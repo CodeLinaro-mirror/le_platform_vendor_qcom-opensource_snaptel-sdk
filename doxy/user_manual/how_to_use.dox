@@ -1,0 +1,126 @@
+/*
+ *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+@page how_to_use  How to use Telematics APIs
+
+This section has instructions to create a sample application using Telematics APIs.
+
+You need to have the following in order to proceed:
+ - Linux Ubuntu 14.04
+ - Linux Yocto Platform SDK Installer created by the system integrator for the device on which the Telematics app is expected to run
+
+@section setup_build_environment Setup the build enviornment
+
+Install the Linux platform SDK created by the platform developer for the intended device. Let's assume that the installer is named sdk_installer.sh.
+
+Open the terminal, Copy the sdk_installer.sh into your working directory, say for example "my_sdk_install".
+
+      \code{.sh}
+      $ mkdir my_sdk_install; cd my_sdk_install
+
+      $ ./sdk_installer.sh
+
+      // Choose to install to my_sdk_install when the SDK installer asks
+      \endcode
+
+- Setup the build enviornment as follows:
+
+      \code{.sh}
+      $ cd my_sdk_install; source environment-setup-cortexa8hf-vfp-neon-oe-linux-gnueabi
+      \endcode
+
+Now your development environment is set for the terminal, start your development.
+
+@section get_started_with_development To get started with a sample app
+
+- Create a sample folder
+
+      \code{.sh}
+      $ mkdir sample_app
+      \endcode
+
+- Create a sample application as follows:
+
+      \code{.cpp}
+      // Program Name: Sample App
+      // FileName: SampleApp.cpp
+
+      #include <iostream>
+      #include <memory>
+
+      #include <tel/PhoneFactory.hpp>
+
+      using namespace tel;
+
+      // This is sample program to initialize PhoneFactory, get an instance of PhoneManager and to check if the telephony sub-system is ready.
+      int main() {
+
+      // Get the PhoneFactory and PhoneManager instances
+      auto &phoneFactory = PhoneFactory::getInstance();
+      auto phoneManager = phoneFactory.getPhoneManager();
+
+      // Check if telephony subsystem is ready
+      bool subSystemsStatus = phoneManager->isSubsystemReady();
+
+      std::cout << "PhoneManager Ready? " << (subSystemsStatus? "Yes":"No") << std::endl;
+
+      // If telephony subsystem is not ready, wait for it to be ready
+      if(!subSystemsStatus) {
+         std::cout << "wait unconditionally for it to be ready " << std::endl;
+         std::future<bool> f = phoneManager->onSubsystemReady();
+         // If we want to wait unconditionally for telephony subsystem to be ready
+         subSystemsStatus = f.get();
+      }
+      std::cout << "PhoneManager Ready? " << (subSystemsStatus? "Yes":"No") << std::endl;
+
+      // Now the application ready for SDK services like Phone, SMS, CardServices
+
+      return 0;
+      }
+      \endcode
+
+@section compile_the_sample Compile the program
+
+   Now compile your source code
+   \code{.sh}
+   user@machine:/sample_app$ ${CC} SampleApp.cpp -ltel -std=c++11 -lstdc++ -o sample_app
+   \endcode
+@section install_the_sample Install program on the device
+
+   Push your binary to the /data location on the device
+
+   \code{.sh}
+   user@machine:/sample_app$ adb push sample_app /data/
+   user@machine:/sample_app$ adb shell
+   $ cd data
+   $ chmod +x hello
+   $ ./sample_app
+   \endcode
+*/

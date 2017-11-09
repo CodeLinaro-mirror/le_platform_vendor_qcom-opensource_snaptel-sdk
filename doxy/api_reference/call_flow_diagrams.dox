@@ -1,0 +1,418 @@
+/*
+ *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+@page sequence_diagrams Call Flow Diagrams
+
+@section app_initialization Application initialization call flow
+
+TelSDK initializes various sub-systems during start-up. It marks each sub-system as ready once the initialization procedures are completed for that sub-system. The application has to wait until the corresponding sub-system is ready on which it needs to make API requests. TelSDK provides APIs to check whether sub-system is ready or not.
+
+
+Example:
+
+@subsection phone_manager Phone manager initialization
+
+@anchor fig_phone_manager
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.7]{../../images/initialization_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Phone manager initialization}
+  \label{fig_phone_manager}
+\end{figure}
+@endlatexonly
+
+@html_image{initialization_call_flow.png,Phone manager initialization,20,20,Phone manager initialization}
+
+
+1. Application can use IPhoneManager::isSubsystemReady to determine if the system is ready.
+2. The application receives the status i.e. either true or false whether sub-sytem is ready or not.
+3. If it is not ready, then the application could use onSubsystemReady which returns std::future. 
+4. PhoneManager notifies the application when the subsystem is ready through the std::future object.
+5. The application waits until the asynchronous operation i.e onSubsystemReady completes.
+6. PhoneManager updates the application once sub-system initialization completes.
+
+@section make_call Dial call flow
+
+@anchor fig_make_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{../../images/dial_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Dial call flow}
+  \label{fig_make_call}
+\end{figure}
+@endlatexonly
+
+@html_image{dial_call_flow.png,Dial call flow,20,20,Dial call flow}
+
+1. The application gets the PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone.
+3. The application gets the Phone object for given phone identifier using PhoneManager.
+4. PhoneManager returns Phone object to application. In case phone identifier is not specified, it returns default phone.
+5. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE and ENDED.
+6. The application receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CallManager.
+7. The application dials a number by using makeCall API, optionally specifying callback to get asynchronous response.
+8. The application receives the status like SUCCESS, INVALIDPARAM and FAILED etc based on the execution of makeCall API.
+9. Optionally, the application gets asynchronous response for makeCall using CommandResponseCallback. 
+10. The application receives callback on call info change like DIALING/ALERTING/ACTIVE when other party accepts the call.
+11. The application sends hangup command to hangup the call, optionally specifying callback to get asynchronous response. 
+12. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
+13. The application receives callback call info change i.e Call Ended from CallManager.
+14. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+
+
+@section e_call ECall call flow
+
+@anchor fig_e_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{../../images/ecall_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{ECall call flow}
+  \label{fig_e_call}
+\end{figure}
+@endlatexonly
+
+@html_image{ecall_call_flow.png,ECall call flow,20,20,ECall call flow}
+
+1. The application gets the PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone.
+3. The application gets the Phone object optionally specifying phone identifier using PhoneManager.
+4. PhoneManager returns Phone object to application, returns default phone in case phone identifier is not specified.
+5. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
+6. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
+7. The application dials an emergency call by using makeECall API, optionally specifying callback to get asynchronous response.  
+8. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
+9. Optionally, the application gets asynchronous response for makeECall using CommandResponseCallback.
+10. CallManager sends ecall msd transmission status to the application by using onECallMsdTransmissionStatus API.
+11. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback. 
+12. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
+13. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
+14. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback. 
+
+@section signal_strength Signal strength call flow
+
+@anchor fig_signal_strength
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{../../images/signal_strength_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Signal strength call flow}
+  \label{fig_signal_strength}
+\end{figure}
+@endlatexonly
+
+@html_image{signal_strength_call_flow.png,Signal strength call flow,20,20,Signal strength call flow}
+
+1. The application gets PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone instance.
+3. The application gets phone instance for a given phone identifier using PhoneManager object.
+4. PhoneManager returns IPhone object to the application.
+5. The application requests for signal strength and optionally, gets asynchronous response using ISignalStrengthCallback.
+6. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSignalStrength API in SapCardManager. 
+7. Optionally, the response for signal strength request is received by the application.
+8. Application registers the listener to get notification for signal strength change.
+9. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+10. Application receives a notification when there is a change in signal strength.
+
+@section answer_reject_rejectWithSMS Answer, Reject, RejectWithSMS call flow
+
+@anchor fig_answer_reject_reject_with_sms
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.6]{../../images/answer_reject_reject_with_sms_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Answer, Reject, RejectWithSMS call flow}
+  \label{fig_answer_reject_reject_with_sms}
+\end{figure}
+@endlatexonly
+
+@html_image{answer_reject_reject_with_sms_call_flow.png,Answer Reject RejectWithSMS call flow,20,20,Answer Reject RejectWithSMS call flow}
+
+1. The application gets the PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to register listener.
+3. The application registers a listener with CallManager to listen incoming call notifications.
+4. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
+5. The application receives onIncomingCall notification when there is an incoming call along with ICall.
+6. The application performs answer/reject/rejectWithSMS operation using ICall.
+7. The application receives the status like SUCCESS, FAILED etc  based on execution of answer/reject/rejectWithSMS.
+8. The CallManager sends call info change i.e CALL_ACTIVE or CALL_ENDED to the application by using onCallInfoChange callback function.
+9. Optionally, the application gets asynchronous response for answer/reject/rejectWithSMS using CommandResponseCallback.
+
+@section hold_call Hold call flow
+
+@anchor fig_hold_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{../../images/hold_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Hold call flow}
+  \label{fig_hold_call}
+\end{figure}
+@endlatexonly
+
+@html_image{hold_call_flow.png,Hold call flow,20,20,Hold call flow}
+
+1. The application gets the PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone.
+3. The application gets the Phone object for given phone identifier using PhoneManager.
+4. PhoneManager returns Phone object to application, returns default phone in case phone identifier is not specified.
+5. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
+6. The application receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CallManager.
+7. The application dials a number by using makeCall API, optionally specifying callback to get asynchronous response.
+8. The application receives the status like SUCCESS, INVALIDPARAM and FAILED etc based on the execution of makeCall API.
+9. Optionally, the application gets asynchronous response for makeCall using CommandResponseCallback. 
+10. The CallManager sends call info change i.e CALL_ACTIVE to application by using onCallInfoChange API.
+11. The application sends hold command to hold the call, optionally specifying callback to get asynchronous response. 
+12. The application receives the status like SUCCESS, FAILED etc based on the execution of hold API.
+13. The application receives call info change i.e CALL_ON_HOLD from CallManager.
+14. Optionally, the application gets asynchronous response for hold using CommandResponseCallback.
+
+@section hold_conference_swap_callflow Hold, Conference, Swap call flow 
+
+@anchor fig_hold_conference_swap_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{../../images/hold_conference_swap_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Hold, Conference, Swap call flow}
+  \label{fig_hold_conference_swap_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{hold_conference_swap_call_flow.png,Hold Conference Swap call flow,20,20,Hold Conference Swap call flow}
+
+1. The application makes first call using ICall.
+2. The application receives the status like SUCCESS, FAILED etc  based on execution of makeCall operation.
+3. The CallManager sends call info change i.e CALL_ACTIVE to application by using onCallInfoChange callback function.
+4. The application puts the first call on hold using ICall, optionally application can pass callback to receive hold response asynchronously.
+5. The application receives the status like SUCCESS, FAILED etc  based on execution of hold operation.
+6. The CallManager sends call info change i.e HOLD to application by using onCallInfoChange callback function.
+7. Optionally, the application gets asynchronous response for hold operation using commandResponse callback.
+8. The application makes second call using ICall.
+9. The application receives the status like SUCCESS, FAILED etc  based on execution of makeCall operation.
+10. The CallManager sends call info change i.e CALL_ACTIVE to application by using onCallInfoChange callback function.
+11. The application gets the ICallManager object using PhoneFactory.
+12. The application receives the ICallManager object in order to perform operations like conference/ swap.
+13. The application performs conference/ swap operation using ICallManager by passing first call and second call. optionally application can pass callback to receive hold response asynchronously.
+14. The application receives the status like SUCCESS, FAILED etc  based on execution of conference/ swap operation.
+15. Optionally, the application gets asynchronous response for conference/ swap using commandResponse callback.
+
+@section sms_call SMS call flow
+
+@anchor fig_sms_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{../../images/sms_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{SMS call flow}
+  \label{fig_sms_call}
+\end{figure}
+@endlatexonly
+
+@html_image{sms_call_flow.png,SMS call flow,20,20,SMS call flow}
+
+1. Application gets PhoneManager object using PhoneFactory.
+2. PhoneFactory returns the PhoneManager object to application in order to get list of phone identifiers.
+3. The application retrieves the list of phone identifier on the device using PhoneManager object.
+4. Application receives the status i.e. either SUCCESS or FAILED based on the execution of getPhoneIds API in PhoneManager.
+5. The application gets SmsManager object corresponding to specific phone identifier.
+6. PhoneFactory returns the SmsManager object to application in order to perform operations like send SMS and get SMSC address.
+7. The application sends SMS to the receiver address and optionally gets asynchronous response using CommandResponseCallback.
+8. Application receives the status i.e. either SUCCESS or FAILED based on execution of sendSms API in SmsManager.
+9. Optionally, the response for send SMS is received by the application.
+10. Application registers the listener for incoming SMS with IPhoneManager.
+11. The application receives the status i.e. either SUCCESS or INVALIDPARAM based on successful registration of the listener.
+12. Application gets notified for incoming SMS.
+13. The application requests for SmscAddress and optionally gets asynchronous response using ISmscAddressCallback.
+14. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestSmscAddress API in SmsManager.
+15. Optionally, the application receives the SMSC address on success or gets error on failure in the command response callback.
+
+@section get_applications Get applications call flow
+
+@anchor fig_get_applications
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.6]{../../images/get_applications_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Get applications call flow}
+  \label{fig_get_applications}
+\end{figure}
+@endlatexonly
+
+@html_image{get_applications_call_flow.png,Get applications call flow,20,20,Get applications call flow}
+
+1. Application gets the CardManager object from PhoneFactory.
+2. Application receives CardManager object in order to perform operations like getSlotIds and getCard.
+3. The application registers a listener for Card info change event with CardManager.
+4. Application receives the status i.e. either SUCCESS or INVALIDPARAM based on the registration of listener.
+5. The response from onCardInfoChanged is received by the application whenever there is card info change.
+6. The application gets the slotIds from the sub-system using CardManager.
+7. Application receives the status i.e. either SUCCESS or NOTREADY along with the updated slotIds.
+8. Then, the application sends request to CardManager to get Card object for a specific slotId.
+9. Application receives Card object from CardManager in order to perform card operation like getApplications.
+10. The application gets the CardApps from Card object.
+11. The application receives CardApps which contain information such as AppId, AppType and AppState.
+12. Now the application removes the listener associated with CardManager.
+13. Application receives the status i.e. either SUCCESS or NOSUCH for the removal of listener.
+
+@section transmit_apdu Transmit APDU call flow
+
+@subsection apdu_logical On logical channel
+
+@anchor fig_apdu_logical
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{../../images/transmit_apdu_logical_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{On logical channel}
+  \label{fig_apdu_logical}
+\end{figure}
+@endlatexonly
+
+@html_image{transmit_apdu_logical_call_flow.png,On logical channel,20,20,On logical channel}
+
+1. The Application requests CardApp for the SIM application identifier.
+2. The application receives the application identifier to perform open logical channel.
+3. Application sends request to open the logical channel with the application identifier and optionally, gets asynchronous response in OpenLogicalChannelCallback.
+4. The application receives the status i.e. either SUCCESS or FAILED based on execution of openLogicalChannel API.
+5. Optionally, the application receives the response which contains either channel number on success or error in case of failure.
+6. Then, the application transmits the APDU data on logical channel using the channel obtained earlier. Optionally, gets asynchronous response in TransmitApduResponseCallback.
+7. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApduLogicalChannel API.
+8. Optionally, the application receives the response which contains either result on success or error in case of failure.
+9. Finally, the application closes the logical channel that is opened to transmit APDU and optionally, gets asynchronous response in CommandResponseCallback.
+10. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeLogicalChannel API.
+11. Optionally, the application receives the response which contains error in case of failure.
+
+@subsection apdu_basic On basic channel
+
+@anchor fig_apdu_basic
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{../../images/transmit_apdu_basic_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{On basic channel}
+  \label{fig_apdu_basic}
+\end{figure}
+@endlatexonly
+
+@html_image{transmit_apdu_basic_call_flow.png,On basic channel,20,20,On basic channel}
+
+1. Application gets the ICardManager object from PhoneFactory.
+2. Application receives ICardManager object in order to perform operation like getCard.
+3. The application gets ICard object for a specific slotId from ICardManager.
+4. Application receives ICard object in order to perform card operation like transmitApduBasicChannel.
+5. The application transmits APDU data on basic channel and optionally, gets asynchronous response in TransmitApduResponseCallback.
+6. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApduBasicChannel API.
+7. Optionally, the application receives the response which contains either result on success or error in case of failure.
+
+@section sap_manager_call_flow SAP card manager call flow
+
+@subsection sap_card_operations Request card reader status, Request ATR, Transmit APDU call flow
+
+@anchor fig_sap_card_operations
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{../../images/sap_card_operations.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Request card reader status, Request ATR, Transmit APDU call flow}
+  \label{fig_sap_card_operations}
+\end{figure}
+@endlatexonly
+
+@html_image{sap_card_operations.png,Request card reader status, Request ATR, Transmit APDU call flow,20,20,Request card reader status, Request ATR, Transmit APDU call flow}
+
+1. The application gets SapCardManager object corresponding to slotId using PhoneFactory.
+2. The application receives the SapCardManager object in order to perform SAP operations like request ATR, Card Reader Status and transmit APDU.
+3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets asynchronous
+response using CommandResponseCallback.
+4. The application receives the status i.e. either SUCCESS or FAILED based on execution of openConnection API in SapCardManager.
+5. Optionally, the response for openConnection is received by the application.
+6. The application sends request card reader status command and optionally, gets asynchronous response using ICardReaderCallback.
+7. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestCardReaderStatus API in SapCardManager.
+8. Optionally, the response for card reader status is received by the application.
+9. Similarly, the application can send SAP Answer To Reset command and optionally, gets asynchronous response using IAtrResponseCallback.
+10. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestAtr API in SapCardManager.
+11. Optionally, the response for SAP Answer To Reset is received by the application.
+12. Similarly, the application sends the APDU on SAP mode and optionally, gets asynchronous response using ISapTransmitApduResponseCallback.
+13. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApdu API in SapCardManager.
+14. Optionally, the response for transmit APDU is received by the application.
+15. Now the application closes the SAP connection with SIM and optionally, gets asynchronous response using CommandResponseCallback.
+16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager. 
+17. Optionally, the response for SAP close connection is received by the application.
+
+@subsection sap_mgr_sim_call_flow SIM Turn off, Turn on and Reset call flow
+
+@anchor fig_sap_mgr_sim_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{../../images/sap_mgr_sim_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{SIM Turn off, Turn on and Reset call flow}
+  \label{fig_sap_mgr_sim_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sap_mgr_sim_call_flow.png,SIM Turn off, Turn on and Reset call flow,20,20,SIM Turn off, Turn on and Reset call flow}
+
+1. Application gets SapCardManager object corresponding to slotID using PhoneFactory.
+2. PhoneFactory returns the SapCardManager object to application in order to perform SAP operations like SIM power off, on or reset.
+3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets 
+asynchronous response using CommandResponseCallback.
+4. Application receives the status i.e. either SUCCESS or FAILED based on execution of openConnection API in SapCardManager.
+5. Optionally, the response for openConnection is received by the application.
+6. The application sends SIM Power Off command to turn off the SIM and optionally, gets asynchronous response using CommandResponseCallback. 
+7. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOff API in SapCardManager. 
+8. Optionally, the response for SIM Power Off is received by the application.
+9. Similarly, the application can send SIM Power On command to turn on the SIM and optionally, gets asynchronous response using CommandResponseCallback. 
+10. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOn API in SapCardManager. 
+11. Optionally, the response for SIM Power On is received by the application.
+12. Similarly, the application sends SIM Reset command to perform SIM Reset and optionally, gets asynchronous response.
+13. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimReset API in SapCardManager. 
+14. Optionally, the response for SIM Reset is received by the application.
+15. Now the application closes the SAP connection with SIM and optionally, gets asynchronous response using CommandResponseCallback.
+16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager. 
+17. Optionally, the response for SAP close connection is received by the application.
+
+*/

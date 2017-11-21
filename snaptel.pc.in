@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: Telematics SDK
+Description: Inclusion of telematics SDK interfaces
+Version: @VERSION@
+Libs: -L${libdir} -ltel
+Cflags: -I${includedir}/telux

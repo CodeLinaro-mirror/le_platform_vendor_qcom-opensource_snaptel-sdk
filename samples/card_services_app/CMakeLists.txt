@@ -27,28 +27,28 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
-##############################################################################
-#
-# FILE: Makefile
-# DESCRIPTION: Create a sample eCall program by linking libtel
-#
-##############################################################################
+cmake_minimum_required(VERSION 2.8.9)
 
-ecall_app_source_files = MsdSettings.cpp \
-   ../console_app_framework/ConsoleAppCommand.cpp \
-   ../console_app_framework/ConsoleApp.cpp \
-   ECallConsoleApp.cpp \
-   MyCallListener.cpp
+set(TARGET_CARD_APP card_services_app)
 
-ecall_app_header_files = MsdSettings.hpp \
-   ConsoleAppCommand.hpp \
-   ConsoleApp.hpp \
-   ECallConsoleApp.hpp \
-   MyCallListener.hpp
+set(CARD_APP_SOURCES
+    CardServicesApp.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
 
-bin_PROGRAMS = ecall_app
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
 
-ecall_app_SOURCES = $(ecall_app_source_files) $(ecall_app_header_files)
-ecall_app_CPPFLAGS  := -std=c++11
-ecall_app_CPPFLAGS  += -I../console_app_framework
-ecall_app_LDFLAGS   := -ltelux_tel -lpthread
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_executable (${TARGET_CARD_APP} ${CARD_APP_SOURCES})
+target_link_libraries(${TARGET_CARD_APP} telux_tel)
+
+# install to target
+install ( TARGETS ${TARGET_CARD_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

@@ -367,7 +367,8 @@ int main(int, char **) {
          if(args.length() > 0) {
             std::string msg = std::string(args);
             msg = msg.substr(1, msg.size());
-            std::cout << "message = " << msg;
+            std::cout << "\nmessage = " << msg << std::endl;
+            std::cout << "messageLength = " << msg.length() << std::endl;
             auto msgAttributes = smsManager->calculateMessageAttributes(msg);
             std::cout << "msgAttributes encoding = " << (int)msgAttributes.encoding << std::endl;
             std::cout << "msgAttributes numberOfSegments = " << msgAttributes.numberOfSegments

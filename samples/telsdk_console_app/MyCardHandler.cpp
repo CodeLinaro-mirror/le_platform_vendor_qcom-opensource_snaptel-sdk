@@ -57,6 +57,7 @@ void MyOpenLogicalChannelCallback::onChannelResponse(int channel, IccResult resu
  *  Implementation of MyCardCommandResponseCallback
  */
 void MyCardCommandResponseCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "onCloseLogicalChannel successful." << std::endl;
    } else {
@@ -68,6 +69,7 @@ void MyCardCommandResponseCallback::commandResponse(ErrorCode error) {
  *  Implementation of MySapCommandCallback
  */
 void MySapCommandResponseCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << " commandResponse successful." << std::endl;
    } else {
@@ -79,6 +81,7 @@ void MySapCommandResponseCallback::commandResponse(ErrorCode error) {
  *  Implementation of MySapTransmitApduResponseCallback
  */
 void MySapTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode error) {
+   std::cout << std::endl << std::endl;
    iccResultCode_ = result.sw2;
    std::cout << "onResponse: error: " << (int)error << std::endl;
    print_notification << "onResponse: " << result.toString() << std::endl << std::endl;
@@ -88,6 +91,7 @@ void MySapTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode e
  *  Implementation of MyAtrResponseCallback
  */
 void MyAtrResponseCallback::atrResponse(std::vector<int> responseAtr, ErrorCode error) {
+   std::cout << std::endl << std::endl;
    print_notification << "atrResponse\n\terror: " << (int)error << std::endl;
    print_notification << "\tATR.data:";
    for(int val : responseAtr) {
@@ -100,6 +104,7 @@ void MyAtrResponseCallback::atrResponse(std::vector<int> responseAtr, ErrorCode 
  *  Implementation of MyTransmitApduResponseCallback
  */
 void MyTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode error) {
+   std::cout << std::endl << std::endl;
    iccResultCode_ = result.sw2;
    std::cout << "onResponse\n\terror: " << (int)error << std::endl;
    print_notification << "onResponse: " << result.toString() << std::endl << std::endl;
@@ -109,6 +114,7 @@ void MyTransmitApduResponseCallback::onResponse(IccResult result, ErrorCode erro
  *  Implementation of MyCardReaderCallback
  */
 void MyCardReaderCallback::cardReaderResponse(CardReaderStatus readerStatus, ErrorCode error) {
+   std::cout << std::endl << std::endl;
    print_notification << "onCardReaderStatus\n\terror: " << (int)error << std::endl;
 
    print_notification << " CardReaderStatus, id = " << readerStatus.id
@@ -123,6 +129,7 @@ void MyCardReaderCallback::cardReaderResponse(CardReaderStatus readerStatus, Err
  *  Implementation of MyCardListener
  */
 void MyCardListener::onCardInfoChanged(int slotId) {
+   std::cout << std::endl << std::endl;
    print_notification << "onCardInfoChange\n\t" << std::endl;
    print_notification << "\tSlotId :" << slotId << std::endl;
    auto cardMgr = PhoneFactory::getInstance().getCardManager();
@@ -132,19 +139,19 @@ void MyCardListener::onCardInfoChanged(int slotId) {
    print_notification << "\tCardState:" << (int)cardState << std::endl;
    switch(cardState) {
       case CardState::CARDSTATE_ABSENT:
-         std::cout << "Cardstate Absent" << std::endl;
+         print_notification << "Cardstate Absent" << std::endl;
          break;
       case CardState::CARDSTATE_PRESENT:
-         std::cout << "Cardstate Present" << std::endl;
+         print_notification << "Cardstate Present" << std::endl;
          break;
       case CardState::CARDSTATE_ERROR:
-         std::cout << "Cardstate Error or Absent" << std::endl;
+         print_notification << "Cardstate Error or Absent" << std::endl;
          break;
       case CardState::CARDSTATE_RESTRICTED:
-         std::cout << "Cardstate Restricted" << std::endl;
+         print_notification << "Cardstate Restricted" << std::endl;
          break;
       default:
-         std::cout << "Unknown Card State" << std::endl;
+         print_notification << "Unknown Card State" << std::endl;
          break;
    }
 }

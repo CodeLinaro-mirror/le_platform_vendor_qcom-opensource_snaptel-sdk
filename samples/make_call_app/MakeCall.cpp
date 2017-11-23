@@ -27,62 +27,44 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <chrono>
 #include <iostream>
-#include <string>
 #include <memory>
-#include <vector>
 
-#include <telux/tel/PhoneListener.hpp>
-#include <telux/tel/SmsManager.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 
 using namespace telux::tel;
 using namespace telux::common;
 
-// [3.1] Implement ICommandResponseCallback interface to know
-// SMS sent and Delivery status
-class SmsCallback : public ICommandResponseCallback {
+// ##### 5.1 implement IMakeCallCallback interface to receive response for the dial request -
+// optional
+class DialCallback : public IMakeCallCallback {
 public:
-   void commandResponse(ErrorCode error) override;
+   void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
 };
 
-void SmsCallback::commandResponse(ErrorCode error) {
-   if(error == ErrorCode::SUCCESS) {
-      std::cout << "onSmsSent successfully" << std::endl;
-   } else {
-      std::cout << "onSmsSent failed" << std::endl;
+void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
+   std::cout << "DialCallback::makeCallResponse" << std::endl;
+   std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
+   if(call) {
+      std::cout << "makeCallResponse RemotePartyNumber : " << call->getRemotePartyNumber()
+                << std::endl;
+      std::cout << "makeCallResponse getCallIndex : " << call->getCallIndex() << std::endl;
    }
-   std::cout << "onSmsSent error = " << (int)error << std::endl;
-}
-
-class SmsDeliveryCallback : public ICommandResponseCallback {
-public:
-   void commandResponse(ErrorCode error) override;
-};
-
-void SmsDeliveryCallback::commandResponse(ErrorCode error) {
-   if(error == ErrorCode::SUCCESS) {
-      std::cout << "SMS Delivered successfully" << std::endl;
-   } else {
-      std::cout << "SMS Delivery failed" << std::endl;
-   }
-   std::cout << "onSmsSent error = " << (int)error << std::endl;
 }
 
 /**
  * Main routine
  */
-int main(int argc, char *argv[]) {
+int main(int, char **) {
 
-   // [1] Get the PhoneFactory and PhoneManager instances.
+   // ### 1. Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
 
-   // [2] Check if telephony subsystem is ready
+   // ### 2. Check if telephony subsystem is ready
    bool subSystemsStatus = phoneManager->isSubsystemReady();
 
-   // [2.1] If telephony subsystem is not ready, wait for it to be ready
+   // #### 2.1 If telephony subsystem is not ready, wait for it to be ready
    if(!subSystemsStatus) {
       std::cout << "Telephony subsystem is not ready" << std::endl;
       std::cout << "wait unconditionally for it to be ready " << std::endl;
@@ -99,24 +81,25 @@ int main(int argc, char *argv[]) {
       return 1;
    }
 
-   // [3] Instantiate SMS sent and delivery callback
-   auto smsSentCb = std::make_shared<SmsCallback>();
-   auto smsDeliveryCb = std::make_shared<SmsDeliveryCallback>();
+   // ### 3. Instantiate Phone and call manager
+   auto phone = phoneManager->getPhone();
+   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
 
-   // [4] Get Default SMS manager instance
-   std::shared_ptr<ISmsManager> smsManager = phoneFactory.getSmsManager();
+   // ### 4. Get unique id of the phone
+   int phoneId;
+   phone->getPhoneId(phoneId);
 
-   // [5] Send an SMS using ISmsManager by passing the text and receiver number
-   // along with required callback
-   if(smsManager) {
-      std::string receiverAddress("+18989531755");
-      std::string message("TEST message");
-      smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
+   // ### 5. Instantiate dial callback instance - this is optional
+   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
+
+   // ### 6. Send a dial request
+   if(callManager) {
+      std::string phoneNumber("+18989531755");
+      auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
+      std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
    }
 
-   // [6] Receive responses for sendSms request
-
-   // exit logic is specific to an application
+   // Exit logic is specific to an application
    std::cout << " *** Press [ENTER] or type [quit] to exit the application *** " << std::endl;
    std::string input;
    std::getline(std::cin, input);

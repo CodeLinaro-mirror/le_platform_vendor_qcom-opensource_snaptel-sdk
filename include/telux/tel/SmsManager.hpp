@@ -143,14 +143,17 @@ public:
     *
     * @param [in] message           Message or payload text to be sent
     * @param [in] receiverAddress   Receiver or destination address
-    * @param [in] callback          Optional callback pointer to get the response of
+    * @param [in] sentCallback      Optional callback pointer to get the response of
     *                               send SMS request, This callback gives possible error codes.
+    * @param [in] deliveryCallback  Optional callback pointer to get message delivery status
     *
     * @returns Status of sendSms i.e. success or suitable error code.
+    *
     */
    virtual telux::common::Status
       sendSms(const std::string &message, const std::string &receiverAddress,
-              std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+              std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
+              std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback = nullptr)
       = 0;
 
    /**

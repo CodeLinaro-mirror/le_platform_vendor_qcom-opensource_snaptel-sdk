@@ -27,42 +27,38 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
-##############################################################################
-#
-# FILE: Makefile
-# DESCRIPTION: It creates an sample program by linking libtel
-#
-##############################################################################
+cmake_minimum_required(VERSION 2.8.9)
 
-#====================================================
-# build tel-sdk samples and link tel-sdk library
-#====================================================
-GTEST_RDIR := ../../mock/googletest
+set(TARGET_ECALL_APP ecall_app)
 
-app_source_files = \
-   TelSdkConsoleApp.cpp \
-   MyPhoneListener.cpp \
-   MyCardHandler.cpp \
-   MyCallListener.cpp \
-   MsdSettings.cpp \
-   MySmsHandler.cpp
+set(ECALL_APP_SOURCES
+    MsdSettings.cpp
+    ECallConsoleApp.cpp
+    MyCallListener.cpp
 
-app_header_files = \
-   MyPhoneListener.hpp \
-   MsdSettings.hpp \
-   MyCardHandler.hpp \
-   MyCallListener.hpp \
-   MySmsHandler.hpp
+    ../console_app_framework/ConsoleAppCommand.cpp
+    ../console_app_framework/ConsoleApp.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
 
-bin_PROGRAMS = telsdk_console_app
-telsdk_console_app_SOURCES = $(app_header_files) $(app_source_files)
-telsdk_console_app_CPPFLAGS  := -std=c++11
-telsdk_console_app_LDFLAGS   := -ltelux_tel -rdynamic
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
 
-if BUILD_MOCK
-telsdk_console_app_CPPFLAGS  += -I../../mock # -I$(top_srcdir)/mock
-endif
-if BUILD_OFF_MOCK
-telsdk_console_app_CPPFLAGS  += -I../../mock # -I$(top_srcdir)/mock
-telsdk_console_app_LDFLAGS += $(GTEST_RDIR)/googlemock/libgmock_main.a
-endif
+include_directories(BEFORE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../console_app_framework
+)
+
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_executable (${TARGET_ECALL_APP} ${ECALL_APP_SOURCES})
+target_link_libraries(${TARGET_ECALL_APP} telux_tel)
+
+# install to target
+install ( TARGETS ${TARGET_ECALL_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

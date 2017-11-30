@@ -41,11 +41,13 @@ using namespace telux::tel;
 using namespace telux::common;
 
 void MyPhoneListener::onServiceStateChanged(std::shared_ptr<IPhone> phone, ServiceState state) {
+   std::cout << std::endl << std::endl;
    print_notification << "MyPhoneListener::onServiceStateChanged, " << std::endl;
 }
 
 void MyPhoneListener::onSignalStrengthChanged(std::shared_ptr<IPhone> phone,
                                               std::shared_ptr<SignalStrength> signalStrength) {
+   std::cout << std::endl << std::endl;
    print_notification << "MyPhoneListener::onSignalStrengthChanged " << std::endl;
    // print_notification << "getLevel(): " << signalStrength->getLevel() << std::endl;
    print_notification
@@ -113,6 +115,7 @@ MySignalStrengthCallback::MySignalStrengthCallback() {
 
 void MySignalStrengthCallback::signalStrengthResponse(
    std::shared_ptr<SignalStrength> signalStrength, ErrorCode error) {
+   std::cout << std::endl << std::endl;
    print_notification << "Received Signal Strength Callback with Error Code:" << (int)error
                       << std::endl;
    // print_notification << "getLevel(): " << signalStrength->getLevel() << std::endl;

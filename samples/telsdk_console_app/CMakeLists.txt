@@ -27,17 +27,34 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
-##############################################################################
-#
-# FILE: Makefile
-# DESCRIPTION: It creates a sample program to send SMS by linking
-#              libtelux_tel and libtelux_common libraries
-#
-##############################################################################
+cmake_minimum_required(VERSION 2.8.9)
 
-send_sms_app_source_files = SendSms.cpp 
-bin_PROGRAMS = send_sms_app
+set(TARGET_TELSDK_CONSOKE_APP telsdk_console_app)
 
-send_sms_app_SOURCES = $(send_sms_app_source_files)
-send_sms_app_CPPFLAGS := -std=c++11
-send_sms_app_LDFLAGS := -ltelux_tel -lpthread
+set(TELSDK_CONSOKE_APP_SOURCES
+    TelSdkConsoleApp.cpp
+    MyPhoneListener.cpp
+    MyCardHandler.cpp
+    MyCallListener.cpp
+    MsdSettings.cpp
+    MySmsHandler.cpp
+)
+
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
+
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
+
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_executable (${TARGET_TELSDK_CONSOKE_APP} ${TELSDK_CONSOKE_APP_SOURCES})
+target_link_libraries(${TARGET_TELSDK_CONSOKE_APP} telux_tel)
+
+# install to target
+install ( TARGETS ${TARGET_TELSDK_CONSOKE_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

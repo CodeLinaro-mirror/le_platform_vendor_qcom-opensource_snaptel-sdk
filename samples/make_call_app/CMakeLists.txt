@@ -27,57 +27,28 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
-AC_PREREQ(2.61)
-AC_INIT([ecall_app], 1.0.0)
-AM_INIT_AUTOMAKE([-Wall gnu foreign])
-AM_MAINTAINER_MODE
-AC_CONFIG_HEADER([config.h])
-AC_CONFIG_MACRO_DIR([m4])
+cmake_minimum_required(VERSION 2.8.9)
 
-AC_PROG_CC
-AM_PROG_CC_C_O
-AM_PROG_AS
-AC_PROG_LIBTOOL
-AC_PROG_AWK
-AC_PROG_CPP
-AC_PROG_CXX
-AC_PROG_INSTALL
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
-PKG_PROG_PKG_CONFIG
+set(TARGET_CALL_APP make_call_app)
 
-AC_SUBST([CPPFLAGS])
-AC_SUBST([CC])
+set(CALL_APP_SOURCES
+    MakeCall.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
 
-# This is required for standalone sdk_installer not for meta-qti-telematics bitbake recipe
-# local-libs build
-   AC_ARG_ENABLE([local-libs],
-               AC_HELP_STRING([--enable-local-libs],[Enabling local-libs build]),
-     [case "${enableval}" in
-       yes) local_libs=true ;;
-       no)  local_libs=false ;;
-       *) AC_MSG_ERROR([bad value ${enableval} for --enable-local-libs]) ;;
-     esac],[local_libs=false])
-   if test x$local_libs = xtrue ; then
-      CPPFLAGS="$CPPFLAGS -I../../include"
-      LDFLAGS="$LDFLAGS -L../../.libs"
-      AC_MSG_NOTICE([Enabling local-libs build.])
-   fi
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
 
-# Debug build
-   AC_ARG_ENABLE([debug],
-               AC_HELP_STRING([--enable-debug],[Enabling debug build]),
-     [case "${enableval}" in
-       yes) debug=true ;;
-       no)  debug=false ;;
-       *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
-     esac],[debug=false])
-   if test x$debug = xtrue ; then
-      CPPFLAGS="$CPPFLAGS -g"
-      AC_MSG_NOTICE([Enabling debug build.])
-   fi
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-AC_CONFIG_FILES([ \
-        Makefile
-        ])
-AC_OUTPUT
+add_executable (${TARGET_CALL_APP} ${CALL_APP_SOURCES})
+target_link_libraries(${TARGET_CALL_APP} telux_tel)
+
+# install to target
+install ( TARGETS ${TARGET_CALL_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

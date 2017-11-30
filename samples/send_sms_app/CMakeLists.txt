@@ -27,22 +27,28 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
+cmake_minimum_required(VERSION 2.8.9)
 
-##############################################################################
-#
-# FILE: Makefile
-# DESCRIPTION: It creates an sample program by linking libtel
-#
-##############################################################################
+set(TARGET_SMS_APP send_sms_app)
 
-#=======================================================
-# build sample applications and link with telsdk library
-#=======================================================
+set(SMS_APP_SOURCES
+    SendSms.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
 
-SUBDIRS = \
-  telsdk_console_app \
-  send_sms_app \
-  receive_sms_app \
-  card_services_app \
-  simple_sap_api_app
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
 
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_executable (${TARGET_SMS_APP} ${SMS_APP_SOURCES})
+target_link_libraries(${TARGET_SMS_APP} telux_tel)
+
+# install to target
+install ( TARGETS ${TARGET_SMS_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

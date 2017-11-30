@@ -27,37 +27,28 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
-# Requires autoconf tool later than 2.61
-  AC_PREREQ(2.61)
+cmake_minimum_required(VERSION 2.8.9)
 
-# Initialize the snaptel-sdk, Package version 0.0.1
-  AC_INIT([snaptel-sdk],0.0.1)
+set(TARGET_SMS_APP receive_sms_app)
 
-# Does not strictly follow GNU Coding standards
-  AM_INIT_AUTOMAKE([foreign subdir-objects])
+set(SMS_APP_SOURCES
+    SimpleSmsListener.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
 
-# Disables auto rebuilding of configure, Makefile.ins
-  AM_MAINTAINER_MODE
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
 
-# defines some macros variable to be included by source
-  AC_CONFIG_HEADER([config.h])
-  AC_CONFIG_MACRO_DIR([m4])
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-# Checks for programs.
-  AM_PROG_AS
-  AC_PROG_CC
-  AM_PROG_CC_C_O
-  AC_PROG_LIBTOOL
-  AC_PROG_AWK
-  AC_PROG_CPP
-  AC_PROG_CXX
-  AC_PROG_INSTALL
-  AC_PROG_LN_S
-  AC_PROG_MAKE_SET
+add_executable (${TARGET_SMS_APP} ${SMS_APP_SOURCES})
+target_link_libraries(${TARGET_SMS_APP} telux_tel)
 
-
-# Config files
-  AC_CONFIG_FILES([Makefile include/Makefile snaptel.pc])
-
-# Output
-  AC_OUTPUT
+# install to target
+install ( TARGETS ${TARGET_SMS_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

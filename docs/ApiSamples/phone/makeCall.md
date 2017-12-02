@@ -2,76 +2,69 @@
 
 *Quick steps:* Please follow below steps to make a voice call
 
-### 1. Get the PhoneFactory and PhoneManager instances ###
+### 1. Get the PhoneFactory and PhoneManager instances
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
    ~~~~~~
 
-### 2. Check if telephony subsystem is ready ###
+### 2. Check if telephony subsystem is ready
 
    ~~~~~~{.cpp}
    bool subSystemsStatus = phoneManager->isSubsystemReady();
    ~~~~~~
 
-### 3. If telephony subsystem is not ready, wait for it to be ready ###
+### 2.1 If telephony subsystem is not ready, wait for it to be ready
+
+Telephony subsystems is to make sure that device is ready for services like Phone, SMS
+and others. if subsystems were not ready, wait for unconditionally.
 
    ~~~~~~{.cpp}
-   std::future<bool> f = phoneManager->onSubSystemReady();
-    // If we want to wait unconditionally for telephony subsystem to be ready
-   subSystemsStatus = f.get();
-   ~~~~~~
-   or
-
-   ~~~~~~{.cpp}
-   // If we want to wait with a timeout
-   std::future_status status;
-   status = f.wait_for(std::chrono::seconds(5));
-   if (status != std::future_status::ready) {
-     // Error out
-   }
-   subSystemsStatus = f.get();
-   ~~~~~~
-
-### 4. Get Phone identifiers of the phones that are present on the device ###
-   ~~~~~~{.cpp}
-   if(subSystemsStatus) {
-      std::vector<int> phoneIds;
-      auto status=phoneManager->getPhoneIds(&phoneIds);
+   if(!subSystemsStatus) {
+      std::future<bool> f = phoneManager->onSubsystemReady();
+      subSystemsStatus = f.get();
    }
    ~~~~~~
 
-### 5. Get Phone instance ###
+### 3. Instantiate Phone and call manager
 
    ~~~~~~{.cpp}
-   auto defaultPhone = phoneManager->getPhone();
-   ~~~~~~
-   or get  phone with a particular identifier
-
-   ~~~~~~{.cpp}
-   auto phoneObj = phoneManager->getPhone(phoneIds[0])
+   auto phone = phoneManager->getPhone();
+   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
    ~~~~~~
 
-### 6. Implement callback for Make call ###
-
-   ~~~~~{.cpp}
-    class MyPhoneCallback: public ICommandResponseCallback {
-    public:
-        MyPhoneCallback() { }
-        ~MyPhoneCallback() { }
-        void commandResponse(ErrorCode error) {
-            LOG(DEBUG, "MyCallCommandCallback: " __FUNCTION__);
-            LOG(INFO, "ErrorCode: ", int(error));
-        }
-    };
-   ~~~~~
-
-### 7. Make call from the phone instance by passing the dial number(call params), status and callback object ###
+### 4. Get unique id of the phone
 
    ~~~~~~{.cpp}
-   std::string dialNumber("+18588451326");
-   const CallParams phCallParams = {dialNumber};
-   Status *status = SUCCESS;
-   auto callbackObj = std::make_shared<MyPhoneCallback>();
-   std::shared_ptr<ICall> callObjWithCallback =  defaultPhone->makeCall(phCallParams, &status, callbackObj);
+   int phoneId;
+   phone->getPhoneId(phoneId);
+   ~~~~~~
+
+### 5. Instantiate dial call instance - this is optional
+
+   ~~~~~~{.cpp}
+   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();
+   ~~~~~~
+
+### 5.1 implement IMakeCallCallback interface to receive response for the dial request optional
+
+   ~~~~~~{.cpp}
+   class DialCallback : public IMakeCallCallback {
+   public:
+      void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
+   };
+
+   void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
+      // will be invoked with response of makeCall operation
+   }
+   ~~~~~~
+
+### 6. Send a dial request
+
+   ~~~~~~{.cpp}
+   if(callManager) {
+      std::string phoneNumber("+18989531755");
+      auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
+      std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
+   }
    ~~~~~~

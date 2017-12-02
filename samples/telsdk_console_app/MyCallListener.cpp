@@ -41,6 +41,7 @@ using namespace telux::tel;
 using namespace telux::common;
 
 void MyCallListener::onIncomingCall(std::shared_ptr<ICall> call) {
+   std::cout << std::endl << std::endl;
    print_notification << getCurrentTime() << " MyCallListener::onIncomingCall" << std::endl;
    std::string user_string;
    std::cout << "Enter 2 to answer call" << std::endl;
@@ -49,6 +50,7 @@ void MyCallListener::onIncomingCall(std::shared_ptr<ICall> call) {
 }
 
 void MyCallListener::onCallInfoChange(std::shared_ptr<ICall> call) {
+   std::cout << std::endl << std::endl;
    print_notification << "MyCallListener::onCallInfoChange: "
                       << " Call State: " << getCallStateString(call->getCallState())
                       << " Call Index: " << (int)call->getCallIndex()
@@ -61,6 +63,7 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<ICall> call) {
 }
 
 void MyCallListener::onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) {
+   std::cout << std::endl << std::endl;
    print_notification
       << "MyCallListener::onMsdTransmissionComplete, Status: " << static_cast<int>(errorCode)
       << std::endl;
@@ -244,6 +247,7 @@ std::string MyCallListener::getCurrentTime() {
 }
 
 void MyDialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
+   std::cout << std::endl << std::endl;
    print_notification << "MyDialCallback::makeCallResponse" << std::endl;
    print_notification << "makeCall ErrorCode: " << int(error) << std::endl;
    callObj_ = call;
@@ -259,11 +263,13 @@ void MyDialCallback::waitForResponse(int seconds) {
 }
 
 void MyUpdateMsdCommandCallback::commandResponse(ErrorCode error) {
-   std::cout << "MyUpdateMsdCommandCallback::commandResponse" << std::endl;
-   std::cout << "updateMsd ErrorCode: " << int(error) << std::endl;
+   std::cout << std::endl << std::endl;
+   print_notification << "MyUpdateMsdCommandCallback::commandResponse" << std::endl;
+   print_notification << "updateMsd ErrorCode: " << int(error) << std::endl;
 }
 
 void MyHoldCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "Hold operation successful" << std::endl;
    } else {
@@ -273,6 +279,7 @@ void MyHoldCallback::commandResponse(ErrorCode error) {
 }
 
 void MyResumeCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "Resume operation successful" << std::endl;
    } else {
@@ -282,6 +289,7 @@ void MyResumeCallback::commandResponse(ErrorCode error) {
 }
 
 void MyAnswerCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "Answer operation successful" << std::endl;
    } else {
@@ -291,6 +299,7 @@ void MyAnswerCallback::commandResponse(ErrorCode error) {
 }
 
 void MyRejectCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "Reject operation successful" << std::endl;
    } else {
@@ -300,6 +309,7 @@ void MyRejectCallback::commandResponse(ErrorCode error) {
 }
 
 void MyHangupCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "Hangup operation successful" << std::endl;
    } else {
@@ -309,6 +319,7 @@ void MyHangupCallback::commandResponse(ErrorCode error) {
 }
 
 void MyConferenceCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "Conference operation successful" << std::endl;
    } else {
@@ -318,6 +329,7 @@ void MyConferenceCallback::commandResponse(ErrorCode error) {
 }
 
 void MySwapCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
    if(error == ErrorCode::SUCCESS) {
       print_notification << "Swap operation successful" << std::endl;
    } else {

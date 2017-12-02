@@ -27,15 +27,28 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
-#====================================================
-# Export pkg config
-#====================================================
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig = snaptel.pc
-EXTRA_DIST = $(pkgconfig)
+cmake_minimum_required(VERSION 2.8.9)
 
-#====================================================
-# Export headers
-#====================================================
-SUBDIRS = include
+set(TARGET_ECALL_APP make_ecall_app)
 
+set(ECALL_APP_SOURCES
+    MakeECall.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
+
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
+
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_executable (${TARGET_ECALL_APP} ${ECALL_APP_SOURCES})
+target_link_libraries(${TARGET_ECALL_APP} telux_tel)
+
+# install to target
+install ( TARGETS ${TARGET_ECALL_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

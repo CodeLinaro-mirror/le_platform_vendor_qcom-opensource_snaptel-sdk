@@ -46,8 +46,6 @@
 #include "ConsoleApp.hpp"
 #include "MsdSettings.hpp"
 
-#define print_notification std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
-
 const std::string ECALL_CATEGORY_AUTO = "auto";
 const std::string ECALL_CATEGORY_MANUAL = "manual";
 const std::string ECALL_VARIANT_TEST = "test";
@@ -70,6 +68,15 @@ public:
     * Sample eCall operation
     */
    void makeECall(std::vector<std::string> inputCommand);
+
+   /**
+    * Sample eCall SOS operation
+    */
+   void eCallSOS(std::vector<std::string> inputCommand);
+
+   // answer incoming call
+   void answerCall(std::vector<std::string> inputCommand);
+
    /**
     * Sample Update eCall MSD operation
     */
@@ -127,6 +134,12 @@ private:
       void commandResponse(telux::common::ErrorCode error) override;
    };
    std::shared_ptr<HangupCommandCallback> hangupCommandCallback_;
+
+   class AnswerCommandCallback : public telux::common::ICommandResponseCallback {
+   public:
+      void commandResponse(telux::common::ErrorCode error) override;
+   };
+   std::shared_ptr<AnswerCommandCallback> answerCommandCallback_;
 };
 
 #endif  // ECALLCONSOLEAPP_HPP

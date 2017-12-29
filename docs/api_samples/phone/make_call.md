@@ -3,6 +3,7 @@
 *Quick steps:* Please follow below steps to make a voice call
 
 ### 1. Get the PhoneFactory and PhoneManager instances
+
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();

@@ -35,11 +35,8 @@ when       who     what, where, why
 =============================================================================*/
 /**
 @mainpage notitle
-@html_image{qcr_image_HTML.png,QCR,55,55,}
-@latexonly \begin{titlepage} @endlatexonly
-@image latex qcr_image_LATEX.png "" width=18cm
+@html_image{image_HTML.png,telux,55,55,}
 @titlepage
-@latexonly \vfill \setlength{\parskip}{6pt} @endlatexonly
 
 @no_public_disclosure
 
@@ -60,8 +57,10 @@ when       who     what, where, why
 \fancyhf{}
 \fancyfoot[L]{\sffamily\footnotesize\dcn}
 %For Regular Distribution, comment out the next two lines
+%\fancyfoot[C]{\sffamily\footnotesize \copyrighttext}
+%\fancyfoot[R]{\sffamily\footnotesize\thepage \\ \begin{center}\sffamily\footnotesize\textbf \copyrightreserved \end{center}}
 %For Regular Distribution, uncomment the next two lines
-\fancyfoot[C]{\sffamily\scriptsize\textbf{FOR ILLUSTRATIVE PURPOSE ONLY. CONTENT IS SUBJECT TO CHANGE.}}
+\fancyfoot[C]{\sffamily\scriptsize\textbf{MAY CONTAIN U.S. AND INTERNATIONAL EXPORT CONTROLLED INFORMATION}}
 \fancyfoot[R]{\sffamily\footnotesize\thepage }
 \renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
 \setcounter{page}{3}

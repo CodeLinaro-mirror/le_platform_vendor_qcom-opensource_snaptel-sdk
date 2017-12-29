@@ -46,9 +46,11 @@ NOTE: for an appendix, the label must match the filename
 \fancyhead[R]{\sl\sffamily\footnotesize\textbf{\firstleftmark}}
 \fancyfoot[L]{\sffamily\footnotesize\textbf{\dcn}}
 %For Regular Distribution, comment out the next two lines
+\fancyfoot[C]{\sffamily\footnotesize \copyrighttext}
+\fancyfoot[R]{\sffamily\footnotesize\thepage \\ \begin{center}\sffamily\footnotesize\textbf \copyrightreserved \end{center}}
 %For Regular Distribution, uncomment the next two lines
-\fancyfoot[C]{\sffamily\scriptsize\textbf{FOR ILLUSTRATIVE PURPOSE ONLY. CONTENT IS SUBJECT TO CHANGE.}}
-\fancyfoot[R]{\sffamily\footnotesize\thepage }
+%\fancyfoot[C]{\sffamily\scriptsize\textbf{MAY CONTAIN U.S. AND INTERNATIONAL EXPORT CONTROLLED INFORMATION}}
+%\fancyfoot[R]{\sffamily\footnotesize\thepage }
 \renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
 @endlatexonly
 

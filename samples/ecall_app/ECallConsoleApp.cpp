@@ -34,6 +34,17 @@
 #include "ECallConsoleApp.hpp"
 #include "MyCallListener.hpp"
 
+// Config file name. Using current directory as default path.
+#define MSDSETTINGS_FILE "./msdsettings.txt"
+#define UPDATED_MSDSETTINGS_FILE "./updated_msdsettings.txt"
+
+#define print_notification std::cout << std::endl << "\033[1;35mNotification: \033[0m"
+
+const std::string GREEN = "\033[0;32m";
+const std::string RED = "\033[0;31m";
+const std::string BOLD_RED = "\033[1;31m";
+const std::string DONE = "\033[0m";  // No color
+
 using namespace telux::tel;
 using namespace telux::common;
 
@@ -43,6 +54,7 @@ ECallConsoleApp::ECallConsoleApp(std::string appName, std::string cursor)
    callCommandCallback_ = std::make_shared<CallCommandCallback>();
    updateMsdCommandCallback_ = std::make_shared<UpdateMsdCommandCallback>();
    hangupCommandCallback_ = std::make_shared<HangupCommandCallback>();
+   answerCommandCallback_ = std::make_shared<AnswerCommandCallback>();
 }
 
 ECallConsoleApp::~ECallConsoleApp() {
@@ -50,26 +62,46 @@ ECallConsoleApp::~ECallConsoleApp() {
 }
 
 /**
- * Initializing Commands and Display..
+ * Initializing Commands and Display
  */
 void ECallConsoleApp::init() {
-   std::shared_ptr<ConsoleAppCommand> dial = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-      "1", "dial", {"number"}, std::bind(&ECallConsoleApp::makeCall, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> hangup
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "hangup", {}, std::bind(&ECallConsoleApp::hangup, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getCalls
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "getCalls", {}, std::bind(&ECallConsoleApp::getCalls, this, std::placeholders::_1)));
+   // below commands are used to add menu options like below
+   //
+   // 1 - eCall-SOS
+   // 2 - eCall <auto | manual> <test | emergency>
+   // 3 - update_ecall_msd
+   // 4 - dial <number>
+   // 5 - hangup
+   // 6 - get_calls
+   // 7 - answer_call
+   //
+
+   std::shared_ptr<ConsoleAppCommand> eCallSos = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("1", BOLD_RED + "eCall-SOS" + DONE, {},
+                        std::bind(&ECallConsoleApp::eCallSOS, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> eCall = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("4", "eCall", {ECALL_CATEGORY_AUTO + " | " + ECALL_CATEGORY_MANUAL,
+      ConsoleAppCommand("2", "eCall", {ECALL_CATEGORY_AUTO + " | " + ECALL_CATEGORY_MANUAL,
                                        ECALL_VARIANT_TEST + " | " + ECALL_VARIANT_EMERGENCY},
                         std::bind(&ECallConsoleApp::makeECall, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> update_eCall_msd = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("5", "update_ecall_msd", {},
+   std::shared_ptr<ConsoleAppCommand> updateMsd = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("3", "update_ecall_msd", {},
                         std::bind(&ECallConsoleApp::updateECallMSD, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> dial = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+      "4", "dial", {"number"}, std::bind(&ECallConsoleApp::makeCall, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> hangup
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "5", "hangup", {}, std::bind(&ECallConsoleApp::hangup, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> getCalls
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "6", "get_calls", {}, std::bind(&ECallConsoleApp::getCalls, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> answerCall = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("7", "answer_call", {},
+                        std::bind(&ECallConsoleApp::answerCall, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
-      = {dial, hangup, getCalls, eCall, update_eCall_msd};
+      = {eCallSos, eCall, updateMsd, dial, hangup, getCalls, answerCall};
 
    addCommands(commandsList);
 
@@ -117,9 +149,34 @@ void ECallConsoleApp::makeCall(std::vector<std::string> inputCommand) {
    spDefaultPhone->getPhoneId(phoneId);
    Status status = callManager->makeCall(phoneId, phoneNumber, callCommandCallback_);
    if(status == Status::SUCCESS) {
-      std::cout << "Call is successful" << std::endl;
+      std::cout << GREEN << "  Dial request is successful" << DONE << std::endl;
    } else {
-      std::cout << "Call failed" << std::endl;
+      std::cout << RED << "  Dial request failed" << DONE << std::endl;
+   }
+}
+
+void ECallConsoleApp::answerCall(std::vector<std::string> inputCommand) {
+   auto &phoneFactory = PhoneFactory::getInstance();
+   try {
+      std::shared_ptr<ICall> spCall = nullptr;
+      std::vector<std::shared_ptr<ICall>> inProgressCalls
+         = phoneFactory.getCallManager()->getInProgressCalls();
+      // Fetch the list of in prgress calls from CallManager and accept the incoming call.
+      for(auto callIterator = std::begin(inProgressCalls);
+          callIterator != std::end(inProgressCalls); ++callIterator) {
+         if((*callIterator)->getCallState() == CallState::CALL_INCOMING) {
+            spCall = *callIterator;
+            break;
+         }
+      }
+      if(spCall != nullptr) {
+         std::cout << "Sending request to accept call " << std::endl;
+         spCall->answer(answerCommandCallback_);
+      } else {
+         std::cout << "No incoming call to accept " << std::endl;
+      }
+   } catch(const std::exception &e) {
+      std::cout << "ERROR: Exception caught -" << e.what() << std::endl;
    }
 }
 
@@ -128,7 +185,9 @@ void ECallConsoleApp::makeCall(std::vector<std::string> inputCommand) {
  */
 void ECallConsoleApp::hangup(std::vector<std::string> inputCommand) {
    auto &phoneFactory = PhoneFactory::getInstance();
+
    try {
+
       std::shared_ptr<ICall> spCall = nullptr;
       // Iterate through the call list in the application and hangup the first Call that is
       // Active or on Hold
@@ -137,25 +196,11 @@ void ECallConsoleApp::hangup(std::vector<std::string> inputCommand) {
          = phoneFactory.getCallManager()->getInProgressCalls();
       for(auto callIterator = std::begin(callList); callIterator != std::end(callList);
           ++callIterator) {
-         if(((*callIterator)->getCallState() == CallState::CALL_ACTIVE)
-            || ((*callIterator)->getCallState() == CallState::CALL_ON_HOLD)) {
+         CallState callState = (*callIterator)->getCallState();
+         if((callState == CallState::CALL_ACTIVE) || (callState == CallState::CALL_DIALING)
+            || (callState == CallState::CALL_ALERTING) || (callState == CallState::CALL_ON_HOLD)) {
             spCall = *callIterator;
             break;
-         }
-      }
-      // If no Active or OnHold call is found in the current call list, get the in progress
-      // call list from CallMgr
-      // Hangup the first Active or OnHold call from that list
-      if(spCall == nullptr) {
-         std::vector<std::shared_ptr<ICall>> inProgressCalls
-            = phoneFactory.getCallManager()->getInProgressCalls();
-         for(auto callIterator = std::begin(inProgressCalls);
-             callIterator != std::end(inProgressCalls); ++callIterator) {
-            if(((*callIterator)->getCallState() == CallState::CALL_ACTIVE)
-               || ((*callIterator)->getCallState() == CallState::CALL_ON_HOLD)) {
-               spCall = *callIterator;
-               break;
-            }
          }
       }
       if(spCall != nullptr) {
@@ -166,6 +211,28 @@ void ECallConsoleApp::hangup(std::vector<std::string> inputCommand) {
       }
    } catch(const std::exception &e) {
       std::cout << "ERROR: Exception caught -" << e.what();
+   }
+}
+
+void ECallConsoleApp::eCallSOS(std::vector<std::string> inputCommand) {
+   // Get Phone from PhoneFactory
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto spDefaultPhone = phoneFactory.getPhoneManager()->getPhone();
+
+   ECallCategory emergencyCategory = ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
+   ECallVariant eCallVariant = ECallVariant::ECALL_EMERGENCY;
+
+   MsdSettings msdSettings;
+   auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
+   auto callManager = phoneFactory.getCallManager();
+   int phoneId;
+   spDefaultPhone->getPhoneId(phoneId);
+   auto ret = callManager->makeECall(phoneId, eCallMsdData, (int)emergencyCategory,
+                                     (int)eCallVariant, callCommandCallback_);
+   if(ret == Status::SUCCESS) {
+      std::cout << GREEN << "  eCall request is successful" << DONE << std::endl;
+   } else {
+      std::cout << RED << "  eCall request failed" << DONE << std::endl;
    }
 }
 
@@ -180,8 +247,6 @@ void ECallConsoleApp::makeECall(std::vector<std::string> inputCommand) {
    // Fetch eCall category and variant
    std::string category = toLowerCase(inputCommand[1]);
    std::string variant = toLowerCase(inputCommand[2]);
-   std::cout << "eCall variant :" << variant << std::endl;
-   std::cout << "eCall category:" << category << std::endl;
 
    ECallCategory emergencyCategory;
    ECallVariant eCallVariant;
@@ -213,16 +278,16 @@ void ECallConsoleApp::makeECall(std::vector<std::string> inputCommand) {
 
    MsdSettings msdSettings;
    bool msdStatus;
-   auto eCallMsdData = msdSettings.readMsdFromFile();
+   auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    auto callManager = phoneFactory.getCallManager();
    int phoneId;
    spDefaultPhone->getPhoneId(phoneId);
    auto ret = callManager->makeECall(phoneId, eCallMsdData, (int)emergencyCategory,
                                      (int)eCallVariant, callCommandCallback_);
    if(ret == Status::SUCCESS) {
-      std::cout << "eCall is successful" << std::endl;
+      std::cout << GREEN << "  eCall request is successful" << DONE << std::endl;
    } else {
-      std::cout << "eCall failed" << std::endl;
+      std::cout << RED << "  eCall request failed" << DONE << std::endl;
    }
 }
 
@@ -234,15 +299,15 @@ void ECallConsoleApp::updateECallMSD(std::vector<std::string> inputCommand) {
    auto &phoneFactory = PhoneFactory::getInstance();
    auto spDefaultPhone = phoneFactory.getPhoneManager()->getPhone();
    bool msdStatus;
-   auto eCallMsdData = msdSettings.readMsdFromFile();
+   auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
    auto callManager = phoneFactory.getCallManager();
    int phoneId;
    spDefaultPhone->getPhoneId(phoneId);
    auto ret = callManager->updateECallMsd(phoneId, eCallMsdData, updateMsdCommandCallback_);
    if(ret == Status::SUCCESS) {
-      std::cout << "Update_ecall_msd is successful" << std::endl;
+      std::cout << GREEN << "  Update MSD request is successful" << DONE << std::endl;
    } else {
-      std::cout << "Update_ecall_msd failed" << std::endl;
+      std::cout << RED << "  Update MSD request failed" << DONE << std::endl;
    }
 }
 
@@ -289,27 +354,50 @@ std::string ECallConsoleApp::toLowerCase(std::string inputOption) {
 
 void ECallConsoleApp::CallCommandCallback::makeCallResponse(ErrorCode errorCode,
                                                             std::shared_ptr<ICall> call) {
-   print_notification << "Call command returned code:  " << static_cast<int>(errorCode)
-                      << std::endl;
-   if(call) {
-      print_notification << "Call Id received:  " << call->getCallIndex() << std::endl;
+   std::string infoStr = "";
+   if(errorCode == ErrorCode::SUCCESS) {
+      infoStr.append("Call is successful ");
+   } else {
+      infoStr.append("Call failed with error code: " + static_cast<int>(errorCode));
    }
+
+   print_notification << infoStr << std::endl;
 }
 
 void ECallConsoleApp::UpdateMsdCommandCallback::commandResponse(ErrorCode errorCode) {
-   print_notification << "Update MSD command returned code:  " << static_cast<int>(errorCode)
-                      << std::endl;
+   std::string infoStr = "";
+   if(errorCode == ErrorCode::SUCCESS) {
+      infoStr.append(" MSD Update is successful");
+   } else {
+      infoStr.append("Update MSD failed with error code: " + static_cast<int>(errorCode));
+   }
+   print_notification << infoStr << std::endl;
 }
 
 void ECallConsoleApp::HangupCommandCallback::commandResponse(ErrorCode errorCode) {
-   print_notification << "Hangup command returned code:  " << static_cast<int>(errorCode)
-                      << std::endl;
+   std::string infoStr = "";
+   if(errorCode == ErrorCode::SUCCESS) {
+      infoStr.append(" Hangup is successful");
+   } else {
+      infoStr.append(" Hangup failed with error code: " + static_cast<int>(errorCode));
+   }
+   print_notification << infoStr << std::endl;
+}
+
+void ECallConsoleApp::AnswerCommandCallback::commandResponse(ErrorCode errorCode) {
+   std::string infoStr = "";
+   if(errorCode == ErrorCode::SUCCESS) {
+      infoStr.append(" Answer Call is successful");
+   } else {
+      infoStr.append(" Answer call failed with error code: " + static_cast<int>(errorCode));
+   }
+   print_notification << infoStr << std::endl;
 }
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
 
-   ECallConsoleApp eCallConsoleApp("eCall App", "eCall");
+   ECallConsoleApp eCallConsoleApp("eCall App", GREEN + "eCall> " + DONE);
 
    eCallConsoleApp.init();  // initialize commands and display
 

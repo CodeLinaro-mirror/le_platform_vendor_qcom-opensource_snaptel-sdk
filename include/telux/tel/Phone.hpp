@@ -29,7 +29,8 @@
 
 /**
  * @file       Phone.hpp
- * @brief      Phone class is the primary interface that provides telephony services
+ * @brief      Phone class is the primary interface that provides telephony
+ * services
  *             like makeCall, get phoneInfo, radio state, service state.
  */
 
@@ -46,7 +47,6 @@
 #include <telux/tel/PhoneManager.hpp>
 
 namespace telux {
-
 namespace tel {
 
 /** @addtogroup telematics_phone
@@ -55,16 +55,16 @@ class PhoneListener;
 class ISignalStrengthCallback;
 
 /**
- * @brief This class allows making phone calls, getting system information and registering
- *        for system events. Each Phone instance is associated with a single SIM.
- *        So on a dual SIM device you would have 2 Phone instances.
+ * @brief This class allows making phone calls, getting system information and
+ * registering for system events. Each Phone instance is associated with a single
+ * SIM. So on a dual SIM device you would have 2 Phone instances.
  */
 class IPhone {
 public:
    /**
     * Get the Phone ID corresponding to phone.
     *
-    * @param [out] phoneId - Unique identifier for the phone
+    * @param [out] phoneId    Unique identifier for the phone
     *
     * @returns Status of getPhoneId i.e. success or suitable error code.
     */
@@ -86,12 +86,25 @@ public:
    virtual ServiceState getServiceState() = 0;
 
    /**
+    * Set the radio power on or off.
+    * @param [in] enable    Flag that determines whether to turn radio on or off
+    * @param [in] callback  Optional callback pointer to get the response of set
+    *                       radio power request
+    *
+    * @returns Status of setRadioPower i.e. success or suitable error code.
+    */
+   virtual telux::common::Status setRadioPower(
+      bool enable, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
     * Get current signal strength of the associated network.
     *
-    * @param [in] callback - Optional callback pointer to get the response of signal strength
-    * request
+    * @param [in] callback    Optional callback pointer to get the response of
+    *                         signal strength request
     *
-    * @returns Status of requestSignalStrength i.e. success or suitable error code.
+    * @returns Status of requestSignalStrength i.e. success or suitable error
+    * code.
     */
    virtual telux::common::Status
       requestSignalStrength(std::shared_ptr<ISignalStrengthCallback> callback = nullptr)
@@ -102,8 +115,8 @@ public:
 
 /**
  * @brief Interface for Signal strength callback object.
- * Client needs to implement this interface to get single shot responses for commands like get
- * signal strength.
+ * Client needs to implement this interface to get single shot responses for
+ * commands like get signal strength.
  *
  * The methods in callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
@@ -113,8 +126,9 @@ public:
    /**
     * This function is called with the response to requestSignalStrength API.
     *
-    * @param [out] signalStrength - Pointer to signal strength object
-    * @param [out] error - Return code for whether the operation succeeded or failed
+    * @param [out] signalStrength   Pointer to signal strength object
+    * @param [out] error            Return code for whether the operation
+    *                               succeeded or failed
     *        - @ref SUCCESS
     *        - @ref RADIO_NOT_AVAILABLE
     */
@@ -122,10 +136,9 @@ public:
                                        telux::common::ErrorCode error) {
    }
 };
+
 /** @} */ /* end_addtogroup telematics_phone */
+}
+}
 
-}  // End of namespace tel
-
-}  // End of namespace telux
-
-#endif  // PHONE_HPP
+#endif

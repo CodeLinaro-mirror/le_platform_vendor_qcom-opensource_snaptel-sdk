@@ -47,15 +47,15 @@ namespace tel {
  * ECall Variant
  */
 enum class ECallVariant {
-   ECALL_TEST = 1,      /**< Test eCall (0x01)*/
+   ECALL_TEST = 1,      /**< Test eCall (0x01) */
    ECALL_EMERGENCY = 2, /**< Emergency eCall (0x02) */
 };
 
 /**
- * ECall Type
+ * Emergency Call Type
  */
 enum class EmergencyCallType {
-   CALL_TYPE_ECALL = 12, /**<  eCall (0x0C)*/
+   CALL_TYPE_ECALL = 12, /**<  eCall (0x0C) */
 };
 
 /**
@@ -98,22 +98,23 @@ enum class ECallOptionalDataType {
 struct ECallMsdOptionals {
 
    ECallOptionalDataType optionalDataType; /**< Type of optional data */
-   bool optionalDataPresent; /**< Availability of Optional data: true - Present or true - Absent */
-   bool recentVehicleLocationN1Present; /**< Availability of Recent Vehicle Location N1 data: true -
-                                           Present or false - Absent*/
-   bool recentVehicleLocationN2Present; /**< Availability of Recent Vehicle Location N2 data: true -
-                                           Present or false - Absent */
-   bool numberOfPassengersPresent; /**< Availability of number of seat belts fastened data: true -
-                                      Present or false - Absent*/
+   bool optionalDataPresent;               /**< Availability of Optional data:
+                                                  true - Present or false - Absent */
+   bool recentVehicleLocationN1Present;    /**< Availability of Recent Vehicle Location N1 data:
+                                                  true - Present or false - Absent*/
+   bool recentVehicleLocationN2Present;    /**< Availability of Recent Vehicle Location N2 data:
+                                                  true - Present or false - Absent */
+   bool numberOfPassengersPresent;         /**< Availability of number of seat belts fastened data:
+                                                  true - Present or false - Absent*/
 };
 
 /**
  * Represents ECallMsdControlBits structure as per European eCall MSD standard. i.e. EN 15722.
  */
 struct ECallMsdControlBits {
-   bool automaticAvtivation;  /**< auto / manual activation */
+   bool automaticActivation;  /**< auto / manual activation */
    bool testCall;             /**< test / emergency call */
-   bool positionCanBeTrusted; /**< false if conidence < 95% of reported pos within +/- 150m */
+   bool positionCanBeTrusted; /**< false if coincidence < 95% of reported pos within +/- 150m */
    ECallVehicleType vehicleType : 5; /**< Represents a vehicle class as per EN 15722 */
 };
 
@@ -146,8 +147,8 @@ struct ECallVehiclePropulsionStorageType {
  * Represents VehicleLocation structure as per European eCall MSD standard. i.e. EN 15722.
  */
 struct ECallVehicleLocation {
-   uint32_t positionLatitude;  /**< latitude in value range (-324000000 to 324000000) */
-   uint32_t positionLongitude; /**< longitude in value range (-324000000 to 324000000) */
+   int32_t positionLatitude; /**< latitude in value range (-2147483648 to 2147483647) */
+   int32_t positionLongitude;
 };
 
 /**
@@ -209,7 +210,7 @@ struct ECallMsdData {
    ECallVehicleLocationDelta recentVehicleLocationN2; /**< Change in latitude and longitude compared
                                                          to the last but one MSD transmission */
    uint8_t numberOfPassengers;                        /**< Number of occupants in the vehicle */
-   /* Optional information for the emergency rescue service
+   /** Optional information for the emergency rescue service
     * (103 bytes, ASN.1 encoded); may also point to an address, where this information is located
     */
    ECallOptionalPdu optionalPdu; /**< Optional information for the emergency rescue service */

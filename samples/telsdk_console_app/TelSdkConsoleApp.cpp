@@ -54,6 +54,10 @@ using namespace telux::common;
 
 #define print_cursor std::cout << "tel_sdk> "
 
+// Config file name. Using current directory as default path.
+#define MSDSETTINGS_FILE "./msdsettings.txt"
+#define UPDATED_MSDSETTINGS_FILE "./updated_msdsettings.txt"
+
 /**
  * List of supported menus
  */
@@ -73,12 +77,16 @@ void telSDKMenu() {
    std::cout << "   8 - swap" << std::endl;
    std::cout << "   9 - resume" << std::endl;
    std::cout << "   10 - get_calls" << std::endl;
-   std::cout << "   15 - ecall <Catogery> <Number>" << std::endl;
+   std::cout << "   15 - ecall <category> <variant> " << std::endl;
+   std::cout << "        [category: 64-Auto,32-Manual, variant: 1-test,2-emergency]" << std::endl;
    std::cout << "   16 - update_ecall_msd" << std::endl;
    std::cout << "   l7 - call_listener [add|del|help]" << std::endl;
-   std::cout << "************** Phone **************" << std::endl;
-   // std::cout << "   12 - get_subscription" << std::endl;
+   std::cout << "************** Device Details **************" << std::endl;
    std::cout << "   18 - request_signal_strength" << std::endl;
+   std::cout << "   19 - set_radio_power" << std::endl;
+   std::cout << "   20 - get_radio_state" << std::endl;
+   std::cout << "   21 - get_service_state" << std::endl;
+   std::cout << "   22 - get_subscription" << std::endl;
    std::cout << "************** Card Services **************" << std::endl;
    std::cout << "   100 - get_card <slotId>" << std::endl;
    std::cout << "   101 - get_card_state" << std::endl;
@@ -137,7 +145,7 @@ void smsListener(std::shared_ptr<MySmsListener> mySmsListener, std::string args,
       std::cout << "sms_listener del - to delete listener" << std::endl;
       std::cout << "sms_listener help  - to list listener command help" << std::endl;
    } else {
-      std::cout << "unsupported sms_listener command with args:" << args;
+      std::cout << "unsupported sms_listener command with args:" << args << std::endl;
    }
 }
 
@@ -152,7 +160,7 @@ void cardListener(std::shared_ptr<MyCardListener> myCardListener, std::string ar
    } else if(args == " add") {
       cardMgr->registerListener(myCardListener);
    } else {
-      std::cout << "unsupported listener command with args:" << args;
+      std::cout << "unsupported listener command with args:" << args << std::endl;
    }
 }
 
@@ -164,16 +172,10 @@ void callListener(std::shared_ptr<MyCallListener> myCallListener, std::string ar
       std::cout << "call_listener add - to add listener" << std::endl;
       std::cout << "call_listener del - to delete listener" << std::endl;
       std::cout << "call_listener help  - to list listener command help" << std::endl;
-      std::cout << "<flag> can be a 32 bit integer representing ListenType enumeration :";
-      std::cout << "\n\tCALL_STATE = 1,";
-      std::cout << "\n\tECALL_STATE = 2,";
-      std::cout << "\nExample:\n\tlistener add 1 - To register for CALL_STATE changes";
-      std::cout << "\nExample:\n\tlistener add 3 - To register for both CALL_STATE and ECALL_STATE "
-                   "changes";
    } else if(args == " add") {
       callMgr->registerListener(myCallListener);
    } else {
-      std::cout << "unsupported listener command with args:" << args;
+      std::cout << "unsupported listener command with args:" << args << std::endl;
    }
 }
 
@@ -182,21 +184,19 @@ void listener(std::shared_ptr<MyPhoneListener> myPhListener, std::string args) {
    if(args == " del") {
       phMgr->removeListener(myPhListener);
    } else if(args == " help") {
-      std::cout << "listener add <flag>" << std::endl;
-      std::cout << "listener del  - to delete listener" << std::endl;
-      std::cout << "listener help  - to list listener command help" << std::endl;
-      std::cout << "<flag> can be a 32 bit integer representing ListenType enumeration :";
-      std::cout << "\n\tSERVICE_STATE = 1,";
-      std::cout << "\n\tSIGNAL_STRENGTH = 2,";
-      std::cout << "\n\tlistener add 3 - To listen for all the events";
+      std::cout << "listener add - to add listener" << std::endl;
+      std::cout << "listener del - to delete listener" << std::endl;
+      std::cout << "listener help - to list listener command help" << std::endl;
    } else {
       std::string::size_type cmd_start = 1, cmd_end = args.find(' ', cmd_start);
       std::string sub_cmd = args.substr(0, cmd_end);
-      if((sub_cmd == " add") && (cmd_end != std::string::npos)) {
-         int opt = std::stoi(args.substr(cmd_end));
-         phMgr->registerListener((ListenType)opt, myPhListener);
-      } else
-         std::cout << "unsupported listener command with args:" << args;
+      if(sub_cmd == " add") {
+         phMgr->registerListener(myPhListener);
+      } else if(sub_cmd == " remove") {
+         phMgr->removeListener(myPhListener);
+      } else {
+         std::cout << "unsupported listener command with args:" << args << std::endl;
+      }
    }
 }
 
@@ -293,6 +293,7 @@ int main(int, char **) {
    auto myRejectCb = std::make_shared<MyRejectCallback>();
    auto myConferenceCb = std::make_shared<MyConferenceCallback>();
    auto mySwapCb = std::make_shared<MySwapCallback>();
+   auto myRadioPowerCb = std::make_shared<MyRadioPowerCallback>();
    auto spDefaultPhone = phoneManager->getPhone();
    int defaultPhoneId;
    spDefaultPhone->getPhoneId(defaultPhoneId);
@@ -302,6 +303,10 @@ int main(int, char **) {
    std::shared_ptr<ICallManager> callManager = PhoneFactory::getInstance().getCallManager();
    std::shared_ptr<ISapCardManager> sapCardMgr = PhoneFactory::getInstance().getSapCardManager();
    std::shared_ptr<ICard> card = nullptr;
+
+   // Subscription
+   std::shared_ptr<ISubscriptionManager> subscriptionMgr
+      = PhoneFactory::getInstance().getSubscriptionManager();
 
    // SMS instances
    std::shared_ptr<ISmsManager> smsManager = phoneFactory.getSmsManager();
@@ -350,12 +355,12 @@ int main(int, char **) {
             std::string message = args.substr(cmd_end);
             message = message.erase(0, message.find_first_not_of(" \n\r\t"));  // trim std::string
 
-            std::cout << "send sms " << input;
+            std::cout << "send sms " << input << std::endl;
             auto ret = smsManager->sendSms(message, smsReceiver, mySmsCmdCb);
             if(ret == Status::SUCCESS) {
-               std::cout << "send sms successfully";
+               std::cout << "Send SMS request sent successfully \n";
             } else {
-               std::cout << "send sms failed";
+               std::cout << "Send SMS request failed \n";
             }
          } else {
             std::cout << "Invalid argument" << std::endl;
@@ -403,7 +408,7 @@ int main(int, char **) {
          callList.emplace_back(myDialCallCmdCb->getCallObj());
          // std::cout << spCall;
       } else if(cmd == "accept_call" || cmd == "2") {
-         std::cout << "request accept_call " << input;
+         std::cout << "request accept_call " << input << std::endl;
          try {
             std::shared_ptr<ICall> spCall = nullptr;
             std::vector<std::shared_ptr<ICall>> inProgressCalls
@@ -649,35 +654,101 @@ int main(int, char **) {
             std::cout << getCallDescription(*callIterator) << std::endl;
          }
       } else if(cmd == "ecall" || cmd == "15") {
-         std::string ecallMsd;
          int emergencyCategory, ecallMsdLen, eCallVariant;
-         if(args.length() > 0) {
-            std::string category = std::string(args);
+         std::string::size_type cmd_start = 1, cmd_end = args.find(' ', cmd_start);
+         if(cmd_end != std::string::npos) {
+            std::string category = args.substr(0, cmd_end);
             category = category.erase(0, category.find_first_not_of(" \n\r\t"));
             emergencyCategory = std::stoi(category);
+
+            std::string variant = args.substr(cmd_end);
+            variant = variant.erase(0, variant.find_first_not_of(" \n\r\t"));
+            eCallVariant = std::stoi(variant);
+
+            MsdSettings msdSettings;
+            auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
+            auto eCallStatus = callManager->makeECall(
+               defaultPhoneId, eCallMsdData, emergencyCategory, eCallVariant, myECallCmdCb);
+            if(eCallStatus == Status::SUCCESS) {
+               std::cout << "eCall request sent successfully \n";
+            } else {
+               std::cout << "eCall request failed \n";
+            }
          } else {
-            std::cout << "Invalid Input--Look Help for usage";
-            break;
+            std::cout << "Invalid eCall arguments" << std::endl;
          }
-         eCallVariant = 1;
-         MsdSettings msdSettings;
-         auto eCallMsdData = msdSettings.readMsdFromFile();
-         auto eCallStatus = callManager->makeECall(defaultPhoneId, eCallMsdData, emergencyCategory,
-                                                   eCallVariant, myECallCmdCb);
-         std::cout << "Make eCall Status:" << (int)eCallStatus << std::endl;
+
       } else if(cmd == "update_ecall_msd" || cmd == "16") {
          MsdSettings msdSettings;
-         auto eCallMsdData = msdSettings.readMsdFromFile();
+         auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
          auto ret = callManager->updateECallMsd(defaultPhoneId, eCallMsdData, myUpdateMsdCmdCb);
          if(ret == Status::SUCCESS) {
-            std::cout << "update_ecall_msd is successful";
+            std::cout << "updateECallMsd request sent successfully\n";
          } else {
-            std::cout << "update_ecall_msd failed";
+            std::cout << "updateECallMsd request failed \n";
          }
       } else if(cmd == "call_listener" || cmd == "17") {
          callListener(myCallListener, args);
       } else if(cmd == "request_signal_strength" || cmd == "18") {
          auto ret = spDefaultPhone->requestSignalStrength(mySignalStrengthCb);
+      } else if(cmd == "set_radio_power" || cmd == "19") {
+         bool radioPowerFlag;
+         std::cout << "Enter 1: (to turn on Radio) 0: (to turn off radio) ";
+         std::cin >> radioPowerFlag;
+         if(radioPowerFlag) {
+            std::cout << "Turning Radio Power On" << std::endl;
+         } else {
+            std::cout << "Turning Radio Power Off" << std::endl;
+         }
+         auto ret = spDefaultPhone->setRadioPower(radioPowerFlag, myRadioPowerCb);
+      } else if(cmd == "get_radio_state" || cmd == "20") {
+         RadioState radState = spDefaultPhone->getRadioState();
+         switch(radState) {
+            case RadioState::RADIO_STATE_OFF:
+               std::cout << "RADIO_STATE_OFF" << std::endl;
+               break;
+            case RadioState::RADIO_STATE_UNAVAILABLE:
+               std::cout << "RADIO_STATE_UNAVAILABLE" << std::endl;
+               break;
+            case RadioState::RADIO_STATE_ON:
+               std::cout << "RADIO_STATE_ON" << std::endl;
+               break;
+         }
+      } else if(cmd == "get_service_state" || cmd == "21") {
+         ServiceState srvState = spDefaultPhone->getServiceState();
+         switch(srvState) {
+            case ServiceState::EMERGENCY_ONLY:
+               std::cout << "Service State EMERGENCY_ONLY" << std::endl;
+               break;
+            case ServiceState::IN_SERVICE:
+               std::cout << "Service State IN_SERVICE" << std::endl;
+               break;
+            case ServiceState::OUT_OF_SERVICE:
+               std::cout << "Service State  OUT_OF_SERVICE" << std::endl;
+               break;
+            case ServiceState::RADIO_OFF:
+               std::cout << "Service State RADIO_OFF" << std::endl;
+               break;
+         }
+      } else if(cmd == "get_subscription" || cmd == "22") {
+         telux::common::Status status;
+         if(!subscriptionMgr->isSubsystemReady()) {
+            subscriptionMgr->onSubsystemReady().get();
+         }
+         auto subscription = subscriptionMgr->getSubscription(DEFAULT_SLOT_ID, &status);
+         if(subscription) {
+            std::cout << "**Subscription Details**" << std::endl;
+            std::cout << " CarrierName : " << subscription->getCarrierName() << std::endl;
+            std::cout << " CountryISO : " << subscription->getCountryISO() << std::endl;
+            std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
+            std::cout << " IccId : " << subscription->getIccId() << std::endl;
+            std::cout << " Mcc : " << subscription->getMcc() << std::endl;
+            std::cout << " Mnc : " << subscription->getMnc() << std::endl;
+            std::cout << " SlotId : " << subscription->getSlotId() << std::endl;
+            std::cout << " Imsi : " << subscription->getImsi() << std::endl;
+         } else {
+            std::cout << "Subscription is empty" << std::endl;
+         }
       }
 
       // Card Services
@@ -781,9 +852,9 @@ int main(int, char **) {
                                                         (uint8_t)p1, (uint8_t)p2, (uint8_t)p3, data,
                                                         myTransmitApduCb);
             if(ret == Status::SUCCESS) {
-               std::cout << "transmit_apdu is successful";
+               std::cout << "transmit_apdu is successful\n";
             } else {
-               std::cout << "transmit_apdu failed";
+               std::cout << "transmit_apdu failed\n";
             }
          }
       } else if(cmd == "basic_transmit_apdu" || cmd == "106") {
@@ -819,9 +890,9 @@ int main(int, char **) {
                = card->transmitApduBasicChannel((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1,
                                                 (uint8_t)p2, (uint8_t)p3, data, myTransmitApduCb);
             if(ret == Status::SUCCESS) {
-               std::cout << "basic_transmit_apdu is successful";
+               std::cout << "basic_transmit_apdu is successful\n";
             } else {
-               std::cout << "basic_transmit_apdu failed";
+               std::cout << "basic_transmit_apdu failed\n";
             }
          }
       } else if(cmd == "card_listener" || cmd == "107") {
@@ -848,7 +919,7 @@ int main(int, char **) {
                std::cout << "get_sap_state success" << std::endl;
                logSapState(sapstate);
             } else {
-               std::cout << "get_sap_state failed";
+               std::cout << "get_sap_state failed\n";
             }
          }
       } else if(cmd == "transmit_sap_apdu" || cmd == "155") {
@@ -883,7 +954,7 @@ int main(int, char **) {
                                                 (uint8_t)p2, (uint8_t)lc, data, 0,
                                                 myTransmitApduResponseCb);
             if(ret == Status::SUCCESS) {
-               std::cout << "Sending of sap_transmit_apdu command is successful";
+               std::cout << "Sending of sap_transmit_apdu command is successful\n";
             } else {
                std::cout
                   << "Unable to send sap_transmit_apdu command, status : " << static_cast<int>(ret)
@@ -909,7 +980,6 @@ int main(int, char **) {
       }
 
       if(cmd == "listener" || cmd == "l") {  // Listener
-         std::cout << "listener";
          listener(myPhListener, args);
       } else if(cmd == "help" || cmd == "?") {
          telSDKMenu();

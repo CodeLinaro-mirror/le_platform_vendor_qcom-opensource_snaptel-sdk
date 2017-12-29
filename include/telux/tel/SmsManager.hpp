@@ -29,8 +29,9 @@
 
 /**
  * @file       SmsManager.hpp
- * @brief      SMS Manager class is the primary interface to send and receive SMS messages.
- *             It allows to send an SMS in several formats and sizes.
+ * @brief      SMS Manager class is the primary interface to send and receive
+ *             SMS messages. It allows to send an SMS in several formats
+ *             and sizes.
  *
  */
 
@@ -40,11 +41,9 @@
 #include <memory>
 #include <string>
 
-#include <telux/tel/PhoneDefines.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
-
 namespace tel {
 
 /** @addtogroup telematics_sms
@@ -64,8 +63,8 @@ enum class SmsEncoding {
 };
 
 /**
- * @brief   Contains structure of message attributes like encoding type, number of segments,
- *          characters left in last segment
+ * @brief   Contains structure of message attributes like encoding type, number
+ * of segments, characters left in last segment
  */
 struct MessageAttributes {
    SmsEncoding encoding;               /**< Data encoding type */
@@ -133,7 +132,8 @@ private:
 };
 
 /**
- * @brief SMS Manager class is the primary interface to send and receive SMS messages.
+ * @brief SMS Manager class is the primary interface to send and receive SMS
+ * messages.
  *        It allows to send an SMS in several formats and sizes.
  */
 class ISmsManager {
@@ -143,9 +143,11 @@ public:
     *
     * @param [in] message           Message or payload text to be sent
     * @param [in] receiverAddress   Receiver or destination address
-    * @param [in] sentCallback      Optional callback pointer to get the response of
-    *                               send SMS request, This callback gives possible error codes.
-    * @param [in] deliveryCallback  Optional callback pointer to get message delivery status
+    * @param [in] sentCallback      Optional callback pointer to get the response
+    *                               of send SMS request, This callback gives
+    *                               possible error codes.
+    * @param [in] deliveryCallback  Optional callback pointer to get message
+    * delivery status
     *
     * @returns Status of sendSms i.e. success or suitable error code.
     *
@@ -161,8 +163,8 @@ public:
     * Purpose of SMSC is to store, forward, convert and
     * deliver Short Message Service (SMS) messages.
     *
-    * @param [in] callback        Optional callback pointer to get the response of
-    *                             Smsc address request
+    * @param [in] callback        Optional callback pointer to get the response
+    *                             of Smsc address request
     *
     * @returns Status of getSmscAddress i.e. success or suitable error code.
     */
@@ -175,8 +177,8 @@ public:
     *
     * @param [in] message         Message to send
     *
-    * @returns MessageAttributes structure containing encoding type, number of segments,
-    *          max size of segment and characters left in last segment.
+    * @returns MessageAttributes structure containing encoding type, number of
+    * segments, max size of segment and characters left in last segment.
     */
    virtual MessageAttributes calculateMessageAttributes(const std::string &message) = 0;
 
@@ -190,8 +192,8 @@ public:
    /**
     * Register a listener for Sms events
     *
-    * @param [in] listener    Pointer to ISmsListener object which receives event corresponding
-    *                         to SMS
+    * @param [in] listener    Pointer to ISmsListener object which receives event
+    *                         corresponding to SMS
     *
     * @returns Status of registerListener i.e. success or suitable error code.
     */
@@ -213,8 +215,8 @@ public:
  * @brief A listener class for monitoring  incoming SMS.
  * Override the methods for the state that you wish to receive updates for.
  *
- * The methods in listener can be invoked from multiple different threads. The implementation
- * should be thread safe.
+ * The methods in listener can be invoked from multiple different threads. The
+ * implementation should be thread safe.
  */
 class ISmsListener {
 public:
@@ -231,11 +233,11 @@ public:
 };
 
 /**
- * Interface for SMS callback object. Client needs to implement this interface to get
- * single shot responses for send SMS.
+ * Interface for SMS callback object. Client needs to implement this interface
+ * to get single shot responses for send SMS.
  *
- * The methods in callback can be invoked from multiple different threads. The implementation
- * should be thread safe.
+ * The methods in callback can be invoked from multiple different threads. The
+ * implementation should be thread safe.
  */
 class ISmscAddressCallback : public telux::common::ICommandCallback {
 public:
@@ -248,9 +250,7 @@ public:
    virtual void smscAddressResponse(const std::string &address, telux::common::ErrorCode error) = 0;
 };
 /** @} */ /* end_addtogroup telematics_sms */
+}
+}
 
-}  // End namespace tel
-
-}  // End namespace telux
-
-#endif  // SMSMANAGER_HPP
+#endif

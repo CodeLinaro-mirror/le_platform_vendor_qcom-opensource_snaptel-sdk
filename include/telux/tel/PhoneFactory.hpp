@@ -45,6 +45,7 @@
 #include <telux/tel/PhoneManager.hpp>
 #include <telux/tel/SmsManager.hpp>
 #include <telux/tel/SapCardManager.hpp>
+#include <telux/tel/SubscriptionManager.hpp>
 
 namespace telux {
 
@@ -107,11 +108,19 @@ public:
     */
    std::shared_ptr<ISapCardManager> getSapCardManager(int slotId = DEFAULT_SLOT_ID);
 
+   /**
+    * Get Subscription Manager instance to get device subscription details
+    *
+    * @returns Pointer of ISubscriptionManager object.
+    */
+   std::shared_ptr<ISubscriptionManager> getSubscriptionManager();
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
    std::shared_ptr<ICardManager> cardManager_;
    std::shared_ptr<ISapCardManager> sapCardManager_;
+   std::shared_ptr<ISubscriptionManager> subscriptionManager_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
 
    PhoneFactory();

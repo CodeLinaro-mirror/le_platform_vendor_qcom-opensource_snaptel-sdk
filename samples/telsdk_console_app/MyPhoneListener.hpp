@@ -38,14 +38,19 @@
 
 class MyPhoneListener : public telux::tel::IPhoneListener {
 public:
-   void onServiceStateChanged(std::shared_ptr<telux::tel::IPhone> phone,
-                              telux::tel::ServiceState state) override;
-   void onSignalStrengthChanged(std::shared_ptr<telux::tel::IPhone> phone,
-                                std::shared_ptr<telux::tel::SignalStrength> signalStrength) override;
+   void onServiceStateChanged(int phoneId, telux::tel::ServiceState state) override;
+   void onSignalStrengthChanged(
+      int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) override;
+   void onRadioStateChanged(int phoneId, telux::tel::RadioState radioState) override;
+
    std::string getCurrentTime();
 
    ~MyPhoneListener() {
    }
+
+private:
+   std::string radioStateToString(telux::tel::RadioState radioState);
+   std::string serviceStateToString(telux::tel::ServiceState serviceState);
 };
 
 class MySignalStrengthCallback : public telux::tel::ISignalStrengthCallback {
@@ -55,4 +60,8 @@ public:
                                telux::common::ErrorCode error) override;
 };
 
+class MyRadioPowerCallback : public telux::common::ICommandResponseCallback {
+public:
+   void commandResponse(telux::common::ErrorCode error);
+};
 #endif  // MYPHONELISTENER_HPP

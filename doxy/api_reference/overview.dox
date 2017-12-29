@@ -51,13 +51,13 @@ when       who     what, where, why
 \renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
 \begin{figure}[H]
    \centering
-   \includegraphics[scale=0.42]{../../images/sdk_overview.png}
+   \includegraphics[scale=0.42]{sdk_overview.png}
    \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
    \caption{SDK-Overview}
    \label{fig_sdk_overview}
 \end{figure}
 @endlatexonly
-@html_image{sdk_overview.png,SDK-Overview,120,120,SDK-Overview}
+@html_image{sdk_overview.png,SDK-Overview,40,40,SDK-Overview}
 
 @section overview Overview
 
@@ -128,5 +128,6 @@ Phone APIs of Telematics SDK provides phone related information such as
    - Get Radio state of device i.e RADIO_STATE_OFF, RADIO_STATE_ON and RADIO_STATE_UNAVAILABLE
    - Retrieve the signal strength corresponding to the technology supported by SIM
    - Device Identity
+   - Subscription Information
 
 */

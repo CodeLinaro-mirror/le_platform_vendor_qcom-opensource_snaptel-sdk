@@ -40,12 +40,35 @@
 using namespace telux::tel;
 using namespace telux::common;
 
-void MyPhoneListener::onServiceStateChanged(std::shared_ptr<IPhone> phone, ServiceState state) {
-   std::cout << std::endl << std::endl;
-   print_notification << "MyPhoneListener::onServiceStateChanged, " << std::endl;
+void MyPhoneListener::onServiceStateChanged(int phoneId, ServiceState state) {
+   print_notification
+      << "MyPhoneListener::onServiceStateChanged, ServiceState = " << serviceStateToString(state)
+      << std::endl;
 }
 
-void MyPhoneListener::onSignalStrengthChanged(std::shared_ptr<IPhone> phone,
+std::string MyPhoneListener::serviceStateToString(ServiceState serviceState) {
+   std::string state = "";
+   switch(serviceState) {
+      case ServiceState::EMERGENCY_ONLY:
+         state = "Emergency Only";
+         break;
+      case ServiceState::IN_SERVICE:
+         state = "In Service";
+         break;
+      case ServiceState::OUT_OF_SERVICE:
+         state = "Out Of Service";
+         break;
+      case ServiceState::RADIO_OFF:
+         state = "Radio Off";
+         break;
+      default:
+         state = "Unknown";
+         break;
+   }
+   return state;
+}
+
+void MyPhoneListener::onSignalStrengthChanged(int phoneId,
                                               std::shared_ptr<SignalStrength> signalStrength) {
    std::cout << std::endl << std::endl;
    print_notification << "MyPhoneListener::onSignalStrengthChanged " << std::endl;
@@ -163,4 +186,37 @@ void MySignalStrengthCallback::signalStrengthResponse(
    print_notification
       << "LTE Signal Level: " << (int)signalStrength->getLteSignalStrength()->getLevel()
       << std::endl;
+}
+
+void MyRadioPowerCallback::commandResponse(ErrorCode error) {
+   if(error == ErrorCode::SUCCESS) {
+      print_notification << "Radio power request executed successfully" << std::endl;
+   } else {
+      print_notification << "Radio power request failed" << std::endl;
+   }
+   print_notification << "RadioPowerRequest error = " << static_cast<int>(error) << std::endl;
+}
+
+void MyPhoneListener::onRadioStateChanged(int phoneId, RadioState state) {
+   print_notification
+      << "MyPhoneListener::onRadioStateChanged, State: " << radioStateToString(state) << std::endl;
+}
+
+std::string MyPhoneListener::radioStateToString(RadioState radioState) {
+   std::string state = "";
+   switch(radioState) {
+      case RadioState::RADIO_STATE_OFF:
+         state = "Off";
+         break;
+      case RadioState::RADIO_STATE_UNAVAILABLE:
+         state = "Unavailable";
+         break;
+      case RadioState::RADIO_STATE_ON:
+         state = "On";
+         break;
+      default:
+         state = "Unknown";
+         break;
+   }
+   return state;
 }

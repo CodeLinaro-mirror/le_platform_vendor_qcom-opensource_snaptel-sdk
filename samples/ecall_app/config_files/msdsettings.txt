@@ -1,9 +1,28 @@
-#MSD#
-MESSAGE_IDENTIFIER = 60
+# eCall MSD as per EN 15733 standard
+# possible set of values 0=FALSE, 1=TRUE
+
+MESSAGE_IDENTIFIER = 1
 AUTOMATIC_ACTIVATION = 1
 TEST_CALL = 0
 POSITION_CAN_BE_TRUSTED = 1
+
+# VEHICLE_TYPE specifies a vehicle class
+# Possible VEHICLE_TYPE values are 0 to 12
+#  0=passenger vehicle class M1
+#  1=buses and coaches class M2,
+#  2=buses and coaches class M3,
+#  3=light commercial vehicles class N1,
+#  4=heavy duty vehicles class N2,
+#  5=heavy duty vehicles class N3,
+#  6=motorcycles class L1e,
+#  7=motorcycles class L2e,
+#  8=motorcycles class L3e,
+#  9=motorcycles class L4e,
+#  10=motorcycles class L5e,
+#  11=motorcycles class L6e,
+#  12=motorcycles class L7e,
 VEHICLE_TYPE = 0
+
 ISO_WMI = ECA
 ISO_VDS = LLEXAM
 ISO_VIS_MODEL_YEAR = P
@@ -16,16 +35,9 @@ ELECTRIC_ENERGY_STORAGE = 0
 HYDROGEN_STORAGE = 0
 OTHER_STORAGE = 0
 TIMESTAMP = 1367878452
-VEHICLE_POSITION_LATITUDE = 123
-VEHICLE_POSITION_LONGITUDE = 1234
-VEHICLE_DIRECTION = 4
-RECENT_LOCATION_N1_PRESENT = 1
-RECENT_N1_LATITUDE_DELTA = 0
-RECENT_N1_LONGITUDE_DELTA = 10
-RECENT_LOCATION_N2_PRESENT = 1
-RECENT_N2_LATITUDE_DELTA = 0
-RECENT_N2_LONGITUDE_DELTA = 30
+VEHICLE_POSITION_LATITUDE = 118422000
+VEHICLE_POSITION_LONGITUDE = -421902360
+VEHICLE_DIRECTION = 45
 NUMBER_OF_PASSENGERS_PRESENT = 1
 NUMBER_OF_PASSENGERS = 2
-OPTIONAL_DATA_PRESENT = 1
-OPTIONALS_OPTIONAL_DATA_TYPE = 1
+

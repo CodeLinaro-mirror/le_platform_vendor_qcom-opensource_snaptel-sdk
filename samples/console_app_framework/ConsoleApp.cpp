@@ -63,13 +63,14 @@ void ConsoleApp::displayMenu() {
  * Display Cursor to Read User Input
  */
 void ConsoleApp::displayCursor() {
-   std::cout << cursor_ << "> ";
+   std::cout << cursor_;
 }
 
 /**
  * Display the title banner
  */
 void ConsoleApp::displayBanner() {
+   std::cout << "\n";
    std::cout << "------------------------------------------------" << std::endl;
    std::cout << "                   " << appName_ << std::endl;
    std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -117,8 +118,6 @@ void ConsoleApp::addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> sup
  * Initialize sub-systems of SDK
  */
 bool ConsoleApp::initializeSDK() {
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
    //  Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
@@ -128,8 +127,6 @@ bool ConsoleApp::initializeSDK() {
 
    //  If telephony subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
-      std::cout << "Telephony subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for Telephony subsystem to be ready " << std::endl;
       std::future<bool> f = phoneManager->onSubsystemReady();
       // If we want to wait unconditionally for telephony subsystem to be ready
       subSystemStatus = f.get();
@@ -137,10 +134,6 @@ bool ConsoleApp::initializeSDK() {
 
    //  Exit the application, if SDK is unable to initialize telephony subsystems
    if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
       return true;
    } else {
       std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;

@@ -34,7 +34,7 @@
 DOXYFILE_ENCODING      = UTF-8
 #                        The PROJECT_NAME and PROJECT_NUMBER appear in the header
 #                        on each HTML page.
-PROJECT_NAME           = "Telematics SDK Project"
+PROJECT_NAME           = "Telematics SDK - Interface Specification"
 PROJECT_NUMBER         = "TBD"
 PROJECT_BRIEF          =
 PROJECT_LOGO           =
@@ -140,7 +140,7 @@ ALIASES +=               "limit=@par Limitations"
 #                     CUSTOM ALIASES TO SUPPORT BOTH HTML AND LATEX OUTPUT:
 ALIASES +=              "apr_msgpayload=@par APR message payload" \
                         "apr_msgpayload{1}=@par APR message payload (\1)" \
-                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics SDK API Reference Guide</b></span>\
+                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics Software Development Kit </b> <br /><br /><br /> Interface Specification</span>\
                         <br /><span style='font-size:0.8cm;'></span><br /> \
                         <span style='font-size:0.4cm;'>TBD<br /> $(today)<br /><br /></span></>@endhtmlonly \
                         @latexonly \vspace{1.0in}\begin{flushleft}\textbf{\Huge \doctitle} \par \vspace{6pt} {\huge \doctype} \par \vspace{16pt} {\Large \dcn \par \vspace{1pt} \docdate} \end{flushleft}\sffamily\small@endlatexonly" \
@@ -257,31 +257,14 @@ WARN_LOGFILE           = $(ENV_WARN_LOG)
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../../include/telux/tel/PhoneFactory.hpp \
-                         ../../include/telux/tel/Phone.hpp \
-                         ../../include/telux/tel/Call.hpp \
-                         ../../include/telux/tel/CallManager.hpp \
-                         ../../include/telux/tel/PhoneDefines.hpp \
-                         ../../include/telux/tel/PhoneListener.hpp \
-                         ../../include/telux/tel/PhoneManager.hpp \
-                         ../../include/telux/tel/SmsManager.hpp \
-                         ../../include/telux/tel/CardApp.hpp \
-                         ../../include/telux/tel/CardDefines.hpp \
-                         ../../include/telux/tel/CardManager.hpp \
-                         ../../include/telux/tel/ECallDefines.hpp \
-                         ../../include/telux/tel/SignalStrength.hpp \
-                         ../../include/telux/tel/SapCardManager.hpp \
-                         ../../include/telux/common/CommonDefines.hpp \
-                         ../../include/telux/common/Version.hpp \
-                         title_page.dox \
-                         revision_history.dox \
-                         introduction.dox \
-                         overview.dox \
-                         call_flow_diagrams.dox \
-                         telematics_api.dox
+INPUT                  = $(TELUX_GIT_ROOT)/include/ \
+                         $(TITLE_PAGE) \
+                         $(TELUX_GIT_ROOT)/doxy/api_reference/revision_history.dox \
+                         $(TELUX_GIT_ROOT)/doxy/api_reference/introduction.dox \
+                         $(TELUX_GIT_ROOT)/doxy/api_reference/overview.dox \
+                         $(TELUX_GIT_ROOT)/doxy/api_reference/call_flow_diagrams.dox \
+                         $(TELUX_GIT_ROOT)/doxy/api_reference/telematics_api.dox
 
-#                         faq.dox \
-#                         appxa_references.dox
 
 INPUT_ENCODING         = UTF-8
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and
@@ -291,9 +274,10 @@ INPUT_ENCODING         = UTF-8
 # *.h++, *.cs, *.d, *.php, *.php4, *.php5, *.phtml, *.inc, *.m, *.markdown,
 # *.md, *.mm, *.dox, *.py, *.f90, *.f, *.for, *.tcl, *.vhd, *.vhdl, *.ucf,
 # *.qsf, *.as and *.js.
-FILE_PATTERNS          = *.h \
+FILE_PATTERNS          = *.hpp \
                          *.dox \
-                         *.md
+                         *.md \
+                         *.dot
 RECURSIVE              = YES
 EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
@@ -302,7 +286,7 @@ EXCLUDE_SYMBOLS        = YES
 EXAMPLE_PATH           =
 EXAMPLE_PATTERNS       = *
 EXAMPLE_RECURSIVE      = NO
-IMAGE_PATH             = ../images
+IMAGE_PATH             = $(TELUX_GIT_ROOT)/doxy/images
 INPUT_FILTER           =
 FILTER_PATTERNS        =
 FILTER_SOURCE_FILES    = NO
@@ -330,11 +314,11 @@ IGNORE_PREFIX          =
 GENERATE_HTML          = $(ENV_GEN_HTML)
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-HTML_HEADER            = ../template/header.html
-HTML_FOOTER            = ../template/footer.html
-HTML_STYLESHEET        = ../template/sdk.css
-HTML_EXTRA_STYLESHEET  = ../template/custom.css
-HTML_EXTRA_FILES       = ../template/tabs.css
+HTML_HEADER            = $(TELUX_GIT_ROOT)/doxy/template/header.html
+HTML_FOOTER            = $(TELUX_GIT_ROOT)/doxy/template/footer.html
+HTML_STYLESHEET        = $(TELUX_GIT_ROOT)/doxy/template/sdk.css
+HTML_EXTRA_STYLESHEET  = $(TELUX_GIT_ROOT)/doxy/template/custom.css
+HTML_EXTRA_FILES       = $(TELUX_GIT_ROOT)/doxy/template/tabs.css
 HTML_COLORSTYLE_HUE    = 0
 HTML_COLORSTYLE_SAT    = 0
 HTML_COLORSTYLE_GAMMA  = 110
@@ -379,6 +363,25 @@ MATHJAX_EXTENSIONS     =
 SEARCHENGINE           = NO
 SERVER_BASED_SEARCH    = NO
 #---------------------------------------------------------------------------
+# configuration options related to the LaTeX output
+#---------------------------------------------------------------------------
+GENERATE_LATEX         = $(ENV_GEN_LATEX)
+LATEX_OUTPUT           = latex
+LATEX_CMD_NAME         = latex
+MAKEINDEX_CMD_NAME     = makeindex
+COMPACT_LATEX          = NO
+PAPER_TYPE             = letter
+EXTRA_PACKAGES         =
+LATEX_HEADER           = $(HEADER_FILE)
+LATEX_FOOTER           = $(FOOTER_FILE)
+PDF_HYPERLINKS         = YES
+USE_PDFLATEX           = YES
+LATEX_BATCHMODE        = NO
+LATEX_HIDE_INDICES     = NO
+LATEX_SOURCE_CODE      = NO
+LATEX_BIB_STYLE        =
+CITE_BIB_FILES         =
+#---------------------------------------------------------------------------
 # configuration options related to the RTF output
 #---------------------------------------------------------------------------
 GENERATE_RTF           = NO
@@ -418,8 +421,10 @@ ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
-INCLUDE_PATH           = ../../include
-INCLUDE_FILE_PATTERNS  = *.hpp
+INCLUDE_PATH           = $(TELUX_GIT_ROOT)/include \
+                         $(TELUX_GIT_ROOT)/doxy/images
+INCLUDE_FILE_PATTERNS  = *.hpp \
+                         *.png
 PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = NO

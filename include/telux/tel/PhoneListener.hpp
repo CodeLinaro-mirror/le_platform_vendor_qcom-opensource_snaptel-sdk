@@ -29,27 +29,29 @@
 
 /**
  * @file       PhoneListener.hpp
- * @brief      Interface for Phone listener object. Client needs to implement this interface
- *             to get access to Telephony subsystem notifications like service state and
+ * @brief      Interface for Phone listener object. Client needs to implement
+ * this interface
+ *             to get access to Telephony subsystem notifications like service
+ * state and
  *             signal strength.
  *
- *             The methods in listener can be invoked from multiple different threads.
+ *             The methods in listener can be invoked from multiple different
+ * threads.
  *             The implementation should be thread-safe.
  */
 
 #ifndef PHONELISTENER_HPP
 #define PHONELISTENER_HPP
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <telux/tel/Call.hpp>
-#include <telux/tel/SmsManager.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/SignalStrength.hpp>
+#include <telux/tel/SmsManager.hpp>
 
 namespace telux {
-
 namespace tel {
 
 /** @addtogroup telematics_phone
@@ -58,42 +60,45 @@ namespace tel {
 class IPhone;
 
 /**
- * These are all the notifications that can be listened to global telephony state.
- * They are part of a bitmask and can be ANDed together to provide to
- * PhoneManager::RegisterListener() method.
- */
-enum class ListenType {
-   SERVICE_STATE = 0x0001,   /**< Listen for changes to network service state */
-   SIGNAL_STRENGTH = 0x0002, /**< Listen for changes to the network signal strength */
-};
-
-/**
- * @brief A listener class for monitoring changes in specific telephony states on the device,
- * including service state and signal strength.
+ * @brief A listener class for monitoring changes in specific telephony states
+ * on the device, including service state and signal strength.
  * Override the methods for the state that you wish to receive updates for.
  *
- * The methods in listener can be invoked from multiple different threads. The implementation
- * should be thread safe.
+ * The methods in listener can be invoked from multiple different threads. The
+ * implementation should be thread safe.
  */
 class IPhoneListener {
 public:
    /**
     * This function is called when device service state changes.
     *
-    * @param [out] phone    Pointer to existing IPhone instance created by Phone Manager
-    * @param [out] state    @ref ServiceState
+    * @param [in] phoneId   Unique id of the phone on which service state
+    *                       changed.
+    * @param [in] state     Service state of the phone @ref ServiceState
     */
-   virtual void onServiceStateChanged(std::shared_ptr<IPhone> phone, ServiceState state) {
+   virtual void onServiceStateChanged(int phoneId, ServiceState state) {
    }
 
    /**
     * This function is called when network signal strength changes.
     *
-    * @param [out] phone              Pointer to existing IPhone instance created by Phone Manager
-    * @param [out] signalStrength     Pointer to signal strength object
+    * @param [in] phoneId          Unique id of the phone on which signal
+    *                              strength state changed.
+    * @param [in] signalStrength   Pointer to signal strength object
     */
-   virtual void onSignalStrengthChanged(std::shared_ptr<IPhone> phone,
+   virtual void onSignalStrengthChanged(int phoneId,
                                         std::shared_ptr<SignalStrength> signalStrength) {
+   }
+
+   /**
+    * This function is called when radio state changes on phone
+    *
+    * @param [in] phone       Unique id of the phone on which radio state
+    *                         changed
+    *
+    * @param [in] radioState  Radio state of the phone @ref RadioState
+    */
+   virtual void onRadioStateChanged(int phoneId, RadioState radioState) {
    }
 
    virtual ~IPhoneListener() {
@@ -102,7 +107,6 @@ public:
 /** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel
-
 }  // End namespace telux
 
 #endif  // PHONELISTENER_HPP

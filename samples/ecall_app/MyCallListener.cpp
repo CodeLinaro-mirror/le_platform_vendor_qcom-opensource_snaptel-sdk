@@ -34,24 +34,45 @@
 
 #include "MyCallListener.hpp"
 
-#define print_notification std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
+#define print_notification std::cout << std::endl << "\033[1;35mNotification: \033[0m"
 
 using namespace telux::tel;
 using namespace telux::common;
 
+void MyCallListener::onIncomingCall(std::shared_ptr<ICall> call) {
+   std::cout << std::endl << std::endl;
+   print_notification << getCurrentTime() << "Answer incoming call" << std::endl;
+   std::string user_string;
+   std::cout << " Enter 7 to answer call " << std::endl;
+}
+
 void MyCallListener::onCallInfoChange(std::shared_ptr<ICall> call) {
-   print_notification << "MyCallListener::onCallInfoChange: "
-                      << " Call State: " << getCallStateString(call->getCallState())
-                      << " Call Index: " << (int)call->getCallIndex()
-                      << " Call Direction: " << (int)call->getCallDirection()
-                      << " Phone Number: " << call->getRemotePartyNumber() << std::endl;
+   print_notification << "\n onCallInfoChange: "
+                      << " Call State: " << callStateToString(call->getCallState())
+                      << ", Call Index: " << (int)call->getCallIndex()
+                      << ", Call Direction: " << callDirectionToString(call->getCallDirection())
+                      << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
    if(call->getCallState() == CallState::CALL_ENDED) {
       print_notification << getCurrentTime() << "  Cause of call termination: "
-                         << getCallEndCauseString(call->getCallEndCause()) << std::endl;
+                         << callEndCauseToString(call->getCallEndCause()) << std::endl;
    }
 }
 
-std::string MyCallListener::getCallStateString(CallState cs) {
+std::string MyCallListener::callDirectionToString(CallDirection cd) {
+   switch(cd) {
+      case CallDirection::INCOMING:
+         return std::string("Incoming call");
+      case CallDirection::OUTGOING:
+         return std::string("Outgoing call");
+      case CallDirection::NONE:
+         return std::string("none");
+      default:
+         std::cout << "Unexpected call direction = " << (int)cd << std::endl;
+         return std::string("unknown");
+   }
+}
+
+std::string MyCallListener::callStateToString(CallState cs) {
    switch(cs) {
       case CallState::CALL_IDLE:
          return std::string("Idle call");
@@ -76,12 +97,16 @@ std::string MyCallListener::getCallStateString(CallState cs) {
 }
 
 void MyCallListener::onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) {
-   print_notification
-      << "MyCallListener::onECallMsdTransmissionStatus, Status: " << static_cast<int>(errorCode)
-      << std::endl;
+   if(errorCode == ErrorCode::SUCCESS) {
+      print_notification << "onECallMsdTransmissionStatus is Success" << std::endl;
+   } else {
+      print_notification
+         << "onECallMsdTransmissionStatus failed with error code: " << static_cast<int>(errorCode)
+         << std::endl;
+   }
 }
 
-std::string MyCallListener::getCallEndCauseString(CallEndCause causeCode) {
+std::string MyCallListener::callEndCauseToString(CallEndCause causeCode) {
    switch(causeCode) {
       case CallEndCause::UNOBTAINABLE_NUMBER:
          return std::string("Unobtainable number");

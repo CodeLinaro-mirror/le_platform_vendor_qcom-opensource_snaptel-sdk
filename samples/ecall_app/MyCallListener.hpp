@@ -37,6 +37,7 @@
 #include <telux/tel/CallListener.hpp>
 
 class MyCallListener : public telux::tel::ICallListener {
+   void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
    void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
 
@@ -48,12 +49,13 @@ class MyCallListener : public telux::tel::ICallListener {
    /*
     * Get the call state in string format
     */
-   std::string getCallStateString(telux::tel::CallState cs);
+   std::string callStateToString(telux::tel::CallState cs);
 
+   std::string callDirectionToString(telux::tel::CallDirection cd);
    /**
     * Get the call end cause in string format from call end cause code
     */
-   std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
+   std::string callEndCauseToString(telux::tel::CallEndCause causeCode);
 };
 
 #endif  // MYCALLLISTENER_HPP

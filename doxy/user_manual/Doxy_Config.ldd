@@ -34,7 +34,7 @@
 DOXYFILE_ENCODING      = UTF-8
 #                        The PROJECT_NAME and PROJECT_NUMBER appear in the header
 #                        on each HTML page.
-PROJECT_NAME           = "Telematics SDK Project"
+PROJECT_NAME           = "Telematics SDK - User manual"
 PROJECT_NUMBER         = "TBD"
 PROJECT_BRIEF          =
 PROJECT_LOGO           =
@@ -140,7 +140,7 @@ ALIASES +=               "limit=@par Limitations"
 #                     CUSTOM ALIASES TO SUPPORT BOTH HTML AND LATEX OUTPUT:
 ALIASES +=              "apr_msgpayload=@par APR message payload" \
                         "apr_msgpayload{1}=@par APR message payload (\1)" \
-                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics SDK API Reference Guide</b></span>\
+                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics Software Development Kit </b> <br /><br /><br /> User Manual</span>\
                         <br /><span style='font-size:0.8cm;'></span><br /> \
                         <span style='font-size:0.4cm;'>TBD<br /> $(today)<br /><br /></span></>@endhtmlonly \
                         @latexonly \vspace{1.0in}\begin{flushleft}\textbf{\Huge \doctitle} \par \vspace{6pt} {\huge \doctype} \par \vspace{16pt} {\Large \dcn \par \vspace{1pt} \docdate} \end{flushleft}\sffamily\small@endlatexonly" \
@@ -257,17 +257,16 @@ WARN_LOGFILE           = $(ENV_WARN_LOG)
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = title_page.dox \
-                         revision_history.dox \
-			 introduction.dox \
-                         how_to_use.dox \
-                         ../../docs/ApiSamples/logger_settings/loggerSettings.md \
-                         ../../docs/ApiSamples/phone/makeCall.md \
-                         ../../docs/ApiSamples/phone/makeECall.md \
-                         ../../docs/ApiSamples/sms/sendSms.md \
-                         ../../docs/ApiSamples/sms/smsListener.md \
-                         ../../docs/ApiSamples/card_services/sap_api_and_listener.md \
-			 ../../docs/ApiSamples/card_services/card_services_app.md
+INPUT                  = $(TITLE_PAGE) \
+                         $(TELUX_GIT_ROOT)/doxy/user_manual/revision_history.dox \
+                         $(TELUX_GIT_ROOT)/doxy/user_manual/introduction.dox \
+                         $(TELUX_GIT_ROOT)/doxy/user_manual/steps_to_write_app.dox \
+                         $(TELUX_GIT_ROOT)/doxy/user_manual/using_sample_apps.dox \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/logger_settings/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/phone/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/subscription/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/sms/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/card_services/ 
 
 INPUT_ENCODING         = UTF-8
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and
@@ -277,10 +276,10 @@ INPUT_ENCODING         = UTF-8
 # *.h++, *.cs, *.d, *.php, *.php4, *.php5, *.phtml, *.inc, *.m, *.markdown,
 # *.md, *.mm, *.dox, *.py, *.f90, *.f, *.for, *.tcl, *.vhd, *.vhdl, *.ucf,
 # *.qsf, *.as and *.js.
-FILE_PATTERNS          = *.h \
+FILE_PATTERNS          = *.hpp \
                          *.dox \
                          *.md \
-			 *.dot
+                         *.dot
 RECURSIVE              = YES
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
@@ -317,11 +316,11 @@ IGNORE_PREFIX          =
 GENERATE_HTML          = $(ENV_GEN_HTML)
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-HTML_HEADER            = ../template/header.html
-HTML_FOOTER            = ../template/footer.html
-HTML_STYLESHEET        = ../template/sdk.css
-HTML_EXTRA_STYLESHEET  = ../template/custom.css
-HTML_EXTRA_FILES       = ../template/tabs.css
+HTML_HEADER            = $(TELUX_GIT_ROOT)/doxy/template/header.html
+HTML_FOOTER            = $(TELUX_GIT_ROOT)/doxy/template/footer.html
+HTML_STYLESHEET        = $(TELUX_GIT_ROOT)/doxy/template/sdk.css
+HTML_EXTRA_STYLESHEET  = $(TELUX_GIT_ROOT)/doxy/template/custom.css
+HTML_EXTRA_FILES       = $(TELUX_GIT_ROOT)/doxy/template/tabs.css
 HTML_COLORSTYLE_HUE    = 0
 HTML_COLORSTYLE_SAT    = 0
 HTML_COLORSTYLE_GAMMA  = 110
@@ -366,6 +365,25 @@ MATHJAX_EXTENSIONS     =
 SEARCHENGINE           = NO
 SERVER_BASED_SEARCH    = NO
 #---------------------------------------------------------------------------
+# configuration options related to the LaTeX output
+#---------------------------------------------------------------------------
+GENERATE_LATEX         = $(ENV_GEN_LATEX)
+LATEX_OUTPUT           = latex
+LATEX_CMD_NAME         = latex
+MAKEINDEX_CMD_NAME     = makeindex
+COMPACT_LATEX          = NO
+PAPER_TYPE             = letter
+EXTRA_PACKAGES         =
+LATEX_HEADER           = $(HEADER_FILE)
+LATEX_FOOTER           = $(FOOTER_FILE)
+PDF_HYPERLINKS         = YES
+USE_PDFLATEX           = YES
+LATEX_BATCHMODE        = NO
+LATEX_HIDE_INDICES     = NO
+LATEX_SOURCE_CODE      = NO
+LATEX_BIB_STYLE        =
+CITE_BIB_FILES         =
+#---------------------------------------------------------------------------
 # configuration options related to the RTF output
 #---------------------------------------------------------------------------
 GENERATE_RTF           = NO
@@ -405,7 +423,7 @@ ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
-INCLUDE_PATH           = ../../include
+INCLUDE_PATH           = $(TELUX_GIT_ROOT)/include
 INCLUDE_FILE_PATTERNS  = *.hpp
 PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS
 EXPAND_AS_DEFINED      =

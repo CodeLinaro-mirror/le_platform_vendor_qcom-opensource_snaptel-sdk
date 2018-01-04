@@ -33,22 +33,18 @@
 #include <memory>
 #include <vector>
 
-#include <telux/tel/PhoneListener.hpp>
-#include <telux/tel/SmsManager.hpp>
+#include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneFactory.hpp>
-
-using namespace telux::tel;
-using namespace telux::common;
 
 // [3.1] Implement ICommandResponseCallback interface to know
 // SMS sent and Delivery status
-class SmsCallback : public ICommandResponseCallback {
+class SmsCallback : public telux::common::ICommandResponseCallback {
 public:
-   void commandResponse(ErrorCode error) override;
+   void commandResponse(telux::common::ErrorCode error) override;
 };
 
-void SmsCallback::commandResponse(ErrorCode error) {
-   if(error == ErrorCode::SUCCESS) {
+void SmsCallback::commandResponse(telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
       std::cout << "onSmsSent successfully" << std::endl;
    } else {
       std::cout << "onSmsSent failed" << std::endl;
@@ -56,13 +52,13 @@ void SmsCallback::commandResponse(ErrorCode error) {
    std::cout << "onSmsSent error = " << (int)error << std::endl;
 }
 
-class SmsDeliveryCallback : public ICommandResponseCallback {
+class SmsDeliveryCallback : public telux::common::ICommandResponseCallback {
 public:
-   void commandResponse(ErrorCode error) override;
+   void commandResponse(telux::common::ErrorCode error) override;
 };
 
-void SmsDeliveryCallback::commandResponse(ErrorCode error) {
-   if(error == ErrorCode::SUCCESS) {
+void SmsDeliveryCallback::commandResponse(telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
       std::cout << "SMS Delivered successfully" << std::endl;
    } else {
       std::cout << "SMS Delivery failed" << std::endl;
@@ -76,7 +72,7 @@ void SmsDeliveryCallback::commandResponse(ErrorCode error) {
 int main(int argc, char *argv[]) {
 
    // [1] Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = PhoneFactory::getInstance();
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
 
    // [2] Check if telephony subsystem is ready
@@ -104,7 +100,7 @@ int main(int argc, char *argv[]) {
    auto smsDeliveryCb = std::make_shared<SmsDeliveryCallback>();
 
    // [4] Get Default SMS manager instance
-   std::shared_ptr<ISmsManager> smsManager = phoneFactory.getSmsManager();
+   std::shared_ptr<telux::tel::ISmsManager> smsManager = phoneFactory.getSmsManager();
 
    // [5] Send an SMS using ISmsManager by passing the text and receiver number
    // along with required callback

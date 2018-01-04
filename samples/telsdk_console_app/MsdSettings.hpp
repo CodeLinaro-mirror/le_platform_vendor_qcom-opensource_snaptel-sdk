@@ -41,12 +41,6 @@
 #include <telux/tel/ECallDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
-// Config file name. Using current directory as default path.
-#define MSDSETTINGS_FILE "./msdsettings.txt"
-
-namespace telux {
-namespace tel {
-
 /*
  * MsdSettings class caches the config msdSettings from tel.conf file
  * It provides utility methods to get value of a config setting by passing the key
@@ -62,22 +56,12 @@ public:
    // Print all the key value pairs in the cache
    static void printMsdSettings();
 
-   // Singleton class. Disable copy constructors.
-   MsdSettings(const MsdSettings &) = delete;
-   MsdSettings &operator=(const MsdSettings &) = delete;
-   ECallMsdData readMsdFromFile();
-   MsdSettings() {
-   }
-   ~MsdSettings() {
-   }
+   telux::tel::ECallMsdData readMsdFromFile(std::string filename);
 
 private:
    // Hashmap to store all msdSettings as key-value pairs
-   static std::map<std::string, std::string> msdSettingsMap;
-   ECallMsdData eCallMsdData_;
-
+   static std::map<std::string, std::string> msdSettingsMap_;
+   static std::string filename_;
 };  // end of class MsdSettings
-}  // end of namespace tel
-}  // end of namespace telux
 
 #endif  // MSDSETTINGS_HPP

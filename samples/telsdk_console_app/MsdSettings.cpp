@@ -31,20 +31,21 @@
 #include <iostream>
 #include <regex>
 #include <string>
+
 #include "MsdSettings.hpp"
 
-namespace telux {
-namespace tel {
+using namespace telux::tel;
 
-std::map<std::string, std::string> MsdSettings::msdSettingsMap;
+std::map<std::string, std::string> MsdSettings::msdSettingsMap_;
+std::string MsdSettings::filename_;
 /**
  * Reads MSD data from file and caches it
  */
-ECallMsdData MsdSettings::readMsdFromFile() {
-   std::cout << "ECallMSD - "
-             << " readMsdFromFile(..)" << std::endl;
-   MsdSettings::printMsdSettings();
-   // MsdOptionals optionals;
+ECallMsdData MsdSettings::readMsdFromFile(std::string filename) {
+   std::cout << " readMsdFromFile(..) filename:" << filename << std::endl;
+   msdSettingsMap_.clear();
+
+   filename_ = filename;
    ECallMsdData msdData;
 
    MsdSettings::readMsdSettingsFile();
@@ -73,9 +74,9 @@ ECallMsdData MsdSettings::readMsdFromFile() {
    msdData.messageIdentifier = atoi(MsdSettings::getValue("MESSAGE_IDENTIFIER").c_str());
 
    // AUTOMATIC_ACTIVATION
-   auto automaticAvtivationtAsString = MsdSettings::getValue("AUTOMATIC_ACTIVATION");
-   bool automaticAvtivationAsBool = atoi(automaticAvtivationtAsString.c_str()) ? true : false;
-   msdData.control.automaticAvtivation = automaticAvtivationAsBool;
+   auto automaticActivationtAsString = MsdSettings::getValue("AUTOMATIC_ACTIVATION");
+   bool automaticActivationAsBool = atoi(automaticActivationtAsString.c_str()) ? true : false;
+   msdData.control.automaticActivation = automaticActivationAsBool;
 
    // TEST_CALL
    auto testCallAsString = MsdSettings::getValue("TEST_CALL");
@@ -172,20 +173,14 @@ ECallMsdData MsdSettings::readMsdFromFile() {
    // NUMBER_OF_PASSENGERS
    msdData.numberOfPassengers = atoi(MsdSettings::getValue("NUMBER_OF_PASSENGERS").c_str());
 
-   // TODO: ecallMSD version
-   eCallMsdData_ = msdData;
-   return eCallMsdData_;
+   return msdData;
 }
 /*
  * Get the user defined value for any configuration msdSetting
  */
 std::string MsdSettings::getValue(std::string key) {
-   // Check if msdSettingsMap is initialized. If not, initialize it.
-   // if(msdSettingsMap.size() == 0) {
-   // readMsdSettingsFile(MSDSETTINGS_FILE);
-   //}
-   auto msdSettingsIterator = msdSettingsMap.find(key);
-   if(msdSettingsIterator != msdSettingsMap.end()) {
+   auto msdSettingsIterator = msdSettingsMap_.find(key);
+   if(msdSettingsIterator != msdSettingsMap_.end()) {
       return msdSettingsIterator->second;
    } else {
       return std::string("");  // return an empty string when the setting is not configured.
@@ -199,19 +194,10 @@ std::string MsdSettings::getValue(std::string key) {
  * Removes any leading or training spaces around Key and Value if any
  */
 void MsdSettings::readMsdSettingsFile() {
-   // Append current directory path to msdSettingsFile
-   /*
-   std::experimental::fs::path appPath(std::experimental::fs::current_path<fs::path>());
-   std::cout << appPath << std::endl;
-   std::cout << appPath.stem() << std::endl;
-
-   msdSettingsFile = appPath + "/" + msdSettingsFile;
-   */
-
    // Create a file stream from the file name
    std::cout << "MsdSettings -  readMsdSettingsFile(..)" << std::endl;
-   std::cout << "MsdSettings - Reading From File:" << MSDSETTINGS_FILE << std::endl;
-   std::ifstream configFileStream(MSDSETTINGS_FILE);
+   std::cout << "MsdSettings - Reading From File:" << filename_ << std::endl;
+   std::ifstream configFileStream(filename_);
 
    // Iterate through each parameter in the file and read the key value pairs
    std::string param;
@@ -228,9 +214,7 @@ void MsdSettings::readMsdSettingsFile() {
             std::string value;
             if(std::getline(paramStream, value)) {
                value = std::regex_replace(value, std::regex("^ +| +$"), "");
-               msdSettingsMap[key] = value;
-               // std::cout<< "MsdSettings - Inserting Key: "<< key <<"-->Value:"<<value<<"
-               // -->Length:"<<value.length()<<std::endl;
+               msdSettingsMap_[key] = value;
             }
          }
       }
@@ -241,11 +225,8 @@ void MsdSettings::readMsdSettingsFile() {
  * Prints the contents of the map. i.e. all configured msdSettings
  */
 void MsdSettings::printMsdSettings() {
-   for(auto &iter : msdSettingsMap) {
+   for(auto &iter : msdSettingsMap_) {
       std::cout << "Key: " << iter.first << ",     "
                 << "Value: " << iter.second << std::endl;
    }
 }
-
-}  // end namespace tel
-}  // end namespace telux

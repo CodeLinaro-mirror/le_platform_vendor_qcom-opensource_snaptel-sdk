@@ -35,8 +35,8 @@
 #ifndef PHONEDEFINES_HPP
 #define PHONEDEFINES_HPP
 
-#include <string>
 #include <memory>
+#include <string>
 
 #define DEFAULT_PHONE_ID 1
 #define INVALID_PHONE_ID -1
@@ -79,9 +79,9 @@ enum class CallState {
  * Defines the radio state
  */
 enum class RadioState {
-   RADIO_STATE_OFF,         /**< Radio is explicitly powered off */
-   RADIO_STATE_UNAVAILABLE, /**< Radio unavailable (eg, resetting or not booted) */
-   RADIO_STATE_ON,          /**< Radio is on */
+   RADIO_STATE_OFF = 0,         /**< Radio is explicitly powered off */
+   RADIO_STATE_UNAVAILABLE = 1, /**< Radio unavailable (eg, resetting or not booted) */
+   RADIO_STATE_ON = 10,         /**< Radio is on */
 };
 
 /**
@@ -89,7 +89,8 @@ enum class RadioState {
  */
 enum class ServiceState {
    EMERGENCY_ONLY, /**< Only emergency calls allowed */
-   IN_SERVICE,     /**< Normal operation, device is registered with a carrier and online */
+   IN_SERVICE,     /**< Normal operation, device is registered with a carrier and
+                      online */
    OUT_OF_SERVICE, /**< Device is not registered with any carrier */
    RADIO_OFF,      /**< Device radio is off - Airplane mode for example */
 };

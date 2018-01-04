@@ -140,7 +140,7 @@ int main(int, char **) {
    eCallMsdData.optionals.recentVehicleLocationN2Present = RECENT_LOCATION_N2_PRESENT;
    eCallMsdData.optionals.numberOfPassengersPresent = NUMBER_OF_PASSENGERS_PRESENT;
    eCallMsdData.messageIdentifier = MESSAGE_IDENTIFIER;
-   eCallMsdData.control.automaticAvtivation = AUTOMATIC_ACTIVATION;
+   eCallMsdData.control.automaticActivation = AUTOMATIC_ACTIVATION;
    eCallMsdData.control.testCall = TEST_CALL;
    eCallMsdData.control.positionCanBeTrusted = POSITION_CAN_BE_TRUSTED;
    eCallMsdData.control.vehicleType = static_cast<ECallVehicleType>(VEHICLE_TYPE);

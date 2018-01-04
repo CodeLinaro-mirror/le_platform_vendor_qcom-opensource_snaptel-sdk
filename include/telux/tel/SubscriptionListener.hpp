@@ -28,58 +28,57 @@
  */
 
 /**
- * @file       Version.hpp
- * @brief      Provide APIs to query the version of SDK
+ * @file       SubscriptionListener.hpp
+ * @brief      SubscriptionListener provides callback methods for listening to
+ *             notifications about Subscriptions. Client needs to implement this
+ *             interface to get access to notifications. The methods in listener can be
+ *             invoked from multiple different threads. The implementation should be
+ *             thread-safe.
+ * @note       Eval: This is a new API and is being evaluated. It is subject to
+ *             change and could break backwards compatibility.
  */
 
-#ifndef VERSION_HPP
-#define VERSION_HPP
+#ifndef SUBSCRIPTIONLISTENER_HPP
+#define SUBSCRIPTIONLISTENER_HPP
 
-#include <string>
-
-#define DEFAULT_VALUE -1
+#include <telux/tel/Subscription.hpp>
 
 namespace telux {
-namespace common {
 
-/** @addtogroup telematics_common
+namespace tel {
+
+/** @addtogroup telematics_subscription
  * @{ */
 
 /**
- * Structure of major, minor and patch version
+ * @brief	A listener class for receiving device subscription information.
+ *              The methods in listener can be invoked from multiple different
+ *              threads. The implementation should be thread safe.
+ *
+ * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
+ *          break backwards compatibility.
  */
-struct SdkVersion {
-   int major = DEFAULT_VALUE; /**< Major Version: This number will be incremented whenever
-                   significant changes
-                   or features are introduced */
-   int minor = DEFAULT_VALUE; /**< Minor Version: This number will be incremented when smaller
-                   features with
-                   some new APIs are introduced. */
-   int patch = DEFAULT_VALUE; /**< Patch Version: If the release only contains bug fixes,
-                   but no API change then the patch version would be incremented. */
-};
+class ISubscriptionListener {
 
-/**
- * @brief Provides version of SDK.
- */
-class Version {
 public:
    /**
-    * Get the release name.
+    * This function is called whenever there is a change in Subscription details.
     *
-    * @returns String contains release name
+    * @param [in] subscription    Pointer to Subscription Object.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
     */
-   static std::string getReleaseName();
+   virtual void onSubscriptionInfoChanged(std::shared_ptr<ISubscription> subscription) {
+   }
 
-   /**
-    * Get the telematics SDK version, for example: 01.00.
-    *
-    * @returns String contains sdk version
-    */
-   static SdkVersion getSdkVersion();
+   virtual ~ISubscriptionListener() {
+   }
 };
-/** @} */ /* end_addtogroup telematics_common */
-}
-}
+
+/** @} */ /* end_addtogroup telematics_subscription */
+
+}  // end of namespace tel
+}  // end namespace telux
 
 #endif

@@ -50,7 +50,8 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
-@tr @td A @tdend @td Sep 2017 @tdend @tdlast Draft Version @tdlastend @trend
+@tr @td A @tdend @td Sep 2017 @tdend @tdlast Initial Release @tdlastend @trend
+@tr @td B @tdend @td Dec 2017 @tdend @tdlast Added subscription feature @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly
@@ -64,9 +65,11 @@ when       who     what, where, why
 \fancyhead[R]{\sl\sffamily\footnotesize\firstleftmark}
 \fancyfoot[L]{\sffamily\footnotesize\dcn}
 %For Regular Distribution, comment out the next two lines
+\fancyfoot[C]{\sffamily\footnotesize \copyrighttext}
+\fancyfoot[R]{\sffamily\footnotesize\thepage \\ \begin{center}\sffamily\footnotesize\textbf \copyrightreserved \end{center}}
 %For Regular Distribution, uncomment the next two lines
-\fancyfoot[C]{\sffamily\scriptsize\textbf{FOR ILLUSTRATIVE PURPOSE ONLY. CONTENT IS SUBJECT TO CHANGE.}}
-\fancyfoot[R]{\sffamily\footnotesize\thepage }
+%\fancyfoot[C]{\sffamily\scriptsize\textbf{MAY CONTAIN U.S. AND INTERNATIONAL EXPORT CONTROLLED INFORMATION}}
+%\fancyfoot[R]{\sffamily\footnotesize\thepage }
 \renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
 
 \tocloftpagestyle{plain} %Sets the page style for the first page of the ToC. The "plain" style removes any previously defined headers/footers and only includes a page number in the footer.

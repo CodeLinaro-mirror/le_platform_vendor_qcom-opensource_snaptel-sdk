@@ -29,9 +29,11 @@
 
 /**
  * @file       PhoneManager.hpp
- * @brief      PhoneManager enumerates one or more phones. It also allows clients to register for
- *             notification of system events. clients should check if the subsystem is
- *             ready before invoking any of the APIs as follows
+ * @brief      PhoneManager enumerates one or more phones. It also allows
+ *             clients to register for notification of system events.
+ *             clients should check if the subsystem is ready before
+ *             invoking any of the APIs as follows
+ *
  *                bool isReady = phoneManager->isSubsystemReady();
  *
  */
@@ -41,24 +43,24 @@
 
 #include <future>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include <telux/common/CommonDefines.hpp>
-
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/PhoneListener.hpp>
 
 namespace telux {
-
 namespace tel {
 
 /** @addtogroup telematics_phone
  * @{ */
 
 /**
- *@brief       Phone Manager creates one or more phones based on SIM slot count, it allows
- *             clients to register for notification of system events. Clients should check if
+ *@brief       Phone Manager creates one or more phones based on SIM slot count,
+ *it allows
+ *             clients to register for notification of system events. Clients
+ *should check if
  *             the subsystem is ready before invoking any of the APIs.
  */
 class IPhoneManager {
@@ -66,7 +68,8 @@ public:
    /**
     * Checks the status of telephony subsystems and returns the result.
     *
-    * @returns If true PhoneManager is ready for service (i.e Phone, Sms and Card).
+    * @returns If true PhoneManager is ready for service (i.e Phone, Sms and
+    * Card).
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -74,7 +77,7 @@ public:
     * Wait for telephony subsystem to be ready.
     *
     * @returns A future that caller can wait on to be notified when telephony
-    *   subsystem is ready.
+    * subsystem is ready.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -82,7 +85,7 @@ public:
     * Retrieves a list of Phone Ids. Each id is unique per phone.
     * For example: on a dual SIM device, there would be 2 Phones.
     *
-    * @param [out] phoneIds - List of phone ids
+    * @param [out] phoneIds   List of phone ids
     *
     * @returns Status of getPhoneIds i.e. success or suitable error code.
     */
@@ -91,7 +94,7 @@ public:
    /**
     * Get the Phone Id for a given Slot Id.
     *
-    * @param [in] slotId - SIM Card Slot Id
+    * @param [in] slotId    SIM Card Slot Id
     *
     * @returns Phone Id corresponding to the Slot Id.
     */
@@ -100,7 +103,7 @@ public:
    /**
     * Get the SIM Slot Id for a given Phone Id.
     *
-    * @param [in] phoneId - Phone Id of the phone
+    * @param [in] phoneId    Phone Id of the phone
     *
     * @returns Slot Id corresponding to the Phone Id.
     */
@@ -109,7 +112,8 @@ public:
    /**
     * Get the phone instance for a given phone identifier.
     *
-    * @param [in] phoneId - Identifier for phone instance, retrieved from getPhoneIds API
+    * @param [in] phoneId   Identifier for phone instance, retrieved from
+    *                       getPhoneIds API
     *
     * @returns Pointer to Phone object corresponding to phoneId.
     */
@@ -118,31 +122,28 @@ public:
    /**
     * Register a listener for specific events in the telephony subsystem.
     *
-    * @param [in] eventMask - Requested events to register for notification
-    * @param [in] listener - Pointer to Phone Listener object that processes the notification
+    * @param [in] listener  Pointer to Phone Listener object that processes the
+    *                       notification
     *
     * @returns Status of registerListener i.e. success or suitable error code.
     */
-   virtual telux::common::Status registerListener(ListenType eventMask,
-                                                  std::shared_ptr<IPhoneListener> listener)
-      = 0;
+   virtual telux::common::Status registerListener(std::weak_ptr<IPhoneListener> listener) = 0;
 
    /**
     * Remove a previously added listener.
     *
-    * @param [in] listener - Pointer to Phone Listener object that needs to be removed
+    * @param [in] listener    Pointer to Phone Listener object that needs to be
+    *                         removed
     *
     * @returns Status of removeListener i.e. success or suitable error code.
     */
-   virtual telux::common::Status removeListener(std::shared_ptr<IPhoneListener> listener) = 0;
+   virtual telux::common::Status removeListener(std::weak_ptr<IPhoneListener> listener) = 0;
 
    virtual ~IPhoneManager(){};
 };
 
 /** @} */ /* end_addtogroup telematics_phone */
+}
+}
 
-}  // End of namespace tel
-
-}  // End of namespace telux
-
-#endif  // PHONEMANAGER_HPP
+#endif

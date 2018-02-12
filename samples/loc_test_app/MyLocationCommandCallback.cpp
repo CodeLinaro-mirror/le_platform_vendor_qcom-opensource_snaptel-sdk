@@ -27,69 +27,22 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
-
+#include <iostream>
 #include <memory>
-#include <string>
-#include <vector>
+#include <chrono>
 
-#include "ConsoleAppCommand.hpp"
+#include "MyLocationCommandCallback.hpp"
 
-/**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
- */
-class ConsoleApp {
-public:
-   /**
-    * Displaying menu of supported commands
-    */
-   void displayMenu();
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-   /**
-    * Display cursor to read user input
-    */
-   void displayCursor();
-
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
-
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
-
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
-
-private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
-};
-
-#endif  // CONSOLEAPP_HPP
+// Implementation of My location callback
+MyLocationCommandCallback::MyLocationCommandCallback() {
+}
+void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_NOTIFICATION << "startLocationServiceResponse successfully" << std::endl;
+   } else {
+      PRINT_NOTIFICATION << "startLocationServiceResponse error = " << static_cast<int>(error)
+                         << std::endl;
+   }
+}

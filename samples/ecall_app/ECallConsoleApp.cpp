@@ -123,9 +123,26 @@ void ECallConsoleApp::removeCallListener(std::shared_ptr<ICallListener> listener
 }
 
 bool ECallConsoleApp::initalizeSDK() {
-   bool sdkStatus = ConsoleApp::initializeSDK();
-   if(sdkStatus) {
-      // Registering for Call state events
+   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+   startTime = std::chrono::system_clock::now();
+   //  Get the PhoneFactory and PhoneManager instances.
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto phoneManager = phoneFactory.getPhoneManager();
+
+   //  Check if telephony subsystem is ready
+   bool subSystemStatus = phoneManager->isSubsystemReady();
+
+   //  If telephony subsystem is not ready, wait for it to be ready
+   if(!subSystemStatus) {
+      std::future<bool> f = phoneManager->onSubsystemReady();
+      // If we want to wait unconditionally for telephony subsystem to be ready
+      subSystemStatus = f.get();
+   }
+
+   //  Exit the application, if SDK is unable to initialize telephony subsystems
+   if(subSystemStatus) {
+      endTime = std::chrono::system_clock::now();
+      std::chrono::duration<double> elapsedTime = endTime - startTime;
       registerCallListener(callListener_);
       return true;
    } else {

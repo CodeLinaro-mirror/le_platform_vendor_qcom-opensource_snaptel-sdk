@@ -43,7 +43,6 @@
 #include <string>
 
 namespace telux {
-
 namespace tel {
 
 /** @addtogroup telematics_subscription
@@ -68,16 +67,6 @@ public:
     *         break backwards compatibility.
     */
    virtual std::string getCarrierName() = 0;
-
-   /**
-    * Retrieves ISO code of the country where the subscription is made.
-    *
-    * @returns Country's ISO code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    */
-   virtual std::string getCountryISO() = 0;
 
    /**
     * Retrieves the SIM's ICCID (Integrated Chip ID) - i.e SIM Serial Number.

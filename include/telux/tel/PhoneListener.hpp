@@ -30,14 +30,11 @@
 /**
  * @file       PhoneListener.hpp
  * @brief      Interface for Phone listener object. Client needs to implement
- * this interface
- *             to get access to Telephony subsystem notifications like service
- * state and
- *             signal strength.
+ *             this interface to get access to Telephony subsystem notifications
+ *             like service state and signal strength.
  *
  *             The methods in listener can be invoked from multiple different
- * threads.
- *             The implementation should be thread-safe.
+ *             threads. The implementation should be thread-safe.
  */
 
 #ifndef PHONELISTENER_HPP
@@ -49,7 +46,7 @@
 #include <telux/tel/Call.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/SignalStrength.hpp>
-#include <telux/tel/SmsManager.hpp>
+#include <telux/tel/VoiceServiceInfo.hpp>
 
 namespace telux {
 namespace tel {
@@ -75,6 +72,8 @@ public:
     * @param [in] phoneId   Unique id of the phone on which service state
     *                       changed.
     * @param [in] state     Service state of the phone @ref ServiceState
+    *
+    * @deprecated Use onVoiceServiceStateChanged() listener
     */
    virtual void onServiceStateChanged(int phoneId, ServiceState state) {
    }
@@ -99,6 +98,35 @@ public:
     * @param [in] radioState  Radio state of the phone @ref RadioState
     */
    virtual void onRadioStateChanged(int phoneId, RadioState radioState) {
+   }
+
+   /**
+    * This function is called when the radio technology for voice service changes
+    *
+    * @param [in] phone       Unique id of the phone on which radio technology
+    *                         changed
+    *
+    * @param [in] radioTech   Radio state of the phone @ref RadioTechnology
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onVoiceRadioTechnologyChanged(int phoneId, RadioTechnology radioTech) {
+   }
+
+   /**
+    * This function is called when the service state for voice service changes
+    *
+    * @param [in] phone       Unique id of the phone on which radio technology
+    *                         changed
+    *
+    * @param [in] serviceInfo pointer of voice service state info object
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onVoiceServiceStateChanged(int phoneId,
+                                           const std::shared_ptr<VoiceServiceInfo> &serviceInfo) {
    }
 
    virtual ~IPhoneListener() {

@@ -27,69 +27,38 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
+#ifndef MYLOCATIONLISTENER_HPP
+#define MYLOCATIONLISTENER_HPP
 
-#include <memory>
-#include <string>
 #include <vector>
+#include <telux/loc/LocationDefines.hpp>
+#include <telux/loc/LocationListener.hpp>
+#include <telux/loc/LocationManager.hpp>
 
-#include "ConsoleAppCommand.hpp"
-
-/**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
- */
-class ConsoleApp {
+class MyLocationListener : public telux::loc::ILocationListener {
 public:
-   /**
-    * Displaying menu of supported commands
-    */
-   void displayMenu();
+   void onLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfo> &locationInfo) override;
 
-   /**
-    * Display cursor to read user input
-    */
-   void displayCursor();
+   void onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) override;
 
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
+   std::string logSessionStatus(telux::loc::SessionStatus sessionStatus);
 
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
-
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
+   ~MyLocationListener() {
+   }
 
 private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
+   void printSbasCorrection(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
+   void printPositionTech(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
+   void printMeasurementType(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
+   void printHorizontalReliability(telux::loc::LocationReliability locReliability);
+   void printVerticalReliability(telux::loc::LocationReliability locReliability);
+   void printSensorType(telux::loc::SensorType sensorType);
+   void printAltitudeType(telux::loc::AltitudeType altitudeType);
+   void printConstellationType(telux::loc::GnssConstellationType constellation);
+   void printSVHealthStatus(telux::loc::SVHealthStatus healthStatus);
+   void printSVStatus(telux::loc::SVStatus svStatus);
+   void printEphimerisAvailability(telux::loc::SVInfoAvailability availability);
+   void printAlmanacAvailability(telux::loc::SVInfoAvailability availability);
 };
 
-#endif  // CONSOLEAPP_HPP
+#endif  // MYLOCATIONLISTENER_HPP

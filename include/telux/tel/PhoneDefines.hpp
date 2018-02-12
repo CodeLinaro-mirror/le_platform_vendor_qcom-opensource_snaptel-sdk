@@ -86,11 +86,13 @@ enum class RadioState {
 
 /**
  * Defines the service states
+ *
+ * @deprecated Use requestVoiceServiceState() API or  to know the status of phone
  */
 enum class ServiceState {
    EMERGENCY_ONLY, /**< Only emergency calls allowed */
    IN_SERVICE,     /**< Normal operation, device is registered with a carrier and
-                      online */
+                        online */
    OUT_OF_SERVICE, /**< Device is not registered with any carrier */
    RADIO_OFF,      /**< Device radio is off - Airplane mode for example */
 };
@@ -166,6 +168,33 @@ enum class CallEndCause {
    CDMA_ACCESS_BLOCKED = 1009,
    ERROR_UNSPECIFIED = 0xffff,
 };
+
+/**
+ * Defines all available radio access technologies
+ */
+enum class RadioTechnology {
+   RADIO_TECH_UNKNOWN,  /**< Network type is unknown */
+   RADIO_TECH_GPRS,     /**< Network type is GPRS */
+   RADIO_TECH_EDGE,     /**< Network type is EDGE */
+   RADIO_TECH_UMTS,     /**< Network type is UMTS */
+   RADIO_TECH_IS95A,    /**< Network type is IS95A */
+   RADIO_TECH_IS95B,    /**< Network type is IS95B */
+   RADIO_TECH_1xRTT,    /**< Network type is 1xRTT */
+   RADIO_TECH_EVDO_0,   /**< Network type is EVDO revision 0 */
+   RADIO_TECH_EVDO_A,   /**< Network type is EVDO revision A */
+   RADIO_TECH_HSDPA,    /**< Network type is HSDPA */
+   RADIO_TECH_HSUPA,    /**< Network type is HSUPA */
+   RADIO_TECH_HSPA,     /**< Network type is HSPA */
+   RADIO_TECH_EVDO_B,   /**< Network type is EVDO revision B*/
+   RADIO_TECH_EHRPD,    /**< Network type is eHRPD */
+   RADIO_TECH_LTE,      /**< Network type is LTE */
+   RADIO_TECH_HSPAP,    /**< Network type is HSPA+ */
+   RADIO_TECH_GSM,      /**< Network type is GSM, Only supports voice */
+   RADIO_TECH_TD_SCDMA, /**< Network type is TD SCDMA */
+   RADIO_TECH_IWLAN,    /**< Network type is TD IWLAN */
+   RADIO_TECH_LTE_CA,   /**< Network type is LTE CA */
+};
+
 /** @} */ /* end_addtogroup telematics_call */
 
 }  // End of namespace tel

@@ -46,6 +46,7 @@
 #include "MyCallListener.hpp"
 #include "MyPhoneListener.hpp"
 #include "MsdSettings.hpp"
+#include "MySubscriptionListener.hpp"
 
 using namespace telux::tel;
 using namespace telux::common;
@@ -307,6 +308,11 @@ int main(int, char **) {
    // Subscription
    std::shared_ptr<ISubscriptionManager> subscriptionMgr
       = PhoneFactory::getInstance().getSubscriptionManager();
+   auto mySubscriptionListener = std::make_shared<MySubscriptionListener>();
+   if(!subscriptionMgr->isSubsystemReady()) {
+      subscriptionMgr->onSubsystemReady().get();
+   }
+   subscriptionMgr->registerListener(mySubscriptionListener);
 
    // SMS instances
    std::shared_ptr<ISmsManager> smsManager = phoneFactory.getSmsManager();
@@ -692,15 +698,19 @@ int main(int, char **) {
       } else if(cmd == "request_signal_strength" || cmd == "18") {
          auto ret = spDefaultPhone->requestSignalStrength(mySignalStrengthCb);
       } else if(cmd == "set_radio_power" || cmd == "19") {
-         bool radioPowerFlag;
-         std::cout << "Enter 1: (to turn on Radio) 0: (to turn off radio) ";
+         int radioPowerFlag;
+         std::cout << "Enter radio power (1 - On, 0 - Off): ";
          std::cin >> radioPowerFlag;
-         if(radioPowerFlag) {
+         if(radioPowerFlag == 1) {
             std::cout << "Turning Radio Power On" << std::endl;
-         } else {
+            spDefaultPhone->setRadioPower(true, myRadioPowerCb);
+         } else if(radioPowerFlag == 0) {
             std::cout << "Turning Radio Power Off" << std::endl;
+            spDefaultPhone->setRadioPower(false, myRadioPowerCb);
+         } else {
+            std::cout << " Invalid input " << std::endl;
          }
-         auto ret = spDefaultPhone->setRadioPower(radioPowerFlag, myRadioPowerCb);
+         radioPowerFlag = -1;
       } else if(cmd == "get_radio_state" || cmd == "20") {
          RadioState radState = spDefaultPhone->getRadioState();
          switch(radState) {
@@ -732,14 +742,10 @@ int main(int, char **) {
          }
       } else if(cmd == "get_subscription" || cmd == "22") {
          telux::common::Status status;
-         if(!subscriptionMgr->isSubsystemReady()) {
-            subscriptionMgr->onSubsystemReady().get();
-         }
          auto subscription = subscriptionMgr->getSubscription(DEFAULT_SLOT_ID, &status);
          if(subscription) {
             std::cout << "**Subscription Details**" << std::endl;
             std::cout << " CarrierName : " << subscription->getCarrierName() << std::endl;
-            std::cout << " CountryISO : " << subscription->getCountryISO() << std::endl;
             std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
             std::cout << " IccId : " << subscription->getIccId() << std::endl;
             std::cout << " Mcc : " << subscription->getMcc() << std::endl;

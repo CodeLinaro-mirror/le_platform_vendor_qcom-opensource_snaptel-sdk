@@ -27,69 +27,65 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
+/**
+ * @file       LocationFactory.hpp
+ * @brief      LocationFactory allows creation of location manager.
+ *
+ * @note       Eval: This is a new API and is being evaluated.It is subject to
+ *             change and could break backwards compatibility.
+ */
 
+#ifndef LOCATIONFACTORY_HPP
+#define LOCATIONFACTORY_HPP
+
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "ConsoleAppCommand.hpp"
+#include <telux/loc/LocationDefines.hpp>
+#include <telux/loc/LocationManager.hpp>
+
+namespace telux {
+
+namespace loc {
+/** @addtogroup telematics_location
+ * @{ */
 
 /**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
+ * @brief   LocationFactory allows creation of location manager.
+ *
+ * @note    Eval: This is a new API and is being evaluated.It is subject to change
+ *          and could break backwards compatibility.
  */
-class ConsoleApp {
+class LocationFactory {
 public:
    /**
-    * Displaying menu of supported commands
+    * Get Location Factory instance.
     */
-   void displayMenu();
+   static LocationFactory &getInstance();
 
    /**
-    * Display cursor to read user input
+    * Get instance of Location Manager
+    *
+    * @returns Pointer of ILocationManager object.
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
     */
-   void displayCursor();
+   std::shared_ptr<ILocationManager> getLocationManager();
 
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
-
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
-
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
+   ~LocationFactory();
 
 private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
+   std::shared_ptr<ILocationManager> locationManager_;
+   std::mutex locationFactoryMutex_;
+   LocationFactory();
+   LocationFactory(const LocationFactory &) = delete;
+   LocationFactory &operator=(const LocationFactory &) = delete;
 };
+/** @} */ /* end_addtogroup telematics_location */
+}  // end of namespace loc
 
-#endif  // CONSOLEAPP_HPP
+}  // end of namespace telux
+
+#endif  // LocationFactory_HPP

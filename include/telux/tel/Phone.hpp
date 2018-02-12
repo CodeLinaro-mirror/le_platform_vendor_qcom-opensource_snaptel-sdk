@@ -29,9 +29,8 @@
 
 /**
  * @file       Phone.hpp
- * @brief      Phone class is the primary interface that provides telephony
- * services
- *             like makeCall, get phoneInfo, radio state, service state.
+ * @brief      Phone class is the primary interface to get phone informations like radio state,
+ *             signal strength, turn on/off radio power, voice radio tech and voice service state.
  */
 
 #ifndef PHONE_HPP
@@ -45,19 +44,21 @@
 #include <telux/tel/ECallDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/PhoneManager.hpp>
+#include <telux/tel/VoiceServiceInfo.hpp>
 
 namespace telux {
 namespace tel {
 
 /** @addtogroup telematics_phone
  * @{ */
-class PhoneListener;
 class ISignalStrengthCallback;
+class IVoiceRadioTechnologyCallback;
+class IVoiceServiceStateCallback;
 
 /**
- * @brief This class allows making phone calls, getting system information and
- * registering for system events. Each Phone instance is associated with a single
- * SIM. So on a dual SIM device you would have 2 Phone instances.
+ * @brief This class allows getting system information and registering for system events.
+ * Each Phone instance is associated with a single SIM. So on a dual SIM device you
+ * would have 2 Phone instances.
  */
 class IPhone {
 public:
@@ -79,14 +80,46 @@ public:
    virtual RadioState getRadioState() = 0;
 
    /**
+    * Request for Radio technology type (3GPP/3GPP2) used for voice.
+    *
+    * @param [in] callback  callback pointer to get the response of radio power request
+    *
+    * @returns Status of requestVoiceRadioTechnology i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual telux::common::Status
+      requestVoiceRadioTechnology(std::weak_ptr<IVoiceRadioTechnologyCallback> callback)
+      = 0;
+
+   /**
     * Get service state of the phone.
     *
-    * @returns @ref ServiceState
+    * @returns    @ref ServiceState
+    *
+    * @deprecated Use requestVoiceServiceState() API
     */
    virtual ServiceState getServiceState() = 0;
 
    /**
+    * Request for voice service state to get the information of phone serving states
+    *
+    * @param [in] callback  callback pointer to get the response of voice
+    *                       service state
+    *
+    * @returns Status of requestVoiceServiceState i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual telux::common::Status
+      requestVoiceServiceState(std::weak_ptr<IVoiceServiceStateCallback> callback)
+      = 0;
+
+   /**
     * Set the radio power on or off.
+    *
     * @param [in] enable    Flag that determines whether to turn radio on or off
     * @param [in] callback  Optional callback pointer to get the response of set
     *                       radio power request
@@ -134,6 +167,63 @@ public:
     */
    virtual void signalStrengthResponse(std::shared_ptr<SignalStrength> signalStrength,
                                        telux::common::ErrorCode error) {
+   }
+};
+
+/**
+ * @brief Interface for voice radio technology callback object.
+ * Client needs to implement this interface to get single shot responses for
+ * commands like request voice radio technology.
+ *
+ * The methods in callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ */
+class IVoiceRadioTechnologyCallback : public telux::common::ICommandCallback {
+public:
+   /**
+    * This function is called with the response to requestVoiceRadioTechnology API.
+    *
+    * @param [out] radioTech        Pointer to radio technology
+    *
+    * @param [out] error            Return code for whether the operation
+    *                               succeeded or failed
+    *        - @ref SUCCESS
+    *        - @ref RADIO_NOT_AVAILABLE
+    *        - @ref GENERIC_FAILURE
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void voiceRadioTechnologyResponse(RadioTechnology radioTech,
+                                             telux::common::ErrorCode error) {
+   }
+};
+
+/**
+ * @brief Interface for voice service state callback object.
+ * Client needs to implement this interface to get single shot responses for
+ * commands like request voice radio technology.
+ *
+ * The methods in callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ */
+class IVoiceServiceStateCallback : public telux::common::ICommandCallback {
+public:
+   /**
+    * This function is called with the response to requestVoiceServiceState API.
+    *
+    * @param [out] serviceInfo      Pointer to voice service info object
+    * @param [out] error            Return code for whether the operation
+    *                               succeeded or failed
+    *        - @ref SUCCESS
+    *        - @ref RADIO_NOT_AVAILABLE
+    *        - @ref GENERIC_FAILURE
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void voiceServiceStateResponse(const std::shared_ptr<VoiceServiceInfo> &serviceInfo,
+                                          telux::common::ErrorCode error) {
    }
 };
 

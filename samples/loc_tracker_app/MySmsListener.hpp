@@ -27,69 +27,36 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
+#ifndef MYSMSLISTENER_HPP
+#define MYSMSLISTENER_HPP
 
-#include <memory>
+#include <chrono>
+#include <iostream>
 #include <string>
+#include <memory>
 #include <vector>
+#include <mutex>
 
-#include "ConsoleAppCommand.hpp"
+#include <telux/tel/PhoneListener.hpp>
+#include <telux/tel/SmsManager.hpp>
 
-/**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
- */
-class ConsoleApp {
+#include "MyLocationListener.hpp"
+
+class MySmsListener : public telux::tel::ISmsListener {
 public:
-   /**
-    * Displaying menu of supported commands
-    */
-   void displayMenu();
-
-   /**
-    * Display cursor to read user input
-    */
-   void displayCursor();
-
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
-
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
-
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
+   void onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> message) override;
+   void setLocationListener(std::shared_ptr<MyLocationListener> myLocationListener);
+   void setSecureToken();
+   MySmsListener();
 
 private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
+   std::shared_ptr<MyLocationListener> myLocationListener_;
+   int token_;
 };
 
-#endif  // CONSOLEAPP_HPP
+class SmsCallback : public telux::common::ICommandResponseCallback {
+public:
+   void commandResponse(telux::common::ErrorCode error) override;
+};
+
+#endif  // MYSMSLISTENER_HPP

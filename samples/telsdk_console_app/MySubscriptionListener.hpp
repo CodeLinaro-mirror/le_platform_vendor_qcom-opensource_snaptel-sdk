@@ -27,69 +27,15 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
+#ifndef MYSUBSCRIPTIONLISTENER_HPP
+#define MYSUBSCRIPTIONLISTENER_HPP
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <telux/tel/SubscriptionListener.hpp>
 
-#include "ConsoleAppCommand.hpp"
-
-/**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
- */
-class ConsoleApp {
+class MySubscriptionListener : public telux::tel::ISubscriptionListener {
 public:
-   /**
-    * Displaying menu of supported commands
-    */
-   void displayMenu();
-
-   /**
-    * Display cursor to read user input
-    */
-   void displayCursor();
-
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
-
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
-
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
-
-private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
+   void onSubscriptionInfoChanged(std::shared_ptr<telux::tel::ISubscription> subscription) override;
+   void onNumberOfSubscriptionsChanged(int count) override;
 };
 
-#endif  // CONSOLEAPP_HPP
+#endif

@@ -29,18 +29,11 @@
 
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_TELSDK_CONSOKE_APP telsdk_console_app)
+set(TARGET_LOC_APP loc_app)
 
-set(TELSDK_CONSOKE_APP_SOURCES
-    TelSdkConsoleApp.cpp
-    MyPhoneListener.cpp
-    MyCardHandler.cpp
-    MyCallListener.cpp
-    MsdSettings.cpp
-    MySmsHandler.cpp
-    MySubscriptionListener.cpp
+set(LOC_APP_SOURCES
+    SampleLocationApp.cpp
 )
-
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
@@ -49,13 +42,17 @@ endmacro()
 # add these sub-folders from /usr/include/<subdir>
 SYSR_INCLUDE_DIR(telux)
 
+include_directories(BEFORE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-add_executable (${TARGET_TELSDK_CONSOKE_APP} ${TELSDK_CONSOKE_APP_SOURCES})
-target_link_libraries(${TARGET_TELSDK_CONSOKE_APP} telux_tel)
+add_executable (${TARGET_LOC_APP} ${LOC_APP_SOURCES})
+target_link_libraries(${TARGET_LOC_APP} telux_loc)
 
 # install to target
-install ( TARGETS ${TARGET_TELSDK_CONSOKE_APP}
+install ( TARGETS ${TARGET_LOC_APP}
           RUNTIME DESTINATION bin
           ARCHIVE DESTINATION bin )

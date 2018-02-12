@@ -32,11 +32,8 @@
 #include <iterator>
 #include <sstream>
 
-#include <telux/tel/PhoneFactory.hpp>
 #include "ConsoleApp.hpp"
 #include "ConsoleAppCommand.hpp"
-
-using namespace telux::tel;
 
 ConsoleApp::ConsoleApp(std::string appName, std::string cursor)
    : appName_(appName)
@@ -114,33 +111,6 @@ void ConsoleApp::addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> sup
    }
 }
 
-/**
- * Initialize sub-systems of SDK
- */
-bool ConsoleApp::initializeSDK() {
-   //  Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-
-   //  Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager->isSubsystemReady();
-
-   //  If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
-   }
-
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
-      return true;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
-      return false;
-   }
-}
-
 int ConsoleApp::mainLoop() {
    while(true) {
       std::vector<std::string> userInput = readCommand();
@@ -162,8 +132,6 @@ int ConsoleApp::mainLoop() {
          for(auto command : supportedCommands_) {
             if((command->getId() == userInput[0] || command->getName() == userInput[0])
                && (command->getArguments().size() == (userInput.size() - 1))) {
-               // std::cout << "valid operation: " << command->getName()
-               //           << std::endl;  // extract operation name ...
                command->executeCommand(userInput);
             }
          }

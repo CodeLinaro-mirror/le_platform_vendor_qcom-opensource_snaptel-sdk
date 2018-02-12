@@ -29,11 +29,13 @@
 
 /**
  * @file       SubscriptionListener.hpp
+ *
  * @brief      SubscriptionListener provides callback methods for listening to
  *             notifications about Subscriptions. Client needs to implement this
  *             interface to get access to notifications. The methods in listener can be
  *             invoked from multiple different threads. The implementation should be
  *             thread-safe.
+ *
  * @note       Eval: This is a new API and is being evaluated. It is subject to
  *             change and could break backwards compatibility.
  */
@@ -41,10 +43,11 @@
 #ifndef SUBSCRIPTIONLISTENER_HPP
 #define SUBSCRIPTIONLISTENER_HPP
 
+#include <memory>
+
 #include <telux/tel/Subscription.hpp>
 
 namespace telux {
-
 namespace tel {
 
 /** @addtogroup telematics_subscription
@@ -72,6 +75,19 @@ public:
    virtual void onSubscriptionInfoChanged(std::shared_ptr<ISubscription> subscription) {
    }
 
+   /**
+    * This function called whenever there is a change in the subscription count.
+    * for example when a new subscription is discovered or an existing subscription
+    * goes away when SIM is inserted or removed respectively.
+    *
+    * @param [in] count   - count of subscription
+   *
+   * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onNumberOfSubscriptionsChanged(int count) {
+   }
+
    virtual ~ISubscriptionListener() {
    }
 };
@@ -79,6 +95,6 @@ public:
 /** @} */ /* end_addtogroup telematics_subscription */
 
 }  // end of namespace tel
-}  // end namespace telux
+}  // end of namespace telux
 
 #endif

@@ -27,69 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
+#ifndef MYLOCATIONLISTENER_HPP
+#define MYLOCATIONLISTENER_HPP
 
-#include <memory>
-#include <string>
 #include <vector>
 
-#include "ConsoleAppCommand.hpp"
+#include <telux/tel/SmsManager.hpp>
+#include <telux/tel/PhoneFactory.hpp>
+#include <telux/loc/LocationDefines.hpp>
+#include <telux/loc/LocationListener.hpp>
+#include <telux/loc/LocationManager.hpp>
 
-/**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
- */
-class ConsoleApp {
+class MyLocationListener : public telux::loc::ILocationListener {
 public:
-   /**
-    * Displaying menu of supported commands
-    */
-   void displayMenu();
+   void onLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfo> &locationInfo) override;
 
-   /**
-    * Display cursor to read user input
-    */
-   void displayCursor();
+   void onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) override {
+   }
 
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
+   void setRequestReceived(bool requestReceived, std::string senderNumber_);
 
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
+   MyLocationListener();
 
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
+   ~MyLocationListener() {
+   }
 
 private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
+   std::shared_ptr<telux::tel::ISmsManager> smsManager_;
+   std::mutex locationLock_;
+   bool requestReceived_ = false;
+   std::string senderNumber_;
 };
 
-#endif  // CONSOLEAPP_HPP
+class MyLocationCommandCallback : public telux::common::ICommandResponseCallback {
+public:
+   MyLocationCommandCallback();
+   void commandResponse(telux::common::ErrorCode error);
+};
+
+#endif  // MYLOCATIONLISTENER_HPP

@@ -27,69 +27,28 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
+#include <iostream>
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <telux/tel/PhoneFactory.hpp>
 
-#include "ConsoleAppCommand.hpp"
+#include "MySubscriptionListener.hpp"
 
-/**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
- */
-class ConsoleApp {
-public:
-   /**
-    * Displaying menu of supported commands
-    */
-   void displayMenu();
+void MySubscriptionListener::onSubscriptionInfoChanged(
+   std::shared_ptr<telux::tel::ISubscription> subscription) {
+   if(subscription) {
+      std::cout << "\nonSubscriptionInfoChanged\n**Subscription Details**" << std::endl;
+      std::cout << " CarrierName : " << subscription->getCarrierName() << std::endl;
+      std::cout << " PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
+      std::cout << " IccId : " << subscription->getIccId() << std::endl;
+      std::cout << " Mcc : " << subscription->getMcc() << std::endl;
+      std::cout << " Mnc : " << subscription->getMnc() << std::endl;
+      std::cout << " SlotId : " << subscription->getSlotId() << std::endl;
+      std::cout << " Imsi : " << subscription->getImsi() << std::endl;
+   } else {
+      std::cout << " \n Subscription is empty" << std::endl;
+   }
+}
 
-   /**
-    * Display cursor to read user input
-    */
-   void displayCursor();
-
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
-
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
-
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
-
-private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
-};
-
-#endif  // CONSOLEAPP_HPP
+void MySubscriptionListener::onNumberOfSubscriptionsChanged(int count) {
+   std::cout << "\nonNumberOfSubscriptionsChanged: count = " << count << std::endl;
+}

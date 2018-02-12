@@ -27,69 +27,45 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONSOLEAPP_HPP
-#define CONSOLEAPP_HPP
+#ifndef LOCATIONTESTAPP_HPP
+#define LOCATIONTESTAPP_HPP
 
+#include <cctype>
+#include <algorithm>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "ConsoleAppCommand.hpp"
+#include <telux/loc/LocationDefines.hpp>
+#include <telux/loc/LocationManager.hpp>
 
-/**
- * ConsoleApp provides skeleton implementation to display a list of commands,
- * Read user's input and trigger commands
- */
-class ConsoleApp {
+#include "ConsoleApp.hpp"
+
+#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
+
+class LocationTestApp : public ConsoleApp {
 public:
    /**
-    * Displaying menu of supported commands
+    * Initialize commands and SDK
     */
-   void displayMenu();
+   void init();
 
-   /**
-    * Display cursor to read user input
-    */
-   void displayCursor();
+   LocationTestApp(std::string appName, std::string cursor);
 
-   /**
-    * Display the title banner
-    */
-   void displayBanner();
+   ~LocationTestApp();
 
-   /**
-    * Read user's input From command line
-    */
-   std::vector<std::string> readCommand();
+   void addLocationListener(std::vector<std::string> userInput);
+   void removeLocationListener(std::vector<std::string> userInput);
 
-   /**
-    * Check whether user's input is valid
-    */
-   bool isValidChoice(std::vector<std::string> inputCommand);
-
-   /**
-    * Add  commands into supportCommands_ list
-    */
-   void addCommands(std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommandsList);
-
-   /**
-    * Initialize commands and display
-   */
-   void init(){};
-
-   /**
-    * Main loop to display commands, read user input and execute the commands
-   */
-   int mainLoop();
-
-   ConsoleApp(std::string appName, std::string cursor);
+   void finalReportMinInterval(std::vector<std::string> userInput);
+   void positionReportTimeout(std::vector<std::string> userInput);
+   void horizontalAccuracyLevel(std::vector<std::string> userInput);
 
 private:
-   /**
-    * A list of commands supported by the ConsoleApp
-    */
-   std::vector<std::shared_ptr<ConsoleAppCommand>> supportedCommands_;
-   std::string appName_, cursor_;
+   // Member variable to keep the Listener object alive till application ends.
+   std::shared_ptr<telux::loc::ILocationListener> posListener_;
+   std::shared_ptr<telux::loc::ILocationManager> locationManager_ = nullptr;
 };
 
-#endif  // CONSOLEAPP_HPP
+#endif  // LOCATIONTESTAPP_HPP

@@ -30,10 +30,10 @@
 #ifndef CONSOLEAPPCOMMAND_HPP
 #define CONSOLEAPPCOMMAND_HPP
 
+#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <functional>
 
 /**
  * This class provides a generic way of creating a menu command for a given Telematics SDK API.

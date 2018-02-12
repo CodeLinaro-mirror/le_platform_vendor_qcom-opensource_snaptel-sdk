@@ -41,6 +41,7 @@
 #define SUBSCRIPTIONMANAGER_HPP
 
 #include <future>
+#include <vector>
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -49,7 +50,6 @@
 #include <telux/tel/SubscriptionListener.hpp>
 
 namespace telux {
-
 namespace tel {
 
 class ISubscriptionCallback;
@@ -105,6 +105,18 @@ public:
       = 0;
 
    /**
+    * Get all the subscription details of the device.
+    *
+    * @param [out] status  Status of getAllSubscriptions i.e. success or suitable status code.
+    *
+    * @returns list of subscriptions
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
+    *          break backwards compatibility.
+    */
+   virtual std::vector<std::shared_ptr<ISubscription>>
+      getAllSubscriptions(telux::common::Status *status = nullptr) = 0;
+   /**
     * Register a listener for Subscription events.
     *
     * @param [in] listener   Pointer to ISubscriptionListener object that
@@ -115,7 +127,7 @@ public:
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
     *          break backwards compatibility.
     */
-   virtual telux::common::Status registerListener(std::shared_ptr<ISubscriptionListener> listener)
+   virtual telux::common::Status registerListener(std::weak_ptr<ISubscriptionListener> listener)
       = 0;
 
    /**
@@ -129,8 +141,7 @@ public:
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
     *          break backwards compatibility.
     */
-   virtual telux::common::Status removeListener(std::shared_ptr<ISubscriptionListener> listener)
-      = 0;
+   virtual telux::common::Status removeListener(std::weak_ptr<ISubscriptionListener> listener) = 0;
 
    virtual ~ISubscriptionManager(){};
 };

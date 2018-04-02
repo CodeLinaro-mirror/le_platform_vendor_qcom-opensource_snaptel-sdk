@@ -34,8 +34,10 @@
 
 class MyLocationCommandCallback : public telux::common::ICommandResponseCallback {
 public:
-   MyLocationCommandCallback();
+   MyLocationCommandCallback(std::string cmdName);
    void commandResponse(telux::common::ErrorCode error);
+private: 
+   std::string commandName_;
 };
 
 #endif  // MYLOCATIONCOMMANDCALLACK_HPP

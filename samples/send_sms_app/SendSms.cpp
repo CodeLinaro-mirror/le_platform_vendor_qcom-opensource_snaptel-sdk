@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
       subSystemsStatus = f.get();
    }
 
-   // Exit the application, if SDK is unable to initialize telephony subsystems
+   // [3] Exit the application, if SDK is unable to initialize telephony subsystems
    if(subSystemsStatus) {
       std::cout << " *** Sub Systems Ready *** " << std::endl;
    } else {
@@ -95,14 +95,14 @@ int main(int argc, char *argv[]) {
       return 1;
    }
 
-   // [3] Instantiate SMS sent and delivery callback
+   // [4] Instantiate SMS sent and delivery callback
    auto smsSentCb = std::make_shared<SmsCallback>();
    auto smsDeliveryCb = std::make_shared<SmsDeliveryCallback>();
 
-   // [4] Get Default SMS manager instance
+   // [5] Get Default SMS manager instance
    std::shared_ptr<telux::tel::ISmsManager> smsManager = phoneFactory.getSmsManager();
 
-   // [5] Send an SMS using ISmsManager by passing the text and receiver number
+   // [6] Send an SMS using ISmsManager by passing the text and receiver number
    // along with required callback
    if(smsManager) {
       std::string receiverAddress("+18989531755");
@@ -110,13 +110,12 @@ int main(int argc, char *argv[]) {
       smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
    }
 
-   // [6] Receive responses for sendSms request
+   // [7] Receive responses for sendSms request
 
-   // exit logic is specific to an application
-   std::cout << " *** Press [ENTER] or type [quit] to exit the application *** " << std::endl;
+   // [8] Exit logic is specific to an application
+   std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);
-   if(input != "quit") {
-      return 0;
-   }
+   std::cout << "Exiting application..." << std::endl;
+   return 0;
 }

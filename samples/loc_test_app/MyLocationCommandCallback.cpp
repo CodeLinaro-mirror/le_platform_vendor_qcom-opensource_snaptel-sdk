@@ -36,13 +36,14 @@
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 // Implementation of My location callback
-MyLocationCommandCallback::MyLocationCommandCallback() {
+MyLocationCommandCallback::MyLocationCommandCallback(std::string cmdName) {
+   commandName_ = cmdName;
 }
 void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) {
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << "startLocationServiceResponse successfully" << std::endl;
+      PRINT_NOTIFICATION << commandName_ << " executed successfully" << std::endl;
    } else {
-      PRINT_NOTIFICATION << "startLocationServiceResponse error = " << static_cast<int>(error)
+      PRINT_NOTIFICATION << commandName_ << "failed with error = " << static_cast<int>(error)
                          << std::endl;
    }
 }

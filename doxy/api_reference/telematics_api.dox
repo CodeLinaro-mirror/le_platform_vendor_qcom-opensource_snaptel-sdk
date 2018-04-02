@@ -52,6 +52,8 @@ Jun 2017   SVM      Created to support V2X API
     This section contains APIs related to Sending and Receiving SMS.
     @defgroup telematics_card Card API
     This section contains APIs related to Card Services.
+    @defgroup telematics_location Location Services API
+    This section contains APIs related to Location Services.
     @defgroup telematics_subscription Subscription API
     This section contains APIs related to Subscription.
     @defgroup telematics_common Common

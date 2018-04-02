@@ -146,12 +146,11 @@ int main(int, char **) {
    // [8] Instantiate global ILocationListener
    locationMgr->registerListener(myLocationListener);
 
-   // [9] exit logic is specific to an application
-   // std::cout << " *** Press [ENTER] or type [quit] to exit the application *** " << std::endl;
+   // [9] Exit logic is specific to an application
+   std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);
-   if(input != "quit") {
-      locationMgr->removeListener(myLocationListener);
-      return 0;
-   }
+   locationMgr->removeListener(myLocationListener);
+   std::cout << "Exiting application..." << std::endl;
+   return 0;
 }

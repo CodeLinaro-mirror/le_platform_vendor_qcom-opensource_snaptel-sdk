@@ -192,6 +192,47 @@ public:
       = 0;
 
    /**
+    * Play a DTMF tone and stop it.
+    * The interval for which the tone is played is dependent on the system implementation.
+    * If continuous DTMF tone is playing, it will be stopped.
+    *
+    * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
+    *
+    * @param [in] callback - Optional callback pointer to get the result of
+    * playDtmfTones function
+    *
+    * @returns Status of playDtmfTones i.e. success or suitable error code.
+    */
+   virtual telux::common::Status playDtmfTone(
+      char tone, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Starts a continuous DTMF tone.
+    * To terminate the continous DTMF tone,stopDtmfTone API needs to be invoked explicitly.
+    *
+    * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
+    * @param [in] callback - Optional callback pointer to get the result of
+    * startDtmfTone function.
+    *
+    * @returns Status of startDtmfTone i.e. success or suitable error code.
+    */
+   virtual telux::common::Status startDtmfTone(
+      char tone, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Stop the currently playing continuous DTMF tone.
+    * @param [in] callback - Optional callback pointer to get the result of
+    * stopDtmfTone function.
+    *
+    * @returns Status of stopDtmfTone i.e. success or suitable error code.
+    */
+   virtual telux::common::Status
+      stopDtmfTone(std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
     * Get the current state of the call, such as ringing, in progress etc.
     *
     * @returns CallState - enumeration representing call State

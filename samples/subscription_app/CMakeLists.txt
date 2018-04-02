@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+#  Copyright (c) 2018, The Linux Foundation. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -29,16 +29,26 @@
 
 cmake_minimum_required(VERSION 2.8.9)
 
-add_subdirectory( telsdk_console_app )
-add_subdirectory( make_call_app )
-add_subdirectory( make_ecall_app )
-add_subdirectory( card_services_app )
-add_subdirectory( ecall_app )
-add_subdirectory( receive_sms_app )
-add_subdirectory( send_sms_app )
-add_subdirectory( simple_sap_api_app )
-add_subdirectory( loc_test_app )
-add_subdirectory( loc_tracker_app )
-add_subdirectory( loc_app )
-add_subdirectory( subscription_app )
+set(TARGET_SUBSCRIPTION_APP subscription_app)
 
+set(SOURCES
+    SubscriptionApp.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
+
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
+
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_executable (${TARGET_SUBSCRIPTION_APP} ${SOURCES})
+target_link_libraries(${TARGET_SUBSCRIPTION_APP} telux_tel)
+
+# install to target
+install ( TARGETS ${TARGET_SUBSCRIPTION_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

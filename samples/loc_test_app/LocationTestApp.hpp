@@ -39,6 +39,7 @@
 
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationManager.hpp>
+#include "MyLocationCommandCallback.hpp"
 
 #include "ConsoleApp.hpp"
 
@@ -66,6 +67,7 @@ private:
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::loc::ILocationListener> posListener_;
    std::shared_ptr<telux::loc::ILocationManager> locationManager_ = nullptr;
+   std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb_ = nullptr;
 };
 
 #endif  // LOCATIONTESTAPP_HPP

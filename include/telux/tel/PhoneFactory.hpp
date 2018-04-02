@@ -46,6 +46,7 @@
 #include <telux/tel/SmsManager.hpp>
 #include <telux/tel/SapCardManager.hpp>
 #include <telux/tel/SubscriptionManager.hpp>
+#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 

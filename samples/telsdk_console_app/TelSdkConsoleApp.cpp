@@ -81,13 +81,16 @@ void telSDKMenu() {
    std::cout << "   15 - ecall <category> <variant> " << std::endl;
    std::cout << "        [category: 64-Auto,32-Manual, variant: 1-test,2-emergency]" << std::endl;
    std::cout << "   16 - update_ecall_msd" << std::endl;
-   std::cout << "   l7 - call_listener [add|del|help]" << std::endl;
+   std::cout << "   17 - play_dtmf_tones" << std::endl;
+   std::cout << "   18 - start_dtmf_tone" << std::endl;
+   std::cout << "   19 - stop_dtmf_tone" << std::endl;
+   std::cout << "   20 - call_listener [add|del|help]" << std::endl;
    std::cout << "************** Device Details **************" << std::endl;
-   std::cout << "   18 - request_signal_strength" << std::endl;
-   std::cout << "   19 - set_radio_power" << std::endl;
-   std::cout << "   20 - get_radio_state" << std::endl;
-   std::cout << "   21 - get_service_state" << std::endl;
-   std::cout << "   22 - get_subscription" << std::endl;
+   std::cout << "   50 - request_signal_strength" << std::endl;
+   std::cout << "   51 - set_radio_power" << std::endl;
+   std::cout << "   52 - get_radio_state" << std::endl;
+   std::cout << "   53 - get_service_state" << std::endl;
+   std::cout << "   54 - get_subscription" << std::endl;
    std::cout << "************** Card Services **************" << std::endl;
    std::cout << "   100 - get_card <slotId>" << std::endl;
    std::cout << "   101 - get_card_state" << std::endl;
@@ -295,6 +298,9 @@ int main(int, char **) {
    auto myConferenceCb = std::make_shared<MyConferenceCallback>();
    auto mySwapCb = std::make_shared<MySwapCallback>();
    auto myRadioPowerCb = std::make_shared<MyRadioPowerCallback>();
+   auto myPlayTonesCb = std::make_shared<MyPlayTonesCallback>();
+   auto myStartToneCb = std::make_shared<MyStartToneCallback>();
+   auto myStopToneCb = std::make_shared<MyStopToneCallback>();
    auto spDefaultPhone = phoneManager->getPhone();
    int defaultPhoneId;
    spDefaultPhone->getPhoneId(defaultPhoneId);
@@ -693,11 +699,86 @@ int main(int, char **) {
          } else {
             std::cout << "updateECallMsd request failed \n";
          }
-      } else if(cmd == "call_listener" || cmd == "17") {
+      } else if(cmd == "play_dtmf_tones" || cmd == "17") {
+         std::cout << "request play_dtmf_tones " << std::endl;
+         std::shared_ptr<ICall> spCall = nullptr;
+         std::vector<std::shared_ptr<ICall>> inProgressCalls
+            = phoneFactory.getCallManager()->getInProgressCalls();
+         // Fetch the list of in prgress calls from CallManager and accept the
+         // incoming call.
+         for(auto callIterator = std::begin(inProgressCalls);
+             callIterator != std::end(inProgressCalls); ++callIterator) {
+            if((*callIterator)->getCallState() == CallState::CALL_ACTIVE
+               || (*callIterator)->getCallState() == CallState::CALL_ALERTING) {
+               spCall = *callIterator;
+               break;
+            }
+         }
+         if(spCall != nullptr) {
+            std::string dtmfString;
+            if(args.length() > 0) {
+               dtmfString = std::string(args);
+               dtmfString = dtmfString.erase(0, dtmfString.find_first_not_of(" \n\r\t"));
+               std::cout << "DTMF string length " << dtmfString.length() << std::endl;
+            }
+            if(dtmfString.length() == 0) {
+               std::cout << "Invalid DTMF String\n";
+            } else {
+               auto ret = spCall->playDtmfTone(dtmfString[0], myPlayTonesCb);
+               if(ret == Status::SUCCESS) {
+                  std::cout << "play tones request sent successfully\n";
+               } else {
+                  std::cout << "play tones request failed \n";
+               }
+            }
+         } else {
+            std::cout << "No active call found in the list " << std::endl;
+         }
+      } else if(cmd == "start_dtmf_tone" || cmd == "18") {
+         std::cout << "request start_dtmf_tones " << std::endl;
+         std::shared_ptr<ICall> spCall = nullptr;
+         std::vector<std::shared_ptr<ICall>> inProgressCalls
+            = phoneFactory.getCallManager()->getInProgressCalls();
+         // Fetch the list of in prgress calls from CallManager and accept the
+         // incoming call.
+         for(auto callIterator = std::begin(inProgressCalls);
+             callIterator != std::end(inProgressCalls); ++callIterator) {
+            if((*callIterator)->getCallState() == CallState::CALL_ACTIVE
+               || (*callIterator)->getCallState() == CallState::CALL_ALERTING) {
+               spCall = *callIterator;
+               break;
+            }
+         }
+         if(spCall != nullptr) {
+            spCall->startDtmfTone('1', myStartToneCb);
+         } else {
+            std::cout << "No active call found in the list " << std::endl;
+         }
+      } else if(cmd == "stop_dtmf_tone" || cmd == "19") {
+         std::cout << "request stop_dtmf_tones " << std::endl;
+         std::shared_ptr<ICall> spCall = nullptr;
+         std::vector<std::shared_ptr<ICall>> inProgressCalls
+            = phoneFactory.getCallManager()->getInProgressCalls();
+         // Fetch the list of in prgress calls from CallManager and accept the
+         // incoming call.
+         for(auto callIterator = std::begin(inProgressCalls);
+             callIterator != std::end(inProgressCalls); ++callIterator) {
+            if((*callIterator)->getCallState() == CallState::CALL_ACTIVE
+               || (*callIterator)->getCallState() == CallState::CALL_ALERTING) {
+               spCall = *callIterator;
+               break;
+            }
+         }
+         if(spCall != nullptr) {
+            spCall->stopDtmfTone(myStopToneCb);
+         } else {
+            std::cout << "No active call found in the list " << std::endl;
+         }
+      } else if(cmd == "call_listener" || cmd == "20") {
          callListener(myCallListener, args);
-      } else if(cmd == "request_signal_strength" || cmd == "18") {
+      } else if(cmd == "request_signal_strength" || cmd == "50") {
          auto ret = spDefaultPhone->requestSignalStrength(mySignalStrengthCb);
-      } else if(cmd == "set_radio_power" || cmd == "19") {
+      } else if(cmd == "set_radio_power" || cmd == "51") {
          int radioPowerFlag;
          std::cout << "Enter radio power (1 - On, 0 - Off): ";
          std::cin >> radioPowerFlag;
@@ -711,7 +792,7 @@ int main(int, char **) {
             std::cout << " Invalid input " << std::endl;
          }
          radioPowerFlag = -1;
-      } else if(cmd == "get_radio_state" || cmd == "20") {
+      } else if(cmd == "get_radio_state" || cmd == "52") {
          RadioState radState = spDefaultPhone->getRadioState();
          switch(radState) {
             case RadioState::RADIO_STATE_OFF:
@@ -724,7 +805,7 @@ int main(int, char **) {
                std::cout << "RADIO_STATE_ON" << std::endl;
                break;
          }
-      } else if(cmd == "get_service_state" || cmd == "21") {
+      } else if(cmd == "get_service_state" || cmd == "53") {
          ServiceState srvState = spDefaultPhone->getServiceState();
          switch(srvState) {
             case ServiceState::EMERGENCY_ONLY:
@@ -740,7 +821,7 @@ int main(int, char **) {
                std::cout << "Service State RADIO_OFF" << std::endl;
                break;
          }
-      } else if(cmd == "get_subscription" || cmd == "22") {
+      } else if(cmd == "get_subscription" || cmd == "54") {
          telux::common::Status status;
          auto subscription = subscriptionMgr->getSubscription(DEFAULT_SLOT_ID, &status);
          if(subscription) {

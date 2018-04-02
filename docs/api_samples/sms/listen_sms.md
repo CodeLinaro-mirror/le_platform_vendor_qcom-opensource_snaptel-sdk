@@ -63,10 +63,8 @@
 
    ~~~~~~{.cpp}
    std::cout << " *** wait for MyPhoneListener::onIncomingSms() to be triggered*** " << std::endl;
-   std::cout << " *** Press [ENTER] or type [quit] to exit the application *** " << std::endl;
+   std::cout << " *** Press enter to exit the application *** " << std::endl;
    std::string input;
    std::getline(std::cin, input);
-   if(input != "quit") {
-      return 0;
-   }
+   return 0;
    ~~~~~~

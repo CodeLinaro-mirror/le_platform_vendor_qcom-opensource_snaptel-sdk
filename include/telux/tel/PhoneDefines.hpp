@@ -41,9 +41,6 @@
 #define DEFAULT_PHONE_ID 1
 #define INVALID_PHONE_ID -1
 
-#define DEFAULT_SLOT_ID 1
-#define INVALID_SLOT_ID -1
-
 namespace telux {
 
 namespace tel {

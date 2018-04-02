@@ -104,4 +104,19 @@ public:
    void commandResponse(telux::common::ErrorCode error) override;
 };
 
+class MyPlayTonesCallback : public telux::common::ICommandResponseCallback {
+public:
+   void commandResponse(telux::common::ErrorCode error) override;
+};
+
+class MyStartToneCallback : public telux::common::ICommandResponseCallback {
+public:
+   void commandResponse(telux::common::ErrorCode error) override;
+};
+
+class MyStopToneCallback : public telux::common::ICommandResponseCallback {
+public:
+   void commandResponse(telux::common::ErrorCode error) override;
+};
+
 #endif  // MYCALLLISTENER_HPP

@@ -337,3 +337,33 @@ void MySwapCallback::commandResponse(ErrorCode error) {
    }
    print_notification << "Swap operation - ErrorCode " << (int)error << std::endl;
 }
+
+void MyPlayTonesCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if(error == ErrorCode::SUCCESS) {
+      print_notification << "Play tones operation successful" << std::endl;
+   } else {
+      print_notification << "Play tones operation failed" << std::endl;
+   }
+   print_notification << "Play tones operation - ErrorCode " << (int)error << std::endl;
+}
+
+void MyStartToneCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if(error == ErrorCode::SUCCESS) {
+      print_notification << "Start tone operation successful" << std::endl;
+   } else {
+      print_notification << "Start tone failed" << std::endl;
+   }
+   print_notification << "Start tone operation - ErrorCode " << (int)error << std::endl;
+}
+
+void MyStopToneCallback::commandResponse(ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if(error == ErrorCode::SUCCESS) {
+      print_notification << "Stop tone operation successful" << std::endl;
+   } else {
+      print_notification << "Stop tone operation failed" << std::endl;
+   }
+   print_notification << "Stop tone operation - ErrorCode " << (int)error << std::endl;
+}

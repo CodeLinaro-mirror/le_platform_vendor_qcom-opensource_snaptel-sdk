@@ -1,0 +1,454 @@
+/*
+ *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @file       DataConnectionManager.hpp
+ *
+ * @brief      DataConnectionManager is a primary interface for cellular connectivity. This
+ *             interface provides APIs for start and stop data call connections, get data
+ *             call information and add or remove listeners for monitoring data calls
+ *             status.
+ *
+ * @note       Eval: This is a new API and is being evaluated. It is subject to
+ *             change and could break backwards compatibility.
+ *
+ */
+
+#ifndef DATACONNECTIONMANAGER_HPP
+#define DATACONNECTIONMANAGER_HPP
+
+#include <future>
+#include <vector>
+#include <list>
+#include <memory>
+
+#include <telux/data/DataDefines.hpp>
+#include <telux/data/DataProfile.hpp>
+
+#include <telux/common/CommonDefines.hpp>
+
+namespace telux {
+namespace data {
+
+// Forward declarations
+class IDataConnectionListener;
+class IDataCall;
+class IDataCallStatisticsCallback;
+class IDataRateCallback;
+
+/** @addtogroup telematics_data
+ * @{ */
+/**
+ *@brief IDataConnectionManager is a primary interface for cellular connectivity
+ *       This interface provides APIs for start and stop data call connections,
+ *       get data call information and listener for monitoring data calls.
+ */
+class IDataConnectionManager {
+public:
+   /**
+    * Checks if the data subsystem is ready.
+    *
+    * @returns True if Data Connection Manager is ready for service, otherwise
+    * returns false.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual bool isSubsystemReady() = 0;
+
+   /**
+    * Wait for data subsystem to be ready.
+    *
+    * @returns A future that caller can wait on to be notified
+    * when card manager is ready.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual std::future<bool> onSubsystemReady() = 0;
+
+   /**
+    * Starts a data call corresponding to default or specified profile identifier.
+    *
+    * This will bring up data call connection based on specified profile identifier. This is an
+    * asynchronous API, client receives notification indicating the data call establishment
+    * or failure in callback.
+    *
+    * @param [in] profileId     Profile identifier corresponding to which data call bring up
+    *                           will be done. Use IDataProfileManager::requestProfileList to get
+    *                           list of available profiles.
+    * @param [in] ipFamilyType  Identifies IP family type
+    * @param [out] callback     Optional callback to get the response of start data call.
+    *
+    * @returns Immediate status of startDataCall() request sent
+    *                   i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status
+      startDataCall(int profileId, IpFamilyType ipFamilyType = IpFamilyType::IP_FAMILY_TYPE_V4V6,
+                    std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Stops a data call corresponding to default or specified profile identifier.
+    *
+    * This will tear down specific data call connection based on profile identifier.
+    *
+    * @param [in] profileId     Profile identifier corresponding to which data call tear down
+    *                           will be done. Use data profile manager to get the list of
+    *                           available profiles.
+    * @param [in] ipFamilyType  Identifies IP family type
+    * @param [out] callback     Optional callback to get the response of stop data call
+    *
+    * @returns Immediate status of stopDataCall() request sent i.e. success or
+    *          suitable status code. The client receives asynchronous notifications indicating
+    *          the data call tear-down.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status
+      stopDataCall(int profileId, IpFamilyType ipFamilyType = IpFamilyType::IP_FAMILY_TYPE_V4V6,
+                   std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * This is synchronous API called by client to get data call list.
+    *
+    * @param [in, out] status   Status of getDataCallList i.e. success or suitable status code.
+    *
+    * @returns List of all active data calls.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual std::vector<std::shared_ptr<IDataCall>> getDataCallList(telux::common::Status *status
+                                                                   = nullptr)
+      = 0;
+
+   /**
+    * Request the data transfer statistics for data call corresponding
+    * to specified profile identifier.
+    *
+    * @param [in] profileId   Profile identifier
+    * @param [in] callback    Optional callback to get the response of request Data Call
+    *                         Statistics
+    *
+    * @returns Status of getDataCallStatistics i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestDataCallStatistics(
+      int profileId, std::shared_ptr<IDataCallStatisticsCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Reset data transfer statistics for data call corresponding to specified profile identifier.
+    *
+    * @param [in] profileId   Reset statistics corresponding to profile identifier
+    *
+    * @returns Status of resetDataCallStatistics i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status resetDataCallStatistics(int profileId) = 0;
+
+   /**
+    * Request the current/maximum transmit and receive data channel rate for specified profile
+    * identifier.
+    *
+    * @param [in] profileId   Profile identifier.
+    * @param [in] callback    Optional callback to get the response of request Data channel
+    *                         rate
+    *
+    * @returns Status of getDataRate i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestDataRate(int profileId,
+                                                 std::shared_ptr<IDataRateCallback> callback
+                                                 = nullptr)
+      = 0;
+
+   /**
+    * Register a listener for specific events in the Connection Manager like establishment of new
+    * data call, data call info change and call failure.
+    *
+    * @param [in] listener    pointer of IDataConnectionListener object that processes the
+    * notification
+    *
+    * @returns Status of registerListener success or suitable status code
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status registerListener(std::weak_ptr<IDataConnectionListener> listener)
+      = 0;
+
+   /**
+    * Removes a previously added listener.
+    *
+    * @param [in] listener    pointer of IDataConnectionListener object that needs to be removed
+    *
+    * @returns Status of removeListener success or suitable status code
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status removeListener(std::weak_ptr<IDataConnectionListener> listener)
+      = 0;
+
+   /**
+    * Get associated slot id for the Data Connection Manager.
+    *
+    * @returns SlotId
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual int getSlotId() = 0;
+
+   /**
+    * Destructor for IDataConnectionManager
+    */
+   virtual ~IDataConnectionManager(){};
+};  // end of IDataConnectionManager
+
+/**
+ * @brief Represents single established data call on the device.
+ *
+ * @note  Eval: This is a new API and is being evaluated. It is subject to
+ *             change and could break backwards compatibility.
+ */
+class IDataCall {
+public:
+   /**
+    * Get interface name for the data call associated.
+    *
+    * @returns Interface Name.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual const std::string &getInterfaceName() = 0;
+
+   /**
+    * Get the bearer technology on which earlier data call was brought up like LTE, WCDMA and etc.
+    * This is synchronous API called by client to get bearer technology corresponding to data call.
+    *
+    * @returns @ref DataBearerTechnology
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual DataBearerTechnology getCurrentBearerTech() = 0;
+
+   /**
+    * Get failure reason for the data call.
+    *
+    * @returns @ref DataCallFailReason.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual DataCallFailReason getDataCallFailReason() = 0;
+
+   /**
+    * Get data call status like connected, disconnected and IP address changes.
+    *
+    * @returns @ref DataCallStatus.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual DataCallStatus getDataCallStatus() = 0;
+
+   /**
+    * Get the technology on which the call was brought up.
+    *
+    * @returns @ref TechPreference.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual TechPreference getTechPreference() = 0;
+
+   /**
+    * Get list of IP address information.
+    *
+    * @returns List of IP address details.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual std::list<IpAddrInfo> getIpAddressInfo() = 0;
+
+   /**
+    * Get Access Point Name (APN) name
+    *
+    * @returns APN name.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual const std::string &getApnName() = 0;
+
+   /**
+    * Get IP Family Type i.e. IPv4, IPv6 or Both
+    *
+    * @returns @ref IpFamilyType.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual IpFamilyType getIpFamilyType() = 0;
+
+   /**
+    * Get Profile Id
+    *
+    * @returns Profile Identifier.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual int getProfileId() = 0;
+};
+
+/**
+ * Interface for Data call listener object. Client needs to implement this interface to get
+ * access to data services notifications like onNewDataCall, onDataCallStatusChanged and
+ * onDataCallFailure.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+class IDataConnectionListener {
+public:
+   /**
+    * This function is called when there is new data call established.
+    *
+    * @param [out] dataCall   Handle of specific data call with data call info
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onNewDataCall(const std::shared_ptr<IDataCall> &dataCall) {
+   }
+
+   /**
+    * This function is called when there is a change in the data call.
+    *
+    * @param [out] status     Data Call Status
+    * @param [out] dataCall   Pointer to IDataCall
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
+
+   /**
+    * This function is called in case of call failure, IDataCall will have cause code for
+    * failure
+    *
+    * @param [out] dataCall   Pointer to IDataCall
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onDataCallFailure(const std::shared_ptr<IDataCall> &dataCall){};
+};
+
+/**
+ * @brief Interface for request Data call statistics callback
+ * Client needs to implement this interface to get single shot responses for
+ * commands like request auto connect.
+ *
+ * The methods in callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+class IDataCallStatisticsCallback : public telux::common::ICommandCallback {
+public:
+   /**
+    * This function is called with the response to requestDataCallStatistics API.
+    *
+    * @param [out] dataStats       Data Call statistics
+    * @param [out] error           Return code for whether the operation
+    *                              succeeded or failed
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onResponse(const DataCallStats &dataStats, telux::common::ErrorCode error) {
+   }
+};
+
+/**
+ * @brief Interface for request Data rate callback
+ * Client needs to implement this interface to get single shot responses for
+ * commands like request auto connect.
+ *
+ * The methods in callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+class IDataRateCallback : public telux::common::ICommandCallback {
+public:
+   /**
+    * This function is called with the response to requestDataRate API.
+    *
+    * @param [out] dataRate   The structure contains current and max transfer and
+    *                         receiver rate
+    * @param [out] error      Return code for whether the operation
+    *                         succeeded or failed
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onResponse(const DataChannelRate &dataRate, telux::common::ErrorCode error) {
+   }
+};
+
+/** @} */ /* end_addtogroup telematics_data */
+}
+}
+
+#endif

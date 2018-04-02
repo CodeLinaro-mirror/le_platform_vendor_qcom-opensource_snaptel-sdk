@@ -99,11 +99,10 @@ int main(int, char **) {
       std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
    }
 
-   // Exit logic is specific to an application
-   std::cout << " *** Press [ENTER] or type [quit] to exit the application *** " << std::endl;
+   // ### 7. Exit logic is specific to an application
+   std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);
-   if(input != "quit") {
-      return 0;
-   }
+   std::cout << "Exiting application..." << std::endl;
+   return 0;
 }

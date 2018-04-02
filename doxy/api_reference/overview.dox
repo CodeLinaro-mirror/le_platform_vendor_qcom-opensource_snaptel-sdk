@@ -67,11 +67,11 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
    Telephony sub-system consists of APIs for functions related to Phone, Call, SMS and Signal Strength.
 
-<b>SIM Card services</b>
+<b>SIM Card Services</b>
 
    SIM Card services sub-system consists of APIs to perform SIM card operations such as Send APDU messages to SIM card applications, SIM Access Profile(SAP) operations etc.
 
-<b>Location services</b>
+<b>Location Services</b>
 
    Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information etc.
 
@@ -129,5 +129,12 @@ Phone APIs of Telematics SDK provides phone related information such as
    - Retrieve the signal strength corresponding to the technology supported by SIM
    - Device Identity
    - Subscription Information
+
+@subsection location_services Location Services
+Location Services APIs of Telematics SDK provide the mechanism to register listener and to receive location updates and satellite vehicle infomation.
+Following parameters are configurable through the APIs.
+   - Minimum time interval between two consecutive location reports.
+   - Timeout period for location reports.
+   - Horizontal accuracy level.
 
 */

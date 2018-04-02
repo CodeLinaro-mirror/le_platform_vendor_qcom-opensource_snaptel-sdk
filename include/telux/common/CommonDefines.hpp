@@ -37,6 +37,9 @@
 #ifndef COMMONDEFINES_HPP
 #define COMMONDEFINES_HPP
 
+#define DEFAULT_SLOT_ID 1
+#define INVALID_SLOT_ID -1
+
 namespace telux {
 
 namespace common {
@@ -260,6 +263,21 @@ enum class ErrorCode {
    TOO_SOON = 1116,                      /**< Too soon */
    TIME_NOT_ACQUIRED = 1117,             /**< Time not acquired */
    OP_IN_PROGRESS = 1118,                /**< Operation is in progress */
+   // Transport error codes
+   INTERNAL_ERROR = -1,       /**< Internal error */
+   SERVICE_ERROR = -2,        /**< Service error */
+   TIMEOUT_ERROR = -3,        /**< Timeout error */
+   EXTENDED_ERROR = -4,       /**< Extended error */
+   PORT_NOT_OPEN_ERROR = -5,  /**< Port not open */
+   MEMCOPY_ERROR = -13,       /**< Memory copy error */
+   INVALID_TRANSACTION = -14, /**< Invalid transaction */
+   ALLOCATION_FAILURE = -15,  /**< Allocation failure */
+   TRANSPORT_ERROR = -16,     /**< Transport error */
+   PARAM_ERROR = -17,         /**< Parameter error */
+   INVALID_CLIENT = -18,      /**< Invalid client */
+   FRAMEWORK_NOT_READY = -19, /**< Framework not ready */
+   INVALID_SIGNAL = -20,      /**< Invalid signal */
+   TRANSPORT_BUSY_ERROR = -21 /**< Transport busy error */
 };
 
 /**

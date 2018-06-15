@@ -129,6 +129,17 @@ public:
                                            const std::shared_ptr<VoiceServiceInfo> &serviceInfo) {
    }
 
+   /**
+    * This function is called when the operating mode changes
+    *
+    * @param [in] mode       Operating mode @ref OperatingMode.
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onOperatingModeChanged(OperatingMode mode) {
+   }
+
    virtual ~IPhoneListener() {
    }
 };

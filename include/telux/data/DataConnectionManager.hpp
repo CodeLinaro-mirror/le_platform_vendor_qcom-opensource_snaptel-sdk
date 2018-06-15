@@ -59,8 +59,57 @@ namespace data {
 // Forward declarations
 class IDataConnectionListener;
 class IDataCall;
-class IDataCallStatisticsCallback;
-class IDataRateCallback;
+
+/**
+ * This function is called with the response to requestDataCallStatistics API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] dataCall        Pointer to IDataCall
+ * @param [in] error           Return code for whether the operation
+ *                             succeeded or failed
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+
+using DataCallResponseCb
+   = std::function<void(const std::shared_ptr<IDataCall> &dataCall, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestDataCallStatistics API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] dataStats       Data Call statistics
+ * @param [in] error           Return code for whether the operation
+ *                             succeeded or failed
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+
+using StatisticsResponseCb
+   = std::function<void(const DataCallStats dataStats, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestDataRate API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] dataRate   The structure contains current and max transfer and
+ *                        receiver rate
+ * @param [in] error      Return code for whether the operation
+ *                        succeeded or failed
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+using RateResponseCallback
+   = std::function<void(const DataChannelRate dataRate, telux::common::ErrorCode error)>;
 
 /** @addtogroup telematics_data
  * @{ */
@@ -112,9 +161,9 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to
     *             change and could break backwards compatibility.
     */
-   virtual telux::common::Status
-      startDataCall(int profileId, IpFamilyType ipFamilyType = IpFamilyType::IP_FAMILY_TYPE_V4V6,
-                    std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+   virtual telux::common::Status startDataCall(int profileId, IpFamilyType ipFamilyType
+                                                              = IpFamilyType::IP_FAMILY_TYPE_V4V6,
+                                               DataCallResponseCb callback = nullptr)
       = 0;
 
    /**
@@ -129,29 +178,15 @@ public:
     * @param [out] callback     Optional callback to get the response of stop data call
     *
     * @returns Immediate status of stopDataCall() request sent i.e. success or
-    *          suitable status code. The client receives asynchronous notifications indicating
-    *          the data call tear-down.
+    *          suitable status code. The client receives asynchronous notifications
+    *          indicating the data call tear-down.
     *
     * @note       Eval: This is a new API and is being evaluated. It is subject to
     *             change and could break backwards compatibility.
     */
-   virtual telux::common::Status
-      stopDataCall(int profileId, IpFamilyType ipFamilyType = IpFamilyType::IP_FAMILY_TYPE_V4V6,
-                   std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
-      = 0;
-
-   /**
-    * This is synchronous API called by client to get data call list.
-    *
-    * @param [in, out] status   Status of getDataCallList i.e. success or suitable status code.
-    *
-    * @returns List of all active data calls.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
-    */
-   virtual std::vector<std::shared_ptr<IDataCall>> getDataCallList(telux::common::Status *status
-                                                                   = nullptr)
+   virtual telux::common::Status stopDataCall(int profileId, IpFamilyType ipFamilyType
+                                                             = IpFamilyType::IP_FAMILY_TYPE_V4V6,
+                                              DataCallResponseCb callback = nullptr)
       = 0;
 
    /**
@@ -167,8 +202,8 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to
     *             change and could break backwards compatibility.
     */
-   virtual telux::common::Status requestDataCallStatistics(
-      int profileId, std::shared_ptr<IDataCallStatisticsCallback> callback = nullptr)
+   virtual telux::common::Status requestDataCallStatistics(int profileId,
+                                                           StatisticsResponseCb callback = nullptr)
       = 0;
 
    /**
@@ -197,8 +232,7 @@ public:
     *             change and could break backwards compatibility.
     */
    virtual telux::common::Status requestDataRate(int profileId,
-                                                 std::shared_ptr<IDataRateCallback> callback
-                                                 = nullptr)
+                                                 RateResponseCallback callback = nullptr)
       = 0;
 
    /**
@@ -221,12 +255,12 @@ public:
     *
     * @param [in] listener    pointer of IDataConnectionListener object that needs to be removed
     *
-    * @returns Status of removeListener success or suitable status code
+    * @returns Status of deregisterListener success or suitable status code
     *
     * @note       Eval: This is a new API and is being evaluated. It is subject to
     *             change and could break backwards compatibility.
     */
-   virtual telux::common::Status removeListener(std::weak_ptr<IDataConnectionListener> listener)
+   virtual telux::common::Status deregisterListener(std::weak_ptr<IDataConnectionListener> listener)
       = 0;
 
    /**
@@ -282,7 +316,7 @@ public:
     * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
     *         break backwards compatibility.
     */
-   virtual DataCallFailReason getDataCallFailReason() = 0;
+   virtual DataCallEndReason getDataCallEndReason() = 0;
 
    /**
     * Get data call status like connected, disconnected and IP address changes.
@@ -359,17 +393,6 @@ public:
 class IDataConnectionListener {
 public:
    /**
-    * This function is called when there is new data call established.
-    *
-    * @param [out] dataCall   Handle of specific data call with data call info
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    */
-   virtual void onNewDataCall(const std::shared_ptr<IDataCall> &dataCall) {
-   }
-
-   /**
     * This function is called when there is a change in the data call.
     *
     * @param [out] status     Data Call Status
@@ -379,72 +402,6 @@ public:
     *         break backwards compatibility.
     */
    virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
-
-   /**
-    * This function is called in case of call failure, IDataCall will have cause code for
-    * failure
-    *
-    * @param [out] dataCall   Pointer to IDataCall
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    */
-   virtual void onDataCallFailure(const std::shared_ptr<IDataCall> &dataCall){};
-};
-
-/**
- * @brief Interface for request Data call statistics callback
- * Client needs to implement this interface to get single shot responses for
- * commands like request auto connect.
- *
- * The methods in callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
- */
-class IDataCallStatisticsCallback : public telux::common::ICommandCallback {
-public:
-   /**
-    * This function is called with the response to requestDataCallStatistics API.
-    *
-    * @param [out] dataStats       Data Call statistics
-    * @param [out] error           Return code for whether the operation
-    *                              succeeded or failed
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    */
-   virtual void onResponse(const DataCallStats &dataStats, telux::common::ErrorCode error) {
-   }
-};
-
-/**
- * @brief Interface for request Data rate callback
- * Client needs to implement this interface to get single shot responses for
- * commands like request auto connect.
- *
- * The methods in callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
- */
-class IDataRateCallback : public telux::common::ICommandCallback {
-public:
-   /**
-    * This function is called with the response to requestDataRate API.
-    *
-    * @param [out] dataRate   The structure contains current and max transfer and
-    *                         receiver rate
-    * @param [out] error      Return code for whether the operation
-    *                         succeeded or failed
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    */
-   virtual void onResponse(const DataChannelRate &dataRate, telux::common::ErrorCode error) {
-   }
 };
 
 /** @} */ /* end_addtogroup telematics_data */

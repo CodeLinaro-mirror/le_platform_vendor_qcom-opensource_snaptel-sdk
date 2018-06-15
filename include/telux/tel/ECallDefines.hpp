@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,12 +43,16 @@ namespace tel {
 
 /** @addtogroup telematics_phone
  * @{ */
+
 /**
  * ECall Variant
  */
 enum class ECallVariant {
-   ECALL_TEST = 1,      /**< Test eCall (0x01) */
-   ECALL_EMERGENCY = 2, /**< Emergency eCall (0x02) */
+   ECALL_TEST = 1,      /**< Initiate a test voice eCall with a configured telephone number stored
+                           in the USIM. */
+   ECALL_EMERGENCY = 2, /**< Initiate an emergency eCall. The trigger can be a manually initiated
+                           eCall or automatically initiated eCall. */
+   ECALL_VOICE = 4,     /**< Initiate a regular voice call with capability to transfer an MSD. */
 };
 
 /**
@@ -56,6 +60,19 @@ enum class ECallVariant {
  */
 enum class EmergencyCallType {
    CALL_TYPE_ECALL = 12, /**<  eCall (0x0C) */
+};
+
+/**
+ * MSD Transmission Status
+ */
+enum class ECallMsdTransmissionStatus{
+   SUCCESS = 0, /**< Success */
+   FAILURE = 1, /**< Generic failure */
+   MSD_TRANSMISSION_STARTED = 2,   /**< MSD Transmission Started */
+   NACK_OUT_OF_ORDER = 3,      /**< Out of order NACK message
+                               detected */
+   ACK_OUT_OF_ORDER = 4,       /**< Out of order ACK message
+                               detected */
 };
 
 /**

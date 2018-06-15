@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -109,8 +109,8 @@ void LocationTestApp::removeLocationListener(std::vector<std::string> userInput)
 void LocationTestApp::positionReportTimeout(std::vector<std::string> userInput) {
    if(!userInput[1].empty()) {
       int opt = std::stoi(userInput[1]);
-      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-                                                   "Postion report timeout request");
+      myLocCmdResponseCb_
+         = std::make_shared<MyLocationCommandCallback>("Postion report timeout request");
       locationManager_->setPositionReportTimeout((uint32_t)opt, myLocCmdResponseCb_);
    }
 }
@@ -118,8 +118,8 @@ void LocationTestApp::positionReportTimeout(std::vector<std::string> userInput) 
 void LocationTestApp::finalReportMinInterval(std::vector<std::string> userInput) {
    if(!userInput[1].empty()) {
       int opt = std::stoi(userInput[1]);
-      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-                                                   "Final report min interval request");
+      myLocCmdResponseCb_
+         = std::make_shared<MyLocationCommandCallback>("Final report min interval request");
       locationManager_->setMinIntervalForReports((uint32_t)opt, myLocCmdResponseCb_);
    }
 }
@@ -127,8 +127,8 @@ void LocationTestApp::finalReportMinInterval(std::vector<std::string> userInput)
 void LocationTestApp::horizontalAccuracyLevel(std::vector<std::string> userInput) {
    if(!userInput[1].empty()) {
       int opt = std::stoi(userInput[1]);
-      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-                                                   "Horizontal accuracy level request");
+      myLocCmdResponseCb_
+         = std::make_shared<MyLocationCommandCallback>("Horizontal accuracy level request");
       locationManager_->setHorizontalAccuracyLevel((HorizontalAccuracyLevel)opt,
                                                    myLocCmdResponseCb_);
    } else {

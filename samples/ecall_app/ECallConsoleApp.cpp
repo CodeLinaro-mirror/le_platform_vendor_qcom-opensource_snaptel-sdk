@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -162,8 +162,7 @@ void ECallConsoleApp::makeCall(std::vector<std::string> inputCommand) {
    std::cout << "dialing " << inputCommand[1] << std::endl;  // Phone Number entered by user
    std::shared_ptr<ICall> spCall;
    const std::string phoneNumber = inputCommand[1];  // Phone Number mandatory
-   int phoneId;
-   spDefaultPhone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
    Status status = callManager->makeCall(phoneId, phoneNumber, callCommandCallback_);
    if(status == Status::SUCCESS) {
       std::cout << GREEN << "  Dial request is successful" << DONE << std::endl;
@@ -201,8 +200,6 @@ void ECallConsoleApp::answerCall(std::vector<std::string> inputCommand) {
  * Sample hangup operation
  */
 void ECallConsoleApp::hangup(std::vector<std::string> inputCommand) {
-   auto &phoneFactory = PhoneFactory::getInstance();
-
    try {
 
       std::shared_ptr<ICall> spCall = nullptr;
@@ -242,8 +239,7 @@ void ECallConsoleApp::eCallSOS(std::vector<std::string> inputCommand) {
    MsdSettings msdSettings;
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    auto callManager = phoneFactory.getCallManager();
-   int phoneId;
-   spDefaultPhone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
    auto ret = callManager->makeECall(phoneId, eCallMsdData, (int)emergencyCategory,
                                      (int)eCallVariant, callCommandCallback_);
    if(ret == Status::SUCCESS) {
@@ -268,37 +264,29 @@ void ECallConsoleApp::makeECall(std::vector<std::string> inputCommand) {
    ECallCategory emergencyCategory;
    ECallVariant eCallVariant;
 
-   bool validCategory = false;
-   bool validVariant = false;
    if(category == ECALL_CATEGORY_AUTO) {  // Automatically triggered eCall.
       emergencyCategory = ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
-      validCategory = true;
    } else if(category == ECALL_CATEGORY_MANUAL) {  // Manually triggered eCall.
       emergencyCategory = ECallCategory::VOICE_EMER_CAT_MANUAL;
-      validCategory = true;
    } else {
       std::cout << "Invalid Emergency Call Category --Look Help for usage" << std::endl;
       return;
    }
    if(variant == ECALL_VARIANT_TEST) {  // Will use the PSAP number configured in NV settings
       eCallVariant = ECallVariant::ECALL_TEST;
-      validVariant = true;
    } else if(variant
              == ECALL_VARIANT_EMERGENCY) {  // Will use the emergency number configured in FDN
                                             // i.e. 112.
       eCallVariant = ECallVariant::ECALL_EMERGENCY;
-      validVariant = true;
    } else {
       std::cout << "Invalid Emergency Call Variant--Look Help for usage" << std::endl;
       return;
    }
 
    MsdSettings msdSettings;
-   bool msdStatus;
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    auto callManager = phoneFactory.getCallManager();
-   int phoneId;
-   spDefaultPhone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
    auto ret = callManager->makeECall(phoneId, eCallMsdData, (int)emergencyCategory,
                                      (int)eCallVariant, callCommandCallback_);
    if(ret == Status::SUCCESS) {
@@ -315,11 +303,9 @@ void ECallConsoleApp::updateECallMSD(std::vector<std::string> inputCommand) {
    MsdSettings msdSettings;
    auto &phoneFactory = PhoneFactory::getInstance();
    auto spDefaultPhone = phoneFactory.getPhoneManager()->getPhone();
-   bool msdStatus;
    auto eCallMsdData = msdSettings.readMsdFromFile(UPDATED_MSDSETTINGS_FILE);
    auto callManager = phoneFactory.getCallManager();
-   int phoneId;
-   spDefaultPhone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
    auto ret = callManager->updateECallMsd(phoneId, eCallMsdData, updateMsdCommandCallback_);
    if(ret == Status::SUCCESS) {
       std::cout << GREEN << "  Update MSD request is successful" << DONE << std::endl;

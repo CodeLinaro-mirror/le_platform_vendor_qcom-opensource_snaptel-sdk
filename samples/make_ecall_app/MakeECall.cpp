@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -123,8 +123,7 @@ int main(int, char **) {
    std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
 
    // ### 5. Get unique id of the phone
-   int phoneId;
-   phone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
 
    // ### 6. Instantiate dial callback instance - this is optional
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
@@ -134,7 +133,6 @@ int main(int, char **) {
    int emergencyCategory = 64;
    ECallMsdData eCallMsdData;
    int eCallVariant = 1;
-   int msdVersion_ = MSD_VERSION;
    // Populate eCallMsdData with valid information
    eCallMsdData.optionals.recentVehicleLocationN1Present = RECENT_LOCATION_N1_PRESENT;
    eCallMsdData.optionals.recentVehicleLocationN2Present = RECENT_LOCATION_N2_PRESENT;

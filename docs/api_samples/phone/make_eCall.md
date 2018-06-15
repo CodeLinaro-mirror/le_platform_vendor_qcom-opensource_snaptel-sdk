@@ -35,11 +35,10 @@ and others. if subsystems were not ready, wait for unconditionally.
    ~~~~~~
 
 
-### 5. Get unique id of the phone
+### 5. Initialize phoneId with default value
 
    ~~~~~~{.cpp}
-   int phoneId;
-   phone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
    ~~~~~~
 
 ### 6. Instantiate dial callback instance - this is optional

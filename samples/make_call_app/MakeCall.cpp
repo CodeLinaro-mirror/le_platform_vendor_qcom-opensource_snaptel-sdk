@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -86,8 +86,7 @@ int main(int, char **) {
    std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
 
    // ### 4. Get unique id of the phone
-   int phoneId;
-   phone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
 
    // ### 5. Instantiate dial callback instance - this is optional
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();

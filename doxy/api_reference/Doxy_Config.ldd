@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+#  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -35,8 +35,8 @@ DOXYFILE_ENCODING      = UTF-8
 #                        The PROJECT_NAME and PROJECT_NUMBER appear in the header
 #                        on each HTML page.
 PROJECT_NAME           = "Telematics SDK - Interface Specification"
-PROJECT_NUMBER         = "TBD"
-PROJECT_BRIEF          =
+PROJECT_NUMBER         = ""
+PROJECT_BRIEF          = 
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = "."
 CREATE_SUBDIRS         = NO
@@ -93,7 +93,7 @@ ALIASES +=               "anonenum{1}=@latexonly\anonenum{@endlatexonly\1@latexo
 #                     FIGURE AND TABLE INSERTION:
 ALIASES +=               "inputfig{2}=@latexonly \begin{figure}[H] \centering \includegraphics[scale=\1]{../../images/\2} \end{figure} @endlatexonly " \
                          "inputfigcap{4}=@latexonly \begin{figure}[H] \centering \includegraphics[scale=\1]{../../images/\2} \renewcommand{\thefigure}{\thechapter-\arabic{figure}} \caption{\3} \label{fig_\4} \end{figure}@endlatexonly" \
-                         "html_image{5}=@htmlonly <div style="text-align:center;"><img src=\"../../images/\1\" alt=\"\2\" width=\"\3%\" height=\"\4%\"><br/><br/><b>\5</b></div><br/> @endhtmlonly" \
+                         "html_image{5}=@htmlonly <div style="text-align:center;"><img src=\"images/\1\" alt=\"\2\" width=\"\3%\" height=\"\4%\"><br/><br/><b>\5</b></div><br/> @endhtmlonly" \
                          "inputtable{1}=&nbsp; @latexonly \vspace{-8pt} \input{tables/\1}@endlatexonly"
 #                     CROSS-REFERENCES FOR LATEX AND HTML:
 ALIASES +=               "xreflabel{1}=@latexonly \label{\1}@endlatexonly" \
@@ -140,9 +140,9 @@ ALIASES +=               "limit=@par Limitations"
 #                     CUSTOM ALIASES TO SUPPORT BOTH HTML AND LATEX OUTPUT:
 ALIASES +=              "apr_msgpayload=@par APR message payload" \
                         "apr_msgpayload{1}=@par APR message payload (\1)" \
-                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics Software Development Kit </b> <br /><br /><br /> Interface Specification</span>\
+                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics SDK </b> <br /><br /><br /> Interface Specification</span>\
                         <br /><span style='font-size:0.8cm;'></span><br /> \
-                        <span style='font-size:0.4cm;'>TBD<br /> $(today)<br /><br /></span></>@endhtmlonly \
+                        <span style='font-size:0.4cm;'><br /> $(today)<br /><br /></span></>@endhtmlonly \
                         @latexonly \vspace{1.0in}\begin{flushleft}\textbf{\Huge \doctitle} \par \vspace{6pt} {\huge \doctype} \par \vspace{16pt} {\Large \dcn \par \vspace{1pt} \docdate} \end{flushleft}\sffamily\small@endlatexonly" \
                                     "url{2}=@latexonly \rm \color{blue}{\url{\1}} \bf @endlatexonly @htmlonly <p><b></b> <a style='color: #0A0AFF;' href='\1'>\2</a></p>@endhtmlonly" \
 #                       Table definitions:
@@ -350,14 +350,14 @@ QHP_SECT_FILTER_ATTRS  =
 QHG_LOCATION           =
 GENERATE_ECLIPSEHELP   = NO
 ECLIPSE_DOC_ID         = org.doxygen.Project
-DISABLE_INDEX          = YES
+DISABLE_INDEX          = NO
 GENERATE_TREEVIEW      = YES
 ENUM_VALUES_PER_LINE   = 4
-TREEVIEW_WIDTH         = 100
+TREEVIEW_WIDTH         = 280
 EXT_LINKS_IN_WINDOW    = NO
 FORMULA_FONTSIZE       = 10
 FORMULA_TRANSPARENT    = YES
-USE_MATHJAX            = YES
+USE_MATHJAX            = NO
 MATHJAX_RELPATH        = http://cdn.mathjax.org/mathjax/latest
 MATHJAX_EXTENSIONS     =
 SEARCHENGINE           = NO

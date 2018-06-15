@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -50,7 +50,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{initialization_call_flow.png,Phone manager initialization,40,40,Phone manager initialization}
+@html_image{initialization_call_flow.png,Phone manager initialization,50,50,Phone manager initialization}
 
 
 1. Application can use IPhoneManager::isSubsystemReady to determine if the system is ready.
@@ -73,7 +73,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{dial_call_flow.png,Dial call flow,40,40,Dial call flow}
+@html_image{dial_call_flow.png,Dial call flow,80,80,Dial call flow}
 
 1. The application gets the PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to get Phone.
@@ -103,7 +103,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{ecall_call_flow.png,ECall call flow,40,40,ECall call flow}
+@html_image{ecall_call_flow.png,ECall call flow,80,80,ECall call flow}
 
 1. The application gets the PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to get Phone.
@@ -133,7 +133,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{signal_strength_call_flow.png,Signal strength call flow,40,40,Signal strength call flow}
+@html_image{signal_strength_call_flow.png,Signal strength call flow,80,80,Signal strength call flow}
 
 1. The application gets PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to get Phone instance.
@@ -159,7 +159,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{answer_reject_reject_with_sms_call_flow.png,Answer Reject RejectWithSMS call flow,40,40,Answer Reject RejectWithSMS call flow}
+@html_image{answer_reject_reject_with_sms_call_flow.png,Answer Reject RejectWithSMS call flow,80,80,Answer Reject RejectWithSMS call flow}
 
 1. The application gets the PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to register listener.
@@ -184,7 +184,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{hold_call_flow.png,Hold call flow,40,40,Hold call flow}
+@html_image{hold_call_flow.png,Hold call flow,80,80,Hold call flow}
 
 1. The application gets the PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to get Phone.
@@ -214,7 +214,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{hold_conference_swap_call_flow.png,Hold Conference Swap call flow,40,40,Hold Conference Swap call flow}
+@html_image{hold_conference_swap_call_flow.png,Hold Conference Swap call flow,80,80,Hold Conference Swap call flow}
 
 1. The application makes first call using ICall.
 2. The application receives the status like SUCCESS, FAILED etc based on execution of makeCall operation.
@@ -247,7 +247,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{sms_call_flow.png,SMS call flow,40,40,SMS call flow}
+@html_image{sms_call_flow.png,SMS call flow,80,80,SMS call flow}
 
 1. Application gets PhoneManager object using PhoneFactory.
 2. PhoneFactory returns the PhoneManager object to application in order to get list of phone identifiers.
@@ -278,7 +278,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{get_applications_call_flow.png,Get applications call flow,40,40,Get applications call flow}
+@html_image{get_applications_call_flow.png,Get applications call flow,80,80,Get applications call flow}
 
 1. Application gets the CardManager object from PhoneFactory.
 2. Application receives CardManager object in order to perform operations like getSlotIds and getCard.
@@ -309,7 +309,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{transmit_apdu_logical_call_flow.png,On logical channel,40,40,On logical channel}
+@html_image{transmit_apdu_logical_call_flow.png,On logical channel,80,80,On logical channel}
 
 1. The Application requests CardApp for the SIM application identifier.
 2. The application receives the application identifier to perform open logical channel.
@@ -336,7 +336,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{transmit_apdu_basic_call_flow.png,On basic channel,40,40,On basic channel}
+@html_image{transmit_apdu_basic_call_flow.png,On basic channel,80,80,On basic channel}
 
 1. Application gets the ICardManager object from PhoneFactory.
 2. Application receives ICardManager object in order to perform operation like getCard.
@@ -361,7 +361,7 @@ Example:
 \end{figure}
 @endlatexonly
 
-@html_image{sap_card_operations.png,Request card reader status, Request ATR, Transmit APDU call flow,40,40,Request card reader status, Request ATR, Transmit APDU call flow}
+@html_image{sap_card_operations.png,Request card reader status, Request ATR, Transmit APDU call flow,80,80,Request card reader status, Request ATR, Transmit APDU call flow}
 
 1. The application gets SapCardManager object corresponding to slotId using PhoneFactory.
 2. The application receives the SapCardManager object in order to perform SAP operations like request ATR, Card Reader Status and transmit APDU.
@@ -395,7 +395,7 @@ response using CommandResponseCallback.
 \end{figure}
 @endlatexonly
 
-@html_image{sap_mgr_sim_call_flow.png,SIM Turn off, Turn on and Reset call flow,40,40,SIM Turn off, Turn on and Reset call flow}
+@html_image{sap_mgr_sim_call_flow.png,SIM Turn off, Turn on and Reset call flow,80,80,SIM Turn off, Turn on and Reset call flow}
 
 1. Application gets SapCardManager object corresponding to slotID using PhoneFactory.
 2. PhoneFactory returns the SapCardManager object to application in order to perform SAP operations like SIM power off, on or reset.
@@ -429,7 +429,7 @@ asynchronous response using CommandResponseCallback.
 \end{figure}
 @endlatexonly
 
-@html_image{radio_and_service_state_call_flow.png,Radio and Service state call flow,40,40,Radio and Service state call flow}
+@html_image{radio_and_service_state_call_flow.png,Radio and Service state call flow,80,80,Radio and Service state call flow}
 
 1. The application gets PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to get Phone instance.
@@ -460,7 +460,7 @@ asynchronous response using CommandResponseCallback.
 \end{figure}
 @endlatexonly
 
-@html_image{subscription_initialization_call_flow.png,Subscription initialization call flow,40,40,subscription initialization call flow}
+@html_image{subscription_initialization_call_flow.png,Subscription initialization call flow,80,80,subscription initialization call flow}
 
 1. Application can use ISubscriptionManager::isSubsystemReady to determine if the SubscriptionManager is ready.
 2. The application receives the status i.e either true or false whether sub-system is ready or not.
@@ -495,14 +495,79 @@ asynchronous response using CommandResponseCallback.
 \end{figure}
 @endlatexonly
 
-@html_image{subscription_call_flow.png,Subscription call flow,40,40,subscription call flow}
+@html_image{subscription_call_flow.png,Subscription call flow,80,80,subscription call flow}
 
 1. The application gets the PhoneManager object using PhoneFactory.
 2. The application receives the PhoneManager object in order to get Subscription.
 3. The application gets the Subscription object for given slot identifier using SubscriptionManager.
 4. SubscriptionManager returns Subscription object to application. Subscription can be used to get subscription details like countryISO, operator details etc.
-5. The Subscriptionmanager registers a listener with CardManager to listen to the card info change notifications like cardstate PRESENT, ABSENT, UNKNOWN, ERROR and RESTRICTED.
+5. The Subscription manager registers a listener with CardManager to listen to the card info change notifications like cardstate PRESENT, ABSENT, UNKNOWN, ERROR and RESTRICTED.
 6. The SubscriptionManager receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CardManager.
 7. The SubscriptionManager receives callback card info change i.e subscription info changed or removed.
 8. The SubscriptionManager updates the application once the subscription info is updated.
+
+@section location_manager_call_flow Location Services call flow
+
+Application will get the location manager object from location factory. The application can register a listener for location and SV info updates. Location service will get
+started when the first listener registers itself. Application can configure horizontal accuracy level, time interval and timeout for position reports and can query for fix criteria.
+When there are no more listeners, location service will get stopped automatically.
+
+@subsection location_manager_listener_callflow Register/Remove listener for location manager call flow
+
+@anchor fig_location_manager_listener_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_manager_listener_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Register/Remove listener for location manager call flow}
+  \label{fig_location_manager_listener_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_manager_listener_callflow.png,Register/Remove listener for location manager call flow,80,80,Register/Remove listener for location manager call flow}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object using which application will register or remove a listener.
+3. Application can register a listener for getting notifications for location and satellite vehicle updates. Location manager will get started in background when first listener get added.
+Subsequently all other listeners will latch on the already started service.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application will get location updates like latitude, longitude and altitude etc.
+6. Application will also receive satellite vehicle information like SV status and constellation etc.
+7. Application can remove listener and when the number of listeners are zero then location manager will get stopped automatically.
+8. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@subsection configuration_of_position_reports Call flow for configuring position reports and query fix criteria
+
+@anchor fig_configuration_of_position_reports
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{configuration_of_position_reports.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for configuring position reports and query fix criteria}
+  \label{fig_configuration_of_position_reports}
+\end{figure}
+@endlatexonly
+
+@html_image{configuration_of_position_reports.png,Call flow for configuring position reports and query fix criteria,80,80,Call flow for configuring position reports and query fix criteria}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object using which application will configure time interval for position reports, horizontal accuracy level etc.
+3. Application can configure horizontal accuracy level criteria as LOW, MEDIUM or HIGH.
+4. Status of setHorizontalAccuracyLevel i.e. either SUCCESS or FAILED will be returned to the application.
+5. Optionally, the response for set horizontal accuracy level is received by the application.
+6. Application can configure minimum interval between position reports using ILocationManager object.
+7. Status of setMinIntervalForReports i.e. either SUCCESS or FAILED will be returned to the application.
+8. Optionally, the response for set minimum interval for position reports is received by the application.
+9. Application can configure timeout for getting a position fix.
+10. Status of setPositionReportTimeout i.e. either SUCCESS or FAILED will be returned to the application.
+11. Optionally, the response for set position report timeout is received by the application.
+12. Application can register a listener for getting notifications for fix criteria request.
+13. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
+14. Application can request the fix criteria.
+15. Status of requestLocationFixCriteria i.e. either SUCCESS or FAILED will be returned to the application.
+16. The response for request location fix criteria is received by the application.
+17. Application will get fix criteria indications like minimum interval between reports, timeout and horizontal accuracy level.
+
 */

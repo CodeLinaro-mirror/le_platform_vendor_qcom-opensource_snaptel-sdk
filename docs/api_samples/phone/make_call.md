@@ -34,11 +34,10 @@ and others. if subsystems were not ready, wait for unconditionally.
    std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
    ~~~~~~
 
-### 4. Get unique id of the phone
+### 4. Initialize phoneId with default value
 
    ~~~~~~{.cpp}
-   int phoneId;
-   phone->getPhoneId(phoneId);
+   int phoneId = DEFAULT_PHONE_ID;
    ~~~~~~
 
 ### 5. Instantiate dial call instance - this is optional
@@ -47,7 +46,7 @@ and others. if subsystems were not ready, wait for unconditionally.
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();
    ~~~~~~
 
-### 5.1 implement IMakeCallCallback interface to receive response for the dial request optional
+### 5.1 Implement IMakeCallCallback interface to receive response for the dial request optional
 
    ~~~~~~{.cpp}
    class DialCallback : public IMakeCallCallback {

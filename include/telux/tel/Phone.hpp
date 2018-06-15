@@ -52,8 +52,23 @@ namespace tel {
 /** @addtogroup telematics_phone
  * @{ */
 class ISignalStrengthCallback;
-class IVoiceRadioTechnologyCallback;
 class IVoiceServiceStateCallback;
+
+/**
+ * This function is called with the response to requestVoiceRadioTechnology API.
+ *
+ * @param [in] radioTech        Pointer to radio technology
+ * @param [in] error            Return code for whether the operation
+ *                              succeeded or failed
+ *        - @ref SUCCESS
+ *        - @ref RADIO_NOT_AVAILABLE
+ *        - @ref GENERIC_FAILURE
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+using VoiceRadioTechResponseCb
+   = std::function<void(RadioTechnology radioTech, telux::common::ErrorCode error)>;
 
 /**
  * @brief This class allows getting system information and registering for system events.
@@ -89,9 +104,7 @@ public:
     * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
     *         break backwards compatibility.
     */
-   virtual telux::common::Status
-      requestVoiceRadioTechnology(std::weak_ptr<IVoiceRadioTechnologyCallback> callback)
-      = 0;
+   virtual telux::common::Status requestVoiceRadioTechnology(VoiceRadioTechResponseCb callback) = 0;
 
    /**
     * Get service state of the phone.
@@ -167,35 +180,6 @@ public:
     */
    virtual void signalStrengthResponse(std::shared_ptr<SignalStrength> signalStrength,
                                        telux::common::ErrorCode error) {
-   }
-};
-
-/**
- * @brief Interface for voice radio technology callback object.
- * Client needs to implement this interface to get single shot responses for
- * commands like request voice radio technology.
- *
- * The methods in callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- */
-class IVoiceRadioTechnologyCallback : public telux::common::ICommandCallback {
-public:
-   /**
-    * This function is called with the response to requestVoiceRadioTechnology API.
-    *
-    * @param [out] radioTech        Pointer to radio technology
-    *
-    * @param [out] error            Return code for whether the operation
-    *                               succeeded or failed
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref GENERIC_FAILURE
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    */
-   virtual void voiceRadioTechnologyResponse(RadioTechnology radioTech,
-                                             telux::common::ErrorCode error) {
    }
 };
 

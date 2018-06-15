@@ -196,9 +196,9 @@ public:
    /**
     * This function is called with the response to IDataProfileManager::createProfile API.
     *
-    * @param [out] profileId    created profile Id for the response.
+    * @param [in] profileId    created profile Id for the response.
     *                           Use IDataProfileManager::requestProfile to get the data profile
-    * @param [out] error        @ref telux::common::ErrorCode
+    * @param [in] error        @ref telux::common::ErrorCode
     *
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
     *          break backwards compatibility.
@@ -223,8 +223,8 @@ public:
    /**
     * This function is called with the response to requestProfileList API or queryProfile API.
     *
-    * @param [out] profiles   List of profiles supported by the device
-    * @param [out] error      @ref telux::common::ErrorCode
+    * @param [in] profiles   List of profiles supported by the device
+    * @param [in] error      @ref telux::common::ErrorCode
     *
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
     *          break backwards compatibility.
@@ -250,8 +250,8 @@ public:
    /**
     * This function is called with the response to IDataProfileManager::requestProfile API.
     *
-    * @param [out] profile      Response of data profile
-    * @param [out] error        @ref telux::common::ErrorCode
+    * @param [in] profile      Response of data profile
+    * @param [in] error        @ref telux::common::ErrorCode
     *
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
     *          break backwards compatibility.

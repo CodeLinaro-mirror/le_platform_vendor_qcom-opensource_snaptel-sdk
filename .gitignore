@@ -7,11 +7,11 @@ doxy/api_reference/logs
 doxy/api_reference/logs/**
 doxy/api_reference/rtf/**
 
-doxy/user_manual/html
-doxy/user_manual/html/**
-doxy/user_manual/latex
-doxy/user_manual/latex/**
-doxy/user_manual/logs
-doxy/user_manual/logs/**
-doxy/user_manual/rtf/**
+doxy/user_guide/html
+doxy/user_guide/html/**
+doxy/user_guide/latex
+doxy/user_guide/latex/**
+doxy/user_guide/logs
+doxy/user_guide/logs/**
+doxy/user_guide/rtf/**
 

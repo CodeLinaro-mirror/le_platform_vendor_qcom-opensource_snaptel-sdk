@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,7 +57,7 @@ when       who     what, where, why
    \label{fig_sdk_overview}
 \end{figure}
 @endlatexonly
-@html_image{sdk_overview.png,SDK-Overview,40,40,SDK-Overview}
+@html_image{sdk_overview.png,SDK-Overview,70,70,SDK-Overview}
 
 @section overview Overview
 
@@ -131,10 +131,22 @@ Phone APIs of Telematics SDK provides phone related information such as
    - Subscription Information
 
 @subsection location_services Location Services
-Location Services APIs of Telematics SDK provide the mechanism to register listener and to receive location updates and satellite vehicle infomation.
+Location Services APIs of Telematics SDK provide the mechanism to register listener and to receive location updates and satellite vehicle information.
 Following parameters are configurable through the APIs.
    - Minimum time interval between two consecutive location reports.
    - Timeout period for location reports.
    - Horizontal accuracy level.
+
+@subsection data_services Data Services
+Data Services APIs in the Telematics SDK used for cellular connectivity and modem profile management.
+
+Data Connection Manager APIs provide functionality such as 
+   - start / stop data call
+   - listen for data call state changes
+
+Data Profile Manager APIs provide functionality such as 
+   - List available profiles in the modem
+   - Create / modify / delete / modify modem profiles
+   - Query for the selected profile
 
 */

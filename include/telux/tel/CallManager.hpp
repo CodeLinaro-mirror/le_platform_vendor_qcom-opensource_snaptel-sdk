@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -224,7 +224,6 @@ public:
     * @param [out] error - @ref ErrorCode
     * @param [out] call - Pointer to Call object or nullptr in case of failure
     */
-   // TODO: How to get call object if dial request handler is in CallManager?
    virtual void makeCallResponse(telux::common::ErrorCode error,
                                  std::shared_ptr<ICall> call = nullptr) {
    }

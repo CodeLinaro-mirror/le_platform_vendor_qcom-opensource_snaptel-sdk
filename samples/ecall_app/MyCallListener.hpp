@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -39,7 +39,10 @@
 class MyCallListener : public telux::tel::ICallListener {
    void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
-   void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
+   void onECallMsdTransmissionStatus(int phoneId,
+      telux::common::ErrorCode errorCode) override;
+   void onECallMsdTransmissionStatus(int phoneId,
+      telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
 
    /**
     * Get current time
@@ -56,6 +59,10 @@ class MyCallListener : public telux::tel::ICallListener {
     * Get the call end cause in string format from call end cause code
     */
    std::string callEndCauseToString(telux::tel::CallEndCause causeCode);
+   /*
+    * Get ECallMsdTransmissionStatus in string
+    */
+   std::string eCallMsdTransmissionStatusToString(telux::tel::ECallMsdTransmissionStatus status);
 };
 
 #endif  // MYCALLLISTENER_HPP

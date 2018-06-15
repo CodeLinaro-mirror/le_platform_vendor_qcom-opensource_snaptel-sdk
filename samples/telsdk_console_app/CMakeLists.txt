@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+#  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -29,16 +29,37 @@
 
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_TELSDK_CONSOKE_APP telsdk_console_app)
+set(TARGET_TELSDK_CONSOLE_APP telsdk_console_app)
 
-set(TELSDK_CONSOKE_APP_SOURCES
-    TelSdkConsoleApp.cpp
-    MyPhoneListener.cpp
-    MyCardHandler.cpp
-    MyCallListener.cpp
-    MsdSettings.cpp
-    MySmsHandler.cpp
-    MySubscriptionListener.cpp
+set(TELSDK_CONSOLE_APP_SOURCES
+   Phone/PhoneMenu.cpp
+   Phone/MyPhoneListener.cpp
+   Phone/MySubscriptionListener.cpp
+
+   Call/CallMenu.cpp
+   Call/MyCallListener.cpp
+
+   SimCardServices/SimCardServicesMenu.cpp
+   SimCardServices/Card/CardServicesMenu.cpp
+   SimCardServices/Card/MyCardListener.cpp
+   SimCardServices/SapCard/SapCardServicesMenu.cpp
+   SimCardServices/SapCard/MySapCardListener.cpp
+
+   Sms/SmsMenu.cpp
+   Sms/MySmsListener.cpp
+
+   Location/LocationMenu.cpp
+   Location/MyLocationListener.cpp
+   Location/MyLocationCommandCallback.cpp
+
+   ECall/ECallMenu.cpp
+   ECall/MsdSettings.cpp
+   ECall/MyECallListener.cpp
+
+   TelSdkConsoleApp.cpp
+
+   console_app_framework/ConsoleAppCommand.cpp
+   console_app_framework/ConsoleApp.cpp
 )
 
 macro(SYSR_INCLUDE_DIR subdir)
@@ -46,16 +67,19 @@ macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
 endmacro()
 
+include_directories(BEFORE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 # add these sub-folders from /usr/include/<subdir>
 SYSR_INCLUDE_DIR(telux)
 
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-add_executable (${TARGET_TELSDK_CONSOKE_APP} ${TELSDK_CONSOKE_APP_SOURCES})
-target_link_libraries(${TARGET_TELSDK_CONSOKE_APP} telux_tel)
+add_executable (${TARGET_TELSDK_CONSOLE_APP} ${TELSDK_CONSOLE_APP_SOURCES})
+target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_loc)
 
 # install to target
-install ( TARGETS ${TARGET_TELSDK_CONSOKE_APP}
+install ( TARGETS ${TARGET_TELSDK_CONSOLE_APP}
           RUNTIME DESTINATION bin
           ARCHIVE DESTINATION bin )

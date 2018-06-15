@@ -41,6 +41,8 @@
 #include <string>
 #include <vector>
 
+#include <telux/common/CommonDefines.hpp>
+
 namespace telux {
 namespace data {
 
@@ -51,9 +53,9 @@ namespace data {
  */
 enum class IpFamilyType {
    IP_FAMILY_TYPE_UNKNOWN = -1,
-   IP_FAMILY_TYPE_V4 = 0,    // IPv4 call
-   IP_FAMILY_TYPE_V6 = 2,    // IPv6 call
-   IP_FAMILY_TYPE_V4V6 = 3,  // IPv4 and IPv6 call
+   IP_FAMILY_TYPE_V4 = 0x04,    // IPv4 call
+   IP_FAMILY_TYPE_V6 = 0x06,    // IPv6 call
+   IP_FAMILY_TYPE_V4V6 = 0x0A,  // IPv4 and IPv6 call
 };
 
 /**
@@ -119,15 +121,15 @@ struct DataChannelRate {
  * DATA event status
  */
 enum class DataCallStatus {
-   CALL_STATUS_INVALID = 0x00,    /**<  Invalid  */
-   CALL_STATUS_NET_CONNECTED,     /**< Call is connected */
-   CALL_STATUS_NET_NO_NET,        /**< Call is disconnected */
-   CALL_STATUS_NET_IDLE,          /**< Call is in idle state */
-   CALL_STATUS_NET_CONNECTING,    /**< Call is in connecting state */
-   CALL_STATUS_NET_DISCONNECTING, /**< Call is in disconnecting state */
-   CALL_STATUS_NET_RECONFIGURED,  /**< Interface is reconfigured, IP Address got changed */
-   CALL_STATUS_NET_NEWADDR,       /**< A new IP address was added on an existing call */
-   CALL_STATUS_NET_DELADDR,       /**< An IP address was removed from the existing interface */
+   INVALID = 0x00,    /**<  Invalid  */
+   NET_CONNECTED,     /**< Call is connected */
+   NET_NO_NET,        /**< Call is disconnected */
+   NET_IDLE,          /**< Call is in idle state */
+   NET_CONNECTING,    /**< Call is in connecting state */
+   NET_DISCONNECTING, /**< Call is in disconnecting state */
+   NET_RECONFIGURED,  /**< Interface is reconfigured, IP Address got changed */
+   NET_NEWADDR,       /**< A new IP address was added on an existing call */
+   NET_DELADDR,       /**< An IP address was removed from the existing interface */
 };
 
 /**
@@ -146,52 +148,252 @@ struct IpAddrInfo {
  * Bearer technology types (returned with getCurrentBearerTech).
  */
 enum class DataBearerTechnology {
-   BEARER_TECH_UNKNOWN, /**< Unknown bearer. */
+   UNKNOWN, /**< Unknown bearer. */
    // CDMA related data bearer technologies
-   BEARER_TECH_CDMA_1X,    /**< 1X technology. */
-   BEARER_TECH_EVDO_REV0,  /**< CDMA Rev 0. */
-   BEARER_TECH_EVDO_REVA,  /**< CDMA Rev A. */
-   BEARER_TECH_EVDO_REVB,  /**< CDMA Rev B. */
-   BEARER_TECH_EHRPD,      /**< EHRPD. */
-   BEARER_TECH_FMC,        /**< Fixed mobile convergence. */
-   BEARER_TECH_HRPD,       /**< HRPD */
+   CDMA_1X,                /**< 1X technology. */
+   EVDO_REV0,              /**< CDMA Rev 0. */
+   EVDO_REVA,              /**< CDMA Rev A. */
+   EVDO_REVB,              /**< CDMA Rev B. */
+   EHRPD,                  /**< EHRPD. */
+   FMC,                    /**< Fixed mobile convergence. */
+   HRPD,                   /**< HRPD */
    BEARER_TECH_3GPP2_WLAN, /**< IWLAN */
 
    // UMTS related data bearer technologies
-   BEARER_TECH_WCDMA,         /**< WCDMA. */
-   BEARER_TECH_GPRS,          /**< GPRS. */
-   BEARER_TECH_HSDPA,         /**< HSDPA. */
-   BEARER_TECH_HSUPA,         /**< HSUPA. */
-   BEARER_TECH_EDGE,          /**< EDGE. */
-   BEARER_TECH_LTE,           /**< LTE. */
-   BEARER_TECH_HSDPA_PLUS,    /**< HSDPA+. */
-   BEARER_TECH_DC_HSDPA_PLUS, /**< DC HSDPA+. */
-   BEARER_TECH_HSPA,          /**< HSPA */
-   BEARER_TECH_64_QAM,        /**< 64 QAM. */
-   BEARER_TECH_TDSCDMA,       /**< TD-SCDMA. */
-   BEARER_TECH_GSM,           /**< GSM */
-   BEARER_TECH_3GPP_WLAN,     /**< IWLAN */
-   BEARER_TECH_MAX,
+   WCDMA,                 /**< WCDMA. */
+   GPRS,                  /**< GPRS. */
+   HSDPA,                 /**< HSDPA. */
+   HSUPA,                 /**< HSUPA. */
+   EDGE,                  /**< EDGE. */
+   LTE,                   /**< LTE. */
+   HSDPA_PLUS,            /**< HSDPA+. */
+   DC_HSDPA_PLUS,         /**< DC HSDPA+. */
+   HSPA,                  /**< HSPA */
+   BEARER_TECH_64_QAM,    /**< 64 QAM. */
+   TDSCDMA,               /**< TD-SCDMA. */
+   GSM,                   /**< GSM */
+   BEARER_TECH_3GPP_WLAN, /**< IWLAN */
 };
 
 /**
  * Data call terminated due to reason type.
  */
-enum class DataCallFailType {
-   CALL_FAIL_TYPE_UNKNOWN,
-   CALL_FAIL_TYPE_MOBILE_IP,
-   CALL_FAIL_TYPE_INTERNAL,
-   CALL_FAIL_TYPE_CALL_MANAGER_DEFINED,
-   CALL_FAIL_TYPE_3GPP_SPEC_DEFINED,
-   CALL_FAIL_TYPE_PPP,
-   CALL_FAIL_TYPE_EHRPD,
-   CALL_FAIL_TYPE_IPV6,
+enum class EndReasonType {
+   CE_UNKNOWN = 0xFF,
+   CE_MOBILE_IP = 0x01,
+   CE_INTERNAL = 0x02,
+   CE_CALL_MANAGER_DEFINED = 0x03,
+   CE_3GPP_SPEC_DEFINED = 0x06,
+   CE_PPP = 0x07,
+   CE_EHRPD = 0x08,
+   CE_IPV6 = 0x09,
 };
-struct DataCallFailReason {
-   DataCallFailType reasonType
-      = DataCallFailType::CALL_FAIL_TYPE_UNKNOWN; /**< Data call terminated due to reason type,
-              default is CALL_FAIL_TYPE_UNKNOWN */
-   int reasonCode = 0;                            /**< Reason Code corresponding to reason type*/
+
+enum class MobileIpReasonCode {
+   /*Mobile IP Call End reasons*/
+   CE_MIP_FA_ERR_REASON_UNSPECIFIED = 64,
+   CE_MIP_FA_ERR_ADMINISTRATIVELY_PROHIBITED = 65,
+   CE_MIP_FA_ERR_INSUFFICIENT_RESOURCES = 66,
+   CE_MIP_FA_ERR_MOBILE_NODE_AUTHENTICATION_FAILURE = 67,
+   CE_MIP_FA_ERR_HA_AUTHENTICATION_FAILURE = 68,
+   CE_MIP_FA_ERR_REQUESTED_LIFETIME_TOO_LONG = 69,
+   CE_MIP_FA_ERR_MALFORMED_REQUEST = 70,
+   CE_MIP_FA_ERR_MALFORMED_REPLY = 71,
+   CE_MIP_FA_ERR_ENCAPSULATION_UNAVAILABLE = 72,
+   CE_MIP_FA_ERR_VJHC_UNAVAILABLE = 73,
+   CE_MIP_FA_ERR_REVERSE_TUNNEL_UNAVAILABLE = 74,
+   CE_MIP_FA_ERR_REVERSE_TUNNEL_IS_MANDATORY_AND_T_BIT_NOT_SET = 75,
+   CE_MIP_FA_ERR_DELIVERY_STYLE_NOT_SUPPORTED = 79,
+   CE_MIP_FA_ERR_MISSING_NAI = 97,
+   CE_MIP_FA_ERR_MISSING_HA = 98,
+   CE_MIP_FA_ERR_MISSING_HOME_ADDR = 99,
+   CE_MIP_FA_ERR_UNKNOWN_CHALLENGE = 104,
+   CE_MIP_FA_ERR_MISSING_CHALLENGE = 105,
+   CE_MIP_FA_ERR_STALE_CHALLENGE = 106,
+   CE_MIP_HA_ERR_REASON_UNSPECIFIED = 128,
+   CE_MIP_HA_ERR_ADMINISTRATIVELY_PROHIBITED = 129,
+   CE_MIP_HA_ERR_INSUFFICIENT_RESOURCES = 130,
+   CE_MIP_HA_ERR_MOBILE_NODE_AUTHENTICATION_FAILURE = 131,
+   CE_MIP_HA_ERR_FA_AUTHENTICATION_FAILURE = 132,
+   CE_MIP_HA_ERR_REGISTRATION_ID_MISMATCH = 133,
+   CE_MIP_HA_ERR_MALFORMED_REQUEST = 134,
+   CE_MIP_HA_ERR_UNKNOWN_HA_ADDR = 136,
+   CE_MIP_HA_ERR_REVERSE_TUNNEL_UNAVAILABLE = 137,
+   CE_MIP_HA_ERR_REVERSE_TUNNEL_IS_MANDATORY_AND_T_BIT_NOT_SET = 138,
+   CE_MIP_HA_ERR_ENCAPSULATION_UNAVAILABLE = 139,
+   CE_MIP_ERR_REASON_UNKNOWN = 65535,
+};
+
+enum class InternalReasonCode {
+   /*Internal Error Call End reasons*/
+   CE_INTERNAL_ERROR = 201,
+   CE_CALL_ENDED = 202,
+   CE_INTERNAL_UNKNOWN_CAUSE_CODE = 203,
+   CE_UNKNOWN_CAUSE_CODE = 204,
+   CE_CLOSE_IN_PROGRESS = 205,
+   CE_NW_INITIATED_TERMINATION = 206,
+   CE_APP_PREEMPTED = 207,
+   CE_ERR_PDN_IPV4_CALL_DISALLOWED = 208,
+   CE_ERR_PDN_IPV4_CALL_THROTTLED = 209,
+   CE_ERR_PDN_IPV6_CALL_DISALLOWED = 210,
+   CE_ERR_PDN_IPV6_CALL_THROTTLED = 211,
+   CE_UNPREFERRED_RAT = 214,
+   CE_APN_DISABLED = 220,
+   CE_MAX_V4_CONNECTIONS = 228,
+   CE_MAX_V6_CONNECTIONS = 229,
+   CE_APN_MISMATCH = 230,
+   CE_IP_VERSION_MISMATCH = 231,
+   CE_DUN_CALL_DISALLOWED = 232,
+   CE_INVALID_PROFILE = 233,
+   CE_INTERNAL_EPC_NONEPC_TRANSITION = 234,
+};
+
+enum class CallManagerReasonCode {
+   /*CM defined Call End reasons*/
+   CE_CDMA_LOCK = 500,
+   CE_INTERCEPT = 501,
+   CE_REORDER = 502,
+   CE_REL_SO_REJ = 503,
+   CE_INCOM_CALL = 504,
+   CE_ALERT_STOP = 505,
+   CE_ACTIVATION = 506,
+   CE_MAX_ACCESS_PROBE = 507,
+   CE_CCS_NOT_SUPPORTED_BY_BS = 508,
+   CE_NO_RESPONSE_FROM_BS = 509,
+   CE_REJECTED_BY_BS = 510,
+   CE_INCOMPATIBLE = 511,
+   CE_ALREADY_IN_TC = 512,
+   CE_USER_CALL_ORIG_DURING_GPS = 513,
+   CE_USER_CALL_ORIG_DURING_SMS = 514,
+   CE_NO_CDMA_SRV = 515,
+   CE_CONF_FAILED = 1000,
+   CE_INCOM_REJ = 1001,
+   CE_NO_GW_SRV = 1002,
+   CE_NO_GPRS_CONTEXT = 1003,
+   CE_ILLEGAL_MS = 1004,
+   CE_ILLEGAL_ME = 1005,
+   CE_GPRS_SERVICES_AND_NON_GPRS_SERVICES_NOT_ALLOWED = 1006,
+   CE_GPRS_SERVICES_NOT_ALLOWED = 1007,
+   CE_MS_IDENTITY_CANNOT_BE_DERIVED_BY_THE_NETWORK = 1008,
+   CE_IMPLICITLY_DETACHED = 1009,
+   CE_PLMN_NOT_ALLOWED = 1010,
+   CE_LA_NOT_ALLOWED = 1011,
+   CE_GPRS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN = 1012,
+   CE_PDP_DUPLICATE = 1013,
+   CE_UE_RAT_CHANGE = 1014,
+   CE_CONGESTION = 1015,
+   CE_NO_PDP_CONTEXT_ACTIVATED = 1016,
+   CE_ACCESS_CLASS_DSAC_REJECTION = 1017,
+   CE_CD_GEN_OR_BUSY = 1500,
+   CE_CD_BILL_OR_AUTH = 1501,
+   CE_CHG_HDR = 1502,
+   CE_EXIT_HDR = 1503,
+   CE_HDR_NO_SESSION = 1504,
+   CE_HDR_ORIG_DURING_GPS_FIX = 1505,
+   CE_HDR_CS_TIMEOUT = 1506,
+   CE_HDR_RELEASED_BY_CM = 1507,
+   CE_CLIENT_END = 2000,
+   CE_NO_SRV = 2001,
+   CE_FADE = 2002,
+   CE_REL_NORMAL = 2003,
+   CE_ACC_IN_PROG = 2004,
+   CE_ACC_FAIL = 2005,
+   CE_REDIR_OR_HANDOFF = 2006,
+   CE_UNKNOWN = -1,
+};
+
+enum class SpecReasonCode {
+   /*3GPP spec defined Call End reasons*/
+   CE_OPERATOR_DETERMINED_BARRING = 8,
+   CE_LLC_SNDCP_FAILURE = 25,
+   CE_INSUFFICIENT_RESOURCES = 26,
+   CE_UNKNOWN_APN = 27,
+   CE_UNKNOWN_PDP = 28,
+   CE_AUTH_FAILED = 29,
+   CE_GGSN_REJECT = 30,
+   CE_ACTIVATION_REJECT = 31,
+   CE_OPTION_NOT_SUPPORTED = 32,
+   CE_OPTION_UNSUBSCRIBED = 33,
+   CE_OPTION_TEMP_OOO = 34,
+   CE_NSAPI_ALREADY_USED = 35,
+   CE_REGULAR_DEACTIVATION = 36,
+   CE_QOS_NOT_ACCEPTED = 37,
+   CE_NETWORK_FAILURE = 38,
+   CE_UMTS_REACTIVATION_REQ = 39,
+   CE_FEATURE_NOT_SUPPORTED = 40,
+   CE_TFT_SEMANTIC_ERROR = 41,
+   CE_TFT_SYNTAX_ERROR = 42,
+   CE_UNKNOWN_PDP_CONTEXT = 43,
+   CE_FILTER_SEMANTIC_ERROR = 44,
+   CE_FILTER_SYNTAX_ERROR = 45,
+   CE_PDP_WITHOUT_ACTIVE_TFT = 46,
+   CE_IP_V4_ONLY_ALLOWED = 50,
+   CE_IP_V6_ONLY_ALLOWED = 51,
+   CE_SINGLE_ADDR_BEARER_ONLY = 52,
+   CE_INVALID_TRANSACTION_ID = 81,
+   CE_MESSAGE_INCORRECT_SEMANTIC = 95,
+   CE_INVALID_MANDATORY_INFO = 96,
+   CE_MESSAGE_TYPE_UNSUPPORTED = 97,
+   CE_MSG_TYPE_NONCOMPATIBLE_STATE = 98,
+   CE_UNKNOWN_INFO_ELEMENT = 99,
+   CE_CONDITIONAL_IE_ERROR = 100,
+   CE_MSG_AND_PROTOCOL_STATE_UNCOMPATIBLE = 101,
+   CE_PROTOCOL_ERROR = 111,
+   CE_APN_TYPE_CONFLICT = 112,
+   CE_UNKNOWN = -1,
+};
+
+enum class PPPReasonCode {
+   /*Enumeration for the PPP verbose call end reason*/
+   CE_PPP_TIMEOUT = 1,
+   CE_PPP_AUTH_FAILURE = 2,
+   CE_PPP_OPTION_MISMATCH = 3,
+   CE_PPP_PAP_FAILURE = 31,
+   CE_PPP_CHAP_FAILURE = 32,
+   CE_PPP_UNKNOWN = -1,
+};
+
+enum class EHRPDReasonCode {
+   /* Enumeration for the EHRPD verbose call end reason */
+   CE_EHRPD_SUBS_LIMITED_TO_V4 = 1,
+   CE_EHRPD_SUBS_LIMITED_TO_V6 = 2,
+   CE_EHRPD_VSNCP_TIMEOUT = 4,
+   CE_EHRPD_VSNCP_FAILURE = 5,
+   CE_EHRPD_VSNCP_3GPP2I_GEN_ERROR = 6,
+   CE_EHRPD_VSNCP_3GPP2I_UNAUTH_APN = 7,
+   CE_EHRPD_VSNCP_3GPP2I_PDN_LIMIT_EXCEED = 8,
+   CE_EHRPD_VSNCP_3GPP2I_NO_PDN_GW = 9,
+   CE_EHRPD_VSNCP_3GPP2I_PDN_GW_UNREACH = 10,
+   CE_EHRPD_VSNCP_3GPP2I_PDN_GW_REJ = 11,
+   CE_EHRPD_VSNCP_3GPP2I_INSUFF_PARAM = 12,
+   CE_EHRPD_VSNCP_3GPP2I_RESOURCE_UNAVAIL = 13,
+   CE_EHRPD_VSNCP_3GPP2I_ADMIN_PROHIBIT = 14,
+   CE_EHRPD_VSNCP_3GPP2I_PDN_ID_IN_USE = 15,
+   CE_EHRPD_VSNCP_3GPP2I_SUBSCR_LIMITATION = 16,
+   CE_EHRPD_VSNCP_3GPP2I_PDN_EXISTS_FOR_THIS_APN = 17,
+   CE_EHRPD_UNKNOWN = -1,
+};
+
+enum class Ipv6ReasonCode {
+   /*IPV6 defined Call End reasons*/
+   CE_PREFIX_UNAVAILABLE = 1,
+   CE_IPV6_ERR_HRPD_IPV6_DISABLED = 2,
+   CE_IPV6_DISABLED = 3,
+};
+
+struct DataCallEndReason {
+   EndReasonType type = EndReasonType::CE_UNKNOWN;
+   /**< Data call terminated due to reason type, default is CE_UNKNOWN */
+   union {
+      MobileIpReasonCode IpCode;
+      InternalReasonCode internalCode;
+      CallManagerReasonCode cmCode;
+      SpecReasonCode specCode;
+      PPPReasonCode pppCode;
+      EHRPDReasonCode ehrpdCode;
+      Ipv6ReasonCode ipv6Code;
+   };
+   /**< Reason Code corresponding to reason type*/
 };
 
 /** @} */ /* end_addtogroup telematics_data */

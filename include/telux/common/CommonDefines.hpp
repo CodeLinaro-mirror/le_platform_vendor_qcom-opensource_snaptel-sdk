@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -36,6 +36,8 @@
 
 #ifndef COMMONDEFINES_HPP
 #define COMMONDEFINES_HPP
+
+#include <functional>
 
 #define DEFAULT_SLOT_ID 1
 #define INVALID_SLOT_ID -1
@@ -302,6 +304,18 @@ public:
     */
    virtual void commandResponse(ErrorCode error) = 0;
 };
+
+/**
+ * @brief General response callback for most of the requests, client needs to implement
+ * this function to get the asynchronous response.
+ *
+ * The methods in callback can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ *  @param [in] errorCode  @ref ErrorCode
+ */
+using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>;
+
 /** @} */ /* end_addtogroup telematics_common */
 
 }  // End of namespace common

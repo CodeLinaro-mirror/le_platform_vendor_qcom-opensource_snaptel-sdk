@@ -53,7 +53,7 @@ include_directories(BEFORE
 )
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_ECALL_APP} ${ECALL_APP_SOURCES})
 target_link_libraries(${TARGET_ECALL_APP} telux_tel)

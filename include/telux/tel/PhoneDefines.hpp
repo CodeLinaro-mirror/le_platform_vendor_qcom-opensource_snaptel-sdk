@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,6 +37,8 @@
 
 #include <memory>
 #include <string>
+#include <bitset>
+#include <vector>
 
 #define DEFAULT_PHONE_ID 1
 #define INVALID_PHONE_ID -1
@@ -190,6 +192,68 @@ enum class RadioTechnology {
    RADIO_TECH_TD_SCDMA, /**< Network type is TD SCDMA */
    RADIO_TECH_IWLAN,    /**< Network type is TD IWLAN */
    RADIO_TECH_LTE_CA,   /**< Network type is LTE CA */
+};
+
+/**
+ * Defines all available RAT capabilities for each subscription
+ */
+enum class RATCapability {
+  AMPS,
+  CDMA,
+  HDR,
+  GSM,
+  WCDMA,
+  LTE,
+  TDS,
+};
+using RATCapabilitiesMask = std::bitset<16>;
+
+/**
+ * Defines all voice support available on device
+ */
+enum class VoiceServiceTechnology {
+   VOICE_TECH_GW_CSFB,
+   VOICE_TECH_1x_CSFB,
+   VOICE_TECH_VOLTE,
+};
+using VoiceServiceTechnologiesMask = std::bitset<16>;
+
+/**
+ * Structure contains slotID and RAT capabilities corresponding to slot.
+ */
+struct SimRatCapability {
+   int slotId;
+   RATCapabilitiesMask capabilities;
+};
+
+/**
+ * Structure contains information about device capability.
+ */
+struct CellularCapabilityInfo {
+   VoiceServiceTechnologiesMask voiceServiceTechs;   /**<Indicates voice support
+                                                     capabilities */
+   int simCount;        /**<The maximum number of SIMs that can be
+                         supported simultaneously */
+   int maxActiveSims;   /**< The maximum number of SIMs that can be
+                        simultaneously active. If this number is less than
+                        numberofSims, it implies that any combination
+                        of the SIMs can be active and the
+                        remaining can be in standby. */
+   std::vector<SimRatCapability> simRatCapabilities; /**<An array of struct which contains
+                        mask of RAT capabilities and slotId corresponding to each SIM */
+};
+
+/**
+ * Defines operating modes of the device.
+ */
+enum class OperatingMode {
+   ONLINE = 0,           /**< Online mode */
+   AIRPLANE,             /**< Low Power mode i.e temporarily disabled RF */
+   FACTORY_TEST,         /**< Special mode for manufacturer use*/
+   OFFLINE,              /**< Device has deactivated RF and partially shutdown */
+   RESETTING,            /**< Device is in process of power cycling */
+   SHUTTING_DOWN,        /**< Device is in process of shutting down */
+   PERSISTENT_LOW_POWER, /**< Persists low power mode even on reset*/
 };
 
 /** @} */ /* end_addtogroup telematics_call */

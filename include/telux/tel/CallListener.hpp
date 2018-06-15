@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -48,6 +48,7 @@
 #include <telux/tel/Call.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/Phone.hpp>
+#include <telux/tel/ECallDefines.hpp>
 
 namespace telux {
 
@@ -90,8 +91,21 @@ public:
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
     * @param [in] status - Indicates MSD Transmission status i.e. success or failure
     *
+    * @deprecated Use another onECallMsdTransmissionStatus() API with argument
+    * @Ref ECallMsdTransmissionStatus
     */
    virtual void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) {
+   }
+
+   /**
+    * This function is called when device completes MSD Transmission.
+    *
+    * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
+    * @param [in] msdTransmissionStatus - Indicates MSD Transmission status
+    * @Ref ECallMsdTransmissionStatus
+    */
+   virtual void onECallMsdTransmissionStatus(int phoneId,
+      telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
    }
 
    virtual ~ICallListener() {

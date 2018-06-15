@@ -43,7 +43,7 @@ endmacro()
 SYSR_INCLUDE_DIR(telux)
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_SAP_APP} ${SAP_APP_SOURCES})
 target_link_libraries(${TARGET_SAP_APP} telux_tel)

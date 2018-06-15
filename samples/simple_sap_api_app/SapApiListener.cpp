@@ -160,6 +160,7 @@ bool waitForSapEvent(SapEvent sapEvent, int timeout = DEFAULT_TIMEOUT_IN_SECONDS
       std::cout << "Unable to get the events, so timing out" << std::endl;
       return false;
    }
+   return false;
 }
 
 // Main routine performs operations required to transmit Sap Apdu
@@ -171,7 +172,6 @@ int main(int, char **) {
    // [2] Wait for the telephony subsystem initialization.
    bool subSystemsStatus = phoneManager->isSubsystemReady();
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   SapEvent sapEvent;
    startTime = std::chrono::system_clock::now();
 
    if(!subSystemsStatus) {
@@ -216,8 +216,7 @@ int main(int, char **) {
 
    // [7] send sap apdu and wait for the request to complete
    std::cout << "Transmit Sap APDU request made..." << std::endl;
-   Status ret
-      = sapCardMgr->transmitApdu(CLA, INSTRUCTION, P1, P2, LC, DATA, 0, myTransmitApduResponseCb);
+   sapCardMgr->transmitApdu(CLA, INSTRUCTION, P1, P2, LC, DATA, 0, myTransmitApduResponseCb);
    if(!waitForSapEvent(SapEvent::SAP_TRANSMIT_APDU)) {
       std::cout << "Transmit Sap APDU failed " << std::endl;
       exit(1);

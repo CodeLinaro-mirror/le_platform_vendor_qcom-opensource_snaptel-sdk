@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -286,8 +286,8 @@ public:
 };
 
 /**
- * @brief ILocationInfo provides interface to get postion related information like
- *        latitude, longitude, altitude and other information like timestamp, session status etc
+ * @brief ILocationInfo provides interface to get position related information like
+ *        latitude, longitude, altitude and other information like time stamp, session status etc
  *
  * @note    Eval: This is a new API and is being evaluated.It is subject to change and could break
  * backwards compatibility.
@@ -541,8 +541,6 @@ public:
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
     * break backwards compatibility.
     */
-   // TODO: Need to add interface to handle multiple sessions
-   //       Need to support multiple user sessions
    virtual SessionStatus getSessionStatus() = 0;
 
    /**
@@ -691,7 +689,7 @@ public:
 };
 
 /**
- * @brief ISVInfo provides interface to retreive inforation
+ * @brief ISVInfo provides interface to retrieve information
  *        about Satellite Vehicles, their position and health status
  */
 class ISVInfo {

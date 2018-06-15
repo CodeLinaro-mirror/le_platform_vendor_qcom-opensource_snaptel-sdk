@@ -352,7 +352,7 @@ void MyLocationListener::onLocationUpdate(const std::shared_ptr<ILocationInfo> &
    PRINT_NOTIFICATION << "Ids of used SVs : " << std::endl;
    std::vector<uint16_t> SVIds;
    locationInfo->getSVIds(SVIds);
-   for(auto i = 0; i < SVIds.size(); ++i) {
+   for(size_t i = 0; i < SVIds.size(); ++i) {
       PRINT_NOTIFICATION << SVIds[i] << std::endl;
    }
    printSbasCorrection(locationInfo);
@@ -411,7 +411,7 @@ void MyLocationListener::onLocationUpdate(const std::shared_ptr<ILocationInfo> &
    std::vector<float> velocityEastNorthUp;
    if(locationInfo->getVelocityEastNorthUp(velocityEastNorthUp) == Status::SUCCESS) {
       PRINT_NOTIFICATION << "East, North, Up velocity : ";
-      for(auto i = 0; i < velocityEastNorthUp.size(); ++i) {
+      for(size_t i = 0; i < velocityEastNorthUp.size(); ++i) {
          std::cout << velocityEastNorthUp[i] << ", ";
       }
       std::cout << std::endl;
@@ -421,7 +421,7 @@ void MyLocationListener::onLocationUpdate(const std::shared_ptr<ILocationInfo> &
    if(locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp)
       == Status::SUCCESS) {
       PRINT_NOTIFICATION << "East, North, Up velocity uncertainty : ";
-      for(auto i = 0; i < velocityEastNorthUp.size(); ++i) {
+      for(size_t i = 0; i < velocityEastNorthUp.size(); ++i) {
          std::cout << velocityUncertaintyEastNorthUp[i] << ", ";
       }
       std::cout << std::endl;

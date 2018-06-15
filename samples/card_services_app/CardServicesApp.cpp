@@ -161,6 +161,7 @@ bool waitForCardEvent(CardEvent cardEvent, int timeout = DEFAULT_TIMEOUT_IN_SECO
       std::cout << "Unable to get the events, so timing out" << std::endl;
       return false;
    }
+   return false;
 }
 
 // Main routine performs operations required to transmit Sap Apdu
@@ -172,7 +173,6 @@ int main(int, char **) {
    // [2] Wait for the telephony subsystem initialization.
    bool subSystemsStatus = cardManager->isSubsystemReady();
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   CardEvent cardEvent;
    startTime = std::chrono::system_clock::now();
 
    if(!subSystemsStatus) {

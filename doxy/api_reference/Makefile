@@ -40,6 +40,8 @@ html: logs
 	ENV_GEN_LATEX=NO \
 	ENV_LAYOUT_FILE=Doxygen_Layout_Standard_UserManual_html.xml \
 	doxygen Doxy_Config.ldd > logs/api_reference_html_doxy.log
+	# copy images into html folder
+	cp -r $(TELUX_GIT_ROOT)/doxy/images/ $(TELUX_GIT_ROOT)/doxy/api_reference/html/images/
 
 logs:
 	mkdir -p logs

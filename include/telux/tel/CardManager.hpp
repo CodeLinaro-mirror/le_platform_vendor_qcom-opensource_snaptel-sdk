@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -260,9 +260,9 @@ public:
    /**
     * This function is called with the response to the open logical channel operation.
     *
-    * @param [out] channel  Channel Id for the logical channel.
-    * @param [out] result   @ref IccResult of open logical channel.
-    * @param [out] error    @ref ErrorCode of the request.
+    * @param [in] channel  Channel Id for the logical channel.
+    * @param [in] result   @ref IccResult of open logical channel.
+    * @param [in] error    @ref ErrorCode of the request.
     *
     */
    virtual void onChannelResponse(int channel, IccResult result, telux::common::ErrorCode error)
@@ -275,14 +275,14 @@ public:
     * This function is called when SIM Card transmit APDU over Logical, Basic Channel and
     * Exchange Sim IO.
     *
-    * @param [out] result   @ref IccResult of transmit APDU command
-    * @param [out] error    @ref ErrorCode of the request,
-    *                       Possible error codes are
-    *                       - @ref SUCCESS
-    *                       - @ref INTERNAL
-    *                       - @ref NO_MEMORY
-    *                       - @ref INVALID_ARG
-    *                       - @ref MISSING_ARG
+    * @param [in] result   @ref IccResult of transmit APDU command
+    * @param [in] error    @ref ErrorCode of the request,
+    *                      Possible error codes are
+    *                      - @ref SUCCESS
+    *                      - @ref INTERNAL
+    *                      - @ref NO_MEMORY
+    *                      - @ref INVALID_ARG
+    *                      - @ref MISSING_ARG
     */
    virtual void onResponse(IccResult result, telux::common::ErrorCode error) = 0;
 };
@@ -299,7 +299,7 @@ public:
    /**
     * This function is called when info of card gets updated.
     *
-    * @param [out] slotId   Slot identifier.
+    * @param [in] slotId   Slot identifier.
     */
    virtual void onCardInfoChanged(int slotId) {
    }

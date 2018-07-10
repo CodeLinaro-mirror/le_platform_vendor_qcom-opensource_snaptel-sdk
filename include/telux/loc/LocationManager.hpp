@@ -120,9 +120,9 @@ public:
     *      report will be returned with sessionStatus=SessionStatus::SUCCESS. Otherwise, a
     *      position report will be sent with sessionStatus=SessionStatus::TIMEOUT after 5 seconds.
     *
-    * @param [in] timeout - Maximum time to get a position report in milliseconds.
+    * @param [in] timeout  - Maximum time to get a position report in milliseconds.
     * @param [in] callback - Optional callback to get the response of set
-    *             position report time out
+    *                        position report time out
     *
     * @returns Status of setPositionReportTimeout i.e. success or suitable status code.
     *
@@ -141,7 +141,7 @@ public:
     *
     * @param [in] accuracy - @ref HorizontalAccuracyLevel
     * @param [in] callback - Optional callback to get the response of set
-    *             horizontal accuracy level
+    *                        horizontal accuracy level
     *
     * @returns Status of setHorizontalAccuracyLevel i.e. success or suitable status code.
     *

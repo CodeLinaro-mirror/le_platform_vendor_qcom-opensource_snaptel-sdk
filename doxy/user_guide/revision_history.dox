@@ -52,6 +52,7 @@ when       who     what, where, why
 @trhdgend
 @tr @td A @tdend @td Sep 2017 @tdend @tdlast Initial Release @tdlastend @trend
 @tr @td B @tdend @td Dec 2017 @tdend @tdlast Added subscription feature @tdlastend @trend
+@tr @td B @tdend @td Jun 2018 @tdend @tdlast Added data services apps @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

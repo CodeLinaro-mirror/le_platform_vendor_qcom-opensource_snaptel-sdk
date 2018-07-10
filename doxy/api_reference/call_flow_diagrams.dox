@@ -570,4 +570,73 @@ Subsequently all other listeners will latch on the already started service.
 16. The response for request location fix criteria is received by the application.
 17. Application will get fix criteria indications like minimum interval between reports, timeout and horizontal accuracy level.
 
+@section data_connection_call_flow Data Connection Manager Call Flow
+
+@subsection data_connection_manager_callflow Start/Stop for data connection manager call flow
+
+@anchor fig_data_connection_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{data_connection_manager_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Start/Stop for data connection manager call flow}
+  \label{fig_sub data_connection_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{data_connection_manager_call_flow.png,Start/Stop for data connection manager call flow,60,60,Start/Stop for data connection manager call flow}
+
+1. Application requests data factory for data connection manager object.
+2. Data factory returns IDataConnectionManager object to application.
+3. Application registers the listener to get notifications for data call change.
+4. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+5. Application requests for start data call and optionally gets asynchronous response using startDataCallback.
+6. Application receives the status i.e. either SUCCESS or FAILED based on the execution of startDataCall.
+7. Optionally, the application gets asynchronous response for startDataCall using startDataCallback.
+8. Application requests for stop data call and optionally gets asynchronous response using stopDataCallback.
+9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of stopDataCall.
+10. Optionally, the application gets asynchronous response for stopDataCall using stopDataCallback.
+11. Application receives a notification when there is a change in data call.
+12. Application removes the listener.
+13. Application receives the status i.e. SUCCESS or FAILED for the removal of listener.
+
+@section data_profile_call_flow Data Profile Manager Call Flow
+
+@subsection data_profile_manager_callflow Request/Create/Delete/Modify for data profile manager call flow
+
+@anchor fig_data_profile_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{data_profile_create_delete_modify_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Request/Create/Delete/Modify for data profile manager call flow}
+  \label{fig_data_profile_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{data_profile_create_delete_modify_call_flow.png,Request/Create/Delete/Modify for data profile call flow,60,60,Request/Create/Delete/Modify for data profile call flow}
+
+1. Application requests data factory for data profile manager object.
+2. Data factory returns IDataProfileManager object to application.
+3. Application requests for profile list and optionally gets asynchronous response using dataProfilesCallback.
+4. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfileList.
+5. Optionally, the application gets asynchronous response for requestProfileList using dataProfilesCallback.
+6. Application requests for create profile and optionally gets asynchronous response using createProfilesCallback.
+7. Application receives the status i.e. either SUCCESS or FAILED based on the execution of createProfile.
+8. Optionally, the application gets asynchronous response for createProfile using createProfilesCallback.
+9. Application requests for delete profile and optionally gets asynchronous response using deleteProfilesCallback.
+10. Application receives the status i.e. either SUCCESS or FAILED based on the execution of deleteProfile.
+11. Optionally, the application gets asynchronous response for deleteProfile using deleteProfilesCallback.
+12. Application requests for modify profile and optionally gets asynchronous response using modifyProfilesCallback.
+13. Application receives the status i.e. either SUCCESS or FAILED based on the execution of modifyProfile.
+14. Optionally, the application gets asynchronous response for modifyProfile using modifyProfilesCallback.
+15. Application requests for query profile and optionally gets asynchronous response using queryProfilesCallback.
+16. Application receives the status i.e. either SUCCESS or FAILED based on the execution of queryProfile.
+17. Optionally, the application gets asynchronous response for queryProfile using queryProfilesCallback.
+18. Application requests for request profile and optionally gets asynchronous response using requestProfileByIdCallback.
+19. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfile.
+20. Optionally, the application gets asynchronous response for requestProfile using requestProfileByIdCallback.
+
 */

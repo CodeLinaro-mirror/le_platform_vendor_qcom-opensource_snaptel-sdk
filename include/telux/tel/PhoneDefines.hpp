@@ -75,28 +75,6 @@ enum class CallState {
 };
 
 /**
- * Defines the radio state
- */
-enum class RadioState {
-   RADIO_STATE_OFF = 0,         /**< Radio is explicitly powered off */
-   RADIO_STATE_UNAVAILABLE = 1, /**< Radio unavailable (eg, resetting or not booted) */
-   RADIO_STATE_ON = 10,         /**< Radio is on */
-};
-
-/**
- * Defines the service states
- *
- * @deprecated Use requestVoiceServiceState() API or  to know the status of phone
- */
-enum class ServiceState {
-   EMERGENCY_ONLY, /**< Only emergency calls allowed */
-   IN_SERVICE,     /**< Normal operation, device is registered with a carrier and
-                        online */
-   OUT_OF_SERVICE, /**< Device is not registered with any carrier */
-   RADIO_OFF,      /**< Device radio is off - Airplane mode for example */
-};
-
-/**
  * Reason for the recently terminated call (either normally ended or failed)
  */
 enum class CallEndCause {
@@ -166,6 +144,35 @@ enum class CallEndCause {
    CDMA_NOT_EMERGENCY = 1008,
    CDMA_ACCESS_BLOCKED = 1009,
    ERROR_UNSPECIFIED = 0xffff,
+};
+
+/** @} */ /* end_addtogroup telematics_call */
+
+
+
+/** @addtogroup telematics_phone
+ * @{ */
+
+/**
+ * Defines the radio state
+ */
+enum class RadioState {
+   RADIO_STATE_OFF = 0,         /**< Radio is explicitly powered off */
+   RADIO_STATE_UNAVAILABLE = 1, /**< Radio unavailable (eg, resetting or not booted) */
+   RADIO_STATE_ON = 10,         /**< Radio is on */
+};
+
+/**
+ * Defines the service states
+ *
+ * @deprecated Use requestVoiceServiceState() API or  to know the status of phone
+ */
+enum class ServiceState {
+   EMERGENCY_ONLY, /**< Only emergency calls allowed */
+   IN_SERVICE,     /**< Normal operation, device is registered with a carrier and
+                        online */
+   OUT_OF_SERVICE, /**< Device is not registered with any carrier */
+   RADIO_OFF,      /**< Device radio is off - Airplane mode for example */
 };
 
 /**
@@ -256,7 +263,7 @@ enum class OperatingMode {
    PERSISTENT_LOW_POWER, /**< Persists low power mode even on reset*/
 };
 
-/** @} */ /* end_addtogroup telematics_call */
+/** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel
 

@@ -43,6 +43,8 @@
 
 namespace telux {
 namespace data {
+/** @addtogroup telematics_data
+ * @{ */
 
 /**
  * @brief  DataProfile class represents single data profile on the modem.
@@ -156,6 +158,9 @@ private:
    TechPreference techPref_;
    AuthProtocolType authType_;
 };
+
+/** @} */ /* end_addtogroup telematics_data */
+
 }
 }
 

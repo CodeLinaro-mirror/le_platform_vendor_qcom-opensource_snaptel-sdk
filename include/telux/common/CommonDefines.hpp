@@ -30,7 +30,7 @@
 /**
  * @file       CommonDefines.hpp
  * @brief      Contains enumerations and variables used across telephony subsystems.
- * 			   Also defines interface for command callback for asynchronous calls.
+ *         Also defines interface for command callback for asynchronous calls.
  *
  */
 
@@ -300,7 +300,7 @@ public:
    /**
     * This function is called with the response to the command operation.
     *
-    * @param [out] error - @ref ErrorCode
+    * @param [in] error - @ref ErrorCode
     */
    virtual void commandResponse(ErrorCode error) = 0;
 };

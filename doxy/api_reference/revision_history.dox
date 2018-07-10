@@ -52,7 +52,7 @@ when       who     what, where, why
 @trhdgend
 @tr @td A @tdend @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
 @tr @td B @tdend @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trend
-@tr @td C @tdend @td June 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trend
+@tr @td C @tdend @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

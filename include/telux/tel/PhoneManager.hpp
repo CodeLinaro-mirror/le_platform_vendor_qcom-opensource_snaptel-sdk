@@ -211,11 +211,11 @@ public:
    /**
     * This function is called with the response to requestCellularCapabilityInfo API.
     *
-    * @param [out] capabilityInfo - Cellular capability information.
-    * @param [out] error - Return code for whether the operation succeeded or failed
-    *        - @ref SUCCESS
-    *        - @ref INTERNAL
-    *        - @ref NO_MEMORY
+    * @param [in] capabilityInfo - Cellular capability information.
+    * @param [in] error          - Return code for whether the operation succeeded or failed
+    *                            - @ref SUCCESS
+    *                            - @ref INTERNAL
+    *                            - @ref NO_MEMORY
     *
     */
    virtual void cellularCapabilityResponse(CellularCapabilityInfo capabilityInfo,
@@ -237,11 +237,11 @@ public:
    /**
     * This function is called with the response to requestOperatingMode API.
     *
-    * @param [out] operatingMode - @ref OperatingMode
-    * @param [out] error - Return code for whether the operation succeeded or failed
-    *        - @ref SUCCESS
-    *        - @ref INTERNAL_ERR
-    *        - @ref NO_MEMORY
+    * @param [in] operatingMode - @ref OperatingMode
+    * @param [in] error         - Return code for whether the operation succeeded or failed
+    *                           - @ref SUCCESS
+    *                           - @ref INTERNAL_ERR
+    *                           - @ref NO_MEMORY
     */
    virtual void operatingModeResponse(OperatingMode operatingMode, telux::common::ErrorCode error) {
    }

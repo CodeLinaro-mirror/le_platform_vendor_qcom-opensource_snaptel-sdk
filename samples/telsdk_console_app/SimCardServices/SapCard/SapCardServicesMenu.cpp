@@ -63,9 +63,9 @@ void SapCardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> getSapAtrCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("2", "Get_sap_ATR", {},
                         std::bind(&SapCardServicesMenu::getSapAtr, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getSapStateCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("3", "Get_sap_state", {},
-                        std::bind(&SapCardServicesMenu::getSapState, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestSapStateCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("3", "Request_sap_state", {},
+                        std::bind(&SapCardServicesMenu::requestSapState, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> transmitSapApduCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "4", "Transmit_sap_APDU", {},
@@ -88,10 +88,13 @@ void SapCardServicesMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "9", "Close_sap_connection", {},
          std::bind(&SapCardServicesMenu::closeSapConnection, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> getStateCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("10", "Get_sap_state", {},
+                        std::bind(&SapCardServicesMenu::getState, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSapManagerSubMenu
-      = {openSapConnectionCommand, getSapAtrCommand,           getSapStateCommand,
+      = {openSapConnectionCommand, getSapAtrCommand,           requestSapStateCommand,
          transmitSapApduCommand,   sapSimPowerOffCommand,      sapSimPowerOnCommand,
-         sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand};
+         sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand, getStateCommand};
    addCommands(commandsListSapManagerSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -177,7 +180,17 @@ void SapCardServicesMenu::closeSapConnection(std::vector<std::string> userInput)
    sapCardMgr_->closeConnection(mySapCmdResponseCb_);
 }
 
-void SapCardServicesMenu::getSapState(std::vector<std::string> userInput) {
+void SapCardServicesMenu::requestSapState(std::vector<std::string> userInput) {
+   telux::tel::SapState sapstate;
+   if(sapCardMgr_->requestSapState(MySapStateCallback::sapStateResponse)
+      == telux::common::Status::SUCCESS) {
+      std::cout << "Request sap state success \n";
+   } else {
+      std::cout << "Request sap state failed \n";
+   }
+}
+
+void SapCardServicesMenu::getState(std::vector<std::string> userInput) {
    telux::tel::SapState sapstate;
    if(sapCardMgr_->getState(sapstate) == telux::common::Status::SUCCESS) {
       logSapState(sapstate);

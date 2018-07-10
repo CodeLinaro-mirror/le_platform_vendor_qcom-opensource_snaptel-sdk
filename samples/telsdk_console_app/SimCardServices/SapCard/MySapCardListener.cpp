@@ -95,3 +95,32 @@ void MyAtrResponseCallback::atrResponse(std::vector<int> responseAtr,
    }
    std::cout << std::endl;
 }
+
+void MySapStateCallback::logSapState(telux::tel::SapState sapState) {
+   if(sapState == telux::tel::SapState::SAP_STATE_NOT_ENABLED) {
+      std::cout << "Sap state not enabled \n";
+   } else if(sapState == telux::tel::SapState::SAP_STATE_CONNECTING) {
+      std::cout << "Sap state connecting \n";
+   } else if(sapState == telux::tel::SapState::SAP_STATE_CONNECTED_SUCCESSFULLY) {
+      std::cout << "Sap state connected successfully \n";
+   } else if(sapState == telux::tel::SapState::SAP_STATE_CONNECTION_ERROR) {
+      std::cout << "Sap state connection error \n";
+   } else if(sapState == telux::tel::SapState::SAP_STATE_DISCONNECTING) {
+      std::cout << "Sap state disconnecting \n";
+   } else if(sapState == telux::tel::SapState::SAP_STATE_DISCONNECTED_SUCCESSFULLY) {
+      std::cout << "Sap state disconnected successfully \n";
+   }
+}
+
+void MySapStateCallback::sapStateResponse(telux::tel::SapState sapState,
+   telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      print_cb << "SAP state: " << (int)sapState << std::endl << std::endl;
+      logSapState(sapState);
+   } else {
+      print_cb << "sapConnectionStatusResponse failed\n error: "
+         << static_cast<int>(error) << std::endl;
+   }
+   std::cout << std::endl;
+}

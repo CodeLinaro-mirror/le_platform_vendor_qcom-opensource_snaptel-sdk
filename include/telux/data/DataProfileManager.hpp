@@ -51,12 +51,14 @@
 namespace telux {
 namespace data {
 
+/** @addtogroup telematics_data
+ * @{ */
+
 class IDataCreateProfileCallback;
 class IDataProfileListCallback;
 class IDataProfileCallback;
 
-/** @addtogroup telematics_data
- * @{ */
+
 
 /**
  * IDataProfileManager is a primary interface for profile management.
@@ -155,7 +157,7 @@ public:
     *
     * @param [in] profileId         Profile identifier
     * @param [in] techPreference    Technology preference
-    *	     - @ref TechPreference
+    *      - @ref TechPreference
     * @param [in] callback          Callback pointer to get the result of get profile by ID
     *
     * @returns Status of requestProfile i.e. success or suitable error code.
@@ -197,7 +199,7 @@ public:
     * This function is called with the response to IDataProfileManager::createProfile API.
     *
     * @param [in] profileId    created profile Id for the response.
-    *                           Use IDataProfileManager::requestProfile to get the data profile
+    *                          Use IDataProfileManager::requestProfile to get the data profile
     * @param [in] error        @ref telux::common::ErrorCode
     *
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could

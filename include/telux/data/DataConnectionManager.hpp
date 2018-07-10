@@ -56,6 +56,9 @@
 namespace telux {
 namespace data {
 
+/** @addtogroup telematics_data
+ * @{ */
+
 // Forward declarations
 class IDataConnectionListener;
 class IDataCall;
@@ -111,8 +114,7 @@ using StatisticsResponseCb
 using RateResponseCallback
    = std::function<void(const DataChannelRate dataRate, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_data
- * @{ */
+
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
  *       This interface provides APIs for start and stop data call connections,
@@ -395,8 +397,8 @@ public:
    /**
     * This function is called when there is a change in the data call.
     *
-    * @param [out] status     Data Call Status
-    * @param [out] dataCall   Pointer to IDataCall
+    * @param [in] status     Data Call Status
+    * @param [in] dataCall   Pointer to IDataCall
     *
     * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
     *         break backwards compatibility.

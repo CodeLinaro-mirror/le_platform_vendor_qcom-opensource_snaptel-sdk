@@ -47,3 +47,4 @@ logs:
 clean:
 	rm -rf logs
 	rm -rf html
+	rm -rf images

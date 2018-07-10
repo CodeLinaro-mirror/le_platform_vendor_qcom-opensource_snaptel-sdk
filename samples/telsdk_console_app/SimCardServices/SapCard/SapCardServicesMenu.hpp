@@ -48,7 +48,8 @@ public:
 private:
    void openSapConnection(std::vector<std::string> userInput);
    void getSapAtr(std::vector<std::string> userInput);
-   void getSapState(std::vector<std::string> userInput);
+   void requestSapState(std::vector<std::string> userInput);
+   void getState(std::vector<std::string> userInput);
    void transmitSapApdu(std::vector<std::string> userInput);
    void sapSimPowerOff(std::vector<std::string> userInput);
    void sapSimPowerOn(std::vector<std::string> userInput);

@@ -37,28 +37,28 @@ Jun 2017   SVM      Created to support V2X API
                          /* BEGIN TITLEPAGE */
                    /* BEGIN MODULE GROUPING DEFINITIONS */
 /**
-@defgroup chapter_telematics_sdk Telematics SDK API
+@defgroup chapter_telematics_sdk Telematics SDK APIs
 @latexonly \setcounter{table}{0} @endlatexonly
 
   @addtogroup chapter_telematics_sdk
   @{
     @defgroup telematics_phone_factory  Phone Factory
     This section contains APIs related to PhoneFactory.
-    @defgroup telematics_phone  Phone API
+    @defgroup telematics_phone  Phone
     This section contains APIs related to Phone, Signal Strength and interfaces to register global listeners to event notifications.
-    @defgroup telematics_call  Call API
+    @defgroup telematics_call  Call
     This section contains APIs related to Call.
-    @defgroup telematics_sms SMS API
+    @defgroup telematics_sms SMS
     This section contains APIs related to Sending and Receiving SMS.
-    @defgroup telematics_card Card API
+    @defgroup telematics_card SIM Card Services
     This section contains APIs related to Card Services.
-    @defgroup telematics_location Location Services API
+    @defgroup telematics_location Location Services
     This section contains APIs related to Location Services.
-    @defgroup telematics_data Data Services API
+    @defgroup telematics_data Data Services
     This section contains APIs related to Cellular Data Services.
-    @defgroup telematics_subscription Subscription API
-    This section contains APIs related to Subscription.
+    @defgroup telematics_subscription Subscription Management
+    This section contains APIs related to Subscription Management.
     @defgroup telematics_common Common
-    This section contains APIs related to Command Callbacks, Error Codes and TelSdk Version information.
+    This section contains APIs related to Command Callbacks, Error Codes and Version information.
   @}
 */

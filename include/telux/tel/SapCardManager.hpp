@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -96,6 +96,23 @@ struct CardReaderStatus {
 };
 
 /**
+ * This function is called with the response to requestSapState API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] sapState        @ref SapState of SIM access profile (SAP) connection
+ * @param [in] error           Return code for whether the operation
+ *                             succeeded or failed
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+
+using SapStateResponseCallback
+   = std::function<void(SapState sapState, telux::common::ErrorCode error)>;
+
+/**
  * @brief ISapCardManager provide APIs for SAP related operations.
  */
 class ISapCardManager {
@@ -106,8 +123,20 @@ public:
     * @param [out] sapState   @ref SapState of the SIM Card
     *
     * @returns Status of getState i.e. success or suitable status code.
+    *
+    * @deprecated Use requestSapState() API below to get SAP state
     */
    virtual telux::common::Status getState(SapState &sapState) = 0;
+
+   /**
+    * Get SIM access profile(SAP) client connection state.
+    *
+    * @param [out] callback   Callback function pointer to get the response of requestSapState.
+    *
+    * @returns Status of requestSapState i.e. success or suitable status code.
+    */
+   virtual telux::common::Status requestSapState(
+      SapStateResponseCallback callback) = 0;
 
    /**
     * Establishes SIM access profile (SAP) client connection with SIM Card.
@@ -198,8 +227,8 @@ public:
     * @returns Status of requestSimPowerOn i.e. success or suitable status code.
     */
    virtual telux::common::Status
-      requestSimPowerOn(std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
-      = 0;
+      requestSimPowerOn(std::shared_ptr<telux::common::ICommandResponseCallback> callback
+      = nullptr) = 0;
 
    /**
     * Send the SAP SIM reset request.
@@ -234,26 +263,19 @@ public:
 
 };  // end of ISapCardManager
 
-/**
- * Interface for SAP connection callback object. Client needs to implement this interface to get
- * single shot responses for commands like open and close sap connection.
- *
- * The methods in callback can be invoked from multiple different threads. The implementation
- * should be thread safe.
- */
 class IAtrResponseCallback : public telux::common::ICommandCallback {
 public:
    /**
     * This function is called in response to requestAtr() request.
     *
-    * @param [out] responseAtr    response ATR values
-    * @param [out] error          @ref ErrorCode of the request
-    *                             possible error codes are
-    *                             - @ref SUCCESS
-    *                             - @ref INTERNAL
-    *                             - @ref NO_MEMORY
-    *                             - @ref INVALID_ARG
-    *                             - @ref MISSING_ARG
+    * @param [in] responseAtr    response ATR values
+    * @param [in] error          @ref ErrorCode of the request
+    *                            possible error codes are
+    *                            - @ref SUCCESS
+    *                            - @ref INTERNAL
+    *                            - @ref NO_MEMORY
+    *                            - @ref INVALID_ARG
+    *                            - @ref MISSING_ARG
    */
    virtual void atrResponse(std::vector<int> responseAtr, telux::common::ErrorCode error) = 0;
 };
@@ -263,14 +285,14 @@ public:
    /**
     * This function is called when SIM Card transmit APDU on SAP mode.
     *
-    * @param [out] result   @ref IccResult of transmit APDU command
-    * @param [out] error    @ref ErrorCode of the request,
-    *                       possible error codes are
-    *                       - @ref SUCCESS
-    *                       - @ref INTERNAL
-    *                       - @ref NO_MEMORY
-    *                       - @ref INVALID_ARG
-    *                       - @ref MISSING_ARG
+    * @param [in] result   @ref IccResult of transmit APDU command
+    * @param [in] error    @ref ErrorCode of the request,
+    *                      possible error codes are
+    *                      - @ref SUCCESS
+    *                      - @ref INTERNAL
+    *                      - @ref NO_MEMORY
+    *                      - @ref INVALID_ARG
+    *                      - @ref MISSING_ARG
     */
    virtual void onResponse(IccResult result, telux::common::ErrorCode error) = 0;
 };
@@ -280,8 +302,8 @@ public:
    /**
     * This function is called in response to requestCardReaderStatus() method.
     *
-    * @param [out] cardReaderStatus   Structure contains the identity of the card reader
-    * @param [out] error              @ref ErrorCode of the request
+    * @param [in] cardReaderStatus   Structure contains the identity of the card reader
+    * @param [in] error              @ref ErrorCode of the request
     *
     */
    virtual void cardReaderResponse(CardReaderStatus cardReaderStatus,

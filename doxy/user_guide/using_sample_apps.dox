@@ -24,7 +24,7 @@ Now your development environment is set for the terminal, start your development
 - Compile all the samples:
       \code{.cpp}
       $ cmake -DCMAKE_INSTALL_PREFIX=./install ..
-      $ make clean & make install
+      $ make clean && make install
       \endcode
 
 

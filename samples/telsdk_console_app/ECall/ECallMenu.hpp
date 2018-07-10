@@ -38,7 +38,9 @@
 #include <sstream>
 #include <vector>
 
+extern "C" {
 #include <sys/time.h>
+}
 
 #include <telux/tel/Call.hpp>
 #include <telux/common/CommonDefines.hpp>

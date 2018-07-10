@@ -62,4 +62,11 @@ public:
    void atrResponse(std::vector<int> responseAtr, telux::common::ErrorCode error) override;
 };
 
+class MySapStateCallback {
+public:
+   static void sapStateResponse(telux::tel::SapState sapState,
+                                telux::common::ErrorCode error);
+   static void logSapState(telux::tel::SapState sapState);
+};
+
 #endif  // MYSAPCARDLISTENER_HPP

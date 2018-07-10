@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -223,8 +223,8 @@ public:
    /**
     * This function is called when device receives an incoming message
     *
-    * @param [out] phoneId      Unique identifier per phone
-    * @param [out] SmsMessage   Pointer to SmsMessage object
+    * @param [in] phoneId      Unique identifier per phone
+    * @param [in] SmsMessage   Pointer to SmsMessage object
     */
    virtual void onIncomingSms(int phoneId, std::shared_ptr<SmsMessage> message) {
    }
@@ -244,8 +244,8 @@ public:
    /**
     * This function is called with the response to the Smsc address request.
     *
-    * @param [out] address    Smsc address
-    * @param [out] error      @ref ErrorCode
+    * @param [in] address    Smsc address
+    * @param [in] error      @ref ErrorCode
     */
    virtual void smscAddressResponse(const std::string &address, telux::common::ErrorCode error) = 0;
 };

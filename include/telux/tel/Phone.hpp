@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -172,11 +172,11 @@ public:
    /**
     * This function is called with the response to requestSignalStrength API.
     *
-    * @param [out] signalStrength   Pointer to signal strength object
-    * @param [out] error            Return code for whether the operation
-    *                               succeeded or failed
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
+    * @param [in] signalStrength   Pointer to signal strength object
+    * @param [in] error            Return code for whether the operation
+    *                              succeeded or failed
+    *                              - @ref SUCCESS
+    *                              - @ref RADIO_NOT_AVAILABLE
     */
    virtual void signalStrengthResponse(std::shared_ptr<SignalStrength> signalStrength,
                                        telux::common::ErrorCode error) {
@@ -196,12 +196,12 @@ public:
    /**
     * This function is called with the response to requestVoiceServiceState API.
     *
-    * @param [out] serviceInfo      Pointer to voice service info object
-    * @param [out] error            Return code for whether the operation
-    *                               succeeded or failed
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref GENERIC_FAILURE
+    * @param [in] serviceInfo      Pointer to voice service info object
+    * @param [in] error            Return code for whether the operation
+    *                              succeeded or failed
+    *                              - @ref SUCCESS
+    *                              - @ref RADIO_NOT_AVAILABLE
+    *                              - @ref GENERIC_FAILURE
     *
     * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
     *         break backwards compatibility.

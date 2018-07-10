@@ -30,8 +30,11 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <sys/time.h>
 #include <string>
+
+extern "C" {
+#include <sys/time.h>
+}
 
 #include "MyPhoneListener.hpp"
 

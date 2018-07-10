@@ -29,8 +29,11 @@
 
 #include <iostream>
 #include <sstream>
-#include <sys/time.h>
 //#include <vector>
+
+extern "C" {
+#include <sys/time.h>
+}
 
 #include "MyECallListener.hpp"
 

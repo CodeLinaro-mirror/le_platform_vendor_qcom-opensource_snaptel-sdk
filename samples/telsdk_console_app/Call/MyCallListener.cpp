@@ -30,7 +30,10 @@
 #include <chrono>
 #include <iostream>
 #include <sstream>
+
+extern "C" {
 #include <sys/time.h>
+}
 
 #include "MyCallListener.hpp"
 

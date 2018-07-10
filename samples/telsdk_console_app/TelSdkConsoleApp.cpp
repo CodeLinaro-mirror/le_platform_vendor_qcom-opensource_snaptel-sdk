@@ -34,11 +34,13 @@
  *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
  */
 
+#include <iostream>
 #include <cxxabi.h>
+
+extern "C" {
 #include <execinfo.h>
 #include <signal.h>
-
-#include <iostream>
+}
 
 #include "Call/CallMenu.hpp"
 #include "ECall/ECallMenu.hpp"
@@ -212,5 +214,3 @@ int main(int argc, char **argv) {
 
    return telsdkConsoleApp.mainLoop();  // Main loop to continuously read and execute commands
 }
-
-// end of main()

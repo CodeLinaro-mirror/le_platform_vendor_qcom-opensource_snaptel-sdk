@@ -4,8 +4,7 @@
 This section has instructions to create a sample application using Telematics APIs.
 
 You need to have the following in order to proceed:
- - Linux Ubuntu 14.04
- - Linux Yocto Platform SDK Installer created by the system integrator for the device on which the Telematics app is expected to run
+ - Linux Yocto Platform SDK Installer created by the system integrator or created using section 2 (Building Platform SDK)
 
 @section setup_build_environment Setup the build environment
 
@@ -22,6 +21,7 @@ Open the terminal, Copy the sdk_installer.sh into your working directory, say fo
       \endcode
 
 - Setup the build environment as follows:
+
       \code{.sh}
       $ cd my_sdk_install; source environment-setup-cortexa8hf-vfp-neon-oe-linux-gnueabi
       \endcode

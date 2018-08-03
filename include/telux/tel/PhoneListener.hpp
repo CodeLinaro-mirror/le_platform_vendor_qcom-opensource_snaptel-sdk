@@ -46,6 +46,7 @@
 #include <telux/tel/Call.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/SignalStrength.hpp>
+#include <telux/tel/CellInfo.hpp>
 #include <telux/tel/VoiceServiceInfo.hpp>
 
 namespace telux {
@@ -87,6 +88,19 @@ public:
     */
    virtual void onSignalStrengthChanged(int phoneId,
                                         std::shared_ptr<SignalStrength> signalStrength) {
+   }
+
+   /**
+    * This function is called when info pertaining to current or neighboring cells change.
+    *
+    * @param [in] phoneId          Unique id of the phone on which cell info changed.
+    * @param [in] cellInfoList     vector of shared pointers to cell info object
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onCellInfoListChanged(int phoneId,
+                                      std::vector<std::shared_ptr<CellInfo>> cellInfoList) {
    }
 
    /**

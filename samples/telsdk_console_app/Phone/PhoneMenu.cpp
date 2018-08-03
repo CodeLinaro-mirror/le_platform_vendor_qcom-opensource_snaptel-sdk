@@ -35,6 +35,7 @@
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
+#include "MyCellInfoHandler.hpp"
 
 #include "PhoneMenu.hpp"
 
@@ -72,7 +73,7 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
    if(subSystemStatus) {
       phone_ = phoneManager_->getPhone(phoneId);
       // Turn on the radio if it's not available
-      if(phone_->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
+      if(phone_ != nullptr && phone_->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
          phone_->setRadioPower(true);
       }
 
@@ -146,6 +147,12 @@ void PhoneMenu::init() {
    std::shared_ptr<ConsoleAppCommand> setOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("9", "Set_operating_mode", {},
                         std::bind(&PhoneMenu::setOperatingMode, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestCellInfoListCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("10", "Request_cell_info_list", {},
+                        std::bind(&PhoneMenu::requestCellInfoList, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> setCellInfoListRateCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("11", "Set_cell_info_list_rate", {},
+                        std::bind(&PhoneMenu::setCellInfoListRate, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
          setRadioPowerCommand,
@@ -155,7 +162,9 @@ void PhoneMenu::init() {
          requestCellularCapabilitiesCommand,
          getSubscriptionCommand,
          getOperatingModeCommand,
-         setOperatingModeCommand};
+         setOperatingModeCommand,
+         requestCellInfoListCommand,
+         setCellInfoListRateCommand};
    addCommands(commandsListPhoneSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -328,5 +337,46 @@ void PhoneMenu::setOperatingMode(std::vector<std::string> userInput) {
       } else {
          std::cout << " Invalid input " << std::endl;
       }
+   }
+}
+
+void PhoneMenu::requestCellInfoList(std::vector<std::string> userInput) {
+   if(phone_) {
+      auto ret = phone_->requestCellInfo(MyCellInfoCallback::cellInfoListResponse);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "CellInfo list request sent successfully" << std::endl;
+      } else {
+         std::cout << "CellInfo list request failed" << std::endl;
+      }
+   } else {
+      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+   }
+}
+
+void PhoneMenu::setCellInfoListRate(std::vector<std::string> userInput) {
+   if(phone_) {
+      char delimiter = '\n';
+      std::string timeIntervalInput;
+      std::cout << "Enter time interval in Milliseconds: ";
+      std::getline(std::cin, timeIntervalInput, delimiter);
+      uint32_t opt = -1;
+      if(!timeIntervalInput.empty()) {
+         try {
+            opt = std::stoi(timeIntervalInput);
+         } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt << std::endl;
+         }
+      } else {
+         std::cout << "Empty input using default interval as 0ms\n";
+         opt = 0;
+      }
+      auto ret = phone_->setCellInfoListRate(opt, MyCellInfoCallback::cellInfoListRateResponse);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "Set cell info rate request sent successfully\n" << std::endl;
+      } else {
+         std::cout << "Set cell info rate request failed\n" << std::endl;
+      }
+   } else {
+      std::cout << "No phone found corresponding to default phoneid" << std::endl;
    }
 }

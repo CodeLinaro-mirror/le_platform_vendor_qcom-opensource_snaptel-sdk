@@ -42,4 +42,4 @@ add_subdirectory( loc_tracker_app )
 add_subdirectory( loc_app )
 add_subdirectory( subscription_app )
 add_subdirectory( data_app )
-
+add_subdirectory( data_profile_app )

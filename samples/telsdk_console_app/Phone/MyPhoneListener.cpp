@@ -136,65 +136,6 @@ std::string MyPhoneListener::getCurrentTime() {
    return std::string(currTime);
 }
 
-// Implementation of Signal strength callback
-
-MySignalStrengthCallback::MySignalStrengthCallback() {
-}
-
-void MySignalStrengthCallback::signalStrengthResponse(
-   std::shared_ptr<telux::tel::SignalStrength> signalStrength, telux::common::ErrorCode error) {
-   std::cout << std::endl << std::endl;
-
-   if(error != telux::common::ErrorCode::SUCCESS) {
-      print_cb << " signalStrengthResponse failed with errorCode: " << static_cast<int>(error)
-               << std::endl;
-      return;
-   }
-
-   print_cb << "Received Signal Strength Callback" << std::endl;
-   if(signalStrength->getGsmSignalStrength() != nullptr) {
-      print_cb
-         << "GsmSignalStrength: " << signalStrength->getGsmSignalStrength()->getGsmSignalStrength()
-         << std::endl;
-      print_cb
-         << "GsmBitErrorRate: " << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
-         << std::endl;
-      print_cb << "GsmDbm: " << signalStrength->getGsmSignalStrength()->getDbm() << std::endl;
-      print_cb << "Gsm Signal Level: " << (int)signalStrength->getGsmSignalStrength()->getLevel()
-               << std::endl;
-   }
-   if(signalStrength->getCdmaSignalStrength() != nullptr) {
-      print_cb << "Cdma/Evdo Dbm: " << signalStrength->getCdmaSignalStrength()->getDbm()
-               << std::endl;
-      print_cb << "CdmaEcio: " << signalStrength->getCdmaSignalStrength()->getCdmaEcio()
-               << std::endl;
-      print_cb << "EvdoEcio: " << signalStrength->getCdmaSignalStrength()->getEvdoEcio()
-               << std::endl;
-      print_cb << "EvdoSignalNoiseRatio: "
-               << signalStrength->getCdmaSignalStrength()->getEvdoSignalNoiseRatio() << std::endl;
-      print_cb << "Cdma Signal Level: " << (int)signalStrength->getCdmaSignalStrength()->getLevel()
-               << std::endl;
-   }
-   if(signalStrength->getLteSignalStrength() != nullptr) {
-      print_cb
-         << "LteSignalStrength: " << signalStrength->getLteSignalStrength()->getLteSignalStrength()
-         << std::endl;
-      print_cb
-         << "LteReferenceSignalReceivePower: " << signalStrength->getLteSignalStrength()->getDbm()
-         << std::endl;
-      print_cb << "LteReferenceSignalReceiveQuality: "
-               << signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
-               << std::endl;
-      print_cb << "LteReferenceSignalSnr: "
-               << signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr() << std::endl;
-      print_cb << "LteChannelQualityIndicator: "
-               << signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-               << std::endl;
-      print_cb << "LTE Signal Level: " << (int)signalStrength->getLteSignalStrength()->getLevel()
-               << std::endl;
-   }
-}
-
 void MyRadioPowerCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
@@ -512,4 +453,149 @@ void MySetOperatingModeCallback::setOperatingModeResponse(telux::common::ErrorCo
       print_cb << "Set operating mode request failed" << std::endl;
    }
    print_cb << "SetOperatingModeRequest error = " << static_cast<int>(error) << std::endl;
+}
+
+void MyPhoneListener::onCellInfoListChanged(
+   int phoneId, std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) {
+   print_notification << "Received unsol response for PhoneId " << phoneId
+                      << " for change in cellinfo" << std::endl;
+   print_notification << "CellInfo: "<< std::endl;
+   MyPhoneHelper::printCellInfoDetails(cellInfoList);
+}
+
+void MyPhoneHelper::printCellInfoDetails(
+      std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) {
+   for(auto cellinfo : cellInfoList) {
+      print_notification <<  "CellInfo Type: " << (int)cellinfo->getType() << std::endl;
+      if(cellinfo->getType() == telux::tel::CellType::GSM) {
+         print_notification << "GSM Cellinfo " << std::endl;
+         auto gsmCellInfo = std::static_pointer_cast<telux::tel::GsmCellInfo>(cellinfo);
+         print_notification << "GSM isRegistered: " << gsmCellInfo->isRegistered()
+                            << std::endl;
+         print_notification << "GSM mcc: " << gsmCellInfo->getCellIdentity().getMcc() << std::endl;
+         print_notification << "GSM mnc: " << gsmCellInfo->getCellIdentity().getMnc() << std::endl;
+         print_notification << "GSM lac: " << gsmCellInfo->getCellIdentity().getLac() << std::endl;
+         print_notification << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity() << std::endl;
+         print_notification << "GSM arfcn: " << gsmCellInfo->getCellIdentity().getArfcn() << std::endl;
+         // GSM signal strength
+         print_notification << "GSM Signal Strength: "
+                            << gsmCellInfo->getSignalStrengthInfo().getGsmSignalStrength()
+                            << std::endl;
+         print_notification
+            << "GSM Bit error rate: " << gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()
+            << std::endl;
+         print_notification
+            << "GSM TimingAdvance: " << gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
+            << std::endl;
+         print_notification
+            << "GSM Signal Level: " << (int)gsmCellInfo->getSignalStrengthInfo().getLevel()
+            << std::endl;
+      } else if(cellinfo->getType() == telux::tel::CellType::CDMA) {
+         print_notification << "CDMA Cellinfo " << std::endl;
+         auto cdmaCellInfo = std::static_pointer_cast<telux::tel::CdmaCellInfo>(cellinfo);
+         print_notification << "CDMA isRegistered: " << cdmaCellInfo->isRegistered()
+                            << std::endl;
+         print_notification << "CDMA networkId: " << cdmaCellInfo->getCellIdentity().getNid()
+                            << std::endl;
+         print_notification << "CDMA SystemId: " << cdmaCellInfo->getCellIdentity().getSid()
+                            << std::endl;
+         print_notification
+            << "CDMA BaseStationId: " << cdmaCellInfo->getCellIdentity().getBaseStationId() << std::endl;
+         print_notification << "CDMA Longitude: " << cdmaCellInfo->getCellIdentity().getLongitude()
+                            << std::endl;
+         print_notification << "CDMA Latitude: " << cdmaCellInfo->getCellIdentity().getLatitude()
+                            << std::endl;
+         // CDMA Signal Strength
+         print_notification << "CDMA Dbm: " << cdmaCellInfo->getSignalStrengthInfo().getDbm()
+                            << std::endl;
+         print_notification << "CDMA Ecio: " << cdmaCellInfo->getSignalStrengthInfo().getCdmaEcio()
+                            << std::endl;
+         print_notification << "EVDO Ecio: " << cdmaCellInfo->getSignalStrengthInfo().getEvdoEcio()
+                            << std::endl;
+         print_notification
+            << "EVDO SNR: " << cdmaCellInfo->getSignalStrengthInfo().getEvdoSignalNoiseRatio()
+            << std::endl;
+         print_notification
+            << "CDMA/EVDO Signal Level: " << (int)cdmaCellInfo->getSignalStrengthInfo().getLevel()
+            << std::endl;
+      } else if(cellinfo->getType() == telux::tel::CellType::LTE) {
+         print_notification << "LTE Cellinfo  " << std::endl;
+         auto lteCellInfo = std::static_pointer_cast<telux::tel::LteCellInfo>(cellinfo);
+         print_notification << "LTE isRegistered: " << lteCellInfo->isRegistered()
+                            << std::endl;
+         print_notification << "LTE mcc: " << lteCellInfo->getCellIdentity().getMcc() << std::endl;
+         print_notification << "LTE mnc: " << lteCellInfo->getCellIdentity().getMnc() << std::endl;
+         print_notification << "LTE cid: " << lteCellInfo->getCellIdentity().getIdentity() << std::endl;
+         print_notification << "LTE pid: " << lteCellInfo->getCellIdentity().getPhysicalCellId()
+                            << std::endl;
+         print_notification << "LTE tac: " << lteCellInfo->getCellIdentity().getTrackingAreaCode()
+                            << std::endl;
+         print_notification << "LTE arfcn: " << lteCellInfo->getCellIdentity().getEarfcn() << std::endl;
+         // LTE Signal Strength
+         print_notification << "LTE signal strength: "
+                            << lteCellInfo->getSignalStrengthInfo().getLteSignalStrength()
+                            << std::endl;
+         print_notification << "LTE Rsrp: " << lteCellInfo->getSignalStrengthInfo().getDbm()
+                            << std::endl;
+         print_notification
+            << "LTE Rsrq: "
+            << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalReceiveQuality()
+            << std::endl;
+         print_notification
+            << "LTE Rssnr: " << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr()
+            << std::endl;
+         print_notification
+            << "LTE Cqi: " << lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
+            << std::endl;
+         print_notification
+            << "LTE Timing Advance: " << lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
+            << std::endl;
+         print_notification
+            << "LTE Signal Level: " << (int)lteCellInfo->getSignalStrengthInfo().getLevel()
+            << std::endl;
+      } else if(cellinfo->getType() == telux::tel::CellType::WCDMA) {
+         print_notification << "WCDMA Cellinfo " << std::endl;
+         auto wcdmaCellInfo = std::static_pointer_cast<telux::tel::WcdmaCellInfo>(cellinfo);
+         print_notification << "WCDMA isRegistered: " << wcdmaCellInfo->isRegistered()
+                            << std::endl;
+         print_notification << "WCDMA mcc: " << wcdmaCellInfo->getCellIdentity().getMcc() << std::endl;
+         print_notification << "WCDMA mnc: " << wcdmaCellInfo->getCellIdentity().getMnc() << std::endl;
+         print_notification << "WCDMA lac: " << wcdmaCellInfo->getCellIdentity().getLac() << std::endl;
+         print_notification << "WCDMA cid: " << wcdmaCellInfo->getCellIdentity().getIdentity()
+                            << std::endl;
+         print_notification
+            << "WCDMA psc: " << wcdmaCellInfo->getCellIdentity().getPrimaryScramblingCode() << std::endl;
+         print_notification << "WCDMA arfcn: " << wcdmaCellInfo->getCellIdentity().getUarfcn()
+                            << std::endl;
+         // WCDMA Signal Strength
+         print_notification << "WCDMA Signal Strength: "
+                            << wcdmaCellInfo->getSignalStrengthInfo().getSignalStrength()
+                            << std::endl;
+         print_notification
+            << "WCDMA bit error rate: " << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
+            << std::endl;
+         print_notification
+            << "WCDMA Signal Level: " << (int)wcdmaCellInfo->getSignalStrengthInfo().getLevel()
+            << std::endl;
+      } else if(cellinfo->getType() == telux::tel::CellType::TDSCDMA) {
+         print_notification << "TDSCDMA Cellinfo " << std::endl;
+         auto tdsCdmaCellInfo = std::static_pointer_cast<telux::tel::TdscdmaCellInfo>(cellinfo);
+         print_notification << "TDSCDMA isRegistered: " << tdsCdmaCellInfo->isRegistered()
+                            << std::endl;
+         print_notification << "TDSCDMA MCC: " << tdsCdmaCellInfo->getCellIdentity().getMcc()
+                            << std::endl;
+         print_notification << "TDSCDMA MNC: " << tdsCdmaCellInfo->getCellIdentity().getMnc()
+                            << std::endl;
+         print_notification << "TDSCDMA LAC : " << tdsCdmaCellInfo->getCellIdentity().getLac()
+                            << std::endl;
+         print_notification << "TDSCDMA CID: " << tdsCdmaCellInfo->getCellIdentity().getIdentity()
+                            << std::endl;
+         print_notification << "TDSCDMA Cell Parameters Id : "
+                            << tdsCdmaCellInfo->getCellIdentity().getParametersId() << std::endl;
+         // TDSCDMA signal strength..
+         print_notification
+            << "TDSCDMA power : "
+            << tdsCdmaCellInfo->getSignalStrengthInfo().getRscp() << std::endl;
+      }
+   }
 }

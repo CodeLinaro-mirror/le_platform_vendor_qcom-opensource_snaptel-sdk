@@ -48,21 +48,15 @@ public:
    void onVoiceServiceStateChanged(
       int phoneId, const std::shared_ptr<telux::tel::VoiceServiceInfo> &serviceInfo) override;
    void onOperatingModeChanged(telux::tel::OperatingMode mode) override;
+   void onCellInfoListChanged(int phoneId,
+      std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) override;
    std::string getCurrentTime();
-
    ~MyPhoneListener() {
    }
 
 private:
    std::string radioStateToString(telux::tel::RadioState radioState);
    std::string serviceStateToString(telux::tel::ServiceState serviceState);
-};
-
-class MySignalStrengthCallback : public telux::tel::ISignalStrengthCallback {
-public:
-   MySignalStrengthCallback();
-   void signalStrengthResponse(std::shared_ptr<telux::tel::SignalStrength> signalStrength,
-                               telux::common::ErrorCode error) override;
 };
 
 class MyRadioPowerCallback : public telux::common::ICommandResponseCallback {
@@ -113,5 +107,7 @@ public:
 class MyPhoneHelper {
 public:
    static std::string operatingModeToString(telux::tel::OperatingMode operatingMode);
+   static void printCellInfoDetails(
+      std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList);
 };
 #endif  // MYPHONELISTENER_HPP

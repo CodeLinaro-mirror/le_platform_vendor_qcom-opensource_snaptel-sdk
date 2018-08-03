@@ -41,6 +41,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/Call.hpp>
+#include <telux/tel/CellInfo.hpp>
 #include <telux/tel/ECallDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/PhoneManager.hpp>
@@ -51,6 +52,7 @@ namespace tel {
 
 /** @addtogroup telematics_phone
  * @{ */
+
 class ISignalStrengthCallback;
 class IVoiceServiceStateCallback;
 
@@ -69,6 +71,21 @@ class IVoiceServiceStateCallback;
  */
 using VoiceRadioTechResponseCb
    = std::function<void(RadioTechnology radioTech, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestCellInfo API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] cellInfoList - vector of shared pointers to cell info object
+ * @param [out] error - Return code for whether the operation succeeded or failed
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+ *         break backwards compatibility.
+ */
+using CellInfoCallback = std::function<void(std::vector<std::shared_ptr<CellInfo>> cellInfoList,
+   telux::common::ErrorCode error)>;
 
 /**
  * @brief This class allows getting system information and registering for system events.
@@ -142,6 +159,34 @@ public:
    virtual telux::common::Status setRadioPower(
       bool enable, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
       = 0;
+
+   /**
+    * Get the cell information about current serving cell and neighboring cells.
+    *
+    * @param [in] callback    Callback to get the response of cell info request.
+    *
+    * @returns Status of requestCellInfo i.e. success or suitable error
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestCellInfo(CellInfoCallback callback) = 0;
+
+   /**
+    * Set the minimum time in milliseconds between when the cell info list should be received.
+    *
+    * @param [in] timeInterval  Value of 0 means receive cell info list when any info changes.
+    *                           Value of INT_MAX means never receive cell info list even on change.
+    *                           Default value is 0
+    * @param [in] callback      Callback to get the response for set cell info list rate.
+    *
+    * @returns Status of setCellInfoListRate i.e. success or suitable error
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status setCellInfoListRate(uint32_t timeInterval,
+      common::ResponseCallback callback) = 0;
 
    /**
     * Get current signal strength of the associated network.

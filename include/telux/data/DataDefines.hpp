@@ -99,12 +99,12 @@ struct ProfileParams {
  * Data transfer statistics structure.
  */
 struct DataCallStats {
-   int bytesReceived = 0;
-   int bytesTransmitted = 0;
-   int packetsReceived = 0;
-   int packetsTransmitted = 0;
-   int packetsDroppedOnReceive = 0;
-   int packetsDroppedOnTransmit = 0;
+   unsigned long packetsTx = 0;          /**< Number of packets transmitted */
+   unsigned long packetsRx = 0;          /**< Number of packets received */
+   long long bytesTx = 0;                /**< Number of bytes transmitted */
+   long long bytesRx = 0;                /**< Number of bytes received */
+   unsigned long packetsDroppedTx = 0;   /**< Number of transmit packets dropped */
+   unsigned long packetsDroppedRx = 0;   /**< Number of receive packets dropped */
 };
 
 /**

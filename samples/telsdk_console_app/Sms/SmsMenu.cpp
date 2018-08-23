@@ -31,6 +31,7 @@
  * SmsMenu provides menu options to invoke SMS functions such as send SMS, receive SMS etc.
  */
 
+#include <algorithm>
 #include <chrono>
 #include <vector>
 #include <iostream>
@@ -71,6 +72,7 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor, int phoneId)
    if(subSystemStatus) {
       mySmsCmdCb_ = std::make_shared<MySmsCommandCallback>();
       mySmscAddrCb_ = std::make_shared<MySmscAddressCallback>();
+      mySmsDeliveryCb_ = std::make_shared<MySmsDeliveryCallback>();
       smsListener_ = std::make_shared<MySmsListener>();
 
       smsManager_ = phoneFactory.getSmsManager(phoneId);
@@ -88,12 +90,13 @@ SmsMenu::~SmsMenu() {
    mySmsCmdCb_ = nullptr;
    mySmscAddrCb_ = nullptr;
    smsListener_ = nullptr;
+   mySmsDeliveryCb_ = nullptr;
 }
 
 void SmsMenu::init() {
-   std::shared_ptr<ConsoleAppCommand> sendSmsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("1", "Send_SMS", {"receiver", "msg"},
-                        std::bind(&SmsMenu::sendSms, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> sendSmsCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "1", "Send_SMS", {}, std::bind(&SmsMenu::sendSms, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getSmscAddrCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("2", "Get_SMSC_address", {},
                         std::bind(&SmsMenu::getSmscAddr, this, std::placeholders::_1)));
@@ -101,31 +104,45 @@ void SmsMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "3", "Calculate_message_attributes", {"message"},
          std::bind(&SmsMenu::calculateMessageAttributes, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getPhoneIdCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Get_phone_id", {}, std::bind(&SmsMenu::getPhoneId, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
-      = {sendSmsCommand, getSmscAddrCommand, getMsgEncodingSizeCommand, getPhoneIdCommand};
+      = {sendSmsCommand, getSmscAddrCommand, getMsgEncodingSizeCommand};
    addCommands(commandsListSmsSubMenu);
    ConsoleApp::displayMenu();
 }
 
 // SMS Requests
 void SmsMenu::sendSms(std::vector<std::string> userInput) {
-   std::cout << "Send SMS \n";
+   std::cout << "Send SMS \n\n";
 
-   if(userInput.size() > 2) {
-      std::string receiverAddress = userInput[1];
-      std::string message = userInput[2];
+   char delimiter = '\n';
 
-      auto ret = smsManager_->sendSms(message, receiverAddress, mySmsCmdCb_);
-      if(ret == telux::common::Status::SUCCESS) {
-         std::cout << "Send SMS request sent successfully \n";
-      } else {
-         std::cout << "Send SMS request failed \n";
-      }
+   std::string receiverAddress;
+   std::cout << "Enter phone number: ";
+   std::getline(std::cin, receiverAddress, delimiter);
+
+   std::string message;
+   std::cout << "Enter message: ";
+   std::getline(std::cin, message, delimiter);
+
+   std::string deliveryAck;
+   bool isDeliveryAck = false;
+   do {
+      std::cout << "Do you need delivery status (y/n): ";
+      std::getline(std::cin, deliveryAck, delimiter);
+      std::transform(deliveryAck.begin(), deliveryAck.end(), deliveryAck.begin(), ::tolower);
+   } while((deliveryAck != "y") && (deliveryAck != "n"));
+
+   telux::common::Status status = telux::common::Status::FAILED;
+   if(deliveryAck == "y") {
+      status = smsManager_->sendSms(message, receiverAddress, mySmsCmdCb_, mySmsDeliveryCb_);
    } else {
-      std::cout << "Invalid SMS argument \n";
+      status = smsManager_->sendSms(message, receiverAddress, mySmsCmdCb_);
+   }
+
+   if(status == telux::common::Status::SUCCESS) {
+      std::cout << "Send SMS request sent successfully \n";
+   } else {
+      std::cout << "Send SMS request failed \n";
    }
 }
 
@@ -146,10 +163,5 @@ void SmsMenu::calculateMessageAttributes(std::vector<std::string> userInput) {
    std::cout << " numberOfSegments: " << msgAttributes.numberOfSegments << std::endl;
    std::cout << " segmentSize: " << msgAttributes.segmentSize << std::endl;
    std::cout << " numberOfCharsLeftInLastSegment: " << msgAttributes.numberOfCharsLeftInLastSegment
-             << std::endl;
-}
-
-void SmsMenu::getPhoneId(std::vector<std::string> userInput) {
-   std::cout << "Associated PhoneID for this SmsManager instance is " << smsManager_->getPhoneId()
              << std::endl;
 }

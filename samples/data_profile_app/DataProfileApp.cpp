@@ -67,11 +67,11 @@ class MyDataProfilesCallback : public telux::data::IDataProfileListCallback {
 
    std::string techPreferenceToString(telux::data::TechPreference techPref) {
       switch(techPref) {
-         case telux::data::TechPreference::TECH_PREFERENCE_3GPP:
+         case telux::data::TechPreference::TP_3GPP:
             return "3gpp";
-         case telux::data::TechPreference::TECH_PREFERENCE_3GPP2:
+         case telux::data::TechPreference::TP_3GPP2:
             return "3gpp2";
-         case telux::data::TechPreference::TECH_PREFERENCE_ANY:
+         case telux::data::TechPreference::TP_ANY:
          default:
             return "Any";
       }
@@ -79,13 +79,13 @@ class MyDataProfilesCallback : public telux::data::IDataProfileListCallback {
 
    std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType) {
       switch(ipType) {
-         case telux::data::IpFamilyType::IP_FAMILY_TYPE_V4:
+         case telux::data::IpFamilyType::IPV4:
             return "IPv4";
-         case telux::data::IpFamilyType::IP_FAMILY_TYPE_V6:
+         case telux::data::IpFamilyType::IPV6:
             return "IPv6";
-         case telux::data::IpFamilyType::IP_FAMILY_TYPE_V4V6:
+         case telux::data::IpFamilyType::IPV4V6:
             return "IPv4v6";
-         case telux::data::IpFamilyType::IP_FAMILY_TYPE_UNKNOWN:
+         case telux::data::IpFamilyType::UNKNOWN:
          default:
             return "NA";
       }

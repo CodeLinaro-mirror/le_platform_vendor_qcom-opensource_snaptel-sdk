@@ -47,10 +47,10 @@ private:
    void sendSms(std::vector<std::string> userInput);
    void getSmscAddr(std::vector<std::string> userInput);
    void calculateMessageAttributes(std::vector<std::string> userInput);
-   void getPhoneId(std::vector<std::string> userInput);
 
    std::shared_ptr<MySmsCommandCallback> mySmsCmdCb_ = nullptr;
    std::shared_ptr<MySmscAddressCallback> mySmscAddrCb_ = nullptr;
+   std::shared_ptr<MySmsDeliveryCallback> mySmsDeliveryCb_ = nullptr;
    std::shared_ptr<telux::tel::ISmsManager> smsManager_ = nullptr;
    std::shared_ptr<telux::tel::ISmsListener> smsListener_ = nullptr;
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_ = nullptr;

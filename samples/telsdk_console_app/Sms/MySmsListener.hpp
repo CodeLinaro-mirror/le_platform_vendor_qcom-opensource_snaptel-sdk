@@ -47,4 +47,9 @@ public:
    void smscAddressResponse(const std::string &address, telux::common::ErrorCode error) override;
 };
 
+class MySmsDeliveryCallback : public telux::common::ICommandResponseCallback {
+public:
+   void commandResponse(telux::common::ErrorCode error) override;
+};
+
 #endif

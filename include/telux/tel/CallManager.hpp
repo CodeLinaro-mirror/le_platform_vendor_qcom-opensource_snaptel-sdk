@@ -59,6 +59,21 @@ namespace tel {
 class IMakeCallCallback;
 
 /**
+ * This function is called with the response to make eCall API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] error - @ref ErrorCode
+ * @param [out] call - Pointer to Call object or nullptr in case of failure
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+ *         break backwards compatibility.
+ */
+using MakeCallCallback = std::function<void(telux::common::ErrorCode error,
+   std::shared_ptr<ICall> call)>;
+
+/**
  * @brief Call Manager does aggregate state management for in-progress calls
  *        It provides APIs for makeCall, makeECall, conferencing or swapping active and on-hold
  *        calls
@@ -101,16 +116,16 @@ public:
       = 0;
 
    /**
-    * Initiate an ecall.
+    * Initiate an eCall.
     *
-    * @param [in] phoneId - Represents phone corresponding to which on make ecall operation
+    * @param [in] phoneId - Represents phone corresponding to which on make eCall operation
     * is performed
     * @param [in] eCallMsdData - The structure containing required fields to
     * create eCall Minimum Set of Data (MSD)
-    * @param [in] emergencyCategory - Denotes the eCall category
+    * @param [in] category - Denotes the eCall category
     *     - 0x20 or 32 (VOICE_EMER_CAT_MANUAL)
     *     - 0x40 or 64 (VOICE_EMER_CAT_AUTO_ECALL)
-    * @param [in] eCallVariant - Denotes the call variant enum which can take following values:
+    * @param [in] variant - Denotes the call variant enum which can take following values:
     *     - 0x01 -- Test ECALL (Originate test eCall to the mobile number configured
     *               in NV params), This is the default value.
     *     - 0x02 -- Emergency ECALL (Originate EMERGENCY eCall i.e. call to 112)
@@ -130,8 +145,44 @@ public:
     * @returns Status of makeECall i.e. success or suitable status code.
     */
    virtual telux::common::Status makeECall(int phoneId, const ECallMsdData &eCallMsdData,
-                                           int emergencyCategory, int eCallVariant,
+                                           int category, int variant,
                                            std::shared_ptr<IMakeCallCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Initiate an eCall.
+    *
+    * @param [in] phoneId - Represents phone corresponding to which on make eCall operation
+    * is performed
+    * @param [in] msdPdu - Encoded MSD(Minimum Set of Data) PDU as per spec EN 15722 2015.
+    * @param [in] category - Denotes the eCall category
+    *     - 0x20 or 32 (VOICE_EMER_CAT_MANUAL)
+    *     - 0x40 or 64 (VOICE_EMER_CAT_AUTO_ECALL)
+    * @param [in] variant - Denotes the call variant enum which can take following values:
+    *     - 0x01 -- Test ECALL (Originate test eCall to the mobile number configured
+    *               in NV params), This is the default value.
+    *     - 0x02 -- Emergency ECALL (Originate EMERGENCY eCall i.e. call to 112)
+    * @param [in] callback - Callback function to get the response of makeECall request.
+    * Possible error codes for callback response
+    *        - @ref SUCCESS
+    *        - @ref RADIO_NOT_AVAILABLE
+    *        - @ref NO_MEMORY
+    *        - @ref MODEM_ERR
+    *        - @ref INTERNAL_ERR
+    *        - @ref INVALID_STATE
+    *        - @ref INVALID_CALL_ID
+    *        - @ref INVALID_ARGUMENTS
+    *        - @ref OPERATION_NOT_ALLOWED
+    *        - @ref GENERIC_FAILURE
+    *
+    * @returns Status of makeECall i.e. success or suitable status code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
+                                           int category, int variant,
+                                           MakeCallCallback callback)
       = 0;
 
    /**
@@ -140,6 +191,7 @@ public:
     * @param [in] phoneId - Represents phone corresponding to which updateECallMsd operation
     * is performed
     * @param [in] eCallMsd - The data structure represents the Minimum Set of Data (MSD)
+    * @param [in] callback - Optional callback pointer to get the response of updateECallMsd.
     *
     * @returns Status of updateECallMsd i.e. success or suitable error code.
     */
@@ -147,6 +199,23 @@ public:
       updateECallMsd(int phoneId, const ECallMsdData &eCallMsd,
                      std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
       = 0;
+
+   /**
+    * Update the eCall MSD in modem to be sent to Public Safety Answering Point (PSAP) when
+    * requested.
+    * @param [in] phoneId - Represents phone corresponding to which updateECallMsd operation
+    * is performed
+    * @param [in] msdPdu - Encoded MSD(Minimum Set of Data) PDU as per spec EN 15722 2015
+    * @param [in] callback - Callback function to get the response of updateECallMsd.
+    *
+    * @returns Status of updateECallMsd i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual telux::common::Status
+      updateECallMsd(int phoneId, const std::vector<uint8_t> &msdPdu,
+      telux::common::ResponseCallback callback) = 0;
 
    /**
     * Get a vector of all currently in-progress calls in the system

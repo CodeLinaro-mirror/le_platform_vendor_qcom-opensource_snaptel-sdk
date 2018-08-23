@@ -47,6 +47,7 @@ extern "C" {
 #include "Location/LocationMenu.hpp"
 #include "Phone/PhoneMenu.hpp"
 #include "Sms/SmsMenu.hpp"
+#include "Data/DataMenu.hpp"
 #include "SimCardServices/SimCardServicesMenu.hpp"
 
 #include "TelSdkConsoleApp.hpp"
@@ -80,9 +81,12 @@ void TelSdkConsoleApp::init() {
    std::shared_ptr<ConsoleAppCommand> locationMenuCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("6", "Location", {},
                         std::bind(&TelSdkConsoleApp::locationMenu, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> dataMenuCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("7", "Data", {},
+                        std::bind(&TelSdkConsoleApp::dataMenu, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
       = {phoneMenuCommand, callMenuCommand,    eCallMenuCommand,
-         smsMenuCommand,   simCardMenuCommand, locationMenuCommand};
+         smsMenuCommand,   simCardMenuCommand, locationMenuCommand, dataMenuCommand};
 
    addCommands(mainMenuCommands);
    ConsoleApp::displayMenu();
@@ -122,6 +126,12 @@ void TelSdkConsoleApp::locationMenu(std::vector<std::string> userInput) {
    LocationMenu locationMenu("Location Menu", "location> ");
    locationMenu.init();
    locationMenu.mainLoop();
+}
+
+void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
+   DataMenu dataMenu("Data Menu", "data> ");
+   dataMenu.init();
+   dataMenu.mainLoop();
 }
 
 void signalHandler(int sig) {

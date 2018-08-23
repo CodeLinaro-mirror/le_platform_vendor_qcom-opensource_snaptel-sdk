@@ -27,39 +27,23 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
- */
+#ifndef DATALISTENER_HPP
+#define DATALISTENER_HPP
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
+#include <telux/data/DataFactory.hpp>
+#include <telux/data/DataConnectionManager.hpp>
 
-#include <string>
-#include <vector>
-
-#include "console_app_framework/ConsoleApp.hpp"
-
-class TelSdkConsoleApp : public ConsoleApp {
+class DataListener : public telux::data::IDataConnectionListener {
 public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
-
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
+   void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
 
 private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void locationMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
+   void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall);
+   std::string callEndReasonTypeToString(telux::data::EndReasonType type);
+   int callEndReasonCode(telux::data::DataCallEndReason ceReason);
+   std::string techPreferenceToString(telux::data::TechPreference techPref);
+   std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
+   std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
 };
 
-#endif  // TELSDKCONSOLEAPP_HPP
+#endif  // DATALISTENER_HPP

@@ -39,8 +39,7 @@ Compile telsdk_console_app:
       \endcode
 @section install_the_sample Install apps on the device
 
-Push your binary to the /data location on the device
-
+- Push your binary to the /data location on the device
    \code{.sh}
    # this install all the sample apps
    user@machine:/build/install/bin$ adb push . /data/

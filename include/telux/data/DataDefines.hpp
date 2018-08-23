@@ -52,29 +52,30 @@ namespace data {
  * Preferred IP family for the call
  */
 enum class IpFamilyType {
-   IP_FAMILY_TYPE_UNKNOWN = -1,
-   IP_FAMILY_TYPE_V4 = 0x04,    // IPv4 call
-   IP_FAMILY_TYPE_V6 = 0x06,    // IPv6 call
-   IP_FAMILY_TYPE_V4V6 = 0x0A,  // IPv4 and IPv6 call
+   UNKNOWN = -1,
+   IPV4 = 0x04,    // IPv4 call
+   IPV6 = 0x06,    // IPv6 call
+   IPV4V6 = 0x0A,  // IPv4 and IPv6 call
 };
 
 /**
  * Technology Preference
  */
 enum class TechPreference {
-   TECH_PREFERENCE_3GPP,  /**< UMTS, LTE */
-   TECH_PREFERENCE_3GPP2, /**< CDMA */
-   TECH_PREFERENCE_ANY,   /**< ANY (3GPP or 3GPP2)  */
+   UNKNOWN = -1,
+   TP_3GPP,  /**< UMTS, LTE */
+   TP_3GPP2, /**< CDMA */
+   TP_ANY,   /**< ANY (3GPP or 3GPP2)  */
 };
 
 /**
  * Authentication protocol type to be used for PDP context.
  */
 enum class AuthProtocolType {
-   AUTH_TYPE_NONE = 0,
-   AUTH_TYPE_PAP = 1,  /**< Password Authentication Protocol */
-   AUTH_TYPE_CHAP = 2, /**< Challenge Handshake Authentication Protocol */
-   AUTH_TYPE_PAP_CHAP = 3,
+   AUTH_NONE = 0,
+   AUTH_PAP = 1,  /**< Password Authentication Protocol */
+   AUTH_CHAP = 2, /**< Challenge Handshake Authentication Protocol */
+   AUTH_PAP_CHAP = 3,
 };
 
 /**
@@ -85,14 +86,14 @@ struct ProfileParams {
    std::string apn;                                                /**< APN name */
    std::string userName;                                           /**< APN user name (if any) */
    std::string password;                                           /**< APN password (if any) */
-   TechPreference techPref = TechPreference::TECH_PREFERENCE_3GPP; /**< Technology preference,
-                                     default is TechPreference::TECH_PREFERENCE_3GPP */
-   AuthProtocolType authType = AuthProtocolType::AUTH_TYPE_NONE; /**< Authentication protocol type,
-                                     default is AuthProtocolType::AUTH_TYPE_NONE */
+   TechPreference techPref = TechPreference::UNKNOWN; /**< Technology preference,
+                                     default is TechPreference::UNKNOWN */
+   AuthProtocolType authType = AuthProtocolType::AUTH_NONE; /**< Authentication protocol type,
+                                     default is AuthProtocolType::AUTH_NONE */
    IpFamilyType ipFamilyType
-      = IpFamilyType::IP_FAMILY_TYPE_UNKNOWN; /**< Preferred IP family for the call,
-                                                   default is
-                                                   IpFamilyType::IP_FAMILY_TYPE_UNKNOWN */
+      = IpFamilyType::UNKNOWN; /**< Preferred IP family for the call,
+                                    default is
+                                    IpFamilyType::UNKNOWN */
 };
 
 /**

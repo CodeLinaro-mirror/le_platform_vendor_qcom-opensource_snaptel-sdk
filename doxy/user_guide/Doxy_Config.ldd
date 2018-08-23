@@ -35,7 +35,7 @@ DOXYFILE_ENCODING      = UTF-8
 #                        The PROJECT_NAME and PROJECT_NUMBER appear in the header
 #                        on each HTML page.
 PROJECT_NAME           = "Telematics SDK - User Guide"
-PROJECT_NUMBER         = ""
+PROJECT_NUMBER         = "v$(SDK_VERSION)"
 PROJECT_BRIEF          =
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = "."
@@ -51,7 +51,7 @@ INLINE_GROUPED_CLASSES = YES
 FULL_PATH_NAMES        = NO
 STRIP_FROM_PATH        =
 STRIP_FROM_INC_PATH    =
-SHORT_NAMES            = NO
+SHORT_NAMES            = YES
 JAVADOC_AUTOBRIEF      = NO
 QT_AUTOBRIEF           = NO
 MULTILINE_CPP_IS_BRIEF = NO
@@ -271,6 +271,7 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/loc/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/data/
 
+
 INPUT_ENCODING         = UTF-8
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and
 # *.h) to filter out the source-files in the directories. If left blank the
@@ -324,9 +325,9 @@ HTML_FOOTER            = $(TELUX_GIT_ROOT)/doxy/template/footer.html
 HTML_STYLESHEET        = $(TELUX_GIT_ROOT)/doxy/template/sdk.css
 HTML_EXTRA_STYLESHEET  = $(TELUX_GIT_ROOT)/doxy/template/custom.css
 HTML_EXTRA_FILES       = $(TELUX_GIT_ROOT)/doxy/template/tabs.css
-HTML_COLORSTYLE_HUE    = 0
-HTML_COLORSTYLE_SAT    = 0
-HTML_COLORSTYLE_GAMMA  = 110
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
 HTML_TIMESTAMP         = YES
 HTML_DYNAMIC_SECTIONS  = NO
 HTML_INDEX_NUM_ENTRIES = 100
@@ -363,10 +364,15 @@ EXT_LINKS_IN_WINDOW    = NO
 FORMULA_FONTSIZE       = 10
 FORMULA_TRANSPARENT    = YES
 USE_MATHJAX            = NO
-MATHJAX_RELPATH        = http://cdn.mathjax.org/mathjax/latest
+MATHJAX_FORMAT         = HTML-CSS
 MATHJAX_EXTENSIONS     =
 SEARCHENGINE           = NO
 SERVER_BASED_SEARCH    = NO
+EXTERNAL_SEARCH        = NO
+SEARCHENGINE_URL       =
+SEARCHDATA_FILE        = searchdata.xml
+EXTERNAL_SEARCH_ID     =
+EXTRA_SEARCH_MAPPINGS  =
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
 #---------------------------------------------------------------------------

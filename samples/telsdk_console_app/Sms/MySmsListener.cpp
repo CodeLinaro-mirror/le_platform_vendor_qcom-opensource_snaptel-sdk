@@ -31,11 +31,12 @@
 
 #include "MySmsListener.hpp"
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
 
 void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> smsMsg) {
    std::cout << std::endl << std::endl;
-   print_notification << "Received SMS from: " << smsMsg->getSender()
+   PRINT_NOTIFICATION << "Received SMS from: " << smsMsg->getSender()
                       << "\n message: " << smsMsg->getText() << std::endl;
 }
 
@@ -43,21 +44,28 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMe
 void MySmsCommandCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_notification << "sendSmsResponse successfully" << std::endl;
+      PRINT_CB << "sendSmsResponse successfully" << std::endl;
    } else {
-      print_notification << "sendSmsResponse failed, errorCode: " << static_cast<int>(error)
-                         << std::endl;
+      PRINT_CB << "sendSmsResponse failed, errorCode: " << static_cast<int>(error) << std::endl;
    }
 }
 
-// Implementation of SMS callback
+// Implementation of SMSC Address callback
 void MySmscAddressCallback::smscAddressResponse(const std::string &address,
                                                 telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_notification << "requestSmscAddress smscAddressResponse: " << address << std::endl;
+      PRINT_CB << "requestSmscAddress smscAddressResponse: " << address << std::endl;
    } else {
-      print_notification << "requestSmscAddress failed, error: " << static_cast<int>(error)
-                         << std::endl;
+      PRINT_CB << "requestSmscAddress failed, errorCode: " << static_cast<int>(error) << std::endl;
    }
 }
+
+void MySmsDeliveryCallback::commandResponse(telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "SMS Delivered successfully" << std::endl;
+   } else {
+      PRINT_CB << "SMS Delivery failed, errorCode: " << (int)error << std::endl;
+   }
+}
+

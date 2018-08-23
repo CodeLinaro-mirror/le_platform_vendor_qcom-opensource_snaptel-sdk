@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
    // [5] Start data call on the mentioned profile id
    if(argc == 2) {
       int profileId = std::atoi(argv[1]);
-      telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IP_FAMILY_TYPE_V4;
+      telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IPV4;
       dataConnMgr->startDataCall(profileId, ipFamilyType, responseCallback);
 
    } else {

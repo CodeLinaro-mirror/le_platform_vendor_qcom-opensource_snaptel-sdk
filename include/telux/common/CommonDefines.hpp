@@ -265,6 +265,62 @@ enum class ErrorCode {
    TOO_SOON = 1116,                      /**< Too soon */
    TIME_NOT_ACQUIRED = 1117,             /**< Time not acquired */
    OP_IN_PROGRESS = 1118,                /**< Operation is in progress */
+   // WDS extended error codes with offset 2000
+   DS_PROFILE_REG_RESULT_FAIL = 2001,                   /**< General failure */
+   DS_PROFILE_REG_RESULT_ERR_INVAL_HNDL = 2002,         /**< Request contains an invalid
+                                                             profile handle */
+   DS_PROFILE_REG_RESULT_ERR_INVAL_OP = 2003,           /**< Invalid operation was
+                                                             requested */
+   DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_TYPE = 2004, /**< Request contains an
+                                                             invalid technology type */
+   DS_PROFILE_REG_RESULT_ERR_INVAL_PROFILE_NUM = 2005,  /**< Request contains an invalid
+                                                             profile number */
+   DS_PROFILE_REG_RESULT_ERR_INVAL_IDENT = 2006,        /**< Request contains an invalid
+                                                             profile identifier */
+   DS_PROFILE_REG_RESULT_ERR_INVAL = 2007,              /**< Request contains an invalid
+                                                             argument other than profile
+                                                             number and profile identifier
+                                                             received */
+   DS_PROFILE_REG_RESULT_ERR_LIB_NOT_INITED = 2008,     /**< Profile registry has not been
+                                                             initialized yet */
+   DS_PROFILE_REG_RESULT_ERR_LEN_INVALID = 2009,        /**< Request contains a parameter
+                                                             with invalid length */
+   DS_PROFILE_REG_RESULT_LIST_END = 2010,               /**< End of the profile list was
+                                                             reached while searching for
+                                                             the requested profile */
+   DS_PROFILE_REG_RESULT_ERR_INVAL_SUBS_ID = 2011,      /**< Request contains an invalid
+                                                             subscription identifier */
+   DS_PROFILE_REG_INVAL_PROFILE_FAMILY = 2012,          /**< Request contains an invalid
+                                                             profile family*/
+   DS_PROFILE_REG_PROFILE_VERSION_MISMATCH = 2013,      /**< Version mismatch */
+   REG_RESULT_ERR_OUT_OF_MEMORY = 2014,                 /**< Out of memory */
+   DS_PROFILE_REG_RESULT_ERR_FILE_ACCESS = 2015,        /**< File access error */
+   DS_PROFILE_REG_RESULT_ERR_EOF = 2016,                /**< End of field */
+   REG_RESULT_ERR_VALID_FLAG_NOT_SET = 2017,            /**< A valid flag is not set */
+   REG_RESULT_ERR_OUT_OF_PROFILES = 2018,               /**< Out of profiles */
+   REG_RESULT_NO_EMERGENCY_PDN_SUPPORT = 2019,          /**< No emergency PDN support */
+   // WDS extended error codes without offset
+   DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY = 4097,         /**< Request contains an invalid
+                                                               3GPP profile family */
+   DS_PROFILE_3GPP_ACCESS_ERR = 4098,                   /**< Error was encountered while
+                                                               accessing the 3GPP profiles*/
+   DS_PROFILE_3GPP_CONTEXT_NOT_DEFINED = 4099,          /**< Specified 3GPP profile does
+                                                               not have a valid context*/
+   DS_PROFILE_3GPP_VALID_FLAG_NOT_SET = 4100,           /**< Specified 3GPP profile is
+                                                               marked invalid */
+   DS_PROFILE_3GPP_READ_ONLY_FLAG_SET = 4101,           /**< Specified 3GPP profile is
+                                                               marked read-only */
+   DS_PROFILE_3GPP_ERR_OUT_OF_PROFILES = 4102,          /**< Creation of a new 3GPP profile
+                                                             failed because the limit of
+                                                             16 profiles has already been
+                                                             reached*/
+   DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE = 4353, /**< Invalid profile
+                                                                 identifier was received as
+                                                                 part of the 3GPP2 profile
+                                                                 modification request */
+   DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE = 4354,          /**< Creation of a new 3GPP2 profile
+                                                      failed because the limit has already
+                                                      been reached*/
    // Transport error codes
    INTERNAL_ERROR = -1,       /**< Internal error */
    SERVICE_ERROR = -2,        /**< Service error */
@@ -279,7 +335,7 @@ enum class ErrorCode {
    INVALID_CLIENT = -18,      /**< Invalid client */
    FRAMEWORK_NOT_READY = -19, /**< Framework not ready */
    INVALID_SIGNAL = -20,      /**< Invalid signal */
-   TRANSPORT_BUSY_ERROR = -21 /**< Transport busy error */
+   TRANSPORT_BUSY_ERROR = -21, /**< Transport busy error */
 };
 
 /**

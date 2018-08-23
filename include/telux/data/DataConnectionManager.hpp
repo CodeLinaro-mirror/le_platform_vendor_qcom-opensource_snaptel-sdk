@@ -164,7 +164,7 @@ public:
     *             change and could break backwards compatibility.
     */
    virtual telux::common::Status startDataCall(int profileId, IpFamilyType ipFamilyType
-                                                              = IpFamilyType::IP_FAMILY_TYPE_V4V6,
+                                                              = IpFamilyType::IPV4V6,
                                                DataCallResponseCb callback = nullptr)
       = 0;
 
@@ -187,7 +187,7 @@ public:
     *             change and could break backwards compatibility.
     */
    virtual telux::common::Status stopDataCall(int profileId, IpFamilyType ipFamilyType
-                                                             = IpFamilyType::IP_FAMILY_TYPE_V4V6,
+                                                             = IpFamilyType::IPV4V6,
                                               DataCallResponseCb callback = nullptr)
       = 0;
 

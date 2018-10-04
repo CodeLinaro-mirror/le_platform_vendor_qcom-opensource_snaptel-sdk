@@ -1,6 +1,6 @@
 # Making eCall (Emergency E112)
 
-*Quick steps:* Please follow below steps to make an emergency call(eCall).
+Please follow below steps to make an emergency call(eCall).
 
 ### 1. Get the PhoneFactory and PhoneManager instances.
 

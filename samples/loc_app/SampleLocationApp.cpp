@@ -41,7 +41,7 @@
 #include "telux/loc/LocationManager.hpp"
 #include "telux/loc/LocationListener.hpp"
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mCallback: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 using namespace telux::loc;
 using namespace telux::common;

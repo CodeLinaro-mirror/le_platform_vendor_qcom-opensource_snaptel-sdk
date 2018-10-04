@@ -1,6 +1,6 @@
 # Using Subscription Manager APIs
 
-*Quick steps:* Please follow below steps to use Subscription Manager APIs to get Subscription Information.
+Please follow below steps to use Subscription Manager APIs to get Subscription Information.
 
 ##### 1. Get the PhoneFactory and SubscriptionManager instances
 

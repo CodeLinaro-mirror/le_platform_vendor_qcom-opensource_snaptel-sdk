@@ -247,17 +247,21 @@ void CallMenu::rejectWithSms(std::vector<std::string> userInput) {
 
 void CallMenu::hangupDialingOrAlerting(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
+   int noOfExistingCalls = 0;
    // Iterate through the call list in the application and hangup the first Call that is
    // in Dialing or Alerting state
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if(((*callIterator)->getCallState() == telux::tel::CallState::CALL_DIALING)
-         || ((*callIterator)->getCallState() == telux::tel::CallState::CALL_ALERTING)) {
+      if((*callIterator)->getCallState() != telux::tel::CallState::CALL_ENDED) {
+         noOfExistingCalls++;
          spCall = *callIterator;
-         break;
       }
+   }
+   if (noOfExistingCalls > 1) {
+      std::cout << "More than one call: use Hangup cmd with Index " << std::endl;
+      return;
    }
 
    if(spCall != nullptr) {

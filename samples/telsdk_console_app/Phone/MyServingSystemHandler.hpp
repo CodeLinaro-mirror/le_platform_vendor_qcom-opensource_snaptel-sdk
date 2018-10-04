@@ -27,27 +27,43 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
+#ifndef MYSERVINGSYSTEMHANDLER_HPP
+#define MYSERVINGSYSTEMHANDLER_HPP
 
-#include <telux/tel/PhoneFactory.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "MySubscriptionListener.hpp"
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/ServingSystemManager.hpp>
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+class MyRatPreferenceResponseCallback {
+public:
+   static void ratPreferenceResponse(telux::tel::RatPreference preference,
+                                     telux::common::ErrorCode error);
+};
 
-void MySubscriptionListener::onSubscriptionInfoChanged(
-   std::shared_ptr<telux::tel::ISubscription> subscription) {
-   std::cout << "\n";
-   if(subscription) {
-      PRINT_NOTIFICATION
-         << " onSubscriptionInfoChanged: CarrierName : " << subscription->getCarrierName()
-         << ", PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
-   } else {
-      PRINT_NOTIFICATION << " onSubscriptionInfoChanged: Subscription is empty" << std::endl;
-   }
-}
+class MyServiceDomainResponseCallback {
+public:
+   static void serviceDomainResponse(telux::tel::ServiceDomainPreference preference,
+                                     telux::common::ErrorCode error);
+};
 
-void MySubscriptionListener::onNumberOfSubscriptionsChanged(int count) {
-   std::cout << "\n";
-   PRINT_NOTIFICATION << "\nonNumberOfSubscriptionsChanged: count = " << count << std::endl;
-}
+class MyServingSystemResponsecallback {
+public:
+   static void servingSystemResponse(telux::common::ErrorCode error);
+};
+
+class MyServingSystemHelper {
+public:
+   static std::string getRatPreference(telux::tel::RatPreference preference);
+   static std::string getServiceDomain(telux::tel::ServiceDomainPreference preference);
+};
+
+class MyServingSystemListener : public telux::tel::IServingSystemListener {
+public:
+   void onRatPreferenceChanged(telux::tel::RatPreference preference) override;
+   void onServiceDomainPreferenceChanged(telux::tel::ServiceDomainPreference preference) override;
+};
+
+#endif  // MYSERVINGSYSTEMHANDLER_HPP

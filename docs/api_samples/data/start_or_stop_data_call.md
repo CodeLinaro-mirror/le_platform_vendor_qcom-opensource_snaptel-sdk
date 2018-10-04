@@ -1,6 +1,6 @@
 # Cellular Data Call - Start/Stop
 
-*Quick steps:* Please follow below steps to start or stop cellular data call
+Please follow below steps to start or stop cellular data call
 
 ### 1. Get the DataFactory and DataConnectionManager instances
 

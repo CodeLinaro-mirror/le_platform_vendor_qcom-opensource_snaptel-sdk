@@ -31,7 +31,7 @@
 
 #include "MyLocationCommandCallback.hpp"
 
-#define print_cb std::cout << "\033[1;35mCALLBACK: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 // Implementation of My location callback
 MyLocationCommandCallback::MyLocationCommandCallback(std::string cmdName) {
@@ -40,8 +40,8 @@ MyLocationCommandCallback::MyLocationCommandCallback(std::string cmdName) {
 void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_cb << commandName_ << " sent successfully" << std::endl;
+      PRINT_CB << commandName_ << " sent successfully" << std::endl;
    } else {
-      print_cb << commandName_ << " failed\n errorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << commandName_ << " failed\n errorCode: " << static_cast<int>(error) << std::endl;
    }
 }

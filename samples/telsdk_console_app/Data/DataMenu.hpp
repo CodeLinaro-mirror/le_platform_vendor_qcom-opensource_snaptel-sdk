@@ -72,8 +72,6 @@ public:
    DataMenu(std::string appName, std::string cursor);
    ~DataMenu();
 
-   static std::vector<std::shared_ptr<telux::data::DataProfile>> profiles_;
-
 private:
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
    std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;

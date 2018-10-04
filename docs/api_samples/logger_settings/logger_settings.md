@@ -1,14 +1,30 @@
 # Configuring Logs from the SDK
 
-*Quick steps:* Please follow below steps to configure Logger settings.
+Please follow below steps to configure Logger settings.
 
 Telematics SDK provides a configurable logger module that can be used to log messages from Telematics SDK library at desired threshold levels into device console and optionally into a log file.
 
-A configuration file called "tel.conf" is provided to configure logger settings such as logging threshold, enable/ disable file logging and to change the log file name.
+By default, both console logging and file logging are set to "NONE" log level, *tel.conf* will be placed under /etc location
 
-File "tel.conf" is located in project workspace in "<BASE_DIR>/config" and in "/data" folder on the target device.
+The configuration file called "appName.conf" or "tel.conf" is used to configure logger settings such as logging threshold, enable/disable file logging and to change the log file name. These file have to be updated to override default behavior. These configuration file should be copied either in /etc or the folder where the application is running.
 
-In order to change the default behavior of the Telematics SDK library, the settings in "tel.conf" file need to be updated as required and the updated file should be copied into the same folder where the application using Telematics SDK library is located.
+To modify tel.conf file under /etc, you need to mount partition on MDM A7 processor
+
+   ~~~~~~{.sh}
+   adb shell mount -o rw,remount /
+   ~~~~~~
+
+**NOTE:** The file path where the log file will be written to, need to be in a writable partition, accessible to the application that is running.
+
+In the case of MDMs A7 processor the /data partition is writable.
+
+Here is how the platform searches for the configuration file. If configuration file is found use the same to configure logger settings else keep continue to search in below order.
+-  Search for appName.conf in /etc folder. (i.e. telsdk_console_app.conf)
+-  Search for appName.conf in the folder that contains the application.
+-  Search for tel.conf in etc folder.
+-  Search for tel.conf in the folder that contains the application.
+
+This allows flexibility for app's to either share the same log file or keep each apps log file separate.
 
 ### 1. Console and file level logging
 
@@ -28,7 +44,7 @@ CONSOLE_LOG_LEVEL, FILE_LOG_LEVEL specifies the threshold for console log messag
 ### 2. Set Max file size
 
 MAX_LOG_FILE_SIZE specifies the maximum allowed size(in bytes) of the log file
--  When max size is reached, logger backs up the log file once, for example: tapi.log will be renamed to tapi.log.backup and a new log file will be created.
+-  When max size is reached, logger backs up the log file once, for example: tel.log will be renamed to tel.log.backup and a new log file will be created.
 -  Default MAX_LOG_FILE_SIZE is 5 Mega Bytes
 
    ~~~~~~{.sh}
@@ -54,7 +70,7 @@ Specifies the path of the log file
    LOG_FILE_PATH=/data
    ~~~~~~
 
-### 5. set log file name
+### 5. Set log file name
 
 Specifies the name of the log file to be used
 

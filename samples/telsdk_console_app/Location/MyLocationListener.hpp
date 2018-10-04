@@ -40,11 +40,15 @@ public:
    void onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) override;
 
    std::string logSessionStatus(telux::loc::SessionStatus sessionStatus);
+   void setLocationReportFlag(bool enable);
+   void setSvInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
 
 private:
+   bool isSvInfoFlagEnabled_ = false, isLocReportFlagEnabled_ = false;
+   bool isTimerExpired = false;
    void printSbasCorrection(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
    void printPositionTech(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
    void printMeasurementType(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);

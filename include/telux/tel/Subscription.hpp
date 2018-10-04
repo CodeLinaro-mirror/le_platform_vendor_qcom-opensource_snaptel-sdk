@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -32,9 +32,6 @@
  * @brief       Subscription class provides the details about operator
  *              subscription pertaining to a SIM card and the network to
  *              which the SIM is connected.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef SUBSCRIPTION_HPP
@@ -51,9 +48,6 @@ namespace tel {
 /**
  *  @brief       Subscription returns information about network operator
  *               subscription details pertaining to a SIM card.
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 class ISubscription {
 
@@ -63,8 +57,8 @@ public:
     *
     * @returns Name of the carrier.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
     */
    virtual std::string getCarrierName() = 0;
 
@@ -72,9 +66,6 @@ public:
     * Retrieves the SIM's ICCID (Integrated Chip ID) - i.e SIM Serial Number.
     *
     * @returns Integrated Chip Id.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual std::string getIccId() = 0;
 
@@ -83,9 +74,6 @@ public:
     * connected.
     *
     * @returns Mobile Country Code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual int getMcc() = 0;
 
@@ -94,9 +82,6 @@ public:
     * connected.
     *
     * @returns Mobile Network Code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual int getMnc() = 0;
 
@@ -104,9 +89,6 @@ public:
     * Retrieves the phone number for the SIM subscription.
     *
     * @returns PhoneNumber.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual std::string getPhoneNumber() = 0;
 
@@ -114,9 +96,6 @@ public:
     * Retrieves SIM Slot index for the SIM pertaining to this subscription object.
     *
     * @returns SIM slotId.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual int getSlotId() = 0;
 
@@ -125,9 +104,6 @@ public:
     * This will have home network MCC and MNC values.
     *
     * @returns imsi.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual std::string getImsi() = 0;
 

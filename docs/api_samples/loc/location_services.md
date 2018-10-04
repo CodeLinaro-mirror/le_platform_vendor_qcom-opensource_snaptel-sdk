@@ -1,6 +1,6 @@
 # Using Location Service APIs
 
-*Quick steps:* Please follow below steps to get Location, Satellite Vehicle (SV) Info reports
+Please follow below steps to get Location, Satellite Vehicle (SV) Info reports
 
 ### 1. Implement ICommandResponseCallback interface for receiving notifications ###
    ~~~~~~{.cpp}

@@ -37,23 +37,23 @@ extern "C" {
 
 #include "MyECallListener.hpp"
 
-#define print_notification std::cout << std::endl << "\033[1;35mNotification: \033[0m"
+#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
 
 void MyECallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
-   print_notification << getCurrentTime() << "Answer incoming call" << std::endl;
+   PRINT_NOTIFICATION << getCurrentTime() << "Answer incoming call" << std::endl;
    std::string user_string;
    std::cout << " Enter 7 to answer call " << std::endl;
 }
 
 void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
-   print_notification << "\n onCallInfoChange: "
+   PRINT_NOTIFICATION << "\n onCallInfoChange: "
                       << " Call State: " << callStateToString(call->getCallState())
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " << callDirectionToString(call->getCallDirection())
                       << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
-      print_notification << getCurrentTime() << "  Cause of call termination: "
+      PRINT_NOTIFICATION << getCurrentTime() << "  Cause of call termination: "
                          << callEndCauseToString(call->getCallEndCause()) << std::endl;
    }
 }
@@ -99,15 +99,16 @@ std::string MyECallListener::callStateToString(telux::tel::CallState cs) {
 void MyECallListener::onECallMsdTransmissionStatus(int phoneId,
                                                    telux::common::ErrorCode errorCode) {
    if(errorCode == telux::common::ErrorCode::SUCCESS) {
-      print_notification << "onECallMsdTransmissionStatus is Success" << std::endl;
+      PRINT_NOTIFICATION << "onECallMsdTransmissionStatus is Success" << std::endl;
    } else {
-      print_notification
+      PRINT_NOTIFICATION
          << "onECallMsdTransmissionStatus failed with error code: " << static_cast<int>(errorCode)
          << std::endl;
    }
 }
 
-std::string MyECallListener::eCallMsdTransmissionStatusToString(telux::tel::ECallMsdTransmissionStatus status) {
+std::string MyECallListener::eCallMsdTransmissionStatusToString(
+   telux::tel::ECallMsdTransmissionStatus status) {
    switch(status) {
       case telux::tel::ECallMsdTransmissionStatus::SUCCESS:
          return std::string("SUCCESS ");
@@ -126,11 +127,11 @@ std::string MyECallListener::eCallMsdTransmissionStatusToString(telux::tel::ECal
    }
 }
 
-void MyECallListener::onECallMsdTransmissionStatus(int phoneId,
-   telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
-   std::cout << std::endl ;
-   print_notification << "ECallMsdTransmission  Status: " <<
-         eCallMsdTransmissionStatusToString(msdTransmissionStatus) << std::endl;
+void MyECallListener::onECallMsdTransmissionStatus(
+   int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
+   std::cout << std::endl;
+   PRINT_NOTIFICATION << "ECallMsdTransmission  Status: "
+                      << eCallMsdTransmissionStatusToString(msdTransmissionStatus) << std::endl;
 }
 
 std::string MyECallListener::callEndCauseToString(telux::tel::CallEndCause callEndCause) {

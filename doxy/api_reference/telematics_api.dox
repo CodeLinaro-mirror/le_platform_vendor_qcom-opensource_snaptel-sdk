@@ -58,6 +58,10 @@ Jun 2017   SVM      Created to support V2X API
     This section contains APIs related to Cellular Data Services.
     @defgroup telematics_subscription Subscription Management
     This section contains APIs related to Subscription Management.
+    @defgroup telematics_network_selection Network Selection
+    Network Selection Manager provides the interface to get and set network selection mode (Manual or Automatic), scan available networks and set and get preferred networks list.
+    @defgroup telematics_serving_system Serving System
+    Serving System Manager class provides the interface to request and set service domain preference and radio access technology mode preference for  searching and registering (CS/PS domain, RAT and operation mode)
     @defgroup telematics_common Common
     This section contains APIs related to Command Callbacks, Error Codes and Version information.
   @}

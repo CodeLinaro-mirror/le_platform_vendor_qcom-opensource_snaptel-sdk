@@ -27,15 +27,15 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <bitset>
 #include <iostream>
 #include <memory>
-#include <bitset>
 
 #include <telux/loc/LocationDefines.hpp>
 
 #include "MyLocationListener.hpp"
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 std::string MyLocationListener::logSessionStatus(telux::loc::SessionStatus sessionStatus) {
    std::string sessionStatusString = "UNKNOWN";
@@ -72,28 +72,27 @@ std::string MyLocationListener::logSessionStatus(telux::loc::SessionStatus sessi
 
 void MyLocationListener::printSbasCorrection(
    std::shared_ptr<telux::loc::ILocationInfo> locationInfo) {
-   std::cout << std::endl << std::endl;
    telux::loc::SbasCorrection correction = locationInfo->getSbasCorrection();
    if(correction[telux::loc::SBAS_CORRECTION_IONO]) {
-      print_notification << "SBAS ionospheric correction is used" << std::endl;
+      std::cout << "SBAS ionospheric correction is used" << std::endl;
    }
 
    if(correction[telux::loc::SBAS_CORRECTION_FAST]) {
-      print_notification << "SBAS fast correction is used" << std::endl;
+      std::cout << "SBAS fast correction is used" << std::endl;
    }
 
    if(correction[telux::loc::SBAS_CORRECTION_LONG]) {
-      print_notification << "SBAS long correction is used" << std::endl;
+      std::cout << "SBAS long correction is used" << std::endl;
    }
 
    if(correction[telux::loc::SBAS_INTEGRITY]) {
-      print_notification << "SBAS integrity information is used" << std::endl;
+      std::cout << "SBAS integrity information is used" << std::endl;
    }
 }
 
 void MyLocationListener::printPositionTech(std::shared_ptr<telux::loc::ILocationInfo> locationInfo) {
    telux::loc::PositionTech positionTech = locationInfo->getPositionTechnology();
-   print_notification << "Position Technologies used: ";
+   std::cout << "Position Technologies used: ";
 
    if(positionTech[telux::loc::SATELLITE]) {
       std::cout << "SATELLITE ";
@@ -134,70 +133,68 @@ void MyLocationListener::printMeasurementType(
    std::shared_ptr<telux::loc::ISensorDataUsage> sensorDataUsage;
    std::cout << std::endl << std::endl;
    if(sensorDataUsage != nullptr) {
-      print_notification << "Sensor data usage: " << std::endl;
+      std::cout << "Sensor data usage: " << std::endl;
       if(locationInfo->getSensorDataUsage(sensorDataUsage) == telux::common::Status::SUCCESS) {
          telux::loc::Measurement measurement = sensorDataUsage->getMeasurement();
-         print_notification << "Measurement type: " << std::endl;
+         std::cout << "Measurement type: " << std::endl;
 
          if(measurement[telux::loc::HEADING]) {
-            print_notification << "HEADING" << std::endl;
+            std::cout << "HEADING" << std::endl;
          }
          if(measurement[telux::loc::SPEED]) {
-            print_notification << "SPEED" << std::endl;
+            std::cout << "SPEED" << std::endl;
          }
          if(measurement[telux::loc::POSITION]) {
-            print_notification << "POSITION" << std::endl;
+            std::cout << "POSITION" << std::endl;
          }
          if(measurement[telux::loc::VELOCITY]) {
-            print_notification << "VELOCITY" << std::endl;
+            std::cout << "VELOCITY" << std::endl;
          }
       }
    }
 }
 
 void MyLocationListener::printHorizontalReliability(telux::loc::LocationReliability locReliability) {
-   std::cout << std::endl << std::endl;
    switch(locReliability) {
       case telux::loc::LocationReliability::NOT_SET:
-         print_notification << "Horizontal reliability: NOT_SET" << std::endl;
+         std::cout << "Horizontal reliability: NOT_SET" << std::endl;
          break;
       case telux::loc::LocationReliability::VERY_LOW:
-         print_notification << "Horizontal reliability: VERY_LOW" << std::endl;
+         std::cout << "Horizontal reliability: VERY_LOW" << std::endl;
          break;
       case telux::loc::LocationReliability::LOW:
-         print_notification << "Horizontal reliability: LOW" << std::endl;
+         std::cout << "Horizontal reliability: LOW" << std::endl;
          break;
       case telux::loc::LocationReliability::MEDIUM:
-         print_notification << "Horizontal reliability: MEDIUM" << std::endl;
+         std::cout << "Horizontal reliability: MEDIUM" << std::endl;
          break;
       case telux::loc::LocationReliability::HIGH:
-         print_notification << "Horizontal reliability: HIGH" << std::endl;
+         std::cout << "Horizontal reliability: HIGH" << std::endl;
          break;
       default:
-         print_notification << "Horizontal reliability is UNKNOWN" << std::endl;
+         std::cout << "Horizontal reliability is UNKNOWN" << std::endl;
    }
 }
 
 void MyLocationListener::printVerticalReliability(telux::loc::LocationReliability locReliability) {
-   std::cout << std::endl << std::endl;
    switch(locReliability) {
       case telux::loc::LocationReliability::NOT_SET:
-         print_notification << "Vertical reliability: NOT_SET" << std::endl;
+         std::cout << "Vertical reliability: NOT_SET" << std::endl;
          break;
       case telux::loc::LocationReliability::VERY_LOW:
-         print_notification << "Vertical reliability: VERY_LOW" << std::endl;
+         std::cout << "Vertical reliability: VERY_LOW" << std::endl;
          break;
       case telux::loc::LocationReliability::LOW:
-         print_notification << "Vertical reliability: LOW" << std::endl;
+         std::cout << "Vertical reliability: LOW" << std::endl;
          break;
       case telux::loc::LocationReliability::MEDIUM:
-         print_notification << "Vertical reliability: MEDIUM" << std::endl;
+         std::cout << "Vertical reliability: MEDIUM" << std::endl;
          break;
       case telux::loc::LocationReliability::HIGH:
-         print_notification << "Vertical reliability: HIGH" << std::endl;
+         std::cout << "Vertical reliability: HIGH" << std::endl;
          break;
       default:
-         print_notification << "Vertical reliability is UNKNOWN" << std::endl;
+         std::cout << "Vertical reliability is UNKNOWN" << std::endl;
    }
 }
 
@@ -205,255 +202,262 @@ void MyLocationListener::printSensorType(telux::loc::SensorType sensorType) {
    std::cout << std::endl << std::endl;
    switch(sensorType) {
       case telux::loc::SensorType::ACCELEROMETER:
-         print_notification << "Sensor type: ACCELEROMETER" << std::endl;
+         std::cout << "Sensor type: ACCELEROMETER" << std::endl;
          break;
       case telux::loc::SensorType::GYROSCOPE:
-         print_notification << "Sensor type: GYROSCOPE" << std::endl;
+         std::cout << "Sensor type: GYROSCOPE" << std::endl;
          break;
       default:
-         print_notification << "Sensor type is UNKNOWN" << std::endl;
+         std::cout << "Sensor type is UNKNOWN" << std::endl;
    }
 }
 
 void MyLocationListener::printAltitudeType(telux::loc::AltitudeType altitudeType) {
    switch(altitudeType) {
       case telux::loc::AltitudeType::CALCULATED:
-         print_notification << "Altitude type: CALCULATED" << std::endl;
+         std::cout << "Altitude type: CALCULATED, ";
          break;
       case telux::loc::AltitudeType::ASSUMED:
-         print_notification << "Altitude type: ASSUMED" << std::endl;
+         std::cout << "Altitude type: ASSUMED, ";
          break;
       default:
-         print_notification << "Altitude type is UNKNOWN" << std::endl;
+         std::cout << "Altitude type is UNKNOWN, ";
    }
 }
 
 void MyLocationListener::printConstellationType(telux::loc::GnssConstellationType constellation) {
    switch(constellation) {
       case telux::loc::GnssConstellationType::GPS:
-         print_notification << "Constellation type: GPS" << std::endl;
+         std::cout << "Constellation type: GPS" << std::endl;
          break;
       case telux::loc::GnssConstellationType::GALILEO:
-         print_notification << "Constellation type: GALILEO" << std::endl;
+         std::cout << "Constellation type: GALILEO" << std::endl;
          break;
       case telux::loc::GnssConstellationType::SBAS:
-         print_notification << "Constellation type: SBAS" << std::endl;
+         std::cout << "Constellation type: SBAS" << std::endl;
          break;
       case telux::loc::GnssConstellationType::COMPASS:
-         print_notification << "Constellation type: COMPASS" << std::endl;
+         std::cout << "Constellation type: COMPASS" << std::endl;
          break;
       case telux::loc::GnssConstellationType::GLONASS:
-         print_notification << "Constellation type: GLONASS" << std::endl;
+         std::cout << "Constellation type: GLONASS" << std::endl;
          break;
       case telux::loc::GnssConstellationType::BDS:
-         print_notification << "Constellation type: BDS" << std::endl;
+         std::cout << "Constellation type: BDS" << std::endl;
          break;
       case telux::loc::GnssConstellationType::QZSS:
-         print_notification << "Constellation type: QZSS" << std::endl;
+         std::cout << "Constellation type: QZSS" << std::endl;
          break;
       default:
-         print_notification << "Constellation type is UNKNOWN" << std::endl;
+         std::cout << "Constellation type: UNKNOWN" << std::endl;
    }
 }
 
 void MyLocationListener::printSVHealthStatus(telux::loc::SVHealthStatus healthStatus) {
    switch(healthStatus) {
       case telux::loc::SVHealthStatus::UNHEALTHY:
-         print_notification << "SV health status: UNHEALTHY" << std::endl;
+         std::cout << "SV health status: UNHEALTHY, ";
          break;
       case telux::loc::SVHealthStatus::HEALTHY:
-         print_notification << "SV health status: HEALTHY" << std::endl;
+         std::cout << "SV health status: HEALTHY, ";
          break;
       default:
-         print_notification << "SV health status is UNKNOWN" << std::endl;
+         std::cout << "SV health status: UNKNOWN, ";
    }
 }
 void MyLocationListener::printSVStatus(telux::loc::SVStatus svStatus) {
    switch(svStatus) {
       case telux::loc::SVStatus::IDLE:
-         print_notification << "SV status: IDLE" << std::endl;
+         std::cout << "SV status: IDLE" << std::endl;
          break;
       case telux::loc::SVStatus::SEARCH:
-         print_notification << "SV status: SEARCH" << std::endl;
+         std::cout << "SV status: SEARCH" << std::endl;
          break;
       case telux::loc::SVStatus::TRACK:
-         print_notification << "SV status: TRACK" << std::endl;
+         std::cout << "SV status: TRACK" << std::endl;
          break;
       default:
-         print_notification << "SV status is UNKNOWN" << std::endl;
+         std::cout << "SV status: UNKNOWN" << std::endl;
    }
 }
 
 void MyLocationListener::printEphimerisAvailability(telux::loc::SVInfoAvailability availability) {
    switch(availability) {
       case telux::loc::SVInfoAvailability::YES:
-         print_notification << "Ephemeris availability: YES" << std::endl;
+         std::cout << "Ephemeris availability: YES, ";
          break;
       case telux::loc::SVInfoAvailability::NO:
-         print_notification << "Ephemeris availability: NO " << std::endl;
+         std::cout << "Ephemeris availability: NO,  ";
          break;
       default:
-         print_notification << "Ephemeris availability is UNKNOWN" << std::endl;
+         std::cout << "Ephemeris availability: UNKNOWN, ";
    }
 }
 
 void MyLocationListener::printAlmanacAvailability(telux::loc::SVInfoAvailability availability) {
    switch(availability) {
       case telux::loc::SVInfoAvailability::YES:
-         print_notification << "Almanac availability: YES" << std::endl;
+         std::cout << "Almanac availability: YES" << std::endl;
          break;
       case telux::loc::SVInfoAvailability::NO:
-         print_notification << "Almanac availability: NO " << std::endl;
+         std::cout << "Almanac availability: NO " << std::endl;
          break;
       default:
-         print_notification << "Almanac availability is UNKNOWN" << std::endl;
+         std::cout << "Almanac availability: UNKNOWN" << std::endl;
    }
 }
 
 void MyLocationListener::onLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfo> &locationInfo) {
+   isTimerExpired = true;
+   if(!isLocReportFlagEnabled_) {
+      return;
+   }
    std::cout << std::endl;
-   std::cout << "*********************** Location Report *********************" << std::endl;
-   time_t realtime;
-   realtime = (time_t)(locationInfo->getTimeStamp());
-   print_notification << "Time stamp: " << ctime(&realtime);
-   print_notification << "Session status: " << logSessionStatus(locationInfo->getSessionStatus())
+   PRINT_NOTIFICATION << "\n*********************** Location Report *********************"
                       << std::endl;
+   time_t realtime;
+   realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
+   std::cout << "Time stamp: " << locationInfo->getTimeStamp() << " mSec" << std::endl;
+   std::cout << "GMT Time stamp: " << ctime(&realtime);
+   std::cout << "Session status: " << logSessionStatus(locationInfo->getSessionStatus())
+             << std::endl;
    printPositionTech(locationInfo);
-   print_notification << "Latitude: " << locationInfo->getLatitude()
-                      << ", Longitude: " << locationInfo->getLongitude() << std::endl;
+   std::cout
+      << "Latitude: " << locationInfo->getLatitude()
+      << "  Longitude: " << locationInfo->getLongitude() << std::endl
+      << "Altitude: " << locationInfo->getAltitude() << std::endl
+      << "Heading: " << locationInfo->getHeading() << std::endl
+      << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
+      << "Altitude with respect to mean sea level: " << locationInfo->getAltitudeMeanSeaLevel()
+      << std::endl
+      << "Position DOP: " << locationInfo->getPositionDop() << std::endl
+      << "Horizontal DOP: " << locationInfo->getHorizontalDop() << std::endl
+      << "Vertical DOP: " << locationInfo->getVerticalDop() << std::endl
+      << "Magnetic deviation: " << locationInfo->getMagneticDeviation() << std::endl
+      << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
+      << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
+      << "HorizontalUncertainty\nSemiMajor: " << locationInfo->getHorizontalUncertaintySemiMajor()
+      << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
+      << ", Azimuth: " << locationInfo->getHorizontalUncertaintyAzimuth() << std::endl;
+   printHorizontalReliability(locationInfo->getHorizontalReliability());
+   printVerticalReliability(locationInfo->getVerticalReliability());
+   std::vector<uint16_t> SVIds;
+   locationInfo->getSVIds(SVIds);
+   if(SVIds.size() > 0) {
+      std::cout << "Ids of used SVs : " << std::endl;
+   }
+   for(auto i = 0; i < SVIds.size() - 1; ++i) {
+      std::cout << SVIds[i] << ", ";
+   }
+   if(SVIds.size() > 0) {
+      std::cout << SVIds[SVIds.size() - 1] << std::endl;
+   }
+   printSbasCorrection(locationInfo);
 
-   // NOTE: Uncomment following log statements for the detailed NOTIFICATION
-   // print_notification << "Altitude : " << locationInfo->getAltitude() << std::endl;
-   // print_notification << "Heading : " << locationInfo->getHeading() << std::endl;
-   // print_notification << "Vertical uncertainty : " << locationInfo->getVerticalUncertainty()
-   //                    << std::endl;
-   // print_notification
-   //    << "Altitude with respect to mean sea level : " << locationInfo->getAltitudeMeanSeaLevel()
-   //    << std::endl;
-   // print_notification << "Position DOP : " << locationInfo->getPositionDop() << std::endl;
-   // print_notification << "Horizontal DOP : " << locationInfo->getHorizontalDop() << std::endl;
-   // print_notification << "Vertical DOP : " << locationInfo->getVerticalDop() << std::endl;
-   // print_notification << "Magnetic deviation : " << locationInfo->getMagneticDeviation()
-   //                    << std::endl;
-   // print_notification << "Speed uncertainty : " << locationInfo->getSpeedUncertainty() <<
-   // std::endl;
-   // print_notification << "Heading uncertainty : " << locationInfo->getHeadingUncertainty()
-   //                    << std::endl;
-   // printHorizontalReliability(locationInfo->getHorizontalReliability());
-   // printVerticalReliability(locationInfo->getVerticalReliability());
-   // print_notification
-   //    << "HorizontalUncertaintySemiMajor : " << locationInfo->getHorizontalUncertaintySemiMajor()
-   //    << std::endl;
-   // print_notification
-   //    << "HorizontalUncertaintySemiMinor : " << locationInfo->getHorizontalUncertaintySemiMinor()
-   //    << std::endl;
-   // print_notification
-   //    << "HorizontalUncertaintyAzimuth : " << locationInfo->getHorizontalUncertaintyAzimuth()
-   //    << std::endl;
+   uint8_t leapSeconds;
+   if(locationInfo->getLeapSeconds(leapSeconds) == telux::common::Status::SUCCESS) {
+      std::cout << "Leap seconds: " << static_cast<int>(leapSeconds) << std::endl;
+   }
 
-   // print_notification << "Ids of used SVs : " << std::endl;
-   // std::vector<uint16_t> SVIds;
-   // locationInfo->getSVIds(SVIds);
-   // for(auto i = 0; i < SVIds.size(); ++i) {
-   //    print_notification << SVIds[i] << std::endl;
-   // }
-   // printSbasCorrection(locationInfo);
+   if(locationInfo->getGpsTime() != nullptr) {
+      auto locGpsTime = locationInfo->getGpsTime();
+      std::cout << "Current GPS week: " << locGpsTime->getWeek() << std::endl;
+      std::cout << "GPS week in milliseconds: " << locGpsTime->getTimeOfWeekMsec() << std::endl;
+   }
 
-   // uint8_t leapSeconds;
-   // if(locationInfo->getLeapSeconds(leapSeconds) == telux::common::Status::SUCCESS) {
-   //    print_notification << "Leap seconds : " << leapSeconds << std::endl;
-   // }
+   float circularHorizontalUncertainty;
+   if(locationInfo->getCircularHorizontalUncertainty(circularHorizontalUncertainty)
+      == telux::common::Status::SUCCESS) {
+      std::cout << "Circular horizontal uncertainty: " << circularHorizontalUncertainty
+                << std::endl;
+   }
 
-   // if(locationInfo->getGpsTime() != nullptr) {
-   //    auto locGpsTime = locationInfo->getGpsTime();
-   //    print_notification << "Current GPS week : " << locGpsTime->getWeek() << std::endl;
-   //    print_notification << "GPS week in milliseconds : " << locGpsTime->getTimeOfWeekMsec()
-   //                       << std::endl;
-   // }
+   uint8_t horizontalConfidence;
+   if(locationInfo->getHorizontalConfidence(horizontalConfidence)
+      == telux::common::Status::SUCCESS) {
+      std::cout << "Horizontal uncertainty confidence: " << unsigned(horizontalConfidence)
+                << std::endl;
+   }
 
-   // float circularHorizontalUncertainty;
-   // if(locationInfo->getCircularHorizontalUncertainty(circularHorizontalUncertainty)
-   //    == telux::common::Status::SUCCESS) {
-   //    print_notification << "Circular horizontal uncertainty : " << circularHorizontalUncertainty
-   //                       << std::endl;
-   // }
+   std::cout << "Horizontal speed: " << locationInfo->getHorizontalSpeed() << std::endl;
 
-   // uint8_t horizontalConfidence;
-   // if(locationInfo->getHorizontalConfidence(horizontalConfidence)
-   //    == telux::common::Status::SUCCESS) {
-   //    print_notification << "Horizontal uncertainty confidence : " <<
-   //    unsigned(horizontalConfidence)
-   //                       << std::endl;
-   // }
+   uint8_t verticalConfidence;
+   if(locationInfo->getVerticalConfidence(verticalConfidence) == telux::common::Status::SUCCESS) {
+      std::cout << "Vertical uncertainty confidence: " << unsigned(verticalConfidence) << std::endl;
+   }
 
-   // print_notification << "Horizontal speed : " << locationInfo->getHorizontalSpeed() <<
-   // std::endl;
+   std::cout << "Vertical speed: " << locationInfo->getVerticalSpeed() << std::endl;
 
-   // uint8_t verticalConfidence;
-   // if(locationInfo->getVerticalConfidence(verticalConfidence) == telux::common::Status::SUCCESS)
-   // {
-   //    print_notification << "Vertical uncertainty confidence : " << unsigned(verticalConfidence)
-   //                       << std::endl;
-   // }
+   std::shared_ptr<telux::loc::ISensorDataUsage> sensorDataUsage;
+   if(sensorDataUsage != nullptr) {
+      std::cout << "Sensor data usage" << std::endl;
+      if(locationInfo->getSensorDataUsage(sensorDataUsage) == telux::common::Status::SUCCESS) {
+         std::cout << "Status of getSensorDataUsage: "
+                   << (int)locationInfo->getSensorDataUsage(sensorDataUsage) << std::endl;
+         printSensorType(sensorDataUsage->getSensorType());
+         printMeasurementType(locationInfo);
+      }
+   }
 
-   // print_notification << "Vertical speed : " << locationInfo->getVerticalSpeed() << std::endl;
+   uint32_t fixId;
+   if(locationInfo->getFixId(fixId) == telux::common::Status::SUCCESS) {
+      std::cout << "Fix Id: " << fixId << std::endl;
+   }
 
-   // std::shared_ptr<telux::loc::ISensorDataUsage> sensorDataUsage;
-   // if(sensorDataUsage != nullptr) {
-   //    print_notification << "Sensor data usage" << std::endl;
-   //    if(locationInfo->getSensorDataUsage(sensorDataUsage) == telux::common::Status::SUCCESS) {
-   //       print_notification << "Status of getSensorDataUsage : "
-   //                          << (int)locationInfo->getSensorDataUsage(sensorDataUsage) <<
-   //                          std::endl;
-   //       printSensorType(sensorDataUsage->getSensorType());
-   //       printMeasurementType(locationInfo);
-   //    }
-   // }
+   std::vector<float> velocityEastNorthUp;
+   if(locationInfo->getVelocityEastNorthUp(velocityEastNorthUp) == telux::common::Status::SUCCESS) {
+      std::cout << "East, North, Up velocity: ";
+      for(auto i = 0; i < velocityEastNorthUp.size() - 1; ++i) {
+         std::cout << velocityEastNorthUp[i] << ", ";
+      }
+      if(velocityEastNorthUp.size() > 0) {
+         std::cout << velocityEastNorthUp[velocityEastNorthUp.size() - 1];
+      }
+      std::cout << std::endl;
+   }
 
-   // uint32_t fixId;
-   // if(locationInfo->getFixId(fixId) == telux::common::Status::SUCCESS) {
-   //    print_notification << "Fix Id : " << fixId << std::endl;
-   // }
-
-   // std::vector<float> velocityEastNorthUp;
-   // if(locationInfo->getVelocityEastNorthUp(velocityEastNorthUp) ==
-   // telux::common::Status::SUCCESS) {
-   //    print_notification << "East, North, Up velocity : ";
-   //    for(auto i = 0; i < velocityEastNorthUp.size(); ++i) {
-   //       std::cout << velocityEastNorthUp[i] << ", ";
-   //    }
-   //    std::cout << std::endl;
-   // }
-
-   // std::vector<float> velocityUncertaintyEastNorthUp;
-   // if(locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp)
-   //    == telux::common::Status::SUCCESS) {
-   //    print_notification << "East, North, Up velocity uncertainty : ";
-   //    for(auto i = 0; i < velocityEastNorthUp.size(); ++i) {
-   //       std::cout << velocityUncertaintyEastNorthUp[i] << ", ";
-   //    }
-   //    std::cout << std::endl;
-   // }
+   std::vector<float> velocityUncertaintyEastNorthUp;
+   if(locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp)
+      == telux::common::Status::SUCCESS) {
+      std::cout << "East, North, Up velocity uncertainty: " << std::endl;
+      for(auto i = 0; i < velocityEastNorthUp.size() - 1; ++i) {
+         std::cout << velocityUncertaintyEastNorthUp[i] << ", ";
+      }
+      if(velocityEastNorthUp.size() > 0) {
+         std::cout << velocityUncertaintyEastNorthUp[velocityEastNorthUp.size() - 1];
+      }
+      std::cout << std::endl;
+   }
    std::cout << "*************************************************************" << std::endl;
 }
 
 void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) {
+   if(!isSvInfoFlagEnabled_ || !isTimerExpired) {
+      return;
+   }
    std::cout << std::endl;
-   std::cout << "**************** Satellite Vehicle Information ***************" << std::endl;
+   PRINT_NOTIFICATION << "\n**************** Satellite Vehicle Information ***************"
+                      << std::endl;
    printAltitudeType(gnssSVInfo->getAltitudeType());
-   // NOTE: Uncomment following log statements for the detailed NOTIFICATION
-   // for(auto svInfo : gnssSVInfo->getSVInfoList()) {
-   //    print_notification << "**** GNSS SV Id : " << svInfo->getId() << " ****" << std::endl;
-   //    printConstellationType(svInfo->getConstellation());
-   //    printSVHealthStatus(svInfo->getSVHealthStatus());
-   //    printSVStatus(svInfo->getStatus());
-   //    printEphimerisAvailability(svInfo->getHasEphemeris());
-   //    printAlmanacAvailability(svInfo->getHasAlmanac());
-   //    print_notification << "Elevation : " << svInfo->getElevation() << std::endl;
-   //    print_notification << "Azimuth : " << svInfo->getAzimuth() << std::endl;
-   //    print_notification << "SNR : " << svInfo->getSnr() << std::endl;
-   // }
-
+   for(auto svInfo : gnssSVInfo->getSVInfoList()) {
+      std::cout << "**** GNSS SV Id : " << svInfo->getId() << " ****" << std::endl;
+      printConstellationType(svInfo->getConstellation());
+      printSVHealthStatus(svInfo->getSVHealthStatus());
+      printSVStatus(svInfo->getStatus());
+      printEphimerisAvailability(svInfo->getHasEphemeris());
+      printAlmanacAvailability(svInfo->getHasAlmanac());
+      std::cout << "Elevation: " << svInfo->getElevation() << ", Azimuth: " << svInfo->getAzimuth()
+                << ", SNR: " << svInfo->getSnr() << std::endl;
+   }
+   isTimerExpired = false;
    std::cout << "*************************************************************" << std::endl;
+}
+
+void MyLocationListener::setLocationReportFlag(bool enable) {
+   isLocReportFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setSvInfoFlag(bool enable) {
+   isSvInfoFlagEnabled_ = enable;
 }

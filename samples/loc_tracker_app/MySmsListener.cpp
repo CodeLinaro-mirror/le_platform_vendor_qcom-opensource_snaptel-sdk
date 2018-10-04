@@ -40,7 +40,7 @@ extern "C" {
 
 #include "MySmsListener.hpp"
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mNotification: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 const std::string keyword = "location";
 const std::string keyword2 = "Location";

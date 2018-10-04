@@ -29,12 +29,11 @@
 
 /**
  * @file       SubscriptionManager.hpp
+ *
  * @brief      Subscription Manager class provides the interface to register
  *             listener and receive notifications related to SIM card subscription
  *             information and to fetch the current subscription on client's
  *             request by SIM SlotId.
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef SUBSCRIPTIONMANAGER_HPP
@@ -45,14 +44,11 @@
 
 #include <telux/common/CommonDefines.hpp>
 
-#include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/Subscription.hpp>
 #include <telux/tel/SubscriptionListener.hpp>
 
 namespace telux {
 namespace tel {
-
-class ISubscriptionCallback;
 
 /** @addtogroup telematics_subscription
 * @{ */
@@ -62,9 +58,6 @@ class ISubscriptionCallback;
  *          and receive notifications related to SIM card subscription
  *          information and to fetch the current subscription on client's
  *          request by SIM SlotId.
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
  */
 class ISubscriptionManager {
 public:
@@ -72,9 +65,6 @@ public:
     * Checks the status of SubscriptionManager and returns the result.
     *
     * @returns If true then SubscriptionManager is ready for service.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -83,9 +73,6 @@ public:
     *
     * @returns A future that caller can wait on to be notified when
     *          SubscriptionManager is ready.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -95,10 +82,7 @@ public:
     * @param [in] slotId   Slot id corresponding to the subscription.
     * @param [out] status  Status of getSubscription i.e. success or suitable status code.
     *
-    * @returns Pointer to Subscription object.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
+    * @returns Pointer to ISubscription object.
     */
    virtual std::shared_ptr<ISubscription> getSubscription(int slotId = DEFAULT_SLOT_ID,
                                                           telux::common::Status *status = nullptr)
@@ -109,13 +93,11 @@ public:
     *
     * @param [out] status  Status of getAllSubscriptions i.e. success or suitable status code.
     *
-    * @returns list of subscriptions
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
+    * @returns list of ISubscription objects.
     */
    virtual std::vector<std::shared_ptr<ISubscription>>
       getAllSubscriptions(telux::common::Status *status = nullptr) = 0;
+
    /**
     * Register a listener for Subscription events.
     *
@@ -123,9 +105,6 @@ public:
     *                        processes the notification.
     *
     * @returns Status of registerListener i.e. success or suitable status code.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<ISubscriptionListener> listener)
       = 0;
@@ -137,9 +116,6 @@ public:
     *                        to be removed.
     *
     * @returns Status of removeListener i.e. success or suitable status code.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status removeListener(std::weak_ptr<ISubscriptionListener> listener) = 0;
 

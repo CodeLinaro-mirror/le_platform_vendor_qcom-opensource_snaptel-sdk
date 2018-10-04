@@ -27,27 +27,40 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
+#ifndef SERVINGSYSTEMMENU_HPP
+#define SERVINGSYSTEMMENU_HPP
 
-#include <telux/tel/PhoneFactory.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "MySubscriptionListener.hpp"
+#include "telux/tel/PhoneManager.hpp"
+#include <telux/tel/ServingSystemManager.hpp>
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#include "console_app_framework/ConsoleApp.hpp"
 
-void MySubscriptionListener::onSubscriptionInfoChanged(
-   std::shared_ptr<telux::tel::ISubscription> subscription) {
-   std::cout << "\n";
-   if(subscription) {
-      PRINT_NOTIFICATION
-         << " onSubscriptionInfoChanged: CarrierName : " << subscription->getCarrierName()
-         << ", PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
-   } else {
-      PRINT_NOTIFICATION << " onSubscriptionInfoChanged: Subscription is empty" << std::endl;
-   }
-}
+#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
-void MySubscriptionListener::onNumberOfSubscriptionsChanged(int count) {
-   std::cout << "\n";
-   PRINT_NOTIFICATION << "\nonNumberOfSubscriptionsChanged: count = " << count << std::endl;
-}
+class ServingSystemMenu : public ConsoleApp {
+public:
+   /**
+    * Initialize commands and SDK
+    */
+   void init();
+
+   ServingSystemMenu(std::string appName, std::string cursor);
+
+   ~ServingSystemMenu();
+
+   void getRatModePreference(std::vector<std::string> userInput);
+   void setRatModePreference(std::vector<std::string> userInput);
+   void getServiceDomainPreference(std::vector<std::string> userInput);
+   void setServiceDomainPreference(std::vector<std::string> userInput);
+
+private:
+   // Member variable to keep the Listener object alive till application ends.
+   std::shared_ptr<telux::tel::IServingSystemListener> servingSystemListener_;
+   std::shared_ptr<telux::tel::IServingSystemManager> servingSystemManager_ = nullptr;
+};
+
+#endif  // SERVINGSYSTEMMENU_HPP

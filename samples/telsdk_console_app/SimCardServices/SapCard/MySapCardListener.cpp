@@ -31,7 +31,7 @@
 
 #include "MySapCardListener.hpp"
 
-#define print_cb std::cout << "\033[1;35mCALLBACK: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 /**
  *  Implementation of MySapCommandCallback
@@ -39,9 +39,9 @@
 void MySapCommandResponseCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_cb << " commandResponse successful." << std::endl;
+      PRINT_CB << " commandResponse successful." << std::endl;
    } else {
-      print_cb << "commandResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "commandResponse failed\n error: " << static_cast<int>(error) << std::endl;
    }
 }
 
@@ -53,15 +53,15 @@ void MyCardReaderCallback::cardReaderResponse(telux::tel::CardReaderStatus reade
    std::cout << std::endl << std::endl;
 
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_cb << "cardReaderResponse successful\n";
-      print_cb << " CardReaderStatus, id = " << readerStatus.id
+      PRINT_CB << "cardReaderResponse successful\n";
+      PRINT_CB << " CardReaderStatus, id = " << readerStatus.id
                << "\n isRemovable = " << readerStatus.isRemovable
                << "\n isPresent = " << readerStatus.isPresent
                << "\n isID1size = " << readerStatus.isID1size
                << "\n isCardPresent = " << readerStatus.isCardPresent
                << "\n isCardPoweredOn = " << readerStatus.isCardPoweredOn << "\n";
    } else {
-      print_cb << "cardReaderResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "cardReaderResponse failed\n error: " << static_cast<int>(error) << std::endl;
    }
 }
 
@@ -72,9 +72,17 @@ void MySapTransmitApduResponseCallback::onResponse(telux::tel::IccResult result,
                                                    telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_cb << "onResponse successful, " << result.toString() << std::endl << std::endl;
+      PRINT_CB << "onResponse successful" << std::endl;
+      std::cout << " sw1: 0x" << std::hex << result.sw1 << "\n";
+      std::cout << " sw2: 0x" << std::hex << result.sw2 << "\n";
+      std::cout << " payload in Hex: " << result.payload << "\n\n";
+      std::cout << " data: ";
+      for(auto &i : result.data) {
+         std::cout << std::dec << i << " ";
+      }
+      std::cout << std::endl << std::endl;
    } else {
-      print_cb << "onResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "onResponse failed\n error: " << static_cast<int>(error) << std::endl;
    }
 }
 
@@ -85,13 +93,13 @@ void MyAtrResponseCallback::atrResponse(std::vector<int> responseAtr,
                                         telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_cb << "atrResponse successful\n";
-      print_cb << "\tATR.data:";
+      PRINT_CB << "atrResponse successful\n";
+      PRINT_CB << "\tATR.data:";
       for(int val : responseAtr) {
          std::cout << " " << val;
       }
    } else {
-      print_cb << "atrResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "atrResponse failed\n error: " << static_cast<int>(error) << std::endl;
    }
    std::cout << std::endl;
 }
@@ -113,14 +121,14 @@ void MySapStateCallback::logSapState(telux::tel::SapState sapState) {
 }
 
 void MySapStateCallback::sapStateResponse(telux::tel::SapState sapState,
-   telux::common::ErrorCode error) {
+                                          telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      print_cb << "SAP state: " << (int)sapState << std::endl << std::endl;
+      PRINT_CB << "SAP state: " << (int)sapState << std::endl << std::endl;
       logSapState(sapState);
    } else {
-      print_cb << "sapConnectionStatusResponse failed\n error: "
-         << static_cast<int>(error) << std::endl;
+      PRINT_CB << "sapConnectionStatusResponse failed\n error: " << static_cast<int>(error)
+               << std::endl;
    }
    std::cout << std::endl;
 }

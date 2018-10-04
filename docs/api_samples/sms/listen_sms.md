@@ -1,6 +1,6 @@
 # Listening to Incoming SMS
 
-*Quick steps:* Please follow below steps to listen for incoming SMS
+Please follow below steps to listen for incoming SMS
 
 ### 1. Implement ISmsListener interface to receive incoming SMS ###
    ~~~~~~{.cpp}

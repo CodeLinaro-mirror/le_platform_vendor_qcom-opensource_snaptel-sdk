@@ -29,8 +29,8 @@
 
 /**
  * @file       CommonDefines.hpp
- * @brief      Contains enumerations and variables used across telephony subsystems.
- *         Also defines interface for command callback for asynchronous calls.
+ * @brief      Contains enumerations and variables used across telephony, location, data subsystems.
+ *             Also defines interface for command callback for asynchronous calls.
  *
  */
 
@@ -43,7 +43,6 @@
 #define INVALID_SLOT_ID -1
 
 namespace telux {
-
 namespace common {
 
 /** @addtogroup telematics_common
@@ -58,7 +57,7 @@ enum class Status {
    NOSUBSCRIPTION, /**< Subscription not available */
    INVALIDPARAM,   /**< Input parameters are invalid*/
    INVALIDSTATE,   /**< Invalid State*/
-   NOTREADY,       /**< Device is not ready*/
+   NOTREADY,       /**< Subsystem is not ready*/
    NOTALLOWED,     /**< Operation not allowed*/
    NOTIMPLEMENTED, /**< Functionality not implemented*/
    CONNECTIONLOST, /**< Connection to Socket server lost*/
@@ -80,29 +79,29 @@ enum class ErrorCode {
    REQUEST_NOT_SUPPORTED = 6,            /**< Not Supported request */
    CANCELLED = 7,                        /**< Cancelled */
    OP_NOT_ALLOWED_DURING_VOICE_CALL = 8, /**< Data operation are not allowed during voice
-                                            call on a Class C GPRS device */
+                                              call on a Class C GPRS device */
    OP_NOT_ALLOWED_BEFORE_REG_TO_NW = 9,  /**< Data operation are not allowed before device
                                             registers in network */
    SMS_SEND_FAIL_RETRY = 10,             /**< Fail to send SMS and need retry */
    SIM_ABSENT = 11,                      /**< Fail to set the location where CDMA subscription
-                                            shall be retrieved because of SIM or RUIM
-                                            card absent */
+                                              shall be retrieved because of SIM or RUIM
+                                              are absent */
    SUBSCRIPTION_NOT_AVAILABLE = 12,      /**< Fail to find CDMA subscription from specified
-                                            location */
+                                              location */
    MODE_NOT_SUPPORTED = 13,              /**< Hardware does not support preferred network type */
    FDN_CHECK_FAILURE = 14,               /**< Command failed because recipient is not on FDN list */
    ILLEGAL_SIM_OR_ME = 15,               /**< Network selection failed due to
-                                            illegal SIM or ME */
+                                              illegal SIM or ME */
    MISSING_RESOURCE = 16,                /**< No logical channel available */
    NO_SUCH_ELEMENT = 17,                 /**< Application not found on SIM */
    DIAL_MODIFIED_TO_USSD = 18,           /**< DIAL request modified to USSD */
    DIAL_MODIFIED_TO_SS = 19,             /**< DIAL request modified to SS */
    DIAL_MODIFIED_TO_DIAL = 20,           /**< DIAL request modified to DIAL with different
-                                            data */
+                                              data */
    USSD_MODIFIED_TO_DIAL = 21,           /**< USSD request modified to DIAL */
    USSD_MODIFIED_TO_SS = 22,             /**< USSD request modified to SS */
    USSD_MODIFIED_TO_USSD = 23,           /**< USSD request modified to different USSD
-                                            request */
+                                              request */
    SS_MODIFIED_TO_DIAL = 24,             /**< SS request modified to DIAL */
    SS_MODIFIED_TO_USSD = 25,             /**< SS request modified to USSD */
    SUBSCRIPTION_NOT_SUPPORTED = 26,      /**< Subscription not supported */
@@ -136,7 +135,7 @@ enum class ErrorCode {
    NO_SUBSCRIPTION = 62,                 /**< Device does not have subscription */
    NO_NETWORK_FOUND = 63,                /**< Network cannot be found */
    DEVICE_IN_USE = 64,                   /**< Operation cannot be performed because the device
-                                            is currently in use */
+                                              is currently in use */
    ABORTED = 65,                         /**< Operation aborted */
    INCOMPATIBLE_STATE = 90,              /**< Operation cannot be performed because the device
                                           is in incompatible state */
@@ -300,49 +299,54 @@ enum class ErrorCode {
    REG_RESULT_ERR_OUT_OF_PROFILES = 2018,               /**< Out of profiles */
    REG_RESULT_NO_EMERGENCY_PDN_SUPPORT = 2019,          /**< No emergency PDN support */
    // WDS extended error codes without offset
-   DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY = 4097,         /**< Request contains an invalid
+   DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY = 4097,           /**< Request contains an invalid
                                                                3GPP profile family */
-   DS_PROFILE_3GPP_ACCESS_ERR = 4098,                   /**< Error was encountered while
+   DS_PROFILE_3GPP_ACCESS_ERR = 4098,                     /**< Error was encountered while
                                                                accessing the 3GPP profiles*/
-   DS_PROFILE_3GPP_CONTEXT_NOT_DEFINED = 4099,          /**< Specified 3GPP profile does
+   DS_PROFILE_3GPP_CONTEXT_NOT_DEFINED = 4099,            /**< Specified 3GPP profile does
                                                                not have a valid context*/
-   DS_PROFILE_3GPP_VALID_FLAG_NOT_SET = 4100,           /**< Specified 3GPP profile is
+   DS_PROFILE_3GPP_VALID_FLAG_NOT_SET = 4100,             /**< Specified 3GPP profile is
                                                                marked invalid */
-   DS_PROFILE_3GPP_READ_ONLY_FLAG_SET = 4101,           /**< Specified 3GPP profile is
+   DS_PROFILE_3GPP_READ_ONLY_FLAG_SET = 4101,             /**< Specified 3GPP profile is
                                                                marked read-only */
-   DS_PROFILE_3GPP_ERR_OUT_OF_PROFILES = 4102,          /**< Creation of a new 3GPP profile
-                                                             failed because the limit of
-                                                             16 profiles has already been
-                                                             reached*/
+   DS_PROFILE_3GPP_ERR_OUT_OF_PROFILES = 4102,            /**< Creation of a new 3GPP profile
+                                                               failed because the limit of
+                                                               16 profiles has already been
+                                                               reached*/
    DS_PROFILE_3GPP2_ERR_INVALID_IDENT_FOR_PROFILE = 4353, /**< Invalid profile
-                                                                 identifier was received as
-                                                                 part of the 3GPP2 profile
-                                                                 modification request */
-   DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE = 4354,          /**< Creation of a new 3GPP2 profile
-                                                      failed because the limit has already
-                                                      been reached*/
+                                                               identifier was received as
+                                                               part of the 3GPP2 profile
+                                                               modification request */
+   DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE = 4354,            /**< Creation of a new 3GPP2 profile
+                                                               failed because the limit has already
+                                                               been reached*/
    // Transport error codes
-   INTERNAL_ERROR = -1,       /**< Internal error */
-   SERVICE_ERROR = -2,        /**< Service error */
-   TIMEOUT_ERROR = -3,        /**< Timeout error */
-   EXTENDED_ERROR = -4,       /**< Extended error */
-   PORT_NOT_OPEN_ERROR = -5,  /**< Port not open */
-   MEMCOPY_ERROR = -13,       /**< Memory copy error */
-   INVALID_TRANSACTION = -14, /**< Invalid transaction */
-   ALLOCATION_FAILURE = -15,  /**< Allocation failure */
-   TRANSPORT_ERROR = -16,     /**< Transport error */
-   PARAM_ERROR = -17,         /**< Parameter error */
-   INVALID_CLIENT = -18,      /**< Invalid client */
-   FRAMEWORK_NOT_READY = -19, /**< Framework not ready */
-   INVALID_SIGNAL = -20,      /**< Invalid signal */
+   INTERNAL_ERROR = -1,        /**< Internal error */
+   SERVICE_ERROR = -2,         /**< Service error */
+   TIMEOUT_ERROR = -3,         /**< Timeout error */
+   EXTENDED_ERROR = -4,        /**< Extended error */
+   PORT_NOT_OPEN_ERROR = -5,   /**< Port not open */
+   MEMCOPY_ERROR = -13,        /**< Memory copy error */
+   INVALID_TRANSACTION = -14,  /**< Invalid transaction */
+   ALLOCATION_FAILURE = -15,   /**< Allocation failure */
+   TRANSPORT_ERROR = -16,      /**< Transport error */
+   PARAM_ERROR = -17,          /**< Parameter error */
+   INVALID_CLIENT = -18,       /**< Invalid client */
+   FRAMEWORK_NOT_READY = -19,  /**< Framework not ready */
+   INVALID_SIGNAL = -20,       /**< Invalid signal */
    TRANSPORT_BUSY_ERROR = -21, /**< Transport busy error */
+
+   SUBSYSTEM_UNAVAILABLE = 5000, /**< Underlying service currently unavailable */
 };
 
 /**
  * Base command callback class is responsible for single shot asynchronous callback.
  * This callback will be invoked only once when the operation succeeds or fails.
  */
-class ICommandCallback {};
+class ICommandCallback {
+public:
+    virtual ~ICommandCallback() {}
+};
 
 /**
  * @brief General command response callback for most of the requests, client needs to implement
@@ -359,6 +363,8 @@ public:
     * @param [in] error - @ref ErrorCode
     */
    virtual void commandResponse(ErrorCode error) = 0;
+
+   virtual ~ICommandResponseCallback() {}
 };
 
 /**
@@ -375,7 +381,6 @@ using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>
 /** @} */ /* end_addtogroup telematics_common */
 
 }  // End of namespace common
-
 }  // End of namespace telux
 
 #endif

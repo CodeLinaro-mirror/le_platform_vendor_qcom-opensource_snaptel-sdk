@@ -1,6 +1,6 @@
 # Set radio power of the device
 
-*Quick steps:* Please follow below steps to Radio Power state notifications.
+Please follow below steps to Radio Power state notifications.
 
 ### 1. Get the PhoneFactory and PhoneManager instances ###
 

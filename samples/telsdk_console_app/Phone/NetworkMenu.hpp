@@ -27,27 +27,41 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
+#ifndef NETWORKMENU_HPP
+#define NETWORKMENU_HPP
 
-#include <telux/tel/PhoneFactory.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "MySubscriptionListener.hpp"
+#include "telux/tel/PhoneManager.hpp"
+#include <telux/tel/NetworkSelectionManager.hpp>
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#include "console_app_framework/ConsoleApp.hpp"
 
-void MySubscriptionListener::onSubscriptionInfoChanged(
-   std::shared_ptr<telux::tel::ISubscription> subscription) {
-   std::cout << "\n";
-   if(subscription) {
-      PRINT_NOTIFICATION
-         << " onSubscriptionInfoChanged: CarrierName : " << subscription->getCarrierName()
-         << ", PhoneNumber : " << subscription->getPhoneNumber() << std::endl;
-   } else {
-      PRINT_NOTIFICATION << " onSubscriptionInfoChanged: Subscription is empty" << std::endl;
-   }
-}
+#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
-void MySubscriptionListener::onNumberOfSubscriptionsChanged(int count) {
-   std::cout << "\n";
-   PRINT_NOTIFICATION << "\nonNumberOfSubscriptionsChanged: count = " << count << std::endl;
-}
+class NetworkMenu : public ConsoleApp {
+public:
+   /**
+    * Initialize commands and SDK
+    */
+   void init();
+
+   NetworkMenu(std::string appName, std::string cursor);
+
+   ~NetworkMenu();
+
+   void getNetworkSelectionMode(std::vector<std::string> userInput);
+   void setNetworkSelectionMode(std::vector<std::string> userInput);
+   void getPreferredNetworks(std::vector<std::string> userInput);
+   void setPreferredNetworks(std::vector<std::string> userInput);
+   void performNetworkScan(std::vector<std::string> userInput);
+
+private:
+   // Member variable to keep the Listener object alive till application ends.
+   std::shared_ptr<telux::tel::INetworkSelectionListener> networkListener_;
+   std::shared_ptr<telux::tel::INetworkSelectionManager> networkManager_ = nullptr;
+};
+
+#endif  // NETWORKMENU_HPP

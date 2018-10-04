@@ -65,7 +65,7 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
 <b>Telephony </b>
 
-   Telephony sub-system consists of APIs for functions related to Phone, Call, SMS and Signal Strength.
+   Telephony sub-system consists of APIs for functions related to Phone, Call, SMS and Signal Strength, Network Selection and Serving System Management.
 
 <b>SIM Card Services</b>
 
@@ -128,6 +128,7 @@ Phone APIs of Telematics SDK provides phone related information such as
    - Get Radio state of device i.e RADIO_STATE_OFF, RADIO_STATE_ON and RADIO_STATE_UNAVAILABLE
    - Retrieve the signal strength corresponding to the technology supported by SIM
    - Device Identity
+   - Set or Request Operating Mode
    - Subscription Information
 
 @subsection location_services Location Services
@@ -148,5 +149,16 @@ Data Profile Manager APIs provide functionality such as
    - List available profiles in the modem
    - Create / modify / delete / modify modem profiles
    - Query for the selected profile
+
+@subsection nw_srv_sys_services Network Selection and Serving System Management
+Network Selection and Service System Management APIs in the Telematics SDK used for configuring the networks and preferences
+
+Network Selection Manager APIs provide functionality such as 
+   - request or set network selection mode (Manual or Automatic)
+   - scan for available networks
+   - request or set preferred networks list
+
+Serving System Manager APIs provide functionality such as 
+   - request and set service domain preference and radio access technology mode preference for searching and registering (CS/PS domain, RAT and operation mode)
 
 */

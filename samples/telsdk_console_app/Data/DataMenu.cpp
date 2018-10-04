@@ -34,8 +34,6 @@
 #include "DataMenu.hpp"
 #include "DataResponseCallback.hpp"
 
-std::vector<std::shared_ptr<telux::data::DataProfile>> DataMenu::profiles_;
-
 DataMenu::DataMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
 }
@@ -147,36 +145,12 @@ void DataMenu::init() {
 void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
    std::cout << "\nStart data call" << std::endl;
    int profileId;
-   if(DataMenu::profiles_.size() == 0) {
-      std::cout << " ** Please run request_profile_list command to populate profiles ** "
-                << std::endl;
-      return;
-   }
-
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
-
-   std::vector<std::shared_ptr<telux::data::DataProfile>> profiles;
-   std::copy_if(std::begin(DataMenu::profiles_), std::end(DataMenu::profiles_),
-                std::back_inserter(profiles),
-                [=](std::shared_ptr<telux::data::DataProfile> dpExisted) {
-                   return (dpExisted->getId() == profileId);
-                });
-   int len = profiles.size();
-
-   if(profiles.size() == 0) {
-      std::cout << " ERROR: Invalid profile id" << std::endl;
-      return;
-   }
-
-   if(len > 1) {
-      std::cout << " ERROR: observed more than one profile, so invalid" << std::endl;
-      return;
-   }
 
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
    dataConnectionManager_->startDataCall(profileId, ipFamType,
@@ -186,36 +160,12 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
 void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
    std::cout << "\nStop data call" << std::endl;
    int profileId;
-   if(DataMenu::profiles_.size() == 0) {
-      std::cout << " ** Please run request_profile_list command to populate profiles ** "
-                << std::endl;
-      return;
-   }
-
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
-
-   std::vector<std::shared_ptr<telux::data::DataProfile>> profiles;
-   std::copy_if(std::begin(DataMenu::profiles_), std::end(DataMenu::profiles_),
-                std::back_inserter(profiles),
-                [=](std::shared_ptr<telux::data::DataProfile> dpExisted) {
-                   return (dpExisted->getId() == profileId);
-                });
-   int len = profiles.size();
-
-   if(profiles.size() == 0) {
-      std::cout << " ERROR: Invalid profile id" << std::endl;
-      return;
-   }
-
-   if(len > 1) {
-      std::cout << " ERROR: observed more than one profile, so invalid" << std::endl;
-      return;
-   }
 
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
    dataConnectionManager_->stopDataCall(profileId, ipFamType,

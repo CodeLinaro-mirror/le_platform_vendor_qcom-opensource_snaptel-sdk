@@ -53,7 +53,7 @@ void ConsoleApp::displayMenu() {
       command->displayCommand();
    }
    std::cout << std::endl;
-   std::cout << "   ? - help" << std::endl;
+   std::cout << "   ? / h - help" << std::endl;
    std::cout << "   q / 0 - exit" << std::endl << std::endl;
    std::cout << MENU_DIVIDER << std::endl << std::endl;
 }
@@ -140,7 +140,7 @@ int ConsoleApp::mainLoop() {
       if(userInput[0] == "0" || userInput[0] == "exit" || userInput[0] == "q"
          || userInput[0] == "quit" || userInput[0] == "back") {
          break;
-      } else if(userInput[0] == "?" || userInput[0] == "help") {
+      } else if(userInput[0] == "?" || userInput[0] == "help" || userInput[0] == "h") {
          displayMenu();
          continue;
       }

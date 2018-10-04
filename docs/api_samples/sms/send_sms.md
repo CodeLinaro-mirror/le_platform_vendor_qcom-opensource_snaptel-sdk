@@ -1,6 +1,6 @@
 # Sending SMS
 
-*Quick steps:* Please follow below steps to send an SMS to any mobile number.
+Please follow below steps to send an SMS to any mobile number.
 
 ### 1. Get the PhoneFactory and PhoneManager instances. ###
 

@@ -1,6 +1,6 @@
 # How to get data profile list
 
-*Quick steps:* Please follow below steps to request list of available modem profiles
+Please follow below steps to request list of available modem profiles
 
 ### 1. Get the DataFactory and DataProfileManager instances
 

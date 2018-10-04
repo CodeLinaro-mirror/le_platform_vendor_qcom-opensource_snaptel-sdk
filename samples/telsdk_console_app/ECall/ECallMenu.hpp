@@ -49,6 +49,11 @@ extern "C" {
 #include "console_app_framework/ConsoleApp.hpp"
 #include "MsdSettings.hpp"
 
+#define CATEGORY_AUTO 1
+#define CATEGORY_MANUAL 2
+#define VARIANT_TEST 1
+#define VARIANT_EMERGENCY 2
+
 const std::string ECALL_CATEGORY_AUTO = "auto";
 const std::string ECALL_CATEGORY_MANUAL = "manual";
 const std::string ECALL_VARIANT_TEST = "test";
@@ -82,6 +87,11 @@ private:
    void makeECall(std::vector<std::string> inputCommand);
 
    /**
+    * Sample eCall operation with raw PDU
+    */
+   void eCallWithPdu(std::vector<std::string> inputCommand);
+
+   /**
     * Sample eCall SOS operation
     */
    void eCallSos(std::vector<std::string> inputCommand);
@@ -93,6 +103,12 @@ private:
     * Sample Update eCall MSD operation
     */
    void updateECallMSD(std::vector<std::string> inputCommand);
+
+   /**
+    * Sample Update eCall MSD operation with raw pdu
+    */
+   void updateEcallMsdWithPdu(std::vector<std::string> inputCommand);
+
    /**
     * Sample get in progress calls operations
     */
@@ -109,6 +125,11 @@ private:
     * Remove a registered listener
     */
    void removeCallListener(std::shared_ptr<telux::tel::ICallListener> listener);
+
+   /**
+    * Convert the hexadecimal string to bytes
+    */
+   std::vector<uint8_t> convertHexToBytes(std::string msdData);
 
    /**
     * This method is useful to trim the spaces in options and converting them into LOWERCASE

@@ -1,5 +1,6 @@
 # Using Card Service APIs
-*Quick steps:* Please follow below steps to use Card Service APIs to transmit APDU
+
+Please follow below steps to use Card Service APIs to transmit APDU
 
 ### 1. Get the PhoneFactory and CardManager instances. ###
    ~~~~~~{.cpp}

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,12 +30,9 @@
 /**
  * @file       VoiceServiceInfo.hpp
  *
- * @brief      VoiceServiceInfo is a container class for obtaining serving state details
- *             like phone is registered to home network, roaming, in service, out of service
- *             or only emergency calls allowed.
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
+ * @brief      VoiceServiceInfo is a container class for obtaining serving state
+ *             details like phone is registered to home network, roaming,
+ *             in service, out of service or only emergency calls allowed.
  */
 #ifndef VOICESERVICEINFO_HPP
 #define VOICESERVICEINFO_HPP
@@ -52,11 +49,12 @@ namespace tel {
  * Defines the voice service states
  */
 enum class VoiceServiceState {
-   NOT_REG_AND_NOT_SEARCHING = 0, /**< Not registered, MT is not currently searching
-                                         a new operator to register */
+   NOT_REG_AND_NOT_SEARCHING = 0, /**< Not registered, MT is not currently
+                                       searching a new operator to
+                                       register */
    REG_HOME = 1,                  /**< Registered, home network */
    NOT_REG_AND_SEARCHING = 2,     /**< Not registered, but MT is currently searching
-                                         a new operator to register */
+                                       a new operator to register */
    REG_DENIED = 3,                /**< Registration denied */
    UNKNOWN = 4,                   /**< Unknown */
    REG_ROAMING = 5,               /**< Registered, roaming */
@@ -64,16 +62,18 @@ enum class VoiceServiceState {
                                                                  but indicates that emergency
                                                                  calls are enabled */
    NOT_REG_AND_EMERGENCY_AVAILABLE_AND_SEARCHING = 12,     /**< Same as NOT_REG_AND_SEARCHING
-                                                                but indicates that
+                                                                but indicates that emergency
+                                                                calls are enabled */
+   REG_DENIED_AND_EMERGENCY_AVAILABLE = 13,                /**< Same as REG_DENIED but indicates
+                                                                that emergency calls are
+                                                                enabled */
+   UNKNOWN_AND_EMERGENCY_AVAILABLE = 14,                   /**< Same as UNKNOWN but indicates that
                                                                 emergency calls are enabled */
-   REG_DENIED_AND_EMERGENCY_AVAILABLE = 13, /**< Same as REG_DENIED but indicates that
-                                                 emergency calls are enabled */
-   UNKNOWN_AND_EMERGENCY_AVAILABLE = 14,    /**< Same as UNKNOWN but indicates that
-                                                 emergency calls are enabled */
 };
 
 /**
- * Defines the voice service denial cause why voice service state registration was denied
+ * Defines the voice service denial cause why voice service state registration
+ * was denied
  * See 3GPP TS 24.008, 10.5.3.6 and Annex G.
  */
 enum class VoiceServiceDenialCause {
@@ -121,7 +121,8 @@ enum class VoiceServiceDenialCause {
    NO_SUITABLE_CELLS = 15,         /**< No Suitable Cells in this Location Area */
    NOT_AUTHORIZED = 25,            /**< Not Authorized for this CSG */
 
-   // Causes related to PLMN specific network failures and congestion/Authentication Failures
+   // Causes related to PLMN specific network failures and
+   // congestion/Authentication Failures
    NETWORK_FAILURE = 17,                 /**< Network Failure */
    MAC_FAILURE = 20,                     /**< MAC failure */
    SYNC_FAILURE = 21,                    /**< USIM detects that the SQN in the
@@ -150,12 +151,9 @@ enum class VoiceServiceDenialCause {
 };
 
 /**
- *  VoiceServiceInfo is a container class for obtaining serving state details
- *  like phone is registered to home network, roaming, in service, out of service
- *  or only emergency calls allowed
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
+ * VoiceServiceInfo is a container class for obtaining serving state details
+ * like phone is registered to home network, roaming, in service, out of
+ * service or only emergency calls allowed.
  */
 class VoiceServiceInfo {
 public:
@@ -165,9 +163,6 @@ public:
     * Get voice service state.
     *
     * @returns @ref VoiceServiceState
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    VoiceServiceState getVoiceServiceState();
 
@@ -175,33 +170,23 @@ public:
     * Get Voice service denial cause
     *
     * @returns @ref VoiceServiceDenialCause
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    VoiceServiceDenialCause getVoiceServiceDenialCause();
 
    /**
-    * Check if phone service is in emergency mode (i.e Only emergency numbers are allowed)
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * Check if phone service is in emergency mode (i.e Only emergency numbers are
+    * allowed)
     */
    bool isEmergency();
 
    /**
-    * Check if phone is registered to home network or roaming network, phone is in service mode
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * Check if phone is registered to home network or roaming network, phone is
+    * in service mode
     */
    bool isInService();
 
    /**
     * check if phone not registered, phone is in out of service mode
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    bool isOutOfService();
 

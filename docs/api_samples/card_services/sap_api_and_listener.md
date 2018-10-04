@@ -1,5 +1,6 @@
 # Using SAP APIs
-*Quick steps:* Please follow below steps to use SAP APIs to send APDU and listen to SAP events
+
+Please follow below steps to use SAP APIs to send APDU and listen to SAP events
 
 
 ### 1. Get the PhoneFactory and PhoneManager instances. ###

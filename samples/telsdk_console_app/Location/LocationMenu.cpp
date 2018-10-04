@@ -28,8 +28,8 @@
  */
 
 #include <chrono>
-#include <iostream>
 #include <future>
+#include <iostream>
 #include <memory>
 
 #include <telux/loc/LocationFactory.hpp>
@@ -60,57 +60,61 @@ LocationMenu::LocationMenu(std::string appName, std::string cursor)
       } else {
          std::cout << " *** ERROR - Unable to initialize Location subsystem" << std::endl;
       }
+
+      posListener_ = std::make_shared<MyLocationListener>();
+      posListener_->setSvInfoFlag(false);
+      posListener_->setLocationReportFlag(false);
+
+      locationManager_->registerListener(posListener_);
    }
-   posListener_ = std::make_shared<MyLocationListener>();
 }
 
 LocationMenu::~LocationMenu() {
+   if(locationManager_ && posListener_) {
+      locationManager_->removeListener(posListener_);
+   }
    if(posListener_) {
       posListener_ = nullptr;
+   }
+
+   if(locationManager_) {
+      locationManager_ = nullptr;
    }
 }
 
 void LocationMenu::init() {
-   std::shared_ptr<ConsoleAppCommand> addLocationListenerCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Add_listener", {},
-         std::bind(&LocationMenu::addLocationListener, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> removeLocationListenerCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "Remove_listener", {},
-         std::bind(&LocationMenu::removeLocationListener, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> finalReportMinIntervalCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Set_min_interval", {},
+         "1", "Set_min_interval", {},
          std::bind(&LocationMenu::finalReportMinInterval, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> positionReportTimeoutCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Set_position_report_timeout", {},
+         "2", "Set_position_report_timeout", {},
          std::bind(&LocationMenu::positionReportTimeout, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> horizontalAccuracyLevelCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Set_Horizontal_accuracy", {},
+         "3", "Set_Horizontal_accuracy", {},
          std::bind(&LocationMenu::horizontalAccuracyLevel, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> enableLocationReportLogsCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "4", "Location_notifications", {},
+         std::bind(&LocationMenu::enableLocationReportLogs, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> enableSvInfoLogsCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("5", "SV_info_notifications", {},
+                        std::bind(&LocationMenu::enableSvInfoLogs, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
-      = {addLocationListenerCommand, removeLocationListenerCommand, finalReportMinIntervalCommand,
-         positionReportTimeoutCommand, horizontalAccuracyLevelCommand};
+      = {finalReportMinIntervalCommand, positionReportTimeoutCommand,
+         horizontalAccuracyLevelCommand, enableLocationReportLogsCommand, enableSvInfoLogsCommand};
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
-}
-
-void LocationMenu::addLocationListener(std::vector<std::string> userInput) {
-   locationManager_->registerListener(posListener_);
-}
-
-void LocationMenu::removeLocationListener(std::vector<std::string> userInput) {
-   locationManager_->removeListener(posListener_);
 }
 
 void LocationMenu::positionReportTimeout(std::vector<std::string> userInput) {
    if(locationManager_) {
       char delimiter = '\n';
       std::string posReportTimeoutInput;
-      std::cout << "Enter Position report timeout in Milliseconds (range: 1000ms-255000ms): ";
+      std::cout << "Enter Position report timeout in Milliseconds (range: "
+                   "1000ms-255000ms): ";
       std::getline(std::cin, posReportTimeoutInput, delimiter);
       int opt = -1;
       if(!posReportTimeoutInput.empty()) {
@@ -181,5 +185,49 @@ void LocationMenu::horizontalAccuracyLevel(std::vector<std::string> userInput) {
       } else {
          std::cout << " Invalid input: " << accuLevel << std::endl;
       }
+   }
+}
+
+void LocationMenu::enableLocationReportLogs(std::vector<std::string> userInput) {
+   char delimiter = '\n';
+   std::string usrInput;
+   std::cout << "Enter 1-Enable/0-Disable: ";
+   std::getline(std::cin, usrInput, delimiter);
+   int opt = -1;
+   if(!usrInput.empty()) {
+      try {
+         opt = std::stoi(usrInput);
+      } catch(const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter numerical values " << opt << std::endl;
+      }
+   } else {
+      std::cout << "empty input\n";
+   }
+   if((opt == 0) || (opt == 1)) {
+      posListener_->setLocationReportFlag(opt);
+   } else {
+      std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+   }
+}
+
+void LocationMenu::enableSvInfoLogs(std::vector<std::string> userInput) {
+   char delimiter = '\n';
+   std::string usrInput;
+   std::cout << "Enter 1-Enable/0-Disable: ";
+   std::getline(std::cin, usrInput, delimiter);
+   int opt = -1;
+   if(!usrInput.empty()) {
+      try {
+         opt = std::stoi(usrInput);
+      } catch(const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter numerical values " << opt << std::endl;
+      }
+   } else {
+      std::cout << "empty input\n";
+   }
+   if((opt == 0) || (opt == 1)) {
+      posListener_->setSvInfoFlag(opt);
+   } else {
+      std::cout << "ERROR: invalid input, please enter 0 or 1\n";
    }
 }

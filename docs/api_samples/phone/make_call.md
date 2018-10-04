@@ -1,6 +1,6 @@
 # Making a Voice Call
 
-*Quick steps:* Please follow below steps to make a voice call
+Please follow below steps to make a voice call
 
 ### 1. Get the PhoneFactory and PhoneManager instances
 

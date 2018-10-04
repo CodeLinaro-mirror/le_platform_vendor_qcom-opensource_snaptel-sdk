@@ -30,7 +30,6 @@
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
-
 #include "ECallMenu.hpp"
 #include "MyECallListener.hpp"
 
@@ -38,12 +37,31 @@
 #define MSDSETTINGS_FILE "./msdsettings.txt"
 #define UPDATED_MSDSETTINGS_FILE "./updated_msdsettings.txt"
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 const std::string GREEN = "\033[0;32m";
 const std::string RED = "\033[0;31m";
 const std::string BOLD_RED = "\033[1;31m";
 const std::string DONE = "\033[0m";  // No color
+
+// std::function callback for CallManager::makeECall
+void makeEcallResponse(telux::common::ErrorCode error, std::shared_ptr<telux::tel::ICall> call) {
+   PRINT_NOTIFICATION << "Received response for makeECall" << std::endl;
+   if(error != telux::common::ErrorCode::SUCCESS) {
+      PRINT_NOTIFICATION << "makeECall Request failed with errorCode: " << static_cast<int>(error)
+                         << std::endl;
+   }
+}
+
+// std::function callback for CallManager::updateECallMsd
+void updateEcallResponse(telux::common::ErrorCode error) {
+   PRINT_NOTIFICATION << "Received response for updateECallMsd " << std::endl;
+   if(error != telux::common::ErrorCode::SUCCESS) {
+      PRINT_NOTIFICATION
+         << "updateECallMsd Request failed with errorCode: " << static_cast<int>(error)
+         << std::endl;
+   }
+}
 
 ECallMenu::ECallMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -67,15 +85,6 @@ ECallMenu::~ECallMenu() {
  */
 void ECallMenu::init() {
    // below commands are used to add menu options like below
-   //
-   // 1 - eCall-SOS
-   // 2 - eCall <auto | manual> <test | emergency>
-   // 3 - update_ecall_msd
-   // 4 - dial <number>
-   // 5 - hangup
-   // 6 - get_calls
-   // 7 - answer_call
-   //
 
    std::shared_ptr<ConsoleAppCommand> eCallSosCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
@@ -102,9 +111,17 @@ void ECallMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "7", "Answer_call", {}, std::bind(&ECallMenu::answerCall, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> eCallWithPdu = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("8", "eCall_with_MSD_PDU", {},
+                        std::bind(&ECallMenu::eCallWithPdu, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> updateEcallMsd = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("9", "Update_eCall_MSD_PDU", {},
+                        std::bind(&ECallMenu::updateEcallMsdWithPdu, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
-      = {eCallSosCommand, eCallCommand,    updateMsdCommand, dialCommad,
-         hangupCommand,   getCallsCommand, answerCallCommand};
+      = {eCallSosCommand, eCallCommand,      updateMsdCommand, dialCommad,    hangupCommand,
+         getCallsCommand, answerCallCommand, eCallWithPdu,     updateEcallMsd};
 
    addCommands(commandsList);
 
@@ -214,10 +231,7 @@ void ECallMenu::hangup(std::vector<std::string> inputCommand) {
       for(auto callIterator = std::begin(callList); callIterator != std::end(callList);
           ++callIterator) {
          telux::tel::CallState callState = (*callIterator)->getCallState();
-         if((callState == telux::tel::CallState::CALL_ACTIVE)
-            || (callState == telux::tel::CallState::CALL_DIALING)
-            || (callState == telux::tel::CallState::CALL_ALERTING)
-            || (callState == telux::tel::CallState::CALL_ON_HOLD)) {
+         if(callState != telux::tel::CallState::CALL_ENDED) {
             spCall = *callIterator;
             break;
          }
@@ -320,6 +334,116 @@ void ECallMenu::updateECallMSD(std::vector<std::string> inputCommand) {
    }
 }
 
+void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
+   char delimiter = '\n';
+   std::string category;
+   std::cout << "Enter category(1 - auto | 2 - manual): ";
+   std::getline(std::cin, category, delimiter);
+   int opt1 = -1;
+   if(!category.empty()) {
+      try {
+         opt1 = std::stoi(category);
+      } catch(const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter numerical values " << opt1 << std::endl;
+      }
+   } else {
+      std::cout << "empty input going with default auto category\n";
+      opt1 = CATEGORY_AUTO;
+   }
+   std::string variant;
+   std::cout << "Enter variant(1 - test | 2 - emergency): ";
+   std::getline(std::cin, variant, delimiter);
+   int opt2 = -1;
+   if(!variant.empty()) {
+      try {
+         opt2 = std::stoi(variant);
+      } catch(const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter numerical values " << opt2 << std::endl;
+      }
+   } else {
+      std::cout << "empty input going with default Emergency variant\n";
+      opt2 = VARIANT_EMERGENCY;
+   }
+   // Get Phone from PhoneFactory
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto spDefaultPhone = phoneFactory.getPhoneManager()->getPhone();
+
+   telux::tel::ECallCategory emergencyCategory;
+   telux::tel::ECallVariant eCallVariant;
+
+   if(opt1 == CATEGORY_AUTO) {  // Automatically triggered eCall.
+      emergencyCategory = telux::tel::ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
+   } else if(opt1 == CATEGORY_MANUAL) {  // Manually triggered eCall.
+      emergencyCategory = telux::tel::ECallCategory::VOICE_EMER_CAT_MANUAL;
+   } else {
+      std::cout << "Invalid Emergency Call Category" << std::endl;
+      return;
+   }
+
+   if(opt2 == VARIANT_TEST) {  // Will use the PSAP number configured in NV settings
+      eCallVariant = telux::tel::ECallVariant::ECALL_TEST;
+   } else if(opt2 == VARIANT_EMERGENCY) {  // Will use the emergency number configured in FDN
+                                           // i.e. 112.
+      eCallVariant = telux::tel::ECallVariant::ECALL_EMERGENCY;
+   } else {
+      std::cout << "Invalid Emergency Call Variant" << std::endl;
+      return;
+   }
+
+   auto callManager = phoneFactory.getCallManager();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   std::string msdData;
+   std::cout << "Enter MSD PDU: ";
+   std::getline(std::cin, msdData, delimiter);
+   std::vector<uint8_t> rawData;
+
+   if(!msdData.empty()) {
+      rawData = convertHexToBytes(msdData);
+   } else {
+      std::cout << "Input is empty, using default raw msd.\n";
+      rawData = {2,   41,  68, 6,  128, 227, 10, 81,  67, 158, 41,  85,  212, 56,  0,
+                 128, 4,   52, 10, 140, 65,  89, 164, 56, 119, 207, 131, 54,  210, 63,
+                 65,  104, 16, 24, 8,   32,  19, 198, 68, 0,   0,   48,  20};
+   }
+
+   auto ret = callManager->makeECall(phoneId, rawData, (int)emergencyCategory, (int)eCallVariant,
+                                     &makeEcallResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << GREEN << "  eCall request is successful" << DONE << std::endl;
+   } else {
+      std::cout << RED << "  eCall request failed" << DONE << std::endl;
+   }
+}
+
+void ECallMenu::updateEcallMsdWithPdu(std::vector<std::string> userInput) {
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto spDefaultPhone = phoneFactory.getPhoneManager()->getPhone();
+   auto callManager = phoneFactory.getCallManager();
+   int phoneId = DEFAULT_PHONE_ID;
+   char delimiter = '\n';
+   std::string msdData;
+   std::cout << "Enter raw msd: ";
+   std::getline(std::cin, msdData, delimiter);
+   std::vector<uint8_t> rawData;
+
+   if(!msdData.empty()) {
+      rawData = convertHexToBytes(msdData);
+   } else {
+      std::cout << "Input is empty, using default raw msd.\n";
+      rawData = {2,   41,  68, 6,  128, 227, 10, 81,  67, 158, 41,  85,  212, 56,  0,
+                 128, 4,   52, 10, 140, 65,  89, 164, 56, 119, 207, 131, 54,  210, 63,
+                 65,  104, 16, 24, 8,   32,  19, 198, 68, 0,   0,   48,  20};
+   }
+
+   auto ret = callManager->updateECallMsd(phoneId, rawData, &updateEcallResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << GREEN << "  Update MSD request is successful" << DONE << std::endl;
+   } else {
+      std::cout << RED << "  Update MSD request failed" << DONE << std::endl;
+   }
+}
+
 /**
  * Sample get in progress calls operations
  */
@@ -370,7 +494,7 @@ void ECallMenu::CallCommandCallback::makeCallResponse(telux::common::ErrorCode e
       infoStr.append("Call failed with error code: " + static_cast<int>(errorCode));
    }
 
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
 }
 
 void ECallMenu::UpdateMsdCommandCallback::commandResponse(telux::common::ErrorCode errorCode) {
@@ -380,7 +504,7 @@ void ECallMenu::UpdateMsdCommandCallback::commandResponse(telux::common::ErrorCo
    } else {
       infoStr.append("Update MSD failed with error code: " + static_cast<int>(errorCode));
    }
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
 }
 
 void ECallMenu::HangupCommandCallback::commandResponse(telux::common::ErrorCode errorCode) {
@@ -390,7 +514,7 @@ void ECallMenu::HangupCommandCallback::commandResponse(telux::common::ErrorCode 
    } else {
       infoStr.append(" Hangup failed with error code: " + static_cast<int>(errorCode));
    }
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
 }
 
 void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode errorCode) {
@@ -400,5 +524,37 @@ void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode 
    } else {
       infoStr.append(" Answer call failed with error code: " + static_cast<int>(errorCode));
    }
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
+}
+/** Convert the hexadecimal string to bytes
+ *  Eg: i/p: 0229440680E30A51439E
+ *      o/p: 2,41,68,6,128,227,10,81,67,158
+ */
+std::vector<uint8_t> ECallMenu::convertHexToBytes(std::string msdData) {
+   std::vector<uint8_t> rawMsd;
+   size_t i, len;
+   uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
+
+   len = msdData.length();
+   for(i = 0; i < len; i = i + 2) {
+      if(msdData[i] >= '0' && msdData[i] <= '9') {
+         rawData1 = (msdData[i] - 48) * 16;
+      } else if(msdData[i] >= 'A' && msdData[i] <= 'F') {
+         rawData1 = (msdData[i] - 55) * 16;
+      } else if(msdData[i] >= 'a' && msdData[i] <= 'f') {
+         rawData1 = (msdData[i] - 87) * 16;
+      }
+
+      if(msdData[i + 1] >= '0' && msdData[i + 1] <= '9') {
+         rawData2 = msdData[i + 1] - 48;
+      } else if(msdData[i + 1] >= 'A' && msdData[i + 1] <= 'F') {
+         rawData2 = msdData[i + 1] - 55;
+      } else if(msdData[i + 1] >= 'a' && msdData[i + 1] <= 'f') {
+         rawData2 = msdData[i + 1] - 87;
+      }
+
+      rawData = rawData1 + rawData2;
+      rawMsd.emplace_back(rawData);
+   }
+   return rawMsd;
 }

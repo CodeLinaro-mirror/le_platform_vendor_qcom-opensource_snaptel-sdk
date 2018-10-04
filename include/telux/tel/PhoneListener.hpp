@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,9 +44,9 @@
 #include <vector>
 
 #include <telux/tel/Call.hpp>
+#include <telux/tel/CellInfo.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/SignalStrength.hpp>
-#include <telux/tel/CellInfo.hpp>
 #include <telux/tel/VoiceServiceInfo.hpp>
 
 namespace telux {
@@ -54,8 +54,6 @@ namespace tel {
 
 /** @addtogroup telematics_phone
  * @{ */
-
-class IPhone;
 
 /**
  * @brief A listener class for monitoring changes in specific telephony states
@@ -91,13 +89,15 @@ public:
    }
 
    /**
-    * This function is called when info pertaining to current or neighboring cells change.
+    * This function is called when info pertaining to current or neighboring
+    * cells change.
     *
-    * @param [in] phoneId          Unique id of the phone on which cell info changed.
-    * @param [in] cellInfoList     vector of shared pointers to cell info object
+    * @param [in] phoneId        Unique id of the phone on which cell info
+    *                            changed.
+    * @param [in] cellInfoList   vector of shared pointers to cell info object
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @note Eval: This is a new API and is being evaluated.It is subject to
+    * change and could break backwards compatibility.
     */
    virtual void onCellInfoListChanged(int phoneId,
                                       std::vector<std::shared_ptr<CellInfo>> cellInfoList) {
@@ -120,10 +120,8 @@ public:
     * @param [in] phone       Unique id of the phone on which radio technology
     *                         changed
     *
-    * @param [in] radioTech   Radio state of the phone @ref RadioTechnology
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @param [in] radioTech   Radio state of the phone
+    *                         @ref telux::tel::RadioTechnology
     */
    virtual void onVoiceRadioTechnologyChanged(int phoneId, RadioTechnology radioTech) {
    }
@@ -135,9 +133,7 @@ public:
     *                         changed
     *
     * @param [in] serviceInfo pointer of voice service state info object
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    *                         @ref telux::tel::VoiceServiceInfo
     */
    virtual void onVoiceServiceStateChanged(int phoneId,
                                            const std::shared_ptr<VoiceServiceInfo> &serviceInfo) {
@@ -146,10 +142,10 @@ public:
    /**
     * This function is called when the operating mode changes
     *
-    * @param [in] mode       Operating mode @ref OperatingMode.
+    * @param [in] mode   Operating mode @ref OperatingMode.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @note Eval: This is a new API and is being evaluated.It is subject to
+    *             change and could break backwards compatibility.
     */
    virtual void onOperatingModeChanged(OperatingMode mode) {
    }

@@ -29,8 +29,9 @@
 
 /**
  * @file       Phone.hpp
- * @brief      Phone class is the primary interface to get phone informations like radio state,
- *             signal strength, turn on/off radio power, voice radio tech and voice service state.
+ * @brief      Phone class is the primary interface to get phone informations
+ *             like radio state, signal strength, turn on/off radio power,
+ *             voice radio tech and voice service state.
  */
 
 #ifndef PHONE_HPP
@@ -59,18 +60,15 @@ class IVoiceServiceStateCallback;
 /**
  * This function is called with the response to requestVoiceRadioTechnology API.
  *
- * @param [in] radioTech        Pointer to radio technology
- * @param [in] error            Return code for whether the operation
- *                              succeeded or failed
- *        - @ref SUCCESS
- *        - @ref RADIO_NOT_AVAILABLE
- *        - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
+ * @param [in] radioTech  Pointer to radio technology
+ * @param [in] error      Return code for whether the operation
+ *                        succeeded or failed
+ *                        - @ref telux::common::ErrorCode::SUCCESS
+ *                        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+ *                        - @ref telux::common::ErrorCode::GENERIC_FAILURE
  */
 using VoiceRadioTechResponseCb
-   = std::function<void(RadioTechnology radioTech, telux::common::ErrorCode error)>;
+   = std::function<void(telux::tel::RadioTechnology radioTech, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to requestCellInfo API.
@@ -78,26 +76,27 @@ using VoiceRadioTechResponseCb
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [out] cellInfoList - vector of shared pointers to cell info object
- * @param [out] error - Return code for whether the operation succeeded or failed
+ * @param [out] cellInfoList  vector of shared pointers to cell info object
+ * @param [out] error         Return code for whether the operation
+ *                            succeeded or failed
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
+ * @note Eval: This is a new API and is being evaluated. It is subject to
+ * change and could break backwards compatibility.
  */
 using CellInfoCallback = std::function<void(std::vector<std::shared_ptr<CellInfo>> cellInfoList,
-   telux::common::ErrorCode error)>;
+                                            telux::common::ErrorCode error)>;
 
 /**
- * @brief This class allows getting system information and registering for system events.
- * Each Phone instance is associated with a single SIM. So on a dual SIM device you
- * would have 2 Phone instances.
+ * @brief This class allows getting system information and registering for
+ * system events. Each Phone instance is associated with a single SIM.
+ * So on a dual SIM device you would have 2 Phone instances.
  */
 class IPhone {
 public:
    /**
     * Get the Phone ID corresponding to phone.
     *
-    * @param [out] phoneId    Unique identifier for the phone
+    * @param [out] phoneId   Unique identifier for the phone
     *
     * @returns Status of getPhoneId i.e. success or suitable error code.
     */
@@ -114,12 +113,11 @@ public:
    /**
     * Request for Radio technology type (3GPP/3GPP2) used for voice.
     *
-    * @param [in] callback  callback pointer to get the response of radio power request
+    * @param [in] callback  callback pointer to get the response of radio power
+    *                       request @ref telux::tel::VoiceRadioTechResponseCb
     *
-    * @returns Status of requestVoiceRadioTechnology i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @returns Status of requestVoiceRadioTechnology i.e. success or suitable
+    * error code @ref telux::common::Status.
     */
    virtual telux::common::Status requestVoiceRadioTechnology(VoiceRadioTechResponseCb callback) = 0;
 
@@ -133,15 +131,14 @@ public:
    virtual ServiceState getServiceState() = 0;
 
    /**
-    * Request for voice service state to get the information of phone serving states
+    * Request for voice service state to get the information of phone serving
+    * states
     *
     * @param [in] callback  callback pointer to get the response of voice
-    *                       service state
+    *                       service state @ref telux::tel::IVoiceServiceStateCallback.
     *
-    * @returns Status of requestVoiceServiceState i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @returns Status of requestVoiceServiceState i.e. success or suitable error
+    * code @ref telux::common::Status.
     */
    virtual telux::common::Status
       requestVoiceServiceState(std::weak_ptr<IVoiceServiceStateCallback> callback)
@@ -163,36 +160,41 @@ public:
    /**
     * Get the cell information about current serving cell and neighboring cells.
     *
-    * @param [in] callback    Callback to get the response of cell info request.
+    * @param [in] callback    Callback to get the response of cell info request
+    *                         @telux::tel::CellInfoCallback
     *
     * @returns Status of requestCellInfo i.e. success or suitable error
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
+    * @note Eval: This is a new API and is being evaluated. It is subject
+    * to change and could break backwards compatibility.
     */
    virtual telux::common::Status requestCellInfo(CellInfoCallback callback) = 0;
 
    /**
-    * Set the minimum time in milliseconds between when the cell info list should be received.
+    * Set the minimum time in milliseconds between when the cell info list should
+    * be received.
     *
-    * @param [in] timeInterval  Value of 0 means receive cell info list when any info changes.
-    *                           Value of INT_MAX means never receive cell info list even on change.
+    * @param [in] timeInterval  Value of 0 means receive cell info list when any
+    *                           info changes. Value of INT_MAX means never
+    *                           receive cell info list even on change.
     *                           Default value is 0
-    * @param [in] callback      Callback to get the response for set cell info list rate.
+    * @param [in] callback      Callback to get the response for set cell info
+    *                           list rate.
     *
     * @returns Status of setCellInfoListRate i.e. success or suitable error
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
+    * @note Eval: This is a new API and is being evaluated. It is subject
+    * to change and could break backwards compatibility.
     */
    virtual telux::common::Status setCellInfoListRate(uint32_t timeInterval,
-      common::ResponseCallback callback) = 0;
+                                                     common::ResponseCallback callback)
+      = 0;
 
    /**
     * Get current signal strength of the associated network.
     *
-    * @param [in] callback    Optional callback pointer to get the response of
-    *                         signal strength request
+    * @param [in] callback   Optional callback pointer to get the response of
+    *                        signal strength request
     *
     * @returns Status of requestSignalStrength i.e. success or suitable error
     * code.
@@ -201,7 +203,8 @@ public:
       requestSignalStrength(std::shared_ptr<ISignalStrengthCallback> callback = nullptr)
       = 0;
 
-   virtual ~IPhone(){};
+   virtual ~IPhone() {
+   }
 };
 
 /**
@@ -220,11 +223,14 @@ public:
     * @param [in] signalStrength   Pointer to signal strength object
     * @param [in] error            Return code for whether the operation
     *                              succeeded or failed
-    *                              - @ref SUCCESS
-    *                              - @ref RADIO_NOT_AVAILABLE
+    *                              @ref SUCCESS
+    *                              @ref RADIO_NOT_AVAILABLE
     */
    virtual void signalStrengthResponse(std::shared_ptr<SignalStrength> signalStrength,
                                        telux::common::ErrorCode error) {
+   }
+
+   virtual ~ISignalStrengthCallback() {
    }
 };
 
@@ -241,18 +247,19 @@ public:
    /**
     * This function is called with the response to requestVoiceServiceState API.
     *
-    * @param [in] serviceInfo      Pointer to voice service info object
-    * @param [in] error            Return code for whether the operation
-    *                              succeeded or failed
-    *                              - @ref SUCCESS
-    *                              - @ref RADIO_NOT_AVAILABLE
-    *                              - @ref GENERIC_FAILURE
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @param [in] serviceInfo   Pointer to voice service info object
+    *                           @ref telux::tel::VoiceServiceInfo
+    * @param [in] error         Return code for whether the operation
+    *                           succeeded or failed
+    *                           - @ref telux::common::ErrorCode::SUCCESS
+    *                           - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                           - @ref telux::common::ErrorCode::GENERIC_FAILURE
     */
    virtual void voiceServiceStateResponse(const std::shared_ptr<VoiceServiceInfo> &serviceInfo,
                                           telux::common::ErrorCode error) {
+   }
+
+   virtual ~IVoiceServiceStateCallback() {
    }
 };
 

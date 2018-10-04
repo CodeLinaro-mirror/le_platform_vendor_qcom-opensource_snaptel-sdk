@@ -32,7 +32,7 @@
 #include "MySmsListener.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
-#define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> smsMsg) {
    std::cout << std::endl << std::endl;
@@ -68,4 +68,3 @@ void MySmsDeliveryCallback::commandResponse(telux::common::ErrorCode error) {
       PRINT_CB << "SMS Delivery failed, errorCode: " << (int)error << std::endl;
    }
 }
-

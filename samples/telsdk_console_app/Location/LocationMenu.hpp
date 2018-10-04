@@ -30,16 +30,17 @@
 #ifndef LOCATIONMENU_HPP
 #define LOCATIONMENU_HPP
 
-#include <cctype>
 #include <algorithm>
+#include <cctype>
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "MyLocationCommandCallback.hpp"
+#include "MyLocationListener.hpp"
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationManager.hpp>
-#include "MyLocationCommandCallback.hpp"
 
 #include "console_app_framework/ConsoleApp.hpp"
 
@@ -56,15 +57,15 @@ public:
 
    ~LocationMenu();
 
-   void addLocationListener(std::vector<std::string> userInput);
-   void removeLocationListener(std::vector<std::string> userInput);
    void finalReportMinInterval(std::vector<std::string> userInput);
    void positionReportTimeout(std::vector<std::string> userInput);
    void horizontalAccuracyLevel(std::vector<std::string> userInput);
+   void enableLocationReportLogs(std::vector<std::string> userInput);
+   void enableSvInfoLogs(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.
-   std::shared_ptr<telux::loc::ILocationListener> posListener_;
+   std::shared_ptr<MyLocationListener> posListener_;
    std::shared_ptr<telux::loc::ILocationManager> locationManager_ = nullptr;
    std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb_ = nullptr;
 };

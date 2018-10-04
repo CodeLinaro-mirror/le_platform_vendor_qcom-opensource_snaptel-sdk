@@ -1,6 +1,6 @@
 # Request Voice Service State of the device
 
-*Quick steps:* Please follow below steps to get voice service state notifications.
+Please follow below steps to get voice service state notifications.
 
 ### 1. Get the PhoneFactory and PhoneManager instances ###
    ~~~~~~{.cpp}

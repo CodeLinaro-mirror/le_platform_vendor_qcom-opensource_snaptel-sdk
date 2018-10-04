@@ -28,16 +28,19 @@
  */
 
 /**
- * PhoneMenu provides menu options to invoke Phone functions such as requestSignalStrength.
+ * PhoneMenu provides menu options to invoke Phone functions such as
+ * requestSignalStrength.
  */
 
 #include <chrono>
 #include <iostream>
 
-#include <telux/tel/PhoneFactory.hpp>
 #include "MyCellInfoHandler.hpp"
+#include <telux/tel/PhoneFactory.hpp>
 
+#include "NetworkMenu.hpp"
 #include "PhoneMenu.hpp"
+#include "ServingSystemMenu.hpp"
 
 PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
    : ConsoleApp(appName, cursor) {
@@ -147,12 +150,22 @@ void PhoneMenu::init() {
    std::shared_ptr<ConsoleAppCommand> setOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("9", "Set_operating_mode", {},
                         std::bind(&PhoneMenu::setOperatingMode, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> requestCellInfoListCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Request_cell_info_list", {},
-                        std::bind(&PhoneMenu::requestCellInfoList, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> setCellInfoListRateCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("11", "Set_cell_info_list_rate", {},
-                        std::bind(&PhoneMenu::setCellInfoListRate, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestCellInfoListCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "10", "Request_cell_info_list", {},
+         std::bind(&PhoneMenu::requestCellInfoList, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> setCellInfoListRateCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "11", "Set_cell_info_list_rate", {},
+         std::bind(&PhoneMenu::setCellInfoListRate, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> networkMenuCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("12", "Network_Selection", {},
+                        std::bind(&PhoneMenu::networkMenu, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> servingSystemMenuCommand
+      = std::make_shared<ConsoleAppCommand>(
+         ConsoleAppCommand("13", "Serving_System", {},
+                           std::bind(&PhoneMenu::servingSystemMenu, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
          setRadioPowerCommand,
@@ -164,7 +177,9 @@ void PhoneMenu::init() {
          getOperatingModeCommand,
          setOperatingModeCommand,
          requestCellInfoListCommand,
-         setCellInfoListRateCommand};
+         setCellInfoListRateCommand,
+         networkMenuCommand,
+         servingSystemMenuCommand};
    addCommands(commandsListPhoneSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -321,7 +336,8 @@ void PhoneMenu::setOperatingMode(std::vector<std::string> userInput) {
    if(phoneManager_) {
       int operatingMode;
       std::cout << "Enter Operating Mode (0-Online, 1-Airplane, 2-Factory Test,\n"
-                << "3-Offline, 4-Resetting, 5-Shutting Down, 6-Persistent Low Power) : ";
+                << "3-Offline, 4-Resetting, 5-Shutting Down, 6-Persistent Low "
+                   "Power) : ";
       std::cin >> operatingMode;
       if(operatingMode >= 0 && operatingMode <= 6) {
 
@@ -379,4 +395,16 @@ void PhoneMenu::setCellInfoListRate(std::vector<std::string> userInput) {
    } else {
       std::cout << "No phone found corresponding to default phoneid" << std::endl;
    }
+}
+
+void PhoneMenu::servingSystemMenu(std::vector<std::string> userInput) {
+   ServingSystemMenu servingSystemMenu("Serving System Menu", "ServingSystem> ");
+   servingSystemMenu.init();
+   servingSystemMenu.mainLoop();
+}
+
+void PhoneMenu::networkMenu(std::vector<std::string> userInput) {
+   NetworkMenu networkMenu("Network Menu", "Network> ");
+   networkMenu.init();
+   networkMenu.mainLoop();
 }

@@ -43,7 +43,7 @@ extern "C" {
 #include "MyLocationListener.hpp"
 #include "MySmsListener.hpp"
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mNotification: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 const std::string MAPS_URL = "https://www.google.com/maps/search/?api=1&query=";
 

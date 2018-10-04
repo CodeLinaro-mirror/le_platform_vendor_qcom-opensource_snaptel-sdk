@@ -38,8 +38,6 @@
 void MyDataProfilesCallback::onProfileListResponse(
    const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
    telux::common::ErrorCode error) {
-   DataMenu::profiles_.clear();
-   DataMenu::profiles_ = profiles;
    std::cout << std::endl << std::endl;
    PRINT_CB << " ** onProfileListResponse **" << std::endl;
    std::cout << std::setw(2)

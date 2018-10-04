@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,9 +35,6 @@
  *             interface to get access to notifications. The methods in listener can be
  *             invoked from multiple different threads. The implementation should be
  *             thread-safe.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef SUBSCRIPTIONLISTENER_HPP
@@ -54,12 +51,9 @@ namespace tel {
  * @{ */
 
 /**
- * @brief	A listener class for receiving device subscription information.
- *              The methods in listener can be invoked from multiple different
- *              threads. The implementation should be thread safe.
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
+ * @brief     A listener class for receiving device subscription information.
+ *            The methods in listener can be invoked from multiple different
+ *            threads. The implementation should be thread safe.
  */
 class ISubscriptionListener {
 
@@ -67,10 +61,7 @@ public:
    /**
     * This function is called whenever there is a change in Subscription details.
     *
-    * @param [in] subscription    Pointer to Subscription Object.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @param [in] subscription    Pointer to ISubscription Object.
     */
    virtual void onSubscriptionInfoChanged(std::shared_ptr<ISubscription> subscription) {
    }
@@ -80,10 +71,7 @@ public:
     * for example when a new subscription is discovered or an existing subscription
     * goes away when SIM is inserted or removed respectively.
     *
-    * @param [in] count   - count of subscription
-   *
-   * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
+    * @param [in] count    count of subscription
     */
    virtual void onNumberOfSubscriptionsChanged(int count) {
    }

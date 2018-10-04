@@ -30,7 +30,7 @@
 #include "iostream"
 #include "MySignalStrengthHandler.hpp"
 
-#define PRINT_CALLBACK std::cout << "\033[1;35mCALLBACK: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 using namespace telux::tel;
 using namespace telux::common;
@@ -41,70 +41,60 @@ MySignalStrengthCallback::MySignalStrengthCallback() {
 void MySignalStrengthCallback::signalStrengthResponse(
    std::shared_ptr<SignalStrength> signalStrength, ErrorCode error) {
    std::cout << std::endl << std::endl;
-   PRINT_CALLBACK << "Received Signal Strength Callback with Error Code:" << (int)error
-                      << std::endl;
+   PRINT_CB << "Received Signal Strength Callback with Error Code:" << (int)error << std::endl;
    if(signalStrength->getGsmSignalStrength() != nullptr) {
-      PRINT_CALLBACK
+      PRINT_CB
          << "GsmSignalStrength: " << signalStrength->getGsmSignalStrength()->getGsmSignalStrength()
          << std::endl;
-      PRINT_CALLBACK
+      PRINT_CB
          << "GsmBitErrorRate: " << signalStrength->getGsmSignalStrength()->getGsmBitErrorRate()
          << std::endl;
-      PRINT_CALLBACK << "GsmDbm: " << signalStrength->getGsmSignalStrength()->getDbm()
-                         << std::endl;
-      PRINT_CALLBACK
-         << "Gsm Signal Level: " << (int)signalStrength->getGsmSignalStrength()->getLevel()
-         << std::endl;
+      PRINT_CB << "GsmDbm: " << signalStrength->getGsmSignalStrength()->getDbm() << std::endl;
+      PRINT_CB << "Gsm Signal Level: " << (int)signalStrength->getGsmSignalStrength()->getLevel()
+               << std::endl;
    }
    if(signalStrength->getCdmaSignalStrength() != nullptr) {
-      PRINT_CALLBACK << "Cdma/Evdo Dbm: " << signalStrength->getCdmaSignalStrength()->getDbm()
-                         << std::endl;
-      PRINT_CALLBACK << "CdmaEcio: " << signalStrength->getCdmaSignalStrength()->getCdmaEcio()
-                         << std::endl;
-      PRINT_CALLBACK << "EvdoEcio: " << signalStrength->getCdmaSignalStrength()->getEvdoEcio()
-                         << std::endl;
-      PRINT_CALLBACK << "EvdoSignalNoiseRatio: "
-                         << signalStrength->getCdmaSignalStrength()->getEvdoSignalNoiseRatio()
-                         << std::endl;
-      PRINT_CALLBACK
-         << "Cdma Signal Level: " << (int)signalStrength->getCdmaSignalStrength()->getLevel()
-         << std::endl;
+      PRINT_CB << "Cdma/Evdo Dbm: " << signalStrength->getCdmaSignalStrength()->getDbm()
+               << std::endl;
+      PRINT_CB << "CdmaEcio: " << signalStrength->getCdmaSignalStrength()->getCdmaEcio()
+               << std::endl;
+      PRINT_CB << "EvdoEcio: " << signalStrength->getCdmaSignalStrength()->getEvdoEcio()
+               << std::endl;
+      PRINT_CB << "EvdoSignalNoiseRatio: "
+               << signalStrength->getCdmaSignalStrength()->getEvdoSignalNoiseRatio() << std::endl;
+      PRINT_CB << "Cdma Signal Level: " << (int)signalStrength->getCdmaSignalStrength()->getLevel()
+               << std::endl;
    }
    if(signalStrength->getLteSignalStrength() != nullptr) {
-      PRINT_CALLBACK
+      PRINT_CB
          << "LteSignalStrength: " << signalStrength->getLteSignalStrength()->getLteSignalStrength()
          << std::endl;
-      PRINT_CALLBACK
+      PRINT_CB
          << "LteReferenceSignalReceivePower: " << signalStrength->getLteSignalStrength()->getDbm()
          << std::endl;
-      PRINT_CALLBACK
-         << "LteReferenceSignalReceiveQuality: "
-         << signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
-         << std::endl;
-      PRINT_CALLBACK << "LteReferenceSignalSnr: "
-                         << signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr()
-                         << std::endl;
-      PRINT_CALLBACK << "LteChannelQualityIndicator: "
-                         << signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-                         << std::endl;
-      PRINT_CALLBACK
-         << "LTE Signal Level: " << (int)signalStrength->getLteSignalStrength()->getLevel()
-         << std::endl;
+      PRINT_CB << "LteReferenceSignalReceiveQuality: "
+               << signalStrength->getLteSignalStrength()->getLteReferenceSignalReceiveQuality()
+               << std::endl;
+      PRINT_CB << "LteReferenceSignalSnr: "
+               << signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr() << std::endl;
+      PRINT_CB << "LteChannelQualityIndicator: "
+               << signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
+               << std::endl;
+      PRINT_CB << "LTE Signal Level: " << (int)signalStrength->getLteSignalStrength()->getLevel()
+               << std::endl;
    }
    if(signalStrength->getWcdmaSignalStrength() != nullptr) {
-      PRINT_CALLBACK << "WCDMA Signal Strength: "
-                         << signalStrength->getWcdmaSignalStrength()->getSignalStrength()
-                         << std::endl;
-      PRINT_CALLBACK
+      PRINT_CB << "WCDMA Signal Strength: "
+               << signalStrength->getWcdmaSignalStrength()->getSignalStrength() << std::endl;
+      PRINT_CB
          << "WCDMA bit error rate: " << signalStrength->getWcdmaSignalStrength()->getBitErrorRate()
          << std::endl;
-      PRINT_CALLBACK
+      PRINT_CB
          << "WCDMA Signal Level: " << (int)signalStrength->getWcdmaSignalStrength()->getLevel()
          << std::endl;
    }
    if(signalStrength->getTdscdmaSignalStrength() != nullptr) {
-      PRINT_CALLBACK << "TDSCDMA signal power: "
-                         << signalStrength->getTdscdmaSignalStrength()->getRscp()
-                         << std::endl;
+      PRINT_CB << "TDSCDMA signal power: " << signalStrength->getTdscdmaSignalStrength()->getRscp()
+               << std::endl;
    }
 }

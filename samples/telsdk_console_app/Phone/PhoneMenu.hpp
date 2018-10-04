@@ -30,14 +30,14 @@
 #ifndef PHONEMENU_HPP
 #define PHONEMENU_HPP
 
-#include <telux/tel/Phone.hpp>
+#include "telux/tel/PhoneListener.hpp"
 #include "telux/tel/PhoneManager.hpp"
 #include "telux/tel/SubscriptionManager.hpp"
-#include "telux/tel/PhoneListener.hpp"
+#include <telux/tel/Phone.hpp>
 
-#include "MySubscriptionListener.hpp"
 #include "MyPhoneListener.hpp"
 #include "MySignalStrengthHandler.hpp"
+#include "MySubscriptionListener.hpp"
 
 #include "console_app_framework/ConsoleApp.hpp"
 
@@ -59,6 +59,8 @@ private:
    void setOperatingMode(std::vector<std::string> userInput);
    void requestCellInfoList(std::vector<std::string> userInput);
    void setCellInfoListRate(std::vector<std::string> userInput);
+   void servingSystemMenu(std::vector<std::string> userInput);
+   void networkMenu(std::vector<std::string> userInput);
 
    std::string getRadioStateAsString(telux::tel::RadioState radioState);
    std::string getServiceStateAsString(telux::tel::ServiceState serviceState);

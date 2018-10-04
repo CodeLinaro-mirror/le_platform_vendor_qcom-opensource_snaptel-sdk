@@ -38,7 +38,7 @@
 #define MSDSETTINGS_FILE "./msdsettings.txt"
 #define UPDATED_MSDSETTINGS_FILE "./updated_msdsettings.txt"
 
-#define print_notification std::cout << std::endl << "\033[1;35mNotification: \033[0m"
+#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
 
 const std::string GREEN = "\033[0;32m";
 const std::string RED = "\033[0;31m";
@@ -364,7 +364,7 @@ void ECallConsoleApp::CallCommandCallback::makeCallResponse(ErrorCode errorCode,
       infoStr.append("Call failed with error code: " + static_cast<int>(errorCode));
    }
 
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
 }
 
 void ECallConsoleApp::UpdateMsdCommandCallback::commandResponse(ErrorCode errorCode) {
@@ -374,7 +374,7 @@ void ECallConsoleApp::UpdateMsdCommandCallback::commandResponse(ErrorCode errorC
    } else {
       infoStr.append("Update MSD failed with error code: " + static_cast<int>(errorCode));
    }
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
 }
 
 void ECallConsoleApp::HangupCommandCallback::commandResponse(ErrorCode errorCode) {
@@ -384,7 +384,7 @@ void ECallConsoleApp::HangupCommandCallback::commandResponse(ErrorCode errorCode
    } else {
       infoStr.append(" Hangup failed with error code: " + static_cast<int>(errorCode));
    }
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
 }
 
 void ECallConsoleApp::AnswerCommandCallback::commandResponse(ErrorCode errorCode) {
@@ -394,7 +394,7 @@ void ECallConsoleApp::AnswerCommandCallback::commandResponse(ErrorCode errorCode
    } else {
       infoStr.append(" Answer call failed with error code: " + static_cast<int>(errorCode));
    }
-   print_notification << infoStr << std::endl;
+   PRINT_NOTIFICATION << infoStr << std::endl;
 }
 
 // Main function that displays the console and processes user input

@@ -36,7 +36,7 @@
 #include <telux/tel/SmsManager.hpp>
 #include <telux/tel/PhoneFactory.hpp>
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 using namespace telux::tel;
 
@@ -47,8 +47,8 @@ public:
 };
 
 void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<SmsMessage> smsMsg) {
-   print_notification << "MySmsListener::onIncomingSms from PhoneId : " << phoneId << std::endl;
-   print_notification << "smsReceived: " << smsMsg->toString() << std::endl;
+   PRINT_NOTIFICATION << "MySmsListener::onIncomingSms from PhoneId : " << phoneId << std::endl;
+   PRINT_NOTIFICATION << "smsReceived: " << smsMsg->toString() << std::endl;
 }
 
 /**

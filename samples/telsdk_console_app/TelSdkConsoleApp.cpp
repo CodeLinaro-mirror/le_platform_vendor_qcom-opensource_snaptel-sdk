@@ -48,6 +48,7 @@ extern "C" {
 #include "Phone/PhoneMenu.hpp"
 #include "Sms/SmsMenu.hpp"
 #include "Data/DataMenu.hpp"
+#include "common/Version.hpp"
 #include "SimCardServices/SimCardServicesMenu.hpp"
 
 #include "TelSdkConsoleApp.hpp"
@@ -216,9 +217,12 @@ void setupSignal() {
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
 
+   auto sdkVersion = telux::common::Version::getSdkVersion();
+   std::string  appName = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
+             + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch);
    setupSignal();
 
-   TelSdkConsoleApp telsdkConsoleApp("Telematics SDK features", "tel_sdk> ");
+   TelSdkConsoleApp telsdkConsoleApp(appName, "tel_sdk> ");
 
    telsdkConsoleApp.init();  // initialize commands and display
 

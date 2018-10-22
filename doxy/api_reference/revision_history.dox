@@ -53,7 +53,7 @@ when       who     what, where, why
 @tr @td A @tdend @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
 @tr @td B @tdend @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trend
 @tr @td C @tdend @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trend
-@tr @td D @tdend @td Oct 2018 @tdend @tdlast Addition of Network Selection and Serving System Management APIs @tdlastend @trend
+@tr @td D @tdend @td Oct 2018 @tdend @tdlast Addition of Network Selection and Serving System Management APIs and call flows @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

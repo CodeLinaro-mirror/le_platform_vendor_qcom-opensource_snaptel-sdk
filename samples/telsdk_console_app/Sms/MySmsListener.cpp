@@ -61,6 +61,16 @@ void MySmscAddressCallback::smscAddressResponse(const std::string &address,
    }
 }
 
+// Implementation of set SMSC Address callback
+void MySetSmscAddressResponseCallback::setSmscResponse(telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "setSmscAddress sent successfully" << std::endl;
+   } else {
+      PRINT_CB << "setSmscAddress failed with errorCode: " << static_cast<int>(error) << std::endl;
+   }
+}
+
 void MySmsDeliveryCallback::commandResponse(telux::common::ErrorCode error) {
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "SMS Delivered successfully" << std::endl;

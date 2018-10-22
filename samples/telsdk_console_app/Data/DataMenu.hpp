@@ -30,8 +30,8 @@
 
 /**
  * Data Connection Manager Sample Application using Telematics SDK
- * This is used to demonstrate data connection manager APIs like start/stop data calls
- * and profile management
+ * This is used to demonstrate data connection manager APIs like start/stop data
+ * calls and profile management
  */
 
 #ifndef DATAMENU_HPP
@@ -42,15 +42,15 @@
 #include <memory>
 #include <string>
 
-#include <telux/data/DataProfile.hpp>
 #include <telux/data/DataConnectionManager.hpp>
+#include <telux/data/DataProfile.hpp>
 #include <telux/data/DataProfileManager.hpp>
 #include <telux/tel/PhoneManager.hpp>
 
 #include "console_app_framework/ConsoleApp.hpp"
 
-#include "DataResponseCallback.hpp"
 #include "DataListener.hpp"
+#include "DataResponseCallback.hpp"
 
 class DataMenu : public ConsoleApp {
 public:
@@ -76,7 +76,7 @@ private:
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
    std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;
    std::shared_ptr<telux::data::IDataProfileManager> dataProfileManager_;
-   telux::data::ProfileParams params;
+   telux::data::ProfileParams params_;
 
    std::shared_ptr<MyDataProfilesCallback> myDataProfileListCb_;
    std::shared_ptr<MyDataProfilesCallback> myDataProfileListCbForQuery_;

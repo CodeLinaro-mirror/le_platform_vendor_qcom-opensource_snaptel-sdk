@@ -132,7 +132,7 @@ std::string MyPhoneListener::getCurrentTime() {
    char buffer[100];
    std::strftime(buffer, 100, "%Y-%m-%d %H:%M:%S", localtime(&tt));
    char currTime[120];
-   sprintf(currTime, "%s.%ld", buffer, tod.tv_usec / 1000);
+   snprintf(currTime, 120, "%s.%ld", buffer, tod.tv_usec / 1000);
    return std::string(currTime);
 }
 

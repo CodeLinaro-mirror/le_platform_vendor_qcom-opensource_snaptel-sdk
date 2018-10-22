@@ -34,8 +34,8 @@
 #include <string>
 #include <vector>
 
-#include "console_app_framework/ConsoleApp.hpp"
 #include "MySmsListener.hpp"
+#include "console_app_framework/ConsoleApp.hpp"
 
 class SmsMenu : public ConsoleApp {
 public:
@@ -46,6 +46,7 @@ public:
 private:
    void sendSms(std::vector<std::string> userInput);
    void getSmscAddr(std::vector<std::string> userInput);
+   void setSmscAddr(std::vector<std::string> userInput);
    void calculateMessageAttributes(std::vector<std::string> userInput);
 
    std::shared_ptr<MySmsCommandCallback> mySmsCmdCb_ = nullptr;

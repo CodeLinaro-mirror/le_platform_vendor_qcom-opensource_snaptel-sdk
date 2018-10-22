@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
+#include <Utils.hpp>
 
 #include "DataMenu.hpp"
 #include "DataResponseCallback.hpp"
@@ -147,10 +148,12 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
    int profileId;
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
+   Utils<int>::validateInput(profileId);
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
+   Utils<int>::validateInput(ipFamilyType);
 
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
    dataConnectionManager_->startDataCall(profileId, ipFamType,
@@ -162,10 +165,12 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
    int profileId;
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
+   Utils<int>::validateInput(profileId);
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
+   Utils<int>::validateInput(ipFamilyType);
 
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
    dataConnectionManager_->stopDataCall(profileId, ipFamType,
@@ -178,6 +183,7 @@ void DataMenu::requestDataCallStatistics(std::vector<std::string> inputCommand) 
    int profileId;
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
+   Utils<int>::validateInput(profileId);
 
    dataConnectionManager_->requestDataCallStatistics(
       profileId, DataCallStatisticsResponseCb::requestStatisticsResponse);
@@ -188,8 +194,9 @@ void DataMenu::getProfileParamsFromUser() {
    int techPref;
    std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
    std::cin >> techPref;
-   std::cin.get();
+   Utils<int>::validateInput(techPref);
 
+   std::cin.get();
    std::string profileName;
    std::cout << "Enter profileName : ";
    std::getline(std::cin, profileName, delimiter);
@@ -207,20 +214,23 @@ void DataMenu::getProfileParamsFromUser() {
    std::getline(std::cin, password, delimiter);
 
    int authType;
-   std::cout << "Enter Authentication Protocol Type (0-None, 1-PAP, 2-CHAP, 3-PAP_CHAP): ";
+   std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP \n2-CHAP"
+                "\n3-PAP_CHAP\n";
    std::cin >> authType;
+   Utils<int>::validateInput(authType);
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
+   Utils<int>::validateInput(ipFamilyType);
 
-   params.profileName = profileName;
-   params.techPref = static_cast<telux::data::TechPreference>(techPref);
-   params.authType = static_cast<telux::data::AuthProtocolType>(authType);
-   params.ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
-   params.apn = apnName;
-   params.userName = username;
-   params.password = password;
+   params_.profileName = profileName;
+   params_.techPref = static_cast<telux::data::TechPreference>(techPref);
+   params_.authType = static_cast<telux::data::AuthProtocolType>(authType);
+   params_.ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+   params_.apn = apnName;
+   params_.userName = username;
+   params_.password = password;
 }
 
 void DataMenu::requestProfileList(std::vector<std::string> inputCommand) {
@@ -235,8 +245,9 @@ void DataMenu::requestProfileList(std::vector<std::string> inputCommand) {
 
 void DataMenu::createProfile(std::vector<std::string> inputCommand) {
    getProfileParamsFromUser();
+
    telux::common::Status status
-      = dataProfileManager_->createProfile(params, myDataCreateProfileCb_);
+      = dataProfileManager_->createProfile(params_, myDataCreateProfileCb_);
 
    if(status == telux::common::Status::SUCCESS) {
       std::cout << "Create profile request sent successfully" << std::endl;
@@ -246,10 +257,15 @@ void DataMenu::createProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::deleteProfile(std::vector<std::string> inputCommand) {
-   int profileId = std::stoi(inputCommand[1]);
-   int techPrefId = std::stoi(inputCommand[2]);
-
-   telux::data::TechPreference tp;
+   int profileId, techPrefId;
+   try {
+      profileId = std::stoi(inputCommand[1]);
+      techPrefId = std::stoi(inputCommand[2]);
+   } catch(const std::exception &e) {
+      std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
+      return;
+   }
+   telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
    if(techPrefId == 1) {
       tp = telux::data::TechPreference::TP_3GPP;
    } else if(techPrefId == 2) {
@@ -265,14 +281,15 @@ void DataMenu::deleteProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::modifyProfile(std::vector<std::string> inputCommand) {
-   char delimiter = '\n';
    int profileId;
    std::cout << "Enter profile Id to Modify : ";
    std::cin >> profileId;
+   Utils<int>::validateInput(profileId);
 
    getProfileParamsFromUser();
+
    telux::common::Status status
-      = dataProfileManager_->modifyProfile(profileId, params, myModifyProfileCb_);
+      = dataProfileManager_->modifyProfile(profileId, params_, myModifyProfileCb_);
    if(status == telux::common::Status::SUCCESS) {
       std::cout << "Modify profile request sent successfully" << std::endl;
    } else {
@@ -283,22 +300,11 @@ void DataMenu::modifyProfile(std::vector<std::string> inputCommand) {
 void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
    char delimiter = '\n';
    int techPref;
-   std::string tP;
    std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
-   std::getline(std::cin, tP, delimiter);
+   std::cin >> techPref;
+   Utils<int>::validateInput(techPref);
 
-   if(!tP.empty()) {
-      try {
-         techPref = std::stoi(tP);
-      } catch(const std::exception &e) {
-         std::cout << "ERROR: invalid input, please enter numerical values " << techPref
-                   << std::endl;
-      }
-   } else {
-      std::cout << "empty input using default techPref \n";
-      techPref = -1;
-   }
-
+   std::cin.get();
    std::string profileName;
    std::cout << "Enter profileName: ";
    std::getline(std::cin, profileName, delimiter);
@@ -316,47 +322,26 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
    std::getline(std::cin, password, delimiter);
 
    int authType;
-   std::string aT;
-   std::cout << "Enter Authentication Protocol Type (0-None, 1-PAP, 2-CHAP, 3-PAP_CHAP): ";
-   std::getline(std::cin, aT, delimiter);
-   if(!aT.empty()) {
-      try {
-         authType = std::stoi(aT);
-      } catch(const std::exception &e) {
-         std::cout << "ERROR: invalid input, please enter numerical values " << authType
-                   << std::endl;
-      }
-   } else {
-      std::cout << "empty input using default authType \n";
-      authType = 0;
-   }
+   std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP"
+                "\n2-CHAP \n3-PAP_CHAP\n";
+   std::cin >> authType;
+   Utils<int>::validateInput(authType);
 
    int ipFamilyType;
-   std::string iFType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPV6, 10-IPV4V6): ";
-   std::getline(std::cin, iFType, delimiter);
-   if(!iFType.empty()) {
-      try {
-         ipFamilyType = std::stoi(iFType);
-      } catch(const std::exception &e) {
-         std::cout << "ERROR: invalid input, please enter numerical values " << ipFamilyType
-                   << std::endl;
-      }
-   } else {
-      std::cout << "empty input using default ipFamilyType \n";
-      ipFamilyType = -1;
-   }
+   std::cin >> ipFamilyType;
+   Utils<int>::validateInput(ipFamilyType);
 
-   params.profileName = profileName;
-   params.techPref = static_cast<telux::data::TechPreference>(techPref);
-   params.authType = static_cast<telux::data::AuthProtocolType>(authType);
-   params.ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
-   params.apn = apnName;
-   params.userName = username;
-   params.password = password;
+   params_.profileName = profileName;
+   params_.techPref = static_cast<telux::data::TechPreference>(techPref);
+   params_.authType = static_cast<telux::data::AuthProtocolType>(authType);
+   params_.ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+   params_.apn = apnName;
+   params_.userName = username;
+   params_.password = password;
 
    telux::common::Status status
-      = dataProfileManager_->queryProfile(params, myDataProfileListCbForQuery_);
+      = dataProfileManager_->queryProfile(params_, myDataProfileListCbForQuery_);
    if(status == telux::common::Status::SUCCESS) {
       std::cout << "Query profile request sent successfully" << std::endl;
    } else {
@@ -365,10 +350,16 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::requestProfileById(std::vector<std::string> inputCommand) {
-   int profileId = std::stoi(inputCommand[1]);
-   int techPrefId = std::stoi(inputCommand[2]);
+   int profileId, techPrefId;
+   try {
+      profileId = std::stoi(inputCommand[1]);
+      techPrefId = std::stoi(inputCommand[2]);
+   } catch(const std::exception &e) {
+      std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
+      return;
+   }
 
-   telux::data::TechPreference tp;
+   telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
    if(techPrefId == 1) {
       tp = telux::data::TechPreference::TP_3GPP;
    } else if(techPrefId == 2) {

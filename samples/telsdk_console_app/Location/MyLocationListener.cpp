@@ -131,7 +131,6 @@ void MyLocationListener::printPositionTech(std::shared_ptr<telux::loc::ILocation
 void MyLocationListener::printMeasurementType(
    std::shared_ptr<telux::loc::ILocationInfo> locationInfo) {
    std::shared_ptr<telux::loc::ISensorDataUsage> sensorDataUsage;
-   std::cout << std::endl << std::endl;
    if(sensorDataUsage != nullptr) {
       std::cout << "Sensor data usage: " << std::endl;
       if(locationInfo->getSensorDataUsage(sensorDataUsage) == telux::common::Status::SUCCESS) {
@@ -172,7 +171,7 @@ void MyLocationListener::printHorizontalReliability(telux::loc::LocationReliabil
          std::cout << "Horizontal reliability: HIGH" << std::endl;
          break;
       default:
-         std::cout << "Horizontal reliability is UNKNOWN" << std::endl;
+         std::cout << "Horizontal reliability: UNKNOWN" << std::endl;
    }
 }
 
@@ -194,12 +193,11 @@ void MyLocationListener::printVerticalReliability(telux::loc::LocationReliabilit
          std::cout << "Vertical reliability: HIGH" << std::endl;
          break;
       default:
-         std::cout << "Vertical reliability is UNKNOWN" << std::endl;
+         std::cout << "Vertical reliability: UNKNOWN" << std::endl;
    }
 }
 
 void MyLocationListener::printSensorType(telux::loc::SensorType sensorType) {
-   std::cout << std::endl << std::endl;
    switch(sensorType) {
       case telux::loc::SensorType::ACCELEROMETER:
          std::cout << "Sensor type: ACCELEROMETER" << std::endl;
@@ -208,7 +206,7 @@ void MyLocationListener::printSensorType(telux::loc::SensorType sensorType) {
          std::cout << "Sensor type: GYROSCOPE" << std::endl;
          break;
       default:
-         std::cout << "Sensor type is UNKNOWN" << std::endl;
+         std::cout << "Sensor type: UNKNOWN" << std::endl;
    }
 }
 
@@ -221,7 +219,7 @@ void MyLocationListener::printAltitudeType(telux::loc::AltitudeType altitudeType
          std::cout << "Altitude type: ASSUMED, ";
          break;
       default:
-         std::cout << "Altitude type is UNKNOWN, ";
+         std::cout << "Altitude type: UNKNOWN, ";
    }
 }
 
@@ -346,12 +344,12 @@ void MyLocationListener::onLocationUpdate(
    locationInfo->getSVIds(SVIds);
    if(SVIds.size() > 0) {
       std::cout << "Ids of used SVs : " << std::endl;
-   }
-   for(auto i = 0; i < SVIds.size() - 1; ++i) {
-      std::cout << SVIds[i] << ", ";
-   }
-   if(SVIds.size() > 0) {
-      std::cout << SVIds[SVIds.size() - 1] << std::endl;
+      for(auto i = 0; i < SVIds.size() - 1; ++i) {
+         std::cout << SVIds[i] << ", ";
+      }
+      if(SVIds.size() > 0) {
+         std::cout << SVIds[SVIds.size() - 1] << std::endl;
+      }
    }
    printSbasCorrection(locationInfo);
 
@@ -360,8 +358,8 @@ void MyLocationListener::onLocationUpdate(
       std::cout << "Leap seconds: " << static_cast<int>(leapSeconds) << std::endl;
    }
 
-   if(locationInfo->getGpsTime() != nullptr) {
-      auto locGpsTime = locationInfo->getGpsTime();
+   auto locGpsTime = locationInfo->getGpsTime();
+   if(locGpsTime != nullptr) {
       std::cout << "Current GPS week: " << locGpsTime->getWeek() << std::endl;
       std::cout << "GPS week in milliseconds: " << locGpsTime->getTimeOfWeekMsec() << std::endl;
    }
@@ -389,12 +387,9 @@ void MyLocationListener::onLocationUpdate(
 
    std::cout << "Vertical speed: " << locationInfo->getVerticalSpeed() << std::endl;
 
-   std::shared_ptr<telux::loc::ISensorDataUsage> sensorDataUsage;
-   if(sensorDataUsage != nullptr) {
-      std::cout << "Sensor data usage" << std::endl;
-      if(locationInfo->getSensorDataUsage(sensorDataUsage) == telux::common::Status::SUCCESS) {
-         std::cout << "Status of getSensorDataUsage: "
-                   << (int)locationInfo->getSensorDataUsage(sensorDataUsage) << std::endl;
+   std::shared_ptr<telux::loc::ISensorDataUsage> sensorDataUsage = nullptr;
+   if(locationInfo->getSensorDataUsage(sensorDataUsage) == telux::common::Status::SUCCESS) {
+      if(sensorDataUsage != nullptr) {
          printSensorType(sensorDataUsage->getSensorType());
          printMeasurementType(locationInfo);
       }

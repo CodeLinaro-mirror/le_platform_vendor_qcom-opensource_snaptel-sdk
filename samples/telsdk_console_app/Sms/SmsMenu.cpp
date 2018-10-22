@@ -28,13 +28,14 @@
  */
 
 /**
- * SmsMenu provides menu options to invoke SMS functions such as send SMS, receive SMS etc.
+ * SmsMenu provides menu options to invoke SMS functions such as send SMS,
+ * receive SMS etc.
  */
 
 #include <algorithm>
 #include <chrono>
-#include <vector>
 #include <iostream>
+#include <vector>
 
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -100,12 +101,15 @@ void SmsMenu::init() {
    std::shared_ptr<ConsoleAppCommand> getSmscAddrCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("2", "Get_SMSC_address", {},
                         std::bind(&SmsMenu::getSmscAddr, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> setSmscAddrCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("3", "Set_SMSC_address", {},
+                        std::bind(&SmsMenu::setSmscAddr, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getMsgEncodingSizeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Calculate_message_attributes", {"message"},
+         "4", "Calculate_message_attributes", {"message"},
          std::bind(&SmsMenu::calculateMessageAttributes, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
-      = {sendSmsCommand, getSmscAddrCommand, getMsgEncodingSizeCommand};
+      = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand};
    addCommands(commandsListSmsSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -153,6 +157,22 @@ void SmsMenu::getSmscAddr(std::vector<std::string> userInput) {
       std::cout << "Request SmscAddress is success" << std::endl;
    } else {
       std::cout << "Request SmscAddress is not success" << std::endl;
+   }
+}
+
+void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
+   std::cout << "set SMSC Address \n" << std::endl;
+   char delimiter = '\n';
+
+   std::string smscAddress;
+   std::cout << "Enter SMSC number: ";
+   std::getline(std::cin, smscAddress, delimiter);
+   auto ret
+      = smsManager_->setSmscAddress(smscAddress, MySetSmscAddressResponseCallback::setSmscResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Set SmscAddress request success" << std::endl;
+   } else {
+      std::cout << "Set SmscAddress request failed" << std::endl;
    }
 }
 

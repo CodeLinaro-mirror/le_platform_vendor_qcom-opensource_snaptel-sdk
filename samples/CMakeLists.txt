@@ -29,6 +29,11 @@
 
 cmake_minimum_required(VERSION 2.8.9)
 
+# provides install directory variables CMAKE_INSTALL_<dir>
+include(GNUInstallDirs)
+# pkg-config module
+include(FindPkgConfig)
+
 add_subdirectory( telsdk_console_app )
 add_subdirectory( make_call_app )
 add_subdirectory( make_ecall_app )
@@ -43,3 +48,5 @@ add_subdirectory( loc_app )
 add_subdirectory( subscription_app )
 add_subdirectory( data_app )
 add_subdirectory( data_profile_app )
+add_subdirectory( network_selection_app )
+add_subdirectory( serving_system_app )

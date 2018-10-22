@@ -28,10 +28,12 @@
  */
 
 /**
- * @file       CallManager.hpp
- * @brief Call Manager does aggregate state management for in-progress calls
- *        It provides APIs for conferencing or swapping active and on-hold calls
- *        and to get the list of in-progress calls
+ * @file  CallManager.hpp
+ * @brief Call Manager is the primary interface for performing call related
+ *        operations. Allows to conference calls, swap calls, make normal
+ *        voice call and emergency call, send and update MSD pdu. Registers
+ *        the listener and notify about incoming call, call info change and
+ *        eCall MSD transmission status change to listener.
  *
  */
 
@@ -39,13 +41,13 @@
 #define CALLMANAGER_HPP
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include <telux/tel/Call.hpp>
-#include <telux/tel/PhoneDefines.hpp>
-#include <telux/tel/ECallDefines.hpp>
 #include <telux/tel/CallListener.hpp>
+#include <telux/tel/ECallDefines.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -59,88 +61,86 @@ namespace tel {
 class IMakeCallCallback;
 
 /**
- * This function is called with the response to make eCall API.
+ * This function is called with the response to make normal call and
+ * emergency call.
  *
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [out] error - @ref ErrorCode
- * @param [out] call - Pointer to Call object or nullptr in case of failure
+ * @param [out] error  @ref ErrorCode
+ * @param [out] call   Pointer to Call object or nullptr in case of failure
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ * change and could break backwards compatibility.
+ *
  */
-using MakeCallCallback = std::function<void(telux::common::ErrorCode error,
-   std::shared_ptr<ICall> call)>;
+using MakeCallCallback
+   = std::function<void(telux::common::ErrorCode error, std::shared_ptr<ICall> call)>;
 
 /**
- * @brief Call Manager does aggregate state management for in-progress calls
- *        It provides APIs for makeCall, makeECall, conferencing or swapping active and on-hold
- *        calls
- *        and to get the list of in-progress calls
+ * @brief Call Manager is the primary interface for call related operations
+ *        Allows to conference calls, swap calls, make normal voice call and
+ *        emergency call, send and update MSD pdu.
  */
 class ICallManager {
 public:
    /**
     * Initiate a voice call.
     *
-    * @param [in] phoneId - Represents phone corresponding to which on make call operation
-    * is performed
-    * @param [in] dialNumber - String representing the dialing number
-    * @param [in] callback - Optional callback pointer to get the response of makeCall request.
-    * Possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref DIAL_MODIFIED_TO_USSD
-    *        - @ref DIAL_MODIFIED_TO_SS
-    *        - @ref DIAL_MODIFIED_TO_DIAL
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref NO_MEMORY
-    *        - @ref INVALID_STATE
-    *        - @ref NO_RESOURCES
-    *        - @ref INTERNAL_ERR
-    *        - @ref FDN_CHECK_FAILURE
-    *        - @ref MODEM_ERR
-    *        - @ref NO_SUBSCRIPTION
-    *        - @ref NO_NETWORK_FOUND
-    *        - @ref INVALID_CALL_ID
-    *        - @ref DEVICE_IN_USE
-    *        - @ref MODE_NOT_SUPPORTED
-    *        - @ref ABORTED
-    *        - @ref GENERIC_FAILURE
+    * @param [in] phoneId      Represents phone corresponding to which on make
+    *                          call operation is performed
+    * @param [in] dialNumber   String representing the dialing number
+    * @param [in] callback     Optional callback pointer to get the response of
+    *                          makeCall request.
+    *                          Possible(not exhaustive) error codes for callback response
+    *                          - @ref telux::common::ErrorCode::SUCCESS
+    *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                          - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_USSD
+    *                          - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_SS
+    *                          - @ref telux::common::ErrorCode::DIAL_MODIFIED_TO_DIAL
+    *                          - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                          - @ref telux::common::ErrorCode::NO_MEMORY
+    *                          - @ref telux::common::ErrorCode::INVALID_STATE
+    *                          - @ref telux::common::ErrorCode::NO_RESOURCES
+    *                          - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                          - @ref telux::common::ErrorCode::FDN_CHECK_FAILURE
+    *                          - @ref telux::common::ErrorCode::MODEM_ERR
+    *                          - @ref telux::common::ErrorCode::NO_SUBSCRIPTION
+    *                          - @ref telux::common::ErrorCode::NO_NETWORK_FOUND
+    *                          - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                          - @ref telux::common::ErrorCode::DEVICE_IN_USE
+    *                          - @ref telux::common::ErrorCode::MODE_NOT_SUPPORTED
+    *                          - @ref telux::common::ErrorCode::ABORTED
+    *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
-    *@returns Status of makeCall i.e. success or suitable status code.
+    * @returns Status of makeCall i.e. success or suitable status code.
     */
    virtual telux::common::Status makeCall(int phoneId, const std::string &dialNumber,
                                           std::shared_ptr<IMakeCallCallback> callback = nullptr)
       = 0;
 
    /**
-    * Initiate an eCall.
+    * Initiate an emergency call.
     *
-    * @param [in] phoneId - Represents phone corresponding to which on make eCall operation
-    * is performed
-    * @param [in] eCallMsdData - The structure containing required fields to
-    * create eCall Minimum Set of Data (MSD)
-    * @param [in] category - Denotes the eCall category
-    *     - 0x20 or 32 (VOICE_EMER_CAT_MANUAL)
-    *     - 0x40 or 64 (VOICE_EMER_CAT_AUTO_ECALL)
-    * @param [in] variant - Denotes the call variant enum which can take following values:
-    *     - 0x01 -- Test ECALL (Originate test eCall to the mobile number configured
-    *               in NV params), This is the default value.
-    *     - 0x02 -- Emergency ECALL (Originate EMERGENCY eCall i.e. call to 112)
-    * @param [in] callback - Optional callback pointer to get the response of makeECall request.
-    * Possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    * @param [in] phoneId      Represents phone corresponding to which make
+    *                          eCall operation is performed
+    * @param [in] eCallMsdData The structure containing required fields to
+    *                          create eCall Minimum Set of Data (MSD)
+    * @param [in] category     @ref ECallCategory
+    * @param [in] variant      @ref ECallVariant
+    * @param [in] callback     Optional callback pointer to get the response of
+    *                          makeECall request.
+    *                          Possible(not exhaustive) error codes for callback response
+    *                          - @ref telux::common::ErrorCode::SUCCESS
+    *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                          - @ref telux::common::ErrorCode::NO_MEMORY
+    *                          - @ref telux::common::ErrorCode::MODEM_ERR
+    *                          - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                          - @ref telux::common::ErrorCode::INVALID_STATE
+    *                          - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                          - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                          - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of makeECall i.e. success or suitable status code.
     */
@@ -150,48 +150,47 @@ public:
       = 0;
 
    /**
-    * Initiate an eCall.
+    * Initiate an emergency call with raw MSD pdu.
     *
-    * @param [in] phoneId - Represents phone corresponding to which on make eCall operation
-    * is performed
-    * @param [in] msdPdu - Encoded MSD(Minimum Set of Data) PDU as per spec EN 15722 2015.
-    * @param [in] category - Denotes the eCall category
-    *     - 0x20 or 32 (VOICE_EMER_CAT_MANUAL)
-    *     - 0x40 or 64 (VOICE_EMER_CAT_AUTO_ECALL)
-    * @param [in] variant - Denotes the call variant enum which can take following values:
-    *     - 0x01 -- Test ECALL (Originate test eCall to the mobile number configured
-    *               in NV params), This is the default value.
-    *     - 0x02 -- Emergency ECALL (Originate EMERGENCY eCall i.e. call to 112)
-    * @param [in] callback - Callback function to get the response of makeECall request.
-    * Possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    * @param [in] phoneId   Represents phone corresponding to which on make eCall
+    *                       operation is performed
+    * @param [in] msdPdu    Encoded MSD(Minimum Set of Data) PDU as per spec EN
+    *                       15722 2015 or GOST R 54620-2011/33464-2015
+    * @param [in] category  @ref ECallCategory
+    * @param [in] variant   @ref ECallVariant
+    * @param [in] callback  Callback function to get the response of makeECall
+    *                       request.
+    *                       Possible(not exhaustive) error codes for callback response
+    *                       - @ref telux::common::ErrorCode::SUCCESS
+    *                       - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                       - @ref telux::common::ErrorCode::NO_MEMORY
+    *                       - @ref telux::common::ErrorCode::MODEM_ERR
+    *                       - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                       - @ref telux::common::ErrorCode::INVALID_STATE
+    *                       - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                       - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                       - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *                       - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of makeECall i.e. success or suitable status code.
     *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-    *         break backwards compatibility.
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    * change and could break backwards compatibility.
     */
    virtual telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
-                                           int category, int variant,
-                                           MakeCallCallback callback)
+                                           int category, int variant, MakeCallCallback callback)
       = 0;
 
    /**
-    * Update the eCall MSD in modem to be sent to Public Safety Answering Point (PSAP) when
-    * requested.
-    * @param [in] phoneId - Represents phone corresponding to which updateECallMsd operation
-    * is performed
-    * @param [in] eCallMsd - The data structure represents the Minimum Set of Data (MSD)
-    * @param [in] callback - Optional callback pointer to get the response of updateECallMsd.
+    * Update the eCall MSD in modem to be sent to Public Safety Answering Point
+    * (PSAP) when requested.
+    *
+    * @param [in] phoneId   Represents phone corresponding to which
+    *                       updateECallMsd operation is performed
+    * @param [in] eCallMsd  The data structure represents the Minimum Set of Data
+    *                       (MSD)
+    * @param [in] callback  Optional callback pointer to get the response of
+    *                       updateECallMsd.
     *
     * @returns Status of updateECallMsd i.e. success or suitable error code.
     */
@@ -201,35 +200,39 @@ public:
       = 0;
 
    /**
-    * Update the eCall MSD in modem to be sent to Public Safety Answering Point (PSAP) when
-    * requested.
-    * @param [in] phoneId - Represents phone corresponding to which updateECallMsd operation
-    * is performed
-    * @param [in] msdPdu - Encoded MSD(Minimum Set of Data) PDU as per spec EN 15722 2015
-    * @param [in] callback - Callback function to get the response of updateECallMsd.
+    * Update the eCall MSD in modem to be sent to Public Safety Answering Point
+    * (PSAP) when requested.
+    *
+    * @param [in] phoneId   Represents phone corresponding to which
+    *                       updateECallMsd operation is performed
+    * @param [in] msdPdu    Encoded MSD(Minimum Set of Data) PDU as per spec EN
+    *                       15722 2015 or GOST R 54620-2011/33464-2015
+    * @param [in] callback  Callback function to get the response of
+    *                       updateECallMsd.
     *
     * @returns Status of updateECallMsd i.e. success or suitable error code.
     *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
-    *         break backwards compatibility.
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    * change and could break backwards compatibility.
     */
-   virtual telux::common::Status
-      updateECallMsd(int phoneId, const std::vector<uint8_t> &msdPdu,
-      telux::common::ResponseCallback callback) = 0;
+   virtual telux::common::Status updateECallMsd(int phoneId, const std::vector<uint8_t> &msdPdu,
+                                                telux::common::ResponseCallback callback)
+      = 0;
 
    /**
-    * Get a vector of all currently in-progress calls in the system
+    * Get in-progress calls.
     *
     * @returns List of active calls.
     */
    virtual std::vector<std::shared_ptr<ICall>> getInProgressCalls() = 0;
 
    /**
-    * Join two calls in a conference
+    * Merge two calls in a conference.
     *
-    * @param [in] call1 - Call object to conference.
-    * @param [in] call2 - Call object to conference.
-    * @param [in] callback - Optional callback pointer to get the result of conference function
+    * @param [in] call1     Call object to conference.
+    * @param [in] call2     Call object to conference.
+    * @param [in] callback  Optional callback pointer to get the result of
+    *                       conference function
     *
     * @returns Status of conference i.e. success or suitable error code.
     */
@@ -239,11 +242,12 @@ public:
       = 0;
 
    /**
-    * Swap two calls - make one active and put the other on hold.
+    * Swap calls to make one active and put the another on hold.
     *
-    * @param [in] callToHold - Active call object to swap to hold state.
-    * @param [in] callToActivate - Hold call object to swap to active state.
-    * @param [in] callback - Optional callback pointer to get the result of swap function
+    * @param [in] callToHold      Active call object to swap to hold state.
+    * @param [in] callToActivate  Hold call object to swap to active state.
+    * @param [in] callback        Optional callback pointer to get the result of
+    *                             swap function
     *
     * @returns Status of swap i.e. success or suitable error code.
     */
@@ -253,10 +257,11 @@ public:
       = 0;
 
    /**
-    * Add a listener for Call events.
-    * This listener will only get called for state changes on the Call objects.
-    * @param [in] listener - Pointer to ICallListener object which receives event corresponding
-    * to phone
+    * Add a listener to listen for incoming call, call info change and eCall MSD
+    * transmission status change.
+    *
+    * @param [in] listener  Pointer to ICallListener object which receives event
+    *                       corresponding to phone
     *
     * @returns Status of registerListener i.e. success or suitable error code.
     */
@@ -266,8 +271,8 @@ public:
 
    /**
     * Remove a previously added listener.
-    * @param [in] listener - Pointer to ICallListener object which receives event corresponding
-    * to call
+    *
+    * @param [in] listener  Listener to be removed.
     *
     * @returns Status of removeListener i.e. success or suitable error code.
     */
@@ -279,8 +284,8 @@ public:
 
 /**
  * @brief Interface for Make Call callback object.
- * Client needs to implement this interface to get single shot responses for commands like
- * make call.
+ * Client needs to implement this interface to get single shot responses for
+ * commands like make call.
  *
  * The methods in callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
@@ -290,18 +295,20 @@ public:
    /**
     * This function is called with the response to makeCall API.
     *
-    * @param [out] error - @ref ErrorCode
-    * @param [out] call - Pointer to Call object or nullptr in case of failure
+    * @param [out] error  @ref ErrorCode
+    * @param [out] call   Pointer to Call object or nullptr in case of failure
     */
    virtual void makeCallResponse(telux::common::ErrorCode error,
                                  std::shared_ptr<ICall> call = nullptr) {
    }
+
+   virtual ~IMakeCallCallback(){};
 };
 
 /** @} */ /* end_addtogroup telematics_call */
 
-}  // End  of namespace tel
+}  // End of namespace tel
 
-}  // End  of namespace telux
+}  // End of namespace telux
 
 #endif  // CALLMANAGER_HPP

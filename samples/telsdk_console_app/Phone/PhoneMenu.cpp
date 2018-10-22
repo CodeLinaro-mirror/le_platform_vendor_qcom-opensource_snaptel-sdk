@@ -76,8 +76,10 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
    if(subSystemStatus) {
       phone_ = phoneManager_->getPhone(phoneId);
       // Turn on the radio if it's not available
-      if(phone_ != nullptr && phone_->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
-         phone_->setRadioPower(true);
+      if(phone_ != nullptr) {
+         if(phone_->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
+            phone_->setRadioPower(true);
+         }
       }
 
       phoneListener_ = std::make_shared<MyPhoneListener>();

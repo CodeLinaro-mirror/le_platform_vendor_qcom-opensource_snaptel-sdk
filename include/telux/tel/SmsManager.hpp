@@ -173,6 +173,25 @@ public:
       = 0;
 
    /**
+    * Sets the Short Message Service Center(SMSC) address on the device.
+    *
+    * This will change the SMSC address for all the SMS messages sent from any
+    * app.
+    *
+    * @param [in] smscAddress    SMSC address
+    * @param [in] callback       Optional callback pointer to get the response
+    *                            of set SMSC address
+    *
+    * @returns Status of setSmscAddress i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    *          change and could break backwards compatibility.
+    */
+   virtual telux::common::Status setSmscAddress(const std::string &smscAddress,
+                                                telux::common::ResponseCallback callback = nullptr)
+      = 0;
+
+   /**
     * Calculate message attributes for the given message.
     *
     * @param [in] message         Message to send

@@ -491,7 +491,7 @@ void ECallMenu::CallCommandCallback::makeCallResponse(telux::common::ErrorCode e
    if(errorCode == telux::common::ErrorCode::SUCCESS) {
       infoStr.append("Call is successful ");
    } else {
-      infoStr.append("Call failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append("Call failed with error code: " + std::to_string(static_cast<int>(errorCode)));
    }
 
    PRINT_NOTIFICATION << infoStr << std::endl;
@@ -502,7 +502,8 @@ void ECallMenu::UpdateMsdCommandCallback::commandResponse(telux::common::ErrorCo
    if(errorCode == telux::common::ErrorCode::SUCCESS) {
       infoStr.append(" MSD Update is successful");
    } else {
-      infoStr.append("Update MSD failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append("Update MSD failed with error code: "
+                     + std::to_string(static_cast<int>(errorCode)));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }
@@ -512,7 +513,8 @@ void ECallMenu::HangupCommandCallback::commandResponse(telux::common::ErrorCode 
    if(errorCode == telux::common::ErrorCode::SUCCESS) {
       infoStr.append(" Hangup is successful");
    } else {
-      infoStr.append(" Hangup failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append(" Hangup failed with error code: "
+                     + std::to_string(static_cast<int>(errorCode)));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }
@@ -522,7 +524,8 @@ void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode 
    if(errorCode == telux::common::ErrorCode::SUCCESS) {
       infoStr.append(" Answer Call is successful");
    } else {
-      infoStr.append(" Answer call failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append(" Answer call failed with error code: "
+                     + std::to_string(static_cast<int>(errorCode)));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }

@@ -54,7 +54,7 @@ Example:
 
 
 1. Application can use IPhoneManager::isSubsystemReady to determine if the system is ready.
-2. The application receives the status i.e. either true or false whether sub-sytem is ready or not.
+2. The application receives the status i.e. either true or false whether sub-system is ready or not.
 3. If it is not ready, then the application could use onSubsystemReady which returns std::future.
 4. PhoneManager notifies the application when the subsystem is ready through the std::future object.
 5. The application waits until the asynchronous operation i.e onSubsystemReady completes.
@@ -472,7 +472,7 @@ asynchronous response using CommandResponseCallback.
 8. If it is not ready, then the SubscriptionManager could use onSubsystemReady which returns std::future.
 9. CardManager notifies the SubscriptionManager when the subsystem is ready through the std::future object.
 10. The SubscriptionManager waits until the asynchronous operation i.e onSubsystemReady completes.
-11. CardManager updates the SubscriptionManager once the cardmanager sub-system is ready
+11. CardManager updates the SubscriptionManager once the card manager sub-system is ready
 12. SubscriptionManager uses ISubscription::isReady to determine if the Subscription is ready.
 13. The SubscriptionManager receives the status i.e either true or false whether sub-system is ready or not.
 14. If it is not ready, then the SubscriptionManager could use onSubsystemReady which returns std::future.
@@ -501,7 +501,7 @@ asynchronous response using CommandResponseCallback.
 2. The application receives the PhoneManager object in order to get Subscription.
 3. The application gets the Subscription object for given slot identifier using SubscriptionManager.
 4. SubscriptionManager returns Subscription object to application. Subscription can be used to get subscription details like countryISO, operator details etc.
-5. The Subscription manager registers a listener with CardManager to listen to the card info change notifications like cardstate PRESENT, ABSENT, UNKNOWN, ERROR and RESTRICTED.
+5. The Subscription manager registers a listener with CardManager to listen to the card info change notifications like card state PRESENT, ABSENT, UNKNOWN, ERROR and RESTRICTED.
 6. The SubscriptionManager receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CardManager.
 7. The SubscriptionManager receives callback card info change i.e subscription info changed or removed.
 8. The SubscriptionManager updates the application once the subscription info is updated.
@@ -638,5 +638,112 @@ Subsequently all other listeners will latch on the already started service.
 18. Application requests for request profile and optionally gets asynchronous response using requestProfileByIdCallback.
 19. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfile.
 20. Optionally, the application gets asynchronous response for requestProfile using requestProfileByIdCallback.
+
+@section network_selection_call_flow Network Selection Call Flow
+
+@subsection network_selection_call_flow Network selection manager call flow
+
+Network selection manager provides APIs to get and set network selection mode, get and set preferred networks and perform
+network scan for availbale networks. Registered listener will get notified for the change in network selection mode.
+
+@anchor fig_network_selection_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.38]{network_selection_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Network selection manager call flow}
+  \label{fig_network_selection_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{network_selection_call_flow.png,Network selection manager call flow,80,80,Network selection manager call flow}
+
+1. Application requests phone factory for network selection manager.
+2. Phone factory returns INetworkSelectionManager object using which application will
+register or deregister a listener.
+3. Application can register a listener to get notifications for network selection mode change.
+4. Status of register listener i.e. either SUCCESS or other status will be returned to the application.
+5. Application requests for network selection mode using INetworkSelectionManager object and gets
+asynchronous response using SelectionModeResponseCallback.
+6. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestNetworkSelectionMode API.
+7. The response for get network selection mode request is received by the application.
+8. The application can also set network selection mode and optionally gets asynchronous response using
+ResponseCallback. MCC and MNC are optional for AUTOMATIC network selection mode.
+9. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setNetworkSelectionMode API.
+10. Optionally the response for set network selection mode request is received by the application.
+11. Registered listener will get notified for the network selection mode change.
+12. Similarly, the application requests for preferred networks using INetworkSelectionManager object
+and gets asynchronous response using PreferredNetworksCallback.
+13. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestPreferredNetworks API.
+14. The response for get preferred networks request i.e. 3GPP preferred network list and
+static 3GPP preferred network list is received by the application asynchronously. Higher
+priority networks appear first in the list. The networks that appear in the 3GPP Preferred
+Networks list get higher priority than the networks in the static 3GPP preferred networks list.
+15. The application can set 3GPP preferred network list and optionally gets asynchronous response using ResponseCallback. If clear previous networks flag is false then new 3GPP preferred network list is appended to existing preferred network list. If flag is true then old list is flushed and new 3GPP preferred network list is added.
+16. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setPreferredNetworks API.
+17. Optionally the response for set preferred networks request is received by the application.
+18. The application can perform network scan for available networks using INetworkSelectionManager object
+and gets asynchronous response using NetworkScanCallback.
+19. Application receives the status i.e. either SUCCESS or other status based on the execution
+of performNetworkScan API.
+20. Network name, MCC, MNC and status of the operator will be received by the application.
+21. Application can deregister a listener there by it would not get notifications.
+22. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+
+@section serving_system_call_flow Serving System Call Flow
+
+@subsection serving_system_call_flow Serving System Manager Call Flow
+
+Serving system manager provides APIs to get and set RAT mode preference and get and set service domain preference.
+Registered listener will get notified for the change in RAT mode and service domain preference change.
+
+@anchor fig_serving_system_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.38]{serving_system_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Serving System Manager Call Flow}
+  \label{fig_serving_system_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{serving_system_call_flow.png,Serving System Manager Call Flow,80,80,Serving System Manager Call Flow}
+
+1. Application requests phone factory for serving system manager.
+2. Phone factory returns IServingSystemManager object using which application will
+register or deregister a listener.
+3. Application can register a listener to get notifications for RAT mode and service domain
+preference changes.
+4. Status of register listener i.e. either SUCCESS or other status will be returned to the application.
+5. Application requests for RAT mode preference using IServingSystemManager object and gets
+asynchronous response using RatPreferenceCallback.
+6. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestRatPreference API.
+7. The response for get RAT preference request is received by the application.
+8. The application can also set RAT mode preference and optionally gets asynchronous response using
+ResponseCallback.
+9. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setRatPreference API.
+10. Optionally the response for set RAT preference request is received by the application.
+11. Registered listener will get notified for the RAT mode preference change.
+12. Application requests for service domain preference using IServingSystemManager object and gets
+asynchronous response using ServiceDomainPreferenceCallback.
+13. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestServiceDomainPreference API.
+14. The response for get service domain preference request is received by the application.
+15. The application can also set service domain preference and optionally gets asynchronous response using
+ResponseCallback.
+16. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setServiceDomainPreference API.
+17. Optionally the response for set service domain preference request is received by the application.
+18. Registered listener will get notified for the service domain preference change.
+19. Application can deregister a listener there by it would not get notifications.
+20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
 
 */

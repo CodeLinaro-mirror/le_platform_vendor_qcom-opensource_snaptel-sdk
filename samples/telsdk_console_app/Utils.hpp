@@ -27,45 +27,38 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
-#include <iterator>
-#include <sstream>
-
-#include "ConsoleAppCommand.hpp"
-
 /**
- * Initialize command for console app.
+ * Utility helper class
  */
-ConsoleAppCommand::ConsoleAppCommand(std::string id, std::string name,
-                                     std::vector<std::string> arguments,
-                                     std::function<void(std::vector<std::string> &)> handler)
-   : id_(id)
-   , name_(name)
-   , arguments_(arguments)
-   , handler_(handler) {
-}
 
-std::string ConsoleAppCommand::getId() {
-   return id_;
-}
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
-std::string ConsoleAppCommand::getName() {
-   return name_;
-}
+#include <iostream>
+#include <limits>
 
-std::vector<std::string> ConsoleAppCommand::getArguments() {
-   return arguments_;
-}
-
-void ConsoleAppCommand::displayCommand() {
-   std::cout << "   " << id_ << " - " << name_;
-   for(std::vector<std::string>::const_iterator argument = arguments_.begin();
-       argument != arguments_.end(); ++argument) {
-      std::cout << " <" << *argument << "> ";
+template <typename T>
+class Utils {
+public:
+   // Validate the input and in case of invalid input request
+   // for proper input from user.
+   static void validateInput(T &input) {
+      bool valid = false;
+      do {
+         if(std::cin.good()) {
+            valid = true;
+         } else {
+            // If an error occurs then an error flag is set and future attempts to get
+            // input will fail. Cear the error flag on cin.
+            std::cin.clear();
+            // Extracts characters from the previous input sequence and discards them,
+            // until entire stream have been extracted, or one compares equal to newline.
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "ERROR: Invalid input, please re-enter." << std::endl;
+            std::cin >> input;
+         }
+      } while(!valid);
    }
-   std::cout << std::endl;
-}
+};
 
-void ConsoleAppCommand::executeCommand(std::vector<std::string> userInput) {
-   handler_(userInput);
-}
+#endif

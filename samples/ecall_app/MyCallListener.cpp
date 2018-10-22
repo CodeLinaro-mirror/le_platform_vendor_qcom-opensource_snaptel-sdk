@@ -38,6 +38,7 @@ extern "C" {
 #include "MyCallListener.hpp"
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
+#define BUFSIZE 120
 
 using namespace telux::tel;
 using namespace telux::common;
@@ -281,9 +282,9 @@ std::string MyCallListener::getCurrentTime() {
    gettimeofday(&tod, NULL);
    std::stringstream ss;
    time_t tt = tod.tv_sec;
-   char buffer[100];
-   std::strftime(buffer, 100, "%Y-%m-%d %H:%M:%S", localtime(&tt));
-   char currTime[120];
-   sprintf(currTime, "%s.%ld", buffer, tod.tv_usec / 1000);
+   char buffer[BUFSIZE];
+   std::strftime(buffer, BUFSIZE, "%Y-%m-%d %H:%M:%S", localtime(&tt));
+   char currTime[BUFSIZE];
+   snprintf(currTime, BUFSIZE, "%s.%ld", buffer, tod.tv_usec / 1000);
    return std::string(currTime);
 }

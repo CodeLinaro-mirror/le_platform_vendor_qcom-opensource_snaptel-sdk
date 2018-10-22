@@ -34,7 +34,7 @@
  *             clients should check if the subsystem is ready before
  *             invoking any of the APIs as follows
  *
- *                bool isReady = phoneManager->isSubsystemReady();
+ *             bool isReady = phoneManager->isSubsystemReady();
  *
  */
 
@@ -61,10 +61,10 @@ class IOperatingModeCallback;
 
 /**
  *@brief       Phone Manager creates one or more phones based on SIM slot count,
- *it allows
- *             clients to register for notification of system events. Clients
- *should check if
- *             the subsystem is ready before invoking any of the APIs.
+ *             it allows clients to register for notification of system events.
+ *             Clients should check if the subsystem is ready before invoking
+ *             any of the APIs.
+ *
  */
 class IPhoneManager {
 public:
@@ -128,11 +128,11 @@ public:
     * @param [in] callback   Optional callback pointer to get the response of
     *                        cellular capability.
     *
-    * @returns Status of requestCellularCapabilityInfo i.e. success or suitable error
-    * code.
+    * @returns Status of requestCellularCapabilityInfo i.e. success or suitable
+    * error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    * change and could break backwards compatibility.
     *
     */
    virtual telux::common::Status
@@ -142,13 +142,14 @@ public:
    /**
     * Get current operating mode of the device.
     *
-    * @param [in] callback - Optional callback pointer to get the response of operating mode
-    * request
+    * @param [in] callback   Optional callback pointer to get the response of
+    *                        operating mode request
     *
-    * @returns Status of requestOperatingMode i.e. success or suitable error code.
+    * @returns Status of requestOperatingMode i.e. success or suitable error
+    * code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    * change and could break backwards compatibility.
     */
    virtual telux::common::Status
       requestOperatingMode(std::shared_ptr<IOperatingModeCallback> callback = nullptr)
@@ -158,14 +159,16 @@ public:
     * Set the operating mode of the device. Only valid transitions allowed from
     * one mode to another.
     *
-    * @param [in] operatingMode - Operating Mode to be set
-    * @param [in] callback - Optional callback pointer to get the response of set
-    *                        operating mode request.In callback following error
-    *                         is returned.
-    *                        - @ref INVALID_TRANSITION
-    *                        - @ref INVALID_ARGUMENTS
-    *                        - @ref DEVICE_IN_USE
-    *                        - @ref NO_MEMORY
+    * @param [in] operatingMode Operating Mode to be set
+    * @param [in] callback      Optional callback pointer to get the response
+    *                           of set operatingmode request.
+    *                           In callback following error is returned.
+    *                           - @ref
+    *                             telux::common::ErrorCode::INVALID_TRANSITION
+    *                           - @ref
+    *                             telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                           - @ref telux::common::ErrorCode::DEVICE_IN_USE
+    *                           - @ref telux::common::ErrorCode::NO_MEMORY
     *
     * @returns Status of setOperatingMode i.e. success or suitable error code.
     */
@@ -199,8 +202,8 @@ public:
 
 /**
  * Interface for callback corresponding to cellular capability request.
- * Client needs to implement this interface to get single shot responses for commands like get
- * cellular capability.
+ * Client needs to implement this interface to get single shot responses for
+ * commands like get cellular capability.
  *
  * The methods in callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
@@ -209,24 +212,27 @@ public:
 class ICellularCapabilityCallback : public telux::common::ICommandCallback {
 public:
    /**
-    * This function is called with the response to requestCellularCapabilityInfo API.
+    * This function is called with the response to requestCellularCapabilityInfo
+    * API.
     *
-    * @param [in] capabilityInfo - Cellular capability information.
-    * @param [in] error          - Return code for whether the operation succeeded or failed
-    *                            - @ref SUCCESS
-    *                            - @ref INTERNAL
-    *                            - @ref NO_MEMORY
+    * @param [in] capabilityInfo  Cellular capability information.
+    * @param [in] error           Return code for whether the operation
+    *                             succeeded or failed
+    *                             - @ref telux::common::ErrorCode::SUCCESS
+    *                             - @ref telux::common::ErrorCode::INTERNAL
+    *                             - @ref telux::common::ErrorCode::NO_MEMORY
     *
     */
    virtual void cellularCapabilityResponse(CellularCapabilityInfo capabilityInfo,
                                            telux::common::ErrorCode error) {
    }
+   virtual ~ICellularCapabilityCallback(){};
 };
 
 /**
  * Interface for operating mode callback object.
- * Client needs to implement this interface to get single shot responses for commands like request
- * current operating mode.
+ * Client needs to implement this interface to get single shot responses for
+ * commands like request current operating mode.
  *
  * The methods in callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
@@ -237,14 +243,16 @@ public:
    /**
     * This function is called with the response to requestOperatingMode API.
     *
-    * @param [in] operatingMode - @ref OperatingMode
-    * @param [in] error         - Return code for whether the operation succeeded or failed
-    *                           - @ref SUCCESS
-    *                           - @ref INTERNAL_ERR
-    *                           - @ref NO_MEMORY
+    * @param [in] operatingMode   @ref OperatingMode
+    * @param [in] error           Return code for whether the operation succeeded
+    *                             or failed
+    *                             - @ref telux::common::ErrorCode::SUCCESS
+    *                             - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                             - @ref telux::common::ErrorCode::NO_MEMORY
     */
    virtual void operatingModeResponse(OperatingMode operatingMode, telux::common::ErrorCode error) {
    }
+   virtual ~IOperatingModeCallback(){};
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

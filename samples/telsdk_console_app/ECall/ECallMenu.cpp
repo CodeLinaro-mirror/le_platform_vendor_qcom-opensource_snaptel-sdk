@@ -32,6 +32,7 @@
 #include <telux/tel/PhoneFactory.hpp>
 #include "ECallMenu.hpp"
 #include "MyECallListener.hpp"
+#include "Utils.hpp"
 
 // Config file name. Using current directory as default path.
 #define MSDSETTINGS_FILE "./msdsettings.txt"
@@ -49,7 +50,7 @@ void makeEcallResponse(telux::common::ErrorCode error, std::shared_ptr<telux::te
    PRINT_NOTIFICATION << "Received response for makeECall" << std::endl;
    if(error != telux::common::ErrorCode::SUCCESS) {
       PRINT_NOTIFICATION << "makeECall Request failed with errorCode: " << static_cast<int>(error)
-                         << std::endl;
+                         << ":" << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -58,8 +59,8 @@ void updateEcallResponse(telux::common::ErrorCode error) {
    PRINT_NOTIFICATION << "Received response for updateECallMsd " << std::endl;
    if(error != telux::common::ErrorCode::SUCCESS) {
       PRINT_NOTIFICATION
-         << "updateECallMsd Request failed with errorCode: " << static_cast<int>(error)
-         << std::endl;
+         << "updateECallMsd Request failed with errorCode: " << static_cast<int>(error) << ":"
+         << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -491,7 +492,8 @@ void ECallMenu::CallCommandCallback::makeCallResponse(telux::common::ErrorCode e
    if(errorCode == telux::common::ErrorCode::SUCCESS) {
       infoStr.append("Call is successful ");
    } else {
-      infoStr.append("Call failed with error code: " + std::to_string(static_cast<int>(errorCode)));
+      infoStr.append("Call failed with error code: " + std::to_string(static_cast<int>(errorCode))
+                     + ":" + Utils::getErrorCodeAsString(errorCode));
    }
 
    PRINT_NOTIFICATION << infoStr << std::endl;
@@ -503,7 +505,8 @@ void ECallMenu::UpdateMsdCommandCallback::commandResponse(telux::common::ErrorCo
       infoStr.append(" MSD Update is successful");
    } else {
       infoStr.append("Update MSD failed with error code: "
-                     + std::to_string(static_cast<int>(errorCode)));
+                     + std::to_string(static_cast<int>(errorCode)) + ":"
+                     + Utils::getErrorCodeAsString(errorCode));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }
@@ -514,7 +517,8 @@ void ECallMenu::HangupCommandCallback::commandResponse(telux::common::ErrorCode 
       infoStr.append(" Hangup is successful");
    } else {
       infoStr.append(" Hangup failed with error code: "
-                     + std::to_string(static_cast<int>(errorCode)));
+                     + std::to_string(static_cast<int>(errorCode)) + ":"
+                     + Utils::getErrorCodeAsString(errorCode));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }
@@ -525,7 +529,8 @@ void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode 
       infoStr.append(" Answer Call is successful");
    } else {
       infoStr.append(" Answer call failed with error code: "
-                     + std::to_string(static_cast<int>(errorCode)));
+                     + std::to_string(static_cast<int>(errorCode)) + ":"
+                     + Utils::getErrorCodeAsString(errorCode));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }

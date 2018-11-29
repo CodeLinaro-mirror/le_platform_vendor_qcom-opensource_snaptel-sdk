@@ -148,8 +148,6 @@ enum class CallEndCause {
 
 /** @} */ /* end_addtogroup telematics_call */
 
-
-
 /** @addtogroup telematics_phone
  * @{ */
 
@@ -205,15 +203,20 @@ enum class RadioTechnology {
  * Defines all available RAT capabilities for each subscription
  */
 enum class RATCapability {
-  AMPS,
-  CDMA,
-  HDR,
-  GSM,
-  WCDMA,
-  LTE,
-  TDS,
+   AMPS,
+   CDMA,
+   HDR,
+   GSM,
+   WCDMA,
+   LTE,
+   TDS,
 };
+/** @} */ /* end_addtogroup telematics_phone */
+
 using RATCapabilitiesMask = std::bitset<16>;
+
+/** @addtogroup telematics_phone
+ * @{ */
 
 /**
  * Defines all voice support available on device
@@ -223,7 +226,12 @@ enum class VoiceServiceTechnology {
    VOICE_TECH_1x_CSFB,
    VOICE_TECH_VOLTE,
 };
+/** @} */ /* end_addtogroup telematics_phone */
+
 using VoiceServiceTechnologiesMask = std::bitset<16>;
+
+/** @addtogroup telematics_phone
+ * @{ */
 
 /**
  * Structure contains slotID and RAT capabilities corresponding to slot.
@@ -239,13 +247,13 @@ struct SimRatCapability {
 struct CellularCapabilityInfo {
    VoiceServiceTechnologiesMask voiceServiceTechs;   /**<Indicates voice support
                                                      capabilities */
-   int simCount;        /**<The maximum number of SIMs that can be
-                         supported simultaneously */
-   int maxActiveSims;   /**< The maximum number of SIMs that can be
-                        simultaneously active. If this number is less than
-                        numberofSims, it implies that any combination
-                        of the SIMs can be active and the
-                        remaining can be in standby. */
+   int simCount;                                     /**<The maximum number of SIMs that can be
+                                                      supported simultaneously */
+   int maxActiveSims;                                /**< The maximum number of SIMs that can be
+                                                     simultaneously active. If this number is less than
+                                                     numberofSims, it implies that any combination
+                                                     of the SIMs can be active and the
+                                                     remaining can be in standby. */
    std::vector<SimRatCapability> simRatCapabilities; /**<An array of struct which contains
                         mask of RAT capabilities and slotId corresponding to each SIM */
 };

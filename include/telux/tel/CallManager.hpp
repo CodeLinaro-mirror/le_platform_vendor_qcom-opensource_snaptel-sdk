@@ -55,9 +55,6 @@ namespace telux {
 
 namespace tel {
 
-/** @addtogroup telematics_call
- * @{ */
-
 class IMakeCallCallback;
 
 /**
@@ -76,6 +73,9 @@ class IMakeCallCallback;
  */
 using MakeCallCallback
    = std::function<void(telux::common::ErrorCode error, std::shared_ptr<ICall> call)>;
+
+/** @addtogroup telematics_call
+ * @{ */
 
 /**
  * @brief Call Manager is the primary interface for call related operations

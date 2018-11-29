@@ -160,7 +160,6 @@ private:
 };
 
 /** @} */ /* end_addtogroup telematics_data */
-
 }
 }
 

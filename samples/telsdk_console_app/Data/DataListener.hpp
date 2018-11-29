@@ -30,20 +30,30 @@
 #ifndef DATALISTENER_HPP
 #define DATALISTENER_HPP
 
+#include <mutex>
+#include <map>
+
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataConnectionManager.hpp>
 
 class DataListener : public telux::data::IDataConnectionListener {
 public:
    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
+   std::shared_ptr<telux::data::IDataCall> getDataCall(int profileId);
 
 private:
+   std::mutex mtx_;
+   // Associate profileId, ipfamily type with data call impl
+   std::map<int, std::shared_ptr<telux::data::IDataCall>> dataCallMap_;
+
+   void updateDataCallMap(const std::shared_ptr<telux::data::IDataCall> &dataCall);
    void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall);
    std::string callEndReasonTypeToString(telux::data::EndReasonType type);
    int callEndReasonCode(telux::data::DataCallEndReason ceReason);
    std::string techPreferenceToString(telux::data::TechPreference techPref);
    std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
    std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
+   std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
 };
 
 #endif  // DATALISTENER_HPP

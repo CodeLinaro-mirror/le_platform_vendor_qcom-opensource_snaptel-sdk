@@ -95,6 +95,8 @@ struct CardReaderStatus {
    bool isCardPoweredOn; /**< Card in reader is powered*/
 };
 
+/** @} */ /* end_addtogroup telematics_card */
+
 /**
  * This function is called with the response to requestSapState API.
  *
@@ -111,6 +113,9 @@ struct CardReaderStatus {
 
 using SapStateResponseCallback
    = std::function<void(SapState sapState, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_card
+ * @{ */
 
 /**
  * @brief ISapCardManager provide APIs for SAP related operations.
@@ -135,8 +140,7 @@ public:
     *
     * @returns Status of requestSapState i.e. success or suitable status code.
     */
-   virtual telux::common::Status requestSapState(
-      SapStateResponseCallback callback) = 0;
+   virtual telux::common::Status requestSapState(SapStateResponseCallback callback) = 0;
 
    /**
     * Establishes SIM access profile (SAP) client connection with SIM Card.
@@ -227,8 +231,8 @@ public:
     * @returns Status of requestSimPowerOn i.e. success or suitable status code.
     */
    virtual telux::common::Status
-      requestSimPowerOn(std::shared_ptr<telux::common::ICommandResponseCallback> callback
-      = nullptr) = 0;
+      requestSimPowerOn(std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
 
    /**
     * Send the SAP SIM reset request.

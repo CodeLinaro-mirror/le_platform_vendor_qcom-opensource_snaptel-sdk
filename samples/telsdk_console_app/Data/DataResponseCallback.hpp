@@ -73,5 +73,6 @@ class DataCallStatisticsResponseCb {
 public:
    static void requestStatisticsResponse(const telux::data::DataCallStats dCallStats,
                                          telux::common::ErrorCode error);
+   static void resetStatisticsResponse(telux::common::ErrorCode error);
 };
 #endif

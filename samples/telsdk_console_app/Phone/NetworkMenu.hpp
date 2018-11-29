@@ -62,6 +62,8 @@ private:
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::tel::INetworkSelectionListener> networkListener_;
    std::shared_ptr<telux::tel::INetworkSelectionManager> networkManager_ = nullptr;
+   int convertToRatType(int input);
+   telux::tel::PreferredNetworkInfo getNetworkInfoFromUser();
 };
 
 #endif  // NETWORKMENU_HPP

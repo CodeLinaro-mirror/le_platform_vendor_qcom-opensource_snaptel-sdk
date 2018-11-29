@@ -29,6 +29,7 @@
 
 /**
  * Utility helper class
+ * @brief Utils class performs common error code conversions
  */
 
 #ifndef UTILS_HPP
@@ -36,12 +37,16 @@
 
 #include <iostream>
 #include <limits>
+#include <map>
+#include <memory>
+#include <string>
+#include <telux/common/CommonDefines.hpp>
 
-template <typename T>
 class Utils {
 public:
    // Validate the input and in case of invalid input request
    // for proper input from user.
+   template <typename T>
    static void validateInput(T &input) {
       bool valid = false;
       do {
@@ -59,6 +64,14 @@ public:
          }
       } while(!valid);
    }
+
+   // Validate input string(Ex: 1, 2, 3) which should contain
+   // atleast one number or numbers seperated by either comma, space or both.
+   static void validateNumericString(std::string &input);
+   /**
+    * Get error description for given ErrorCode
+    */
+   static std::string getErrorCodeAsString(telux::common::ErrorCode error);
 };
 
 #endif

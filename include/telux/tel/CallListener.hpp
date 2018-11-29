@@ -104,8 +104,8 @@ public:
     * @param [in] msdTransmissionStatus - Indicates MSD Transmission status
     * @Ref ECallMsdTransmissionStatus
     */
-   virtual void onECallMsdTransmissionStatus(int phoneId,
-      telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
+   virtual void onECallMsdTransmissionStatus(
+      int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
    }
 
    virtual ~ICallListener() {

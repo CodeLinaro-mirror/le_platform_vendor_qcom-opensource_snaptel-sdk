@@ -40,6 +40,9 @@
 
 #include "MyNetworkSelectionHandler.hpp"
 #include "NetworkMenu.hpp"
+#include "Utils.hpp"
+
+#define UNKNOWN 0
 
 NetworkMenu::NetworkMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -57,7 +60,7 @@ NetworkMenu::NetworkMenu(std::string appName, std::string cursor)
 
    //  If network subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
-      std::cout << "\n\n Network subsystem is not ready, Please wait!!!..." << std::endl;
+      std::cout << "\n\n Network subsystem is not ready, Please wait." << std::endl;
       std::future<bool> f = networkManager_->onSubsystemReady();
       // If we want to wait unconditionally for network subsystem to be ready
       subSystemStatus = f.get();
@@ -67,7 +70,7 @@ NetworkMenu::NetworkMenu(std::string appName, std::string cursor)
    if(subSystemStatus) {
       endTime = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+      std::cout << "Elapsed Time for Subsystems to ready: " << elapsedTime.count() << "s\n"
                 << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize network subsystem" << std::endl;
@@ -132,19 +135,18 @@ void NetworkMenu::setNetworkSelectionMode(std::vector<std::string> userInput) {
       bool selectionMode;
       std::string mcc;
       std::string mnc;
-      telux::common::Status retStatus;
+      telux::common::Status retStatus = telux::common::Status::FAILED;
       std::cout << "Enter Network Selection Mode(0-AUTOMATIC,1-MANUAL): ";
-      while(!(std::cin >> selectionMode)) {
-         std::cin.clear();
-         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-         std::cout << "Invalid input. Enter only boolean: ";
-      }
+      std::cin >> selectionMode;
+      Utils::validateInput(selectionMode);
       if(selectionMode == 1) {
          telux::tel::NetworkSelectionMode selectMode = telux::tel::NetworkSelectionMode::MANUAL;
          std::cout << "Enter MCC: ";
          std::cin >> mcc;
+         Utils::validateInput(mcc);
          std::cout << "Enter MNC: ";
          std::cin >> mnc;
+         Utils::validateInput(mnc);
          retStatus = networkManager_->setNetworkSelectionMode(
             selectMode, mcc, mnc, &MyNetworkResponsecallback::setNetworkSelectionModeResponseCb);
 
@@ -156,7 +158,7 @@ void NetworkMenu::setNetworkSelectionMode(std::vector<std::string> userInput) {
             selectMode, mcc, mnc, &MyNetworkResponsecallback::setNetworkSelectionModeResponseCb);
 
       } else {
-         std::cout << "Network selection mode shouldn't be empty. Enter only 0 or 1";
+         std::cout << "Invalid network selection mode input, Valid values are 0 or 1";
       }
       if(retStatus == telux::common::Status::SUCCESS) {
          std::cout << "\nSet network selection mode request sent successfully\n";
@@ -176,102 +178,83 @@ void NetworkMenu::getPreferredNetworks(std::vector<std::string> userInput) {
    }
 }
 
+int NetworkMenu::convertToRatType(int input) {
+   switch(input) {
+      case 1:
+         return telux::tel::RatType::GSM;
+      case 2:
+         return telux::tel::RatType::LTE;
+      case 3:
+         return telux::tel::RatType::UMTS;
+      default:
+         return UNKNOWN;
+   }
+}
+
+telux::tel::PreferredNetworkInfo NetworkMenu::getNetworkInfoFromUser() {
+   telux::tel::PreferredNetworkInfo networkInfo = {};
+   telux::tel::RatMask rat;
+   uint16_t mcc;
+   uint16_t mnc;
+   std::string preference;
+   std::vector<int> options;
+   std::cout << "Enter MCC: ";
+   std::cin >> mcc;
+   Utils::validateInput(mcc);
+   networkInfo.mcc = mcc;
+   std::cout << "Enter MNC: ";
+   std::cin >> mnc;
+   Utils::validateInput(mnc);
+   networkInfo.mnc = mnc;
+   std::cout << "Select RAT types (1-GSM, 2-LTE, 3-UMTS) \n";
+   std::cout << "Enter RAT types\n(For example: enter 1,2 to set GSM & "
+                "LTE RAT type): ";
+   std::cin >> preference;
+   Utils::validateNumericString(preference);
+   std::stringstream ss(preference);
+   int pref;
+   while(ss >> pref) {
+      options.push_back(pref);
+      if(ss.peek() == ',' || ss.peek() == ' ')
+         ss.ignore();
+   }
+   for(auto &opt : options) {
+      if((opt == 1) || (opt == 2) || (opt == 3)) {
+         rat.set(convertToRatType(opt));
+      } else {
+         std::cout << "Preference should not be out of range" << std::endl;
+      }
+   }
+   options.clear();
+   networkInfo.ratMask = rat;
+   return networkInfo;
+}
+
 void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
    if(networkManager_) {
       std::vector<telux::tel::PreferredNetworkInfo> preferredNetworksInfo;
       int numOfNetworks;
-      uint16_t mcc;
-      uint16_t mnc;
-      std::bitset<16> prefNetworks;
-      int pref;
       bool clearPrevPreferredNetworks;
-      bool flag = 0;
-      bool prefFlag;
+      std::cout << "Enter number of preferred networks: ";
+      std::cin >> numOfNetworks;
+      Utils::validateInput(numOfNetworks);
 
-      std::cout << "Enter number of preferred networks you want to set: ";
-      while(!(std::cin >> numOfNetworks)) {
-         std::cin.clear();
-         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-         std::cout << "Invalid input. Enter only integer: ";
-      }
       for(int index = 0; index < numOfNetworks; index++) {
-         telux::tel::PreferredNetworkInfo networkInfo;
-         std::cout << "Enter MCC: ";
-         while(!(std::cin >> mcc)) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "Invalid input. Enter only integer: ";
-         }
-         networkInfo.mcc = mcc;
-         std::cout << "Enter MNC: ";
-         while(!(std::cin >> mnc)) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "Invalid input. Enter only integer: ";
-         }
-         networkInfo.mnc = mnc;
-         std::cout << "Select RAT type (15-UMTS, 14-LTE, 7-GSM): ";
-         std::vector<int> preferredNetworks = {7, 14, 15};
-         while(!(std::cin >> pref)) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "Invalid input. Enter only integer: ";
-         }
-         while(!flag) {
-            std::vector<int>::iterator it;
-            it = std::find(preferredNetworks.begin(), preferredNetworks.end(), pref);
-            if(it != preferredNetworks.end()) {
-               if(!(prefNetworks.test(pref))) {
-                  prefNetworks.set(pref);
-                  flag = 1;
-               } else {
-                  std::cout << " RAT type already set" << std::endl;
-                  flag = 1;
-               }
-               std::cout << "Do you want to set another RAT type? 1-Yes, 0-No" << std::endl;
-               while(!(std::cin >> prefFlag)) {
-                  std::cin.clear();
-                  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                  std::cout << "Invalid input. Enter only integer: ";
-               }
-               if(prefFlag) {
-                  std::cout << "Enter RAT type (15-UMTS, 14-LTE, 7-GSM): " << std::endl;
-                  while(!(std::cin >> pref)) {
-                     std::cin.clear();
-                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                     std::cout << "Invalid input. Enter only integer: ";
-                  }
-                  flag = 0;
-               } else {
-                  flag = 1;
-               }
-            } else {
-               std::cout << "Enter valid  RAT type: ";
-               while(!(std::cin >> pref)) {
-                  std::cin.clear();
-                  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                  std::cout << "Invalid input. Enter only integer: ";
-               }
-               flag = 0;
-            }
-         }
-         flag = 0;
-         networkInfo.ratMask = prefNetworks;
-         preferredNetworksInfo.emplace_back(networkInfo);
+         auto nwInfo = getNetworkInfoFromUser();
+         preferredNetworksInfo.emplace_back(nwInfo);
       }
-      std::cout << "Clear previous preferred network(1-yes, 0-no): ";
-      while(!(std::cin >> clearPrevPreferredNetworks)) {
-         std::cin.clear();
-         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-         std::cout << "Invalid input. Enter only boolean: ";
-      }
+
+      std::cout << "Clear previous preferred network(1 - Yes, 0 - No)?: ";
+      std::cin >> clearPrevPreferredNetworks;
+      Utils::validateInput(clearPrevPreferredNetworks);
       auto ret = networkManager_->setPreferredNetworks(
          preferredNetworksInfo, clearPrevPreferredNetworks,
          MyNetworkResponsecallback::setPreferredNetworksResponseCb);
+
       if(ret == telux::common::Status::SUCCESS) {
-         std::cout << "\nGet preferred networks request sent successfully\n";
+         std::cout << "\nSet preferred networks request sent successfully\n";
       } else {
-         std::cout << "\nGet preferred networks request failed \n";
+         std::cout << "\nSet preferred networks request failed \n";
       }
    }
 }

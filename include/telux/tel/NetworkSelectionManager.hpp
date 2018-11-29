@@ -63,10 +63,12 @@ class OperatorInfo;
  * corresponding bit for RatMask bitset.
  */
 enum RatType {
-  UMTS = 15, /**< UMTS */
-  LTE = 14,  /**< LTE */
-  GSM = 7,   /**< GSM */
+   UMTS = 15, /**< UMTS */
+   LTE = 14,  /**< LTE */
+   GSM = 7,   /**< GSM */
 };
+
+/** @} */ /* end_addtogroup telematics_network_selection */
 
 /**
  * 16 bit mask that denotes which of the radio access technologies defined in
@@ -74,74 +76,77 @@ enum RatType {
  */
 using RatMask = std::bitset<16>;
 
+/** @addtogroup telematics_network_selection
+* @{ */
+
 /**
  * Defines the preferred network information
  */
 struct PreferredNetworkInfo {
-  uint16_t mcc; /**< mobile country code */
-  uint16_t mnc; /**< mobile network code */
-  RatMask ratMask;   /**< bit mask denotes which of the radio access technologies are
-                          set */
+   uint16_t mcc;    /**< mobile country code */
+   uint16_t mnc;    /**< mobile network code */
+   RatMask ratMask; /**< bit mask denotes which of the radio access technologies are
+                         set */
 };
 
 /**
  * Defines network selection mode
  */
 enum class NetworkSelectionMode {
-  UNKNOWN = -1,  /**< Unknown */
-  AUTOMATIC = 0, /**< Device registers according to provisioned mcc and mnc */
-  MANUAL = 1     /**< Device registers to specified network as per provided mcc and mnc */
+   UNKNOWN = -1,  /**< Unknown */
+   AUTOMATIC = 0, /**< Device registers according to provisioned mcc and mnc */
+   MANUAL = 1     /**< Device registers to specified network as per provided mcc and mnc */
 };
 
 /**
  * Defines in-use status of network operator
  */
 enum class InUseStatus {
-  UNKNOWN,         /**< Unknown */
-  CURRENT_SERVING, /**< Current serving */
-  AVAILABLE        /**< Available */
+   UNKNOWN,         /**< Unknown */
+   CURRENT_SERVING, /**< Current serving */
+   AVAILABLE        /**< Available */
 };
 
 /**
  * Defines roaming status of network operator
  */
 enum class RoamingStatus {
-  UNKNOWN, /**< Unknown */
-  HOME,    /**< Home */
-  ROAM     /**< Roaming */
+   UNKNOWN, /**< Unknown */
+   HOME,    /**< Home */
+   ROAM     /**< Roaming */
 };
 
 /**
  * Defines forbidden status of network operator
  */
 enum class ForbiddenStatus {
-  UNKNOWN,      /**< Unknown */
-  FORBIDDEN,    /**< Forbidden */
-  NOT_FORBIDDEN /**< Not forbidden */
+   UNKNOWN,      /**< Unknown */
+   FORBIDDEN,    /**< Forbidden */
+   NOT_FORBIDDEN /**< Not forbidden */
 };
 
 /**
  * Defines preferred status of network operator
  */
 enum class PreferredStatus {
-  UNKNOWN,      /**< Unknown */
-  PREFERRED,    /**< Preferred */
-  NOT_PREFERRED /**< Not preferred */
+   UNKNOWN,      /**< Unknown */
+   PREFERRED,    /**< Preferred */
+   NOT_PREFERRED /**< Not preferred */
 };
 
 /**
  * Defines status of network operator
  */
 struct OperatorStatus {
-  InUseStatus inUse =
-      InUseStatus::UNKNOWN;     /**< In-use status of network operator */
-  RoamingStatus roaming =
-      RoamingStatus::UNKNOWN;   /**< Roaming status of network operator */
-  ForbiddenStatus forbidden =
-      ForbiddenStatus::UNKNOWN; /**< Forbidden status of network operator */
-  PreferredStatus preferred =
-      PreferredStatus::UNKNOWN; /**< Preferred status of network operator */
+   InUseStatus inUse = InUseStatus::UNKNOWN;       /**< In-use status of network operator */
+   RoamingStatus roaming = RoamingStatus::UNKNOWN; /**< Roaming status of network operator */
+   ForbiddenStatus forbidden
+      = ForbiddenStatus::UNKNOWN; /**< Forbidden status of network operator */
+   PreferredStatus preferred
+      = PreferredStatus::UNKNOWN; /**< Preferred status of network operator */
 };
+
+/** @} */ /* end_addtogroup telematics_network_selection */
 
 /**
  * This function is called with the response to requestNetworkSelectionMode API.
@@ -157,8 +162,8 @@ struct OperatorStatus {
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using SelectionModeResponseCallback = std::function<void(
-    NetworkSelectionMode mode, telux::common::ErrorCode error)>;
+using SelectionModeResponseCallback
+   = std::function<void(NetworkSelectionMode mode, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to requestPreferredNetworks API.
@@ -175,10 +180,9 @@ using SelectionModeResponseCallback = std::function<void(
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using PreferredNetworksCallback =
-    std::function<void(std::vector<PreferredNetworkInfo> info,
-                       std::vector<PreferredNetworkInfo> staticInfo,
-                       telux::common::ErrorCode error)>;
+using PreferredNetworksCallback = std::function<void(std::vector<PreferredNetworkInfo> info,
+                                                     std::vector<PreferredNetworkInfo> staticInfo,
+                                                     telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to performNetworkScan API.
@@ -195,8 +199,11 @@ using PreferredNetworksCallback =
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using NetworkScanCallback = std::function<void(
-    std::vector<OperatorInfo> operatorInfos, telux::common::ErrorCode error)>;
+using NetworkScanCallback
+   = std::function<void(std::vector<OperatorInfo> operatorInfos, telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_network_selection
+* @{ */
 
 /**
  * @brief   Network Selection Manager class provides the interface to get and set
@@ -204,149 +211,149 @@ using NetworkScanCallback = std::function<void(
  */
 class INetworkSelectionManager {
 public:
-  /**
-   * Checks the status of network subsystem and returns the result.
-   *
-   * @returns True if network subsystem is ready for service otherwise false.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual bool isSubsystemReady() = 0;
+   /**
+    * Checks the status of network subsystem and returns the result.
+    *
+    * @returns True if network subsystem is ready for service otherwise false.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual bool isSubsystemReady() = 0;
 
-  /**
-   * Wait for network subsystem to be ready.
-   *
-   * @returns  A future that caller can wait on to be notified when network
-   *           subsystem is ready.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual std::future<bool> onSubsystemReady() = 0;
+   /**
+    * Wait for network subsystem to be ready.
+    *
+    * @returns  A future that caller can wait on to be notified when network
+    *           subsystem is ready.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual std::future<bool> onSubsystemReady() = 0;
 
-  /**
-   * Get current network selection mode (i.e Manual or Automatic) asynchronously.
-   *
-   * @param [in] callback    Callback function to get the response of get
-   *                         network selection mode request.
-   *
-   * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual telux::common::Status
-     requestNetworkSelectionMode(SelectionModeResponseCallback callback) = 0;
+   /**
+    * Get current network selection mode (i.e Manual or Automatic) asynchronously.
+    *
+    * @param [in] callback    Callback function to get the response of get
+    *                         network selection mode request.
+    *
+    * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestNetworkSelectionMode(SelectionModeResponseCallback callback)
+      = 0;
 
-  /**
-   * Set current network selection mode and receive the response asynchronously.
-   *
-   * @param [in] selectMode    Selection mode for a network i.e. automatic or manual.
-   *                           If selection mode is automatic then MCC and MNC are ignored.
-   *                           If it is manual, client has to explicitly pass MCC and MNC
-   *                           as arguments.
-   * @param [in] callback      Optional callback function to get the response of
-   *                           set network selection mode request.
-   * @param [in] mcc           Mobile Country Code (Applicable only for MANUAL selection mode).
-   * @param [in] mnc           Mobile Network Code (Applicable only for MANUAL selection mode).
-   *
-   * @returns  Status of setNetworkSelectionMode i.e. success or suitable error code.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual telux::common::Status
-     setNetworkSelectionMode(NetworkSelectionMode selectMode, std::string mcc,
-                          std::string mnc,
-                          common::ResponseCallback callback = nullptr) = 0;
+   /**
+    * Set current network selection mode and receive the response asynchronously.
+    *
+    * @param [in] selectMode    Selection mode for a network i.e. automatic or manual.
+    *                           If selection mode is automatic then MCC and MNC are ignored.
+    *                           If it is manual, client has to explicitly pass MCC and MNC
+    *                           as arguments.
+    * @param [in] callback      Optional callback function to get the response of
+    *                           set network selection mode request.
+    * @param [in] mcc           Mobile Country Code (Applicable only for MANUAL selection mode).
+    * @param [in] mnc           Mobile Network Code (Applicable only for MANUAL selection mode).
+    *
+    * @returns  Status of setNetworkSelectionMode i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status setNetworkSelectionMode(NetworkSelectionMode selectMode,
+                                                         std::string mcc, std::string mnc,
+                                                         common::ResponseCallback callback
+                                                         = nullptr)
+      = 0;
 
-  /**
-   * Get 3GPP preferred network list and static 3GPP preferred network list
-   * asynchronously. Higher priority networks appear first in the list. The networks
-   * that appear in the 3GPP Preferred Networks list get higher priority than the
-   * networks in the static 3GPP preferred networks list.
-   *
-   * @param [in] callback    Callback function to get the response of get preferred
-   *                         networks request.
-   *
-   * @returns Status of requestPreferredNetworks i.e. success or suitable error code.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual telux::common::Status
-     requestPreferredNetworks(PreferredNetworksCallback callback) = 0;
+   /**
+    * Get 3GPP preferred network list and static 3GPP preferred network list
+    * asynchronously. Higher priority networks appear first in the list. The networks
+    * that appear in the 3GPP Preferred Networks list get higher priority than the
+    * networks in the static 3GPP preferred networks list.
+    *
+    * @param [in] callback    Callback function to get the response of get preferred
+    *                         networks request.
+    *
+    * @returns Status of requestPreferredNetworks i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestPreferredNetworks(PreferredNetworksCallback callback) = 0;
 
-  /**
-   * Set 3GPP preferred network list and receive the response asynchronously. It
-   * overrides the existing preferred network list. The preferred network list
-   * affects network selection selection when automatic registration is performed
-   * by the device. Higher priority networks should appear first in the list.
-   *
-   * @param [in] preferredNetworksInfo   List of 3GPP preferred networks.
-   * @param [in] clearPrevious           If flag is false then new 3GPP preferred
-   *                                     network list is appended to existing
-   *                                     preferred network list. If flag
-   *                                     is true then old list is flushed and
-   *                                     new 3GPP preferred network list is added.
-   * @param [in] callback                Callback function to get the response
-   *                                     of set preferred network list request.
-   *
-   * @returns Status of setPreferredNetworks i.e. success or suitable error code.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
+   /**
+    * Set 3GPP preferred network list and receive the response asynchronously. It
+    * overrides the existing preferred network list. The preferred network list
+    * affects network selection selection when automatic registration is performed
+    * by the device. Higher priority networks should appear first in the list.
+    *
+    * @param [in] preferredNetworksInfo   List of 3GPP preferred networks.
+    * @param [in] clearPrevious           If flag is false then new 3GPP preferred
+    *                                     network list is appended to existing
+    *                                     preferred network list. If flag
+    *                                     is true then old list is flushed and
+    *                                     new 3GPP preferred network list is added.
+    * @param [in] callback                Callback function to get the response
+    *                                     of set preferred network list request.
+    *
+    * @returns Status of setPreferredNetworks i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
 
-  virtual telux::common::Status
-     setPreferredNetworks(std::vector<PreferredNetworkInfo> preferredNetworksInfo,
-                       bool clearPrevious,
-                       common::ResponseCallback callback = nullptr) = 0;
+   virtual telux::common::Status
+      setPreferredNetworks(std::vector<PreferredNetworkInfo> preferredNetworksInfo,
+                           bool clearPrevious, common::ResponseCallback callback = nullptr)
+      = 0;
 
-  /**
-   * Perform the network scan and returns a list of available networks.
-   *
-   * @param [in] callback    Callback function to get the response of perform
-   *                         network scan request
-   *
-   * @returns Status of performNetworkScan i.e. success or suitable error code.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual telux::common::Status
-     performNetworkScan(NetworkScanCallback callback) = 0;
+   /**
+    * Perform the network scan and returns a list of available networks.
+    *
+    * @param [in] callback    Callback function to get the response of perform
+    *                         network scan request
+    *
+    * @returns Status of performNetworkScan i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status performNetworkScan(NetworkScanCallback callback) = 0;
 
-  /**
-   * Register a listener for specific updates from network access service.
-   *
-   * @param [in] listener    Pointer of INetworkSelectionListener object that
-   *                         processes the notification
-   *
-   * @returns Status of registerListener i.e success or suitable status code.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual telux::common::Status
-     registerListener(std::weak_ptr<INetworkSelectionListener> listener) = 0;
+   /**
+    * Register a listener for specific updates from network access service.
+    *
+    * @param [in] listener    Pointer of INetworkSelectionListener object that
+    *                         processes the notification
+    *
+    * @returns Status of registerListener i.e success or suitable status code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status registerListener(std::weak_ptr<INetworkSelectionListener> listener)
+      = 0;
 
-  /**
-   * Deregister the previously added listener.
-   *
-   * @param [in] listener    Previously registered INetworkSelectionListener
-   *                         that needs to be removed
-   *
-   * @returns Status of removeListener success or suitable status code
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual telux::common::Status
-     deregisterListener(std::weak_ptr<INetworkSelectionListener> listener) = 0;
+   /**
+    * Deregister the previously added listener.
+    *
+    * @param [in] listener    Previously registered INetworkSelectionListener
+    *                         that needs to be removed
+    *
+    * @returns Status of removeListener success or suitable status code
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status
+      deregisterListener(std::weak_ptr<INetworkSelectionListener> listener)
+      = 0;
 
-  virtual ~INetworkSelectionManager(){};
+   virtual ~INetworkSelectionManager(){};
 };
 
 /**
@@ -354,54 +361,54 @@ public:
  */
 class OperatorInfo {
 public:
-  OperatorInfo(std::string networkName, std::string mcc, std::string mnc,
-               OperatorStatus operatorStatus);
+   OperatorInfo(std::string networkName, std::string mcc, std::string mnc,
+                OperatorStatus operatorStatus);
 
-  /**
-   * Get Operator name or description
-   *
-   * @returns Operator name.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  std::string getName();
+   /**
+    * Get Operator name or description
+    *
+    * @returns Operator name.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   std::string getName();
 
-  /**
-   * Get mcc from the operator numeric.
-   *
-   * @returns MCC.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  std::string getMcc();
+   /**
+    * Get mcc from the operator numeric.
+    *
+    * @returns MCC.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   std::string getMcc();
 
-  /**
-   * Get mnc from operator numeric.
-   *
-   * @returns MNC.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  std::string getMnc();
+   /**
+    * Get mnc from operator numeric.
+    *
+    * @returns MNC.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   std::string getMnc();
 
-  /**
-   * Get status of operator.
-   *
-   * @returns status of the operator @ref OperatorStatus.
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  OperatorStatus getStatus();
+   /**
+    * Get status of operator.
+    *
+    * @returns status of the operator @ref OperatorStatus.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   OperatorStatus getStatus();
 
 private:
-  std::string networkName_;
-  std::string mcc_;
-  std::string mnc_;
-  OperatorStatus operatorStatus_;
+   std::string networkName_;
+   std::string mcc_;
+   std::string mnc_;
+   OperatorStatus operatorStatus_;
 };
 
 /**
@@ -412,25 +419,27 @@ private:
  */
 class INetworkSelectionListener {
 public:
-  /**
-   * This function is called whenever network selection mode is changed.
-   *
-   * @param [in] mode    Network selection mode @ref NetworkSelectionMode
-   *
-   * @note   Eval: This is a new API and is being evaluated. It is subject to
-   *         change and could break backwards compatibility.
-   */
-  virtual void onSelectionModeChanged(NetworkSelectionMode mode) {}
+   /**
+    * This function is called whenever network selection mode is changed.
+    *
+    * @param [in] mode    Network selection mode @ref NetworkSelectionMode
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual void onSelectionModeChanged(NetworkSelectionMode mode) {
+   }
 
-  /**
-   * Destructor of INetworkSelectionListener
-   */
-  virtual ~INetworkSelectionListener() {}
+   /**
+    * Destructor of INetworkSelectionListener
+    */
+   virtual ~INetworkSelectionListener() {
+   }
 };
 
 /** @} */ /* end_addtogroup telematics_network_selection */
 
-} // end of namespace tel
-} // end of namespace telux
+}  // end of namespace tel
+}  // end of namespace telux
 
 #endif

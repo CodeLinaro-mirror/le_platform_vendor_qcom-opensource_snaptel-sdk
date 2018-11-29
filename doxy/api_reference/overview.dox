@@ -141,11 +141,11 @@ Following parameters are configurable through the APIs.
 @subsection data_services Data Services
 Data Services APIs in the Telematics SDK used for cellular connectivity and modem profile management.
 
-Data Connection Manager APIs provide functionality such as 
+Data Connection Manager APIs provide functionality such as
    - start / stop data call
    - listen for data call state changes
 
-Data Profile Manager APIs provide functionality such as 
+Data Profile Manager APIs provide functionality such as
    - List available profiles in the modem
    - Create / modify / delete / modify modem profiles
    - Query for the selected profile
@@ -153,12 +153,33 @@ Data Profile Manager APIs provide functionality such as
 @subsection nw_srv_sys_services Network Selection and Serving System Management
 Network Selection and Service System Management APIs in the Telematics SDK used for configuring the networks and preferences
 
-Network Selection Manager APIs provide functionality such as 
+Network Selection Manager APIs provide functionality such as
    - request or set network selection mode (Manual or Automatic)
    - scan for available networks
    - request or set preferred networks list
 
-Serving System Manager APIs provide functionality such as 
+Serving System Manager APIs provide functionality such as
    - request and set service domain preference and radio access technology mode preference for searching and registering (CS/PS domain, RAT and operation mode)
+
+@subsection cv2x C-V2X
+
+The C-V2X sub-system contains APIs that support Cellular-V2X operation.
+
+Cellular-V2X APIs in the Telematics SDK include Cv2xRadioManager and Cv2xRadio interfaces.
+
+Cv2xRadioManager provides an interface to a C-V2X capable modem. The API includes methods for
+   - Enabling C-V2X mode
+   - Disabling C-V2X mode
+   - Querying the status of C-V2X
+   - Updating the C-V2X configuration via a config XML file
+
+Cv2xRadio abstracts a C-V2X radio channel. The API includes methods for
+   - Obtaining the current capabilities of the radio
+   - Listen for radio state changes
+   - Creating and Closing an RX subscription
+   - Creating and Closing a TX event-driven flow
+   - Creating and Closing  a TX semi-persistent-scheduling (SPS) flow
+   - Updating TX SPS flow parameters
+   - Update Source L2 Info
 
 */

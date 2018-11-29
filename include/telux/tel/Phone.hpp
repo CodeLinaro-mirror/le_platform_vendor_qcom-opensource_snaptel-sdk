@@ -51,9 +51,6 @@
 namespace telux {
 namespace tel {
 
-/** @addtogroup telematics_phone
- * @{ */
-
 class ISignalStrengthCallback;
 class IVoiceServiceStateCallback;
 
@@ -85,6 +82,9 @@ using VoiceRadioTechResponseCb
  */
 using CellInfoCallback = std::function<void(std::vector<std::shared_ptr<CellInfo>> cellInfoList,
                                             telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_phone
+ * @{ */
 
 /**
  * @brief This class allows getting system information and registering for

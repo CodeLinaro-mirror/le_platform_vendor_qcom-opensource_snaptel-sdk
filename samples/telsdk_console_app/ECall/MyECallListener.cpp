@@ -34,10 +34,11 @@
 extern "C" {
 #include <sys/time.h>
 }
-
+#include "Utils.hpp"
 #include "MyECallListener.hpp"
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
+#define BUFSIZE 120
 
 void MyECallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
@@ -103,7 +104,7 @@ void MyECallListener::onECallMsdTransmissionStatus(int phoneId,
    } else {
       PRINT_NOTIFICATION
          << "onECallMsdTransmissionStatus failed with error code: " << static_cast<int>(errorCode)
-         << std::endl;
+         << ":" << Utils::getErrorCodeAsString(errorCode) << std::endl;
    }
 }
 
@@ -280,9 +281,9 @@ std::string MyECallListener::getCurrentTime() {
    gettimeofday(&tod, NULL);
    std::stringstream ss;
    time_t tt = tod.tv_sec;
-   char buffer[100];
-   std::strftime(buffer, 100, "%Y-%m-%d %H:%M:%S", localtime(&tt));
-   char currTime[120];
-   sprintf(currTime, "%s.%ld", buffer, tod.tv_usec / 1000);
+   char buffer[BUFSIZE];
+   std::strftime(buffer, BUFSIZE, "%Y-%m-%d %H:%M:%S", localtime(&tt));
+   char currTime[BUFSIZE];
+   snprintf(currTime, BUFSIZE, "%s.%ld", buffer, tod.tv_usec / 1000);
    return std::string(currTime);
 }

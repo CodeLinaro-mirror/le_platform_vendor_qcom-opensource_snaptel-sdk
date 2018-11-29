@@ -15,4 +15,6 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to request data profile list](data/request_profile_list.md)
   * [How to get network selection details](network_selection/network_selection.md)
   * [How to serving system details](serving_system/serving_system.md)
-
+  * [How to get C-V2X radio status](cv2x/cv2x_get_status_app.md)
+  * [How to use C-V2X API for RX](cv2x/cv2x_rx_app.md)
+  * [How to use C-V2X API for TX](cv2x/cv2x_tx_app.md)

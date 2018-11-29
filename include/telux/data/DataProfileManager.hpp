@@ -58,8 +58,6 @@ class IDataCreateProfileCallback;
 class IDataProfileListCallback;
 class IDataProfileCallback;
 
-
-
 /**
  * IDataProfileManager is a primary interface for profile management.
  *
@@ -179,6 +177,11 @@ public:
     *          break backwards compatibility.
     */
    virtual int getSlotId() = 0;
+
+   /**
+    * Destructor for IDataProfileManager
+    */
+   virtual ~IDataProfileManager(){};
 
 };  // end of IDataProfileManager
 

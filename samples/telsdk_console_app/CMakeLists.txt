@@ -69,10 +69,11 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Phone/NetworkMenu.cpp
 
    TelSdkConsoleApp.cpp
-
+   Utils.cpp
    console_app_framework/ConsoleAppCommand.cpp
    console_app_framework/ConsoleApp.cpp
 
+   Utils.cpp
 )
 
 macro(SYSR_INCLUDE_DIR subdir)

@@ -1,4 +1,4 @@
-##############################################################################
+###########################################################################
 #  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 #  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 #  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##############################################################################
+###########################################################################
 
 cmake_minimum_required(VERSION 2.8.9)
 
@@ -50,3 +50,9 @@ add_subdirectory( data_app )
 add_subdirectory( data_profile_app )
 add_subdirectory( network_selection_app )
 add_subdirectory( serving_system_app )
+
+if(MACHINE_HAS_CV2X_ONLY)
+    add_subdirectory( cv2x_rx_app )
+    add_subdirectory( cv2x_tx_app )
+    add_subdirectory( cv2x_get_status_app )
+endif(MACHINE_HAS_CV2X_ONLY)

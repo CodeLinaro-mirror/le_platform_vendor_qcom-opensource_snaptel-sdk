@@ -1,4 +1,3 @@
-
 /*
  *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
  *
@@ -61,6 +60,7 @@ public:
    void startDataCall(std::vector<std::string> inputCommand);
    void stopDataCall(std::vector<std::string> inputCommand);
    void requestDataCallStatistics(std::vector<std::string> inputCommand);
+   void resetDataCallStatistics(std::vector<std::string> inputCommand);
    // Profile Management APIs
    void requestProfileList(std::vector<std::string> inputCommand);
    void createProfile(std::vector<std::string> inputCommand);

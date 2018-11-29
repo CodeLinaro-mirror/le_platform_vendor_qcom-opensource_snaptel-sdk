@@ -35,6 +35,25 @@
 
 void DataListener::onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
    logDataCallDetails(dataCall);
+   updateDataCallMap(dataCall);
+}
+
+std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int profileId) {
+   std::lock_guard<std::mutex> lk(mtx_);
+   std::shared_ptr<telux::data::IDataCall> dataCall = nullptr;
+   auto it = dataCallMap_.find(profileId);
+   if(it != dataCallMap_.end()) {
+      dataCall = it->second;
+   }
+   return dataCall;
+}
+
+void DataListener::updateDataCallMap(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
+   if(dataCall) {
+      std::lock_guard<std::mutex> lk(mtx_);
+      int profileId = dataCall->getProfileId();
+      dataCallMap_[profileId] = dataCall;
+   }
 }
 
 void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
@@ -50,14 +69,14 @@ void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCa
    std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
    for(auto &it : ipAddrList) {
       std::cout << "\n ifAddress: " << it.ifAddress
+                << "\n gwAddress: " << it.gwAddress
                 << "\n primaryDnsAddress: " << it.primaryDnsAddress
                 << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
    }
-   std::cout << "\n APN: " << dataCall->getApnName() << '\n';
    std::cout << " IpFamilyType: " << ipFamilyTypeToString(dataCall->getIpFamilyType()) << '\n';
    std::cout << " TechPreference: " << techPreferenceToString(dataCall->getTechPreference())
              << '\n';
-   std::cout << " DataBearerTechnology: " << static_cast<int>(dataCall->getCurrentBearerTech())
+   std::cout << " DataBearerTechnology: " << bearerTechToString(dataCall->getCurrentBearerTech())
              << '\n';
 }
 
@@ -150,5 +169,53 @@ std::string DataListener::dataCallStatusToString(telux::data::DataCallStatus dcS
       case telux::data::DataCallStatus::NET_DELADDR:
          return "DELADDR";
       default: { return "INVALID"; }
+   }
+}
+
+std::string DataListener::bearerTechToString(telux::data::DataBearerTechnology bearerTech) {
+   switch(bearerTech) {
+      case telux::data::DataBearerTechnology::CDMA_1X:
+         return "1X technology";
+      case telux::data::DataBearerTechnology::EVDO_REV0:
+         return "CDMA Rev 0";
+      case telux::data::DataBearerTechnology::EVDO_REVA:
+         return "CDMA Rev A";
+      case telux::data::DataBearerTechnology::EVDO_REVB:
+         return "CDMA Rev B";
+      case telux::data::DataBearerTechnology::EHRPD:
+         return "EHRPD";
+      case telux::data::DataBearerTechnology::FMC:
+         return "Fixed mobile convergence";
+      case telux::data::DataBearerTechnology::HRPD:
+         return "HRPD";
+      case telux::data::DataBearerTechnology::BEARER_TECH_3GPP2_WLAN:
+         return "3GPP2 IWLAN";
+      case telux::data::DataBearerTechnology::WCDMA:
+         return "WCDMA";
+      case telux::data::DataBearerTechnology::GPRS:
+         return "GPRS";
+      case telux::data::DataBearerTechnology::HSDPA:
+         return "HSDPA";
+      case telux::data::DataBearerTechnology::HSUPA:
+         return "HSUPA";
+      case telux::data::DataBearerTechnology::EDGE:
+         return "EDGE";
+      case telux::data::DataBearerTechnology::LTE:
+         return "LTE";
+      case telux::data::DataBearerTechnology::HSDPA_PLUS:
+         return "HSDPA+";
+      case telux::data::DataBearerTechnology::DC_HSDPA_PLUS:
+         return "DC HSDPA+.";
+      case telux::data::DataBearerTechnology::HSPA:
+         return "HSPA";
+      case telux::data::DataBearerTechnology::BEARER_TECH_64_QAM:
+         return "64 QAM";
+      case telux::data::DataBearerTechnology::TDSCDMA:
+         return "TDSCDMA";
+      case telux::data::DataBearerTechnology::GSM:
+         return "GSM";
+      case telux::data::DataBearerTechnology::BEARER_TECH_3GPP_WLAN:
+         return "3GPP WLAN";
+      default: { return "UNKNOWN"; }
    }
 }

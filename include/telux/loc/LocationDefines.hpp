@@ -46,8 +46,8 @@
 #define LOCATION_DEFINES_HPP
 
 namespace telux {
-
 namespace loc {
+
 /** @addtogroup telematics_location
  * @{ */
 
@@ -89,11 +89,16 @@ enum PositionTechType {
                                   to generate the fix*/
 };
 
+/** @} */ /* end_addtogroup telematics_location */
+
 /**
  * 16 bit mask that denotes which of the technologies defined in PositionTech enum are used
  * in the location fix.
  */
 using PositionTech = std::bitset<16>;
+
+/** @addtogroup telematics_location
+ * @{ */
 
 /**
  * Specifies the reliability of the position.
@@ -122,11 +127,16 @@ enum SbasCorrectionType {
                               SBAS integrity information is used */
 };
 
+/** @} */ /* end_addtogroup telematics_location */
+
 /**
  * 8 bit mask that denotes which of the SBAS corrections in SbasCorrection used
  * to improve the performance of GNSS output.
  */
 using SbasCorrection = std::bitset<8>;
+
+/** @addtogroup telematics_location
+ * @{ */
 
 /**
  * Defines status of the session that is requested by user application.
@@ -219,11 +229,16 @@ enum MeasurementType {
    VELOCITY  /**<  Bitmask to specify whether a sensor was used to calculate velocity */
 };
 
+/** @} */ /* end_addtogroup telematics_location */
+
 /**
  * 8 bit mask that denotes which of the measurements in MeasurementType enum are aided
  * by sensor data.
  */
 using Measurement = std::bitset<8>;
+
+/** @addtogroup telematics_location
+ * @{ */
 
 /**
  * @brief IGpsTime provides interface to get current GPS week and elapsed

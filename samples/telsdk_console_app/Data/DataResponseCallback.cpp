@@ -161,18 +161,22 @@ void DataCallStatisticsResponseCb::requestStatisticsResponse(
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "requestDataCallStatistics Response is successful \n";
-      std::cout << " Number of packets transmitted: " << dCallStats.packetsTx << std::endl;
-      std::cout << " Number of packets received: " << dCallStats.packetsRx << std::endl;
-      std::cout << " Number of bytes transmitted: " << dCallStats.bytesTx << std::endl;
-      std::cout << " Number of bytes received: " << dCallStats.bytesRx << std::endl;
-      std::cout << " Number of transmit packets dropped: " << dCallStats.packetsDroppedTx
+      std::cout << " RX packets: " << dCallStats.packetsRx
+                << " dropped: " << dCallStats.packetsDroppedRx << " bytes: " << dCallStats.bytesRx
                 << std::endl;
-      std::cout << " Number of receive packets dropped: " << dCallStats.packetsDroppedRx
-                << std::endl
+      std::cout << " TX packets: " << dCallStats.packetsTx
+                << " dropped: " << dCallStats.packetsDroppedRx << " bytes: " << dCallStats.bytesTx
                 << std::endl;
    } else {
       PRINT_CB
          << "requestDataCallStatistics Response failed, errorCode: " << static_cast<int>(error)
          << std::endl;
    }
+}
+
+void DataCallStatisticsResponseCb::resetStatisticsResponse(telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   PRINT_CB << "resetDataCallStatistics Response"
+            << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+            << std::endl;
 }

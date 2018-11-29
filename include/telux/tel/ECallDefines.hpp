@@ -65,14 +65,14 @@ enum class EmergencyCallType {
 /**
  * MSD Transmission Status
  */
-enum class ECallMsdTransmissionStatus{
-   SUCCESS = 0, /**< Success */
-   FAILURE = 1, /**< Generic failure */
-   MSD_TRANSMISSION_STARTED = 2,   /**< MSD Transmission Started */
-   NACK_OUT_OF_ORDER = 3,      /**< Out of order NACK message
-                               detected */
-   ACK_OUT_OF_ORDER = 4,       /**< Out of order ACK message
-                               detected */
+enum class ECallMsdTransmissionStatus {
+   SUCCESS = 0,                  /**< Success */
+   FAILURE = 1,                  /**< Generic failure */
+   MSD_TRANSMISSION_STARTED = 2, /**< MSD Transmission Started */
+   NACK_OUT_OF_ORDER = 3,        /**< Out of order NACK message
+                                 detected */
+   ACK_OUT_OF_ORDER = 4,         /**< Out of order ACK message
+                                 detected */
 };
 
 /**

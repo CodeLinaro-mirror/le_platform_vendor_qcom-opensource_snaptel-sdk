@@ -68,7 +68,6 @@ private:
                    << "\n primaryDnsAddress: " << it.primaryDnsAddress
                    << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
       }
-      std::cout << " APN: " << dataCall->getApnName() << '\n';
       std::cout << " IpFamilyType: " << static_cast<int>(dataCall->getIpFamilyType()) << '\n';
       std::cout << " TechPreference: " << static_cast<int>(dataCall->getTechPreference()) << '\n';
       std::cout << " DataBearerTechnology: " << static_cast<int>(dataCall->getCurrentBearerTech())

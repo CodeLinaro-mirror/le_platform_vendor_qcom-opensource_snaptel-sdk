@@ -345,7 +345,8 @@ enum class ErrorCode {
  */
 class ICommandCallback {
 public:
-    virtual ~ICommandCallback() {}
+   virtual ~ICommandCallback() {
+   }
 };
 
 /**
@@ -364,8 +365,10 @@ public:
     */
    virtual void commandResponse(ErrorCode error) = 0;
 
-   virtual ~ICommandResponseCallback() {}
+   virtual ~ICommandResponseCallback() {
+   }
 };
+/** @} */ /* end_addtogroup telematics_common */
 
 /**
  * @brief General response callback for most of the requests, client needs to implement
@@ -377,8 +380,6 @@ public:
  *  @param [in] errorCode  @ref ErrorCode
  */
 using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>;
-
-/** @} */ /* end_addtogroup telematics_common */
 
 }  // End of namespace common
 }  // End of namespace telux

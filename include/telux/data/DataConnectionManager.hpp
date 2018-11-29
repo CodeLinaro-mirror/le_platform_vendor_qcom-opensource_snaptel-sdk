@@ -56,9 +56,6 @@
 namespace telux {
 namespace data {
 
-/** @addtogroup telematics_data
- * @{ */
-
 // Forward declarations
 class IDataConnectionListener;
 class IDataCall;
@@ -76,7 +73,6 @@ class IDataCall;
  * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
  *         break backwards compatibility.
  */
-
 using DataCallResponseCb
    = std::function<void(const std::shared_ptr<IDataCall> &dataCall, telux::common::ErrorCode error)>;
 
@@ -93,27 +89,12 @@ using DataCallResponseCb
  * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
  *         break backwards compatibility.
  */
-
 using StatisticsResponseCb
    = std::function<void(const DataCallStats dataStats, telux::common::ErrorCode error)>;
 
-/**
- * This function is called with the response to requestDataRate API.
- *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @param [in] dataRate   The structure contains current and max transfer and
- *                        receiver rate
- * @param [in] error      Return code for whether the operation
- *                        succeeded or failed
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
- */
-using RateResponseCallback
-   = std::function<void(const DataChannelRate dataRate, telux::common::ErrorCode error)>;
 
+/** @addtogroup telematics_data
+ * @{ */
 
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
@@ -151,6 +132,9 @@ public:
     * asynchronous API, client receives notification indicating the data call establishment
     * or failure in callback.
     *
+    * @note       if application starts data call on IPV4V6 then it's expected to stop the
+    *             data call on same ip family type (i.e IPV4V6).
+    *
     * @param [in] profileId     Profile identifier corresponding to which data call bring up
     *                           will be done. Use IDataProfileManager::requestProfileList to get
     *                           list of available profiles.
@@ -162,9 +146,10 @@ public:
     *
     * @note       Eval: This is a new API and is being evaluated. It is subject to
     *             change and could break backwards compatibility.
+    *
     */
-   virtual telux::common::Status startDataCall(int profileId, IpFamilyType ipFamilyType
-                                                              = IpFamilyType::IPV4V6,
+   virtual telux::common::Status startDataCall(int profileId,
+                                               IpFamilyType ipFamilyType = IpFamilyType::IPV4V6,
                                                DataCallResponseCb callback = nullptr)
       = 0;
 
@@ -172,6 +157,9 @@ public:
     * Stops a data call corresponding to default or specified profile identifier.
     *
     * This will tear down specific data call connection based on profile identifier.
+    *
+    * @note       if application starts data call on IPV4V6 then it's expected to stop the
+    *             data call on same ip family type (i.e IPV4V6).
     *
     * @param [in] profileId     Profile identifier corresponding to which data call tear down
     *                           will be done. Use data profile manager to get the list of
@@ -186,55 +174,9 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to
     *             change and could break backwards compatibility.
     */
-   virtual telux::common::Status stopDataCall(int profileId, IpFamilyType ipFamilyType
-                                                             = IpFamilyType::IPV4V6,
+   virtual telux::common::Status stopDataCall(int profileId,
+                                              IpFamilyType ipFamilyType = IpFamilyType::IPV4V6,
                                               DataCallResponseCb callback = nullptr)
-      = 0;
-
-   /**
-    * Request the data transfer statistics for data call corresponding
-    * to specified profile identifier.
-    *
-    * @param [in] profileId   Profile identifier
-    * @param [in] callback    Optional callback to get the response of request Data Call
-    *                         Statistics
-    *
-    * @returns Status of getDataCallStatistics i.e. success or suitable status code.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
-    */
-   virtual telux::common::Status requestDataCallStatistics(int profileId,
-                                                           StatisticsResponseCb callback = nullptr)
-      = 0;
-
-   /**
-    * Reset data transfer statistics for data call corresponding to specified profile identifier.
-    *
-    * @param [in] profileId   Reset statistics corresponding to profile identifier
-    *
-    * @returns Status of resetDataCallStatistics i.e. success or suitable status code.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
-    */
-   virtual telux::common::Status resetDataCallStatistics(int profileId) = 0;
-
-   /**
-    * Request the current/maximum transmit and receive data channel rate for specified profile
-    * identifier.
-    *
-    * @param [in] profileId   Profile identifier.
-    * @param [in] callback    Optional callback to get the response of request Data channel
-    *                         rate
-    *
-    * @returns Status of getDataRate i.e. success or suitable status code.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
-    */
-   virtual telux::common::Status requestDataRate(int profileId,
-                                                 RateResponseCallback callback = nullptr)
       = 0;
 
    /**
@@ -351,16 +293,6 @@ public:
    virtual std::list<IpAddrInfo> getIpAddressInfo() = 0;
 
    /**
-    * Get Access Point Name (APN) name
-    *
-    * @returns APN name.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    */
-   virtual const std::string &getApnName() = 0;
-
-   /**
     * Get IP Family Type i.e. IPv4, IPv6 or Both
     *
     * @returns @ref IpFamilyType.
@@ -379,6 +311,40 @@ public:
     *         break backwards compatibility.
     */
    virtual int getProfileId() = 0;
+
+   /**
+    * Request the data transfer statistics for data call corresponding
+    * to specified profile identifier.
+    *
+    * @param [in] callback    Optional callback to get the response of request Data Call
+    *                         Statistics
+    *
+    * @returns Status of getDataCallStatistics i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestDataCallStatistics(StatisticsResponseCb callback = nullptr)
+      = 0;
+
+   /**
+    * Reset data transfer statistics for data call corresponding to specified profile identifier.
+    *
+    * @param [in] callback   optional callback to get the response of reset Data call statistics
+    *
+    * @returns Status of resetDataCallStatistics i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status resetDataCallStatistics(telux::common::ResponseCallback callback
+                                                         = nullptr)
+      = 0;
+
+   /**
+    * Destructor for IDataCall
+    */
+   virtual ~IDataCall(){};
 };
 
 /**
@@ -404,6 +370,11 @@ public:
     *         break backwards compatibility.
     */
    virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
+
+   /**
+    * Destructor for IDataConnectionListener
+    */
+   virtual ~IDataConnectionListener(){};
 };
 
 /** @} */ /* end_addtogroup telematics_data */

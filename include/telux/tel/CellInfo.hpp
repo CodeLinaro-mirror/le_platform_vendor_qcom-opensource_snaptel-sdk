@@ -56,7 +56,7 @@ enum class CellType {
    CDMA = 2,
    LTE = 3,
    WCDMA = 4,
-   TDSCDMA = 5
+   TDSCDMA = 5,
 };
 
 /**
@@ -498,7 +498,6 @@ private:
  */
 class CdmaCellInfo : public CellInfo {
 public:
-
    /**
     * CdmaCellInfo constructor
     * @param [in] registered - Registration status of the cell.

@@ -62,109 +62,104 @@ namespace tel {
  */
 class PhoneFactory {
 public:
-  /**
-   * Get Phone Factory instance.
-   */
-  static PhoneFactory &getInstance();
+   /**
+    * Get Phone Factory instance.
+    */
+   static PhoneFactory &getInstance();
 
-  /**
-   * Get Phone Manager instance. Phone Manager is the main entry point into the
-   * telephony subsystem.
-   *
-   * @returns Pointer of IPhoneManager object.
-   */
-  std::shared_ptr<IPhoneManager> getPhoneManager();
+   /**
+    * Get Phone Manager instance. Phone Manager is the main entry point into the
+    * telephony subsystem.
+    *
+    * @returns Pointer of IPhoneManager object.
+    */
+   std::shared_ptr<IPhoneManager> getPhoneManager();
 
-  /**
-   * Get SMS Manager instance for Phone ID. SMSManager used to send and receive
-   * SMS messages.
-   *
-   * @param [in] phoneId   Unique identifier for the phone
-   *
-   * @returns Pointer of ISmsManager object or nullptr in case of failure.
-   */
-  std::shared_ptr<ISmsManager> getSmsManager(int phoneId = DEFAULT_PHONE_ID);
+   /**
+    * Get SMS Manager instance for Phone ID. SMSManager used to send and receive
+    * SMS messages.
+    *
+    * @param [in] phoneId   Unique identifier for the phone
+    *
+    * @returns Pointer of ISmsManager object or nullptr in case of failure.
+    */
+   std::shared_ptr<ISmsManager> getSmsManager(int phoneId = DEFAULT_PHONE_ID);
 
-  /**
-   * Get Call Manager instance to determine state of active calls and perform
-   * other functions like dial, conference, swap call.
-   *
-   * @returns Pointer of ICallManager object.
-   */
-  std::shared_ptr<ICallManager> getCallManager();
+   /**
+    * Get Call Manager instance to determine state of active calls and perform
+    * other functions like dial, conference, swap call.
+    *
+    * @returns Pointer of ICallManager object.
+    */
+   std::shared_ptr<ICallManager> getCallManager();
 
-  /**
-   * Get Card Manager instance to handle services such as transmitting APDU,
-   * SIM IO and more.
-   *
-   * @returns Pointer of ICardManager object.
-   */
-  std::shared_ptr<ICardManager> getCardManager();
+   /**
+    * Get Card Manager instance to handle services such as transmitting APDU,
+    * SIM IO and more.
+    *
+    * @returns Pointer of ICardManager object.
+    */
+   std::shared_ptr<ICardManager> getCardManager();
 
-  /**
-   * Get Sap Card Manager instance associated with the provided slot id. This
-   * object will handle services in SAP mode such as APDU, SIM Power On/Off
-   * and SIM reset.
-   *
-   * @param [in] slotId    Unique identifier for the SIM slot
-   *
-   * @returns Pointer of ISapCardManager object.
-   */
-  std::shared_ptr<ISapCardManager>
-  getSapCardManager(int slotId = DEFAULT_SLOT_ID);
+   /**
+    * Get Sap Card Manager instance associated with the provided slot id. This
+    * object will handle services in SAP mode such as APDU, SIM Power On/Off
+    * and SIM reset.
+    *
+    * @param [in] slotId    Unique identifier for the SIM slot
+    *
+    * @returns Pointer of ISapCardManager object.
+    */
+   std::shared_ptr<ISapCardManager> getSapCardManager(int slotId = DEFAULT_SLOT_ID);
 
-  /**
-   * Get Subscription Manager instance to get device subscription details
-   *
-   * @returns Pointer of ISubscriptionManager object.
-   */
-  std::shared_ptr<ISubscriptionManager> getSubscriptionManager();
+   /**
+    * Get Subscription Manager instance to get device subscription details
+    *
+    * @returns Pointer of ISubscriptionManager object.
+    */
+   std::shared_ptr<ISubscriptionManager> getSubscriptionManager();
 
-  /**
-   * Get Serving System Manager instance to get and set preferred network type.
-   *
-   * @param [in] slotId    Unique identifier for the SIM slot
-   *
-   * @returns Pointer of IServingSystemManager object.
-   */
-  std::shared_ptr<IServingSystemManager>
-  getServingSystemManager(int slotId = DEFAULT_SLOT_ID);
+   /**
+    * Get Serving System Manager instance to get and set preferred network type.
+    *
+    * @param [in] slotId    Unique identifier for the SIM slot
+    *
+    * @returns Pointer of IServingSystemManager object.
+    */
+   std::shared_ptr<IServingSystemManager> getServingSystemManager(int slotId = DEFAULT_SLOT_ID);
 
-  /**
-   * Get Network Selection Manager instance to get and set selection mode, get
-   * and set preferred networks and scan available networks.
-   *
-   * @param [in] slotId    Unique identifier for the SIM slot
-   *
-   * @returns Pointer of INetworkSelectionManager object.
-   */
-  std::shared_ptr<INetworkSelectionManager>
-  getNetworkSelectionManager(int slotId = DEFAULT_SLOT_ID);
+   /**
+    * Get Network Selection Manager instance to get and set selection mode, get
+    * and set preferred networks and scan available networks.
+    *
+    * @param [in] slotId    Unique identifier for the SIM slot
+    *
+    * @returns Pointer of INetworkSelectionManager object.
+    */
+   std::shared_ptr<INetworkSelectionManager> getNetworkSelectionManager(int slotId
+                                                                        = DEFAULT_SLOT_ID);
 
 private:
-  std::shared_ptr<IPhoneManager> phoneManager_;
-  std::shared_ptr<ICallManager> callManager_;
-  std::shared_ptr<ICardManager> cardManager_;
-  std::shared_ptr<ISapCardManager> sapCardManager_;
-  std::shared_ptr<ISubscriptionManager> subscriptionManager_;
-  std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
-  std::map<int, std::shared_ptr<IServingSystemManager>>
-     servingSystemManagerMap_;
-  std::map<int, std::shared_ptr<INetworkSelectionManager>>
-     networkSelectionManagerMap_;
-  std::map<int, std::shared_ptr<ISapCardManager>>
-     sapCardManagerMap_;
+   std::shared_ptr<IPhoneManager> phoneManager_;
+   std::shared_ptr<ICallManager> callManager_;
+   std::shared_ptr<ICardManager> cardManager_;
+   std::shared_ptr<ISapCardManager> sapCardManager_;
+   std::shared_ptr<ISubscriptionManager> subscriptionManager_;
+   std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
+   std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
+   std::map<int, std::shared_ptr<INetworkSelectionManager>> networkSelectionManagerMap_;
+   std::map<int, std::shared_ptr<ISapCardManager>> sapCardManagerMap_;
 
-  PhoneFactory();
-  ~PhoneFactory();
-  PhoneFactory(const PhoneFactory &) = delete;
-  PhoneFactory &operator=(const PhoneFactory &) = delete;
+   PhoneFactory();
+   ~PhoneFactory();
+   PhoneFactory(const PhoneFactory &) = delete;
+   PhoneFactory &operator=(const PhoneFactory &) = delete;
 };
 
 /** @} */ /* end_addtogroup telematics_phone_factory */
 
-} // End of namespace tel
+}  // End of namespace tel
 
-} // End of namespace telux
+}  // End of namespace telux
 
-#endif // PHONEFACTORY_HPP
+#endif  // PHONEFACTORY_HPP

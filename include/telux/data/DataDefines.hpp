@@ -41,13 +41,12 @@
 #include <string>
 #include <vector>
 
-#include <telux/common/CommonDefines.hpp>
-
 namespace telux {
 namespace data {
 
 /** @addtogroup telematics_data
  * @{ */
+
 /**
  * Preferred IP family for the call
  */
@@ -82,44 +81,33 @@ enum class AuthProtocolType {
  * Profile Parameters used for profile creation, query and modify
  */
 struct ProfileParams {
-   std::string profileName;                                        /**< Profile Name */
-   std::string apn;                                                /**< APN name */
-   std::string userName;                                           /**< APN user name (if any) */
-   std::string password;                                           /**< APN password (if any) */
-   TechPreference techPref = TechPreference::UNKNOWN; /**< Technology preference,
-                                     default is TechPreference::UNKNOWN */
+   std::string profileName;                                 /**< Profile Name */
+   std::string apn;                                         /**< APN name */
+   std::string userName;                                    /**< APN user name (if any) */
+   std::string password;                                    /**< APN password (if any) */
+   TechPreference techPref = TechPreference::UNKNOWN;       /**< Technology preference,
+                                           default is TechPreference::UNKNOWN */
    AuthProtocolType authType = AuthProtocolType::AUTH_NONE; /**< Authentication protocol type,
                                      default is AuthProtocolType::AUTH_NONE */
-   IpFamilyType ipFamilyType
-      = IpFamilyType::UNKNOWN; /**< Preferred IP family for the call,
-                                    default is
-                                    IpFamilyType::UNKNOWN */
+   IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN;       /**< Preferred IP family for the call,
+                                                                 default is
+                                                                 IpFamilyType::UNKNOWN */
 };
 
 /**
  * Data transfer statistics structure.
  */
 struct DataCallStats {
-   unsigned long packetsTx = 0;          /**< Number of packets transmitted */
-   unsigned long packetsRx = 0;          /**< Number of packets received */
-   long long bytesTx = 0;                /**< Number of bytes transmitted */
-   long long bytesRx = 0;                /**< Number of bytes received */
-   unsigned long packetsDroppedTx = 0;   /**< Number of transmit packets dropped */
-   unsigned long packetsDroppedRx = 0;   /**< Number of receive packets dropped */
+   unsigned long packetsTx = 0;        /**< Number of packets transmitted */
+   unsigned long packetsRx = 0;        /**< Number of packets received */
+   long long bytesTx = 0;              /**< Number of bytes transmitted */
+   long long bytesRx = 0;              /**< Number of bytes received */
+   unsigned long packetsDroppedTx = 0; /**< Number of transmit packets dropped */
+   unsigned long packetsDroppedRx = 0; /**< Number of receive packets dropped */
 };
 
 /**
- * Data bit rate in kbps
- */
-struct DataChannelRate {
-   int txRate = 0;    /**< Current transfer rate */
-   int rxRate = 0;    /**< Current receiver rate */
-   int maxTxRate = 0; /**< Max transfer rate */
-   int maxRxRate = 0; /**< Max receiver rate */
-};
-
-/**
- * DATA event status
+ * Data call event status
  */
 enum class DataCallStatus {
    INVALID = 0x00,    /**<  Invalid  */
@@ -177,7 +165,7 @@ enum class DataBearerTechnology {
 };
 
 /**
- * Data call terminated due to reason type.
+ * Data call end/termination due to reason type.
  */
 enum class EndReasonType {
    CE_UNKNOWN = 0xFF,
@@ -188,8 +176,12 @@ enum class EndReasonType {
    CE_PPP = 0x07,
    CE_EHRPD = 0x08,
    CE_IPV6 = 0x09,
+   CE_HANDOFF = 0x0C,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_MOBILE_IP
+ */
 enum class MobileIpReasonCode {
    /*Mobile IP Call End reasons*/
    CE_MIP_FA_ERR_REASON_UNSPECIFIED = 64,
@@ -222,9 +214,12 @@ enum class MobileIpReasonCode {
    CE_MIP_HA_ERR_REVERSE_TUNNEL_UNAVAILABLE = 137,
    CE_MIP_HA_ERR_REVERSE_TUNNEL_IS_MANDATORY_AND_T_BIT_NOT_SET = 138,
    CE_MIP_HA_ERR_ENCAPSULATION_UNAVAILABLE = 139,
-   CE_MIP_ERR_REASON_UNKNOWN = 65535,
+   CE_MIP_ERR_REASON_UNKNOWN = -1,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_INTERNAL
+ */
 enum class InternalReasonCode {
    /*Internal Error Call End reasons*/
    CE_INTERNAL_ERROR = 201,
@@ -238,8 +233,22 @@ enum class InternalReasonCode {
    CE_ERR_PDN_IPV4_CALL_THROTTLED = 209,
    CE_ERR_PDN_IPV6_CALL_DISALLOWED = 210,
    CE_ERR_PDN_IPV6_CALL_THROTTLED = 211,
+   CE_MODEM_RESTART = 212,
+   CE_PDP_PPP_NOT_SUPPORTED = 213,
    CE_UNPREFERRED_RAT = 214,
+   CE_PHYS_LINK_CLOSE_IN_PROGRESS = 215,
+   CE_APN_PENDING_HANDOVER = 216,
+   CE_PROFILE_BEARER_INCOMPATIBLE = 217,
+   CE_MMGSDI_CARD_EVT = 218,
+   CE_LPM_OR_PWR_DOWN = 219,
    CE_APN_DISABLED = 220,
+   CE_MPIT_EXPIRED = 221,
+   CE_IPV6_ADDR_TRANSFER_FAILED = 222,
+   CE_TRAT_SWAP_FAILED = 223,
+   CE_EHRPD_TO_HRPD_FALLBACK = 224,
+   CE_MANDATORY_APN_DISABLED = 225,
+   CE_MIP_CONFIG_FAILURE = 226,
+   CE_INTERNAL_PDN_INACTIVITY_TIMER_EXPIRED = 227,
    CE_MAX_V4_CONNECTIONS = 228,
    CE_MAX_V6_CONNECTIONS = 229,
    CE_APN_MISMATCH = 230,
@@ -247,8 +256,29 @@ enum class InternalReasonCode {
    CE_DUN_CALL_DISALLOWED = 232,
    CE_INVALID_PROFILE = 233,
    CE_INTERNAL_EPC_NONEPC_TRANSITION = 234,
+   CE_INVALID_PROFILE_ID = 235,
+   CE_INTERNAL_CALL_ALREADY_PRESENT = 236,
+   CE_IFACE_IN_USE = 237,
+   CE_IP_PDP_MISMATCH = 238,
+   CE_APN_DISALLOWED_ON_ROAMING = 239,
+   CE_APN_PARAM_CHANGE = 240,
+   CE_IFACE_IN_USE_CFG_MATCH = 241,
+   CE_NULL_APN_DISALLOWED = 242,
+   CE_THERMAL_MITIGATION = 243,
+   CE_SUBS_ID_MISMATCH = 244,
+   CE_DATA_SETTINGS_DISABLED = 245,
+   CE_DATA_ROAMING_SETTINGS_DISABLED = 246,
+   CE_APN_FORMAT_INVALID = 247,
+   CE_DDS_CALL_ABORT = 248,
+   CE_VALIDATION_FAILURE = 249,
+   CE_PROFILES_NOT_COMPATIBLE = 251,
+   CE_NULL_RESOLVED_APN_NO_MATCH = 252,
+   CE_INVALID_APN_NAME = 253,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_CALL_MANAGER_DEFINED
+ */
 enum class CallManagerReasonCode {
    /*CM defined Call End reasons*/
    CE_CDMA_LOCK = 500,
@@ -267,24 +297,132 @@ enum class CallManagerReasonCode {
    CE_USER_CALL_ORIG_DURING_GPS = 513,
    CE_USER_CALL_ORIG_DURING_SMS = 514,
    CE_NO_CDMA_SRV = 515,
+   CE_MC_ABORT = 516,
+   CE_PSIST_NG = 517,
+   CE_UIM_NOT_PRESENT = 518,
+   CE_RETRY_ORDER = 519,
+   CE_ACCESS_BLOCK = 520,
+   CEACCESS_BLOCK_ALL = 521,
+   CE_IS707B_MAX_ACC = 522,
+   CE_THERMAL_EMERGENCY = 523,
+   CE_CALL_ORIG_THROTTLED = 524,
+   CE_USER_CALL_ORIG_DURING_VOICE_CALL = 535,
    CE_CONF_FAILED = 1000,
    CE_INCOM_REJ = 1001,
-   CE_NO_GW_SRV = 1002,
-   CE_NO_GPRS_CONTEXT = 1003,
-   CE_ILLEGAL_MS = 1004,
-   CE_ILLEGAL_ME = 1005,
-   CE_GPRS_SERVICES_AND_NON_GPRS_SERVICES_NOT_ALLOWED = 1006,
-   CE_GPRS_SERVICES_NOT_ALLOWED = 1007,
-   CE_MS_IDENTITY_CANNOT_BE_DERIVED_BY_THE_NETWORK = 1008,
-   CE_IMPLICITLY_DETACHED = 1009,
-   CE_PLMN_NOT_ALLOWED = 1010,
-   CE_LA_NOT_ALLOWED = 1011,
-   CE_GPRS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN = 1012,
-   CE_PDP_DUPLICATE = 1013,
-   CE_UE_RAT_CHANGE = 1014,
-   CE_CONGESTION = 1015,
-   CE_NO_PDP_CONTEXT_ACTIVATED = 1016,
-   CE_ACCESS_CLASS_DSAC_REJECTION = 1017,
+   CE_NEW_NO_GW_SRV = 1002,
+   CE_NEW_NO_GPRS_CONTEXT = 1003,
+   CE_NEW_ILLEGAL_MS = 1004,
+   CE_NEW_ILLEGAL_ME = 1005,
+   CE_NEW_GPRS_SERVICES_AND_NON_GPRS_SERVICES_NOT_ALLOWED = 1006,
+   CE_NEW_GPRS_SERVICES_NOT_ALLOWED = 1007,
+   CE_NEW_MS_IDENTITY_CANNOT_BE_DERIVED_BY_THE_NETWORK = 1008,
+   CE_NEW_IMPLICITLY_DETACHED = 1009,
+   CE_NEW_PLMN_NOT_ALLOWED = 1010,
+   CE_NEW_LA_NOT_ALLOWED = 1011,
+   CE_NEW_GPRS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN = 1012,
+   CE_NEW_PDP_DUPLICATE = 1013,
+   CE_NEW_UE_RAT_CHANGE = 1014,
+   CE_NEW_CONGESTION = 1015,
+   CE_NEW_NO_PDP_CONTEXT_ACTIVATED = 1016,
+   CE_NEW_ACCESS_CLASS_DSAC_REJECTION = 1017,
+   CE_PDP_ACTIVATE_MAX_RETRY_FAILED = 1018,
+   CE_RAB_FAILURE = 1019,
+   CE_ESM_UNKNOWN_EPS_BEARER_CONTEXT = 1025,
+   CE_DRB_RELEASED_AT_RRC = 1026,
+   CE_NAS_SIG_CONN_RELEASED = 1027,
+   CE_REASON_EMM_DETACHED = 1028,
+   CE_EMM_ATTACH_FAILED = 1029,
+   CE_EMM_ATTACH_STARTED = 1030,
+   CE_LTE_NAS_SERVICE_REQ_FAILED = 1031,
+   CE_ESM_ACTIVE_DEDICATED_BEARER_REACTIVATED_BY_NW = 1032,
+   CE_ESM_LOWER_LAYER_FAILURE = 1033,
+   CE_ESM_SYNC_UP_WITH_NW = 1034,
+   CE_ESM_NW_ACTIVATED_DED_BEARER_WITH_ID_OF_DEF_BEARER = 1035,
+   CE_ESM_BAD_OTA_MESSAGE = 1036,
+   CE_ESM_DS_REJECTED_THE_CALL = 1037,
+   CE_ESM_CONTEXT_TRANSFERED_DUE_TO_IRAT = 1038,
+   CE_DS_EXPLICIT_DEACT = 1039,
+   CE_ESM_LOCAL_CAUSE_NONE = 1040,
+   CE_LTE_NAS_SERVICE_REQ_FAILED_NO_THROTTLE = 1041,
+   CE_ACL_FAILURE = 1042,
+   CE_LTE_NAS_SERVICE_REQ_FAILED_DS_DISALLOW = 1043,
+   CE_EMM_T3417_EXPIRED = 1044,
+   CE_EMM_T3417_EXT_EXPIRED = 1045,
+   CE_LRRC_UL_DATA_CNF_FAILURE_TXN = 1046,
+   CE_LRRC_UL_DATA_CNF_FAILURE_HO = 1047,
+   CE_LRRC_UL_DATA_CNF_FAILURE_CONN_REL = 1048,
+   CE_LRRC_UL_DATA_CNF_FAILURE_RLF = 1049,
+   CE_LRRC_UL_DATA_CNF_FAILURE_CTRL_NOT_CONN = 1050,
+   CE_LRRC_CONN_EST_FAILURE = 1051,
+   CE_LRRC_CONN_EST_FAILURE_ABORTED = 1052,
+   CE_LRRC_CONN_EST_FAILURE_ACCESS_BARRED = 1053,
+   CE_LRRC_CONN_EST_FAILURE_CELL_RESEL = 1054,
+   CE_LRRC_CONN_EST_FAILURE_CONFIG_FAILURE = 1055,
+   CE_LRRC_CONN_EST_FAILURE_TIMER_EXPIRED = 1056,
+   CE_LRRC_CONN_EST_FAILURE_LINK_FAILURE = 1057,
+   CE_LRRC_CONN_EST_FAILURE_NOT_CAMPED = 1058,
+   CE_LRRC_CONN_EST_FAILURE_SI_FAILURE = 1059,
+   CE_LRRC_CONN_EST_FAILURE_CONN_REJECT = 1060,
+   CE_LRRC_CONN_REL_NORMAL = 1061,
+   CE_LRRC_CONN_REL_RLF = 1062,
+   CE_LRRC_CONN_REL_CRE_FAILURE = 1063,
+   CE_LRRC_CONN_REL_OOS_DURING_CRE = 1064,
+   CE_LRRC_CONN_REL_ABORTED = 1065,
+   CE_LRRC_CONN_REL_SIB_READ_ERROR = 1066,
+   CE_DETACH_WITH_REATTACH_LTE_NW_DETACH = 1067,
+   CE_DETACH_WITH_OUT_REATTACH_LTE_NW_DETACH = 1068,
+   CE_ESM_PROC_TIME_OUT = 1069,
+   CE_INVALID_CONNECTION_ID = 1070,
+   CE_INVALID_NSAPI = 1071,
+   CE_INVALID_PRI_NSAPI = 1072,
+   CE_INVALID_FIELD = 1073,
+   CE_RAB_SETUP_FAILURE = 1074,
+   CE_PDP_ESTABLISH_MAX_TIMEOUT = 1075,
+   CE_PDP_MODIFY_MAX_TIMEOUT = 1076,
+   CE_PDP_INACTIVE_MAX_TIMEOUT = 1077,
+   CE_PDP_LOWERLAYER_ERROR = 1078,
+   CE_PPD_UNKNOWN_REASON = 1079,
+   CE_PDP_MODIFY_COLLISION = 1080,
+   CE_PDP_MBMS_REQUEST_COLLISION = 1081,
+   CE_MBMS_DUPLICATE = 1082,
+   CE_SM_PS_DETACHED = 1083,
+   CE_SM_NO_RADIO_AVAILABLE = 1084,
+   CE_SM_ABORT_SERVICE_NOT_AVAILABLE = 1085,
+   CE_MESSAGE_EXCEED_MAX_L2_LIMIT = 1086,
+   CE_SM_NAS_SRV_REQ_FAILURE = 1087,
+   CE_RRC_CONN_EST_FAILURE_REQ_ERROR = 1088,
+   CE_RRC_CONN_EST_FAILURE_TAI_CHANGE = 1089,
+   CE_RRC_CONN_EST_FAILURE_RF_UNAVAILABLE = 1090,
+   CE_RRC_CONN_REL_ABORTED_IRAT_SUCCESS = 1091,
+   CE_RRC_CONN_REL_RLF_SEC_NOT_ACTIVE = 1092,
+   CE_RRC_CONN_REL_IRAT_TO_LTE_ABORTED = 1093,
+   CE_RRC_CONN_REL_IRAT_FROM_LTE_TO_G_CCO_SUCCESS = 1094,
+   CE_RRC_CONN_REL_IRAT_FROM_LTE_TO_G_CCO_ABORTED = 1095,
+   CE_IMSI_UNKNOWN_IN_HSS = 1096,
+   CE_IMEI_NOT_ACCEPTED = 1097,
+   CE_EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED = 1098,
+   CE_EPS_SERVICES_NOT_ALLOWED_IN_PLMN = 1099,
+   CE_MSC_TEMPORARILY_NOT_REACHABLE = 1100,
+   CE_CS_DOMAIN_NOT_AVAILABLE = 1101,
+   CE_ESM_FAILURE = 1102,
+   CE_MAC_FAILURE = 1103,
+   CE_SYNCH_FAILURE = 1104,
+   CE_UE_SECURITY_CAPABILITIES_MISMATCH = 1105,
+   CE_SECURITY_MODE_REJ_UNSPECIFIED = 1106,
+   CE_NON_EPS_AUTH_UNACCEPTABLE = 1107,
+   CE_CS_FALLBACK_CALL_EST_NOT_ALLOWED = 1108,
+   CE_NO_EPS_BEARER_CONTEXT_ACTIVATED = 1109,
+   CE_EMM_INVALID_STATE = 1110,
+   CE_NAS_LAYER_FAILURE = 1111,
+   CE_MULTI_PDN_NOT_ALLOWED = 1112,
+   CE_EMBMS_NOT_ENABLED = 1113,
+   CE_PENDING_REDIAL_CALL_CLEANUP = 1114,
+   CE_EMBMS_REGULAR_DEACTIVATION = 1115,
+   CE_TLB_REGULAR_DEACTIVATION = 1116,
+   CE_LOWER_LAYER_REGISTRATION_FAILURE = 1117,
+   CE_DETACH_EPS_SERVICES_NOT_ALLOWED = 1118,
+   CE_SM_INTERNAL_PDP_DEACTIVATION = 1119,
+   CE_UNSUPPORTED_1X_PREV = 1515,
    CE_CD_GEN_OR_BUSY = 1500,
    CE_CD_BILL_OR_AUTH = 1501,
    CE_CHG_HDR = 1502,
@@ -293,6 +431,13 @@ enum class CallManagerReasonCode {
    CE_HDR_ORIG_DURING_GPS_FIX = 1505,
    CE_HDR_CS_TIMEOUT = 1506,
    CE_HDR_RELEASED_BY_CM = 1507,
+   CE_COLLOC_ACQ_FAIL = 1508,
+   CE_OTASP_COMMIT_IN_PROG = 1509,
+   CE_NO_HYBR_HDR_SRV = 1510,
+   CE_HDR_NO_LOCK_GRANTED = 1511,
+   CE_HOLD_OTHER_IN_PROG = 1512,
+   CE_HDR_FADE = 1513,
+   CE_HDR_ACC_FAIL = 1514,
    CE_CLIENT_END = 2000,
    CE_NO_SRV = 2001,
    CE_FADE = 2002,
@@ -300,12 +445,24 @@ enum class CallManagerReasonCode {
    CE_ACC_IN_PROG = 2004,
    CE_ACC_FAIL = 2005,
    CE_REDIR_OR_HANDOFF = 2006,
+   CE_CM_UNKNOWN_ERROR = 2007,
+   CE_OFFLINE = 2500,
+   CE_EMERGENCY_MODE = 2501,
+   CE_PHONE_IN_USE = 2502,
+   CE_INVALID_MODE = 2503,
+   CE_INVALID_SIM_STATE = 2504,
+   CE_NO_COLLOC_HDR = 2505,
+   CE_CALL_CONTROL_REJECTED = 2506,
    CE_UNKNOWN = -1,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_3GPP_SPEC_DEFINED
+ */
 enum class SpecReasonCode {
    /*3GPP spec defined Call End reasons*/
    CE_OPERATOR_DETERMINED_BARRING = 8,
+   CE_NAS_SIGNALLING_ERROR = 14,
    CE_LLC_SNDCP_FAILURE = 25,
    CE_INSUFFICIENT_RESOURCES = 26,
    CE_UNKNOWN_APN = 27,
@@ -331,6 +488,11 @@ enum class SpecReasonCode {
    CE_IP_V4_ONLY_ALLOWED = 50,
    CE_IP_V6_ONLY_ALLOWED = 51,
    CE_SINGLE_ADDR_BEARER_ONLY = 52,
+   CE_ESM_INFO_NOT_RECEIVED = 53,
+   CE_PDN_CONN_DOES_NOT_EXIST = 54,
+   CE_MULTI_CONN_TO_SAME_PDN_NOT_ALLOWED = 55,
+   CE_MAX_ACTIVE_PDP_CONTEXT_REACHED = 65,
+   CE_UNSUPPORTED_APN_IN_CURRENT_PLMN = 66,
    CE_INVALID_TRANSACTION_ID = 81,
    CE_MESSAGE_INCORRECT_SEMANTIC = 95,
    CE_INVALID_MANDATORY_INFO = 96,
@@ -341,9 +503,25 @@ enum class SpecReasonCode {
    CE_MSG_AND_PROTOCOL_STATE_UNCOMPATIBLE = 101,
    CE_PROTOCOL_ERROR = 111,
    CE_APN_TYPE_CONFLICT = 112,
+   CE_INVALID_PCSCF_ADDRESS = 113,
+   CE_INTERNAL_CALL_PREEMPT_BY_HIGH_PRIO_APN = 114,
+   CE_EMM_ACCESS_BARRED = 115,
+   CE_EMERGENCY_IFACE_ONLY = 116,
+   CE_IFACE_MISMATCH = 117,
+   CE_COMPANION_IFACE_IN_USE = 118,
+   CE_IP_ADDRESS_MISMATCH = 119,
+   CE_IFACE_AND_POL_FAMILY_MISMATCH = 120,
+   CE_EMM_ACCESS_BARRED_INFINITE_RETRY = 121,
+   CE_AUTH_FAILURE_ON_EMERGENCY_CALL = 122,
+   CE_INVALID_DNS_ADDR = 123,
+   CE_INVALID_PCSCF_DNS_ADDR = 124,
+   CE_TEST_LOOPBACK_MODE_A_OR_B_ENABLED = 125,
    CE_UNKNOWN = -1,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_PPP
+ */
 enum class PPPReasonCode {
    /*Enumeration for the PPP verbose call end reason*/
    CE_PPP_TIMEOUT = 1,
@@ -351,9 +529,14 @@ enum class PPPReasonCode {
    CE_PPP_OPTION_MISMATCH = 3,
    CE_PPP_PAP_FAILURE = 31,
    CE_PPP_CHAP_FAILURE = 32,
+   CE_PPP_CLOSE_IN_PROGRESS = 33,
+   CE_PPP_NV_REFRESH_IN_PROGRESS = 34,
    CE_PPP_UNKNOWN = -1,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_EHRPD
+ */
 enum class EHRPDReasonCode {
    /* Enumeration for the EHRPD verbose call end reason */
    CE_EHRPD_SUBS_LIMITED_TO_V4 = 1,
@@ -372,9 +555,13 @@ enum class EHRPDReasonCode {
    CE_EHRPD_VSNCP_3GPP2I_PDN_ID_IN_USE = 15,
    CE_EHRPD_VSNCP_3GPP2I_SUBSCR_LIMITATION = 16,
    CE_EHRPD_VSNCP_3GPP2I_PDN_EXISTS_FOR_THIS_APN = 17,
+   CE_EHRPD_VSNCP_3GPP2I_RECONNECT_NOT_ALLOWED = 19,
    CE_EHRPD_UNKNOWN = -1,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_IPV6
+ */
 enum class Ipv6ReasonCode {
    /*IPV6 defined Call End reasons*/
    CE_PREFIX_UNAVAILABLE = 1,
@@ -382,6 +569,17 @@ enum class Ipv6ReasonCode {
    CE_IPV6_DISABLED = 3,
 };
 
+/**
+ * Data call end/termination reason code for EndReasonType::CE_HANDOFF
+ */
+enum class HandoffReasonCode {
+   /*Hand off Call End reasons*/
+   CE_VCER_HANDOFF_PREF_SYS_BACK_TO_SRAT = 1,
+};
+
+/**
+ * Structure represents data call failure reason type and code.
+ */
 struct DataCallEndReason {
    EndReasonType type = EndReasonType::CE_UNKNOWN;
    /**< Data call terminated due to reason type, default is CE_UNKNOWN */
@@ -393,6 +591,7 @@ struct DataCallEndReason {
       PPPReasonCode pppCode;
       EHRPDReasonCode ehrpdCode;
       Ipv6ReasonCode ipv6Code;
+      HandoffReasonCode handOffCode;
    };
    /**< Reason Code corresponding to reason type*/
 };

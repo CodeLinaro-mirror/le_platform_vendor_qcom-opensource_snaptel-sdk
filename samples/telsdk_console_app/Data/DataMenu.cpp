@@ -104,8 +104,12 @@ void DataMenu::init() {
 
    std::shared_ptr<ConsoleAppCommand> reqDataCallStats
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "request_datacall_statistics\n", {},
+         "3", "request_datacall_statistics", {},
          std::bind(&DataMenu::requestDataCallStatistics, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> resetDataCallStats
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "4", "reset_datacall_statistics\n", {},
+         std::bind(&DataMenu::resetDataCallStatistics, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> reqProfile = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("100", "request_profile_list", {},
@@ -132,9 +136,9 @@ void DataMenu::init() {
                         std::bind(&DataMenu::requestProfileById, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
-      = {startDataCall,     stopDataCall,      reqDataCallStats,
-         reqProfile,        createProfileMenu, deleteProfileMenu,
-         modifyProfileMenu, queryProfileMenu,  requestProfileByIdMenu};
+      = {startDataCall,    stopDataCall,          reqDataCallStats,  resetDataCallStats,
+         reqProfile,       createProfileMenu,     deleteProfileMenu, modifyProfileMenu,
+         queryProfileMenu, requestProfileByIdMenu};
 
    addCommands(commandsList);
 
@@ -148,12 +152,12 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
    int profileId;
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
-   Utils<int>::validateInput(profileId);
+   Utils::validateInput(profileId);
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
-   Utils<int>::validateInput(ipFamilyType);
+   Utils::validateInput(ipFamilyType);
 
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
    dataConnectionManager_->startDataCall(profileId, ipFamType,
@@ -165,12 +169,12 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
    int profileId;
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
-   Utils<int>::validateInput(profileId);
+   Utils::validateInput(profileId);
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
-   Utils<int>::validateInput(ipFamilyType);
+   Utils::validateInput(ipFamilyType);
 
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
    dataConnectionManager_->stopDataCall(profileId, ipFamType,
@@ -183,18 +187,36 @@ void DataMenu::requestDataCallStatistics(std::vector<std::string> inputCommand) 
    int profileId;
    std::cout << "Enter Profile Id : ";
    std::cin >> profileId;
-   Utils<int>::validateInput(profileId);
+   Utils::validateInput(profileId);
 
-   dataConnectionManager_->requestDataCallStatistics(
-      profileId, DataCallStatisticsResponseCb::requestStatisticsResponse);
+   auto dataCall = dataListener_->getDataCall(profileId);
+   if(dataCall) {
+      dataCall->requestDataCallStatistics(&DataCallStatisticsResponseCb::requestStatisticsResponse);
+   } else {
+      std::cout << "Unable to find DataCall, Please start_data_call" << std::endl;
+   }
 }
 
+void DataMenu::resetDataCallStatistics(std::vector<std::string> inputCommand) {
+   std::cout << "\nReset DataCall Statistics" << std::endl;
+
+   int profileId;
+   std::cout << "Enter Profile Id : ";
+   std::cin >> profileId;
+
+   auto dataCall = dataListener_->getDataCall(profileId);
+   if(dataCall) {
+      dataCall->resetDataCallStatistics(&DataCallStatisticsResponseCb::resetStatisticsResponse);
+   } else {
+      std::cout << "Unable to find DataCall, Please start_data_call" << std::endl;
+   }
+}
 void DataMenu::getProfileParamsFromUser() {
    char delimiter = '\n';
    int techPref;
    std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
    std::cin >> techPref;
-   Utils<int>::validateInput(techPref);
+   Utils::validateInput(techPref);
 
    std::cin.get();
    std::string profileName;
@@ -217,12 +239,12 @@ void DataMenu::getProfileParamsFromUser() {
    std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP \n2-CHAP"
                 "\n3-PAP_CHAP\n";
    std::cin >> authType;
-   Utils<int>::validateInput(authType);
+   Utils::validateInput(authType);
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
    std::cin >> ipFamilyType;
-   Utils<int>::validateInput(ipFamilyType);
+   Utils::validateInput(ipFamilyType);
 
    params_.profileName = profileName;
    params_.techPref = static_cast<telux::data::TechPreference>(techPref);
@@ -284,7 +306,7 @@ void DataMenu::modifyProfile(std::vector<std::string> inputCommand) {
    int profileId;
    std::cout << "Enter profile Id to Modify : ";
    std::cin >> profileId;
-   Utils<int>::validateInput(profileId);
+   Utils::validateInput(profileId);
 
    getProfileParamsFromUser();
 
@@ -302,7 +324,7 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
    int techPref;
    std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
    std::cin >> techPref;
-   Utils<int>::validateInput(techPref);
+   Utils::validateInput(techPref);
 
    std::cin.get();
    std::string profileName;
@@ -325,12 +347,12 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
    std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP"
                 "\n2-CHAP \n3-PAP_CHAP\n";
    std::cin >> authType;
-   Utils<int>::validateInput(authType);
+   Utils::validateInput(authType);
 
    int ipFamilyType;
    std::cout << "Enter Ip Family (4-IPv4, 6-IPV6, 10-IPV4V6): ";
    std::cin >> ipFamilyType;
-   Utils<int>::validateInput(ipFamilyType);
+   Utils::validateInput(ipFamilyType);
 
    params_.profileName = profileName;
    params_.techPref = static_cast<telux::data::TechPreference>(techPref);

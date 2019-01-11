@@ -35,9 +35,6 @@
  *             call information and add or remove listeners for monitoring data calls
  *             status.
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
- *
  */
 
 #ifndef DATACONNECTIONMANAGER_HPP
@@ -70,8 +67,6 @@ class IDataCall;
  * @param [in] error           Return code for whether the operation
  *                             succeeded or failed
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using DataCallResponseCb
    = std::function<void(const std::shared_ptr<IDataCall> &dataCall, telux::common::ErrorCode error)>;
@@ -109,8 +104,6 @@ public:
     * @returns True if Data Connection Manager is ready for service, otherwise
     * returns false.
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -120,8 +113,6 @@ public:
     * @returns A future that caller can wait on to be notified
     * when card manager is ready.
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -144,8 +135,6 @@ public:
     * @returns Immediate status of startDataCall() request sent
     *                   i.e. success or suitable status code.
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     *
     */
    virtual telux::common::Status startDataCall(int profileId,
@@ -171,8 +160,6 @@ public:
     *          suitable status code. The client receives asynchronous notifications
     *          indicating the data call tear-down.
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual telux::common::Status stopDataCall(int profileId,
                                               IpFamilyType ipFamilyType = IpFamilyType::IPV4V6,
@@ -188,8 +175,6 @@ public:
     *
     * @returns Status of registerListener success or suitable status code
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<IDataConnectionListener> listener)
       = 0;
@@ -201,8 +186,6 @@ public:
     *
     * @returns Status of deregisterListener success or suitable status code
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual telux::common::Status deregisterListener(std::weak_ptr<IDataConnectionListener> listener)
       = 0;
@@ -212,8 +195,6 @@ public:
     *
     * @returns SlotId
     *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual int getSlotId() = 0;
 
@@ -226,8 +207,6 @@ public:
 /**
  * @brief Represents single established data call on the device.
  *
- * @note  Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 class IDataCall {
 public:
@@ -236,8 +215,6 @@ public:
     *
     * @returns Interface Name.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual const std::string &getInterfaceName() = 0;
 
@@ -247,8 +224,6 @@ public:
     *
     * @returns @ref DataBearerTechnology
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual DataBearerTechnology getCurrentBearerTech() = 0;
 
@@ -257,8 +232,6 @@ public:
     *
     * @returns @ref DataCallFailReason.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual DataCallEndReason getDataCallEndReason() = 0;
 
@@ -267,8 +240,6 @@ public:
     *
     * @returns @ref DataCallStatus.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual DataCallStatus getDataCallStatus() = 0;
 
@@ -277,8 +248,6 @@ public:
     *
     * @returns @ref TechPreference.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual TechPreference getTechPreference() = 0;
 
@@ -287,8 +256,6 @@ public:
     *
     * @returns List of IP address details.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual std::list<IpAddrInfo> getIpAddressInfo() = 0;
 
@@ -297,8 +264,6 @@ public:
     *
     * @returns @ref IpFamilyType.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual IpFamilyType getIpFamilyType() = 0;
 
@@ -307,8 +272,6 @@ public:
     *
     * @returns Profile Identifier.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual int getProfileId() = 0;
 
@@ -355,8 +318,6 @@ public:
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 class IDataConnectionListener {
 public:
@@ -366,8 +327,6 @@ public:
     * @param [in] status     Data Call Status
     * @param [in] dataCall   Pointer to IDataCall
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
 

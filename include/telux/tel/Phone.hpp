@@ -76,9 +76,6 @@ using VoiceRadioTechResponseCb
  * @param [out] cellInfoList  vector of shared pointers to cell info object
  * @param [out] error         Return code for whether the operation
  *                            succeeded or failed
- *
- * @note Eval: This is a new API and is being evaluated. It is subject to
- * change and could break backwards compatibility.
  */
 using CellInfoCallback = std::function<void(std::vector<std::shared_ptr<CellInfo>> cellInfoList,
                                             telux::common::ErrorCode error)>;
@@ -165,8 +162,6 @@ public:
     *
     * @returns Status of requestCellInfo i.e. success or suitable error
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    * to change and could break backwards compatibility.
     */
    virtual telux::common::Status requestCellInfo(CellInfoCallback callback) = 0;
 
@@ -183,8 +178,6 @@ public:
     *
     * @returns Status of setCellInfoListRate i.e. success or suitable error
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject
-    * to change and could break backwards compatibility.
     */
    virtual telux::common::Status setCellInfoListRate(uint32_t timeInterval,
                                                      common::ResponseCallback callback)

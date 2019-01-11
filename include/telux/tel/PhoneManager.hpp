@@ -131,8 +131,6 @@ public:
     * @returns Status of requestCellularCapabilityInfo i.e. success or suitable
     * error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    * change and could break backwards compatibility.
     *
     */
    virtual telux::common::Status
@@ -148,8 +146,6 @@ public:
     * @returns Status of requestOperatingMode i.e. success or suitable error
     * code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    * change and could break backwards compatibility.
     */
    virtual telux::common::Status
       requestOperatingMode(std::shared_ptr<IOperatingModeCallback> callback = nullptr)

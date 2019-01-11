@@ -32,8 +32,6 @@
  *
  * @brief      DataFactory is the central factory to create all data instances
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef DATAFACTORY_HPP
@@ -55,8 +53,6 @@ namespace data {
 /**
  *@brief DataFactory is the central factory to create all data classes
  *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
  */
 class DataFactory {
 public:
@@ -72,8 +68,6 @@ public:
     *
     * @returns instance of IDataConnectionManager
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    std::shared_ptr<IDataConnectionManager> getDataConnectionManager(int slotId = DEFAULT_SLOT_ID);
 
@@ -84,8 +78,6 @@ public:
     *
     * @returns instance of IDataProfileManager
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    std::shared_ptr<IDataProfileManager> getDataProfileManager(int slotId = DEFAULT_SLOT_ID);
 

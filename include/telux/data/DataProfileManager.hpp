@@ -34,8 +34,6 @@
  *             This interface provides APIs to create, update, delete and lookup
  *             profiles in the device.
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef DATAPROFILEMANAGER_HPP
@@ -61,8 +59,6 @@ class IDataProfileCallback;
 /**
  * IDataProfileManager is a primary interface for profile management.
  *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
  */
 class IDataProfileManager {
 public:
@@ -73,8 +69,6 @@ public:
     *
     * @returns  Status of request profile i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status
       requestProfileList(std::shared_ptr<IDataProfileListCallback> callback = nullptr)
@@ -89,8 +83,6 @@ public:
     *
     * @returns Status of create profile i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status createProfile(const ProfileParams &profileParams,
                                                std::shared_ptr<IDataCreateProfileCallback> callback
@@ -108,8 +100,6 @@ public:
     *
     * @returns Status of delete profile i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status
       deleteProfile(uint8_t profileId, TechPreference techPreference,
@@ -126,8 +116,6 @@ public:
     *
     * @returns Status of modify profile i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status
       modifyProfile(uint8_t profileId, const ProfileParams &profileParams,
@@ -142,8 +130,6 @@ public:
     *
     * @returns Status of query profile i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status queryProfile(const ProfileParams &profileParams,
                                               std::shared_ptr<IDataProfileListCallback> callback
@@ -160,8 +146,6 @@ public:
     *
     * @returns Status of requestProfile i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual telux::common::Status requestProfile(uint8_t profileId, TechPreference techPreference,
                                                 std::shared_ptr<IDataProfileCallback> callback
@@ -173,8 +157,6 @@ public:
     * @returns SlotId
     *
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getSlotId() = 0;
 
@@ -193,8 +175,6 @@ public:
  * The methods in callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
  */
 class IDataCreateProfileCallback : public telux::common::ICommandCallback {
 public:
@@ -205,8 +185,6 @@ public:
     *                          Use IDataProfileManager::requestProfile to get the data profile
     * @param [in] error        @ref telux::common::ErrorCode
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual void onResponse(int profileId, telux::common::ErrorCode error) {
    }
@@ -220,8 +198,6 @@ public:
  * The methods in callback can be invoked from different threads.
  * The implementation should be thread safe.
  *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
  */
 class IDataProfileListCallback : public telux::common::ICommandCallback {
 public:
@@ -231,8 +207,6 @@ public:
     * @param [in] profiles   List of profiles supported by the device
     * @param [in] error      @ref telux::common::ErrorCode
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual void onProfileListResponse(const std::vector<std::shared_ptr<DataProfile>> &profiles,
                                       telux::common::ErrorCode error) {
@@ -247,8 +221,6 @@ public:
  * The methods in callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
  */
 class IDataProfileCallback : public telux::common::ICommandCallback {
 public:
@@ -258,8 +230,6 @@ public:
     * @param [in] profile      Response of data profile
     * @param [in] error        @ref telux::common::ErrorCode
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual void onResponse(const std::shared_ptr<DataProfile> &profile,
                            telux::common::ErrorCode error) {

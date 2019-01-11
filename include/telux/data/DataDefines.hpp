@@ -31,8 +31,6 @@
  * @file       DataDefines.hpp
  * @brief      DataDefines provides the enumerations required for Connection Manager
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef DATADEFINES_HPP

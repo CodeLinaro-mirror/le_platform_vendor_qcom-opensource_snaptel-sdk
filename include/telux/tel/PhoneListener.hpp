@@ -96,8 +96,6 @@ public:
     *                            changed.
     * @param [in] cellInfoList   vector of shared pointers to cell info object
     *
-    * @note Eval: This is a new API and is being evaluated.It is subject to
-    * change and could break backwards compatibility.
     */
    virtual void onCellInfoListChanged(int phoneId,
                                       std::vector<std::shared_ptr<CellInfo>> cellInfoList) {
@@ -144,8 +142,6 @@ public:
     *
     * @param [in] mode   Operating mode @ref OperatingMode.
     *
-    * @note Eval: This is a new API and is being evaluated.It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual void onOperatingModeChanged(OperatingMode mode) {
    }

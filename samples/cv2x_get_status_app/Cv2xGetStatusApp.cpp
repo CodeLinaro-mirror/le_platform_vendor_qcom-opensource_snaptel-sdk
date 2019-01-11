@@ -90,11 +90,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Print status
-    if (Cv2xStatusType::ACTIVE == gCv2xStatus.rxStatus) {
-        cout << "C-V2X Status:" << endl
-             << "  RX : " << gCv2xStatusToString[gCv2xStatus.rxStatus] << endl
-             << "  TX : " << gCv2xStatusToString[gCv2xStatus.txStatus] << endl;
-    }
+    cout << "C-V2X Status:" << endl
+         << "  RX : " << gCv2xStatusToString[gCv2xStatus.rxStatus] << endl
+         << "  TX : " << gCv2xStatusToString[gCv2xStatus.txStatus] << endl;
 
     return EXIT_SUCCESS;
 }

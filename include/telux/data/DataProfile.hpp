@@ -31,8 +31,6 @@
  * @file       DataProfile.hpp
  * @brief      This is a container class represents single data profile on the modem.
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  *
  */
 
@@ -49,8 +47,6 @@ namespace data {
 /**
  * @brief  DataProfile class represents single data profile on the modem.
  *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
- *          break backwards compatibility.
  */
 class DataProfile {
 public:
@@ -63,8 +59,6 @@ public:
     *
     * @returns profile id
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    int getId();
 
@@ -73,8 +67,6 @@ public:
     *
     * @returns profile name
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    std::string getName();
 
@@ -83,8 +75,6 @@ public:
     *
     * @returns APN name
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    std::string getApn();
 
@@ -93,8 +83,6 @@ public:
     *
     * @returns user name
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    std::string getUserName();
 
@@ -103,8 +91,6 @@ public:
     *
     * @returns profile password
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    std::string getPassword();
 
@@ -113,8 +99,6 @@ public:
     *
     * @returns TechPreference @ref TechPreference
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    TechPreference getTechPreference();
 
@@ -123,8 +107,6 @@ public:
     *
     * @returns AuthProtocolType @ref AuthProtocolType
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    AuthProtocolType getAuthProtocolType();
 
@@ -133,8 +115,6 @@ public:
     *
     * @returns IpFamilyType @ref IpFamilyType
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    IpFamilyType getIpFamilyType();
 
@@ -143,8 +123,6 @@ public:
     *
     * @returns String containing informative string.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
    std::string toString();
 

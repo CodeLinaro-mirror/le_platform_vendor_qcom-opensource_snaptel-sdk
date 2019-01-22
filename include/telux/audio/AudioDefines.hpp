@@ -40,6 +40,8 @@
 #ifndef AUDIODEFINES_HPP
 #define AUDIODEFINES_HPP
 
+#include <cstdint>
+#include <cstddef>
 #include <vector>
 
 namespace telux {

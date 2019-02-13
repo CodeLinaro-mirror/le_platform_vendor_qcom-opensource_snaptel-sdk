@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -61,6 +61,8 @@ private:
    void setCellInfoListRate(std::vector<std::string> userInput);
    void servingSystemMenu(std::vector<std::string> userInput);
    void networkMenu(std::vector<std::string> userInput);
+   void setECallOperatingMode(std::vector<std::string> userInput);
+   void requestECallOperatingMode(std::vector<std::string> userInput);
 
    std::string getRadioStateAsString(telux::tel::RadioState radioState);
    std::string getServiceStateAsString(telux::tel::ServiceState serviceState);

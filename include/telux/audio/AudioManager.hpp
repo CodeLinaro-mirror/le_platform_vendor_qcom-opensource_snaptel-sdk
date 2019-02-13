@@ -30,7 +30,7 @@
 /**
  * @file    AudioManager.hpp
  *
- * @brief   Audio Manager is a primary interface for audio operations. It provide
+ * @brief   Audio Manager is a primary interface for audio operations. It provides
  *          APIs to manage Voice, Audio and Sound Cards.
  *
  * @note    Eval: This is a new API and is being evaluated. It is subject to change
@@ -65,17 +65,16 @@ class IAudioCaptureStream;
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] devices     Devices list.
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] devices  Devices list.
+ * @param [in] error    Return code which indicates whether the operation
+ *                      succeeded or not.
+ *                      @ref ErrorCode
  *
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using GetDevicesResponseCb =
-    std::function<void(std::vector<std::shared_ptr<IAudioDevice>> devices,
-                       telux::common::ErrorCode error)>;
+using GetDevicesResponseCb = std::function<void(std::vector<std::shared_ptr<IAudioDevice>> devices,
+                                                telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to getStreamTypes API.
@@ -83,7 +82,7 @@ using GetDevicesResponseCb =
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] streamTypes   Stream type list.
+ * @param [in] streamTypes  Stream type list.
  * @param [in] error        Return code which indicates whether the operation
  *                          succeeded or not.
  *                          @ref ErrorCode
@@ -91,9 +90,8 @@ using GetDevicesResponseCb =
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using GetStreamTypesResponseCb =
-    std::function<void(std::vector<StreamType> streamTypes,
-                       telux::common::ErrorCode error)>;
+using GetStreamTypesResponseCb
+   = std::function<void(std::vector<StreamType> streamTypes, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to createStream API.
@@ -101,20 +99,19 @@ using GetStreamTypesResponseCb =
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] stream  Interface to Audio Stream created.
- *                     VOICE_CALL - Provides IAudioVoiceStream
- *                     PLAY - Provides IAudioPlayStream
- *                     CAPTURE - Provides IAudioCaptureStream
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] stream  Interface pointer of Stream created.
+ *                     VOICE_CALL - Provides IAudioVoiceStream pointer
+ *                     PLAY - Provides IAudioPlayStream pointer
+ *                     CAPTURE - Provides IAudioCaptureStream pointer
+ * @param [in] error   Return code which indicates whether the operation
+ *                     succeeded or not.
+ *                     @ref ErrorCode
  *
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using CreateStreamResponseCb =
-    std::function<void(std::shared_ptr<IAudioStream> &stream,
-                       telux::common::ErrorCode error)>;
+using CreateStreamResponseCb
+   = std::function<void(std::shared_ptr<IAudioStream> &stream, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to deleteStream API.
@@ -122,19 +119,18 @@ using CreateStreamResponseCb =
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] error  Return code which indicates whether the operation
+ *                    succeeded or not.
+ *                    @ref ErrorCode
  *
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using DeleteStreamResponseCb =
-    std::function<void(telux::common::ErrorCode error)>;
+using DeleteStreamResponseCb = std::function<void(telux::common::ErrorCode error)>;
 
 /**
  * @brief   Audio Manager is a primary interface for audio operations. It provide
- *          APIs to manage stream ( like voice, play, record etc) and sound cards.
+ *          APIs to manage Streams ( like voice, play, record etc) and sound cards.
  */
 class IAudioManager {
 public:
@@ -185,10 +181,10 @@ public:
    virtual telux::common::Status getStreamTypes(GetStreamTypesResponseCb callback = nullptr) = 0;
 
    /**
-    * Creates the audio streams for audio operation
+    * Creates the stream for audio operation
     *
     * @param [in] streamConfig    stream configuration.
-    * @param [in] callback    callback pointer to get the response of createAudioStream.
+    * @param [in] callback        callback pointer to get the response of createStream.
     *
     * @returns Status of request i.e. success or suitable status code.
     *
@@ -196,12 +192,13 @@ public:
     *              and could break backwards compatibility.
     */
    virtual telux::common::Status createStream(StreamConfig streamConfig,
-      CreateStreamResponseCb callback = nullptr) = 0;
+                                              CreateStreamResponseCb callback = nullptr)
+      = 0;
 
    /**
-    * Deletes the audio streams which was created
+    * Deletes the specified stream which was created before
     *
-    * @param [in] stream    reference to audio stream to be deleted.
+    * @param [in] stream      reference to stream to be deleted.
     * @param [in] callback    callback pointer to get the response of deleteStream.
     *
     * @returns Status of request i.e. success or suitable status code.
@@ -210,11 +207,12 @@ public:
     *              and could break backwards compatibility.
     */
    virtual telux::common::Status deleteStream(std::shared_ptr<IAudioStream> stream,
-      DeleteStreamResponseCb callback = nullptr) = 0;
+                                              DeleteStreamResponseCb callback = nullptr)
+      = 0;
 };
 
 /**
- * @brief   Audio device and it's characteristics like Direction (sink or source), type
+ * @brief   Audio device and it's characteristics like Direction (Sink or Source), type
  */
 class IAudioDevice {
 public:
@@ -229,10 +227,10 @@ public:
    virtual DeviceType getType() = 0;
 
    /**
-    * Provide direction of device whether is sink for audio data ( RX i.e. speaker or others)
-    * or source for audio data ( TX i.e. mic or others)
+    * Provide direction of device whether is Sink for audio data ( RX i.e. speaker, etc)
+    * or Source for audio data ( TX i.e. mic, etc)
     *
-    * @returns    direction flag representing device
+    * @returns    DeviceDirection
     *
     * @note       Eval: This is a new API and is being evaluated. It is subject to change
     *             and could break backwards compatibility.
@@ -248,16 +246,15 @@ public:
  * The implementation should be thread safe.
  *
  * @param [in] devices   Devices list.
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] error     Return code which indicates whether the operation
+ *                       succeeded or not.
+ *                       @ref ErrorCode
  *
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using GetStreamDeviceResponseCb =
-    std::function<void(std::vector<DeviceType> devices,
-                       telux::common::ErrorCode error)>;
+using GetStreamDeviceResponseCb
+   = std::function<void(std::vector<DeviceType> devices, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to stream getVolume API.
@@ -265,17 +262,16 @@ using GetStreamDeviceResponseCb =
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] volume  stream volume details.
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] volume   stream volume details.
+ * @param [in] error    Return code which indicates whether the operation
+ *                      succeeded or not.
+ *                      @ref ErrorCode
  *
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using GetStreamVolumeResponseCb =
-    std::function<void(StreamVolume volume,
-                       telux::common::ErrorCode error)>;
+using GetStreamVolumeResponseCb
+   = std::function<void(StreamVolume volume, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to stream getMute API.
@@ -283,20 +279,19 @@ using GetStreamVolumeResponseCb =
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] mute  stream mute details.
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] mute   stream mute details.
+ * @param [in] error  Return code which indicates whether the operation
+ *                    succeeded or not.
+ *                    @ref ErrorCode
  *
  * @note   Eval: This is a new API and is being evaluated. It is subject to
  *         change and could break backwards compatibility.
  */
-using GetStreamMuteResponseCb =
-    std::function<void(StreamMute mute,
-                       telux::common::ErrorCode error)>;
+using GetStreamMuteResponseCb
+   = std::function<void(StreamMute mute, telux::common::ErrorCode error)>;
 
 /**
- * @brief   IAudioStream represents single audio stream base properties
+ * @brief   IAudioStream represents single audio stream with base properties
  */
 class IAudioStream {
 public:
@@ -322,7 +317,8 @@ public:
     *             and could break backwards compatibility.
     */
    virtual telux::common::Status setDevice(std::vector<DeviceType> devices,
-      telux::common::ResponseCallback callback = nullptr) = 0;
+                                           telux::common::ResponseCallback callback = nullptr)
+      = 0;
 
    /**
     * Get Device of audio stream
@@ -339,8 +335,8 @@ public:
    /**
     * Set Volume of audio stream
     *
-    * @param [in] volume     volume setting per channel data.
-    * @param [in] callback    callback to get the response of setVolume
+    * @param [in] volume     volume setting per channel for direction.
+    * @param [in] callback   callback to get the response of setVolume.
     *
     * @returns Status of the request i.e. success or suitable status code.
     *
@@ -348,13 +344,14 @@ public:
     *             and could break backwards compatibility.
     */
    virtual telux::common::Status setVolume(StreamVolume volume,
-      telux::common::ResponseCallback callback = nullptr) = 0;
+                                           telux::common::ResponseCallback callback = nullptr)
+      = 0;
 
    /**
     * Get Volume of audio stream
     *
-    * @param [in] dir    Stream Direction to query
-    * @param [in] callback    callback to get the response of getVolume
+    * @param [in] dir         Stream Direction to query volume details.
+    * @param [in] callback    callback to get the response of getVolume.
     *
     * @returns Status of the request i.e. success or suitable status code.
     *
@@ -362,12 +359,13 @@ public:
     *             and could break backwards compatibility.
     */
    virtual telux::common::Status getVolume(StreamDirection dir,
-      GetStreamVolumeResponseCb callback = nullptr) = 0;
+                                           GetStreamVolumeResponseCb callback = nullptr)
+      = 0;
 
    /**
     * Set Mute of audio stream
     *
-    * @param [in] mute        True - enable the mute, False - disable the mute
+    * @param [in] mute        mute setting for direction.
     * @param [in] callback    callback to know the status of the request.
     *
     * @returns Status of the request i.e. success or suitable status code.
@@ -376,13 +374,14 @@ public:
     *              and could break backwards compatibility.
     */
    virtual telux::common::Status setMute(StreamMute mute,
-      telux::common::ResponseCallback callback = nullptr) = 0;
+                                         telux::common::ResponseCallback callback = nullptr)
+      = 0;
 
    /**
     * Get Mute of audio stream
     *
-    * @param [in] dir    Stream Direction to query
-    * @param [in] callback    callback to get the response of getMute
+    * @param [in] dir         Stream Direction to query mute details.
+    * @param [in] callback    callback to get the response of getMute.
     *
     * @returns Status of the request i.e. success or suitable status code.
     *
@@ -390,7 +389,8 @@ public:
     *              and could break backwards compatibility.
     */
    virtual telux::common::Status getMute(StreamDirection dir,
-      GetStreamMuteResponseCb callback = nullptr) = 0;
+                                         GetStreamMuteResponseCb callback = nullptr)
+      = 0;
 };
 
 /**
@@ -408,8 +408,7 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to change
     *             and could break backwards compatibility.
     */
-   virtual telux::common::Status
-      startAudio(telux::common::ResponseCallback callback = nullptr) = 0;
+   virtual telux::common::Status startAudio(telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * Stops audio stream
@@ -421,10 +420,8 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to change
     *             and could break backwards compatibility.
     */
-   virtual telux::common::Status
-      stopAudio(telux::common::ResponseCallback callback = nullptr) = 0;
+   virtual telux::common::Status stopAudio(telux::common::ResponseCallback callback = nullptr) = 0;
 };
-
 
 /**
  * @brief   IAudioPlayStream represents single audio playback stream
@@ -435,7 +432,7 @@ public:
     * Write Samples to audio stream. First write starts playback operation.
     *
     * @param [in] buffer       stream buffer for write.
-    * @param [in] callback    callback to get the response of write.
+    * @param [in] callback     callback to get the response of write.
     *
     * @returns Status of the request i.e. success or suitable status code.
     *
@@ -443,7 +440,8 @@ public:
     *             and could break backwards compatibility.
     */
    virtual telux::common::Status write(StreamBuffer buffer,
-      telux::common::ResponseCallback callback = nullptr) = 0;
+                                       telux::common::ResponseCallback callback = nullptr)
+      = 0;
 };
 
 /**
@@ -455,7 +453,7 @@ public:
     * Read Samples from audio stream. First read starts capture operation.
     *
     * @param [in] buffer       stream buffer for read.
-    * @param [in] callback    callback to get the response of read.
+    * @param [in] callback     callback to get the response of read.
     *
     * @returns Status of the request i.e. success or suitable status code.
     *
@@ -463,12 +461,13 @@ public:
     *             and could break backwards compatibility.
     */
    virtual telux::common::Status read(StreamBuffer &buffer,
-      telux::common::ResponseCallback callback = nullptr) = 0;
+                                      telux::common::ResponseCallback callback = nullptr)
+      = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_audio */
 }  // End of namespace audio
 
-}// End of namespace telux
+}  // End of namespace telux
 
 #endif  // end of AUDIOMANAGER_HPP

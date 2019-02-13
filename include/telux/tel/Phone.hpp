@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,6 +57,9 @@ class IVoiceServiceStateCallback;
 /**
  * This function is called with the response to requestVoiceRadioTechnology API.
  *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
  * @param [in] radioTech  Pointer to radio technology
  * @param [in] error      Return code for whether the operation
  *                        succeeded or failed
@@ -80,13 +83,28 @@ using VoiceRadioTechResponseCb
 using CellInfoCallback = std::function<void(std::vector<std::shared_ptr<CellInfo>> cellInfoList,
                                             telux::common::ErrorCode error)>;
 
+/**
+ * This function is called with the response to requestECallOperatingMode API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] eCallMode    @ref ECallMode
+ * @param [out] error        Return code for whether the operation succeeded or failed
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+ *         break backwards compatibility.
+ */
+using ECallGetOperatingModeCallback
+   = std::function<void(ECallMode eCallMode, telux::common::ErrorCode error)>;
+
 /** @addtogroup telematics_phone
  * @{ */
 
 /**
- * @brief This class allows getting system information and registering for
- * system events. Each Phone instance is associated with a single SIM.
- * So on a dual SIM device you would have 2 Phone instances.
+ * @brief This class allows getting system information and registering for system events.
+ * Each Phone instance is associated with a single SIM. So on a dual SIM device you
+ * would have 2 Phone instances.
  */
 class IPhone {
 public:
@@ -196,8 +214,36 @@ public:
       requestSignalStrength(std::shared_ptr<ISignalStrengthCallback> callback = nullptr)
       = 0;
 
-   virtual ~IPhone() {
-   }
+   /**
+    * Sets the eCall operating mode
+    *
+    * @param [in] eCallMode - @ref ECallMode
+    * @param [in] callback - Callback function to get the response for set eCall operating mode
+    * request.
+    *
+    * @returns Status of setECallOperatingMode i.e. success or suitable error
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status setECallOperatingMode(ECallMode eCallMode,
+                                                       telux::common::ResponseCallback callback)
+      = 0;
+
+   /**
+    * Get the eCall operating mode
+    *
+    * @param [in] callback - Callback function to get the response of eCall operating mode request
+    *
+    * @returns Status of requestECallOperatingMode i.e. success or suitable error
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to
+    *             change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestECallOperatingMode(ECallGetOperatingModeCallback callback)
+      = 0;
+
+   virtual ~IPhone(){};
 };
 
 /**

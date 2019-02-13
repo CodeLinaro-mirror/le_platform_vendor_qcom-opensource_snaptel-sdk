@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -32,6 +32,7 @@
 when       who     what, where, why
 --------   ---     ------------------------------------------------------------
 02/27/17   LB      Created to support the Telematics SDK
+01/28/19   RK      Updated with Audio support to the Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/
@@ -60,7 +61,8 @@ This document serves as a User Guide for Telematics SDK APIs.
 @section sec_scope Scope
 This document provides details on how to use Telematics SDK APIs to build stand-alone applications on Linux based Automotive platforms.
 
-It contains information that depicts the usage of the APIs and demonstrate different use case scenarios through a set of sample applications such as make_call, make_ecall, send_sms, receive_sms, command_callback etc.
+It contains information that depicts the usage of the APIs and demonstrate different use case scenarios through a set of sample applications
+such as make_call, make_ecall, send_sms, receive_sms, command_callback, make_audio_voice_call etc.
 
 This document is intended for software developers who will be using the Telematics SDK.
 

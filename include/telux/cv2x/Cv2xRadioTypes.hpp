@@ -163,6 +163,29 @@ enum class Periodicity {
 };
 
 /**
+ * Contains event flow configuration parameters.
+ *
+ * Used in @ref createTxEventFlow
+ */
+struct EventFlowInfo {
+    bool autoRetransEnabledValid = true;
+    /**< Set to true if autoRetransEnabled field is specified. If false, the
+         system will use the default setting. */
+    bool autoRetransEnabled = true;
+    /**< Used to enable automatic-retransmissions. */
+    bool peakTxPowerValid = false;
+    /**< Set to true if peakTxPower is used. If false, the system will
+         use the default setting. */
+    int32_t peakTxPower;
+    /**< Max Tx power setting in dBm. */
+    bool mcsIndexValid = false;
+    /**< Set to true if mcsIndex is used. If false, the system will use its
+         default setting. */
+    uint8_t mcsIndex;
+    /**< Modulation and Coding Scheme Index to use. */
+};
+
+/**
  * Used to request the QoS bandwidth contract, implemented in PC5 3GPP V2X
  * radio as a <i>Semi Persistent Flow</i> (SPS).
  *
@@ -195,12 +218,12 @@ struct SpsFlowInfo {
     /**< Set to true if peakTxPower is used. If false, the system will
          use the default setting. */
     int32_t peakTxPower;
-    /**< Max Tx power setting. */
+    /**< Max Tx power setting in dBm. */
     bool mcsIndexValid = false;
     /**< Set to true if mcsIndex is used. If false, the system will use its
          default setting. */
     uint8_t mcsIndex;
-    /** Modulation and Coding Scheme Index to use.  */
+    /**< Modulation and Coding Scheme Index to use.  */
 };
 
 /**
@@ -262,6 +285,45 @@ struct MacDetails {
          MAC selected and is using for the transmit reservation. If the data
          goes to the radio with enough time, it can be transmitted on the
          medium in the next immediately scheduled slot. */
+};
+
+/**
+ * Contains SPS packet scheduling information that is reported from the radio.
+ *
+ * Used in @ref onSpsSchedulingChanged
+ */
+struct SpsSchedulingInfo {
+    uint8_t spsId;
+    /**< SPS ID */
+    uint64_t utcTime;
+    /**< Absolute UTC start time of next selected grant in nanoseconds. */
+    uint32_t periodicity;
+    /**< Periodicity of the grant in milliseconds. */
+};
+
+/**
+ * Contains IPv6 address.
+ *
+ * Used in @ref DataSessionSettings
+ */
+struct IPv6Address {
+    uint8_t addr[16];
+};
+
+/**
+ * Contains packet data session settings.
+ *
+ * Used in @ref requestDataSessionSettings
+ */
+struct DataSessionSettings {
+    bool mtuValid = false;
+    /**< Set to true if mtu is valid. */
+    uint32_t mtu;
+    /**< MTU size. */
+    bool ipv6AddrValid = false;
+    /**< Set to true if ipv6 address is valid. */
+    IPv6Address ipv6Addr;
+    /**< IPv6 address. */
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x */

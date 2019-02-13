@@ -32,76 +32,99 @@
 
 #include <telux/tel/PhoneFactory.hpp>
 
+#include "../common/ConfigParser.hpp"
+
+#define DEFAULT_PHONE_NUMBER "+18588451326"
+
 using namespace telux::tel;
 using namespace telux::common;
 
-// ##### 5.1 implement IMakeCallCallback interface to receive response for the dial request -
+// ##### 5.1 implement IMakeCallCallback interface to receive response for the
+// dial request -
 // optional
 class DialCallback : public IMakeCallCallback {
 public:
-   void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
+  void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
 };
 
-void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
-   std::cout << "DialCallback::makeCallResponse" << std::endl;
-   std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
-   if(call) {
-      std::cout << "makeCallResponse RemotePartyNumber : " << call->getRemotePartyNumber()
-                << std::endl;
-      std::cout << "makeCallResponse getCallIndex : " << call->getCallIndex() << std::endl;
-   }
+void DialCallback::makeCallResponse(ErrorCode error,
+                                    std::shared_ptr<ICall> call) {
+  std::cout << "DialCallback::makeCallResponse" << std::endl;
+  std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
+  if (call) {
+    std::cout << "makeCallResponse RemotePartyNumber : "
+              << call->getRemotePartyNumber() << std::endl;
+    std::cout << "makeCallResponse getCallIndex : " << call->getCallIndex()
+              << std::endl;
+  }
 }
 
 /**
  * Main routine
  */
-int main(int, char **) {
+int main(int argc, char *argv[]) {
 
-   // ### 1. Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
+  // ### 1. Get the PhoneFactory and PhoneManager instances.
+  auto &phoneFactory = PhoneFactory::getInstance();
+  auto phoneManager = phoneFactory.getPhoneManager();
 
-   // ### 2. Check if telephony subsystem is ready
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
+  // ### 2. Check if telephony subsystem is ready
+  bool subSystemsStatus = phoneManager->isSubsystemReady();
 
-   // #### 2.1 If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemsStatus = f.get();
-   }
+  // #### 2.1 If telephony subsystem is not ready, wait for it to be ready
+  if (!subSystemsStatus) {
+    std::cout << "Telephony subsystem is not ready" << std::endl;
+    std::cout << "wait unconditionally for it to be ready " << std::endl;
+    std::future<bool> f = phoneManager->onSubsystemReady();
+    // If we want to wait unconditionally for telephony subsystem to be ready
+    subSystemsStatus = f.get();
+  }
 
-   // Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
-      return 1;
-   }
+  // Exit the application, if SDK is unable to initialize telephony subsystems
+  if (subSystemsStatus) {
+    std::cout << " *** Sub Systems Ready *** " << std::endl;
+  } else {
+    std::cout << " *** ERROR - Unable to initialize telephony subsystem"
+              << std::endl;
+    return 1;
+  }
 
-   // ### 3. Instantiate Phone and call manager
-   auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
+  // ### 3. Instantiate Phone and call manager
+  auto phone = phoneManager->getPhone();
+  std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
 
-   // ### 4. Get unique id of the phone
-   int phoneId = DEFAULT_PHONE_ID;
+  // ### 4. Get unique id of the phone
+  int phoneId = DEFAULT_PHONE_ID;
 
-   // ### 5. Instantiate dial callback instance - this is optional
-   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
+  // ### 5. Instantiate dial callback instance - this is optional
+  std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
 
-   // ### 6. Send a dial request
-   if(callManager) {
-      std::string phoneNumber("+18989531755");
-      auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
-      std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
-   }
+  // ### 6. Send a dial request
+  if (callManager) {
+    std::string configFile;
+    std::string phoneNumber;
 
-   // ### 7. Exit logic is specific to an application
-   std::cout << "Press enter to exit" << std::endl;
-   std::string input;
-   std::getline(std::cin, input);
-   std::cout << "Exiting application..." << std::endl;
-   return 0;
+    if (argc == 2) {
+      configFile = argv[1];
+      std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>(configFile);
+      phoneNumber = configParser->getValue(std::string("DIAL_NUMBER"));
+    } else {
+      std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>();
+      phoneNumber = configParser->getValue(std::string("DIAL_NUMBER"));
+    }
+    if (phoneNumber.empty()) {
+      phoneNumber = DEFAULT_PHONE_NUMBER;
+      std::cout<<"Using default phoneNumber:" << phoneNumber << std::endl;
+    }
+
+    auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
+    std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
+  }
+
+  // ### 7. Exit logic is specific to an application
+  std::cout << "Press enter to exit" << std::endl;
+  std::string input;
+  std::getline(std::cin, input);
+  std::cout << "Exiting application..." << std::endl;
+  return 0;
 }

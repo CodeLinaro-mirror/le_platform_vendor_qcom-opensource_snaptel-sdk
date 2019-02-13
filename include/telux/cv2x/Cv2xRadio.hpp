@@ -170,6 +170,21 @@ using RequestSpsFlowInfoCallback =
                         telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to @ref requestDataSessionSettings.
+ *
+ * @param [in] settings     - Data session settings
+ * @param [in] error       - SUCCESS if data session settings request succeeded
+ *                         - @ref SUCCESS
+ *                         - @ref GENERIC_FAILURE
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+ *         break backwards compatibility.
+ */
+using RequestDataSessionSettingsCallback =
+    std::function<void (const DataSessionSettings & settings,
+                        telux::common::ErrorCode error)>;
+
+/**
  * This function is called with the response to updateSrcL2Info.
  *
  * @param [in] error       - SUCCESS if Tx reservation change succeeded
@@ -345,6 +360,40 @@ public:
         CreateTxEventFlowCallback cb) = 0;
 
     /**
+     * Creates an event flow. An associated Tx socket will be created and
+     * initialized.
+     *
+     * @param [in] ipType         - IP traffic type (IP or NON-IP)
+     * @param [in] serviceId      - ID used for transmissions that will be
+     *                              mapped to an L2 destination address.
+     *                              Variable length 4-byte PSID or ITS_AID, or
+     *                              another service ID.
+     * @param [in] flowInfo       - Flow configuration parameters
+     * @param [in] eventSrcPort   - Local port number to which the socket is
+     *                              bound. Used for transmissions of this ID.
+     * @param [in] cb             - Callback function that is invoked when socket
+     *                              creation is complete. This must not be null.
+     *
+     * @detdesc This function is used only for TX when no periodicity is
+     *          available for the application type. If your transmit data
+     *          periodicity is known, use createTxSpsFlow() instead.
+     *
+     * @par These even-driven sockets pay attention to the QoS parameters in
+     *      the IP socket.
+     *
+     * @returns SUCCESS upon success. Error status otherwise.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual telux::common::Status createTxEventFlow(
+        TrafficIpType ipType,
+        uint32_t serviceId,
+        const EventFlowInfo & flowInfo,
+        uint16_t eventSrcPort,
+        CreateTxEventFlowCallback cb) = 0;
+
+    /**
      * Closes the RxSubscription and frees resources (such as the Rx socket) associated
      * with it.
      *
@@ -410,6 +459,21 @@ public:
     virtual telux::common::Status requestSpsFlowInfo(
         std::shared_ptr<ICv2xTxFlow> txFlow,
         RequestSpsFlowInfoCallback cb) = 0;
+
+    /**
+    /**
+     * Request data session settings currently in use.
+     *
+     * @param [in] cb           - Callback that will be invoked and returns the
+     *                            data session settings. Must not be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestDataSessionSettings(
+        RequestDataSessionSettingsCallback cb) = 0;
 
     /**
      * Requests modem to change L2 info.

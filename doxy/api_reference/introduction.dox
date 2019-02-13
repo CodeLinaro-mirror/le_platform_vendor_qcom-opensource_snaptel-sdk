@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017, 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -32,25 +32,12 @@
 when       who     what, where, why
 --------   ---     ------------------------------------------------------------
 02/27/17   LB      Created to support the Telematics SDK
+01/28/19   RK      Updated with Audio support to the Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/
 /**
 @page introduction Introduction
-
-@latexonly
-%Header/footers redefined for Revision History page. No header
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{\sl\sffamily\footnotesize\textbf{\doctitleheader}}
-\fancyhead[R]{\sl\sffamily\footnotesize\textbf{\firstleftmark}}
-\fancyfoot[L]{\sffamily\footnotesize\textbf{\dcn}}
-%For Regular Distribution, comment out the next two lines
-%For Regular Distribution, uncomment the next two lines
-\fancyfoot[C]{\sffamily\scriptsize\textbf{FOR ILLUSTRATIVE PURPOSE ONLY. CONTENT IS SUBJECT TO CHANGE.}}
-\fancyfoot[R]{\sffamily\footnotesize\thepage }
-\renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
-@endlatexonly
 
 @section sec_purpose Purpose
 This document describes  interface specification of Telematics Software Development Kit (SDK) for applications on Linux based automotive platforms.
@@ -58,7 +45,8 @@ This document describes  interface specification of Telematics Software Developm
 @section sec_scope Scope
 Telematics SDK exposes a rich set of APIs conforming to C++11 standard which form the building blocks to create stand-alone Telematics applications.
 
-This document provides high level overview of Telematics SDK architecture and its APIs. Call flow diagrams are provided for various APIs such as a Phone, Call, SMS, SIM Card Services etc.
+This document provides high level overview of Telematics SDK architecture and its APIs.
+Call flow diagrams are provided for various APIs such as a Phone, Call, SMS, SIM Card Services, Audio etc.
 
 This document assumes that the developers are familiar with Linux and C++11 programming.
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -196,7 +196,7 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       std::cout << "Sending request to accept call " << std::endl;
       spCall->answer(myAnswerCb_);
    } else {
@@ -216,7 +216,7 @@ void CallMenu::rejectCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       std::cout << "Sending request to reject call " << std::endl;
       spCall->reject(myRejectCb_);
    } else {
@@ -237,7 +237,7 @@ void CallMenu::rejectWithSms(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       std::cout << "Sending request to reject call " << std::endl;
       spCall->reject("Testing reject with reason", myRejectCb_);
    } else {
@@ -259,12 +259,12 @@ void CallMenu::hangupDialingOrAlerting(std::vector<std::string> userInput) {
          spCall = *callIterator;
       }
    }
-   if (noOfExistingCalls > 1) {
+   if(noOfExistingCalls > 1) {
       std::cout << "More than one call: use Hangup cmd with Index " << std::endl;
       return;
    }
 
-   if(spCall != nullptr) {
+   if(spCall) {
       std::cout << "Sending request to hangup call " << std::endl;
       spCall->hangup(myHangupCb_);
    } else {
@@ -293,7 +293,7 @@ void CallMenu::hangupWithCallIndex(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       std::cout << "Sending request to hangup call " << std::endl;
       spCall->hangup(myHangupCb_);
    } else {
@@ -313,7 +313,7 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       spCall->hold(myHoldCb_);
    } else {
       std::cout << "No active call found in the list to hold " << std::endl;
@@ -413,7 +413,7 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       spCall->resume(myResumeCb_);
    } else {
       std::cout << "No call to resume which is on hold " << std::endl;
@@ -436,7 +436,7 @@ void CallMenu::playDtmfTone(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       std::string dtmfString = userInput[1];
       if(dtmfString.length() > 0) {
          dtmfString = dtmfString.erase(0, dtmfString.find_first_not_of(" \n\r\t"));
@@ -472,7 +472,7 @@ void CallMenu::startDtmfTone(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       spCall->startDtmfTone('1', myStartToneCb_);
    } else {
       std::cout << "No active call found in the list " << std::endl;
@@ -494,7 +494,7 @@ void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall != nullptr) {
+   if(spCall) {
       spCall->stopDtmfTone(myStopToneCb_);
    } else {
       std::cout << "No active call found in the list " << std::endl;

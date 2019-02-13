@@ -38,7 +38,7 @@
  */
 
 #ifndef __V2X_RADIO_APIS_H__
-#define __V2X_RADIO_APIS_H__ 1
+#define __V2X_RADIO_APIS_H__
 
 #include <net/ethernet.h> /* the L2 protocols */
 #include <netinet/in.h>
@@ -512,6 +512,43 @@ typedef struct {
 } v2x_per_sps_reservation_calls_t;
 
 /**
+    V2X TX retransmission policies supported by the modem.
+
+    In the case of V2X_AUTO_RETRANSMIT_DONT_CARE, the modem will fallback to its default behavior,
+    which remains unspecified.
+ */
+typedef enum {
+    V2X_AUTO_RETRANSMIT_DISABLED = 0,   /**< Auto-retransmit mode is disabled */
+    V2X_AUTO_RETRANSMIT_ENABLED = 1,    /**< Auto-retransmit mode is enabled */
+    V2X_AUTO_RETRANSMIT_DONT_CARE = 2,  /**< Default to what the modem chooses */
+} v2x_auto_retransmit_policy_t;
+
+/**
+    Encapsulates advanced parameters that can be specified for TX SPS and Event-driven flows.
+ */
+typedef struct {
+    v2x_auto_retransmit_policy_t retransmit_policy;
+    /**< V2X retransmit policy */
+    uint8_t default_tx_power_valid;
+    /**< 1 if default_tx_power is specified. 0 otherwise */
+    int32_t default_tx_power;
+    /**< Default power used for transmit */
+    uint8_t mcs_index_valid;
+    /**< 1 if mcs_index is specified. 0 otherwise */
+    uint8_t mcs_index;
+    /**< MCS index number */
+} v2x_tx_flow_info_t;
+
+/**
+    Encapsulates advanced parameters that can be specified for TX SPS flows.
+ */
+typedef struct {
+    v2x_tx_bandwidth_reservation_t reservation;
+    /**< aaa */
+    v2x_tx_flow_info_t flow_info;
+} v2x_tx_sps_flow_info_t;
+
+/**
     Method used to query the platform SDK for its version number, build
     information, and build date.
 
@@ -769,6 +806,14 @@ extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
         int *event_sock,
         struct sockaddr_in6 *event_sockaddr);
 
+
+extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
+    v2x_tx_bandwidth_reservation_t *res,
+    v2x_per_sps_reservation_calls_t *calls,
+    int sps_portnum,
+    int *sps_sock,
+    struct sockaddr_in6 *sps_sockaddr);
+
 /**
     Adjusts the reservation for transmit bandwidth.
 
@@ -921,13 +966,215 @@ extern int v2x_radio_sock_close(int *sock_fd);
 extern void v2x_radio_set_log_level(int new_level, int use_syslog);
 
 /**
- *  poll for recent V2X status.  Does not generate any modem control traffic, but rather for efficiency, just returns 
+ *  poll for recent V2X status.  Does not generate any modem control traffic, but rather for efficiency, just returns
  *  most recently cached value that was reported form the modem (often repoted at high/frequent rate from Modem
  *
  *  @param[out]  the age in microseconds of the last event (radio status) that is being reported
  *  @return,  the Status Active, suspended, etc
  */
 extern v2x_event_t cv2x_status_poll(uint64_t *status_age_useconds);
+
+/**
+    Triggers modem to change its SRC L2 address.
+
+    @datatypes
+    v2x_radio_handle_t
+
+    @param[in]  handle          Identifies the initialized Radio interface on
+                                which this data connection is connected.
+
+    @detdesc
+    This function is called in order to prompt the modem to change its SRC L2 address by
+    randomly generating a new one.
+    @par
+    When the change is complete, clients will be notified of the new L2 via the
+    v2x_radio_l2_addr_changed_listener callback function.
+
+    @return
+    0 -- On success
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device. @newpage
+ */
+extern int v2x_radio_trigger_l2_update(
+    v2x_radio_handle_t handle);
+
+/**
+    Creates and binds a socket with a bandwidth-reserved (SPS) Tx flow with the
+    requested ID/priority/periodicity/size on a specified source port number.
+    The socket is created as an IPv6 UDP socket.
+
+    @datatypes
+    v2x_radio_handle_t \n
+    v2x_tx_sps_flow_info_t \n
+    v2x_per_sps_reservation_calls_t
+
+    @param[in]  handle          Identifies the initialized Radio interface on
+                                which this data connection is connected.
+    @param[in]  sps_flow_info   Pointer to the parameter structure (how often it
+                                is sent, how many bytes reserved, and so on).
+    @param[in]  calls           Pointer to reservation callbacks/listeners. This
+                                parameter is called when underlying radio MAC
+                                parameters change related to the SPS bandwidth
+                                contract. For example, the callback after a
+                                reservation change, or if the timing offset of
+                                the SPS adjusts itself in response to traffic.
+                                This parameter passes NULL if no callbacks are
+                                required.
+    @param[in]  sps_portnum     Requested source port number for the bandwidth
+                                reserved SPS transmissions.
+    @param[in]  event_portnum   Requested source port number for the bandwidth
+                                reserved event transmissions, or  -1 for no event
+                                port.
+    @param[out] sps_sock        Pointer to the socket that is bound to the
+                                requested port for Tx with reserved bandwidth.
+    @param[out] sps_sockaddr    Pointer to the IPv6 UDP socket. The sockaddr_in6
+                                buffer is initialized with the IPv6 source
+                                address and source port that are used for the
+                                bind() function. The caller can then use the
+                                buffer for subsequent sendto() function calls.
+    @param[out] event_sock      Pointer to the socket that is bound to the
+                                event-driven transmission port.
+    @param[out] event_sockaddr  Pointer to the IPV6 UDP socket. The sockaddr_in6
+                                buffer is initialized with the IPv6 source
+                                address and source port that are used for the
+                                bind() function. The caller can then use the
+                                buffer for subsequent sendto() function calls.
+
+    @detdesc
+    The radio attempts to reserve the flow with the specified size and rate
+    passed in the request parameters.
+    @par
+    This function is used only for Tx. It sets up two UDP sockets on the
+    requested two HLOS port numbers.
+    @par
+    For only a single SPS flow, indicate the event port number by using a
+    negative number or NULL for the event_sockaddr. For a single event-driven
+    port, use v2x_radio_tx_event_sock_create_and_bind() instead.
+    @par
+    Because the modem endpoint requires a specific global address, all data sent
+    on these sockets must have a configurable IPv6 destination address for the
+    non-IP traffic.
+    @par
+    @note1hang The Priority parameter of the SPS reservation is used only for the
+    reserved Tx bandwidth (SPS) flow. The non-SPS/event-driven data sent to the
+    event_portnum parameter is prioritized on the air, based on the IPv67
+    Traffic Class of the packet.
+    @par
+    The caller is expected to identify two unused local port numbers to use for
+    binding: one for the event-driven flow and one for the SPS flow.
+    @par
+    This call is a blocking call. When it returns, the sockets are ready to used,
+    assuming there is no error.
+
+    @return
+    0 -- On success.
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device.
+
+    @dependencies
+    The interface must be pre-initialized with v2x_radio_init(). The handle from
+    that function must be used as the parameter in this function. @newpage
+*/
+extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
+    v2x_radio_handle_t handle,
+    v2x_tx_sps_flow_info_t *sps_flow_info,
+    v2x_per_sps_reservation_calls_t *calls,
+    int sps_portnum,
+    int event_portnum,
+    int *sps_sock,
+    struct sockaddr_in6 *sps_sockaddr,
+    int *event_sock,
+    struct sockaddr_in6 *event_sockaddr);
+
+int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
+    v2x_tx_sps_flow_info_t *sps_flow_info,
+    v2x_per_sps_reservation_calls_t *calls,
+    int sps_portnum,
+    int *sps_sock,
+    struct sockaddr_in6 *sps_sockaddr);
+
+/**
+    Adjusts the reservation for transmit bandwidth.
+
+    @datatypes
+    v2x_tx_sps_flow_info_t
+
+    @param[out] sps_sock             Pointer to the socket bound to the requested
+                                     port.
+    @param[in]  updated_flow_info    Pointer to a parameter structure with
+                                     new reservation information.
+
+    @detdesc
+    This function is used as follows:
+    - When the bandwidth requirement changes in periodicity (for example, due to
+        an application layer DCC algorithm)
+    - Because the packet size is increasing (for example, due to a growing path
+        history size in a BSM).
+    @par
+    When the reservation change is complete, a callback to the structure is
+    passed at in a v2x_radio_init() call.
+
+    @return
+    #V2X_STATUS_SUCCESS -- On success.
+    @par
+    Error code -- If there is a problem (see #v2x_status_enum_type).
+
+    @dependencies
+    An SPS flow must have been successfully initialized with the
+    v2x_radio_tx_sps_sock_create_and_bind() or
+    v2x_radio_tx_sps_sock_create_and_bind_v2() methods.
+ */
+extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
+    int *sps_sock,
+    v2x_tx_sps_flow_info_t *updated_flow_info);
+
+/**
+    Opens and binds an event-driven socket (one with no bandwidth reservation).
+
+    @datatypes
+    v2x_tx_flow_info_t
+
+    @param[in]  interface        Pointer to the operating system name to use.
+                                 This interface is an RmNet interface (HLOS).
+    @param[in]  v2x_id           Used for transmissions that are ultimately
+                                 mapped to an L2 destination address.
+    @param[in]  event_portnum    Local port number to which the socket is
+                                 bound. Used for transmissions of this ID.
+    @param[in]  event_flow_info  Pointer to event flow parameters strutcture.
+    @param[out] event_sock_addr  Pointer to the sockaddr_ll structure buffer
+                                 to be initialized.
+    @param[out] sock             Pointer to the file descriptor. Loaded when
+                                 the function is successful.
+
+    @detdesc
+    This function is used only for Tx when no periodicity is available for the
+    application type. If your transmit data periodicity is known, use
+    v2x_radio_tx_sps_sock_create_and_bind() or v2x_radio_tx_sps_sock_create_and_bind_v2()
+    instead.
+    @par
+    These event-driven sockets pay attention to QoS parameters in the IP socket.
+
+    @return
+    0 -- On success
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device. @newpage
+ */
+extern int v2x_radio_tx_event_sock_create_and_bind_v2(
+    const char *interface,
+    int v2x_id,
+    int event_portnum,
+    v2x_tx_flow_info_t *event_flow_info,
+    struct sockaddr_in6 *event_sock_addr,
+    int *sock);
 
 /**
  * Testing functions mainly for sim environment

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -167,6 +167,14 @@ void PhoneMenu::init() {
       = std::make_shared<ConsoleAppCommand>(
          ConsoleAppCommand("13", "Serving_System", {},
                            std::bind(&PhoneMenu::servingSystemMenu, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> setECallOperatingModeCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "14", "Set_eCall_operating_mode", {},
+         std::bind(&PhoneMenu::setECallOperatingMode, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestECallOperatingModeCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "15", "Request_eCall_operating_mode", {},
+         std::bind(&PhoneMenu::requestECallOperatingMode, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
@@ -181,7 +189,9 @@ void PhoneMenu::init() {
          requestCellInfoListCommand,
          setCellInfoListRateCommand,
          networkMenuCommand,
-         servingSystemMenuCommand};
+         servingSystemMenuCommand,
+         setECallOperatingModeCommand,
+         requestECallOperatingModeCommand};
    addCommands(commandsListPhoneSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -195,7 +205,7 @@ void PhoneMenu::requestSignalStrength(std::vector<std::string> userInput) {
          std::cout << "Request Signal strength is failed" << std::endl;
       }
    } else {
-      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
    }
 }
 
@@ -204,7 +214,7 @@ void PhoneMenu::getRadioState(std::vector<std::string> userInput) {
       auto radioState = phone_->getRadioState();
       std::cout << "RadioState is " << getRadioStateAsString(radioState) << std::endl;
    } else {
-      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
    }
 }
 
@@ -259,7 +269,7 @@ void PhoneMenu::requestRadioTechnology(std::vector<std::string> userInput) {
          std::cout << "Request Voice Radio Technology is failed" << std::endl;
       }
    } else {
-      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
    }
 }
 
@@ -272,7 +282,7 @@ void PhoneMenu::requestVoiceServiceState(std::vector<std::string> userInput) {
          std::cout << "Request Voice Service state is failed" << std::endl;
       }
    } else {
-      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
    }
 }
 
@@ -309,7 +319,7 @@ void PhoneMenu::setRadioPower(std::vector<std::string> userInput) {
       }
       radioPowerFlag = -1;
    } else {
-      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
    }
 }
 
@@ -367,7 +377,7 @@ void PhoneMenu::requestCellInfoList(std::vector<std::string> userInput) {
          std::cout << "CellInfo list request failed" << std::endl;
       }
    } else {
-      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
    }
 }
 
@@ -395,7 +405,7 @@ void PhoneMenu::setCellInfoListRate(std::vector<std::string> userInput) {
          std::cout << "Set cell info rate request failed\n" << std::endl;
       }
    } else {
-      std::cout << "No phone found corresponding to default phoneid" << std::endl;
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
    }
 }
 
@@ -409,4 +419,42 @@ void PhoneMenu::networkMenu(std::vector<std::string> userInput) {
    NetworkMenu networkMenu("Network Menu", "Network> ");
    networkMenu.init();
    networkMenu.mainLoop();
+}
+
+void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
+   if(phone_) {
+      int eCallMode;
+      std::cout << std::endl;
+      std::cout << "Enter eCall Operating Mode(0-NORMAL, 1-ECALL_ONLY): ";
+      std::cin >> eCallMode;
+
+      if(eCallMode == 0 || eCallMode == 1) {
+         auto ret = phone_->setECallOperatingMode(
+            static_cast<telux::tel::ECallMode>(eCallMode),
+            MySetECallOperatingModeCallback::setECallOperatingModeResponse);
+         if(ret == telux::common::Status::SUCCESS) {
+            std::cout << "Set eCall operating mode request sent successfully \n";
+         } else {
+            std::cout << "Set eCall operating mode request failed \n";
+         }
+      } else {
+         std::cout << "Invalid input \n";
+      }
+   } else {
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
+   }
+}
+
+void PhoneMenu::requestECallOperatingMode(std::vector<std::string> userInput) {
+   if(phone_) {
+      auto ret = phone_->requestECallOperatingMode(
+         MyGetECallOperatingModeCallback::getECallOperatingModeResponse);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "Get eCall Operating mode request sent successfully\n";
+      } else {
+         std::cout << "Get eCall Operating mode request failed \n";
+      }
+   } else {
+      std::cout << "No phone found corresponding to default phoneId" << std::endl;
+   }
 }

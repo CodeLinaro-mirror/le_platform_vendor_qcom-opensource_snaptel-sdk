@@ -88,6 +88,16 @@ public:
                                     MacDetails details) {}
 
     /**
+     * Called when SPS scheduling has changed.
+     *
+     * @param [in] schedulingInfo - SPS scheduling information .
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual void onSpsSchedulingChanged(const SpsSchedulingInfo & schedulingInfo) {}
+
+    /**
      * Destructor for ICv2xRadioListener
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to

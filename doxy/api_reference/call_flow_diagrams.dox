@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -911,4 +911,148 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 15. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
 16. C-V2X Radio sends asynchronous notification via the callback (if a callback was specified) indicating the status of the request.
 
+@section audio_call_flows Audio
+
+@subsection audio_manager_api_callflow Audio Manager API call flow
+
+@anchor fig_audio_manager_api_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_manager_api_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Manager API call flow}
+  \label{fig_audio_manager_api_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_manager_api_call_flow.png,Audio Manager API call flow,80,80,Audio Manager API call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. Application can use IAudioManager::isSubsystemReady to determine if the system is ready.
+4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
+5. If it is not ready, then the application could use onSubsystemReady which returns std::future.
+6. AudioManager notifies the application when the subsystem is ready through the std::future object.
+7. The application waits until the asynchronous operation i.e onSubsystemReady completes.
+8. On Readiness, Application requests supported device types using getDevices method.
+9. Application receives synchronous Status which indicates if the getDevices request was sent successfully.
+10. Application is notified of the Status of the getDevices request (either SUCCESS or FAILED) via the application-supplied callback, with array of supported device types.
+11. Application requests supported stream types using getStreamTypes method.
+12. Application receives synchronous Status which indicates if the getStreamTypes request was sent successfully.
+13. Application is notified of the Status of the getStreamTypes request (either SUCCESS or FAILED) via the application-supplied callback, with array of supported stream types.
+14. Application requests create audio stream using createStream method.
+15. Application receives synchronous Status which indicates if the createStream request was sent successfully.
+16. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface.
+17. Application requests delete audio stream using deleteStream method.
+18. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+19. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_voicecall_start_stop_callflow Audio Voice Call Start/Stop call flow
+
+@anchor fig_audio_voicecall_start_stop_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_voicecall_start_stop_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Voice Call Start/Stop call flow}
+  \label{fig_audio_voicecall_start_stop_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_voicecall_start_stop_call_flow.png,Audio Voice Call Start/Stop call flow,80,80,Audio Voice Call Start/Stop call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests create audio voice stream using createStream method with streamType as VOICE_CALL.
+4. Application receives synchronous Status which indicates if the createStream request was sent successfully.
+5. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioVoiceStream.
+6. Application requests start audio stream using startAudio method on IAudioVoiceStream.
+7. Application receives synchronous Status which indicates if the startAudio request was sent successfully.
+8. Application is notified of the Status of the startAudio request (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application requests stop audio stream using stopAudio method on IAudioVoiceStream.
+10. Application receives synchronous Status which indicates if the stopAudio request was sent successfully.
+11. Application is notified of the Status of the stopAudio request (either SUCCESS or FAILED) via the application-supplied callback.
+12. Application requests delete audio stream using deleteStream method.
+13. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+14. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_voicecall_device_switch_callflow Audio Voice Call Device Switch call flow
+
+@anchor fig_audio_voicecall_device_switch_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_voicecall_device_switch_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Voice Call Device Switch call flow}
+  \label{fig_audio_voicecall_device_switch_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_voicecall_device_switch_call_flow.png,Audio Voice Call Device Switch call flow,80,80,Audio Voice Call Device Switch call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests create audio voice stream using createStream method with streamType as VOICE_CALL.
+4. Application receives synchronous Status which indicates if the createStream request was sent successfully.
+5. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioVoiceStream.
+6. Application requests start audio stream using startAudio method on IAudioVoiceStream.
+7. Application receives synchronous Status which indicates if the startAudio request was sent successfully.
+8. Application is notified of the Status of the startAudio request (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application requests new device routing of stream using setDevice method on IAudioVoiceStream.
+10. Application receives synchronous Status which indicates if the setDevice request was sent successfully.
+11. Application is notified of the Status of the setDevice request (either SUCCESS or FAILED) via the application-supplied callback.
+12. Application query device stream routed to using getDevice method on IAudioVoiceStream.
+13. Application receives synchronous Status which indicates if the getDevice request was sent successfully.
+14. Application is notified of the Status of the getDevice request (either SUCCESS or FAILED) via the application-supplied callback, along with device types.
+15. Application requests stop audio stream using stopAudio method on IAudioVoiceStream.
+16. Application receives synchronous Status which indicates if the stopAudio request was sent successfully.
+17. Application is notified of the Status of the stopAudio request (either SUCCESS or FAILED) via the application-supplied callback.
+18. Application requests delete audio stream using deleteStream method.
+19. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+20. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_voicecall_volume_mute_control_callflow Audio Voice Call Volume/Mute control call flow
+
+@anchor fig_audio_voicecall_volume_mute_control_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_voicecall_volume_mute_control_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Voice Call Volume/Mute control call flow}
+  \label{fig_audio_voicecall_volume_mute_control_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_voicecall_volume_mute_control_call_flow.png,Audio Voice Call Volume/Mute control call flow,80,80,Audio Voice Call Volume/Mute control call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests create audio voice stream using createStream method with streamType as VOICE_CALL.
+4. Application receives synchronous Status which indicates if the createStream request was sent successfully.
+5. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioVoiceStream.
+6. Application requests start audio stream using startAudio method on IAudioVoiceStream.
+7. Application receives synchronous Status which indicates if the startAudio request was sent successfully.
+8. Application is notified of the Status of the startAudio request (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application requests new volume on stream using setVolume method on IAudioVoiceStream for specified direction.
+10. Application receives synchronous Status which indicates if the setVolume request was sent successfully.
+11. Application is notified of the Status of the setVolume request (either SUCCESS or FAILED) via the application-supplied callback.
+12. Application query volume on stream using getVolume method on IAudioVoiceStream for specified direction.
+13. Application receives synchronous Status which indicates if the getVolume request was sent successfully.
+14. Application is notified of the Status of the getVolume request (either SUCCESS or FAILED) via the application-supplied callback for specified direction with volume details.
+15. Application requests new mute on stream using setMute method on IAudioVoiceStream for specified direction.
+16. Application receives synchronous Status which indicates if the setMute request was sent successfully.
+17. Application is notified of the Status of the setMute request (either SUCCESS or FAILED) via the application-supplied callback.
+18. Application query mute details on stream using getMute method on IAudioVoiceStream for specified direction.
+19. Application receives synchronous Status which indicates if the getMute request was sent successfully.
+20. Application is notified of the Status of the getMute request (either SUCCESS or FAILED) via the application-supplied callback for specified direction with mute details.
+21. Application requests stop audio stream using stopAudio method on IAudioVoiceStream.
+22. Application receives synchronous Status which indicates if the stopAudio request was sent successfully.
+23. Application is notified of the Status of the stopAudio request (either SUCCESS or FAILED) via the application-supplied callback.
+24. Application requests delete audio stream using deleteStream method.
+25. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+26. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
 */

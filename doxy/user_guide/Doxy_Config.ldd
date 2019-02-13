@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+#  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -272,7 +272,8 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/data/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/network_selection/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/serving_system/ \
-                         $(TELUX_GIT_ROOT)/docs/api_samples/cv2x/ 
+                         $(TELUX_GIT_ROOT)/docs/api_samples/cv2x/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/audio/
 
 INPUT_ENCODING         = UTF-8
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and

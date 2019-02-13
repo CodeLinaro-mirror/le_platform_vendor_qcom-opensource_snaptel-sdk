@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -34,6 +34,7 @@
 #include <telux/tel/PhoneListener.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 #include <telux/tel/VoiceServiceInfo.hpp>
+#include <telux/tel/ECallDefines.hpp>
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -48,15 +49,18 @@ public:
    void onVoiceServiceStateChanged(
       int phoneId, const std::shared_ptr<telux::tel::VoiceServiceInfo> &serviceInfo) override;
    void onOperatingModeChanged(telux::tel::OperatingMode mode) override;
-   void onCellInfoListChanged(int phoneId,
-      std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) override;
+   void onCellInfoListChanged(
+      int phoneId, std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) override;
+   void onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo info) override;
    std::string getCurrentTime();
+
    ~MyPhoneListener() {
    }
 
 private:
    std::string radioStateToString(telux::tel::RadioState radioState);
    std::string serviceStateToString(telux::tel::ServiceState serviceState);
+   std::string eCallModeReasonToString(telux::tel::ECallModeReason reason);
 };
 
 class MyRadioPowerCallback : public telux::common::ICommandResponseCallback {
@@ -104,10 +108,22 @@ public:
    void setOperatingModeResponse(telux::common::ErrorCode error);
 };
 
+class MySetECallOperatingModeCallback {
+public:
+   static void setECallOperatingModeResponse(telux::common::ErrorCode error);
+};
+
+class MyGetECallOperatingModeCallback {
+public:
+   static void getECallOperatingModeResponse(telux::tel::ECallMode eCallMode,
+                                             telux::common::ErrorCode error);
+};
+
 class MyPhoneHelper {
 public:
    static std::string operatingModeToString(telux::tel::OperatingMode operatingMode);
-   static void printCellInfoDetails(
-      std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList);
+   static void printCellInfoDetails(std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList);
+   static std::string eCallOperatingModeToString(telux::tel::ECallMode eCallMode);
 };
+
 #endif  // MYPHONELISTENER_HPP

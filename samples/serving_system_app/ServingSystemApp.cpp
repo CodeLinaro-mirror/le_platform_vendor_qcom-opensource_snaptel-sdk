@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -87,15 +87,21 @@ int main(int argc, char *argv[]) {
    auto servingSystemMgr = phoneFactory.getServingSystemManager(DEFAULT_SLOT_ID);
 
    // [2] Check if serving subsystem is ready
-   bool subSystemStatus = servingSystemMgr->isSubsystemReady();
+   bool subSystemStatus = false;
+
+   if(servingSystemMgr) {
+      subSystemStatus = servingSystemMgr->isSubsystemReady();
+   }
 
    // [2.1] If serving subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
       std::cout << "serving subsystem is not ready" << std::endl;
       std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = servingSystemMgr->onSubsystemReady();
-      // If we want to wait unconditionally for serving subsystem to be ready
-      subSystemStatus = f.get();
+      if(servingSystemMgr) {
+         std::future<bool> f = servingSystemMgr->onSubsystemReady();
+         // If we want to wait unconditionally for serving subsystem to be ready
+         subSystemStatus = f.get();
+      }
    }
 
    // [3] Exit the application, if SDK is unable to initialize serving subsystem

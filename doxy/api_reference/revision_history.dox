@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -54,6 +54,8 @@ when       who     what, where, why
 @tr @td B @tdend @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trend
 @tr @td C @tdend @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trend
 @tr @td D @tdend @td Oct 2018 @tdend @tdlast Addition of Network Selection and Serving System Management APIs and call flows @tdlastend @trend
+@tr @td E @tdend @td Nov 2018 @tdend @tdlast Addition of C-V2X APIs @tdlastend @trend
+@tr @td F @tdend @td Jan 2019 @tdend @tdlast Addition of Audio APIs and call flows @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

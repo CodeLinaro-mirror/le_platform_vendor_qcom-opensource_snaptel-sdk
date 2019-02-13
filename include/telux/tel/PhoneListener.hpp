@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,6 +46,7 @@
 #include <telux/tel/Call.hpp>
 #include <telux/tel/CellInfo.hpp>
 #include <telux/tel/PhoneDefines.hpp>
+#include <telux/tel/ECallDefines.hpp>
 #include <telux/tel/SignalStrength.hpp>
 #include <telux/tel/VoiceServiceInfo.hpp>
 
@@ -144,6 +145,19 @@ public:
     *
     */
    virtual void onOperatingModeChanged(OperatingMode mode) {
+   }
+
+   /**
+    * This function is called when eCall operating mode changes.
+    *
+    * @param [in] phoneId - Unique Id of phone for which eCall operating mode changed
+    * @param [in] info - Indicates eCall operating mode change reason
+    * @Ref ECallModeInfo
+    *
+    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+    *         break backwards compatibility.
+    */
+   virtual void onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo info) {
    }
 
    virtual ~IPhoneListener() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -185,7 +185,7 @@ void ECallConsoleApp::answerCall(std::vector<std::string> inputCommand) {
             break;
          }
       }
-      if(spCall != nullptr) {
+      if(spCall) {
          std::cout << "Sending request to accept call " << std::endl;
          spCall->answer(answerCommandCallback_);
       } else {
@@ -217,7 +217,7 @@ void ECallConsoleApp::hangup(std::vector<std::string> inputCommand) {
             break;
          }
       }
-      if(spCall != nullptr) {
+      if(spCall) {
          std::cout << "Sending request to hangup call " << std::endl;
          spCall->hangup(hangupCommandCallback_);
       } else {
@@ -361,7 +361,7 @@ void ECallConsoleApp::CallCommandCallback::makeCallResponse(ErrorCode errorCode,
    if(errorCode == ErrorCode::SUCCESS) {
       infoStr.append("Call is successful ");
    } else {
-      infoStr.append("Call failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append("Call failed with error code: " + std::to_string(static_cast<int>(errorCode)));
    }
 
    PRINT_NOTIFICATION << infoStr << std::endl;
@@ -372,7 +372,8 @@ void ECallConsoleApp::UpdateMsdCommandCallback::commandResponse(ErrorCode errorC
    if(errorCode == ErrorCode::SUCCESS) {
       infoStr.append(" MSD Update is successful");
    } else {
-      infoStr.append("Update MSD failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append("Update MSD failed with error code: "
+                     + std::to_string(static_cast<int>(errorCode)));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }
@@ -382,7 +383,8 @@ void ECallConsoleApp::HangupCommandCallback::commandResponse(ErrorCode errorCode
    if(errorCode == ErrorCode::SUCCESS) {
       infoStr.append(" Hangup is successful");
    } else {
-      infoStr.append(" Hangup failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append(" Hangup failed with error code: "
+                     + std::to_string(static_cast<int>(errorCode)));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }
@@ -392,7 +394,8 @@ void ECallConsoleApp::AnswerCommandCallback::commandResponse(ErrorCode errorCode
    if(errorCode == ErrorCode::SUCCESS) {
       infoStr.append(" Answer Call is successful");
    } else {
-      infoStr.append(" Answer call failed with error code: " + static_cast<int>(errorCode));
+      infoStr.append(" Answer call failed with error code: "
+                     + std::to_string(static_cast<int>(errorCode)));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
 }

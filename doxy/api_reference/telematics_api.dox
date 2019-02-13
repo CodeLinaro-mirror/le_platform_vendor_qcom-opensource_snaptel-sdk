@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -66,5 +66,7 @@ Jun 2017   SVM      Created to support V2X API
     This section contains APIs related to Command Callbacks, Error Codes and Version information.
     @defgroup telematics_cv2x C-V2X
     This section contains APIs related to Cellular-V2X operation.
+    @defgroup telematics_audio Audio
+    This section contains APIs related to Audio Stream operation.
   @}
 */

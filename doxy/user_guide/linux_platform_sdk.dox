@@ -39,7 +39,7 @@ You need to have the following in order to proceed:
    $ repo sync -j 32
    \endcode
 
-   The tags are listed here - https://source.codeaurora.org/quic/le/le/manifest/refs/tags?h=IMM.LE.1.0
+   The tags are listed here - https://source.codeaurora.org/quic/le/le/manifest/refs/?h=IMM.LE.1.0
 
 </br>
 - Update Telux and Telephony libs
@@ -49,15 +49,15 @@ You need to have the following in order to proceed:
    </br>
    For LE.UM.1.3.2 target
    \code{.sh}
-   CORE_IMAGE_EXTRA_INSTALL += "telux-lib"
    CORE_IMAGE_EXTRA_INSTALL += "telux"
+   CORE_IMAGE_EXTRA_INSTALL += "telux-lib"
    \endcode
 
    </br>
    For LE.UM.1.3.r5 target
    \code{.sh}
-   CORE_IMAGE_EXTRA_INSTALL += "telephony-lib"
    CORE_IMAGE_EXTRA_INSTALL += "telux"
+   CORE_IMAGE_EXTRA_INSTALL += "telephony-lib"
    \endcode
 
 </br>

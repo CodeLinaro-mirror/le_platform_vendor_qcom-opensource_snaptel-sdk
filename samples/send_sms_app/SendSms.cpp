@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -29,12 +29,17 @@
 
 #include <chrono>
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneFactory.hpp>
+
+#include "../common/ConfigParser.hpp"
+
+#define DEFAULT_RECEIVER_PHONE_NUMBER "+18588451326"
+#define DEFAULT_MESSAGE "default test msg"
 
 // [3.1] Implement ICommandResponseCallback interface to know
 // SMS sent and Delivery status
@@ -87,7 +92,8 @@ int main(int argc, char *argv[]) {
       subSystemsStatus = f.get();
    }
 
-   // [3] Exit the application, if SDK is unable to initialize telephony subsystems
+   // [3] Exit the application, if SDK is unable to initialize telephony
+   // subsystems
    if(subSystemsStatus) {
       std::cout << " *** Sub Systems Ready *** " << std::endl;
    } else {
@@ -105,8 +111,26 @@ int main(int argc, char *argv[]) {
    // [6] Send an SMS using ISmsManager by passing the text and receiver number
    // along with required callback
    if(smsManager) {
-      std::string receiverAddress("+18989531755");
-      std::string message("TEST message");
+      std::string configFile;
+      std::string receiverAddress;
+      std::string message;
+
+      if(argc == 2) {
+         configFile = argv[1];
+         std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>(configFile);
+         receiverAddress = configParser->getValue(std::string("RECEIVER_NUMBER"));
+         message = configParser->getValue(std::string("MESSAGE"));
+      } else {
+         std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>();
+         receiverAddress = configParser->getValue(std::string("RECEIVER_NUMBER"));
+         message = configParser->getValue(std::string("MESSAGE"));
+      }
+
+      if(receiverAddress.empty() || message.empty()) {
+         receiverAddress = DEFAULT_RECEIVER_PHONE_NUMBER;
+         message = DEFAULT_MESSAGE;
+         std::cout << "Using default receiverAddress:" << std::endl;
+      }
       smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
    }
 

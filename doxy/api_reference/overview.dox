@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -38,20 +38,9 @@ when       who     what, where, why
 
 @anchor fig_sdk_overview
 @latexonly
-%Header/footers redefined for Revision History page. No header
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{\sl\sffamily\footnotesize\doctitleheader}
-\fancyhead[R]{\sl\sffamily\footnotesize\firstleftmark}
-\fancyfoot[L]{\sffamily\footnotesize\dcn}
-%For Regular Distribution, comment out the next two lines
-%For Regular Distribution, uncomment the next two lines
-\fancyfoot[C]{\sffamily\scriptsize\textbf{FOR ILLUSTRATIVE PURPOSE ONLY. CONTENT IS SUBJECT TO CHANGE.}}
-\fancyfoot[R]{\sffamily\footnotesize\thepage }
-\renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
 \begin{figure}[H]
    \centering
-   \includegraphics[scale=0.42]{sdk_overview.png}
+   \includegraphics[scale=0.55]{sdk_overview.png}
    \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
    \caption{SDK-Overview}
    \label{fig_sdk_overview}
@@ -78,6 +67,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 <b>Connection Management</b>
 
    Connection Management sub-system consists of APIs for establishing Cellular WAN/ Backhaul connection sessions and for Connection Profile Management etc.
+
+<b>Audio Management</b>
+
+   Audio Management sub-system consists of APIs for Audio management such as setting up audio streams, switching devices on streams, apply volume/mute etc
 
 Telematics SDK classes can be broadly divided into the following types:
 
@@ -182,4 +175,100 @@ Cv2xRadio abstracts a C-V2X radio channel. The API includes methods for
    - Updating TX SPS flow parameters
    - Update Source L2 Info
 
+@subsection audio Audio
+
+The Audio subSystem contains of APIs that support Audio operation.
+
+Audio APIs in the Telematics SDK include AudioManager, AudioStream, AudioVoiceStream interfaces.
+
+AudioManager provides an interface for creation/deletion of audio stream. The API includes methods for
+   - Query readiness of subSystem
+   - Query supported "Device Types"
+   - Query supported "Stream Types"
+   - Creating Audio Stream
+   - Deleting Audio Stream
+
+AudioStream abstracts the properties common to different stream types. The API includes methods for
+   - Query stream type
+   - Query routed device
+   - Set device
+   - Query volume details
+   - Set volume
+   - Query mute details
+   - Set mute
+
+AudioVoiceStream along with inheriting AudioStream, provides additional APIs to manage voice call session as stated below.
+   - Start Voice Audio Operation
+   - Stop Voice Audio Operation
+
+
+Audio SDK provides details of Supported "Device Types" and "Stream Types" in the Audio subSystem of Reference Telematics platform.
+
+“Device Type” encapsulates the type of device supported in Reference Telematics platform.
+The representation of these devices would be made available via public header file <usr/include/telux/audio/AudioDefines.hpp>.
+
+Example: DEVICE_TYPE_XXXX
+
+Internally SDK Device Type mapped to Audio HAL devices as per <usr/include/system/audio.h>.
+
+In current release is mapped per below table, in future releases of SDK it will be made configurable.
+This configurability provides flexibility to map different Audio HAL devices to SDK representation.
+
+<b> Current Device Mapping Table: </b>
+
+@table{2,{\raggedright}p{2.62in},{\raggedright}p{2.63in}}
+@trfirsthdg
+@thmultcol{1,|c|} SDK Audio Device Representation @thmultcolend @thmultcollast{1,c|} Audio HAL Representation @thmultcollastend
+@trfirsthdgend
+@trhdg
+@thdg{1,|c|,SDK Audio Device Representation} @thdglast{1,c|,Audio HAL Representation}
+@trhdgend
+@tr @td DEVICE_TYPE_SPEAKER @tdend @tdlast AUDIO_DEVICE_OUT_SPEAKER @tdlastend @trend
+@tr @td DEVICE_TYPE_MIC @tdend @tdlast AUDIO_DEVICE_IN_BACK_MIC @tdlastend @trend
+@tableend
+
+For any stream types, maximum device supported would be one. Single stream per multiple devices not supported.
+For voice stream Rx Device would decide corresponding Tx Device pair as decided by Audio HAL.
+
+<b> NOTE FOR SYSTEM INTEGRATORS: </b>
+
+The mapping of Audio devices to Audio HAL devices is static currently based on QTI's Reference Telematics platform.
+For custom platforms this mapping need to be updated.
+
+“Stream Type” encapsulates the type of stream supported in Reference Telematics Platform.
+The representation of these stream types made available via public header file <usr/include/telux/audio/AudioDefines.hpp>.
+
+Example:  VOICE_CALL, PLAY, CAPTURE etc
+
+<b> Volume Support Table: </b>
+
+This table captures scenarios where the volume could be modified.
+
+@table{3,{\raggedright}p{1.62in},{\raggedright}p{1.63in},{\raggedright}p{1.63in}}
+@trfirsthdg
+@thmultcol{1,|c|} Stream Type @thmultcolend @thmultcol{1,c|} Stream Direction (RX) @thmultcolend @thmultcollast{1,c|} Stream Direction (Tx) @thmultcollastend
+@trfirsthdgend
+@trhdg
+@thdg{1,|c|, Stream Type} @thdg{1,c|,Stream Direction (RX)} @thdglast{1,c|,Stream Direction (Tx)}
+@trhdgend
+@tr @td VOICE_CALL @tdend @td Applicable @tdend @tdlast Not Applicable @tdlastend @trend
+@tr @td PLAY @tdend @td Applicable @tdend @tdlast Not Applicable @tdlastend @trend
+@tr @td CAPTURE @tdend @td Not Applicable @tdend @tdlast Applicable @tdlastend @trend
+@tableend
+
+<b> Mute Support Table: </b>
+
+This table captures when stream could be muted and in which direction.
+
+@table{3,{\raggedright}p{1.62in},{\raggedright}p{1.63in},{\raggedright}p{1.63in}}
+@trfirsthdg
+@thmultcol{1,|c|} Stream Type @thmultcolend @thmultcol{1,c|} Stream Direction (RX) @thmultcolend @thmultcollast{1,c|} Stream Direction (Tx) @thmultcollastend
+@trfirsthdgend
+@trhdg
+@thdg{1,|c|, Stream Type} @thdg{1,c|,Stream Direction (RX)} @thdglast{1,c|,Stream Direction (Tx)}
+@trhdgend
+@tr @td VOICE_CALL @tdend @td Applicable @tdend @tdlast Applicable @tdlastend @trend
+@tr @td PLAY @tdend @td Applicable @tdend @tdlast Not Applicable @tdlastend @trend
+@tr @td CAPTURE @tdend @td Not Applicable @tdend @tdlast Applicable @tdlastend @trend
+@tableend
 */

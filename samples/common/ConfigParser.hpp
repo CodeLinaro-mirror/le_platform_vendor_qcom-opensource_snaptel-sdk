@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,62 +28,38 @@
  */
 
 /**
- * @file       AudioFactory.hpp
- *
- * @brief      AudioFactory is the central factory to create all audio instances
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to
- *             change and could break backwards compatibility.
+ * @brief ConfigParser class reads config file and caches the app config
+ * settings. It provides utility functions to read the config values.
  */
 
-#ifndef AUDIOFACTORY_HPP
-#define AUDIOFACTORY_HPP
+#ifndef CONFIGPARSER_HPP
+#define CONFIGPARSER_HPP
 
-#include <telux/audio/AudioManager.hpp>
+#include <map>
+#include <string>
 
-namespace telux {
+#define DEFAULT_CONFIG_FILE_NAME "SampleAppConfig.conf"
 
-namespace audio {
-/** @addtogroup telematics_audio
- * @{ */
-
-/**
- * @brief   AudioFactory allows creation of audio manager.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
+/*
+ * ConfigParser class caches the config settings from conf file
+ * It provides utility methods to get value of a configured settings
  */
-class AudioFactory {
+class ConfigParser {
 public:
-   /**
-    * Get Audio Factory instance.
-    */
-   static AudioFactory &getInstance();
-
-   /**
-    * Get instance of audio manager.
-    *
-    * @returns IAudioManager pointer.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
-    */
-   std::shared_ptr<IAudioManager> getAudioManager();
-
-   ~AudioFactory();
+  ConfigParser(std::string configFile = DEFAULT_CONFIG_FILE_NAME);
+  ~ConfigParser();
+  // Get the user defined value for configured key
+  std::string getValue(std::string key);
 
 private:
-   std::mutex audioFactoryMutex_;
-   std::shared_ptr<IAudioManager> audioManager_;
+  // Function to read config file containing key value pairs
+  void readConfigFile(std::string configFile);
 
-   AudioFactory();
-   AudioFactory(const AudioFactory &) = delete;
-   AudioFactory &operator=(const AudioFactory &) = delete;
+  // Get the path where config file is located
+  std::string getConfigFilePath();
+
+  // Hashmap to store all settings as key-value pairs
+  std::map<std::string, std::string> configMap_;
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
-}  // End of namespace audio
-
-}  // End of namespace telux
-
-#endif  // AUDIOFACTORY_HPP
+#endif // CONFIGPARSER_HPP

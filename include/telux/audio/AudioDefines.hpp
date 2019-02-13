@@ -41,93 +41,127 @@
 #define AUDIODEFINES_HPP
 
 #include <cstdint>
-#include <cstddef>
+#include <cstring>
 #include <vector>
 
 namespace telux {
 
 namespace audio {
 
+/** @addtogroup telematics_audio
+ * @{ */
+
 /**
  * Represent type of device like SPEAKER, MIC, etc.
  */
 enum DeviceType {
-    DEVICE_TYPE_NONE          = -1,
-    /* output devices */
-    DEVICE_TYPE_SPEAKER       =  1,
-    /* input devices */
-    DEVICE_TYPE_MIC           =  257,
+   DEVICE_TYPE_NONE = -1,
+   /* output devices */
+   DEVICE_TYPE_SPEAKER = 1,
+   /* input devices */
+   DEVICE_TYPE_MIC = 257,
 };
 
+/**
+ * Represent Device Direction RX (Sink), Tx (Source)
+ */
 enum class DeviceDirection {
-    NONE             = -1,
-    RX               =  1,
-    TX               =  2,
+   NONE = -1,
+   RX = 1,
+   TX = 2,
 };
 
+/**
+ * Represent Stream Type
+ */
 enum class StreamType {
-    NONE             = -1,
-    VOICE_CALL       =  1,
-    PLAY             =  2,
-    CAPTURE          =  3,
+   NONE = -1,
+   VOICE_CALL = 1, /**< Voice Call, Provides Audio Session for an active Voice */
+   PLAY = 2, /**< Plaback, Provides Audio Playback Session */
+   CAPTURE = 3, /**< Capture, Provides Audio Capture/Record Session */
 };
 
+/**
+ * Represent Stream Direction
+ */
 enum class StreamDirection {
-    NONE             = -1,
-    RX               =  1,
-    TX               =  2,
+   NONE = -1,
+   RX = 1, /**< Represents Session Directed towards Sink Device */
+   TX = 2, /**< Represents Session Directed from Source Device*/
 };
 
+/**
+ * Represent Stream's types of Channel
+ */
 enum ChannelType {
-    LEFT             =  ( 1 << 0 ), /* left channel*/
-    RIGHT            =  ( 1 << 1 ), /* right channel*/
+   LEFT = (1 << 0), /**< Represents left channel   */
+   RIGHT = (1 << 1), /**< Represents right channel */
 };
 
+/**
+ * Represent Stream's consolidated lists of Channel presence
+ */
 using ChannelTypeMask = int;
 
 /**
- * Specifies audio data format
+ * Specifies Stream data format
  */
 enum class AudioFormat {
-    UNKNOWN = -1, /**< Unknown format */
-    PCM_16BIT_SIGNED = 1, /* 16 bit signed PCM format */
+   UNKNOWN = -1,         /**< Unknown format */
+   PCM_16BIT_SIGNED = 1, /* 16 bit signed PCM format */
 };
 
-/* common audio stream configuration parameters
- *  ensure forward compatibility
+/**
+ *  Common Stream configuration parameters
  */
 struct StreamConfig {
-    StreamType type;
-    int modemSubId = 1;
-    uint32_t sampleRate;
-    ChannelTypeMask channelTypeMask;
-    AudioFormat  format;
-    std::vector<DeviceType> deviceTypes;
+   StreamType type;
+   int modemSubId = 1; /**<  Represents modem Subscription ID, Default set to 1.
+                             Applicable only for Voice Call */
+   uint32_t sampleRate; /**< Sample Rate of Stream, Typical Values <8k/16k/32k/48k> */
+   ChannelTypeMask channelTypeMask;
+   AudioFormat format;
+   std::vector<DeviceType> deviceTypes;
 };
 
+/**
+ *  Stream Channel Volume parameters
+ */
 struct ChannelVolume {
-    ChannelType channelType;
-    float vol;
+   ChannelType channelType;
+   float vol; /**< Volume range in float <0 to 1.0>.
+                    0 represents min volume, 1 represents max volume */
 };
 
+/**
+ *  Stream Channel Volume parameters consolidating entire Stream
+ */
 struct StreamVolume {
-    std::vector<ChannelVolume> volume;
-    StreamDirection dir;
+   std::vector<ChannelVolume> volume;
+   StreamDirection dir;
 };
 
+/**
+ *  Stream Mute parameters
+ */
 struct StreamMute {
-    bool enable;
-    StreamDirection dir;
+   bool enable;
+   StreamDirection dir;
 };
 
+/**
+ *  Stream Data Buffer
+ */
 struct StreamBuffer {
-    std::vector<uint8_t> buffer; /* Buffer with Size encapsulated */
-    size_t offset; /* Actual Buffer Content starting position */
-    int64_t timestamp;
+   std::vector<uint8_t> buffer; /**< Buffer with Size encapsulated */
+   size_t offset; /**< Actual Buffer Content starting position */
+   int64_t timestamp; /**< For future use */
 };
+
+/** @} */ /* end_addtogroup telematics_audio */
 
 }  // End of namespace audio
 
 }  // End of namespace telux
 
-#endif //AUDIODEFINES_HPP
+#endif  // AUDIODEFINES_HPP

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -206,7 +206,7 @@ void ECallMenu::answerCall(std::vector<std::string> inputCommand) {
             break;
          }
       }
-      if(spCall != nullptr) {
+      if(spCall) {
          std::cout << "Sending request to accept call " << std::endl;
          spCall->answer(answerCommandCallback_);
       } else {
@@ -237,7 +237,7 @@ void ECallMenu::hangup(std::vector<std::string> inputCommand) {
             break;
          }
       }
-      if(spCall != nullptr) {
+      if(spCall) {
          std::cout << "Sending request to hangup call " << std::endl;
          spCall->hangup(hangupCommandCallback_);
       } else {

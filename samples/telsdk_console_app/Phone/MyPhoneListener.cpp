@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,8 +43,8 @@ extern "C" {
 
 void MyPhoneListener::onServiceStateChanged(int phoneId, telux::tel::ServiceState state) {
    std::cout << "\n";
-   PRINT_NOTIFICATION << "MyPhoneListener::onServiceStateChanged for PhoneId = " << phoneId
-                      << " ,ServiceState = " << serviceStateToString(state) << std::endl;
+   PRINT_NOTIFICATION << "onServiceStateChanged for PhoneId = " << phoneId
+                      << " , ServiceState = " << serviceStateToString(state) << std::endl;
 }
 
 std::string MyPhoneListener::serviceStateToString(telux::tel::ServiceState serviceState) {
@@ -72,8 +72,7 @@ std::string MyPhoneListener::serviceStateToString(telux::tel::ServiceState servi
 void MyPhoneListener::onSignalStrengthChanged(
    int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) {
    std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << "MyPhoneListener::onSignalStrengthChanged for PhoneId = " << phoneId
-                      << std::endl;
+   PRINT_NOTIFICATION << "onSignalStrengthChanged for PhoneId = " << phoneId << std::endl;
    if(signalStrength->getGsmSignalStrength() != nullptr) {
       PRINT_NOTIFICATION
          << "GsmSignalStrength: " << signalStrength->getGsmSignalStrength()->getGsmSignalStrength()
@@ -148,7 +147,7 @@ void MyRadioPowerCallback::commandResponse(telux::common::ErrorCode error) {
 
 void MyPhoneListener::onRadioStateChanged(int phoneId, telux::tel::RadioState state) {
    std::cout << "\n";
-   PRINT_NOTIFICATION << "MyPhoneListener::onRadioStateChanged for PhoneId " << phoneId
+   PRINT_NOTIFICATION << "onRadioStateChanged for PhoneId " << phoneId
                       << " , RadioState: " << radioStateToString(state) << std::endl;
 }
 
@@ -599,5 +598,70 @@ void MyPhoneHelper::printCellInfoDetails(
             << "TDSCDMA power : " << tdsCdmaCellInfo->getSignalStrengthInfo().getRscp()
             << std::endl;
       }
+   }
+}
+
+void MyPhoneListener::onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo modeInfo) {
+
+   PRINT_NOTIFICATION << "onECallOperatingModeChange for PhoneId = " << phoneId
+                      << " , mode = " << MyPhoneHelper::eCallOperatingModeToString(modeInfo.mode)
+                      << " , reason = " << eCallModeReasonToString(modeInfo.reason) << std::endl;
+}
+
+std::string MyPhoneHelper::eCallOperatingModeToString(telux::tel::ECallMode mode) {
+   std::string eCallOprtModeString = "UNKNOWN";
+   switch(mode) {
+      case telux::tel::ECallMode::NORMAL:
+         eCallOprtModeString = "NORMAL";
+         break;
+      case telux::tel::ECallMode::ECALL_ONLY:
+         eCallOprtModeString = "ECALL_ONLY";
+         break;
+      case telux::tel::ECallMode::NONE:
+         eCallOprtModeString = "NONE";
+         break;
+      default:
+         break;
+   }
+   return eCallOprtModeString;
+}
+
+std::string MyPhoneListener::eCallModeReasonToString(telux::tel::ECallModeReason modeReason) {
+   std::string reason = "";
+   switch(modeReason) {
+      case telux::tel::ECallModeReason::NORMAL:
+         reason = "NORMAL";
+         break;
+      case telux::tel::ECallModeReason::ERA_GLONASS:
+         reason = "ERA_GLONASS";
+         break;
+      default:
+         reason = "UNKNOWN";
+         break;
+   }
+   return reason;
+}
+
+void MySetECallOperatingModeCallback::setECallOperatingModeResponse(telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "Set eCall operating mode request executed successfully" << std::endl;
+   } else {
+      PRINT_CB << "Set eCall operating mode request failed" << std::endl;
+   }
+   PRINT_CB << "SetECallOperatingModeRequest error: " << static_cast<int>(error) << std::endl;
+}
+
+void MyGetECallOperatingModeCallback::getECallOperatingModeResponse(
+   telux::tel::ECallMode eCallMode, telux::common::ErrorCode error) {
+
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "eCall operating mode request executed successfully" << std::endl;
+      PRINT_CB << "eCall Operating Mode: " << MyPhoneHelper::eCallOperatingModeToString(eCallMode)
+               << std::endl;
+   } else {
+      PRINT_CB << "Request eCall Operating Mode failed, errorCode: " << static_cast<int>(error)
+               << std::endl;
    }
 }

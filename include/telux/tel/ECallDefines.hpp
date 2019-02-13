@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -231,6 +231,32 @@ struct ECallMsdData {
     * (103 bytes, ASN.1 encoded); may also point to an address, where this information is located
     */
    ECallOptionalPdu optionalPdu; /**< Optional information for the emergency rescue service */
+};
+
+/**
+ * Represents eCall operating mode
+ */
+enum class ECallMode {
+   NORMAL = 0,     /**< eCall and normal voice calls are allowed */
+   ECALL_ONLY = 1, /**< Only eCall is allowed */
+   NONE = 2,       /**< Invalid mode */
+};
+
+/**
+ * Represents eCall operating mode change reason
+ */
+enum class ECallModeReason {
+   NORMAL = 0,      /**< eCall operating mode changed due to normal operation like
+                        setting of eCall mode */
+   ERA_GLONASS = 1, /**< eCall operating mode changed due to ERA-GLONASS operation */
+};
+
+/**
+ *  Represents eCall operating mode information
+ */
+struct ECallModeInfo {
+   ECallMode mode;         /**< Represents eCall operating mode */
+   ECallModeReason reason; /**< Represents eCall operating mode change reason */
 };
 /** @} */ /* end_addtogroup telematics_phone */
 

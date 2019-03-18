@@ -36,12 +36,13 @@ extern "C" {
 }
 
 #include "MyCallListener.hpp"
+#include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << getCurrentTime() << " MyCallListener::onIncomingCall" << std::endl;
+   PRINT_NOTIFICATION << getCurrentTime() << std::endl;
    std::cout << "Enter 2 to answer call" << std::endl;
    std::cout << "Enter 3 to reject call" << std::endl;
    std::cout << "Enter 4 to reject call with an SMS message" << std::endl;
@@ -49,8 +50,7 @@ void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
 
 void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << "MyCallListener::onCallInfoChange: "
-                      << " Call State: " << getCallStateString(call->getCallState())
+   PRINT_NOTIFICATION << " Call State: " << getCallStateString(call->getCallState())
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " << (int)call->getCallDirection()
                       << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
@@ -62,10 +62,10 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
 
 void MyCallListener::onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) {
    if(errorCode == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << "onECallMsdTransmissionStatus is success" << std::endl;
+      PRINT_NOTIFICATION << "OnECallMsdTransmissionStatus is success" << std::endl;
    } else {
       PRINT_NOTIFICATION
-         << "onECallMsdTransmissionStatus failed with error code: " << static_cast<int>(errorCode)
+         << "OnECallMsdTransmissionStatus failed, code: " << static_cast<int>(errorCode)
          << std::endl;
    }
 }
@@ -250,8 +250,8 @@ std::string MyCallListener::getCurrentTime() {
 void MyDialCallback::makeCallResponse(telux::common::ErrorCode error,
                                       std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << "MyDialCallback::makeCallResponse" << std::endl;
-   PRINT_NOTIFICATION << "makeCall ErrorCode: " << int(error) << std::endl;
+   PRINT_NOTIFICATION << "makeCall response ErrorCode: " << int(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    callObj_ = call;
 }
 
@@ -275,5 +275,6 @@ void MyCallCommandCallback::commandResponse(telux::common::ErrorCode error) {
    } else {
       PRINT_NOTIFICATION << commandName_ << " operation failed" << std::endl;
    }
-   PRINT_NOTIFICATION << commandName_ << " operation - ErrorCode " << (int)error << std::endl;
+   PRINT_NOTIFICATION << commandName_ << " operation - ErrorCode " << (int)error
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 }

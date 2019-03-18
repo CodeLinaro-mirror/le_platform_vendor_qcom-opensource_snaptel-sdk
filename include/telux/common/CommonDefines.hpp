@@ -381,6 +381,26 @@ public:
  */
 using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>;
 
+/**
+ * @brief Service status.
+ */
+enum class ServiceStatus {
+    SERVICE_UNAVAILABLE,
+    SERVICE_AVAILABLE,
+};
+
+class IServiceStatusListener {
+public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(ServiceStatus status) {}
+
+    virtual ~IServiceStatusListener() {}
+};
+
 }  // End of namespace common
 }  // End of namespace telux
 

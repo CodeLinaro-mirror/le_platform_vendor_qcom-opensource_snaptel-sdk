@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -39,9 +39,12 @@ class MyDataProfilesCallback : public telux::data::IDataProfileListCallback {
 public:
    void onProfileListResponse(const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
                               telux::common::ErrorCode error) override;
+};
 
-   std::string techPreferenceToString(telux::data::TechPreference techPref);
-   std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
+class DataUtils {
+public:
+   static std::string techPreferenceToString(telux::data::TechPreference techPref);
+   static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
 };
 
 class MyDataProfileCallback : public telux::data::IDataProfileCallback {

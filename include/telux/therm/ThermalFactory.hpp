@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,47 +27,64 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LOCATIONTESTAPP_HPP
-#define LOCATIONTESTAPP_HPP
+/**
+ * @file       ThermalFactory.hpp
+ * @brief      ThermalFactory allows creation of thermal manager.
+ *
+ * @note       Eval: This is a new API and is being evaluated.It is subject to
+ *             change and could break backwards compatibility.
+ */
 
-#include <cctype>
-#include <algorithm>
-#include <functional>
+#ifndef THERMALFACTORY_HPP
+#define THERMALFACTORY_HPP
+
 #include <memory>
-#include <string>
-#include <vector>
+#include <mutex>
 
-#include <telux/loc/LocationDefines.hpp>
-#include <telux/loc/LocationManager.hpp>
-#include "MyLocationCommandCallback.hpp"
+#include <telux/therm/ThermalManager.hpp>
 
-#include "ConsoleApp.hpp"
+namespace telux {
 
-#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
+namespace therm {
 
-class LocationTestApp : public ConsoleApp {
+/** @addtogroup telematics_therm
+ * @{ */
+
+/**
+ * @brief   ThermalFactory allows creation of thermal manager.
+ *
+ * @note    Eval: This is a new API and is being evaluated.It is subject to change
+ *          and could break backwards compatibility.
+ */
+class ThermalFactory {
 public:
    /**
-    * Initialize commands and SDK
+    * Get Thermal Factory instance.
     */
-   void init();
+   static ThermalFactory &getInstance();
 
-   LocationTestApp(std::string appName, std::string cursor);
-
-   ~LocationTestApp();
-
-   void addLocationListener(std::vector<std::string> userInput);
-   void removeLocationListener(std::vector<std::string> userInput);
-
-   void finalReportMinInterval(std::vector<std::string> userInput);
-   void positionReportTimeout(std::vector<std::string> userInput);
-   void horizontalAccuracyLevel(std::vector<std::string> userInput);
+   /**
+    * Get thermal manager instance to get list of thermal zones (sensors) and
+    * cooling devices supported by the device
+    *
+    * @returns Pointer of IThermalManager object.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   std::shared_ptr<IThermalManager> getThermalManager();
 
 private:
-   // Member variable to keep the Listener object alive till application ends.
-   std::shared_ptr<telux::loc::ILocationListener> posListener_;
-   std::shared_ptr<telux::loc::ILocationManager> locationManager_ = nullptr;
-   std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb_ = nullptr;
+   ThermalFactory();
+   ~ThermalFactory();
+   ThermalFactory(const ThermalFactory &) = delete;
+   ThermalFactory &operator=(const ThermalFactory &) = delete;
 };
 
-#endif  // LOCATIONTESTAPP_HPP
+/** @} */ /* end_addtogroup telematics_therm */
+
+}  // End of namespace therm
+
+}  // End of namespace telux
+
+#endif  // THERMALFACTORY_HPP

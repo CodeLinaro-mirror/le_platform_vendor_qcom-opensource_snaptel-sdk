@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -40,7 +40,7 @@
 
 class MyLocationListener : public telux::loc::ILocationListener {
 public:
-   void onLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfo> &locationInfo) override;
+   void onDetailedLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) override;
 
    void onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) override {
    }

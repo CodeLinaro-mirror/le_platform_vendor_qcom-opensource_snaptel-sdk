@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -40,38 +40,75 @@ DataMenu::DataMenu(std::string appName, std::string cursor)
 }
 
 DataMenu::~DataMenu() {
+
+   myDataProfileListCb_ = nullptr;
+   myDataProfileListCb_ = nullptr;
+   myDataProfileListCbForQuery_ = nullptr;
+   myDataCreateProfileCb_ = nullptr;
+   myDataProfileCb_ = nullptr;
+   myDeleteProfileCb_ = nullptr;
+   myModifyProfileCb_ = nullptr;
+   myDataProfileCbForGetProfileById_ = nullptr;
+
    if(dataConnectionManager_) {
       dataConnectionManager_->deregisterListener(dataListener_);
+      dataConnectionManager_ = nullptr;
+   }
+
+   if(dataProfileManager_) {
+      dataProfileManager_->deregisterListener(profileListener_);
+      dataProfileManager_ = nullptr;
+   }
+
+   if(profileListener_) {
+      profileListener_ = nullptr;
+   }
+
+   if(dataListener_) {
+      dataListener_ = nullptr;
    }
 }
 
 bool DataMenu::initializeSDK() {
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
    startTime = std::chrono::system_clock::now();
-   //  Get the DataFactory instances.
+   // Get the DataFactory instances.
    auto &dataFactory = telux::data::DataFactory::getInstance();
 
    dataConnectionManager_ = telux::data::DataFactory::getInstance().getDataConnectionManager();
 
-   //  Check if telephony subsystem is ready
+   // Check if data subsystem is ready
    bool subSystemStatus = dataConnectionManager_->isSubsystemReady();
 
-   //  If telephony subsystem is not ready, wait for it to be ready
+   // If data subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
-      std::cout << "\n\nData subsystem is not ready, Please wait!!!..." << std::endl;
+      std::cout << "\n\nData subsystem is not ready, Please wait" << std::endl;
       std::future<bool> f = dataConnectionManager_->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
+      // Wait unconditionally for data subsystem to be ready
       subSystemStatus = f.get();
    }
 
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
+   dataProfileManager_ = dataFactory.getDataProfileManager();
+
+   // Check if data subsystem is ready
+   subSystemStatus = dataProfileManager_->isSubsystemReady();
+
+   // If data subsystem is not ready, wait for it to be ready
+   if(!subSystemStatus) {
+      std::cout << "\n\nData profile manager subsystem is not ready, Please wait" << std::endl;
+      std::future<bool> f = dataProfileManager_->onSubsystemReady();
+      // Wait unconditionally for data subsystem to be ready
+      subSystemStatus = f.get();
+   }
+
+   // Exit the application, if SDK is unable to initialize data subsystems
    if(subSystemStatus) {
       endTime = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;
    } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
       exit(0);
    }
 
@@ -80,7 +117,6 @@ bool DataMenu::initializeSDK() {
       dataConnectionManager_->registerListener(dataListener_);
    }
 
-   dataProfileManager_ = dataFactory.getDataProfileManager();
    myDataProfileListCb_ = std::make_shared<MyDataProfilesCallback>();
    myDataProfileListCbForQuery_ = std::make_shared<MyDataProfilesCallback>();
    myDataCreateProfileCb_ = std::make_shared<MyDataCreateProfileCallback>();
@@ -88,7 +124,12 @@ bool DataMenu::initializeSDK() {
    myDeleteProfileCb_ = std::make_shared<MyDeleteProfileCallback>();
    myModifyProfileCb_ = std::make_shared<MyModifyProfileCallback>();
    myDataProfileCbForGetProfileById_ = std::make_shared<MyDataProfileCallback>();
+   profileListener_ = std::make_shared<MyProfileListener>();
 
+   telux::common::Status status = dataProfileManager_->registerListener(profileListener_);
+   if(status != telux::common::Status::SUCCESS) {
+      std::cout << "Unable to register data profile manager listener" << std::endl;
+   }
    return true;
 }
 
@@ -382,9 +423,9 @@ void DataMenu::requestProfileById(std::vector<std::string> inputCommand) {
    }
 
    telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
-   if(techPrefId == 1) {
+   if(techPrefId == 0) {
       tp = telux::data::TechPreference::TP_3GPP;
-   } else if(techPrefId == 2) {
+   } else if(techPrefId == 1) {
       tp = telux::data::TechPreference::TP_3GPP2;
    }
    telux::common::Status status

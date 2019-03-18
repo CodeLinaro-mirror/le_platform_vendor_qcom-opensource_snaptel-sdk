@@ -37,14 +37,15 @@ extern "C" {
 }
 
 #include "MyPhoneListener.hpp"
+#include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void MyPhoneListener::onServiceStateChanged(int phoneId, telux::tel::ServiceState state) {
    std::cout << "\n";
-   PRINT_NOTIFICATION << "onServiceStateChanged for PhoneId = " << phoneId
-                      << " , ServiceState = " << serviceStateToString(state) << std::endl;
+   PRINT_NOTIFICATION << "OnServiceStateChanged for PhoneId = " << phoneId
+                      << " ,ServiceState = " << serviceStateToString(state) << std::endl;
 }
 
 std::string MyPhoneListener::serviceStateToString(telux::tel::ServiceState serviceState) {
@@ -72,7 +73,7 @@ std::string MyPhoneListener::serviceStateToString(telux::tel::ServiceState servi
 void MyPhoneListener::onSignalStrengthChanged(
    int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) {
    std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << "onSignalStrengthChanged for PhoneId = " << phoneId << std::endl;
+   PRINT_NOTIFICATION << "OnSignalStrengthChanged for PhoneId = " << phoneId << std::endl;
    if(signalStrength->getGsmSignalStrength() != nullptr) {
       PRINT_NOTIFICATION
          << "GsmSignalStrength: " << signalStrength->getGsmSignalStrength()->getGsmSignalStrength()
@@ -138,16 +139,17 @@ std::string MyPhoneListener::getCurrentTime() {
 void MyRadioPowerCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "Radio power request executed successfully" << std::endl;
+      PRINT_CB << "Radio power request successful" << std::endl;
    } else {
       PRINT_CB << "Radio power request failed" << std::endl;
    }
-   PRINT_CB << "RadioPowerRequest error = " << static_cast<int>(error) << std::endl;
+   PRINT_CB << "RadioPowerRequest error: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 }
 
 void MyPhoneListener::onRadioStateChanged(int phoneId, telux::tel::RadioState state) {
    std::cout << "\n";
-   PRINT_NOTIFICATION << "onRadioStateChanged for PhoneId " << phoneId
+   PRINT_NOTIFICATION << "OnRadioStateChanged for PhoneId " << phoneId
                       << " , RadioState: " << radioStateToString(state) << std::endl;
 }
 
@@ -174,13 +176,14 @@ void MyVoiceRadioTechnologyCallback::voiceRadioTechnologyResponse(
    telux::tel::RadioTechnology radioTechnology, telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "requestVoiceRadioTechnology is successful, Radio technology: "
+      PRINT_CB << "requestVoiceRadioTechnology successful, Radio technology: "
                << radioTechToString(radioTechnology) << std::endl;
    } else {
       PRINT_CB << "Request Voice Technology failed, errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
+
 std::string
    MyVoiceRadioTechnologyCallback::radioTechToString(telux::tel::RadioTechnology radioTech) {
    std::string rtString = "";
@@ -251,13 +254,14 @@ void MyVoiceServiceStateCallback::voiceServiceStateResponse(
    telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "requestVoiceServiceState is successful, Service State: "
+      PRINT_CB << "requestVoiceServiceState successful, Service State: "
                << voiceServiceStateToString(serviceInfo->getVoiceServiceState()) << std::endl;
    } else {
       PRINT_CB << "requestVoiceServiceState is failed, errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
+
 std::string MyVoiceServiceStateCallback::voiceServiceStateToString(
    telux::tel::VoiceServiceState vocSrvState) {
    std::string state = "";
@@ -302,8 +306,7 @@ std::string MyVoiceServiceStateCallback::voiceServiceStateToString(
 void MyPhoneListener::onVoiceRadioTechnologyChanged(int phoneId,
                                                     telux::tel::RadioTechnology radioTechnology) {
    std::cout << "\n";
-   PRINT_NOTIFICATION << "Received unsol response for PhoneId " << phoneId
-                      << " for change in voice radio technology" << std::endl;
+   PRINT_NOTIFICATION << "Received unsol response, PhoneId " << phoneId << std::endl;
    PRINT_NOTIFICATION << "Changed Radio technology " << static_cast<int>(radioTechnology)
                       << std::endl;
 }
@@ -372,7 +375,7 @@ void MyCellularCapabilityCallback::cellularCapabilityResponse(
    telux::tel::CellularCapabilityInfo capabilityInfo, telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "requestCellularCapability response is successful" << std::endl;
+      PRINT_CB << "requestCellularCapability response successful" << std::endl;
       PRINT_CB << "VoiceServiceTechnologiesMask: "
                << voiceServiceTechnologiesMaskToString(capabilityInfo.voiceServiceTechs)
                << std::endl;
@@ -386,7 +389,7 @@ void MyCellularCapabilityCallback::cellularCapabilityResponse(
       PRINT_CB << "Max Active SIMs : " << capabilityInfo.maxActiveSims << std::endl;
    } else {
       PRINT_CB << "requestCellularCapability is failed, errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -425,12 +428,12 @@ void MyGetOperatingModeCallback::operatingModeResponse(telux::tel::OperatingMode
                                                        telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "requestOperatingMode response is successful" << std::endl;
+      PRINT_CB << "requestOperatingMode response successful" << std::endl;
       PRINT_CB << "Operating Mode: " << MyPhoneHelper::operatingModeToString(operatingMode)
                << std::endl;
    } else {
       PRINT_CB << "requestOperatingMode is failed, errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -444,18 +447,17 @@ void MyPhoneListener::onOperatingModeChanged(telux::tel::OperatingMode mode) {
 void MySetOperatingModeCallback::setOperatingModeResponse(telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "Set operating mode request executed successfully" << std::endl;
+      PRINT_CB << "Set operating mode request successful" << std::endl;
    } else {
       PRINT_CB << "Set operating mode request failed" << std::endl;
    }
-   PRINT_CB << "SetOperatingModeRequest error = " << static_cast<int>(error) << std::endl;
+   PRINT_CB << "SetOperatingModeRequest error: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 }
 
 void MyPhoneListener::onCellInfoListChanged(
    int phoneId, std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList) {
-   PRINT_NOTIFICATION << "Received unsol response for PhoneId " << phoneId
-                      << " for change in cellinfo" << std::endl;
-   PRINT_NOTIFICATION << "CellInfo: " << std::endl;
+   PRINT_NOTIFICATION << "Received unsol response for PhoneId " << phoneId << std::endl;
    MyPhoneHelper::printCellInfoDetails(cellInfoList);
 }
 
@@ -464,7 +466,6 @@ void MyPhoneHelper::printCellInfoDetails(
    for(auto cellinfo : cellInfoList) {
       PRINT_NOTIFICATION << "CellInfo Type: " << (int)cellinfo->getType() << std::endl;
       if(cellinfo->getType() == telux::tel::CellType::GSM) {
-         PRINT_NOTIFICATION << "GSM Cellinfo " << std::endl;
          auto gsmCellInfo = std::static_pointer_cast<telux::tel::GsmCellInfo>(cellinfo);
          PRINT_NOTIFICATION << "GSM isRegistered: " << gsmCellInfo->isRegistered() << std::endl;
          PRINT_NOTIFICATION << "GSM mcc: " << gsmCellInfo->getCellIdentity().getMcc() << std::endl;
@@ -488,7 +489,6 @@ void MyPhoneHelper::printCellInfoDetails(
             << "GSM Signal Level: " << (int)gsmCellInfo->getSignalStrengthInfo().getLevel()
             << std::endl;
       } else if(cellinfo->getType() == telux::tel::CellType::CDMA) {
-         PRINT_NOTIFICATION << "CDMA Cellinfo " << std::endl;
          auto cdmaCellInfo = std::static_pointer_cast<telux::tel::CdmaCellInfo>(cellinfo);
          PRINT_NOTIFICATION << "CDMA isRegistered: " << cdmaCellInfo->isRegistered() << std::endl;
          PRINT_NOTIFICATION << "CDMA networkId: " << cdmaCellInfo->getCellIdentity().getNid()
@@ -516,7 +516,6 @@ void MyPhoneHelper::printCellInfoDetails(
             << "CDMA/EVDO Signal Level: " << (int)cdmaCellInfo->getSignalStrengthInfo().getLevel()
             << std::endl;
       } else if(cellinfo->getType() == telux::tel::CellType::LTE) {
-         PRINT_NOTIFICATION << "LTE Cellinfo  " << std::endl;
          auto lteCellInfo = std::static_pointer_cast<telux::tel::LteCellInfo>(cellinfo);
          PRINT_NOTIFICATION << "LTE isRegistered: " << lteCellInfo->isRegistered() << std::endl;
          PRINT_NOTIFICATION << "LTE mcc: " << lteCellInfo->getCellIdentity().getMcc() << std::endl;
@@ -552,7 +551,6 @@ void MyPhoneHelper::printCellInfoDetails(
             << "LTE Signal Level: " << (int)lteCellInfo->getSignalStrengthInfo().getLevel()
             << std::endl;
       } else if(cellinfo->getType() == telux::tel::CellType::WCDMA) {
-         PRINT_NOTIFICATION << "WCDMA Cellinfo " << std::endl;
          auto wcdmaCellInfo = std::static_pointer_cast<telux::tel::WcdmaCellInfo>(cellinfo);
          PRINT_NOTIFICATION << "WCDMA isRegistered: " << wcdmaCellInfo->isRegistered() << std::endl;
          PRINT_NOTIFICATION << "WCDMA mcc: " << wcdmaCellInfo->getCellIdentity().getMcc()
@@ -579,7 +577,6 @@ void MyPhoneHelper::printCellInfoDetails(
             << "WCDMA Signal Level: " << (int)wcdmaCellInfo->getSignalStrengthInfo().getLevel()
             << std::endl;
       } else if(cellinfo->getType() == telux::tel::CellType::TDSCDMA) {
-         PRINT_NOTIFICATION << "TDSCDMA Cellinfo " << std::endl;
          auto tdsCdmaCellInfo = std::static_pointer_cast<telux::tel::TdscdmaCellInfo>(cellinfo);
          PRINT_NOTIFICATION << "TDSCDMA isRegistered: " << tdsCdmaCellInfo->isRegistered()
                             << std::endl;

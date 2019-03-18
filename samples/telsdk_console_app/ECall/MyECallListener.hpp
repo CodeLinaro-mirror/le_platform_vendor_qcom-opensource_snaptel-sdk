@@ -39,10 +39,9 @@
 class MyECallListener : public telux::tel::ICallListener {
    void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
-   void onECallMsdTransmissionStatus(int phoneId,
-      telux::common::ErrorCode errorCode) override;
-   void onECallMsdTransmissionStatus(int phoneId,
-      telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
+   void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
+   void onECallMsdTransmissionStatus(
+      int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
 
    /**
     * Get current time

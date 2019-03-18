@@ -35,9 +35,10 @@
  */
 
 #include <iostream>
-#include <cxxabi.h>
+#include <memory>
 
 extern "C" {
+#include <cxxabi.h>
 #include <execinfo.h>
 #include <signal.h>
 }
@@ -82,57 +83,70 @@ void TelSdkConsoleApp::init() {
    std::shared_ptr<ConsoleAppCommand> locationMenuCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("6", "Location", {},
                         std::bind(&TelSdkConsoleApp::locationMenu, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> dataMenuCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("7", "Data", {},
-                        std::bind(&TelSdkConsoleApp::dataMenu, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> dataMenuCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "7", "Data", {}, std::bind(&TelSdkConsoleApp::dataMenu, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-      = {phoneMenuCommand, callMenuCommand,    eCallMenuCommand,
-         smsMenuCommand,   simCardMenuCommand, locationMenuCommand, dataMenuCommand};
+      = {phoneMenuCommand,   callMenuCommand,     eCallMenuCommand, smsMenuCommand,
+         simCardMenuCommand, locationMenuCommand, dataMenuCommand};
 
    addCommands(mainMenuCommands);
-   ConsoleApp::displayMenu();
+   TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
    PhoneMenu phoneMenu("Phone Menu", "phone> ", 1);
    phoneMenu.init();
    phoneMenu.mainLoop();
+   TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::callMenu(std::vector<std::string> userInput) {
    CallMenu callMenu("Dialer Menu", "dialer> ");
    callMenu.init();
    callMenu.mainLoop();
+   TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::eCallMenu(std::vector<std::string> userInput) {
    ECallMenu eCallMenu("eCall Menu", "eCall> ");
    eCallMenu.init();
    eCallMenu.mainLoop();
+   TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::simCardMenu(std::vector<std::string> userInput) {
    SimCardServicesMenu simCardServicesMenu("SIM Card Services Menu", "card_services> ");
    simCardServicesMenu.init();
    simCardServicesMenu.mainLoop();
+   TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::smsMenu(std::vector<std::string> userInput) {
    SmsMenu smsMenu("SMS Menu", "sms> ", 1);
    smsMenu.init();
    smsMenu.mainLoop();
+   TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::locationMenu(std::vector<std::string> userInput) {
    LocationMenu locationMenu("Location Menu", "location> ");
    locationMenu.init();
    locationMenu.mainLoop();
+   TelSdkConsoleApp::displayMenu();
 }
 
 void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
    DataMenu dataMenu("Data Menu", "data> ");
    dataMenu.init();
    dataMenu.mainLoop();
+   TelSdkConsoleApp::displayMenu();
+}
+
+void TelSdkConsoleApp::displayMenu() {
+   ConsoleApp::displayMenu();
+   std::shared_ptr<ModemStatus> modemStatus = std::make_shared<ModemStatus>();
+   modemStatus->printOperatingMode();
 }
 
 void signalHandler(int sig) {
@@ -218,8 +232,9 @@ void setupSignal() {
 int main(int argc, char **argv) {
 
    auto sdkVersion = telux::common::Version::getSdkVersion();
-   std::string  appName = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
-             + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch);
+   std::string appName = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
+                         + std::to_string(sdkVersion.minor) + "."
+                         + std::to_string(sdkVersion.patch);
    setupSignal();
 
    TelSdkConsoleApp telsdkConsoleApp(appName, "tel_sdk> ");

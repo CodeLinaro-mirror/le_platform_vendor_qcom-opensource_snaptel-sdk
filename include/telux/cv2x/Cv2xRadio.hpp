@@ -170,6 +170,21 @@ using RequestSpsFlowInfoCallback =
                         telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to @ref requestCapabilities.
+ *
+ * @param [in] capabilities     - Capability info
+ * @param [in] error       - SUCCESS if capabilities request succeeded
+ *                         - @ref SUCCESS
+ *                         - @ref GENERIC_FAILURE
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+using RequestCapabilitiesCallback =
+    std::function<void(const Cv2xRadioCapabilities & capabilities,
+                       telux::common::ErrorCode error)>;
+
+/**
  * This function is called with the response to @ref requestDataSessionSettings.
  *
  * @param [in] settings     - Data session settings
@@ -183,6 +198,21 @@ using RequestSpsFlowInfoCallback =
 using RequestDataSessionSettingsCallback =
     std::function<void (const DataSessionSettings & settings,
                         telux::common::ErrorCode error)>;
+/**
+ * This function is called with the response to @ref updateTrustedUEList.
+ *
+ * @param [in] error       - SUCCESS if update succeeded
+ *                         - INVALID_ARGUMENTS if trustedUEs or maliciousIds
+ *                           length greater than maximum value
+ *                         - @ref SUCCESS
+ *                         - @ref GENERIC_FAILURE
+ *                         - @ref INVALID_ARGUMENTS
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+ *         break backwards compatibility.
+ */
+using UpdateTrustedUEListCallback =
+    std::function<void(telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to updateSrcL2Info.
@@ -212,6 +242,8 @@ public:
      * Get the capabilities of this Cv2xRadio.
      *
      * @returns Cv2xRadioCapabilities - Contains capabilities of this Cv2xRadio.
+     *
+     * @deprecated Use requestCapabilities() API
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to
      *          change and could break backwards compatibility.
@@ -461,6 +493,19 @@ public:
         RequestSpsFlowInfoCallback cb) = 0;
 
     /**
+     * Request modem Cv2x capability information.
+     *
+     * @param [in] cb           - Callback that will be invoked and returns the
+     *                            capability info. Must not be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestCapabilities(
+        RequestCapabilitiesCallback cb) = 0;
+
     /**
      * Request data session settings currently in use.
      *
@@ -487,6 +532,23 @@ public:
      *          change and could break backwards compatibility.
      */
     virtual telux::common::Status updateSrcL2Info(UpdateSrcL2InfoCallback cb) = 0;
+
+    /**
+     * Send request to modem to update the list of malicious UE source IDs and
+     * trusted UE source IDs with corresponding confidence information.
+     *
+     * @param  [in] infoList    - Trusted and malicious UE information list
+     * @param  [in] cb          - Callback that will be invoked and returns status.
+     *                            Must not be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual telux::common::Status updateTrustedUEList(
+        const TrustedUEInfoList & infoList,
+        UpdateTrustedUEListCallback cb) = 0;
 
     /**
      * Destructor for ICv2xRadio

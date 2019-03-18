@@ -103,9 +103,6 @@ public:
     *
     * @returns Pointer to WCDMA signal strength instance that can be used to get
     * WCDMA dbm, signal level values.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    std::shared_ptr<WcdmaSignalStrengthInfo> getWcdmaSignalStrength();
 
@@ -115,8 +112,6 @@ public:
     * @returns Pointer to TDSWCDMA signal strength instance that can be used to get
     * TDSCDMA RSCP value.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    std::shared_ptr<TdscdmaSignalStrengthInfo> getTdscdmaSignalStrength();
 
@@ -189,8 +184,6 @@ public:
     *
     * @returns Timing advance value.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getTimingAdvance() const;
 
@@ -243,9 +236,6 @@ public:
     * Get the timing advance in bit periods
     *
     * @returns timing advance.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getTimingAdvance();
 
@@ -325,8 +315,6 @@ public:
     * @returns Signal levels indicates the quality of signal being received by
     * the device.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const SignalStrengthLevel getLevel() const;
 
@@ -335,8 +323,6 @@ public:
     *
     * @returns Wcdma signal strength in dBm.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getDbm() const;
 
@@ -345,8 +331,6 @@ public:
     *
     * @returns Wcdma signal strength.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getSignalStrength() const;
 
@@ -355,8 +339,6 @@ public:
     *
     * @returns Wcdma bit error rate.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getBitErrorRate() const;
 
@@ -377,8 +359,6 @@ public:
     *
     * @returns TdScdma signal code power.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getRscp() const;
 

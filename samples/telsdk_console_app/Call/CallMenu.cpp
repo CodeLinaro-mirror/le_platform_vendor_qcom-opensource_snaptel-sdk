@@ -44,29 +44,29 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
 
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
    startTime = std::chrono::system_clock::now();
-   //  Get the PhoneFactory and PhoneManager instances.
+   // Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    phoneManager_ = phoneFactory.getPhoneManager();
 
-   //  Check if telephony subsystem is ready
+   // Check if telephony subsystem is ready
    bool subSystemStatus = phoneManager_->isSubsystemReady();
 
-   //  If telephony subsystem is not ready, wait for it to be ready
+   // If telephony subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
-      std::cout << "\nTelephony subsystem is not ready, Please wait!!!..." << std::endl;
+      std::cout << "\nTelephony subsystem is not ready, Please wait" << std::endl;
       std::future<bool> f = phoneManager_->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
+      // Wait unconditionally for telephony subsystem to be ready
       subSystemStatus = f.get();
    }
 
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
+   // Exit the application, if SDK is unable to initialize telephony subsystems
    if(subSystemStatus) {
       endTime = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;
    } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
       exit(0);
    }
 
@@ -171,20 +171,16 @@ void CallMenu::init() {
 }
 
 void CallMenu::dial(std::vector<std::string> userInput) {
-   std::cout << "dialing " << userInput[1] << std::endl;
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    const std::string phoneNumber = userInput[1];
    telux::common::Status makeCallStatus
       = callManager_->makeCall(phoneId_, phoneNumber, myDialCallCmdCb_);
-   if(makeCallStatus == telux::common::Status::SUCCESS) {
-      std::cout << "makeCall is successful" << std::endl;
-   } else {
-      std::cout << "makeCall failed" << std::endl;
-   }
+   std::cout << (makeCallStatus == telux::common::Status::SUCCESS ? "MakeCall is successful"
+                                                                  : "MakeCall failed")
+             << '\n';
 }
 
 void CallMenu::acceptCall(std::vector<std::string> userInput) {
-   std::cout << "request accept call " << std::endl;
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
@@ -196,11 +192,10 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
-      std::cout << "Sending request to accept call " << std::endl;
+   if(spCall != nullptr) {
       spCall->answer(myAnswerCb_);
    } else {
-      std::cout << "No incoming call to accept " << std::endl;
+      std::cout << "No incoming call" << std::endl;
    }
 }
 
@@ -216,11 +211,10 @@ void CallMenu::rejectCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
-      std::cout << "Sending request to reject call " << std::endl;
+   if(spCall != nullptr) {
       spCall->reject(myRejectCb_);
    } else {
-      std::cout << "No incoming call to reject " << std::endl;
+      std::cout << "No incoming call" << std::endl;
    }
 }
 
@@ -237,11 +231,10 @@ void CallMenu::rejectWithSms(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
-      std::cout << "Sending request to reject call " << std::endl;
+   if(spCall != nullptr) {
       spCall->reject("Testing reject with reason", myRejectCb_);
    } else {
-      std::cout << "No incoming call to reject " << std::endl;
+      std::cout << "No incoming call" << std::endl;
    }
 }
 
@@ -263,12 +256,10 @@ void CallMenu::hangupDialingOrAlerting(std::vector<std::string> userInput) {
       std::cout << "More than one call: use Hangup cmd with Index " << std::endl;
       return;
    }
-
-   if(spCall) {
-      std::cout << "Sending request to hangup call " << std::endl;
+   if(spCall != nullptr) {
       spCall->hangup(myHangupCb_);
    } else {
-      std::cout << "No dialing or alerting call found in the list to hangup " << std::endl;
+      std::cout << "No dialing or alerting call found" << std::endl;
    }
 }
 
@@ -293,16 +284,14 @@ void CallMenu::hangupWithCallIndex(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
-      std::cout << "Sending request to hangup call " << std::endl;
+   if(spCall != nullptr) {
       spCall->hangup(myHangupCb_);
    } else {
-      std::cout << "No call found with the given index to hangup " << std::endl;
+      std::cout << "No call found with given index" << std::endl;
    }
 }
 
 void CallMenu::holdCall(std::vector<std::string> userInput) {
-   std::cout << "request hold active call" << std::endl;
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
@@ -313,10 +302,10 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
+   if(spCall != nullptr) {
       spCall->hold(myHoldCb_);
    } else {
-      std::cout << "No active call found in the list to hold " << std::endl;
+      std::cout << "No active call found" << std::endl;
    }
 }
 
@@ -324,7 +313,7 @@ void CallMenu::conference(std::vector<std::string> userInput) {
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
    if(inProgressCalls.size() < 2) {
-      std::cout << "getInProgressCalls does not have 2 calls to conference" << std::endl;
+      std::cout << "getInProgressCalls does not have 2 calls" << std::endl;
    }
    // Iterate through the call list find the call that is active and the first call that is
    // on hold then conference both the calls
@@ -344,7 +333,6 @@ void CallMenu::conference(std::vector<std::string> userInput) {
       }
    }
    if(spCall1 != nullptr && spCall2 != nullptr) {
-      std::cout << "Conferencing active and hold calls " << std::endl;
       callManager_->conference(spCall1, spCall2, myConferenceCb_);
    } else {
       std::cout << "Need 1 active and 1 hold call to conference" << std::endl;
@@ -355,7 +343,7 @@ void CallMenu::swap(std::vector<std::string> userInput) {
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
    if(inProgressCalls.size() < 2) {
-      std::cout << "call list does not have 2 calls to swap" << std::endl;
+      std::cout << "call list does not have 2 calls" << std::endl;
    }
    // Iterate through the call list find the call that is active and the first call that is
    // on hold
@@ -375,8 +363,6 @@ void CallMenu::swap(std::vector<std::string> userInput) {
       }
    }
    if(spCall1 != nullptr && spCall2 != nullptr) {
-      std::cout << "Swapping active and hold calls " << std::endl;
-
       callManager_->swap(spCall1, spCall2, mySwapCb_);
    } else {
       std::cout << "Need 1 active and 1 hold call to swap" << std::endl;
@@ -384,7 +370,6 @@ void CallMenu::swap(std::vector<std::string> userInput) {
 }
 
 void CallMenu::getCalls(std::vector<std::string> userInput) {
-   std::cout << "Get current calls \n";
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
@@ -399,8 +384,6 @@ void CallMenu::getCalls(std::vector<std::string> userInput) {
 }
 
 void CallMenu::resumeCall(std::vector<std::string> userInput) {
-   std::cout << "resume call" << std::endl;
-   std::cout << "resume a call which is on hold" << std::endl;
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
@@ -413,7 +396,7 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
+   if(spCall != nullptr) {
       spCall->resume(myResumeCb_);
    } else {
       std::cout << "No call to resume which is on hold " << std::endl;
@@ -421,7 +404,6 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
 }
 
 void CallMenu::playDtmfTone(std::vector<std::string> userInput) {
-   std::cout << "Play DTMF tone " << std::endl;
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
@@ -436,7 +418,7 @@ void CallMenu::playDtmfTone(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
+   if(spCall != nullptr) {
       std::string dtmfString = userInput[1];
       if(dtmfString.length() > 0) {
          dtmfString = dtmfString.erase(0, dtmfString.find_first_not_of(" \n\r\t"));
@@ -446,19 +428,16 @@ void CallMenu::playDtmfTone(std::vector<std::string> userInput) {
          std::cout << "Invalid DTMF String\n";
       } else {
          auto ret = spCall->playDtmfTone(dtmfString[0], myPlayTonesCb_);
-         if(ret == telux::common::Status::SUCCESS) {
-            std::cout << "play tone request sent successfully\n";
-         } else {
-            std::cout << "play tone request failed \n";
-         }
+         std::cout << (ret == telux::common::Status::SUCCESS ? "Play tone request sent successfully"
+                                                             : "Play tone request failed")
+                   << '\n';
       }
    } else {
-      std::cout << "No active call found in the list " << std::endl;
+      std::cout << "No active call found" << std::endl;
    }
 }
 
 void CallMenu::startDtmfTone(std::vector<std::string> userInput) {
-   std::cout << "start DTMF tone " << std::endl;
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
@@ -472,15 +451,14 @@ void CallMenu::startDtmfTone(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
+   if(spCall != nullptr) {
       spCall->startDtmfTone('1', myStartToneCb_);
    } else {
-      std::cout << "No active call found in the list " << std::endl;
+      std::cout << "No active call found" << std::endl;
    }
 }
 
 void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
-   std::cout << " Stop DTMF tone " << std::endl;
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
@@ -494,9 +472,9 @@ void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
          break;
       }
    }
-   if(spCall) {
+   if(spCall != nullptr) {
       spCall->stopDtmfTone(myStopToneCb_);
    } else {
-      std::cout << "No active call found in the list " << std::endl;
+      std::cout << "No active call found" << std::endl;
    }
 }

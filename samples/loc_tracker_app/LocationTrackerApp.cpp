@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -144,13 +144,14 @@ int main(int, char **) {
    }
 
    // [8] Instantiate global ILocationListener
-   locationMgr->registerListener(myLocationListener);
-
-   // [9] Exit logic is specific to an application
+   locationMgr->registerListenerEx(myLocationListener);
+   // [9]Starting the reports for fixes
+   locationMgr->startDetailedReports(1000,NULL);
+   // [10] Exit logic is specific to an application
    std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);
-   locationMgr->removeListener(myLocationListener);
+   locationMgr->deRegisterListenerEx(myLocationListener);
    std::cout << "Exiting application..." << std::endl;
    return 0;
 }

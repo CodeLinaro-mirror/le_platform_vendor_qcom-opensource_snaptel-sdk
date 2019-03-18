@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -66,7 +66,7 @@ enum class TechPreference {
 };
 
 /**
- * Authentication protocol type to be used for PDP context.
+ * Authentication protocol preference type to be used for PDP context.
  */
 enum class AuthProtocolType {
    AUTH_NONE = 0,
@@ -591,7 +591,15 @@ struct DataCallEndReason {
       Ipv6ReasonCode ipv6Code;
       HandoffReasonCode handOffCode;
    };
-   /**< Reason Code corresponding to reason type*/
+};
+
+/**
+ * Event due to which change in profile happened.
+ */
+enum class ProfileChangeEvent {
+   CREATE_PROFILE_EVENT = 1, /**< Profile was created */
+   DELETE_PROFILE_EVENT,     /**< Profile was deleted */
+   MODIFY_PROFILE_EVENT,     /**< Profile was modified */
 };
 
 /** @} */ /* end_addtogroup telematics_data */

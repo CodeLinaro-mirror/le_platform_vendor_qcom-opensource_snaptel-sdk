@@ -76,6 +76,12 @@ typedef int v2x_radio_handle_t;
  */
 #define V2X_RX_WILDCARD_PORTNUM (9000)
 
+/** Maximum len for malicious and trusted IDs that can be passed in
+    v2x_radio_update_tunnel_mode_info().
+ */
+#define MAX_MALICIOUS_IDS_LIST_LEN (50)
+#define MAX_TRUSTED_IDS_LIST_LEN   (50)
+
 /**
     Describes whether the radio chip modem should attempt or support concurrent
     3GPP CV2X operation with a WWAN 4G/5G data call.
@@ -120,6 +126,42 @@ typedef enum {
     V2X_PRIO_6 = 6,
     V2X_PRIO_BACKGROUND = 7
 } v2x_priority_et;
+
+/** Contains time confidence, position confidence, and propogation delay for a
+    trusted UE.
+*/
+typedef struct {
+    uint32_t source_l2_id;
+    /**< Trusted Source L2 ID */
+    float time_uncertainty;
+    /**< Time uncertainty in milliseconds. */
+    uint16_t time_confidence_level;
+    /**< @deprecated Use timeUncertainty
+         Time confidence level.
+         Range from 0 to 127 with 0 being invalid/unavailable
+         and 127 being the most confident. */
+    uint16_t position_confidence_level;
+    /**< Position confidence level.
+         Range from 0 to 127 with 0 being invalid/unavailable
+         and 127 being the most confident. */
+    uint32_t propagation_delay;
+    /**< Propagation delay in microseconds. */
+} trusted_ue_info_t;
+
+/**
+ * Contains mininum and maximum frequency for a TX Pool ID
+ *
+ * Used in @ref Cv2xRadioCapabilities
+ */
+typedef struct {
+    uint8_t poolId;
+    /**< TX Pool ID. */
+    uint16_t minFreq;
+    /**< Minimum frequency. */
+    uint16_t maxFreq;
+    /**< Maximum frequency. */
+} tx_pool_id_info_t;
+
 
 /**
     Contains information on the capabilities of a Radio interface.
@@ -227,6 +269,12 @@ typedef struct {
 
     uint16_t max_qty_non_SPS_flows;
     /**< Maximum number of supported event flows (non-SPS ports). @newpagetable */
+
+    int32_t max_tx_pwr;
+    /**< Maximum supported transmission power in dBm. */
+
+    int32_t min_tx_pwr;
+    /**< Minimum supported transmission ower in dBm. */
 
 } v2x_iface_capabilities_t;
 
@@ -377,6 +425,9 @@ typedef struct {
     float noise_floor;
     /**< Measurement of the background noise for a quiet channel.
          @newpagetable */
+
+    float time_uncertainty;
+    /**< V2X time uncertainty in milliseconds */
 } v2x_chan_measurements_t;
 
 /**
@@ -448,6 +499,20 @@ typedef struct {
     @newpage
     */
     void (*v2x_radio_macphy_change_complete_cb)(void *context);
+
+    /**
+    Callback made when v2x capabilities change.
+
+    @param caps     Pointer to the v2x_iface_capabilities_t structure, which
+                    contains the capabilities of this specific interface.
+
+    @param context  Pointer to the context of the caller who originally
+                    registered for this callback.
+
+    @newpage
+    */
+    void (*v2x_radio_capabilities_listener)(v2x_iface_capabilities_t *caps,
+                                            void *context);
 
 } v2x_radio_calls_t;
 
@@ -537,6 +602,10 @@ typedef struct {
     /**< 1 if mcs_index is specified. 0 otherwise */
     uint8_t mcs_index;
     /**< MCS index number */
+    uint8_t tx_pool_id_valid;
+    /**< 1 if tx_pool_id is valid. 0 otherwise */
+    uint8_t tx_pool_id;
+    /**< TX pool Id */
 } v2x_tx_flow_info_t;
 
 /**
@@ -942,6 +1011,13 @@ extern v2x_status_enum_type v2x_radio_start_measurements(v2x_radio_handle_t hand
 extern v2x_status_enum_type v2x_radio_stop_measurements(v2x_radio_handle_t handle);
 
 /**
+ *  Queries the current V2X RX/TX status.
+ *
+ *  @return,  the Status Active, suspended, etc
+ */
+v2x_event_t v2x_radio_get_status(void);
+
+/**
     Closes a specified socket file descriptor and deregisters any modem resources
     associated with it (such as reserved SPS bandwidth contracts). This
     function works on receive, SPS, or event driven sockets.
@@ -1000,6 +1076,31 @@ extern v2x_event_t cv2x_status_poll(uint64_t *status_age_useconds);
  */
 extern int v2x_radio_trigger_l2_update(
     v2x_radio_handle_t handle);
+
+/**
+    Updates the list of malicious and trusted UEs.
+
+    @param[in]  malicious_list_len  Number of malicious IDs in malicious_list
+    @param[in]  malicious_list      List of malicious IDs
+    @param[in]  trusted_list_len    Number of trusted IDs in trusted_list
+    @param[in]  trusted_list        List of trusted IDs
+
+    @detdesc
+    This function is called in order to update the list of malicious and trusted IDs tracked
+    by the modem.
+
+    @return
+    0 -- On success
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device. @newpage
+ */
+int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
+                                     unsigned int malicious_list[MAX_MALICIOUS_IDS_LIST_LEN],
+                                     unsigned int trusted_list_len,
+                                     trusted_ue_info_t trusted_list[MAX_TRUSTED_IDS_LIST_LEN]);
 
 /**
     Creates and binds a socket with a bandwidth-reserved (SPS) Tx flow with the

@@ -63,9 +63,10 @@ void SapCardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> getSapAtrCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("2", "Get_sap_ATR", {},
                         std::bind(&SapCardServicesMenu::getSapAtr, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> requestSapStateCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("3", "Request_sap_state", {},
-                        std::bind(&SapCardServicesMenu::requestSapState, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestSapStateCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "3", "Request_sap_state", {},
+         std::bind(&SapCardServicesMenu::requestSapState, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> transmitSapApduCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "4", "Transmit_sap_APDU", {},
@@ -94,7 +95,8 @@ void SapCardServicesMenu::init() {
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSapManagerSubMenu
       = {openSapConnectionCommand, getSapAtrCommand,           requestSapStateCommand,
          transmitSapApduCommand,   sapSimPowerOffCommand,      sapSimPowerOnCommand,
-         sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand, getStateCommand};
+         sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand,
+         getStateCommand};
    addCommands(commandsListSapManagerSubMenu);
    ConsoleApp::displayMenu();
 }

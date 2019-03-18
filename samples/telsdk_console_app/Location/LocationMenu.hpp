@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,11 +57,23 @@ public:
 
    ~LocationMenu();
 
-   void finalReportMinInterval(std::vector<std::string> userInput);
-   void positionReportTimeout(std::vector<std::string> userInput);
-   void horizontalAccuracyLevel(std::vector<std::string> userInput);
-   void enableLocationReportLogs(std::vector<std::string> userInput);
-   void enableSvInfoLogs(std::vector<std::string> userInput);
+   void registerListenerEx(std::vector<std::string> userInput);
+   void deRegisterListenerEx(std::vector<std::string> userInput);
+   void startDetailedReports(std::vector<std::string> userInput);
+   void startBasicReports(std::vector<std::string> userInput);
+   void stopReports(std::vector<std::string> userInput);
+   int enableReportLogsUtility();
+   void enableReportLogs(std::vector<std::string> userInput);
+   void enableLocationReportLogs();
+   void enableBasicLocationReportLogs();
+   void enableDetailedLocationReportLogs();
+   void enableSvInfoLogs();
+   void enableDataInfoLogs();
+   void removeListener(std::vector<std::string> userInput);
+   void registerListener(std::vector<std::string> userInput);
+   void minInterval(std::vector<std::string> userInput);
+   void positionReport(std::vector<std::string> userInput);
+   void horizontalAccuracy(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

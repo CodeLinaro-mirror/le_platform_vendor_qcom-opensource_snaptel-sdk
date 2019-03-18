@@ -107,8 +107,6 @@ struct CardReaderStatus {
  * @param [in] error           Return code for whether the operation
  *                             succeeded or failed
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 
 using SapStateResponseCallback

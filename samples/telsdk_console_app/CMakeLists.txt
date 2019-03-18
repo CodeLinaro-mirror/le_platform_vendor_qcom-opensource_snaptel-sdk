@@ -61,6 +61,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/DataMenu.cpp
    Data/DataResponseCallback.cpp
    Data/DataListener.cpp
+   Data/MyProfileListener.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp
@@ -69,7 +70,10 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Phone/NetworkMenu.cpp
 
    TelSdkConsoleApp.cpp
+
    Utils.cpp
+   ModemStatus.cpp
+
    console_app_framework/ConsoleAppCommand.cpp
    console_app_framework/ConsoleApp.cpp
 

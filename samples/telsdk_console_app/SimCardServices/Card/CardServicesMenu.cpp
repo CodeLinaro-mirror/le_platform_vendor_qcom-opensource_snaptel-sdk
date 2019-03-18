@@ -52,7 +52,7 @@ CardServicesMenu::CardServicesMenu(std::string appName, std::string cursor)
 
    //  If telephony subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
-      std::cout << "Telephony subsystem is not ready, Please wait!!!..." << std::endl;
+      std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
       std::future<bool> f = cardManager_->onSubsystemReady();
       // If we want to wait unconditionally for telephony subsystem to be ready
       subSystemStatus = f.get();
@@ -65,7 +65,7 @@ CardServicesMenu::CardServicesMenu(std::string appName, std::string cursor)
       std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;
    } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
       exit(0);
    }
 
@@ -87,7 +87,7 @@ CardServicesMenu::CardServicesMenu(std::string appName, std::string cursor)
       // registering Listener
       telux::common::Status status = cardManager_->registerListener(cardListener_);
       if(status != telux::common::Status::SUCCESS) {
-         std::cout << "Unable to registerListener for Card Manager" << std::endl;
+         std::cout << "Unable to registerListener" << std::endl;
       }
    }
 }
@@ -212,11 +212,9 @@ void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
       auto ret = card_->transmitApduLogicalChannel(channel, (uint8_t)cla, (uint8_t)instruction,
                                                    (uint8_t)p1, (uint8_t)p2, (uint8_t)p3, data,
                                                    myTransmitApduCb_);
-      if(ret == telux::common::Status::SUCCESS) {
-         std::cout << "Transmit APDU is successful\n";
-      } else {
-         std::cout << "Transmit APDU failed\n";
-      }
+      std::cout << (ret == telux::common::Status::SUCCESS ? "Transmit APDU successful"
+                                                          : "Transmit APDU failed")
+                << '\n';
    }
 }
 
@@ -252,7 +250,7 @@ void CardServicesMenu::basicTransmitApdu(std::vector<std::string> userInput) {
       auto ret = card_->transmitApduBasicChannel((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1,
                                                  (uint8_t)p2, (uint8_t)p3, data, myTransmitApduCb_);
       if(ret == telux::common::Status::SUCCESS) {
-         std::cout << "Basic transmit APDU is successful\n";
+         std::cout << "Basic transmit APDU successful\n";
       } else {
          std::cout << "Basic transmit APDU failed\n";
       }

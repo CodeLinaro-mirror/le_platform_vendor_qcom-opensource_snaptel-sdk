@@ -51,6 +51,10 @@ namespace cv2x {
 
 class ICv2xRadio;
 
+/**
+ *@brief Cv2x Radio Manager listeners implement this interface.
+ */
+class ICv2xListener : public common::IServiceStatusListener {};
 
 /**
  * This function is called as a response to @ref startCv2x
@@ -88,9 +92,25 @@ using StopCv2xCallback = std::function<void (telux::common::ErrorCode error)>;
  *
  * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
  *         break backwards compatibility.
+ *
+ * @deprecated use RequestCv2xStatusCallbackEx
  */
 using RequestCv2xStatusCallback = std::function<void (Cv2xStatus status,
                                                       telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref requestCv2xStatus
+ *
+ * @param [in] status    - Cv2x status
+ * @param [in] error     - SUCCESS if Cv2x status was successully retrieved
+ *                       - @ref SUCCESS
+ *                       - @ref GENERIC_FAILURE
+ *
+ * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
+ *         break backwards compatibility.
+ */
+using RequestCv2xStatusCallbackEx = std::function<void (Cv2xStatusEx status,
+                                                        telux::common::ErrorCode error)>;
 
 
 /**
@@ -162,9 +182,43 @@ public:
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to
      *          change and could break backwards compatibility.
+     *
+     * @deprecated use requestCv2xStatus(RequestCv2xCalbackEx)
      */
     virtual telux::common::Status requestCv2xStatus(RequestCv2xStatusCallback cb) = 0;
 
+    /**
+     * request CV2X status from modem
+     *
+     * @param [in] cb      - Callback that is invoked when Cv2x status is retrieved
+     *
+     * @returns SUCCESS on success. Error status otherwise.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestCv2xStatus(RequestCv2xStatusCallbackEx cb) = 0;
+
+    /**
+     * Registers a listener for this manager.
+     *
+     * @param [in] listener - Listener that implements Cv2xListener interface.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<ICv2xListener> listener) = 0;
+
+    /**
+     * Deregisters a Cv2xListener for this manager.
+     *
+     * @param [in] listener - Previously registered CvListener that is to be
+     *        deregistered.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<ICv2xListener> listener) = 0;
 
     /**
      * Updates CV2X configuration

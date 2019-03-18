@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,18 +27,51 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MYLOCATIONCOMMANDCALLACK_HPP
-#define MYLOCATIONCOMMANDCALLACK_HPP
+/**
+ * @file       PowerDefines.hpp
+ *
+ * @brief      This file contains types related to power management services.
+ *
+ * @note       Eval: These are new APIs and are being evaluated. They are subject to change and
+ *             could break backwards compatibility.
+ */
 
-#include "telux/common/CommonDefines.hpp"
+#include <telux/common/CommonDefines.hpp>
 
-class MyLocationCommandCallback : public telux::common::ICommandResponseCallback {
-public:
-   MyLocationCommandCallback(std::string cmdName);
-   void commandResponse(telux::common::ErrorCode error);
+#ifndef POWERDEFINES_HPP
+#define POWERDEFINES_HPP
 
-private:
-   std::string commandName_;
+namespace telux {
+namespace power {
+
+/** @addtogroup telematics_power
+ * @{ */
+
+/**
+ * Defines the supported system states that the listeners will be notified about.
+ */
+enum class SystemState {
+    UNKNOWN,    /**< To indicate that system state information is not available */
+    SUSPEND,    /**< System is going to SUSPEND state */
+    RESUME,     /**< System is going to RESUME state */
+    SHUTDOWN    /**< System is going to SHUTDOWN */
 };
 
-#endif  // MYLOCATIONCOMMANDCALLACK_HPP
+/**
+ * Defines the acknowledgements to System states.The client process sends this after processing the
+ * SystemState notification, indicating that it is prepared for state transition.
+ *
+ * Acknowledgement for SystemState::RESUME is not required, as the state transition has already
+ * happened.
+ */
+enum class SystemStateAck {
+    SUSPEND_ACK,    /**< processed SystemState::SUSPEND notification */
+    SHUTDOWN_ACK,   /**< processed SystemState::SHUTDOWN notification */
+};
+
+/** @} */ /* end_addtogroup telematics_power */
+
+}  // end of namespace power
+}  // end of namespace telux
+
+#endif  // POWERDEFINES_HPP

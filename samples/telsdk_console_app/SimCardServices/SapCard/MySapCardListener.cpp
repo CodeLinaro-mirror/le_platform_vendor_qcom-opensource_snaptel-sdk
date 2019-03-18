@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include "MySapCardListener.hpp"
+#include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
@@ -41,7 +42,8 @@ void MySapCommandResponseCallback::commandResponse(telux::common::ErrorCode erro
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << " commandResponse successful." << std::endl;
    } else {
-      PRINT_CB << "commandResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "commandResponse failed\n error: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -53,7 +55,6 @@ void MyCardReaderCallback::cardReaderResponse(telux::tel::CardReaderStatus reade
    std::cout << std::endl << std::endl;
 
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "cardReaderResponse successful\n";
       PRINT_CB << " CardReaderStatus, id = " << readerStatus.id
                << "\n isRemovable = " << readerStatus.isRemovable
                << "\n isPresent = " << readerStatus.isPresent
@@ -61,7 +62,8 @@ void MyCardReaderCallback::cardReaderResponse(telux::tel::CardReaderStatus reade
                << "\n isCardPresent = " << readerStatus.isCardPresent
                << "\n isCardPoweredOn = " << readerStatus.isCardPoweredOn << "\n";
    } else {
-      PRINT_CB << "cardReaderResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "cardReaderResponse failed\n error: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -82,7 +84,8 @@ void MySapTransmitApduResponseCallback::onResponse(telux::tel::IccResult result,
       }
       std::cout << std::endl << std::endl;
    } else {
-      PRINT_CB << "onResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "onResponse failed\n error: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -93,13 +96,12 @@ void MyAtrResponseCallback::atrResponse(std::vector<int> responseAtr,
                                         telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "atrResponse successful\n";
-      PRINT_CB << "\tATR.data:";
       for(int val : responseAtr) {
          std::cout << " " << val;
       }
    } else {
-      PRINT_CB << "atrResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "atrResponse failed\n error: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
    std::cout << std::endl;
 }
@@ -128,7 +130,7 @@ void MySapStateCallback::sapStateResponse(telux::tel::SapState sapState,
       logSapState(sapState);
    } else {
       PRINT_CB << "sapConnectionStatusResponse failed\n error: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
    std::cout << std::endl;
 }

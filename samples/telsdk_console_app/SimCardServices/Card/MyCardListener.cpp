@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include "MyCardListener.hpp"
+#include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
@@ -44,7 +45,7 @@ void MyOpenLogicalChannelCallback::onChannelResponse(int channel, telux::tel::Ic
                          << result.toString() << std::endl;
    } else {
       PRINT_NOTIFICATION << "onChannelResponse failed\n error: " << static_cast<int>(error)
-                         << std::endl;
+                         << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -57,7 +58,7 @@ void MyCardCommandResponseCallback::commandResponse(telux::common::ErrorCode err
       PRINT_NOTIFICATION << "onCloseLogicalChannel successful." << std::endl;
    } else {
       PRINT_NOTIFICATION << "onCloseLogicalChannel failed\n error: " << static_cast<int>(error)
-                         << std::endl;
+                         << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -71,7 +72,8 @@ void MyTransmitApduResponseCallback::onResponse(telux::tel::IccResult result,
       PRINT_NOTIFICATION << "onResponse successful, " << result.toString() << std::endl
                          << std::endl;
    } else {
-      PRINT_NOTIFICATION << "onResponse failed\n error: " << static_cast<int>(error) << std::endl;
+      PRINT_NOTIFICATION << "onResponse failed\n error: " << static_cast<int>(error)
+                         << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -80,7 +82,6 @@ void MyTransmitApduResponseCallback::onResponse(telux::tel::IccResult result,
  */
 void MyCardListener::onCardInfoChanged(int slotId) {
    std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << "onCardInfoChange\n\t" << std::endl;
    PRINT_NOTIFICATION << "\tSlotId :" << slotId << std::endl;
    auto cardMgr = telux::tel::PhoneFactory::getInstance().getCardManager();
    // CardState cardState = cardMgr->getCardState(slotId);

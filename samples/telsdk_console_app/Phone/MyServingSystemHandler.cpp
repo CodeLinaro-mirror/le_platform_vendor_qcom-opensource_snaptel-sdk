@@ -27,8 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "MyServingSystemHandler.hpp"
 #include <iostream>
+
+#include "MyServingSystemHandler.hpp"
+#include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
@@ -68,7 +70,8 @@ void MyRatPreferenceResponseCallback::ratPreferenceResponse(telux::tel::RatPrefe
       PRINT_CB << "\nRAT mode preference: \n"
                << MyServingSystemHelper::getRatPreference(preference);
    } else {
-      PRINT_CB << "ErrorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "ErrorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -98,7 +101,7 @@ void MyServiceDomainResponseCallback::serviceDomainResponse(
                << MyServingSystemHelper::getServiceDomain(preference) << std::endl;
    } else {
       PRINT_CB << "\n requestServiceDomainPreference failed, ErrorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -108,7 +111,7 @@ void MyServingSystemResponsecallback::servingSystemResponse(telux::common::Error
       PRINT_CB << "setRatPreference is successful" << std::endl;
    } else {
       PRINT_CB << "setRatPreference Request failed, errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 

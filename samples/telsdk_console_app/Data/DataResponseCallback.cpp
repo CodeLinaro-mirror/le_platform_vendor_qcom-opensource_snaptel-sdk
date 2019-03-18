@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -32,32 +32,40 @@
 
 #include "DataResponseCallback.hpp"
 #include "DataMenu.hpp"
+#include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void MyDataProfilesCallback::onProfileListResponse(
    const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
    telux::common::ErrorCode error) {
-   std::cout << std::endl << std::endl;
-   PRINT_CB << " ** onProfileListResponse **" << std::endl;
-   std::cout << std::setw(2)
-             << "+-----------------------------------------------------------------+" << std::endl;
-   std::cout << std::setw(14) << "| Profile # | " << std::setw(11) << "TechPref | " << std::setw(15)
-             << "      APN      " << std::setw(17) << "|  ProfileName  |" << std::setw(10)
-             << " IP Type |" << std::endl;
-   std::cout << std::setw(2)
-             << "+-----------------------------------------------------------------+" << std::endl;
-   for(auto it : profiles) {
-      std::cout << std::left << std::setw(4) << "  " << std::setw(10) << it->getId()
-                << std::setw(11) << techPreferenceToString(it->getTechPreference()) << std::setw(15)
-                << it->getApn() << std::setw(17) << it->getName() << std::setw(10)
-                << ipFamilyTypeToString(it->getIpFamilyType()) << std::endl;
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      std::cout << std::endl << std::endl;
+      PRINT_CB << " ** onProfileListResponse **" << std::endl;
+      std::cout << std::setw(2)
+                << "+-----------------------------------------------------------------+"
+                << std::endl;
+      std::cout << std::setw(14) << "| Profile # | " << std::setw(11) << "TechPref | "
+                << std::setw(15) << "      APN      " << std::setw(17) << "|  ProfileName  |"
+                << std::setw(10) << " IP Type |" << std::endl;
+      std::cout << std::setw(2)
+                << "+-----------------------------------------------------------------+"
+                << std::endl;
+      for(auto it : profiles) {
+         std::cout << std::left << std::setw(4) << "  " << std::setw(10) << it->getId()
+                   << std::setw(11) << DataUtils::techPreferenceToString(it->getTechPreference())
+                   << std::setw(15) << it->getApn() << std::setw(17) << it->getName()
+                   << std::setw(10) << DataUtils::ipFamilyTypeToString(it->getIpFamilyType())
+                   << std::endl;
+      }
+      std::cout << std::endl << std::endl;
+   } else {
+      std::cout << "ProfileList response failed, ErrorCode:" << (int)error
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
-   std::cout << "ErrorCode:" << (int)error << std::endl;
-   std::cout << std::endl << std::endl;
 }
 
-std::string MyDataProfilesCallback::techPreferenceToString(telux::data::TechPreference techPref) {
+std::string DataUtils::techPreferenceToString(telux::data::TechPreference techPref) {
    switch(techPref) {
       case telux::data::TechPreference::TP_3GPP:
          return "3gpp";
@@ -69,7 +77,7 @@ std::string MyDataProfilesCallback::techPreferenceToString(telux::data::TechPref
    }
 }
 
-std::string MyDataProfilesCallback::ipFamilyTypeToString(telux::data::IpFamilyType ipType) {
+std::string DataUtils::ipFamilyTypeToString(telux::data::IpFamilyType ipType) {
    switch(ipType) {
       case telux::data::IpFamilyType::IPV4:
          return "IPv4";
@@ -88,14 +96,18 @@ void MyDataProfileCallback::onResponse(const std::shared_ptr<telux::data::DataPr
    if(error == telux::common::ErrorCode::SUCCESS) {
       std::cout << std::endl << std::endl;
       PRINT_CB << "onProfileResponse:" << std::endl;
-      PRINT_CB << "ProfileID : " << profile->getId() << ", ProfileName : " << profile->getName()
-               << ", TechPreference : " << (int)profile->getTechPreference()
-               << ", APN : " << profile->getApn() << ", UserName : " << profile->getUserName()
-               << ", Password : " << profile->getPassword()
-               << ", AuthPreference : " << (int)profile->getAuthProtocolType()
-               << ", IpFamilyType : " << (int)profile->getIpFamilyType() << std::endl;
+      PRINT_CB
+         << "ProfileID : " << profile->getId() << ", ProfileName : " << profile->getName()
+         << ", TechPreference : " << DataUtils::techPreferenceToString(profile->getTechPreference())
+         << ", APN : " << profile->getApn() << ", UserName : " << profile->getUserName()
+         << ", Password : " << profile->getPassword()
+         << ", AuthPreference : " << (int)profile->getAuthProtocolType()
+         << ", IpFamilyType : " << DataUtils::ipFamilyTypeToString(profile->getIpFamilyType())
+         << std::endl;
    } else {
-      PRINT_CB << "Unable to create profile or request profile by ID. " << std::endl;
+      PRINT_CB << "Unable to create profile or request profile by ID, errorCode: "
+               << static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error)
+               << std::endl;
    }
    std::cout << std::endl << std::endl;
 }
@@ -106,28 +118,30 @@ void MyDataCreateProfileCallback::onResponse(int profileId, telux::common::Error
       PRINT_CB << "onResponse:" << std::endl;
       PRINT_CB << "ProfileID : " << profileId << std::endl;
    } else {
-      PRINT_CB << "Unable to create profile or request profile by ID. " << std::endl;
+      PRINT_CB << "Unable to create profile or request profile by ID, errorCode: "
+               << static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error)
+               << std::endl;
    }
    std::cout << std::endl << std::endl;
 }
 
 void MyDeleteProfileCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
-   PRINT_CB << "onDeleteProfileResponse:" << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << " Delete Profile is successful " << std::endl;
    } else {
-      PRINT_CB << " Delete Profile is failure " << std::endl;
+      PRINT_CB << " Delete Profile is failure, errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
 void MyModifyProfileCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
-   PRINT_CB << "onModifyProfileResponse:" << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << " Modify Profile is successful " << std::endl;
    } else {
-      PRINT_CB << " Modify Profile is failure " << std::endl;
+      PRINT_CB << " Modify Profile is failure, errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -139,9 +153,8 @@ void MyDataCallResponseCallback::startDataCallResponseCallBack(
       PRINT_CB << "start DataCallResponseCb is successful " << std::endl;
    } else {
       PRINT_CB << "start DataCallResponseCb failed,  errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
-   std::cout << std::endl;
 }
 
 void MyDataCallResponseCallback::stopDataCallResponseCallBack(
@@ -151,7 +164,7 @@ void MyDataCallResponseCallback::stopDataCallResponseCallBack(
       PRINT_CB << "stop DataCallResponseCb is successful " << std::endl;
    } else {
       PRINT_CB << "stop DataCallResponseCb failed,  errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
    std::cout << std::endl;
 }
@@ -170,7 +183,7 @@ void DataCallStatisticsResponseCb::requestStatisticsResponse(
    } else {
       PRINT_CB
          << "requestDataCallStatistics Response failed, errorCode: " << static_cast<int>(error)
-         << std::endl;
+         << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -178,5 +191,6 @@ void DataCallStatisticsResponseCb::resetStatisticsResponse(telux::common::ErrorC
    std::cout << std::endl << std::endl;
    PRINT_CB << "resetDataCallStatistics Response"
             << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-            << std::endl;
+            << ". ErrorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 }

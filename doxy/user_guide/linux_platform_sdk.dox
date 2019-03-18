@@ -3,6 +3,7 @@
 
 This section has instructions to build a platform SDK using code aurora forum (CAF) / open source
 
+ - These instructions are applicable for QTI Processor builds only, <b>For external APs the platform SDK corresponding to specific external AP would have to be used.</b>
 
 </br>
 <b>NOTE:</b> This is not to be confused with the Telematics SDK. The Yocto platform SDK, includes the tool chain, and libraries necessary to be able to develop any program for a given device. It also includes the stub open source libraries for the Telematics SDK, allowing one to develop application using the Telematics SDK's APIs as well.

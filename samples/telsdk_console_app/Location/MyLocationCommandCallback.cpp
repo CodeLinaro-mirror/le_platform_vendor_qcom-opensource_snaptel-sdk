@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include "MyLocationCommandCallback.hpp"
+#include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
@@ -42,6 +43,7 @@ void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) 
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << commandName_ << " sent successfully" << std::endl;
    } else {
-      PRINT_CB << commandName_ << " failed\n errorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << commandName_ << " failed\n errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }

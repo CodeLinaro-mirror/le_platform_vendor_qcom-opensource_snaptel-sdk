@@ -54,7 +54,7 @@ when       who     what, where, why
 @tr @td B @tdend @td Dec 2017 @tdend @tdlast Added subscription feature @tdlastend @trend
 @tr @td C @tdend @td Jun 2018 @tdend @tdlast Added data services apps @tdlastend @trend
 @tr @td D @tdend @td Oct 2018 @tdend @tdlast Update of Yocto Platform SDK instructions, Addition of Network Selection and Service System Manager @tdlastend @trend
-@tr @td E @tdend @td Nov 2018 @tdend @tdlast Addition of C-V2X samples @tdlastend @trend
+@tr @td E @tdend @td Nov 2018 @tdend @tdlast Update QTI logo and copyright, Addition of C-V2X samples @tdlastend @trend
 @tr @td F @tdend @td Jan 2019 @tdend @tdlast Addition of Audio Manager apps reference code @tdlastend @trend
 @tableend
 

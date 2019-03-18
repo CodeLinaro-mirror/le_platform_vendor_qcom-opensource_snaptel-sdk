@@ -154,6 +154,7 @@ private:
    ~PhoneFactory();
    PhoneFactory(const PhoneFactory &) = delete;
    PhoneFactory &operator=(const PhoneFactory &) = delete;
+   std::recursive_mutex mutex_;
 };
 
 /** @} */ /* end_addtogroup telematics_phone_factory */

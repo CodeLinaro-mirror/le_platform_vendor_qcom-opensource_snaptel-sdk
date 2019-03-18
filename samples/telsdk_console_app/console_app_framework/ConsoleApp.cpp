@@ -150,7 +150,7 @@ int ConsoleApp::mainLoop() {
          conAppCmd->executeCommand(userInput);
       } else {
          std::cout << "Invalid command: " << userInput[0] << " entered." << std::endl;
-         std::cout << "Please enter valid command and arguments." << std::endl;
+         std::cout << "Please enter valid command and arguments" << std::endl;
       }
    }
    return 0;

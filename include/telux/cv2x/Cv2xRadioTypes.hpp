@@ -40,6 +40,7 @@
 #define CV2XRADIOTYPES_HPP
 
 #include <bitset>
+#include <vector>
 
 namespace telux {
 
@@ -85,8 +86,7 @@ enum class Cv2xCauseType {
 /**
  * Encapsulates status of CV2X radio.
  *
- * Used in @ref Cv2xRadioManager:requestV2xStatus and
- * Cv2xRadioListener.
+ * Used in @ref Cv2xRadioManager:requestV2xStatus and Cv2xRadioListener.
  */
 struct Cv2xStatus {
     Cv2xStatusType rxStatus = Cv2xStatusType::UNKNOWN;  /**< RX status */
@@ -95,6 +95,29 @@ struct Cv2xStatus {
     Cv2xCauseType txCause = Cv2xCauseType::UNKNOWN;     /**< TX cause of failure */
     uint8_t cbrValue = 255;                             /**< Channel Busy Ratio */
     bool cbrValueValid = false;                         /**< CBR value is valid */
+};
+
+/**
+ * Encapsulates status for single pool.
+ *
+ * Used in @ref Cv2xStatusEx.
+ */
+struct Cv2xPoolStatus {
+    uint8_t poolId = 0u; /**< pool ID*/
+    Cv2xStatus status;   /**< status */
+};
+
+/**
+ * Encapsulates status of CV2X radio and per pool status.
+ *
+ * Used in @ref Cv2xRadioManager:requestV2xStatus and
+ * Cv2xRadioListener.
+ */
+struct Cv2xStatusEx {
+    Cv2xStatus status;                      /**< Overall Cv2x status */
+    std::vector<Cv2xPoolStatus> poolStatus; /**< Multi pool status vector */
+    bool timeUncertaintyValid = false;      /**< Time uncertainty value is valid */
+    float timeUncertainty;                  /**< Time uncertainty value in milleseconds */
 };
 
 /**
@@ -163,6 +186,23 @@ enum class Periodicity {
 };
 
 /**
+ * Contains minimum and maximum frequency for a given TX pool ID. Multiple TX
+ * Pools allow the same radio and overall frequency range to be shared for
+ * multiple types of traffic like V2V and V2X. Each pool ID and frequency range
+ * corresponds to a certain type of traffic.
+ *
+ * Used in @ref Cv2xRadioCapabilities
+ */
+struct TxPoolIdInfo {
+    uint8_t poolId;
+    /**< TX pool ID. */
+    uint16_t minFreq;
+    /**< Minimum frequency in MHz. */
+    uint16_t maxFreq;
+    /**< Maximum frequency in MHz. */
+};
+
+/**
  * Contains event flow configuration parameters.
  *
  * Used in @ref createTxEventFlow
@@ -183,6 +223,11 @@ struct EventFlowInfo {
          default setting. */
     uint8_t mcsIndex;
     /**< Modulation and Coding Scheme Index to use. */
+    bool txPoolIdValid = false;
+    /**< Set to true if txPoolId is used.  If false, the system will use its
+         default setting. */
+    uint8_t txPoolId = 0u;
+    /**< Transmission Pool ID. */
 };
 
 /**
@@ -224,12 +269,17 @@ struct SpsFlowInfo {
          default setting. */
     uint8_t mcsIndex;
     /**< Modulation and Coding Scheme Index to use.  */
+    bool txPoolIdValid = false;
+    /**< Set to true if txPoolId is used.  If false, the system will use its
+         default setting. */
+    uint8_t txPoolId = 0u;
+    /**< Transmission Pool ID. */
 };
 
 /**
- * Capabilities of the Cv2xRadio.
+ * Contains capabilities of the Cv2xRadio.
  *
- * Returned from @ref getCapabilities
+ * Used in @ref requestCapabilities and @ref onCapabilitiesChanged
  */
 struct Cv2xRadioCapabilities {
     uint32_t linkIpMtuBytes;
@@ -267,6 +317,12 @@ struct Cv2xRadioCapabilities {
     /**< Maximum number of supported SPS reservations. */
     uint16_t maxNumNonSpsFlows;
     /**< Maximum number of supported event flows (non-SPS ports). */
+    int32_t maxTxPower;
+    /**< Maximum supported transmission power. */
+    int32_t minTxPower;
+    /**< Minimum supported transmission power. */
+    std::vector<TxPoolIdInfo> txPoolIdsSupported;
+    /**< Vector of supported transmission pool IDs. */
 };
 
 /**
@@ -299,6 +355,47 @@ struct SpsSchedulingInfo {
     /**< Absolute UTC start time of next selected grant in nanoseconds. */
     uint32_t periodicity;
     /**< Periodicity of the grant in milliseconds. */
+};
+
+/**
+ * Contains time confidence, position confidence, and propogation delay for a
+ * trusted UE.
+ *
+ * Used in @ref TrustedUEInfo
+ */
+struct TrustedUEInfo {
+    uint32_t sourceL2Id;
+    /**< Trusted Source L2 ID */
+    float timeUncertainty;
+    /**< Time uncertainty value in milliseconds. */
+    uint16_t timeConfidenceLevel;
+    /**< @deprecated Use timeUncertainty
+         Time confidence level.
+         Range from 0 to 127 with 0 being invalid/unavailable
+         and 127 being the most confident. */
+    uint16_t positionConfidenceLevel;
+    /**< Position confidence level.
+         Range from 0 to 127 with 0 being invalid/unavailable
+         and 127 being the most confident. */
+    uint32_t propagationDelay;
+    /**< Propagation delay in microseconds. */
+};
+
+/**
+ * Contains list of malicious UE source L2 IDs.
+ * Contains list of trusted UE source L2 IDs and associated confidence values.
+ *
+ * Used in @ref updateTrustedUEList
+ */
+struct TrustedUEInfoList {
+    bool maliciousIdsValid = false;
+    /**< Malicious remote UE sources are valid. */
+    std::vector<uint32_t> maliciousIds;
+    /**< Malicious remote UE source L2 IDs. */
+    bool trustedUEsValid = false;
+    /**< Trusted remote UE sources are valid. */
+    std::vector<TrustedUEInfo> trustedUEs;
+    /**< Trusted remote UE sources. */
 };
 
 /**

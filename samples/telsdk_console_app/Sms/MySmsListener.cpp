@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include "MySmsListener.hpp"
+#include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
@@ -46,7 +47,8 @@ void MySmsCommandCallback::commandResponse(telux::common::ErrorCode error) {
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "sendSmsResponse successfully" << std::endl;
    } else {
-      PRINT_CB << "sendSmsResponse failed, errorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "sendSmsResponse failed, errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -57,7 +59,8 @@ void MySmscAddressCallback::smscAddressResponse(const std::string &address,
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "requestSmscAddress smscAddressResponse: " << address << std::endl;
    } else {
-      PRINT_CB << "requestSmscAddress failed, errorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "requestSmscAddress failed, errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -67,7 +70,8 @@ void MySetSmscAddressResponseCallback::setSmscResponse(telux::common::ErrorCode 
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "setSmscAddress sent successfully" << std::endl;
    } else {
-      PRINT_CB << "setSmscAddress failed with errorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "setSmscAddress failed with errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -75,6 +79,7 @@ void MySmsDeliveryCallback::commandResponse(telux::common::ErrorCode error) {
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "SMS Delivered successfully" << std::endl;
    } else {
-      PRINT_CB << "SMS Delivery failed, errorCode: " << (int)error << std::endl;
+      PRINT_CB << "SMS Delivery failed, errorCode: " << (int)error
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }

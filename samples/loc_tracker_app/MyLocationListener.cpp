@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -47,9 +47,8 @@ extern "C" {
 
 const std::string MAPS_URL = "https://www.google.com/maps/search/?api=1&query=";
 
-void MyLocationListener::onLocationUpdate(
-   const std::shared_ptr<telux::loc::ILocationInfo> &locationInfo) {
-
+void MyLocationListener::onDetailedLocationUpdate(
+   const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
    std::string locMsg = MAPS_URL + std::to_string(locationInfo->getLatitude()) + ","
                         + std::to_string(locationInfo->getLongitude());
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,74 +30,99 @@
 /**
  * @file       LocationListener.hpp
  *
- * @brief      Interface for location service listener object. Client needs to implement this
- *             interface to get location service notifications like location update,
+ * @brief      Interface for location service listener object. Client needs to
+ * implement this
+ *             interface to get location service notifications like location
+ * update,
  *             satellite vehicle info etc.
  *             The methods in listener can be invoked from multiple threads.
  *             Client needs to make sure that implementation is thread-safe.
  *
- * @note       Eval: This is a new API and is being evaluated.It is subject to change
- *             and could break backwards compatibility.
  */
 
 #ifndef LOCATIONLISTENER_HPP
 #define LOCATIONLISTENER_HPP
 
 #include "telux/loc/LocationDefines.hpp"
+#include <memory>
 
 namespace telux {
 
 namespace loc {
 // forward declarations
-class ILocationInfo;
+class ILocationInfoBase;
+class ILocationInfoEx;
 class IGnssSVInfo;
 
 /** @addtogroup telematics_location
- * @{ */
+* @{ */
 
 /**
- * @brief Listener class for getting location updates and satellite vehicle information
+ * @brief Listener class for getting location updates and satellite vehicle
+ * information.
  *
- *        The methods in listener can be invoked from multiple different threads. Client
- *        needs to make sure that implementation is thread-safe.
+ * The methods in listener can be invoked from multiple different
+ * threads. Client needs to make sure that implementation is thread-safe.
  *
- * @note  Eval: This is a new API and is being evaluated.It is subject to change
- *        and could break backwards compatibility.
  */
 class ILocationListener {
 public:
-   /**
-    * This function is called when device receives location update.
-    *
-    * @param [in] locationInfo - Location information  like latitude, longitude, timeStamp and
-    *             other information such as heading, altitude and velocity etc.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
-    */
-   virtual void onLocationUpdate(const std::shared_ptr<ILocationInfo> &locationInfo) {
-   }
+/**
+ * This function is called when device receives location update.
+ *
+ * @param [in] locationInfo - Location information  like latitude, longitude,
+ * timeStamp other information such as heading, altitude and velocity etc.
+ *
+ */
+  virtual void
+  onLocationUpdate(const std::shared_ptr<ILocationInfo> &locationInfo) {}
 
-   /**
-    * This function is called when device receives GNSS satellite information.
-    *
-    * @param [in] gnssSVInfo - GNSS satellite information
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
-    */
-   virtual void onGnssSVInfo(const std::shared_ptr<IGnssSVInfo> &gnssSVInfo) {
-   }
+/**
+ * This function is called when device receives location update.
+ *
+ * @param [in] locationInfo - Location information  like latitude, longitude,
+ * timeStamp other information such as heading, altitude and velocity etc.
+ *
+ */
+  virtual void onBasicLocationUpdate(
+      const std::shared_ptr<ILocationInfoBase> &locationInfo) {}
 
-   /**
-    * Destructor of ILocationListener
-    */
-   virtual ~ILocationListener() {
-   }
+/**
+ * This function is called when device receives Gnss location update.
+ *
+ * @param [in] locationInfo - Contains richer set of location information
+ * like latitude, longitude, timeStamp, heading, altitude, velocity and other
+ * information such as deviations, elliptical accuracies etc.
+ *
+ */
+  virtual void onDetailedLocationUpdate(
+      const std::shared_ptr<ILocationInfoEx> &locationInfo) {}
+
+/**
+ * This function is called when device receives GNSS satellite information.
+ *
+ * @param [in] gnssSVInfo - GNSS satellite information
+ *
+ */
+  virtual void onGnssSVInfo(const std::shared_ptr<IGnssSVInfo> &gnssSVInfo) {}
+
+/**
+ * This function is called when device receives GNSS data information
+ * like jammer metrics and automatic gain control for satellite signal type.
+ *
+ * @param [in] info - GNSS signal info
+ *
+ */
+  virtual void onGnssSignalInfo(const std::shared_ptr<IGnssSignalInfo> &info) {}
+
+/**
+ * Destructor of ILocationListener
+ */
+  virtual ~ILocationListener() {}
 };
 /** @} */ /* end_addtogroup telematics_location */
-}  // end of namespace loc
+}         // end of namespace loc
 
-}  // end of namespace telux
+} // end of namespace telux
 
-#endif  // LOCATIONLISTENER_HPP
+#endif // LOCATIONLISTENER_HPP

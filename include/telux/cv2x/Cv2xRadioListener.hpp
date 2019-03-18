@@ -62,8 +62,20 @@ public:
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to
      *          change and could break backwards compatibility.
+     *
+     * @deprecated use onStatusChanged(Cv2xStatusEx status)
      */
     virtual void onStatusChanged(Cv2xStatus status) {}
+
+    /**
+     * Called when the status of the CV2X radio has changed.
+     *
+     * @param [in] status - CV2X radio status.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual void onStatusChanged(Cv2xStatusEx status) {}
 
     /**
      * Called when the L2 Address has changed.
@@ -96,6 +108,16 @@ public:
      *          and could break backwards compatibility.
      */
     virtual void onSpsSchedulingChanged(const SpsSchedulingInfo & schedulingInfo) {}
+
+    /**
+     * Called when Cv2x radio capabilities have changed.
+     *
+     * @param [in] capabilities - Capabilities of the CV2X radio .
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual void onCapabilitiesChanged(const Cv2xRadioCapabilities & capabilities) {}
 
     /**
      * Destructor for ICv2xRadioListener

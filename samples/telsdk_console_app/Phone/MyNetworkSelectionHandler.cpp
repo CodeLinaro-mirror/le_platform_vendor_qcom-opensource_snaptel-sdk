@@ -27,8 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "MyNetworkSelectionHandler.hpp"
 #include <iostream>
+
+#include "MyNetworkSelectionHandler.hpp"
+#include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
@@ -83,7 +85,7 @@ void MySelectionModeResponseCallback::selectionModeResponse(
                << std::endl;
    } else {
       PRINT_CB << "Network selection mode failed, ErrorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -98,7 +100,8 @@ void MyPreferredNetworksResponseCallback::preferredNetworksResponse(
       PRINT_CB << "Static preferred networks: " << std::endl;
       MyNetworkSelectionHelper::logPreferredNetworkInfo(staticPreferredNetworksInfo);
    } else {
-      PRINT_CB << "ErrorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "ErrorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
    std::cout << "\n*********************************************************\n";
 }
@@ -109,7 +112,7 @@ void MyNetworkResponsecallback::setNetworkSelectionModeResponseCb(telux::common:
       PRINT_CB << "Set network selection mode is successful" << std::endl;
    } else {
       PRINT_CB << "Set network selection mode failed, errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -119,7 +122,7 @@ void MyNetworkResponsecallback::setPreferredNetworksResponseCb(telux::common::Er
       PRINT_CB << "Set preferred networks is successful" << std::endl;
    } else {
       PRINT_CB << "Set preferred networks failed, errorCode: " << static_cast<int>(error)
-               << std::endl;
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 
@@ -206,7 +209,8 @@ void MyPerformNetworkScanCallback::performNetworkScanResponse(
       }
       std::cout << "\n*********************************************************\n";
    } else {
-      PRINT_CB << "Request failed with errorCode: " << static_cast<int>(error) << std::endl;
+      PRINT_CB << "Request failed with errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 

@@ -50,6 +50,7 @@
 
 #include "DataListener.hpp"
 #include "DataResponseCallback.hpp"
+#include "MyProfileListener.hpp"
 
 class DataMenu : public ConsoleApp {
 public:
@@ -85,6 +86,7 @@ private:
    std::shared_ptr<MyDataProfileCallback> myDataProfileCbForGetProfileById_;
    std::shared_ptr<MyDeleteProfileCallback> myDeleteProfileCb_;
    std::shared_ptr<MyModifyProfileCallback> myModifyProfileCb_;
+   std::shared_ptr<MyProfileListener> profileListener_;
 
    std::shared_ptr<DataListener> dataListener_;
 

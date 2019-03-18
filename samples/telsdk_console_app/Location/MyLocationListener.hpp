@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -36,23 +36,41 @@
 class MyLocationListener : public telux::loc::ILocationListener {
 public:
    void onLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfo> &locationInfo) override;
+   void onBasicLocationUpdate(
+      const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) override;
+   void onDetailedLocationUpdate(
+      const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) override;
 
    void onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) override;
 
+   void onGnssSignalInfo(const std::shared_ptr<telux::loc::IGnssSignalInfo> &gnssDatainfo) override;
+
    std::string logSessionStatus(telux::loc::SessionStatus sessionStatus);
    void setLocationReportFlag(bool enable);
+   void setDetailedLocationReportFlag(bool enable);
+   void setBasicLocationReportFlag(bool enable);
    void setSvInfoFlag(bool enable);
+   void setDataInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
 
 private:
-   bool isSvInfoFlagEnabled_ = false, isLocReportFlagEnabled_ = false;
+   bool isSvInfoFlagEnabled_ = false, isDetailedReportFlagEnabled_ = false;
+   bool isBasicReportFlagEnabled_ = false, isLocReportFlagEnabled_ = false,
+        isDataInfoFlagEnabled_ = false;
    bool isTimerExpired = false;
+   void printOnLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfo> &locationInfo);
    void printSbasCorrection(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
+   void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printPositionTech(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
    void printMeasurementType(std::shared_ptr<telux::loc::ILocationInfo> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
+   void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printLocationPositionDynamics(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printGnssMeasurementInfo(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printGnssSystemTime(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printLocationTech(std::shared_ptr<telux::loc::ILocationInfoBase> locationInfo);
    void printVerticalReliability(telux::loc::LocationReliability locReliability);
    void printSensorType(telux::loc::SensorType sensorType);
    void printAltitudeType(telux::loc::AltitudeType altitudeType);

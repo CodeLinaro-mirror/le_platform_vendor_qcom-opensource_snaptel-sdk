@@ -40,9 +40,11 @@
 #define DATAPROFILEMANAGER_HPP
 
 #include <memory>
+#include <future>
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataProfile.hpp>
+#include <telux/data/DataProfileListener.hpp>
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -62,6 +64,27 @@ class IDataProfileCallback;
  */
 class IDataProfileManager {
 public:
+   /**
+    * Checks if the data profile manager is ready.
+    *
+    * @returns True if data profile subsystem is ready for service otherwise false.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual bool isSubsystemReady() = 0;
+
+   /**
+    * Waits for data profile subsystem to be ready.
+    *
+    * @returns  A future that caller can wait on to be notified when data profile
+    *           subsystem is ready.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual std::future<bool> onSubsystemReady() = 0;
+
    /**
     * Request list of profiles supported by the device.
     *
@@ -159,6 +182,32 @@ public:
     *
     */
    virtual int getSlotId() = 0;
+
+   /**
+    * Listen for create, delete and modify profile events.
+    *
+    * @param [in] listener - Listener that processes the notification.
+    *
+    * @returns @ref Status.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status registerListener(
+      std::weak_ptr<telux::data::IDataProfileListener> listener) = 0;
+
+   /**
+    * De-register listener.
+    *
+    * @param [in] listener - Listener to be de-registered.
+    *
+    * @returns @ref Status.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status deregisterListener(
+      std::weak_ptr<telux::data::IDataProfileListener> listener) = 0;
 
    /**
     * Destructor for IDataProfileManager

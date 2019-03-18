@@ -40,6 +40,7 @@
 #include <string>
 #include <vector>
 
+#include "ModemStatus.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
 
 class TelSdkConsoleApp : public ConsoleApp {
@@ -51,6 +52,9 @@ public:
     * Used for creating a menus of high level features
     */
    void init();
+
+   // Displays main menu
+   void displayMenu();
 
 private:
    void phoneMenu(std::vector<std::string> userInput);

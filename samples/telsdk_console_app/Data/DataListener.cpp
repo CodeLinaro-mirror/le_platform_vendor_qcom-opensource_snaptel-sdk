@@ -59,17 +59,15 @@ void DataListener::updateDataCallMap(const std::shared_ptr<telux::data::IDataCal
 void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
    std::cout << "\n\n";
    PRINT_NOTIFICATION << " ** DataCall Details **\n";
-   std::cout << " ProfileID: " << dataCall->getProfileId() << std::endl;
-   std::cout << " interfaceName: " << dataCall->getInterfaceName() << std::endl;
-   std::cout << " DataCallStatus: " << dataCallStatusToString(dataCall->getDataCallStatus())
-             << std::endl;
-   std::cout << " DataCallEndReason:\n   Type: "
+   std::cout << " ProfileID: " << dataCall->getProfileId()
+             << "\n InterfaceName: " << dataCall->getInterfaceName()
+             << "\n DataCallStatus: " << dataCallStatusToString(dataCall->getDataCallStatus())
+             << "\n DataCallEndReason:\n   Type: "
              << callEndReasonTypeToString(dataCall->getDataCallEndReason().type)
              << ", Code: " << callEndReasonCode(dataCall->getDataCallEndReason()) << std::endl;
    std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
    for(auto &it : ipAddrList) {
-      std::cout << "\n ifAddress: " << it.ifAddress
-                << "\n gwAddress: " << it.gwAddress
+      std::cout << "\n ifAddress: " << it.ifAddress << "\n gwAddress: " << it.gwAddress
                 << "\n primaryDnsAddress: " << it.primaryDnsAddress
                 << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
    }

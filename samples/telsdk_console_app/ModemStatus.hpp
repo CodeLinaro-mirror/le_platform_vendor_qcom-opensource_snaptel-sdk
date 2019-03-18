@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,23 +27,37 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
+/**
+ * @file       ModemStatus.hpp
+ *
+ * @brief      This class displays current modem status.
+ */
+
+#ifndef MODEMSTATUS_HPP
+#define MODEMSTATUS_HPP
+
+#include <future>
 #include <memory>
-#include <chrono>
 
-#include "MyLocationCommandCallback.hpp"
+#include <telux/tel/PhoneManager.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 
-#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+class MyOperatingModeCallback;
 
-// Implementation of My location callback
-MyLocationCommandCallback::MyLocationCommandCallback(std::string cmdName) {
-   commandName_ = cmdName;
-}
-void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) {
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << commandName_ << " executed successfully" << std::endl;
-   } else {
-      PRINT_NOTIFICATION << commandName_ << "failed with error = " << static_cast<int>(error)
-                         << std::endl;
-   }
-}
+class ModemStatus : public telux::tel::IOperatingModeCallback,
+                    public std::enable_shared_from_this<ModemStatus> {
+public:
+   ModemStatus();
+
+   // Provides current operating mode status
+   void printOperatingMode();
+
+   void operatingModeResponse(telux::tel::OperatingMode operatingMode,
+                              telux::common::ErrorCode error) override;
+
+private:
+   std::shared_ptr<telux::tel::IPhoneManager> phoneManager_ = nullptr;
+   std::promise<bool> callbackPromise_;
+};
+
+#endif  // MODEMSTATUS_HPP

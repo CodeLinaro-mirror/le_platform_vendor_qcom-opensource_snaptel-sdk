@@ -54,7 +54,7 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor, int phoneId)
 
    //  If telephony subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
-      std::cout << "Telephony subsystem is not ready, Please wait!!!..." << std::endl;
+      std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
       std::future<bool> f = phoneManager_->onSubsystemReady();
       // If we want to wait unconditionally for telephony subsystem to be ready
       subSystemStatus = f.get();
@@ -67,7 +67,7 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor, int phoneId)
       std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;
    } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
       exit(0);
    }
    if(subSystemStatus) {
@@ -81,7 +81,7 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor, int phoneId)
       // add listeners for incoming SMS notification
       telux::common::Status status = smsManager_->registerListener(smsListener_);
       if(status != telux::common::Status::SUCCESS) {
-         std::cout << "Unable to registerListener for SMS Manager" << std::endl;
+         std::cout << "Unable to register Listener" << std::endl;
       }
    }
 }
@@ -116,8 +116,6 @@ void SmsMenu::init() {
 
 // SMS Requests
 void SmsMenu::sendSms(std::vector<std::string> userInput) {
-   std::cout << "Send SMS \n\n";
-
    char delimiter = '\n';
 
    std::string receiverAddress;
@@ -144,20 +142,17 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
    }
 
    if(status == telux::common::Status::SUCCESS) {
-      std::cout << "Send SMS request sent successfully \n";
+      std::cout << "Send SMS request successful\n";
    } else {
-      std::cout << "Send SMS request failed \n";
+      std::cout << "Send SMS request failed\n";
    }
 }
 
 void SmsMenu::getSmscAddr(std::vector<std::string> userInput) {
-   std::cout << "Get SMS Address " << std::endl;
    auto ret = smsManager_->requestSmscAddress(mySmscAddrCb_);
-   if(ret == telux::common::Status::SUCCESS) {
-      std::cout << "Request SmscAddress is success" << std::endl;
-   } else {
-      std::cout << "Request SmscAddress is not success" << std::endl;
-   }
+   std::cout << (ret == telux::common::Status::SUCCESS ? "Request SmscAddress successful"
+                                                       : "Request SmscAddress failed")
+             << '\n';
 }
 
 void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
@@ -177,11 +172,11 @@ void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
 }
 
 void SmsMenu::calculateMessageAttributes(std::vector<std::string> userInput) {
-   std::cout << "Calculating Message attributes for " << userInput[1] << std::endl;
    auto msgAttributes = smsManager_->calculateMessageAttributes(userInput[1]);
-   std::cout << "Message Attributes \n encoding: " << (int)msgAttributes.encoding << std::endl;
-   std::cout << " numberOfSegments: " << msgAttributes.numberOfSegments << std::endl;
-   std::cout << " segmentSize: " << msgAttributes.segmentSize << std::endl;
-   std::cout << " numberOfCharsLeftInLastSegment: " << msgAttributes.numberOfCharsLeftInLastSegment
-             << std::endl;
+   std::cout
+      << "Message Attributes \n encoding: " << (int)msgAttributes.encoding
+      << "\n numberOfSegments: " << msgAttributes.numberOfSegments
+      << "\n segmentSize: " << msgAttributes.segmentSize
+      << "\n numberOfCharsLeftInLastSegment: " << msgAttributes.numberOfCharsLeftInLastSegment
+      << std::endl;
 }

@@ -36,10 +36,10 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/Phone.hpp>
 
-class MyCellInfoCallback  {
+class MyCellInfoCallback {
 public:
    static void cellInfoListResponse(std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList,
-                             telux::common::ErrorCode error);
+                                    telux::common::ErrorCode error);
    static void cellInfoListRateResponse(telux::common::ErrorCode error);
 };
 

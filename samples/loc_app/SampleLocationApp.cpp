@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -48,14 +48,15 @@ using namespace telux::common;
 
 class MyLocationListener : public telux::loc::ILocationListener {
 public:
-   void onLocationUpdate(const std::shared_ptr<ILocationInfo> &locationInfo) {
+   void onDetailedLocationUpdate(const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {
       std::cout << std::endl;
-      std::cout << "*********************** Location Report *********************" << std::endl;
+      std::cout << "*********************** Detailed Location Report *********************" << std::endl;
       time_t realtime;
       realtime = (time_t)(locationInfo->getTimeStamp());
       PRINT_NOTIFICATION << "Timestamp : " << ctime(&realtime) << std::endl;
       PRINT_NOTIFICATION << "Latitude : " << locationInfo->getLatitude() << std::endl;
       PRINT_NOTIFICATION << "Longitude : " << locationInfo->getLongitude() << std::endl;
+      PRINT_NOTIFICATION << "Altitude : " << locationInfo->getAltitude() << std::endl;
    }
 };
 
@@ -89,13 +90,14 @@ int main(int, char **) {
    }
 
    // Registering a listener to get location fixes
-   locationManager->registerListener(myLocationListener);
-
+   locationManager->registerListenerEx(myLocationListener);
+   // Starting the reports for fixes
+   locationManager->startDetailedReports(1000,NULL);
    // Exit logic is specific to an application
    std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);
-   locationManager->removeListener(myLocationListener);
+   locationManager->deRegisterListenerEx(myLocationListener);
    std::cout << "Exiting application..." << std::endl;
    return 0;
 }

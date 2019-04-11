@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -40,9 +40,11 @@
 #define CV2XRADIOMANAGER_HPP
 
 #include <memory>
+#include <future>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
+#include <telux/cv2x/Cv2xRadioListener.hpp>
 
 
 namespace telux {
@@ -54,7 +56,38 @@ class ICv2xRadio;
 /**
  *@brief Cv2x Radio Manager listeners implement this interface.
  */
-class ICv2xListener : public common::IServiceStatusListener {};
+class ICv2xListener : public common::IServiceStatusListener {
+public:
+    /**
+     * Called when the status of the CV2X radio has changed.
+     *
+     * @param [in] status - CV2X radio status.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     *
+     * @deprecated use onStatusChanged(Cv2xStatusEx status)
+     */
+    virtual void onStatusChanged(Cv2xStatus status) {}
+
+    /**
+     * Called when the status of the CV2X radio has changed.
+     *
+     * @param [in] status - CV2X radio status.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual void onStatusChanged(Cv2xStatusEx status) {}
+
+    /**
+     * Destructor for ICv2xListener
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual ~ICv2xListener() {}
+};
 
 /**
  * This function is called as a response to @ref startCv2x
@@ -135,6 +168,24 @@ using UpdateConfigurationCallback =
  */
 class ICv2xRadioManager {
 public:
+    /**
+     * Checks if the Cv2x Radio Manager is ready.
+     *
+     * @returns True if Cv2x Radio Manager is ready for service, otherwise
+     * returns false.
+     *
+     */
+    virtual bool isReady() = 0;
+
+    /**
+     * Wait for Cv2x Radio Manager to be ready.
+     *
+     * @returns A future that caller can wait on to be notified
+     * when Cv2x Radio Manager is ready.
+     *
+     */
+    virtual std::future<bool> onReady() = 0;
+
     /**
      * Get Cv2xRadio instance
      *

@@ -68,5 +68,7 @@ Jun 2017   SVM      Created to support V2X API
     This section contains APIs related to Cellular-V2X operation.
     @defgroup telematics_audio Audio
     This section contains APIs related to Audio Stream operation.
+    @defgroup telematics_therm Thermal Management
+    This section contains APIs related to Thermal Management such as read list of thermal zones, cooling devices and binding info.
   @}
 */

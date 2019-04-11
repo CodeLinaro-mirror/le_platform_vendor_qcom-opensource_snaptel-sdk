@@ -72,5 +72,5 @@ and others. if subsystems were not ready, wait for unconditionally.
       smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
    }
    ~~~~~~
-   
+
 ### 6. Receive responses for sendSms request ###

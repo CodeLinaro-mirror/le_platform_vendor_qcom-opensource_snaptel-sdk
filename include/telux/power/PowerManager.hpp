@@ -53,8 +53,8 @@ namespace power {
  * @{ */
 
 /**
- * @brief   IPowerManager provides interface to register and de-register listeners, for being
- *          notified of system/power states. And also API to initiate system power-state transition.
+ * @brief   IPowerManager provides interface to register and de-register listeners (to get
+ *          system power-state updates). And also API to initiate system power-state transition.
  *
  * @note    Eval: This is a new API and is being evaluated.It is subject to change and could break
  *          backwards compatibility.
@@ -86,7 +86,7 @@ public:
     /**
      * Register a listener for updates on system power-state changes.
      *
-     * @param [in] listener - Pointer of IPowerListener object that processes the notification
+     * @param [in] listener Pointer of IPowerListener object that processes the notification
      *
      * @returns Status of registerListener i.e success or suitable status code.
      *
@@ -98,7 +98,7 @@ public:
     /**
      * Remove a previously registered listener.
      *
-     * @param [in] listener - Previously registered IPowerListener that needs to be removed
+     * @param [in] listener Previously registered IPowerListener that needs to be removed
      *
      * @returns Status of deregisterListener, success or suitable status code
      *
@@ -113,8 +113,8 @@ public:
      * This API needs to be used cautiously, as it changes the power-state of the system and may
      * affect other processes.
      *
-     * @param [in] state    - power-state that the System is intended to enter
-     * @param [in] callback - Optional callback to get the response for the system-state transition
+     * @param [in] state    power-state that the System is intended to enter
+     * @param [in] callback Optional callback to get the response for the system-state transition
      *                        command
      *
      * @returns Status of setSystemState i.e. success or suitable status code.

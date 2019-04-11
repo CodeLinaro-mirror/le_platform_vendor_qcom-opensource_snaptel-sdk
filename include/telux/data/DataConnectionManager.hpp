@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -86,7 +86,6 @@ using DataCallResponseCb
  */
 using StatisticsResponseCb
    = std::function<void(const DataCallStats dataStats, telux::common::ErrorCode error)>;
-
 
 /** @addtogroup telematics_data
  * @{ */
@@ -319,7 +318,7 @@ public:
  * should be thread safe.
  *
  */
-class IDataConnectionListener {
+class IDataConnectionListener : public telux::common::IServiceStatusListener {
 public:
    /**
     * This function is called when there is a change in the data call.

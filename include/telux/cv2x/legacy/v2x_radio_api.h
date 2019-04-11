@@ -127,6 +127,15 @@ typedef enum {
     V2X_PRIO_BACKGROUND = 7
 } v2x_priority_et;
 
+/**
+   Service status.
+ */
+typedef enum  {
+    SERVICE_UNAVAILABLE = 0,
+    SERVICE_AVAILABLE = 1,
+} v2x_service_status_t;
+
+
 /** Contains time confidence, position confidence, and propogation delay for a
     trusted UE.
 */
@@ -513,6 +522,18 @@ typedef struct {
     */
     void (*v2x_radio_capabilities_listener)(v2x_iface_capabilities_t *caps,
                                             void *context);
+
+    /**
+    Callback made when the service status changes.
+
+    @param status   Service status
+    @param context  Pointer to the context of the caller who originally
+                    registered for this callback.
+
+    @newpage
+    */
+    void (*v2x_service_status_listener)(v2x_service_status_t status,
+                                        void *context);
 
 } v2x_radio_calls_t;
 

@@ -53,20 +53,21 @@ namespace power {
  * @{ */
 
 /**
- * @brief Listener class for getting notifications related to power-management. The client needs to
- *        implement the methods in it.
+ * @brief Listener class for getting notifications related to system power-state and also the
+ *        updates related to power-management service status. The client needs to implement these
+ *        methods as briefly as possible and avoid blocking calls in it.
  *        The methods in this class can be invoked from multiple different threads. Client
  *        needs to make sure that the implementation is thread-safe.
  *
  * @note  Eval: This is a new API and is being evaluated.It is subject to change
  *        and could break backwards compatibility.
  */
-class IPowerListener {
+class IPowerListener : public common::IServiceStatusListener {
 public:
     /**
      * This function is called when the system/device is going to change its power-state.
      *
-     * @param [in] state - power state that system is about to enter
+     * @param [in] state power state that system is about to enter
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.

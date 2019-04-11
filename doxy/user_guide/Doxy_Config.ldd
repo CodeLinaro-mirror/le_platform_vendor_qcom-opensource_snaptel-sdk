@@ -264,6 +264,7 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/steps_to_write_app.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/using_sample_apps.dox \
                          $(TELUX_GIT_ROOT)/docs/api_samples/logger_settings/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/sample_apps_settings/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/phone/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/subscription/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/sms/ \
@@ -273,7 +274,8 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/network_selection/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/serving_system/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/cv2x/ \
-                         $(TELUX_GIT_ROOT)/docs/api_samples/audio/
+                         $(TELUX_GIT_ROOT)/docs/api_samples/audio/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/thermal/
 
 INPUT_ENCODING         = UTF-8
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and

@@ -72,6 +72,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
    Audio Management sub-system consists of APIs for Audio management such as setting up audio streams, switching devices on streams, apply volume/mute etc
 
+<b>Thermal Management</b>
+
+   Thermal Management sub-system consists of APIs to get list of thermal zones, cooling devices and binding information.
+
 Telematics SDK classes can be broadly divided into the following types:
 
 - Factory - Factory classes are central classes such as PhoneFactory which can be used to create Manager classes corresponding to their sub-systems such as PhoneManager.
@@ -271,4 +275,14 @@ This table captures when stream could be muted and in which direction.
 @tr @td PLAY @tdend @td Applicable @tdend @tdlast Not Applicable @tdlastend @trend
 @tr @td CAPTURE @tdend @td Not Applicable @tdend @tdlast Applicable @tdlastend @trend
 @tableend
+
+@subsection thermal_management Thermal Management
+Thermal Management APIs in the Telematics SDK are used for reading thermal zone, cooling device and binding information.
+
+Thermal Management APIs provide functionality such as
+   - get thermal zones with thermal zone description, current temperature, trip points and binding info
+   - get cooling devices with cooling device type, maximum and current cooling level
+   - get thermal zone by Id
+   - get cooling device by Id
+
 */

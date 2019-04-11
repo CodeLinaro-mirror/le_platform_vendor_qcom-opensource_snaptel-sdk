@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -29,7 +29,7 @@
 
 /**
  * @file       Version.hpp
- * @brief      Provide APIs to query the version of SDK
+ * @brief      Provide APIs to query the version of the SDK
  */
 
 #ifndef VERSION_HPP
@@ -50,13 +50,11 @@ namespace common {
  */
 struct SdkVersion {
    int major = DEFAULT_VALUE; /**< Major Version: This number will be incremented whenever
-                   significant changes
-                   or features are introduced */
+                                   significant changes  or features are introduced */
    int minor = DEFAULT_VALUE; /**< Minor Version: This number will be incremented when smaller
-                   features with
-                   some new APIs are introduced. */
+                                   features with some new APIs are introduced. */
    int patch = DEFAULT_VALUE; /**< Patch Version: If the release only contains bug fixes,
-                   but no API change then the patch version would be incremented. */
+                                   but no API change then the patch version would be incremented.*/
 };
 
 /**
@@ -72,9 +70,9 @@ public:
    static std::string getReleaseName();
 
    /**
-    * Get the telematics SDK version, for example: 01.00.
+    * Get the Telematics SDK version, for example: 01.00.00
     *
-    * @returns String contains sdk version
+    * @returns @ref SdkVersion structure of major, minor and patch version
     */
    static SdkVersion getSdkVersion();
 };

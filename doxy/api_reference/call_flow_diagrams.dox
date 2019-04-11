@@ -1055,4 +1055,34 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 24. Application requests delete audio stream using deleteStream method.
 25. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
 26. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@section thermal_manager_call_flow Thermal manager call flow
+
+Thermal manager provides APIs to get list of thermal zones and cooling devices. It also contains APIs
+to get a particular thermal zone and a particular cooling device details with the given Id.
+
+@anchor fig_thermal_manager_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{thermal_manager_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Thermal manager call flow}
+  \label{fig_thermal_manager_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{thermal_manager_call_flow.png,Thermal manager call flow,80,80,Thermal manager call flow}
+
+1. Application requests Thermal factory for Thermal Manager.
+2. Thermal factory returns IThermalManager object to application.
+3. Application sends request to get all thermal zones using IThermalManager object.
+4. Thermal manager returns the list of thermal zones to the application.
+5. Application requests for a particular thermal zone details by mentioning the thermal zone Id.
+6. Application receives thermal zone details with the given Id from thermal manager.
+7. Application sends request to get all cooling devices using IThermalManager object.
+8. Thermal manager returns the list of cooling devices to the application.
+9. Application requests for a particular cooling device details by passing the cooling device Id.
+10. Thermal Manager sends cooling device details with the given Id to the application.
+
 */

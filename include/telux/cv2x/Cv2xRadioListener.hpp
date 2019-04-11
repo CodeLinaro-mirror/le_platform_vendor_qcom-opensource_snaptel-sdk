@@ -63,7 +63,7 @@ public:
      * @note    Eval: This is a new API and is being evaluated.It is subject to
      *          change and could break backwards compatibility.
      *
-     * @deprecated use onStatusChanged(Cv2xStatusEx status)
+     * @deprecated use onStatusChanged in Cv2xListener
      */
     virtual void onStatusChanged(Cv2xStatus status) {}
 
@@ -74,6 +74,8 @@ public:
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to
      *          change and could break backwards compatibility.
+     *
+     * @deprecated use onStatusChanged in Cv2xListener
      */
     virtual void onStatusChanged(Cv2xStatusEx status) {}
 

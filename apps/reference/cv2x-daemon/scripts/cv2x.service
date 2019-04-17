@@ -41,7 +41,7 @@ PartOf=cv2x.target
 Type=notify
 ExecStartPre=/sbin/ip link set dev rmnet_data0 addrgenmode none
 ExecStartPre=/sbin/ip link set dev rmnet_data1 addrgenmode none
-ExecStart=/usr/bin/cv2x-control -s
+ExecStart=/usr/bin/cv2x-daemon -s
 Restart=always
 RestartSec=5
 

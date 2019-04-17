@@ -14,7 +14,7 @@ if(WITH_SYSTEMD)
     set(SYSTEMD_LIB systemd)
 endif()
 
-set(TARGET_CV2X_DAEMON_APP cv2x-control)
+set(TARGET_CV2X_DAEMON_APP cv2x-daemon)
 
 set(SOURCES
     src/Cv2xDaemon.cpp
@@ -38,4 +38,13 @@ set(EXEC_PERM OWNER_EXECUTE OWNER_WRITE OWNER_READ
 # Installation
 install(TARGETS ${TARGET_CV2X_DAEMON_APP}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+if(WITH_SYSTEMD)
+    install(FILES scripts/cv2x.service scripts/cv2x.target
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/../lib/systemd/system)
+else()
+    install(FILES scripts/start_cv2x_le
+            DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/init.d
+            PERMISSIONS ${EXEC_PERM})
+endif()
 

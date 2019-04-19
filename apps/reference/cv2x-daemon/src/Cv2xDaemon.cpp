@@ -52,6 +52,9 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#ifdef WITH_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 #include <Cv2xDaemon.hpp>
 
@@ -332,6 +335,9 @@ int main(int argc, char **argv) {
 
     // The App is running in daemon mode, We wait on Signal to terminate program
     if (isRunningDaemonMode) {
+#ifdef WITH_SYSTEMD
+        sd_notify(0, "READY=1");
+#endif
         std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
         LOGD("Press CTRL+C to exit\n");
         cv2xDaemon.cv_.wait(lock);

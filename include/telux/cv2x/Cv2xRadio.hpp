@@ -31,9 +31,6 @@
 * @file       Cv2xRadio.hpp
 *
 * @brief      Cv2xRadio class encapsulates a CV2X radio (channel) resource.
-*
-* @note       Eval: This is a new API and is being evaluated. It is
-*             subject to change and could break backwards compatibility.
 */
 
 #ifndef CV2XRADIO_HPP
@@ -66,9 +63,6 @@ class ICv2xTxFlow;
  * @param [in] error       - Indicates whether socket creation succeeded
  *                         - @ref SUCCESS
  *                         - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using CreateRxSubscriptionCallback =
     std::function<void (std::shared_ptr<ICv2xRxSubscription> rxSub,
@@ -86,8 +80,6 @@ using CreateRxSubscriptionCallback =
  * @param [in] error          - Indicates whether optional Tx Event flow creation succeeded
  *                            - @ref SUCCESS
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using CreateTxSpsFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txSpsFlow,
                                                     std::shared_ptr<ICv2xTxFlow> txEventFlow,
@@ -101,9 +93,6 @@ using CreateTxSpsFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow>
  * @param [in] error          - Indicates whether Tx event flow creation succeeded
  *                            - @ref SUCCESS
  *                            - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using CreateTxEventFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txEventFlow,
                                                       telux::common::ErrorCode error)>;
@@ -115,9 +104,6 @@ using CreateTxEventFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlo
  * @param [in] error     - Indicates whether close operation succeeded
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using CloseTxFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow,
                                                 telux::common::ErrorCode error)>;
@@ -129,9 +115,6 @@ using CloseTxFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txF
  * @param [in] error     - Indicates whether Rx subscription close succeeded
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using CloseRxSubscriptionCallback =
     std::function<void (std::shared_ptr<ICv2xRxSubscription> rxSub,
@@ -145,9 +128,6 @@ using CloseRxSubscriptionCallback =
  * @param [in] error     - SUCCESS if Tx reservation change succeeded
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using ChangeSpsFlowInfoCallback =
     std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
@@ -160,9 +140,6 @@ using ChangeSpsFlowInfoCallback =
  * @param [in] error       - SUCCESS if Tx reservation change succeeded
  *                         - @ref SUCCESS
  *                         - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using RequestSpsFlowInfoCallback =
     std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow,
@@ -220,9 +197,6 @@ using UpdateTrustedUEListCallback =
  * @param [in] error       - SUCCESS if Tx reservation change succeeded
  *                         - @ref SUCCESS
  *                         - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using UpdateSrcL2InfoCallback =
     std::function<void (telux::common::ErrorCode error)>;
@@ -244,9 +218,6 @@ public:
      * @returns Cv2xRadioCapabilities - Contains capabilities of this Cv2xRadio.
      *
      * @deprecated Use requestCapabilities() API
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual Cv2xRadioCapabilities getCapabilities() const = 0;
 
@@ -254,9 +225,6 @@ public:
      * Returns true if the radio interface has completed initialization.
      *
      * @returns True if ready. False otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual bool isReady() const = 0;
 
@@ -266,9 +234,6 @@ public:
      *
      * @returns SUCCESS if Cv2xRadio initialization was successful. Otherwise it
      *          returns an Error Code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual std::future<telux::common::Status> onReady() = 0;
 
@@ -277,9 +242,6 @@ public:
      *
      * @param [in] listener - Listener that implements Cv2xRadioListener
      *                        interface.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(
         std::weak_ptr<ICv2xRadioListener> listener) = 0;
@@ -289,9 +251,6 @@ public:
      *
      * @param [in] listener - Previously registered Cv2xRadioListener that is
      *                        to be deregistered.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<ICv2xRadioListener> listener) = 0;
@@ -309,9 +268,6 @@ public:
      *
      * @dependencies The interface must be pre-initialized with init().
      *
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status createRxSubscription(
         TrafficIpType ipType,
@@ -346,9 +302,6 @@ public:
      * flow.
      *
      * @returns SUCCESS upon success. Error status otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status createTxSpsFlow(
         TrafficIpType ipType,
@@ -381,9 +334,6 @@ public:
      *      the IP socket.
      *
      * @returns SUCCESS upon success. Error status otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status createTxEventFlow(
         TrafficIpType ipType,
@@ -434,9 +384,6 @@ public:
      *                     This may be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status closeRxSubscription(std::shared_ptr<ICv2xRxSubscription> rxSub,
                                                       CloseRxSubscriptionCallback cb) = 0;
@@ -451,9 +398,6 @@ public:
      *                       This may be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status closeTxFlow(std::shared_ptr<ICv2xTxFlow> txFlow,
                                               CloseTxFlowCallback cb) = 0;
@@ -467,9 +411,6 @@ public:
      *                            may be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status changeSpsFlowInfo(
         std::shared_ptr<ICv2xTxFlow> txFlow,
@@ -484,9 +425,6 @@ public:
      *                            Must not be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status requestSpsFlowInfo(
         std::shared_ptr<ICv2xTxFlow> txFlow,
@@ -527,9 +465,6 @@ public:
      *                            Must not be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status updateSrcL2Info(UpdateSrcL2InfoCallback cb) = 0;
 

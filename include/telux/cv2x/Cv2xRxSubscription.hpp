@@ -32,9 +32,6 @@
 *
 * @brief      Represents a Cv2x Rx subscription. Encapsulates the Rx socket
 *             and associated Socket address.
-*
-* @note       Eval: This is a new API and is being evaluated. It is
-*             subject to change and could break backwards compatibility.
 */
 
 #ifndef CV2XRXSUBSCRIPTION_HPP
@@ -65,9 +62,6 @@ public:
      * Accessor for Rx subscription ID
      *
      * @returns subscription ID
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual uint32_t getSubscriptionId() const = 0;
 
@@ -75,9 +69,6 @@ public:
      * Accessor for IP traffic type
      *
      * @returns The Rx subscriptions's IP traffic type (IP or NON-IP)
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual TrafficIpType getIpType() const = 0;
 
@@ -85,9 +76,6 @@ public:
      * Accessor for the socket file descriptor
      *
      * @returns The Rx subscriptions's socket fd.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual int getSock() const = 0;
 
@@ -95,9 +83,6 @@ public:
      * Accessor for the socket address description
      *
      * @returns The Rx subscriptions's socket address
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual struct sockaddr_in6 getSockAddr() const = 0;
 
@@ -105,9 +90,6 @@ public:
      * Accessor for the subscriptions's port number
      *
      * @returns The Rx subscriptions's port num
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual uint16_t getPortNum() const = 0;
 

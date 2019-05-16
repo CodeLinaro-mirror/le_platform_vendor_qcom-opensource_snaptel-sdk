@@ -31,9 +31,6 @@
  * @file       v2x_kinematics_data_types.pb.h
  *
  * @brief      Contains data types used in v2x kinematics API
- *
- * @note       Eval: This is a new API and is being evaluated. It is
- *             subject to change and could break backwards compatibility.
  */
 
 #ifndef PB_V2X_KINEMATICS_DATA_TYPES_PB_H_INCLUDED

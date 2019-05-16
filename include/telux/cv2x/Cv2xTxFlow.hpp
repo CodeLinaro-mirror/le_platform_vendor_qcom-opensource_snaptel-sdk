@@ -33,9 +33,6 @@
 * @brief      Cv2xRadio class encapsulates a CV2X radio (channel) resource.
 * @brief      Represents both Cv2x SPS and Event flows. Encapsulates the Tx
 *             socket and associated socket address.
-*
-* @note       Eval: This is a new API and is being evaluated. It is subject
-*             to change and could break backwards compatibility.
 */
 
 
@@ -69,9 +66,6 @@ public:
      * not be unique between processes.
      *
      * @returns flow ID
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual uint32_t getFlowId() const = 0;
 
@@ -79,9 +73,6 @@ public:
      * Accessor for IP traffic type
      *
      * @returns The flow's IP traffic type (IP or NON-IP)
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual TrafficIpType getIpType() const = 0;
 
@@ -89,9 +80,6 @@ public:
      * Accessor for service ID
      *
      * @returns The flow's Service ID.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual uint32_t getServiceId() const = 0;
 
@@ -99,9 +87,6 @@ public:
      * Accessor for the socket file descriptor
      *
      * @returns The flow's socket fd.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual int getSock() const = 0;
 
@@ -109,9 +94,6 @@ public:
      * Accessor for the socket address description
      *
      * @returns The flow's socket address
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual struct sockaddr_in6 getSockAddr() const = 0;
 
@@ -119,9 +101,6 @@ public:
      * Accessor for the flow's source port number
      *
      * @returns The flow's source port num
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual uint16_t getPortNum() const = 0;
 

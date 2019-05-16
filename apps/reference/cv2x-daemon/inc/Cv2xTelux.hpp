@@ -36,7 +36,7 @@
 #include <Cv2xUtils.hpp>
 #include <Cv2xLog.hpp>
 #include <telux/cv2x/Cv2xFactory.hpp>
-#include <telux/cv2x/Cv2xRadio.hpp>
+#include <telux/cv2x/Cv2xRadioManager.hpp>
 #include <telux/data/DataProfileManager.hpp>
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -58,9 +58,7 @@ using telux::data::DataFactory;
 using telux::data::IDataProfileManager;
 using telux::data::TechPreference;
 using telux::data::IpFamilyType;
-using telux::cv2x::ICv2xRadio;
 using telux::cv2x::ICv2xRadioManager;
-using telux::cv2x::ICv2xRadioListener;
 using telux::common::IServiceStatusListener;
 using telux::common::ServiceStatus;
 using telux::common::Status;
@@ -128,8 +126,7 @@ class DataConnectionListener: public telux::data::IDataConnectionListener
         std::weak_ptr<Cv2xTelux> cv2xTelux_;
 };
 
-class Cv2xTelux : public telux::cv2x::ICv2xRadioListener,
-                  public telux::cv2x::ICv2xListener,
+class Cv2xTelux : public telux::cv2x::ICv2xListener,
                   public std::enable_shared_from_this<Cv2xTelux> {
 
     public:
@@ -186,7 +183,6 @@ class Cv2xTelux : public telux::cv2x::ICv2xRadioListener,
          * V2X Radio Listener
          */
         void onStatusChanged(Cv2xStatus status) override;
-        void onL2AddrChanged(uint32_t newL2Address) override;
 
         /**
          * SSR Listener
@@ -206,9 +202,9 @@ class Cv2xTelux : public telux::cv2x::ICv2xRadioListener,
         std::shared_ptr<DataCallInfo> dcInfoNonIP_;
         Cv2xStatus cv2xStatus_;
         bool isInitializationDone_;
+        bool cv2xActiveDone_ = false;
 
         /* Telux objects */
-        std::shared_ptr<ICv2xRadio> cv2xRadio_;
         std::shared_ptr<ICv2xRadioManager> cv2xRadioMgr_;
         std::shared_ptr<IDataProfileManager> dataProfileMgr_;
         std::shared_ptr<IDataConnectionManager> dataConnectionMgr_;
@@ -217,8 +213,7 @@ class Cv2xTelux : public telux::cv2x::ICv2xRadioListener,
         /**
          * Stop data call, used internally by stopV2xDataCall()
          */
-        int stopDataCall(std::shared_ptr<DataCallInfo>,
-                IpFamilyType ipFamilyType);
+        int stopDataCall(std::shared_ptr<DataCallInfo>, IpFamilyType ipFamilyType);
 
         /**
          * Handle creating V2X data profile, used internally by createProfileAndStartDataCalls()

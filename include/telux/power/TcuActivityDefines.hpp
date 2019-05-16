@@ -28,23 +28,18 @@
  */
 
 /**
- * @file       PowerListener.hpp
+ * @file       TcuActivityDefines.hpp
  *
- * @brief      PowerListener provides callback methods for listening to power-management service
- *             notifications, like system power-state change.Client need to implement these methods.
- *             The methods in listener can be invoked from multiple threads.So the client needs to
- *             make sure that the implementation is thread-safe.
+ * @brief      This file contains types related to TCU activity.
  *
- * @note       Eval: This is a new API and is being evaluated.It is subject to change and could
- *             break backwards compatibility.
+ * @note       Eval: These are new APIs and are being evaluated. They are subject to change and
+ *             could break backwards compatibility.
  */
 
-#ifndef POWERLISTENER_HPP
-#define POWERLISTENER_HPP
+#include <telux/common/CommonDefines.hpp>
 
-#include <memory>
-
-#include <telux/power/PowerDefines.hpp>
+#ifndef TCUACTIVITYDEFINES_HPP
+#define TCUACTIVITYDEFINES_HPP
 
 namespace telux {
 namespace power {
@@ -53,33 +48,25 @@ namespace power {
  * @{ */
 
 /**
- * @brief Listener class for getting notifications related to system power-state and also the
- *        updates related to power-management service status. The client needs to implement these
- *        methods as briefly as possible and avoid blocking calls in it.
- *        The methods in this class can be invoked from multiple different threads. Client
- *        needs to make sure that the implementation is thread-safe.
- *
- * @note  Eval: This is a new API and is being evaluated.It is subject to change
- *        and could break backwards compatibility.
+ * Defines the supported TCU-activity states that the listeners will be notified about.
  */
-class IPowerListener : public common::IServiceStatusListener {
-public:
-    /**
-     * This function is called when the system/device is going to change its power-state.
-     *
-     * @param [in] state power state that system is about to enter
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
-     */
-    virtual void onSystemStateUpdate(SystemState state) {
-    }
+enum class TcuActivityState {
+    UNKNOWN,    /**< To indicate that system state information is not available */
+    SUSPEND,    /**< System is going to SUSPEND state */
+    RESUME,     /**< System is going to RESUME state */
+    SHUTDOWN    /**< System is going to SHUTDOWN */
+};
 
-    /**
-     * Destructor of IPowerListener
-     */
-    virtual ~IPowerListener() {
-    }
+/**
+ * Defines the acknowledgements to TCU-activity states.The client process sends this after
+ * processing the TcuActivityState notification, indicating that it is prepared for state transition
+ *
+ * Acknowledgement for TcuActivityState::RESUME is not required, as the state transition has already
+ * happened.
+ */
+enum class TcuActivityStateAck {
+    SUSPEND_ACK,    /**< processed TcuActivityState::SUSPEND notification */
+    SHUTDOWN_ACK,   /**< processed TcuActivityState::SHUTDOWN notification */
 };
 
 /** @} */ /* end_addtogroup telematics_power */
@@ -87,4 +74,4 @@ public:
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif  // POWERLISTENER_HPP
+#endif  // TCUACTIVITYDEFINES_HPP

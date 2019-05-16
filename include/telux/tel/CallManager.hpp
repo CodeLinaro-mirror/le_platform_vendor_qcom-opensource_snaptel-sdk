@@ -67,9 +67,6 @@ class IMakeCallCallback;
  * @param [out] error  @ref ErrorCode
  * @param [out] call   Pointer to Call object or nullptr in case of failure
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- * change and could break backwards compatibility.
- *
  */
 using MakeCallCallback
    = std::function<void(telux::common::ErrorCode error, std::shared_ptr<ICall> call)>;
@@ -173,9 +170,6 @@ public:
     *                       - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of makeECall i.e. success or suitable status code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    * change and could break backwards compatibility.
     */
    virtual telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
                                            int category, int variant, MakeCallCallback callback)
@@ -211,9 +205,6 @@ public:
     *                       updateECallMsd.
     *
     * @returns Status of updateECallMsd i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    * change and could break backwards compatibility.
     */
    virtual telux::common::Status updateECallMsd(int phoneId, const std::vector<uint8_t> &msdPdu,
                                                 telux::common::ResponseCallback callback)

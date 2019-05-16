@@ -30,9 +30,6 @@
 /**
  * @file       LocationFactory.hpp
  * @brief      LocationFactory allows creation of location manager.
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef LOCATIONFACTORY_HPP
@@ -54,9 +51,6 @@ namespace loc {
 
 /**
  * @brief   LocationFactory allows creation of location manager.
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change
- *          and could break backwards compatibility.
  */
 class LocationFactory {
 public:
@@ -69,8 +63,6 @@ public:
     * Get instance of Location Manager
     *
     * @returns Pointer of ILocationManager object.
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    std::shared_ptr<ILocationManager> getLocationManager();
 

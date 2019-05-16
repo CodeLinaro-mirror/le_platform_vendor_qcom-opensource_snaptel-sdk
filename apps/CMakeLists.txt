@@ -7,7 +7,18 @@ include(GNUInstallDirs)
 # pkg-config module
 include(FindPkgConfig)
 
+if (MACHINE_HAS_CV2X_ONLY)
+    add_definitions(-DFEATURE_CV2X_ONLY)
+endif (MACHINE_HAS_CV2X_ONLY)
+
 add_subdirectory( tests/telsdk_console_app )
+add_subdirectory( tests/thermal_test_app )
+
+pkg_check_modules(PWR_MGR_QMI_LIB powermanagerqmi)
+
+if (PWR_MGR_QMI_LIB_FOUND)
+    add_subdirectory( tests/power_test_app )
+endif (PWR_MGR_QMI_LIB_FOUND)
 
 # build only if we are not building in bitbake environment
 if(BUILD_ALL_REFERENCE)
@@ -28,7 +39,11 @@ if(BUILD_ALL_APPS)
     add_subdirectory( samples/data_profile_app )
     add_subdirectory( samples/network_scan_app )
     add_subdirectory( samples/serving_system_app )
+    add_subdirectory( samples/thermal_app )
     add_subdirectory( tests/audio_test_app )
+    if (PWR_MGR_QMI_LIB_FOUND)
+        add_subdirectory( samples/tcuactivity_sample_app )
+    endif (PWR_MGR_QMI_LIB_FOUND)
 endif(BUILD_ALL_APPS)
 
 if(MACHINE_HAS_CV2X_ONLY)
@@ -37,4 +52,6 @@ if(MACHINE_HAS_CV2X_ONLY)
     add_subdirectory( samples/cv2x_get_status_app )
     add_subdirectory( samples/cv2x_get_capabilities_app )
     add_subdirectory( reference/cv2x-daemon )
+else(MACHINE_HAS_CV2X_ONLY)
+    add_subdirectory( tests/telux_audio_testapp )
 endif(MACHINE_HAS_CV2X_ONLY)

@@ -80,9 +80,6 @@ using DataCallResponseCb
  * @param [in] dataStats       Data Call statistics
  * @param [in] error           Return code for whether the operation
  *                             succeeded or failed
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using StatisticsResponseCb
    = std::function<void(const DataCallStats dataStats, telux::common::ErrorCode error)>;
@@ -282,9 +279,6 @@ public:
     *                         Statistics
     *
     * @returns Status of getDataCallStatistics i.e. success or suitable status code.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual telux::common::Status requestDataCallStatistics(StatisticsResponseCb callback = nullptr)
       = 0;
@@ -295,9 +289,6 @@ public:
     * @param [in] callback   optional callback to get the response of reset Data call statistics
     *
     * @returns Status of resetDataCallStatistics i.e. success or suitable status code.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual telux::common::Status resetDataCallStatistics(telux::common::ResponseCallback callback
                                                          = nullptr)

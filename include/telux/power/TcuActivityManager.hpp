@@ -28,23 +28,23 @@
  */
 
 /**
- * @file       PowerManager.hpp
+ * @file       TcuActivityManager.hpp
  *
- * @brief      PowerManager class provides interface to register listeners and receive
- *             notifications related to power management.
+ * @brief      TcuActivityManager class provides interface to register and receive notifications
+ *             related to TCU-activity states, initiate TCU-activity state transition.
  *
  * @note       Eval: This is a new API and is being evaluated.It is subject to change and could
  *             break backwards compatibility.
  */
 
-#ifndef POWERMANAGER_HPP
-#define POWERMANAGER_HPP
+#ifndef TCUACTIVITYMANAGER_HPP
+#define TCUACTIVITYMANAGER_HPP
 
 #include <future>
 #include <memory>
 
 #include <telux/common/CommonDefines.hpp>
-#include <telux/power/PowerListener.hpp>
+#include <telux/power/TcuActivityListener.hpp>
 
 namespace telux {
 namespace power {
@@ -53,16 +53,16 @@ namespace power {
  * @{ */
 
 /**
- * @brief   IPowerManager provides interface to register and de-register listeners (to get
- *          system power-state updates). And also API to initiate system power-state transition.
+ * @brief   ITcuActivityManager provides interface to register and de-register listeners (to get
+ *          TCU-activity state updates). And also API to initiate TCU-activity state transition.
  *
  * @note    Eval: This is a new API and is being evaluated.It is subject to change and could break
  *          backwards compatibility.
  */
-class IPowerManager {
+class ITcuActivityManager {
 public:
     /**
-     * Checks the status of power-management services and if the other APIs are ready for use,
+     * Checks the status of TCU-activity services and if the other APIs are ready for use,
      * and returns the result.
      *
      * @returns  True if the services are ready otherwise false.
@@ -73,9 +73,9 @@ public:
     virtual bool isReady() = 0;
 
     /**
-     * Wait for power-management services to be ready.
+     * Wait for TCU-activity services to be ready.
      *
-     * @returns  A future that caller can wait on to be notified when power-management services
+     * @returns  A future that caller can wait on to be notified when TCU-activity services
      *           are ready.
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
@@ -84,79 +84,80 @@ public:
     virtual std::future<bool> onReady() = 0;
 
     /**
-     * Register a listener for updates on system power-state changes.
+     * Register a listener for updates on TCU-activity state changes.
      *
-     * @param [in] listener Pointer of IPowerListener object that processes the notification
+     * @param [in] listener Pointer of ITcuActivityListener object that processes the notification
      *
      * @returns Status of registerListener i.e success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status registerListener(std::weak_ptr<IPowerListener> listener) = 0;
+    virtual telux::common::Status registerListener(std::weak_ptr<ITcuActivityListener> listener) =0;
 
     /**
      * Remove a previously registered listener.
      *
-     * @param [in] listener Previously registered IPowerListener that needs to be removed
+     * @param [in] listener Previously registered ITcuActivityListener that needs to be removed
      *
      * @returns Status of deregisterListener, success or suitable status code
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status deregisterListener(std::weak_ptr<IPowerListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(std::weak_ptr<ITcuActivityListener> listener)
+                        = 0;
 
     /**
-     * Initiate a System power-state transition.
+     * Initiate a TCU-activity state transition.
      *
-     * This API needs to be used cautiously, as it changes the power-state of the system and may
-     * affect other processes.
+     * This API needs to be used cautiously, as it could change the power-state of the system and
+     * may affect other processes.
      *
-     * @param [in] state    power-state that the System is intended to enter
-     * @param [in] callback Optional callback to get the response for the system-state transition
-     *                        command
+     * @param [in] state    TCU-activity state that the System is intended to enter
+     * @param [in] callback Optional callback to get the response for the TCU-activity state
+     *                      transition command
      *
-     * @returns Status of setSystemState i.e. success or suitable status code.
+     * @returns Status of setActivityState i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status setSystemState( SystemState state,
-            telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setActivityState( TcuActivityState state,
+                        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Get the current system power-state.
+     * Get the current TCU-activity state.
      *
-     * @returns SystemState
+     * @returns TcuActivityState
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual SystemState getSystemState() = 0;
+    virtual TcuActivityState getActivityState() = 0;
 
     /**
-     * API to send the acknowledgement, after processing a system power-state notification.
+     * API to send the acknowledgement, after processing a TCU-activity state notification.
      * This indicates that the client is prepared for state transition.Only one acknowledgement is
      * expected from a single client process(may have multiple listeners).
      *
-     * @param [in] ack Acknowledgement for a SystemState notification.
+     * @param [in] ack Acknowledgement for a TCU-activity state notification.
      *
-     * @returns Status of sendSysStateAck i.e. success or suitable status code.
+     * @returns Status of sendActivityStateAck i.e. success or suitable status code.
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    virtual telux::common::Status sendSysStateAck(SystemStateAck ack) = 0;
+    virtual telux::common::Status sendActivityStateAck(TcuActivityStateAck ack) = 0;
 
     /**
-     * Destructor of IPowerManager
+     * Destructor of ITcuActivityManager
      */
-    virtual ~IPowerManager(){};
+    virtual ~ITcuActivityManager(){};
 };
 /** @} */ /* end_addtogroup telematics_power */
 
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif  // POWERMANAGER_HPP
+#endif  // TCUACTIVITYMANAGER_HPP

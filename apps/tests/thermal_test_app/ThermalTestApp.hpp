@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,51 +27,39 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       PowerDefines.hpp
- *
- * @brief      This file contains types related to power management services.
- *
- * @note       Eval: These are new APIs and are being evaluated. They are subject to change and
- *             could break backwards compatibility.
- */
+#ifndef THERMALTESTAPP_HPP
+#define THERMALTESTAPP_HPP
 
-#include <telux/common/CommonDefines.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
-#ifndef POWERDEFINES_HPP
-#define POWERDEFINES_HPP
+#include <telux/therm/ThermalManager.hpp>
+#include "ThermalHelper.hpp"
 
-namespace telux {
-namespace power {
+#include "console_app_framework/ConsoleApp.hpp"
 
-/** @addtogroup telematics_power
- * @{ */
+class ThermalTestApp : public ConsoleApp {
+ public:
+    /**
+     * Initialize commands and SDK
+     */
+    void init();
 
-/**
- * Defines the supported system states that the listeners will be notified about.
- */
-enum class SystemState {
-    UNKNOWN,    /**< To indicate that system state information is not available */
-    SUSPEND,    /**< System is going to SUSPEND state */
-    RESUME,     /**< System is going to RESUME state */
-    SHUTDOWN    /**< System is going to SHUTDOWN */
+    ThermalTestApp(std::string appName, std::string cursor);
+
+    ~ThermalTestApp();
+
+    void getThermalZones(std::vector<std::string> userInput);
+    void getCoolingDevices(std::vector<std::string> userInput);
+    void getThermalZoneById(std::vector<std::string> userInput);
+    void getCoolingDeviceById(std::vector<std::string> userInput);
+
+ private:
+    std::shared_ptr<telux::therm::IThermalManager> thermalManager_ = nullptr;
+
+    void printThermalZoneHeader();
+    void printCoolingDeviceHeader();
 };
 
-/**
- * Defines the acknowledgements to System states.The client process sends this after processing the
- * SystemState notification, indicating that it is prepared for state transition.
- *
- * Acknowledgement for SystemState::RESUME is not required, as the state transition has already
- * happened.
- */
-enum class SystemStateAck {
-    SUSPEND_ACK,    /**< processed SystemState::SUSPEND notification */
-    SHUTDOWN_ACK,   /**< processed SystemState::SHUTDOWN notification */
-};
-
-/** @} */ /* end_addtogroup telematics_power */
-
-}  // end of namespace power
-}  // end of namespace telux
-
-#endif  // POWERDEFINES_HPP
+#endif  // THERMALTESTAPP_HPP

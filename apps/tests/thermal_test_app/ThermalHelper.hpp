@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,62 +27,30 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @file       Cv2xFactory.hpp
-*
-* @brief      Cv2xFactory is the factory that creates the Cv2x Radio.
-*/
-
-#ifndef CV2XFACTORY_HPP
-#define CV2XFACTORY_HPP
+#ifndef THERMALHELPER_HPP
+#define THERMALHELPER_HPP
 
 #include <memory>
-#include <mutex>
+#include <string>
 
-#include <telux/common/CommonDefines.hpp>
+#include <telux/therm/ThermalManager.hpp>
 
-namespace telux {
+class ThermalHelper {
+ public:
+    static std::string convertTripTypeToStr(telux::therm::TripType type);
 
-namespace cv2x {
+    // Utility function to print thermal zone details
+    static void printThermalZoneInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo);
 
-/** @addtogroup telematics_cv2x
- * @{ */
+    // Utility function to print cooling device details
+    static void printCoolingDevInfo(std::shared_ptr<telux::therm::ICoolingDevice> &cdevInfo);
 
-class ICv2xRadio;
-class ICv2xRadioManager;
+    // Utility function to print binding info
+    static void printBindingInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo);
 
-/**
- *@brief Cv2xFactory is the factory that creates the Cv2x Radio.
- */
-class Cv2xFactory {
-public:
-    /**
-     * Get Cv2xFactory instance
-     *
-     * @returns Reference to Cv2xFactory singleton.
-     */
-    static Cv2xFactory & getInstance();
-
-    /**
-     * Get Cv2xRadioManager instance.
-     *
-     * @returns shared pointer to Radio upon success.
-     *          nullptr otherwise.
-     */
-    std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager();
-
-private:
-
-    std::mutex mutex_;
-    std::shared_ptr<ICv2xRadioManager> radioManager_;
-
-    Cv2xFactory();
+    // Utility function to print trip point as string
+    static std::string tripPointToString(
+        std::shared_ptr<telux::therm::ITripPoint> &tripInfo, std::string &type);
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
-
-} // namespace cv2x
-
-} // namespace telux
-
-#endif // #ifndef CV2XFACTORY_HPP
+#endif  // THERMALHELPER_HPP

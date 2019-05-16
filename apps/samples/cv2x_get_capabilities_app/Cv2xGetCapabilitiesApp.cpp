@@ -116,8 +116,11 @@ static string capabilitiesToString(const Cv2xRadioCapabilities &capabilities) {
         static_cast<int>(capabilities.nonIpTxPayloadOffsetBytes) << "\n";
     ss << "\t" << "nonIpRxPayloadOffsetBytes: "
         << static_cast<int>(capabilities.nonIpRxPayloadOffsetBytes) << "\n";
-    ss << "\t" << "periodicitiesSupported: "
-        << capabilities.periodicitiesSupported << "\n";
+    ss << "\t" << "Periodicities Supported - size: "
+        << capabilities.periodicities.size() << "\n";
+    for (auto i = 0u; i < capabilities.periodicities.size(); ++i) {
+        ss << "\t" << static_cast<int64_t>(capabilities.periodicities[i]);
+    }
     ss << "\t" << "maxNumAutoRetransmissions: "
         << static_cast<int>(capabilities.maxNumAutoRetransmissions) << "\n";
     ss << "\t" << "layer2MacAddressSize: "

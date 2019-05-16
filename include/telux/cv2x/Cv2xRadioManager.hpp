@@ -32,8 +32,6 @@
 *
 * @brief      Cv2xRadioManager manages instances of Cv2xRadio
 *
-* @note       Eval: This is a new API and is being evaluated. It is
-*             subject to change and could break backwards compatibility.
 */
 
 #ifndef CV2XRADIOMANAGER_HPP
@@ -96,8 +94,6 @@ public:
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using StartCv2xCallback = std::function<void (telux::common::ErrorCode error)>;
 
@@ -109,8 +105,6 @@ using StartCv2xCallback = std::function<void (telux::common::ErrorCode error)>;
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using StopCv2xCallback = std::function<void (telux::common::ErrorCode error)>;
 
@@ -123,8 +117,6 @@ using StopCv2xCallback = std::function<void (telux::common::ErrorCode error)>;
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  *
  * @deprecated use RequestCv2xStatusCallbackEx
  */
@@ -153,8 +145,6 @@ using RequestCv2xStatusCallbackEx = std::function<void (Cv2xStatusEx status,
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
  *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using UpdateConfigurationCallback =
     std::function<void (telux::common::ErrorCode error)>;
@@ -194,9 +184,6 @@ public:
      *
      * @returns Reference to Cv2xRadio interface that corresponds to the Cv2x Traffic
      *          Category specified.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual std::shared_ptr<ICv2xRadio> getCv2xRadio(TrafficCategory category) = 0;
 
@@ -206,9 +193,6 @@ public:
      * @param [in] cb      - Callback that is invoked when Cv2x mode is started
      *
      * @returns SUCCESS on success. Error status otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status startCv2x(StartCv2xCallback cb) = 0;
 
@@ -218,9 +202,6 @@ public:
      * @param [in] cb      - Callback that is invoked when Cv2x mode is stopped
      *
      * @returns SUCCESS on success. Error status otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status stopCv2x(StopCv2xCallback cb) = 0;
 
@@ -230,9 +211,6 @@ public:
      * @param [in] cb      - Callback that is invoked when Cv2x status is retrieved
      *
      * @returns SUCCESS on success. Error status otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      *
      * @deprecated use requestCv2xStatus(RequestCv2xCalbackEx)
      */
@@ -244,9 +222,6 @@ public:
      * @param [in] cb      - Callback that is invoked when Cv2x status is retrieved
      *
      * @returns SUCCESS on success. Error status otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status requestCv2xStatus(RequestCv2xStatusCallbackEx cb) = 0;
 

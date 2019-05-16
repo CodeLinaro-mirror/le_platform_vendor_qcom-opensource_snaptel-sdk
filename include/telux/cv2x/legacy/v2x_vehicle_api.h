@@ -32,9 +32,6 @@
  *
  * @brief      Abstraction of the vehicle system parameters required for CAM/BSM
  *             ITS beacons.
- *
- * @note       eval: this is a new api and is being evaluated. it is
- *             subject to change and could break backwards compatibility.
  */
 
 #ifndef __V2X_VEHICLE_APIS_H__

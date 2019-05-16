@@ -56,9 +56,6 @@ public:
     * Retrieves the name of the carrier on which this subscription is made.
     *
     * @returns Name of the carrier.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual std::string getCarrierName() = 0;
 

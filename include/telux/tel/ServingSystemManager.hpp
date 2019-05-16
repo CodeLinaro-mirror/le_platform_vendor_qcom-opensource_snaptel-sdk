@@ -33,9 +33,6 @@
  * @brief      Serving System Manager class provides the interface to request and set
  *             service domain preference and radio access technology mode preference for
  *             searching and registering (CS/PS domain, RAT and operation mode).
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef SERVINGSYSTEMMANAGER_HPP
@@ -96,9 +93,6 @@ using RatPreference = std::bitset<16>;
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not
  *                            @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using RatPreferenceCallback
    = std::function<void(RatPreference preference, telux::common::ErrorCode error)>;
@@ -114,9 +108,6 @@ using RatPreferenceCallback
  * @param [in] error        Return code which indicates whether the operation
  *                          succeeded or not
  *                          @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using ServiceDomainPreferenceCallback
    = std::function<void(ServiceDomainPreference preference, telux::common::ErrorCode error)>;
@@ -134,9 +125,6 @@ public:
     * Checks the status of serving subsystem and returns the result.
     *
     * @returns True if serving subsystem is ready for service otherwise false.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -145,9 +133,6 @@ public:
     *
     * @returns  A future that caller can wait on to be notified when serving
     *           subsystem is ready.
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -160,9 +145,6 @@ public:
     *                           mode preference.
     *
     * @returns Status of setRatPreference i.e. success or suitable error code.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status setRatPreference(RatPreference ratPref,
                                                   common::ResponseCallback callback = nullptr)
@@ -176,9 +158,6 @@ public:
     *
     * @returns Status of requestRatPreference i.e. success or suitable error
     *          code.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status requestRatPreference(RatPreferenceCallback callback) = 0;
 
@@ -193,9 +172,6 @@ public:
     *
     * @returns Status of setServiceDomainPreference i.e. success or suitable
     *          error code.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status setServiceDomainPreference(ServiceDomainPreference serviceDomain,
                                                             common::ResponseCallback callback
@@ -210,9 +186,6 @@ public:
     *
     * @returns Status of requestServiceDomainPreference i.e. success or suitable
     *          error code.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status
       requestServiceDomainPreference(ServiceDomainPreferenceCallback callback)
@@ -225,9 +198,6 @@ public:
     *                          processes the notification
     *
     * @returns Status of registerListener i.e success or suitable status code.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener)
       = 0;
@@ -239,9 +209,6 @@ public:
     *                          needs to be removed
     *
     * @returns Status of removeListener i.e. success or suitable status code
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener)
       = 0;
@@ -259,9 +226,6 @@ public:
  *
  *        The listener method can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
- *
- * @note  Eval: This is a new API and is being evaluated.It is subject to change
- *        and could break backwards compatibility.
  */
 class IServingSystemListener {
 public:
@@ -269,9 +233,6 @@ public:
     * This function is called whenever RAT mode preference is changed.
     *
     * @param [in] preference      @ref RatPreference
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual void onRatPreferenceChanged(RatPreference preference) {
    }
@@ -280,9 +241,6 @@ public:
     * This function is called whenever service domain preference is changed.
     *
     * @param [in] preference      @ref ServiceDomainPreference
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual void onServiceDomainPreferenceChanged(ServiceDomainPreference preference) {
    }

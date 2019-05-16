@@ -28,21 +28,23 @@
  */
 
 /**
- * @file       PowerFactory.hpp
+ * @file       TcuActivityListener.hpp
  *
- * @brief      PowerFactory allows creation of TCU-activity manager class
+ * @brief      TcuActivityListener provides callback methods for listening to TCU-activity service
+ *             notifications, like TCU-activity state change.Client need to implement these methods.
+ *             The methods in listener can be invoked from multiple threads.So the client needs to
+ *             make sure that the implementation is thread-safe.
  *
  * @note       Eval: This is a new API and is being evaluated.It is subject to change and could
  *             break backwards compatibility.
  */
 
-#ifndef POWERFACTORY_HPP
-#define POWERFACTORY_HPP
+#ifndef TCUACTIVITYLISTENER_HPP
+#define TCUACTIVITYLISTENER_HPP
 
 #include <memory>
-#include <mutex>
 
-#include <telux/power/TcuActivityManager.hpp>
+#include <telux/power/TcuActivityDefines.hpp>
 
 namespace telux {
 namespace power {
@@ -51,36 +53,33 @@ namespace power {
  * @{ */
 
 /**
- * @brief   PowerFactory allows creation of TCU-activity manager instance.
+ * @brief Listener class for getting notifications related to TCU-activity state and also the
+ *        updates related to TCU-activity service status. The client needs to implement these
+ *        methods as briefly as possible and avoid blocking calls in it.
+ *        The methods in this class can be invoked from multiple different threads. Client
+ *        needs to make sure that the implementation is thread-safe.
  *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could break
- *          backwards compatibility.
+ * @note  Eval: This is a new API and is being evaluated.It is subject to change
+ *        and could break backwards compatibility.
  */
-class PowerFactory {
+class ITcuActivityListener : public common::IServiceStatusListener {
 public:
     /**
-     * API to get the factory instance for TCU-activity management
+     * This function is called when the TCU-activity state is going to change.
+     *
+     * @param [in] state TCU-activity state that system is about to enter
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
      */
-    static PowerFactory &getInstance();
+    virtual void onTcuActivityStateUpdate(TcuActivityState state) {
+    }
 
     /**
-     * API to get the TCU-activity Manager instance
-     *
-     * @returns Pointer of ITcuActivityManager object.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
+     * Destructor of ITcuActivityListener
      */
-    std::shared_ptr<ITcuActivityManager> getTcuActivityManager();
-
-    ~PowerFactory();
-
-private:
-    std::shared_ptr<ITcuActivityManager> tcuActivityManager_;
-    std::mutex tcuActivityFactoryMutex_;
-    PowerFactory();
-    PowerFactory(const PowerFactory &) = delete;
-    PowerFactory &operator=(const PowerFactory &) = delete;
+    virtual ~ITcuActivityListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_power */
@@ -88,4 +87,4 @@ private:
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif  // POWERFACTORY_HPP
+#endif  // TCUACTIVITYLISTENER_HPP

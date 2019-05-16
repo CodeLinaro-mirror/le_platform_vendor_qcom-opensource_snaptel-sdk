@@ -65,7 +65,7 @@ class Cv2xDaemon{
         /**
          * Display the usage of program
          */
-        void printUsage();
+        void printUsage(std::string appName);
 
         /**
          * Process input flags from user

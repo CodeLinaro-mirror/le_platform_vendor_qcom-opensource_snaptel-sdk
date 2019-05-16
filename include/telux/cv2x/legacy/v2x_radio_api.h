@@ -32,9 +32,6 @@
  *
  * @brief      Abstraction of the radio driver parameters for a V2X broadcast
  *             socket interface, including 3GPP CV2X QoS bandwidth contracts.
- *
- * @note       eval: this is a new api and is being evaluated. it is
- *             subject to change and could break backwards compatibility.
  */
 
 #ifndef __V2X_RADIO_APIS_H__

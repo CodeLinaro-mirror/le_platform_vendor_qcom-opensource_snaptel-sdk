@@ -31,11 +31,13 @@
 #include <iostream>
 #include <cstring>
 #include <map>
+#include <cstdlib>
 
 #include "Cv2xTelux.hpp"
+#include "Cv2xLog.hpp"
 
 #include <telux/cv2x/Cv2xFactory.hpp>
-#include <telux/cv2x/Cv2xRadio.hpp>
+#include <telux/cv2x/Cv2xRadioManager.hpp>
 #include <telux/data/DataProfileManager.hpp>
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -44,14 +46,26 @@ using telux::common::Status;
 using telux::common::ErrorCode;
 
 static std::map<ServiceStatus, std::string> convertServiceStatusToString = {
-        {ServiceStatus::SERVICE_AVAILABLE, "Available"},
-        {ServiceStatus::SERVICE_UNAVAILABLE, "Unavailable"},
+    {ServiceStatus::SERVICE_AVAILABLE, "Available"},
+    {ServiceStatus::SERVICE_UNAVAILABLE, "Unavailable"},
 };
 
-void Cv2xTelux::onStatusChanged(Cv2xStatus status)
-{
-    if ((status.txStatus != Cv2xStatusType::UNKNOWN ||
-        status.rxStatus != Cv2xStatusType::UNKNOWN)) {
+void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
+
+    if (not cv2xActiveDone_ and status.txStatus == Cv2xStatusType::ACTIVE
+        and status.rxStatus == Cv2xStatusType::ACTIVE) {
+        cv2xActiveDone_ = true;
+        LOGI("V2X in active state\n");
+        system("echo \"cv2x-daemon: V2X in active state\" > /dev/kmsg");
+    }
+
+    if ((status.txStatus != Cv2xStatusType::UNKNOWN or
+         status.rxStatus != Cv2xStatusType::UNKNOWN) and
+        (cv2xStatus_.txStatus != status.txStatus or
+         cv2xStatus_.rxStatus != status.rxStatus or
+         cv2xStatus_.txCause != status.txCause or
+         cv2xStatus_.rxCause != status.rxCause)) {
+
         LOGI("tx_status=%d, rx_status=%d, tx_cause=%d, rx_cause=%d\n",
             Cv2xUtils::convertStatus(status.txStatus),
             Cv2xUtils::convertStatus(status.rxStatus),
@@ -103,18 +117,11 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status)
     cv2xStatus_ = status;
 }
 
-void Cv2xTelux::onL2AddrChanged(uint32_t newL2Address)
-{
-    LOGI("Received QMI_WDS_V2X_SRC_L2_INFO_IND_V01\n");
-    LOGI("l2_addr=0x%x\n", newL2Address);
-}
-
-DataConnectionListener::DataConnectionListener(std::weak_ptr<Cv2xTelux> instance){
+DataConnectionListener::DataConnectionListener(std::weak_ptr<Cv2xTelux> instance) {
     cv2xTelux_ = instance;
 }
 
-void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall)
-{
+void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall) {
     if (!dataCall) {
         return;
     }
@@ -137,8 +144,7 @@ void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCa
             iface.c_str(), status.c_str(), reason, ip_type.c_str(), profile_id);;
 }
 
-void DataConnectionListener::onServiceStatusChange(ServiceStatus status)
-{
+void DataConnectionListener::onServiceStatusChange(ServiceStatus status) {
     Status res = Status::FAILED;
 
     LOGD("DataConnectionListener Service Status changed to %s\n",
@@ -165,12 +171,11 @@ void DataConnectionListener::onServiceStatusChange(ServiceStatus status)
     }
 }
 
-void Cv2xTelux::onServiceStatusChange(ServiceStatus status)
-{
+void Cv2xTelux::onServiceStatusChange(ServiceStatus status) {
     Status res = Status::FAILED;
 
     LOGD("Cv2xTelux Service Status changed to %s\n",
-            convertServiceStatusToString[status].c_str() );
+         convertServiceStatusToString[status].c_str());
 
     if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
         isPostSSRV2XDone_ = false;
@@ -183,14 +188,12 @@ void Cv2xTelux::onServiceStatusChange(ServiceStatus status)
     }
 }
 
-QueryProfileCallback::QueryProfileCallback(std::shared_ptr<std::promise<ProfileIds>> prom)
-{
+QueryProfileCallback::QueryProfileCallback(std::shared_ptr<std::promise<ProfileIds>> prom) {
     prom_ = prom;
 }
 
 void QueryProfileCallback::onProfileListResponse(
-    const std::vector<std::shared_ptr<DataProfile>> &profiles, ErrorCode error)
-{
+    const std::vector<std::shared_ptr<DataProfile>> &profiles, ErrorCode error) {
     ProfileIds profileIds = { -1, -1};
 
     if (error == ErrorCode::SUCCESS) {
@@ -206,13 +209,11 @@ void QueryProfileCallback::onProfileListResponse(
     prom_->set_value(profileIds);
 }
 
-CreateProfileCallback::CreateProfileCallback(std::shared_ptr<std::promise<int>> prom)
-{
+CreateProfileCallback::CreateProfileCallback(std::shared_ptr<std::promise<int>> prom) {
     prom_ = prom;
 }
 
-void CreateProfileCallback::onResponse(int profileId, ErrorCode error)
-{
+void CreateProfileCallback::onResponse(int profileId, ErrorCode error) {
     if (error == ErrorCode::SUCCESS) {
         prom_->set_value(profileId);
     } else {
@@ -220,8 +221,7 @@ void CreateProfileCallback::onResponse(int profileId, ErrorCode error)
     }
 }
 
-Status Cv2xTelux::initV2xLibrary()
-{
+Status Cv2xTelux::initV2xLibrary() {
     auto &cv2xFactory = Cv2xFactory::getInstance();
     cv2xRadioMgr_ = cv2xFactory.getCv2xRadioManager();
 
@@ -259,8 +259,7 @@ Status Cv2xTelux::initV2xLibrary()
     return Status::SUCCESS;
 }
 
-Status Cv2xTelux::deinitV2xLibrary()
-{
+Status Cv2xTelux::deinitV2xLibrary() {
     if (dataConnectionMgr_ != nullptr) {
         dataConnectionMgr_->deregisterListener(dataConnectionListener_);
     } else {
@@ -278,8 +277,7 @@ Status Cv2xTelux::deinitV2xLibrary()
     return Status::SUCCESS;
 }
 
-Status Cv2xTelux::getV2xRadioStatus(Cv2xStatus &status)
-{
+Status Cv2xTelux::getV2xRadioStatus(Cv2xStatus &status) {
     std::promise<Cv2xStatus> prom;
 
     auto res = cv2xRadioMgr_->requestCv2xStatus(
@@ -295,12 +293,15 @@ Status Cv2xTelux::getV2xRadioStatus(Cv2xStatus &status)
     return Status::SUCCESS;
 }
 
-Status Cv2xTelux::startV2xRadio()
-{
+Status Cv2xTelux::startV2xRadio() {
+
+    LOGI("Starting V2X radio\n");
+
     std::promise<ErrorCode> prom;
     cv2xRadioMgr_->startCv2x([&prom](ErrorCode code) {
         if (code == ErrorCode::SUCCESS) {
-            LOGD("Started V2X radio\n");
+            LOGI("Started V2X radio\n");
+            system("echo \"cv2x-daemon: V2X mode started\" > /dev/kmsg");
         } else {
             LOGE("Failed to start the V2X radio\n");
         }
@@ -316,14 +317,14 @@ Status Cv2xTelux::startV2xRadio()
     return Status::SUCCESS;
 }
 
-Status Cv2xTelux::stopV2xRadio()
-{
+Status Cv2xTelux::stopV2xRadio() {
     std::promise<ErrorCode> prom;
     cv2xRadioMgr_->stopCv2x([&prom](ErrorCode code) {
         if (code == ErrorCode::SUCCESS) {
-            LOGD("Stopped V2X radio\n");
+            LOGI("Stopped V2X radio\n");
+            system("echo \"cv2x-daemon: V2X mode stopped\" > /dev/kmsg");
         } else {
-             LOGE("Failed to stop the V2X radio\n");
+            LOGE("Failed to stop the V2X radio\n");
         }
         prom.set_value(code);
     });
@@ -337,8 +338,7 @@ Status Cv2xTelux::stopV2xRadio()
     return Status::SUCCESS;
 }
 
-Status Cv2xTelux::registerListeners()
-{
+Status Cv2xTelux::registerListeners() {
     Status ret = Status::FAILED;
     dataConnectionListener_ = std::make_shared<DataConnectionListener>(shared_from_this());
 
@@ -361,9 +361,8 @@ Status Cv2xTelux::registerListeners()
 }
 
 static bool createV2xProfile(std::shared_ptr<IDataProfileManager> dataProfileMgr,
-                               std::shared_ptr<DataCallInfo> dataCall,
-                               std::string apnName)
-{
+                             std::shared_ptr<DataCallInfo> dataCall,
+                             std::string apnName) {
     ProfileParams params;
     memset(&params, 0, sizeof(params));
     params.profileName = apnName;
@@ -389,8 +388,8 @@ static bool createV2xProfile(std::shared_ptr<IDataProfileManager> dataProfileMgr
     return true;
 }
 
-Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall, IpFamilyType ipFamilyType)
-{
+Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall,
+                                IpFamilyType ipFamilyType) {
     Status res = Status::FAILED;
     std::promise<bool> response;
 
@@ -408,6 +407,11 @@ Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall, IpFamily
 
     if (response.get_future().get()) {
         LOGI("Received DSI_EVT_NET_IS_CONN: network_type=%d is online\n", dataCall->type);
+        if (dataCall->type == CV2X_DATA_CALL_IP) {
+            system("echo \"cv2x-daemon: V2X IP call is online\" > /dev/kmsg");
+        } else {
+            system("echo \"cv2x-daemon: V2X Non-IP call is online\" > /dev/kmsg");
+        }
         res = Status::SUCCESS;
     } else {
         LOGI("Received DSI_EVT_NET_IS_CONN: network_type=%d is offline\n", dataCall->type);
@@ -484,8 +488,7 @@ Status Cv2xTelux::startDataCalls() {
     return Status::SUCCESS;
 }
 
-Status Cv2xTelux::createProfileAndStartDataCalls()
-{
+Status Cv2xTelux::createProfileAndStartDataCalls() {
     Status res = Status::FAILED;
 
     if ((dcInfoIP_ == nullptr) && (dcInfoNonIP_ == nullptr)) {
@@ -533,8 +536,7 @@ Status Cv2xTelux::createProfileAndStartDataCalls()
 }
 
 int Cv2xTelux::stopDataCall(std::shared_ptr<DataCallInfo> dataCall,
-        IpFamilyType ipFamilyType)
-{
+                            IpFamilyType ipFamilyType) {
     std::promise<bool> prom;
 
     // Stop IP Data Call
@@ -561,8 +563,7 @@ int Cv2xTelux::stopDataCall(std::shared_ptr<DataCallInfo> dataCall,
     return 0;
 }
 
-int Cv2xTelux::stopV2xDataCalls()
-{
+int Cv2xTelux::stopV2xDataCalls() {
     int res=0;
 
     // Stop IP Data Call

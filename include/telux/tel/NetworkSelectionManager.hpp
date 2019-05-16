@@ -33,9 +33,6 @@
  * @brief      Network Selection Manager class provides the interface to get and
  *             set network selection mode (Manual or Automatic), scan available
  *             networks and set and get preferred networks list.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef NETWORKSELECTIONMANAGER_HPP
@@ -158,9 +155,6 @@ struct OperatorStatus {
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not
  *                        @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using SelectionModeResponseCallback
    = std::function<void(NetworkSelectionMode mode, telux::common::ErrorCode error)>;
@@ -176,9 +170,6 @@ using SelectionModeResponseCallback
  * @param [in] error        Return code which indicates whether the operation
  *                          succeeded or not.
  *                          @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using PreferredNetworksCallback = std::function<void(std::vector<PreferredNetworkInfo> info,
                                                      std::vector<PreferredNetworkInfo> staticInfo,
@@ -195,9 +186,6 @@ using PreferredNetworksCallback = std::function<void(std::vector<PreferredNetwor
  * @param [in] error           Return code which indicates whether the operation
  *                             succeeded or not.
  *                             @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using NetworkScanCallback
    = std::function<void(std::vector<OperatorInfo> operatorInfos, telux::common::ErrorCode error)>;
@@ -215,9 +203,6 @@ public:
     * Checks the status of network subsystem and returns the result.
     *
     * @returns True if network subsystem is ready for service otherwise false.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -226,9 +211,6 @@ public:
     *
     * @returns  A future that caller can wait on to be notified when network
     *           subsystem is ready.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -239,9 +221,6 @@ public:
     *                         network selection mode request.
     *
     * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status requestNetworkSelectionMode(SelectionModeResponseCallback callback)
       = 0;
@@ -259,9 +238,6 @@ public:
     * @param [in] mnc           Mobile Network Code (Applicable only for MANUAL selection mode).
     *
     * @returns  Status of setNetworkSelectionMode i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status setNetworkSelectionMode(NetworkSelectionMode selectMode,
                                                          std::string mcc, std::string mnc,
@@ -279,9 +255,6 @@ public:
     *                         networks request.
     *
     * @returns Status of requestPreferredNetworks i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status requestPreferredNetworks(PreferredNetworksCallback callback) = 0;
 
@@ -301,9 +274,6 @@ public:
     *                                     of set preferred network list request.
     *
     * @returns Status of setPreferredNetworks i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
 
    virtual telux::common::Status
@@ -318,9 +288,6 @@ public:
     *                         network scan request
     *
     * @returns Status of performNetworkScan i.e. success or suitable error code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status performNetworkScan(NetworkScanCallback callback) = 0;
 
@@ -331,9 +298,6 @@ public:
     *                         processes the notification
     *
     * @returns Status of registerListener i.e success or suitable status code.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<INetworkSelectionListener> listener)
       = 0;
@@ -345,9 +309,6 @@ public:
     *                         that needs to be removed
     *
     * @returns Status of removeListener success or suitable status code
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual telux::common::Status
       deregisterListener(std::weak_ptr<INetworkSelectionListener> listener)
@@ -368,9 +329,6 @@ public:
     * Get Operator name or description
     *
     * @returns Operator name.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    std::string getName();
 
@@ -378,9 +336,6 @@ public:
     * Get mcc from the operator numeric.
     *
     * @returns MCC.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    std::string getMcc();
 
@@ -388,9 +343,6 @@ public:
     * Get mnc from operator numeric.
     *
     * @returns MNC.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    std::string getMnc();
 
@@ -398,9 +350,6 @@ public:
     * Get status of operator.
     *
     * @returns status of the operator @ref OperatorStatus.
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    OperatorStatus getStatus();
 
@@ -423,9 +372,6 @@ public:
     * This function is called whenever network selection mode is changed.
     *
     * @param [in] mode    Network selection mode @ref NetworkSelectionMode
-    *
-    * @note   Eval: This is a new API and is being evaluated. It is subject to
-    *         change and could break backwards compatibility.
     */
    virtual void onSelectionModeChanged(NetworkSelectionMode mode) {
    }

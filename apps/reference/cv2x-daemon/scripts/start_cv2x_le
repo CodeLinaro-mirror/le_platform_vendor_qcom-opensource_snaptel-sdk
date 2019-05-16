@@ -37,7 +37,7 @@ case "$1" in
         done
         /sbin/ip link set dev rmnet_data0 addrgenmode none
         /sbin/ip link set dev rmnet_data1 addrgenmode none
-        start-stop-daemon -S -b -a /usr/bin/cv2x-control -SD
+        start-stop-daemon -S -b -a /usr/bin/cv2x-control -s
         echo "done"
         ;;
   stop)

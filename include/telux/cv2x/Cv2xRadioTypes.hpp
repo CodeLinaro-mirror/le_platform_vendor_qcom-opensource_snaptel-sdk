@@ -31,9 +31,6 @@
 * @file       Cv2xRxTypes.hpp
 *
 * @brief      Contains common data types used in Cv2x Radio API
-*
-* @note       Eval: This is a new API and is being evaluated. It is
-*             subject to change and could break backwards compatibility.
 */
 
 #ifndef CV2XRADIOTYPES_HPP
@@ -80,6 +77,7 @@ enum class Cv2xCauseType {
     TIMING,     /**< Timing is invalid */
     CONFIG,     /**< Config is invalid */
     UE_MODE,    /**< UE Mode is invalid */
+    GEOPOLYGON, /**< V2x is not supported in current geopolygon */
     UNKNOWN,    /**< Cause is unknown */
 };
 
@@ -176,6 +174,10 @@ enum class Priority {
  * Range of supported periodicities in milliseconds.
  *
  * Used in @ref Cv2xRadioCapabilities and @ref SpsFlowInfo
+ *
+ * @Deprecated: enum class not going to be supported in future releases. Clients should stop using
+ * this. Once a class has been marked as Deprecated, the class could be removed in future releases.
+ *
  */
 enum class Periodicity {
     PERIODICITY_10MS,
@@ -244,8 +246,14 @@ struct SpsFlowInfo {
     /**< Specifies one of the 3GPP levels of Priority for the traffic that is
          pre-reserved on the SPS flow. Default is PRIORITY_2.
 
-         Use getCapabilities() to discover the supported priority levels. */
+         Use getCapabilities() to discover the supported priority levels.
+         @Deprecated: periodicity, Use new periodicityMs instead */
     Periodicity periodicity = Periodicity::PERIODICITY_100MS;
+    /**This is the new interface to specify periodicity in milliseconds for
+       SpsFlowInfo. Enum Periodicity is deprecated and will be removed in future
+       release.
+    */
+    uint64_t periodicityMs = 100;
     /**< Bandwidth-reserved periodicity interval in interval in milliseconds.
 
          There are limits on which intervals the underlying radio supports.
@@ -294,8 +302,10 @@ struct Cv2xRadioCapabilities {
     uint16_t nonIpTxPayloadOffsetBytes;
     /**< Byte offset in a non-IP Tx packet before the actual payload begins. */
     uint16_t nonIpRxPayloadOffsetBytes;
-    /**< Byte offset in a non-IP Rx packet before the actual payload begins. */
+    /**< Byte offset in a non-IP Rx packet before the actual payload begins.
+         @Deprecated: periodicitiesSupported, Use new periodicities instead */
     std::bitset<8> periodicitiesSupported;
+    std::vector<uint64_t> periodicities;
     /**< Specifies the periodicities supported */
     uint8_t maxNumAutoRetransmissions;
     /**< Least frequent bandwidth periodicity that is supported. Above this

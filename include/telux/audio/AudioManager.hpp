@@ -60,6 +60,91 @@ class IAudioPlayStream;
 class IAudioCaptureStream;
 
 /**
+ * @brief   Stream Buffer manages the buffer to be used for read and write operations on Audio
+ *          Streams. For write operations, applications should request a stream buffer, populate
+ *          it with the data and then pass it to the write operation and set the dataSize that is
+ *          to be written to the stream. Similarly for read operations,the application should
+ *          request a stream buffer and use that in the read operation.
+ *          At the end of the read, the stream buffer will contain the data read. Once an operation
+ *          (read/write) has completed, the stream buffer could be reused for a subsequent
+ *          read/write operation, provided reset() API called on stream buffer between
+ *          subsequent calls.
+ *
+ */
+class IStreamBuffer {
+public:
+   /**
+    * Returns the minimum size (in bytes) of data that caller needs to read/write
+    * before calling a read/write operation on the stream.
+    *
+    * @returns    minimum size
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to change
+    *             and could break backwards compatibility.
+    */
+   virtual size_t getMinSize() = 0;
+
+   /**
+    * Returns the maximum size (in bytes) that the buffer can hold.
+    *
+    * @returns    maximum size
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to change
+    *             and could break backwards compatibility.
+    */
+   virtual size_t getMaxSize() = 0;
+
+   /**
+    * Gets the raw buffer that IStreamBuffer manages. Application should write in between(include)
+    * of  getMinSize() to getMaxSize() number of bytes in this buffer. Application is not
+    * responsible to free the raw buffer. It will be free'ed when the IStreamBuffer is destroyed.
+    *
+    * @returns    raw buffer
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to change
+    *             and could break backwards compatibility.
+    */
+   virtual uint8_t *getRawBuffer() = 0;
+
+   /**
+    * Gets the size (in bytes) of valid data present in the buffer.
+    *
+    *
+    * @returns size of valid data in the buffer
+    *
+    * @note        Eval: This is a new API and is being evaluated. It is subject to change
+    *              and could break backwards compatibility.
+    */
+   virtual uint32_t getDataSize() = 0;
+
+   /**
+    * Sets the size (in bytes) of valid data present in the buffer.
+    *
+    *
+    * @param size  size of valid data in the buffer
+    *
+    * @note        Eval: This is a new API and is being evaluated. It is subject to change
+    *              and could break backwards compatibility.
+    */
+   virtual void setDataSize(uint32_t size) = 0;
+
+   /**
+    * Reset all state and data of the buffer. This is to be called when reusing the same buffer
+    * for multiple operations.
+    *
+    * @returns status   Status of the operation
+    *
+    * @note        Eval: This is a new API and is being evaluated. It is subject to change
+    *              and could break backwards compatibility.
+    */
+   virtual telux::common::Status reset() = 0;
+
+   virtual ~IStreamBuffer() {};
+};
+
+
+
+/**
  * This function is called with the response to getDevices API.
  *
  * The callback can be invoked from multiple different threads.
@@ -396,8 +481,9 @@ public:
 /**
  * @brief   IAudioVoiceStream represents single voice stream
  */
-class IAudioVoiceStream : public IAudioStream {
+class IAudioVoiceStream : virtual public IAudioStream {
 public:
+
    /**
     * Starts audio stream
     *
@@ -424,10 +510,44 @@ public:
 };
 
 /**
+ * This function is called with the response to IAudioPlayStream::write().
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] buffer       Buffer that was used for the write operation. Application could call
+ *                          IStreamBuffer::reset() and reuse this buffer for subsequent write
+ *                          operations on the same stream.
+ *
+ * @param [in] bytesWritten Return how many bytes are written to the stream.
+ *
+ * @param [in] error        Return code which indicates whether the operation
+ *                          succeeded or not.
+ *                          @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using WriteResponseCb
+    = std::function<void(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytesWritten,
+                                                            telux::common::ErrorCode error)>;
+
+/**
  * @brief   IAudioPlayStream represents single audio playback stream
  */
-class IAudioPlayStream : public IAudioStream {
+class IAudioPlayStream : virtual public IAudioStream {
 public:
+
+   /**
+    * Get an Audio StreamBuffer to be used for playback operations
+    *
+    * @returns            an Audio Buffer or a nullptr in case of error
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
+
    /**
     * Write Samples to audio stream. First write starts playback operation.
     *
@@ -439,20 +559,54 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to change
     *             and could break backwards compatibility.
     */
-   virtual telux::common::Status write(StreamBuffer buffer,
-                                       telux::common::ResponseCallback callback = nullptr)
-      = 0;
+   virtual telux::common::Status write(std::shared_ptr<IStreamBuffer> buffer,
+                    WriteResponseCb callback = nullptr) = 0;
 };
+
+
+/**
+ * This function is called with the response to IAudioCaptureStream::read().
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] buffer Buffer that was used to capture the data from the read operation.
+ *                    Applications could call IStreamBuffer::reset() and reuse this buffer for
+ *                    subsequent read operations on the same stream. Also buffer.getDataSize()
+ *                    will represent the number of bytes read.
+ *
+ * @param [in] error  Return code which indicates whether the operation
+ *                    succeeded or not.
+ *                    @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using ReadResponseCb
+    = std::function<void(std::shared_ptr<IStreamBuffer> buffer,
+                                        telux::common::ErrorCode error)>;
 
 /**
  * @brief   IAudioCaptureStream represents single audio capture stream
  */
-class IAudioCaptureStream : public IAudioStream {
+class IAudioCaptureStream : virtual public IAudioStream {
 public:
+
+   /**
+    * Get an Audio Stream Buffer to be used for capture operations
+    *
+    * @returns            an Audio Buffer or nullptr in case of failure
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
+
    /**
     * Read Samples from audio stream. First read starts capture operation.
     *
     * @param [in] buffer       stream buffer for read.
+    * @param [in] bytesToRead  specifying how many bytes to be read from stream.
     * @param [in] callback     callback to get the response of read.
     *
     * @returns Status of the request i.e. success or suitable status code.
@@ -460,10 +614,10 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to change
     *             and could break backwards compatibility.
     */
-   virtual telux::common::Status read(StreamBuffer &buffer,
-                                      telux::common::ResponseCallback callback = nullptr)
-      = 0;
+   virtual telux::common::Status read(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytesToRead,
+                                      ReadResponseCb callback = nullptr) = 0;
 };
+
 
 /** @} */ /* end_addtogroup telematics_audio */
 }  // End of namespace audio

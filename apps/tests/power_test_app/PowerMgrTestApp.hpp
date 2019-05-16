@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,62 +27,47 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
-* @file       Cv2xFactory.hpp
-*
-* @brief      Cv2xFactory is the factory that creates the Cv2x Radio.
-*/
-
-#ifndef CV2XFACTORY_HPP
-#define CV2XFACTORY_HPP
+#ifndef POWERTESTAPP_HPP
+#define POWERTESTAPP_HPP
 
 #include <memory>
-#include <mutex>
 
-#include <telux/common/CommonDefines.hpp>
+#include <telux/power/TcuActivityDefines.hpp>
+#include <telux/power/PowerFactory.hpp>
+#include <telux/power/TcuActivityManager.hpp>
+#include <telux/power/TcuActivityListener.hpp>
+#include "ConsoleApp.hpp"
 
-namespace telux {
+#define APP_NAME "telux_power_test_app"
+#define PRINT_NOTIFICATION std::cout << APP_NAME << " \033[1;35mNOTIFICATION: \033[0m"
 
-namespace cv2x {
+using namespace telux::power;
+using namespace telux::common;
 
-/** @addtogroup telematics_cv2x
- * @{ */
-
-class ICv2xRadio;
-class ICv2xRadioManager;
-
-/**
- *@brief Cv2xFactory is the factory that creates the Cv2x Radio.
- */
-class Cv2xFactory {
+class PowerMgmtTestApp : public ITcuActivityListener,
+                         public ConsoleApp,
+                         public std::enable_shared_from_this<PowerMgmtTestApp> {
 public:
-    /**
-     * Get Cv2xFactory instance
-     *
-     * @returns Reference to Cv2xFactory singleton.
-     */
-    static Cv2xFactory & getInstance();
 
-    /**
-     * Get Cv2xRadioManager instance.
-     *
-     * @returns shared pointer to Radio upon success.
-     *          nullptr otherwise.
-     */
-    std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager();
+    PowerMgmtTestApp();
+    ~PowerMgmtTestApp();
 
+    int start();
+    void onTcuActivityStateUpdate(TcuActivityState state) override;
+    void onServiceStatusChange(ServiceStatus status) override;
+
+    void registerForUpdates();
+    void deregisterForUpdates();
+    void sendActivityStateCommand(TcuActivityState state);
+
+    void consoleinit();
 private:
 
-    std::mutex mutex_;
-    std::shared_ptr<ICv2xRadioManager> radioManager_;
+    PowerMgmtTestApp(PowerMgmtTestApp const &) = delete;
+    PowerMgmtTestApp &operator=(PowerMgmtTestApp const &) = delete;
 
-    Cv2xFactory();
+    // Member variable to keep the manager object alive till application ends.
+    std::shared_ptr<telux::power::ITcuActivityManager> tcuActivityMgr_;
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
-
-} // namespace cv2x
-
-} // namespace telux
-
-#endif // #ifndef CV2XFACTORY_HPP
+#endif  // POWERTESTAPP_HPP

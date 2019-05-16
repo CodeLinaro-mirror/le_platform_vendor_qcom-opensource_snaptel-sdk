@@ -34,9 +34,6 @@
  *             precision fixes with low latency via callbacks. This solution is
  *             used each time a fix is available, and it supports multiple
  *             callbacks to a short list of clients.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef __V2X_KINEMATICS_APIS_H__

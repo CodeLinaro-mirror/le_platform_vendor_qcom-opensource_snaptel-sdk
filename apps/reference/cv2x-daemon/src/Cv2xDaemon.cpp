@@ -52,11 +52,13 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+
 #ifdef WITH_SYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
 
-#include <Cv2xDaemon.hpp>
+#include "Cv2xDaemon.hpp"
+#include "Cv2xLog.hpp"
 
 extern int enableDebug;
 extern int enableSyslog;
@@ -66,11 +68,15 @@ Status Cv2xDaemon::startV2xMode() {
     Status ret = Status::FAILED;
     Cv2xStatus v2xStatus;
 
+    LOGI("Starting V2X mode\n");
+
     ret = cv2xTelux_->getV2xRadioStatus(v2xStatus);
     if (ret != Status::SUCCESS) {
         LOGE("Failed to get v2x status\n");
         return ret;
     }
+
+    LOGI("Read V2X radio status\n");
 
     if (v2xStatus.rxStatus != Cv2xStatusType::INACTIVE &&
             v2xStatus.txStatus != Cv2xStatusType::INACTIVE) {
@@ -83,7 +89,7 @@ Status Cv2xDaemon::startV2xMode() {
         LOGE("Failed to start v2x mode\n");
         return ret;
     }
-    LOGD("Start v2x mode successful\n");
+    LOGI("V2X mode started\n");
 
     return Status::SUCCESS;
 }
@@ -92,6 +98,8 @@ Status Cv2xDaemon::stopV2xMode() {
 
     Status ret = Status::FAILED;
     Cv2xStatus v2xStatus;
+
+    LOGI("Stopping V2X mode\n");
 
     ret = cv2xTelux_->getV2xRadioStatus(v2xStatus);
     if (ret != Status::SUCCESS) {
@@ -111,13 +119,15 @@ Status Cv2xDaemon::stopV2xMode() {
         return ret;
     }
 
-    LOGD("Stop v2x mode successful\n");
+    LOGI("Stopped V2X radio\n");
     return Status::SUCCESS;
 }
 
 Status Cv2xDaemon::runAsDaemon() {
 
     Status ret = Status::FAILED;
+
+    LOGI("Starting the CV2X Daemon\n");
 
     // Register for Radio Status, Data Connection, SSR
     ret = cv2xTelux_->registerListeners();
@@ -175,7 +185,7 @@ Status Cv2xDaemon::deInit() {
 
 void terminationHandler(int signum) {
 
-    LOGE("Got signal(%d) tearing down all services \n",signum );
+    LOGE("Got signal %d, tearing down all services\n",signum );
 
     Cv2xDaemon::getInstance().deInit();
 
@@ -199,16 +209,14 @@ void Cv2xDaemon::setupSignalHandler() {
     sigaction(SIGTERM, &sig_action, NULL);
 }
 
-void Cv2xDaemon::printUsage() {
-
-    std::cout <<
-        "Usage:\n"
-        "-d, --debug\t\tEnable debug\n"
-        "-S, --syslog\t\tUse syslog\n"
-        "-h, --help\t\tShow this menu\n"
-        "-s, --start-v2x-mode\tStart v2x mode\n"
-        "-e --stop-v2x-mode\tStop v2x mode\n"
-        "-D, --daemon-mode\tStart v2x and run in daemon mode\n";
+void Cv2xDaemon::printUsage(std::string appName) {
+    std::cout << "Usage: " << appName << " --debug|-d --use-syslog|-s "
+        << "--start-v2x-mode|-S --stop-v2x-mode|-E --daemon-mode|-D\n"
+        << "--debug|-d: Enable debug\n"
+        << "--use-syslog|-s: Use syslog\n"
+        << "--start-v2x-mode|-S: Start v2x mode\n"
+        << "--stop-v2x-mode|-E: Stop v2x mode\n"
+        << "--daemon-mode|-D: Start v2x and run in daemon mode\n";
 }
 
 Status Cv2xDaemon::handleArguments(bool &isRunningDaemonMode) {
@@ -232,6 +240,11 @@ Status Cv2xDaemon::handleArguments(bool &isRunningDaemonMode) {
         }
     }
 
+    if (stopV2x_ == 0 and startV2x_ == 0) {
+        // If no other action specified, start daemon mode
+        daemonMode_ = 1;
+    }
+
     if (daemonMode_) {
         ret = runAsDaemon();
         if (ret != Status::SUCCESS) {
@@ -248,22 +261,18 @@ Status Cv2xDaemon::parseArguments(int argc, char **argv) {
     int c;
 
     while (1) {
-        if (argc == 1) {
-            printUsage();
-            break;
-        }
         static struct option long_options[] = {
             {"debug",           no_argument, 0, 'd'},
-            {"syslog",          no_argument, 0, 'S'},
+            {"use-syslog",      no_argument, 0, 's'},
             {"help",            no_argument, 0, 'h'},
-            {"start-v2x-mode",  no_argument, 0, 's'},
-            {"stop-v2x-mode",   no_argument, 0, 'e'},
+            {"start-v2x-mode",  no_argument, 0, 'S'},
+            {"stop-v2x-mode",   no_argument, 0, 'E'},
             {"daemon-mode",     no_argument, 0, 'D'},
             {0, 0, 0, 0}
         };
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "dhSseD", long_options, &option_index);
+        c = getopt_long(argc, argv, "dhsSED", long_options, &option_index);
         /* Detect the end of the options. */
         if (c == -1) {
             break;
@@ -273,14 +282,14 @@ Status Cv2xDaemon::parseArguments(int argc, char **argv) {
                 LOGD("Enable debug\n");
                 enableDebug = 1;
                 break;
-            case 'S':
+            case 's':
                 LOGD("Enable syslog\n");
                 enableSyslog = 1;
                 break;
-            case 's':
+            case 'S':
                 startV2x_ = 1;
                 break;
-            case 'e':
+            case 'E':
                 stopV2x_ = 1;
                 break;
             case 'D':
@@ -288,10 +297,8 @@ Status Cv2xDaemon::parseArguments(int argc, char **argv) {
                 daemonMode_ = 1;
                 break;
             case 'h':
-                printUsage();
-                break;
-            default:
-                printUsage();
+                printUsage(argv[0]);
+                return Status::INVALIDPARAM;
                 break;
         }
     }
@@ -316,21 +323,22 @@ int main(int argc, char **argv) {
     Status ret = Status::FAILED;
     auto &cv2xDaemon = Cv2xDaemon::getInstance();
 
+    ret = cv2xDaemon.parseArguments(argc, argv);
+    if (ret != Status::SUCCESS) {
+        return -1;
+    }
+
     cv2xDaemon.setupSignalHandler();
     ret = cv2xDaemon.init();
     if (ret != Status::SUCCESS) {
-        exit(-1);
-    }
-
-    ret = cv2xDaemon.parseArguments(argc, argv);
-    if (ret != Status::SUCCESS) {
-        exit(-1);
+        return -1;
     }
 
     bool isRunningDaemonMode = false;
     ret = cv2xDaemon.handleArguments(isRunningDaemonMode);
     if (ret != Status::SUCCESS) {
-        exit(-1);
+        cv2xDaemon.deInit();
+        return -1;
     }
 
     // The App is running in daemon mode, We wait on Signal to terminate program
@@ -341,6 +349,8 @@ int main(int argc, char **argv) {
         std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
         LOGD("Press CTRL+C to exit\n");
         cv2xDaemon.cv_.wait(lock);
+    } else {
+        cv2xDaemon.deInit();
     }
 
     return 0;

@@ -31,9 +31,6 @@
  * @file       v2x_common.pb.h
  *
  * @brief      Contains common data types used in v2x API
- *
- * @note       Eval: This is a new API and is being evaluated. It is
- *             subject to change and could break backwards compatibility.
  */
 
 #ifndef PB_V2X_COMMON_PB_H_INCLUDED

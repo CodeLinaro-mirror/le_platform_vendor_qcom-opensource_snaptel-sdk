@@ -31,9 +31,6 @@
 * @file       Cv2xRadioListener.hpp
 *
 * @brief      Cv2xRadioListener is the listener interface for Cv2xRadio
-*
-* @note       Eval: This is a new API and is being evaluated. It is
-*             subject to change and could break backwards compatibility.
 */
 
 #ifndef CV2XRADIOLISTENER_HPP
@@ -60,9 +57,6 @@ public:
      *
      * @param [in] status - CV2X radio status.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
-     *
      * @deprecated use onStatusChanged in Cv2xListener
      */
     virtual void onStatusChanged(Cv2xStatus status) {}
@@ -83,9 +77,6 @@ public:
      * Called when the L2 Address has changed.
      *
      * @param [in] newL2Address - The new L2 address.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual void onL2AddrChanged(uint32_t newL2Address) {}
 
@@ -94,9 +85,6 @@ public:
      *
      * @param [in] spsId   - SPS Id of the SPS flow
      * @param [in] details - new SPS MAC PHY details.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void onSpsOffsetChanged(int spsId,
                                     MacDetails details) {}
@@ -123,9 +111,6 @@ public:
 
     /**
      * Destructor for ICv2xRadioListener
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual ~ICv2xRadioListener(){}
 };

@@ -31,8 +31,6 @@
  * @file       CellInfo.hpp
  * @brief      CellInfo is a container class for information about a Cell such as
  *             Cell Identify and Signal Strength.
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef CELLINFO_HPP
@@ -71,9 +69,6 @@ public:
     * Get the Mobile Country Code.
     *
     * @returns Mcc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMcc();
 
@@ -81,9 +76,6 @@ public:
     * Get the Mobile Network Code.
     *
     * @returns Mnc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMnc();
 
@@ -91,9 +83,6 @@ public:
     * Get the location area code.
     *
     * @returns Location area code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getLac();
 
@@ -101,9 +90,6 @@ public:
     * Get the cell identity.
     *
     * @returns Cell identity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getIdentity();
 
@@ -111,9 +97,6 @@ public:
     * Get the absolute RF channel number.
     *
     * @returns Absolute RF channel number.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getArfcn();
 
@@ -121,9 +104,6 @@ public:
     * Get the base station identity code.
     *
     * @returns Base station identity code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getBaseStationIdentityCode();
 
@@ -147,9 +127,6 @@ public:
     * Get the network identifier.
     *
     * @returns Network identifier.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getNid();
 
@@ -157,9 +134,6 @@ public:
     * Get the system identifier.
     *
     * @returns System identifier.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getSid();
 
@@ -167,9 +141,6 @@ public:
     * Get the base station identifier.
     *
     * @returns Base station identifier.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getBaseStationId();
 
@@ -177,9 +148,6 @@ public:
     * Get the longitude.
     *
     * @returns Longitude.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getLongitude();
 
@@ -187,9 +155,6 @@ public:
     * Get the latitude.
     *
     * @returns Latitude.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getLatitude();
 
@@ -212,9 +177,6 @@ public:
     * Get the Mobile Country Code.
     *
     * @returns Mcc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMcc();
 
@@ -222,9 +184,6 @@ public:
     * Get the Mobile Network Code.
     *
     * @returns Mnc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMnc();
 
@@ -232,9 +191,6 @@ public:
     * Get the cell identity.
     *
     * @returns Cell identity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getIdentity();
 
@@ -242,9 +198,6 @@ public:
     * Get the physical cell identifier.
     *
     * @returns Physical cell identifier.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getPhysicalCellId();
 
@@ -252,9 +205,6 @@ public:
     * Get the tracking area code.
     *
     * @returns Tracking area code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getTrackingAreaCode();
 
@@ -262,9 +212,6 @@ public:
     * Get the absolute RF channel number.
     *
     * @returns Absolute RF channel number.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getEarfcn();
 
@@ -289,9 +236,6 @@ public:
     * Get the Mobile Country Code.
     *
     * @returns Mcc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMcc();
 
@@ -299,9 +243,6 @@ public:
     * Get the Mobile Network Code.
     *
     * @returns Mnc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMnc();
 
@@ -309,9 +250,6 @@ public:
     * Get the location area code.
     *
     * @returns Location area code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getLac();
 
@@ -319,9 +257,6 @@ public:
     * Get the cell identity.
     *
     * @returns Cell identity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getIdentity();
 
@@ -329,9 +264,6 @@ public:
     * Get the primary scrambling code.
     *
     * @returns Primary scrambling code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getPrimaryScramblingCode();
 
@@ -339,9 +271,6 @@ public:
     * Get the absolute RF channel number.
     *
     * @returns Absolute RF channel number.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getUarfcn();
 
@@ -365,9 +294,6 @@ public:
     * Get the Mobile Country Code.
     *
     * @returns Mcc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMcc();
 
@@ -375,9 +301,6 @@ public:
     * Get the Mobile Network Code.
     *
     * @returns Mnc value.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getMnc();
 
@@ -385,9 +308,6 @@ public:
     * Get the location area code
     *
     * @returns Location area code.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getLac();
 
@@ -395,9 +315,6 @@ public:
     * Get the cell identity.
     *
     * @returns Cell identity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getIdentity();
 
@@ -405,9 +322,6 @@ public:
     * Get the cell parameters identifier.
     *
     * @returns Cell parameters identifier.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    const int getParametersId();
 
@@ -429,9 +343,6 @@ public:
     * Get the cell type.
     *
     * @returns CellType.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual CellType getType();
 
@@ -439,9 +350,6 @@ public:
     * Checks whether the current cell is registered or not.
     *
     * @returns If true cell is registered or vice-versa.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual bool isRegistered();
 
@@ -461,9 +369,6 @@ public:
     * @param [in] registered - Registration status of the cell.
     * @param [in] id - GSM cell identity.
     * @param [in] ssInfo - GSM cell signal strength.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    GsmCellInfo(int registered, GsmCellIdentity id, GsmSignalStrengthInfo ssInfo);
 
@@ -471,9 +376,6 @@ public:
     * Get GSM cell identity information.
     *
     * @returns GsmCellIdentity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    GsmCellIdentity getCellIdentity();
 
@@ -481,9 +383,6 @@ public:
     * Get GSM cell signal strength information.
     *
     * @returns GsmSignalStrengthInfo.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    GsmSignalStrengthInfo getSignalStrengthInfo();
 
@@ -503,9 +402,6 @@ public:
     * @param [in] registered - Registration status of the cell.
     * @param [in] id - CDMA cell identity.
     * @param [in] ssInfo - CDMA cell signal strength.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    CdmaCellInfo(int registered, CdmaCellIdentity id, CdmaSignalStrengthInfo ssInfo);
 
@@ -513,9 +409,6 @@ public:
     * Get CDMA cell identity information.
     *
     * @returns CdmaCellIdentity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    CdmaCellIdentity getCellIdentity();
 
@@ -523,9 +416,6 @@ public:
     * Get CDMA cell signal strength information.
     *
     * @returns CdmaSignalStrengthInfo.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    CdmaSignalStrengthInfo getSignalStrengthInfo();
 
@@ -545,9 +435,6 @@ public:
     * @param [in] registered - Registration status of the cell.
     * @param [in] id - LTE cell identity class.
     * @param [in] ssInfo - LTE cell signal strength.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    LteCellInfo(int registered, LteCellIdentity id, LteSignalStrengthInfo ssInfo);
 
@@ -555,9 +442,6 @@ public:
     * Get LTE cell identity information.
     *
     * @returns LteCellIdentity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    LteCellIdentity getCellIdentity();
 
@@ -565,9 +449,6 @@ public:
     * Get LTE cell signal strength information.
     *
     * @returns LteSignalStrengthInfo.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    LteSignalStrengthInfo getSignalStrengthInfo();
 
@@ -587,9 +468,6 @@ public:
     * @param [in] registered - Registration status of the cell.
     * @param [in] id - WCDMA cell identity.
     * @param [in] ssInfo - WCDMA cell signal strength.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    WcdmaCellInfo(int registered, WcdmaCellIdentity id, WcdmaSignalStrengthInfo ssInfo);
 
@@ -597,9 +475,6 @@ public:
     * Get WCDMA cell identity information.
     *
     * @returns WcdmaCellIdentity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    WcdmaCellIdentity getCellIdentity();
 
@@ -607,9 +482,6 @@ public:
     * Get WCDMA cell signal strength information.
     *
     * @returns WcdmaSignalStrengthInfo.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    WcdmaSignalStrengthInfo getSignalStrengthInfo();
 
@@ -629,9 +501,6 @@ public:
     * @param [in] registered - Registration status of the cell
     * @param [in] id - TDSCDMA cell identity.
     * @param [in] ssInfo - TDSCDMA cell signal strength.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    TdscdmaCellInfo(int registered, TdscdmaCellIdentity id, TdscdmaSignalStrengthInfo ssInfo);
 
@@ -639,9 +508,6 @@ public:
     * Get TDSCDMA cell identity information.
     *
     * @returns TdscdmaCellIdentity.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    TdscdmaCellIdentity getCellIdentity();
 
@@ -649,9 +515,6 @@ public:
     * Get TDSCDMA cell signal strength information.
     *
     * @returns TdscdmaSignalStrengthInfo.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    TdscdmaSignalStrengthInfo getSignalStrengthInfo();
 

@@ -21,10 +21,6 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Sms/SmsMenu.cpp
    Sms/MySmsListener.cpp
 
-   Location/LocationMenu.cpp
-   Location/MyLocationListener.cpp
-   Location/MyLocationCommandCallback.cpp
-
    ECall/ECallMenu.cpp
    ECall/MsdSettings.cpp
    ECall/MyECallListener.cpp
@@ -60,7 +56,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_executable (${TARGET_TELSDK_CONSOLE_APP} ${TELSDK_CONSOLE_APP_SOURCES})
-target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_loc telux_data telux_common)
+target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common)
 
 # install to target
 install ( TARGETS ${TARGET_TELSDK_CONSOLE_APP}

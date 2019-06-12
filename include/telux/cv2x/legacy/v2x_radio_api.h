@@ -73,6 +73,9 @@ typedef int v2x_radio_handle_t;
  */
 #define V2X_RX_WILDCARD_PORTNUM (9000)
 
+/** Maximum len of pool id list returned in capabilities struct */
+#define MAX_POOL_IDS_LIST_LEN (20)
+
 /** Maximum len for malicious and trusted IDs that can be passed in
     v2x_radio_update_tunnel_mode_info().
  */
@@ -157,15 +160,15 @@ typedef struct {
 /**
  * Contains mininum and maximum frequency for a TX Pool ID
  *
- * Used in @ref Cv2xRadioCapabilities
+ * Used in @ref v2x_iface_capabilities_t
  */
 typedef struct {
-    uint8_t poolId;
+    uint8_t pool_id;
     /**< TX Pool ID. */
-    uint16_t minFreq;
-    /**< Minimum frequency. */
-    uint16_t maxFreq;
-    /**< Maximum frequency. */
+    uint16_t min_freq;
+    /**< Minimum frequency in MHz. */
+    uint16_t max_freq;
+    /**< Maximum frequency in MHz. */
 } tx_pool_id_info_t;
 
 
@@ -282,6 +285,12 @@ typedef struct {
     int32_t min_tx_pwr;
     /**< Minimum supported transmission ower in dBm. */
 
+    uint32_t tx_pool_ids_supported_len;
+    /**< Length of tx_pool_ids_supported array. */
+
+    tx_pool_id_info_t tx_pool_ids_supported[MAX_POOL_IDS_LIST_LEN];
+    /**< Array of tx pool ids and associated min/max frequencies. */
+
 } v2x_iface_capabilities_t;
 
 /**
@@ -328,6 +337,8 @@ v2x_priority_et v2x_convert_traffic_class_to_priority(uint16_t traffic_class);
     Applications might need to set these parameters in response to a WSA/WRA or
     other application-level reconfiguration (such as power reduction).
     Currently, these parameters are all transmission-profile types of parameters.
+
+    @deprecated use v2x_tx_flow_info_t
  */
 typedef struct {
     int channel_center_khz;
@@ -554,6 +565,9 @@ typedef struct {
          If data goes to the radio with enough time, it can be transmitted on
          the medium in the next immediately scheduled slot. @newpagetable */
 
+    uint64_t utc_time_ns;
+    /**< Absolute UTC start time of next selected grant in nanoseconds. */
+
 } v2x_sps_mac_details_t;
 
 /**
@@ -572,7 +586,8 @@ typedef struct {
     @param context  Pointer to the application context.
     @param details  Pointer to the MAC information.
     */
-    void (*v2x_radio_l2_reservation_change_complete_cb)(void *context, v2x_sps_mac_details_t *details);
+    void (*v2x_radio_l2_reservation_change_complete_cb)(void *context,
+                                                        v2x_sps_mac_details_t *details);
 
     /**
     Callback periodically made when the MAC SPS timeslot changes. The new
@@ -746,6 +761,8 @@ v2x_radio_handle_t v2x_radio_init(char *interface_name,
     @dependencies
     The interface must be pre-initialized with v2x_radio_init(). The handle from
     that function must be used as the parameter in this function. @newpage
+
+    @deprecated pass v2x_tx_flow_info_t on flow creation
  */
 extern v2x_status_enum_type v2x_radio_set_macphy(v2x_radio_handle_t handle, v2x_radio_macphy_params_t *macphy,
         void *context);

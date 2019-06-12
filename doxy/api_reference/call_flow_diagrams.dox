@@ -1085,4 +1085,61 @@ to get a particular thermal zone and a particular cooling device details with th
 9. Application requests for a particular cooling device details by passing the cooling device Id.
 10. Thermal Manager sends cooling device details with the given Id to the application.
 
+@section tcuactivity_management_call_flow TCU Activity Management
+
+Application will get the TCU-activity manager object from power factory. The application can register a listener for updates on TCU-activity state and its management service status. The application can also set the system to a desired activity state.
+When the application is notified about the service being unavailable, the TCU-activity state notifications will be inactive. After the service becomes available, the existing listener registrations will be maintained.
+
+@subsection tcuactivity_manager_listener_callflow Call flow to register/remove listener for TCU-activity manager
+
+@anchor fig_tcuactivity_manager_listener_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{tcuactivity_manager_listener_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to register/remove listener for TCU-activity manager}
+  \label{fig_tcuactivity_manager_listener_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{tcuactivity_manager_listener_callflow.png,Call flow to register/remove listener for TCU-activity manager,80,80,Register/Remove listener for TCU-activity manager call flow}
+
+1. Application requests power factory for TCU-activity manager object.
+2. Power factory returns ITcuActivityManager object using which application will register or remove a listener.
+3. Application can register a listener for getting notifications on TCU-activity state updates.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application will get TCU-activity state notifications like SUSPEND, RESUME and SHUTDOWN.
+6. Application will send one(despite multiple listeners) acknowledgement, after processing(save any required information) SUSPEND/SHUTDOWN notifications. This indicates the readiness of application for state-transition. However the TCU-activity management service doesn't wait for acknowledgement indefinitely, before performing the state transition.
+7. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
+8. Application can remove listener.
+9. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@subsection tcuactivity_manager_commands_callflow Call flow to set the TCU-activity state
+
+@anchor fig_tcuactivity_manager_commands_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{tcuactivity_manager_commands_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to set the TCU-activity state}
+  \label{fig_tcuactivity_manager_commands_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{tcuactivity_manager_commands_callflow.png,Call flow to set the TCU-activity state,80,80,Call flow to set the TCU-activity state}
+
+1. Application requests power factory for TCU-activity manager object.
+2. Power factory returns ITcuActivityManager object using which application will set the TCU-activity state.
+3. Application can register a listener for getting notifications on TCU-activity state.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
+5. Application can set the TCU-activity state to SUSPEND, RESUME or SHUTDOWN.
+6. Application receives synchronous status which indicates if the request was sent successfully.
+7. Optionally, the response to setActivityState request can be received by the application.
+8. Application waits for TCU-activity state update to confirm the state change.
+9. Application will send one(despite multiple listeners) acknowledgement, after processing(save any required information) SUSPEND/SHUTDOWN notifications. This indicates the readiness of application for state-transition. However the TCU-activity management service doesn't wait for acknowledgement indefinitely, before performing the state transition.
+10. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
+11. Application can remove listener.
+12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 */

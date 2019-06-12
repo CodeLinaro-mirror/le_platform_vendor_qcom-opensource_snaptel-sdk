@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,23 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
+/**
+ * @file      RemoteSimDefines.hpp
+ * @brief     RemoteSimDefines contains enumerations and variables used for the
+ *            Remote SIM subsystem.
+ * @note      Eval: This is a new API and is being evaluated. It is subject to
+ *            change and could break backwards compatibility.
+ */
 
-#include "MyLocationCommandCallback.hpp"
-#include "Utils.hpp"
+#ifndef REMOTESIMDEFINES_HPP
+#define REMOTESIMDEFINES_HPP
 
-#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
+#include <cstdint>
+#include <vector>
 
-// Implementation of My location callback
-MyLocationCommandCallback::MyLocationCommandCallback(std::string cmdName) {
-   commandName_ = cmdName;
-}
-void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) {
-   std::cout << std::endl << std::endl;
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << commandName_ << " sent successfully" << std::endl;
-   } else {
-      PRINT_CB << commandName_ << " failed\n errorCode: " << static_cast<int>(error)
-               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-   }
-}
+namespace telux {
+
+namespace tel {
+
+/** @addtogroup telematics_remote_sim
+ * @{ */
+
+/**
+ * Defines the card error cause, sent to the modem by the SIM provider
+ */
+enum class CardErrorCause {
+    INVALID = -1,               /**< Card error cause value will not be passed to modem */
+    UNKNOWN_ERROR = 0,          /**< Unknown error */
+    NO_LINK_ESTABLISHED = 1,    /**< No link was established */
+    COMMAND_TIMEOUT = 2,        /**< Command timeout */
+    POWER_DOWN = 3,             /**< Error due to a card power down */
+};
+
+/** @} */ /* end_addtogroup telematics_remote_sim */
+
+} // End of namespace tel
+
+} // End of namespace telux
+
+#endif // REMOTESIMDEFINES_HPP

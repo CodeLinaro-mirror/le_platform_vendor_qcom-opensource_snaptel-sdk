@@ -79,9 +79,9 @@ void ThermalTestApp::printThermalZoneHeader() {
               << "+---------------------------------------------------------------------------"
                  "--------------------+"
               << std::endl;
-    std::cout << std::setw(3) << "| Sensor Id | " << std::setw(25) << "Sensor Type  "
-              << std::setw(5) << " | Current Temp  " << std::setw(5) << "|  Passive Temp  |"
-              << std::setw(20) << " Trip Points  " << std::endl;
+    std::cout << std::setw(3) << "| Tzone Id | " << std::setw(10) << "Type  " << std::setw(35)
+              << " | Current Temp  " << std::setw(5) << "|  Passive Temp  |" << std::setw(20)
+              << " Trip Points  " << std::endl;
     std::cout << std::setw(2)
               << "+---------------------------------------------------------------------------"
                  "--------------------+"
@@ -104,24 +104,20 @@ void ThermalTestApp::getThermalZones(std::vector<std::string> userInput) {
 void ThermalTestApp::getThermalZoneById(std::vector<std::string> userInput) {
     if (thermalManager_) {
         int thermalZoneId = -1;
-        std::cout << "Enter thermal zone Id (Range: 0 to 9): ";
+        std::cout << "Enter thermal zone id: ";
         if (!(std::cin >> thermalZoneId)) {
             std::cout << "ERROR Invalid input " << std::endl;
             std::cin.clear();
             std::cin.ignore();
         }
 
-        if (thermalZoneId >= 0 && thermalZoneId <= 9) {
-            std::cout << "Thermal zone Id: " << thermalZoneId << std::endl;
-            std::shared_ptr<telux::therm::IThermalZone> tzInfo
-                = thermalManager_->getThermalZone(thermalZoneId);
-            if (tzInfo != nullptr) {
-                printThermalZoneHeader();
-                ThermalHelper::printThermalZoneInfo(tzInfo);
-                ThermalHelper::printBindingInfo(tzInfo);
-            }
-        } else {
-            std::cout << " Invalid input: " << thermalZoneId << std::endl;
+        std::cout << "Thermal zone Id: " << thermalZoneId << std::endl;
+        std::shared_ptr<telux::therm::IThermalZone> tzInfo
+            = thermalManager_->getThermalZone(thermalZoneId);
+        if (tzInfo != nullptr) {
+            printThermalZoneHeader();
+            ThermalHelper::printThermalZoneInfo(tzInfo);
+            ThermalHelper::printBindingInfo(tzInfo);
         }
     }
 }

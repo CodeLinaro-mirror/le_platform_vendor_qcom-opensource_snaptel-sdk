@@ -46,6 +46,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/audio/AudioDefines.hpp>
+#include <telux/audio/AudioListener.hpp>
 
 namespace telux {
 
@@ -507,6 +508,64 @@ public:
     *             and could break backwards compatibility.
     */
    virtual telux::common::Status stopAudio(telux::common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Plays in-band DTMF tone on the active voice stream
+    *
+    * @param [in] dtmfTone     DTMF tone properties
+    *        [in] duration     Duration (in milliseconds) for which the tone needs to be played. The
+    *                          constant infiniteDtmfDuration(=0xFFFF) represents infinite duration.
+    *        [in] gain         DTMF tone gain
+    *        [in] callback     callback to get the response of playDtmfTone.
+    *
+    * @returns Status of the request i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to change
+    *             and could break backwards compatibility.
+    */
+   virtual telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint16_t duration, uint16_t gain,
+                    telux::common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Stops the DTMF tone which is being played (i.e duration not expired) on the active voice
+    * stream
+    *
+    * @param [in] direction   Direction associated with the DTMF tone
+    * @      [in] callback    callback to get the response of stopDtmfTone.
+    *
+    * @returns Status of the request i.e. success or suitable status code.
+    *
+    * @note       Eval: This is a new API and is being evaluated. It is subject to change
+    *             and could break backwards compatibility.
+    */
+   virtual telux::common::Status stopDtmfTone(StreamDirection direction,
+                    telux::common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Register a listener to get notified when a DTMF tone is detected in the active voice stream
+    *
+    * @param [in] listener     Pointer of IVoiceListener object that processes the notification
+    *        [in] callback     callback to get the response of registerListener
+    *
+    * @returns Status of registerListener i.e success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status registerListener(std::weak_ptr<IVoiceListener> listener,
+                    telux::common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Remove a previously registered listener.
+    *
+    * @param [in] listener Previously registered IVoiceListener that needs to be removed
+    *
+    * @returns Status of deRegisterListener, success or suitable status code
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status deRegisterListener(std::weak_ptr<IVoiceListener> listener) = 0;
 };
 
 /**

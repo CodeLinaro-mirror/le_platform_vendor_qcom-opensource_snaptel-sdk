@@ -70,5 +70,7 @@ Jun 2017   SVM      Created to support V2X API
     This section contains APIs related to Audio Stream operation.
     @defgroup telematics_therm Thermal Management
     This section contains APIs related to Thermal Management such as read list of thermal zones, cooling devices and binding info.
+    @defgroup telematics_power TCU Activity Manager
+    This section contains APIs related to TCU activity state management.
   @}
 */

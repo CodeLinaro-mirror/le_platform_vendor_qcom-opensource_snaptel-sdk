@@ -183,9 +183,6 @@ public:
     *                            of set SMSC address
     *
     * @returns Status of setSmscAddress i.e. success or suitable error code.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status setSmscAddress(const std::string &smscAddress,
                                                 telux::common::ResponseCallback callback = nullptr)

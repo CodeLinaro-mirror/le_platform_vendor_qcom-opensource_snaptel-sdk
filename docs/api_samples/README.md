@@ -22,3 +22,5 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to start/stop audio in voice call](audio/audio_manager_voicecall_start_stop.md)
   * [How to do device switch in voice call](audio/audio_manager_voicecall_device_switch.md)
   * [How to do volume/mute control in voice call](audio/audio_manager_voicecall_volume_mute.md)
+  * [How to get TCU activity state updates](power/get_tcu_activity_state_notifications.md)
+  * [How to initiate a TCU activity state transition](power/set_tcu_activity_state_command.md)

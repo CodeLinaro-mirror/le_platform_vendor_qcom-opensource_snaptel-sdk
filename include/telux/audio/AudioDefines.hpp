@@ -48,6 +48,9 @@ namespace telux {
 
 namespace audio {
 
+/* Duration to play DTMF tone for infinite time */
+const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
+
 /** @addtogroup telematics_audio
  * @{ */
 
@@ -112,6 +115,26 @@ enum class AudioFormat {
 };
 
 /**
+ * Represents the possible lower frequencies(in Hz) in a standard DTMF tone
+ */
+enum class DtmfLowFreq {
+    FREQ_697 = 697,
+    FREQ_770 = 770,
+    FREQ_852 = 852,
+    FREQ_941 = 941
+};
+
+/**
+ * Represents the possible higher frequencies(in Hz) in a standard DTMF tone
+ */
+enum class DtmfHighFreq {
+    FREQ_1209 = 1209,
+    FREQ_1336 = 1336,
+    FREQ_1477 = 1477,
+    FREQ_1633 = 1633
+};
+
+/**
  *  Common Stream configuration parameters
  */
 struct StreamConfig {
@@ -156,6 +179,15 @@ struct StreamBuffer {
    std::vector<uint8_t> buffer; /**< Buffer with Size encapsulated */
    size_t offset; /**< Actual Buffer Content starting position */
    int64_t timestamp; /**< For future use */
+};
+
+/**
+ *  DTMF tone parameters
+ */
+struct DtmfTone {
+    DtmfLowFreq lowFreq;    /* Lower frequency associated with DTMF tone */
+    DtmfHighFreq highFreq;  /* Higher frequency associated with DTMF tone */
+    StreamDirection direction; /* Direction associated with DTMF tone */
 };
 
 /** @} */ /* end_addtogroup telematics_audio */

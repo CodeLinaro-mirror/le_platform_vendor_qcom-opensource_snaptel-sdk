@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,6 +44,7 @@
 #include <telux/tel/NetworkSelectionManager.hpp>
 #include <telux/tel/Phone.hpp>
 #include <telux/tel/PhoneManager.hpp>
+#include <telux/tel/RemoteSimManager.hpp>
 #include <telux/tel/SapCardManager.hpp>
 #include <telux/tel/ServingSystemManager.hpp>
 #include <telux/tel/SmsManager.hpp>
@@ -139,6 +140,16 @@ public:
    std::shared_ptr<INetworkSelectionManager> getNetworkSelectionManager(int slotId
                                                                         = DEFAULT_SLOT_ID);
 
+   /**
+    * Get Remote SIM Manager instance to handle services like exchanging APDU,
+    * SIM Power On/Off, etc.
+    *
+    * @param [in] slotId    Unique identifier for the SIM slot
+    *
+    * @returns Pointer of IRemoteSimManager object.
+    */
+   std::shared_ptr<IRemoteSimManager> getRemoteSimManager(int slotId = DEFAULT_SLOT_ID);
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
@@ -149,6 +160,7 @@ private:
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
    std::map<int, std::shared_ptr<INetworkSelectionManager>> networkSelectionManagerMap_;
    std::map<int, std::shared_ptr<ISapCardManager>> sapCardManagerMap_;
+   std::map<int, std::shared_ptr<IRemoteSimManager>> remoteSimManagerMap_;
 
    PhoneFactory();
    ~PhoneFactory();

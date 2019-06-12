@@ -119,7 +119,6 @@ Status Cv2xDaemon::stopV2xMode() {
         return ret;
     }
 
-    LOGI("Stopped V2X radio\n");
     return Status::SUCCESS;
 }
 
@@ -168,16 +167,18 @@ Status Cv2xDaemon::deInit() {
 
     Status ret = Status::FAILED;
 
-    ret = stopV2xMode();
-    if (ret != Status::SUCCESS) {
-        LOGE("Failed to stop v2x mode\n");
-        return Status::FAILED;
-    }
+    if (daemonMode_) {
+        ret = stopV2xMode();
+        if (ret != Status::SUCCESS) {
+            LOGE("Failed to stop v2x mode\n");
+            return Status::FAILED;
+        }
 
-    ret = cv2xTelux_->deinitV2xLibrary();
-    if (ret != Status::SUCCESS) {
-        LOGE("Failed to de-initialize v2x library\n");
-        return Status::FAILED;
+        ret = cv2xTelux_->deinitV2xLibrary();
+        if (ret != Status::SUCCESS) {
+            LOGE("Failed to de-initialize v2x library\n");
+            return Status::FAILED;
+        }
     }
 
     return Status::SUCCESS;
@@ -211,11 +212,9 @@ void Cv2xDaemon::setupSignalHandler() {
 
 void Cv2xDaemon::printUsage(std::string appName) {
     std::cout << "Usage: " << appName << " --debug|-d --use-syslog|-s "
-        << "--start-v2x-mode|-S --stop-v2x-mode|-E --daemon-mode|-D\n"
+        << "--daemon-mode|-D\n"
         << "--debug|-d: Enable debug\n"
         << "--use-syslog|-s: Use syslog\n"
-        << "--start-v2x-mode|-S: Start v2x mode\n"
-        << "--stop-v2x-mode|-E: Stop v2x mode\n"
         << "--daemon-mode|-D: Start v2x and run in daemon mode\n";
 }
 
@@ -352,6 +351,5 @@ int main(int argc, char **argv) {
     } else {
         cv2xDaemon.deInit();
     }
-
     return 0;
 }

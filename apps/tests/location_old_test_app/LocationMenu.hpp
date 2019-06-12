@@ -42,7 +42,7 @@
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationManager.hpp>
 
-#include "console_app_framework/ConsoleApp.hpp"
+#include "../../common/console_app_framework/ConsoleApp.hpp"
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
@@ -51,24 +51,16 @@ public:
    /**
     * Initialize commands and SDK
     */
-   void init();
+   int init();
 
    LocationMenu(std::string appName, std::string cursor);
 
    ~LocationMenu();
 
-   void registerListenerEx(std::vector<std::string> userInput);
-   void deRegisterListenerEx(std::vector<std::string> userInput);
-   void startDetailedReports(std::vector<std::string> userInput);
-   void startBasicReports(std::vector<std::string> userInput);
-   void stopReports(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableLocationReportLogs();
-   void enableBasicLocationReportLogs();
-   void enableDetailedLocationReportLogs();
    void enableSvInfoLogs();
-   void enableDataInfoLogs();
    void removeListener(std::vector<std::string> userInput);
    void registerListener(std::vector<std::string> userInput);
    void minInterval(std::vector<std::string> userInput);

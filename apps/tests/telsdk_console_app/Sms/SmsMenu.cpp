@@ -106,7 +106,7 @@ void SmsMenu::init() {
                         std::bind(&SmsMenu::setSmscAddr, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getMsgEncodingSizeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Calculate_message_attributes", {"message"},
+         "4", "Calculate_message_attributes", {},
          std::bind(&SmsMenu::calculateMessageAttributes, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
       = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand};
@@ -173,7 +173,13 @@ void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
 }
 
 void SmsMenu::calculateMessageAttributes(std::vector<std::string> userInput) {
-   auto msgAttributes = smsManager_->calculateMessageAttributes(userInput[1]);
+   std::string smsMessage;
+   char delimiter = '\n';
+
+   std::cout << "Enter Message: ";
+   std::getline(std::cin, smsMessage, delimiter);
+
+   auto msgAttributes = smsManager_->calculateMessageAttributes(smsMessage);
    std::cout
       << "Message Attributes \n encoding: " << (int)msgAttributes.encoding
       << "\n numberOfSegments: " << msgAttributes.numberOfSegments

@@ -73,6 +73,10 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
             Cv2xUtils::convertStatus(status.rxCause));
     }
 
+    if (status.cbrValueValid) {
+        LOGD("cbr_value=%d\n", static_cast<int>(status.cbrValue));
+    }
+
     // Trigger post SSR event to start data call
     bool triggetPostSSRV2XReady = false;
     {
@@ -226,8 +230,6 @@ Status Cv2xTelux::initV2xLibrary() {
     cv2xRadioMgr_ = cv2xFactory.getCv2xRadioManager();
 
     auto &dataFactory = DataFactory::getInstance();
-    dataProfileMgr_ = dataFactory.getDataProfileManager();
-    dataConnectionMgr_ = dataFactory.getDataConnectionManager();
 
     /* Check that V2X radio is initialized */
     if (not cv2xRadioMgr_->isReady()) {
@@ -237,16 +239,18 @@ Status Cv2xTelux::initV2xLibrary() {
         }
     }
 
-    if (not dataProfileMgr_->isSubsystemReady()) {
-        if (not dataProfileMgr_->onSubsystemReady().get()) {
-            LOGE("dataProfileMgr initialization failed\n");
+    dataConnectionMgr_ = dataFactory.getDataConnectionManager();
+    if (not dataConnectionMgr_->isSubsystemReady()) {
+        if (not dataConnectionMgr_->onSubsystemReady().get()) {
+            LOGE("dataConnectionMgr initialization failed\n");
             return Status::FAILED;
         }
     }
 
-    if (not dataConnectionMgr_->isSubsystemReady()) {
-        if (not dataConnectionMgr_->onSubsystemReady().get()) {
-            LOGE("dataConnectionMgr initialization failed\n");
+    dataProfileMgr_ = dataFactory.getDataProfileManager();
+    if (not dataProfileMgr_->isSubsystemReady()) {
+        if (not dataProfileMgr_->onSubsystemReady().get()) {
+            LOGE("dataProfileMgr initialization failed\n");
             return Status::FAILED;
         }
     }

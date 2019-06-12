@@ -85,6 +85,8 @@ public:
      *
      * @param [in] spsId   - SPS Id of the SPS flow
      * @param [in] details - new SPS MAC PHY details.
+     *
+     * @deprecated use onSpsSchedulingChanged
      */
     virtual void onSpsOffsetChanged(int spsId,
                                     MacDetails details) {}

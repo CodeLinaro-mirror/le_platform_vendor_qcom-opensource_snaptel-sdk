@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_TELUX_AUDIO_TEST_APP telux_audio_testapp)
+set(TARGET_PLAYBACK_APP playback_app)
 
-set(TELUX_AUDIO_TEST_APP_SOURCES
-    TeluxAudioTestApp.cpp
+set(PLAYBACK_APP_SOURCES
+    PlaybackApp.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
@@ -20,10 +20,10 @@ include_directories(BEFORE
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_executable (${TARGET_TELUX_AUDIO_TEST_APP} ${TELUX_AUDIO_TEST_APP_SOURCES})
-target_link_libraries(${TARGET_TELUX_AUDIO_TEST_APP} telux_audio)
+add_executable (${TARGET_PLAYBACK_APP} ${PLAYBACK_APP_SOURCES})
+target_link_libraries(${TARGET_PLAYBACK_APP} telux_audio)
 
 # install to target
-install ( TARGETS ${TARGET_TELUX_AUDIO_TEST_APP}
+install ( TARGETS ${TARGET_PLAYBACK_APP}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )

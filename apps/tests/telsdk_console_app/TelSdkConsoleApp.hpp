@@ -62,7 +62,6 @@ private:
    void eCallMenu(std::vector<std::string> userInput);
    void smsMenu(std::vector<std::string> userInput);
    void simCardMenu(std::vector<std::string> userInput);
-   void locationMenu(std::vector<std::string> userInput);
    void dataMenu(std::vector<std::string> userInput);
 };
 

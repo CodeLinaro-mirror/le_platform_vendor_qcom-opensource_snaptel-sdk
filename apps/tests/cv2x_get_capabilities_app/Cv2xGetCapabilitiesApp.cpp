@@ -45,6 +45,7 @@
 #include <iomanip>
 #include <cstdint>
 #include <atomic>
+#include <map>
 
 #include <telux/cv2x/Cv2xRadio.hpp>
 #include <telux/cv2x/Cv2xRadioListener.hpp>
@@ -59,12 +60,14 @@ using std::string;
 using std::shared_ptr;
 using std::stringstream;
 using std::hex;
+using std::map;
 using telux::common::ErrorCode;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusEx;
 using telux::cv2x::Cv2xStatusType;
+using telux::cv2x::Cv2xCauseType;
 using telux::cv2x::TrafficCategory;
 using telux::cv2x::ICv2xRadio;
 using telux::cv2x::Cv2xRadioCapabilities;
@@ -74,14 +77,45 @@ static Cv2xStatusEx gCv2xStatus;
 static promise<ErrorCode> gCallbackPromise;
 static promise<ErrorCode> gCapabilityPromise;
 
-static string statusToString(const Cv2xStatus &status) {
+static map<Cv2xStatusType, string> gCv2xStatusToString = {
+    { Cv2xStatusType::INACTIVE, "INACTIVE" },
+    { Cv2xStatusType::ACTIVE, "ACTIVE" },
+    { Cv2xStatusType::SUSPENDED, "SUSPENDED" },
+    { Cv2xStatusType::UNKNOWN, "UNKNOWN" },
+};
+
+static map<Cv2xCauseType, string> gCv2xCauseToString = {
+    { Cv2xCauseType::TIMING, "TIMING" },
+    { Cv2xCauseType::CONFIG, "CONFIG" },
+    { Cv2xCauseType::UE_MODE, "UE_MODE" },
+    { Cv2xCauseType::GEOPOLYGON, "GEOPOLYGON" },
+    { Cv2xCauseType::UNKNOWN, "UNKNOWN" },
+};
+
+static string statusToString(const Cv2xStatus &status, bool printUnknown = true) {
     stringstream ss;
-    ss << "\tRx Status: " << static_cast<int>(status.rxStatus) << "\n";
-    ss << "\tTx Status: " << static_cast<int>(status.txStatus) << "\n";
-    ss << "\tTxCause: " << static_cast<int>(status.txCause) << "\n";
-    ss << "\tRxCause: " << static_cast<int>(status.rxCause) << "\n";
-    ss << "\tCBR valid: " << status.cbrValueValid
-        << ", value: " << static_cast<unsigned int>(status.cbrValue) << "\n";
+
+    if (printUnknown or status.rxStatus != Cv2xStatusType::UNKNOWN) {
+        ss << "\tRx Status= " << static_cast<int>(status.rxStatus);
+        ss << " : " << gCv2xStatusToString[status.rxStatus] << "\n";
+        if (status.rxStatus != Cv2xStatusType::ACTIVE) {
+            ss << "\tRx Cause= " << static_cast<int>(status.rxCause);
+            ss << " : " << gCv2xCauseToString[status.rxCause] << "\n";
+        }
+    }
+
+    if (printUnknown or status.txStatus != Cv2xStatusType::UNKNOWN) {
+        ss << "\tTx Status= " << static_cast<int>(status.txStatus);
+        ss << " : " << gCv2xStatusToString[status.txStatus] << "\n";
+        if (status.txStatus != Cv2xStatusType::ACTIVE) {
+            ss << "\tTx Cause= " << static_cast<int>(status.txCause);
+            ss << " : " << gCv2xCauseToString[status.txCause] << "\n";
+        }
+    }
+
+    if (status.cbrValueValid) {
+        ss << "\tCBR= " << static_cast<unsigned int>(status.cbrValue) << "\n";
+    }
     return ss.str();
 }
 
@@ -92,14 +126,14 @@ static string statusToString(const Cv2xStatusEx &status) {
     ss << "Overall:\n" << statusToString(status.status);
 
     for (auto i = 0u; i < status.poolStatus.size(); ++i) {
-        ss << "Pool ID " << status.poolStatus[i].poolId << ":\n";
-        ss << statusToString(status.poolStatus[i].status);
+        ss << "Pool ID " << static_cast<unsigned int>(status.poolStatus[i].poolId) << ":\n";
+        ss << statusToString(status.poolStatus[i].status, false);
     }
 
-    ss << "\tTime uncertainty valid: " <<
-        static_cast<int>(status.timeUncertaintyValid)<< ", value: "
-        << std::fixed << std::setprecision(8) << status.timeUncertainty << "\n";
-
+    if (status.timeUncertaintyValid) {
+        ss << "\tTime uncertainty= "
+            << std::fixed << std::setprecision(10) << status.timeUncertainty << "\n";
+    }
     return ss.str();
 }
 

@@ -128,8 +128,8 @@ static void fillBuffer(void) {
     dataPtr += sizeof(uint16_t);
 
     // Timestamp
-
-    dataPtr += sprintf(dataPtr, "<%llu> ", static_cast<long long unsigned>(timestamp));
+    dataPtr += snprintf(dataPtr, G_BUF_LEN - (2 + sizeof(uint16_t)),
+                        "<%llu> ", static_cast<long long unsigned>(timestamp));
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;

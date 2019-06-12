@@ -275,7 +275,8 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/serving_system/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/cv2x/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/audio/ \
-                         $(TELUX_GIT_ROOT)/docs/api_samples/thermal/
+                         $(TELUX_GIT_ROOT)/docs/api_samples/thermal/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/power/
 
 INPUT_ENCODING         = UTF-8
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and

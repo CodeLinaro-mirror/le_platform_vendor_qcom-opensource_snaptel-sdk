@@ -38,7 +38,7 @@
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
-const int THERMAL_ZONE_ID = 2;
+const int THERMAL_ZONE_ID = 1;
 
 std::string convertTripTypeToStr(telux::therm::TripType type) {
     std::string tripType;
@@ -116,9 +116,9 @@ void printBindingInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo) {
                     thresholdPoints = tripPointToString(
                         boundCoolingDeviceList[j].bindingInfo[k], thresholdPoints);
                 }
-                std::cout << std::left << std::setw(7) << " " << std::setw(3) << 6 << std::setw(15)
-                          << " " << std::setw(30) << thresholdPoints << std::setw(20) << std::endl;
-                std::cout << std::endl;
+                std::cout << std::left << std::setw(7) << " " << std::setw(3)
+                          << boundCoolingDeviceList[j].coolingDeviceId << std::setw(15) << " "
+                          << std::setw(30) << thresholdPoints << std::setw(20) << std::endl;
             } else {
                 std::cout << "No trip points bound!" << std::endl;
             }
@@ -151,7 +151,6 @@ void printDeviceInfo(std::shared_ptr<telux::therm::ICoolingDevice> &cdevInfo) {
               << std::setw(7) << " " << std::setw(20) << cdevInfo->getDescription() << std::setw(7)
               << " " << std::setw(5) << cdevInfo->getMaxCoolingLevel() << std::setw(15) << " "
               << std::setw(5) << cdevInfo->getCurrentCoolingLevel() << std::endl;
-    std::cout << std::endl;
 }
 
 void printThermalZoneHeader() {
@@ -160,9 +159,9 @@ void printThermalZoneHeader() {
               << "+---------------------------------------------------------------------------"
                  "--------------------+"
               << std::endl;
-    std::cout << std::setw(3) << "| Sensor Id | " << std::setw(25) << "Sensor Type  "
-              << std::setw(5) << " | Current Temp  " << std::setw(5) << "|  Passive Temp  |"
-              << std::setw(20) << " Trip Points  " << std::endl;
+    std::cout << std::setw(3) << "| Tzone Id | " << std::setw(25) << " Type  " << std::setw(5)
+              << " | Current Temp  " << std::setw(5) << "|  Passive Temp  |" << std::setw(20)
+              << " Trip Points  " << std::endl;
     std::cout << std::setw(2)
               << "+---------------------------------------------------------------------------"
                  "--------------------+"

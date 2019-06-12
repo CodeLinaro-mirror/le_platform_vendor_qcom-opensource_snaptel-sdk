@@ -113,9 +113,9 @@ void ThermalHelper::printBindingInfo(std::shared_ptr<telux::therm::IThermalZone>
                     thresholdPoints
                         += tripPointToString(boundCoolingDeviceList[j].bindingInfo[k], trip);
                 }
-                std::cout << std::left << std::setw(7) << " " << std::setw(3) << 6 << std::setw(15)
-                          << " " << std::setw(30) << thresholdPoints << std::setw(20) << std::endl;
-                std::cout << std::endl;
+                std::cout << std::left << std::setw(7) << " " << std::setw(3)
+                          << boundCoolingDeviceList[j].coolingDeviceId << std::setw(15) << " "
+                          << std::setw(30) << thresholdPoints << std::setw(20) << std::endl;
             } else {
                 std::cout << "No trip points bound!" << std::endl;
             }
@@ -149,5 +149,4 @@ void ThermalHelper::printCoolingDevInfo(std::shared_ptr<telux::therm::ICoolingDe
               << std::setw(7) << " " << std::setw(20) << cdevInfo->getDescription() << std::setw(7)
               << " " << std::setw(5) << cdevInfo->getMaxCoolingLevel() << std::setw(15) << " "
               << std::setw(5) << cdevInfo->getCurrentCoolingLevel() << std::endl;
-    std::cout << std::endl;
 }

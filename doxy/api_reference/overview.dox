@@ -76,6 +76,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
    Thermal Management sub-system consists of APIs to get list of thermal zones, cooling devices and binding information.
 
+<b>TCU Activity Management</b>
+
+   TCU Activity Management sub-system consists of APIs to get TCU-activity state updates, set the TCU-activity state, etc.
+
 Telematics SDK classes can be broadly divided into the following types:
 
 - Factory - Factory classes are central classes such as PhoneFactory which can be used to create Manager classes corresponding to their sub-systems such as PhoneManager.
@@ -284,5 +288,12 @@ Thermal Management APIs provide functionality such as
    - get cooling devices with cooling device type, maximum and current cooling level
    - get thermal zone by Id
    - get cooling device by Id
+
+@subsection power TCU Activity Management
+
+TCU-activity Manager APIs in Telematics SDK provides TCU-activity state related operations such as
+   - Query the current TCU-activity state
+   - Get notifications about the TCU-activity state changes
+   - Set the system to a desired activity state
 
 */

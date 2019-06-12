@@ -1296,6 +1296,38 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
     int *sock);
 
 /**
+    Adjusts the flow parameters for an existing tx event socket.
+
+    @datatypes
+    v2x_tx_flow_info_t
+
+    @param[out] sock                 Pointer to the socket bound to the
+                                     requested port.
+    @param[in]  updated_flow_info    Pointer to a flow info structure with
+                                     new flow parameters.
+
+    @detdesc
+    When the reservation change is complete, a callback to the structure is
+    passed at in a v2x_radio_init() call.
+    @par
+    This call is a blocking call. When it returns, the socket is ready to be
+    used, assuming there is no error.
+
+    @return
+    #V2X_STATUS_SUCCESS -- On success.
+    @par
+    Error code -- If there is a problem (see #v2x_status_enum_type).
+
+    @dependencies
+    An event flow must have been successfully initialized with the
+    v2x_radio_tx_event_sock_create_and_bind() or
+    v2x_radio_tx_event_sock_create_and_bind_v2() methods.
+ */
+extern v2x_status_enum_type v2x_radio_tx_event_flow_info_change(
+    int *sock,
+    v2x_tx_flow_info_t *updated_flow_info);
+
+/**
  * Testing functions mainly for sim environment
  * but also useful for IPV6 testing
  */

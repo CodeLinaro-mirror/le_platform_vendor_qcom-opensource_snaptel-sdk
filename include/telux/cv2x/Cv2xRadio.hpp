@@ -145,6 +145,16 @@ using RequestSpsFlowInfoCallback =
     std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow,
                         const SpsFlowInfo & spsInfo,
                         telux::common::ErrorCode error)>;
+/**
+ * This function is called with the response to @ref changeEventFlowInfo.
+ *
+ * @param [in] txFlow    - Event flow that requested reservation change
+ * @param [in] error     - SUCCESS if Tx parameter change succeeded
+ *                       - @ref SUCCESS
+ *                       - @ref GENERIC_FAILURE
+ */
+using ChangeEventFlowInfoCallback =
+    std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to @ref requestCapabilities.
@@ -429,6 +439,21 @@ public:
     virtual telux::common::Status requestSpsFlowInfo(
         std::shared_ptr<ICv2xTxFlow> txFlow,
         RequestSpsFlowInfoCallback cb) = 0;
+
+    /**
+     * Request to change TX Event Flow reservation parameters.
+     *
+     * @param [in] txFlow       - Tx Event flow
+     * @param [in] flowInfo     - Desired Event flow parameters
+     * @param [in] cb           - Callback that is invoked upon parameter
+     *                            change. This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status changeEventFlowInfo(
+        std::shared_ptr<ICv2xTxFlow> txFlow,
+        const EventFlowInfo & flowInfo,
+        ChangeEventFlowInfoCallback cb) = 0;
 
     /**
      * Request modem Cv2x capability information.

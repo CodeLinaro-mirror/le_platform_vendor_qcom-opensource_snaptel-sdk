@@ -42,6 +42,7 @@
 #include <mutex>
 
 #include <telux/therm/ThermalManager.hpp>
+#include <telux/therm/ThermalShutdownManager.hpp>
 
 namespace telux {
 
@@ -74,7 +75,19 @@ public:
     */
    std::shared_ptr<IThermalManager> getThermalManager();
 
+   /**
+    * Get thermal shutdown manager instance to control automatic thermal shutdown and get relevant
+    * notifications
+    *
+    * @returns Pointer of IThermalShutdownManager object.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   std::shared_ptr<IThermalShutdownManager> getThermalShutdownManager();
+
 private:
+   std::shared_ptr<IThermalShutdownManager> thermalShutdownManager_;
    ThermalFactory();
    ~ThermalFactory();
    ThermalFactory(const ThermalFactory &) = delete;

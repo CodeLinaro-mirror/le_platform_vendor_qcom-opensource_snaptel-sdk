@@ -58,6 +58,7 @@ when       who     what, where, why
 @tr @td F @tdend @td Jan 2019 @tdend @tdlast Addition of Audio APIs and call flows @tdlastend @trend
 @tr @td G @tdend @td Mar 2019 @tdend @tdlast Addition of Thermal manager APIs and call flows @tdlastend @trend
 @tr @td H @tdend @td May 2019 @tdend @tdlast Addition of TCU Activity Management APIs and call flows @tdlastend @trend
+@tr @td I @tdend @td Jun 2019 @tdend @tdlast Addition of Audio APIs for play, capture, DTMF and related call flows @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

@@ -27,32 +27,50 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string>
-#include <stdlib.h>
+#ifndef THERMALSHUTDOWNTEST_HPP
+#define THERMALSHUTDOWNTEST_HPP
 
-#include "Cv2xLog.hpp"
+#include <memory>
 
-int enableDebug = 0;
-int enableSyslog= 0;
+#include <telux/therm/ThermalDefines.hpp>
+#include <telux/therm/ThermalFactory.hpp>
+#include <telux/therm/ThermalShutdownManager.hpp>
+#include <telux/therm/ThermalShutdownListener.hpp>
+#include "ConsoleApp.hpp"
 
-void cv2xlog(int level, const char *fmt, ...)
-{
-    va_list args;
+#define APP_NAME "telux_therm_shutdown_test_app"
+#define PRINT_NOTIFICATION std::cout << APP_NAME << " \033[1;35mNOTIFICATION: \033[0m"
 
-    va_start(args, fmt);
-    if (level != LOG_DEBUG || enableDebug) {
-        if (!enableSyslog) {
-            vprintf(fmt, args);
-        } else {
-            vsyslog(level, fmt, args);
-        }
-    }
-    va_end(args);
-}
+using namespace telux::therm;
+using namespace telux::common;
 
-void bootkpilog(const char *message) {
-    auto ret = system(("echo \"" + std::string(message) + "\" > /dev/kmsg").c_str());
-    if (ret) {
-        LOGE("Failed to write boot kpi log message\n");
-    }
-}
+class ThermShutdownMgrTestApp : public IThermalShutdownListener,
+                         public ConsoleApp,
+                         public std::enable_shared_from_this<ThermShutdownMgrTestApp> {
+public:
+
+    ThermShutdownMgrTestApp();
+    ~ThermShutdownMgrTestApp();
+
+    int init();
+    void onShutdownEnabled() override;
+    void onShutdownDisabled() override;
+    void onImminentShutdownEnablement(uint32_t imminentDuration) override;
+    void onServiceStatusChange(ServiceStatus status) override;
+
+    void registerForUpdates();
+    void deregisterForUpdates();
+    void sendAutoShutdownModeCommand(AutoShutdownMode state);
+
+    void getAutoShutdownModeCommand();
+    void consoleinit();
+private:
+
+    ThermShutdownMgrTestApp(ThermShutdownMgrTestApp const &) = delete;
+    ThermShutdownMgrTestApp &operator=(ThermShutdownMgrTestApp const &) = delete;
+
+    // Member variable to keep the manager object alive till application ends.
+    std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
+};
+
+#endif  // THERMALSHUTDOWNTEST_HPP

@@ -27,32 +27,36 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string>
-#include <stdlib.h>
+/**
+ * @file       ThermalDefines.hpp
+ *
+ * @brief      This file contains types related to Thermal management activities.
+ *
+ * @note       Eval: These are new APIs and are being evaluated. They are subject to change and
+ *             could break backwards compatibility.
+ */
 
-#include "Cv2xLog.hpp"
+#ifndef THERMALDEFINES_HPP
+#define THERMALDEFINES_HPP
 
-int enableDebug = 0;
-int enableSyslog= 0;
+namespace telux {
+namespace therm {
 
-void cv2xlog(int level, const char *fmt, ...)
-{
-    va_list args;
+/** @addtogroup telematics_therm
+ * @{ */
 
-    va_start(args, fmt);
-    if (level != LOG_DEBUG || enableDebug) {
-        if (!enableSyslog) {
-            vprintf(fmt, args);
-        } else {
-            vsyslog(level, fmt, args);
-        }
-    }
-    va_end(args);
-}
+/**
+ * Defines the status of automatic thermal shutdown
+ */
+enum class AutoShutdownMode {
+    UNKNOWN,    /**< Automatic thermal shutdown status is unknown */
+    ENABLE,     /**< Automatic thermal shutdown is enabled */
+    DISABLE    /**< Automatic thermal shutdown is disabled */
+};
 
-void bootkpilog(const char *message) {
-    auto ret = system(("echo \"" + std::string(message) + "\" > /dev/kmsg").c_str());
-    if (ret) {
-        LOGE("Failed to write boot kpi log message\n");
-    }
-}
+/** @} */ /* end_addtogroup telematics_therm */
+
+}  // end of namespace therm
+}  // end of namespace telux
+
+#endif  // THERMALDEFINES_HPP

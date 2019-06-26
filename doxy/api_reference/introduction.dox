@@ -34,6 +34,7 @@ when       who     what, where, why
 02/27/17   LB      Created to support the Telematics SDK
 01/28/19   RK      Updated with Audio support to the Telematics SDK
 05/10/19   SM      Added TCU Activity management support in Telematics SDK
+06/10/19   RK      Updated with Audio Play, Capture and DTMF support in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

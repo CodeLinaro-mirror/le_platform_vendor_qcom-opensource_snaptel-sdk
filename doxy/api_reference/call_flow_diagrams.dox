@@ -1056,6 +1056,149 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 25. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
 26. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
 
+@subsection audio_voicecall_dtmf_play_callflow Call flow to play DTMF tone
+
+@anchor fig_audio_voicecall_dtmf_play_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_voicecall_dtmf_play_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to play DTMF tone}
+  \label{fig_audio_voicecall_dtmf_play_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_voicecall_dtmf_play_call_flow.png,Call flow to play DTMF tone,80,80,Call flow to play DTMF tone}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to create a voice stream with streamType as VOICE_CALL.
+4. Application receives synchronous status which indicates if the createStream request was sent successfully.
+5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioVoiceStream.
+6. Application requests to start voice session using startAudio method on IAudioVoiceStream.
+7. Application receives synchronous status which indicates if the startAudio request was sent successfully.
+8. Application is notified of the startAudio request status (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application requests to play a DTMF tone associated with the voice session
+10. Application receives synchronous status which indicates if the playDtmfTone request was sent successfully.
+11. Application is notified of the playDtmfTone request status (either SUCCESS or FAILED) via the application-supplied callback.
+12. Application can optionally stop the DTMF tone being played, before its duration expires.
+13. Application receives synchronous status which indicates if the stopDtmfTone request was sent successfully.
+14. Application is notified of the stopDtmfTone request status (either SUCCESS or FAILED) via the application-supplied callback.
+15. Application requests to stop the voice session using stopAudio method on IAudioVoiceStream.
+16. Application receives synchronous Status which indicates if the stopAudio request was sent successfully.
+17. Application is notified of the stopAudio request status(either SUCCESS or FAILED) via the application-supplied callback.
+18. Application requests delete audio stream using deleteStream method.
+19. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+20. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_voicecall_dtmf_detect_callflow Call flow to detect DTMF tones
+
+@anchor fig_audio_voicecall_dtmf_detect_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_voicecall_dtmf_detect_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to detect DTMF tone}
+  \label{fig_audio_voicecall_dtmf_detect_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_voicecall_dtmf_detect_call_flow.png,Call flow to detect DTMF tone,80,80,Call flow to detect DTMF tone}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to create a voice stream with streamType as VOICE_CALL.
+4. Application receives synchronous status which indicates if the createStream request was sent successfully.
+5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioVoiceStream.
+6. Application requests to start voice session using startAudio method on IAudioVoiceStream.
+7. Application receives synchronous status which indicates if the startAudio request was sent successfully.
+8. Application is notified of the startAudio request status (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application registers a listener for getting notifications when DTMF tones are detected
+10. Application receives synchronous status which indicates if the registerListener request was sent successfully.
+11. Application is notified of the registerListener request status (either SUCCESS or FAILED) via the application-supplied callback.
+12. Application receives onDtmfToneDetection notification when a DTMF tone is detected in the active voice call session
+13. Application deregisters a listener to stop getting notifications
+14. Application receives synchronous status which indicates if the deRegisterListener request was sent successfully.
+15. Application requests to stop the voice session using stopAudio method on IAudioVoiceStream.
+16. Application receives synchronous Status which indicates if the stopAudio request was sent successfully.
+17. Application is notified of the stopAudio request status(either SUCCESS or FAILED) via the application-supplied callback.
+18. Application requests delete audio stream using deleteStream method.
+19. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+20. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_playback_callflow Audio Playback call flow
+
+@anchor fig_audio_playback_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_playback_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Playback call flow}
+  \label{fig_audio_playback_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_playback_call_flow.png,Audio Playback call flow,80,80,Audio Playback call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests create audio playback stream using createStream method with streamType as PLAY.
+4. Application receives synchronous Status which indicates if the createStream request was sent successfully.
+5. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioPlayStream.
+6. Application requests stream buffer#1 using getStreamBuffer method on IAudioPlayStream.
+7. Application receives IStreamBuffer if Success.
+8. Application requests stream buffer#2 using getStreamBuffer method on IAudioPlayStream.
+9. Application receives IStreamBuffer if Success.
+10. Application writes audio samples on buffer#1 using getRawBuffer method on IStreamBuffer.
+11. Application writes buffer#1 on Playback session using write method on IAudioPlayStream.
+12. Application receives synchronous Status which indicates if the write request was sent successfully.
+13. Application writes audio samples on buffer#2 using getRawBuffer method on IStreamBuffer.
+14. Application writes buffer#2 on Playback session using write method on IAudioPlayStream.
+15. Application receives synchronous Status which indicates if the write request was sent successfully.
+16. Application is notified of the buffer#1 write Status (either SUCCESS or FAILED) via the application-supplied write callback with successful bytes written.
+17. Application is notified of the buffer#2 write Status (either SUCCESS or FAILED) via the application-supplied write callback with successful bytes written.
+18. Application requests delete audio stream using deleteStream method.
+19. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+20. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_capture_callflow Audio Capture call flow
+
+@anchor fig_audio_capture_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_capture_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Capture call flow}
+  \label{fig_audio_capture_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_capture_call_flow.png,Audio Capture call flow,80,80,Audio Capture call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests create audio capture stream using createStream method with streamType as CAPTURE.
+4. Application receives synchronous Status which indicates if the createStream request was sent successfully.
+5. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioCaptureStream.
+6. Application requests stream buffer#1 using getStreamBuffer method on IAudioCaptureStream.
+7. Application receives IStreamBuffer if Success.
+8. Application requests stream buffer#2 using getStreamBuffer method on IAudioCaptureStream.
+9. Application receives IStreamBuffer if Success.
+10. Application decides read sample size.
+11. Application issue read audio samples on buffer#1 using read method on IAudioCaptureStream.
+12. Application receives synchronous Status which indicates if the read request was sent successfully.
+13. Application issue read audio samples on buffer#2 using read method on IAudioCaptureStream.
+14. Application receives synchronous Status which indicates if the read request was sent successfully.
+15. Application is notified of the buffer#1 write Status (either SUCCESS or FAILED) via the application-supplied read callback with successful bytes read.
+16. Application is notified of the buffer#2 write Status (either SUCCESS or FAILED) via the application-supplied read callback with successful bytes read.
+17. Application requests delete audio stream using deleteStream method.
+18. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+19.  Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
+
 @section thermal_manager_call_flow Thermal manager call flow
 
 Thermal manager provides APIs to get list of thermal zones and cooling devices. It also contains APIs

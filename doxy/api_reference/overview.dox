@@ -187,7 +187,7 @@ Cv2xRadio abstracts a C-V2X radio channel. The API includes methods for
 
 The Audio subSystem contains of APIs that support Audio operation.
 
-Audio APIs in the Telematics SDK include AudioManager, AudioStream, AudioVoiceStream interfaces.
+Audio APIs in the Telematics SDK include AudioManager, AudioStream, AudioVoiceStream, AudioPlayStream, AudioCaptureStream interfaces.
 
 AudioManager provides an interface for creation/deletion of audio stream. The API includes methods for
    - Query readiness of subSystem
@@ -208,7 +208,14 @@ AudioStream abstracts the properties common to different stream types. The API i
 AudioVoiceStream along with inheriting AudioStream, provides additional APIs to manage voice call session as stated below.
    - Start Voice Audio Operation
    - Stop Voice Audio Operation
+   - Play DTMF tone
+   - Detect DTMF tone
 
+AudioPlayStream along with inheriting AudioStream, provides additional APIs to manage audio play session as stated below.
+   - write audio samples
+
+AudioCaptureStream along with inheriting AudioStream, provides additional APIs to manage audio capture session as stated below.
+   - read audio samples
 
 Audio SDK provides details of Supported "Device Types" and "Stream Types" in the Audio subSystem of Reference Telematics platform.
 
@@ -219,8 +226,7 @@ Example: DEVICE_TYPE_XXXX
 
 Internally SDK Device Type mapped to Audio HAL devices as per <usr/include/system/audio.h>.
 
-In current release is mapped per below table, in future releases of SDK it will be made configurable.
-This configurability provides flexibility to map different Audio HAL devices to SDK representation.
+In current release it is mapped per below table.
 
 <b> Current Device Mapping Table: </b>
 
@@ -234,6 +240,31 @@ This configurability provides flexibility to map different Audio HAL devices to 
 @tr @td DEVICE_TYPE_SPEAKER @tdend @tdlast AUDIO_DEVICE_OUT_SPEAKER @tdlastend @trend
 @tr @td DEVICE_TYPE_MIC @tdend @tdlast AUDIO_DEVICE_IN_BACK_MIC @tdlastend @trend
 @tableend
+
+However Device Mapping configurable as stated below. This configurability provides flexibility to map different Audio HAL devices
+to SDK representation.
+
+Update tel.conf file with below details before boot of system.
+
+NUM_DEVICES specifies the number of device types supported
+
+DEVICE_TYPE specifies the SDK type of each device (in comma separated values)
+
+DEVICE_DIR specifies the device direction for each device in order above (in comma separated values)
+
+AHAL_DEVICE_TYPE specifies the mapped Audio HAL type of each device (in comma separated values)
+
+Example:
+
+Note: The default values provided here are based on QTI's reference design.
+
+NUM_DEVICES=6
+
+DEVICE_TYPE=1,2,3,257,258,259
+
+DEVICE_DIR=1,1,1,2,2,2
+
+AHAL_DEVICE_TYPE=2,1,4,2147483776,2147483652,2147483664
 
 For any stream types, maximum device supported would be one. Single stream per multiple devices not supported.
 For voice stream Rx Device would decide corresponding Tx Device pair as decided by Audio HAL.
@@ -264,6 +295,8 @@ This table captures scenarios where the volume could be modified.
 @tr @td CAPTURE @tdend @td Not Applicable @tdend @tdlast Applicable @tdlastend @trend
 @tableend
 
+In case QTI's reference design does not support volume for specific stream category, API responds with error.
+
 <b> Mute Support Table: </b>
 
 This table captures when stream could be muted and in which direction.
@@ -279,6 +312,8 @@ This table captures when stream could be muted and in which direction.
 @tr @td PLAY @tdend @td Applicable @tdend @tdlast Not Applicable @tdlastend @trend
 @tr @td CAPTURE @tdend @td Not Applicable @tdend @tdlast Applicable @tdlastend @trend
 @tableend
+
+In case QTI's reference design does not support mute for specific stream category, API responds with error.
 
 @subsection thermal_management Thermal Management
 Thermal Management APIs in the Telematics SDK are used for reading thermal zone, cooling device and binding information.

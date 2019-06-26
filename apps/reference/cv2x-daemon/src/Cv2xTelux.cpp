@@ -56,7 +56,7 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
         and status.rxStatus == Cv2xStatusType::ACTIVE) {
         cv2xActiveDone_ = true;
         LOGI("V2X in active state\n");
-        system("echo \"cv2x-daemon: V2X in active state\" > /dev/kmsg");
+        bootkpilog("cv2x-daemon: V2X in active state");
     }
 
     if ((status.txStatus != Cv2xStatusType::UNKNOWN or
@@ -305,7 +305,7 @@ Status Cv2xTelux::startV2xRadio() {
     cv2xRadioMgr_->startCv2x([&prom](ErrorCode code) {
         if (code == ErrorCode::SUCCESS) {
             LOGI("Started V2X radio\n");
-            system("echo \"cv2x-daemon: V2X mode started\" > /dev/kmsg");
+            bootkpilog("cv2x-daemon: V2X mode started");
         } else {
             LOGE("Failed to start the V2X radio\n");
         }
@@ -326,7 +326,7 @@ Status Cv2xTelux::stopV2xRadio() {
     cv2xRadioMgr_->stopCv2x([&prom](ErrorCode code) {
         if (code == ErrorCode::SUCCESS) {
             LOGI("Stopped V2X radio\n");
-            system("echo \"cv2x-daemon: V2X mode stopped\" > /dev/kmsg");
+            bootkpilog("cv2x-daemon: V2X mode stopped");
         } else {
             LOGE("Failed to stop the V2X radio\n");
         }
@@ -367,8 +367,7 @@ Status Cv2xTelux::registerListeners() {
 static bool createV2xProfile(std::shared_ptr<IDataProfileManager> dataProfileMgr,
                              std::shared_ptr<DataCallInfo> dataCall,
                              std::string apnName) {
-    ProfileParams params;
-    memset(&params, 0, sizeof(params));
+    ProfileParams params = {};
     params.profileName = apnName;
     params.apn = apnName;
     params.techPref = TechPreference::TP_3GPP;
@@ -412,9 +411,9 @@ Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall,
     if (response.get_future().get()) {
         LOGI("Received DSI_EVT_NET_IS_CONN: network_type=%d is online\n", dataCall->type);
         if (dataCall->type == CV2X_DATA_CALL_IP) {
-            system("echo \"cv2x-daemon: V2X IP call is online\" > /dev/kmsg");
+            bootkpilog("cv2x-daemon: V2X IP call is online");
         } else {
-            system("echo \"cv2x-daemon: V2X Non-IP call is online\" > /dev/kmsg");
+            bootkpilog("cv2x-daemon: V2X Non-IP call is online");
         }
         res = Status::SUCCESS;
     } else {

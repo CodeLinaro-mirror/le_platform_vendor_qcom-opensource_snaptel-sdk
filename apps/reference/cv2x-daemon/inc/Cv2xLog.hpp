@@ -44,6 +44,8 @@ extern "C" {
 
 void cv2xlog(int level, const char *fmt, ...);
 
+void bootkpilog(const char *message);
+
 #ifdef __cplusplus
 }
 #endif

@@ -41,12 +41,6 @@ public:
                               telux::common::ErrorCode error) override;
 };
 
-class DataUtils {
-public:
-   static std::string techPreferenceToString(telux::data::TechPreference techPref);
-   static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
-};
-
 class MyDataProfileCallback : public telux::data::IDataProfileCallback {
    void onResponse(const std::shared_ptr<telux::data::DataProfile> &profile,
                    telux::common::ErrorCode error) override;
@@ -70,6 +64,8 @@ public:
       const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error);
    static void stopDataCallResponseCallBack(const std::shared_ptr<telux::data::IDataCall> &dataCall,
                                             telux::common::ErrorCode error);
+   static void dataCallListResponseCb(const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
+                                      telux::common::ErrorCode error);
 };
 
 class DataCallStatisticsResponseCb {

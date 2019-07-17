@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,28 +27,22 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DATALISTENER_HPP
-#define DATALISTENER_HPP
-
-#include <mutex>
-#include <map>
+#ifndef DATAUTILS_HPP
+#define DATAUTILS_HPP
 
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataConnectionManager.hpp>
 
-class DataListener : public telux::data::IDataConnectionListener {
+class DataUtils {
 public:
-   void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
-   void onServiceStatusChange(telux::common::ServiceStatus status) override;
-   std::shared_ptr<telux::data::IDataCall> getDataCall(int profileId);
+   static std::string callEndReasonTypeToString(telux::data::EndReasonType type);
+   static int callEndReasonCode(telux::data::DataCallEndReason ceReason);
+   static std::string techPreferenceToString(telux::data::TechPreference techPref);
+   static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
+   static std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
+   static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
+   static std::string operationTypeToString(telux::data::OperationType oprType);
 
-private:
-   std::mutex mtx_;
-   // Associate profileId, ipfamily type with data call impl
-   std::map<int, std::shared_ptr<telux::data::IDataCall>> dataCallMap_;
-
-   void updateDataCallMap(const std::shared_ptr<telux::data::IDataCall> &dataCall);
-   void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall);
 };
 
-#endif  // DATALISTENER_HPP
+#endif  // DATAUTILS_HPP

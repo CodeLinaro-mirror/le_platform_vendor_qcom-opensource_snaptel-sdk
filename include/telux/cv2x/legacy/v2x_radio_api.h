@@ -57,7 +57,7 @@ extern "C" {
 /** Radio data handle to the interface. */
 typedef int v2x_radio_handle_t;
 
-/** Invalid handle returned by v2x_radio_init() upon an error. */
+/** Invalid handle returned by v2x_radio_init() and v2x_radio_init_v2() upon an error. */
 #define V2X_RADIO_HANDLE_BAD (-1)
 
 /** Limit on the number of simultaneous RmNet Radio interfaces this library can
@@ -485,7 +485,7 @@ typedef struct {
 } v2x_chan_measurements_t;
 
 /**
-    Contains callback functions used in a v2x_radio_init() call.
+    Contains callback functions used in a v2x_radio_init() and v2x_radio_init_v2 call.
 
     The radio interface uses these callback functions for events such as
     completion of initialization, a Layer-02 MAC address change, or a status
@@ -726,6 +726,14 @@ typedef struct {
 } v2x_tx_sps_flow_info_t;
 
 /**
+    V2X Ip Types
+ */
+typedef enum {
+    TRAFFIC_IP = 0,     /**< Use Ip type traffic. */
+    TRAFFIC_NON_IP = 1  /**< Use Non-Ip type traffic. */
+} traffic_ip_type;
+
+/**
     Method used to query the platform SDK for its version number, build
     information, and build date.
 
@@ -761,8 +769,11 @@ extern v2x_api_ver_t v2x_radio_api_version();
     An SPS flow must have been successfully initialized. @newpage
  */
 extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v2x_iface_capabilities_t *caps);
+/** @} *//* end_addtogroup v2x_api_radio */
 
-/**
+/** @ingroup v2x_deprecated_radio
+    Deprecated. Pass #traffic_ip_type on radio init.
+
     Initializes the Radio interface and sets the callback that will be used
     when events in the radio change (including when radio initialization is
     complete).
@@ -814,7 +825,6 @@ v2x_radio_handle_t v2x_radio_init(char *interface_name,
                                   v2x_concurrency_sel_t mode,
                                   v2x_radio_calls_t *callbacks,
                                   void *context);
-/** @} *//* end_addtogroup v2x_api_radio */
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Pass #v2x_tx_flow_info_t on flow creation.
@@ -843,7 +853,7 @@ v2x_radio_handle_t v2x_radio_init(char *interface_name,
     Error code -- If there is a problem (see #v2x_status_enum_type).
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
  */
 extern v2x_status_enum_type v2x_radio_set_macphy(v2x_radio_handle_t handle, v2x_radio_macphy_params_t *macphy,
@@ -863,7 +873,7 @@ extern v2x_status_enum_type v2x_radio_set_macphy(v2x_radio_handle_t handle, v2x_
     Indication of success or failure (see #v2x_status_enum_type).
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
  */
 extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
@@ -899,8 +909,8 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
      - EACCES -- On failure to get the MAC address of the device.
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle from
-    that function must be used as the parameter in this function. @newpage
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
+    from that function must be used as the parameter in this function. @newpage
  */
 extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *sock, struct sockaddr_in6 *rx_sockaddr);
 
@@ -991,7 +1001,7 @@ extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *soc
      - EACCES -- On failure to get the MAC address of the device.
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
 */
 extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
@@ -1071,7 +1081,7 @@ extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
      - EINVAL -- On failure to find the interface or get bad parameters.
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
 */
 extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
@@ -1099,8 +1109,8 @@ extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
     - Because the packet size is increasing (for example, due to a growing path
         history size in a BSM).
     @par
-    When the reservation change is complete, a callback to the structure is
-    passed at in a v2x_radio_init() call.
+    When the reservation change is complete, a callback to the structure is passed
+    in a v2x_radio_init() or v2x_radio_init_v2() call.
 
     @return
     #V2X_STATUS_SUCCESS.
@@ -1198,7 +1208,7 @@ extern int v2x_radio_tx_event_sock_create_and_bind(const char *interface,
     #V2X_STATUS_FAIL -- CBR measurement is not supported yet.
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
  */
 extern v2x_status_enum_type v2x_radio_start_measurements(v2x_radio_handle_t handle,
@@ -1258,7 +1268,8 @@ v2x_event_t v2x_radio_get_status(void);
     - v2x_radio_tx_sps_only_create()
     - v2x_radio_tx_sps_only_create_v2()
     - v2x_radio_tx_event_sock_create_and_bind()
-    - v2x_radio_tx_event_sock_create_and_bind_v2() @newpage
+    - v2x_radio_tx_event_sock_create_and_bind_v2()
+    - v2x_radio_tx_event_sock_create_and_bind_v3() @newpage
  */
 extern int v2x_radio_sock_close(int *sock_fd);
 
@@ -1407,7 +1418,8 @@ int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
     For only a single SPS flow, indicate the event port number by using a
     negative number or NULL for the event_sockaddr. For a single event-driven
     port, use v2x_radio_tx_event_sock_create_and_bind() or
-    v2x_radio_tx_event_sock_create_and_bind_v2() instead.
+    v2x_radio_tx_event_sock_create_and_bind_v2() or
+    v2x_radio_tx_event_sock_create_and_bind_v3() instead.
     @par
     Because the modem endpoint requires a specific global address, all data
     sent on these sockets must have a configurable IPv6 destination address for
@@ -1433,7 +1445,7 @@ int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
      - EACCES -- On failure to get the MAC address of the device.
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
 */
 extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
@@ -1513,7 +1525,7 @@ extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
      - EINVAL -- On failure to find the interface or get bad parameters.
 
     @dependencies
-    The interface must be pre-initialized with v2x_radio_init(). The handle
+    The interface must be pre-initialized with v2x_radio_init() or v2x_radio_init_v2(). The handle
     from that function must be used as the parameter in this function. @newpage
 */
 int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
@@ -1545,7 +1557,7 @@ int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
       history size in a BSM).
     @par
     When the reservation change is complete, a callback to the structure is
-    passed in a v2x_radio_init() call.
+    passed in a v2x_radio_init() or v2x_radio_init_v2() call.
 
     @return
     #V2X_STATUS_SUCCESS.
@@ -1560,8 +1572,12 @@ int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
 extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
     int *sps_sock,
     v2x_tx_sps_flow_info_t *updated_flow_info);
+/** @} *//* end_addtogroup v2x_api_radio */
 
-/**
+
+/** @ingroup v2x_deprecated_radio
+    Deprecated. Pass #traffic_ip_type on flow creation.
+
     Opens and binds an event-driven socket (one with no bandwidth reservation).
 
     This %v2x_radio_tx_event_sock_create_and_bind_v2() method differs from
@@ -1609,6 +1625,8 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
     struct sockaddr_in6 *event_sock_addr,
     int *sock);
 
+/** @addtogroup v2x_api_radio
+@{ */
 /**
     Adjusts the flow parameters for an existing Tx event socket.
 
@@ -1621,7 +1639,7 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
 
     @detdesc
     When the reservation change is complete, a callback to the structure is
-    passed in a v2x_radio_init() call.
+    passed in a v2x_radio_init() or v2x_radio_init_v2() call.
     @par
     This call is a blocking call. When it returns, the socket is ready to be
     use, assuming there is no error.
@@ -1634,7 +1652,8 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
     @dependencies
     An event flow must have been successfully initialized with
     v2x_radio_tx_event_sock_create_and_bind() or
-    v2x_radio_tx_event_sock_create_and_bind_v2(). @newpage
+    v2x_radio_tx_event_sock_create_and_bind_v2()
+    v2x_radio_tx_event_sock_create_and_bind_v3(). @newpage
  */
 extern v2x_status_enum_type v2x_radio_tx_event_flow_info_change(
     int *sock,
@@ -1707,6 +1726,96 @@ extern v2x_status_enum_type start_v2x_mode();
  */
 extern v2x_status_enum_type stop_v2x_mode();
 
+/**
+    Initializes the Radio interface and sets the callback that will be used
+    when events in the radio change (including when radio initialization is
+    complete).
+
+    @datatypes
+    #traffic_ip_type \n
+    #v2x_concurrency_sel_t \n
+    #v2x_radio_calls_t
+
+    @param[in] ip_type         The Ip or non-Ip interface.
+    @param[in] mode            WAN concurrency mode, although the radio might
+                               not support concurrency. Errors can be generated.
+    @param[in] callbacks       Pointer to the v2x_radio_calls_t structure that
+                               is prepopulated with function pointers used
+                               during radio events (such as loss of time
+                               synchronization or accuracy) for subscribers. \n
+                               @vertspace{3}
+                               This parameter also points to a callback for
+                               this initialization function.
+    @param[in] context         Voluntary pointer to the first parameter on the
+                               callback.
+
+    @detdesc
+    This function call is a nonblocking, and it is a control plane action.
+    @par
+    Use v2x_radio_deinit() when radio operations are complete.
+    @par
+    @note1hang Currently, the channel and transmit power are not specified.
+               They are specified with a subsequent call to
+               #v2x_radio_calls_t::v2x_radio_init_complete() when
+               initialization is complete.
+
+    @return
+    Handle to the specified initialized radio. The handle is used for
+    reconfiguring, opening or changing, and closing reservations.
+    @par
+    #V2X_RADIO_HANDLE_BAD -- If there is an error. No initialization callback
+    is made. @newpage
+ */
+v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type ip_type,
+                                     v2x_concurrency_sel_t mode,
+                                     v2x_radio_calls_t *callbacks_p,
+                                     void *ctx_p);
+/**
+    Opens and binds an event-driven socket (one with no bandwidth reservation).
+
+    This %v2x_radio_tx_event_sock_create_and_bind_v3() method differs from
+    v2x_radio_tx_event_sock_create_and_bind_v2() in that you can use the traffic_ip_type
+    parameter to specify traffic ip type instead of needing the interface name.
+
+    @datatypes
+    v2x_tx_flow_info_t
+    traffic_ip_type
+
+    @param[in]  ip_type          traffice_ip_type.
+    @param[in]  v2x_id           Used for transmissions that are ultimately
+                                 mapped to an L2 destination address.
+    @param[in]  event_portnum    Local port number to which the socket is
+                                 bound. Used for transmissions of this ID.
+    @param[in]  event_flow_info  Pointer to the event flow parameters.
+    @param[out] event_sock_addr  Pointer to the sockaddr_ll structure buffer
+                                 to be initialized.
+    @param[out] sock             Pointer to the file descriptor. Loaded when
+                                 the function is successful.
+
+    @detdesc
+    This function is used only for Tx when no periodicity is available for the
+    application type. If you know your transmit data periodicity, use
+    v2x_radio_tx_sps_sock_create_and_bind() or
+    v2x_radio_tx_sps_sock_create_and_bind_v2() instead.
+    @par
+    These event-driven sockets pay attention to QoS parameters in the IP
+    socket.
+
+    @return
+    0 -- On success.
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device. @newpage
+ */
+int v2x_radio_tx_event_sock_create_and_bind_v3(
+        traffic_ip_type ip_type,
+        int v2x_id,
+        int event_portnum,
+        v2x_tx_flow_info_t *event_flow_info,
+        struct sockaddr_in6 *event_sockaddr,
+        int *sock);
 /** @} *//* end_addtogroup v2x_api_radio */
 
 /*

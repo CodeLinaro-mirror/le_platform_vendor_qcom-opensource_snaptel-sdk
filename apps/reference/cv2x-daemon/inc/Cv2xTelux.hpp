@@ -81,6 +81,7 @@ class DataCallInfo {
         DataCallType type;
         uint8_t profileIndex;
         std::string ifaceName;
+        std::string apnName;
 };
 
 /** TELUX callbacks */

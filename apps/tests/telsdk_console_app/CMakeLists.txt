@@ -29,6 +29,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/DataResponseCallback.cpp
    Data/DataListener.cpp
    Data/MyProfileListener.cpp
+   Data/DataUtils.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp

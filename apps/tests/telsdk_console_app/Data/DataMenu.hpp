@@ -62,6 +62,7 @@ public:
    void stopDataCall(std::vector<std::string> inputCommand);
    void requestDataCallStatistics(std::vector<std::string> inputCommand);
    void resetDataCallStatistics(std::vector<std::string> inputCommand);
+   void requestDataCallList();
    // Profile Management APIs
    void requestProfileList(std::vector<std::string> inputCommand);
    void createProfile(std::vector<std::string> inputCommand);

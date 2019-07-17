@@ -32,6 +32,7 @@
 
 #include "DataResponseCallback.hpp"
 #include "DataMenu.hpp"
+#include "DataUtils.hpp"
 #include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
@@ -62,32 +63,6 @@ void MyDataProfilesCallback::onProfileListResponse(
    } else {
       std::cout << "ProfileList response failed, ErrorCode:" << (int)error
                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-   }
-}
-
-std::string DataUtils::techPreferenceToString(telux::data::TechPreference techPref) {
-   switch(techPref) {
-      case telux::data::TechPreference::TP_3GPP:
-         return "3gpp";
-      case telux::data::TechPreference::TP_3GPP2:
-         return "3gpp2";
-      case telux::data::TechPreference::TP_ANY:
-      default:
-         return "Any";
-   }
-}
-
-std::string DataUtils::ipFamilyTypeToString(telux::data::IpFamilyType ipType) {
-   switch(ipType) {
-      case telux::data::IpFamilyType::IPV4:
-         return "IPv4";
-      case telux::data::IpFamilyType::IPV6:
-         return "IPv6";
-      case telux::data::IpFamilyType::IPV4V6:
-         return "IPv4v6";
-      case telux::data::IpFamilyType::UNKNOWN:
-      default:
-         return "NA";
    }
 }
 
@@ -193,4 +168,37 @@ void DataCallStatisticsResponseCb::resetStatisticsResponse(telux::common::ErrorC
             << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
             << ". ErrorCode: " << static_cast<int>(error)
             << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+void MyDataCallResponseCallback::dataCallListResponseCb(
+    const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList, telux::common::ErrorCode error) {
+    std::cout << std::endl;
+   if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << " ** Found "<<dataCallList.size()<<" DataCalls in the list **\n";
+      for(auto dataCall:dataCallList) {
+         std::cout << " ProfileID: " << dataCall->getProfileId()
+             << "\n InterfaceName: " << dataCall->getInterfaceName()
+             << "\n DataCallStatus: " << DataUtils::dataCallStatusToString(dataCall->getDataCallStatus())
+             << "\n DataCallEndReason:\n   Type: "
+             << DataUtils::callEndReasonTypeToString(dataCall->getDataCallEndReason().type)
+             << ", Code: " << DataUtils::callEndReasonCode(dataCall->getDataCallEndReason()) << std::endl;
+         std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
+         for(auto &it : ipAddrList) {
+            std::cout << "\n ifAddress: " << it.ifAddress << "\n gwAddress: " << it.gwAddress
+                      << "\n primaryDnsAddress: " << it.primaryDnsAddress
+                      << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
+         }
+         std::cout << " IpFamilyType: " << DataUtils::ipFamilyTypeToString(dataCall->getIpFamilyType()) << '\n';
+         std::cout << " TechPreference: " << DataUtils::techPreferenceToString(dataCall->getTechPreference())
+                   << '\n';
+         std::cout << " DataBearerTechnology: " << DataUtils::bearerTechToString(dataCall->getCurrentBearerTech())
+                   << '\n';
+         std::cout << " OperationType: " << DataUtils::operationTypeToString(dataCall->getOperationType())
+                   << '\n';
+         std::cout << " ----------------------------------------------------------\n\n";
+      }
+   } else {
+      PRINT_CB << "requestDataCallList() failed,  errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+   }
 }

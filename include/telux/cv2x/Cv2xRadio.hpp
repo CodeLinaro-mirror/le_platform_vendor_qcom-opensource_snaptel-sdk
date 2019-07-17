@@ -514,6 +514,18 @@ public:
      * Destructor for ICv2xRadio
      */
     virtual ~ICv2xRadio(){}
+
+    /**
+     * Get interface name based on ipType.
+     *
+     * @param ipType          - IP traffic type (IP or NON-IP)
+     *
+     * @returns Interface name as a string
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to
+     *          change and could break backwards compatibility.
+     */
+    virtual std::string getIfaceNameFromIpType(TrafficIpType ipType) = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x */

@@ -149,8 +149,12 @@ void DataMenu::init() {
          std::bind(&DataMenu::requestDataCallStatistics, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> resetDataCallStats
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "reset_datacall_statistics\n", {},
+         "4", "reset_datacall_statistics", {},
          std::bind(&DataMenu::resetDataCallStatistics, this, std::placeholders::_1)));
+      std::shared_ptr<ConsoleAppCommand> reqDataCallList
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "5", "request_datacall_list\n", {},
+         std::bind(&DataMenu::requestDataCallList, this)));
 
    std::shared_ptr<ConsoleAppCommand> reqProfile = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("100", "request_profile_list", {},
@@ -178,8 +182,8 @@ void DataMenu::init() {
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
       = {startDataCall,    stopDataCall,          reqDataCallStats,  resetDataCallStats,
-         reqProfile,       createProfileMenu,     deleteProfileMenu, modifyProfileMenu,
-         queryProfileMenu, requestProfileByIdMenu};
+         reqDataCallList,  reqProfile,            createProfileMenu, deleteProfileMenu,
+         modifyProfileMenu,queryProfileMenu, requestProfileByIdMenu};
 
    addCommands(commandsList);
 
@@ -200,9 +204,23 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
    std::cin >> ipFamilyType;
    Utils::validateInput(ipFamilyType);
 
+   char delimiter = '\n';
+   std::string apn;
+   std::cin.get();
+   std::cout << "Enter APN: ";
+   std::getline(std::cin, apn, delimiter);
+
+   int operationType;
+   std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+   std::cin >> operationType;
+   Utils::validateInput(operationType);
+
+
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+   telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
    dataConnectionManager_->startDataCall(profileId, ipFamType,
-                                         MyDataCallResponseCallback::startDataCallResponseCallBack);
+                                         MyDataCallResponseCallback::startDataCallResponseCallBack,
+                                         opType, apn);
 }
 
 void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
@@ -217,16 +235,30 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
    std::cin >> ipFamilyType;
    Utils::validateInput(ipFamilyType);
 
+   char delimiter = '\n';
+   std::string apn;
+   std::cin.get();
+   std::cout << "Enter APN: ";
+   std::getline(std::cin, apn, delimiter);
+
+   int operationType;
+   std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+   std::cin >> operationType;
+   Utils::validateInput(operationType);
+
+
    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+   telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
    dataConnectionManager_->stopDataCall(profileId, ipFamType,
-                                        MyDataCallResponseCallback::stopDataCallResponseCallBack);
+                                        MyDataCallResponseCallback::stopDataCallResponseCallBack,
+                                        opType, apn);
 }
 
 void DataMenu::requestDataCallStatistics(std::vector<std::string> inputCommand) {
    std::cout << "\nRequest DataCall Statistics" << std::endl;
 
    int profileId;
-   std::cout << "Enter Profile Id : ";
+   std::cout << "Enter Profile Id: ";
    std::cin >> profileId;
    Utils::validateInput(profileId);
 
@@ -242,7 +274,7 @@ void DataMenu::resetDataCallStatistics(std::vector<std::string> inputCommand) {
    std::cout << "\nReset DataCall Statistics" << std::endl;
 
    int profileId;
-   std::cout << "Enter Profile Id : ";
+   std::cout << "Enter Profile Id: ";
    std::cin >> profileId;
 
    auto dataCall = dataListener_->getDataCall(profileId);
@@ -252,6 +284,21 @@ void DataMenu::resetDataCallStatistics(std::vector<std::string> inputCommand) {
       std::cout << "Unable to find DataCall, Please start_data_call" << std::endl;
    }
 }
+
+void DataMenu::requestDataCallList() {
+   std::cout << "\nRequest DataCall List" << std::endl;
+   if(dataConnectionManager_) {
+      int operationType;
+      std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+      std::cin >> operationType;
+      Utils::validateInput(operationType);
+
+      telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+      dataConnectionManager_->requestDataCallList(opType,
+         MyDataCallResponseCallback::dataCallListResponseCb);
+   }
+}
+
 void DataMenu::getProfileParamsFromUser() {
    char delimiter = '\n';
    int techPref;

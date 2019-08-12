@@ -48,7 +48,7 @@ namespace telux {
 
 namespace audio {
 
-/* Duration to play DTMF tone for infinite time */
+/** Duration to play DTMF tone for infinite time */
 const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
 
 /** @addtogroup telematics_audio
@@ -111,7 +111,10 @@ using ChannelTypeMask = int;
  */
 enum class AudioFormat {
    UNKNOWN = -1,         /**< Unknown format */
-   PCM_16BIT_SIGNED = 1, /* 16 bit signed PCM format */
+   PCM_16BIT_SIGNED = 1, /**< 16 bit signed PCM format */
+   AMRNB = 20,           /**< AMRNB format */
+   AMRWB,                /**< AMRWB format */
+   AMRWB_PLUS,           /**< AMRWB+ format */
 };
 
 /**
@@ -135,6 +138,31 @@ enum class DtmfHighFreq {
 };
 
 /**
+ * Representative of type of frame structure.
+ * Typical transport interface or file storage.
+ */
+enum class AmrwbpFrameFormat {
+    UNKNOWN = -1,        /**< Unknown format */
+    TRANSPORT_INTERFACE_FORMAT,
+    FILE_STORAGE_FORMAT,
+};
+
+/**
+ *  Frame format common parameters
+ */
+struct FormatParams {
+
+};
+
+/**
+ *  Frame format codec specific parameters
+ */
+struct AmrwbpParams : FormatParams {
+   uint32_t bitWidth; /**< Bitwidth of Stream, Typical Values <16/24>. */
+   AmrwbpFrameFormat frameFormat;
+};
+
+/**
  *  Common Stream configuration parameters
  */
 struct StreamConfig {
@@ -145,6 +173,7 @@ struct StreamConfig {
    ChannelTypeMask channelTypeMask;
    AudioFormat format;
    std::vector<DeviceType> deviceTypes;
+   FormatParams *formatParams;
 };
 
 /**
@@ -168,7 +197,7 @@ struct StreamVolume {
  *  Stream Mute parameters
  */
 struct StreamMute {
-   bool enable;
+   bool enable; /**< enable or disable mute on stream */
    StreamDirection dir;
 };
 

@@ -592,6 +592,36 @@ using WriteResponseCb
                                                             telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to IAudioPlayStream::drain().
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] error        Return code which indicates whether the operation
+ *                          succeeded or not.
+ *                          @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using DrainResponseCb = std::function<void(telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to IAudioPlayStream::flush().
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] error        Return code which indicates whether the operation
+ *                          succeeded or not.
+ *                          @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using FlushResponseCb = std::function<void(telux::common::ErrorCode error)>;
+
+/**
  * @brief   IAudioPlayStream represents single audio playback stream
  */
 class IAudioPlayStream : virtual public IAudioStream {
@@ -608,7 +638,7 @@ public:
    virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
 
    /**
-    * Write Samples to audio stream. First write starts playback operation.
+    * Write Samples\Frames to audio stream. First write starts playback operation.
     *
     * @param [in] buffer       stream buffer for write.
     * @param [in] callback     callback to get the response of write.
@@ -620,6 +650,33 @@ public:
     */
    virtual telux::common::Status write(std::shared_ptr<IStreamBuffer> buffer,
                     WriteResponseCb callback = nullptr) = 0;
+
+   /**
+     * This API is to be used to determine when all the Frames that were sent to the decoder
+     * using the write() API, have finished being played.
+     * Typical usage for End Of Session.
+     *
+     * @param [in] callback    callback to get the response of drain.
+     *
+     * @returns Status of the request i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change
+     *         and could break backwards compatibility.
+     */
+   virtual telux::common::Status drain(DrainResponseCb callback = nullptr) = 0;
+
+   /**
+     * This API is to be used to abandon pending\waiting frames from decoding.
+     * Typical usage of force reset or abnormal termination.
+     *
+     * @param [in] callback      callback to get the response of flush.
+     *
+     * @returns Status of the request i.e. success or suitable status code.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change
+     *         and could break backwards compatibility.
+     */
+   virtual telux::common::Status flush(FlushResponseCb callback = nullptr) = 0;
 };
 
 

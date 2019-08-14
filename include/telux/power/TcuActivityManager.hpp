@@ -109,6 +109,32 @@ public:
                         = 0;
 
     /**
+     * Register a listener for updates on TCU-activity management service status.
+     *
+     * @param [in] listener Pointer of IServiceStatusListener object that processes the notification
+     *
+     * @returns Status of registerServiceStateListener i.e success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status registerServiceStateListener(
+                        std::weak_ptr<telux::common::IServiceStatusListener> listener) = 0;
+
+    /**
+     * Remove a previously registered listener for service status updates.
+     *
+     * @param [in] listener Previously registered IServiceStatusListener that needs to be removed
+     *
+     * @returns Status of deregisterServiceStateListener, success or suitable status code
+     *
+     * @note    Eval: This is a new API and is being evaluated.It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status deregisterServiceStateListener(
+                        std::weak_ptr<telux::common::IServiceStatusListener> listener) = 0;
+
+    /**
      * Initiate a TCU-activity state transition.
      *
      * This API needs to be used cautiously, as it could change the power-state of the system and

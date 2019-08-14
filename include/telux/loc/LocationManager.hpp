@@ -194,7 +194,7 @@ public:
  *
  * @returns Status of registerListener i.e success or suitable status code.
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual telux::common::Status
@@ -207,7 +207,7 @@ public:
  *
  * @returns Status of removeListener success or suitable status code
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual telux::common::Status
@@ -230,7 +230,7 @@ public:
  *
  * @returns Status as SUCCESS for setPositionReportTimeout.
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual telux::common::Status setPositionReportTimeout(
@@ -248,7 +248,7 @@ public:
  *
  * @returns Status as SUCCESS of setHorizontalAccuracyLevel.
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual telux::common::Status setHorizontalAccuracyLevel(
@@ -269,7 +269,7 @@ public:
  * @returns Status of setMinIntervalForReports i.e. success or suitable status code.
  *
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual telux::common::Status setMinIntervalForReports(
@@ -282,7 +282,7 @@ public:
  * @returns Maximum time to get a position report.
  *
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual uint32_t getPositionReportTimeout() = 0;
@@ -293,7 +293,7 @@ public:
  * @returns @ref HorizontalAccuracyLevel.
  *
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual HorizontalAccuracyLevel getHorizontalAccuracyLevel() = 0;
@@ -304,7 +304,7 @@ public:
  * @returns Minimum time interval between final position reports.
  *
  *
- * @Deprecated: API is not going to be supported in future releases. Clients should stop using
+ * @deprecated API is not going to be supported in future releases. Clients should stop using
  * this API. Once an API has been marked as Deprecated, the API could be removed in future releases.
  */
   virtual uint32_t getMinIntervalForFinalReports() = 0;

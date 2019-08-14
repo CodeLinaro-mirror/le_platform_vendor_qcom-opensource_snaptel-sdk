@@ -155,6 +155,7 @@ static string capabilitiesToString(const Cv2xRadioCapabilities &capabilities) {
     for (auto i = 0u; i < capabilities.periodicities.size(); ++i) {
         ss << "\t" << static_cast<int64_t>(capabilities.periodicities[i]);
     }
+    ss << "\n";
     ss << "\t" << "maxNumAutoRetransmissions: "
         << static_cast<int>(capabilities.maxNumAutoRetransmissions) << "\n";
     ss << "\t" << "layer2MacAddressSize: "

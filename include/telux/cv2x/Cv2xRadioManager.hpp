@@ -247,7 +247,9 @@ public:
     virtual telux::common::Status deregisterListener(std::weak_ptr<ICv2xListener> listener) = 0;
 
     /**
-     * Updates CV2X configuration
+     * Updates CV2X configuration.
+     * Requires CV2X TX/RX radio status be Inactive. If CV2X radio status is
+     * Active or Suspended, call @ref stopCv2x before updateConfiguration.
      *
      * @param [in] configFilePath - Path to config file.
      * @param [in] cb             - Callback that is invoked when the send is complete.

@@ -48,6 +48,8 @@ private:
     void voiceMenu(std::vector<std::string> userInput);
     void playMenu(std::vector<std::string> userInput);
     void captureMenu(std::vector<std::string> userInput);
+    void loopbackMenu(std::vector<std::string> userInput);
+    void toneMenu(std::vector<std::string> userInput);
 
     void cleanup();
 
@@ -57,6 +59,8 @@ private:
     std::shared_ptr<VoiceMenu> voiceMenu_;
     std::shared_ptr<PlayMenu> playMenu_;
     std::shared_ptr<CaptureMenu> captureMenu_;
+    std::shared_ptr<LoopbackMenu> loopbackMenu_;
+    std::shared_ptr<ToneMenu> toneMenu_;
 };
 
 #endif  // AUDIOCONSOLEAPP_HPP

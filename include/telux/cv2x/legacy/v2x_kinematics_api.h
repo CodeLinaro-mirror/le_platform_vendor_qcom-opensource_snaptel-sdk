@@ -221,7 +221,9 @@ v2x_status_enum_type v2x_kinematics_set_rate(v2x_kinematics_handle_t handle, v2x
                                             callbacks, which can help the caller code.
 
     @return
-    None. @newpage
+    Indication of success or failure from #v2x_status_enum_type. @newpage
+
+    @Obsolete: This API is not supported and will be removed in the future.
  */
 v2x_status_enum_type v2x_kinematics_get_capabilities(v2x_kinematics_handle_t handle,
         v2x_kinematics_get_capability_callback_t cb,
@@ -293,7 +295,30 @@ v2x_status_enum_type v2x_kinematics_deregister_listener(v2x_kinematics_handle_t 
 v2x_status_enum_type v2x_kinematics_final(v2x_kinematics_handle_t handle, v2x_kinematics_final_callback_t cb,
         void *context);
 
+/**
+    Enable the Kinematics fixes from GNSS.
+
+    @datatypes
+    #v2x_kinematics_handle_t \n
+
+    @param[in] handle   Handle number of the library.
+
+    @return
+    None. @newpage
+ */
 void v2x_kinematics_enable_fixes(v2x_kinematics_handle_t handle);
+
+/**
+    Disable the Kinematics fixes from GNSS.
+
+    @datatypes
+    #v2x_kinematics_handle_t \n
+
+    @param[in] handle   Handle number of the library.
+
+    @return
+    None. @newpage
+ */
 void v2x_kinematics_disable_fixes(v2x_kinematics_handle_t handle);
 
 /** @} */

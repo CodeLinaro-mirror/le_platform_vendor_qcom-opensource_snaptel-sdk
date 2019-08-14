@@ -46,6 +46,8 @@ extern "C" {
 #include "VoiceMenu.hpp"
 #include "PlayMenu.hpp"
 #include "CaptureMenu.hpp"
+#include "LoopbackMenu.hpp"
+#include "ToneMenu.hpp"
 
 #define APP_NAME "audio_console_app"
 
@@ -79,8 +81,17 @@ void AudioConsoleApp::init() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Capture", {},
         std::bind(&AudioConsoleApp::captureMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> loopbackMenuCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Loopback", {},
+        std::bind(&AudioConsoleApp::loopbackMenu, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> toneMenuCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Tone", {},
+        std::bind(&AudioConsoleApp::toneMenu, this, std::placeholders::_1)));
+
      std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-        = {voiceMenuCommand, playMenuCommand, captureMenuCommand};
+        = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
+            toneMenuCommand};
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ", audioClient_);
     voiceMenu_->init();
@@ -88,6 +99,10 @@ void AudioConsoleApp::init() {
     playMenu_->init();
     captureMenu_ = std::make_shared<CaptureMenu>("Capture Menu", "capture> ", audioClient_);
     captureMenu_->init();
+    loopbackMenu_ = std::make_shared<LoopbackMenu>("Loopback Menu", "loopback> ", audioClient_);
+    loopbackMenu_->init();
+    toneMenu_ = std::make_shared<ToneMenu>("Tone menu", "tone> ", audioClient_);
+    toneMenu_->init();
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -108,6 +123,16 @@ void AudioConsoleApp::captureMenu(std::vector<std::string> userInput) {
     captureMenu_->mainLoop();
 }
 
+void AudioConsoleApp::loopbackMenu(std::vector<std::string> userInput) {
+    loopbackMenu_->displayMenu();
+    loopbackMenu_->mainLoop();
+}
+
+void AudioConsoleApp::toneMenu(std::vector<std::string> userInput) {
+    toneMenu_->displayMenu();
+    toneMenu_->mainLoop();
+}
+
 void AudioConsoleApp::cleanup() {
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(
            audioClient_->getStream(StreamType::VOICE_CALL));
@@ -125,6 +150,12 @@ void AudioConsoleApp::cleanup() {
            audioClient_->getStream(StreamType::CAPTURE));
     if(audioCaptureStream_){
         audioClient_->deleteStream(StreamType::CAPTURE);
+    }
+
+    auto audioLoopbackStream_ = std::dynamic_pointer_cast<IAudioLoopbackStream>(
+           audioClient_->getStream(StreamType::LOOPBACK));
+    if(audioLoopbackStream_){
+        audioClient_->deleteStream(StreamType::LOOPBACK);
     }
 }
 

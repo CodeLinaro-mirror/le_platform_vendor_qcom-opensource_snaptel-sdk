@@ -506,69 +506,70 @@ asynchronous response using CommandResponseCallback.
 7. The SubscriptionManager receives callback card info change i.e subscription info changed or removed.
 8. The SubscriptionManager updates the application once the subscription info is updated.
 
-@section location_manager_call_flow Location Services call flow
+@section location_manager_call_flow Call flow for location services
 
-Application will get the location manager object from location factory. The application can register a listener for location and SV info updates. Location service will get
-started when the first listener registers itself. Application can configure horizontal accuracy level, time interval and timeout for position reports and can query for fix criteria.
-When there are no more listeners, location service will get stopped automatically.
+Application will get the location manager object from location factory. The caller needs to register a listener. Application would then need to start the reports using one of 2 APIs depending on if the detailed or basic reports are needed.
+When reports are no longer required, the app needs to stop the report and de-register the listener.
 
-@subsection location_manager_listener_callflow Register/Remove listener for location manager call flow
+@subsection location_manager_basic_reports_callflow Call flow to register/remove listener for generating basic reports
 
-@anchor fig_location_manager_listener_callflow
+@anchor fig_location_manager_basic_reports_callflow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{location_manager_listener_callflow.png}
+  \includegraphics[scale=0.5]{location_manager_basic_reports_callflow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Register/Remove listener for location manager call flow}
-  \label{fig_location_manager_listener_callflow}
+  \caption{Call flow to register/remove listener for generating basic reports}
+  \label{fig_location_manager_basic_reports_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{location_manager_listener_callflow.png,Register/Remove listener for location manager call flow,80,80,Register/Remove listener for location manager call flow}
+@html_image{location_manager_basic_reports_callflow.png,Call flow to register/remove listener for generating basic reports,80,80,Call flow to register/remove listener for generating basic reports}
 
 1. Application requests location factory for location manager object.
 2. Location factory returns ILocationManager object using which application will register or remove a listener.
-3. Application can register a listener for getting notifications for location and satellite vehicle updates. Location manager will get started in background when first listener get added.
-Subsequently all other listeners will latch on the already started service.
+3. Application can register a listener for getting notifications for location updates.
 4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-5. Application will get location updates like latitude, longitude and altitude etc.
-6. Application will also receive satellite vehicle information like SV status and constellation etc.
-7. Application can remove listener and when the number of listeners are zero then location manager will get stopped automatically.
-8. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application starts the basic reports using startBasicReports API for getting location updates.
+6. Status of startBasicReports i.e. either SUCCESS or FAILED will be returned to the application.
+7. The response for startBasicReports is received by the application.
+8. Application will get location updates like latitude, longitude and altitude etc.
+9. Application stops receiving the report through stopReports API.
+10. Status of stopReports i.e. either SUCCESS or FAILED will be returned to the application.
+11. The response for stopReports is received by the application.
+12. Application can remove listener and when the number of listeners are zero then location service will get stopped automatically.
+13. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
-@subsection configuration_of_position_reports Call flow for configuring position reports and query fix criteria
+@subsection location_manager_detailed_reports_callflow Call flow to register/remove listener for generating detailed reports
 
-@anchor fig_configuration_of_position_reports
+@anchor fig_location_manager_detailed_reports_callflow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{configuration_of_position_reports.png}
+  \includegraphics[scale=0.5]{location_manager_detailed_reports_callflow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Call flow for configuring position reports and query fix criteria}
-  \label{fig_configuration_of_position_reports}
+  \caption{Call flow to register/remove listener for generating detailed reports}
+  \label{fig_location_manager_detailed_reports_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{configuration_of_position_reports.png,Call flow for configuring position reports and query fix criteria,80,80,Call flow for configuring position reports and query fix criteria}
+@html_image{location_manager_detailed_reports_callflow.png,Call flow to register/remove listener for generating detailed reports,80,80,Call flow to register/remove listener for generating detailed reports}
 
 1. Application requests location factory for location manager object.
-2. Location factory returns ILocationManager object using which application will configure time interval for position reports, horizontal accuracy level etc.
-3. Application can configure horizontal accuracy level criteria as LOW, MEDIUM or HIGH.
-4. Status of setHorizontalAccuracyLevel i.e. either SUCCESS or FAILED will be returned to the application.
-5. Optionally, the response for set horizontal accuracy level is received by the application.
-6. Application can configure minimum interval between position reports using ILocationManager object.
-7. Status of setMinIntervalForReports i.e. either SUCCESS or FAILED will be returned to the application.
-8. Optionally, the response for set minimum interval for position reports is received by the application.
-9. Application can configure timeout for getting a position fix.
-10. Status of setPositionReportTimeout i.e. either SUCCESS or FAILED will be returned to the application.
-11. Optionally, the response for set position report timeout is received by the application.
-12. Application can register a listener for getting notifications for fix criteria request.
-13. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
-14. Application can request the fix criteria.
-15. Status of requestLocationFixCriteria i.e. either SUCCESS or FAILED will be returned to the application.
-16. The response for request location fix criteria is received by the application.
-17. Application will get fix criteria indications like minimum interval between reports, timeout and horizontal accuracy level.
+2. Location factory returns ILocationManager object using which application will register or remove a listener.
+3. Application can register a listener for getting notifications for location, satellite vehicle and jammer signal updates.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application starts the detailed reports using startDetailedReports API for getting location, satellite vehicle and jammer signal updates.
+6. Status of startDetailedReports i.e. either SUCCESS or FAILED will be returned to the application.
+7. The response for startDetailedReports is received by the application.
+8. Application will get location updates like latitude, longitude and altitude etc.
+9. Application will receive satellite vehicle information like SV status and constellation etc.
+10. Application will receive jammer information etc.
+11. Application stops receiving all the reports through stopReports API.
+12. Status of stopReports i.e. either SUCCESS or FAILED will be returned to the application.
+13. The response for stopReports is received by the application.
+14. Application can remove listener and when the number of listeners are zero then location service will get stopped automatically.
+15. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 @section data_connection_call_flow Data Connection Manager Call Flow
 
@@ -1227,6 +1228,105 @@ to get a particular thermal zone and a particular cooling device details with th
 8. Thermal manager returns the list of cooling devices to the application.
 9. Application requests for a particular cooling device details by passing the cooling device Id.
 10. Thermal Manager sends cooling device details with the given Id to the application.
+
+@section thermal_shutdown_manager_call_flow Thermal shutdown management
+
+Thermal shutdown manager provides APIs to set/get auto thermal shutdown modes. It also has listener interface for notifications.
+Application will get the Thermal-shutdown manager object from thermal factory. The application can register a listener for
+updates in thermal auto shutdown modes and its management service status. Also there is provision to set the desired
+thermal auto-shutdown mode.
+
+When application is notifed of service being unavailable, the thermal auto-shutdown mode updates are inactive. After service
+becomes available, the existing listener registrations will be maintained.
+
+As a reference, auto-shutdown management in an eCall application is described in the below sections.
+
+@subsection thermal_shutdown_manager_listener_call_flow Call flow to register/remove listener for Thermal auto-shutdown mode updates.
+
+@anchor fig_thermal_shutdown_manager_listener_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{thermal_shutdown_mode_notification_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to register/remove listener for Thermal shutdown manager}
+  \label{fig_thermal_shutdown_manager_listener_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{thermal_shutdown_manager_listener_callflow.png,Call flow to register/remove listener for Thermal shutdown manager,80,80,Register/Remove listener for Thermal shutdown manager call flow}
+
+1. Application requests thermal factory for Thermal Shutdown Manager.
+2. Thermal factory returns IThermalShutdownManager object using which application will register or remove a listener.
+3. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application recieves a notification that thermal auto-shutdown mode is disabled.
+6. Application recieves a notification that thermal auto-shutdown mode is going to enabled soon. The exact duration is also recieved as part of notification.
+7. Application recieves a notification that thermal auto-shutdown mode is enabled.
+8. Application can remove listener.
+9. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@subsection thermal_shutdown_manager_commands_callflow Call flow to set/get the Thermal auto-shutdown mode
+
+@anchor fig_thermal_shutdown_manager_commands_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{thermal_shutdown_mode_command_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to set/get the Thermal auto-shutdown mode}
+  \label{fig_thermal_shutdown_manager_commands_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{thermal_shutdown_mode_command_callflow.png, Call flow to set/get the Thermal auto-shutdown mode,80,80,Call flow to set/get the Thermal auto-shutdown mode}
+
+1. Application requests thermal factory for Thermal Shutdown Manager object using which application will set/get the thermal auto-shutdown mode.
+2. Thermal factory returns IThermalShutdownManager object.
+3. Application can query the thermal auto-shutdown mode.
+4. Application receives synchronous status which indicates if the request was sent successfully.
+5. Application receives the auto-shutdown mode asynchronously.
+6. Application can set the thermal auto-shutdown mode to ENABLE or DISABLE.
+7. Application receives synchronous status which indicates if the request was sent successfully.
+8. Optionally, the response to setAutoShutdownMode request can be received by the application.
+
+@subsection thermal_shutdown_manager_eCall_app_call_flow Call flow to manage thermal auto-shutdown from an eCall application.
+
+@anchor fig_thermal_shutdown_manager_eCall_app_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{thermal_shutdown_mode_eCall_app_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to manage thermal auto-shutdown from an eCall application}
+  \label{fig_thermal_shutdown_manager_eCall_app_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{thermal_shutdown_mode_eCall_app_callflow.png,Call flow to manage thermal auto-shutdown from an eCall application,80,80,Manage thermal auto-shutdown from an eCall application}
+
+1. When eCall is triggered, application requests thermal factory for Thermal Shutdown Manager.
+2. Thermal factory returns IThermalShutdownManager object.
+3. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application disables auto-shutdown using setAutoShutdownMode API, to prevent a possible thermal auto-shutdown during eCall.
+6. Application receives synchronous status which indicates if the request was sent successfully.
+7. Optionally, the response to setAutoShutdownMode request can be received by the application.
+8. Application recieves a notification that thermal auto-shutdown mode is disabled.
+9. Application receives an imminent auto-shutdown enable notification and system will attempt to enable auto-shutdown after a certain period.
+   This notification is received if application does not enable auto-shutdown due to an active eCall.
+10. If the eCall is still active, the application disables auto-shutdown before it gets enabled automatically.
+11. Application receives synchronous status which indicates if the request was sent successfully.
+12. Optionally, the response to setAutoShutdownMode request can be received by the application.
+13. Application recieves a notification that thermal auto-shutdown mode is disabled.
+    Steps 9 to 13 are repeated as long as the eCall is active.
+14. When the eCall is completed, the application immediately enables auto-shutdown using setAutoShutdownMode API.
+15. Application receives synchronous status which indicates if the request was sent successfully.
+16. Optionally, the response to setAutoShutdownMode request can be received by the application.
+17. Application recieves a notification that thermal auto-shutdown mode is enabled.
+18. Application can remove listener.
+19. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
 
 @section tcuactivity_management_call_flow TCU Activity Management
 

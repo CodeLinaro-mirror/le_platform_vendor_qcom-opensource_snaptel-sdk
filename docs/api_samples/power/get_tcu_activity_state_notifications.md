@@ -2,9 +2,10 @@
 
 The below steps need to be followed by applications to listen to TCU-activity state notifications, for performing any tasks before the state transition.
 
-### 1. Implement ITcuActivityListener interface ###
+### 1. Implement ITcuActivityListener and IServiceStatusListener interface ###
    ~~~~~~{.cpp}
-    class MyTcuActivityStateListener : public ITcuActivityListener {
+    class MyTcuActivityStateListener : public ITcuActivityListener,
+                                       public IServiceStatusListener {
     public:
         void onTcuActivityStateUpdate(TcuActivityState state) override;
         void onServiceStatusChange(ServiceStatus status) override;
@@ -50,6 +51,7 @@ The below steps need to be followed by applications to listen to TCU-activity st
 ### 7. Register for updates on TCU-activity state and its management service status ###
    ~~~~~~{.cpp}
     tcuActivityManager->registerListener(myTcuStateListener);
+    tcuActivityManager->registerServiceStateListener(myTcuStateListener);
    ~~~~~~
 
 ### 8. Wait for the TCU-activity state updates ###

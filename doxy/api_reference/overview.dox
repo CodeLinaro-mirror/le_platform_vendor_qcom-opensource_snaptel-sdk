@@ -62,7 +62,7 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
 <b>Location Services</b>
 
-   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information etc.
+   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information, Jammer Data signals etc.
 
 <b>Connection Management</b>
 
@@ -75,6 +75,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 <b>Thermal Management</b>
 
    Thermal Management sub-system consists of APIs to get list of thermal zones, cooling devices and binding information.
+
+<b> Thermal Shutdown Mangement</b>
+
+   Thermal shutdown management sub-system consists of APIs to get/set the thermal auto-shutdown mode and listen to its updates.
 
 <b>TCU Activity Management</b>
 
@@ -133,11 +137,10 @@ Phone APIs of Telematics SDK provides phone related information such as
    - Subscription Information
 
 @subsection location_services Location Services
-Location Services APIs of Telematics SDK provide the mechanism to register listener and to receive location updates and satellite vehicle information.
+Location Services APIs of Telematics SDK provide the mechanism to register listener and to receive location updates, satellite vehicle information and jammer signals.
 Following parameters are configurable through the APIs.
    - Minimum time interval between two consecutive location reports.
-   - Timeout period for location reports.
-   - Horizontal accuracy level.
+   - Minimum distance travelled after which the period between two consecutive location reports depends on the interval specified.
 
 @subsection data_services Data Services
 Data Services APIs in the Telematics SDK used for cellular connectivity and modem profile management.
@@ -323,6 +326,12 @@ Thermal Management APIs provide functionality such as
    - get cooling devices with cooling device type, maximum and current cooling level
    - get thermal zone by Id
    - get cooling device by Id
+
+@subsection thermal_shutdown_management Thermal Shutdown Management
+Thermal Shutdown Management APIs provide funtionality such as
+   - Query auto-shutdown mode.
+   - Set auto-shutdown mode.
+   - Get notifications on auto-shutdown mode updates.
 
 @subsection power TCU Activity Management
 

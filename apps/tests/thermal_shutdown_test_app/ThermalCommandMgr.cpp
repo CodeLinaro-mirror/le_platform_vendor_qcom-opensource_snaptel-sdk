@@ -1,0 +1,138 @@
+/*
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <iostream>
+
+#include "ThermalCommandMgr.hpp"
+#include "../telsdk_console_app/Utils.hpp"
+#include "ThermalShutdownMgrTestApp.hpp"
+
+ThermalCommandMgr::ThermalCommandMgr() {
+}
+
+ThermalCommandMgr::~ThermalCommandMgr() {
+    thermShutdownMgr_ = nullptr;
+}
+
+int ThermalCommandMgr::init() {
+    // Get thermal factory instance
+    auto &thermalFactory = ThermalFactory::getInstance();
+    // Get thermal shutdown manager object
+    thermShutdownMgr_ = thermalFactory.getThermalShutdownManager();
+    if(thermShutdownMgr_ == NULL)
+    {
+        std::cout << APP_NAME << " *** ERROR - Failed to get manager instance" << std::endl;
+        return -1;
+    }
+    // Check thermal shutdown manager service status
+    bool isReady = thermShutdownMgr_->isReady();
+    if(!isReady) {
+        std::cout << APP_NAME << " Thermal-Shutdown management services are not ready, "
+                                 "waiting for it to be ready " << std::endl;
+        std::future<bool> f = thermShutdownMgr_->onReady();
+        isReady = f.get();
+    }
+    if(isReady) {
+        std::cout << APP_NAME << " Thermal-Shutdown management services are ready !" << std::endl;
+    } else {
+        std::cout << APP_NAME << " *** ERROR - Unable to initialize Thermal-Shutdown management "
+                                 "services" << std::endl;
+        return -1;
+    }
+    myThermListener_ = std::make_shared<ThermalListener>(shared_from_this());
+    setAutoDisableFlag(false);
+    return 0;
+}
+
+void ThermalCommandMgr::registerForUpdates() {
+    // Registering a listener for auto-shutdown mode updates
+    telux::common::Status status = thermShutdownMgr_->registerListener(myThermListener_);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " *** ERROR - Failed to register for auto-shutdown mode events"
+                << std::endl;
+    } else {
+        std::cout << APP_NAME << " Registered Listener for auto-shutdown mode events" << std::endl;
+    }
+}
+
+void ThermalCommandMgr::deregisterForUpdates() {
+    // De-registering a listener for auto-shutdown mode updates
+    telux::common::Status status = thermShutdownMgr_->deregisterListener(myThermListener_);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " *** ERROR - Failed to de-register for auto-shutdown mode events"
+                << std::endl;
+    } else {
+        std::cout << APP_NAME << " De-registered listener" << std::endl;
+    }
+}
+
+void ThermalCommandMgr::sendAutoShutdownModeCommand(AutoShutdownMode state) {
+    std::string cmd;
+    if(state == AutoShutdownMode::ENABLE) {
+        cmd = "Enable Command: ";
+        setAutoDisableFlag(false);
+        std::cout << APP_NAME << " Sending ENABLE command" << std::endl;
+    } else if(state == AutoShutdownMode::DISABLE) {
+        cmd = "Disable Command: ";
+        std::cout << APP_NAME << " Sending DISABLE command" << std::endl;
+    }
+    cmdRspCb_= std::make_shared<ThermalCommandCallback>(cmd);
+    telux::common::Status status =
+       thermShutdownMgr_->setAutoShutdownMode(state,
+          std::bind(&ThermalCommandCallback::commandResponse, cmdRspCb_, std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME <<
+            " *** ERROR - Failed to send set auto-shutdown mode command" << std::endl;
+    }
+}
+
+void ThermalCommandMgr::sendRecurringDisableCommand() {
+    setAutoDisableFlag(true);
+    sendAutoShutdownModeCommand(AutoShutdownMode::DISABLE);
+}
+
+std::future<bool> ThermalCommandMgr::getAutoShutdownModeCommand() {
+    cmdRspCb_= std::make_shared<ThermalCommandCallback>("Get status: ");
+    telux::common::Status status =
+       thermShutdownMgr_->getAutoShutdownMode(
+          std::bind(&ThermalCommandCallback::getCmdResponse, cmdRspCb_, std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME <<
+             " *** ERROR - Failed to send get auto-shutdown mode command" << std::endl;
+    }
+    return cmdRspCb_->getPromValue();
+}
+
+void ThermalCommandMgr::setAutoDisableFlag(bool disable) {
+   autoDisable_ = disable;
+}
+
+bool ThermalCommandMgr::getAutoDisableFlag() {
+  return autoDisable_;
+}

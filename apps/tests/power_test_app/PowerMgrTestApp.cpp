@@ -53,13 +53,13 @@ static std::condition_variable cv;
 static void printTcuActivityState(TcuActivityState state) {
 
     if(state == TcuActivityState::SUSPEND) {
-        PRINT_NOTIFICATION << "System State : SUSPEND" << std::endl;
+        PRINT_NOTIFICATION << " TCU-activity State : SUSPEND" << std::endl;
     } else if(state == TcuActivityState::RESUME) {
-        PRINT_NOTIFICATION << "System State : RESUME" << std::endl;
+        PRINT_NOTIFICATION << " TCU-activity State : RESUME" << std::endl;
     } else if(state == TcuActivityState::SHUTDOWN) {
-        PRINT_NOTIFICATION << "System State : SHUTDOWN" << std::endl;
+        PRINT_NOTIFICATION << " TCU-activity State : SHUTDOWN" << std::endl;
     } else if(state == TcuActivityState::UNKNOWN) {
-        PRINT_NOTIFICATION << "System State : UNKNOWN" << std::endl;
+        PRINT_NOTIFICATION << " TCU-activity State : UNKNOWN" << std::endl;
     } else {
         std::cout << APP_NAME << " ERROR: Invalid TCU-activity state notified" << std::endl;
     }
@@ -67,7 +67,7 @@ static void printTcuActivityState(TcuActivityState state) {
 
 static void printHelp() {
     std::cout << "-----------------------------------------------" << std::endl;
-    std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-h>" << std::endl;
+    std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-c> <-h>" << std::endl;
     std::cout << "   -l : listen to TCU-activity state updates" << std::endl;
     std::cout << "   -s : send SUSPEND command" << std::endl;
     std::cout << "   -r : send RESUME command" << std::endl;
@@ -107,9 +107,9 @@ void PowerMgmtTestApp::onTcuActivityStateUpdate(TcuActivityState tcuState) {
 void PowerMgmtTestApp::onServiceStatusChange(ServiceStatus status) {
     std::cout << std::endl;
     if(status == ServiceStatus::SERVICE_UNAVAILABLE) {
-        PRINT_NOTIFICATION << "Service Status : UNAVAILABLE" << std::endl;
+        PRINT_NOTIFICATION << " Service Status : UNAVAILABLE" << std::endl;
     } else if(status == ServiceStatus::SERVICE_AVAILABLE) {
-        PRINT_NOTIFICATION << "Service Status : AVAILABLE" << std::endl;
+        PRINT_NOTIFICATION << " Service Status : AVAILABLE" << std::endl;
     }
 }
 
@@ -141,8 +141,14 @@ void PowerMgmtTestApp::sendActivityStateCommand(TcuActivityState state) {
     }
     telux::common::Status status = tcuActivityMgr_->setActivityState(state, &commandCallback);;
     if(status != telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME << " *** ERROR - Failed to TCU-activity state command" << std::endl;
+        std::cout << APP_NAME << " ERROR - Failed to send TCU-activity state command" << std::endl;
     }
+}
+
+TcuActivityState PowerMgmtTestApp::getTcuActivityState() {
+    TcuActivityState state = tcuActivityMgr_->getActivityState();
+    printTcuActivityState(state);
+    return state;
 }
 
 int PowerMgmtTestApp::start() {
@@ -150,31 +156,28 @@ int PowerMgmtTestApp::start() {
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
     tcuActivityMgr_ = powerFactory.getTcuActivityManager();
-    if(tcuActivityMgr_ == NULL)
+    if(tcuActivityMgr_ == nullptr)
     {
-        std::cout << APP_NAME << " *** ERROR - Failed to get manager instance" << std::endl;
+        std::cout << APP_NAME << " ERROR - Failed to get manager instance" << std::endl;
         return -1;
     }
     // Check TCU-activity manager service status
     bool isReady = tcuActivityMgr_->isReady();
     if(!isReady) {
-        std::cout << APP_NAME << " TCU-activity management services are not ready, waiting for it to be "
-                "ready " << std::endl;
+        std::cout << APP_NAME << " TCU-activity management services are not ready, waiting for it "
+                "to be ready " << std::endl;
         std::future<bool> f = tcuActivityMgr_->onReady();
         isReady = f.get();
     }
 
     if(isReady) {
-        std::cout << APP_NAME << " TCU-activity managemnt services are ready !" << std::endl;
+        std::cout << APP_NAME << " TCU-activity management services are ready !" << std::endl;
     } else {
-        std::cout << APP_NAME << " *** ERROR - Unable to initialize TCU-activity management services"
+        std::cout << APP_NAME << " ERROR - Unable to initialize TCU-activity management services"
                 << std::endl;
         return -1;
     }
-    // Get current system TCU-activity state
-    TcuActivityState state = tcuActivityMgr_->getActivityState();
-    printTcuActivityState(state);
-
+    getTcuActivityState();
     return 0;
 }
 
@@ -182,10 +185,16 @@ void PowerMgmtTestApp::registerForUpdates() {
     // Registering a listener for TCU-activity state updates
     telux::common::Status status = tcuActivityMgr_->registerListener(shared_from_this());
     if(status != telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME << " *** ERROR - Failed to register for TCU-activity state events"
+        std::cout << APP_NAME << " ERROR - Failed to register for TCU-activity state updates"
                 << std::endl;
     } else {
-        std::cout << APP_NAME << " Registered Listener for TCU-activity state events" << std::endl;
+        std::cout << APP_NAME << " Registered Listener for TCU-activity state updates" << std::endl;
+    }
+    // Registering a listener for TCU-activity management service status updates
+    status = tcuActivityMgr_->registerServiceStateListener(shared_from_this());
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " ERROR - Failed to register for Service status updates"
+                << std::endl;
     }
 }
 
@@ -193,10 +202,16 @@ void PowerMgmtTestApp::deregisterForUpdates() {
     // De-registering a listener for TCU-activity state updates
     telux::common::Status status = tcuActivityMgr_->deregisterListener(shared_from_this());
     if(status != telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME << " *** ERROR - Failed to de-register for TCU-activity state events"
+        std::cout << APP_NAME << " ERROR - Failed to de-register for TCU-activity state updates"
                 << std::endl;
     } else {
         std::cout << APP_NAME << " De-registered listener" << std::endl;
+    }
+    // De-registering a listener for TCU-activity management service status updates
+    status = tcuActivityMgr_->deregisterServiceStateListener(shared_from_this());
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " ERROR - Failed to de-register for Service status updates"
+                << std::endl;
     }
 }
 
@@ -216,8 +231,12 @@ void PowerMgmtTestApp::consoleinit() {
          "3", "Shutdown_System", {},
          std::bind(&PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::SHUTDOWN)));
 
+   std::shared_ptr<ConsoleAppCommand> getTcuStateCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "4", "Get_System_State", {},
+         std::bind(&PowerMgmtTestApp::getTcuActivityState, this)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPowerMenu
-      = {suspendSytemCommand, resumeSytemCommand, shutdownSytemCommand};
+      = {suspendSytemCommand, resumeSytemCommand, shutdownSytemCommand, getTcuStateCommand};
    ConsoleApp::addCommands(commandsListPowerMenu);
    ConsoleApp::displayMenu();
 }
@@ -230,12 +249,16 @@ int main(int argc, char ** argv) {
     bool inputCommand = false;
     TcuActivityState state=TcuActivityState::UNKNOWN;
 
-    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
-    if( 0 != myPowerMgmtTest->start()) {
-        std::cout << APP_NAME << " Failed to initialize the TCU-activity management service" << std::endl;
+    if(argc <= 1) {
+        printHelp();
         return -1;
     }
-
+    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
+    if( 0 != myPowerMgmtTest->start()) {
+        std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
+            << std::endl;
+        return -1;
+    }
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "-l") {
             listenerEnabled =true;
@@ -260,7 +283,6 @@ int main(int argc, char ** argv) {
             return -1;
         }
     }
-
     if(listenerEnabled) {
         myPowerMgmtTest->registerForUpdates();
     }
@@ -274,7 +296,6 @@ int main(int argc, char ** argv) {
     if(listenerEnabled) {
         myPowerMgmtTest->deregisterForUpdates();
     }
-
     std::cout << "Exiting application..." << std::endl;
     return 0;
 }

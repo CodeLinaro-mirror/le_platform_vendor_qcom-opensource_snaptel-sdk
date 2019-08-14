@@ -80,6 +80,12 @@ void VoiceMenu::init() {
     std::shared_ptr<ConsoleAppCommand> stopDtmfCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "Stop Dtmf Tone",
          {}, std::bind(&VoiceMenu::stopDtmf, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> regListenerCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Register Listener",
+         {}, std::bind(&VoiceMenu::registerListener, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> deregListenerCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Deregister Listener",
+         {}, std::bind(&VoiceMenu::deRegisterListener, this, std::placeholders::_1)));
 
      std::vector<std::shared_ptr<ConsoleAppCommand>> voiceMenuCommandsList
       = {createStreamCommand,
@@ -93,7 +99,9 @@ void VoiceMenu::init() {
          startAudioCommand,
          stopAudioCommand,
          startDtmfCommand,
-         stopDtmfCommand};
+         stopDtmfCommand,
+         regListenerCmd,
+         deregListenerCmd};
    if(audioClient_){
         audioVoiceStream_ =std::dynamic_pointer_cast<IAudioVoiceStream>(
            audioClient_->getStream(StreamType::VOICE_CALL));
@@ -206,7 +214,6 @@ void VoiceMenu::startAudio(std::vector<std::string> userInput) {
                 audioStarted_ = true;
                 std::cout << "Audio Stream is Started" << std::endl;
                 // Registering for the Dtmf Detection, not required if detection is not required
-                registerListener();
             }
         } else {
             std::cout << "Audio already started" << std::endl;
@@ -237,7 +244,6 @@ void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
             if (p.get_future().get()) {
                 std::cout << "Audio Stream is Stopped" << std::endl;
                 audioStarted_ = false;
-                deRegisterListener();
             }
         } else {
             std::cout << "Audio not started yet" << std::endl;
@@ -251,29 +257,61 @@ void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
 void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
     if(audioStarted_) {
         std::promise<bool> p;
-
         std::string userInput = "";
         // Start Means we are enabling DTMF and  direction is RX
+
+        uint16_t gain;
         std::cout << "Enter the Gain : ";
-        std::getline(std::cin, userInput);
-        uint16_t gain = stoi(userInput);
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if(!(inputStream >> gain)) {
+                std::cout << "Invalid Input!" << std::endl;
+                return;
+            }
+        } else {
+            std::cout << "Invalid input!" << std::endl;
+        }
 
+        uint32_t lowFreq;
         std::cout << "Enter the Low Frequency (697, 770, 852, 941) : ";
-        std::getline(std::cin, userInput);
-        uint32_t lowFreq = stoi(userInput);
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if(!(inputStream >> lowFreq)) {
+                std::cout << "Invalid Input!" << std::endl;
+                return;
+            }
+        } else {
+            std::cout << "Invalid input!" << std::endl;
+        }
 
+        uint32_t highFreq;
         std::cout << "Enter the High Frequency (1209 1336 1477 1633) : ";
-        std::getline(std::cin, userInput);
-        uint32_t highFreq = stoi(userInput);
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if(!(inputStream >> highFreq)) {
+                std::cout << "Invalid Input!" << std::endl;
+                return;
+            }
+        } else {
+            std::cout << "Invalid input!" << std::endl;
+        }
 
+        uint32_t duration;
         std::cout << "Enter the duration (in ms (0-65534) and 65535 for infinite): ";
-        std::getline(std::cin, userInput);
-        uint32_t duration = stoi(userInput);
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if(!(inputStream >> duration)) {
+                std::cout << "Invalid Input!" << std::endl;
+                return;
+            }
+        } else {
+            std::cout << "Invalid input!" << std::endl;
+        }
 
         telux::audio::DtmfTone dtmfTone;
         telux::common::Status lowFreqValid = lowFrequencyHelper(lowFreq, dtmfTone.lowFreq);
         telux::common::Status highFreqValid = highFrequencyHelper(highFreq, dtmfTone.highFreq);
-         dtmfTone.direction = telux::audio::StreamDirection::RX;
+        dtmfTone.direction = telux::audio::StreamDirection::RX;
 
         if(lowFreqValid == telux::common::Status::SUCCESS &&
                     highFreqValid == telux::common::Status::SUCCESS ) {
@@ -326,7 +364,7 @@ void VoiceMenu::stopDtmf(std::vector<std::string> userInput) {
     }
 }
 
-void VoiceMenu::registerListener() {
+void VoiceMenu::registerListener(std::vector<std::string> userInput) {
         std::promise<bool> p;
         telux::common::Status status = audioVoiceStream_ ->registerListener(shared_from_this(),
                                      [&p,this](telux::common::ErrorCode error) {
@@ -345,7 +383,7 @@ void VoiceMenu::registerListener() {
         }
 }
 
-void VoiceMenu::deRegisterListener() {
+void VoiceMenu::deRegisterListener(std::vector<std::string> userInput) {
     telux::common::Status status = audioVoiceStream_ ->deRegisterListener(
         shared_from_this());
     if(status == telux::common::Status::SUCCESS){

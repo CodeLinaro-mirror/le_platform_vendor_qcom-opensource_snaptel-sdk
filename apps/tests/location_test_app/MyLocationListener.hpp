@@ -64,12 +64,13 @@ private:
    void printGnssSystemTime(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocationTech(std::shared_ptr<telux::loc::ILocationInfoBase> locationInfo);
    void printVerticalReliability(telux::loc::LocationReliability locReliability);
-   void printAltitudeType(telux::loc::AltitudeType altitudeType);
    void printConstellationType(telux::loc::GnssConstellationType constellation);
+   void printGnssSignalType(telux::loc::GnssSignal signalTypeMask);
    void printSVHealthStatus(telux::loc::SVHealthStatus healthStatus);
    void printSVStatus(telux::loc::SVStatus svStatus);
    void printEphimerisAvailability(telux::loc::SVInfoAvailability availability);
    void printAlmanacAvailability(telux::loc::SVInfoAvailability availability);
+   void printFixAvailability(telux::loc::SVInfoAvailability availability);
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

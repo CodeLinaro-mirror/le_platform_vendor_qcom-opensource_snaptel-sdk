@@ -102,7 +102,7 @@ int TcuActivityTestApp::start() {
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
     tcuActivityStateMgr_ = powerFactory.getTcuActivityManager();
-    if(tcuActivityStateMgr_ == NULL)
+    if(tcuActivityStateMgr_ == nullptr)
     {
         std::cout << APP_NAME << " *** ERROR - Failed to get manager instance" << std::endl;
         return -1;
@@ -136,6 +136,12 @@ void TcuActivityTestApp::registerForUpdates() {
     } else {
         std::cout << APP_NAME << " Registered Listener for TCU-activity state events" << std::endl;
     }
+    // Registering a listener for TCU-activity management service status updates
+    status = tcuActivityStateMgr_->registerServiceStateListener(shared_from_this());
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " ERROR - Failed to register for Service status updates"
+                << std::endl;
+    }
 }
 
 void TcuActivityTestApp::deregisterForUpdates() {
@@ -146,6 +152,12 @@ void TcuActivityTestApp::deregisterForUpdates() {
                 << std::endl;
     } else {
         std::cout << APP_NAME << " De-registered listener" << std::endl;
+    }
+    // De-registering a listener for TCU-activity management service status updates
+    status = tcuActivityStateMgr_->deregisterServiceStateListener(shared_from_this());
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " ERROR - Failed to de-register for Service status updates"
+                << std::endl;
     }
 }
 

@@ -36,6 +36,9 @@
 #include <Cv2xTelux.hpp>
 #include <Cv2xUtils.hpp>
 #include <Cv2xLog.hpp>
+#include <TcuActivityManager.hpp>
+
+using namespace telux::power;
 
 /**
  * @file       Cv2xDaemon.hpp
@@ -109,6 +112,26 @@ class Cv2xDaemon{
          */
         Status runAsDaemon();
 
+        /**
+         * Handle system power notifications from powr manager daemon
+         */
+        Status handleSystemStateChange();
+
+        /**
+         * Register system power notifications from powr manager daemon
+         */
+        Status enableSysPowerNotification();
+
+        /**
+         * set latest system state and cache to Cv2xDaemon
+         */
+        void setSystemState(TcuActivityState newState);
+
+        /**
+         * get latest cached system state
+         */
+        TcuActivityState getSystemState();
+
     private:
         Cv2xDaemon();
 
@@ -118,10 +141,13 @@ class Cv2xDaemon{
         int daemonMode_;
         int startV2x_;
         int stopV2x_;
+        TcuActivityState systemState_;
 
         /**
          * Wrapper class to perform Telsdk Operations
          */
         std::shared_ptr<Cv2xTelux> cv2xTelux_;
+        std::shared_ptr<telux::power::ITcuActivityManager> sysStateMgr_;
+        std::shared_ptr<telux::power::ITcuActivityListener> sysStateListener_;
 };
 #endif

@@ -8,6 +8,8 @@ set(AUDIO_CONSOLE_APP_SOURCES
     VoiceMenu.cpp
     PlayMenu.cpp
     CaptureMenu.cpp
+    LoopbackMenu.cpp
+    ToneMenu.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
 )

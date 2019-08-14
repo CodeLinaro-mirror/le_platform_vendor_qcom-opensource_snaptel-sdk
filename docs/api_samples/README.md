@@ -28,3 +28,5 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to do audio capture](audio/audio_capture.md)
   * [How to get TCU activity state updates](power/get_tcu_activity_state_notifications.md)
   * [How to initiate a TCU activity state transition](power/set_tcu_activity_state_command.md)
+  * [How to manage thermal shutdown mode](thermal/send_thermal_shutdown_mode_commands.md)
+  * [How to get thermal auto-shutdown updates](thermal/get_thermal_autoshutdown_mode_updates.md)

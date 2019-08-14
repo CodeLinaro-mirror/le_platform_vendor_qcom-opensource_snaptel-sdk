@@ -3,7 +3,11 @@ cmake_minimum_required(VERSION 2.8.9)
 set(TARGET_THERM_SHUTDOWN_MGR_TEST_APP thermal_shutdown_test_app)
 
 set(THERM_SHUTDOWN_MGR_TEST_APP
-    ThermShutdownMgrTestApp.cpp
+    ThermalShutdownMgrTestApp.cpp
+    ThermalCommandCallback.cpp
+    ThermalListener.cpp
+    ThermalCommandMgr.cpp
+    ../telsdk_console_app/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
 )

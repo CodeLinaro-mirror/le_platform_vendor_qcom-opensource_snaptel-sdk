@@ -52,30 +52,7 @@ static std::map<ServiceStatus, std::string> convertServiceStatusToString = {
 
 void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
 
-    if (not cv2xActiveDone_ and status.txStatus == Cv2xStatusType::ACTIVE
-        and status.rxStatus == Cv2xStatusType::ACTIVE) {
-        cv2xActiveDone_ = true;
-        LOGI("V2X in active state\n");
-        bootkpilog("cv2x-daemon: V2X in active state");
-    }
-
-    if ((status.txStatus != Cv2xStatusType::UNKNOWN or
-         status.rxStatus != Cv2xStatusType::UNKNOWN) and
-        (cv2xStatus_.txStatus != status.txStatus or
-         cv2xStatus_.rxStatus != status.rxStatus or
-         cv2xStatus_.txCause != status.txCause or
-         cv2xStatus_.rxCause != status.rxCause)) {
-
-        LOGI("tx_status=%d, rx_status=%d, tx_cause=%d, rx_cause=%d\n",
-            Cv2xUtils::convertStatus(status.txStatus),
-            Cv2xUtils::convertStatus(status.rxStatus),
-            Cv2xUtils::convertStatus(status.txCause),
-            Cv2xUtils::convertStatus(status.rxCause));
-    }
-
-    if (status.cbrValueValid) {
-        LOGD("cbr_value=%d\n", static_cast<int>(status.cbrValue));
-    }
+    logStatusChanged(status);
 
     // Trigger post SSR event to start data call
     bool triggetPostSSRV2XReady = false;
@@ -119,6 +96,41 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
     }
 
     cv2xStatus_ = status;
+}
+
+void Cv2xTelux::logStatusChanged(Cv2xStatus &status) {
+
+    if (not cv2xTxActiveDone_ and
+        status.txStatus == Cv2xStatusType::ACTIVE) {
+        cv2xTxActiveDone_ = true;
+        LOGI("V2X TX status is active\n");
+        bootkpilog("cv2x-daemon: V2X TX status is active");
+    }
+
+    if (not cv2xRxActiveDone_ and
+        status.rxStatus == Cv2xStatusType::ACTIVE) {
+        cv2xRxActiveDone_ = true;
+        LOGI("V2X Rx status is active\n");
+        bootkpilog("cv2x-daemon: V2X RX status is active");
+    }
+
+    if ((status.txStatus != Cv2xStatusType::UNKNOWN or
+         status.rxStatus != Cv2xStatusType::UNKNOWN) and
+        (cv2xStatus_.txStatus != status.txStatus or
+         cv2xStatus_.rxStatus != status.rxStatus or
+         cv2xStatus_.txCause != status.txCause or
+         cv2xStatus_.rxCause != status.rxCause)) {
+
+        LOGI("tx_status=%d, rx_status=%d, tx_cause=%d, rx_cause=%d\n",
+            Cv2xUtils::convertStatus(status.txStatus),
+            Cv2xUtils::convertStatus(status.rxStatus),
+            Cv2xUtils::convertStatus(status.txCause),
+            Cv2xUtils::convertStatus(status.rxCause));
+    }
+
+    if (status.cbrValueValid) {
+        LOGD("cbr_value=%d\n", static_cast<int>(status.cbrValue));
+    }
 }
 
 DataConnectionListener::DataConnectionListener(std::weak_ptr<Cv2xTelux> instance) {

@@ -962,6 +962,8 @@ extern v2x_status_enum_type v2x_radio_tx_reservation_change(int *sps_sock,
 
     @returns
     None. @newpage
+
+    @Obsolete: This API is not supported and will be removed in the future.
  */
 extern void v2x_radio_tx_flush(char *interface);
 
@@ -1343,6 +1345,75 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
 extern v2x_status_enum_type v2x_radio_tx_event_flow_info_change(
     int *sock,
     v2x_tx_flow_info_t *updated_flow_info);
+
+/**
+    Updates v2x radio configuration file.
+
+    @param[in]  config_file_path Pointer to characters containing path to
+                                 configuration file.
+
+    @detdesc
+    This function is used to update v2x radio configuration file. V2X radio
+    status must be @ref V2X_INACTIVE. If V2X status is ACTIVE or SUSPENDED,
+    first call @ref stop_v2x_mode.
+    @par
+    This call is a blocking call. When it returns the configuration has
+    been updated, assuming no error.
+
+    @return
+    #V2X_STATUS_SUCCESS -- On success.
+    @par
+    #V2X_STATUS_EALREADY -- On failure due to V2X status not INACTIVE
+    #V2X_STATUS_FAIL -- On failure
+
+    @dependencies
+    V2X radio status must be V2X_INACTIVE.
+ */
+extern v2x_status_enum_type v2x_update_configuration(const char *config_file_path);
+
+/**
+    Starts v2x mode.
+
+    @detdesc
+    This function is used to start V2X mode. V2X radio
+    status must be @ref V2X_INACTIVE. If V2X status is ACTIVE or SUSPENDED,
+    first call @ref stop_v2x_mode.
+    @par
+    This call is a blocking call. When it returns v2x mode has been
+    started, assuming no error.
+
+    @return
+    #V2X_STATUS_SUCCESS -- On success.
+    @par
+    #V2X_STATUS_EALREADY -- On failure due to V2X mode already started
+    #V2X_STATUS_FAIL -- On failure
+
+    @dependencies
+    V2X radio status must be V2X_INACTIVE.
+ */
+extern v2x_status_enum_type start_v2x_mode();
+
+/**
+    Stops v2x mode.
+
+    @detdesc
+    This function is used to stop V2X mode. V2X radio status must be
+    @ref V2X_ACTIVE or SUSPENDED. If V2X status is V2X_INACTIVE,
+    first call @ref start_v2x_mode.
+    @par
+    This call is a blocking call. When it returns v2x mode has been
+    stopped, assuming no error.
+
+    @return
+    #V2X_STATUS_SUCCESS -- On success.
+    @par
+    #V2X_STATUS_EALREADY -- On failure due to V2X mode already stopped
+    #V2X_STATUS_FAIL -- On failure
+
+    @dependencies
+    V2X radio status must be V2X_ACTIVE or SUSPENDED.
+ */
+extern v2x_status_enum_type stop_v2x_mode();
 
 /**
  * Testing functions mainly for sim environment

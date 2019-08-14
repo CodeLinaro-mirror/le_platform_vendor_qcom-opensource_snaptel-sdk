@@ -28,12 +28,8 @@
  */
 
 #include <chrono>
-#include <cstdio>
-#include <cstring>
 #include <future>
 #include <iostream>
-#include <unistd.h>
-#include <queue>
 #include <condition_variable>
 
 #include <telux/audio/AudioFactory.hpp>
@@ -57,47 +53,40 @@ static inline void resetCallbackPromise(void) {
     gCallbackPromise = promise<ErrorCode>();
 }
 
-//Callback which provides response to createStream, with pointer to base interface IAudioStream.
-//Type Casting Base Stream Pointer to PlayStream, as requested stream is of type PLAY
+// Callback which provides response to createStream, with pointer to base interface IAudioStream.
+// Type Casting Base Stream Pointer to PlayStream, as requested stream is of type PLAY
 static void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
 {
-    if (error != ErrorCode::SUCCESS) {
-        std::cout << "createStream() returned with error " << static_cast<unsigned int>(error)
-            << std::endl;
-        gCallbackPromise.set_value(error);
-        return;
+    if (ErrorCode::SUCCESS == error) {
+        std::cout << "playback stream created" << std::endl;
+        audioPlayStream = std::dynamic_pointer_cast<IAudioPlayStream>(stream);
     }
-    std::cout << "createStream() succeeded" << std::endl;
-    audioPlayStream = std::dynamic_pointer_cast<IAudioPlayStream>(stream);
     gCallbackPromise.set_value(error);
+    return;
 }
 
-//Callback to provide response to the write request
+// Callback to provide response to the write request
 static void writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytes,
                 telux::common::ErrorCode error)
 {
-    if (error != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "write() returned with error " << static_cast<unsigned int>(error)
-            << std::endl;
+   if (ErrorCode::SUCCESS == error) {
+        std::cout << "write() succeeded" << std::endl;
     } else {
-        std::cout << "write() succeed" << std::endl;
+        std::cout << "write failed with error code " << static_cast<int>(error) << std::endl;
     }
     buffer->reset();
     cv.notify_all();
     return;
 }
 
-//Callback which provides response to deleteStream
+// Callback which provides response to deleteStream
 static void deleteStreamCallback(ErrorCode error) {
-    if (error != ErrorCode::SUCCESS) {
-        std::cout << "deleteStream() returned with error " << static_cast<unsigned int>(error)
-            << std::endl;
-        gCallbackPromise.set_value(error);
-        return;
+    if (ErrorCode::SUCCESS == error) {
+        std::cout << "playback stream deleted." << std::endl;
+        audioPlayStream.reset();
     }
-    std::cout << "deleteStream() succeeded." << std::endl;
-    audioPlayStream.reset();
     gCallbackPromise.set_value(error);
+    return;
 }
 
 int main(int, char **) {
@@ -115,6 +104,7 @@ int main(int, char **) {
     } else {
         std::cout << "Audio Subsystem is NOT ready." << std::endl;
     }
+
     // Option # 1 if we want to wait for only timeout period for audio subsystem to get ready
     std::future<bool> f = audioManager->onSubsystemReady();
     if (f.wait_for(std::chrono::seconds(TIMEOUT)) == std::future_status::timeout) {
@@ -139,21 +129,23 @@ int main(int, char **) {
     config.sampleRate = SAMPLE_RATE;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     // here both channel selected, this can be selected according to requirement
-    config.channelTypeMask = (ChannelType::LEFT || ChannelType::RIGHT);
+    config.channelTypeMask = (ChannelType::LEFT | ChannelType::RIGHT);
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
     auto status = audioManager->createStream(config, createStreamCallback);
     if(status == Status::SUCCESS) {
-        std::cout << "Request to create audio stream sent succesfully" << std::endl;
-        if (ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-            std::cout << "Error : failed to create audio stream." << std::endl;
+        std::cout << "Request to create playback stream sent." << std::endl;
+        ErrorCode error = gCallbackPromise.get_future().get();
+        if (ErrorCode::SUCCESS != error) {
+            std::cout << "Error : failed to create playback stream, error code " <<
+                    static_cast<int>(error) << std::endl;
             return EXIT_FAILURE;
         }
     } else {
-        std::cout << "Request to create audio stream failed" << std::endl;
+        std::cout << "Request to create playback stream failed." << std::endl;
         return EXIT_FAILURE;
     }
 
-    // ### 4. Start Writing to the file
+    // ### 4. Writing to stream
     std::mutex mutex;
     std::unique_lock<std::mutex> lock(mutex);
     // Pointer variable to stream buffer
@@ -173,24 +165,27 @@ int main(int, char **) {
     memset(streamBuffer->getRawBuffer(),0,size);
     status = audioPlayStream->write(streamBuffer,writeCallback);
     if(status != telux::common::Status::SUCCESS) {
-        std::cout << "write() failed with error" << static_cast<unsigned int>(status)
-            <<std::endl;
+        std::cout << "Request to write to stream failed." << std::endl;
     } else {
-        std::cout << "Request to write to stream sent" << std::endl;
+        std::cout << "Request to write to stream sent." << std::endl;
         cv.wait(lock);
     }
 
     resetCallbackPromise();
-    // ### 4. Delete an Audio Stream (Play Session), which was created earlier
+
+    // ### 5. Delete an Audio Stream (Play Session), which was created earlier
     status = audioManager->deleteStream(audioPlayStream, deleteStreamCallback);
     if(status == Status::SUCCESS) {
-        std::cout << "Request to delete play stream sent succesfully" << std::endl;
-        if (ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-            std::cout << "Error : failed to delete audio stream" << std::endl;
+        std::cout << "Request to delete playback stream sent." << std::endl;
+        ErrorCode error = gCallbackPromise.get_future().get();
+        if (ErrorCode::SUCCESS != error) {
+            std::cout << "Error : failed to delete playback stream, error code " <<
+                    static_cast<int>(error) << std::endl;
             return EXIT_FAILURE;
         }
     } else {
-        std::cout << "Request to delete audio stream failed" << std::endl;
+        std::cout << "Request to delete playback stream failed" << std::endl;
     }
+
     return EXIT_SUCCESS;
 }

@@ -62,7 +62,7 @@ namespace power {
  * @note  Eval: This is a new API and is being evaluated.It is subject to change
  *        and could break backwards compatibility.
  */
-class ITcuActivityListener : public common::IServiceStatusListener {
+class ITcuActivityListener {
 public:
     /**
      * This function is called when the TCU-activity state is going to change.

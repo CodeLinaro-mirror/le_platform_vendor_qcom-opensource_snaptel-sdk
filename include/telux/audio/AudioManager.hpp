@@ -734,6 +734,81 @@ public:
                                       ReadResponseCb callback = nullptr) = 0;
 };
 
+/**
+ * @brief   IAudioLoopbackStream represents audio loopback stream
+ */
+class IAudioLoopbackStream : virtual public IAudioStream {
+public:
+
+  /**
+    * Start loopback between source and sink devices
+    *
+    * @param [in] callback     callback to get the response of start loopback.
+    *
+    * @returns Status of the request i.e. success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status
+            startLoopback(telux::common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Stop loopback between source and sink devices
+    *
+    * @param [in] callback     callback to get the response of stop loopback.
+    *
+    * @returns Status of the request i.e. success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status
+            stopLoopback(telux::common::ResponseCallback callback = nullptr) = 0;
+
+};
+
+/**
+ * @brief   IAudioToneGeneratorStream represents tone generator stream
+ */
+class IAudioToneGeneratorStream : virtual public IAudioStream {
+public:
+
+  /**
+    * Play a tone on sink devices. As the duartion expires, the generated tone
+    * terminates automatically.
+    *
+    * @param  [in] freq         Accepts the composition of frequencies (in Hz) to be played
+    *                           such as single tone or dual tone. Any additional
+    *                           frequencies provided will be ignored.
+    *         [in] duration     Duration (in milliseconds) for which the tone needs to be played.
+    *                           The constant infiniteToneDuration(=0xFFFF) represents infinte
+    *                           duration.
+    *         [in] gain         Tone Gain.
+    *         [in] callback     callback to get the response of play tone.
+    *
+    * @returns Status of the request i.e. success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status playTone(std::vector<uint16_t> freq, uint16_t duration,
+               uint16_t gain, telux::common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Stops the tone which is being played (i.e duration not expired) on the active Tone generator
+    * stream.
+    *
+    * @param [in] callback     callback to get the response of stop tone.
+    *
+    * @returns Status of the request i.e. success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status stopTone(telux::common::ResponseCallback callback = nullptr) = 0;
+
+};
 
 /** @} */ /* end_addtogroup telematics_audio */
 }  // End of namespace audio

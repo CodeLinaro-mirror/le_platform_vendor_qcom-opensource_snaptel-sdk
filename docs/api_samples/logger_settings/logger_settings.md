@@ -64,10 +64,10 @@ Used to prefix date and time on every log Message
 
 ### 4. Set log file path
 
-Specifies the path of the log file
+Specifies the path of the log file. In an external application processor, the path needs to be in a writable partition.
 
    ~~~~~~{.sh}
-   LOG_FILE_PATH=/data
+   LOG_FILE_PATH=/data/vendor/telsdk
    ~~~~~~
 
 ### 5. Set log file name

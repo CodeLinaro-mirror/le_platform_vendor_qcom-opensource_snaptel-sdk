@@ -255,8 +255,12 @@ void PlayMenu::play() {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
             numBytes = fread(streamBuffer->getRawBuffer(),1,size,file);
-            if(numBytes != size) {
-                std::cout << "Readsize mismatch Error or EOF reached " << numBytes<< std::endl;
+            if(numBytes != size && !feof(file)) {
+                std::cout << "Unable to read specified bytes, bytes read: " << numBytes<< std::endl;
+                streamBuffer->reset();
+                freeBuffers_.push(streamBuffer);
+                playStatus_ = false;
+                break;
             }
             auto writeCb = std::bind(&PlayMenu::writeCallback, this, std::placeholders::_1,
                         std::placeholders::_2, std::placeholders::_3);

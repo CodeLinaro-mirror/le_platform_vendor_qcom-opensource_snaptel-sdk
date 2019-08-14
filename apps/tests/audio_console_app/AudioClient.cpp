@@ -35,6 +35,7 @@
 #include <chrono>
 #include <iostream>
 #include <stdio.h>
+#include <dirent.h>
 
 #include <telux/audio/AudioFactory.hpp>
 
@@ -91,6 +92,10 @@ void AudioClient::resolveStreamType(StreamType streamType) {
         stream_ = audioPlayStream_;
     } else if( streamType == StreamType::CAPTURE) {
         stream_ = audioCaptureStream_;
+    } else if( streamType == StreamType::LOOPBACK) {
+        stream_ = audioLoopbackStream_;
+    } else if( streamType == StreamType::TONE_GENERATOR) {
+        stream_ = audioToneStream_;
     } else {
         stream_ = nullptr;
     }
@@ -237,8 +242,8 @@ void AudioClient::takeUserVolumeInput(StreamVolume &streamVolume) {
 void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
 {
     config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    takeUserModemIdInput(config.modemSubId);
 
+    takeUserModemIdInput(config.modemSubId);
     takeUserSampleRateInput(config.sampleRate);
     takeUserChannelInput(config.channelTypeMask);
     sampleRate_ = config.sampleRate;
@@ -249,12 +254,17 @@ void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
         while(1) {
             std::cout << "Enter File name with path :" ;
             std::getline(std::cin, filepath_);
-            file = fopen(filepath_.c_str(),"r");
-            if(file) {
-                fseek(file, 0 , SEEK_SET);
-                break;
+            DIR* directory = opendir(filepath_.c_str());
+            if (directory != NULL) {
+                std::cout << "Please enter valid file path" << std::endl;
             } else {
-                std::cout << "Corrupted file" <<std::endl;
+                file = fopen(filepath_.c_str(),"r");
+                if(file) {
+                    fseek(file, 0 , SEEK_SET);
+                    break;
+                } else {
+                    perror("Error : ");
+                }
             }
         }
         fclose(file);
@@ -343,6 +353,14 @@ Status AudioClient::createStream(StreamType streamType) {
             audioCaptureStream_ = std::dynamic_pointer_cast<
                         telux::audio::IAudioCaptureStream>(myAudioStream);
             std::cout<< "Audio Capture Stream is Created" << std::endl;
+        } else if(myAudioStream->getType() == StreamType::LOOPBACK) {
+            audioLoopbackStream_ = std::dynamic_pointer_cast<
+                        telux::audio::IAudioLoopbackStream>(myAudioStream);
+            std::cout<< "Audio loopback Stream is Created" << std::endl;
+        } else if (myAudioStream->getType() == StreamType::TONE_GENERATOR) {
+            audioToneStream_ = std::dynamic_pointer_cast<
+                        telux::audio::IAudioToneGeneratorStream>(myAudioStream);
+            std::cout<< "Audio tone generator Stream is Created" << std::endl;
         } else {
             std::cout << "Unknown Stream type is generated" << std::endl;
         }
@@ -374,6 +392,10 @@ Status AudioClient::deleteStream(StreamType streamType) {
             audioPlayStream_= nullptr;
         } else if(streamType == StreamType::CAPTURE) {
             audioCaptureStream_= nullptr;
+        } else if(streamType == StreamType::LOOPBACK) {
+            audioLoopbackStream_= nullptr;
+        } else if(streamType == StreamType::TONE_GENERATOR) {
+            audioToneStream_= nullptr;
         } else {
             std::cout << " Unknown Stream Type " << std::endl;
         }

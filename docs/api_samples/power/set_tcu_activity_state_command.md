@@ -18,7 +18,6 @@ The below steps need to be followed by the applications that control the TCU-act
     class MyTcuActivityStateListener : public ITcuActivityListener {
     public:
         void onTcuActivityStateUpdate(TcuActivityState state) override;
-        void onServiceStatusChange(ServiceStatus status) override;
     };
    ~~~~~~
 

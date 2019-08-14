@@ -59,9 +59,8 @@ private:
     void stopAudio(std::vector<std::string> userInput);
     void startDtmf(std::vector<std::string> userInput);
     void stopDtmf(std::vector<std::string> userInput);
-
-    void registerListener();
-    void deRegisterListener();
+    void registerListener(std::vector<std::string> userInput);
+    void deRegisterListener(std::vector<std::string> userInput);
 
     telux::common::Status lowFrequencyHelper(uint32_t lowFreq,
                              telux::audio::DtmfLowFreq &lowFrequency);

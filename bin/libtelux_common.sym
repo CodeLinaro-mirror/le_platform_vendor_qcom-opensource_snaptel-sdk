@@ -28,6 +28,7 @@
 -Wl,--defsym=_ZN5telux6common11ErrorHelper29initQmiClientErrorToStringMapEv=so_stub_for_libtelux_common
 -Wl,--defsym=_ZN5telux6common11ErrorHelper32initQmiClientErrorToErrorCodeMapEv=so_stub_for_libtelux_common
 -Wl,--defsym=_ZN5telux6common11ErrorHelper4initEv=so_stub_for_libtelux_common
+-Wl,--defsym=_ZN5telux6common11ErrorHelper6mutex_E=so_stub_for_libtelux_common
 -Wl,--defsym=_ZN5telux6common11ErrorHelperC1Ev=so_stub_for_libtelux_common
 -Wl,--defsym=_ZN5telux6common11ErrorHelperC2Ev=so_stub_for_libtelux_common
 -Wl,--defsym=_ZN5telux6common11ErrorHelperD1Ev=so_stub_for_libtelux_common

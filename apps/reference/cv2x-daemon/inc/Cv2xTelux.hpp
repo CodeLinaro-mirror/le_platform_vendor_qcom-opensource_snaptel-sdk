@@ -202,7 +202,8 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
         std::shared_ptr<DataCallInfo> dcInfoNonIP_;
         Cv2xStatus cv2xStatus_;
         bool isInitializationDone_;
-        bool cv2xActiveDone_ = false;
+        bool cv2xRxActiveDone_ = false;
+        bool cv2xTxActiveDone_ = false;
 
         /* Telux objects */
         std::shared_ptr<ICv2xRadioManager> cv2xRadioMgr_;
@@ -224,5 +225,11 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
          * Handle starting V2X data calls, used internally by createProfileAndStartDataCalls()
          */
         Status startDataCalls();
+
+        /**
+         * Print log messages when cv2x status changes
+         */
+        void logStatusChanged(Cv2xStatus &status);
+
 };
 #endif /* CV2XTELUX_H */

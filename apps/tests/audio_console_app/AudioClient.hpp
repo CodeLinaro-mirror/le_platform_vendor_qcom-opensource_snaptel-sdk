@@ -98,6 +98,8 @@ private:
     std::shared_ptr<IAudioVoiceStream> audioVoiceStream_;
     std::shared_ptr<IAudioPlayStream> audioPlayStream_;
     std::shared_ptr<IAudioCaptureStream> audioCaptureStream_;
+    std::shared_ptr<IAudioLoopbackStream> audioLoopbackStream_;
+    std::shared_ptr<IAudioToneGeneratorStream> audioToneStream_;
 };
 
 #endif //AUDIOCLIENT_HPP

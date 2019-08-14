@@ -27,50 +27,64 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef THERMALSHUTDOWNTEST_HPP
-#define THERMALSHUTDOWNTEST_HPP
+/**
+ * @file       ConfigFactory.hpp
+ *
+ * @brief      ConfigFactory allows creation of config related classes.
+ *
+ * @note       Eval: This is a new API and is being evaluated.It is subject to
+ *             change and could break backwards compatibility.
+ */
+
+#ifndef CONFIGFACTORY_HPP
+#define CONFIGFACTORY_HPP
 
 #include <memory>
+#include <mutex>
 
-#include <telux/therm/ThermalDefines.hpp>
-#include <telux/therm/ThermalFactory.hpp>
-#include <telux/therm/ThermalShutdownManager.hpp>
-#include <telux/therm/ThermalShutdownListener.hpp>
-#include "ConsoleApp.hpp"
+#include <telux/config/ModemConfigManager.hpp>
 
-#define APP_NAME "telux_therm_shutdown_test_app"
-#define PRINT_NOTIFICATION std::cout << APP_NAME << " \033[1;35mNOTIFICATION: \033[0m"
+namespace telux {
 
-using namespace telux::therm;
-using namespace telux::common;
+namespace config {
+/** @addtogroup telematics_config
+ * @{ */
 
-class ThermShutdownMgrTestApp : public IThermalShutdownListener,
-                         public ConsoleApp,
-                         public std::enable_shared_from_this<ThermShutdownMgrTestApp> {
+/**
+ * @brief   ConfigFactory allows creation of config related classes.
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change
+ *          and could break backwards compatibility.
+ */
+class ConfigFactory {
 public:
+    /**
+     * Get instance of Config Factory
+     */
+    static ConfigFactory &getInstance();
 
-    ThermShutdownMgrTestApp();
-    ~ThermShutdownMgrTestApp();
+    /**
+     * Get instance of ModemConfig manager
+     *
+     * @returns pointer of IModemConfigManager object.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    std::shared_ptr<IModemConfigManager> getModemConfigManager();
 
-    int init();
-    void onShutdownEnabled() override;
-    void onShutdownDisabled() override;
-    void onImminentShutdownEnablement(uint32_t imminentDuration) override;
-    void onServiceStatusChange(ServiceStatus status) override;
+    ~ConfigFactory();
 
-    void registerForUpdates();
-    void deregisterForUpdates();
-    void sendAutoShutdownModeCommand(AutoShutdownMode state);
-
-    void getAutoShutdownModeCommand();
-    void consoleinit();
 private:
-
-    ThermShutdownMgrTestApp(ThermShutdownMgrTestApp const &) = delete;
-    ThermShutdownMgrTestApp &operator=(ThermShutdownMgrTestApp const &) = delete;
-
-    // Member variable to keep the manager object alive till application ends.
-    std::shared_ptr<telux::therm::IThermalShutdownManager> thermShutdownMgr_;
+    std::shared_ptr<IModemConfigManager> modemConfigManager_;
+    std::mutex mutex_;
+    ConfigFactory();
 };
 
-#endif  // THERMALSHUTDOWNTEST_HPP
+/** @} */ /* end_addtogroup telematics_config */
+} // end of namespace config
+
+} // end of namespace telux
+
+#endif // CONFIGFACTORY_HPP
+

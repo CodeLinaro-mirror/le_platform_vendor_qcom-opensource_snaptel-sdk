@@ -51,6 +51,9 @@ namespace audio {
 /** Duration to play DTMF tone for infinite time */
 const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
 
+/* Duration to play tone for infinite time */
+const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
+
 /** @addtogroup telematics_audio
  * @{ */
 
@@ -82,6 +85,8 @@ enum class StreamType {
    VOICE_CALL = 1, /**< Voice Call, Provides Audio Session for an active Voice */
    PLAY = 2, /**< Plaback, Provides Audio Playback Session */
    CAPTURE = 3, /**< Capture, Provides Audio Capture/Record Session */
+   LOOPBACK = 4, /**< Loopback, Provides loopback between source and sink devices */
+   TONE_GENERATOR = 5, /**< Tone Generator, Generates tone on sink device */
 };
 
 /**

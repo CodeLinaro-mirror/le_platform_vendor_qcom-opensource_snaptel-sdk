@@ -44,6 +44,7 @@ using namespace telux::power;
 using namespace telux::common;
 
 class TcuActivityTestApp : public ITcuActivityListener,
+                           public IServiceStatusListener,
                            public std::enable_shared_from_this<TcuActivityTestApp> {
 public:
 

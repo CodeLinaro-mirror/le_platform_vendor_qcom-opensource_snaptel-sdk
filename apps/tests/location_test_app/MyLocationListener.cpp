@@ -56,6 +56,15 @@ void MyLocationListener::printSbasCorrectionEx(
    if(correction[(telux::loc::SbasCorrectionType)3]) {
       std::cout << "SBAS integrity information is used" << std::endl;
    }
+   if(correction[(telux::loc::SbasCorrectionType)4]) {
+      std::cout << "SBAS DGNSS correction information is used" << std::endl;
+   }
+   if(correction[(telux::loc::SbasCorrectionType)5]) {
+      std::cout << "SBAS RTK correction information is used" << std::endl;
+   }
+   if(correction[(telux::loc::SbasCorrectionType)6]) {
+      std::cout << "SBAS PPP correction information is used" << std::endl;
+   }
 }
 
 void MyLocationListener::printLocationTech(
@@ -76,6 +85,75 @@ void MyLocationListener::printLocationTech(
    }
 }
 
+void MyLocationListener::printGnssSignalType(telux::loc::GnssSignal signalTypeMask) {
+   std::cout << "Gnss Signal Type : " << std::endl;
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L1CA) {
+     std::cout << "GPS L1CA signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L1C) {
+     std::cout << "GPS L1C signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L2) {
+     std::cout << "GPS L2 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L5) {
+     std::cout << "GPS L5 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GLONASS_G1) {
+     std::cout << "Glonass G1 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GLONASS_G2) {
+     std::cout << "Glonass G2 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GALILEO_E1) {
+     std::cout << "Galileo E1 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GALILEO_E5A) {
+     std::cout << "Galileo E5A signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GALILIEO_E5B) {
+     std::cout << "Galileo E5B signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B1) {
+     std::cout << "Beidou B1 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2) {
+     std::cout << "Beidou B2 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L1CA) {
+     std::cout << "QZSS L1CA signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L1S) {
+     std::cout << "QZSS L1S signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L2) {
+     std::cout << "QZSS L2 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L5) {
+     std::cout << "QZSS L5 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::SBAS_L1) {
+     std::cout << "SBAS L1 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B1I) {
+     std::cout << "Beidou B1I signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B1C) {
+     std::cout << "Beidou B1C signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2I) {
+     std::cout << "Beidou B2I signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2AI) {
+     std::cout << "Beidou B2AI signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::NAVIC_L5) {
+     std::cout << "Navic L5 signal is present " << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2AQ) {
+     std::cout << "Beidou B2AQ signal is present " << std::endl;
+   }
+}
 
 void MyLocationListener::printGnssMeasurementInfo(
    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
@@ -83,55 +161,7 @@ void MyLocationListener::printGnssMeasurementInfo(
    std::cout << "GNSS Measurement Info:  " << std::endl;
    for(uint16_t i = 0; i < measInfo.size(); i++) {
       telux::loc::GnssSignal signalType = measInfo[i].gnssSignalType;
-
-      if((signalType & telux::loc::GPS_L1CA)) {
-         std::cout << "GPS L1CA Signal" << std::endl;
-      }
-      if((signalType & telux::loc::GPS_L1C)) {
-         std::cout << "GPS L1C Signal" << std::endl;
-      }
-      if((signalType & telux::loc::GPS_L2)) {
-         std::cout << "GPS L2 RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::GPS_L5)) {
-         std::cout << "GPS L5 RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::GLONASS_G1)) {
-         std::cout << "GLONASS G1 (L1OF) RF Band " << std::endl;
-      }
-      if((signalType & telux::loc::GLONASS_G2)) {
-         std::cout << "GLONASS G2 (L2OF) RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::GALILEO_E1)) {
-         std::cout << "GALILEO E1 RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::GALILEO_E5A)) {
-         std::cout << "GALILEO E5A RF Band " << std::endl;
-      }
-      if((signalType & telux::loc::GALILIEO_E5B)) {
-         std::cout << "GALILEO E5B RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::BEIDOU_B1)) {
-         std::cout << "BEIDOU B1 RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::BEIDOU_B2)) {
-         std::cout << "BEIDOU B2 RF Band " << std::endl;
-      }
-      if((signalType & telux::loc::QZSS_L1CA)) {
-         std::cout << "QZSS L1CA RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::QZSS_L1S)) {
-         std::cout << "QZSS L1S RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::QZSS_L2)) {
-         std::cout << "QZSS L2 RF Band " << std::endl;
-      }
-      if((signalType & telux::loc::QZSS_L5)) {
-         std::cout << "QZSS L5 RF Band" << std::endl;
-      }
-      if((signalType & telux::loc::SBAS_L1)) {
-         std::cout << "SBAS L1 RF Band" << std::endl;
-      }
+      printGnssSignalType(signalType);
 
       telux::loc::GnssSystem system = measInfo[i].gnssConstellation;
       if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS) {
@@ -294,23 +324,32 @@ void MyLocationListener::printLocationPositionTech(
    std::cout << "Location position technology used : " << std::endl;
    if((gnssPositionTech & telux::loc::GNSS_SATELLITE)) {
       std::cout << "SATELLITE" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_CELLID)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_CELLID)) {
       std::cout << "CELL" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_WIFI)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_WIFI)) {
       std::cout << "WIFI" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_SENSORS)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_SENSORS)) {
       std::cout << "SENSORS" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_REFERENCE_LOCATION)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_REFERENCE_LOCATION)) {
       std::cout << "REFERENCE LOCATION" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_INJECTED_COARSE_POSITION)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_INJECTED_COARSE_POSITION)) {
       std::cout << "INJECTED COARSE POSITION" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_AFLT)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_AFLT)) {
       std::cout << "AFLT" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_HYBRID)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_HYBRID)) {
       std::cout << "HYBRID" << std::endl;
-   } else if((gnssPositionTech & telux::loc::GNSS_PPE)) {
+   }
+   if((gnssPositionTech & telux::loc::GNSS_PPE)) {
       std::cout << "PPE" << std::endl;
-   } else {
+   }
+   if((gnssPositionTech == 0)) {
       std::cout << "DEFAULT" << std::endl;
    }
 }
@@ -360,19 +399,6 @@ void MyLocationListener::printVerticalReliability(telux::loc::LocationReliabilit
    }
 }
 
-void MyLocationListener::printAltitudeType(telux::loc::AltitudeType altitudeType) {
-   switch(altitudeType) {
-      case telux::loc::AltitudeType::CALCULATED:
-         std::cout << "Altitude type: CALCULATED, ";
-         break;
-      case telux::loc::AltitudeType::ASSUMED:
-         std::cout << "Altitude type: ASSUMED, ";
-         break;
-      default:
-         std::cout << "Altitude type: UNKNOWN, ";
-   }
-}
-
 void MyLocationListener::printConstellationType(telux::loc::GnssConstellationType constellation) {
    switch(constellation) {
       case telux::loc::GnssConstellationType::GPS:
@@ -404,13 +430,13 @@ void MyLocationListener::printConstellationType(telux::loc::GnssConstellationTyp
 void MyLocationListener::printSVHealthStatus(telux::loc::SVHealthStatus healthStatus) {
    switch(healthStatus) {
       case telux::loc::SVHealthStatus::UNHEALTHY:
-         std::cout << "SV health status: UNHEALTHY, ";
+         std::cout << "SV health status: UNHEALTHY ";
          break;
       case telux::loc::SVHealthStatus::HEALTHY:
-         std::cout << "SV health status: HEALTHY, ";
+         std::cout << "SV health status: HEALTHY ";
          break;
       default:
-         std::cout << "SV health status: UNKNOWN, ";
+         std::cout << "SV health status: UNKNOWN ";
    }
 }
 void MyLocationListener::printSVStatus(telux::loc::SVStatus svStatus) {
@@ -432,13 +458,13 @@ void MyLocationListener::printSVStatus(telux::loc::SVStatus svStatus) {
 void MyLocationListener::printEphimerisAvailability(telux::loc::SVInfoAvailability availability) {
    switch(availability) {
       case telux::loc::SVInfoAvailability::YES:
-         std::cout << "Ephemeris availability: YES, ";
+         std::cout << "Ephemeris availability: YES ";
          break;
       case telux::loc::SVInfoAvailability::NO:
-         std::cout << "Ephemeris availability: NO,  ";
+         std::cout << "Ephemeris availability: NO  ";
          break;
       default:
-         std::cout << "Ephemeris availability: UNKNOWN, ";
+         std::cout << "Ephemeris availability: UNKNOWN ";
    }
 }
 
@@ -452,6 +478,19 @@ void MyLocationListener::printAlmanacAvailability(telux::loc::SVInfoAvailability
          break;
       default:
          std::cout << "Almanac availability: UNKNOWN" << std::endl;
+   }
+}
+
+void MyLocationListener::printFixAvailability(telux::loc::SVInfoAvailability availability) {
+   switch(availability) {
+      case telux::loc::SVInfoAvailability::YES:
+         std::cout << "Fix availability: YES ";
+         break;
+      case telux::loc::SVInfoAvailability::NO:
+         std::cout << "Fix availability: NO  ";
+         break;
+      default:
+         std::cout << "Fix availability: UNKNOWN ";
    }
 }
 
@@ -583,8 +622,11 @@ void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVI
       printConstellationType(svInfo->getConstellation());
       printEphimerisAvailability(svInfo->getHasEphemeris());
       printAlmanacAvailability(svInfo->getHasAlmanac());
+      printFixAvailability(svInfo->getHasFix());
       std::cout << "Elevation: " << svInfo->getElevation() << ", Azimuth: " << svInfo->getAzimuth()
-                << ", SNR: " << svInfo->getSnr() << std::endl;
+                << ", Signal Strength: " << svInfo->getSnr() << std::endl;
+      std::cout << "Carrier frequency: " << svInfo->getCarrierFrequency() << std::endl;
+      printGnssSignalType(svInfo->getSignalType());
    }
    isTimerExpired = false;
    std::cout << "*************************************************************" << std::endl;

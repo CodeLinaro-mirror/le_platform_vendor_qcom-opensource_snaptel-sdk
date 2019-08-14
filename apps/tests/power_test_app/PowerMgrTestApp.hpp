@@ -45,6 +45,7 @@ using namespace telux::power;
 using namespace telux::common;
 
 class PowerMgmtTestApp : public ITcuActivityListener,
+                         public IServiceStatusListener,
                          public ConsoleApp,
                          public std::enable_shared_from_this<PowerMgmtTestApp> {
 public:
@@ -58,6 +59,7 @@ public:
 
     void registerForUpdates();
     void deregisterForUpdates();
+    TcuActivityState getTcuActivityState();
     void sendActivityStateCommand(TcuActivityState state);
 
     void consoleinit();

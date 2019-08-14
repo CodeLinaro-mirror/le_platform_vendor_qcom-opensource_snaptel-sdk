@@ -88,6 +88,15 @@ void MyLocationListener::printSbasCorrection(
    if(correction[(telux::loc::SbasCorrectionType)3]) {
       std::cout << "SBAS integrity information is used" << std::endl;
    }
+   if(correction[(telux::loc::SbasCorrectionType)4]) {
+      std::cout << "SBAS DGNSS correction information is used" << std::endl;
+   }
+   if(correction[(telux::loc::SbasCorrectionType)5]) {
+      std::cout << "SBAS RTK correction information is used" << std::endl;
+   }
+   if(correction[(telux::loc::SbasCorrectionType)6]) {
+      std::cout << "SBAS PPP correction information is used" << std::endl;
+   }
 }
 
 void MyLocationListener::printPositionTech(std::shared_ptr<telux::loc::ILocationInfo> locationInfo) {
@@ -212,13 +221,13 @@ void MyLocationListener::printSensorType(telux::loc::SensorType sensorType) {
 void MyLocationListener::printAltitudeType(telux::loc::AltitudeType altitudeType) {
    switch(altitudeType) {
       case telux::loc::AltitudeType::CALCULATED:
-         std::cout << "Altitude type: CALCULATED, ";
+         std::cout << "Altitude type: CALCULATED ";
          break;
       case telux::loc::AltitudeType::ASSUMED:
-         std::cout << "Altitude type: ASSUMED, ";
+         std::cout << "Altitude type: ASSUMED ";
          break;
       default:
-         std::cout << "Altitude type: UNKNOWN, ";
+         std::cout << "Altitude type: UNKNOWN ";
    }
 }
 
@@ -253,13 +262,13 @@ void MyLocationListener::printConstellationType(telux::loc::GnssConstellationTyp
 void MyLocationListener::printSVHealthStatus(telux::loc::SVHealthStatus healthStatus) {
    switch(healthStatus) {
       case telux::loc::SVHealthStatus::UNHEALTHY:
-         std::cout << "SV health status: UNHEALTHY, ";
+         std::cout << "SV health status: UNHEALTHY ";
          break;
       case telux::loc::SVHealthStatus::HEALTHY:
-         std::cout << "SV health status: HEALTHY, ";
+         std::cout << "SV health status: HEALTHY ";
          break;
       default:
-         std::cout << "SV health status: UNKNOWN, ";
+         std::cout << "SV health status: UNKNOWN ";
    }
 }
 void MyLocationListener::printSVStatus(telux::loc::SVStatus svStatus) {
@@ -281,13 +290,13 @@ void MyLocationListener::printSVStatus(telux::loc::SVStatus svStatus) {
 void MyLocationListener::printEphimerisAvailability(telux::loc::SVInfoAvailability availability) {
    switch(availability) {
       case telux::loc::SVInfoAvailability::YES:
-         std::cout << "Ephemeris availability: YES, ";
+         std::cout << "Ephemeris availability: YES ";
          break;
       case telux::loc::SVInfoAvailability::NO:
-         std::cout << "Ephemeris availability: NO,  ";
+         std::cout << "Ephemeris availability: NO  ";
          break;
       default:
-         std::cout << "Ephemeris availability: UNKNOWN, ";
+         std::cout << "Ephemeris availability: UNKNOWN ";
    }
 }
 
@@ -442,11 +451,14 @@ void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVI
    for(auto svInfo : gnssSVInfo->getSVInfoList()) {
       std::cout << "**** GNSS SV Id : " << svInfo->getId() << " ****" << std::endl;
       printConstellationType(svInfo->getConstellation());
+      printSVHealthStatus(svInfo->getSVHealthStatus());
+      printSVStatus(svInfo->getStatus());
       printEphimerisAvailability(svInfo->getHasEphemeris());
       printAlmanacAvailability(svInfo->getHasAlmanac());
       std::cout << "Elevation: " << svInfo->getElevation() << ", Azimuth: " << svInfo->getAzimuth()
                 << ", SNR: " << svInfo->getSnr() << std::endl;
    }
+   printAltitudeType(gnssSVInfo->getAltitudeType());
    isTimerExpired = false;
    std::cout << "*************************************************************" << std::endl;
 }

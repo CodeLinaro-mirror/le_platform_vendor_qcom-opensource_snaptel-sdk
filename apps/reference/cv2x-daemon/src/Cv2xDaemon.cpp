@@ -59,9 +59,24 @@
 
 #include "Cv2xDaemon.hpp"
 #include "Cv2xLog.hpp"
+#include "PowerFactory.hpp"
 
 extern int enableDebug;
 extern int enableSyslog;
+static bool exiting_ = false;
+
+class SystemStateListener : public telux::power::ITcuActivityListener {
+
+public:
+    void onTcuActivityStateUpdate(TcuActivityState tcuState) override {
+        Cv2xDaemon & cv2xDaemon = Cv2xDaemon::getInstance();
+        LOGD("System state change notification\n");
+
+        std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
+        cv2xDaemon.setSystemState(tcuState);
+        cv2xDaemon.cv_.notify_all();
+    }
+};
 
 Status Cv2xDaemon::startV2xMode() {
 
@@ -119,6 +134,68 @@ Status Cv2xDaemon::stopV2xMode() {
         return ret;
     }
 
+    return Status::SUCCESS;
+}
+
+Status Cv2xDaemon::handleSystemStateChange() {
+    Status ret = Status::SUCCESS;
+    TcuActivityState newState = getSystemState();
+
+    switch (newState) {
+        case TcuActivityState::SUSPEND:
+            LOGI("System going to suspend, stop CV2X mode\n");
+            /* Existing data calls will be auto terminated if v2x mode off */
+            stopV2xMode();
+            sysStateMgr_->sendActivityStateAck(
+                          TcuActivityStateAck::SUSPEND_ACK);
+            break;
+        case TcuActivityState::RESUME:
+            LOGI("System is resuming, start CV2X mode\n");
+            startV2xMode();
+            break;
+        case TcuActivityState::SHUTDOWN:
+            LOGI("System shutting down\n");
+            sysStateMgr_->sendActivityStateAck(
+                             TcuActivityStateAck::SHUTDOWN_ACK);
+            break;
+        default:
+            break;
+    }
+
+    setSystemState(TcuActivityState::UNKNOWN);
+    return ret;
+}
+
+void Cv2xDaemon::setSystemState(TcuActivityState newState) {
+    systemState_ = newState;
+}
+
+TcuActivityState Cv2xDaemon::getSystemState() {
+    return systemState_;
+}
+
+Status Cv2xDaemon::enableSysPowerNotification() {
+    telux::common::Status regStatus;
+    sysStateMgr_ =
+        telux::power::PowerFactory::getInstance().getTcuActivityManager();
+
+    if (sysStateMgr_ == nullptr){
+        LOGE("Failed to get sysStateMgr_\n");
+        return Status::FAILED;
+    }
+    if (sysStateMgr_->isReady() == false) {
+        std::future<bool> future = sysStateMgr_->onReady();
+        future.get();
+    }
+
+    sysStateListener_ = std::make_shared<SystemStateListener>();
+    regStatus = sysStateMgr_->registerListener(sysStateListener_);
+    if (regStatus != telux::common::Status::SUCCESS) {
+        LOGE("Error sysStateMgr_ register listener\n");
+        return Status::FAILED;
+    }
+
+    LOGD("enableSysPowerNotification success\n");
     return Status::SUCCESS;
 }
 
@@ -192,6 +269,7 @@ void terminationHandler(int signum) {
 
     signal(signum, SIG_DFL);
     raise(signum);
+    exiting_ = true;
     Cv2xDaemon::getInstance().cv_.notify_all();
 
 }
@@ -340,14 +418,26 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // The App is running in daemon mode, We wait on Signal to terminate program
     if (isRunningDaemonMode) {
 #ifdef WITH_SYSTEMD
         sd_notify(0, "READY=1");
 #endif
-        std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
-        LOGD("Press CTRL+C to exit\n");
-        cv2xDaemon.cv_.wait(lock);
+
+        if (cv2xDaemon.enableSysPowerNotification() != Status::SUCCESS) {
+            cv2xDaemon.deInit();
+            return -1;
+        }
+
+        while (1) {
+            std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
+            cv2xDaemon.cv_.wait(lock);
+
+            if (true == exiting_) {
+                break;
+            }
+
+            cv2xDaemon.handleSystemStateChange();
+        }
     } else {
         cv2xDaemon.deInit();
     }

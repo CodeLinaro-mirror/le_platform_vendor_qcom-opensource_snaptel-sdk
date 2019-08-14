@@ -49,6 +49,9 @@ namespace loc {
 /** @addtogroup telematics_location
 * @{ */
 
+const float UNKNOWN_CARRIER_FREQ = -1;
+const int UNKNOWN_SIGNAL_MASK = 0;
+
 /**
  * Defines recurrence type of the fix.
  * Obsolete
@@ -118,6 +121,12 @@ enum SbasCorrectionType {
                              SBAS long correction is used */
   SBAS_INTEGRITY, /**< Bit mask to specify whether
                       SBAS integrity information is used */
+  SBAS_CORRECTION_DGNSS, /**< Bit mask to specify whether
+                              SBAS DGNSS correction is used */
+  SBAS_CORRECTION_RTK, /**< Bit mask to specify whether
+                            SBAS RTK correction is used */
+  SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
+                            SBAS PPP correction is used */
   SBAS_COUNT  /**< Bitset */
 };
 
@@ -484,7 +493,19 @@ enum GnssSignalType {
   /** QZSS L5 RF Band */
   QZSS_L5 = (1<<14),
   /** SBAS L1 RF Band */
-  SBAS_L1 = (1<<15)
+  SBAS_L1 = (1<<15),
+  /** BEIDOU B1I RF Band */
+  BEIDOU_B1I = (1<<16),
+  /** BEIDOU B1C RF Band */
+  BEIDOU_B1C = (1<<17),
+  /** BEIDOU B2I RF Band */
+  BEIDOU_B2I = (1<<18),
+  /** BEIDOU B2AI RF Band */
+  BEIDOU_B2AI = (1<<19),
+  /** NAVIC L5 RF Band */
+  NAVIC_L5 = (1<<20),
+  /** BEIDOU B2A_Q RF Band */
+  BEIDOU_B2AQ = (1<<21)
 };
 
 /*Bit mask containing bits from GnssSignalType */
@@ -594,7 +615,9 @@ enum GnssDataSignalTypes {
   GNSS_DATA_SIGNAL_TYPE_QZSS_L2C_L = 15,    /**<  QZSS L2C_L RF Band  */
   GNSS_DATA_SIGNAL_TYPE_QZSS_L5_Q = 16,     /**<  QZSS L5_Q RF Band  */
   GNSS_DATA_SIGNAL_TYPE_SBAS_L1_CA = 17,    /**<  SBAS L1_CA RF Band  */
-  GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES = 18 /**< Maximum number of signal types */
+  GNSS_DATA_SIGNAL_TYPE_NAVIC_L5 = 18,      /**<  NAVIC L5 RF Band */
+  GNSS_DATA_SIGNAL_TYPE_BEIDOU_B2A_Q = 19,       /**<  BEIDOU B2A_Q RF Band  */
+  GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES = 20 /**< Maximum number of signal types */
 };
 
 enum GnssDataValidityType {
@@ -1414,6 +1437,15 @@ public:
   virtual SVInfoAvailability getHasAlmanac() = 0;
 
 /**
+ * Indicates whether the satellite is used in computing the fix.
+ *
+ * @returns @ref SVInfoAvailability, if satellite used or not else returns
+ * UNKNOWN.
+ *
+ */
+  virtual SVInfoAvailability getHasFix() = 0;
+
+/**
  * Retrieves satellite vehicle elevation angle.
  *    - Units: Degrees
  *    - Range: 0 to 90
@@ -1440,6 +1472,22 @@ public:
  *
  */
   virtual float getSnr() = 0;
+
+/**
+ * Indicates the carrier frequency of the signal tracked.
+ *
+ * @returns carrier frequency in Hz else returns UNKNOWN_CARRIER_FREQ frequency
+ * when not supported.
+ */
+  virtual float getCarrierFrequency() = 0;
+
+/**
+ * Indicates the validity for different types of signal
+ * for gps, galileo, beidou etc.
+ *
+ * @returns signalType mask else return UNKNOWN_SIGNAL_MASK when not supported.
+ */
+  virtual GnssSignal getSignalType() = 0;
 };
 
 /**

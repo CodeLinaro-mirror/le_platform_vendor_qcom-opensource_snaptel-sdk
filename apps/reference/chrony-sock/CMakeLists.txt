@@ -11,6 +11,10 @@ add_compile_options(${GLIB_CFLAGS})
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
+set(EXEC_PERM OWNER_EXECUTE OWNER_WRITE OWNER_READ
+              GROUP_EXECUTE GROUP_READ
+              WORLD_EXECUTE WORLD_READ)
+
 set(SOURCES chrony-sock.cpp)
 
 add_executable(${APP_NAME} ${SOURCES})

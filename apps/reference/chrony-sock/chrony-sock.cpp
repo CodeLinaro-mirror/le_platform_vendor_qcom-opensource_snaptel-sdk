@@ -170,7 +170,12 @@ public:
             firstFix = false;
         }
 
-        LOGD("GNSS report with UTC = %" PRIu64 "\n", utc);
+        if (utc % 1000 == 0) {
+           LOGD("GNSS report with UTC = %" PRIu64 "\n", utc);
+        } else {
+           LOGD("GNSS report ignored with UTC = %" PRIu64 "\n", utc);
+           return;
+        }
 
         struct TimeSample sample = { 0 };
         struct timeval gps_time, offset_time;

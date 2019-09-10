@@ -57,6 +57,7 @@ private:
    void setCardLock(std::vector<std::string> userInput);
    std::string appTypeToString(telux::tel::AppType appType);
    std::string appStateToString(telux::tel::AppState appState);
+   std::string cardStateToString(telux::tel::CardState state);
 
    std::shared_ptr<telux::tel::ICardListener> cardListener_;
    std::shared_ptr<telux::tel::ICard> card_ = nullptr;

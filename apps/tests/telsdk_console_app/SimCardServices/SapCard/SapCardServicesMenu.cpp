@@ -34,6 +34,7 @@
 #include <iostream>
 
 #include "SapCardServicesMenu.hpp"
+#include "Utils.hpp"
 
 SapCardServicesMenu::SapCardServicesMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -139,17 +140,23 @@ void SapCardServicesMenu::transmitSapApdu(std::vector<std::string> userInput) {
    std::cout << std::endl;
    std::cout << "Enter CLA : ";
    std::cin >> cla;
+   Utils::validateInput(cla);
    std::cout << "Enter INS : ";
    std::cin >> instruction;
+   Utils::validateInput(instruction);
    std::cout << "Enter P1 : ";
    std::cin >> p1;
+   Utils::validateInput(p1);
    std::cout << "Enter P2 : ";
    std::cin >> p2;
+   Utils::validateInput(p2);
    std::cout << "Enter Lc : ";
    std::cin >> lc;
+   Utils::validateInput(lc);
    for(int i = 0; i < lc; i++) {
       std::cout << "Enter DATA (" << i + 1 << ") :";
       std::cin >> tmpInp;
+      Utils::validateInput(tmpInp);
       data.emplace_back((uint8_t)tmpInp);
    }
    auto ret

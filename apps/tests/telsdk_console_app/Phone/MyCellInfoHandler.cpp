@@ -36,6 +36,19 @@
 using namespace telux::tel;
 using namespace telux::common;
 
+std::string MyCellInfoCallback::signalLevelToString(telux::tel::SignalStrengthLevel level) {
+    switch(level){
+        case telux::tel::SignalStrengthLevel::LEVEL_1 : return "LEVEL_1";
+        case telux::tel::SignalStrengthLevel::LEVEL_2 : return "LEVEL_2";
+        case telux::tel::SignalStrengthLevel::LEVEL_3 : return "LEVEL_3";
+        case telux::tel::SignalStrengthLevel::LEVEL_4 : return "LEVEL_4";
+        case telux::tel::SignalStrengthLevel::LEVEL_5 : return "LEVEL_5";
+        case telux::tel::SignalStrengthLevel::LEVEL_UNKNOWN : return "LEVEL_UNKNOWN";
+        default:
+            return "Invalid Signal Level";
+    }
+}
+
 void MyCellInfoCallback::cellInfoListResponse(
    std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList,
    telux::common::ErrorCode error) {
@@ -53,15 +66,40 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity() << std::endl;
             PRINT_CB << "GSM arfcn: " << gsmCellInfo->getCellIdentity().getArfcn() << std::endl;
             // GSM signal strength
-            PRINT_CB << "GSM Signal Strength: "
-                     << gsmCellInfo->getSignalStrengthInfo().getGsmSignalStrength() << std::endl;
-            PRINT_CB << "GSM Bit error rate: "
-                     << gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate() << std::endl;
-            PRINT_CB
-               << "GSM TimingAdvance: " << gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
-               << std::endl;
-            PRINT_CB << "GSM Signal Level: " << (int)gsmCellInfo->getSignalStrengthInfo().getLevel()
-                     << std::endl;
+            if(gsmCellInfo->getSignalStrengthInfo().getGsmSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "GSM Signal Strength: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "GSM Signal Strength: "
+                    << gsmCellInfo->getSignalStrengthInfo().getGsmSignalStrength() << std::endl;
+            }
+
+            if(gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "GSM Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "GSM Bit Error Rate: "
+                   << gsmCellInfo->getSignalStrengthInfo().getGsmBitErrorRate()<< std::endl;
+            }
+
+            if(gsmCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "GSM Signal Strength(in dBm): " << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "GSM Signal Strength(in dBm): "
+                   << gsmCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(gsmCellInfo->getSignalStrengthInfo().getTimingAdvance()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "GSM Timing Advance(in bit periods): " << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "GSM Timing Advance(in bit periods): "
+                   << gsmCellInfo->getSignalStrengthInfo().getTimingAdvance() << std::endl;
+            }
+
+            PRINT_CB << "GSM Signal Level: "
+               << signalLevelToString(gsmCellInfo->getSignalStrengthInfo().getLevel())<< std::endl;
+
          } else if(cellinfo->getType() == telux::tel::CellType::CDMA) {
             PRINT_CB << "CDMA Cellinfo " << std::endl;
             auto cdmaCellInfo = std::static_pointer_cast<telux::tel::CdmaCellInfo>(cellinfo);
@@ -75,16 +113,39 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "CDMA Latitude: " << cdmaCellInfo->getCellIdentity().getLatitude()
                      << std::endl;
             // CDMA Signal Strength
-            PRINT_CB << "CDMA Dbm: " << cdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
-            PRINT_CB << "CDMA Ecio: " << cdmaCellInfo->getSignalStrengthInfo().getCdmaEcio()
-                     << std::endl;
-            PRINT_CB << "EVDO Ecio: " << cdmaCellInfo->getSignalStrengthInfo().getEvdoEcio()
-                     << std::endl;
+            if(cdmaCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "CDMA/EVDO Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "CDMA/EVDO Signal Strength(in dBm): "
+               << cdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(cdmaCellInfo->getSignalStrengthInfo().getCdmaEcio()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "CDMA Ec/Io(in dB): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "CDMA Ec/Io(in dB): " <<
+                   cdmaCellInfo->getSignalStrengthInfo().getCdmaEcio() << std::endl;
+            }
+
+            if(cdmaCellInfo->getSignalStrengthInfo().getEvdoEcio()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "EVDO Ec/Io(in dB): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "EVDO Ec/Io(in dB): " <<
+                   cdmaCellInfo->getSignalStrengthInfo().getEvdoEcio() << std::endl;
+            }
+
+            if(cdmaCellInfo->getSignalStrengthInfo().getEvdoSignalNoiseRatio()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "EVDO Signal Noise Ratio: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "EVDO Signal Noise Ratio: "
+                    << cdmaCellInfo->getSignalStrengthInfo().getEvdoSignalNoiseRatio() << std::endl;
+            }
             PRINT_CB
-               << "EVDO SNR: " << cdmaCellInfo->getSignalStrengthInfo().getEvdoSignalNoiseRatio()
-               << std::endl;
-            PRINT_CB << "CDMA/EVDO Signal Level: "
-                     << (int)cdmaCellInfo->getSignalStrengthInfo().getLevel() << std::endl;
+            << "CDMA Signal Level: "
+            << signalLevelToString(cdmaCellInfo->getSignalStrengthInfo().getLevel())<< std::endl;
          } else if(cellinfo->getType() == telux::tel::CellType::LTE) {
             PRINT_CB << "LTE Cellinfo  " << std::endl;
             auto lteCellInfo = std::static_pointer_cast<telux::tel::LteCellInfo>(cellinfo);
@@ -98,23 +159,69 @@ void MyCellInfoCallback::cellInfoListResponse(
                      << std::endl;
             PRINT_CB << "LTE arfcn: " << lteCellInfo->getCellIdentity().getEarfcn() << std::endl;
             // LTE Signal Strength
-            PRINT_CB << "LTE signal strength: "
-                     << lteCellInfo->getSignalStrengthInfo().getLteSignalStrength() << std::endl;
-            PRINT_CB << "LTE Rsrp: " << lteCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
-            PRINT_CB << "LTE Rsrq: "
-                     << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalReceiveQuality()
-                     << std::endl;
-            PRINT_CB
-               << "LTE Rssnr: " << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr()
+
+            if(lteCellInfo->getSignalStrengthInfo().getLteSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Signal Strength: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "LTE Signal Strength: "
+                    << lteCellInfo->getSignalStrengthInfo().getLteSignalStrength() << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "LTE Signal Strength(in dBm): "
+                    << lteCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Reference Signal Receive Power(in dBm): "<< "UNAVAILABLE"
                << std::endl;
-            PRINT_CB << "LTE Cqi: "
-                     << lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
-                     << std::endl;
-            PRINT_CB
-               << "LTE Timing Advance: " << lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
-               << std::endl;
-            PRINT_CB << "LTE Signal Level: " << (int)lteCellInfo->getSignalStrengthInfo().getLevel()
-                     << std::endl;
+            } else {
+               PRINT_CB << "LTE Reference Signal Receive Power(in dBm): "
+                    << lteCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalReceiveQuality()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Reference Signal Receive Quality(in dB): "
+                   << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "LTE Reference Signal Receive Quality(in dB): "
+                   << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalReceiveQuality()
+                   << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Reference Signal SNR(in dB): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "LTE Reference Signal SNR(in dB): "
+                    << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr() * 0.1
+                    << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Channel Quality Indicator: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "LTE Channel Quality Indicator: "
+                    << lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
+                    << std::endl;
+            }
+
+            if(lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE Timing Advance: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "LTE Timing Advance: "
+                    << lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
+                    << std::endl;
+            }
+            PRINT_CB << "LTE Signal Level: "
+            << signalLevelToString(lteCellInfo->getSignalStrengthInfo().getLevel())
+             << std::endl;
          } else if(cellinfo->getType() == telux::tel::CellType::WCDMA) {
             PRINT_CB << "WCDMA Cellinfo " << std::endl;
             auto wcdmaCellInfo = std::static_pointer_cast<telux::tel::WcdmaCellInfo>(cellinfo);
@@ -129,12 +236,31 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "WCDMA arfcn: " << wcdmaCellInfo->getCellIdentity().getUarfcn()
                      << std::endl;
             // WCDMA Signal Strength
-            PRINT_CB << "WCDMA Signal Strength: "
-                     << wcdmaCellInfo->getSignalStrengthInfo().getSignalStrength() << std::endl;
-            PRINT_CB << "WCDMA bit error rate: "
-                     << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate() << std::endl;
+            if(wcdmaCellInfo->getSignalStrengthInfo().getSignalStrength()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "WCDMA Signal Strength: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "WCDMA Signal Strength: "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getSignalStrength() << std::endl;
+            }
+
+            if(wcdmaCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "WCDMA Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "WCDMA Signal Strength(in dBm): "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "WCDMA Bit Error Rate: "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "WCDMA Bit Error Rate: "
+                    << wcdmaCellInfo->getSignalStrengthInfo().getBitErrorRate() << std::endl;
+            }
             PRINT_CB
-               << "WCDMA Signal Level: " << (int)wcdmaCellInfo->getSignalStrengthInfo().getLevel()
+               << "WCDMA Signal Level: "
+               << signalLevelToString(wcdmaCellInfo->getSignalStrengthInfo().getLevel())
                << std::endl;
          } else if(cellinfo->getType() == telux::tel::CellType::TDSCDMA) {
             PRINT_CB << "TDSCDMA Cellinfo " << std::endl;
@@ -149,8 +275,15 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "TDSCDMA Cell Parameters Id : "
                      << tdsCdmaCellInfo->getCellIdentity().getParametersId() << std::endl;
             // TDSCDMA signal strength..
-            PRINT_CB << "TDSCDMA power : " << tdsCdmaCellInfo->getSignalStrengthInfo().getRscp()
-                     << std::endl;
+            if(tdsCdmaCellInfo->getSignalStrengthInfo().getRscp()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "TDSCDMA  Reference Signal Code Power(in dBm): "<< "UNAVAILABLE"
+                   << std::endl;
+            } else {
+               PRINT_CB
+               << "TDSCDMA  Reference Signal Code Power(in dBm): "
+               << tdsCdmaCellInfo->getSignalStrengthInfo().getRscp() << std::endl;
+            }
          }
       }
    } else {

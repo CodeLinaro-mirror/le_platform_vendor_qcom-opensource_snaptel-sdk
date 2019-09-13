@@ -494,6 +494,56 @@ void MyLocationListener::printFixAvailability(telux::loc::SVInfoAvailability ava
    }
 }
 
+void MyLocationListener::printCalibrationStatus(
+    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
+  telux::loc::DrCalibrationStatus calibrationStatus = locationInfo->getCalibrationStatus();
+  std::cout << " Calibration status : " << std::endl;
+  if((calibrationStatus & telux::loc::DR_ROLL_CALIBRATION_NEEDED)) {
+      std::cout << "Roll calibration is needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_PITCH_CALIBRATION_NEEDED)) {
+      std::cout << "Pitch calibration is needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_YAW_CALIBRATION_NEEDED)) {
+      std::cout << "Yaw calibration is needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_ODO_CALIBRATION_NEEDED)) {
+      std::cout << "Odo calibration is needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_GYRO_CALIBRATION_NEEDED)) {
+      std::cout << "Gyro calibration is needed" << std::endl;
+   }
+}
+
+void MyLocationListener::printLocOutputEngineType(
+    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
+  telux::loc::LocationAggregationType locEngineType = locationInfo->getLocOutputEngType();
+  if(locEngineType == telux::loc::LOC_OUTPUT_ENGINE_FUSED) {
+    std::cout << " This is FUSED engine reports" << std::endl;
+  }
+  if(locEngineType == telux::loc::LOC_OUTPUT_ENGINE_SPE) {
+    std::cout << " This is SPE engine reports" << std::endl;
+  }
+  if(locEngineType == telux::loc::LOC_OUTPUT_ENGINE_PPE) {
+    std::cout << " This is PPE engine reports" << std::endl;
+  }
+}
+
+void MyLocationListener::printLocOutputEngineMask(
+    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
+  telux::loc::PositioningEngine posEngineBits = locationInfo->getLocOutputEngMask();
+  if(posEngineBits & telux::loc::STANDARD_POSITIONING_ENGINE) {
+    std::cout << " SPE used in the Fused reports" << std::endl;
+  }
+  if(posEngineBits & telux::loc::DEAD_RECKONING_ENGINE) {
+    std::cout << " DRE used in the Fused reports" << std::endl;
+  }
+  if(posEngineBits & telux::loc::PRECISE_POSITIONING_ENGINE) {
+    std::cout << " PPE used in the Fused reports" << std::endl;
+  }
+
+}
+
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -607,6 +657,12 @@ void MyLocationListener::onDetailedLocationUpdate(
       }
       std::cout << std::endl;
    }
+   std::cout << "Caibration confidence percent : " <<
+       locationInfo->getCalibrationConfidencePercent() << std::endl;
+   printCalibrationStatus(locationInfo);
+   printLocOutputEngineType(locationInfo);
+   printLocOutputEngineMask(locationInfo);
+
    std::cout << "*************************************************************" << std::endl;
 }
 

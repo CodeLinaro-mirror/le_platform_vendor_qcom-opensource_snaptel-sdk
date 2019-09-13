@@ -123,6 +123,7 @@ public:
    static void printCellInfoDetails(std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList);
    static std::string eCallOperatingModeToString(telux::tel::ECallMode eCallMode);
    static std::string voiceServiceStateToString(telux::tel::VoiceServiceState vocSrvState);
+   static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
 };
 
 #endif  // MYPHONELISTENER_HPP

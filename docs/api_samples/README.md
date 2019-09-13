@@ -30,3 +30,6 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to initiate a TCU activity state transition](power/set_tcu_activity_state_command.md)
   * [How to manage thermal shutdown mode](thermal/send_thermal_shutdown_mode_commands.md)
   * [How to get thermal auto-shutdown updates](thermal/get_thermal_autoshutdown_mode_updates.md)
+  * [How to use Remote Sim Manager APIs](remote_sim/remote_sim_api.md)
+  * [How to do audio loopback](audio/audio_manager_loopback.md)
+  * [How to generate audio tone](audio/audio_manager_tonegenerator.md)

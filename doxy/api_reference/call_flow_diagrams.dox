@@ -747,7 +747,7 @@ of setServiceDomainPreference API.
 19. Application can deregister a listener there by it would not get notifications.
 20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
 
-@section cv2x_call_flows C-V2X 
+@section cv2x_call_flows C-V2X
 
 @subsection cv2x_start_stop_callflow Start/Stop C-V2X Mode
 
@@ -1200,6 +1200,66 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 18. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
 19.  Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
 
+@subsection audio_tone_generator_play_stop_callflow Audio Tone Generator call flow
+
+@anchor fig_audio_tone_generator_play_stop_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_tone_generation_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to play/stop tone on a sink device}
+  \label{fig_audio_tone_generator_play_stop_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_tone_generation_callflow.png,Audio Tone Generator call flow,80,80,Audio Tone Generator call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to create a tone generator stream with streamType as TONE_GENERATOR.
+4. Application receives synchronous status which indicates if the createStream request was sent successfully.
+5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioToneGeneratorStream.
+6. Application requests to play tone using playTone method on IAudioToneGeneratorStream.
+7. Application receives synchronous status which indicates if the playTone request was sent successfully.
+8. Application is notified of the playTone request status (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application can optionally stop the tone being played, before its duration expires.
+10. Application receives synchronous status which indicates if the stopTone request was sent successfully.
+11. Application is notified of the stopTone request status (either SUCCESS or FAILED) via the application-supplied callback.
+12. Application requests delete audio stream using deleteStream method.
+13. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+14. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_loopback_start_stop_callflow Audio Loopback call flow
+
+@anchor fig_audio_loopback_start_stop_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_loopback_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to start/stop loopback between source and sink devices}
+  \label{fig_audio_loopback_start_stop_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_loopback_callflow.png,Audio Loopback call flow,80,80,Audio Loopback call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to create a loopback stream with streamType as LOOPBACK.
+4. Application receives synchronous status which indicates if the createStream request was sent successfully.
+5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioLoopbackStream.
+6. Application requests to start loopback using startLoopback method on IAudioLoopbackStream.
+7. Application receives synchronous status which indicates if the startLoopback request was sent successfully.
+8. Application is notified of the startLoopback request status (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application requests to stop loopback using stopLoopback method on IAudioLoopbackStream.
+10. Application receives synchronous status which indicates if the stopLoopback request was sent successfully.
+11. Application is notified of the stopLoopback request status (either SUCCESS or FAILED) via the application-supplied callback.
+12. Application requests delete audio stream using deleteStream method.
+13. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+14. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+
 @section thermal_manager_call_flow Thermal manager call flow
 
 Thermal manager provides APIs to get list of thermal zones and cooling devices. It also contains APIs
@@ -1385,4 +1445,44 @@ When the application is notified about the service being unavailable, the TCU-ac
 10. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
 11. Application can remove listener.
 12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@section remote_sim_call_flow Remote SIM call flow
+
+Application will get the remote SIM manager object from phone factory. The application must
+register a listener to receive commands/messages from the modem to send to the SIM. After sending
+the connection available message, a onCardConnect() notification tells the application to connect
+to the SIM and perform an Answer to Reset. After sending the card reset message (with the AtR
+bytes), APDU messages will begin to be sent/received.
+
+@anchor fig_remote_sim_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{remote_sim_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Remote SIM call flow}
+  \label{fig_remote_sim_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{remote_sim_call_flow.png,Remote SIM call flow,80,80,Remote SIM call flow}
+
+1. Application requests remote SIM manager object from phone factory, specifying a slot id.
+2. Phone factory returns IRemoteSimManager object.
+3. Application registers a listener to receive commands/messages from the modem to send to the SIM.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application sends a connection available message indicating that a SIM is available for use.
+6. Status of send connection available i.e. either SUCCESS or FAILED will be returned to the application.
+7. Optionally, the response to send connection available request can be received by the application.
+8. Application will receive a card connect notification by the listener.
+9. After the application successfully connects to the SIM and requests an AtR, it sends a card reset message with the AtR bytes.
+10. Status of send card reset i.e. either SUCCESS or FAILED will be returned to the application.
+11. Optionally, the response to send card reset request can be received by the application.
+12. Application will receive an APDU transfer notification by the listener (with APDU message id).
+13. After forwarding the APDU transfer to the SIM and receiving the response, application will send APDU response.
+14. Status of send APDU i.e. either SUCCESS or FAILED will be returned to the application.
+15. Optionally, the response to send APDU request can be received by the application.
+16. To close the connection, application will send connection unavailable message.
+17. Status of send connection unavailable i.e. either SUCCESS or FAILED will be returned to the application.
+18. Optionally, the response to send connection unavailable can be received by the application.
 */

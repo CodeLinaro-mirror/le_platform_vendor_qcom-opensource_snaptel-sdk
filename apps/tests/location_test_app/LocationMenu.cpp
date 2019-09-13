@@ -31,11 +31,14 @@
 #include <future>
 #include <iostream>
 #include <memory>
+#include <sstream>
 
 #include <telux/loc/LocationFactory.hpp>
 
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
+
+const int DEFAULT_UNKNOWN = 0;
 
 LocationMenu::LocationMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -61,22 +64,27 @@ int LocationMenu::init() {
          "1", "Start_Detailed_Reports", {},
          std::bind(&LocationMenu::startDetailedReports, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> startDetailedEngineReportsCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "2", "Start_Detailed_Engine_Reports", {},
+         std::bind(&LocationMenu::startDetailedEngineReports, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> startBasicReportsCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "Start_Basic_Reports", {},
+         "3", "Start_Basic_Reports", {},
          std::bind(&LocationMenu::startBasicReports, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> stopReportsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("3", "Stop_Reports", {},
+      ConsoleAppCommand("4", "Stop_Reports", {},
                         std::bind(&LocationMenu::stopReports, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> enableReportLogsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("4", "Filter_notifications", {},
+      ConsoleAppCommand("5", "Filter_notifications", {},
                         std::bind(&LocationMenu::enableReportLogs, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
-      = {startDetailedReportsCommand, startBasicReportsCommand, stopReportsCommand,
-         enableReportLogsCommand};
+      = {startDetailedReportsCommand,startDetailedEngineReportsCommand, startBasicReportsCommand,
+         stopReportsCommand, enableReportLogsCommand};
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
 
@@ -139,6 +147,62 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
             = std::make_shared<MyLocationCommandCallback>("Detailed report request");
          locationManager_->startDetailedReports(
             (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
+                                     myLocCmdResponseCb_, std::placeholders::_1));
+      } else {
+         std::cout << " Invalid input \n";
+      }
+   }
+}
+
+void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput) {
+   if(locationManager_) {
+      char delimiter = '\n';
+      std::string minItervalInput;
+      std::cout << "Enter Min Interval in Milliseconds (default: 1000ms): ";
+      std::getline(std::cin, minItervalInput, delimiter);
+      int opt = -1;
+      if(!minItervalInput.empty()) {
+         try {
+            opt = std::stoi(minItervalInput);
+         } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt << std::endl;
+         }
+      } else {
+         opt = 1000;
+      }
+      std::string enginePreference;
+      telux::loc::LocReqEngine engineType = DEFAULT_UNKNOWN;
+      std::vector<int> options;
+      std::cout << " Enter the type of engine reports : \n"
+                   " (0 - FUSED\n 1 - SPE\n 2 - PPE) \n\n";
+      std::cout << " Enter your engine preference\n"
+                   " (For example: enter 0,1 to choose FUSED & SPE engine fixes) : ";
+      std::getline(std::cin,enginePreference,delimiter);
+      std::stringstream ss(enginePreference);
+      int i;
+      while(ss >> i) {
+        options.push_back(i);
+        if(ss.peek() == ',' || ss.peek() == ' ')
+          ss.ignore();
+      }
+      for(auto &opt : options) {
+        if(opt >= 0 && opt <= 2) {
+          try {
+            engineType |= 1UL << opt;
+          } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                         << std::endl;
+          }
+        } else {
+            std::cout << "Engine preference should not be out of range" << std::endl;
+        }
+      }
+
+      if(opt > 0) {
+         myLocCmdResponseCb_
+            = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
+         locationManager_->startDetailedEngineReports(
+            (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
                                      myLocCmdResponseCb_, std::placeholders::_1));
       } else {
          std::cout << " Invalid input \n";
@@ -243,7 +307,7 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
                << "FILTER NOTIFICATION MENU" << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
      std::cout << "  1 - Basic_location_notifications" << std::endl;
-     std::cout << "  2 - Detailed_location_notifications" << std::endl;
+     std::cout << "  2 - Detailed/Detailed_engine_location_notifications" << std::endl;
      std::cout << "  3 - SV_info_notifications" << std::endl;
      std::cout << "  4 - Data_info_notifications" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;

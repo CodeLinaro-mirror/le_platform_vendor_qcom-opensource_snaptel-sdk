@@ -138,6 +138,36 @@ public:
                            telux::common::ResponseCallback callback) = 0;
 
 /**
+ * Starts a session which may provide richer default combined position reports
+ * and position reports from other engines. The fused position report type will
+ * always be supported if at least one engine in the system is producing valid report.
+ *
+ * This Api enables the onDetailedLocationUpdate, onGnssSVInfo and
+ * onGnssSignalInfo Apis on the listener.
+ *
+ * @param [in] interval - Minimum time interval between two consecutive
+ * reports in milliseconds.
+ *
+ * E.g. If minInterval is 1000 milliseconds, reports will be provided with a
+ * periodicity of 1 second or more depending on the number of applications
+ * listening to location updates.
+ *
+ * @param [in] engineType - The type of engine requested for fixes such as
+ * SPE or PPE or FUSED. The FUSED includes all the engines that are running to
+ * generate the fixes such as reports from SPE, PPE and DRE.
+ *
+ * @param [in] callback - Optional callback to get the response of set
+ *             minimum interval for reports.
+ *
+ * @returns Status of startDetailedEngineReports i.e. success or suitable status
+ * code.
+ *
+ */
+  virtual telux::common::Status
+      startDetailedEngineReports(uint32_t interval, LocReqEngine engineType,
+                           telux::common::ResponseCallback callback) = 0;
+
+/**
  * Starts the Location report by configuring the time and distance between
  * the consecutive reports.
  *

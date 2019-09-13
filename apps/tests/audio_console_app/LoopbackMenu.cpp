@@ -122,6 +122,7 @@ void LoopbackMenu::deleteStream(std::vector<std::string> userInput) {
     }
 
     if (status == telux::common::Status::SUCCESS) {
+        loopbackStarted_ = false;
         audioLoopbackStream_ = nullptr;
     }
 }

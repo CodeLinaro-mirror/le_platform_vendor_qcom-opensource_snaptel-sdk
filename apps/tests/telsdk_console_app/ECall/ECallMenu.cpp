@@ -93,35 +93,39 @@ void ECallMenu::init() {
       ConsoleAppCommand("2", "ECall", {ECALL_CATEGORY_AUTO + " | " + ECALL_CATEGORY_MANUAL,
                                        ECALL_VARIANT_TEST + " | " + ECALL_VARIANT_EMERGENCY},
                         std::bind(&ECallMenu::makeECall, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> voiceECallCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("3", "Voice_ECall", {ECALL_CATEGORY_AUTO + " | " + ECALL_CATEGORY_MANUAL,
+                                       "phone number"},
+                        std::bind(&ECallMenu::makeVoiceECall, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> updateMsdCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("3", "Update_eCall_MSD", {},
+      ConsoleAppCommand("4", "Update_eCall_MSD", {},
                         std::bind(&ECallMenu::updateECallMSD, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> dialCommad
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Dial", {"number"}, std::bind(&ECallMenu::makeCall, this, std::placeholders::_1)));
+         "5", "Dial", {"number"}, std::bind(&ECallMenu::makeCall, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> hangupCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Hangup", {}, std::bind(&ECallMenu::hangup, this, std::placeholders::_1)));
+         "6", "Hangup", {}, std::bind(&ECallMenu::hangup, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> getCallsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("6", "Get_InProgress_calls", {},
+      ConsoleAppCommand("7", "Get_InProgress_calls", {},
                         std::bind(&ECallMenu::getCalls, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> answerCallCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "7", "Answer_call", {}, std::bind(&ECallMenu::answerCall, this, std::placeholders::_1)));
+         "8", "Answer_call", {}, std::bind(&ECallMenu::answerCall, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> eCallWithPdu = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("8", "eCall_with_MSD_PDU", {},
+      ConsoleAppCommand("9", "eCall_with_MSD_PDU", {},
                         std::bind(&ECallMenu::eCallWithPdu, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> updateEcallMsd = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("9", "Update_eCall_MSD_PDU", {},
+      ConsoleAppCommand("10", "Update_eCall_MSD_PDU", {},
                         std::bind(&ECallMenu::updateEcallMsdWithPdu, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
-      = {eCallSosCommand, eCallCommand,      updateMsdCommand, dialCommad,    hangupCommand,
-         getCallsCommand, answerCallCommand, eCallWithPdu,     updateEcallMsd};
+      = {eCallSosCommand, eCallCommand, voiceECallCommand, updateMsdCommand, dialCommad,
+         hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu,     updateEcallMsd};
 
    addCommands(commandsList);
 
@@ -314,6 +318,41 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
 }
 
 /**
+ * Sample voice eCall operation
+ */
+void ECallMenu::makeVoiceECall(std::vector<std::string> inputCommand) {
+   // Get Phone from PhoneFactory
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto spDefaultPhone = phoneFactory.getPhoneManager()->getPhone();
+
+   // Fetch eCall category and variant
+   std::string category = toLowerCase(inputCommand[1]);
+   std::string dialNumber = toLowerCase(inputCommand[2]);
+
+   telux::tel::ECallCategory emergencyCategory;
+
+   if(category == ECALL_CATEGORY_AUTO) {  // Automatically triggered eCall.
+      emergencyCategory = telux::tel::ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
+   } else if(category == ECALL_CATEGORY_MANUAL) {  // Manually triggered eCall.
+      emergencyCategory = telux::tel::ECallCategory::VOICE_EMER_CAT_MANUAL;
+   } else {
+      std::cout << "Invalid Emergency Call Category" << std::endl;
+      return;
+   }
+
+   MsdSettings msdSettings;
+   auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
+   auto callManager = phoneFactory.getCallManager();
+   int phoneId = DEFAULT_PHONE_ID;
+   auto ret = callManager->makeVoiceECall(phoneId, dialNumber, eCallMsdData, (int)emergencyCategory,
+                                            callCommandCallback_);
+   std::cout
+      << (ret == telux::common::Status::SUCCESS ? GREEN + "  ECall request is successful" + DONE
+                                                : RED + "  ECall request failed" + DONE)
+      << '\n';
+}
+
+/**
  * Sample Update eCall MSD operation
  */
 void ECallMenu::updateECallMSD(std::vector<std::string> inputCommand) {
@@ -347,7 +386,7 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
       opt1 = CATEGORY_AUTO;
    }
    std::string variant;
-   std::cout << "Enter variant(1 - test | 2 - emergency): ";
+   std::cout << "Enter variant(1 - test | 2 - emergency | 3 - voice): ";
    std::getline(std::cin, variant, delimiter);
    int opt2 = -1;
    if(!variant.empty()) {
@@ -366,6 +405,7 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
 
    telux::tel::ECallCategory emergencyCategory;
    telux::tel::ECallVariant eCallVariant;
+   std::string dialNumber = std::string();
 
    if(opt1 == CATEGORY_AUTO) {  // Automatically triggered eCall.
       emergencyCategory = telux::tel::ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
@@ -381,6 +421,10 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
    } else if(opt2 == VARIANT_EMERGENCY) {  // Will use the emergency number configured in FDN
                                            // i.e. 112.
       eCallVariant = telux::tel::ECallVariant::ECALL_EMERGENCY;
+   } else if(opt2 == VARIANT_VOICE) {  // Will use the emergency number provided by user
+      eCallVariant = telux::tel::ECallVariant::ECALL_VOICE;
+      std::cout << "Enter the phone number : ";
+      std::getline(std::cin, dialNumber, delimiter);
    } else {
       std::cout << "Invalid Emergency Call Variant" << std::endl;
       return;
@@ -401,9 +445,14 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
                  128, 4,   52, 10, 140, 65,  89, 164, 56, 119, 207, 131, 54,  210, 63,
                  65,  104, 16, 24, 8,   32,  19, 198, 68, 0,   0,   48,  20};
    }
-
-   auto ret = callManager->makeECall(phoneId, rawData, (int)emergencyCategory, (int)eCallVariant,
+   telux::common::Status ret;
+   if(eCallVariant != telux::tel::ECallVariant::ECALL_VOICE) {
+      ret = callManager->makeECall(phoneId, rawData, (int)emergencyCategory, (int)eCallVariant,
                                      &makeEcallResponse);
+   } else {
+      ret = callManager->makeVoiceECall(phoneId, dialNumber, rawData, (int)emergencyCategory,
+                                     &makeEcallResponse);
+   }
    std::cout
       << (ret == telux::common::Status::SUCCESS ? GREEN + "  ECall request is successful" + DONE
                                                 : RED + "  ECall request failed" + DONE)

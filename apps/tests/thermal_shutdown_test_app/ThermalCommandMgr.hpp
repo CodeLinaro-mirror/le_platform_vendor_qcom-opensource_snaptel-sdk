@@ -31,6 +31,7 @@
 #define THERMALCOMMANDMGR_HPP
 
 #include<memory>
+
 #include "telux/common/CommonDefines.hpp"
 
 #include <telux/therm/ThermalDefines.hpp>

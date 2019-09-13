@@ -590,7 +590,15 @@ enum LocationInfoExValidityType {
   /** valid leap_seconds */
   HAS_LEAP_SECONDS = (1 << 22),
   /** valid timeUncMs */
-  HAS_TIME_UNC = (1 << 23)
+  HAS_TIME_UNC = (1 << 23),
+  /** valid sensor calibrationConfidencePercent */
+  HAS_CALIBRATION_CONFIDENCE_PERCENT = (1 << 25),
+  /** valid sensor calibrationConfidence */
+  HAS_CALIBRATION_STATUS = (1 << 26),
+  /** valid output engine type */
+  HAS_OUTPUT_ENG_TYPE = (1 << 27),
+  /** valid output engine mask */
+  HAS_OUTPUT_ENG_MASK = (1 << 28),
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -642,6 +650,70 @@ struct GnssData {
    */
   double agc[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
 };
+
+enum DrCalibrationStatusType {
+  /** Indicate that roll calibration is needed. Need to take more
+   turns on level ground */
+  DR_ROLL_CALIBRATION_NEEDED  = (1<<0),
+  /** Indicate that pitch calibration is needed. Need to take more
+   turns on level ground */
+  DR_PITCH_CALIBRATION_NEEDED = (1<<1),
+  /** Indicate that yaw calibration is needed. Need to accelerate
+   in a straight line  */
+  DR_YAW_CALIBRATION_NEEDED   = (1<<2),
+  /** Indicate that odo calibration is needed. Need to accelerate
+   in a straight line  */
+  DR_ODO_CALIBRATION_NEEDED   = (1<<3),
+  /** Indicate that gyro calibration is needed. Need to take more
+   turns on level ground */
+  DR_GYRO_CALIBRATION_NEEDED  = (1<<4)
+};
+
+/** Specifies DrCalibrationStatusType mask */
+using DrCalibrationStatus = uint32_t;
+
+/** Specifies the type of engine requested for fixes*/
+enum LocReqEngineType{
+    /** Indicate that the fused/default position is needed to be reported back
+    for the tracking sessions. The default position is the propagated/aggregated
+    reports from all engines running on the system (e.g.: DR/SPE/PPE) according to
+    QTI algorithm.
+    */
+    LOC_REQ_ENGINE_FUSED_BIT = (1<<0),
+    /** Indicate that the unmodified SPE position is needed to be reported back for the
+    tracking sessions.
+    */
+    LOC_REQ_ENGINE_SPE_BIT   = (1<<1),
+    /** Indicate that the unmodified PPE position is needed to be reported back for the
+    tracking sessions.
+    */
+    LOC_REQ_ENGINE_PPE_BIT   = (1<<2),
+};
+
+/** Specifies LocReqEngineType mask*/
+using LocReqEngine = uint16_t;
+
+/** Specifies the type of engine for the reported fixes*/
+enum LocationAggregationType {
+  /** This is the propagated/aggregated reports from all engines
+  running on the system (e.g.: DR/SPE/PPE) according to QTI
+  algorithm. */
+  LOC_OUTPUT_ENGINE_FUSED = 0,
+  /** This fix is the unmodified fix from modem GNSS engine */
+  LOC_OUTPUT_ENGINE_SPE   = 1,
+  /** This is the unmodified fix from PPP/RTK correction engine */
+  LOC_OUTPUT_ENGINE_PPE   = 2
+};
+
+/** Specifies the type of engine responsible for fixes when the engine type is fused*/
+enum PositioningEngineType{
+    STANDARD_POSITIONING_ENGINE = (1 << 0),
+    DEAD_RECKONING_ENGINE       = (1 << 1),
+    PRECISE_POSITIONING_ENGINE  = (1 << 2)
+};
+
+/** Specifies PositioningEngineType mask */
+using PositioningEngine = uint32_t;
 
 /**
  * @brief IGpsTime provides interface to get current GPS week and elapsed
@@ -1371,6 +1443,43 @@ public:
  */
   virtual telux::common::Status getVelocityUncertaintyEastNorthUp(
       std::vector<float> &velocityUncertaintyEastNorthUp) = 0;
+
+/**
+ * Sensor calibration confidence percent, range [0, 100].
+ *
+ * @returns the percentage of calibration taking all the parameters into account.
+ *
+ */
+  virtual uint8_t getCalibrationConfidencePercent() = 0;
+
+/**
+ * Sensor calibration status.
+ *
+ * @returns mask indicating the calibration status with respect to different parameters.
+ *
+ */
+  virtual DrCalibrationStatus getCalibrationStatus() = 0;
+
+/**
+ * Location engine type. When the type is set to LOC_ENGINE_SRC_FUSED, the fix is
+ * the propagated/aggregated reports from all engines running on the system (e.g.:
+ * DR/SPE/PPE) based QTI algorithm. To check which location engine contributes
+ * to the fused output, check for locOutputEngMask.
+ *
+ * @returns the type of engine that was used for calculating the position fix.
+ *
+ */
+  virtual LocationAggregationType getLocOutputEngType() = 0;
+
+/**
+ * When loc output eng type is set to fused, this field indicates the set of engines
+ * contribute to the fix.
+ *
+ * @returns the combination of position engines used in calculating the position report
+ * when the loc output end type is set to fused.
+ *
+ */
+  virtual PositioningEngine getLocOutputEngMask() = 0;
 };
 
 /**

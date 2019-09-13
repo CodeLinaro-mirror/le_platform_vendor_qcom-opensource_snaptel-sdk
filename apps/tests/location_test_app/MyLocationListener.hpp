@@ -71,6 +71,9 @@ private:
    void printEphimerisAvailability(telux::loc::SVInfoAvailability availability);
    void printAlmanacAvailability(telux::loc::SVInfoAvailability availability);
    void printFixAvailability(telux::loc::SVInfoAvailability availability);
+   void printCalibrationStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printLocOutputEngineType(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printLocOutputEngineMask(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

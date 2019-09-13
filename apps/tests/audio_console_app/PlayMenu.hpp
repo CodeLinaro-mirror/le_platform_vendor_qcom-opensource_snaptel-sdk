@@ -35,11 +35,17 @@
 #include "ConsoleApp.hpp"
 #include "AudioClient.hpp"
 
-class PlayMenu : public ConsoleApp {
+class PlayMenu : public ConsoleApp,
+                 public telux::audio::IPlayListener,
+                 public std::enable_shared_from_this<PlayMenu>{
 public:
     PlayMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
 
     ~PlayMenu();
+
+    void onReadyForWrite() override;
+
+    void onPlayStopped() override;
 
     void init();
 private:
@@ -59,6 +65,9 @@ private:
     void writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytes,
                 telux::common::ErrorCode error);
 
+    void registerListener();
+    void deRegisterListener();
+
     std::shared_ptr<IAudioPlayStream> audioPlayStream_;
     std::shared_ptr<AudioClient> audioClient_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
@@ -67,6 +76,9 @@ private:
     std::condition_variable cv_;
     std::vector<std::thread> runningThreads_;
     bool playStatus_;
+    AudioFormat playFormat_;
+    bool pipeLineEmpty_;
+    FILE * file_;
 };
 
 #endif // PLAYMENU_HPP

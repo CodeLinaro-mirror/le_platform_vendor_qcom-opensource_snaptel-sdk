@@ -55,7 +55,7 @@ public:
     std::shared_ptr<IAudioStream> getStream(StreamType streamtype);
 
     // since file of path is taken during stream creation it is stored for future use
-    std::string getFilePathForPlay();
+    void getPlayConfig(std::string &filePath, AudioFormat &playFormat);
 
     // Since sample Rate and Channel Type is asked while opening stream we keep them because it
     // is required during the time of writting to file.
@@ -77,6 +77,7 @@ private:
 
     // Input functions for different cases
     void takeUserModemIdInput(int &modemId);
+    void takeAudioFormatInput(AudioFormat &audioFormat);
     void takeUserSampleRateInput(uint32_t &userSampleRate);
     void takeUserChannelInput(telux::audio::ChannelTypeMask &channelType);
     void takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices);
@@ -86,7 +87,8 @@ private:
     void takeVolumeValueInput(float &vol);
 
     // Variables for filePath  Used only for play
-    std::string filepath_;
+    std::string filePath_;
+    AudioFormat playFormat_;
 
     // Variable for sample rate and channel type. Used only for Capture
     uint32_t sampleRate_;

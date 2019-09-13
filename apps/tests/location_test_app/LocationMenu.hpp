@@ -60,6 +60,7 @@ public:
    void registerListenerEx(std::vector<std::string> userInput);
    void deRegisterListenerEx(std::vector<std::string> userInput);
    void startDetailedReports(std::vector<std::string> userInput);
+   void startDetailedEngineReports(std::vector<std::string> userInput);
    void startBasicReports(std::vector<std::string> userInput);
    void stopReports(std::vector<std::string> userInput);
    int enableReportLogsUtility();

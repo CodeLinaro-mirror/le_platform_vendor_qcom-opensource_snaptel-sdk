@@ -117,7 +117,7 @@ public:
       = 0;
 
    /**
-    * Initiate an emergency call.
+    * Initiate an emergency call to the emergency number(e.g. 112)
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -147,7 +147,38 @@ public:
       = 0;
 
    /**
-    * Initiate an emergency call with raw MSD pdu.
+    * Initiate an emergency call to the specified phone number. It is similar to a regular voice
+    * call, except that it facilitates MSD transmission.
+    *
+    * @param [in] phoneId      Represents phone corresponding to which make
+    *                          eCall operation is performed
+    * @param [in] dialNumber   String representing the dialing number
+    * @param [in] eCallMsdData The structure containing required fields to
+    *                          create eCall Minimum Set of Data (MSD)
+    * @param [in] category     @ref ECallCategory
+    * @param [in] callback     Optional callback pointer to get the response of
+    *                          makeVoiceECall request.
+    *                          Possible(not exhaustive) error codes for callback response
+    *                          - @ref telux::common::ErrorCode::SUCCESS
+    *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                          - @ref telux::common::ErrorCode::NO_MEMORY
+    *                          - @ref telux::common::ErrorCode::MODEM_ERR
+    *                          - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                          - @ref telux::common::ErrorCode::INVALID_STATE
+    *                          - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                          - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                          - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of makeVoiceECall i.e. success or suitable status code.
+    */
+   virtual telux::common::Status makeVoiceECall(int phoneId, const std::string dialNumber,
+                                           const ECallMsdData &eCallMsdData, int category,
+                                           std::shared_ptr<IMakeCallCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Initiate an emergency call with raw MSD pdu, to the emergency number(e.g. 112)
     *
     * @param [in] phoneId   Represents phone corresponding to which on make eCall
     *                       operation is performed
@@ -172,7 +203,39 @@ public:
     * @returns Status of makeECall i.e. success or suitable status code.
     */
    virtual telux::common::Status makeECall(int phoneId, const std::vector<uint8_t> &msdPdu,
-                                           int category, int variant, MakeCallCallback callback)
+                                           int category, int variant,
+                                           MakeCallCallback callback = nullptr)
+      = 0;
+
+   /**
+    * Initiate an emergency call with raw MSD pdu, to the specified phone number. It is similar to a
+    * regular voice call, except that it facilitates MSD transmission.
+    *
+    * @param [in] phoneId   Represents phone corresponding to which on make eCall
+    *                       operation is performed
+    * @param [in] dialNumber   String representing the dialing number
+    * @param [in] msdPdu    Encoded MSD(Minimum Set of Data) PDU as per spec EN
+    *                       15722 2015 or GOST R 54620-2011/33464-2015
+    * @param [in] category  @ref ECallCategory
+    * @param [in] callback  Callback function to get the response of makeVoiceECall
+    *                       request.
+    *                       Possible(not exhaustive) error codes for callback response
+    *                       - @ref telux::common::ErrorCode::SUCCESS
+    *                       - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                       - @ref telux::common::ErrorCode::NO_MEMORY
+    *                       - @ref telux::common::ErrorCode::MODEM_ERR
+    *                       - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                       - @ref telux::common::ErrorCode::INVALID_STATE
+    *                       - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                       - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                       - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *                       - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of makeVoiceECall i.e. success or suitable status code.
+    */
+   virtual telux::common::Status makeVoiceECall(int phoneId, const std::string dialNumber,
+                                           const std::vector<uint8_t> &msdPdu, int category,
+                                           MakeCallCallback callback = nullptr)
       = 0;
 
    /**

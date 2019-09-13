@@ -36,6 +36,8 @@ when       who     what, where, why
 05/10/19   SM      Added TCU Activity management support in Telematics SDK
 06/10/19   RK      Updated with Audio Play, Capture and DTMF support in Telematics SDK
 07/22/19   AK      Added Thermal Shutdown Management support in Telamatics SDK
+09/04/19   AG      Added Remote SIM support to Telematics SDK
+09/05/19   AK      Added Audio Loopback, Tone Generation support in Telematics SDK.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

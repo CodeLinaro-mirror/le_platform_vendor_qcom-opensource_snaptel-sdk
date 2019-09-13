@@ -79,6 +79,32 @@ public:
     }
 };
 
+class IPlayListener {
+public:
+    /**
+     * This function is called when pipeline is ready to accept new buffer. It is applicable only
+     * for compressed audio format type where a client can write and queue buffers for playback.
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual void onReadyForWrite() {}
+
+    /**
+     * This function is called when stopAudio() is called with StopType::STOP_AFTER_PLAY. It
+     * indicates that all the buffers that were present in the pipeline have been played.
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual void onPlayStopped() {}
+
+    /**
+     * Destructor of IPlayListener
+     */
+    virtual ~IPlayListener() {}
+};
+
 /** @} */ /* end_addtogroup telematics_audio */
 
 }  // end of namespace audio

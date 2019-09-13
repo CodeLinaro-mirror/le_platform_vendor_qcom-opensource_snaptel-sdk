@@ -137,14 +137,16 @@ public:
      *
      * @param [in] mode    desired AutoShutdownMode to be set
      * @param [in] callback Optional callback to get the response of the command
+     * @param [in] timeout Optional timeout(in seconds) for which auto-shutdown remains disabled.
      *
      * @returns Status of setAutoShutdownMode i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated.It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status setAutoShutdownMode( AutoShutdownMode mode,
-                                        telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setAutoShutdownMode(AutoShutdownMode mode,
+                                        telux::common::ResponseCallback callback = nullptr,
+                                        uint32_t timeout = DEFAULT_TIMEOUT) = 0;
 
     /**
      * Get automatic thermal shutdown mode.

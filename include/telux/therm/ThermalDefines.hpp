@@ -39,11 +39,19 @@
 #ifndef THERMALDEFINES_HPP
 #define THERMALDEFINES_HPP
 
+#include <cstdint>
+
 namespace telux {
 namespace therm {
 
 /** @addtogroup telematics_therm
  * @{ */
+
+/**
+ * Default time out (in seconds) for thermal auto-shutdown service
+ * to re-enable thermal auto-shutdown.
+ */
+ const uint32_t DEFAULT_TIMEOUT = 30;
 
 /**
  * Defines the status of automatic thermal shutdown

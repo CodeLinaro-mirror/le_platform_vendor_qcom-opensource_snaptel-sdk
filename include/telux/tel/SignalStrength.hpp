@@ -37,6 +37,8 @@
 
 #include <memory>
 
+#define INVALID_SIGNAL_STRENGTH_VALUE 0x7FFFFFFF
+
 namespace telux {
 
 namespace tel {
@@ -141,30 +143,33 @@ public:
    const SignalStrengthLevel getLevel() const;
 
    /**
-    * Get the signal strength as dBm.
+    * Get the signal strength in dBm.
+    * (Valid value range [-140, -44] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
-    * @returns Dbm value.
+    * @returns LTE dBm value.
     */
    const int getDbm() const;
 
    /**
     * Get the LTE signal strength.
-    * Range:(0, 63) > 63 is invalid.
+    * (Valid value range [0, 31] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
-    * @returns Lte signal strength.
+    * @returns LTE signal strength.
     */
    const int getLteSignalStrength() const;
 
    /**
     * Get LTE reference signal receive quality in dB.
+    * (Valid value range [-20, -3] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns LteRsrq.
     */
    const int getLteReferenceSignalReceiveQuality() const;
 
    /**
-    * Get LTE reference signal signal-to-noise ratio in 0.1 dB units.
-    * Range: -200 to +300 (-200 = -20.0 dB, +300 = 30dB).
+    * Get LTE reference signal signal-to-noise ratio, multiply by 0.1 to get SNR in dB.
+    * (Valid value range [-200, +300] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (-200 = -20.0 dB, +300 = 30dB).
     *
     * @returns LteSnr.
     */
@@ -172,7 +177,7 @@ public:
 
    /**
     * Get LTE channel quality indicator.
-    * Range: 0 to 15.
+    * (Valid value range [0, 15] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns LteCqI.
     */
@@ -180,7 +185,7 @@ public:
 
    /**
     * Get the timing advance in micro seconds.
-    * Range: 0 to 0x7FFFFFFE.
+    * (Valid value range [0, 0x7FFFFFFE] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns Timing advance value.
     *
@@ -212,28 +217,35 @@ public:
    const SignalStrengthLevel getLevel() const;
 
    /**
-    * Get the signal strength as dBm.
+    * Get the signal strength in dBm.
+    * (Valid value range [-113, -51] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
-    * @returns Gsm signal strength in dBm.
+    *
+    * @returns GSM signal strength in dBm.
     */
    const int getDbm() const;
 
    /**
     * Get the GSM signal strength.
+    * (Valid value range [0, 31] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
     *
     * @returns GSM signal strength.
     */
    const int getGsmSignalStrength() const;
 
    /**
-    * Get the GSM bit error rate (0-7, 99).
+    * Get the GSM bit error rate.
+    * (Valid value range [0, 7] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
     *
     * @returns GSM bit error rate.
     */
    const int getGsmBitErrorRate() const;
 
    /**
-    * Get the timing advance in bit periods
+    * Get the timing advance in bit periods . 1 bit period = 48/13 us
+    * (Valid value range [0, 219] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns timing advance.
     */
@@ -244,8 +256,9 @@ private:
    int gsmBitErrorRate_;
    int timingAdvance_;
 };
+
 /**
- * CDMA signal strength provides methods to get details of Cdma and Evdo like signal strength
+ * CDMA signal strength provides methods to get details of CDMA and EVDO like signal strength
  * in dBm and signal level.
  */
 class CdmaSignalStrengthInfo {
@@ -261,28 +274,29 @@ public:
    const SignalStrengthLevel getLevel() const;
 
    /**
-    * Get the signal strength as dBm.
+    * Get the signal strength in dBm.
     *
     * @returns Minimum value of Evdo dBm and Cdma dBm.
     */
    const int getDbm() const;
 
    /**
-    * Get the Cdma Ec/Io value in dB*10.
+    * Get the CDMA Ec/Io in dB.
     *
-    * @returns Cdma Ecio.
+    * @returns CDMA Ec/Io.
     */
    const int getCdmaEcio() const;
 
    /**
-    * Get the Evdo Ec/Io value in dB*10.
+    * Get the EVDO Ec/Io in dB.
     *
-    * @returns Evdo Ecio.
+    * @returns EVDO Ec/Io.
     */
    const int getEvdoEcio() const;
 
    /**
-    * Get the Evdo signal noise ratio and values are 0-8. 8 is the highest signal to noise ratio.
+    * Get the EVDO signal noise ratio.
+    * (Valid value range [0, 8] and 8 is the highest signal to noise ratio.
     *
     * @returns EVDO SNR.
     */
@@ -303,7 +317,7 @@ private:
 };
 
 /**
- * Wcdma signal strength provides methods to get Wcdma signal strength in dBm and Wcdma
+ * WCDMA signal strength provides methods to get WCDMA signal strength in dBm and WCDMA
  * signal level.
  */
 class WcdmaSignalStrengthInfo {
@@ -319,25 +333,28 @@ public:
    const SignalStrengthLevel getLevel() const;
 
    /**
-    * Get the signal strength as dBm.
+    * Get the signal strength in dBm.
+    * (Valid value range [-113, -51] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
-    * @returns Wcdma signal strength in dBm.
+    * @returns WCDMA signal strength in dBm.
     *
     */
    const int getDbm() const;
 
    /**
-    * Get the Wcdma signal strength (0-31, 99).
+    * Get the WCDMA signal strength.
+    * (Valid value range [0, 31] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
-    * @returns Wcdma signal strength.
+    * @returns WCDMA signal strength.
     *
     */
    const int getSignalStrength() const;
 
    /**
-    * Get the Wcdma bit error rate (0-7, 99).
+    * Get the WCDMA bit error rate.
+    * (Valid value range [0, 7] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
-    * @returns Wcdma bit error rate.
+    * @returns WCDMA bit error rate.
     *
     */
    const int getBitErrorRate() const;
@@ -356,6 +373,7 @@ public:
 
    /**
     * Get TdScdma received signal code power in dBm.
+    *(Valid Range [-120,-25], and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
     * @returns TdScdma signal code power.
     *

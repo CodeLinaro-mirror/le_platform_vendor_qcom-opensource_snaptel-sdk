@@ -41,6 +41,7 @@ public:
    static void cellInfoListResponse(std::vector<std::shared_ptr<telux::tel::CellInfo>> cellInfoList,
                                     telux::common::ErrorCode error);
    static void cellInfoListRateResponse(telux::common::ErrorCode error);
+   static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
 };
 
 #endif  // MYCELLINFOHANDLER_HPP

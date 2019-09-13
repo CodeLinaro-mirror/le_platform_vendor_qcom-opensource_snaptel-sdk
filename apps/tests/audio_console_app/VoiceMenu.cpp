@@ -138,6 +138,7 @@ void VoiceMenu::deleteStream(std::vector<std::string> userInput) {
 
     if(status == telux::common::Status::SUCCESS) {
         audioVoiceStream_ = nullptr;
+        audioStarted_ = false;
     }
 }
 

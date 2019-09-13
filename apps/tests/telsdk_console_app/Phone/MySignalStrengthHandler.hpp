@@ -35,12 +35,14 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/Phone.hpp>
+#include <telux/tel/SignalStrength.hpp>
 
 class MySignalStrengthCallback : public telux::tel::ISignalStrengthCallback {
 public:
    MySignalStrengthCallback();
    void signalStrengthResponse(std::shared_ptr<telux::tel::SignalStrength> signalStrength,
                                telux::common::ErrorCode error) override;
+   std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
 };
 
 #endif  // MYSIGNALSTRENGTHHANDLER_HPP

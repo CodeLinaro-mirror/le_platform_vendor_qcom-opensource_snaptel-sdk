@@ -163,6 +163,8 @@ public:
     /**
      * Send card inserted event to the modem.
      *
+     * @param [in]  atr         Answer to Reset bytes (max size = 32, per ISO/IEC 7816-3:2006
+     *                                                 section 8.1).
      * @param [out] callback    Callback function pointer to get the response of sendCardInserted.
      *
      * @returns Status of sendCardInserted i.e. success or suitable status code.
@@ -170,7 +172,7 @@ public:
      * @note    Eval: This is a new API and is being evaluated. It is subject to
      *          change and could break backwards compatibility.
      */
-    virtual telux::common::Status sendCardInserted(
+    virtual telux::common::Status sendCardInserted(const std::vector<uint8_t> &atr,
         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**

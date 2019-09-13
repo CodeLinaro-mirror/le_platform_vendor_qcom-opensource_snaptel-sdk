@@ -592,36 +592,6 @@ using WriteResponseCb
                                                             telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to IAudioPlayStream::drain().
- *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
- */
-using DrainResponseCb = std::function<void(telux::common::ErrorCode error)>;
-
-/**
- * This function is called with the response to IAudioPlayStream::flush().
- *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
- */
-using FlushResponseCb = std::function<void(telux::common::ErrorCode error)>;
-
-/**
  * @brief   IAudioPlayStream represents single audio playback stream
  */
 class IAudioPlayStream : virtual public IAudioStream {
@@ -635,10 +605,15 @@ public:
     * @note    Eval: This is a new API and is being evaluated. It is subject to change
     *          and could break backwards compatibility.
     */
-   virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
+    virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
 
    /**
     * Write Samples\Frames to audio stream. First write starts playback operation.
+    *
+    * Write in case of compressed audio format maintains a pipeline, if the callback returns with
+    * same number of bytes written as requested and no error occured, user can send next buffer.
+    * If the number of bytes returned are not equal to the requested write size, then need to resend
+    * the buffer again from the leftover offset after waiting for the @onReadyForWrite() event.
     *
     * @param [in] buffer       stream buffer for write.
     * @param [in] callback     callback to get the response of write.
@@ -648,35 +623,48 @@ public:
     * @note       Eval: This is a new API and is being evaluated. It is subject to change
     *             and could break backwards compatibility.
     */
-   virtual telux::common::Status write(std::shared_ptr<IStreamBuffer> buffer,
+    virtual telux::common::Status write(std::shared_ptr<IStreamBuffer> buffer,
                     WriteResponseCb callback = nullptr) = 0;
 
    /**
-     * This API is to be used to determine when all the Frames that were sent to the decoder
-     * using the write() API, have finished being played.
-     * Typical usage for End Of Session.
+     * This API is to be used to stop playback. It is applicable only for compressed
+     * audio format playback.
      *
-     * @param [in] callback    callback to get the response of drain.
+     * @param [in] callback      callback to get the response of stopAudio.
+     * @param [in] stopType      it specifies type of stop for stopping audio playback.
      *
      * @returns Status of the request i.e. success or suitable status code.
      *
      * @note   Eval: This is a new API and is being evaluated. It is subject to change
      *         and could break backwards compatibility.
      */
-   virtual telux::common::Status drain(DrainResponseCb callback = nullptr) = 0;
+    virtual telux::common::Status stopAudio(StopType stopType,
+                    telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-     * This API is to be used to abandon pending\waiting frames from decoding.
-     * Typical usage of force reset or abnormal termination.
-     *
-     * @param [in] callback      callback to get the response of flush.
-     *
-     * @returns Status of the request i.e. success or suitable status code.
-     *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change
-     *         and could break backwards compatibility.
-     */
-   virtual telux::common::Status flush(FlushResponseCb callback = nullptr) = 0;
+    * Register a listener to get notified for events of Play Stream
+    *
+    * @param [in] listener     Pointer of IPlayListener object that processes the notification
+    *        [in] callback     callback to get the response of registerListener
+    *
+    * @returns Status of registerListener i.e success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+    virtual telux::common::Status registerListener(std::weak_ptr<IPlayListener> listener) = 0;
+
+   /**
+    * Remove a previously registered listener.
+    *
+    * @param [in] listener Previously registered IPlayListener that needs to be removed
+    *
+    * @returns Status of deRegisterListener, success or suitable status code
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+    virtual telux::common::Status deRegisterListener(std::weak_ptr<IPlayListener> listener) = 0;
 };
 
 

@@ -44,7 +44,7 @@
 AudioClient::AudioClient() {
     sampleRate_ = 0;
     channelType_ = 0;
-    filepath_ = "";
+    filePath_ = "";
     audioManager_ = nullptr;
     stream_ = nullptr;
     audioVoiceStream_ = nullptr;
@@ -239,26 +239,57 @@ void AudioClient::takeUserVolumeInput(StreamVolume &streamVolume) {
     }
 }
 
+void AudioClient::takeAudioFormatInput(AudioFormat &audioFormat) {
+    std::string userInput = "";
+    int command = -1;
+    while(1) {
+        std::cout << "Please Select Audio Format : 1->PCM, 2->AMRWB+, 3->AMRNB, 4->AMRWB :";
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if (inputStream >> command) {
+                if (command == 1 || command == 2 || command == 3 || command == 4) {
+                    if (command == 1) {
+                        audioFormat = AudioFormat::PCM_16BIT_SIGNED;
+                    } else if (command == 2) {
+                        audioFormat = AudioFormat::AMRWB_PLUS;
+                    } else if (command == 3) {
+                        audioFormat = AudioFormat::AMRNB;
+                    } else if (command == 4) {
+                        audioFormat = AudioFormat::AMRWB;
+                    }
+                    break;
+                } else {
+                    std::cout << "Invalid Input!" << std::endl;
+                }
+            } else {
+                std::cout << "Invalid Input!" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid input!" << std::endl;
+        }
+    }
+}
+
 void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
 {
     config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-
     takeUserModemIdInput(config.modemSubId);
     takeUserSampleRateInput(config.sampleRate);
     takeUserChannelInput(config.channelTypeMask);
     sampleRate_ = config.sampleRate;
     channelType_ = config.channelTypeMask;
 
-    if( config.type == telux::audio::StreamType::PLAY) {
+    if (config.type == telux::audio::StreamType::PLAY) {
+        takeAudioFormatInput(config.format);
         FILE * file;
         while(1) {
             std::cout << "Enter File name with path :" ;
-            std::getline(std::cin, filepath_);
-            DIR* directory = opendir(filepath_.c_str());
+            std::getline(std::cin, filePath_);
+            DIR* directory = opendir(filePath_.c_str());
             if (directory != NULL) {
                 std::cout << "Please enter valid file path" << std::endl;
             } else {
-                file = fopen(filepath_.c_str(),"r");
+                file = fopen(filePath_.c_str(),"r");
                 if(file) {
                     fseek(file, 0 , SEEK_SET);
                     break;
@@ -308,8 +339,9 @@ void AudioClient::getCaptureConfig(uint32_t &sampleRate, uint32_t &channelType) 
     channelType = channelType_;
 }
 
-std::string AudioClient::getFilePathForPlay() {
-    return filepath_;
+void AudioClient::getPlayConfig(std::string &filePath, AudioFormat &playFormat) {
+    filePath = filePath_;
+    playFormat = playFormat_;
 }
 
 Status AudioClient::createStream(StreamType streamType) {
@@ -319,6 +351,22 @@ Status AudioClient::createStream(StreamType streamType) {
     // Initialising the Configuration of stream
     streamConfig.type = streamType;
     takeUserCreateStreamInput(streamConfig);
+    AmrwbpParams formatParams{};
+    if (streamConfig.format == AudioFormat::AMRWB_PLUS) {
+        formatParams.bitWidth = 16;
+        formatParams.frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
+        streamConfig.formatParams = static_cast<FormatParams*>(&formatParams);
+        playFormat_ = AudioFormat::AMRWB_PLUS;
+    } else if (streamConfig.format == AudioFormat::PCM_16BIT_SIGNED) {
+        playFormat_ = AudioFormat::PCM_16BIT_SIGNED;
+        streamConfig.formatParams = nullptr;
+    } else if (streamConfig.format == AudioFormat::AMRWB) {
+        playFormat_ = AudioFormat::AMRWB;
+        streamConfig.formatParams = nullptr;
+    } else if (streamConfig.format == AudioFormat::AMRNB) {
+        playFormat_ = AudioFormat::AMRNB;
+        streamConfig.formatParams = nullptr;
+    }
 
     std::shared_ptr<telux::audio::IAudioStream> myAudioStream;
     //Sending a request to create audio stream
@@ -364,6 +412,8 @@ Status AudioClient::createStream(StreamType streamType) {
         } else {
             std::cout << "Unknown Stream type is generated" << std::endl;
         }
+    } else {
+        return Status::FAILED;
     }
     return Status::SUCCESS;
 }
@@ -400,6 +450,8 @@ Status AudioClient::deleteStream(StreamType streamType) {
             std::cout << " Unknown Stream Type " << std::endl;
         }
         std::cout << "Audio Stream is Deleted" << std::endl;
+    } else {
+        return Status::FAILED;
     }
     return Status::SUCCESS;
 }

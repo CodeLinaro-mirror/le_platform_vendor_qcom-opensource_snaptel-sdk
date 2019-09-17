@@ -29,7 +29,7 @@
 
 /**
  * @file       DataDefines.hpp
- * @brief      DataDefines provides the enumerations required for Connection Manager
+ * @brief      DataDefines contains enumerations and variables used for data services
  *
  */
 
@@ -38,6 +38,7 @@
 
 #include <string>
 #include <vector>
+#include <bitset>
 
 namespace telux {
 namespace data {
@@ -46,13 +47,18 @@ namespace data {
  * @{ */
 
 /**
- * Preferred IP family for the call
+ * Default data profile id.
+ */
+#define DEFAULT_PROFILE_ID_MAX 0x7FFFFFFF
+
+/**
+ * Preferred IP family for the connection
  */
 enum class IpFamilyType {
-    UNKNOWN = -1,
-    IPV4 = 0x04,    // IPv4 call
-    IPV6 = 0x06,    // IPv6 call
-    IPV4V6 = 0x0A,  // IPv4 and IPv6 call
+   UNKNOWN = -1,
+   IPV4 = 0x04,    /**< IPv4 data connection */
+   IPV6 = 0x06,    /**< IPv6 data connection */
+   IPV4V6 = 0x0A,  /**< IPv4 and IPv6 data connection */
 };
 
 /**
@@ -73,6 +79,54 @@ enum class AuthProtocolType {
     AUTH_PAP = 1,  /**< Password Authentication Protocol */
     AUTH_CHAP = 2, /**< Challenge Handshake Authentication Protocol */
     AUTH_PAP_CHAP = 3,
+};
+
+/**
+ * Defines the supported filtering mode of the packet data session.
+ * @ref DataRestrictFilter
+ */
+enum class DataRestrictModeType {
+  UNKNOWN = -1,
+  DISABLE,
+  ENABLE
+};
+
+/**
+ * Defines the supported powersave filtering mode and autoexit for the packet data session.
+ * @ref DataRestrictFilter
+ */
+struct DataRestrictMode {
+  DataRestrictModeType filterMode; /**< Disable or enable data filter mode. When disabled all the
+                                        data packets will be forwarded from modem to the apps.
+                                        When enabled only the data matching the filters will be
+                                        forwarded from modem to the apps. */
+  DataRestrictModeType filterAutoExit; /**< Disable or enable autoexit feature. When enabled, once
+                                            an incoming packet matching the filter is received,
+                                            filter mode will we disable automatically and any packet
+                                            will be allowed to be forwarded from modem to apps.*/
+};
+
+/**
+ * Used to define the Port number and range (number of ports following port value)
+ * Ex- for ports ranging from 1000-3000
+ * port = 1000 and range= 2000
+ *
+ * for single port 5000
+ * port = 5000 and range= 0
+ */
+struct PortInfo {
+  uint16_t port = 0;  /**< Port. */
+  uint16_t range = 0; /**< Range. */
+};
+
+/**
+ * Lists the protocol associate with the IDataRestrictFilter object
+ *
+ */
+enum class ProtocolType {
+  NONE, /**< No transport protocol. */
+  TCP,  /**< Transmission Control Protocol. */
+  UDP,  /**< User Datagram Protocol. */
 };
 
 /**

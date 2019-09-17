@@ -40,6 +40,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <iomanip>
 
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/DataProfile.hpp>
@@ -52,7 +53,19 @@
 #include "DataResponseCallback.hpp"
 #include "MyProfileListener.hpp"
 
-class DataMenu : public ConsoleApp {
+
+#include <telux/data/DataDefines.hpp>
+#include <telux/data/DataFactory.hpp>
+#include <telux/data/DataFilterManager.hpp>
+#include <telux/data/DataFilterListener.hpp>
+#include "MyDataFilterListener.hpp"
+#include "ConfigParser.hpp"
+
+using namespace telux::data;
+using namespace telux::common;
+
+class DataMenu : public IDataFilterListener,
+                 public ConsoleApp {
 public:
    bool initializeSDK();
 
@@ -63,6 +76,20 @@ public:
    void requestDataCallStatistics(std::vector<std::string> inputCommand);
    void resetDataCallStatistics(std::vector<std::string> inputCommand);
    void requestDataCallList();
+
+   // Data Filter APIs
+   void sendSetDataRestrictMode(DataRestrictMode mode);
+   void AddFilter();
+   void RemoveAllFilter();
+
+   ProtocolType getTypeOfFilter(ConfigParser instance,
+                                std::map<std::string, std::string> filter);
+   void addIPParameters(
+       std::shared_ptr<telux::data::IDataRestrictFilter> &dataFilter,
+       ConfigParser instance, std::map<std::string, std::string> filterMap);
+   ResponseCallback responseCb;
+   void commandCallback(ErrorCode errorCode);
+
    // Profile Management APIs
    void requestProfileList(std::vector<std::string> inputCommand);
    void createProfile(std::vector<std::string> inputCommand);
@@ -90,6 +117,11 @@ private:
    std::shared_ptr<MyProfileListener> profileListener_;
 
    std::shared_ptr<DataListener> dataListener_;
+
+   std::shared_ptr<telux::data::IDataFilterManager> dataFilterMgr_;
+   std::shared_ptr<telux::data::IDataRestrictFilter> dataFilter_;
+   std::shared_ptr<MyDataFilterListener> dataFilterListener_;
+
 
    void getProfileParamsFromUser();
 };

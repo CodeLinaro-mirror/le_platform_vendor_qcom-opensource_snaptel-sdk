@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -42,6 +42,8 @@
 
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/DataProfileManager.hpp>
+#include <telux/data/DataFilterManager.hpp>
+#include <telux/data/DataRestrictFilter.hpp>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -81,7 +83,33 @@ public:
     */
    std::shared_ptr<IDataProfileManager> getDataProfileManager(int slotId = DEFAULT_SLOT_ID);
 
-private:
+   /**
+    * Get Data Filter Manager instance
+    *
+    * @param [in] slotId    Unique identifier for the SIM slot
+    *
+    * @returns instance of IDataFilterManager.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    * change and could break backwards compatibility.
+    */
+   std::shared_ptr<IDataFilterManager> getDataFilterManager(int slotId = DEFAULT_SLOT_ID);
+
+   /**
+    * Returns a instance of IDataRestrictFilter
+    *
+    * @param [in] type    @ref ProtocolType
+    *
+    * @returns instance of IDataRestrictFilter based on ProtocolType
+    *          ITcpRestrictFilter
+    *          IUdpRestrictFilter
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    * change and could break backwards compatibility.
+    */
+   std::shared_ptr<IDataRestrictFilter> getNewDataRestrictFilter(ProtocolType type);
+
+ private:
    // mutex to protect member variables
    std::mutex dataMutex_;
    std::shared_ptr<IDataConnectionManager> dataConnectionManager_;

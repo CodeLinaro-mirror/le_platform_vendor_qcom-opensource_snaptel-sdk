@@ -42,6 +42,7 @@ public:
    static std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
    static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
    static std::string operationTypeToString(telux::data::OperationType oprType);
+   static std::string protocolToString(telux::data::IpProtocol proto);
 
 };
 

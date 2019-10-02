@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -53,77 +53,97 @@
 #include "DataResponseCallback.hpp"
 #include "MyProfileListener.hpp"
 
-
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataFilterManager.hpp>
-#include <telux/data/IpFilter.hpp>
 #include <telux/data/DataFilterListener.hpp>
+#include <telux/data/DataFilterListener.hpp>
+
 #include "MyDataFilterListener.hpp"
 #include "ConfigParser.hpp"
 
 using namespace telux::data;
 using namespace telux::common;
+using namespace telux::data::net;
 
-class DataMenu : public IDataFilterListener,
-                 public ConsoleApp {
-public:
-   bool initializeSDK();
+class DataMenu : public IDataFilterListener, public ConsoleApp {
+ public:
+    bool initializeSDK();
 
-   // initialize menu and sdk
-   void init();
-   void startDataCall(std::vector<std::string> inputCommand);
-   void stopDataCall(std::vector<std::string> inputCommand);
-   void requestDataCallStatistics(std::vector<std::string> inputCommand);
-   void resetDataCallStatistics(std::vector<std::string> inputCommand);
-   void requestDataCallList();
+    // initialize menu and sdk
+    void init();
+    void startDataCall(std::vector<std::string> inputCommand);
+    void stopDataCall(std::vector<std::string> inputCommand);
+    void requestDataCallStatistics(std::vector<std::string> inputCommand);
+    void resetDataCallStatistics(std::vector<std::string> inputCommand);
+    void requestDataCallList();
 
-   // Data Filter APIs
-   void sendSetDataRestrictMode(DataRestrictMode mode);
-   void getFilterMode();
-   void addFilter();
-   void removeAllFilter();
+    // Data Filter APIs
+    void sendSetDataRestrictMode(DataRestrictMode mode);
+    void getFilterMode();
+    void addFilter();
+    void removeAllFilter();
 
-   IpProtocol getTypeOfFilter(ConfigParser instance,
-                                std::map<std::string, std::string> filter);
-   void addIPParameters(
-       std::shared_ptr<telux::data::IIpFilter> &dataFilter,
-       ConfigParser instance, std::map<std::string, std::string> filterMap);
-   ResponseCallback responseCb;
-   void commandCallback(ErrorCode errorCode);
+    IpProtocol getTypeOfFilter(ConfigParser instance, std::map<std::string, std::string> filter);
+    void addIPParameters(std::shared_ptr<telux::data::IIpFilter> &dataFilter, ConfigParser instance,
+        std::map<std::string, std::string> filterMap);
+    ResponseCallback responseCb;
+    void commandCallback(ErrorCode errorCode);
 
-   // Profile Management APIs
-   void requestProfileList(std::vector<std::string> inputCommand);
-   void createProfile(std::vector<std::string> inputCommand);
-   void deleteProfile(std::vector<std::string> inputCommand);
-   void modifyProfile(std::vector<std::string> inputCommand);
-   void queryProfile(std::vector<std::string> inputCommand);
-   void requestProfileById(std::vector<std::string> inputCommand);
+    // Profile Management APIs
+    void requestProfileList(std::vector<std::string> inputCommand);
+    void createProfile(std::vector<std::string> inputCommand);
+    void deleteProfile(std::vector<std::string> inputCommand);
+    void modifyProfile(std::vector<std::string> inputCommand);
+    void queryProfile(std::vector<std::string> inputCommand);
+    void requestProfileById(std::vector<std::string> inputCommand);
 
-   DataMenu(std::string appName, std::string cursor);
-   ~DataMenu();
+    DataMenu(std::string appName, std::string cursor);
+    ~DataMenu();
 
-private:
-   std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
-   std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;
-   std::shared_ptr<telux::data::IDataProfileManager> dataProfileManager_;
-   telux::data::ProfileParams params_;
+    void addStaticNatEntry(std::vector<std::string> inputCommand);
+    void removeStaticNatEntry(std::vector<std::string> inputCommand);
+    void requestStaticNatEntries(std::vector<std::string> inputCommand);
+    void setFirewall(std::vector<std::string> inputCommand);
+    void requestFirewallStatus(std::vector<std::string> inputCommand);
+    void addFirewallEntry(std::vector<std::string> inputCommand);
+    void requestFirewallEntry(std::vector<std::string> inputCommand);
+    void removeFirewallEntry(std::vector<std::string> inputCommand);
+    void addDmz(std::vector<std::string> inputCommand);
+    void removeDmz(std::vector<std::string> inputCommand);
+    void requestDmzEntries(std::vector<std::string> inputCommand);
 
-   std::shared_ptr<MyDataProfilesCallback> myDataProfileListCb_;
-   std::shared_ptr<MyDataProfilesCallback> myDataProfileListCbForQuery_;
-   std::shared_ptr<MyDataProfileCallback> myDataProfileCb_;
-   std::shared_ptr<MyDataCreateProfileCallback> myDataCreateProfileCb_;
-   std::shared_ptr<MyDataProfileCallback> myDataProfileCbForGetProfileById_;
-   std::shared_ptr<MyDeleteProfileCallback> myDeleteProfileCb_;
-   std::shared_ptr<MyModifyProfileCallback> myModifyProfileCb_;
-   std::shared_ptr<MyProfileListener> profileListener_;
+    void createVlan(std::vector<std::string> inputCommand);
+    void removeVlan(std::vector<std::string> inputCommand);
+    void queryVlanInfo(std::vector<std::string> inputCommand);
+    void bindWithProfile(std::vector<std::string> inputCommand);
+    void unbindFromProfile(std::vector<std::string> inputCommand);
+    void queryVlanMappingList(std::vector<std::string> inputCommand);
 
-   std::shared_ptr<DataListener> dataListener_;
+ private:
+    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
+    std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;
+    std::shared_ptr<telux::data::IDataProfileManager> dataProfileManager_;
+    telux::data::ProfileParams params_;
 
-   std::shared_ptr<telux::data::IDataFilterManager> dataFilterMgr_;
-   std::shared_ptr<MyDataFilterListener> dataFilterListener_;
+    std::shared_ptr<MyDataProfilesCallback> myDataProfileListCb_;
+    std::shared_ptr<MyDataProfilesCallback> myDataProfileListCbForQuery_;
+    std::shared_ptr<MyDataProfileCallback> myDataProfileCb_;
+    std::shared_ptr<MyDataCreateProfileCallback> myDataCreateProfileCb_;
+    std::shared_ptr<MyDataProfileCallback> myDataProfileCbForGetProfileById_;
+    std::shared_ptr<MyDeleteProfileCallback> myDeleteProfileCb_;
+    std::shared_ptr<MyModifyProfileCallback> myModifyProfileCb_;
+    std::shared_ptr<MyProfileListener> profileListener_;
 
+    std::shared_ptr<DataListener> dataListener_;
 
-   void getProfileParamsFromUser();
+    std::shared_ptr<telux::data::IDataFilterManager> dataFilterMgr_;
+    std::shared_ptr<MyDataFilterListener> dataFilterListener_;
+
+    std::map<std::string, telux::data::IpProtocol> protoMap_;
+    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;
+
+    telux::data::IpProtocol getProtcol(std::string protoStr);
+    void getProfileParamsFromUser();
 };
 #endif

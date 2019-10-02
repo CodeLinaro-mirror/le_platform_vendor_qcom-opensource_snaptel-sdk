@@ -48,6 +48,10 @@
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/IpFilter.hpp>
 
+#include <telux/data/net/FirewallManager.hpp>
+#include <telux/data/net/NatManager.hpp>
+#include <telux/data/net/VlanManager.hpp>
+
 namespace telux {
 namespace data {
 
@@ -98,7 +102,49 @@ class DataFactory {
     std::shared_ptr<IDataFilterManager> getDataFilterManager(int slotId = DEFAULT_SLOT_ID);
 
     /**
-    * Get IIpFilter instance based on IP Protocol
+     * Get Network Address Translation(NAT) Manager
+     *
+     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     *
+     * @returns instance of INatManager
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::net::INatManager> getNatManager(
+        telux::data::OperationType oprType);
+
+    /**
+     * Get Firewall Manager
+     *
+     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     *
+     * @returns instance of IFirewallManager
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::net::IFirewallManager> getFirewallManager(
+        telux::data::OperationType oprType);
+
+    /**
+     * Get Firewall entry based on IP protocol and set respective filter (i.e. TCP or UDP)
+     *
+     * @param [in] proto         @ref telux::data::IpProtocol
+     * @param [in] direction     @ref telux::data::Direction
+     * @param [in] ipFamilyType  Identifies IP family type @ref telux::data::IpFamilyType
+     *
+     * @returns instance of IFirewallEntry
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::net::IFirewallEntry> getNewFirewallEntry(
+        IpProtocol proto, Direction direction, IpFamilyType ipFamilyType);
+
+    /**
+    * Get IIpFilter instance based on IP Protocol, This can be used in Firewall Manager and
+    * Data Filter Manager
     *
     * @param [in] proto    @ref telux::data::IpProtocol
     *                      Some sample protocol values are
@@ -115,11 +161,30 @@ class DataFactory {
     */
     std::shared_ptr<IIpFilter> getNewIpFilter(IpProtocol proto);
 
+    /**
+     * Get VLAN Manager
+     *
+     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     *
+     * @returns instance of IVlanManager
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+      *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::net::IVlanManager> getVlanManager(
+        telux::data::OperationType oprType);
+
  private:
     // mutex to protect member variables
     std::mutex dataMutex_;
     std::shared_ptr<IDataConnectionManager> dataConnectionManager_;
     std::shared_ptr<IDataProfileManager> dataProfileManager_;
+    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::INatManager>>
+        natManagerMap_;
+    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IFirewallManager>>
+        fwManagerMap_;
+    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IVlanManager>>
+        vlanManagerMap_;
 
     DataFactory();
     ~DataFactory();

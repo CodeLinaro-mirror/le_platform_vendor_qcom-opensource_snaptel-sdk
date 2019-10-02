@@ -670,15 +670,29 @@ enum class Direction {
 /**
  * Internet (IP) protocol numbers found in IPv4 or IPv6 headers
  * the protocol numbers are defined by Internet Assigned Numbers Authority (IANA)
- *
- * Some sample protocol values are
- * ICMP = 1    # Internet Control Message Protocol - RFC 792
- * IGMP = 2    # Internet Group Management Protocol - RFC 1112
- * TCP = 6     # Transmission Control Protocol - RFC 793
- * UDP = 17    # User Datagram Protocol - RFC 768
- * ESP = 50    # Encapsulating Security Payload - RFC 4303
  */
 using IpProtocol = uint8_t;
+
+/**
+ * Peripheral Interface type
+ */
+enum class InterfaceType {
+    UNKNOWN = 0, /**< UNKNOWN interface */
+    WLAN = 1,    /**< Wireless Local Area Network (WLAN) */
+    ETH = 2,     /**< Ethernet (ETH)*/
+    ECM = 3,     /**< Ethernet Control Model (ECM) */
+    RNDIS = 4,   /**< Remote Network Driver Interface Specification (RNDIS) */
+    MHI = 5,     /**< Modem Host Interface (MHI) */
+};
+
+/**
+ * Structure for vlan configuration
+ */
+struct VlanConfig {
+    InterfaceType iface; /**< PHY interfaces (i.e. ETH, ECM and RNDIS)*/
+    int16_t vlanId;      /**< Vlan identifier (i.e 1-4094)*/
+    bool isAccelerated;  /**< is acceleration allowed */
+};
 
 /** @} */ /* end_addtogroup telematics_data */
 }

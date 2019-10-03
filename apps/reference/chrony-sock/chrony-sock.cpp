@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/un.h>
@@ -88,6 +89,23 @@ std::condition_variable cv;
 bool cv_done = false;
 ErrorCode ec;
 
+int system_call(const char *command)
+{
+    FILE *stream = NULL;
+    int result = -1;
+    stream = popen(command, "w");
+    if (stream == NULL) {
+        LOGE("system call failed popen failed\n");
+    } else {
+        result = pclose(stream);
+        if (WIFEXITED(result)) {
+            result = WEXITSTATUS(result);
+        }
+        LOGD("popen closed with %d status", result);
+    }
+    return result;
+}
+
 void chronylog(int level, const char *fmt, ...)
 {
     va_list args;
@@ -113,7 +131,7 @@ static void writeRtcFile(int sig, siginfo_t *si, void *uc) {
     int rc;
 
     LOGI("Updating rtc file using: chronyc writertc\n");
-    rc = system("chronyc writertc");
+    rc = system_call("chronyc writertc");
     if (rc) {
         LOGE("Error sending the writertc command\n");
     }

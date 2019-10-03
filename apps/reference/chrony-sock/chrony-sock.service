@@ -31,7 +31,10 @@ Requires=chronyd.service
 After=chronyd.service
 
 [Service]
+User=locclient
+Group=locclient
 Type=simple
+ExecStartPre=+/bin/chown locclient:locclient /var/run/chrony.sock
 ExecStart=/usr/bin/chrony-sock -s
 Restart=always
 

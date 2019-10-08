@@ -82,6 +82,7 @@ static int chronyfd;
 
 bool enableDebug = false;
 bool enableSyslog = false;
+bool enableWriteRtc = false;
 
 // Used to get the Telux async result
 std::mutex mtx;
@@ -122,9 +123,10 @@ void chronylog(int level, const char *fmt, ...)
 }
 
 void printUsage(char *app_name) {
-    printf("Usage: %s -d -s\n", app_name);
+    printf("Usage: %s -d -s -r\n", app_name);
     printf("\t-d: Enable debug logs\n");
     printf("\t-s: Log to syslog instead of stdout\n");
+    printf("\t-r: Enable updating the rtc file\n");
 }
 
 static void writeRtcFile(int sig, siginfo_t *si, void *uc) {
@@ -251,13 +253,16 @@ void responseCallback(ErrorCode error) {
 void parseArguments(int& argc, char **argv) {
     int opt;
 
-    while ((opt = getopt(argc, argv, "dsh")) != -1) {
+    while ((opt = getopt(argc, argv, "dsrh")) != -1) {
         switch (opt) {
         case 'd':
             enableDebug = true;
             break;
         case 's':
             enableSyslog = true;
+            break;
+        case 'r':
+            enableWriteRtc = true;
             break;
         case 'h':
         default:
@@ -278,7 +283,9 @@ int main(int argc, char *argv[]) {
         return ret;
     }
 
-    installRtcTimer();
+    if (enableWriteRtc) {
+        installRtcTimer();
+    }
 
     // Initialize the TelSDK Location library
     std::shared_ptr<ILocationListener> myLocationListener

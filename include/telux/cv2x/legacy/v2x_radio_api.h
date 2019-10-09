@@ -1775,7 +1775,7 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type ip_type,
 
     This %v2x_radio_tx_event_sock_create_and_bind_v3() method differs from
     v2x_radio_tx_event_sock_create_and_bind_v2() in that you can use the traffic_ip_type
-    parameter to specify traffic ip type instead of needing the interface name.
+    parameter to specify traffic ip type instead of requiring the interface name.
 
     @datatypes
     v2x_tx_flow_info_t
@@ -1807,7 +1807,7 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type ip_type,
     Otherwise:
      - EPERM -- Socket creation failed; for more details, check errno.h.
      - EAFNOSUPPORT -- On failure to find the interface.
-     - EACCES -- On failure to get the MAC address of the device. @newpage
+     - EACCES -- On failure to get the MAC address of the device.
  */
 int v2x_radio_tx_event_sock_create_and_bind_v3(
         traffic_ip_type ip_type,
@@ -1816,6 +1816,28 @@ int v2x_radio_tx_event_sock_create_and_bind_v3(
         v2x_tx_flow_info_t *event_flow_info,
         struct sockaddr_in6 *event_sockaddr,
         int *sock);
+
+/**
+    Returns interface name set during radio initialization.
+
+    @datatypes
+    traffic_ip_type
+
+    @param[in]  ip_type     traffic_ip_type
+    @param[out] iface_name  pointer to buffer for interface name
+    @param[in]  buffer_len  length of the buffer passed for interface name.
+ *                          Must be at least the max buffer size for an interface name (IFNAMSIZE).
+    @detdesc
+    This function should only be called after successfully initializing a radio.
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error. Interface name will be an
+    empty string. @newpage
+ */
+v2x_status_enum_type get_iface_name(traffic_ip_type ip_type, char * iface_name, size_t buffer_len);
+
 /** @} *//* end_addtogroup v2x_api_radio */
 
 /*

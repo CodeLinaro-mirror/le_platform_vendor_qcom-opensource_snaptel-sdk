@@ -94,7 +94,7 @@ void ThermalCommandMgr::deregisterForUpdates() {
 
 void ThermalCommandMgr::sendAutoShutdownModeCommand(AutoShutdownMode state) {
     std::string cmd, userInput;
-    int timeout;
+    int timeout = DEFAULT_TIMEOUT;
     bool defaultTimeout = false;
     telux::common::Status status;
     if (state == AutoShutdownMode::ENABLE) {

@@ -27,50 +27,45 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @brief ConfigParser class reads config file and caches the app config
- * settings. It provides utility functions to read the config values (key=value pair).
- */
+#include<queue>
 
-#ifndef CONFIGPARSER_HPP
-#define CONFIGPARSER_HPP
+#include <telux/audio/AudioManager.hpp>
+#include <telux/audio/AudioListener.hpp>
+#include <telux/audio/AudioTranscoder.hpp>
 
-#include <map>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <regex>
+using namespace telux::audio;
+using namespace telux::common;
 
-extern "C" {
-#include <limits.h>
-#include <unistd.h>
-}
-
-
-#define DEFAULT_CONFIG_FILE_NAME "/etc/Datafilter.conf"
-
-/*
- * ConfigParser class caches the config settings from conf file
- * It provides utility methods to get value from configuration file in key,value form.
- */
-class ConfigParser {
+class TranscoderApp : public ITranscodeListener,
+                       public std::enable_shared_from_this<TranscoderApp> {
 public:
-  ConfigParser(std::string section, std::string configFile = DEFAULT_CONFIG_FILE_NAME);
-  ~ConfigParser();
-  // Get the user defined value for configured key
-  std::string getValue(std::map<std::string, std::string> pairMap_, std::string key);
-  std::vector< std::map < std::string, std::string>>  getFilters();
+    TranscoderApp();
+    ~TranscoderApp();
+
+    Status init();
+    void transcode();
+    void teardown();
+
+    void onReadyForWrite() override;
 
 private:
-  std::string section_;
-  // Function to read config file containing key value pairs
-  void readConfigFile(std::string configFile);
-  // Get the path where config file is located
-  std::string getConfigFilePath();
-  // Hashmap to store all settings as key-value pairs
-  std::vector<std::map<std::string, std::string>> configVector_;
+    void writeCallback(std::shared_ptr<IAudioBuffer> buffer, uint32_t bytes, ErrorCode error);
+    void readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
+         uint32_t isLastBuffer, telux::common::ErrorCode error);
+    void createTranscoder();
+    void write();
+    void read();
+    void registerListener();
+    void deRegisterListener();
+    std::vector<std::thread> runningThreads_;
+    std::shared_ptr<ITranscoder> transcoder_;
+    std::shared_ptr<IAudioManager> audioManager_;
+    std::condition_variable cv_;
+    // Flag to represent if any Bitstream Buffer partial consumed and wait for event to trigger.
+    FormatInfo inputConfig_;
+    FormatInfo outputConfig_;
+    bool pipeLineEmpty_;
+    std::queue<std::shared_ptr<IAudioBuffer>> readBuffers_;
+    std::queue<std::shared_ptr<IAudioBuffer>> writeBuffers_;
+    std::mutex mutex_;
 };
-
-#endif // CONFIGPARSER_HPP

@@ -182,7 +182,7 @@ void ToneMenu::playTone(std::vector<std::string> userInput) {
         std::string userInput = "";
 
         std::vector<uint16_t> freq;
-        uint16_t tempFreq, gain, numFreq, duration;
+        uint16_t tempFreq = 0, gain = 0, numFreq = 0, duration = 0;
 
         std::cout << "Enter number of frequencies ";
         if (std::getline(std::cin, userInput)) {

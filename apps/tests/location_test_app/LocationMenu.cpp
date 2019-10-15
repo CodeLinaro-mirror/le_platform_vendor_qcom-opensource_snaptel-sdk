@@ -57,8 +57,76 @@ LocationMenu::~LocationMenu() {
    }
 }
 
-int LocationMenu::init() {
+telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocationManager>
+        &locationManager, std::shared_ptr<MyLocationListener> &posListener) {
+    if(locationManager == nullptr) {
+      auto &locationFactory = LocationFactory::getInstance();
+      locationManager = locationFactory.getLocationManager();
 
+      std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+      startTime = std::chrono::system_clock::now();
+      bool subSystemsStatus = locationManager->isSubsystemReady();
+      if(!subSystemsStatus) {
+         std::cout << "Location subsystem is not ready, Please wait" << std::endl;
+         std::future<bool> f = locationManager->onSubsystemReady();
+         subSystemsStatus = f.get();
+      }
+
+      if(subSystemsStatus) {
+          endTime = std::chrono::system_clock::now();
+          std::chrono::duration<double> elapsedTime = endTime - startTime;
+          std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                            << std::endl;
+      } else {
+          std::cout << "ERROR - Unable to initialize Location subsystem" << std::endl;
+          return telux::common::Status::NOTREADY;
+      }
+
+      posListener = std::make_shared<MyLocationListener>();
+      posListener->setSvInfoFlag(false);
+      posListener->setDetailedLocationReportFlag(false);
+      posListener->setBasicLocationReportFlag(false);
+      posListener->setDataInfoFlag(false);
+
+      //Registering listener for fixes
+      locationManager->registerListenerEx(posListener_);
+   } else {
+       std::cout<< "Location manager already initialized" << std::endl;
+   }
+   return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILocationConfigurator>
+        &locationConfigurator) {
+    if(locationConfigurator == nullptr) {
+        auto &locationFactory = LocationFactory::getInstance();
+        locationConfigurator = locationFactory.getLocationConfigurator();
+        std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+        startTime = std::chrono::system_clock::now();
+        bool subSystemsStatus = locationConfigurator->isSubsystemReady();
+        if(!subSystemsStatus) {
+            std::cout << "Location configuration subsystem is not ready, Please wait" << std::endl;
+            std::future<bool> f = locationConfigurator->onSubsystemReady();
+            subSystemsStatus = f.get();
+        }
+
+        if(subSystemsStatus) {
+            endTime = std::chrono::system_clock::now();
+            std::chrono::duration<double> elapsedTime = endTime - startTime;
+            std::cout << "Elapsed Time for configuration subsystems to ready : "
+                << elapsedTime.count() << "s\n"  << std::endl;
+        } else {
+            std::cout << "ERROR - Unable to initialize Location configuration subsystem"
+                << std::endl;
+            return telux::common::Status::NOTREADY;
+        }
+   } else {
+       std::cout<< "Location configurator is already initialized" << std::endl;
+   }
+   return telux::common::Status::SUCCESS;
+}
+
+int LocationMenu::init() {
    std::shared_ptr<ConsoleAppCommand> startDetailedReportsCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Start_Detailed_Reports", {},
@@ -82,47 +150,27 @@ int LocationMenu::init() {
       ConsoleAppCommand("5", "Filter_notifications", {},
                         std::bind(&LocationMenu::enableReportLogs, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> enableDisableTunc = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("6", "C-TUNC", {},
+                        std::bind(&LocationMenu::enableDisableTunc, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
-      = {startDetailedReportsCommand,startDetailedEngineReportsCommand, startBasicReportsCommand,
-         stopReportsCommand, enableReportLogsCommand};
+      = {startDetailedReportsCommand, startBasicReportsCommand, stopReportsCommand,
+         enableReportLogsCommand, enableDisableTunc};
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
 
-   if(locationManager_ == nullptr) {
-      auto &locationFactory = telux::loc::LocationFactory::getInstance();
-      locationManager_ = locationFactory.getLocationManager();
-
-      std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-      startTime = std::chrono::system_clock::now();
-      bool subSystemsStatus = locationManager_->isSubsystemReady();
-      if(!subSystemsStatus) {
-         std::cout << "Location subsystem is not ready, Please wait" << std::endl;
-         std::future<bool> f = locationManager_->onSubsystemReady();
-         subSystemsStatus = f.get();
-      }
-
-      if(subSystemsStatus) {
-          endTime = std::chrono::system_clock::now();
-          std::chrono::duration<double> elapsedTime = endTime - startTime;
-          std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                            << std::endl;
-      } else {
-          std::cout << "ERROR - Unable to initialize Location subsystem" << std::endl;
-          return -1;
-      }
-
-      posListener_ = std::make_shared<MyLocationListener>();
-      posListener_->setSvInfoFlag(false);
-      posListener_->setDetailedLocationReportFlag(false);
-      posListener_->setBasicLocationReportFlag(false);
-      posListener_->setDataInfoFlag(false);
-
-      //Registering listener for fixes
-      locationManager_->registerListenerEx(posListener_);
-
+   telux::common::Status status = telux::common::Status::FAILED;
+   int rc = 0;
+   status = initLocationManager(locationManager_, posListener_);
+   if (status != telux::common::Status::SUCCESS) {
+       rc = -1;
    }
-
-   return 0;
+   status = initLocationConfigurator(locationConfigurator_);
+   if (status != telux::common::Status::SUCCESS) {
+       rc = -1;
+   }
+   return rc;
 }
 
 void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
@@ -171,7 +219,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
          opt = 1000;
       }
       std::string enginePreference;
-      telux::loc::LocReqEngine engineType = DEFAULT_UNKNOWN;
+      LocReqEngine engineType = DEFAULT_UNKNOWN;
       std::vector<int> options;
       std::cout << " Enter the type of engine reports : \n"
                    " (0 - FUSED\n 1 - SPE\n 2 - PPE) \n\n";
@@ -259,6 +307,61 @@ void LocationMenu::stopReports(std::vector<std::string> userInput) {
                                            myLocCmdResponseCb_, std::placeholders::_1));
 }
 
+void LocationMenu::enableDisableTunc(std::vector<std::string> userInput) {
+   if(locationConfigurator_) {
+       char delimiter = '\n';
+       std::string option;
+       std::cout << "Enter Y to enable or N to disable C-TUNC: ";
+       std::getline(std::cin, option, delimiter);
+       std::string threshold;
+       std::cout << "Enter value for threshold in ms, default is 0.0: ";
+       std::getline(std::cin, threshold, delimiter);
+       std::string energyBudget;
+       std::cout << "Enter value for power in .1 milli watt second, default is 0: ";
+       std::getline(std::cin, energyBudget, delimiter);
+
+       bool enable = false;
+       if(option == "Y") {
+            enable = true;
+       } else if(option == "N") {
+            enable = false;
+       } else {
+            std::cout << " BAD input " << std::endl;
+       }
+       float optThreshold = 0.0;
+       if(!threshold.empty()) {
+           try {
+                optThreshold = std::stof(threshold);
+           } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << optThreshold
+                          << std::endl;
+           }
+        } else {
+             optThreshold = 0.0;
+        }
+        int optPower = 0;
+        if(!energyBudget.empty()) {
+            try {
+                optPower = std::stoi(energyBudget);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << optPower
+                          << std::endl;
+            }
+        } else {
+             optPower = 0;
+        }
+        std::cout << " Enable: " << enable << " Threshold: " << optThreshold << " Power: " <<
+                optPower << std::endl;
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Constraint-TUNC");
+        telux::common::Status status = locationConfigurator_->configureCTunc(enable,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1), optThreshold, optPower);
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not Implemented" << std::endl;
+        }
+   }
+}
 
 int LocationMenu::enableReportLogsUtility() {
    char delimiter = '\n';

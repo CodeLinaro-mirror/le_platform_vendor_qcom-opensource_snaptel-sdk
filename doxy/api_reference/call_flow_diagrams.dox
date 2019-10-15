@@ -201,7 +201,7 @@ Example:
 13. Optionally, the application gets asynchronous response for hold using CommandResponseCallback.
 14. The application receives call info change i.e CALL_ON_HOLD from CallManager.
 
-@section hold_conference_swap_callflow Hold, Conference, Swap call flow 
+@section hold_conference_swap_callflow Hold, Conference, Swap call flow
 
 @anchor fig_hold_conference_swap_callflow
 @latexonly
@@ -218,7 +218,7 @@ Example:
 
 1. The application makes first call using ICall.
 2. The application receives the status like SUCCESS, FAILED etc based on execution of makeCall operation.
-3. Optionally, the application gets asynchronous response for makeCall using makeCallResponseCallback. 
+3. Optionally, the application gets asynchronous response for makeCall using makeCallResponseCallback.
 4. The CallManager sends call info change i.e CALL_ACTIVE to application by using onCallInfoChange API.
 5. The application sends hold command to hold the call, optionally specifying callback to get asynchronous response.
 6. The application receives the status like SUCCESS, FAILED etc based on the execution of hold API.
@@ -379,7 +379,7 @@ response using CommandResponseCallback.
 13. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApdu API in SapCardManager.
 14. Optionally, the response for transmit APDU is received by the application.
 15. Now the application closes the SAP connection with SIM and optionally, gets asynchronous response using CommandResponseCallback.
-16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager. 
+16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager.
 17. Optionally, the response for SAP close connection is received by the application.
 
 @subsection sap_mgr_sim_call_flow SIM Turn off, Turn on and Reset call flow
@@ -399,14 +399,14 @@ response using CommandResponseCallback.
 
 1. Application gets SapCardManager object corresponding to slotID using PhoneFactory.
 2. PhoneFactory returns the SapCardManager object to application in order to perform SAP operations like SIM power off, on or reset.
-3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets 
+3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets
 asynchronous response using CommandResponseCallback.
 4. Application receives the status i.e. either SUCCESS or FAILED based on execution of openConnection API in SapCardManager.
 5. Optionally, the response for openConnection is received by the application.
 6. The application sends SIM Power Off command to turn off the SIM and optionally, gets asynchronous response using CommandResponseCallback.
 7. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOff API in SapCardManager.
 8. Optionally, the response for SIM Power Off is received by the application.
-9. Similarly, the application can send SIM Power On command to turn on the SIM and optionally, gets asynchronous response using CommandResponseCallback. 
+9. Similarly, the application can send SIM Power On command to turn on the SIM and optionally, gets asynchronous response using CommandResponseCallback.
 10. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOn API in SapCardManager.
 11. Optionally, the response for SIM Power On is received by the application.
 12. Similarly, the application sends SIM Reset command to perform SIM Reset and optionally, gets asynchronous response.
@@ -639,6 +639,95 @@ When reports are no longer required, the app needs to stop the report and de-reg
 18. Application requests for request profile and optionally gets asynchronous response using requestProfileByIdCallback.
 19. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfile.
 20. Optionally, the application gets asynchronous response for requestProfile using requestProfileByIdCallback.
+
+@section data_filter_call_flow Data Filter Manager Call Flow
+
+Data Filter manager provides APIs to get/set data filter mode, add/remove data restrict filters.
+Its API can used per data call or globally to apply the same changes to all the underlying
+currently up data call. It also has listener interface for notifications for data filter status update.
+Application will get the Data Filter manager object from data factory.
+The application can register a listener for data filter mode change updates.
+
+@subsection get_and_set_data_filter_mode_call_flow Call flow to Set/Get data filter mode
+
+@anchor fig_get_and_set_data_filter_mode_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{get_and_set_data_filter_mode_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Get/Set data filter mode call flow}
+  \label{fig_get_and_set_data_filter_mode_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{get_and_set_data_filter_mode_call_flow.png,Get/Set data filter mode call flow,80,80,Get/Set data filter mode call flow}
+
+1. Application requests data factory for data connection manager object.
+2. Data factory returns IDataConnectionManager object to application.
+3. Application requests data factory for data filter manager object.
+4. Data factory returns IDataFilterManager object to application.
+5. Application requests for start data call and optionally gets asynchronous response using startDataCallback.
+6. Application receives the status i.e. either SUCCESS or FAILED based on the execution of startDataCall.
+7. Optionally, the application gets asynchronous response for startDataCall using startDataCallback.
+8. Application requests for set data filter mode to enable and optionally gets asynchronous response using ResponseCallback.
+9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of setDataRestrictMode.
+10. Optionally, the application gets asynchronous response for setDataRestrictMode using ResponseCallback.
+11. Application requests for get data filter mode and optionally gets asynchronous response using DataRestrictModeCb.
+12. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestDataRestrictMode.
+13. Optionally, the application gets asynchronous response for requestDataRestrictMode using DataRestrictModeCb.
+
+@subsection add_data_filter_call_flow Call flow to Add data restrict filter
+
+@anchor fig_add_data_filter_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{add_data_filter_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Add data restrict filter call flow}
+  \label{fig_add_data_filter_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{add_data_filter_call_flow.png,Add data restrict filter call flow,80,80,Add data restrict filter call flow}
+
+1. Application requests data factory for data connection manager object.
+2. Data factory returns IDataConnectionManager object to application.
+3. Application requests data factory for data filter manager object.
+4. Data factory returns IDataFilterManager object to application.
+5. Application requests for start data call and optionally gets asynchronous response using startDataCallback.
+6. Application receives the status i.e. either SUCCESS or FAILED based on the execution of startDataCall.
+7. Optionally, the application gets asynchronous response for startDataCall using startDataCallback.
+8. Application requests for add data filter and optionally gets asynchronous response using ResponseCallback.
+9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of addDataRestrictFilter.
+10. Optionally, the application gets asynchronous response for addDataRestrictFilter using ResponseCallback.
+
+@subsection remove_data_filter_call_flow Call flow to Remove data restrict filter
+
+@anchor fig_remove_data_filter_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{remove_data_filter_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Remove data restrict filter call flow}
+  \label{fig_remove_data_filter_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{remove_data_filter_call_flow.png,Remove data restrict filter call flow,80,80,Remove data restrict filter call flow}
+
+1. Application requests data factory for data connection manager object.
+2. Data factory returns IDataConnectionManager object to application.
+3. Application requests data factory for data filter manager object.
+4. Data factory returns IDataFilterManager object to application.
+5. Application requests for start data call and optionally gets asynchronous response using startDataCallback.
+6. Application receives the status i.e. either SUCCESS or FAILED based on the execution of startDataCall.
+7. Optionally, the application gets asynchronous response for startDataCall using startDataCallback.
+8. Application requests for add data filter and optionally gets asynchronous response using ResponseCallback.
+9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of removeAllDataRestrictFilters.
+10. Optionally, the application gets asynchronous response for removeAllDataRestrictFilters using ResponseCallback.
 
 @section network_selection_call_flow Network Selection Call Flow
 
@@ -1260,6 +1349,38 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 13. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
 14. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
 
+@subsection compressed_audio_format_playback_callflow Compressed audio format playback call flow
+
+@anchor fig_compressed_audio_format_playback_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{compressed_audio_format_playback_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to play Compressed audio format}
+  \label{fig_compressed_audio_format_playback_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{compressed_audio_format_playback.png,Audio Compressed Audio Format Playback call flow,80,80,Compressed Audio Format Playback call flow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to create a play stream with streamType as PLAY.
+4. Application receives synchronous status which indicates if the createStream request was sent successfully.
+5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioPlayStream.
+6. Application requests to write buffer using write method on IAudioPlayStream.
+7. Application receives synchronous status which indicates if the write request was sent successfully.
+8. Application is notified of the write request status (either SUCCESS or FAILED) via the application-supplied callback along with number of bytes written.
+9. Application is notified of when pipeline is ready to accept new buffer if callback returns with error that number of bytes written are not equal to bytes requested.
+10. Application send request to stop playback using stopAudio method of IAudioPlayStream.
+11. Application receives synchronous status which indicates if the stopAudio request was sent successfully.
+12. Application is notified of the stopAudio request status (either SUCCESS or FAILED) via the application-supplied callback.
+13. Appication is notified via indication that playback is stopped if StopType is STOP_AFTER_PLAY.
+14. Application requests delete audio stream using deleteStream method.
+15. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+16. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+
 @section thermal_manager_call_flow Thermal manager call flow
 
 Thermal manager provides APIs to get list of thermal zones and cooling devices. It also contains APIs
@@ -1485,4 +1606,91 @@ bytes), APDU messages will begin to be sent/received.
 16. To close the connection, application will send connection unavailable message.
 17. Status of send connection unavailable i.e. either SUCCESS or FAILED will be returned to the application.
 18. Optionally, the response to send connection unavailable can be received by the application.
+
+@section modem_config_call_flow Modem Config Call Flow
+
+Modem Config manager provides APIs to request all configs from modem, load/delete modem config files
+from modem's storage, activate/deactivate a modem config file, get the active config details, set
+and get auto config selection mode. It also has listener interface for notifications for config
+activation update status. Application will get the Modem Config manager object from config factory.
+The application can register a listener for updates reagrding modem config activation.
+
+@subsection modem_config_load_and_activate_call_flow Call flow to load and activate a modem config file.
+
+@anchor fig_modem_config_load_and_activate_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{modem_config_load_and_activate_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modem Config load and activate call flow}
+  \label{fig_modem_config_load_and_activate_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{modem_config_load_and_activate_call_flow.png,Modem Config load and activate call flow,80,80,Modem Config load and activate call flow}
+
+1. Application requests modem config manager object from config factory.
+2. Config factory returns IModemConfigManager object.
+3. Application sends a request to load config file in modem's storage.
+4. Application receives synchronous Status which indicates if the request to load config file was sent successfully.
+5. Application is notified of the Status of the loadConfigFile request (either SUCCESS or FAILED) via the application-supplied callback.
+6. Application sends a request to get list of all modem configs from modem's storage.
+7. Application receives synchronous Status which indicates if the request to get config list was sent successfully.
+8. Application is notified of the Status of the requestConfigList request (either SUCCESS or FAILED) via the application-supplied callback along with list of modem configs.
+9. Application sends a request to activate config file.
+10. Application receives synchronous Status which indicates if the request to activate config file was sent successfully.
+11. Application is notified of the Status of the activateConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection deactivate_and_delete_modem_config_call_flow Call flow to deactivate and delete a modem config file.
+
+@anchor fig_deactivate_and_delete_modem_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{deactivate_and_delete_modem_config_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modem Config deactivate and delete Call Flow}
+  \label{fig_deactivate_and_delete_modem_config_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{deactivate_and_delete_modem_config_call_flow.png,Modem Config deactivate and delete Call Flow,80,80,Modem Config deactivate and delete Call Flow}
+
+1. Application requests modem config manager object from config factory.
+2. Config factory returns IModemConfigManager object.
+3. Application sends a request to deactivate config file.
+4. Application receives synchronous Status which indicates if the request to deactivate config file was sent successfully.
+5. Application is notified of the Status of the deactivateConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+6. Application sends a request to get list of all modem configs from modem's storage.
+7. Application receives synchronous Status which indicates if the request to get config list was sent successfully.
+8. Application is notified of the Status of the requestConfigList request (either SUCCESS or FAILED) via the application-supplied callback along with list of modem configs.
+9. Application sends a request to delete config file.
+10. Application receives synchronous Status which indicates if the request to delete config file was sent successfully.
+11. Application is notified of the Status of the deleteConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection modem_config_set_and_get_auto_selection_mode_call_flow Call flow to set and get config auto selection mode
+
+@anchor fig_modem_config_set_and_get_auto_selection_mode_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{modem_config_set_and_get_auto_selection_mode_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modem Config get and set Auto Selection Mode Call Flow}
+  \label{fig_modem_config_set_and_get_auto_selection_mode_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{modem_config_set_and_get_auto_selection_mode_call_flow.png,Modem Config get and set Auto Selection Mode Call Flow,80,80,Modem Config get and set Auto Selection Mode Call Flow}
+
+1. Application requests modem config manager object from config factory.
+2. Config factory returns IModemConfigManager object.
+3. Application sends a request to set config auto selection mode.
+4. Application receives synchronous Status which indicates if the request to set config auto selection mode was sent successfully.
+5. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback.
+6. Application sends a request to get config auto selection mode.
+7. Application receives synchronous Status which indicates if the request to get config auto selection mode was sent successfully.
+8. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback, along with mode and slot id.
+
 */

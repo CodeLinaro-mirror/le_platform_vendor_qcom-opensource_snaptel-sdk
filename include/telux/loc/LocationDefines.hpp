@@ -51,6 +51,12 @@ namespace loc {
 
 const float UNKNOWN_CARRIER_FREQ = -1;
 const int UNKNOWN_SIGNAL_MASK = 0;
+const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
+                                               Units: milli-seconds. */
+const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consumed of time
+                                                  uncertainty. The default here means that the
+                                                  engine is allowed to use infinite power.
+                                                  Units: 100 micro watt second. */
 
 /**
  * Defines recurrence type of the fix.

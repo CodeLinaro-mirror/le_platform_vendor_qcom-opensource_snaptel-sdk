@@ -79,7 +79,7 @@ void ThermalListener::onImminentShutdownEnablement(uint32_t imminentDuration) {
     PRINT_NOTIFICATION << "Auto shutdown will be enabled in " <<
         imminentDuration << " seconds" << std::endl;
     auto sp = myThermCmdMgr_.lock();
-    if(sp->getAutoDisableFlag()) {
+    if(sp && sp->getAutoDisableFlag()) {
         sp->sendAutoShutdownModeCommand(telux::therm::AutoShutdownMode::DISABLE);
     }
 }

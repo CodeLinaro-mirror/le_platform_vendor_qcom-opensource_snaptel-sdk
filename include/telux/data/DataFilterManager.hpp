@@ -52,10 +52,20 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataFilterListener.hpp>
-#include <telux/data/DataRestrictFilter.hpp>
+#include <telux/data/IpFilter.hpp>
 
 namespace telux {
 namespace data {
+
+/**
+ * This function is called in the response to requestDataRestrictMode().
+ *
+ * @param [in] mode       Return current data restrict mode.
+ * @param [in] error      Return code which indicates whether the operation
+ *                        succeeded or not.  @ref ErrorCode.
+ */
+using DataRestrictModeCb =
+    std::function<void(DataRestrictMode mode, telux::common::ErrorCode error)>;
 
 /** @addtogroup telematics_data
  * @{ */
@@ -128,9 +138,15 @@ public:
      * This API enables or disables the powersave filtering mode of the packet data session..
      *
      * @param [in] mode - Enable or disable the powersave filtering mode.
-     * @param [in] profileId - Profile ID for data connection.
-     * @param [in] ipFamilyType - IP Family type @ref IpFamilyType.
      * @param [in] callback - Optional callback to get the response for the change in filter mode.
+     * @param [in] profileId - Optional Profile ID for data connection. If user does not specify
+     *                         the profile id, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its profile id can be specified as input.
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not specify
+     *                         the ip family type, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its ip family type can be specified as input.
      *
      * @returns Status of setDataRestrictMode i.e. success or suitable status code.
      *
@@ -139,9 +155,23 @@ public:
      */
     virtual telux::common::Status
     setDataRestrictMode(DataRestrictMode mode,
-                        int profileId = DEFAULT_PROFILE_ID_MAX,
-                        IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN,
-                        telux::common::ResponseCallback callback = nullptr) = 0;
+                        telux::common::ResponseCallback callback = nullptr,
+                        int profileId = PROFILE_ID_MAX,
+                        IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
+    /**
+     * Get the current Data Powersave filter mode
+     *
+     * @param [in]  ifaceName - Interface name for data connection.
+     * @param [in]  callback - callback function to get the result of API.
+     *
+     * @returns Status of requestDataRestrictMode i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status
+    requestDataRestrictMode(std::string ifaceName,
+                            DataRestrictModeCb callback) = 0;
 
     /**
      * This API adds a filter rules for a packet data session to achieve power savings.
@@ -151,10 +181,15 @@ public:
      * forwarded to AP, until filter mode is disabled.
      *
      * @param [in] filter - Filter rule.
-     * @param [in] profileId - Profile ID for data connection.
-     * @param [in] ipFamilyType - IP Family type @ref IpFamilyType.
-     *
      * @param [in] callback - Optional callback to get the response.
+     * @param [in] profileId - Optional Profile ID for data connection. If user does not specify
+     *                         the profile id, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its profile id can be specified as input.
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not specify
+     *                         the ip family type, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its ip family type can be specified as input.
      *
      * @returns Status of addDataRestrictFilter i.e. success or suitable status code.
      *
@@ -162,17 +197,23 @@ public:
      *           break backwards compatibility.
      */
     virtual telux::common::Status
-    addDataRestrictFilter(std::shared_ptr<IDataRestrictFilter> &filter,
-                          int profileId = DEFAULT_PROFILE_ID_MAX,
-                          IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN,
-                          telux::common::ResponseCallback callback = nullptr) = 0;
+    addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
+                          telux::common::ResponseCallback callback = nullptr,
+                          int profileId = PROFILE_ID_MAX,
+                          IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
 
     /**
      * This API removes all the previous added powersave filter for a packet data session
      *
-     * @param [in] profileId - Profile ID for data connection.
-     * @param [in] ipFamilyType - IP Family type @ref IpFamilyType.
      * @param [in] callback - Optional callback to get the response.
+     * @param [in] profileId - Optional Profile ID for data connection. If user does not specify
+     *                         the profile id, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its profile id can be specified as input.
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not specify
+     *                         the ip family type, then the API applies to all the currently running
+     *                         data connection. If user wants to apply the changes to any specific
+     *                         data connection, then its ip family type can be specified as input.
      *
      * @returns Status of removeAllDataRestrictFilters i.e. success or suitable status code.
      *
@@ -180,9 +221,9 @@ public:
      *           break backwards compatibility.
      */
     virtual telux::common::Status
-    removeAllDataRestrictFilters(int profileId = DEFAULT_PROFILE_ID_MAX,
-                                 IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN,
-                                 telux::common::ResponseCallback callback = nullptr) = 0;
+    removeAllDataRestrictFilters(telux::common::ResponseCallback callback = nullptr,
+                                 int profileId = PROFILE_ID_MAX,
+                                 IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN) = 0;
     /**
      * Get associated slot id for the Data Filter Manager.
      *

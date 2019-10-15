@@ -88,6 +88,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
    Remote SIM sub-system consists of APIs that allow a device that does not have a SIM physically connected to it to access a SIM remotely (e.g. over BT, Ethernet, etc.) and perform card operations on that SIM, such as requesting reset, transmitting APDU messages, etc.
 
+<b>Modem Config Services</b>
+
+   Modem Config sub-system consists of APIs that allow to request modem config files, load/delete a modem config file from modem's storage, activate/deactivate a modem config file, get/set auto selection mode for config files.
+
 Telematics SDK classes can be broadly divided into the following types:
 
 - Factory - Factory classes are central classes such as PhoneFactory which can be used to create Manager classes corresponding to their sub-systems such as PhoneManager.
@@ -147,7 +151,7 @@ Following parameters are configurable through the APIs.
    - Minimum distance travelled after which the period between two consecutive location reports depends on the interval specified.
 
 @subsection data_services Data Services
-Data Services APIs in the Telematics SDK used for cellular connectivity and modem profile management.
+Data Services APIs in the Telematics SDK used for cellular connectivity, modem profile management and data filters management.
 
 Data Connection Manager APIs provide functionality such as
    - start / stop data call
@@ -157,6 +161,12 @@ Data Profile Manager APIs provide functionality such as
    - List available profiles in the modem
    - Create / modify / delete / modify modem profiles
    - Query for the selected profile
+
+Data Filter Manager APIs provide functionality such as
+   - get / set data filter mode per data call
+   - get / set data filter mode for all data call in up state
+   - add / remove data filter per data call
+   - add / remove data filter for all data call in up state
 
 @subsection nw_srv_sys_services Network Selection and Serving System Management
 Network Selection and Service System Management APIs in the Telematics SDK used for configuring the networks and preferences
@@ -220,6 +230,8 @@ AudioVoiceStream along with inheriting AudioStream, provides additional APIs to 
 
 AudioPlayStream along with inheriting AudioStream, provides additional APIs to manage audio play session as stated below.
    - write audio samples
+   - Write audio samples for compressed audio format
+   - Stop Audio for compressed audio format
 
 AudioCaptureStream along with inheriting AudioStream, provides additional APIs to manage audio capture session as stated below.
    - read audio samples
@@ -364,4 +376,13 @@ Remote SIM APIs provide functionality such as
    - Sending/receiving APDU messages from/to the modem and remote SIM.
    - Receiving operations from the modem (disconnect, power up, reset) to the remote SIM.
 
+@subsection modem_config Modem Config Management
+Modem Config APIs in the Telematics SDK provides modem config related functionalities such as
+   - Request modem config files from modem's storage.
+   - Load a modem config file to modem's storage.
+   - Activate/Deactivate a modem config file from modem's storage.
+   - Get Active config info details.
+   - Get/Set config auto selection mode.
+   - Delete a modem config file from modem's storage.
+   - Ability to get notified whenever a SW config file is activated.
 */

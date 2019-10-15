@@ -37,6 +37,8 @@
 #ifndef CV2XRXSUBSCRIPTION_HPP
 #define CV2XRXSUBSCRIPTION_HPP
 
+#include <vector>
+#include <memory>
 #include <netinet/in.h>
 
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
@@ -92,6 +94,20 @@ public:
      * @returns The Rx subscriptions's port num
      */
     virtual uint16_t getPortNum() const = 0;
+
+    /**
+     * Get subscriptions's service ID list
+     *
+     * @returns The Rx subscriptions's service ID list
+     */
+    virtual std::shared_ptr<std::vector<uint32_t>> getServiceIDList() const = 0;
+
+    /**
+     * Set subscriptions's service ID list
+     *
+     * @param [in] idList        - the subscriptions's service ID list
+     */
+    virtual void setServiceIDList(const std::shared_ptr<std::vector<uint32_t>> idList) = 0;
 
     virtual ~ICv2xRxSubscription() {}
 };

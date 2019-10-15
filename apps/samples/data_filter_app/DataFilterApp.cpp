@@ -32,7 +32,8 @@
 #include <cstdlib>
 
 #include <telux/data/DataFactory.hpp>
-
+#define PROTO_TCP 6
+#define PROTO_UDP 17
 /**
  * @file: DataFilterApp.cpp
  *
@@ -169,24 +170,28 @@ int main(int argc, char *argv[]) {
       telux::data::DataRestrictMode enableMode;
       enableMode.filterAutoExit = telux::data::DataRestrictModeType::DISABLE;
       enableMode.filterMode = telux::data::DataRestrictModeType::ENABLE;
-      dataFilterMgr->setDataRestrictMode(enableMode, profileId, ipFamilyType, filterResponseCallback);
+      dataFilterMgr->setDataRestrictMode(enableMode, filterResponseCallback, profileId, ipFamilyType);
 
       std::string ipAddr = std::string(argv[2]);
       int port = std::atoi(argv[3]);
+      telux::data::IPv4Info ipv4Info_ = {};
+      ipv4Info_.srcAddr = ipAddr;
 
       telux::data::PortInfo srcPort;
       srcPort.port = port;
       srcPort.range = 0;
+      telux::data::UdpInfo udpInfo_ = {};
+      udpInfo_.src = srcPort;
 
       // create a filter of UDP type, and set source IP and port.
-      std::shared_ptr<telux::data::IDataRestrictFilter> dataFilter =
-      dataFactory.getNewDataRestrictFilter(telux::data::ProtocolType::UDP);
-      dataFilter->setIPv4SrcAddr(ipAddr);
+      std::shared_ptr<telux::data::IIpFilter> dataFilter = dataFactory.getNewIpFilter(PROTO_UDP);
+      dataFilter->setIPv4Info(ipv4Info_);
 
-      auto udpRestrictFilter = std::dynamic_pointer_cast<telux::data::IUdpRestrictFilter>(dataFilter);
-      udpRestrictFilter->setSourcePort(srcPort);
+      auto udpRestrictFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(dataFilter);
+      udpRestrictFilter->setUdpInfo(udpInfo_);
 
-      dataFilterMgr->addDataRestrictFilter(dataFilter, profileId, ipFamilyType, filterResponseCallback);
+      dataFilterMgr->addDataRestrictFilter(dataFilter, filterResponseCallback,
+                                           profileId, ipFamilyType);
 
    } else {
       std::cout << "\n Invalid argument!!! \n\n";

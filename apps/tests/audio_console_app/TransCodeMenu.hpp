@@ -27,42 +27,54 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AUDIOCONSOLEAPP_HPP
-#define AUDIOCONSOLEAPP_HPP
+#ifndef TRANSCODEMENU_HPP
+#define TRANSCODEMENU_HPP
 
-#include <telux/audio/AudioManager.hpp>
+#include <queue>
+
 #include "ConsoleApp.hpp"
 #include "AudioClient.hpp"
+#include <telux/audio/AudioManager.hpp>
 
-using namespace telux::audio;
-using namespace telux::common;
-
-class AudioConsoleApp : public ConsoleApp {
-public :
-    AudioConsoleApp(std::string appName, std::string cursor);
-    ~AudioConsoleApp();
-
+class TransCodeMenu : public ConsoleApp,
+                      public telux::audio::ITranscodeListener,
+                      public std::enable_shared_from_this<TransCodeMenu> {
+public:
+    TransCodeMenu(std::string appName, std::string cursor);
+    ~TransCodeMenu();
     void init();
+    void onReadyForWrite() override;
 
 private:
-    void voiceMenu(std::vector<std::string> userInput);
-    void playMenu(std::vector<std::string> userInput);
-    void captureMenu(std::vector<std::string> userInput);
-    void loopbackMenu(std::vector<std::string> userInput);
-    void toneMenu(std::vector<std::string> userInput);
-    void transCodeMenu(std::vector<std::string> userInput);
+    void startTranscoding(std::vector<std::string> userInput);
+    void abortTranscoding(std::vector<std::string> userInput);
+    void createTranscoder();
+    void read();
+    void write();
+    void registerListener();
+    void deRegisterListener();
+    void takeFormatData(FormatInfo &info);
 
-    void cleanup();
+    void readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer, uint32_t isLastBuffer,
+                      telux::common::ErrorCode error);
+    void writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer, uint32_t bytes,
+                      telux::common::ErrorCode error);
 
-    // Audio Client is Created by the Audio Console app and it is passed to every Menu
-    std::shared_ptr<AudioClient> audioClient_;
-	// Instance of all menu created are stored to maintain parallel running streams
-    std::shared_ptr<VoiceMenu> voiceMenu_;
-    std::shared_ptr<PlayMenu> playMenu_;
-    std::shared_ptr<CaptureMenu> captureMenu_;
-    std::shared_ptr<LoopbackMenu> loopbackMenu_;
-    std::shared_ptr<ToneMenu> toneMenu_;
-    std::shared_ptr<TransCodeMenu> transCodeMenu_;
+    FormatInfo inputConfig_;
+    FormatInfo outputConfig_;
+    std::shared_ptr<ITranscoder> transcoder_;
+    std::shared_ptr<IAudioManager> audioManager_;
+    FILE * readFile_;
+    FILE * writeFile_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    std::string readFilePath_, writeFilePath_;
+    std::vector<std::thread> runningThreads_;
+    bool writeStatus_;
+    bool readStatus_;
+    std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> writeBuffers_;
+    std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> readBuffers_;
+    bool pipeLineEmpty_;
 };
 
-#endif  // AUDIOCONSOLEAPP_HPP
+#endif // TRANSCODEMENU_HPP

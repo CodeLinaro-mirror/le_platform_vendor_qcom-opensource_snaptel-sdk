@@ -105,6 +105,23 @@ public:
     virtual ~IPlayListener() {}
 };
 
+class ITranscodeListener {
+public:
+    /**
+     * This function is called when pipeline is ready to accept new buffer. It is applicable only
+     * for compressed audio format type where a client can write and queue buffers for transcoding.
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual void onReadyForWrite() {}
+
+    /**
+     * Destructor of ITranscodeListener
+     */
+    virtual ~ITranscodeListener() {}
+};
+
 /** @} */ /* end_addtogroup telematics_audio */
 
 }  // end of namespace audio

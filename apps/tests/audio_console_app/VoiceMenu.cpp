@@ -261,7 +261,7 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
         std::string userInput = "";
         // Start Means we are enabling DTMF and  direction is RX
 
-        uint16_t gain;
+        uint16_t gain = 0;
         std::cout << "Enter the Gain : ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
@@ -273,7 +273,7 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
             std::cout << "Invalid input!" << std::endl;
         }
 
-        uint32_t lowFreq;
+        uint32_t lowFreq = 0;
         std::cout << "Enter the Low Frequency (697, 770, 852, 941) : ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
@@ -285,7 +285,7 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
             std::cout << "Invalid input!" << std::endl;
         }
 
-        uint32_t highFreq;
+        uint32_t highFreq = 0;
         std::cout << "Enter the High Frequency (1209 1336 1477 1633) : ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
@@ -297,7 +297,7 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
             std::cout << "Invalid input!" << std::endl;
         }
 
-        uint32_t duration;
+        uint32_t duration = 0;
         std::cout << "Enter the duration (in ms (0-65534) and 65535 for infinite): ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);

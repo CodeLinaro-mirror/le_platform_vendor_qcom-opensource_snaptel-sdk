@@ -85,9 +85,14 @@ typedef int v2x_radio_handle_t;
 #define MAX_MALICIOUS_IDS_LIST_LEN (50)
 
 /** Maximum length of the trusted ID list that can be passed in
-    v2x_radio_update_trusted_ue_list(). @newpage
+    v2x_radio_update_trusted_ue_list().
  */
 #define MAX_TRUSTED_IDS_LIST_LEN   (50)
+
+ /** Maximum length for the subscribed service ID list that can
+     be passed in v2x_radio_rx_sock_create_and_bind_v2(). @newpage
+  */
+#define MAX_SUBSCRIBE_SIDS_LIST_LEN (10)
 
 /**
     Describes whether the radio chip modem should attempt or support concurrent
@@ -731,7 +736,9 @@ typedef struct {
 typedef enum {
     TRAFFIC_IP = 0,     /**< Use Ip type traffic. */
     TRAFFIC_NON_IP = 1  /**< Use Non-Ip type traffic. */
-} traffic_ip_type;
+} traffic_ip_type_t;
+
+typedef traffic_ip_type_t traffic_ip_type;
 
 /**
     Method used to query the platform SDK for its version number, build
@@ -772,7 +779,7 @@ extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v
 /** @} *//* end_addtogroup v2x_api_radio */
 
 /** @ingroup v2x_deprecated_radio
-    Deprecated. Pass #traffic_ip_type on radio init.
+    Deprecated. Pass #traffic_ip_type_t on radio init.
 
     Initializes the Radio interface and sets the callback that will be used
     when events in the radio change (including when radio initialization is
@@ -913,6 +920,50 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
     from that function must be used as the parameter in this function. @newpage
  */
 extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *sock, struct sockaddr_in6 *rx_sockaddr);
+
+/**
+    Opens a new V2X radio receive socket with specified service IDs for subscription,
+    and initializes the given sockaddr buffer. The socket is also bound as an
+    AF_INET6 UDP type socket.
+
+    @datatypes
+    #v2x_radio_handle_t
+
+    @param[in] handle        Identifies the initialized Radio interface.
+    @param[in] id_ist_len    Identifies the length of service ID list.
+    @param[in] id_list       Pointer to the service ID list for subscription,
+                             subscribe wildcard if input nullptr.
+    @param[out] sock         Pointer to the socket that, on success, returns
+                             the socket descriptor. The caller must release
+                             this socket with v2x_radio_sock_close().
+    @param[out] rx_sockaddr  Pointer to the IPv6 UDP socket. The sockaddr_in6
+                             buffer is initialized with the IPv6 source address
+                             and source port that are used for the bind.
+
+    @detdesc
+    You can execute any sockopts that are appropriate for this type of socket
+    (AF_INET6).
+    @par
+    @note1hang The port number for the receive path is not exposed, but it is
+               in the sockaddr_ll structure (if the caller is interested).
+
+    @return
+    0 -- On success.
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device.
+
+    @dependencies
+    The interface must be pre-initialized with v2x_radio_init(). The handle from
+    that function must be used as the parameter in this function. @newpage
+ */
+extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
+    int id_ist_len,
+    uint32_t *id_list,
+    int *sock,
+    struct sockaddr_in6 *rx_sockaddr);
 
 /**
     Creates and binds a socket with a bandwidth-reserved (SPS) Tx flow with the
@@ -1103,7 +1154,8 @@ extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
                                      new reservation information.
 
     @detdesc
-    This function is used as follows:
+    This function will not update reservation priority.
+    Can be used as follows:
     - When the bandwidth requirement changes in periodicity (for example, due
       to an application layer DCC algorithm)
     - Because the packet size is increasing (for example, due to a growing path
@@ -1550,7 +1602,8 @@ int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
     @param[in]  updated_flow_info  Pointer to the new reservation information.
 
     @detdesc
-    This function is used as follows:
+    This function will not update reservation priority.
+    Can be used as follows:
     - When the bandwidth requirement changes in periodicity (for example, due
       to an application layer DCC algorithm)
     - Because the packet size is increasing (for example, due to a growing path
@@ -1576,7 +1629,7 @@ extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
 
 
 /** @ingroup v2x_deprecated_radio
-    Deprecated. Pass #traffic_ip_type on flow creation.
+    Deprecated. Pass #traffic_ip_type_t on flow creation.
 
     Opens and binds an event-driven socket (one with no bandwidth reservation).
 
@@ -1732,7 +1785,7 @@ extern v2x_status_enum_type stop_v2x_mode();
     complete).
 
     @datatypes
-    #traffic_ip_type \n
+    #traffic_ip_type_t \n
     #v2x_concurrency_sel_t \n
     #v2x_radio_calls_t
 
@@ -1766,7 +1819,7 @@ extern v2x_status_enum_type stop_v2x_mode();
     #V2X_RADIO_HANDLE_BAD -- If there is an error. No initialization callback
     is made. @newpage
  */
-v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type ip_type,
+v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
                                      v2x_concurrency_sel_t mode,
                                      v2x_radio_calls_t *callbacks_p,
                                      void *ctx_p);
@@ -1774,12 +1827,12 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type ip_type,
     Opens and binds an event-driven socket (one with no bandwidth reservation).
 
     This %v2x_radio_tx_event_sock_create_and_bind_v3() method differs from
-    v2x_radio_tx_event_sock_create_and_bind_v2() in that you can use the traffic_ip_type
+    v2x_radio_tx_event_sock_create_and_bind_v2() in that you can use the traffic_ip_type_t
     parameter to specify traffic ip type instead of requiring the interface name.
 
     @datatypes
     v2x_tx_flow_info_t
-    traffic_ip_type
+    traffic_ip_type_t
 
     @param[in]  ip_type          traffice_ip_type.
     @param[in]  v2x_id           Used for transmissions that are ultimately
@@ -1810,7 +1863,7 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type ip_type,
      - EACCES -- On failure to get the MAC address of the device.
  */
 int v2x_radio_tx_event_sock_create_and_bind_v3(
-        traffic_ip_type ip_type,
+        traffic_ip_type_t ip_type,
         int v2x_id,
         int event_portnum,
         v2x_tx_flow_info_t *event_flow_info,
@@ -1821,9 +1874,9 @@ int v2x_radio_tx_event_sock_create_and_bind_v3(
     Returns interface name set during radio initialization.
 
     @datatypes
-    traffic_ip_type
+    traffic_ip_type_t
 
-    @param[in]  ip_type     traffic_ip_type
+    @param[in]  ip_type     traffic_ip_type_t
     @param[out] iface_name  pointer to buffer for interface name
     @param[in]  buffer_len  length of the buffer passed for interface name.
  *                          Must be at least the max buffer size for an interface name (IFNAMSIZE).
@@ -1836,7 +1889,7 @@ int v2x_radio_tx_event_sock_create_and_bind_v3(
     #V2X_STATUS_FAIL -- If there is an error. Interface name will be an
     empty string. @newpage
  */
-v2x_status_enum_type get_iface_name(traffic_ip_type ip_type, char * iface_name, size_t buffer_len);
+v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char * iface_name, size_t buffer_len);
 
 /** @} *//* end_addtogroup v2x_api_radio */
 

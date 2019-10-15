@@ -49,16 +49,16 @@ namespace data {
 /**
  * Default data profile id.
  */
-#define DEFAULT_PROFILE_ID_MAX 0x7FFFFFFF
+#define PROFILE_ID_MAX 0x7FFFFFFF
 
 /**
  * Preferred IP family for the connection
  */
 enum class IpFamilyType {
-   UNKNOWN = -1,
-   IPV4 = 0x04,    /**< IPv4 data connection */
-   IPV6 = 0x06,    /**< IPv6 data connection */
-   IPV4V6 = 0x0A,  /**< IPv4 and IPv6 data connection */
+    UNKNOWN = -1,
+    IPV4 = 0x04,   /**< IPv4 data connection */
+    IPV6 = 0x06,   /**< IPv6 data connection */
+    IPV4V6 = 0x0A, /**< IPv4 and IPv6 data connection */
 };
 
 /**
@@ -86,9 +86,9 @@ enum class AuthProtocolType {
  * @ref DataRestrictFilter
  */
 enum class DataRestrictModeType {
-  UNKNOWN = -1,
-  DISABLE,
-  ENABLE
+    UNKNOWN = -1,
+    DISABLE,
+    ENABLE,
 };
 
 /**
@@ -96,14 +96,15 @@ enum class DataRestrictModeType {
  * @ref DataRestrictFilter
  */
 struct DataRestrictMode {
-  DataRestrictModeType filterMode; /**< Disable or enable data filter mode. When disabled all the
-                                        data packets will be forwarded from modem to the apps.
-                                        When enabled only the data matching the filters will be
-                                        forwarded from modem to the apps. */
-  DataRestrictModeType filterAutoExit; /**< Disable or enable autoexit feature. When enabled, once
-                                            an incoming packet matching the filter is received,
-                                            filter mode will we disable automatically and any packet
-                                            will be allowed to be forwarded from modem to apps.*/
+    DataRestrictModeType filterMode; /**< Disable or enable data filter mode. When disabled all the
+                                          data packets will be forwarded from modem to the apps.
+                                          When enabled only the data matching the filters will be
+                                          forwarded from modem to the apps. */
+    DataRestrictModeType filterAutoExit; /**< Disable or enable autoexit feature. When enabled, once
+                                              an incoming packet matching the filter is received,
+                                              filter mode will we disable automatically and any
+                                            packet
+                                              will be allowed to be forwarded from modem to apps.*/
 };
 
 /**
@@ -115,18 +116,8 @@ struct DataRestrictMode {
  * port = 5000 and range= 0
  */
 struct PortInfo {
-  uint16_t port = 0;  /**< Port. */
-  uint16_t range = 0; /**< Range. */
-};
-
-/**
- * Lists the protocol associate with the IDataRestrictFilter object
- *
- */
-enum class ProtocolType {
-  NONE, /**< No transport protocol. */
-  TCP,  /**< Transmission Control Protocol. */
-  UDP,  /**< User Datagram Protocol. */
+    uint16_t port = 0;  /**< Port. */
+    uint16_t range = 0; /**< Range. */
 };
 
 /**
@@ -658,15 +649,36 @@ enum class ProfileChangeEvent {
 
 /**
  * This applies in architectures where the modem is attached to an External Application
- * Processor(EAP). An API, like start/stop data call, can be invoked from the EAP or from
- * the modems Internal Application Processor (IAP). This type specifies where the operation
- * should be carried out.
+ * Processor(EAP). An API, like start/stop data call, INatManager, IFirewallManager can be
+ * invoked from the EAP or from the modems Internal Application Processor (IAP). This type
+ * specifies where the operation should be carried out.
  */
 enum class OperationType {
     DATA_LOCAL = 0, /**< Perform the operation on the processor where the API is invoked.*/
     DATA_REMOTE,    /**< Perform the operation on the application processor other than where
                            the API is invoked. */
 };
+
+/**
+ * Direction of firewall rule
+ */
+enum class Direction {
+    UPLINK = 1,   /**< Uplink Direction */
+    DOWNLINK = 2, /**< Downlink Direction */
+};
+
+/**
+ * Internet (IP) protocol numbers found in IPv4 or IPv6 headers
+ * the protocol numbers are defined by Internet Assigned Numbers Authority (IANA)
+ *
+ * Some sample protocol values are
+ * ICMP = 1    # Internet Control Message Protocol - RFC 792
+ * IGMP = 2    # Internet Group Management Protocol - RFC 1112
+ * TCP = 6     # Transmission Control Protocol - RFC 793
+ * UDP = 17    # User Datagram Protocol - RFC 768
+ * ESP = 50    # Encapsulating Security Payload - RFC 4303
+ */
+using IpProtocol = uint8_t;
 
 /** @} */ /* end_addtogroup telematics_data */
 }

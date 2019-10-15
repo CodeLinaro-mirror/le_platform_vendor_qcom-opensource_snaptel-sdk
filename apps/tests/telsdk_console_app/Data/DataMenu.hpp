@@ -57,6 +57,7 @@
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataFilterManager.hpp>
+#include <telux/data/IpFilter.hpp>
 #include <telux/data/DataFilterListener.hpp>
 #include "MyDataFilterListener.hpp"
 #include "ConfigParser.hpp"
@@ -79,13 +80,14 @@ public:
 
    // Data Filter APIs
    void sendSetDataRestrictMode(DataRestrictMode mode);
-   void AddFilter();
-   void RemoveAllFilter();
+   void getFilterMode();
+   void addFilter();
+   void removeAllFilter();
 
-   ProtocolType getTypeOfFilter(ConfigParser instance,
+   IpProtocol getTypeOfFilter(ConfigParser instance,
                                 std::map<std::string, std::string> filter);
    void addIPParameters(
-       std::shared_ptr<telux::data::IDataRestrictFilter> &dataFilter,
+       std::shared_ptr<telux::data::IIpFilter> &dataFilter,
        ConfigParser instance, std::map<std::string, std::string> filterMap);
    ResponseCallback responseCb;
    void commandCallback(ErrorCode errorCode);
@@ -119,7 +121,6 @@ private:
    std::shared_ptr<DataListener> dataListener_;
 
    std::shared_ptr<telux::data::IDataFilterManager> dataFilterMgr_;
-   std::shared_ptr<telux::data::IDataRestrictFilter> dataFilter_;
    std::shared_ptr<MyDataFilterListener> dataFilterListener_;
 
 

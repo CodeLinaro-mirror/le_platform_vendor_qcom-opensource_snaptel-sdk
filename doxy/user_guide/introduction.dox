@@ -37,7 +37,10 @@ when       who     what, where, why
 06/10/19   RK      Updated with Audio Play, Capture and DTMF support in Telematics SDK
 07/22/19   AK      Added Thermal Shutdown Management support in Telamatics SDK
 09/04/19   AG      Added Remote SIM support to Telematics SDK
-09/05/19   AK      Added Audio Loopback, Tone Generation support in Telematics SDK.
+09/05/19   AK      Added Audio Loopback, Tone Generation support in Telematics SDK
+09/15/19   RV      Added Compressed Audio Format Playback support in Telematics SDK
+09/16/19   RV      Added Modem Config Support to Telematics SDK
+10/10/19   GS      Added Data Filter Support to Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

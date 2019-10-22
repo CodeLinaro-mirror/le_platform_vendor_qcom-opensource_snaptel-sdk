@@ -74,4 +74,10 @@ public:
                                          telux::common::ErrorCode error);
    static void resetStatisticsResponse(telux::common::ErrorCode error);
 };
+
+class DataFilterModeResponseCb {
+public:
+  static void requestDataRestrictModeResponse(telux::data::DataRestrictMode mode,
+                                              telux::common::ErrorCode error);
+};
 #endif

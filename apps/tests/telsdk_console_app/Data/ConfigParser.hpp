@@ -49,7 +49,7 @@ extern "C" {
 }
 
 
-#define DEFAULT_CONFIG_FILE_NAME "/data/Datafilter.conf"
+#define DEFAULT_CONFIG_FILE_NAME "/etc/Datafilter.conf"
 
 /*
  * ConfigParser class caches the config settings from conf file

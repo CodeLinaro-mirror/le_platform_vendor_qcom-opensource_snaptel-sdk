@@ -47,6 +47,7 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/audio/AudioDefines.hpp>
 #include <telux/audio/AudioListener.hpp>
+#include <telux/audio/AudioTranscoder.hpp>
 
 namespace telux {
 
@@ -59,7 +60,6 @@ class IAudioStream;
 class IAudioVoiceStream;
 class IAudioPlayStream;
 class IAudioCaptureStream;
-
 /**
  * @brief   Stream Buffer manages the buffer to be used for read and write operations on Audio
  *          Streams. For write operations, applications should request a stream buffer, populate
@@ -72,7 +72,7 @@ class IAudioCaptureStream;
  *          subsequent calls.
  *
  */
-class IStreamBuffer {
+class IAudioBuffer {
 public:
    /**
     * Returns the minimum size (in bytes) of data that caller needs to read/write
@@ -140,10 +140,14 @@ public:
     */
    virtual telux::common::Status reset() = 0;
 
-   virtual ~IStreamBuffer() {};
+   virtual ~IAudioBuffer() {};
 };
 
+class IStreamBuffer : virtual public IAudioBuffer {
+public:
 
+    virtual ~IStreamBuffer() {};
+};
 
 /**
  * This function is called with the response to getDevices API.
@@ -198,6 +202,23 @@ using GetStreamTypesResponseCb
  */
 using CreateStreamResponseCb
    = std::function<void(std::shared_ptr<IAudioStream> &stream, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to createTranscoder API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] transcoder  Interface pointer of transcoder.
+ *
+ * @param [in] error       Return code which indicates whether the operation succeeded or not.
+ *                         @ref ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to
+ *         change and could break backwards compatibility.
+ */
+using CreateTranscoderResponseCb = std::function<void(
+        std::shared_ptr<ITranscoder> &transcoder, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to deleteStream API.
@@ -280,6 +301,23 @@ public:
    virtual telux::common::Status createStream(StreamConfig streamConfig,
                                               CreateStreamResponseCb callback = nullptr)
       = 0;
+
+   /**
+    * Creates an instance of transcoder that can be used for transcoding operations.
+    * Each instance returned can be used for single transcoding operation. The instance can not
+    * be used for multiple transcoding operation.
+    *
+    * @param [in] input      configuration of input buffers that needs to be transcoded.
+    * @param [in] output     configuration of transcoded output buffers.
+    * @param [in] callback   callback pointer to get the response of createTranscoder.
+    *
+    * @returns Status of request i.e. success or suitable status code.
+    *
+    * @note        Eval: This is a new API and is being evaluated. It is subject to change
+    *              and could break backwards compatibility.
+    */
+    virtual telux::common::Status createTranscoder(FormatInfo input, FormatInfo output,
+            CreateTranscoderResponseCb callback) = 0;
 
    /**
     * Deletes the specified stream which was created before

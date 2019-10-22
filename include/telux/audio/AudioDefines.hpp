@@ -191,6 +191,16 @@ struct StreamConfig {
 };
 
 /**
+ *  Represents information about the audio format.
+ */
+struct FormatInfo {
+    uint32_t sampleRate; /**< Sample Rate of audio, Typical Values <8k/16k/32k/48k> */
+    ChannelTypeMask mask; /**< parameter for configuration of channel type */
+    AudioFormat format;  /**< Represents audio format */
+    FormatParams *params; /**< Represents codec specific parameters, like Frame Format */
+};
+
+/**
  *  Stream Channel Volume parameters
  */
 struct ChannelVolume {

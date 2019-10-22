@@ -62,7 +62,11 @@ when       who     what, where, why
 @tr @td J @tdend @td Jul 2019 @tdend @tdlast Updated the Location APIs apps @tdlastend @trend
 @tr @td K @tdend @td Jul 2019 @tdend @tdlast Addition of Thermal shutdown manager APIs and call flows @tdlastend @trend
 @tr @td L @tdend @td Sep 2019 @tdend @tdlast Addition of Remote SIM feature @tdlastend @trend
-@tr @td I @tdend @td Sep 2019 @tdend @tdlast Addition of Audio APIs for Loopback, Tone Generator and related call flows @tdlastend @trend
+@tr @td M @tdend @td Sep 2019 @tdend @tdlast Addition of Audio APIs for Loopback, Tone Generator and related call flows @tdlastend @trend
+@tr @td N @tdend @td Sep 2019 @tdend @tdlast Addition of Audio APIs for compressed audio format playback and related call flows @tdlastend @trend
+@tr @td O @tdend @td Sep 2019 @tdend @tdlast Addition of modem config APIs and related call flows @tdlastend @trend
+@tr @td P @tdend @td Oct 2019 @tdend @tdlast Addition of Data Filter APIs and call flows @tdlastend @trend
+
 @tableend
 
 @latexonly \rm @endlatexonly

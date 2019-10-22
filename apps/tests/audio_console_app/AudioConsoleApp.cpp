@@ -48,6 +48,7 @@ extern "C" {
 #include "CaptureMenu.hpp"
 #include "LoopbackMenu.hpp"
 #include "ToneMenu.hpp"
+#include "TransCodeMenu.hpp"
 
 #define APP_NAME "audio_console_app"
 
@@ -89,9 +90,13 @@ void AudioConsoleApp::init() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Tone", {},
         std::bind(&AudioConsoleApp::toneMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> transCodeMenuCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "TransCode", {},
+        std::bind(&AudioConsoleApp::transCodeMenu, this, std::placeholders::_1)));
+
      std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
-            toneMenuCommand};
+            toneMenuCommand, transCodeMenuCommand};
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ", audioClient_);
     voiceMenu_->init();
@@ -103,6 +108,8 @@ void AudioConsoleApp::init() {
     loopbackMenu_->init();
     toneMenu_ = std::make_shared<ToneMenu>("Tone menu", "tone> ", audioClient_);
     toneMenu_->init();
+    transCodeMenu_ = std::make_shared<TransCodeMenu>("TransCode menu", "transCode> ");
+    transCodeMenu_->init();
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -131,6 +138,11 @@ void AudioConsoleApp::loopbackMenu(std::vector<std::string> userInput) {
 void AudioConsoleApp::toneMenu(std::vector<std::string> userInput) {
     toneMenu_->displayMenu();
     toneMenu_->mainLoop();
+}
+
+void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
+    transCodeMenu_->displayMenu();
+    transCodeMenu_->mainLoop();
 }
 
 void AudioConsoleApp::cleanup() {

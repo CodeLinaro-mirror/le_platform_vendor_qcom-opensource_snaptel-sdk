@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/un.h>
@@ -81,12 +82,30 @@ static int chronyfd;
 
 bool enableDebug = false;
 bool enableSyslog = false;
+bool enableWriteRtc = false;
 
 // Used to get the Telux async result
 std::mutex mtx;
 std::condition_variable cv;
 bool cv_done = false;
 ErrorCode ec;
+
+int system_call(const char *command)
+{
+    FILE *stream = NULL;
+    int result = -1;
+    stream = popen(command, "w");
+    if (stream == NULL) {
+        LOGE("system call failed popen failed\n");
+    } else {
+        result = pclose(stream);
+        if (WIFEXITED(result)) {
+            result = WEXITSTATUS(result);
+        }
+        LOGD("popen closed with %d status", result);
+    }
+    return result;
+}
 
 void chronylog(int level, const char *fmt, ...)
 {
@@ -104,16 +123,17 @@ void chronylog(int level, const char *fmt, ...)
 }
 
 void printUsage(char *app_name) {
-    printf("Usage: %s -d -s\n", app_name);
+    printf("Usage: %s -d -s -r\n", app_name);
     printf("\t-d: Enable debug logs\n");
     printf("\t-s: Log to syslog instead of stdout\n");
+    printf("\t-r: Enable updating the rtc file\n");
 }
 
 static void writeRtcFile(int sig, siginfo_t *si, void *uc) {
     int rc;
 
     LOGI("Updating rtc file using: chronyc writertc\n");
-    rc = system("chronyc writertc");
+    rc = system_call("chronyc writertc");
     if (rc) {
         LOGE("Error sending the writertc command\n");
     }
@@ -233,13 +253,16 @@ void responseCallback(ErrorCode error) {
 void parseArguments(int& argc, char **argv) {
     int opt;
 
-    while ((opt = getopt(argc, argv, "dsh")) != -1) {
+    while ((opt = getopt(argc, argv, "dsrh")) != -1) {
         switch (opt) {
         case 'd':
             enableDebug = true;
             break;
         case 's':
             enableSyslog = true;
+            break;
+        case 'r':
+            enableWriteRtc = true;
             break;
         case 'h':
         default:
@@ -260,7 +283,9 @@ int main(int argc, char *argv[]) {
         return ret;
     }
 
-    installRtcTimer();
+    if (enableWriteRtc) {
+        installRtcTimer();
+    }
 
     // Initialize the TelSDK Location library
     std::shared_ptr<ILocationListener> myLocationListener

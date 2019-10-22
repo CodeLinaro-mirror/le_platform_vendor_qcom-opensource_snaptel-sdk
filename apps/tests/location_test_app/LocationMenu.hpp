@@ -46,6 +46,8 @@
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
 
+using namespace telux::loc;
+
 class LocationMenu : public ConsoleApp {
 public:
    /**
@@ -63,6 +65,7 @@ public:
    void startDetailedEngineReports(std::vector<std::string> userInput);
    void startBasicReports(std::vector<std::string> userInput);
    void stopReports(std::vector<std::string> userInput);
+   void enableDisableTunc(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();
@@ -71,9 +74,14 @@ public:
    void enableDataInfoLogs();
 
 private:
+   telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>
+        &locationManager, std::shared_ptr<MyLocationListener> &posListener);
+   telux::common::Status initLocationConfigurator(std::shared_ptr<ILocationConfigurator>
+        &locationConfigurator);
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<MyLocationListener> posListener_;
-   std::shared_ptr<telux::loc::ILocationManager> locationManager_ = nullptr;
+   std::shared_ptr<ILocationManager> locationManager_ = nullptr;
+   std::shared_ptr<ILocationConfigurator> locationConfigurator_ = nullptr;
    std::shared_ptr<MyLocationCommandCallback> myLocCmdResponseCb_ = nullptr;
 };
 

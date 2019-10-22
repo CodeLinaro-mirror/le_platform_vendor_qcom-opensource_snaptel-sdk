@@ -42,6 +42,7 @@
 
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationManager.hpp>
+#include <telux/loc/LocationConfigurator.hpp>
 
 namespace telux {
 
@@ -66,10 +67,18 @@ public:
     */
    std::shared_ptr<ILocationManager> getLocationManager();
 
+   /**
+    * Get instance of Location Configurator.
+    *
+    * @returns Pointer of ILocationConfigurator object.
+    */
+   std::shared_ptr<ILocationConfigurator> getLocationConfigurator();
+
    ~LocationFactory();
 
 private:
    std::shared_ptr<ILocationManager> locationManager_;
+   std::shared_ptr<ILocationConfigurator> locConfigurator_;
    std::mutex locationFactoryMutex_;
    LocationFactory();
    LocationFactory(const LocationFactory &) = delete;

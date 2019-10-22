@@ -202,3 +202,23 @@ void MyDataCallResponseCallback::dataCallListResponseCb(
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
+
+void DataFilterModeResponseCb::requestDataRestrictModeResponse(
+    telux::data::DataRestrictMode mode, telux::common::ErrorCode error) {
+  std::cout << std::endl << std::endl;
+  if (error == telux::common::ErrorCode::SUCCESS) {
+    PRINT_CB << "requestDataRestrictMode Response is successful \n";
+    if (mode.filterMode == DataRestrictModeType::DISABLE) {
+      std::cout << " DataRestrictMode Disabled" << std::endl;
+    } else if (mode.filterMode == DataRestrictModeType::ENABLE) {
+      std::cout << " DataRestrictMode Enabled" << std::endl;
+    } else {
+      std::cout << " Invalid DataRestrictMode" << std::endl;
+    }
+  } else {
+    PRINT_CB << "requestDataRestrictMode Response failed, errorCode: "
+             << static_cast<int>(error)
+             << ", description: " << Utils::getErrorCodeAsString(error)
+             << std::endl;
+  }
+}

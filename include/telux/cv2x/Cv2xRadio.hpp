@@ -273,6 +273,9 @@ public:
      * @param [in] port    - Rx port number
      * @param [in] cb      - Callback function that is invoked when socket
      *                       creation is complete.
+     * @param [in] idList  - Service ID list to subscribe, optional parameter
+     *                       using nullptr by default. Subscribe wildcard if
+     *                       this parameter is set to nullptr.
      *
      * @returns SUCCESS on success. Error status otherwise.
      *
@@ -282,7 +285,8 @@ public:
     virtual telux::common::Status createRxSubscription(
         TrafficIpType ipType,
         uint16_t port,
-        CreateRxSubscriptionCallback cb) = 0;
+        CreateRxSubscriptionCallback cb,
+        std::shared_ptr<std::vector<uint32_t>> idList = nullptr) = 0;
 
     /**
      * Creates a Tx SPS flow with the specified IP type, serviceId, and other
@@ -419,6 +423,8 @@ public:
      * @param [in] spsInfo      - Desired SPS reservation parameters
      * @param [in] cb           - Callback that is invoked upon reservation change. This
      *                            may be null.
+     * @detdesc
+     * This function does not update reservation priority
      *
      * @returns SUCCESS if no error occurred.
      */

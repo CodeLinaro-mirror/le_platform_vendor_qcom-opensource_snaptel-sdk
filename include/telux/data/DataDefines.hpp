@@ -694,6 +694,11 @@ struct VlanConfig {
     bool isAccelerated;  /**< is acceleration allowed */
 };
 
+/**
+ * Default IP Protocol number in IPv4 or IPv6 headers.
+ */
+#define IP_PROT_UNKNOWN 0xFF
+
 /** @} */ /* end_addtogroup telematics_data */
 }
 }

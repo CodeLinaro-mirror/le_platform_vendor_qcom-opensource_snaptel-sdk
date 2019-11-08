@@ -674,6 +674,11 @@ enum class Direction {
 using IpProtocol = uint8_t;
 
 /**
+ * Default IP Protocol number in IPv4 or IPv6 headers.
+ */
+#define IP_PROT_UNKNOWN 0xFF
+
+/**
  * Peripheral Interface type
  */
 enum class InterfaceType {
@@ -693,11 +698,6 @@ struct VlanConfig {
     int16_t vlanId;      /**< Vlan identifier (i.e 1-4094)*/
     bool isAccelerated;  /**< is acceleration allowed */
 };
-
-/**
- * Default IP Protocol number in IPv4 or IPv6 headers.
- */
-#define IP_PROT_UNKNOWN 0xFF
 
 /** @} */ /* end_addtogroup telematics_data */
 }

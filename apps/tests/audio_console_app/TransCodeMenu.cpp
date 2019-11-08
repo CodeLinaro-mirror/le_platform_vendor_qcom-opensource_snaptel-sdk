@@ -157,7 +157,8 @@ void TransCodeMenu::writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> bu
         std::cout <<
             "Bytes Requested " << buffer->getDataSize() << " Bytes Written " << bytes << std::endl;
         // We are seeking back so that left over buffer can be resent again.
-        fseek(writeFile_, -((buffer->getDataSize() - bytes)), SEEK_CUR);
+        long offset = -1 * (static_cast<long>((buffer->getDataSize() - bytes)));
+        fseek(writeFile_, offset, SEEK_CUR);
     }
     buffer->reset();
     writeBuffers_.push(buffer);

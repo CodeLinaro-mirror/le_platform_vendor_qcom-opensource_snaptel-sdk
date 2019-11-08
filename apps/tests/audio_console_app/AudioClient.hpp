@@ -85,6 +85,7 @@ private:
     void takeUserDirectionInput(StreamDirection &direction);
     void takeUserVolumeInput(StreamVolume &streamVolume);
     void takeVolumeValueInput(float &vol);
+    void takeUserVoicePathInput(std::vector<telux::audio::Direction> &direction);
 
     // Variables for filePath  Used only for play
     std::string filePath_;

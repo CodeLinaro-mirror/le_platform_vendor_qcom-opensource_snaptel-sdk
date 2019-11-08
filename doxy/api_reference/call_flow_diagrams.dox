@@ -571,6 +571,58 @@ When reports are no longer required, the app needs to stop the report and de-reg
 14. Application can remove listener and when the number of listeners are zero then location service will get stopped automatically.
 15. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
+@subsection location_manager_detailed_engine_reports_callflow Call flow to register/remove listener for generating detailed engine reports
+
+@anchor fig_location_manager_detailed_engine_reports_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_manager_detailed_engine_reports_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to register/remove listener for generating detailed engine reports}
+  \label{fig_location_manager_detailed_engine_reports_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_manager_detailed_engine_reports_callflow.png,Call flow to register/remove listener for generating detailed engine reports,80,80,Call flow to register/remove listener for generating detailed engine reports}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object using which application will register or remove a listener.
+3. Application can register a listener for getting notifications for location, satellite vehicle and jammer signal updates.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application starts the detailed engine reports using startDetailedEngineReports API for getting location, satellite vehicle and jammer signal updates.
+6. Status of startDetailedReports i.e. either SUCCESS or FAILED will be returned to the application.
+7. The response for startDetailedReports is received by the application.
+8. Application will get location updates like latitude, longitude and altitude etc from the requested engine type(SPE/PPE/Fused).
+9. Application will receive satellite vehicle information like SV status and constellation etc depending on the requested SPE/PPE/Fused engine type.
+10. Application will receive jammer information etc depending on the requested SPE/PPE/Fused engine type.
+11. Application stops receiving all the reports through stopReports API.
+12. Status of stopReports i.e. either SUCCESS or FAILED will be returned to the application.
+13. The response for stopReports is received by the application.
+14. Application can remove listener and when the number of listeners are zero then location service will get stopped automatically.
+15. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@subsection location_configurator_constraint_tunc_callflow Call flow to enable/disable constraint time uncertainty
+
+@anchor fig_location_configurator_constraint_tunc_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_constraint_tunc_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to enable/disable constraint time uncertainty}
+  \label{fig_location_configurator_constraint_tunc_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_constraint_tunc_callflow.png,Call flow to enable/disable constraint time uncertainty,80,80,Call flow to enable/disable constraint time uncertainty}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application enables/disables constraint tunc using configureCTunc API.
+4. Status of configureCTunc i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureCTunc is received by the application.
+
 @section data_connection_call_flow Data Connection Manager Call Flow
 
 @subsection data_connection_manager_callflow Start/Stop for data connection manager call flow
@@ -1380,6 +1432,38 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 14. Application requests delete audio stream using deleteStream method.
 15. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
 16. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_transcoding_callflow Audio Transcoding Operation Callflow
+
+@anchor fig_audio_transcoding_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{audio_transcoding_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Transcoding Operation Callflow}
+  \label{fig_audio_transcoding_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_transcoding_callflow.png,Audio Transcoding Operation Callflow,80,80,Audio Transcoding Operation Callflow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to create a transcoder.
+4. Application receives synchronous status which indicates if the createTranscoder request was sent successfully.
+5. Application is notified of the createTranscoder request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to transcoder interface refering to ITranscoder.
+6. Application requests to read buffer using read method on ITranscoder.
+7. Application receives synchronous status which indicates if the read request was sent successfully.
+8. Application is notified of the read request status (either SUCCESS or FAILED) via the application-supplied callback along with isLastBuffer flag which indicates whether the buffer is last buffer to read or not.
+9. Application requests to write buffer using write method on ITranscoder.
+10. Application receives synchronous status which indicates if the write request was sent successfully.Application need to mark the isLastBuffer flag, whenever it is providing the last buffer to be write.
+11. Application is notified of the write request status (either SUCCESS or FAILED) via the application-supplied callback along with number of bytes written.
+12. Application is notified of when pipeline is ready to accept new buffer if callback returns with error that number of bytes written are not equal to bytes requested.
+13. Once transcoding done, Application requests to tearDown transcoder as transcoder can not be used for multiple transcoding operations.
+14. Application receives synchronous status which indicates if the tearDown request was sent successfully.
+15. Application is notified of the tearDown request status (either SUCCESS or FAILED) via the application-supplied callback.
+
 
 @section thermal_manager_call_flow Thermal manager call flow
 

@@ -196,6 +196,37 @@ void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &dev
     }
 }
 
+void AudioClient::takeUserVoicePathInput(std::vector<telux::audio::Direction> &direction) {
+    std::string userInput = "";
+    int command = -1;
+    int numDir=0;
+    while(1) {
+        std::cout << "Enter voice path type (0 for None, 1 for RX, 2 for TX, 3 for BOTH): ";
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if (inputStream >> command) {
+                if (command >=0 && command <=3) {
+                    if (command == 1 || command == 3) {
+                        direction.emplace_back(telux::audio::Direction::RX);
+                        numDir++;
+                    }
+                    if (command == 2 || command == 3) {
+                        direction.emplace_back(telux::audio::Direction::TX);
+                        numDir++;
+                    }
+                    break;
+                } else {
+                    std::cout << "Invalid input!" << std::endl;
+                }
+            } else {
+                std::cout << "Invalid input!" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid input!" << std::endl;
+        }
+    }
+}
+
 void AudioClient::takeVolumeValueInput(float &vol) {
     std::string userInput = "";
     while(1) {
@@ -301,6 +332,9 @@ void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
         fclose(file);
     }
     takeUserDeviceInput(config.deviceTypes);
+    if (config.type == telux::audio::StreamType::PLAY) {
+      takeUserVoicePathInput(config.voicePaths);
+    }
 }
 
 void AudioClient::takeUserDirectionInput(StreamDirection &direction) {

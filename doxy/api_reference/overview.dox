@@ -62,7 +62,7 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
 <b>Location Services</b>
 
-   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information, Jammer Data signals etc.
+   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information, Jammer Data signals etc. Also constraint Time Uncertainty sub-system consists of API to enable/disable constraint time uncertainty feature.
 
 <b>Connection Management</b>
 
@@ -149,6 +149,7 @@ Location Services APIs of Telematics SDK provide the mechanism to register liste
 Following parameters are configurable through the APIs.
    - Minimum time interval between two consecutive location reports.
    - Minimum distance travelled after which the period between two consecutive location reports depends on the interval specified.
+Location constraint time uncertainty API of Telematics SDK provide the mechanism to enable/disable constraint time uncertainty feature.
 
 @subsection data_services Data Services
 Data Services APIs in the Telematics SDK used for cellular connectivity, modem profile management and data filters management.
@@ -240,9 +241,12 @@ AudioLoopbackStream along with inheriting AudioStream, provides additional APIs 
    - Start loopback
    - Stop loopback
 
-AudioToneGenratorStream along with inheriting AudioStream, provides additional APIs to manage audio tone generator session as stated below.
+AudioToneGeneratorStream along with inheriting AudioStream, provides additional APIs to manage audio tone generator session as stated below.
    - Play tone
    - Stop tone
+
+Transcoder provides APIs to manage audio transcoder which is able to perform below operations.
+   - Convert one audio format to another
 
 Audio SDK provides details of Supported "Device Types" and "Stream Types" in the Audio subSystem of Reference Telematics platform.
 

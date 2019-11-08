@@ -41,6 +41,9 @@ when       who     what, where, why
 09/15/19   RV      Added Compressed Audio Format Playback support in Telematics SDK
 09/16/19   RV      Added Modem Config Support to Telematics SDK
 10/10/19   GS      Added Data Filter Support to Telematics SDK
+10/22/19   SD      Added location concurrent reports support to Telematics SDK
+10/22/19   SD      Added location constraint time uncertainty support to Telematics SDK
+11/05/19   RV      Added Audio Format Transcoding Support in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

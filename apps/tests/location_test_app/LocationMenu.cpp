@@ -155,8 +155,8 @@ int LocationMenu::init() {
                         std::bind(&LocationMenu::enableDisableTunc, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
-      = {startDetailedReportsCommand, startBasicReportsCommand, stopReportsCommand,
-         enableReportLogsCommand, enableDisableTunc};
+      = {startDetailedReportsCommand, startBasicReportsCommand, startDetailedEngineReportsCommand,
+         stopReportsCommand, enableReportLogsCommand, enableDisableTunc};
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
 

@@ -182,3 +182,21 @@ std::string DataUtils::bearerTechToString(telux::data::DataBearerTechnology bear
       default: { return "UNKNOWN"; }
    }
 }
+
+std::string DataUtils::protocolToString(telux::data::IpProtocol proto) {
+   switch(proto) {
+      case 1:
+         return "ICMP";
+      case 2:
+         return "IGMP";
+      case 6:
+         return "TCP";
+      case 17:
+         return "UDP";
+      case 50:
+         return "ESP";
+      default: {
+         return "Unknown";
+      }
+   }
+}

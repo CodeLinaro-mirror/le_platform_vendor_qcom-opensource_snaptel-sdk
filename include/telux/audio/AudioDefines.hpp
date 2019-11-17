@@ -78,6 +78,14 @@ enum class DeviceDirection {
 };
 
 /**
+ * Represent Voice Direction RX (Sink), Tx (Source)
+ */
+enum class Direction {
+   RX = 1,
+   TX = 2,
+};
+
+/**
  * Represent Stream Type
  */
 enum class StreamType {
@@ -187,6 +195,8 @@ struct StreamConfig {
    ChannelTypeMask channelTypeMask;
    AudioFormat format;
    std::vector<DeviceType> deviceTypes;
+   std::vector<Direction> voicePaths; /**< Represent voice path direction for in call audio.
+                                           TX for Uplink and RX for Downlink.> */
    FormatParams *formatParams;
 };
 

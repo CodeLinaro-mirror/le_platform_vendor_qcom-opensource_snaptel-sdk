@@ -64,6 +64,7 @@ enum class Status {
    EXPIRED,        /**< Expired*/
    ALREADY,        /**< Already registered handler */
    NOSUCH,         /**< No such object */
+   NOTSUPPORTED,   /**< Not supported on target platform */
 };
 
 /**

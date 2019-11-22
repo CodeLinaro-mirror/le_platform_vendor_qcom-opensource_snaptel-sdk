@@ -233,6 +233,7 @@ AudioPlayStream along with inheriting AudioStream, provides additional APIs to m
    - write audio samples
    - Write audio samples for compressed audio format
    - Stop Audio for compressed audio format
+   - Play compressed format audio on voice paths
 
 AudioCaptureStream along with inheriting AudioStream, provides additional APIs to manage audio capture session as stated below.
    - read audio samples

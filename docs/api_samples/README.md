@@ -40,4 +40,6 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to get and set data filter mode](data/get_and_set_data_filter_mode.md)
   * [How to remove data filter mode](data/remove_data_filters.md)
   * [How to add data filter](data/add_data_filter.md)
-  * [How to perform transcoding from one audio format to another](data/audio_transcoding_operation.md)
+  * [How to perform transcoding from one audio format to another](audio/audio_transcoding_operation.md)
+  * [How to play compressed format audio on voice paths](audio/compressed_audio_format_playback_on_voice_paths.md)
+

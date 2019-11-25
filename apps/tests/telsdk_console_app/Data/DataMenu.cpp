@@ -432,8 +432,10 @@ void DataMenu::requestDataCallList() {
         Utils::validateInput(operationType);
 
         telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-        dataConnectionManager_->requestDataCallList(
-            opType, MyDataCallResponseCallback::dataCallListResponseCb);
+        if (telux::common::Status::NOTIMPLEMENTED == dataConnectionManager_->requestDataCallList(
+            opType,MyDataCallResponseCallback::dataCallListResponseCb)) {
+            std::cout << "Feature Not Supported" << std::endl;
+        }
     }
 }
 

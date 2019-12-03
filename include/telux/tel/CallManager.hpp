@@ -157,7 +157,7 @@ public:
     *                          create eCall Minimum Set of Data (MSD)
     * @param [in] category     @ref ECallCategory
     * @param [in] callback     Optional callback pointer to get the response of
-    *                          makeVoiceECall request.
+    *                          makeECall request.
     *                          Possible(not exhaustive) error codes for callback response
     *                          - @ref telux::common::ErrorCode::SUCCESS
     *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
@@ -170,9 +170,12 @@ public:
     *                          - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
     *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
-    * @returns Status of makeVoiceECall i.e. success or suitable status code.
+    * @returns Status of makeECall i.e. success or suitable status code.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
     */
-   virtual telux::common::Status makeVoiceECall(int phoneId, const std::string dialNumber,
+   virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
                                            const ECallMsdData &eCallMsdData, int category,
                                            std::shared_ptr<IMakeCallCallback> callback = nullptr)
       = 0;
@@ -217,7 +220,7 @@ public:
     * @param [in] msdPdu    Encoded MSD(Minimum Set of Data) PDU as per spec EN
     *                       15722 2015 or GOST R 54620-2011/33464-2015
     * @param [in] category  @ref ECallCategory
-    * @param [in] callback  Callback function to get the response of makeVoiceECall
+    * @param [in] callback  Callback function to get the response of makeECall
     *                       request.
     *                       Possible(not exhaustive) error codes for callback response
     *                       - @ref telux::common::ErrorCode::SUCCESS
@@ -231,9 +234,12 @@ public:
     *                       - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
     *                       - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
-    * @returns Status of makeVoiceECall i.e. success or suitable status code.
+    * @returns Status of makeECall i.e. success or suitable status code.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
     */
-   virtual telux::common::Status makeVoiceECall(int phoneId, const std::string dialNumber,
+   virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
                                            const std::vector<uint8_t> &msdPdu, int category,
                                            MakeCallCallback callback = nullptr)
       = 0;

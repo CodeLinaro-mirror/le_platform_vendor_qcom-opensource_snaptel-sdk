@@ -55,7 +55,7 @@ extern "C" {
 #define CATEGORY_MANUAL 2
 #define VARIANT_TEST 1
 #define VARIANT_EMERGENCY 2
-#define VARIANT_VOICE 3
+#define VARIANT_EMERGENCY_CUSTOM_NUMBER 3
 
 const std::string ECALL_CATEGORY_AUTO = "auto";
 const std::string ECALL_CATEGORY_MANUAL = "manual";
@@ -92,7 +92,7 @@ private:
    /**
     * Sample voice eCall operation
     */
-   void makeVoiceECall(std::vector<std::string> inputCommand);
+   void makeCustomNumberECall(std::vector<std::string> inputCommand);
 
    /**
     * Sample eCall operation with raw PDU

@@ -80,7 +80,7 @@ private:
     void takeAudioFormatInput(AudioFormat &audioFormat);
     void takeUserSampleRateInput(uint32_t &userSampleRate);
     void takeUserChannelInput(telux::audio::ChannelTypeMask &channelType);
-    void takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices);
+    void takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices, StreamType &streamType);
     void takeUserCreateStreamInput(telux::audio::StreamConfig &config);
     void takeUserDirectionInput(StreamDirection &direction);
     void takeUserVolumeInput(StreamVolume &streamVolume);

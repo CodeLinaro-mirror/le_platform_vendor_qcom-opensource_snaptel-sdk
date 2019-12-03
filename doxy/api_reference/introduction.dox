@@ -44,6 +44,7 @@ when       who     what, where, why
 10/22/19   SD      Added location concurrent reports support to Telematics SDK
 10/22/19   SD      Added location constraint time uncertainty support to Telematics SDK
 11/05/19   RV      Added Audio Format Transcoding Support in Telematics SDK
+11/15/19   RV      Added compressed audio format playback on voice paths support in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

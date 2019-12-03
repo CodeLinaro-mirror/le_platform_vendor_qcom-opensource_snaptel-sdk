@@ -293,6 +293,7 @@ void TransCodeMenu::read() {
     fclose(readFile_);
     readStatus_ = false;
     std::cout << "Transcoding Successful" <<std::endl;
+    abortTranscoding({});
 }
 
 void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,

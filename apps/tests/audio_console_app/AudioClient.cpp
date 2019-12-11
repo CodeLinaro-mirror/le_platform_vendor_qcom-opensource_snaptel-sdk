@@ -164,10 +164,14 @@ void AudioClient::takeUserChannelInput(telux::audio::ChannelTypeMask &channelTyp
     }
 }
 
-void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices) {
+void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices, StreamType &streamType) {
     std::string userInput = "";
     int command = -1;
     int numDevices=0;
+    if (streamType == StreamType::LOOPBACK) {
+        std::cout << "Note: This Stream requires two devices" << std::endl;
+        std::cout << "Please provide first device as RX and second as TX" << std::endl;
+    }
     while(1) {
         std::cout << "Enter no. of devices : " ;
         if(std::getline(std::cin, userInput)) {
@@ -331,7 +335,7 @@ void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
         }
         fclose(file);
     }
-    takeUserDeviceInput(config.deviceTypes);
+    takeUserDeviceInput(config.deviceTypes, config.type);
     if (config.type == telux::audio::StreamType::PLAY) {
       takeUserVoicePathInput(config.voicePaths);
     }
@@ -418,7 +422,8 @@ Status AudioClient::createStream(StreamType streamType) {
     if(audioStatus == Status::SUCCESS) {
         std::cout << "Request to create stream sent" << std::endl;
     } else {
-        std::cout << "Request to delete stream failed"  << std::endl;
+        std::cout << "Request to create stream failed"  << std::endl;
+        return Status::FAILED;
     }
 
     if (p.get_future().get()) {
@@ -528,7 +533,7 @@ void AudioClient::setStreamDevice(StreamType streamType) {
     std::promise<bool> p;
     if(stream_) {
         std::vector<telux::audio::DeviceType> devices;
-        takeUserDeviceInput(devices);
+        takeUserDeviceInput(devices, streamType);
         telux::common::Status status = stream_->setDevice(devices,
            [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {

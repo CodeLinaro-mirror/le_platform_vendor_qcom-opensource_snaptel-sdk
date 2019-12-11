@@ -348,7 +348,7 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
     char delimiter = '\n';
     std::string apn;
     std::cin.get();
-    std::cout << "Enter APN: ";
+    std::cout << "Enter APN (used only in low latency calls): ";
     std::getline(std::cin, apn, delimiter);
 
     int operationType;

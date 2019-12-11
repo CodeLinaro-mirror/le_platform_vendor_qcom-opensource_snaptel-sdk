@@ -44,7 +44,7 @@ void MyECallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
    PRINT_NOTIFICATION << getCurrentTime() << "Answer incoming call" << std::endl;
    std::string user_string;
-   std::cout << " Enter 7 to answer call " << std::endl;
+   std::cout << " Enter \"a\" to answer call " << std::endl;
 }
 
 void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {

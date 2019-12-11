@@ -1464,6 +1464,43 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 14. Application receives synchronous status which indicates if the tearDown request was sent successfully.
 15. Application is notified of the tearDown request status (either SUCCESS or FAILED) via the application-supplied callback.
 
+@subsection audio_playback_on_voice_paths_callflow Compressed audio format playback on Voice Paths Callflow
+
+@anchor fig_compressed_audio_format_playback_on_voice_paths_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.38]{compressed_audio_format_playback_on_voice_paths_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Compressed audio format playback on Voice Paths Callflow}
+  \label{fig_compressed_audio_format_playback_on_voice_paths_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_playback_on_voice_paths_callflow.png,Compressed audio format playback on Voice Paths Callflow,80,80,Compressed audio format playback on Voice Paths Callflow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to create a voice stream with streamType as VOICE_CALL.
+4. Application receives synchronous status which indicates if the createStream request was sent successfully.
+5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioVoiceStream.
+6. On Readiness, Application requests to create a play stream with streamType as PLAY, voicePaths direction as TX or RX and no device is selected.
+7. Application receives synchronous status which indicates if the createStream request was sent successfully.
+8. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioPlayStream.
+9. Application requests to write buffer using write method on IAudioPlayStream.
+10. Application receives synchronous status which indicates if the write request was sent successfully.
+11. Application is notified of the write request status (either SUCCESS or FAILED) via the application-supplied callback along with number of bytes written.
+12. Application is notified of when pipeline is ready to accept new buffer if callback returns with error that number of bytes written are not equal to bytes requested.
+13. Application send request to stop playback using stopAudio method of IAudioPlayStream.
+14. Application receives synchronous status which indicates if the stopAudio request was sent successfully.
+15. Application is notified of the stopAudio request status (either SUCCESS or FAILED) via the application-supplied callback.
+16. Appication is notified via indication that playback is stopped if StopType is STOP_AFTER_PLAY.
+17. Application requests delete audio play stream using deleteStream method.
+18. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+19. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+20. Application requests delete audio voice stream using deleteStream method.
+21. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+22. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
 
 @section thermal_manager_call_flow Thermal manager call flow
 

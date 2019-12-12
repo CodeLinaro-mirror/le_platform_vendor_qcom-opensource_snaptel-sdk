@@ -41,5 +41,9 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to remove data filter mode](data/remove_data_filters.md)
   * [How to add data filter](data/add_data_filter.md)
   * [How to perform transcoding from one audio format to another](audio/audio_transcoding_operation.md)
+  * [How to create vlan and bind it to pdn](data/create_and_bind_vlan.md)
+  * [How to create static nat entry](data/create_snat_entry.md)
+  * [How to create firewall dmz](data/create_firewall_dmz.md)
+  * [How to enable/disable firewall](data/enable_disable_firewall.md)
   * [How to play compressed format audio on voice paths](audio/compressed_audio_format_playback_on_voice_paths.md)
 

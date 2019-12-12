@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,41 +27,76 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @brief ConfigParser class reads config file and caches the app config
- * settings. It provides utility functions to read the config values.
- */
+#ifndef ECALLAPP_HPP
+#define ECALLAPP_HPP
 
-#ifndef CONFIGPARSER_HPP
-#define CONFIGPARSER_HPP
-
-#include <map>
+#include <memory>
 #include <string>
+#include <vector>
+#include <mutex>
 
-#define DEFAULT_CONFIG_FILE_NAME "SampleAppConfig.conf"
-#define DEFAULT_CONFIG_FILE_PATH "/etc"
+#include "ConsoleApp.hpp"
+#include "ECallManager.hpp"
 
-/*
- * ConfigParser class caches the config settings from conf file
- * It provides utility methods to get value of a configured settings
+/**
+ * ECallApp class provides an user-interactive console to trigger an eCall and answer an incoming
+ * call(typically a PSAP callback).
  */
-class ConfigParser {
+class ECallApp : public ConsoleApp {
 public:
-  ConfigParser(std::string configFile = DEFAULT_CONFIG_FILE_NAME,
-                    std::string configFilePath = DEFAULT_CONFIG_FILE_PATH);
-  ~ConfigParser();
-  // Get the user defined value for configured key
-  std::string getValue(std::string key);
+
+    /**
+     * Get an instance of ECallApp
+     */
+    static ECallApp &getInstance();
+
+    /**
+     * Initialize the subsystems, console commands and display the menu.
+     */
+    void init();
+
+    /**
+     * Hangs up a triggered eCall and gracefully clears down the subsystems.
+     */
+    void cleanup();
 
 private:
-  // Function to read config file containing key value pairs
-  void readConfigFile(std::string configFile);
 
-  // Get the path where config file is located
-  std::string getConfigFilePath();
+    ECallApp(std::string appName, std::string cursor);
+    ~ECallApp();
 
-  // Hashmap to store all settings as key-value pairs
-  std::map<std::string, std::string> configMap_;
+    /**
+     * Trigger a standard eCall using the emergency number configured in FDN (eg.112)
+     */
+    void makeECall();
+
+    /**
+     * Trigger a Voice eCall to the specified phone number
+     */
+    void makeCustomNumberECall();
+
+    /**
+     * Answer an incoming call
+     */
+    void answerIncomingCall();
+
+    /**
+     * Hangup the ongoing call
+     */
+    void hangupCall();
+
+    /**
+     * Function to get phoneId from the user-interface
+     */
+    int getPhoneId();
+
+    /**
+     * Function to get eCall category from the user-interface
+     */
+    int getEcallCategory(telux::tel::ECallCategory &emergencyCategory);
+
+    // Member variable to keep the eCall manager object alive until the application quits.
+    std::shared_ptr<ECallManager> eCallMgr_;
 };
 
-#endif // CONFIGPARSER_HPP
+#endif  // ECALLAPP_HPP

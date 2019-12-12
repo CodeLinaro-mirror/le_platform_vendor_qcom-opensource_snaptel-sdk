@@ -46,39 +46,8 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
     #endif
    ~~~~~~
 
-### 3. Create an Audio Stream (Audio Voice Session)
-   ~~~~~~{.cpp}
-    StreamConfig config;
-    config.type = StreamType::VOICE_CALL;
-    config.modemSubId = 1;
-    config.sampleRate = 16000;
-    config.format = AudioFormat::PCM_16BIT_SIGNED;
-    config.channelTypeMask = ChannelType::LEFT;
-    config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
-
-    std::promise<bool> p;
-    auto status = audioManager_->createStream(config,
-        [&p,this](std::shared_ptr<IAudioStream> &audioStream, ErrorCode error) {
-        if (error == ErrorCode::SUCCESS) {
-            audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(audioStream);
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-            std::cout << "failed to Create a stream" <<std::endl;
-        }
-    });
-    if (status == Status::SUCCESS) {
-        std::cout << "Request to create stream sent" << std::endl;
-    } else {
-        std::cout << "Request to create stream failed"  << std::endl;
-    }
-
-    if (p.get_future().get()) {
-        std::cout<< "Audio Voice Stream is Created" << std::endl;
-    }
-   ~~~~~~
-
 ### 3. Create an Audio Stream (Audio Playback Session) with Voice Paths direction
+
    ~~~~~~{.cpp}
     StreamConfig config;
     config.type = StreamType::PLAY;
@@ -142,6 +111,7 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
 
 ### 5. Start write operation for playback to start
    ~~~~~~{.cpp}
+    // We need an active voice session to play on voice paths.
     // Callback which provides response to write operation.
     void writeCallback(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytes, ErrorCode error)
     {
@@ -155,7 +125,7 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
         return;
     }
 
-    // Indiction Received only when callback returns with error that bytes written are not equal to
+    // Indication Received only when callback returns with error that bytes written are not equal to
     // bytes requested to write. It notifies that pipeline is ready to accept new buffer to write.
     void onReadyForWrite() {
         pipeLineEmpty_ = true;
@@ -234,27 +204,5 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
     if (p.get_future().get()) {
         audioPlayStream_= nullptr;
         std::cout << "Audio Play Stream is Deleted" << std::endl;
-    }
-   ~~~~~~
-
-### 8. Delete an Audio Stream (Voice Session).
-   ~~~~~~{.cpp}
-    Status status = audioManager_-> deleteStream(
-    audioVoiceStream_, [&p,this](ErrorCode error) {
-        if (error == ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-            std::cout << "Failed to delete a stream" << std::endl;
-        }
-    });
-    if (status == Status::SUCCESS) {
-        std::cout << "Request to delete stream sent" << std::endl;
-    } else {
-        std::cout << "Request to delete stream failed"  << std::endl;
-    }
-    if (p.get_future().get()) {
-        audioVoiceStream_= nullptr;
-        std::cout << "Audio Voice Stream is Deleted" << std::endl;
     }
    ~~~~~~

@@ -69,7 +69,8 @@ when       who     what, where, why
 @tr @td Q @tdend @td Oct 2019 @tdend @tdlast Addition of Location concurrent report APIs and call flows @tdlastend @trend
 @tr @td R @tdend @td Oct 2019 @tdend @tdlast Addition of Location constraint time uncertainty APIs and call flows @tdlastend @trend
 @tr @td S @tdend @td Nov 2019 @tdend @tdlast Addition of Audio Format Transcoding APIs and call flows @tdlastend @trend
-@tr @td T @tdend @td Nov 2019 @tdend @tdlast Addition of Compressed audio format playback on voice paths APIs and call flows @tdlastend @trend
+@tr @td T @tdend @td Nov 2019 @tdend @tdlast Addition of Data Networking APIs and call flows @tdlastend @trend
+@tr @td U @tdend @td Nov 2019 @tdend @tdlast Addition of Compressed audio format playback on voice paths APIs and call flows @tdlastend @trend
 
 @tableend
 

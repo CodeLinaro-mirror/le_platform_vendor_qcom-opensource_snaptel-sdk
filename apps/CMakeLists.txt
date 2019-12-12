@@ -27,7 +27,6 @@ endif (PWR_MGR_QMI_LIB_FOUND)
 
 # build only if we are not building in bitbake environment
 if(BUILD_ALL_REFERENCE)
-    add_subdirectory( reference/ecall_app )
     add_subdirectory( reference/loc_tracker_app )
     add_subdirectory( reference/remote_sim )
 endif(BUILD_ALL_REFERENCE)
@@ -73,4 +72,5 @@ endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 
 if(NOT MACHINE_HAS_CV2X_ONLY)
     add_subdirectory( tests/audio_console_app )
+    add_subdirectory( reference/ecall_app )
 endif(NOT MACHINE_HAS_CV2X_ONLY)

@@ -781,6 +781,124 @@ The application can register a listener for data filter mode change updates.
 9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of removeAllDataRestrictFilters.
 10. Optionally, the application gets asynchronous response for removeAllDataRestrictFilters using ResponseCallback.
 
+@section data_networking_call_flow Data Networking Call Flow
+
+Application will get the following manager objects from data factory to configure networking.
+IVlanManager is used to access all VLAN APIs.
+INatManager is used to access all Static NAT APIs.
+IFirewallManager is used to access all Firewall APIs.
+
+@subsection data_vlan_manager_callflow Create VLAN and bind it to PDN in data vlan manager call flow
+
+@anchor fig_data_vlan_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{create_and_bind_vlan_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Create VLAN and bind it to PDN for data VLAN manager call flow}
+  \label{fig_data_vlan_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{create_and_bind_vlan_call_flow.png,Create VLAN and bind it to PDN in data vlan manager call flow,60,60,Create VLAN and bind it to PDN in data vlan manager call flow}
+
+1. Application requests data factory for data IVlanManager object.
+   1.1. If IVlanManager object does not exist, data factory will create new object.
+2. Data factory returns IVlanManager object to application.
+3. Application can use IVlanManager::isSubsystemReady to determine if the system is ready.
+4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
+   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
+   4.2. Application gets future for IVlanManager readiness.
+   4.3. Application wait for indefinitely for IVlanManager readiness.
+5. On Readiness, application calls IVlanManager::createVlan with assigned id, interface, and acceleration type.
+6. Application receives synchronous Status which indicates if the IVlanManager::createVlan request was sent successfully.
+7. Application is notified of the Status of the IVlanManager::createVlan request (either SUCCESS or FAILED) via the application-supplied callback.
+8. Application calls IVlanManager::bindWithProfile with Vlan id and profile id.
+9. Application receives synchronous Status which indicates if the IVlanManager::bindWithProfile request was sent successfully.
+7. Application is notified of the Status of the IVlanManager::bindWithProfile request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection data_static_nat_manager_callflow Create Static NAT entry in data Static NAT manager call flow
+
+@anchor fig_data_static_nat_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{create_snat_entry_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Create Static NAT entry for data NAT manager call flow}
+  \label{fig_data_static_nat_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{create_snat_entry_call_flow.png,Create Static NAT entry in data Static NAT manager call flow,60,60,Create Static NAT entry in data Static NAT manager call flow}
+
+1. Application requests data factory for data INatManager object.
+   1.1. If INatManager object does not exist, data factory will create new object.
+2. Data factory returns INatManager object to application.
+3. Application can use INatManager::isSubsystemReady to determine if the system is ready.
+4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
+   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
+   4.2. Application gets future for INatManager readiness.
+   4.3. Application wait for indefinitely for INatManager readiness.
+5. On Readiness, application calls INatManager::addStaticNatEntry with private IP address port, private port, global port and IP Protocol.
+6. Application receives synchronous Status which indicates if the INatManager::addStaticNatEntry request was sent successfully.
+7. Application is notified of the Status of the INatManager::addStaticNatEntry request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection data_firewall_enablement_callflow Firewall Enablement in data Firewall manager call flow
+
+@anchor fig_data_firwall_enablement_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{enable_disable_firewall_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Firewall enablement in data Firewall manager call flow}
+  \label{fig_data_firwall_enablement_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{enable_disable_firewall_call_flow.png,Firewall Enablement in data Firewall manager call flow,60,60,Firewall Enablement in data Firewall manager call flow}
+
+1. Application requests data factory for data IFirewallManager object.
+   1.1. If IFirewallManager object does not exist, data factory will create new object.
+2. Data factory returns IFirewallManager object to application.
+3. Application can use IFirewallManager::isSubsystemReady to determine if the system is ready.
+4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
+   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
+   4.2. Application gets future for IFirewallManager readiness.
+   4.3. Application wait for indefinitely for IFirewallManager readiness.
+5. On Readiness, application calls IFirewallManager::setFirewall with enable/disable and allow/drop packets.
+6. Application receives synchronous Status which indicates if the IFirewallManager::setFirewall request was sent successfully.
+7. Application is notified of the Status of the IFirewallManager::setFirewall request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection data_set_firewall_dmz_callflow Set Firewall DMZ in data Firewall manager call flow
+
+@anchor fig_data_firwall_dmz_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{create_firewall_dmz_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Set Firewall DMZ in data Firewall manager call flow}
+  \label{fig_data_firwall_dmz_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{create_firewall_dmz_call_flow.png,Set Firewall DMZ in data Firewall manager call flow,60,60,Set Firewall DMZ in data Firewall manager call flow}
+
+1. Application requests data factory for data IFirewallManager object.
+   1.1. If IFirewallManager object does not exist, data factory will create new object.
+2. Data factory returns IFirewallManager object to application.
+3. Application can use IFirewallManager::isSubsystemReady to determine if the system is ready.
+4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
+   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
+   4.2. Application gets future for IFirewallManager readiness.
+   4.3. Application wait for indefinitely for IFirewallManager readiness.
+5. On Readiness, application calls IFirewallManager::addDmz with IP Address.
+6. Application receives synchronous Status which indicates if the IFirewallManager::addDmz request was sent successfully.
+7. Application is notified of the Status of the IFirewallManager::addDmz request (either SUCCESS or FAILED) via the application-supplied callback.
+
 @section network_selection_call_flow Network Selection Call Flow
 
 @subsection network_selection_call_flow Network selection manager call flow
@@ -1481,26 +1599,20 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 
 1. Application requests Audio factory for an Audio Manager.
 2. Audio factory return IAudioManager object to application.
-3. On Readiness, Application requests to create a voice stream with streamType as VOICE_CALL.
+3. On Readiness, Application requests to create a play stream with streamType as PLAY, voicePaths direction as TX or RX and no device is selected.
 4. Application receives synchronous status which indicates if the createStream request was sent successfully.
-5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioVoiceStream.
-6. On Readiness, Application requests to create a play stream with streamType as PLAY, voicePaths direction as TX or RX and no device is selected.
-7. Application receives synchronous status which indicates if the createStream request was sent successfully.
-8. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioPlayStream.
-9. Application requests to write buffer using write method on IAudioPlayStream.
-10. Application receives synchronous status which indicates if the write request was sent successfully.
-11. Application is notified of the write request status (either SUCCESS or FAILED) via the application-supplied callback along with number of bytes written.
-12. Application is notified of when pipeline is ready to accept new buffer if callback returns with error that number of bytes written are not equal to bytes requested.
-13. Application send request to stop playback using stopAudio method of IAudioPlayStream.
-14. Application receives synchronous status which indicates if the stopAudio request was sent successfully.
-15. Application is notified of the stopAudio request status (either SUCCESS or FAILED) via the application-supplied callback.
-16. Appication is notified via indication that playback is stopped if StopType is STOP_AFTER_PLAY.
-17. Application requests delete audio play stream using deleteStream method.
-18. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
-19. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
-20. Application requests delete audio voice stream using deleteStream method.
-21. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
-22. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+5. Application is notified of the createStream request status (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface refering to IAudioPlayStream.
+6. Application requests to write buffer using write method on IAudioPlayStream. It needs an active voice session to play over voice paths, refer IAudioVoiceStream for more details on how to create voice stream.
+7. Application receives synchronous status which indicates if the write request was sent successfully.
+8. Application is notified of the write request status (either SUCCESS or FAILED) via the application-supplied callback along with number of bytes written.
+9. Application is notified of when pipeline is ready to accept new buffer if callback returns with error that number of bytes written are not equal to bytes requested.
+10. Application send request to stop playback using stopAudio method of IAudioPlayStream.
+11. Application receives synchronous status which indicates if the stopAudio request was sent successfully.
+12. Application is notified of the stopAudio request status (either SUCCESS or FAILED) via the application-supplied callback.
+13. Appication is notified via indication that playback is stopped if StopType is STOP_AFTER_PLAY.
+14. Application requests delete audio play stream using deleteStream method.
+15. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+16. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
 
 @section thermal_manager_call_flow Thermal manager call flow
 

@@ -29,18 +29,12 @@
 
 [Unit]
 Description=CV2X Daemon Service
-After=netmgrd.service qrtr.service \
-      sys-subsystem-net-devices-rmnet_data0.device \
-      sys-subsystem-net-devices-rmnet_data1.device
-Requires=netmgrd.service qrtr.service \
-         sys-subsystem-net-devices-rmnet_data0.device \
-         sys-subsystem-net-devices-rmnet_data1.device
+After=netmgrd.service qrtr.service
+Requires=netmgrd.service qrtr.service
 PartOf=cv2x.target
 
 [Service]
 Type=notify
-ExecStartPre=/sbin/ip link set dev rmnet_data0 addrgenmode none
-ExecStartPre=/sbin/ip link set dev rmnet_data1 addrgenmode none
 ExecStart=/usr/bin/cv2x-daemon -s
 Restart=always
 RestartSec=5

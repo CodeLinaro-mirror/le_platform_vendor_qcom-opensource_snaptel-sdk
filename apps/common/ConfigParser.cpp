@@ -47,13 +47,21 @@ inline bool fileExists(const std::string &configFile) {
   return f.good();
 }
 
-ConfigParser::ConfigParser(std::string configFile) {
+ConfigParser::ConfigParser(std::string configFile, std::string confFilePath) {
   if (configMap_.size() == 0) {
     std::string configFilePath = getConfigFilePath() + "/" + configFile;
+    // Check if the file is present in the same directory where the application is running
     if (fileExists(configFilePath)) {
       readConfigFile(configFilePath);
     } else {
-      std::cout << "Config file does not exists: " << configFilePath << std::endl;
+      // Check if the file is present in the provided confFilePath
+      configFilePath = confFilePath + "/" + configFile;
+      if(fileExists(configFilePath)) {
+         readConfigFile(configFilePath);
+      } else {
+         std::cout << "Config file " << configFile << " neither exists in same folder nor at "
+                << configFilePath << std::endl;
+      }
     }
   }
 }

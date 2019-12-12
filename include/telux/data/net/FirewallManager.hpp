@@ -131,6 +131,7 @@ class IFirewallManager {
      * Sets firewall configuration to enable or disable and update configuration to
      * drop or accept the packets matching the rules.
      *
+     * @param [in] profileId         Profile identifier on which firewall will be set.
      * @param [in] enable            Indicates whether the firewall is enabled
      * @param [in] allowPackets      Indicates whether to accept or drop packets
      *                               matching the rules
@@ -141,13 +142,14 @@ class IFirewallManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status setFirewall(
+    virtual telux::common::Status setFirewall(int profileId,
         bool enable, bool allowPackets, telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
      * Request status of firewall
      *
+     * @param [in] profileId         Profile identifier for which firewall status is requested.
      * @param [in] callback          callback to get the response of requestFirewallStatus
      *
      * @returns Status of requestFirewallStatus i.e. success or suitable status code.
@@ -155,11 +157,13 @@ class IFirewallManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestFirewallStatus(FirewallStatusCb callback) = 0;
+    virtual telux::common::Status requestFirewallStatus(int profileId,
+        FirewallStatusCb callback) = 0;
 
     /**
      * Adds the firewall rule
      *
+     * @param [in] profileId        Profile identifier on which firewall rule will be added.
      * @param[in] entry             Firewall entry based on protocol type
      * @param[in] callback          optional callback to get the response addFirewallEntry
      *
@@ -168,13 +172,14 @@ class IFirewallManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status addFirewallEntry(
+    virtual telux::common::Status addFirewallEntry(int profileId,
         std::shared_ptr<IFirewallEntry> entry, telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**
      * Request Firewall rules
      *
+     * @param [in] profileId        Profile identifier on which firewall entries are retrieved.
      * @param[in] callback          callback to get the response requestFirewallEntry
      *
      * @returns Status of requestFirewallEntry i.e. success or suitable status code.
@@ -182,11 +187,13 @@ class IFirewallManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestFirewallEntry(FirewallEntriesCb callback) = 0;
+    virtual telux::common::Status requestFirewallEntry(int profileId,
+        FirewallEntriesCb callback) = 0;
 
     /**
      * Remove firewall entry
      *
+     * @param [in] profileId        Profile identifier on which firewall entry will be removed.
      * @param[in] entry             Firewall entry to be removed, get the available entries
      *                              from requestFirewallEntry() API
      * @param[in] callback          callback to get the response removeFirewallEntry
@@ -196,51 +203,52 @@ class IFirewallManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status removeFirewallEntry(const std::shared_ptr<IFirewallEntry> &entry,
-        telux::common::ResponseCallback callback = nullptr)
-        = 0;
+    virtual telux::common::Status removeFirewallEntry(int profileId,
+        const std::shared_ptr<IFirewallEntry> &entry,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Adds demilitarized zone (DMZ) IP address
+     * Enable demilitarized zone (DMZ)
      *
-     * @param [in] ipAddr        IP address to add
+     * @param [in] profileId     Profile identifier on which DMZ will be enabled.
+     * @param [in] ipAddr        IP address for which DMZ will be enabled
      * @param [in] callback      optional callback to get the response addDmz
      *
-     * @returns Status of addDmz i.e. success or suitable status code.
+     * @returns Status of enableDmz i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status addDmz(
-        const std::string ipAddr, telux::common::ResponseCallback callback = nullptr)
-        = 0;
+    virtual telux::common::Status enableDmz(int profileId,
+        const std::string ipAddr, telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Removes demilitarized zone (DMZ) IP address
+     * Disable demilitarized zone (DMZ)
      *
-     * @param [in] ipAddr        IP address to remove
+     * @param [in] profileId     Profile identifier on which DMZ will be disabled.
+     * @param [in] ipType        Specify IP type of the DMZ to be disabled
      * @param [in] callback      optional callback to get the response removeDmz
      *
-     * @returns Status of removeDmz i.e. success or suitable status code.
+     * @returns Status of disableDmz i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status removeDmz(
-        const std::string ipAddr, telux::common::ResponseCallback callback = nullptr)
-        = 0;
+    virtual telux::common::Status disableDmz(int profileId, const telux::data::IpFamilyType ipType,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Request DMZ entries that was previously set using addDmz API
+     * Request DMZ entry that was previously set using enableDmz API
      *
-     * @param [in] dmzCb      callback to get the response requestDmzEntries
+     * @param [in] profileId     Profile identifier on which DMZ entries are requested.
+     * @param [in] dmzCb         callback to get the response requestDmzEntry
      *
-     * @returns Status of requestDmzEntries i.e. success or suitable status code.
+     * @returns Status of requestDmzEntry i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestDmzEntries(DmzEntriesCb dmzCb) = 0;
+    virtual telux::common::Status requestDmzEntry(int profileId, DmzEntriesCb dmzCb) = 0;
 
     /**
      * Get the associated operation type for this instance.

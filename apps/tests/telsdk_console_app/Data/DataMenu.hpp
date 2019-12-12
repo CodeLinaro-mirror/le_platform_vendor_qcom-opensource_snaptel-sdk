@@ -109,9 +109,9 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void addFirewallEntry(std::vector<std::string> inputCommand);
     void requestFirewallEntry(std::vector<std::string> inputCommand);
     void removeFirewallEntry(std::vector<std::string> inputCommand);
-    void addDmz(std::vector<std::string> inputCommand);
-    void removeDmz(std::vector<std::string> inputCommand);
-    void requestDmzEntries(std::vector<std::string> inputCommand);
+    void enableDmz(std::vector<std::string> inputCommand);
+    void disableDmz(std::vector<std::string> inputCommand);
+    void requestDmzEntry(std::vector<std::string> inputCommand);
 
     void createVlan(std::vector<std::string> inputCommand);
     void removeVlan(std::vector<std::string> inputCommand);

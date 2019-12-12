@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,41 +27,28 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @brief ConfigParser class reads config file and caches the app config
- * settings. It provides utility functions to read the config values.
- */
-
-#ifndef CONFIGPARSER_HPP
-#define CONFIGPARSER_HPP
+#ifndef MSDPROVIDER_HPP
+#define MSDPROVIDER_HPP
 
 #include <map>
 #include <string>
 
-#define DEFAULT_CONFIG_FILE_NAME "SampleAppConfig.conf"
-#define DEFAULT_CONFIG_FILE_PATH "/etc"
+#include <telux/tel/ECallDefines.hpp>
 
 /*
- * ConfigParser class caches the config settings from conf file
- * It provides utility methods to get value of a configured settings
+ * MsdProvider class caches the MSD parameters from the specified MSD data file.
+ * It provides utility methods to get value of a config setting by passing the key
  */
-class ConfigParser {
+class MsdProvider {
 public:
-  ConfigParser(std::string configFile = DEFAULT_CONFIG_FILE_NAME,
-                    std::string configFilePath = DEFAULT_CONFIG_FILE_PATH);
-  ~ConfigParser();
-  // Get the user defined value for configured key
-  std::string getValue(std::string key);
+    // Function to read the MSD data file containing key value pairs
+    static void init(std::string filename, std::string filePath);
+
+    // Function to fetch the MSD Data
+    static telux::tel::ECallMsdData getMsd();
 
 private:
-  // Function to read config file containing key value pairs
-  void readConfigFile(std::string configFile);
+    static telux::tel::ECallMsdData msdData_;
+};  // end of class MsdProvider
 
-  // Get the path where config file is located
-  std::string getConfigFilePath();
-
-  // Hashmap to store all settings as key-value pairs
-  std::map<std::string, std::string> configMap_;
-};
-
-#endif // CONFIGPARSER_HPP
+#endif  // MSDPROVIDER_HPP

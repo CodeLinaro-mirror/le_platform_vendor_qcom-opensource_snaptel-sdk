@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,41 +27,36 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @brief ConfigParser class reads config file and caches the app config
- * settings. It provides utility functions to read the config values.
- */
+#ifndef TELCLIENTUTILS_HPP
+#define TELCLIENTUTILS_HPP
 
-#ifndef CONFIGPARSER_HPP
-#define CONFIGPARSER_HPP
+#include <telux/tel/CallManager.hpp>
 
-#include <map>
-#include <string>
+using namespace telux::common;
+using namespace telux::tel;
 
-#define DEFAULT_CONFIG_FILE_NAME "SampleAppConfig.conf"
-#define DEFAULT_CONFIG_FILE_PATH "/etc"
-
-/*
- * ConfigParser class caches the config settings from conf file
- * It provides utility methods to get value of a configured settings
- */
-class ConfigParser {
+/** TelClientUtils class provides helper functions to convert various parameters to strings */
+class TelClientUtils {
 public:
-  ConfigParser(std::string configFile = DEFAULT_CONFIG_FILE_NAME,
-                    std::string configFilePath = DEFAULT_CONFIG_FILE_PATH);
-  ~ConfigParser();
-  // Get the user defined value for configured key
-  std::string getValue(std::string key);
+    /*
+     * Get the call state in string format
+     */
+    static std::string callStateToString(CallState cs);
+    /*
+     * Get the call direction in string format
+     */
+    static std::string callDirectionToString(CallDirection cd);
+    /**
+     * Get the call end cause in string format from call end cause code
+     */
+    static std::string callEndCauseToString(CallEndCause callEndCause);
+    /*
+     * Get ECallMsdTransmissionStatus in string
+     */
+    static std::string eCallMsdTransmissionStatusToString(ECallMsdTransmissionStatus status);
 
-private:
-  // Function to read config file containing key value pairs
-  void readConfigFile(std::string configFile);
-
-  // Get the path where config file is located
-  std::string getConfigFilePath();
-
-  // Hashmap to store all settings as key-value pairs
-  std::map<std::string, std::string> configMap_;
+    TelClientUtils();
+    ~TelClientUtils();
 };
 
-#endif // CONFIGPARSER_HPP
+#endif  // TELCLIENTUTILS_HPP

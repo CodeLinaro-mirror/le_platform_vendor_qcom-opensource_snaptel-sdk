@@ -113,6 +113,7 @@ class INatManager {
      * an entry it needs a explicit call to removeStaticNatEntry() API, it supports both
      * IPv4 and IPv6
      *
+     * @param [in] profileId         Profile identifier to which static entry will be mapped to.
      * @param [in] snatConfig        snatConfiguration @ref telux::net::NatConfig
      * @param [in] callback          optional callback to get the response addStaticNatEntry
      *
@@ -121,14 +122,14 @@ class INatManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status addStaticNatEntry(
-        const NatConfig &snatConfig, telux::common::ResponseCallback callback = nullptr)
-        = 0;
+    virtual telux::common::Status addStaticNatEntry(int profileId,
+        const NatConfig &snatConfig, telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
      * Removes a static Network Address Translation (NAT) entry in the NAT table,
      * it supports both IPv4 and IPv6
      *
+     * @param [in] profileId         Profile identifier to which static entry will be removed from.
      * @param [in] snatConfig        snatConfiguration @ref telux::net::NatConfig
      * @param [in] callback          optional callback to get the response removeStaticNatEntry
      *
@@ -137,13 +138,13 @@ class INatManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status removeStaticNatEntry(
-        const NatConfig &snatConfig, telux::common::ResponseCallback callback = nullptr)
-        = 0;
+    virtual telux::common::Status removeStaticNatEntry(int profileId,
+        const NatConfig &snatConfig, telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
      * Request list of static nat entries available in the NAT table
      *
+     * @param [in] profileId         Profile identifier to which static entries will be retrieved.
      * @param[in] snatEntriesCb      Asynchronous callback to get the list of static
      *                               Network Address Translation (NAT) entries
      *
@@ -152,7 +153,8 @@ class INatManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestStaticNatEntries(StaticNatEntriesCb snatEntriesCb) = 0;
+    virtual telux::common::Status requestStaticNatEntries(int profileId,
+        StaticNatEntriesCb snatEntriesCb) = 0;
 
     /**
      * Get the associated operation type for this instance.

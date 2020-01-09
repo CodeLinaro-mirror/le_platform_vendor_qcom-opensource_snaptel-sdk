@@ -115,39 +115,46 @@ void TransCodeMenu::createTranscoder() {
         }
     }
     takeFormatData(outputConfig_);
-    AmrwbpParams inputParams{};
-    AmrwbpParams outputParams{};
-    if (inputConfig_.format == AudioFormat::AMRWB_PLUS) {
-        inputParams.bitWidth = 16;
-        inputParams.frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
-        inputConfig_.params = &inputParams;
-    } else {
-        inputConfig_.params = nullptr;
-    }
-
-    if (outputConfig_.format == AudioFormat::AMRWB_PLUS) {
-        outputParams.bitWidth = 16;
-        outputParams.frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
-        outputConfig_.params = &inputParams;
-    } else {
-        outputConfig_.params = nullptr;
-    }
-
-    audioManager_->createTranscoder(inputConfig_, outputConfig_,
-    [&p,this](std::shared_ptr<telux::audio::ITranscoder> &transcoder,
-        telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            transcoder_ = transcoder;
-            registerListener();
-            p.set_value(true);
+    AmrwbpParams* inputParams = new AmrwbpParams();
+    AmrwbpParams* outputParams = new AmrwbpParams();
+    if (inputParams && outputParams) {
+        if (inputConfig_.format == AudioFormat::AMRWB_PLUS) {
+        inputParams->bitWidth = 16;
+        inputParams->frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
+        inputConfig_.params = inputParams;
         } else {
-            p.set_value(false);
-            std::cout << "failed to create transcoder" <<std::endl;
+        inputConfig_.params = nullptr;
         }
-    });
-    if (p.get_future().get()) {
-        std::cout<< "Transcoder Created" << std::endl;
+
+        if (outputConfig_.format == AudioFormat::AMRWB_PLUS) {
+            outputParams->bitWidth = 16;
+            outputParams->frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
+            outputConfig_.params = outputParams;
+        } else {
+            outputConfig_.params = nullptr;
+        }
+
+        audioManager_->createTranscoder(inputConfig_, outputConfig_,
+            [&p,this](std::shared_ptr<telux::audio::ITranscoder> &transcoder,
+            telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                transcoder_ = transcoder;
+                registerListener();
+                p.set_value(true);
+            } else {
+                p.set_value(false);
+                std::cout << "failed to create transcoder" << std::endl;
+            }
+            });
+        if (p.get_future().get()) {
+            std::cout << "Transcoder Created" << std::endl;
+        }
+    } else {
+        std::cout << "Memory allocation failure" << std::endl;
     }
+    delete inputParams;
+    delete outputParams;
+    return;
 }
 
 void TransCodeMenu::writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,

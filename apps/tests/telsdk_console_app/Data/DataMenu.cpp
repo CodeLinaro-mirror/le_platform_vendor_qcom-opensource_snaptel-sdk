@@ -1405,7 +1405,9 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
             tcpInfo.dest.range = (uint16_t)destRange;
 
             auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
-            tcpFilter->setTcpInfo(tcpInfo);
+            if(tcpFilter) {
+                tcpFilter->setTcpInfo(tcpInfo);
+            }
         } break;
         case 17:  // UDP
         {
@@ -1436,7 +1438,9 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
             info.dest.range = (uint16_t)destRange;
 
             auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipFilter);
-            udpFilter->setUdpInfo(info);
+            if(udpFilter) {
+                udpFilter->setUdpInfo(info);
+            }
         } break;
         default:
             break;

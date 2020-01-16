@@ -54,6 +54,7 @@ private:
     void registerListener();
     void deRegisterListener();
     void takeFormatData(FormatInfo &info);
+    void cleanup();
 
     void readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer, uint32_t isLastBuffer,
                       telux::common::ErrorCode error);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,16 +55,18 @@ private:
    void queryPin1LockState(std::vector<std::string> userInput);
    void queryFdnLockState(std::vector<std::string> userInput);
    void setCardLock(std::vector<std::string> userInput);
+   void selectCardSlot(std::vector<std::string> userInput);
    std::string appTypeToString(telux::tel::AppType appType);
    std::string appStateToString(telux::tel::AppState appState);
    std::string cardStateToString(telux::tel::CardState state);
 
    std::shared_ptr<telux::tel::ICardListener> cardListener_;
-   std::shared_ptr<telux::tel::ICard> card_ = nullptr;
    std::shared_ptr<MyOpenLogicalChannelCallback> myOpenLogicalChannelCb_;
    std::shared_ptr<MyTransmitApduResponseCallback> myTransmitApduCb_;
    std::shared_ptr<MyCardCommandResponseCallback> myCloseLogicalChannelCb_;
    std::shared_ptr<telux::tel::ICardManager> cardManager_;
+   int slot_ = DEFAULT_SLOT_ID;
+   std::vector<std::shared_ptr<telux::tel::ICard>> cards_;
 };
 
 #endif  // CARDSERVICESMENU_HPP

@@ -74,6 +74,14 @@ void TransCodeMenu::init() {
     audioManager_ = audioFactory.getAudioManager();
 }
 
+void TransCodeMenu::cleanup() {
+    fflush(readFile_);
+    fclose(readFile_);
+    fflush(writeFile_);
+    fclose(writeFile_);
+    abortTranscoding({});
+}
+
 void TransCodeMenu::createTranscoder() {
     std::promise<bool> p;
     std::cout << "Enter configuration for input samples" << std::endl;
@@ -234,8 +242,6 @@ void TransCodeMenu::write() {
         }
     }
     writeStatus_ = false;
-    fflush(writeFile_);
-    fclose(writeFile_);
 }
 
 void TransCodeMenu::read() {
@@ -296,19 +302,11 @@ void TransCodeMenu::read() {
     while (readBuffers_.size() != TOTAL_READ_BUFFERS) {
         cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
     }
-    fflush(readFile_);
-    fclose(readFile_);
-    readStatus_ = false;
     std::cout << "Transcoding Successful" <<std::endl;
-    abortTranscoding({});
 }
 
 void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
          uint32_t isLastBuffer, telux::common::ErrorCode error) {
-
-    if (isLastBuffer) {
-        readStatus_ = false;
-    }
     uint32_t bytesWrittenToFile = 0;
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "read() returned with error " << static_cast<unsigned int>(error) << std::endl;
@@ -322,6 +320,10 @@ void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buf
     buffer->reset();
     readBuffers_.push(buffer);
     cv_.notify_all();
+    if (isLastBuffer) {
+        readStatus_ = false;
+        cleanup();
+    }
     return;
 }
 

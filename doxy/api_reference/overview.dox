@@ -40,7 +40,7 @@ when       who     what, where, why
 @latexonly
 \begin{figure}[H]
    \centering
-   \includegraphics[scale=0.55]{sdk_overview.png}
+   \includegraphics[scale=0.48]{sdk_overview.png}
    \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
    \caption{SDK-Overview}
    \label{fig_sdk_overview}

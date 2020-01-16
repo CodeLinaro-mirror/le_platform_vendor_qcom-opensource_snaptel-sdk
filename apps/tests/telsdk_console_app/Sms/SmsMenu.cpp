@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -41,7 +41,7 @@
 
 #include "SmsMenu.hpp"
 
-SmsMenu::SmsMenu(std::string appName, std::string cursor, int phoneId)
+SmsMenu::SmsMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
    startTime = std::chrono::system_clock::now();
@@ -76,18 +76,28 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor, int phoneId)
       mySmsDeliveryCb_ = std::make_shared<MySmsDeliveryCallback>();
       smsListener_ = std::make_shared<MySmsListener>();
 
-      smsManager_ = phoneFactory.getSmsManager(phoneId);
-
-      // add listeners for incoming SMS notification
-      telux::common::Status status = smsManager_->registerListener(smsListener_);
-      if(status != telux::common::Status::SUCCESS) {
-         std::cout << "Unable to register Listener" << std::endl;
+      std::vector<int> phoneIds;
+      telux::common::Status status = phoneManager_->getPhoneIds(phoneIds);
+      if (status == telux::common::Status::SUCCESS) {
+          for (auto index = 1; index <= phoneIds.size(); index++) {
+              auto smsMgr = phoneFactory.getSmsManager(index);
+              if (smsMgr != nullptr) {
+                  // add listeners for incoming SMS notification
+                  telux::common::Status status = smsMgr->registerListener(smsListener_);
+                  if(status != telux::common::Status::SUCCESS) {
+                     std::cout << "Unable to register Listener" << std::endl;
+                  }
+                  smsManagers_.emplace_back(smsMgr);
+              }
+          }
       }
    }
 }
 
 SmsMenu::~SmsMenu() {
-   smsManager_->removeListener(smsListener_);
+   for (auto index = 0; index < smsManagers_.size(); index++) {
+       smsManagers_[index]->removeListener(smsListener_);
+   }
    mySmsCmdCb_ = nullptr;
    mySmscAddrCb_ = nullptr;
    smsListener_ = nullptr;
@@ -108,8 +118,16 @@ void SmsMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "4", "Calculate_message_attributes", {},
          std::bind(&SmsMenu::calculateMessageAttributes, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("5", "Select_sim_slot", {},
+                        std::bind(&SmsMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
       = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand};
+
+   if (smsManagers_.size() > 1) {
+       commandsListSmsSubMenu.emplace_back(selectSimSlotCommand);
+   }
+
    addCommands(commandsListSmsSubMenu);
    ConsoleApp::displayMenu();
    std::cout << "Device is listening for any incoming messages" << std::endl;
@@ -117,6 +135,7 @@ void SmsMenu::init() {
 
 // SMS Requests
 void SmsMenu::sendSms(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
    char delimiter = '\n';
 
    std::string receiverAddress;
@@ -137,9 +156,9 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
 
    telux::common::Status status = telux::common::Status::FAILED;
    if(deliveryAck == "y") {
-      status = smsManager_->sendSms(message, receiverAddress, mySmsCmdCb_, mySmsDeliveryCb_);
+      status = smsManager->sendSms(message, receiverAddress, mySmsCmdCb_, mySmsDeliveryCb_);
    } else {
-      status = smsManager_->sendSms(message, receiverAddress, mySmsCmdCb_);
+      status = smsManager->sendSms(message, receiverAddress, mySmsCmdCb_);
    }
 
    if(status == telux::common::Status::SUCCESS) {
@@ -150,13 +169,15 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
 }
 
 void SmsMenu::getSmscAddr(std::vector<std::string> userInput) {
-   auto ret = smsManager_->requestSmscAddress(mySmscAddrCb_);
+   auto smsManager = smsManagers_[slot_ - 1];
+   auto ret = smsManager->requestSmscAddress(mySmscAddrCb_);
    std::cout << (ret == telux::common::Status::SUCCESS ? "Request SmscAddress successful"
                                                        : "Request SmscAddress failed")
              << '\n';
 }
 
 void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
    std::cout << "set SMSC Address \n" << std::endl;
    char delimiter = '\n';
 
@@ -164,7 +185,7 @@ void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
    std::cout << "Enter SMSC number: ";
    std::getline(std::cin, smscAddress, delimiter);
    auto ret
-      = smsManager_->setSmscAddress(smscAddress, MySetSmscAddressResponseCallback::setSmscResponse);
+      = smsManager->setSmscAddress(smscAddress, MySetSmscAddressResponseCallback::setSmscResponse);
    if(ret == telux::common::Status::SUCCESS) {
       std::cout << "Set SmscAddress request success" << std::endl;
    } else {
@@ -173,17 +194,44 @@ void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
 }
 
 void SmsMenu::calculateMessageAttributes(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
    std::string smsMessage;
    char delimiter = '\n';
 
    std::cout << "Enter Message: ";
    std::getline(std::cin, smsMessage, delimiter);
 
-   auto msgAttributes = smsManager_->calculateMessageAttributes(smsMessage);
+   auto msgAttributes = smsManager->calculateMessageAttributes(smsMessage);
    std::cout
       << "Message Attributes \n encoding: " << (int)msgAttributes.encoding
       << "\n numberOfSegments: " << msgAttributes.numberOfSegments
       << "\n segmentSize: " << msgAttributes.segmentSize
       << "\n numberOfCharsLeftInLastSegment: " << msgAttributes.numberOfCharsLeftInLastSegment
       << std::endl;
+}
+
+void SmsMenu::selectSimSlot(std::vector<std::string> userInput) {
+   std::string slotSelection;
+   char delimiter = '\n';
+
+   std::cout << "Enter the desired SIM slot: ";
+   std::getline(std::cin, slotSelection, delimiter);
+
+   if (!slotSelection.empty()) {
+      try {
+         int slot = std::stoi(slotSelection);
+         if (slot > 2) {
+            std::cout << "Invalid slot entered, using default slot" << std::endl;
+            slot_ = DEFAULT_SLOT_ID;
+         } else {
+            slot_ = slot;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+            << slotSelection << std::endl;
+         return;
+      }
+   } else {
+      std::cout << "Empty input, enter the correct slot" << std::endl;
+   }
 }

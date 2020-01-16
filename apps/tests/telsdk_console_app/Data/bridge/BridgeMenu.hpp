@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,44 +27,45 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SAPCARDSERVICESMENU_HPP
-#define SAPCARDSERVICESMENU_HPP
+/**
+ * This is a Bridge Manager Sample Application using Telematics SDK.
+ * It is used to demonstrate APIs to enable/disable and configure software bridge for various
+ * interfaces.
+ */
 
+#ifndef BRIDGEMENU_HPP
+#define BRIDGEMENU_HPP
+
+#include <algorithm>
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
+#include <iomanip>
 
-#include <telux/tel/SapCardManager.hpp>
 
 #include "console_app_framework/ConsoleApp.hpp"
-#include "MySapCardListener.hpp"
 
-class SapCardServicesMenu : public ConsoleApp {
-public:
-   SapCardServicesMenu(std::string appName, std::string cursor);
-   ~SapCardServicesMenu();
-   void init();
+#include <telux/data/DataDefines.hpp>
+#include <telux/data/DataFactory.hpp>
 
-private:
-   void openSapConnection(std::vector<std::string> userInput);
-   void getSapAtr(std::vector<std::string> userInput);
-   void requestSapState(std::vector<std::string> userInput);
-   void getState(std::vector<std::string> userInput);
-   void transmitSapApdu(std::vector<std::string> userInput);
-   void sapSimPowerOff(std::vector<std::string> userInput);
-   void sapSimPowerOn(std::vector<std::string> userInput);
-   void sapSimReset(std::vector<std::string> userInput);
-   void sapCardReaderStatus(std::vector<std::string> userInput);
-   void closeSapConnection(std::vector<std::string> userInput);
-   void selectSimSlot(std::vector<std::string> userInput);
-   void logSapState(telux::tel::SapState sapState);
+using namespace telux::data;
+using namespace telux::common;
+using namespace telux::data::net;
 
-   std::shared_ptr<MySapCommandResponseCallback> mySapCmdResponseCb_;
-   std::shared_ptr<MyCardReaderCallback> mySapCardReaderCb_;
-   std::shared_ptr<MySapTransmitApduResponseCallback> myTransmitApduResponseCb_;
-   std::shared_ptr<MyAtrResponseCallback> myAtrCb_;
-   int slot_ = DEFAULT_SLOT_ID;
-   std::vector<std::shared_ptr<telux::tel::ISapCardManager>> sapManagers_;
+class BridgeMenu : public ConsoleApp {
+ public:
+    // initialize menu and sdk
+    int init();
+
+    // Bridge Manager APIs
+    void enableBridge(std::vector<std::string> inputCommand);
+    void addBridge(std::vector<std::string> inputCommand);
+    void getBridgeInfo(std::vector<std::string> inputCommand);
+    void removeBridge(std::vector<std::string> inputCommand);
+
+    BridgeMenu(std::string appName, std::string cursor);
+    ~BridgeMenu();
+ private:
+    std::shared_ptr<telux::data::net::IBridgeManager> bridgeMgr_;
 };
-
-#endif  // SAPCARDSERVICESMENU_HPP
+#endif

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -60,7 +60,6 @@ private:
    void startDtmfTone(std::vector<std::string> userInput);
    void stopDtmfTone(std::vector<std::string> userInput);
 
-   int phoneId_;
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
    std::shared_ptr<telux::tel::ICallListener> callListener_;
    std::shared_ptr<telux::tel::ICallManager> callManager_;
@@ -75,6 +74,7 @@ private:
    std::shared_ptr<MyCallCommandCallback> myPlayTonesCb_;
    std::shared_ptr<MyCallCommandCallback> myStartToneCb_;
    std::shared_ptr<MyCallCommandCallback> myStopToneCb_;
+   std::vector<int> phoneIds_;
 };
 
 #endif  // CALLMENU_HPP

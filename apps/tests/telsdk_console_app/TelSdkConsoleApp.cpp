@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -92,7 +92,7 @@ void TelSdkConsoleApp::init() {
 }
 
 void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
-    PhoneMenu phoneMenu("Phone Menu", "phone> ", 1);
+    PhoneMenu phoneMenu("Phone Menu", "phone> ");
     phoneMenu.init();
     phoneMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
@@ -120,7 +120,7 @@ void TelSdkConsoleApp::simCardMenu(std::vector<std::string> userInput) {
 }
 
 void TelSdkConsoleApp::smsMenu(std::vector<std::string> userInput) {
-    SmsMenu smsMenu("SMS Menu", "sms> ", 1);
+    SmsMenu smsMenu("SMS Menu", "sms> ");
     smsMenu.init();
     smsMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();

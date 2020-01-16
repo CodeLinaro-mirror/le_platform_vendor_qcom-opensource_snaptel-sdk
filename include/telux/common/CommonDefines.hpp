@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -40,6 +40,8 @@
 #include <functional>
 
 #define DEFAULT_SLOT_ID 1
+#define SLOT_ID_1 1
+#define SLOT_ID_2 2
 #define INVALID_SLOT_ID -1
 
 namespace telux {

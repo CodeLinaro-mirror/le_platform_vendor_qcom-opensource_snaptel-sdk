@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -137,10 +137,15 @@ CardServicesMenu::CardServicesMenu(std::string appName, std::string cursor)
 
    if(subSystemStatus) {
       std::vector<int> slotIds;
-      cardManager_->getSlotIds(slotIds);
-
-      // get the default card object
-      card_ = cardManager_->getCard();
+      telux::common::Status status = cardManager_->getSlotIds(slotIds);
+      if (status == telux::common::Status::SUCCESS) {
+          for (auto index = 1; index <= slotIds.size(); index++) {
+              auto card = cardManager_->getCard(index, &status);
+              if (card != nullptr) {
+                  cards_.emplace_back(card);
+              }
+          }
+      }
 
       // listener
       cardListener_ = std::make_shared<MyCardListener>();
@@ -151,7 +156,7 @@ CardServicesMenu::CardServicesMenu(std::string appName, std::string cursor)
       myCloseLogicalChannelCb_ = std::make_shared<MyCardCommandResponseCallback>();
 
       // registering Listener
-      telux::common::Status status = cardManager_->registerListener(cardListener_);
+      status = cardManager_->registerListener(cardListener_);
       if(status != telux::common::Status::SUCCESS) {
          std::cout << "Unable to registerListener" << std::endl;
       }
@@ -211,11 +216,19 @@ void CardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> setCardLockCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("12", "Set_card_lock", {},
                         std::bind(&CardServicesMenu::setCardLock, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("13", "Select_card_slot", {},
+                        std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
       = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
          closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
          changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
          queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand};
+
+   if (cards_.size() > 1) {
+       commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
+   }
+
    addCommands(commandsListCardServicesSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -243,9 +256,10 @@ std::string CardServicesMenu::cardStateToString(telux::tel::CardState state) {
 }
 
 void CardServicesMenu::getCardState(std::vector<std::string> userInput) {
-   if(card_) {
+   auto card = cards_[slot_ - 1];
+   if(card) {
       telux::tel::CardState cardState;
-      card_->getState(cardState);
+      card->getState(cardState);
       std::cout << "CardState : " << cardStateToString(cardState) << std::endl;
    }
 }
@@ -301,9 +315,10 @@ std::string CardServicesMenu::appStateToString(telux::tel::AppState appState) {
 }
 
 void CardServicesMenu::getSupportedApps(std::vector<std::string> userInput) {
-   if(card_) {
+   auto card = cards_[slot_ - 1];
+   if(card) {
       std::vector<std::shared_ptr<telux::tel::ICardApp>> applications;
-      applications = card_->getApplications();
+      applications = card->getApplications();
       if(applications.size() != 0)  {
          for(auto cardApp : applications) {
             std::cout << "App type: " << appTypeToString(cardApp->getAppType()) << std::endl;
@@ -313,7 +328,7 @@ void CardServicesMenu::getSupportedApps(std::vector<std::string> userInput) {
       } else {
          std::cout <<"No supported applications"<< std::endl;
          telux::tel::CardState cardState;
-         card_->getState(cardState);
+         card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
       }
    }  else {
@@ -322,10 +337,11 @@ void CardServicesMenu::getSupportedApps(std::vector<std::string> userInput) {
 }
 
 void CardServicesMenu::openLogicalChannel(std::vector<std::string> userInput) {
-   if(card_) {
+   auto card = cards_[slot_ - 1];
+   if(card) {
       std::string aid = userInput[1];
       std::cout << "Open logical channel with aid:" << aid << std::endl;
-      auto ret = card_->openLogicalChannel(aid, myOpenLogicalChannelCb_);
+      auto ret = card->openLogicalChannel(aid, myOpenLogicalChannelCb_);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "Open logical channel request sent successfully \n";
       } else {
@@ -337,7 +353,8 @@ void CardServicesMenu::openLogicalChannel(std::vector<std::string> userInput) {
 }
 
 void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
-   if(card_) {
+   auto card = cards_[slot_ - 1];
+   if(card) {
       int channel;
       int cla, instruction, p1, p2, p3;
       std::vector<uint8_t> data;
@@ -375,7 +392,7 @@ void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
          data.emplace_back((uint8_t)dataInput);
       }
 
-      auto ret = card_->transmitApduLogicalChannel(channel, (uint8_t)cla, (uint8_t)instruction,
+      auto ret = card->transmitApduLogicalChannel(channel, (uint8_t)cla, (uint8_t)instruction,
                                                    (uint8_t)p1, (uint8_t)p2, (uint8_t)p3, data,
                                                    myTransmitApduCb_);
       std::cout << (ret == telux::common::Status::SUCCESS ?"Transmit APDU request sent successfully"
@@ -387,7 +404,8 @@ void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
 }
 
 void CardServicesMenu::basicTransmitApdu(std::vector<std::string> userInput) {
-   if(card_) {
+   auto card = cards_[slot_ - 1];
+   if(card) {
       int cla, instruction, p1, p2, p3;
       std::vector<uint8_t> data;
 
@@ -421,7 +439,7 @@ void CardServicesMenu::basicTransmitApdu(std::vector<std::string> userInput) {
          Utils::validateInput(tmpInp);
          data.emplace_back((uint8_t)tmpInp);
       }
-      auto ret = card_->transmitApduBasicChannel((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1,
+      auto ret = card->transmitApduBasicChannel((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1,
                                                  (uint8_t)p2, (uint8_t)p3, data, myTransmitApduCb_);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "Basic transmit APDU request sent successfully\n";
@@ -434,10 +452,11 @@ void CardServicesMenu::basicTransmitApdu(std::vector<std::string> userInput) {
 }
 
 void CardServicesMenu::closeLogicalChannel(std::vector<std::string> userInput) {
-   if(card_) {
+   auto card = cards_[slot_ - 1];
+   if(card) {
       int channel = std::stoi(userInput[1]);
       std::cout << "Close logical channel with channel:" << channel << std::endl;
-      auto ret = card_->closeLogicalChannel(channel, myCloseLogicalChannelCb_);
+      auto ret = card->closeLogicalChannel(channel, myCloseLogicalChannelCb_);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "Close logical channel request sent successfully \n";
       } else {
@@ -449,12 +468,13 @@ void CardServicesMenu::closeLogicalChannel(std::vector<std::string> userInput) {
 }
 
 void CardServicesMenu::changeCardPin(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
 
    std::string oldPin, newPin, lockType;
    telux::tel::CardLockType cardLockType;
    char delimiter = '\n';
 
-   if(!card_) {
+   if(!card) {
       std::cout << "ERROR: Unable to get card instance";
       return;
    }
@@ -488,7 +508,7 @@ void CardServicesMenu::changeCardPin(std::vector<std::string> userInput) {
    std::getline(std::cin, newPin, delimiter);
 
    std::vector<std::shared_ptr<telux::tel::ICardApp>> applications;
-   applications = card_->getApplications();
+   applications = card->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
          if((cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM)
@@ -506,17 +526,18 @@ void CardServicesMenu::changeCardPin(std::vector<std::string> userInput) {
    } else {
          std::cout <<"Change card PIN request failed"<< std::endl;
          telux::tel::CardState cardState;
-         card_->getState(cardState);
+         card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
    }
 }
 
 void CardServicesMenu::unlockCardByPuk(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
    std::string puk, newPin, lockType;
    telux::tel::CardLockType cardLockType;
    char delimiter = '\n';
 
-   if(!card_) {
+   if(!card) {
       std::cout << "ERROR: Unable to get card instance";
       return;
    }
@@ -549,7 +570,7 @@ void CardServicesMenu::unlockCardByPuk(std::vector<std::string> userInput) {
    std::getline(std::cin, newPin, delimiter);
 
    std::vector<std::shared_ptr<telux::tel::ICardApp>> applications;
-   applications = card_->getApplications();
+   applications = card->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
          if((cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM)
@@ -566,17 +587,18 @@ void CardServicesMenu::unlockCardByPuk(std::vector<std::string> userInput) {
    } else {
          std::cout <<"Unlock card by PUK request failed"<< std::endl;
          telux::tel::CardState cardState;
-         card_->getState(cardState);
+         card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
    }
 }
 
 void CardServicesMenu::unlockCardByPin(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
    std::string newPin, lockType;
    telux::tel::CardLockType cardLockType;
    char delimiter = '\n';
 
-   if(!card_) {
+   if(!card) {
       std::cout << "ERROR: Unable to get card instance";
       return;
    }
@@ -607,7 +629,7 @@ void CardServicesMenu::unlockCardByPin(std::vector<std::string> userInput) {
    std::getline(std::cin, newPin, delimiter);
 
    std::vector<std::shared_ptr<telux::tel::ICardApp>> applications;
-   applications = card_->getApplications();
+   applications = card->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
          if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
@@ -622,16 +644,17 @@ void CardServicesMenu::unlockCardByPin(std::vector<std::string> userInput) {
    } else {
          std::cout <<"Unlock card by PIN request failed\n"<< std::endl;
          telux::tel::CardState cardState;
-         card_->getState(cardState);
+         card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
    }
 }
 
 void CardServicesMenu::queryPin1LockState(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
 
-   if(card_) {
+   if(card) {
       std::vector<std::shared_ptr<telux::tel::ICardApp>> applications;
-      applications = card_->getApplications();
+      applications = card->getApplications();
       if(applications.size() != 0)  {
          for(auto cardApp : applications) {
             if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
@@ -646,7 +669,7 @@ void CardServicesMenu::queryPin1LockState(std::vector<std::string> userInput) {
       } else {
          std::cout <<"Query pin1 lock state request failed"<< std::endl;
          telux::tel::CardState cardState;
-         card_->getState(cardState);
+         card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
       }
    } else {
@@ -655,10 +678,11 @@ void CardServicesMenu::queryPin1LockState(std::vector<std::string> userInput) {
 }
 
 void CardServicesMenu::queryFdnLockState(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
 
-   if(card_) {
+   if(card) {
       std::vector<std::shared_ptr<telux::tel::ICardApp>> applications;
-      applications = card_->getApplications();
+      applications = card->getApplications();
       if(applications.size() != 0)  {
          for(auto cardApp : applications) {
             if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
@@ -673,7 +697,7 @@ void CardServicesMenu::queryFdnLockState(std::vector<std::string> userInput) {
       } else {
          std::cout <<"Query FDN lock state request failed"<< std::endl;
          telux::tel::CardState cardState;
-         card_->getState(cardState);
+         card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
       }
    } else {
@@ -682,11 +706,12 @@ void CardServicesMenu::queryFdnLockState(std::vector<std::string> userInput) {
 }
 
 void CardServicesMenu::setCardLock(std::vector<std::string> userInput) {
+   auto card = cards_[slot_ - 1];
    std::string pwd, isEnable, lockType;
    telux::tel::CardLockType cardLockType;
    char delimiter = '\n';
 
-   if(!card_) {
+   if(!card) {
       std::cout << "ERROR: Unable to get card instance";
       return;
    }
@@ -737,7 +762,7 @@ void CardServicesMenu::setCardLock(std::vector<std::string> userInput) {
    }
 
    std::vector<std::shared_ptr<telux::tel::ICardApp>> applications;
-   applications = card_->getApplications();
+   applications = card->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
          if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
@@ -752,7 +777,34 @@ void CardServicesMenu::setCardLock(std::vector<std::string> userInput) {
    } else {
          std::cout <<"Set card lock request failed"<< std::endl;
          telux::tel::CardState cardState;
-         card_->getState(cardState);
+         card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
+   }
+}
+
+void CardServicesMenu::selectCardSlot(std::vector<std::string> userInput)
+{
+   std::string slotSelection;
+   char delimiter = '\n';
+
+   std::cout << "Enter the desired card slot: ";
+   std::getline(std::cin, slotSelection, delimiter);
+
+   if (!slotSelection.empty()) {
+      try {
+         int slot = std::stoi(slotSelection);
+         if (slot > 2) {
+            std::cout << "Invalid slot entered, using default slot" << std::endl;
+            slot_ = DEFAULT_SLOT_ID;
+         } else {
+            slot_ = slot;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+            << slotSelection << std::endl;
+         return;
+      }
+   } else {
+      std::cout << "Empty input, enter the correct slot" << std::endl;
    }
 }

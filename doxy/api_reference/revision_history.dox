@@ -42,35 +42,35 @@ when       who     what, where, why
 \setcounter{page}{2}
 @endlatexonly
 
-@table{3,{\centering}p{0.62in},{\centering}p{0.63in},{\raggedright}p{4.76in}}
+@table{2,{\centering}p{0.63in},{\raggedright}p{5.38in}}
 @trfirsthdg
-@thmultcol{1,|c|} Revision @thmultcolend @thmultcol{1,c|} Date @thmultcolend @thmultcollast{1,c|} Description @thmultcollastend
+@thmultcol{1,|c|} Date @thmultcolend @thmultcollast{1,c|} Description @thmultcollastend
 @trfirsthdgend
 @tblcapcont{Revision history (cont.)}
 @trhdg
-@thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
+@thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
-@tr @td A @tdend @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
-@tr @td B @tdend @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trend
-@tr @td C @tdend @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trend
-@tr @td D @tdend @td Oct 2018 @tdend @tdlast Addition of Network Selection and Serving System Management APIs and call flows @tdlastend @trend
-@tr @td E @tdend @td Nov 2018 @tdend @tdlast Addition of C-V2X APIs @tdlastend @trend
-@tr @td F @tdend @td Jan 2019 @tdend @tdlast Addition of Audio APIs and call flows @tdlastend @trend
-@tr @td G @tdend @td Mar 2019 @tdend @tdlast Addition of Thermal manager APIs and call flows @tdlastend @trend
-@tr @td H @tdend @td May 2019 @tdend @tdlast Addition of TCU Activity Management APIs and call flows @tdlastend @trend
-@tr @td I @tdend @td Jun 2019 @tdend @tdlast Addition of Audio APIs for play, capture, DTMF and related call flows @tdlastend @trend
-@tr @td J @tdend @td Jul 2019 @tdend @tdlast Updated the Location APIs and call flows @tdlastend @trend
-@tr @td K @tdend @td Jul 2019 @tdend @tdlast Addition of Thermal shutdown manager APIs and call flows @tdlastend @trend
-@tr @td L @tdend @td Sep 2019 @tdend @tdlast Addition of Remote SIM APIs and call flows @tdlastend @trend
-@tr @td M @tdend @td Sep 2019 @tdend @tdlast Addition of Audio APIs for Loopback, Tone Generator and related call flows @tdlastend @trend
-@tr @td N @tdend @td Sep 2019 @tdend @tdlast Addition of Audio APIs for compressed audio format playback and related call flows @tdlastend @trend
-@tr @td O @tdend @td Sep 2019 @tdend @tdlast Addition of modem config APIs and related call flows @tdlastend @trend
-@tr @td P @tdend @td Oct 2019 @tdend @tdlast Addition of Data Filter APIs and call flows @tdlastend @trend
-@tr @td Q @tdend @td Oct 2019 @tdend @tdlast Addition of Location concurrent report APIs and call flows @tdlastend @trend
-@tr @td R @tdend @td Oct 2019 @tdend @tdlast Addition of Location constraint time uncertainty APIs and call flows @tdlastend @trend
-@tr @td S @tdend @td Nov 2019 @tdend @tdlast Addition of Audio Format Transcoding APIs and call flows @tdlastend @trend
-@tr @td T @tdend @td Nov 2019 @tdend @tdlast Addition of Data Networking APIs and call flows @tdlastend @trend
-@tr @td U @tdend @td Nov 2019 @tdend @tdlast Addition of Compressed audio format playback on voice paths APIs and call flows @tdlastend @trend
+@tr @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
+@tr @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trend
+@tr @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trend
+@tr @td Oct 2018 @tdend @tdlast Addition of Network Selection and Serving System Management APIs and call flows @tdlastend @trend
+@tr @td Nov 2018 @tdend @tdlast Addition of C-V2X APIs @tdlastend @trend
+@tr @td Jan 2019 @tdend @tdlast Addition of Audio APIs and call flows @tdlastend @trend
+@tr @td Mar 2019 @tdend @tdlast Addition of Thermal manager APIs and call flows @tdlastend @trend
+@tr @td May 2019 @tdend @tdlast Addition of TCU Activity Management APIs and call flows @tdlastend @trend
+@tr @td Jun 2019 @tdend @tdlast Addition of Audio APIs for play, capture, DTMF and related call flows @tdlastend @trend
+@tr @td Jul 2019 @tdend @tdlast Updated the Location APIs and call flows @tdlastend @trend
+@tr @td Jul 2019 @tdend @tdlast Addition of Thermal shutdown manager APIs and call flows @tdlastend @trend
+@tr @td Sep 2019 @tdend @tdlast Addition of Remote SIM APIs and call flows @tdlastend @trend
+@tr @td Sep 2019 @tdend @tdlast Addition of Audio APIs for Loopback, Tone Generator and related call flows @tdlastend @trend
+@tr @td Sep 2019 @tdend @tdlast Addition of Audio APIs for compressed audio format playback and related call flows @tdlastend @trend
+@tr @td Sep 2019 @tdend @tdlast Addition of modem config APIs and related call flows @tdlastend @trend
+@tr @td Oct 2019 @tdend @tdlast Addition of Data Filter APIs and call flows @tdlastend @trend
+@tr @td Oct 2019 @tdend @tdlast Addition of Location concurrent report APIs and call flows @tdlastend @trend
+@tr @td Oct 2019 @tdend @tdlast Addition of Location constraint time uncertainty APIs and call flows @tdlastend @trend
+@tr @td Nov 2019 @tdend @tdlast Addition of Audio Format Transcoding APIs and call flows @tdlastend @trend
+@tr @td Nov 2019 @tdend @tdlast Addition of Data Networking APIs and call flows @tdlastend @trend
+@tr @td Nov 2019 @tdend @tdlast Addition of Compressed audio format playback on voice paths APIs and call flows @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly
@@ -105,4 +105,3 @@ when       who     what, where, why
 @endlatexonly
 
 */
-

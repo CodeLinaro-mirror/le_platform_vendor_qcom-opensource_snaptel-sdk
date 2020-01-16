@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,7 +43,7 @@
 
 class PhoneMenu : public ConsoleApp {
 public:
-   PhoneMenu(std::string appName, std::string cursor, int phoneId);
+   PhoneMenu(std::string appName, std::string cursor);
    ~PhoneMenu();
    void init();
 
@@ -63,6 +63,7 @@ private:
    void networkMenu(std::vector<std::string> userInput);
    void setECallOperatingMode(std::vector<std::string> userInput);
    void requestECallOperatingMode(std::vector<std::string> userInput);
+   void selectSimSlot(std::vector<std::string> userInput);
 
    std::string getRadioStateAsString(telux::tel::RadioState radioState);
    std::string getServiceStateAsString(telux::tel::ServiceState serviceState);
@@ -78,7 +79,8 @@ private:
    std::shared_ptr<MyCellularCapabilityCallback> myCellularCapabilityCb_;
    std::shared_ptr<MyGetOperatingModeCallback> myGetOperatingModeCb_;
    std::shared_ptr<MySetOperatingModeCallback> mySetOperatingModeCb_;
-   std::shared_ptr<telux::tel::IPhone> phone_;
+   int slot_ = DEFAULT_SLOT_ID;
+   std::vector<std::shared_ptr<telux::tel::IPhone>> phones_;
 };
 
 #endif  // PHONEMENU_HPP

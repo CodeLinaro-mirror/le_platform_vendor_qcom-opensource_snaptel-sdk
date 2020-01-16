@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,11 +57,13 @@ public:
    void getPreferredNetworks(std::vector<std::string> userInput);
    void setPreferredNetworks(std::vector<std::string> userInput);
    void performNetworkScan(std::vector<std::string> userInput);
+   void selectSimSlot(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::tel::INetworkSelectionListener> networkListener_;
-   std::shared_ptr<telux::tel::INetworkSelectionManager> networkManager_ = nullptr;
+   int slot_ = DEFAULT_SLOT_ID;
+   std::vector<std::shared_ptr<telux::tel::INetworkSelectionManager>> networkManagers_;
    int convertToRatType(int input);
    telux::tel::PreferredNetworkInfo getNetworkInfoFromUser();
 };

@@ -60,7 +60,9 @@ Example:
 5. The application waits until the asynchronous operation i.e onSubsystemReady completes.
 6. PhoneManager updates the application once sub-system initialization completes.
 
-@section make_call Dial call flow
+@section namespace_tel Telephony
+
+@subsection make_call Dial call flow
 
 @anchor fig_make_call
 @latexonly
@@ -90,7 +92,7 @@ Example:
 13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
 14. The application receives callback on call info change i.e Call Ended from CallManager.
 
-@section e_call ECall call flow
+@subsection e_call ECall call flow
 
 @anchor fig_e_call
 @latexonly
@@ -120,7 +122,7 @@ Example:
 13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
 14. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 
-@section signal_strength Signal strength call flow
+@subsection signal_strength Signal strength call flow
 
 @anchor fig_signal_strength
 @latexonly
@@ -146,7 +148,7 @@ Example:
 9. Optionally, the response for signal strength request is received by the application.
 10. Application receives a notification when there is a change in signal strength.
 
-@section answer_reject_rejectWithSMS Answer, Reject, RejectWithSMS call flow
+@subsection answer_reject_rejectWithSMS Answer, Reject, RejectWithSMS call flow
 
 @anchor fig_answer_reject_reject_with_sms
 @latexonly
@@ -171,7 +173,7 @@ Example:
 8. Optionally, the application gets asynchronous response for answer/reject/rejectWithSMS using CommandResponseCallback.
 9. The CallManager sends call info change i.e CALL_ACTIVE or CALL_ENDED to the application by using onCallInfoChange callback function.
 
-@section hold_call Hold call flow
+@subsection hold_call Hold call flow
 
 @anchor fig_hold_call
 @latexonly
@@ -201,7 +203,7 @@ Example:
 13. Optionally, the application gets asynchronous response for hold using CommandResponseCallback.
 14. The application receives call info change i.e CALL_ON_HOLD from CallManager.
 
-@section hold_conference_swap_callflow Hold, Conference, Swap call flow
+@subsection hold_conference_swap_callflow Hold, Conference, Swap call flow
 
 @anchor fig_hold_conference_swap_callflow
 @latexonly
@@ -234,7 +236,7 @@ Example:
 16. The application receives the status like SUCCESS, FAILED etc based on the execution of conference/swap API.
 17. Optionally, the application gets asynchronous response for conference/swap using CommandResponseCallback.
 
-@section sms_call SMS call flow
+@subsection sms_call SMS call flow
 
 @anchor fig_sms_call
 @latexonly
@@ -265,7 +267,140 @@ Example:
 14. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestSmscAddress API in SmsManager.
 15. Optionally, the application receives the SMSC address on success or gets error on failure in the command response callback.
 
-@section get_applications Get applications call flow
+@subsection radio_and_service_state Radio and Service state call flow
+
+@anchor fig_radio_and_service_state_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{radio_and_service_state_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Radio and Service state call flow}
+  \label{fig_radio_and_service_state_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{radio_and_service_state_call_flow.png,Radio and Service state call flow,80,80,Radio and Service state call flow}
+
+1. The application gets PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone instance.
+3. The application gets phone instance for a given phone identifier using PhoneManager object.
+4. PhoneManager returns IPhone object to the application.
+5. Application registers the listener to get notifications for radio and service state change.
+6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+7. The application request the Phone to get radio state.
+8. The application receives the radio state like RADIO_STATE_ON, OFF or UNAVAILABLE.
+9. Application receives a notification when there is a change in radio state.
+10. The application request the Phone to get service state.
+11. The application receives the service state like IN_SERVICE, OUT_OF_SERVICE, EMERGENCY_ONLY or RADIO_OFF.
+12. Application receives a notification when there is a change in service state.
+
+@subsection network_selection_call_flow Network Selection Manager call flow
+
+Network selection manager provides APIs to get and set network selection mode, get and set preferred networks and perform
+network scan for availbale networks. Registered listener will get notified for the change in network selection mode.
+
+@anchor fig_network_selection_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.38]{network_selection_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Network selection manager call flow}
+  \label{fig_network_selection_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{network_selection_call_flow.png,Network selection manager call flow,80,80,Network selection manager call flow}
+
+1. Application requests phone factory for network selection manager.
+2. Phone factory returns INetworkSelectionManager object using which application will
+register or deregister a listener.
+3. Application can register a listener to get notifications for network selection mode change.
+4. Status of register listener i.e. either SUCCESS or other status will be returned to the application.
+5. Application requests for network selection mode using INetworkSelectionManager object and gets
+asynchronous response using SelectionModeResponseCallback.
+6. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestNetworkSelectionMode API.
+7. The response for get network selection mode request is received by the application.
+8. The application can also set network selection mode and optionally gets asynchronous response using
+ResponseCallback. MCC and MNC are optional for AUTOMATIC network selection mode.
+9. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setNetworkSelectionMode API.
+10. Optionally the response for set network selection mode request is received by the application.
+11. Registered listener will get notified for the network selection mode change.
+12. Similarly, the application requests for preferred networks using INetworkSelectionManager object
+and gets asynchronous response using PreferredNetworksCallback.
+13. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestPreferredNetworks API.
+14. The response for get preferred networks request i.e. 3GPP preferred network list and
+static 3GPP preferred network list is received by the application asynchronously. Higher
+priority networks appear first in the list. The networks that appear in the 3GPP Preferred
+Networks list get higher priority than the networks in the static 3GPP preferred networks list.
+15. The application can set 3GPP preferred network list and optionally gets asynchronous response using ResponseCallback. If clear previous networks flag is false then new 3GPP preferred network list is appended to existing preferred network list. If flag is true then old list is flushed and new 3GPP preferred network list is added.
+16. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setPreferredNetworks API.
+17. Optionally the response for set preferred networks request is received by the application.
+18. The application can perform network scan for available networks using INetworkSelectionManager object
+and gets asynchronous response using NetworkScanCallback.
+19. Application receives the status i.e. either SUCCESS or other status based on the execution
+of performNetworkScan API.
+20. Network name, MCC, MNC and status of the operator will be received by the application.
+21. Application can deregister a listener there by it would not get notifications.
+22. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+
+@subsection serving_system_call_flow Serving System Manager Call Flow
+
+Serving system manager provides APIs to get and set RAT mode preference and get and set service domain preference.
+Registered listener will get notified for the change in RAT mode and service domain preference change.
+
+@anchor fig_serving_system_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.38]{serving_system_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Serving System Manager Call Flow}
+  \label{fig_serving_system_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{serving_system_call_flow.png,Serving System Manager Call Flow,80,80,Serving System Manager Call Flow}
+
+1. Application requests phone factory for serving system manager.
+2. Phone factory returns IServingSystemManager object using which application will
+register or deregister a listener.
+3. Application can register a listener to get notifications for RAT mode and service domain
+preference changes.
+4. Status of register listener i.e. either SUCCESS or other status will be returned to the application.
+5. Application requests for RAT mode preference using IServingSystemManager object and gets
+asynchronous response using RatPreferenceCallback.
+6. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestRatPreference API.
+7. The response for get RAT preference request is received by the application.
+8. The application can also set RAT mode preference and optionally gets asynchronous response using
+ResponseCallback.
+9. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setRatPreference API.
+10. Optionally the response for set RAT preference request is received by the application.
+11. Registered listener will get notified for the RAT mode preference change.
+12. Application requests for service domain preference using IServingSystemManager object and gets
+asynchronous response using ServiceDomainPreferenceCallback.
+13. The application receives the status i.e. either SUCCESS or other status based on the execution
+of requestServiceDomainPreference API.
+14. The response for get service domain preference request is received by the application.
+15. The application can also set service domain preference and optionally gets asynchronous response using
+ResponseCallback.
+16. Application receives the status i.e. either SUCCESS or other status based on the execution
+of setServiceDomainPreference API.
+17. Optionally the response for set service domain preference request is received by the application.
+18. Registered listener will get notified for the service domain preference change.
+19. Application can deregister a listener there by it would not get notifications.
+20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+
+@section card_services Card Services
+
+@subsection get_applications Get applications call flow
 
 @anchor fig_get_applications
 @latexonly
@@ -294,9 +429,9 @@ Example:
 12. Now the application removes the listener associated with CardManager.
 13. Application receives the status i.e. either SUCCESS or NOSUCH for the removal of listener.
 
-@section transmit_apdu Transmit APDU call flow
+@subsection transmit_apdu Transmit APDU call flow
 
-@subsection apdu_logical On logical channel
+@subsubsection apdu_logical On logical channel
 
 @anchor fig_apdu_logical
 @latexonly
@@ -323,7 +458,7 @@ Example:
 10. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeLogicalChannel API.
 11. Optionally, the application receives the response which contains error in case of failure.
 
-@subsection apdu_basic On basic channel
+@subsubsection apdu_basic On basic channel
 
 @anchor fig_apdu_basic
 @latexonly
@@ -346,9 +481,9 @@ Example:
 6. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApduBasicChannel API.
 7. Optionally, the application receives the response which contains either result on success or error in case of failure.
 
-@section sap_manager_call_flow SAP card manager call flow
+@subsection sap_manager_call_flow SAP card manager call flow
 
-@subsection sap_card_operations Request card reader status, Request ATR, Transmit APDU call flow
+@subsubsection sap_card_operations Request card reader status, Request ATR, Transmit APDU call flow
 
 @anchor fig_sap_card_operations
 @latexonly
@@ -382,7 +517,7 @@ response using CommandResponseCallback.
 16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager.
 17. Optionally, the response for SAP close connection is received by the application.
 
-@subsection sap_mgr_sim_call_flow SIM Turn off, Turn on and Reset call flow
+@subsubsection sap_mgr_sim_call_flow SIM Turn off, Turn on and Reset call flow
 
 @anchor fig_sap_mgr_sim_call_flow
 @latexonly
@@ -416,38 +551,9 @@ asynchronous response using CommandResponseCallback.
 16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager.
 17. Optionally, the response for SAP close connection is received by the application.
 
-@section radio_and_service_state Radio and Service state call flow
+@subsection subscription_call_flow Subscription Call flow
 
-@anchor fig_radio_and_service_state_call_flow
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{radio_and_service_state_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Radio and Service state call flow}
-  \label{fig_radio_and_service_state_call_flow}
-\end{figure}
-@endlatexonly
-
-@html_image{radio_and_service_state_call_flow.png,Radio and Service state call flow,80,80,Radio and Service state call flow}
-
-1. The application gets PhoneManager object using PhoneFactory.
-2. The application receives the PhoneManager object in order to get Phone instance.
-3. The application gets phone instance for a given phone identifier using PhoneManager object.
-4. PhoneManager returns IPhone object to the application.
-5. Application registers the listener to get notifications for radio and service state change.
-6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
-7. The application request the Phone to get radio state.
-8. The application receives the radio state like RADIO_STATE_ON, OFF or UNAVAILABLE.
-9. Application receives a notification when there is a change in radio state.
-10. The application request the Phone to get service state.
-11. The application receives the service state like IN_SERVICE, OUT_OF_SERVICE, EMERGENCY_ONLY or RADIO_OFF.
-12. Application receives a notification when there is a change in service state.
-
-
-@section subscription_call_flow Subscription Call flow
-
-@subsection subscription_initialization Subscription initialization
+@subsubsection subscription_initialization Subscription initialization
 
 @anchor fig_subscription_initialization
 @latexonly
@@ -482,7 +588,7 @@ asynchronous response using CommandResponseCallback.
 18. SubscriptionManager updates the application once subscription manager initialization completes.
 
 
-@subsection subscription_call Subscription call flow
+@subsubsection subscription_call Subscription call flow
 
 @anchor fig_subscription_call
 @latexonly
@@ -623,7 +729,7 @@ When reports are no longer required, the app needs to stop the report and de-reg
 4. Status of configureCTunc i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for configureCTunc is received by the application.
 
-@section data_connection_call_flow Data Connection Manager Call Flow
+@section data_call_flow Data
 
 @subsection data_connection_manager_callflow Start/Stop for data connection manager call flow
 
@@ -653,8 +759,6 @@ When reports are no longer required, the app needs to stop the report and de-reg
 11. Application receives a notification when there is a change in data call.
 12. Application removes the listener.
 13. Application receives the status i.e. SUCCESS or FAILED for the removal of listener.
-
-@section data_profile_call_flow Data Profile Manager Call Flow
 
 @subsection data_profile_manager_callflow Request/Create/Delete/Modify for data profile manager call flow
 
@@ -692,7 +796,7 @@ When reports are no longer required, the app needs to stop the report and de-reg
 19. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfile.
 20. Optionally, the application gets asynchronous response for requestProfile using requestProfileByIdCallback.
 
-@section data_filter_call_flow Data Filter Manager Call Flow
+@subsection data_filter_call_flow Data Filter Manager Call Flow
 
 Data Filter manager provides APIs to get/set data filter mode, add/remove data restrict filters.
 Its API can used per data call or globally to apply the same changes to all the underlying
@@ -700,7 +804,7 @@ currently up data call. It also has listener interface for notifications for dat
 Application will get the Data Filter manager object from data factory.
 The application can register a listener for data filter mode change updates.
 
-@subsection get_and_set_data_filter_mode_call_flow Call flow to Set/Get data filter mode
+@subsubsection get_and_set_data_filter_mode_call_flow Call flow to Set/Get data filter mode
 
 @anchor fig_get_and_set_data_filter_mode_call_flow
 @latexonly
@@ -729,7 +833,7 @@ The application can register a listener for data filter mode change updates.
 12. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestDataRestrictMode.
 13. Optionally, the application gets asynchronous response for requestDataRestrictMode using DataRestrictModeCb.
 
-@subsection add_data_filter_call_flow Call flow to Add data restrict filter
+@subsubsection add_data_filter_call_flow Call flow to Add data restrict filter
 
 @anchor fig_add_data_filter_call_flow
 @latexonly
@@ -755,7 +859,7 @@ The application can register a listener for data filter mode change updates.
 9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of addDataRestrictFilter.
 10. Optionally, the application gets asynchronous response for addDataRestrictFilter using ResponseCallback.
 
-@subsection remove_data_filter_call_flow Call flow to Remove data restrict filter
+@subsubsection remove_data_filter_call_flow Call flow to Remove data restrict filter
 
 @anchor fig_remove_data_filter_call_flow
 @latexonly
@@ -781,14 +885,14 @@ The application can register a listener for data filter mode change updates.
 9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of removeAllDataRestrictFilters.
 10. Optionally, the application gets asynchronous response for removeAllDataRestrictFilters using ResponseCallback.
 
-@section data_networking_call_flow Data Networking Call Flow
+@subsection data_networking_call_flow Data Networking Call Flow
 
 Application will get the following manager objects from data factory to configure networking.
 IVlanManager is used to access all VLAN APIs.
 INatManager is used to access all Static NAT APIs.
 IFirewallManager is used to access all Firewall APIs.
 
-@subsection data_vlan_manager_callflow Create VLAN and bind it to PDN in data vlan manager call flow
+@subsubsection data_vlan_manager_callflow Create VLAN and bind it to PDN in data vlan manager call flow
 
 @anchor fig_data_vlan_callflow
 @latexonly
@@ -818,7 +922,7 @@ IFirewallManager is used to access all Firewall APIs.
 9. Application receives synchronous Status which indicates if the IVlanManager::bindWithProfile request was sent successfully.
 7. Application is notified of the Status of the IVlanManager::bindWithProfile request (either SUCCESS or FAILED) via the application-supplied callback.
 
-@subsection data_static_nat_manager_callflow Create Static NAT entry in data Static NAT manager call flow
+@subsubsection data_static_nat_manager_callflow Create Static NAT entry in data Static NAT manager call flow
 
 @anchor fig_data_static_nat_callflow
 @latexonly
@@ -845,7 +949,7 @@ IFirewallManager is used to access all Firewall APIs.
 6. Application receives synchronous Status which indicates if the INatManager::addStaticNatEntry request was sent successfully.
 7. Application is notified of the Status of the INatManager::addStaticNatEntry request (either SUCCESS or FAILED) via the application-supplied callback.
 
-@subsection data_firewall_enablement_callflow Firewall Enablement in data Firewall manager call flow
+@subsubsection data_firewall_enablement_callflow Firewall Enablement in data Firewall manager call flow
 
 @anchor fig_data_firwall_enablement_callflow
 @latexonly
@@ -872,7 +976,7 @@ IFirewallManager is used to access all Firewall APIs.
 6. Application receives synchronous Status which indicates if the IFirewallManager::setFirewall request was sent successfully.
 7. Application is notified of the Status of the IFirewallManager::setFirewall request (either SUCCESS or FAILED) via the application-supplied callback.
 
-@subsection data_set_firewall_dmz_callflow Set Firewall DMZ in data Firewall manager call flow
+@subsubsection data_set_firewall_dmz_callflow Set Firewall DMZ in data Firewall manager call flow
 
 @anchor fig_data_firwall_dmz_callflow
 @latexonly
@@ -898,113 +1002,6 @@ IFirewallManager is used to access all Firewall APIs.
 5. On Readiness, application calls IFirewallManager::addDmz with IP Address.
 6. Application receives synchronous Status which indicates if the IFirewallManager::addDmz request was sent successfully.
 7. Application is notified of the Status of the IFirewallManager::addDmz request (either SUCCESS or FAILED) via the application-supplied callback.
-
-@section network_selection_call_flow Network Selection Call Flow
-
-@subsection network_selection_call_flow Network selection manager call flow
-
-Network selection manager provides APIs to get and set network selection mode, get and set preferred networks and perform
-network scan for availbale networks. Registered listener will get notified for the change in network selection mode.
-
-@anchor fig_network_selection_call_flow
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.38]{network_selection_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Network selection manager call flow}
-  \label{fig_network_selection_call_flow}
-\end{figure}
-@endlatexonly
-
-@html_image{network_selection_call_flow.png,Network selection manager call flow,80,80,Network selection manager call flow}
-
-1. Application requests phone factory for network selection manager.
-2. Phone factory returns INetworkSelectionManager object using which application will
-register or deregister a listener.
-3. Application can register a listener to get notifications for network selection mode change.
-4. Status of register listener i.e. either SUCCESS or other status will be returned to the application.
-5. Application requests for network selection mode using INetworkSelectionManager object and gets
-asynchronous response using SelectionModeResponseCallback.
-6. The application receives the status i.e. either SUCCESS or other status based on the execution
-of requestNetworkSelectionMode API.
-7. The response for get network selection mode request is received by the application.
-8. The application can also set network selection mode and optionally gets asynchronous response using
-ResponseCallback. MCC and MNC are optional for AUTOMATIC network selection mode.
-9. Application receives the status i.e. either SUCCESS or other status based on the execution
-of setNetworkSelectionMode API.
-10. Optionally the response for set network selection mode request is received by the application.
-11. Registered listener will get notified for the network selection mode change.
-12. Similarly, the application requests for preferred networks using INetworkSelectionManager object
-and gets asynchronous response using PreferredNetworksCallback.
-13. The application receives the status i.e. either SUCCESS or other status based on the execution
-of requestPreferredNetworks API.
-14. The response for get preferred networks request i.e. 3GPP preferred network list and
-static 3GPP preferred network list is received by the application asynchronously. Higher
-priority networks appear first in the list. The networks that appear in the 3GPP Preferred
-Networks list get higher priority than the networks in the static 3GPP preferred networks list.
-15. The application can set 3GPP preferred network list and optionally gets asynchronous response using ResponseCallback. If clear previous networks flag is false then new 3GPP preferred network list is appended to existing preferred network list. If flag is true then old list is flushed and new 3GPP preferred network list is added.
-16. Application receives the status i.e. either SUCCESS or other status based on the execution
-of setPreferredNetworks API.
-17. Optionally the response for set preferred networks request is received by the application.
-18. The application can perform network scan for available networks using INetworkSelectionManager object
-and gets asynchronous response using NetworkScanCallback.
-19. Application receives the status i.e. either SUCCESS or other status based on the execution
-of performNetworkScan API.
-20. Network name, MCC, MNC and status of the operator will be received by the application.
-21. Application can deregister a listener there by it would not get notifications.
-22. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
-
-@section serving_system_call_flow Serving System Call Flow
-
-@subsection serving_system_call_flow Serving System Manager Call Flow
-
-Serving system manager provides APIs to get and set RAT mode preference and get and set service domain preference.
-Registered listener will get notified for the change in RAT mode and service domain preference change.
-
-@anchor fig_serving_system_call_flow
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.38]{serving_system_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Serving System Manager Call Flow}
-  \label{fig_serving_system_call_flow}
-\end{figure}
-@endlatexonly
-
-@html_image{serving_system_call_flow.png,Serving System Manager Call Flow,80,80,Serving System Manager Call Flow}
-
-1. Application requests phone factory for serving system manager.
-2. Phone factory returns IServingSystemManager object using which application will
-register or deregister a listener.
-3. Application can register a listener to get notifications for RAT mode and service domain
-preference changes.
-4. Status of register listener i.e. either SUCCESS or other status will be returned to the application.
-5. Application requests for RAT mode preference using IServingSystemManager object and gets
-asynchronous response using RatPreferenceCallback.
-6. The application receives the status i.e. either SUCCESS or other status based on the execution
-of requestRatPreference API.
-7. The response for get RAT preference request is received by the application.
-8. The application can also set RAT mode preference and optionally gets asynchronous response using
-ResponseCallback.
-9. Application receives the status i.e. either SUCCESS or other status based on the execution
-of setRatPreference API.
-10. Optionally the response for set RAT preference request is received by the application.
-11. Registered listener will get notified for the RAT mode preference change.
-12. Application requests for service domain preference using IServingSystemManager object and gets
-asynchronous response using ServiceDomainPreferenceCallback.
-13. The application receives the status i.e. either SUCCESS or other status based on the execution
-of requestServiceDomainPreference API.
-14. The response for get service domain preference request is received by the application.
-15. The application can also set service domain preference and optionally gets asynchronous response using
-ResponseCallback.
-16. Application receives the status i.e. either SUCCESS or other status based on the execution
-of setServiceDomainPreference API.
-17. Optionally the response for set service domain preference request is received by the application.
-18. Registered listener will get notified for the service domain preference change.
-19. Application can deregister a listener there by it would not get notifications.
-20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
 
 @section cv2x_call_flows C-V2X
 

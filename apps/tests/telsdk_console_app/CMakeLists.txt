@@ -32,6 +32,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/DataUtils.cpp
    Data/MyDataFilterListener.cpp
    Data/ConfigParser.cpp
+   Data/bridge/BridgeMenu.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp

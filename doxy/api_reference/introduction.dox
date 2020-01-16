@@ -59,7 +59,7 @@ This document describes  interface specification of Telematics Software Developm
 Telematics SDK exposes a rich set of APIs conforming to C++11 standard which form the building blocks to create stand-alone Telematics applications.
 
 This document provides high level overview of Telematics SDK architecture and its APIs.
-Call flow diagrams are provided for various APIs such as a Phone, Call, SMS, SIM Card Services, Audio etc.
+Call flow diagrams are provided for various APIs such as a Phone, Call, SMS, SIM Card Services, Audio, Location, Remote Sim, Modem configuration etc.
 
 This document assumes that the developers are familiar with Linux and C++11 programming.
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,7 +43,7 @@
 #include "PhoneMenu.hpp"
 #include "ServingSystemMenu.hpp"
 
-PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
+PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
 
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
@@ -75,11 +75,20 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
    }
 
    if(subSystemStatus) {
-      phone_ = phoneManager_->getPhone(phoneId);
+      std::vector<int> phoneIds;
+      telux::common::Status status = phoneManager_->getPhoneIds(phoneIds);
+      if (status == telux::common::Status::SUCCESS) {
+          for (auto index = 1; index <= phoneIds.size(); index++) {
+              auto phone = phoneManager_->getPhone(index);
+              if (phone != nullptr) {
+                  phones_.emplace_back(phone);
+              }
+          }
+      }
       // Turn on the radio if it's not available
-      if(phone_ != nullptr) {
-         if(phone_->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
-            phone_->setRadioPower(true);
+      for (auto index = 0; index < phones_.size(); index++) {
+         if(phones_[index]->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
+            phones_[index]->setRadioPower(true);
          }
       }
 
@@ -91,7 +100,7 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
          subscriptionMgr_->onSubsystemReady().get();
       }
 
-      telux::common::Status status = subscriptionMgr_->registerListener(subscriptionListener_);
+      status = subscriptionMgr_->registerListener(subscriptionListener_);
       if(status != telux::common::Status::SUCCESS) {
          std::cout << "Failed to registerListener" << std::endl;
       }
@@ -176,6 +185,9 @@ void PhoneMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "15", "Request_eCall_operating_mode", {},
          std::bind(&PhoneMenu::requestECallOperatingMode, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("16", "Select_sim_slot", {},
+                        std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
@@ -193,13 +205,19 @@ void PhoneMenu::init() {
          servingSystemMenuCommand,
          setECallOperatingModeCommand,
          requestECallOperatingModeCommand};
+
+   if (phones_.size() > 1) {
+       commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
+   }
+
    addCommands(commandsListPhoneSubMenu);
    ConsoleApp::displayMenu();
 }
 
 void PhoneMenu::requestSignalStrength(std::vector<std::string> userInput) {
-   if(phone_) {
-      auto ret = phone_->requestSignalStrength(mySignalStrengthCb_);
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
+      auto ret = phone->requestSignalStrength(mySignalStrengthCb_);
       std::cout
          << (ret == telux::common::Status::SUCCESS ? "Request Signal strength is successful \n"
                                                    : "Request Signal strength failed")
@@ -210,8 +228,9 @@ void PhoneMenu::requestSignalStrength(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::getRadioState(std::vector<std::string> userInput) {
-   if(phone_) {
-      auto radioState = phone_->getRadioState();
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
+      auto radioState = phone->getRadioState();
       std::cout << "RadioState is " << getRadioStateAsString(radioState) << std::endl;
    } else {
       std::cout << "No default phone found" << std::endl;
@@ -258,11 +277,12 @@ std::string PhoneMenu::getServiceStateAsString(telux::tel::ServiceState serviceS
 }
 
 void PhoneMenu::requestRadioTechnology(std::vector<std::string> userInput) {
-   if(phone_) {
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
       auto voiceTechResponseCb
          = std::bind(&MyVoiceRadioTechnologyCallback::voiceRadioTechnologyResponse,
                      myVoiceRadioTechCb_, std::placeholders::_1, std::placeholders::_2);
-      auto ret = phone_->requestVoiceRadioTechnology(voiceTechResponseCb);
+      auto ret = phone->requestVoiceRadioTechnology(voiceTechResponseCb);
       std::cout << (ret == telux::common::Status::SUCCESS
                        ? "Request Voice Radio Technology is successful \n"
                        : "Request Voice Radio Technology failed")
@@ -273,8 +293,9 @@ void PhoneMenu::requestRadioTechnology(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::requestVoiceServiceState(std::vector<std::string> userInput) {
-   if(phone_) {
-      auto ret = phone_->requestVoiceServiceState(myVoiceSrvStateCb_);
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
+      auto ret = phone->requestVoiceServiceState(myVoiceSrvStateCb_);
       std::cout
          << (ret == telux::common::Status::SUCCESS ? "Request Voice Service state is successful \n"
                                                    : "Request Voice Service state failed")
@@ -285,8 +306,9 @@ void PhoneMenu::requestVoiceServiceState(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::getSubscription(std::vector<std::string> userInput) {
+
    telux::common::Status status;
-   auto subscription = subscriptionMgr_->getSubscription(DEFAULT_SLOT_ID, &status);
+   auto subscription = subscriptionMgr_->getSubscription(slot_, &status);
    if(subscription) {
       std::cout << "CarrierName : " << subscription->getCarrierName()
                 << "\nPhoneNumber : " << subscription->getPhoneNumber()
@@ -300,17 +322,18 @@ void PhoneMenu::getSubscription(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::setRadioPower(std::vector<std::string> userInput) {
-   if(phone_) {
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
       int radioPowerFlag;
       std::cout << "Enter radio power (1 - On, 0 - Off): ";
       std::cin >> radioPowerFlag;
       Utils::validateInput(radioPowerFlag);
       if(radioPowerFlag == 1) {
          std::cout << "Turning Radio Power On" << std::endl;
-         phone_->setRadioPower(true, myRadioPowerCb_);
+         phone->setRadioPower(true, myRadioPowerCb_);
       } else if(radioPowerFlag == 0) {
          std::cout << "Turning Radio Power Off" << std::endl;
-         phone_->setRadioPower(false, myRadioPowerCb_);
+         phone->setRadioPower(false, myRadioPowerCb_);
       } else {
          std::cout << " Invalid input " << std::endl;
       }
@@ -364,8 +387,9 @@ void PhoneMenu::setOperatingMode(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::requestCellInfoList(std::vector<std::string> userInput) {
-   if(phone_) {
-      auto ret = phone_->requestCellInfo(MyCellInfoCallback::cellInfoListResponse);
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
+      auto ret = phone->requestCellInfo(MyCellInfoCallback::cellInfoListResponse);
       std::cout << (ret == telux::common::Status::SUCCESS ? "CellInfo list request is successful \n"
                                                           : "CellInfo list request failed")
                 << '\n';
@@ -375,7 +399,8 @@ void PhoneMenu::requestCellInfoList(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::setCellInfoListRate(std::vector<std::string> userInput) {
-   if(phone_) {
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
       char delimiter = '\n';
       std::string timeIntervalInput;
       std::cout
@@ -391,7 +416,7 @@ void PhoneMenu::setCellInfoListRate(std::vector<std::string> userInput) {
       } else {
          opt = 0;
       }
-      auto ret = phone_->setCellInfoListRate(opt, MyCellInfoCallback::cellInfoListRateResponse);
+      auto ret = phone->setCellInfoListRate(opt, MyCellInfoCallback::cellInfoListRateResponse);
       std::cout
          << (ret == telux::common::Status::SUCCESS ? "Set cell info rate request is successful \n"
                                                    : "Set cell info rate request failed")
@@ -414,14 +439,15 @@ void PhoneMenu::networkMenu(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
-   if(phone_) {
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
       int eCallMode;
       std::cout << std::endl;
       std::cout << "Enter eCall Operating Mode(0-NORMAL, 1-ECALL_ONLY): ";
       std::cin >> eCallMode;
 
       if(eCallMode == 0 || eCallMode == 1) {
-         auto ret = phone_->setECallOperatingMode(
+         auto ret = phone->setECallOperatingMode(
             static_cast<telux::tel::ECallMode>(eCallMode),
             MySetECallOperatingModeCallback::setECallOperatingModeResponse);
          if(ret == telux::common::Status::SUCCESS) {
@@ -438,8 +464,9 @@ void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
 }
 
 void PhoneMenu::requestECallOperatingMode(std::vector<std::string> userInput) {
-   if(phone_) {
-      auto ret = phone_->requestECallOperatingMode(
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
+      auto ret = phone->requestECallOperatingMode(
          MyGetECallOperatingModeCallback::getECallOperatingModeResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "Get eCall Operating mode request sent successfully\n";
@@ -448,5 +475,31 @@ void PhoneMenu::requestECallOperatingMode(std::vector<std::string> userInput) {
       }
    } else {
       std::cout << "No phone found corresponding to default phoneId" << std::endl;
+   }
+}
+
+void PhoneMenu::selectSimSlot(std::vector<std::string> userInput) {
+   std::string slotSelection;
+   char delimiter = '\n';
+
+   std::cout << "Enter the desired SIM slot: ";
+   std::getline(std::cin, slotSelection, delimiter);
+
+   if (!slotSelection.empty()) {
+      try {
+         int slot = std::stoi(slotSelection);
+         if (slot > 2) {
+            std::cout << "Invalid slot entered, using default slot" << std::endl;
+            slot_ = DEFAULT_SLOT_ID;
+         } else {
+            slot_ = slot;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+            << slotSelection << std::endl;
+         return;
+      }
+   } else {
+      std::cout << "Empty input, enter the correct slot" << std::endl;
    }
 }

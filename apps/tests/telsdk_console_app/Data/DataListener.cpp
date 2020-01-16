@@ -34,6 +34,17 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
+void DataListener::initDataCallListResponseCb(
+    const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
+    telux::common::ErrorCode error) {
+
+    if (telux::common::ErrorCode::SUCCESS == error) {
+        for (auto dataCall:dataCallList) {
+            updateDataCallMap(dataCall);
+        }
+    }
+}
+
 void DataListener::onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
    logDataCallDetails(dataCall);
    updateDataCallMap(dataCall);

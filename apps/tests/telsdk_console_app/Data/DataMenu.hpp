@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -52,6 +52,7 @@
 #include "DataListener.hpp"
 #include "DataResponseCallback.hpp"
 #include "MyProfileListener.hpp"
+#include "bridge/BridgeMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -77,6 +78,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void requestDataCallStatistics(std::vector<std::string> inputCommand);
     void resetDataCallStatistics(std::vector<std::string> inputCommand);
     void requestDataCallList();
+    void setDefaultProfile();
 
     // Data Filter APIs
     void sendSetDataRestrictMode(DataRestrictMode mode);
@@ -120,7 +122,11 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void unbindFromProfile(std::vector<std::string> inputCommand);
     void queryVlanMappingList(std::vector<std::string> inputCommand);
 
+    void enableSocks(std::vector<std::string> inputCommand);
+    void bridgeMenu(std::vector<std::string> inputCommand);
  private:
+    void requestDataCallList(OperationType operationType, DataCallListResponseCb cb);
+
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
     std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;
     std::shared_ptr<telux::data::IDataProfileManager> dataProfileManager_;
@@ -144,6 +150,9 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;
 
     telux::data::IpProtocol getProtcol(std::string protoStr);
+    void parseProtoInfo(std::shared_ptr<IIpFilter> filter, telux::data::IpProtocol protocol,
+        int &srcPort, int &destPort, int &srcPortRange, int &dstPortRange, std::string &protoStr);
+    void displayFirewallEntry();
     void getProfileParamsFromUser();
 };
 #endif

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,20 +33,58 @@
 
 #include <iostream>
 
+#include <telux/tel/PhoneFactory.hpp>
+
 #include "SapCardServicesMenu.hpp"
 #include "Utils.hpp"
 
 SapCardServicesMenu::SapCardServicesMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
+   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+   startTime = std::chrono::system_clock::now();
+   //  Get the PhoneFactory and PhoneManager instances.
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto phoneManager = phoneFactory.getPhoneManager();
 
-   // Get default SAP Card Manager instance
-   sapCardMgr_ = telux::tel::PhoneFactory::getInstance().getSapCardManager();
-   if(sapCardMgr_) {
-      mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
-      myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
-      mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();
-      myAtrCb_ = std::make_shared<MyAtrResponseCallback>();
+   //  Check if telephony subsystem is ready
+   bool subSystemStatus = phoneManager->isSubsystemReady();
+
+   //  If telephony subsystem is not ready, wait for it to be ready
+   if(!subSystemStatus) {
+      std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
+      std::future<bool> f = phoneManager->onSubsystemReady();
+      // If we want to wait unconditionally for telephony subsystem to be ready
+      subSystemStatus = f.get();
    }
+
+   //  Exit the application, if SDK is unable to initialize telephony subsystems
+   if(subSystemStatus) {
+      endTime = std::chrono::system_clock::now();
+      std::chrono::duration<double> elapsedTime = endTime - startTime;
+      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                << std::endl;
+   } else {
+      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+      exit(0);
+   }
+
+   if(subSystemStatus) {
+       std::vector<int> phoneIds;
+       telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
+       if (status == telux::common::Status::SUCCESS) {
+           for (auto index = 1; index <= phoneIds.size(); index++) {
+               auto sapMgr = phoneFactory.getSapCardManager(index);
+               if (sapMgr != nullptr) {
+                   sapManagers_.emplace_back(sapMgr);
+               }
+           }
+       }
+   }
+
+   mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
+   myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
+   mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();
+   myAtrCb_ = std::make_shared<MyAtrResponseCallback>();
 }
 
 SapCardServicesMenu::~SapCardServicesMenu() {
@@ -93,11 +131,19 @@ void SapCardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> getStateCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("10", "Get_sap_state", {},
                         std::bind(&SapCardServicesMenu::getState, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("11", "Select_sim_slot", {}, std::bind(&SapCardServicesMenu::selectSimSlot,
+                                                               this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSapManagerSubMenu
       = {openSapConnectionCommand, getSapAtrCommand,           requestSapStateCommand,
          transmitSapApduCommand,   sapSimPowerOffCommand,      sapSimPowerOnCommand,
          sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand,
          getStateCommand};
+
+   if (sapManagers_.size() > 1) {
+       commandsListSapManagerSubMenu.emplace_back(selectSimSlotCommand);
+   }
+
    addCommands(commandsListSapManagerSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -119,14 +165,17 @@ void SapCardServicesMenu::logSapState(telux::tel::SapState sapState) {
 }
 
 void SapCardServicesMenu::openSapConnection(std::vector<std::string> userInput) {
-   sapCardMgr_->openConnection(telux::tel::SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA,
+   auto sapCardMgr = sapManagers_[slot_ - 1];
+   sapCardMgr->openConnection(telux::tel::SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA,
                                mySapCmdResponseCb_);
 }
 void SapCardServicesMenu::getSapAtr(std::vector<std::string> userInput) {
-   sapCardMgr_->requestAtr(myAtrCb_);
+   auto sapCardMgr = sapManagers_[slot_ - 1];
+   sapCardMgr->requestAtr(myAtrCb_);
 }
 
 void SapCardServicesMenu::transmitSapApdu(std::vector<std::string> userInput) {
+   auto sapCardMgr = sapManagers_[slot_ - 1];
    int cla, instruction, p1, p2, lc, tmpInp;
    std::vector<uint8_t> data;
 
@@ -160,7 +209,7 @@ void SapCardServicesMenu::transmitSapApdu(std::vector<std::string> userInput) {
       data.emplace_back((uint8_t)tmpInp);
    }
    auto ret
-      = sapCardMgr_->transmitApdu((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1, (uint8_t)p2,
+      = sapCardMgr->transmitApdu((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1, (uint8_t)p2,
                                   (uint8_t)lc, data, 0, myTransmitApduResponseCb_);
    if(ret == telux::common::Status::SUCCESS) {
       std::cout << "Sap transmit APDU is successful \n";
@@ -170,28 +219,34 @@ void SapCardServicesMenu::transmitSapApdu(std::vector<std::string> userInput) {
 }
 
 void SapCardServicesMenu::sapSimPowerOff(std::vector<std::string> userInput) {
-   sapCardMgr_->requestSimPowerOff(mySapCmdResponseCb_);
+   auto sapCardMgr = sapManagers_[slot_ - 1];
+   sapCardMgr->requestSimPowerOff(mySapCmdResponseCb_);
 }
 
 void SapCardServicesMenu::sapSimPowerOn(std::vector<std::string> userInput) {
-   sapCardMgr_->requestSimPowerOn(mySapCmdResponseCb_);
+   auto sapCardMgr = sapManagers_[slot_ - 1];
+   sapCardMgr->requestSimPowerOn(mySapCmdResponseCb_);
 }
 
 void SapCardServicesMenu::sapSimReset(std::vector<std::string> userInput) {
-   sapCardMgr_->requestSimReset(mySapCmdResponseCb_);
+   auto sapCardMgr = sapManagers_[slot_ - 1];
+   sapCardMgr->requestSimReset(mySapCmdResponseCb_);
 }
 
 void SapCardServicesMenu::sapCardReaderStatus(std::vector<std::string> userInput) {
-   sapCardMgr_->requestCardReaderStatus(mySapCardReaderCb_);
+   auto sapCardMgr = sapManagers_[slot_ - 1];
+   sapCardMgr->requestCardReaderStatus(mySapCardReaderCb_);
 }
 
 void SapCardServicesMenu::closeSapConnection(std::vector<std::string> userInput) {
-   sapCardMgr_->closeConnection(mySapCmdResponseCb_);
+   auto sapCardMgr = sapManagers_[slot_ - 1];
+   sapCardMgr->closeConnection(mySapCmdResponseCb_);
 }
 
 void SapCardServicesMenu::requestSapState(std::vector<std::string> userInput) {
+   auto sapCardMgr = sapManagers_[slot_ - 1];
    telux::tel::SapState sapstate;
-   if(sapCardMgr_->requestSapState(MySapStateCallback::sapStateResponse)
+   if(sapCardMgr->requestSapState(MySapStateCallback::sapStateResponse)
       == telux::common::Status::SUCCESS) {
       std::cout << "Request sap state success \n";
    } else {
@@ -200,11 +255,38 @@ void SapCardServicesMenu::requestSapState(std::vector<std::string> userInput) {
 }
 
 void SapCardServicesMenu::getState(std::vector<std::string> userInput) {
+   auto sapCardMgr = sapManagers_[slot_ - 1];
    telux::tel::SapState sapstate;
-   if(sapCardMgr_->getState(sapstate) == telux::common::Status::SUCCESS) {
+   if(sapCardMgr->getState(sapstate) == telux::common::Status::SUCCESS) {
       logSapState(sapstate);
       std::cout << "Get sap state success \n";
    } else {
       std::cout << "Get sap state failed \n";
+   }
+}
+
+void SapCardServicesMenu::selectSimSlot(std::vector<std::string> userInput) {
+   std::string slotSelection;
+   char delimiter = '\n';
+
+   std::cout << "Enter the desired SIM slot: ";
+   std::getline(std::cin, slotSelection, delimiter);
+
+   if (!slotSelection.empty()) {
+      try {
+         int slot = std::stoi(slotSelection);
+         if (slot > 2) {
+            std::cout << "Invalid slot entered, using default slot" << std::endl;
+            slot_ = DEFAULT_SLOT_ID;
+         } else {
+            slot_ = slot;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+            << slotSelection << std::endl;
+         return;
+      }
+   } else {
+      std::cout << "Empty input, enter the correct slot" << std::endl;
    }
 }

@@ -106,6 +106,11 @@ void PlayMenu::init() {
    }
 }
 
+void PlayMenu::cleanup() {
+    fflush(file_);
+    fclose(file_);
+}
+
 void PlayMenu::createStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
     if(audioClient_) {
@@ -195,15 +200,8 @@ void PlayMenu::setMute(std::vector<std::string> userInput) {
 void PlayMenu::startPlay(std::vector<std::string> userInput) {
     if(audioPlayStream_) {
         audioClient_->getPlayConfig(filePath_, playFormat_);
-        if (playFormat_ == AudioFormat::PCM_16BIT_SIGNED) {
-            std::thread playThread(&PlayMenu::play, this);
-            runningThreads_.emplace_back(std::move(playThread));
-        } else if ( (playFormat_ == AudioFormat::AMRWB_PLUS) ||
-                    (playFormat_ == AudioFormat::AMRNB) ||
-                    (playFormat_ == AudioFormat::AMRWB)) {
-            std::thread playThread(&PlayMenu::play, this);
-            runningThreads_.emplace_back(std::move(playThread));
-        }
+        std::thread playThread(&PlayMenu::play, this);
+        runningThreads_.emplace_back(std::move(playThread));
     } else {
         std::cout << "No running Play session please create one" << std::endl;
     }
@@ -316,6 +314,7 @@ void PlayMenu::play() {
         while(freeBuffers_.size() != TOTAL_BUFFERS) {
             cv_.wait(lock);
         }
+        cleanup();
     } else if ((playFormat_ == AudioFormat::AMRWB_PLUS) ||
                (playFormat_ == AudioFormat::AMRWB) ||
                (playFormat_ == AudioFormat::AMRNB)){
@@ -344,8 +343,6 @@ void PlayMenu::play() {
         std::cout << "Play Stopped" << std::endl;
     }
     playStatus_ = false;
-    fflush(file_);
-    fclose(file_);
 }
 
 void PlayMenu::onReadyForWrite() {
@@ -357,6 +354,7 @@ void PlayMenu::onReadyForWrite() {
 }
 
 void PlayMenu::onPlayStopped() {
+    cleanup();
     std::cout << "Playback Stopped after playing pending buffers" << std::endl;
 }
 

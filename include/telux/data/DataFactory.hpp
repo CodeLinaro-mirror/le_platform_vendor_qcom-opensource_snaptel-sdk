@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -51,6 +51,8 @@
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
 #include <telux/data/net/VlanManager.hpp>
+#include <telux/data/net/SocksManager.hpp>
+#include <telux/data/net/BridgeManager.hpp>
 
 namespace telux {
 namespace data {
@@ -169,10 +171,33 @@ class DataFactory {
      * @returns instance of IVlanManager
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-      *           break backwards compatibility.
+     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IVlanManager> getVlanManager(
         telux::data::OperationType oprType);
+
+    /**
+     * Get SocksManager
+     *
+     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     *
+     * @returns instance of ISocksManager
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::net::ISocksManager> getSocksManager(
+        telux::data::OperationType oprType);
+
+    /**
+     * Get Software Bridge Manager
+     *
+     * @returns instance of IBridgeManager
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::net::IBridgeManager> getBridgeManager();
 
  private:
     // mutex to protect member variables
@@ -185,6 +210,9 @@ class DataFactory {
         fwManagerMap_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IVlanManager>>
         vlanManagerMap_;
+    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::ISocksManager>>
+        socksManagerMap_;
+    std::shared_ptr<telux::data::net::IBridgeManager> bridgeManager_;
 
     DataFactory();
     ~DataFactory();

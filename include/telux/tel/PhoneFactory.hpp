@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -154,7 +154,6 @@ private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
    std::shared_ptr<ICardManager> cardManager_;
-   std::shared_ptr<ISapCardManager> sapCardManager_;
    std::shared_ptr<ISubscriptionManager> subscriptionManager_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -65,6 +65,7 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;
+      phoneManager_->getPhoneIds(phoneIds_);
    } else {
       std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
       exit(0);
@@ -173,8 +174,33 @@ void CallMenu::init() {
 void CallMenu::dial(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    const std::string phoneNumber = userInput[1];
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if (phoneIds_.size() > 1) {
+       std::string slotSelection;
+       char delimiter = '\n';
+
+       std::cout << "Enter the desired Phone ID / SIM slot: ";
+       std::getline(std::cin, slotSelection, delimiter);
+
+       if (!slotSelection.empty()) {
+          try {
+             phoneId = std::stoi(slotSelection);
+             if (phoneId > 2) {
+                std::cout << "Invalid slot entered, using default slot" << std::endl;
+                phoneId = DEFAULT_SLOT_ID;
+             }
+          } catch (const std::exception &e) {
+             std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                << slotSelection << std::endl;
+             return;
+          }
+       } else {
+          std::cout << "Empty input, enter the correct slot" << std::endl;
+       }
+   }
    telux::common::Status makeCallStatus
-      = callManager_->makeCall(phoneId_, phoneNumber, myDialCallCmdCb_);
+      = callManager_->makeCall(phoneId, phoneNumber, myDialCallCmdCb_);
    std::cout << (makeCallStatus == telux::common::Status::SUCCESS ? "MakeCall is successful"
                                                                   : "MakeCall failed")
              << '\n';

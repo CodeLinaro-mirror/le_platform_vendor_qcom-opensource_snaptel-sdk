@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -39,7 +39,7 @@
 
 class SmsMenu : public ConsoleApp {
 public:
-   SmsMenu(std::string appName, std::string cursor, int phoneId);
+   SmsMenu(std::string appName, std::string cursor);
    ~SmsMenu();
    void init();
 
@@ -48,13 +48,15 @@ private:
    void getSmscAddr(std::vector<std::string> userInput);
    void setSmscAddr(std::vector<std::string> userInput);
    void calculateMessageAttributes(std::vector<std::string> userInput);
+   void selectSimSlot(std::vector<std::string> userInput);
 
    std::shared_ptr<MySmsCommandCallback> mySmsCmdCb_ = nullptr;
    std::shared_ptr<MySmscAddressCallback> mySmscAddrCb_ = nullptr;
    std::shared_ptr<MySmsDeliveryCallback> mySmsDeliveryCb_ = nullptr;
-   std::shared_ptr<telux::tel::ISmsManager> smsManager_ = nullptr;
    std::shared_ptr<telux::tel::ISmsListener> smsListener_ = nullptr;
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_ = nullptr;
+   int slot_ = DEFAULT_SLOT_ID;
+   std::vector<std::shared_ptr<telux::tel::ISmsManager>> smsManagers_;
 };
 
 #endif  // SMSMENU_HPP

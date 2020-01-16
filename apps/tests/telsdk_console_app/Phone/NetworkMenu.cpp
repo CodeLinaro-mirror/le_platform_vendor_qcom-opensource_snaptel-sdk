@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,51 +46,67 @@
 
 NetworkMenu::NetworkMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-
-   //  Get the PhoneFactory and NetworkManger instances.
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   networkManager_
-      = telux::tel::PhoneFactory::getInstance().getNetworkSelectionManager(DEFAULT_SLOT_ID);
-
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
-
-   //  Check if network subsystem is ready
-   bool subSystemStatus = networkManager_->isSubsystemReady();
-
-   //  If network subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "\n\n Network subsystem is not ready, Please wait." << std::endl;
-      std::future<bool> f = networkManager_->onSubsystemReady();
-      // If we want to wait unconditionally for network subsystem to be ready
-      subSystemStatus = f.get();
-   }
-
-   //  Exit the application, if SDK is unable to initialize network subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready: " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize network subsystem" << std::endl;
-      exit(0);
-   }
-
-   networkListener_ = std::make_shared<MyNetworkSelectionListener>();
-   telux::common::Status status = networkManager_->registerListener(networkListener_);
-
-   if(status != telux::common::Status::SUCCESS) {
-      std::cout << "Failed to registerListener for network Manager" << std::endl;
-   }
 }
 
 NetworkMenu::~NetworkMenu() {
-   networkManager_->deregisterListener(networkListener_);
-   networkManager_ = nullptr;
+   for (auto index = 0; index < networkManagers_.size(); index++) {
+       networkManagers_[index]->deregisterListener(networkListener_);
+       networkManagers_[index] = nullptr;
+   }
 }
 
 void NetworkMenu::init() {
+
+   //  Get the PhoneFactory and NetworkManger instances.
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto phoneManager = phoneFactory.getPhoneManager();
+
+   std::vector<int> phoneIds;
+   telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
+   if (status == telux::common::Status::SUCCESS) {
+       for (auto index = 1; index <= phoneIds.size(); index++) {
+           auto networkManager
+               = telux::tel::PhoneFactory::getInstance().getNetworkSelectionManager(index);
+           if (networkManager != nullptr) {
+               networkManagers_.emplace_back(networkManager);
+           }
+       }
+   }
+
+   for (auto index = 0; index < networkManagers_.size(); index++) {
+       std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+       startTime = std::chrono::system_clock::now();
+
+       //  Check if network subsystem is ready
+       bool subSystemStatus = networkManagers_[index]->isSubsystemReady();
+
+       //  If network subsystem is not ready, wait for it to be ready
+       if(!subSystemStatus) {
+          std::cout << "\n\n Network subsystem is not ready, Please wait." << std::endl;
+          std::future<bool> f = networkManagers_[index]->onSubsystemReady();
+          // If we want to wait unconditionally for network subsystem to be ready
+          subSystemStatus = f.get();
+       }
+
+       //  Exit the application, if SDK is unable to initialize network subsystems
+       if(subSystemStatus) {
+          endTime = std::chrono::system_clock::now();
+          std::chrono::duration<double> elapsedTime = endTime - startTime;
+          std::cout << "Elapsed Time for Subsystems to ready: " << elapsedTime.count() << "s\n"
+                    << std::endl;
+       } else {
+          std::cout << " *** ERROR - Unable to initialize network subsystem" << std::endl;
+          exit(0);
+       }
+
+       networkListener_ = std::make_shared<MyNetworkSelectionListener>();
+       auto status = networkManagers_[index]->registerListener(networkListener_);
+
+       if(status != telux::common::Status::SUCCESS) {
+          std::cout << "Failed to registerListener for network Manager" << std::endl;
+       }
+   }
+
    std::shared_ptr<ConsoleAppCommand> getNetworkSelectionModeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "get_selection_mode", {},
@@ -111,16 +127,26 @@ void NetworkMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "5", "perform_network_scan", {},
          std::bind(&NetworkMenu::performNetworkScan, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "6", "select_sim_slot", {},
+         std::bind(&NetworkMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
       = {getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
          getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
+
+   if (networkManagers_.size() > 1) {
+       commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
+   }
+
    addCommands(commandsListNetworkSubMenu);
    ConsoleApp::displayMenu();
 }
 
 void NetworkMenu::getNetworkSelectionMode(std::vector<std::string> userInput) {
-   if(networkManager_) {
-      auto ret = networkManager_->requestNetworkSelectionMode(
+   auto networkManager = networkManagers_[slot_ - 1];
+   if(networkManager) {
+      auto ret = networkManager->requestNetworkSelectionMode(
          MySelectionModeResponseCallback::selectionModeResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nGet network selection mode request sent successfully\n";
@@ -131,7 +157,8 @@ void NetworkMenu::getNetworkSelectionMode(std::vector<std::string> userInput) {
 }
 
 void NetworkMenu::setNetworkSelectionMode(std::vector<std::string> userInput) {
-   if(networkManager_) {
+   auto networkManager = networkManagers_[slot_ - 1];
+   if(networkManager) {
       bool selectionMode;
       std::string mcc;
       std::string mnc;
@@ -147,14 +174,14 @@ void NetworkMenu::setNetworkSelectionMode(std::vector<std::string> userInput) {
          std::cout << "Enter MNC: ";
          std::cin >> mnc;
          Utils::validateInput(mnc);
-         retStatus = networkManager_->setNetworkSelectionMode(
+         retStatus = networkManager->setNetworkSelectionMode(
             selectMode, mcc, mnc, &MyNetworkResponsecallback::setNetworkSelectionModeResponseCb);
 
       } else if(selectionMode == 0) {
          telux::tel::NetworkSelectionMode selectMode = telux::tel::NetworkSelectionMode::AUTOMATIC;
          mcc = "0";
          mnc = "0";
-         retStatus = networkManager_->setNetworkSelectionMode(
+         retStatus = networkManager->setNetworkSelectionMode(
             selectMode, mcc, mnc, &MyNetworkResponsecallback::setNetworkSelectionModeResponseCb);
 
       } else {
@@ -169,8 +196,9 @@ void NetworkMenu::setNetworkSelectionMode(std::vector<std::string> userInput) {
 }
 
 void NetworkMenu::getPreferredNetworks(std::vector<std::string> userInput) {
-   if(networkManager_) {
-      auto ret = networkManager_->requestPreferredNetworks(
+   auto networkManager = networkManagers_[slot_ - 1];
+   if(networkManager) {
+      auto ret = networkManager->requestPreferredNetworks(
          MyPreferredNetworksResponseCallback::preferredNetworksResponse);
       if(ret != telux::common::Status::SUCCESS) {
          std::cout << "\nGet preferred networks request failed \n";
@@ -231,7 +259,8 @@ telux::tel::PreferredNetworkInfo NetworkMenu::getNetworkInfoFromUser() {
 }
 
 void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
-   if(networkManager_) {
+   auto networkManager = networkManagers_[slot_ - 1];
+   if(networkManager) {
       std::vector<telux::tel::PreferredNetworkInfo> preferredNetworksInfo;
       int numOfNetworks;
       bool clearPrevPreferredNetworks;
@@ -247,7 +276,7 @@ void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
       std::cout << "Clear previous preferred network(1 - Yes, 0 - No)?: ";
       std::cin >> clearPrevPreferredNetworks;
       Utils::validateInput(clearPrevPreferredNetworks);
-      auto ret = networkManager_->setPreferredNetworks(
+      auto ret = networkManager->setPreferredNetworks(
          preferredNetworksInfo, clearPrevPreferredNetworks,
          MyNetworkResponsecallback::setPreferredNetworksResponseCb);
 
@@ -260,13 +289,41 @@ void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
 }
 
 void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
-   if(networkManager_) {
-      auto ret = networkManager_->performNetworkScan(
+   auto networkManager = networkManagers_[slot_ - 1];
+   if(networkManager) {
+      auto ret = networkManager->performNetworkScan(
          MyPerformNetworkScanCallback::performNetworkScanResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nPerform network scan request sent successfully\n";
       } else {
          std::cout << "\nPerform network scan request failed \n";
       }
+   }
+}
+
+void NetworkMenu::selectSimSlot(std::vector<std::string> userInput) {
+   std::string slotSelection;
+   char delimiter = '\n';
+
+   std::cout << "Enter the desired SIM slot: ";
+   std::getline(std::cin, slotSelection, delimiter);
+
+   if (!slotSelection.empty()) {
+      try {
+         int slot = std::stoi(slotSelection);
+         if (slot > 2) {
+            std::cout << "Invalid slot entered, using default slot" << std::endl;
+            slot_ = DEFAULT_SLOT_ID;
+         } else {
+            slot_ = slot;
+            std::cout << "Successfully changed to slot " << slot << std::endl;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+            << slotSelection << std::endl;
+         return;
+      }
+   } else {
+      std::cout << "Empty input, enter the correct slot" << std::endl;
    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,8 +37,8 @@
 
 void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMessage> smsMsg) {
    std::cout << std::endl << std::endl;
-   PRINT_NOTIFICATION << "Received SMS from: " << smsMsg->getSender()
-                      << "\n message: " << smsMsg->getText() << std::endl;
+   PRINT_NOTIFICATION << "Received SMS from phone ID " << phoneId << " from: "
+                      << smsMsg->getSender() << "\n message: " << smsMsg->getText() << std::endl;
 }
 
 // Implementation of My SMS callback

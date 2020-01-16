@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -56,11 +56,13 @@ public:
    void setRatModePreference(std::vector<std::string> userInput);
    void getServiceDomainPreference(std::vector<std::string> userInput);
    void setServiceDomainPreference(std::vector<std::string> userInput);
+   void selectSimSlot(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::tel::IServingSystemListener> servingSystemListener_;
-   std::shared_ptr<telux::tel::IServingSystemManager> servingSystemManager_ = nullptr;
+   int slot_ = DEFAULT_SLOT_ID;
+   std::vector<std::shared_ptr<telux::tel::IServingSystemManager>> servingSystemMgrs_;
 };
 
 #endif  // SERVINGSYSTEMMENU_HPP

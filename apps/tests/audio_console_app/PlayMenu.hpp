@@ -48,6 +48,7 @@ public:
     void onPlayStopped() override;
 
     void init();
+    void cleanup();
 private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);

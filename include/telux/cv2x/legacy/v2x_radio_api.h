@@ -770,10 +770,7 @@ extern v2x_api_ver_t v2x_radio_api_version();
     #V2X_STATUS_SUCCESS -- The radio is ready for data-plane sockets to be
     created and bound.
     @par
-    Error code -- If there is a problem (see #v2x_status_enum_type).
-
-    @dependencies
-    An SPS flow must have been successfully initialized. @newpage
+    Error code -- If there is a problem (see #v2x_status_enum_type). @newpage
  */
 extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v2x_iface_capabilities_t *caps);
 /** @} *//* end_addtogroup v2x_api_radio */

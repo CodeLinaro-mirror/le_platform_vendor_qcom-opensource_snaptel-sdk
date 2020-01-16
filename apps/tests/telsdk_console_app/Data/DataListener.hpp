@@ -41,6 +41,9 @@ public:
    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
    std::shared_ptr<telux::data::IDataCall> getDataCall(int profileId);
+   void initDataCallListResponseCb(
+       const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
+       telux::common::ErrorCode error);
 
 private:
    std::mutex mtx_;

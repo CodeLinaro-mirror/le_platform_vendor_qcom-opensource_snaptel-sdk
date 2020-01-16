@@ -232,11 +232,18 @@ public:
     virtual Cv2xRadioCapabilities getCapabilities() const = 0;
 
     /**
-     * Returns true if the radio interface has completed initialization.
+     * Returns true if the radio interface was successfully initialized.
      *
      * @returns True if ready. False otherwise.
      */
     virtual bool isReady() const = 0;
+
+    /**
+     * Returns true if the radio interface has completed initialization.
+     *
+     * @returns True if initialized. False otherwise.
+     */
+    virtual bool isInitialized() const = 0;
 
     /**
      * Returns a future that indicated if the radio interface is ready or if

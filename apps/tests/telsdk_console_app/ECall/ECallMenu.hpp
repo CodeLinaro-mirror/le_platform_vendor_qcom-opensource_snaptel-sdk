@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -73,6 +73,9 @@ public:
    ~ECallMenu();
 
 private:
+   int phoneId_;
+   std::vector<int> phoneIds_;
+
    bool initalizeSDK();
 
    /**
@@ -116,6 +119,11 @@ private:
     * Sample Update eCall MSD operation with raw pdu
     */
    void updateEcallMsdWithPdu(std::vector<std::string> inputCommand);
+
+   /**
+    * Changes the Phone ID to use for operations
+    */
+   void selectPhoneId(std::vector<std::string> inputCommand);
 
    /**
     * Sample get in progress calls operations

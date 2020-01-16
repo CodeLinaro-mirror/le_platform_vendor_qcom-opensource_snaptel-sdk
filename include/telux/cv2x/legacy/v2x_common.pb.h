@@ -76,6 +76,9 @@ typedef enum /** @cond */_v2x_status_enum_type/** @endcond */ {
     V2X_STATUS_ECHANNEL_UNAVAILABLE = 2001,
                                 /**< Requested radio frequency cannot be used
                                      at this time. */
+    V2X_STATUS_RADIO_NOT_READY = 2002,
+                                /**< Radio initialization failed due to v2x
+                                     status. */
     V2X_STATUS_VEHICLE_PLACEHOLDER = 3000
                                 /**< Begin the return codes associated with the
                                      Vehicle Data interface. */

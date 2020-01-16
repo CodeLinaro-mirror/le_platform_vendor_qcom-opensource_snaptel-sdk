@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,47 +43,65 @@
 
 ServingSystemMenu::ServingSystemMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
-   //  Get the PhoneFactory and ServingSystemManager instances.
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   servingSystemManager_
-      = telux::tel::PhoneFactory::getInstance().getServingSystemManager(DEFAULT_SLOT_ID);
-
-   //  Check if serving subsystem is ready
-   bool subSystemStatus = servingSystemManager_->isSubsystemReady();
-
-   //  If serving subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "\n\nServing subsystem is not ready, Please wait!!!..." << std::endl;
-      std::future<bool> f = servingSystemManager_->onSubsystemReady();
-      // If we want to wait unconditionally for serving subsystem to be ready
-      subSystemStatus = f.get();
-   }
-
-   //  Exit the application, if SDK is unable to initialize serving subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize serving subsystem" << std::endl;
-      exit(0);
-   }
-   servingSystemListener_ = std::make_shared<MyServingSystemListener>();
-   telux::common::Status status = servingSystemManager_->registerListener(servingSystemListener_);
-   if(status != telux::common::Status::SUCCESS) {
-      std::cout << "Failed to registerListener for Serving system Manager" << std::endl;
-   }
 }
 
 ServingSystemMenu::~ServingSystemMenu() {
-   servingSystemManager_->deregisterListener(servingSystemListener_);
-   servingSystemManager_ = nullptr;
+   for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
+       servingSystemMgrs_[index]->deregisterListener(servingSystemListener_);
+       servingSystemMgrs_[index] = nullptr;
+   }
 }
 
 void ServingSystemMenu::init() {
+
+   //  Get the PhoneFactory and ServingSystemManager instances.
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto phoneManager = phoneFactory.getPhoneManager();
+
+   std::vector<int> phoneIds;
+   telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
+   if (status == telux::common::Status::SUCCESS) {
+       for (auto index = 1; index <= phoneIds.size(); index++) {
+           auto servingSystemMgr
+               = telux::tel::PhoneFactory::getInstance().getServingSystemManager(index);
+           if (servingSystemMgr != nullptr) {
+               servingSystemMgrs_.emplace_back(servingSystemMgr);
+           }
+       }
+   }
+
+   for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
+       std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+       startTime = std::chrono::system_clock::now();
+       //  Check if serving subsystem is ready
+       bool subSystemStatus = servingSystemMgrs_[index]->isSubsystemReady();
+
+       //  If serving subsystem is not ready, wait for it to be ready
+       if(!subSystemStatus) {
+          std::cout << "\n\nServing subsystem is not ready, Please wait!!!..." << std::endl;
+          std::future<bool> f = servingSystemMgrs_[index]->onSubsystemReady();
+          // If we want to wait unconditionally for serving subsystem to be ready
+          subSystemStatus = f.get();
+       }
+
+       //  Exit the application, if SDK is unable to initialize serving subsystems
+       if(subSystemStatus) {
+          endTime = std::chrono::system_clock::now();
+          std::chrono::duration<double> elapsedTime = endTime - startTime;
+          std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                    << std::endl;
+       } else {
+          std::cout << " *** ERROR - Unable to initialize serving subsystem" << std::endl;
+          exit(0);
+       }
+
+       servingSystemListener_ = std::make_shared<MyServingSystemListener>();
+       auto status = servingSystemMgrs_[index]->registerListener(servingSystemListener_);
+       if(status != telux::common::Status::SUCCESS) {
+          std::cout << "Failed to registerListener for Serving system Manager" << std::endl;
+       }
+   }
+
    std::shared_ptr<ConsoleAppCommand> getRatModePreferenceCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Get_RAT_mode_preference", {},
@@ -100,16 +118,26 @@ void ServingSystemMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "4", "Set_service_domain_preference", {},
          std::bind(&ServingSystemMenu::setServiceDomainPreference, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "5", "Select_sim_slot", {},
+         std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
       = {getRatModePreferenceCommand, setRatModePreferenceCommand,
          getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand};
+
+   if (servingSystemMgrs_.size() > 1) {
+       commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
+   }
+
    addCommands(commandsListNetworkSubMenu);
    ConsoleApp::displayMenu();
 }
 
 void ServingSystemMenu::getRatModePreference(std::vector<std::string> userInput) {
-   if(servingSystemManager_) {
-      auto ret = servingSystemManager_->requestRatPreference(
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      auto ret = servingSystemMgr->requestRatPreference(
          MyRatPreferenceResponseCallback::ratPreferenceResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nGet RAT mode preference request sent successfully\n";
@@ -120,7 +148,8 @@ void ServingSystemMenu::getRatModePreference(std::vector<std::string> userInput)
 }
 
 void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput) {
-   if(servingSystemManager_) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
       char delimiter = '\n';
       std::string preference;
       telux::tel::RatPreference pref;
@@ -152,7 +181,7 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
             std::cout << "Preference should not be out of range" << std::endl;
          }
       }
-      auto ret = servingSystemManager_->setRatPreference(
+      auto ret = servingSystemMgr->setRatPreference(
          pref, MyServingSystemResponsecallback::servingSystemResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nSet RAT mode preference request sent successfully\n";
@@ -163,8 +192,9 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
 }
 
 void ServingSystemMenu::getServiceDomainPreference(std::vector<std::string> userInput) {
-   if(servingSystemManager_) {
-      auto ret = servingSystemManager_->requestServiceDomainPreference(
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      auto ret = servingSystemMgr->requestServiceDomainPreference(
          MyServiceDomainResponseCallback::serviceDomainResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nGet service domain preference request sent successfully\n";
@@ -175,7 +205,8 @@ void ServingSystemMenu::getServiceDomainPreference(std::vector<std::string> user
 }
 
 void ServingSystemMenu::setServiceDomainPreference(std::vector<std::string> userInput) {
-   if(servingSystemManager_) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
       std::string serviceDomain;
       int opt = -1;
       std::cout << "Enter service domain preference: (0 - CS, 1 - PS, 2 - CS/PS): ";
@@ -191,12 +222,39 @@ void ServingSystemMenu::setServiceDomainPreference(std::vector<std::string> user
       }
       telux::tel::ServiceDomainPreference domainPref
          = static_cast<telux::tel::ServiceDomainPreference>(opt);
-      auto ret = servingSystemManager_->setServiceDomainPreference(
+      auto ret = servingSystemMgr->setServiceDomainPreference(
          domainPref, MyServingSystemResponsecallback::servingSystemResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nSet service domain preference request sent successfully\n";
       } else {
          std::cout << "\nSet service domain preference request failed \n";
       }
+   }
+}
+
+void ServingSystemMenu::selectSimSlot(std::vector<std::string> userInput) {
+   std::string slotSelection;
+   char delimiter = '\n';
+
+   std::cout << "Enter the desired SIM slot: ";
+   std::getline(std::cin, slotSelection, delimiter);
+
+   if (!slotSelection.empty()) {
+      try {
+         int slot = std::stoi(slotSelection);
+         if (slot > 2) {
+            std::cout << "Invalid slot entered, using default slot" << std::endl;
+            slot_ = DEFAULT_SLOT_ID;
+         } else {
+            slot_ = slot;
+            std::cout << "Successfully changed to slot " << slot << std::endl;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+            << slotSelection << std::endl;
+         return;
+      }
+   } else {
+      std::cout << "Empty input, enter the correct slot" << std::endl;
    }
 }

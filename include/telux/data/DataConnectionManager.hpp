@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -126,6 +126,24 @@ class IDataConnectionManager {
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 
+   /**
+    * Set a profile as default which results in the following:.
+    *  - Default routes in the system will route traffic over the network interface associated
+    *    with this profile.
+    *  - Bridge 0 will be associated with traffic from this profile.
+    *
+    * @param [in] operationType     @ref telux::data::OperationType
+    * @param [in] profileId         Profile identifier to be associated with default handler
+    * @param [in] callback          optional callback to get the response setDefaultProfile
+    *
+    * @returns Immediate status of setDefaultProfile i.e. success or suitable status.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
+    */
+   virtual telux::common::Status setDefaultProfile(OperationType oprType, uint8_t profileId,
+       telux::common::ResponseCallback callback = nullptr)  = 0;
+
     /**
      * Starts a data call corresponding to default or specified profile identifier.
      *
@@ -207,8 +225,7 @@ class IDataConnectionManager {
      *
      */
     virtual telux::common::Status deregisterListener(
-        std::weak_ptr<IDataConnectionListener> listener)
-        = 0;
+        std::weak_ptr<IDataConnectionListener> listener) = 0;
 
     /**
      * Get associated slot id for the Data Connection Manager.

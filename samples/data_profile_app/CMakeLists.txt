@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 2.8.9)
+
+set(TARGET_DATA_PROFILE_APP data_profile_app)
+
+set(DATA_PROFILE_APP_SOURCES
+    DataProfileApp.cpp
+)
+macro(SYSR_INCLUDE_DIR subdir)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+endmacro()
+
+# add these sub-folders from /usr/include/<subdir>
+SYSR_INCLUDE_DIR(telux)
+
+# set global variables
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_executable (${TARGET_DATA_PROFILE_APP} ${DATA_PROFILE_APP_SOURCES})
+target_link_libraries(${TARGET_DATA_PROFILE_APP} telux_data)
+
+# install to target
+install ( TARGETS ${TARGET_DATA_PROFILE_APP}
+          RUNTIME DESTINATION bin
+          ARCHIVE DESTINATION bin )

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -722,6 +722,17 @@ void MyLocationListener::onGnssSignalInfo(
    std::cout << "*************************************************************" << std::endl;
 }
 
+void MyLocationListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {
+   if(!isNmeaInfoFlagEnabled_) {
+      return;
+   }
+   std::cout << std::endl;
+   PRINT_NOTIFICATION << "\n**************** Gnss Nmea Information ***************" << std::endl;
+   std::cout << "<<< onGnssNmeaCb\n" << std::endl;
+   std::cout << " Timestamp : " << timestamp << std::endl;
+   std::cout << " Nmea String : " << nmea << std::endl;
+}
+
 void MyLocationListener::setDetailedLocationReportFlag(bool enable) {
    isDetailedReportFlagEnabled_ = enable;
 }
@@ -736,4 +747,8 @@ void MyLocationListener::setSvInfoFlag(bool enable) {
 
 void MyLocationListener::setDataInfoFlag(bool enable) {
    isDataInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setNmeaInfoFlag(bool enable) {
+   isNmeaInfoFlagEnabled_ = enable;
 }

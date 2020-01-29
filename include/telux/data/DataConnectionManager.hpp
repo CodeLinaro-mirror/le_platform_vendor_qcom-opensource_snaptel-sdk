@@ -160,7 +160,7 @@ class IDataConnectionManager {
      * @param [in] ipFamilyType  Identifies IP family type
      * @param [out] callback     Optional callback to get the response of start data call.
      * @param [in] operationType Optional @ref telux::data::OperationType
-     * @param [in] apn           Optional access point name
+     * @param [in] apn           Deprecated and currently unsued
      *
      * @returns Immediate status of startDataCall() request sent
      *                   i.e. success or suitable status code.
@@ -188,7 +188,7 @@ class IDataConnectionManager {
      * @param [in] ipFamilyType  Identifies IP family type
      * @param [out] callback     Optional callback to get the response of stop data call
      * @param [in] operationType Optional @ref telux::data::OperationType
-     * @param [in] apn           Optional access point name
+     * @param [in] apn           Deprecated and currently unused
      *
      * @returns Immediate status of stopDataCall() request sent i.e. success or
      *          suitable status code. The client receives asynchronous notifications

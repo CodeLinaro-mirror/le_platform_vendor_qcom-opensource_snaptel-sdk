@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -100,6 +100,67 @@ public:
   virtual telux::common::Status configureCTunc(bool enable, telux::common::ResponseCallback callback
         = nullptr, float timeUncertainty = DEFAULT_TUNC_THRESHOLD, uint32_t energyBudget =
                 DEFAULT_TUNC_ENERGY_THRESHOLD) = 0;
+
+ /**
+  * This API enables or disables position assisted clock estimator feature.
+  *
+  * @param [in] enable - to enable/disable position assisted clock estimator feature.
+  *
+  * @param [in] callback - Optional callback to get the response of enablement/disablement of
+  *                        PACE.
+  */
+
+  virtual telux::common::Status configurePACE(bool enable, telux::common::ResponseCallback callback
+        = nullptr) = 0;
+
+/**
+  * This API deletes all form of aiding data from all position engines. This API deletes all
+  * assistance data used by GPS engine and force engine to do a cold start for next session.
+  *
+  * @param [in] callback - Optional callback to get the response of delete aiding data.
+  *
+  */
+
+  virtual telux::common::Status deleteAllAidingData(telux::common::ResponseCallback callback
+        = nullptr) = 0;
+
+/**
+  * This API sets the lever arm parameters for the vehicle.
+  *
+  * @param [in] info - lever arm configuration info regarding below three
+  *                   types of lever arm info:
+  *                   a: GNSS Antenna w.r.t the origin at the IMU (inertial measurement unit)
+  *                   for DR engine
+  *                   b: GNSS Antenna w.r.t the origin at the IMU (inertial measurement unit)
+  *                   for VEPP engine
+  *                   c: VRP (Vehicle Reference Point) w.r.t the origin (at the GNSS Antenna).
+  *                   Vehicle manufacturers prefer the position output to be tied to a
+  *                   specific point in the vehicle rather than where the antenna is placed
+  *                   (midpoint of the rear axle is typical).
+  *
+  * @param [in] callback - Optional callback to get the response of configure lever arm.
+  *
+  */
+
+  virtual telux::common::Status configureLeverArm(const LeverArmConfigInfo& info,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+  * This API blacklists some constellations or subset of SVs from the constellation from being used
+  * by the GNSS engine on modem.
+  *
+  * @param [in] SvIdBlackList - specify the set of constellations and SVs that should not be used
+  *                             by the GNSS engine on modem. Constellations and SVs not specified
+  *                             in blacklistedSvList could get used by the GNSS engine on modem.
+  *
+  * @param [in] callback - Optional callback to get the response of configure constellations.
+  *
+  */
+
+
+  virtual telux::common::Status configureConstellations(const SvBlackList& list,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
 
 /**
  * Destructor of ILocationConfigurator

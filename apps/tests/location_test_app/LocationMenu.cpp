@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -87,6 +87,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setDetailedLocationReportFlag(false);
       posListener->setBasicLocationReportFlag(false);
       posListener->setDataInfoFlag(false);
+      posListener->setNmeaInfoFlag(false);
 
       //Registering listener for fixes
       locationManager->registerListenerEx(posListener_);
@@ -154,9 +155,26 @@ int LocationMenu::init() {
       ConsoleAppCommand("6", "C-TUNC", {},
                         std::bind(&LocationMenu::enableDisableTunc, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> enableDisablePace = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("7", "Configure PACE", {},
+                        std::bind(&LocationMenu::enableDisablePace, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> deleteAidingData = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("8", "Delete_data", {},
+                        std::bind(&LocationMenu::deleteAidingData, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> configureLeverArm = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("9", "Lever_arm", {},
+                        std::bind(&LocationMenu::configureLeverArm, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> configureConstellation = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("10", "Configure constellation", {}, std::bind(
+                        &LocationMenu::configureConstellation, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
-         stopReportsCommand, enableReportLogsCommand, enableDisableTunc};
+         stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
+         deleteAidingData, configureLeverArm, configureConstellation};
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
 
@@ -358,9 +376,247 @@ void LocationMenu::enableDisableTunc(std::vector<std::string> userInput) {
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1), optThreshold, optPower);
         if (status == telux::common::Status::NOTIMPLEMENTED) {
-          std::cout << "Not Implemented" << std::endl;
+          std::cout << "Not implemented" << std::endl;
         }
    }
+}
+
+void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+       char delimiter = '\n';
+       std::string option;
+       std::cout << "Enter Y to enable or N to disable PACE: ";
+       std::getline(std::cin, option, delimiter);
+
+       bool enable = false;
+       if(option == "Y") {
+            enable = true;
+       } else if(option == "N") {
+            enable = false;
+       } else {
+            std::cout << " BAD input " << std::endl;
+       }
+        std::cout << " Enable: " << enable << std::endl;
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Configure-PACE");
+        telux::common::Status status = locationConfigurator_->configureCTunc(enable,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+
+void LocationMenu::deleteAidingData(std::vector<std::string> userInput) {
+   if(locationConfigurator_) {
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Delete Aiding Data");
+        telux::common::Status status = locationConfigurator_->deleteAllAidingData(
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+//TODO : split configureLeverArm into smaller sub functions
+void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
+   if(locationConfigurator_) {
+        typedef std::unordered_map<telux::loc::LeverArmType, telux::loc::LeverArmParams>
+            LeverArmConfigInfo;
+        LeverArmConfigInfo configInfo;
+        char delimiter = '\n';
+        while(true) {
+            telux::loc::LeverArmType leverArmType;
+            telux::loc::LeverArmParams leverArmParams;
+            std::string type;
+            std::cout << "Enter the LeverArmType : " << std::endl;
+            std::cout << " Enter 1 for GNSS_TO_VRP or 2 for DR_IMU_TO_GNSS" << std::endl;
+            std::cout << "  or 3 for VEPP_IMU_TO_GNSS " << std::endl;
+            std::getline(std::cin, type, delimiter);
+            int leverArmTypeOption = 1;
+            if(!type.empty()) {
+                try {
+                    leverArmTypeOption = std::stof(type);
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " <<
+                        leverArmTypeOption << std::endl;
+                }
+            } else {
+                 leverArmTypeOption = 1;
+            }
+            if(leverArmTypeOption < 1 or leverArmTypeOption > 3) {
+                std::cout << "invalid LeverArmType, enter again." << std::endl;
+                continue;
+            }
+            if(leverArmTypeOption == 1) {
+                leverArmType = LEVER_ARM_TYPE_GNSS_TO_VRP;
+            } else if(leverArmTypeOption == 2) {
+                leverArmType = LEVER_ARM_TYPE_DR_IMU_TO_GNSS;
+            }else {
+                leverArmType = LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS;
+            }
+            std::cout << "leverArmTypeOption : " << leverArmTypeOption << std::endl;
+            std::cout << "leverArmType : " << leverArmType << std::endl;
+            std::string forwardOffset;
+            std::cout << " Enter the LeverArm Parameters : " << std::endl;
+            std::cout << " Enter forward offset : " << std::endl;
+            forwardOffset = std::cin.get();
+            std::cin.ignore();
+            float optForwardOffset = 0.0;
+            if(!forwardOffset.empty()) {
+                try {
+                    optForwardOffset = std::stof(forwardOffset);
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " <<
+                        optForwardOffset << std::endl;
+                }
+            } else {
+                 optForwardOffset = 0.0;
+            }
+            leverArmParams.forwardOffset = optForwardOffset;
+            std::cout << " leverArmParams.forwardOffset" << leverArmParams.forwardOffset
+                << std::endl;
+
+            std::string sidewaysOffset;
+            std::cout << " Enter sideways offset : " << std::endl;
+            sidewaysOffset = std::cin.get();
+            std::cin.ignore();
+            float optSidewaysOffset = 0.0;
+            if(!sidewaysOffset.empty()) {
+                try {
+                    optSidewaysOffset = std::stof(sidewaysOffset);
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " <<
+                        optSidewaysOffset << std::endl;
+                }
+            } else {
+                 optSidewaysOffset = 0.0;
+            }
+            leverArmParams.sidewaysOffset = optSidewaysOffset;
+            std::cout << " leverArmParams.sidewaysOffset" << leverArmParams.sidewaysOffset <<
+                std::endl;
+
+            std::string upOffset;
+            std::cout << " Enter up offset : " << std::endl;
+            upOffset = std::cin.get();
+            std::cin.ignore();
+            float optUpOffset = 0.0;
+            if(!upOffset.empty()) {
+                try {
+                    optUpOffset = std::stof(upOffset);
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " <<
+                    optUpOffset << std::endl;
+                }
+            } else {
+                 optUpOffset = 0.0;
+            }
+            leverArmParams.upOffset = optUpOffset;
+            std::cout << " leverArmParams.upOffset" << leverArmParams.upOffset;
+
+            configInfo.insert({leverArmType, leverArmParams});
+            std::string option;
+            std::cout << "Do you want to insert more : " << std::endl;
+            std::cout << "enter Y/N : " << std::endl;
+            std::getline(std::cin, option, delimiter);
+            if(option == "Y") {
+                continue;
+            } else {
+                break;
+            }
+
+        }
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Configure lever arm");
+        telux::common::Status status = locationConfigurator_->configureLeverArm(configInfo,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+
+void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+        typedef std::vector<telux::loc::SvBlackListInfo> SvBlackList;
+        SvBlackList svBlackList;
+        char delimiter = '\n';
+        while(true) {
+            telux::loc::SvBlackListInfo blackListInfo;
+            std::string constellation;
+            std::cout << " Enter the constellation : " << std::endl;
+            std::cout << " Enter 2 for GALILEO, 3 for SBAS, 5 for GLONASS " << std::endl;
+            std::cout << " 6 for BEIDOU, 7 for QZSS : " << std::endl;
+            std::getline(std::cin, constellation, delimiter);
+            int constellationOption = 2;
+            if(!constellation.empty()) {
+                try {
+                    constellationOption = std::stof(constellation);
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " <<
+                        constellationOption << std::endl;
+                }
+            } else {
+                 constellationOption = 2;
+            }
+            if(constellationOption < 2 or constellationOption > 7 or constellationOption == 4) {
+                std::cout << "invalid constellation, enter again." << std::endl;
+                continue;
+            }
+            if(constellationOption == 2) {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::GALILEO;
+            } else if (constellationOption == 3) {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::SBAS;
+            } else if (constellationOption == 5) {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::GLONASS;
+            } else if (constellationOption == 6) {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::BDS;
+            } else {
+                blackListInfo.constellation = telux::loc::GnssConstellationType::QZSS;
+            }
+            std::cout << " constellationOption : " << constellationOption << std::endl;
+            std::string satId;
+            std::cout << " Enter the svId : " << std::endl;
+            std::getline(std::cin, satId, delimiter);
+            uint32_t satIdOption = 0;
+            if(!satId.empty()) {
+                try {
+                    satIdOption = std::stoi(satId);
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " <<
+                        satIdOption << std::endl;
+                }
+            } else {
+                 satIdOption = 0;
+            }
+            blackListInfo.svId = satIdOption;
+            std::cout << " blackListInfo.svId" << blackListInfo.svId << std::endl;
+            svBlackList.push_back(blackListInfo);
+            std::string option;
+            std::cout << "Do you want to insert more, enter Y/N : " << std::endl;
+            std::getline(std::cin, option, delimiter);
+            if(option == "Y") {
+                continue;
+            } else {
+                break;
+            }
+
+        }
+        for (auto i : svBlackList) {
+            std::cout << " i.constellation : " << std::endl;
+            std::cout << " i.svId : " << i.svId << std::endl;
+        }
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure constellation");
+        telux::common::Status status = locationConfigurator_->configureConstellations(svBlackList,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+  }
 }
 
 int LocationMenu::enableReportLogsUtility() {
@@ -412,7 +668,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  1 - Basic_location_notifications" << std::endl;
      std::cout << "  2 - Detailed/Detailed_engine_location_notifications" << std::endl;
      std::cout << "  3 - SV_info_notifications" << std::endl;
-     std::cout << "  4 - Data_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  4 - Data_info_notifications" << std::endl;
+     std::cout << "  5 - Nmea_info_notifications" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -430,6 +687,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableSvInfoLogs();
      } else if(usrInput == "4") {
          LocationMenu::enableDataInfoLogs();
+     } else if(usrInput == "5") {
+         LocationMenu::enableNmeaInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -459,6 +718,16 @@ void LocationMenu::enableDataInfoLogs() {
    } else {
       std::cout << "ERROR: invalid input, please enter 0 or 1\n";
    }
+}
+
+void LocationMenu::enableNmeaInfoLogs() {
+  int opt = enableReportLogsUtility();
+  if((opt == 0) || (opt == 1)) {
+    posListener_->setNmeaInfoFlag(opt);
+  } else {
+    std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+  }
+
 }
 
 // Main function that displays the console and processes user input

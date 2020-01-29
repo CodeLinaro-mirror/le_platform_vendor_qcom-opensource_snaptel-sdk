@@ -370,12 +370,6 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
     std::cin >> ipFamilyType;
     Utils::validateInput(ipFamilyType);
 
-    char delimiter = '\n';
-    std::string apn;
-    std::cin.get();
-    std::cout << "Enter APN (used only in low latency calls): ";
-    std::getline(std::cin, apn, delimiter);
-
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
@@ -384,7 +378,7 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     dataConnectionManager_->startDataCall(profileId, ipFamType,
-        MyDataCallResponseCallback::startDataCallResponseCallBack, opType, apn);
+        MyDataCallResponseCallback::startDataCallResponseCallBack, opType);
 }
 
 void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
@@ -399,12 +393,6 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
     std::cin >> ipFamilyType;
     Utils::validateInput(ipFamilyType);
 
-    char delimiter = '\n';
-    std::string apn;
-    std::cin.get();
-    std::cout << "Enter APN: ";
-    std::getline(std::cin, apn, delimiter);
-
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
@@ -413,7 +401,7 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     dataConnectionManager_->stopDataCall(profileId, ipFamType,
-        MyDataCallResponseCallback::stopDataCallResponseCallBack, opType, apn);
+        MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
 }
 
 void DataMenu::requestDataCallStatistics(std::vector<std::string> inputCommand) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -394,7 +394,6 @@ static bool createV2xProfile(std::shared_ptr<IDataProfileManager> dataProfileMgr
         dataCall->profileIndex = prom->get_future().get();
         LOGD("Created profile for APN=%s, profile_id=%d\n", apnName.c_str(),
              dataCall->profileIndex);
-        dataCall->apnName = apnName;
         return true;
     } else {
         LOGE("Create profile failed for APN=%s with error code %d\n", apnName.c_str(),
@@ -420,7 +419,7 @@ Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall,
             LOGE("Failed start data call operation (type=%d ret=%d)\n",
                  dataCall->type, static_cast<int>(error));
         }
-    },OperationType::DATA_LOCAL, dataCall->apnName);
+    },OperationType::DATA_LOCAL);
 
     if (response.get_future().get()) {
         LOGI("Received DSI_EVT_NET_IS_CONN: network_type=%d is online\n", dataCall->type);
@@ -455,7 +454,6 @@ Status Cv2xTelux::createProfile() {
     // check IP Data Profile
     if (profileIds.ip != -1) {
         dcInfoIP_->profileIndex = profileIds.ip;
-        dcInfoIP_->apnName = APN_NAME_V2X_IP;
         LOGI("Found V2X_IP profile, idx=%d\n", profileIds.ip);
     } else {
         if (!createV2xProfile(dataProfileMgr_, dcInfoIP_,
@@ -471,7 +469,6 @@ Status Cv2xTelux::createProfile() {
     // check Non-IP Data Profile
     if (profileIds.nonIp != -1) {
         dcInfoNonIP_->profileIndex = profileIds.nonIp;
-        dcInfoNonIP_->apnName = APN_NAME_V2X_NON_IP;
         LOGI("Found V2X_NON_IP profile, idx=%d\n", profileIds.nonIp);
     } else {
         if (!createV2xProfile(dataProfileMgr_, dcInfoNonIP_,

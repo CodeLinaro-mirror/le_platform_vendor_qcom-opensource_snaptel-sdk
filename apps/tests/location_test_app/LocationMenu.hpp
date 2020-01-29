@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -66,12 +66,17 @@ public:
    void startBasicReports(std::vector<std::string> userInput);
    void stopReports(std::vector<std::string> userInput);
    void enableDisableTunc(std::vector<std::string> userInput);
+   void enableDisablePace(std::vector<std::string> userInput);
+   void deleteAidingData(std::vector<std::string> userInput);
+   void configureLeverArm(std::vector<std::string> userInput);
+   void configureConstellation(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();
    void enableDetailedLocationReportLogs();
    void enableSvInfoLogs();
    void enableDataInfoLogs();
+   void enableNmeaInfoLogs();
 
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>

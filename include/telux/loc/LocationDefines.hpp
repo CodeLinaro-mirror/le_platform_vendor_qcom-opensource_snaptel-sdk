@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,6 +37,7 @@
 #include <memory>
 #include <vector>
 #include <bitset>
+#include <unordered_map>
 
 #include "telux/common/CommonDefines.hpp"
 
@@ -720,6 +721,55 @@ enum PositioningEngineType{
 
 /** Specifies PositioningEngineType mask */
 using PositioningEngine = uint32_t;
+
+
+/**
+ * Specify parameters related to enable/disable SVs */
+struct SvBlackListInfo {
+    /** constellation for the sv  */
+    GnssConstellationType constellation;
+    /** sv id for the constellation:
+     * 0 means blacklist for all SVIds of a given constellation type
+     * GLONASS SV id range: 65 to 96
+     * QZSS SV id range: 193 to 197
+     * BDS SV id range: 201 to 237
+     * GAL SV id range: 301 to 336
+     * SBAS SV id range: 120 to 158 and 183 to 191
+     */
+    uint32_t              svId;
+};
+
+typedef std::vector<SvBlackListInfo> SvBlackList;
+
+/**
+ *  Lever ARM type */
+enum LeverArmType {
+    /** Lever arm parameters regarding the VRP (Vehicle Reference
+     *  Point) w.r.t the origin (at the GNSS Antenna) */
+    LEVER_ARM_TYPE_GNSS_TO_VRP = 1,
+    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
+     *  IMU (inertial measurement unit) for DR (dead reckoning
+     *  engine) */
+    LEVER_ARM_TYPE_DR_IMU_TO_GNSS = 2,
+    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
+     *  IMU (inertial measurement unit) for VEPP (vision enhanced
+     *  precise positioning engine) */
+    LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS = 3,
+};
+
+/**
+ * Specify parameters related to lever arm */
+struct LeverArmParams {
+    /** Offset along the vehicle forward axis, in unit of meters */
+    float forwardOffset;
+    /** Offset along the vehicle starboard axis, in unit of
+     *  meters */
+    float sidewaysOffset;
+    /** Offset along the vehicle up axis, in unit of meters  */
+    float upOffset;
+};
+
+typedef std::unordered_map<LeverArmType, LeverArmParams> LeverArmConfigInfo;
 
 /**
  * @brief IGpsTime provides interface to get current GPS week and elapsed

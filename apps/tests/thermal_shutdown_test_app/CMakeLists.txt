@@ -7,7 +7,7 @@ set(THERM_SHUTDOWN_MGR_TEST_APP
     ThermalCommandCallback.cpp
     ThermalListener.cpp
     ThermalCommandMgr.cpp
-    ../telsdk_console_app/Utils.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
 )

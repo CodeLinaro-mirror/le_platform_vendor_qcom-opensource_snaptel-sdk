@@ -12,6 +12,7 @@ set(TELUX_LIBRARIES ${TELUXTHERM_LIBRARIES} ${TELUXCOMMON_LIBRARIES})
 set(THERMAL_APP_SOURCES
     ThermalHelper.cpp
     ThermalTestApp.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
 )

@@ -35,6 +35,7 @@
 
 #include <telux/loc/LocationFactory.hpp>
 
+#include "../../common/utils/Utils.hpp"
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
 
@@ -734,6 +735,11 @@ void LocationMenu::enableNmeaInfoLogs() {
 int main(int argc, char **argv) {
 
    LocationMenu locationMenu("Location Menu", "location> ");
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
    if( locationMenu.init() == -1) {
        std::cout << "ERROR - Subsystem not ready, Exiting !!!" << std::endl;
        return -1;

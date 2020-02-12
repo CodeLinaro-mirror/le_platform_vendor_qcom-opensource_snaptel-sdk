@@ -45,6 +45,7 @@ extern "C" {
 }
 
 #include "ThermalShutdownMgrTestApp.hpp"
+#include "../../common/utils/Utils.hpp"
 
 void ThermalShutdownTestApp::printHelp() {
 
@@ -210,6 +211,11 @@ void ThermalShutdownTestApp::consoleinit() {
 int main(int argc, char ** argv) {
 
     Status ret = Status::FAILED;
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
+    }
     auto &ThermMgmtTest = ThermalShutdownTestApp::getInstance();
     if( 0 != ThermMgmtTest.init()) {
         std::cout << APP_NAME <<
@@ -225,4 +231,3 @@ int main(int argc, char ** argv) {
     std::cout << "Exiting application..." << std::endl;
     return 0;
 }
-

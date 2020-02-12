@@ -1,4 +1,4 @@
-# Creat Vlan and bind it to PDN
+# Create Vlan And Bind It To PDN
 
 Please follow below steps to create Vlan and bind it to PDN
 

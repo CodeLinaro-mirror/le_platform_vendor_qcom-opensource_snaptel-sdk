@@ -45,6 +45,7 @@ extern "C" {
 }
 
 #include "PowerMgrTestApp.hpp"
+#include "../../common/utils/Utils.hpp"
 
 static bool listenerEnabled = false;
 static std::mutex mutex;
@@ -254,6 +255,11 @@ int main(int argc, char ** argv) {
         return -1;
     }
     std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
+    }
     if( 0 != myPowerMgmtTest->start()) {
         std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
             << std::endl;

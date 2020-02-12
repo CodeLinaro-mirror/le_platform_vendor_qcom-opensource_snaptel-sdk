@@ -33,6 +33,7 @@
 
 #include <telux/common/Version.hpp>
 #include <telux/therm/ThermalFactory.hpp>
+#include "../../common/utils/Utils.hpp"
 
 #include "ThermalHelper.hpp"
 #include "ThermalTestApp.hpp"
@@ -178,7 +179,11 @@ void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
-
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string appName = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."

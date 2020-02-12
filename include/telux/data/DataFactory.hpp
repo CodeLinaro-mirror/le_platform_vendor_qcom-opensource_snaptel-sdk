@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -53,6 +53,7 @@
 #include <telux/data/net/VlanManager.hpp>
 #include <telux/data/net/SocksManager.hpp>
 #include <telux/data/net/BridgeManager.hpp>
+#include <telux/data/net/L2tpManager.hpp>
 
 namespace telux {
 namespace data {
@@ -177,7 +178,7 @@ class DataFactory {
         telux::data::OperationType oprType);
 
     /**
-     * Get SocksManager
+     * Get Socks Manager
      *
      * @param [in] oprType      Required operation type @ref telux::data::OperationType
      *
@@ -199,6 +200,16 @@ class DataFactory {
      */
     std::shared_ptr<telux::data::net::IBridgeManager> getBridgeManager();
 
+    /**
+     * Get L2TP Manager
+     *
+     * @returns instance of IL2tpManager
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager();
+
  private:
     // mutex to protect member variables
     std::mutex dataMutex_;
@@ -213,6 +224,7 @@ class DataFactory {
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::ISocksManager>>
         socksManagerMap_;
     std::shared_ptr<telux::data::net::IBridgeManager> bridgeManager_;
+    std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
 
     DataFactory();
     ~DataFactory();

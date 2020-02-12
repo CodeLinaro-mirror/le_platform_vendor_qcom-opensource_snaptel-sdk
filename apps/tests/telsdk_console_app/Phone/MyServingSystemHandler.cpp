@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -60,7 +60,35 @@ std::string MyServingSystemHelper::getRatPreference(telux::tel::RatPreference pr
    if(preference[telux::tel::PREF_TDSCDMA]) {
       ratPrefString += " TDSCDMA \n";
    }
+
+   if(preference[telux::tel::PREF_NR5G]) {
+      ratPrefString += " NR5G \n";
+   }
    return ratPrefString;
+}
+
+std::string MyServingSystemHelper::getEndcAvailability(telux::tel::EndcAvailability isAvailable) {
+   std::string availabilityString = "";
+   if(isAvailable == telux::tel::EndcAvailability::AVAILABLE) {
+      availabilityString += " AVAILABLE \n";
+   } else if(isAvailable == telux::tel::EndcAvailability::UNAVAILABLE){
+       availabilityString += " NOT AVAILABLE \n";
+   } else {
+       availabilityString += " UNKNOWN \n";
+   }
+   return availabilityString;
+}
+
+std::string MyServingSystemHelper::getDcnrRestriction(telux::tel::DcnrRestriction isRestricted) {
+   std::string restrictedString = "";
+   if(isRestricted == telux::tel::DcnrRestriction::RESTRICTED) {
+      restrictedString += " RESTRICTED \n";
+   } else if(isRestricted == telux::tel::DcnrRestriction::UNRESTRICTED) {
+       restrictedString += " NOT RESTRICTED \n";
+   } else {
+       restrictedString += " UNKNOWN \n";
+   }
+   return restrictedString;
 }
 
 void MyRatPreferenceResponseCallback::ratPreferenceResponse(telux::tel::RatPreference preference,
@@ -126,4 +154,12 @@ void MyServingSystemListener::onServiceDomainPreferenceChanged(
    std::cout << "\n\n";
    PRINT_NOTIFICATION << "\nService domain preference is"
                       << MyServingSystemHelper::getServiceDomain(preference) << std::endl;
+}
+
+void MyServingSystemListener::onDcStatusChanged(telux::tel::DcStatus dcStatus) {
+   std::cout << "\n\n";
+   PRINT_NOTIFICATION << "\nENDC Availability: \n"
+                      << MyServingSystemHelper::getEndcAvailability(dcStatus.endcAvailability);
+   PRINT_NOTIFICATION << "\nDCNR Restriction: \n"
+                      << MyServingSystemHelper::getDcnrRestriction(dcStatus.dcnrRestriction);
 }

@@ -4,6 +4,7 @@ set(TARGET_POWERMGR_TEST_APP telux_power_test_app)
 
 set(POWERMGR_TEST_APP_SOURCES
     PowerMgrTestApp.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
 )

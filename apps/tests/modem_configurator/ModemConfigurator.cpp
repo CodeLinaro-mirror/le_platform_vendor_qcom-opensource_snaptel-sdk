@@ -32,6 +32,7 @@
 #include <dirent.h>
 
 #include "ModemConfigurator.hpp"
+#include "../../common/utils/Utils.hpp"
 
 using namespace telux::config;
 
@@ -472,7 +473,11 @@ telux::common::Status ModemConfigurator::parseArguments(int argc, char **argv) {
 int main(int argc, char **argv) {
 
     std::shared_ptr<ModemConfigurator> modemConfigurator = std::make_shared<ModemConfigurator>();
-
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
     modemConfigurator->init();
 
     telux::common::Status status = telux::common::Status::FAILED;

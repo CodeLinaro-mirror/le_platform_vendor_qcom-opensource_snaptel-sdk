@@ -4,6 +4,7 @@ set(TARGET_MODEM_CONFIGURATOR modem_configurator)
 
 set(MODEM_CONFIGURATOR_SOURCES
     ModemConfigurator.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
 )

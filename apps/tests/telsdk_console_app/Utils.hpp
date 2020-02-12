@@ -42,6 +42,7 @@
 #include <string>
 #include <telux/common/CommonDefines.hpp>
 
+
 class Utils {
 public:
    // Validate the input and in case of invalid input request
@@ -72,6 +73,7 @@ public:
     * Get error description for given ErrorCode
     */
    static std::string getErrorCodeAsString(telux::common::ErrorCode error);
+
 };
 
 #endif

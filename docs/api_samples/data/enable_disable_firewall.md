@@ -1,4 +1,4 @@
-# Enable/Disable firewall
+# Enable/Disable Firewall
 
 Please follow below steps to Enable/Disable Firewall
 
@@ -38,10 +38,10 @@ if subsystems were not ready, wait for unconditionally.
    };
    ~~~~~~
 
-### 4. set firewall mode based on enable/disable and allow/drop packets ###
+### 4. set firewall mode based on profileId, enable/disable and allow/drop packets ###
 
    ~~~~~~{.cpp}
-   dataFwMgr->setFirewall(fwEnable, allowPackets, respCb);
+   dataFwMgr->setFirewall(profileId,fwEnable, allowPackets, respCb);
    ~~~~~~
 
 ### 5. Response callback will be called for the setFirewall response ###

@@ -1,4 +1,4 @@
-# Creat firewall DMZ
+# Create Firewall DMZ
 
 Please follow below steps to create firewall DMZ
 
@@ -38,10 +38,10 @@ if subsystems were not ready, wait for unconditionally.
    };
    ~~~~~~
 
-### 4. Create DMZ based on local ip address ###
+### 4. Create DMZ based on profile id and local ip address ###
 
    ~~~~~~{.cpp}
-   dataFwMgr->addDmz(ipAddr, respCb);
+   dataFwMgr->enableDmz(profileId,ipAddr, respCb);
    ~~~~~~
 
 ### 5. Response callback will be called for the addDmz response ###

@@ -118,13 +118,17 @@ void ServingSystemMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "4", "Set_service_domain_preference", {},
          std::bind(&ServingSystemMenu::setServiceDomainPreference, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> getDcStatusCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "5", "Get_NR_Dual_Connectivity_Status", {},
+         std::bind(&ServingSystemMenu::getDualConnectivityStatus, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Select_sim_slot", {},
+         "6", "Select_sim_slot", {},
          std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
       = {getRatModePreferenceCommand, setRatModePreferenceCommand,
-         getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand};
+         getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand, getDcStatusCommand };
 
    if (servingSystemMgrs_.size() > 1) {
        commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -156,7 +160,8 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
       std::vector<int> options;
       std::cout
          << "Available RAT mode preferences: \n"
-            "(0 - CDMA_1X\n 1 - CDMA_EVDO\n 2 - GSM\n 3 - WCDMA\n 4 - LTE\n 5 - TDSCDMA) \n\n";
+            "(0 - CDMA_1X\n 1 - CDMA_EVDO\n 2 - GSM\n 3 - WCDMA\n 4 - LTE\n 5 - TDSCDMA\n" <<
+            "6 - NR5G) \n\n";
       std::cout
          << "Enter RAT mode preferences\n(For example: enter 2,4 to prefer GSM & LTE mode): ";
       std::getline(std::cin, preference, delimiter);
@@ -170,7 +175,7 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
       }
 
       for(auto &opt : options) {
-         if(opt >= 0 && opt <= 5) {
+         if(opt >= 0 && opt <= 6) {
             try {
                pref.set(opt);
             } catch(const std::exception &e) {
@@ -256,5 +261,16 @@ void ServingSystemMenu::selectSimSlot(std::vector<std::string> userInput) {
       }
    } else {
       std::cout << "Empty input, enter the correct slot" << std::endl;
+   }
+}
+
+void ServingSystemMenu::getDualConnectivityStatus(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      telux::tel::DcStatus dcStatus = servingSystemMgr->getDcStatus();
+      std::cout << "\nENDC Availability: \n"
+               << MyServingSystemHelper::getEndcAvailability(dcStatus.endcAvailability);
+      std::cout << "\nDCNR Restriction: \n"
+               << MyServingSystemHelper::getDcnrRestriction(dcStatus.dcnrRestriction);
    }
 }

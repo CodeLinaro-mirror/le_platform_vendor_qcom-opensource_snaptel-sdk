@@ -33,6 +33,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/MyDataFilterListener.cpp
    Data/ConfigParser.cpp
    Data/bridge/BridgeMenu.cpp
+   Data/l2tp/L2tpMenu.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp
@@ -42,13 +43,12 @@ set(TELSDK_CONSOLE_APP_SOURCES
 
    TelSdkConsoleApp.cpp
 
-   Utils.cpp
    ModemStatus.cpp
 
+   ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
 
-   Utils.cpp
 )
 
 include_directories(BEFORE

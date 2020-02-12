@@ -53,6 +53,7 @@ extern "C" {
 #define APP_NAME "audio_console_app"
 
 #include "AudioConsoleApp.hpp"
+#include "../../common/utils/Utils.hpp"
 
 AudioConsoleApp::AudioConsoleApp(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
@@ -174,7 +175,11 @@ void AudioConsoleApp::cleanup() {
 int main(int argc, char **argv) {
 
     AudioConsoleApp audioConsoleApp(APP_NAME, "audio> ");
-
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
     audioConsoleApp.init();  // initialize commands and display
 
     return audioConsoleApp.mainLoop();  // Main loop to continuously read and execute commands

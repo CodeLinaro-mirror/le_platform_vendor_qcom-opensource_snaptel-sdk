@@ -94,7 +94,7 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
 <b>Data Network Management</b>
 
-   Data Network Management sub-system consists of APIs to setup VLAN, static NAT, Firewall, etc.
+   Data Network Management sub-system consists of APIs to setup VLAN, static NAT, Firewall, Socks, etc.
 
 
 Telematics SDK classes can be broadly divided into the following types:
@@ -191,6 +191,13 @@ Data Firewall Manager APIs provide functionality such as
    - Query current status of Firewall
    - Add / remove Firewall entry
    - Query Firewall entry rules
+
+Data Software Bridge Manager provides interface to enable packet acceleration for non-standard WLAN and Ethernet physical interfaces.
+It facilitates to configure a software bridge between the interface and Hardware accelerator.
+Its APIs provide functionality such as
+   - Add / remove a software bridge
+   - Query the software bridges configured in the system
+   - Enable / Disable the software bridge management
 
 @subsection nw_srv_sys_services Network Selection and Serving System Management
 Network Selection and Service System Management APIs in the Telematics SDK used for configuring the networks and preferences

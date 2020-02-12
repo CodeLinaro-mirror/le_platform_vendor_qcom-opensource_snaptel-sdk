@@ -53,6 +53,7 @@
 #include "DataResponseCallback.hpp"
 #include "MyProfileListener.hpp"
 #include "bridge/BridgeMenu.hpp"
+#include "l2tp/L2tpMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -109,7 +110,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void setFirewall(std::vector<std::string> inputCommand);
     void requestFirewallStatus(std::vector<std::string> inputCommand);
     void addFirewallEntry(std::vector<std::string> inputCommand);
-    void requestFirewallEntry(std::vector<std::string> inputCommand);
+    void requestFirewallEntries(std::vector<std::string> inputCommand);
     void removeFirewallEntry(std::vector<std::string> inputCommand);
     void enableDmz(std::vector<std::string> inputCommand);
     void disableDmz(std::vector<std::string> inputCommand);
@@ -124,6 +125,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
 
     void enableSocks(std::vector<std::string> inputCommand);
     void bridgeMenu(std::vector<std::string> inputCommand);
+    void l2tpMenu(std::vector<std::string> inputCommand);
  private:
     void requestDataCallList(OperationType operationType, DataCallListResponseCb cb);
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -72,7 +72,34 @@ enum RatPrefType {
    PREF_GSM,       /**< GSM */
    PREF_WCDMA,     /**< WCDMA */
    PREF_LTE,       /**< LTE */
-   PREF_TDSCDMA    /**< TDSCDMA */
+   PREF_TDSCDMA,   /**< TDSCDMA */
+   PREF_NR5G       /**< NR5G */
+};
+
+/**
+ * Defines ENDC(E-UTRAN New Radio-Dual Connectivity) Availability status on 5G NR
+ */
+enum class EndcAvailability {
+   UNKNOWN = -1,   /**< Status unknown */
+   AVAILABLE,      /**< ENDC is Available */
+   UNAVAILABLE,    /**< ENDC is not Available */
+};
+
+/**
+ * Defines DCNR(Dual Connectivity with NR) Restriction status on 5G NR
+ */
+enum class DcnrRestriction {
+   UNKNOWN = -1,    /**< Status unknown */
+   RESTRICTED,      /**< DCNR is Rescticted */
+   UNRESTRICTED,    /**< DCNR is not Restricted */
+};
+
+/**
+ * Defines Dual Connectivity status
+ */
+struct DcStatus {
+   EndcAvailability endcAvailability;     /**< ENDC availability */
+   DcnrRestriction  dcnrRestriction;      /**< DCNR restriction */
 };
 
 /** @} */ /* end_addtogroup telematics_serving_system */
@@ -192,6 +219,16 @@ public:
       = 0;
 
    /**
+    * Request for Dual Connectivity status on 5G NR.
+    *
+    * @returns @ref DcStatus
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::tel::DcStatus getDcStatus() = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
@@ -243,6 +280,17 @@ public:
     * @param [in] preference      @ref ServiceDomainPreference
     */
    virtual void onServiceDomainPreferenceChanged(ServiceDomainPreference preference) {
+   }
+
+   /**
+    * This function is called whenever the Dual Connnectivity status is changed on 5G NR.
+    *
+    * @param [in] dcStatus       @ref DcStatus
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual void onDcStatusChanged(DcStatus dcStatus) {
    }
 
    /**

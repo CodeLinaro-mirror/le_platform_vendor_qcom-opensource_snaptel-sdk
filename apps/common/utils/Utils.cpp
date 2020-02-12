@@ -35,8 +35,12 @@
 
 #include <iostream>
 #include <string>
+#include <grp.h>
+#include <sys/types.h>
 
 #include "Utils.hpp"
+
+#define INVALID_GID -1
 
 void Utils::validateNumericString(std::string &input) {
    char delimiter = '\n';
@@ -293,4 +297,30 @@ std::string Utils::getErrorCodeAsString(telux::common::ErrorCode error) {
       return errorCodeToStringMap_[error];
    }
    return "UNKNOWN_ERROR";
+}
+
+std::vector<gid_t> getGidByName(std::vector<std::string> names) {
+    std::vector<gid_t> groupIds;
+    for(auto i: names) {
+        struct group* tempGrp;
+        if((tempGrp = getgrnam(i.c_str())) != NULL) {
+            gid_t tmpGid = tempGrp->gr_gid;
+            groupIds.push_back(tmpGid);
+        }
+    }
+    return groupIds;
+}
+
+int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
+    std::vector<gid_t> groupIds = getGidByName(grps);
+    int numGroups = getgroups(0, NULL);
+    gid_t gid[numGroups]{};
+    getgroups(numGroups, gid);
+    std::vector<gid_t> existingGidList(gid, gid+numGroups);
+    existingGidList.insert(std::end(existingGidList), std::begin(groupIds), std::end(groupIds));
+    uint32_t gidListSize = existingGidList.size();
+    gid_t newGidList[gidListSize]{};
+    std::copy(existingGidList.begin(), existingGidList.end(), newGidList);
+    int status = setgroups(gidListSize, newGidList);
+    return status;
 }

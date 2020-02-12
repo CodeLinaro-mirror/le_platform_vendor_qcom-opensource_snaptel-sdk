@@ -1,4 +1,4 @@
-# Creat static NAT entry
+# Create Static NAT Entry
 
 Please follow below steps to create static NAT entry
 
@@ -38,14 +38,14 @@ if subsystems were not ready, wait for unconditionally.
    };
    ~~~~~~
 
-### 4. Create Snat entry based on local ip, local port, global port, and protocol ###
+### 4. Create Snat entry based on profile id, local ip, local port, global port, and protocol ###
 
    ~~~~~~{.cpp}
    natConfig.addr = ipAddr;
    natConfig.port = (uint16_t)localIpPort;
    natConfig.globalPort = (uint16_t)globalIpPort;
    natConfig.proto = (uint8_t)proto;
-   dataSnatMgr->addStaticNatEntry(natConfig, respCb);
+   dataSnatMgr->addStaticNatEntry(profileId, natConfig, respCb);
    ~~~~~~
 
 ### 5. Response callback will be called for the addStaticNatEntry response ###

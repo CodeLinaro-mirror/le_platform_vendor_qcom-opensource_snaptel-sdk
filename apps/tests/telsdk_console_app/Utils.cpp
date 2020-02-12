@@ -35,8 +35,8 @@
 
 #include <iostream>
 #include <string>
-
 #include "Utils.hpp"
+
 
 void Utils::validateNumericString(std::string &input) {
    char delimiter = '\n';
@@ -294,3 +294,4 @@ std::string Utils::getErrorCodeAsString(telux::common::ErrorCode error) {
    }
    return "UNKNOWN_ERROR";
 }
+

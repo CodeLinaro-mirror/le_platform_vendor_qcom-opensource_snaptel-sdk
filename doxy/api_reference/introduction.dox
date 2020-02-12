@@ -46,6 +46,8 @@ when       who     what, where, why
 11/05/19   RV      Added Audio Format Transcoding Support in Telematics SDK
 11/10/19   FS      Added Data Networking Features support to Telematics SDK
 11/15/19   RV      Added compressed audio format playback on voice paths support in Telematics SDK
+01/15/20   SM      Added software bridge management support in Telematics SDK
+01/15/20   FS      Added Socks Proxy Feature Support in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

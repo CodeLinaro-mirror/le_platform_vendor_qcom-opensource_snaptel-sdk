@@ -276,9 +276,9 @@ void DataMenu::init() {
     std::shared_ptr<ConsoleAppCommand> addFirewallEntry
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("17", "add_firewall_entry", {},
             std::bind(&DataMenu::addFirewallEntry, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> requestFirewallEntry
+    std::shared_ptr<ConsoleAppCommand> requestFirewallEntries
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18", "request_firewall_entry", {},
-            std::bind(&DataMenu::requestFirewallEntry, this, std::placeholders::_1)));
+            std::bind(&DataMenu::requestFirewallEntries, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> removeFirewallEntry
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("19", "remove_firewall_entry", {},
             std::bind(&DataMenu::removeFirewallEntry, this, std::placeholders::_1)));
@@ -315,6 +315,9 @@ void DataMenu::init() {
     std::shared_ptr<ConsoleAppCommand> bridgeMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("30", "Bridge_Menu\n",
             {}, std::bind(&DataMenu::bridgeMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> l2tpMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("31", "L2tp_Menu\n",
+            {}, std::bind(&DataMenu::l2tpMenu, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> reqProfile
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("100", "request_profile_list", {},
@@ -345,10 +348,10 @@ void DataMenu::init() {
         reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile, enableModeCommand,
         disableModeCommand, getFilterModeCommand, addFilterCommand, removeAllFilterCommand,
         reqStaticNatEntries, addStaticNatEntry, removeStaticNatEntry, requestFirewallStatus,
-        setFirewall, addFirewallEntry, requestFirewallEntry, removeFirewallEntry, enableDmz,
+        setFirewall, addFirewallEntry, requestFirewallEntries, removeFirewallEntry, enableDmz,
         disableDmz, requestDmzEntry, createVlan, removeVlan, queryVlanInfo, bindWithProfile,
-        unbindFromProfile, queryVlanMappingList, enableSocks, bridgeMenuCommand, reqProfile,
-        createProfileMenu, deleteProfileMenu, modifyProfileMenu, queryProfileMenu,
+        unbindFromProfile, queryVlanMappingList, enableSocks, bridgeMenuCommand, l2tpMenuCommand,
+        reqProfile, createProfileMenu, deleteProfileMenu, modifyProfileMenu, queryProfileMenu,
         requestProfileByIdMenu};
 
     addCommands(commandsList);
@@ -1565,7 +1568,7 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     firewallMgr->addFirewallEntry(profileId, fwEntry, respCb);
 }
 
-void DataMenu::requestFirewallEntry(std::vector<std::string> inputCommand) {
+void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
@@ -1591,10 +1594,11 @@ void DataMenu::requestFirewallEntry(std::vector<std::string> inputCommand) {
     }
 
     auto respCb = [this](
-        std::vector<std::shared_ptr<IFirewallEntry>> entries, telux::common::ErrorCode error) {
+        std::vector<shared_ptr<IFirewallEntry>> entries,
+            telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
-                  << "requestFirewallEntry Response"
+                  << "requestFirewallEntries Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
@@ -1604,16 +1608,16 @@ void DataMenu::requestFirewallEntry(std::vector<std::string> inputCommand) {
         this->displayFirewallEntry();
     };
 
-    firewallMgr->requestFirewallEntry(profileId, respCb);
+    firewallMgr->requestFirewallEntries(profileId, respCb);
 }
 
 void DataMenu::displayFirewallEntry() {
     std::cout << std::setw(2)
-        << "+------------------------------------------------------------------"
-        << "-------------------------------------------------------------------"
+        << "+-----------------------------------------------------------------------"
+        << "------------------------------------------------------------------------"
         << "-+"
         << std::endl;
-    std::cout << "| ID# | "
+    std::cout << "|    Handle    | "
         << "Direction | "
         << "IPv4 Src Address | "
         << "       IPv6 Src Address        | "
@@ -1621,10 +1625,10 @@ void DataMenu::displayFirewallEntry() {
         << "Src Port | "
         << "Src PortRange | "
         << "Dst Port | "
-        << "Dst PortRange | " << std::endl;
+        << "Dst PortRange  | " << std::endl;
     std::cout << std::setw(2)
-        << "+------------------------------------------------------------------"
-        << "-------------------------------------------------------------------"
+        << "+-----------------------------------------------------------------------"
+        << "------------------------------------------------------------------------"
         << "-+"
         << std::endl;
 
@@ -1639,7 +1643,8 @@ void DataMenu::displayFirewallEntry() {
         parseProtoInfo(ipfilter, proto, srcPort, destPort, srcPortRange, dstPortRange, protoStr);
         std::string dir  = (static_cast<uint32_t>(
                     fwEntries_[i]->getDirection()) == 1)? "UPLINK":"DOWNLINK";
-        std::cout << std::left << std::setw(2) << "  " << std::setw(5) << i + 1
+        std::cout << std::left << std::setw(2) << "  " << std::setw(13)
+            << fwEntries_[i]->getHandle()
             << "  " << std::setw(12) << dir
             << "  " << std::setw(18) << ipv4Info.srcAddr
             << std::setw(32) << ipv6Info.srcAddr << "  "
@@ -1676,25 +1681,10 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
         subSystemStatus = f.get();
     }
 
-    int fwDirection;
-    std::cout << "Enter Firewall Direction (1-Uplink, 2-Downlink): ";
-    std::cin >> fwDirection;
-    Utils::validateInput(fwDirection);
-    telux::data::Direction fwDir = static_cast<telux::data::Direction>(fwDirection);
-
-    char delimiter = '\n';
-    std::string protoStr;
-    std::cin.get();
-    std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
-    std::getline(std::cin, protoStr, delimiter);
-    telux::data::IpProtocol proto = getProtcol(protoStr);
-
-    int ipFamilyType;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6): ";
-    std::cin >> ipFamilyType;
-    std::cout << ipFamilyType;
-    Utils::validateInput(ipFamilyType);
-    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+    int entryHandle;
+    std::cout << "Enter handle of firewall entry to be removed: ";
+    std::cin >> entryHandle;
+    Utils::validateInput(entryHandle);
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -1705,16 +1695,7 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    auto iter = std::find_if(
-        std::begin(fwEntries_), std::end(fwEntries_), [=](std::shared_ptr<IFirewallEntry> e) {
-            return (e->getDirection() == fwDir && e->getIpFamilyType() == ipFamType
-                    && e->getIProtocolFilter()->getIpProtocol() == proto);
-        });
-    if (iter != std::end(fwEntries_)) {
-        firewallMgr->removeFirewallEntry(profileId, *iter, respCb);
-    } else {
-        std::cout << " Invalid input, execute remove_firewall_entry command \n";
-    }
+    firewallMgr->removeFirewallEntry(profileId, entryHandle, respCb);
 }
 
 void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
@@ -2031,6 +2012,14 @@ void DataMenu::bridgeMenu(std::vector<std::string> userInput) {
     BridgeMenu bridgeMenu("Software Bridge Menu", "bridge> ");
     if(0 == bridgeMenu.init()) {
         bridgeMenu.mainLoop();
+    }
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::l2tpMenu(std::vector<std::string> userInput) {
+    L2tpMenu l2tpMenu("L2TP Menu", "l2tp> ");
+    if(0 == l2tpMenu.init()) {
+        l2tpMenu.mainLoop();
     }
     ConsoleApp::displayMenu();
 }

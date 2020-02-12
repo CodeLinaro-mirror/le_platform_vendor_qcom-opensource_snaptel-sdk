@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -71,7 +71,7 @@ using FirewallStatusCb
     = std::function<void(bool enable, bool allowPackets, telux::common::ErrorCode error)>;
 
 /**
- * This function is called as a response to @ref requestFirewallEntry()
+ * This function is called as a response to @ref requestFirewallEntries()
  *
  * @param [in] entries           list of firewall entries
  * @param [in] error       -     Return code which indicates whether the operation
@@ -179,23 +179,24 @@ class IFirewallManager {
     /**
      * Request Firewall rules
      *
-     * @param [in] profileId        Profile identifier on which firewall entries are retrieved.
-     * @param[in] callback          callback to get the response requestFirewallEntry
+     * @param[in] profileId         Profile identifier on which firewall entries are retrieved.
+     * @param[in] callback          callback to get the response requestFirewallEntries.
      *
-     * @returns Status of requestFirewallEntry i.e. success or suitable status code.
+     * @returns Status of requestFirewallEntries i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestFirewallEntry(int profileId,
+    virtual telux::common::Status requestFirewallEntries(int profileId,
         FirewallEntriesCb callback) = 0;
 
     /**
      * Remove firewall entry
      *
-     * @param [in] profileId        Profile identifier on which firewall entry will be removed.
-     * @param[in] entry             Firewall entry to be removed, get the available entries
-     *                              from requestFirewallEntry() API
+     * @param[in] profileId         Profile identifier on which firewall entry will be removed.
+     * @param[in] handle            handle of Firewall entry to be removed. To retrieve the handle,
+     *                              first use requestFirewallEntries() to get the list of entries
+     *                              added in the system. And then use IFirewallEntry::getHandle()
      * @param[in] callback          callback to get the response removeFirewallEntry
      *
      * @returns Status of removeFirewallEntry i.e. success or suitable status code.
@@ -203,8 +204,7 @@ class IFirewallManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status removeFirewallEntry(int profileId,
-        const std::shared_ptr<IFirewallEntry> &entry,
+    virtual telux::common::Status removeFirewallEntry(int profileId, uint32_t handle,
         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
@@ -271,6 +271,8 @@ class IFirewallManager {
  */
 class IFirewallEntry {
  public:
+    static const uint32_t INVALID_HANDLE = 0;
+
     /**
      * Get IProtocol filter type
      *
@@ -294,6 +296,14 @@ class IFirewallEntry {
      *
      */
     virtual telux::data::IpFamilyType getIpFamilyType() = 0;
+
+    /**
+     * Get the unique handle identifying this Firewall entry in the system
+     *
+     * @returns uint32_t handle if initialized or INVALID_HANDLE otherwise
+     *
+     */
+    virtual uint32_t getHandle() = 0;
 
     /**
      * Destructor for IFirewallEntry

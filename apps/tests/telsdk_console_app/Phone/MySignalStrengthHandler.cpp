@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -234,5 +234,36 @@ void MySignalStrengthCallback::signalStrengthResponse(
             << "TDSCDMA  Reference Signal Code Power(in dBm): "
             << signalStrength->getTdscdmaSignalStrength()->getRscp() << std::endl;
         }
+    }
+
+    if (signalStrength->getNr5gSignalStrength() != nullptr) {
+        if(signalStrength->getNr5gSignalStrength()->getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "5G NR Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "5G NR Signal Strength(in dBm): "
+                 << signalStrength->getNr5gSignalStrength()->getDbm() << std::endl;
+        }
+
+        if(signalStrength->getNr5gSignalStrength()->getReferenceSignalReceiveQuality()
+                                                                == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "5G NR Receive Quality(in dB): "<< "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "5G NR Receive Quality(in dB): "
+                 << signalStrength->getNr5gSignalStrength()->getReferenceSignalReceiveQuality()
+                 << std::endl;
+        }
+
+        if(signalStrength->getNr5gSignalStrength()->getReferenceSignalSnr()
+            == INVALID_SIGNAL_STRENGTH_VALUE) {
+            PRINT_CB << "5G Reference Signal SNR(in dB): "<< "UNAVAILABLE" << std::endl;
+        } else {
+            PRINT_CB << "5G Reference Signal SNR(in dB): "
+                 << signalStrength->getNr5gSignalStrength()->getReferenceSignalSnr() * 0.1
+                 << std::endl;
+        }
+
+        PRINT_CB << "5G Signal Level: "
+            << signalLevelToString(signalStrength->getNr5gSignalStrength()->getLevel())
+             << std::endl;
     }
 }

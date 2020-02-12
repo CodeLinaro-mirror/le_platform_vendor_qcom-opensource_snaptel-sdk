@@ -41,6 +41,7 @@
 #include <telux/tel/PhoneDefines.hpp>
 
 #include "ECallApp.hpp"
+#include "../../common/utils/Utils.hpp"
 
 #define ECALL_CATEGORY_AUTO 1
 #define ECALL_CATEGORY_MANUAL 2
@@ -293,6 +294,11 @@ void setupSignalHandler() {
 // Main function that displays the interactive console for eCall related operations
 int main(int argc, char **argv) {
     setupSignalHandler();
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
     auto &eCallApp = ECallApp::getInstance();
     eCallApp.init();  // initialize commands and display
     return eCallApp.mainLoop();  // Main loop to continuously read and execute commands

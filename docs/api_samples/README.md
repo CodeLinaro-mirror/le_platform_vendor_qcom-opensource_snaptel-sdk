@@ -45,5 +45,9 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to create static nat entry](data/create_snat_entry.md)
   * [How to create firewall dmz](data/create_firewall_dmz.md)
   * [How to enable/disable firewall](data/enable_disable_firewall.md)
+  * [How to add and enable a software bridge](data/add_enable_software_bridge.md)
+  * [How to remove and disable a software bridge](data/remove_disable_software_bridge.md)
+  * [How to add firewall entry](data/add_firewall_entry.md)
   * [How to play compressed format audio on voice paths](audio/compressed_audio_format_playback_on_voice_paths.md)
+  * [How to enable/disable socks proxy](data/enable_disable_socks.md)
 

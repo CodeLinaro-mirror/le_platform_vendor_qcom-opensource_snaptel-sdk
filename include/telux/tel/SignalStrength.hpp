@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -52,6 +52,7 @@ class GsmSignalStrengthInfo;
 class CdmaSignalStrengthInfo;
 class WcdmaSignalStrengthInfo;
 class TdscdmaSignalStrengthInfo;
+class Nr5gSignalStrengthInfo;
 
 /**
  * Defines all the signal levels that SignalStrength class can return
@@ -75,7 +76,8 @@ public:
                   std::shared_ptr<GsmSignalStrengthInfo> gsmSignalStrengthInfo,
                   std::shared_ptr<CdmaSignalStrengthInfo> cdmaSignalStrengthInfo,
                   std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSignalStrengthInfo,
-                  std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSignalStrengthInfo);
+                  std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSignalStrengthInfo,
+                  std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSignalStrengthInfo);
    /**
     * Gives LTE signal strength instance.
     *
@@ -117,12 +119,22 @@ public:
     */
    std::shared_ptr<TdscdmaSignalStrengthInfo> getTdscdmaSignalStrength();
 
+   /**
+    * Gives 5G NR signal strength instance.
+    *
+    * @returns Pointer to 5G NR signal strength instance that can be used to get 5G NR dbm and snr
+    *          values.
+    *
+    */
+   std::shared_ptr<Nr5gSignalStrengthInfo> getNr5gSignalStrength();
+
 private:
    std::shared_ptr<LteSignalStrengthInfo> lteSS_;
    std::shared_ptr<GsmSignalStrengthInfo> gsmSS_;
    std::shared_ptr<CdmaSignalStrengthInfo> cdmaSS_;
    std::shared_ptr<WcdmaSignalStrengthInfo> wcdmaSS_;
    std::shared_ptr<TdscdmaSignalStrengthInfo> tdscdmaSS_;
+   std::shared_ptr<Nr5gSignalStrengthInfo> nr5gSS_;
 };
 
 /**
@@ -179,6 +191,8 @@ public:
     * Get LTE channel quality indicator.
     * (Valid value range [0, 15] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
+    * @deprecated This API not being supported
+    *
     * @returns LteCqI.
     */
    const int getLteChannelQualityIndicator() const;
@@ -186,6 +200,8 @@ public:
    /**
     * Get the timing advance in micro seconds.
     * (Valid value range [0, 0x7FFFFFFE] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @deprecated This API not being supported
     *
     * @returns Timing advance value.
     *
@@ -238,6 +254,7 @@ public:
     * Get the GSM bit error rate.
     * (Valid value range [0, 7] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
+    * @deprecated This API not being supported
     *
     * @returns GSM bit error rate.
     */
@@ -246,6 +263,8 @@ public:
    /**
     * Get the timing advance in bit periods . 1 bit period = 48/13 us
     * (Valid value range [0, 219] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    *
+    * @deprecated This API not being supported
     *
     * @returns timing advance.
     */
@@ -354,6 +373,8 @@ public:
     * Get the WCDMA bit error rate.
     * (Valid value range [0, 7] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
     *
+    * @deprecated This API not being supported
+    *
     * @returns WCDMA bit error rate.
     *
     */
@@ -382,6 +403,54 @@ public:
 
 private:
    int rscp_;
+};
+
+/**
+ * 5G NR signal strength provides methods to get signal strength and signal-to-noise ratio.
+ */
+class Nr5gSignalStrengthInfo {
+public:
+   Nr5gSignalStrengthInfo(int rsrp, int rsrq, int rssnr);
+   /**
+    * Get signal level in the range.
+    *
+    * @returns Signal levels indicates the quality of signal being received by
+    *          the device.
+    */
+   const SignalStrengthLevel getLevel() const;
+
+   /**
+    * Get the signal strength in dBm.
+    * (Valid value range [-140, -44] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * INVALID_SIGNAL_STRENGTH_VALUE indicates that modem is not in ENDC connected mode.
+    *
+    * @returns 5G NR dBm value.
+    */
+   const int getDbm() const;
+
+   /**
+    * Get 5G NR reference signal receive quality in dB.
+    * (Valid value range [-20, -3] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * INVALID_SIGNAL_STRENGTH_VALUE indicates that modem is not in ENDC connected mode.
+    *
+    * @returns 5G NR rsrq.
+    */
+   const int getReferenceSignalReceiveQuality() const;
+
+   /**
+    * Get 5G NR reference signal signal-to-noise ratio, multiply by 0.1 to get SNR in dB.
+    * (Valid value range [-200, +300] and INVALID_SIGNAL_STRENGTH_VALUE i.e. unavailable).
+    * (-200 = -20.0 dB, +300 = 30dB).
+    * INVALID_SIGNAL_STRENGTH_VALUE indicates that modem is not in ENDC connected mode.
+    *
+    * @returns 5G NR signal-to-noise.
+    */
+   const int getReferenceSignalSnr() const;
+
+private:
+   int rsrp_;
+   int rsrq_;
+   int rssnr_;
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

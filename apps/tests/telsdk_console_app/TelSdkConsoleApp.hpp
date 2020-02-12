@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,6 +55,9 @@ public:
 
    // Displays main menu
    void displayMenu();
+
+   // Check Modem availability for Telephony
+    void onModemAvailable();
 
 private:
    void phoneMenu(std::vector<std::string> userInput);

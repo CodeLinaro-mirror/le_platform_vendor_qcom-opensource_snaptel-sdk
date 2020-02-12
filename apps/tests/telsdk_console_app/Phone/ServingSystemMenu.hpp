@@ -57,6 +57,7 @@ public:
    void getServiceDomainPreference(std::vector<std::string> userInput);
    void setServiceDomainPreference(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
+   void getDualConnectivityStatus(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

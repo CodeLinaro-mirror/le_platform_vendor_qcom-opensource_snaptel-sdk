@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -51,6 +51,7 @@ extern "C" {
 #include "Sms/SmsMenu.hpp"
 #include "Data/DataMenu.hpp"
 #include "SimCardServices/SimCardServicesMenu.hpp"
+#include "../../common/utils/Utils.hpp"
 
 #include "TelSdkConsoleApp.hpp"
 
@@ -92,6 +93,7 @@ void TelSdkConsoleApp::init() {
 }
 
 void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
+    TelSdkConsoleApp::onModemAvailable();
     PhoneMenu phoneMenu("Phone Menu", "phone> ");
     phoneMenu.init();
     phoneMenu.mainLoop();
@@ -99,6 +101,7 @@ void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
 }
 
 void TelSdkConsoleApp::callMenu(std::vector<std::string> userInput) {
+    TelSdkConsoleApp::onModemAvailable();
     CallMenu callMenu("Dialer Menu", "dialer> ");
     callMenu.init();
     callMenu.mainLoop();
@@ -106,6 +109,7 @@ void TelSdkConsoleApp::callMenu(std::vector<std::string> userInput) {
 }
 
 void TelSdkConsoleApp::eCallMenu(std::vector<std::string> userInput) {
+    TelSdkConsoleApp::onModemAvailable();
     ECallMenu eCallMenu("eCall Menu", "eCall> ");
     eCallMenu.init();
     eCallMenu.mainLoop();
@@ -113,6 +117,7 @@ void TelSdkConsoleApp::eCallMenu(std::vector<std::string> userInput) {
 }
 
 void TelSdkConsoleApp::simCardMenu(std::vector<std::string> userInput) {
+    TelSdkConsoleApp::onModemAvailable();
     SimCardServicesMenu simCardServicesMenu("SIM Card Services Menu", "card_services> ");
     simCardServicesMenu.init();
     simCardServicesMenu.mainLoop();
@@ -120,6 +125,7 @@ void TelSdkConsoleApp::simCardMenu(std::vector<std::string> userInput) {
 }
 
 void TelSdkConsoleApp::smsMenu(std::vector<std::string> userInput) {
+    TelSdkConsoleApp::onModemAvailable();
     SmsMenu smsMenu("SMS Menu", "sms> ");
     smsMenu.init();
     smsMenu.mainLoop();
@@ -135,10 +141,13 @@ void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
 
 void TelSdkConsoleApp::displayMenu() {
     ConsoleApp::displayMenu();
+}
 
+void TelSdkConsoleApp::onModemAvailable() {
 // Do not perform requestOperatingMode in CV2X machine
 // since operating mode cannot be changed
 #ifndef FEATURE_CV2X_ONLY
+    std::cout << "\n\nChecking telephony subsystem, Please wait!!!..." << std::endl;
     std::shared_ptr<ModemStatus> modemStatus = std::make_shared<ModemStatus>();
     modemStatus->printOperatingMode();
 #endif
@@ -165,6 +174,11 @@ int main(int argc, char **argv) {
                           + std::to_string(sdkVersion.minor) + "."
                           + std::to_string(sdkVersion.patch);
     setupSignal();
+    std::vector<std::string> supplementaryGrps{"system"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
 
     TelSdkConsoleApp telsdkConsoleApp(appName, "tel_sdk> ");
 

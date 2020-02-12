@@ -40,6 +40,8 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unistd.h>
+#include <vector>
 #include <telux/common/CommonDefines.hpp>
 
 class Utils {
@@ -72,6 +74,8 @@ public:
     * Get error description for given ErrorCode
     */
    static std::string getErrorCodeAsString(telux::common::ErrorCode error);
+
+   static int setSupplementaryGroups(std::vector<std::string> grps);
 };
 
 #endif

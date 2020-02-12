@@ -214,6 +214,8 @@ int NetworkMenu::convertToRatType(int input) {
          return telux::tel::RatType::LTE;
       case 3:
          return telux::tel::RatType::UMTS;
+      case 4:
+         return telux::tel::RatType::NR5G;
       default:
          return UNKNOWN;
    }
@@ -234,7 +236,7 @@ telux::tel::PreferredNetworkInfo NetworkMenu::getNetworkInfoFromUser() {
    std::cin >> mnc;
    Utils::validateInput(mnc);
    networkInfo.mnc = mnc;
-   std::cout << "Select RAT types (1-GSM, 2-LTE, 3-UMTS) \n";
+   std::cout << "Select RAT types (1-GSM, 2-LTE, 3-UMTS, 4-NR5G) \n";
    std::cout << "Enter RAT types\n(For example: enter 1,2 to set GSM & "
                 "LTE RAT type): ";
    std::cin >> preference;
@@ -247,7 +249,7 @@ telux::tel::PreferredNetworkInfo NetworkMenu::getNetworkInfoFromUser() {
          ss.ignore();
    }
    for(auto &opt : options) {
-      if((opt == 1) || (opt == 2) || (opt == 3)) {
+      if((opt == 1) || (opt == 2) || (opt == 3) || (opt == 4)) {
          rat.set(convertToRatType(opt));
       } else {
          std::cout << "Preference should not be out of range" << std::endl;

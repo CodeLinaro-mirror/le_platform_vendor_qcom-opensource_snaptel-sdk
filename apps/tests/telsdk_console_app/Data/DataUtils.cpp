@@ -179,6 +179,8 @@ std::string DataUtils::bearerTechToString(telux::data::DataBearerTechnology bear
          return "GSM";
       case telux::data::DataBearerTechnology::BEARER_TECH_3GPP_WLAN:
          return "3GPP WLAN";
+      case telux::data::DataBearerTechnology::BEARER_TECH_5G:
+         return "5G";
       default: { return "UNKNOWN"; }
    }
 }

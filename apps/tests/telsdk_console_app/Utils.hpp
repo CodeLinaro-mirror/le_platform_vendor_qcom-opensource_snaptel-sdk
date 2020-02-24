@@ -73,7 +73,6 @@ public:
     * Get error description for given ErrorCode
     */
    static std::string getErrorCodeAsString(telux::common::ErrorCode error);
-
 };
 
 #endif

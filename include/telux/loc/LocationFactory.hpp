@@ -74,8 +74,6 @@ public:
     */
    std::shared_ptr<ILocationConfigurator> getLocationConfigurator();
 
-   ~LocationFactory();
-
 private:
    std::shared_ptr<ILocationManager> locationManager_;
    std::shared_ptr<ILocationConfigurator> locConfigurator_;
@@ -83,6 +81,7 @@ private:
    LocationFactory();
    LocationFactory(const LocationFactory &) = delete;
    LocationFactory &operator=(const LocationFactory &) = delete;
+   ~LocationFactory();
 };
 /** @} */ /* end_addtogroup telematics_location */
 }  // end of namespace loc

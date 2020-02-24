@@ -30,8 +30,9 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/DataListener.cpp
    Data/MyProfileListener.cpp
    Data/DataUtils.cpp
-   Data/MyDataFilterListener.cpp
-   Data/ConfigParser.cpp
+   Data/data_filter/MyDataFilterListener.cpp
+   Data/data_filter/DataFilterMenu.cpp
+   Data/data_filter/ConfigParser.cpp
    Data/bridge/BridgeMenu.cpp
    Data/l2tp/L2tpMenu.cpp
 

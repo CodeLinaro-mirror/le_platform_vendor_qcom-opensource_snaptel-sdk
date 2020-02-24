@@ -95,17 +95,11 @@ class QueryProfileCallback : public telux::data::IDataProfileListCallback
     private:
         const std::string APN_NAME_V2X_IP = std::string("v2x_ip");
         const std::string APN_NAME_V2X_NON_IP = std::string("v2x_non_ip");
+        // V2x profile Ids set by the modem in the HW MBN
+        const int MIN_V2X_PROFILE_ID = 38;
+        const int MAX_V2X_PROFILE_ID = 40;
 
         std::shared_ptr<std::promise<ProfileIds>> prom_;
-};
-
-class CreateProfileCallback : public telux::data::IDataCreateProfileCallback
-{
-    public:
-        CreateProfileCallback(std::shared_ptr<std::promise<int>> prom);
-        void onResponse(int profileId, telux::common::ErrorCode error) override;
-    private:
-        std::shared_ptr<std::promise<int>> prom_;
 };
 
 class DataConnectionListener: public telux::data::IDataConnectionListener
@@ -122,8 +116,14 @@ class DataConnectionListener: public telux::data::IDataConnectionListener
 
         DataConnectionListener(std::weak_ptr<Cv2xTelux> instance);
 
+        void waitDataCallConnect(DataCallType callType, bool& connect);
+
     private:
         std::weak_ptr<Cv2xTelux> cv2xTelux_;
+        std::condition_variable dcv_;
+        std::mutex dmutex_;
+        DataCallStatus ipStatus_;
+        DataCallStatus nonIpStatus_;
 };
 
 class Cv2xTelux : public telux::cv2x::ICv2xListener,
@@ -163,16 +163,11 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
         Status stopV2xRadio();
 
         /**
-         * Start data call, used internally by startV2xDataCall()
-         */
-        Status startDataCall(std::shared_ptr<DataCallInfo> dataCall, IpFamilyType ipFamilyType);
-
-        /**
-         * create data profiles.
+         * find data profiles.
          * Start a data connection in V2X mode, there are two options, IP and NON_IP.
          * .
          */
-        Status createProfileAndStartDataCalls();
+        Status findProfilesAndStartDataCalls();
 
         /**
          * Tear-down a V2X data connection.
@@ -188,6 +183,16 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
          * SSR Listener
          */
         void onServiceStatusChange(ServiceStatus status) override;
+
+        /**
+         * Identify V2X ip data call via profileID
+         */
+        bool isIpDataCall(uint8_t profileID);
+
+        /**
+         * Identify V2X non-ip data call via profileID
+         */
+        bool isNonIpDataCall(uint8_t profileID);
 
         bool isPostSSRV2XDone_;
         std::condition_variable cv_;
@@ -217,12 +222,12 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
         int stopDataCall(std::shared_ptr<DataCallInfo>, IpFamilyType ipFamilyType);
 
         /**
-         * Handle creating V2X data profile, used internally by createProfileAndStartDataCalls()
+         * Handle finding V2X data profile, used internally by findProfilesAndStartDataCalls()
          */
-        Status createProfile();
+        Status findProfiles();
 
         /**
-         * Handle starting V2X data calls, used internally by createProfileAndStartDataCalls()
+         * Handle starting V2X data calls, used internally by findProfilesAndStartDataCalls()
          */
         Status startDataCalls();
 
@@ -231,5 +236,9 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
          */
         void logStatusChanged(Cv2xStatus &status);
 
+        /**
+         * Start data call, used internally by startV2xDataCall()
+         */
+        Status startDataCall(std::shared_ptr<DataCallInfo> dataCall, IpFamilyType ipFamilyType);
 };
 #endif /* CV2XTELUX_H */

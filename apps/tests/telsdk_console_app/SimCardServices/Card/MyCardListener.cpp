@@ -86,7 +86,16 @@ void MyCardListener::onCardInfoChanged(int slotId) {
    auto cardMgr = telux::tel::PhoneFactory::getInstance().getCardManager();
    // CardState cardState = cardMgr->getCardState(slotId);
    telux::tel::CardState cardState;
-   cardMgr->getCard(slotId)->getState(cardState);
+   telux::common::Status status;
+   auto card = cardMgr->getCard(slotId, &status);
+   if(status == telux::common::Status::NOTREADY) {
+       PRINT_NOTIFICATION << "\tCardManager is not ready" << std::endl;
+       return;
+   } else if(status != telux::common::Status::SUCCESS) {
+       PRINT_NOTIFICATION << "\tCouldn't get get Card details" << std::endl;
+       return;
+   }
+   card->getState(cardState);
    PRINT_NOTIFICATION << "\tCardState:" << (int)cardState << std::endl;
    switch(cardState) {
       case telux::tel::CardState::CARDSTATE_ABSENT:

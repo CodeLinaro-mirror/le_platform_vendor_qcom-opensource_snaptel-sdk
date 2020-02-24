@@ -324,3 +324,53 @@ int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
     int status = setgroups(gidListSize, newGidList);
     return status;
 }
+
+void Utils::printStatus(telux::common::Status status) {
+   switch (status)
+   {
+      case telux::common::Status::SUCCESS:
+         std::cout << "Operation processed successfully" << std::endl;
+         break;
+      case telux::common::Status::FAILED:
+         std::cout << "Operation processing failed" << std::endl;
+         break;
+      case telux::common::Status::NOCONNECTION:
+         std::cout << "Connection to Socket server has not been established" << std::endl;
+         break;
+      case telux::common::Status::NOSUBSCRIPTION:
+         std::cout << "Subscription not available" << std::endl;
+         break;
+      case telux::common::Status::INVALIDPARAM:
+         std::cout << "Input parameters are invalid" << std::endl;
+         break;
+      case telux::common::Status::INVALIDSTATE:
+         std::cout << "Invalid State detected" << std::endl;
+         break;
+      case telux::common::Status::NOTREADY:
+         std::cout << "Subsystem is not ready" << std::endl;
+         break;
+      case telux::common::Status::NOTALLOWED:
+         std::cout << "Operation not allowed" << std::endl;
+         break;
+      case telux::common::Status::NOTIMPLEMENTED:
+         std::cout << "Feature not supported" << std::endl;
+         break;
+      case telux::common::Status::CONNECTIONLOST:
+         std::cout << "Connection to Socket server lost" << std::endl;
+         break;
+      case telux::common::Status::EXPIRED:
+         std::cout << "Operation has expired" << std::endl;
+         break;
+      case telux::common::Status::ALREADY:
+         std::cout << "Already registered handler" << std::endl;
+         break;
+      case telux::common::Status::NOSUCH:
+         std::cout << "No such object" << std::endl;
+         break;
+      case telux::common::Status::NOTSUPPORTED:
+         std::cout << "Not supported on target platform" << std::endl;
+         break;
+      default:
+         break;
+   }
+}

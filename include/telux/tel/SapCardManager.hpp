@@ -39,6 +39,7 @@
 #define SAPCARDMANAGER_HPP
 
 #include <vector>
+#include <future>
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -56,6 +57,7 @@ namespace tel {
 class IAtrResponseCallback;
 class ICardReaderCallback;
 class ISapCardCommandCallback;
+class ISapCardListener;
 
 /**
  * Defines all SIM access profile (SAP) connection states.
@@ -120,6 +122,21 @@ using SapStateResponseCallback
  */
 class ISapCardManager {
 public:
+   /**
+    * Checks the status of SIM access profile(SAP) subsystem and returns the result.
+    *
+    * @returns If true then SapCardManager is ready for service.
+    */
+   virtual bool isReady() = 0;
+
+   /**
+    * Wait for IM access profile(SAP) subsystem to be ready.
+    *
+    * @returns A future that caller can wait on to be notified
+    * when card manager is ready.
+    */
+   virtual std::future<bool> onReady() = 0;
+
    /**
     * Get SIM access profile (SAP) client connection state.
     *
@@ -261,6 +278,24 @@ public:
     */
    virtual int getSlotId() = 0;
 
+   /**
+    * Register a listener for SAP events.
+    *
+    * @param [in] listener    Pointer to ISapCardListener object that processes the notification.
+    *
+    * @returns Status of registerListener i.e. success or suitable status code.
+    */
+   virtual telux::common::Status registerListener(std::shared_ptr<ISapCardListener> listener) = 0;
+
+   /**
+    * Remove a previously added listener.
+    *
+    * @param [in] listener    Pointer to ISapCardListener object that needs to be removed.
+    *
+    * @returns Status of removeListener i.e. success or suitable status code.
+    */
+   virtual telux::common::Status removeListener(std::shared_ptr<ISapCardListener> listener) = 0;
+
    virtual ~ISapCardManager(){};
 
 };  // end of ISapCardManager
@@ -311,6 +346,20 @@ public:
    virtual void cardReaderResponse(CardReaderStatus cardReaderStatus,
                                    telux::common::ErrorCode error)
       = 0;
+};
+
+/**
+ * Interface for SAP Listener object. Client needs to implement this interface to get access to
+ * SAP service notifications like service status change.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ */
+class ISapCardListener : public common::IServiceStatusListener{
+ public:
+
+    virtual ~ISapCardListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_card */

@@ -42,6 +42,7 @@
 
 #include <memory>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/tel/Subscription.hpp>
 
 namespace telux {
@@ -55,7 +56,7 @@ namespace tel {
  *            The methods in listener can be invoked from multiple different
  *            threads. The implementation should be thread safe.
  */
-class ISubscriptionListener {
+class ISubscriptionListener : public telux::common::IServiceStatusListener{
 
 public:
    /**

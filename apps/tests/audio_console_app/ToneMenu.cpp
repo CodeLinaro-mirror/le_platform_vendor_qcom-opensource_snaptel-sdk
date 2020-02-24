@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,11 +37,22 @@ ToneMenu::ToneMenu(std::string appName, std::string cursor,
     : ConsoleApp(appName, cursor),
       audioClient_(audioClient) {
         toneStarted_ = false;
+        ready_ = false;
 }
 
 ToneMenu::~ToneMenu() {
-    audioClient_ = nullptr;
 }
+
+void ToneMenu::cleanup() {
+    ready_ = false;
+    toneStarted_ = false;
+    audioToneStream_ = nullptr;
+}
+
+void ToneMenu::setSystemReady() {
+    ready_ = true;
+}
+
 
 void ToneMenu::init() {
     std::shared_ptr<ConsoleAppCommand> createStreamCommand
@@ -88,6 +99,7 @@ void ToneMenu::init() {
          stopToneCommand};
 
     if (audioClient_) {
+        ready_ = true;
         audioToneStream_ =std::dynamic_pointer_cast<IAudioToneGeneratorStream>(
            audioClient_->getStream(StreamType::TONE_GENERATOR));
         ConsoleApp::addCommands(ToneMenuCommandsList);
@@ -98,7 +110,7 @@ void ToneMenu::init() {
 
 void ToneMenu::createStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
-    if (audioClient_) {
+    if (ready_) {
         if (!audioToneStream_) {
             status = audioClient_->createStream(telux::audio::StreamType::TONE_GENERATOR);
             if(status == telux::common::Status::SUCCESS) {
@@ -109,7 +121,7 @@ void ToneMenu::createStream(std::vector<std::string> userInput) {
             std::cout << "Stream exist please delete first" << std::endl;
         }
     } else {
-       std::cout << "AudioClient not initialized " << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 
@@ -188,11 +200,11 @@ void ToneMenu::playTone(std::vector<std::string> userInput) {
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if(!(inputStream >> numFreq)) {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
                 return;
             }
         } else {
-        std::cout << "Invalid input!" << std::endl;
+        std::cout << "Invalid Input" << std::endl;
         }
 
         for (int i = 0; i<numFreq; i++) {
@@ -200,13 +212,13 @@ void ToneMenu::playTone(std::vector<std::string> userInput) {
             if(std::getline(std::cin, userInput)) {
                 std::stringstream inputStream(userInput);
                 if(!(inputStream >> tempFreq)){
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                     return;
                 } else {
                     freq.push_back(tempFreq);
                 }
             } else {
-                std::cout << "Invlaid input!" << std::endl;
+                std::cout << "Invlaid Input" << std::endl;
             }
         }
 
@@ -214,22 +226,22 @@ void ToneMenu::playTone(std::vector<std::string> userInput) {
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if(!(inputStream >> gain)) {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
                 return;
             }
         } else {
-        std::cout << "Invalid input!" << std::endl;
+        std::cout << "Invalid Input" << std::endl;
         }
 
         std::cout << "Enter the duration (in ms (0-65534) and 65535 for infinite): ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if(!(inputStream >> duration)) {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
                 return;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
 
         Status status =

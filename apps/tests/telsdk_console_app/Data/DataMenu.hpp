@@ -54,14 +54,11 @@
 #include "MyProfileListener.hpp"
 #include "bridge/BridgeMenu.hpp"
 #include "l2tp/L2tpMenu.hpp"
+#include "data_filter/DataFilterMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
-#include <telux/data/DataFilterManager.hpp>
-#include <telux/data/DataFilterListener.hpp>
-#include <telux/data/DataFilterListener.hpp>
 
-#include "MyDataFilterListener.hpp"
 #include "ConfigParser.hpp"
 
 using namespace telux::data;
@@ -74,6 +71,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
 
     // initialize menu and sdk
     void init();
+    void openDataFilterMenu(std::vector<std::string> userInput);
     void startDataCall(std::vector<std::string> inputCommand);
     void stopDataCall(std::vector<std::string> inputCommand);
     void requestDataCallStatistics(std::vector<std::string> inputCommand);
@@ -81,15 +79,6 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void requestDataCallList();
     void setDefaultProfile();
 
-    // Data Filter APIs
-    void sendSetDataRestrictMode(DataRestrictMode mode);
-    void getFilterMode();
-    void addFilter();
-    void removeAllFilter();
-
-    IpProtocol getTypeOfFilter(ConfigParser instance, std::map<std::string, std::string> filter);
-    void addIPParameters(std::shared_ptr<telux::data::IIpFilter> &dataFilter, ConfigParser instance,
-        std::map<std::string, std::string> filterMap);
     ResponseCallback responseCb;
     void commandCallback(ErrorCode errorCode);
 
@@ -144,9 +133,6 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<MyProfileListener> profileListener_;
 
     std::shared_ptr<DataListener> dataListener_;
-
-    std::shared_ptr<telux::data::IDataFilterManager> dataFilterMgr_;
-    std::shared_ptr<MyDataFilterListener> dataFilterListener_;
 
     std::map<std::string, telux::data::IpProtocol> protoMap_;
     std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;

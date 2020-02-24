@@ -35,7 +35,7 @@ extern "C" {
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
-#include <Utils.hpp>
+#include "../../../../common/utils/Utils.hpp"
 
 #include "L2tpMenu.hpp"
 
@@ -90,6 +90,7 @@ int L2tpMenu::init() {
 
 void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Unamanged Tunnel\n";
+    telux::common::Status retStat;
     bool enable = false;
     bool enableMss =  false;
     bool enableMtu = false;
@@ -122,11 +123,13 @@ void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    l2tpManager_->setConfig(enable, enableMss, enableMtu, respCb);
+    retStat = l2tpManager_->setConfig(enable, enableMss, enableMtu, respCb);
+    Utils::printStatus(retStat);
 }
 
 void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Configuration\n";
+    telux::common::Status retStat;
     L2tpTunnelConfig l2tpTunnelConfig;
     char delimiter = '\n';
     std::cin.get();
@@ -211,7 +214,8 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    l2tpManager_->addTunnel(l2tpTunnelConfig, respCb);
+    retStat = l2tpManager_->addTunnel(l2tpTunnelConfig, respCb);
+    Utils::printStatus(retStat);
 }
 
 void L2tpMenu::requestConfig(std::vector<std::string> inputCommand) {
@@ -272,11 +276,14 @@ void L2tpMenu::requestConfig(std::vector<std::string> inputCommand) {
     };
 
     std::cout << "Request L2TP Configuration\n";
-    l2tpManager_->requestConfig(respCb);
+    telux::common::Status retStat;
+    retStat = l2tpManager_->requestConfig(respCb);
+    Utils::printStatus(retStat);
 }
 
 void L2tpMenu::removeTunnel(std::vector<std::string> inputCommand) {
     std::cout << "Remove L2TP Tunnel\n";
+    telux::common::Status retStat;
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
@@ -290,5 +297,6 @@ void L2tpMenu::removeTunnel(std::vector<std::string> inputCommand) {
     std::cin >> tempInt;
     Utils::validateInput(tempInt);
 
-    l2tpManager_->removeTunnel(tempInt, respCb);
+    retStat = l2tpManager_->removeTunnel(tempInt, respCb);
+    Utils::printStatus(retStat);
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,15 +46,15 @@ using namespace telux::common;
 
 class AudioClient {
 public:
-    AudioClient();
+    AudioClient(std::shared_ptr<IAudioManager> audioManager);
     ~AudioClient();
-
-    void init();
+    // To cleanup when the service becomes unavailable
+    void cleanup();
 
     // AudioClient creates stream for any type of stream and any SubMenu can request for stream
     std::shared_ptr<IAudioStream> getStream(StreamType streamtype);
 
-    // since file of path is taken during stream creation it is stored for future use
+    // since path of file is taken during stream creation it is stored for future use
     void getPlayConfig(std::string &filePath, AudioFormat &playFormat);
 
     // Since sample Rate and Channel Type is asked while opening stream we keep them because it
@@ -74,7 +74,6 @@ public:
 private:
     // Since all functions need streamType so a common stream resolver
     void resolveStreamType(StreamType streamType);
-
     // Input functions for different cases
     void takeUserModemIdInput(int &modemId);
     void takeAudioFormatInput(AudioFormat &audioFormat);

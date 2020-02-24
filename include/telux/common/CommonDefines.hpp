@@ -63,7 +63,7 @@ enum class Status {
    NOTALLOWED,     /**< Operation not allowed*/
    NOTIMPLEMENTED, /**< Functionality not implemented*/
    CONNECTIONLOST, /**< Connection to Socket server lost*/
-   EXPIRED,        /**< Expired*/
+   EXPIRED,        /**< Expired */
    ALREADY,        /**< Already registered handler */
    NOSUCH,         /**< No such object */
    NOTSUPPORTED,   /**< Not supported on target platform */

@@ -73,14 +73,14 @@ public:
      */
     std::shared_ptr<ITcuActivityManager> getTcuActivityManager();
 
-    ~PowerFactory();
-
 private:
     std::shared_ptr<ITcuActivityManager> tcuActivityManager_;
     std::mutex tcuActivityFactoryMutex_;
     PowerFactory();
     PowerFactory(const PowerFactory &) = delete;
     PowerFactory &operator=(const PowerFactory &) = delete;
+    ~PowerFactory();
+
 };
 
 /** @} */ /* end_addtogroup telematics_power */

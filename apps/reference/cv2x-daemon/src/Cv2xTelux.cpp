@@ -56,17 +56,17 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
     logStatusChanged(status);
 
     // Trigger post SSR event to start data call
-    bool triggetPostSSRV2XReady = false;
+    bool triggerPostSSRV2XReady = false;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (isPostSSRV2XDone_ == false) {
             isPostSSRV2XDone_ = true;
             cv_.notify_one();
-            triggetPostSSRV2XReady = true;
+            triggerPostSSRV2XReady = true;
         }
     }
 
-    if (triggetPostSSRV2XReady) {
+    if (triggerPostSSRV2XReady) {
         LOGD("Triggered post ssr event to start data calls\n");
     }
 
@@ -92,7 +92,7 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
         }
 
         if (startDataCalls) {
-            createProfileAndStartDataCalls();
+            findProfilesAndStartDataCalls();
         }
     }
 
@@ -136,6 +136,25 @@ void Cv2xTelux::logStatusChanged(Cv2xStatus &status) {
 
 DataConnectionListener::DataConnectionListener(std::weak_ptr<Cv2xTelux> instance) {
     cv2xTelux_ = instance;
+    ipStatus_ = DataCallStatus::INVALID;
+    nonIpStatus_ = DataCallStatus::INVALID;
+}
+
+void DataConnectionListener::waitDataCallConnect(DataCallType callType, bool &connect) {
+    if (callType == CV2X_DATA_CALL_IP) {
+        std::unique_lock<std::mutex> cvLock(dmutex_);
+        while (ipStatus_ == DataCallStatus::INVALID) {
+            dcv_.wait(cvLock);
+        }
+        connect = (ipStatus_ == DataCallStatus::NET_CONNECTED) ? true : false;
+    } else {
+        std::unique_lock<std::mutex> cvLock(dmutex_);
+        while (nonIpStatus_ == DataCallStatus::INVALID) {
+            dcv_.wait(cvLock);
+        }
+        connect = (nonIpStatus_ == DataCallStatus::NET_CONNECTED) ? true : false;
+    }
+    LOGI("V2X data call type:%d connect status:%d\n", callType, connect);
 }
 
 void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall) {
@@ -157,8 +176,24 @@ void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCa
         reason = 0;
     }
 
-    LOGD("onDataCallInfoChanged: iface=%s, status=%s, reason=%d, ip_type=%s, profile_id=%d\n",
-            iface.c_str(), status.c_str(), reason, ip_type.c_str(), profile_id);;
+    LOGI("iface=%s, status=%s, reason=%d, ip_type=%s, profile_id=%d\n",
+        iface.c_str(), status.c_str(), reason, ip_type.c_str(), profile_id);
+
+    auto sp = cv2xTelux_.lock();
+    if (sp) {
+        //update data call status and notify data call done
+        if (sp->isIpDataCall(profile_id)) {
+            std::lock_guard<std::mutex> lock(dmutex_);
+            ipStatus_ = dataCall->getDataCallStatus();
+            dcv_.notify_all();
+        } else if (sp->isNonIpDataCall(profile_id)) {
+            std::lock_guard<std::mutex> lock(dmutex_);
+            nonIpStatus_ = dataCall->getDataCallStatus();
+            dcv_.notify_all();
+        } else {
+            LOGE("unknown profile ID %d.\n", profile_id);
+        }
+    }
 }
 
 void DataConnectionListener::onServiceStatusChange(ServiceStatus status) {
@@ -179,13 +214,21 @@ void DataConnectionListener::onServiceStatusChange(ServiceStatus status) {
             }
             LOGD("CV2xRadio back ONLINE\n");
 
-            res = sp->createProfileAndStartDataCalls();
+            res = sp->findProfilesAndStartDataCalls();
             if (res != Status::SUCCESS) {
                 LOGE("Failed to start data call\n");
                 return;
             }
         }
     }
+}
+
+bool Cv2xTelux::isIpDataCall(uint8_t profileID) {
+    return (profileID == dcInfoIP_->profileIndex);
+}
+
+bool Cv2xTelux::isNonIpDataCall(uint8_t profileID) {
+    return (profileID == dcInfoNonIP_->profileIndex);
 }
 
 void Cv2xTelux::onServiceStatusChange(ServiceStatus status) {
@@ -214,28 +257,24 @@ void QueryProfileCallback::onProfileListResponse(
     ProfileIds profileIds = { -1, -1};
 
     if (error == ErrorCode::SUCCESS) {
+        // Assumes that the Ip profile will be the first within the correct range
         for (auto it : profiles) {
-            if (it->getApn().compare(APN_NAME_V2X_IP) == 0) {
+            if (it->getId() >= MIN_V2X_PROFILE_ID &&
+                it->getId() <= MAX_V2X_PROFILE_ID &&
+                profileIds.ip == -1) {
                 profileIds.ip = it->getId();
             }
-            if (it->getApn().compare(APN_NAME_V2X_NON_IP) == 0) {
+            else if (it->getId() >= MIN_V2X_PROFILE_ID &&
+                     it->getId() <= MAX_V2X_PROFILE_ID &&
+                     profileIds.nonIp == -1) {
                 profileIds.nonIp = it->getId();
+            }
+            if (profileIds.ip != -1 && profileIds.nonIp != -1) {
+                break;
             }
         }
     }
     prom_->set_value(profileIds);
-}
-
-CreateProfileCallback::CreateProfileCallback(std::shared_ptr<std::promise<int>> prom) {
-    prom_ = prom;
-}
-
-void CreateProfileCallback::onResponse(int profileId, ErrorCode error) {
-    if (error == ErrorCode::SUCCESS) {
-        prom_->set_value(profileId);
-    } else {
-        prom_->set_value(-1);
-    }
 }
 
 Status Cv2xTelux::initV2xLibrary() {
@@ -377,36 +416,9 @@ Status Cv2xTelux::registerListeners() {
     return Status::SUCCESS;
 }
 
-static bool createV2xProfile(std::shared_ptr<IDataProfileManager> dataProfileMgr,
-                             std::shared_ptr<DataCallInfo> dataCall,
-                             std::string apnName) {
-    ProfileParams params = {};
-    params.profileName = apnName;
-    params.apn = apnName;
-    params.techPref = TechPreference::TP_3GPP;
-    params.ipFamilyType = IpFamilyType::IPV6;
-
-    auto prom = std::make_shared<std::promise<int>>();
-    auto cb = std::make_shared<CreateProfileCallback>(prom);
-    auto status = dataProfileMgr->createProfile(params, cb);
-
-    if (status == Status::SUCCESS) {
-        dataCall->profileIndex = prom->get_future().get();
-        LOGD("Created profile for APN=%s, profile_id=%d\n", apnName.c_str(),
-             dataCall->profileIndex);
-        return true;
-    } else {
-        LOGE("Create profile failed for APN=%s with error code %d\n", apnName.c_str(),
-             static_cast<int>(status));
-        return false;
-    }
-
-    return true;
-}
-
 Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall,
                                 IpFamilyType ipFamilyType) {
-    Status res = Status::FAILED;
+    Status res = Status::SUCCESS;
     std::promise<bool> response;
 
     dataConnectionMgr_->startDataCall(dataCall->profileIndex,
@@ -422,22 +434,35 @@ Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall,
     },OperationType::DATA_LOCAL);
 
     if (response.get_future().get()) {
-        LOGI("Received DSI_EVT_NET_IS_CONN: network_type=%d is online\n", dataCall->type);
+        LOGI("start cv2x data call type:%d in progress\n", dataCall->type);
+
+        // wait until data call connect done
+        bool connected;
+        dataConnectionListener_->waitDataCallConnect(dataCall->type, connected);
+
         if (dataCall->type == CV2X_DATA_CALL_IP) {
-            bootkpilog("cv2x-daemon: V2X IP call is online");
+            if (connected) {
+                bootkpilog("cv2x-daemon: V2X IP call is online");
+            } else {
+                res = Status::FAILED;
+            }
         } else {
-            bootkpilog("cv2x-daemon: V2X Non-IP call is online");
+            if (connected) {
+                bootkpilog("cv2x-daemon: V2X Non-IP call is online");
+            } else {
+                res = Status::FAILED;
+            }
         }
-        res = Status::SUCCESS;
     } else {
-        LOGI("Received DSI_EVT_NET_IS_CONN: network_type=%d is offline\n", dataCall->type);
+        LOGI("start cv2x data call type:%d failed\n", dataCall->type);
         res = Status::FAILED;
     }
+
     return res;
 }
 
 
-Status Cv2xTelux::createProfile() {
+Status Cv2xTelux::findProfiles() {
     dcInfoIP_->type = CV2X_DATA_CALL_IP;
     dcInfoNonIP_->type = CV2X_DATA_CALL_NON_IP;
 
@@ -456,14 +481,8 @@ Status Cv2xTelux::createProfile() {
         dcInfoIP_->profileIndex = profileIds.ip;
         LOGI("Found V2X_IP profile, idx=%d\n", profileIds.ip);
     } else {
-        if (!createV2xProfile(dataProfileMgr_, dcInfoIP_,
-                    APN_NAME_V2X_IP)) {
-            LOGE("Failed to create V2X_IP profile\n");
-            return Status::FAILED;
-        } else {
-            LOGI("Created V2X_IP profile, idx=%d\n",
-                    dcInfoIP_->profileIndex);
-        }
+        LOGE("Failed to find V2X_IP profile\n");
+        return Status::FAILED;
     }
 
     // check Non-IP Data Profile
@@ -471,14 +490,8 @@ Status Cv2xTelux::createProfile() {
         dcInfoNonIP_->profileIndex = profileIds.nonIp;
         LOGI("Found V2X_NON_IP profile, idx=%d\n", profileIds.nonIp);
     } else {
-        if (!createV2xProfile(dataProfileMgr_, dcInfoNonIP_,
-                    APN_NAME_V2X_NON_IP)) {
-            LOGE("Failed to create V2X_NON_IP profile\n");
-            return Status::FAILED;
-        } else {
-            LOGI("Created V2X_NON_IP profile, idx=%d\n",
-                    dcInfoNonIP_->profileIndex);
-        }
+        LOGE("Failed to find V2X_NON_IP profile\n");
+        return Status::FAILED;
     }
 
     return Status::SUCCESS;
@@ -504,7 +517,7 @@ Status Cv2xTelux::startDataCalls() {
     return Status::SUCCESS;
 }
 
-Status Cv2xTelux::createProfileAndStartDataCalls() {
+Status Cv2xTelux::findProfilesAndStartDataCalls() {
     Status res = Status::FAILED;
 
     if ((dcInfoIP_ == nullptr) && (dcInfoNonIP_ == nullptr)) {
@@ -528,17 +541,23 @@ Status Cv2xTelux::createProfileAndStartDataCalls() {
         }
     }
 
-    res = createProfile();
-    if(res != Status::SUCCESS) {
-        LOGE("Error creating data profiles\n");
-        return res;
-    }
-    LOGI("APN profiles setup done\n");
+    if ((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
+        (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) {
+        // will re-start data calls on v2x status change
+        LOGI("not start data calls if V2X status is inactive\n");
+    } else {
+        res = findProfiles();
+        if(res != Status::SUCCESS) {
+            LOGE("Error finding data profiles\n");
+            return res;
+        }
+        LOGI("APN profiles setup done\n");
 
-    res = startDataCalls();
-    if(res != Status::SUCCESS) {
-        LOGE("Error starting data calls\n");
-        return res;
+        res = startDataCalls();
+        if(res != Status::SUCCESS) {
+            LOGE("Error starting data calls\n");
+            return res;
+        }
     }
 
     std::lock_guard<std::mutex> lock(dcMutex_);

@@ -367,7 +367,7 @@ private:
  *        The methods in listener can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
  */
-class INetworkSelectionListener {
+class INetworkSelectionListener : public common::IServiceStatusListener{
 public:
    /**
     * This function is called whenever network selection mode is changed.

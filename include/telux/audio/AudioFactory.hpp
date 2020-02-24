@@ -70,8 +70,6 @@ public:
     */
    std::shared_ptr<IAudioManager> getAudioManager();
 
-   ~AudioFactory();
-
 private:
    std::mutex audioFactoryMutex_;
    std::shared_ptr<IAudioManager> audioManager_;
@@ -79,6 +77,7 @@ private:
    AudioFactory();
    AudioFactory(const AudioFactory &) = delete;
    AudioFactory &operator=(const AudioFactory &) = delete;
+   ~AudioFactory();
 };
 
 /** @} */ /* end_addtogroup telematics_audio */

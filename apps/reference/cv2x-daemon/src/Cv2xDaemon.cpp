@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -92,11 +92,13 @@ Status Cv2xDaemon::startV2xMode() {
     }
 
     LOGI("Read V2X radio status\n");
-
     if (v2xStatus.rxStatus != Cv2xStatusType::INACTIVE &&
             v2xStatus.txStatus != Cv2xStatusType::INACTIVE) {
-        LOGD("V2X radio already started\n");
-        return Status::SUCCESS;
+        // Try stopping v2x mode post ssr for EAP
+        ret = cv2xTelux_->stopV2xRadio();
+        if (ret != Status::SUCCESS) {
+            LOGE("Failed to stop v2x mode, applicable post ssr on EAP\n");
+        }
     }
 
     ret = cv2xTelux_->startV2xRadio();
@@ -218,10 +220,10 @@ Status Cv2xDaemon::runAsDaemon() {
         return ret;
     }
 
-    // Create Profile and Start Data call
-    ret = cv2xTelux_->createProfileAndStartDataCalls();
+    // Find Profiles and Start Data calls
+    ret = cv2xTelux_->findProfilesAndStartDataCalls();
     if (ret != Status::SUCCESS) {
-        LOGE("Failed to create v2x data profile\n");
+        LOGE("Failed to find v2x profiles and start data calls\n");
         return ret;
     }
 

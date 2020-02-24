@@ -335,7 +335,7 @@ class ICardCommandCallback : public telux::common::ICommandCallback {
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
  */
-class ICardListener {
+class ICardListener : public common::IServiceStatusListener{
  public:
     /**
      * This function is called when info of card gets updated.

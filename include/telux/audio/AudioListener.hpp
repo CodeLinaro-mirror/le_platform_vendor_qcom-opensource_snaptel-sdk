@@ -43,6 +43,7 @@
 #define AUDIOLISTENER_HPP
 
 #include <telux/audio/AudioDefines.hpp>
+#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace audio {
@@ -120,6 +121,16 @@ public:
      * Destructor of ITranscodeListener
      */
     virtual ~ITranscodeListener() {}
+};
+
+class IAudioListener : public telux::common::IServiceStatusListener {
+public:
+
+    /**
+     * Destructor of IAudioListener
+     */
+    virtual ~IAudioListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_audio */

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,52 +37,31 @@
 #include <stdio.h>
 #include <dirent.h>
 
-#include <telux/audio/AudioFactory.hpp>
-
 #include "AudioClient.hpp"
 
-AudioClient::AudioClient() {
+AudioClient::AudioClient(std::shared_ptr<IAudioManager> audioManager) {
     sampleRate_ = 0;
     channelType_ = 0;
     filePath_ = "";
-    audioManager_ = nullptr;
+    audioManager_ = audioManager;
     stream_ = nullptr;
     audioVoiceStream_ = nullptr;
     audioPlayStream_ = nullptr;
     audioCaptureStream_ = nullptr;
+    audioLoopbackStream_ = nullptr;
+    audioToneStream_ = nullptr;
 }
 
 AudioClient::~AudioClient() {
 }
 
-void AudioClient::init() {
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
-    //  Get the AudioFactory and AudioManager instances.
-    auto &audioFactory = telux::audio::AudioFactory::getInstance();
-    audioManager_ = audioFactory.getAudioManager();
-
-    //  Check if audio subsystem is ready
-    bool audioSubSystemStatus = audioManager_->isSubsystemReady();
-
-    //  If audio subsystem is not ready, wait for it to be ready
-    if(!audioSubSystemStatus) {
-        std::cout << "\nAudio subsystem is not ready, Please wait!!!..." << std::endl;
-        std::future<bool> f = audioManager_->onSubsystemReady();
-        // If we want to wait unconditionally for audio subsystem to be ready
-        audioSubSystemStatus = f.get();
-    }
-
-    //  Exit the application, if SDK is unable to initialize audio subsystems
-    if(audioSubSystemStatus) {
-        endTime = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsedTime = endTime - startTime;
-        std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
-                << std::endl;
-    } else {
-        std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
-        return;
-    }
+void AudioClient::cleanup() {
+    stream_ = nullptr;
+    audioVoiceStream_ = nullptr;
+    audioPlayStream_ = nullptr;
+    audioCaptureStream_ = nullptr;
+    audioLoopbackStream_ = nullptr;
+    audioToneStream_ = nullptr;
 }
 
 void AudioClient::resolveStreamType(StreamType streamType) {
@@ -110,10 +89,10 @@ void AudioClient::takeUserModemIdInput(int &modemId) {
             if(inputStream >> modemId) {
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -127,10 +106,10 @@ void AudioClient::takeUserSampleRateInput(uint32_t &userSampleRate) {
             if(inputStream >> userSampleRate) {
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -153,18 +132,20 @@ void AudioClient::takeUserChannelInput(telux::audio::ChannelTypeMask &channelTyp
                     }
                     break;
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
 
-void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices, StreamType &streamType) {
+void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &devices,
+    StreamType &streamType) {
+
     std::string userInput = "";
     int command = -1;
     int numDevices=0;
@@ -179,7 +160,7 @@ void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &dev
             if(inputStream >> numDevices){
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         }
     }
@@ -192,10 +173,10 @@ void AudioClient::takeUserDeviceInput(std::vector<telux::audio::DeviceType> &dev
                 devices.emplace_back(static_cast<telux::audio::DeviceType>(command));
                 numDevices--;
             } else {
-                std::cout << "Invalid input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -220,13 +201,13 @@ void AudioClient::takeUserVoicePathInput(std::vector<telux::audio::Direction> &d
                     }
                     break;
                 } else {
-                    std::cout << "Invalid input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -240,10 +221,10 @@ void AudioClient::takeVolumeValueInput(float &vol) {
             if(inputStream >> vol) {
                 break;
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -294,13 +275,13 @@ void AudioClient::takeAudioFormatInput(AudioFormat &audioFormat) {
                     }
                     break;
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         } else {
-            std::cout << "Invalid input!" << std::endl;
+            std::cout << "Invalid Input" << std::endl;
         }
     }
 }
@@ -352,10 +333,10 @@ void AudioClient::takeUserDirectionInput(StreamDirection &direction) {
                 if(command == 0 || command == 1) {
                     break;
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         }
     }
@@ -634,13 +615,13 @@ void AudioClient::setMute(StreamType streamType) {
                     if(muteStatus == 0 || muteStatus == 1) {
                         break;
                     } else {
-                        std::cout << "Invalid Input!" << std::endl;
+                        std::cout << "Invalid Input" << std::endl;
                     }
                 } else {
-                    std::cout << "Invalid Input!" << std::endl;
+                    std::cout << "Invalid Input" << std::endl;
                 }
             } else {
-                std::cout << "Invalid Input!" << std::endl;
+                std::cout << "Invalid Input" << std::endl;
             }
         }
 

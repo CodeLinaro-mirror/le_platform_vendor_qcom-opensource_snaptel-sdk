@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,6 +43,8 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <telux/audio/AudioFactory.hpp>
+
 #include "VoiceMenu.hpp"
 #include "PlayMenu.hpp"
 #include "CaptureMenu.hpp"
@@ -60,17 +62,54 @@ AudioConsoleApp::AudioConsoleApp(std::string appName, std::string cursor)
 }
 
 AudioConsoleApp::~AudioConsoleApp() {
+    closeAllStreams();
     voiceMenu_ = nullptr;
     playMenu_ = nullptr;
     captureMenu_ = nullptr;
-    cleanup();
+    transCodeMenu_ = nullptr;
+    loopbackMenu_ = nullptr;
+    toneMenu_ = nullptr;
     audioClient_ = nullptr;
 }
 
 void AudioConsoleApp::init() {
+    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+    startTime = std::chrono::system_clock::now();
+    //  Get the AudioFactory and AudioManager instances.
+    auto &audioFactory = telux::audio::AudioFactory::getInstance();
+    audioManager_ = audioFactory.getAudioManager();
 
-    audioClient_ = std::make_shared<AudioClient>();
-    audioClient_->init();
+    //  Check if audio subsystem is ready
+    bool ready_ = audioManager_->isSubsystemReady();
+
+    //  If audio subsystem is not ready, wait for it to be ready
+    if(!ready_) {
+        std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+        std::future<bool> f = audioManager_->onSubsystemReady();
+        // If we want to wait unconditionally for audio subsystem to be ready
+        ready_ = f.get();
+    }
+
+    //  Exit the application, if SDK is unable to initialize audio subsystems
+    if(ready_) {
+        endTime = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsedTime = endTime - startTime;
+        std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
+                << std::endl;
+    } else {
+        std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
+        return;
+    }
+    audioClient_ = std::make_shared<AudioClient>(audioManager_);
+
+    auto status = audioManager_->registerListener(shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Audio Listener Registeration failed" <<std::endl;
+    }
+    initConsole();
+}
+
+void AudioConsoleApp::initConsole() {
     std::shared_ptr<ConsoleAppCommand> voiceMenuCommand
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Voice Call", {},
         std::bind(&AudioConsoleApp::voiceMenu, this, std::placeholders::_1)));
@@ -146,42 +185,85 @@ void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
     transCodeMenu_->mainLoop();
 }
 
-void AudioConsoleApp::cleanup() {
+void AudioConsoleApp::closeAllStreams() {
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(
-           audioClient_->getStream(StreamType::VOICE_CALL));
-    if(audioVoiceStream_){
+        audioClient_->getStream(StreamType::VOICE_CALL));
+    if (audioVoiceStream_) {
         audioClient_->deleteStream(StreamType::VOICE_CALL);
     }
 
     auto audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(
-           audioClient_->getStream(StreamType::PLAY));
-    if(audioPlayStream_){
+        audioClient_->getStream(StreamType::PLAY));
+    if (audioPlayStream_) {
         audioClient_->deleteStream(StreamType::PLAY);
     }
 
     auto audioCaptureStream_ = std::dynamic_pointer_cast<IAudioCaptureStream>(
-           audioClient_->getStream(StreamType::CAPTURE));
-    if(audioCaptureStream_){
+        audioClient_->getStream(StreamType::CAPTURE));
+    if (audioCaptureStream_) {
         audioClient_->deleteStream(StreamType::CAPTURE);
     }
 
+    auto audioToneStream_ = std::dynamic_pointer_cast<IAudioToneGeneratorStream>(
+        audioClient_->getStream(StreamType::TONE_GENERATOR));
+    if (audioToneStream_) {
+        audioClient_->deleteStream(StreamType::TONE_GENERATOR);
+    }
+
     auto audioLoopbackStream_ = std::dynamic_pointer_cast<IAudioLoopbackStream>(
-           audioClient_->getStream(StreamType::LOOPBACK));
-    if(audioLoopbackStream_){
+        audioClient_->getStream(StreamType::LOOPBACK));
+    if (audioLoopbackStream_) {
         audioClient_->deleteStream(StreamType::LOOPBACK);
+    }
+
+    if (transCodeMenu_) {
+        transCodeMenu_->tearDown({});
     }
 }
 
+void AudioConsoleApp::cleanup() {
+    audioClient_->cleanup();
+    voiceMenu_->cleanup();
+    playMenu_->cleanup();
+    captureMenu_->cleanup();
+    loopbackMenu_->cleanup();
+    toneMenu_->cleanup();
+    transCodeMenu_->cleanup();
+}
+
+void AudioConsoleApp::setSystemReady() {
+    voiceMenu_->setSystemReady();
+    playMenu_->setSystemReady();
+    captureMenu_->setSystemReady();
+    loopbackMenu_->setSystemReady();
+    toneMenu_->setSystemReady();
+    transCodeMenu_->setSystemReady();
+}
+
+
 int main(int argc, char **argv) {
 
-    AudioConsoleApp audioConsoleApp(APP_NAME, "audio> ");
+    auto audioConsoleApp = std::make_shared<AudioConsoleApp>(APP_NAME, "audio> ");
+
     std::vector<std::string> supplementaryGrps{"system"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
+    if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
-    audioConsoleApp.init();  // initialize commands and display
 
-    return audioConsoleApp.mainLoop();  // Main loop to continuously read and execute commands
+    audioConsoleApp->init();  // initialize commands and display
 
+    return audioConsoleApp->mainLoop();  // Main loop to continuously read and execute commands
+
+}
+
+void AudioConsoleApp::onServiceStatusChange(telux::common::ServiceStatus status) {
+    if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        cleanup();
+    }
+    if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Audio Service AVAILABLE" << std::endl;
+        setSystemReady();
+    }
 }

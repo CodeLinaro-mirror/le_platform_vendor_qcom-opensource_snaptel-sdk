@@ -36,7 +36,7 @@ extern "C" {
 
 #include <telux/data/DataFactory.hpp>
 
-#include <Utils.hpp>
+#include "../../common/utils/Utils.hpp"
 
 #include "DataUtils.hpp"
 #include "DataMenu.hpp"
@@ -75,21 +75,12 @@ DataMenu::~DataMenu() {
         dataProfileManager_ = nullptr;
     }
 
-    if (dataFilterMgr_) {
-        dataFilterMgr_->deregisterListener(dataFilterListener_);
-        dataFilterMgr_ = nullptr;
-    }
-
     if (profileListener_) {
         profileListener_ = nullptr;
     }
 
     if (dataListener_) {
         dataListener_ = nullptr;
-    }
-
-    if (dataFilterListener_) {
-        dataFilterListener_ = nullptr;
     }
 }
 
@@ -152,32 +143,6 @@ bool DataMenu::initializeSDK() {
         }
     }
 
-    // Get data filter manager object
-    dataFilterMgr_ = dataFactory.getDataFilterManager();
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "WARNING: Data Filter feature is not supported." << std::endl;
-    }
-
-    if (dataFilterMgr_ != NULL) {
-        // Check data filter manager service status
-        bool isReady = dataFilterMgr_->isReady();
-        if (!isReady) {
-            std::cout << " Data filter services are not ready, waiting for it to be ready "
-                      << std::endl;
-            std::future<bool> f = dataFilterMgr_->onReady();
-            isReady = f.get();
-        }
-
-        if (isReady) {
-            std::cout << " Data Filter services are ready !" << std::endl;
-        } else {
-            std::cout << " *** ERROR - Unable to initialize data filter services" << std::endl;
-            return -1;
-        }
-
-        responseCb = std::bind(&DataMenu::commandCallback, this, std::placeholders::_1);
-    }
-
     myDataProfileListCb_ = std::make_shared<MyDataProfilesCallback>();
     myDataProfileListCbForQuery_ = std::make_shared<MyDataProfilesCallback>();
     myDataCreateProfileCb_ = std::make_shared<MyDataCreateProfileCallback>();
@@ -187,20 +152,9 @@ bool DataMenu::initializeSDK() {
     myDataProfileCbForGetProfileById_ = std::make_shared<MyDataProfileCallback>();
     profileListener_ = std::make_shared<MyProfileListener>();
 
-    if (dataFilterMgr_ != NULL) {
-        dataFilterListener_ = std::make_shared<MyDataFilterListener>();
-    }
-
     telux::common::Status status = dataProfileManager_->registerListener(profileListener_);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Unable to register data profile manager listener" << std::endl;
-    }
-
-    if (dataFilterMgr_ != NULL) {
-        status = dataFilterMgr_->registerListener(dataFilterListener_);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Unable to register data filter manager listener" << std::endl;
-        }
     }
 
     return true;
@@ -228,95 +182,72 @@ void DataMenu::init() {
             std::bind(static_cast<void(DataMenu::*)()>(&DataMenu::requestDataCallList), this)));
     std::shared_ptr<ConsoleAppCommand> setDefaultProfile
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "6", "set_default_profile\n", {}, std::bind(&DataMenu::setDefaultProfile, this)));
+            "6", "set_default_profile", {}, std::bind(&DataMenu::setDefaultProfile, this)));
 
-    DataRestrictMode enableMode, disableMode;
-    enableMode.filterAutoExit = DataRestrictModeType::DISABLE;
-    enableMode.filterMode = DataRestrictModeType::ENABLE;
-
-    disableMode.filterAutoExit = DataRestrictModeType::DISABLE;
-    disableMode.filterMode = DataRestrictModeType::DISABLE;
-
-    std::shared_ptr<ConsoleAppCommand> enableModeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "enable_data_restrict_mode",
-            {}, std::bind(&DataMenu::sendSetDataRestrictMode, this, enableMode)));
-
-    std::shared_ptr<ConsoleAppCommand> disableModeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "disable_data_restrict_mode",
-            {}, std::bind(&DataMenu::sendSetDataRestrictMode, this, disableMode)));
-
-    std::shared_ptr<ConsoleAppCommand> getFilterModeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "9", "get_data_restrict_mode", {}, std::bind(&DataMenu::getFilterMode, this)));
-
-    std::shared_ptr<ConsoleAppCommand> addFilterCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "10", "add_data_restrict_filter", {}, std::bind(&DataMenu::addFilter, this)));
-
-    std::shared_ptr<ConsoleAppCommand> removeAllFilterCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11",
-            "remove_all_data_restrict_filter", {}, std::bind(&DataMenu::removeAllFilter, this)));
+    std::shared_ptr<ConsoleAppCommand> dataFilterMenu
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Data_Filter",
+            {}, std::bind(&DataMenu::openDataFilterMenu, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> reqStaticNatEntries
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "request_static_nat_entries",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "request_static_nat_entries",
             {}, std::bind(&DataMenu::requestStaticNatEntries, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> addStaticNatEntry
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "add_static_nat", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "add_static_nat", {},
             std::bind(&DataMenu::addStaticNatEntry, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> removeStaticNatEntry
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "remove_static_nat", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "remove_static_nat", {},
             std::bind(&DataMenu::removeStaticNatEntry, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> requestFirewallStatus
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "request_firewall_status", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "request_firewall_status", {},
             std::bind(&DataMenu::requestFirewallStatus, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> setFirewall
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("16", "set_firewall", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("12", "set_firewall", {},
             std::bind(&DataMenu::setFirewall, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> addFirewallEntry
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("17", "add_firewall_entry", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "add_firewall_entry", {},
             std::bind(&DataMenu::addFirewallEntry, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> requestFirewallEntries
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18", "request_firewall_entry", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "request_firewall_entry", {},
             std::bind(&DataMenu::requestFirewallEntries, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> removeFirewallEntry
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("19", "remove_firewall_entry", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "remove_firewall_entry", {},
             std::bind(&DataMenu::removeFirewallEntry, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> enableDmz
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "20", "enable_dmz", {}, std::bind(&DataMenu::enableDmz, this, std::placeholders::_1)));
+            "16", "enable_dmz", {}, std::bind(&DataMenu::enableDmz, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> disableDmz
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "21", "disable_dmz",{}, std::bind(&DataMenu::disableDmz, this, std::placeholders::_1)));
+            "17", "disable_dmz",{}, std::bind(&DataMenu::disableDmz, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> requestDmzEntry
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("22", "request_dmz_entry", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("18", "request_dmz_entry", {},
             std::bind(&DataMenu::requestDmzEntry, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> createVlan
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("23", "create_vlan", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("19", "create_vlan", {},
             std::bind(&DataMenu::createVlan, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> removeVlan
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("24", "remove_vlan", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("20", "remove_vlan", {},
             std::bind(&DataMenu::removeVlan, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> queryVlanInfo
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("25", "query_vlan_info", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("21", "query_vlan_info", {},
             std::bind(&DataMenu::queryVlanInfo, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> bindWithProfile
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("26", "bind_with_profile", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("22", "bind_with_profile", {},
             std::bind(&DataMenu::bindWithProfile, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> unbindFromProfile
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("27", "unbind_from_profile", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("23", "unbind_from_profile", {},
             std::bind(&DataMenu::unbindFromProfile, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> queryVlanMappingList
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("28", "query_vlan_mapping_list\n",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("24", "query_vlan_mapping_list",
             {}, std::bind(&DataMenu::queryVlanMappingList, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> enableSocks
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("29", "socks_enablement\n",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("25", "socks_enablement",
             {}, std::bind(&DataMenu::enableSocks, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> bridgeMenuCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("30", "Bridge_Menu\n",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("26", "Bridge_Menu",
             {}, std::bind(&DataMenu::bridgeMenu, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> l2tpMenuCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("31", "L2tp_Menu\n",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("31", "L2tp_Menu",
             {}, std::bind(&DataMenu::l2tpMenu, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> reqProfile
@@ -345,8 +276,7 @@ void DataMenu::init() {
             std::bind(&DataMenu::requestProfileById, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
-        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile, enableModeCommand,
-        disableModeCommand, getFilterModeCommand, addFilterCommand, removeAllFilterCommand,
+        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile, dataFilterMenu,
         reqStaticNatEntries, addStaticNatEntry, removeStaticNatEntry, requestFirewallStatus,
         setFirewall, addFirewallEntry, requestFirewallEntries, removeFirewallEntry, enableDmz,
         disableDmz, requestDmzEntry, createVlan, removeVlan, queryVlanInfo, bindWithProfile,
@@ -361,8 +291,16 @@ void DataMenu::init() {
     }
 }
 
+void DataMenu::openDataFilterMenu(std::vector<std::string> userInput) {
+    DataFilterMenu dataFilterMenu("Data Filter Menu", "data_filter> ");
+    dataFilterMenu.init();
+    dataFilterMenu.mainLoop();
+    ConsoleApp::displayMenu();
+}
+
 void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStart data call" << std::endl;
+    telux::common::Status retStat;
     int profileId;
     std::cout << "Enter Profile Id : ";
     std::cin >> profileId;
@@ -380,12 +318,14 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
 
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-    dataConnectionManager_->startDataCall(profileId, ipFamType,
+    retStat = dataConnectionManager_->startDataCall(profileId, ipFamType,
         MyDataCallResponseCallback::startDataCallResponseCallBack, opType);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStop data call" << std::endl;
+    telux::common::Status retStat;
     int profileId;
     std::cout << "Enter Profile Id : ";
     std::cin >> profileId;
@@ -403,8 +343,9 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
 
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-    dataConnectionManager_->stopDataCall(profileId, ipFamType,
+    retStat = dataConnectionManager_->stopDataCall(profileId, ipFamType,
         MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::requestDataCallStatistics(std::vector<std::string> inputCommand) {
@@ -440,14 +381,17 @@ void DataMenu::resetDataCallStatistics(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::requestDataCallList(OperationType operationType, DataCallListResponseCb cb) {
+    telux::common::Status retStat;
     if (dataConnectionManager_) {
         telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-        dataConnectionManager_->requestDataCallList(opType,cb);
+        retStat = dataConnectionManager_->requestDataCallList(opType,cb);
+        Utils::printStatus(retStat);
     }
 }
 
 void DataMenu::requestDataCallList() {
     std::cout << "\nRequest DataCall List" << std::endl;
+    telux::common::Status retStat;
     if (dataConnectionManager_) {
         int operationType;
         std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -455,15 +399,15 @@ void DataMenu::requestDataCallList() {
         Utils::validateInput(operationType);
 
         telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-        if (telux::common::Status::NOTIMPLEMENTED == dataConnectionManager_->requestDataCallList(
-            opType,MyDataCallResponseCallback::dataCallListResponseCb)) {
-            std::cout << "Feature Not Supported" << std::endl;
-        }
+        retStat = dataConnectionManager_->requestDataCallList(
+            opType,MyDataCallResponseCallback::dataCallListResponseCb);
+        Utils::printStatus(retStat);
     }
 }
 
 void DataMenu::setDefaultProfile() {
     std::cout << "\nSet Default Profile" << std::endl;
+    telux::common::Status retStat;
     if (dataConnectionManager_) {
         int operationType;
         std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -486,10 +430,8 @@ void DataMenu::setDefaultProfile() {
                       << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
         };
 
-        if (telux::common::Status::NOTIMPLEMENTED == dataConnectionManager_->setDefaultProfile(
-            opType, profileId, respCb)) {
-            std::cout << "Feature Not Supported" << std::endl;
-        }
+        retStat = dataConnectionManager_->setDefaultProfile(opType, profileId, respCb);
+        Utils::printStatus(retStat);
     }
 }
 void DataMenu::commandCallback(ErrorCode errorCode) {
@@ -497,339 +439,6 @@ void DataMenu::commandCallback(ErrorCode errorCode) {
         std::cout << " Command initiated successfully " << std::endl;
     } else {
         std::cout << " Command failed." << std::endl;
-    }
-}
-
-void DataMenu::sendSetDataRestrictMode(DataRestrictMode mode) {
-
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
-        return;
-    }
-
-    char delimiter = '\n';
-    std::string profileIdInput;
-    std::cout << "Enter Profile Id : ";
-    std::getline(std::cin, profileIdInput, delimiter);
-
-    int profileId = -1;
-    if (!profileIdInput.empty()) {
-        try {
-            profileId = std::stoi(profileIdInput);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << profileId
-                      << std::endl;
-            return;
-        }
-    } else {
-        profileId = PROFILE_ID_MAX;
-    }
-
-    std::string ipFamilyTypeInput;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
-    std::getline(std::cin, ipFamilyTypeInput, delimiter);
-
-    telux::data::IpFamilyType ipFamType = IpFamilyType::UNKNOWN;
-    if (!ipFamilyTypeInput.empty()) {
-        try {
-            ipFamType = static_cast<telux::data::IpFamilyType>(std::stoi(ipFamilyTypeInput));
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values "
-                      << static_cast<int>(ipFamType) << std::endl;
-            return;
-        }
-    }
-
-    if (mode.filterMode == DataRestrictModeType::ENABLE) {
-        std::cout << " Sending command to enable Data Filter" << std::endl;
-    } else if (mode.filterMode == DataRestrictModeType::DISABLE) {
-        std::cout << " Sending command to disable Data Filter" << std::endl;
-    }
-
-    mode.filterAutoExit = DataRestrictModeType::DISABLE;
-    telux::common::Status status = telux::common::Status::FAILED;
-
-    if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-        status = dataFilterMgr_->setDataRestrictMode(mode, responseCb);
-    } else {
-        status = dataFilterMgr_->setDataRestrictMode(mode, responseCb, profileId, ipFamType);
-    }
-
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
-    }
-}
-
-void DataMenu::getFilterMode() {
-
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
-        return;
-    }
-
-    std::string interfaceName;
-    std::cout << "Enter Network Interface Name: ";
-    std::cin >> interfaceName;
-    Utils::validateInput(interfaceName);
-
-    std::cout << " Sending command to get Data Filter" << std::endl;
-
-    telux::common::Status status = dataFilterMgr_->requestDataRestrictMode(
-        interfaceName, &DataFilterModeResponseCb::requestDataRestrictModeResponse);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
-    }
-}
-
-IpProtocol DataMenu::getTypeOfFilter(
-    ConfigParser instance, std::map<std::string, std::string> filter) {
-    IpProtocol type = PROTO_UDP;
-    if (instance.getValue(filter, "FILTER_PROTOCOL_TYPE") != "") {
-        std::string protoType = instance.getValue(filter, "FILTER_PROTOCOL_TYPE");
-        if (strcmp(protoType.c_str(), "UDP") == 0) {
-            type = PROTO_UDP;
-        } else if (strcmp(protoType.c_str(), "TCP") == 0) {
-            type = PROTO_TCP;
-        }
-        std::cout << "Set TCP Port and Range combination" << std::endl;
-    }
-    return type;
-}
-
-void DataMenu::addIPParameters(std::shared_ptr<telux::data::IIpFilter> &dataFilter,
-    ConfigParser instance, std::map<std::string, std::string> filterMap) {
-
-    if (instance.getValue(filterMap, "SOURCE_IPV4_ADDRESS") != ""
-        || instance.getValue(filterMap, "DESTINATION_IPV4_ADDRESS") != "") {
-        telux::data::IPv4Info ipv4Info_ = {};
-        if (instance.getValue(filterMap, "SOURCE_IPV4_ADDRESS") != "") {
-            ipv4Info_.srcAddr = instance.getValue(filterMap, "SOURCE_IPV4_ADDRESS");
-        }
-        if (instance.getValue(filterMap, "DESTINATION_IPV4_ADDRESS") != "") {
-            ipv4Info_.destAddr = instance.getValue(filterMap, "DESTINATION_IPV4_ADDRESS");
-        }
-        dataFilter->setIPv4Info(ipv4Info_);
-    }
-
-    if (instance.getValue(filterMap, "SOURCE_IPV6_ADDRESS") != ""
-        || instance.getValue(filterMap, "DESTINATION_IPV6_ADDRESS") != "") {
-        telux::data::IPv6Info ipv6Info_ = {};
-        if (instance.getValue(filterMap, "SOURCE_IPV6_ADDRESS") != "") {
-            ipv6Info_.srcAddr = instance.getValue(filterMap, "SOURCE_IPV6_ADDRESS");
-        }
-        if (instance.getValue(filterMap, "DESTINATION_IPV6_ADDRESS") != "") {
-            ipv6Info_.destAddr = instance.getValue(filterMap, "DESTINATION_IPV6_ADDRESS");
-        }
-        dataFilter->setIPv6Info(ipv6Info_);
-    }
-}
-
-void DataMenu::addFilter() {
-
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
-        return;
-    }
-
-    char delimiter = '\n';
-    std::string profileIdInput;
-    std::cout << "Enter Profile Id : ";
-    std::getline(std::cin, profileIdInput, delimiter);
-
-    int profileId = -1;
-    if (!profileIdInput.empty()) {
-        try {
-            profileId = std::stoi(profileIdInput);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << profileId
-                      << std::endl;
-            return;
-        }
-    } else {
-        profileId = PROFILE_ID_MAX;
-    }
-
-    std::string ipFamilyTypeInput;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
-    std::getline(std::cin, ipFamilyTypeInput, delimiter);
-
-    telux::data::IpFamilyType ipFamType = IpFamilyType::UNKNOWN;
-    if (!ipFamilyTypeInput.empty()) {
-        try {
-            ipFamType = static_cast<telux::data::IpFamilyType>(std::stoi(ipFamilyTypeInput));
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values "
-                      << static_cast<int>(ipFamType) << std::endl;
-            return;
-        }
-    } else {
-        ipFamType = IpFamilyType::UNKNOWN;
-    }
-
-    ConfigParser cfgParser("filter", DEFAULT_CONFIG_FILE_NAME);
-    std::vector<std::map<std::string, std::string>> vectorFilter = cfgParser.getFilters();
-
-    std::cout << "Total Filter = " << vectorFilter.size() << std::endl;
-
-    // Get data factory instance
-    auto &dataFilterFactory = DataFactory::getInstance();
-
-    for (uint8_t i = 0; i < vectorFilter.size(); i++) {
-
-        IpProtocol typeOfFilter = getTypeOfFilter(cfgParser, vectorFilter[i]);
-        std::shared_ptr<telux::data::IIpFilter> dataFilter;
-
-        if (typeOfFilter == PROTO_TCP) {
-
-            std::cout << "Creating TCP filter " << std::endl;
-
-            // Get data filter manager object
-            dataFilter = dataFilterFactory.getNewIpFilter(PROTO_TCP);
-            addIPParameters(dataFilter, cfgParser, vectorFilter[i]);
-            auto tcpRestrictFilter = std::dynamic_pointer_cast<ITcpFilter>(dataFilter);
-
-            PortInfo srcPort = {};
-            PortInfo destPort = {};
-
-            srcPort.port = 0;
-            srcPort.range = 0;
-            destPort.port = 0;
-            destPort.range = 0;
-            telux::data::TcpInfo tcpInfo_ = {};
-
-            if (cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT_RANGE") != "") {
-                srcPort.port = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT"));
-                srcPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT_RANGE"));
-                tcpInfo_.src = srcPort;
-            }
-
-            if (cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT_RANGE") != "") {
-                destPort.port
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT"));
-                destPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT_RANGE"));
-                tcpInfo_.dest = destPort;
-            }
-            if (tcpRestrictFilter) {
-                tcpRestrictFilter->setTcpInfo(tcpInfo_);
-            } else {
-                std::cout << " *** ERROR - Invalid tcp filter" << std::endl;
-                return;
-            }
-        } else if (typeOfFilter == PROTO_UDP) {
-            std::cout << "Creating UDP filter " << std::endl;
-
-            // Get data filter manager object
-            dataFilter = dataFilterFactory.getNewIpFilter(PROTO_UDP);
-            addIPParameters(dataFilter, cfgParser, vectorFilter[i]);
-
-            auto udpRestrictFilter = std::dynamic_pointer_cast<IUdpFilter>(dataFilter);
-
-            PortInfo srcPort;
-            PortInfo destPort;
-
-            srcPort.port = 0;
-            srcPort.range = 0;
-            destPort.port = 0;
-            destPort.range = 0;
-            telux::data::UdpInfo udpInfo_ = {};
-
-            if (cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT_RANGE") != "") {
-                srcPort.port = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT"));
-                srcPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT_RANGE"));
-                udpInfo_.src = srcPort;
-            }
-
-            if (cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT_RANGE") != "") {
-                destPort.port
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT"));
-                destPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT_RANGE"));
-                udpInfo_.dest = destPort;
-            }
-            if (udpRestrictFilter) {
-                udpRestrictFilter->setUdpInfo(udpInfo_);
-            } else {
-                std::cout << " *** ERROR - Invalid udp filter" << std::endl;
-                return;
-            }
-        } else {
-            std::cout << " *** ERROR - Invalid conf file parameters" << std::endl;
-            return;
-        }
-        std::cout << " Sending command to Add Data Filter" << std::endl;
-        telux::common::Status status = telux::common::Status::FAILED;
-
-        if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-            status = dataFilterMgr_->addDataRestrictFilter(dataFilter, responseCb);
-        } else {
-            status = dataFilterMgr_->addDataRestrictFilter(
-                dataFilter, responseCb, profileId, ipFamType);
-        }
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
-        }
-    }
-}
-
-void DataMenu::removeAllFilter() {
-
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
-        return;
-    }
-    std::cout << "\nRemove data filters" << std::endl;
-
-    char delimiter = '\n';
-    std::string profileIdInput;
-    std::cout << "Enter Profile Id : ";
-    std::getline(std::cin, profileIdInput, delimiter);
-
-    int profileId = -1;
-    if (!profileIdInput.empty()) {
-        try {
-            profileId = std::stoi(profileIdInput);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << profileId
-                      << std::endl;
-            return;
-        }
-    } else {
-        profileId = PROFILE_ID_MAX;
-    }
-
-    std::string ipFamilyTypeInput;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
-    std::getline(std::cin, ipFamilyTypeInput, delimiter);
-
-    telux::data::IpFamilyType ipFamType = IpFamilyType::UNKNOWN;
-    if (!ipFamilyTypeInput.empty()) {
-        try {
-            ipFamType = static_cast<telux::data::IpFamilyType>(std::stoi(ipFamilyTypeInput));
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values "
-                      << static_cast<int>(ipFamType) << std::endl;
-            return;
-        }
-    } else {
-        ipFamType = IpFamilyType::UNKNOWN;
-    }
-
-    telux::common::Status status = telux::common::Status::FAILED;
-    if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-        status = dataFilterMgr_->removeAllDataRestrictFilters(responseCb);
-    } else {
-        status = dataFilterMgr_->removeAllDataRestrictFilters(responseCb, profileId, ipFamType);
-    }
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << " *** ERROR - Failed to send remove Data Filter command" << std::endl;
-        return;
     }
 }
 
@@ -1021,6 +630,7 @@ void DataMenu::requestProfileById(std::vector<std::string> inputCommand) {
 
 void DataMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::INatManager> natMgr;
+    telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
@@ -1083,11 +693,13 @@ void DataMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    natMgr->addStaticNatEntry(profileId, natConfig, respCb);
+    retStat = natMgr->addStaticNatEntry(profileId, natConfig, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::INatManager> natMgr;
+    telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
@@ -1149,11 +761,13 @@ void DataMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    natMgr->removeStaticNatEntry(profileId, natConfig, respCb);
+    retStat = natMgr->removeStaticNatEntry(profileId, natConfig, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::INatManager> natMgr;
+    telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
@@ -1195,7 +809,8 @@ void DataMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
                       << "\n==========================================\n";
         }
     };
-    natMgr->requestStaticNatEntries(profileId, respCb);
+    retStat = natMgr->requestStaticNatEntries(profileId, respCb);
+    Utils::printStatus(retStat);
 }
 
 telux::data::IpProtocol DataMenu::getProtcol(std::string protoStr) {
@@ -1258,6 +873,7 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     bool subSystemStatus = false;
     bool fwEnable = false;
     bool allowPackets = false;
+    telux::common::Status retStat;
 
     std::cout << "Set Firewall\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1304,13 +920,15 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    firewallMgr->setFirewall(profileId, fwEnable, allowPackets, respCb);
+    retStat = firewallMgr->setFirewall(profileId, fwEnable, allowPackets, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
+    telux::common::Status retStat;
 
     std::cout << "request Firewall Status\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1346,13 +964,15 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
         }
     };
 
-    firewallMgr->requestFirewallStatus(profileId, respCb);
+    retStat = firewallMgr->requestFirewallStatus(profileId, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
+    telux::common::Status retStat;
     std::cout << "add Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
@@ -1565,13 +1185,15 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    firewallMgr->addFirewallEntry(profileId, fwEntry, respCb);
+    retStat = firewallMgr->addFirewallEntry(profileId, fwEntry, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
+    telux::common::Status retStat;
 
     std::cout << "request Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1608,7 +1230,8 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
         this->displayFirewallEntry();
     };
 
-    firewallMgr->requestFirewallEntries(profileId, respCb);
+    retStat = firewallMgr->requestFirewallEntries(profileId, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::displayFirewallEntry() {
@@ -1660,6 +1283,7 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
+    telux::common::Status retStat;
 
     std::cout << "remove Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1695,13 +1319,15 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    firewallMgr->removeFirewallEntry(profileId, entryHandle, respCb);
+    retStat = firewallMgr->removeFirewallEntry(profileId, entryHandle, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
+    telux::common::Status retStat;
 
     std::cout << "Add DMZ\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1737,13 +1363,15 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    firewallMgr->enableDmz(profileId, ipAddr, respCb);
+    retStat = firewallMgr->enableDmz(profileId, ipAddr, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
+    telux::common::Status retStat;
 
     std::cout << "Remove DMZ\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1780,13 +1408,15 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    firewallMgr->disableDmz(profileId, static_cast<telux::data::IpFamilyType>(ipType), respCb);
+    retStat = firewallMgr->disableDmz(profileId, static_cast<telux::data::IpFamilyType>(ipType), respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     bool subSystemStatus = false;
+    telux::common::Status retStat;
 
     std::cout << "request Dmz Entries\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1825,10 +1455,12 @@ void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
         }
     };
 
-    firewallMgr->requestDmzEntry(profileId, respCb);
+    retStat = firewallMgr->requestDmzEntry(profileId, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::createVlan(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
     std::shared_ptr<telux::data::net::IVlanManager> vlanMgr;
     int operationType;
     bool subSystemStatus = false;
@@ -1884,9 +1516,12 @@ void DataMenu::createVlan(std::vector<std::string> inputCommand) {
     config.vlanId = vlanId;
     config.isAccelerated = isAccelerated;
 
-    vlanMgr->createVlan(config, respCb);
+    retStat = vlanMgr->createVlan(config, respCb);
+    Utils::printStatus(retStat);
 }
+
 void DataMenu::removeVlan(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
     std::shared_ptr<telux::data::net::IVlanManager> vlanMgr;
     int operationType;
     bool subSystemStatus = false;
@@ -1926,10 +1561,13 @@ void DataMenu::removeVlan(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    vlanMgr->removeVlan(vlanId, infType, respCb);
+    retStat = vlanMgr->removeVlan(vlanId, infType, respCb);
+    Utils::printStatus(retStat);
 }
+
 void DataMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IVlanManager> vlanMgr;
+    telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
@@ -1962,11 +1600,13 @@ void DataMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
         }
     };
 
-    vlanMgr->queryVlanInfo(respCb);
+    retStat = vlanMgr->queryVlanInfo(respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::enableSocks(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::ISocksManager> socksMgr;
+    telux::common::Status retStat;
     int operationType;
     int enableEntry;
     bool subSystemStatus = false;
@@ -2005,7 +1645,8 @@ void DataMenu::enableSocks(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    socksMgr->enableSocks(enablement,respCb);
+    retStat = socksMgr->enableSocks(enablement,respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::bridgeMenu(std::vector<std::string> userInput) {
@@ -2026,6 +1667,7 @@ void DataMenu::l2tpMenu(std::vector<std::string> userInput) {
 
 void DataMenu::bindWithProfile(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IVlanManager> vlanMgr;
+    telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
@@ -2064,11 +1706,13 @@ void DataMenu::bindWithProfile(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    vlanMgr->bindWithProfile(profileId, vlanId, respCb);
+    retStat = vlanMgr->bindWithProfile(profileId, vlanId, respCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IVlanManager> vlanMgr;
+    telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
@@ -2107,11 +1751,13 @@ void DataMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    vlanMgr->unbindFromProfile(profileId, vlanId, respCb);
+   retStat = vlanMgr->unbindFromProfile(profileId, vlanId, respCb);
+   Utils::printStatus(retStat);
 }
 
 void DataMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IVlanManager> vlanMgr;
+    telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
@@ -2144,5 +1790,6 @@ void DataMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
         }
     };
 
-    vlanMgr->queryVlanMappingList(respCb);
+    retStat = vlanMgr->queryVlanMappingList(respCb);
+    Utils::printStatus(retStat);
 }

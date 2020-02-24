@@ -35,7 +35,7 @@ extern "C" {
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
-#include <Utils.hpp>
+#include "../../../../common/utils/Utils.hpp"
 
 #include "BridgeMenu.hpp"
 
@@ -90,6 +90,7 @@ int BridgeMenu::init() {
 
 void BridgeMenu::enableBridge(std::vector<std::string> inputCommand) {
     bool enableBridge = false;
+    telux::common::Status retStat;
     int temp = 0;
     std::cout << "Enter the desired state \n (1-enable, 0-disable): ";
     std::cin >> temp;
@@ -112,15 +113,15 @@ void BridgeMenu::enableBridge(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    if(telux::common::Status::SUCCESS != bridgeMgr_->enableBridge(enableBridge, respCb)) {
-        std::cout << "Request to set bridge state failed" << std::endl;
-    }
+    retStat = bridgeMgr_->enableBridge(enableBridge, respCb);
+    Utils::printStatus(retStat);
 }
 
 void BridgeMenu::addBridge(std::vector<std::string> inputCommand) {
     int temp;
     char delimiter = '\n';
     BridgeInfo config;
+    telux::common::Status retStat;
 
     std::cout << "Enter Interface name(ex:wlan0, eth0, etc.) : ";
     std::getline(std::cin, config.ifaceName, delimiter);
@@ -143,13 +144,13 @@ void BridgeMenu::addBridge(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    if(telux::common::Status::SUCCESS != bridgeMgr_->addBridge(config, respCb)) {
-        std::cout << "Request to add a software bridge failed" << std::endl;
-    }
+    retStat= bridgeMgr_->addBridge(config, respCb);
+    Utils::printStatus(retStat);
 }
 
 void BridgeMenu::getBridgeInfo(std::vector<std::string> inputCommand) {
 
+    telux::common::Status retStat;
     auto respCb = [](const std::vector<BridgeInfo> &configs, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
@@ -162,12 +163,12 @@ void BridgeMenu::getBridgeInfo(std::vector<std::string> inputCommand) {
                       << ", bandwidth: " << c.bandwidth << std::endl;
         }
     };
-    if(telux::common::Status::SUCCESS != bridgeMgr_->requestBridgeInfo(respCb)) {
-        std::cout << "Request to get software bridge info failed" << std::endl;
-    }
+    retStat= bridgeMgr_->requestBridgeInfo(respCb);
+    Utils::printStatus(retStat);
 }
 
 void BridgeMenu::removeBridge(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
     std::string ifaceName;
     char delimiter = '\n';
     std::cout << "Enter Interface name(ex:wlan0, eth0, etc.) : ";
@@ -182,7 +183,6 @@ void BridgeMenu::removeBridge(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    if(telux::common::Status::SUCCESS != bridgeMgr_->removeBridge(ifaceName, respCb)) {
-        std::cout << "Request to delete a software bridge failed" << std::endl;
-    }
+    retStat = bridgeMgr_->removeBridge(ifaceName, respCb);
+    Utils::printStatus(retStat);
 }

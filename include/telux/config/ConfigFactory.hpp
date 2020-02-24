@@ -73,12 +73,13 @@ public:
      */
     std::shared_ptr<IModemConfigManager> getModemConfigManager();
 
-    ~ConfigFactory();
-
 private:
     std::shared_ptr<IModemConfigManager> modemConfigManager_;
     std::mutex mutex_;
     ConfigFactory();
+    ConfigFactory(const ConfigFactory &) = delete;
+    ConfigFactory &operator=(const ConfigFactory &) = delete;
+    ~ConfigFactory();
 };
 
 /** @} */ /* end_addtogroup telematics_config */

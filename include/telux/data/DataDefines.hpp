@@ -205,6 +205,7 @@ enum class DataBearerTechnology {
     TDSCDMA,               /**< TD-SCDMA. */
     GSM,                   /**< GSM */
     BEARER_TECH_3GPP_WLAN, /**< IWLAN */
+    BEARER_TECH_5G,        /**< 5G */
 };
 
 /**

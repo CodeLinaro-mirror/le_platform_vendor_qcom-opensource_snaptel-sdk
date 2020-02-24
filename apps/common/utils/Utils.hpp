@@ -76,6 +76,10 @@ public:
    static std::string getErrorCodeAsString(telux::common::ErrorCode error);
 
    static int setSupplementaryGroups(std::vector<std::string> grps);
+
+   // Print status message that corresponds to the return value of managers api(s) of type
+   // telux::common::Status.
+   static void printStatus(telux::common::Status status);
 };
 
 #endif

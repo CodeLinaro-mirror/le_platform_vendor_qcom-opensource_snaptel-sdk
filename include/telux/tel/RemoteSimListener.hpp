@@ -57,7 +57,7 @@ namespace tel {
  * The methods in listener can be invoked from multiple different threads. The
  * implementation should be thread safe.
  */
-class IRemoteSimListener {
+class IRemoteSimListener : public common::IServiceStatusListener{
 public:
    /**
     * This function is called when the modem wants to transmit a command APDU.
@@ -115,17 +115,6 @@ public:
     *           change and could break backwards compatibility.
     */
     virtual void onCardReset() {
-    }
-
-   /**
-    * This function is called when the modem service goes down or comes up.
-    *
-    * @param    [in] status     Service status
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
-    */
-    virtual void onServiceStatusChange(const telux::common::ServiceStatus status) {
     }
 
    /**

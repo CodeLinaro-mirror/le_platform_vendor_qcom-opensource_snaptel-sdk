@@ -362,7 +362,7 @@ class IDataCall {
 };
 
 /**
- * Interface for Data call listener object. Client needs to implement this interface to get
+ * Interface for Data connection listener object. Client needs to implement this interface to get
  * access to data services notifications like onNewDataCall, onDataCallStatusChanged and
  * onDataCallFailure.
  *

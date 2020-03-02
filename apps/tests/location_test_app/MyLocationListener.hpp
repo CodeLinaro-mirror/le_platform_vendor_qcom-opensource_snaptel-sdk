@@ -66,7 +66,9 @@ private:
    void printLocationPositionDynamics(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printGnssMeasurementInfo(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printGnssSystemTime(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
-   void printLocationTech(std::shared_ptr<telux::loc::ILocationInfoBase> locationInfo);
+   void printLocationValidity(telux::loc::LocationInfoValidity validityMask);
+   void printLocationExValidity(telux::loc::LocationInfoExValidity validityMask);
+   void printLocationTech(telux::loc::LocationTechnology techMask);
    void printVerticalReliability(telux::loc::LocationReliability locReliability);
    void printConstellationType(telux::loc::GnssConstellationType constellation);
    void printGnssSignalType(telux::loc::GnssSignal signalTypeMask);
@@ -75,6 +77,7 @@ private:
    void printEphimerisAvailability(telux::loc::SVInfoAvailability availability);
    void printAlmanacAvailability(telux::loc::SVInfoAvailability availability);
    void printFixAvailability(telux::loc::SVInfoAvailability availability);
+   void printSvUsedInPosition(telux::loc::SvUsedInPosition svUsedInPosition);
    void printCalibrationStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineType(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineMask(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);

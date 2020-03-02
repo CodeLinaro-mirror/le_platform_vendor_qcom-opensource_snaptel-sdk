@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -241,9 +241,6 @@ void MyLocationListener::printConstellationType(telux::loc::GnssConstellationTyp
          break;
       case telux::loc::GnssConstellationType::SBAS:
          std::cout << "Constellation type: SBAS" << std::endl;
-         break;
-      case telux::loc::GnssConstellationType::COMPASS:
-         std::cout << "Constellation type: COMPASS" << std::endl;
          break;
       case telux::loc::GnssConstellationType::GLONASS:
          std::cout << "Constellation type: GLONASS" << std::endl;

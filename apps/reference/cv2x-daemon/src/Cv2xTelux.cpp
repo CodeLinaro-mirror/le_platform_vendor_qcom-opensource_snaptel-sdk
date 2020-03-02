@@ -70,6 +70,8 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
         LOGD("Triggered post ssr event to start data calls\n");
     }
 
+    bool startDataCalls = false;
+
     // Handle State Transition InActive to Active/Suspended
     if (((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
          (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) &&
@@ -83,7 +85,6 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
         // because of state transitions from inactive to active.
         //
         // So don't start data calls during daemon startup here, it will be done elsewhere.
-        bool startDataCalls = false;
         {
             std::lock_guard<std::mutex> lock(dcMutex_);
             if (isInitializationDone_) {
@@ -91,12 +92,13 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
             }
         }
 
-        if (startDataCalls) {
-            findProfilesAndStartDataCalls();
-        }
     }
 
     cv2xStatus_ = status;
+
+    if (startDataCalls) {
+        findProfilesAndStartDataCalls();
+    }
 }
 
 void Cv2xTelux::logStatusChanged(Cv2xStatus &status) {

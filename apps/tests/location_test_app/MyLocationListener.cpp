@@ -67,9 +67,131 @@ void MyLocationListener::printSbasCorrectionEx(
    }
 }
 
-void MyLocationListener::printLocationTech(
-   std::shared_ptr<telux::loc::ILocationInfoBase> locationInfo) {
-   telux::loc::LocationTechnology techMask = locationInfo->getTechMask();
+void MyLocationListener::printLocationExValidity(
+      telux::loc::LocationInfoExValidity validityMask) {
+    std::cout << " Location Ex Validity : " << std::endl;
+    if((validityMask & telux::loc::HAS_ALTITUDE_MEAN_SEA_LEVEL)) {
+      std::cout << "valid altitude mean sea level" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_DOP)) {
+      std::cout << "valid pdop, hdop, vdop" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_MAGNETIC_DEVIATION)) {
+      std::cout << "valid magnetic deviation" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_HOR_RELIABILITY)) {
+      std::cout << "valid horizontal reliability" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_VER_RELIABILITY)) {
+      std::cout << "valid vertical reliability" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_HOR_ACCURACY_ELIP_SEMI_MAJOR)) {
+      std::cout << "valid elipsode semi major" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_HOR_ACCURACY_ELIP_SEMI_MINOR)) {
+      std::cout << "valid elipsode semi minor" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_HOR_ACCURACY_ELIP_AZIMUTH)) {
+      std::cout << "valid accuracy elipsode azimuth" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_GNSS_SV_USED_DATA)) {
+      std::cout << "valid gnss sv used in pos data" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_NAV_SOLUTION_MASK)) {
+      std::cout << "valid navSolutionMask" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_POS_TECH_MASK)) {
+      std::cout << "valid LocPosTechMask" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_SV_SOURCE_INFO)) {
+      std::cout << "valid LocSvInfoSource" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_POS_DYNAMICS_DATA)) {
+      std::cout << "valid position dynamics data" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_EXT_DOP)) {
+      std::cout << "valid gdop, tdop" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_NORTH_STD_DEV)) {
+      std::cout << "valid North standard deviation" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_EAST_STD_DEV)) {
+      std::cout << "valid East standard deviation" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_NORTH_VEL)) {
+      std::cout << "valid North Velocity" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_EAST_VEL)) {
+      std::cout << "valid East Velocity" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_UP_VEL)) {
+      std::cout << "valid Up Velocity" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_NORTH_VEL_UNC)) {
+      std::cout << "valid North Velocity Uncertainty" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_EAST_VEL_UNC)) {
+      std::cout << "valid East Velocity Uncertainty" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_UP_VEL_UNC)) {
+      std::cout << "valid Up Velocity Uncertainty" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_LEAP_SECONDS)) {
+      std::cout << "valid leap_seconds" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_TIME_UNC)) {
+      std::cout << "valid timeUncMs" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_NUM_SV_USED_IN_POSITION)) {
+      std::cout << "valid number of sv used" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_CALIBRATION_CONFIDENCE_PERCENT)) {
+      std::cout << "valid sensor calibrationConfidencePercent" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_CALIBRATION_STATUS)) {
+      std::cout << "valid sensor calibrationConfidence" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_OUTPUT_ENG_TYPE)) {
+      std::cout << "valid output engine type" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_OUTPUT_ENG_MASK)) {
+      std::cout << "valid output engine mask" << std::endl;
+    }
+
+}
+
+void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity validityMask) {
+   std::cout << " Location Basic Validity : " << std::endl;
+   if((validityMask & telux::loc::HAS_LAT_LONG_BIT)) {
+      std::cout << "valid latitude longitude" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_ALTITUDE_BIT)) {
+      std::cout << "valid altitude" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_SPEED_BIT)) {
+      std::cout << "valid speed" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_HEADING_BIT)) {
+      std::cout << "valid heading" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_HORIZONTAL_ACCURACY_BIT)) {
+      std::cout << "valid horizontal accuracy" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_VERTICAL_ACCURACY_BIT)) {
+      std::cout << "valid vertical accuracy" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_SPEED_ACCURACY_BIT)) {
+      std::cout << "valid speed accuracy" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_HEADING_ACCURACY_BIT)) {
+      std::cout << "valid heading accuracy " << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_TIMESTAMP_BIT)) {
+      std::cout << "valid timestamp" << std::endl;
+   }
+}
+
+void MyLocationListener::printLocationTech(telux::loc::LocationTechnology techMask) {
    std::cout << "Position Technology used : " << std::endl;
    if((techMask & telux::loc::LOC_GNSS)) {
       std::cout << "location calculated using GNSS" << std::endl;
@@ -173,9 +295,6 @@ void MyLocationListener::printGnssMeasurementInfo(
       if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
          std::cout << "SBAS satellite" << std::endl;
       }
-      if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_COMPASS) {
-         std::cout << "COMPASS satellite " << std::endl;
-      }
       if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
          std::cout << "GLONASS satellite" << std::endl;
       }
@@ -185,9 +304,25 @@ void MyLocationListener::printGnssMeasurementInfo(
       if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
          std::cout << "QZSS satellite" << std::endl;
       }
+      else {
+         std::cout << "UNKNOWN satellite" << std::endl;
+      }
 
       std::cout << "Gnss sv id : " << measInfo[i].gnssSvId;
    }
+}
+
+void MyLocationListener::printSvUsedInPosition(
+      telux::loc::SvUsedInPosition svUsedInPosition) {
+   std::cout << " SV used in position : " << std::endl;
+   std::cout << " SVs from GPS constellation " << svUsedInPosition.gps << std::endl;
+   std::cout << " SVs from GLONASS constellation " << svUsedInPosition.glo
+     << std::endl;
+   std::cout << " SVs from GALILEO constellation " << svUsedInPosition.gal
+     << std::endl;
+   std::cout << " SVs from BEIDOU constellation " << svUsedInPosition.bds
+     << std::endl;
+   std::cout << " SVs from QZSS constellation " << svUsedInPosition.qzss << std::endl;
 }
 
 void MyLocationListener::printGnssSystemTime(
@@ -205,9 +340,6 @@ void MyLocationListener::printGnssSystemTime(
    if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
       std::cout << "SBAS satellite" << std::endl;
    }
-   if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_COMPASS) {
-      std::cout << "COMPASS satellite" << std::endl;
-   }
    if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
       std::cout << "GLONASS satellite " << std::endl;
    }
@@ -216,6 +348,9 @@ void MyLocationListener::printGnssSystemTime(
    }
    if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
       std::cout << "QZSS satellite" << std::endl;
+   }
+   else {
+      std::cout << "UNKNOWN satellite" << std::endl;
    }
 
    telux::loc::SystemTimeInfo sysTimeInfo = sysTime.time;
@@ -410,9 +545,6 @@ void MyLocationListener::printConstellationType(telux::loc::GnssConstellationTyp
       case telux::loc::GnssConstellationType::SBAS:
          std::cout << "Constellation type: SBAS" << std::endl;
          break;
-      case telux::loc::GnssConstellationType::COMPASS:
-         std::cout << "Constellation type: COMPASS" << std::endl;
-         break;
       case telux::loc::GnssConstellationType::GLONASS:
          std::cout << "Constellation type: GLONASS" << std::endl;
          break;
@@ -552,7 +684,8 @@ void MyLocationListener::onBasicLocationUpdate(
    std::cout << std::endl;
    PRINT_NOTIFICATION << "\n*********************** Basic Location Report *********************"
                       << std::endl;
-   printLocationTech(locationInfo);
+   printLocationValidity(locationInfo->getLocationInfoValidity());
+   printLocationTech(locationInfo->getTechMask());
 
    time_t realtime;
    realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
@@ -580,6 +713,9 @@ void MyLocationListener::onDetailedLocationUpdate(
    PRINT_NOTIFICATION << "\n*********************** Detailed Location Report "
                          "*********************"
                       << std::endl;
+   printLocationValidity(locationInfo->getLocationInfoValidity());
+   printLocationExValidity(locationInfo->getLocationInfoExValidity());
+   printLocationTech(locationInfo->getTechMask());
    time_t realtime;
    realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
    std::cout << "Time stamp: " << locationInfo->getTimeStamp() << " mSec" << std::endl;
@@ -607,7 +743,9 @@ void MyLocationListener::onDetailedLocationUpdate(
       << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
       << ", Azimuth: " << locationInfo->getHorizontalUncertaintyAzimuth() << std::endl
       << ", East standard deviation: " << locationInfo->getEastStandardDeviation() << std::endl
-      << ", North standard deviation: " << locationInfo->getNorthStandardDeviation() << std::endl;
+      << ", North standard deviation: " << locationInfo->getNorthStandardDeviation() << std::endl
+      << ", Number of satellite vehicle used: " << locationInfo->getNumSvUsed() << std::endl;
+   printSvUsedInPosition(locationInfo->getSvUsedInPosition());
    printHorizontalReliability(locationInfo->getHorizontalReliability());
    printVerticalReliability(locationInfo->getVerticalReliability());
    std::vector<uint16_t> SVIds;

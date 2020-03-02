@@ -178,7 +178,8 @@ enum class GnssConstellationType {
   GPS = 1, /**< GPS satellite */
   GALILEO = 2, /**< GALILEO satellite */
   SBAS = 3, /**< SBAS satellite */
-  COMPASS = 4, /**< COMPASS satellite */
+  COMPASS = 4, /**< COMPASS satellite.
+               @deprecated constellation type is not supported.*/
   GLONASS = 5, /**< GLONASS satellite */
   BDS = 6, /**< BDS satellite */
   QZSS = 7, /**< QZSS satellite */
@@ -326,13 +327,17 @@ struct GnssKinematicsData {
  * Specifies type of system.
  */
 enum class GnssSystem {
+  /** UNKNOWN satellite. */
+  GNSS_LOC_SV_SYSTEM_UNKNOWN = -1,
   /** GPS satellite. */
   GNSS_LOC_SV_SYSTEM_GPS = 1,
   /** GALILEO satellite. */
   GNSS_LOC_SV_SYSTEM_GALILEO = 2,
   /** SBAS satellite. */
   GNSS_LOC_SV_SYSTEM_SBAS = 3,
-  /** COMPASS satellite. */
+  /** COMPASS satellite.
+  @deprecated constellation type
+  is not supported.*/
   GNSS_LOC_SV_SYSTEM_COMPASS = 4,
   /** GLONASS satellite. */
   GNSS_LOC_SV_SYSTEM_GLONASS = 5,
@@ -534,6 +539,31 @@ struct GnssMeasurementInfo {
   uint16_t gnssSvId;
 };
 
+/** Specify the set of SVs that are used to calculate
+ *  GnssLocation.*/
+struct SvUsedInPosition {
+    /** Specify the set of SVs from GPS constellation that are used
+     *  to compute the position. <br/> Bit 0 to Bit 31 corresponds
+     *  to GPS SV id 1 to 32.*/
+    uint64_t gps;
+    /** Specify the set of SVs from GLONASS constellation that are
+     *  used to compute the position.
+     *  Bit 0 to Bit 31 corresponds to GLO SV id 65 to 96.*/
+    uint64_t glo;
+    /** Specify the set of SVs from GALILEO constellation that are
+     *  used to compute the position.
+     *  Bit 0 to Bit 35 corresponds to GAL SV id 301 to 336.*/
+    uint64_t gal;
+    /** Specify the set of SVs from BEIDOU constellation that are
+     *  used to compute the position.
+     *  Bit 0 to Bit 36 corresponds to BDS SV id 201 to 237.*/
+    uint64_t bds;
+    /** Specify the set of SVs from QZSS constellation that are used
+     *  to compute the position.
+     *  Bit 0 to Bit 4 corresponds to BDS SV id 193 to 197.*/
+    uint64_t qzss;
+};
+
 enum LocationTechnologyType {
   /** location was calculated using GNSS */
   LOC_GNSS = (1 << 0),
@@ -547,6 +577,30 @@ enum LocationTechnologyType {
 
 /*Bit mask containing bits from LocationTechnologyType */
 using LocationTechnology = uint32_t;
+
+enum LocationValidityType {
+  /** Location has valid latitude and longitude.*/
+    HAS_LAT_LONG_BIT          = (1<<0),
+    /** Location has valid altitude.*/
+    HAS_ALTITUDE_BIT          = (1<<1),
+    /** Location has valid speed.*/
+    HAS_SPEED_BIT             = (1<<2),
+    /** Location has valid heading.*/
+    HAS_HEADING_BIT           = (1<<3),
+    /* Location has valid horizontal accuracy. */
+    HAS_HORIZONTAL_ACCURACY_BIT = (1<<4),
+    /** Location has valid vertical accuracy.*/
+    HAS_VERTICAL_ACCURACY_BIT = (1<<5),
+    /** Location has valid speed accuracy.*/
+    HAS_SPEED_ACCURACY_BIT    = (1<<6),
+    /** Location has valid heading accuracy.*/
+    HAS_HEADING_ACCURACY_BIT  = (1<<7),
+    /** Location has valid timestamp.*/
+    HAS_TIMESTAMP_BIT         = (1<<8)
+};
+
+/*Bit mask containing bits from LocationValidityType */
+using LocationInfoValidity = uint32_t;
 
 /** Gnss Location Information mask flags */
 enum LocationInfoExValidityType {
@@ -598,6 +652,8 @@ enum LocationInfoExValidityType {
   HAS_LEAP_SECONDS = (1 << 22),
   /** valid timeUncMs */
   HAS_TIME_UNC = (1 << 23),
+  /** valid number of sv used */
+  HAS_NUM_SV_USED_IN_POSITION = (1 << 24),
   /** valid sensor calibrationConfidencePercent */
   HAS_CALIBRATION_CONFIDENCE_PERCENT = (1 << 25),
   /** valid sensor calibrationConfidence */
@@ -605,7 +661,7 @@ enum LocationInfoExValidityType {
   /** valid output engine type */
   HAS_OUTPUT_ENG_TYPE = (1 << 27),
   /** valid output engine mask */
-  HAS_OUTPUT_ENG_MASK = (1 << 28),
+  HAS_OUTPUT_ENG_MASK = (1 << 28)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -1172,6 +1228,14 @@ public:
 class ILocationInfoBase {
 public:
 /**
+ * Retrieves the validity of the Location basic Info.
+ *
+ * @returns Location basic validity mask.
+ *
+ */
+  virtual LocationInfoValidity getLocationInfoValidity() = 0;
+
+/**
  * Retrieves technology used in computing this fix.
  *
  * @returns Location technology mask.
@@ -1220,7 +1284,7 @@ public:
   virtual double getAltitude() = 0;
 
 /**
- * Retrieves heading.
+ * Retrieves heading/bearing.
  *    - Units: Degrees
  *    - Range: 0 to 359.999
  *
@@ -1256,7 +1320,7 @@ public:
   virtual uint64_t getTimeStamp() = 0;
 
 /**
- * Retrieves 3-D speed uncertainty.
+ * Retrieves 3-D speed uncertainty/accuracy.
  *    - Units: Meters per Second
  *
  * @returns Speed uncertainty if available else returns NaN.
@@ -1284,6 +1348,15 @@ public:
  */
 class ILocationInfoEx : public ILocationInfoBase {
 public:
+
+/**
+ * Retrives the validity of the location info ex. It provides the validity of various information
+ * like dop, reliabilities, uncertainities etc.
+ *
+ * @returns Location ex validity mask
+ */
+  virtual LocationInfoExValidity getLocationInfoExValidity() = 0;
+
 /**
  * Retrieves the altitude with respect to mean sea level.
  *    - Units: Meters
@@ -1412,6 +1485,22 @@ public:
  *
  */
   virtual float getNorthStandardDeviation() = 0;
+
+/**
+ * Retrieves number of satellite vehicles used in position report.
+ *
+ * @returns number of Sv used.
+ *
+ */
+  virtual uint16_t getNumSvUsed() = 0;
+
+/**
+ * Retrives the set of satellite vehicles that are used to calculate position.
+ *
+ * @returns set of satellite vehicles for different constellations.
+ */
+  virtual SvUsedInPosition getSvUsedInPosition() = 0;
+
 /**
  * Retrieves GNSS Satellite Vehicles used in position data.
  *

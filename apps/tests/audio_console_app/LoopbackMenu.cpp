@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -36,6 +36,7 @@ LoopbackMenu::LoopbackMenu(std::string appName, std::string cursor,
                                             std::shared_ptr<AudioClient> audioClient)
     : ConsoleApp(appName, cursor),
       audioClient_(audioClient) {
+        ready_ = false;
         loopbackStarted_ = false;
 }
 
@@ -88,6 +89,7 @@ void LoopbackMenu::init() {
          stopLoopbackCommand};
 
     if (audioClient_) {
+        ready_ = true;
         audioLoopbackStream_ =std::dynamic_pointer_cast<IAudioLoopbackStream>(
            audioClient_->getStream(StreamType::LOOPBACK));
         ConsoleApp::addCommands(loopbackMenuCommandsList);
@@ -96,9 +98,19 @@ void LoopbackMenu::init() {
     }
 }
 
+void LoopbackMenu::cleanup() {
+    ready_ = false;
+    loopbackStarted_ = false;
+    audioLoopbackStream_ = nullptr;
+}
+
+void LoopbackMenu::setSystemReady() {
+    ready_ = true;
+}
+
 void LoopbackMenu::createStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
-    if (audioClient_) {
+    if (ready_) {
         if (!audioLoopbackStream_) {
             status = audioClient_->createStream(telux::audio::StreamType::LOOPBACK);
             if(status == telux::common::Status::SUCCESS) {
@@ -109,7 +121,7 @@ void LoopbackMenu::createStream(std::vector<std::string> userInput) {
             std::cout << "Stream exist please delete first" << std::endl;
         }
     } else {
-       std::cout << "AudioClient not initialized " << std::endl;
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
     }
 }
 

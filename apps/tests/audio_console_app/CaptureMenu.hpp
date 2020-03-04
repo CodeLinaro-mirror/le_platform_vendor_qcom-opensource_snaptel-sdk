@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -36,10 +36,11 @@
 class CaptureMenu : public ConsoleApp {
 public:
     CaptureMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-
     ~CaptureMenu();
-
     void init();
+    void cleanup();
+    void setSystemReady();
+
 private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);
@@ -65,7 +66,8 @@ private:
     uint32_t bufferRecordedTillNow_;
     FILE * file_;
     std::vector<std::thread> runningThreads_;
-    bool captureStatus_;
+    std::atomic<bool> captureStatus_;
+    std::atomic<bool> ready_;
 };
 
 #endif // CAPTUREMENU_HPP

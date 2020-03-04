@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are
@@ -333,6 +333,30 @@ public:
    virtual telux::common::Status deleteStream(std::shared_ptr<IAudioStream> stream,
                                               DeleteStreamResponseCb callback = nullptr)
       = 0;
+
+   /**
+    * Register a listener to get notified when service status changes.
+    *
+    * @param [in] listener     Pointer of IServiceListener object that processes the notification
+    *
+    * @returns Status of registerListener i.e success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status registerListener(std::weak_ptr<IAudioListener> listener) = 0;
+
+   /**
+    * Remove a previously registered listener.
+    *
+    * @param [in] listener Previously registered IServiceListener that needs to be removed
+    *
+    * @returns Status of deRegisterListener, success or suitable status code
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
 };
 
 /**

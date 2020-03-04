@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -42,6 +42,7 @@ CaptureMenu::CaptureMenu(std::string appName, std::string cursor,
    : ConsoleApp(appName, cursor),
    audioClient_(audioClient) {
        captureStatus_ = false;
+       ready_ = false;
 }
 
 CaptureMenu::~CaptureMenu() {
@@ -100,6 +101,7 @@ void CaptureMenu::init() {
          startCaptureCommand,
          stopCaptureCommand};
    if(audioClient_){
+        ready_ = true;
         audioCaptureStream_ = std::dynamic_pointer_cast<IAudioCaptureStream>(
            audioClient_->getStream(StreamType::CAPTURE));
         ConsoleApp::addCommands(captureMenuCommandsList);
@@ -108,9 +110,27 @@ void CaptureMenu::init() {
    }
 }
 
+void CaptureMenu::cleanup() {
+    ready_ = false;
+    captureStatus_ = false;
+    cv_.notify_all();
+    for (std::thread &th : runningThreads_) {
+        if (th.joinable()){
+            th.join();
+        }
+    }
+    bufferRecordedTillNow_ = 0;
+    audioCaptureStream_ = nullptr;
+}
+
+void CaptureMenu::setSystemReady() {
+    ready_ = true;
+}
+
+
 void CaptureMenu::createStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
-    if(audioClient_){
+    if (ready_) {
         if(!audioCaptureStream_) {
             status = audioClient_->createStream(telux::audio::StreamType::CAPTURE);
             if(status == telux::common::Status::SUCCESS) {
@@ -120,9 +140,9 @@ void CaptureMenu::createStream(std::vector<std::string> userInput) {
         } else {
              std::cout << "Stream exist please delete first" << std::endl;
         }
-   } else {
-       std::cout << "AudioClient not initialized " << std::endl;
-   }
+    } else {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    }
 }
 
 void CaptureMenu::deleteStream(std::vector<std::string> userInput) {
@@ -274,7 +294,7 @@ void CaptureMenu::record() {
     int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
                         (sampleRate*numChannels*BITS_PER_SAMPLE);
     waitTime = waitTime+100;
-    while(freeBuffers_.size() != TOTAL_BUFFERS) {
+    while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
         cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
     }
     fflush(file_);

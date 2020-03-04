@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,14 +37,20 @@
 using namespace telux::audio;
 using namespace telux::common;
 
-class AudioConsoleApp : public ConsoleApp {
+class AudioConsoleApp : public ConsoleApp,
+                        public telux::audio::IAudioListener,
+                        public std::enable_shared_from_this<AudioConsoleApp> {
 public :
     AudioConsoleApp(std::string appName, std::string cursor);
     ~AudioConsoleApp();
-
     void init();
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
 private:
+    void initConsole();
+    void cleanup();
+    void setSystemReady();
+    void closeAllStreams();
     void voiceMenu(std::vector<std::string> userInput);
     void playMenu(std::vector<std::string> userInput);
     void captureMenu(std::vector<std::string> userInput);
@@ -52,17 +58,16 @@ private:
     void toneMenu(std::vector<std::string> userInput);
     void transCodeMenu(std::vector<std::string> userInput);
 
-    void cleanup();
-
     // Audio Client is Created by the Audio Console app and it is passed to every Menu
     std::shared_ptr<AudioClient> audioClient_;
-	// Instance of all menu created are stored to maintain parallel running streams
+    // Instance of all menu created are stored to maintain parallel running streams
     std::shared_ptr<VoiceMenu> voiceMenu_;
     std::shared_ptr<PlayMenu> playMenu_;
     std::shared_ptr<CaptureMenu> captureMenu_;
     std::shared_ptr<LoopbackMenu> loopbackMenu_;
     std::shared_ptr<ToneMenu> toneMenu_;
     std::shared_ptr<TransCodeMenu> transCodeMenu_;
+    std::shared_ptr<IAudioManager> audioManager_;
 };
 
 #endif  // AUDIOCONSOLEAPP_HPP

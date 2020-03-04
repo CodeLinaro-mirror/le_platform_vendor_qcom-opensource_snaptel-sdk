@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,11 +43,14 @@ public:
     TransCodeMenu(std::string appName, std::string cursor);
     ~TransCodeMenu();
     void init();
+    void cleanup();
+    void setSystemReady();
     void onReadyForWrite() override;
+    void tearDown(std::vector<std::string> userInput);
 
 private:
+    void finishTranscoding();
     void startTranscoding(std::vector<std::string> userInput);
-    void abortTranscoding(std::vector<std::string> userInput);
     void createTranscoder();
     void read();
     void write();
@@ -70,11 +73,12 @@ private:
     std::condition_variable cv_;
     std::string readFilePath_, writeFilePath_;
     std::vector<std::thread> runningThreads_;
-    bool writeStatus_;
-    bool readStatus_;
+    std::atomic<bool> writeStatus_;
+    std::atomic<bool> readStatus_;
     std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> writeBuffers_;
     std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> readBuffers_;
-    bool pipeLineEmpty_;
+    std::atomic<bool> pipeLineEmpty_;
+    std::atomic<bool> ready_;
 };
 
 #endif // TRANSCODEMENU_HPP

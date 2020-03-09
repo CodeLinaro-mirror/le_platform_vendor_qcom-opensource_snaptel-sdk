@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -388,7 +388,6 @@ void ModemConfigurator::printConfigList() {
     int count = 0;
     for (auto &config : configList_) {
         std::cout << "Config No  : " << count << std::endl;
-        std::cout << "Id         : " << config.id << std::endl;
         std::string type;
         if (config.type == telux::config::ConfigType::HARDWARE) {
             type = "HARDWARE";

@@ -62,13 +62,13 @@ AudioConsoleApp::AudioConsoleApp(std::string appName, std::string cursor)
 }
 
 AudioConsoleApp::~AudioConsoleApp() {
-    closeAllStreams();
     voiceMenu_ = nullptr;
     playMenu_ = nullptr;
     captureMenu_ = nullptr;
-    transCodeMenu_ = nullptr;
     loopbackMenu_ = nullptr;
     toneMenu_ = nullptr;
+    transCodeMenu_ = nullptr;
+    closeAllStreams();
     audioClient_ = nullptr;
 }
 
@@ -214,10 +214,6 @@ void AudioConsoleApp::closeAllStreams() {
         audioClient_->getStream(StreamType::LOOPBACK));
     if (audioLoopbackStream_) {
         audioClient_->deleteStream(StreamType::LOOPBACK);
-    }
-
-    if (transCodeMenu_) {
-        transCodeMenu_->tearDown({});
     }
 }
 

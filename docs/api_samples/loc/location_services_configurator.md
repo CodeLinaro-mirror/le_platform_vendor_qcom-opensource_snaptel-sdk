@@ -1,6 +1,6 @@
-# Using Constraint Time Uncertainty(C-TUNC) APIs
+# Using Location Configurator APIs
 
-Please follow below steps to enable/disable C-TUNC
+Please follow below steps to use Configurator APIs
 
 ### 1. Implement a command response function ###
    ~~~~~~{.cpp}

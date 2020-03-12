@@ -304,6 +304,7 @@ void PlayMenu::play() {
         }
     }
     playStatus_ = true;
+    pipeLineEmpty_ = true;
     std::cout << "Audio play started" << std::endl;
     while (!feof(file_) && playStatus_)
     {

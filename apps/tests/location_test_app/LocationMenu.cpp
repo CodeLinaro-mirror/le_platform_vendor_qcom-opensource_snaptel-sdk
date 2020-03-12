@@ -89,6 +89,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setBasicLocationReportFlag(false);
       posListener->setDataInfoFlag(false);
       posListener->setNmeaInfoFlag(false);
+      posListener->setDetailedEngineLocReportFlag(false);
 
       //Registering listener for fixes
       locationManager->registerListenerEx(posListener_);
@@ -172,10 +173,15 @@ int LocationMenu::init() {
       ConsoleAppCommand("10", "Configure constellation", {}, std::bind(
                         &LocationMenu::configureConstellation, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureRobustLocation = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("11", "Configure robust location", {}, std::bind(
+                        &LocationMenu::configureRobustLocation, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
-         deleteAidingData, configureLeverArm, configureConstellation};
+         deleteAidingData, configureLeverArm, configureConstellation, configureRobustLocation};
+
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
 
@@ -400,7 +406,7 @@ void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
         std::cout << " Enable: " << enable << std::endl;
 
         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Configure-PACE");
-        telux::common::Status status = locationConfigurator_->configureCTunc(enable,
+        telux::common::Status status = locationConfigurator_->configurePACE(enable,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
                         std::placeholders::_1));
         if (status == telux::common::Status::NOTIMPLEMENTED) {
@@ -620,6 +626,48 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
   }
 }
 
+void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+       char delimiter = '\n';
+       std::string option;
+       std::cout << "Enter Y to enable or N to disable Robust Location: ";
+       std::getline(std::cin, option, delimiter);
+
+       bool enable = false;
+       if(option == "Y") {
+            enable = true;
+       } else if(option == "N") {
+            enable = false;
+       } else {
+            std::cout << " BAD input " << std::endl;
+       }
+        std::cout << " Enable: " << enable << std::endl;
+
+       std::string optionE911;
+       std::cout << "Enter Y to enable or N to disable Robust Location E911 session: ";
+       std::getline(std::cin, optionE911, delimiter);
+
+       bool enableE911 = false;
+       if(optionE911 == "Y") {
+            enableE911 = true;
+       } else if(optionE911 == "N") {
+            enableE911 = false;
+       } else {
+            std::cout << " BAD input " << std::endl;
+       }
+        std::cout << " EnableE911: " << enableE911 << std::endl;
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure-Robust Location");
+        telux::common::Status status = locationConfigurator_->configureRobustLocation(enable,
+            enableE911, std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+
 int LocationMenu::enableReportLogsUtility() {
    char delimiter = '\n';
    std::string usrInput;
@@ -648,6 +696,15 @@ void LocationMenu::enableDetailedLocationReportLogs() {
    }
 }
 
+void LocationMenu::enableDetailedEngineLocReportLogs() {
+   int opt = enableReportLogsUtility();
+   if((opt == 0) || (opt == 1)) {
+      posListener_->setDetailedEngineLocReportFlag(opt);
+   } else {
+      std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+   }
+}
+
 void LocationMenu::enableBasicLocationReportLogs() {
    int opt = enableReportLogsUtility();
    if((opt == 0) || (opt == 1)) {
@@ -667,10 +724,11 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
                << "FILTER NOTIFICATION MENU" << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
      std::cout << "  1 - Basic_location_notifications" << std::endl;
-     std::cout << "  2 - Detailed/Detailed_engine_location_notifications" << std::endl;
+     std::cout << "  2 - Detailed_location_notifications" << std::endl;
      std::cout << "  3 - SV_info_notifications" << std::endl;
      std::cout << "  4 - Data_info_notifications" << std::endl;
-     std::cout << "  5 - Nmea_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  5 - Detailed_Engine_location_notifications" << std::endl;
+     std::cout << "  6 - Nmea_info_notifications" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -689,6 +747,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      } else if(usrInput == "4") {
          LocationMenu::enableDataInfoLogs();
      } else if(usrInput == "5") {
+		 LocationMenu::enableDetailedEngineLocReportLogs();
+	 } else if(usrInput == "6") {
          LocationMenu::enableNmeaInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;

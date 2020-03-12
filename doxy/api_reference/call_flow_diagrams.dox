@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -728,6 +728,90 @@ When reports are no longer required, the app needs to stop the report and de-reg
 3. Application enables/disables constraint tunc using configureCTunc API.
 4. Status of configureCTunc i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for configureCTunc is received by the application.
+
+@subsection location_configurator_pace_callflow Call flow to enable/disable PACE
+
+@anchor fig_location_configurator_pace_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_pace_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to enable/disable PACE}
+  \label{fig_location_configurator_pace_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_pace_callflow.png,Call flow to enable/disable PACE,80,80,Call flow to enable/disable PACE}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application enables/disables PACE using configurePACE API.
+4. Status of configurePACE i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configurePACE is received by the application.
+
+@subsection location_configurator_delete_aiding_data_callflow Call flow to delete all aiding data
+
+@anchor fig_location_configurator_delete_aiding_data_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_delete_aiding_data_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to delete all aiding data}
+  \label{fig_location_configurator_delete_aiding_data_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_delete_aiding_data_callflow.png,Call flow to delete all aiding data,80,80,Call flow to delete all aiding data}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application deletes all aiding data using deleteAllAidingData API.
+4. Status of deleteAllAidingData i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for deleteAllAidingData is received by the application.
+
+@subsection location_configurator_configure_lever_arm_callflow Call flow to configure lever arm parameters
+
+@anchor fig_location_configurator_configure_lever_arm_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_lever_arm_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure lever arm parameters}
+  \label{fig_location_configurator_configure_lever_arm_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_lever_arm_callflow.png,Call flow to configure lever arm parameters,80,80,Call flow to configure lever arm parameters}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures lever arm parameters using configureLeverArm API.
+4. Status of configureLeverArm i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureLeverArm is received by the application.
+
+@subsection location_configurator_configure_constellation_callflow Call flow to configure blacklisted constellations
+
+@anchor fig_location_configurator_configure_constellation_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_constellation_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure blacklisted constellations}
+  \label{fig_location_configurator_configure_constellation_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_constellation_callflow.png,Call flow to configure blacklisted constellations,80,80,Call flow to configure blacklisted constellations}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures blacklisted constellations using configureConstellations API.
+4. Status of configureConstellations i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureConstellations is received by the application.
 
 @section data_call_flow Data
 

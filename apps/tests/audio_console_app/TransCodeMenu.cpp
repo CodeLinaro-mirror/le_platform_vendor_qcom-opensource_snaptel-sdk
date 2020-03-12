@@ -44,19 +44,19 @@ TransCodeMenu::TransCodeMenu(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
     pipeLineEmpty_ = true;
     writeStatus_ = false;
-    readStatus_ = true;
+    readStatus_ = false;
     ready_ = false;
 }
 
 TransCodeMenu::~TransCodeMenu() {
+    writeStatus_ = false;
+    readStatus_ = false;
     for(std::thread &th : runningThreads_) {
         if(th.joinable()){
             th.join();
         }
     }
     transcoder_ = nullptr;
-    writeStatus_ = false;
-    readStatus_ = true;
     pipeLineEmpty_ = true;
 }
 
@@ -324,6 +324,9 @@ void TransCodeMenu::read() {
     while (readBuffers_.size() != TOTAL_READ_BUFFERS && ready_) {
         cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
     }
+    if (ready_) {
+        finishTranscoding();
+    }
     std::cout << "Transcoding Successful" <<std::endl;
 }
 
@@ -344,7 +347,6 @@ void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buf
     cv_.notify_all();
     if (isLastBuffer) {
         readStatus_ = false;
-        finishTranscoding();
     }
     return;
 }

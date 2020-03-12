@@ -46,7 +46,11 @@ public:
 
    void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) override;
 
+   void onDetailedEngineLocationUpdate(const std::vector<std::shared_ptr<telux::loc::ILocationInfoEx>>
+       &locationEngineInfo) override;
+
    void setDetailedLocationReportFlag(bool enable);
+   void setDetailedEngineLocReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
    void setSvInfoFlag(bool enable);
    void setDataInfoFlag(bool enable);
@@ -58,7 +62,7 @@ public:
 private:
    bool isSvInfoFlagEnabled_ = false, isDetailedReportFlagEnabled_ = false;
    bool isBasicReportFlagEnabled_ = false, isDataInfoFlagEnabled_ = false;
-   bool isNmeaInfoFlagEnabled_ = false;
+   bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
    bool isTimerExpired = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);

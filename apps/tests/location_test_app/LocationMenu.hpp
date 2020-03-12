@@ -70,10 +70,12 @@ public:
    void deleteAidingData(std::vector<std::string> userInput);
    void configureLeverArm(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
+   void configureRobustLocation(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();
    void enableDetailedLocationReportLogs();
+   void enableDetailedEngineLocReportLogs();
    void enableSvInfoLogs();
    void enableDataInfoLogs();
    void enableNmeaInfoLogs();

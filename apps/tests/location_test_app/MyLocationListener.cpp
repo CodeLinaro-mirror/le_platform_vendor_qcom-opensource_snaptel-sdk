@@ -30,6 +30,7 @@
 #include <bitset>
 #include <iostream>
 #include <memory>
+#include <iomanip>
 
 #include <telux/loc/LocationDefines.hpp>
 
@@ -289,19 +290,19 @@ void MyLocationListener::printGnssMeasurementInfo(
       if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS) {
          std::cout << "GPS satellite " << std::endl;
       }
-      if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
+      else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
          std::cout << "GALILEO satellite" << std::endl;
       }
-      if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
+      else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
          std::cout << "SBAS satellite" << std::endl;
       }
-      if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+      else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
          std::cout << "GLONASS satellite" << std::endl;
       }
-      if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
+      else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
          std::cout << "BDS satellite" << std::endl;
       }
-      if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
+      else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
          std::cout << "QZSS satellite" << std::endl;
       }
       else {
@@ -690,9 +691,9 @@ void MyLocationListener::onBasicLocationUpdate(
    time_t realtime;
    realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
    std::cout << "GMT Time stamp: " << ctime(&realtime);
-   std::cout << "Latitude: " << locationInfo->getLatitude()
-             << "  Longitude: " << locationInfo->getLongitude() << std::endl
-             << "Altitude: " << locationInfo->getAltitude() << std::endl
+   std::cout << "Latitude: " << std::setprecision(15) << locationInfo->getLatitude() << std::endl
+             << "  Longitude: " << std::setprecision(15) << locationInfo->getLongitude() << std::endl
+             << "Altitude: " << std::setprecision(15) << locationInfo->getAltitude() << std::endl
              << "Speed: " << locationInfo->getSpeed() << std::endl
              << "Heading: " << locationInfo->getHeading() << std::endl
              << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
@@ -722,9 +723,9 @@ void MyLocationListener::onDetailedLocationUpdate(
    std::cout << "GMT Time stamp: " << ctime(&realtime);
    std::cout
       << "Speed: " << locationInfo->getSpeed() << std::endl
-      << "Latitude: " << locationInfo->getLatitude() << std::endl
-      << "  Longitude: " << locationInfo->getLongitude() << std::endl
-      << "Altitude: " << locationInfo->getAltitude() << std::endl
+      << "Latitude: " << std::setprecision(15) << locationInfo->getLatitude() << std::endl
+      << "  Longitude: " << std::setprecision(15) << locationInfo->getLongitude() << std::endl
+      << "Altitude: " << std::setprecision(15) << locationInfo->getAltitude() << std::endl
       << "Heading: " << locationInfo->getHeading() << std::endl
       << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
       << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
@@ -800,8 +801,106 @@ void MyLocationListener::onDetailedLocationUpdate(
    printCalibrationStatus(locationInfo);
    printLocOutputEngineType(locationInfo);
    printLocOutputEngineMask(locationInfo);
+   std::cout << " Conformity index : " << locationInfo->getConformityIndex() << std::endl;
 
    std::cout << "*************************************************************" << std::endl;
+}
+
+void MyLocationListener::onDetailedEngineLocationUpdate(
+      const std::vector<std::shared_ptr<telux::loc::ILocationInfoEx> > &locationEngineInfo) {
+    if(!isDetailedEngineReportFlagEnabled_) {
+      return;
+    }
+    for (auto locationInfo : locationEngineInfo) {
+      std::cout << std::endl;
+   PRINT_NOTIFICATION << "\n*********************** Detailed Engine Location Report "
+                         "*********************"
+                      << std::endl;
+   time_t realtime;
+   realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
+   std::cout << "Time stamp: " << locationInfo->getTimeStamp() << " mSec" << std::endl;
+   std::cout << "GMT Time stamp: " << ctime(&realtime);
+   std::cout
+      << "Speed: " << locationInfo->getSpeed() << std::endl
+      << "Latitude: " << std::setprecision(15) << locationInfo->getLatitude() << std::endl
+      << "  Longitude: " << std::setprecision(15) << locationInfo->getLongitude() << std::endl
+      << "Altitude: " << std::setprecision(15) << locationInfo->getAltitude() << std::endl
+      << "Heading: " << locationInfo->getHeading() << std::endl
+      << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
+      << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
+      << std::endl
+      << "Altitude with respect to mean sea level: " << locationInfo->getAltitudeMeanSeaLevel()
+      << std::endl
+      << "Position DOP: " << locationInfo->getPositionDop() << std::endl
+      << "Horizontal DOP: " << locationInfo->getHorizontalDop() << std::endl
+      << "Vertical DOP: " << locationInfo->getVerticalDop() << std::endl
+      << "Geometric DOP: " << locationInfo->getGeometricDop() << std::endl
+      << "Time DOP: " << locationInfo->getTimeDop() << std::endl
+      << "Magnetic deviation: " << locationInfo->getMagneticDeviation() << std::endl
+      << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
+      << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
+      << "HorizontalUncertainty\nSemiMajor: " << locationInfo->getHorizontalUncertaintySemiMajor()
+      << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
+      << ", Azimuth: " << locationInfo->getHorizontalUncertaintyAzimuth() << std::endl
+      << ", East standard deviation: " << locationInfo->getEastStandardDeviation() << std::endl
+      << ", North standard deviation: " << locationInfo->getNorthStandardDeviation() << std::endl;
+   printHorizontalReliability(locationInfo->getHorizontalReliability());
+   printVerticalReliability(locationInfo->getVerticalReliability());
+   std::vector<uint16_t> SVIds;
+   locationInfo->getSVIds(SVIds);
+   if(SVIds.size() > 0) {
+      std::cout << "Ids of used SVs : " << std::endl;
+      for(auto i = 0; (unsigned)i < SVIds.size() - 1; ++i) {
+         std::cout << SVIds[i] << ", ";
+      }
+      if(SVIds.size() > 0) {
+         std::cout << SVIds[SVIds.size() - 1] << std::endl;
+      }
+   }
+   printSbasCorrectionEx(locationInfo);
+   printLocationPositionTech(locationInfo);
+   printLocationPositionDynamics(locationInfo);
+   printGnssMeasurementInfo(locationInfo);
+   printGnssSystemTime(locationInfo);
+   std::cout << " Time Uncertainty : " << locationInfo->getTimeUncMs() << std::endl;
+   uint8_t leapSeconds;
+
+   if(locationInfo->getLeapSeconds(leapSeconds) == telux::common::Status::SUCCESS) {
+      std::cout << "Leap seconds: " << static_cast<int>(leapSeconds) << std::endl;
+   }
+
+   std::vector<float> velocityEastNorthUp;
+   if(locationInfo->getVelocityEastNorthUp(velocityEastNorthUp) == telux::common::Status::SUCCESS) {
+      std::cout << "East, North, Up velocity: ";
+      for(auto i = 0; (unsigned)i < velocityEastNorthUp.size() - 1; ++i) {
+         std::cout << velocityEastNorthUp[i] << ", ";
+      }
+      if(velocityEastNorthUp.size() > 0) {
+         std::cout << velocityEastNorthUp[velocityEastNorthUp.size() - 1];
+      }
+      std::cout << std::endl;
+   }
+
+   std::vector<float> velocityUncertaintyEastNorthUp;
+   if(locationInfo->getVelocityUncertaintyEastNorthUp(velocityUncertaintyEastNorthUp)
+      == telux::common::Status::SUCCESS) {
+      std::cout << "East, North, Up velocity uncertainty: " << std::endl;
+      for(auto i = 0; (unsigned)i < velocityEastNorthUp.size() - 1; ++i) {
+         std::cout << velocityUncertaintyEastNorthUp[i] << ", ";
+      }
+      if(velocityEastNorthUp.size() > 0) {
+         std::cout << velocityUncertaintyEastNorthUp[velocityEastNorthUp.size() - 1];
+      }
+      std::cout << std::endl;
+   }
+   std::cout << "Caibration confidence percent : " <<
+       locationInfo->getCalibrationConfidencePercent() << std::endl;
+   printCalibrationStatus(locationInfo);
+   printLocOutputEngineType(locationInfo);
+   printLocOutputEngineMask(locationInfo);
+
+   std::cout << "*************************************************************" << std::endl;
+    }
 }
 
 void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVInfo> &gnssSVInfo) {
@@ -819,6 +918,7 @@ void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVI
       printFixAvailability(svInfo->getHasFix());
       std::cout << "Elevation: " << svInfo->getElevation() << ", Azimuth: " << svInfo->getAzimuth()
                 << ", Signal Strength: " << svInfo->getSnr() << std::endl;
+      std::cout << std::setprecision(15) << std::showpoint;
       std::cout << "Carrier frequency: " << svInfo->getCarrierFrequency() << std::endl;
       printGnssSignalType(svInfo->getSignalType());
    }
@@ -889,4 +989,8 @@ void MyLocationListener::setDataInfoFlag(bool enable) {
 
 void MyLocationListener::setNmeaInfoFlag(bool enable) {
    isNmeaInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setDetailedEngineLocReportFlag(bool enable) {
+   isDetailedEngineReportFlagEnabled_ = enable;
 }

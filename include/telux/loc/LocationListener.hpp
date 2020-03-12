@@ -99,6 +99,18 @@ public:
       const std::shared_ptr<ILocationInfoEx> &locationInfo) {}
 
 /**
+ * This function is called when device receives multiple Gnss location update from
+ * the different engine types requested, which are SPE/PPE/FUSED.
+ * This API will be called ONLY if we use startDetailedEngineReports.
+ *
+ * @param [in] locationInfo - Contains a list of location infos. Each element in
+ * the list corresponds to one of SPE/PPE/FUSED.
+ *
+ */
+  virtual void onDetailedEngineLocationUpdate(
+      const std::vector<std::shared_ptr<ILocationInfoEx> > &locationEngineInfo) {}
+
+/**
  * This function is called when device receives GNSS satellite information.
  *
  * @param [in] gnssSVInfo - GNSS satellite information

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -73,6 +73,7 @@ when       who     what, where, why
 @tr @td Nov 2019 @tdend @tdlast Addition of Compressed audio format playback on voice paths APIs and call flows @tdlastend @trend
 @tr @td Jan 2020 @tdend @tdlast Addition of Data software bridge management APIs and call flows @tdlastend @trend
 @tr @td Jan 2020 @tdend @tdlast Addition of Socks Proxy to Data Networking APIs and call flows @tdlastend @trend
+@tr @td Feb 2020 @tdend @tdlast Addition of Location Configurator APIs and call flows @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

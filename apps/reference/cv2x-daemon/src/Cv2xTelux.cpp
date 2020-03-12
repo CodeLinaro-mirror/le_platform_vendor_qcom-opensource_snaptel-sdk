@@ -423,7 +423,7 @@ Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall,
     Status res = Status::SUCCESS;
     std::promise<bool> response;
 
-    dataConnectionMgr_->startDataCall(dataCall->profileIndex,
+    res = dataConnectionMgr_->startDataCall(dataCall->profileIndex,
             IpFamilyType::IPV6,
     [&response,&dataCall,this](const std::shared_ptr<IDataCall> &data, ErrorCode error) {
         if (error == ErrorCode::SUCCESS) {
@@ -435,7 +435,7 @@ Status Cv2xTelux::startDataCall(std::shared_ptr<DataCallInfo> dataCall,
         }
     },OperationType::DATA_LOCAL);
 
-    if (response.get_future().get()) {
+    if (res == Status::SUCCESS && response.get_future().get()) {
         LOGI("start cv2x data call type:%d in progress\n", dataCall->type);
 
         // wait until data call connect done

@@ -52,6 +52,7 @@ namespace loc {
 
 const float UNKNOWN_CARRIER_FREQ = -1;
 const int UNKNOWN_SIGNAL_MASK = 0;
+const uint64_t UNKNOWN_TIMESTAMP = -1;
 const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
                                                Units: milli-seconds. */
 const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consumed of time
@@ -661,7 +662,9 @@ enum LocationInfoExValidityType {
   /** valid output engine type */
   HAS_OUTPUT_ENG_TYPE = (1 << 27),
   /** valid output engine mask */
-  HAS_OUTPUT_ENG_MASK = (1 << 28)
+  HAS_OUTPUT_ENG_MASK = (1 << 28),
+  /** valid conformity index */
+  HAS_CONFORMITY_INDEX_FIX = (1 << 29)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -950,6 +953,7 @@ public:
  *
  * @returns TimeStamp in seconds if available else returns 0
  * (as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
+ * If the value is invalid then UNKNOWN_TIMESTAMP is reported.
  *
  */
   virtual uint64_t getTimeStamp() = 0;
@@ -1315,6 +1319,7 @@ public:
  *
  * @returns TimeStamp in seconds if available else returns 0
  * (as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
+ * If the value is invalid then UNKNOWN_TIMESTAMP is reported.
  *
  */
   virtual uint64_t getTimeStamp() = 0;
@@ -1625,6 +1630,16 @@ public:
  *
  */
   virtual PositioningEngine getLocOutputEngMask() = 0;
+
+/**
+ * When robust location is enabled, this field will indicate how well the various input
+ * data considered for navigation solution conforms to expectations.
+ *
+ * @returns values in the range [0.0, 1.0], with 0.0 for least conforming and 1.0 for
+ * most conforming.
+ *
+ */
+  virtual float getConformityIndex() = 0;
 };
 
 /**

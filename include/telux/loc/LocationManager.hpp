@@ -30,8 +30,9 @@
 /**
  * @file       LocationManager.hpp
  * @brief      Location manager provides APIs to get position reports
- *             and satellite vehicle information updates. It also allows
- *             to configure the location engine.
+ *             and satellite vehicle information updates. The reports
+ *             specific to particular location engine can also be obtained
+ *             by choosing the required engine report.
  *
  */
 

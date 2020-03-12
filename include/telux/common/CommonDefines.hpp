@@ -67,6 +67,7 @@ enum class Status {
    ALREADY,        /**< Already registered handler */
    NOSUCH,         /**< No such object */
    NOTSUPPORTED,   /**< Not supported on target platform */
+   NOMEMORY,       /**< Not sufficient memory to process the request */
 };
 
 /**

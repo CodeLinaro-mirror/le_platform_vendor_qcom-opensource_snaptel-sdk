@@ -161,6 +161,29 @@ public:
   virtual telux::common::Status configureConstellations(const SvBlackList& list,
         telux::common::ResponseCallback callback = nullptr) = 0;
 
+/**
+  * This API enables/disables robust location feature and enables/disables robust location while
+  * device is on E911. This API focuses on detection and reporting GNSS spoofing in position, time
+  * and navigation data. When this API is enabled it reports confidence of the GNSS spoofing by the
+  * getConformityIndex() API defined in the ILocationInfoEx class.
+  *
+  * @param [in] enable - true to enable robust location and false to disable robust location.
+  *
+  * @param [in] enableForE911 - true to enable robust location when the device is on E911 session
+  *                             and false to disable on E911 session. This parameter is only valid
+  *                             if robust location is enabled.
+  *
+  * @param [in] callback - Optional callback to get the response of configure robust location.
+  *
+  * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+  virtual telux::common::Status configureRobustLocation(bool enable,
+      bool enableForE911 = false,
+          telux::common::ResponseCallback callback = nullptr) = 0;
+
 
 /**
  * Destructor of ILocationConfigurator

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,75 +27,53 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       LocationFactory.hpp
- * @brief      LocationFactory allows creation of location manager.
- */
+#ifndef DGNSSMENU_HPP
+#define DGNSSMENU_HPP
 
-#ifndef LOCATIONFACTORY_HPP
-#define LOCATIONFACTORY_HPP
-
-#include <map>
+#include <algorithm>
+#include <cctype>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include <telux/loc/LocationDefines.hpp>
-#include <telux/loc/LocationManager.hpp>
-#include <telux/loc/LocationConfigurator.hpp>
 #include <telux/loc/DgnssManager.hpp>
+#include "../../common/console_app_framework/ConsoleApp.hpp"
 
-namespace telux {
+using namespace telux::loc;
 
-namespace loc {
-/** @addtogroup telematics_location
- * @{ */
+enum class DgnssSourceType {
+    FILE_SOURCE = 0,
+    SERVER_SOURCE = 1
+};
 
-/**
- * @brief   LocationFactory allows creation of location manager.
- */
-class LocationFactory {
+class DgnssMenu : public ConsoleApp, public IDgnssStatusListener,
+    public std::enable_shared_from_this<DgnssMenu> {
 public:
    /**
-    * Get Location Factory instance.
+    * Initialize commands and SDK
     */
-   static LocationFactory &getInstance();
+   int init();
 
-   /**
-    * Get instance of Location Manager
-    *
-    * @returns Pointer of ILocationManager object.
-    */
-   std::shared_ptr<ILocationManager> getLocationManager();
+   DgnssMenu(std::string appName, std::string cursor);
 
-   /**
-    * Get instance of Location Configurator.
-    *
-    * @returns Pointer of ILocationConfigurator object.
-    */
-   std::shared_ptr<ILocationConfigurator> getLocationConfigurator();
+   ~DgnssMenu();
 
-   /**
-    * Get instance of Dgnss manager
-    *
-    * @returns Pointer of IDgnssManager object.
-    */
-   std::shared_ptr<IDgnssManager> getDgnssManager(
-           DgnssDataFormat dataFormat = DgnssDataFormat::DATA_FORMAT_RTCM_3);
+   void injectFromFile(std::vector<std::string> userInput);
+   void injectFromServer(std::vector<std::string> userInput);
+   void onDgnssStatusUpdate(DgnssStatus status) override;
 
 private:
-   std::shared_ptr<ILocationManager> locationManager_;
-   std::shared_ptr<ILocationConfigurator> locConfigurator_;
-   std::shared_ptr<IDgnssManager> dgnssManager_;
-   std::mutex locationFactoryMutex_;
-   LocationFactory();
-   LocationFactory(const LocationFactory &) = delete;
-   LocationFactory &operator=(const LocationFactory &) = delete;
-   ~LocationFactory();
+   telux::common::Status initDgnssManager(std::shared_ptr<IDgnssManager> &dgnssManager);
+   int processRtcmFromServer(void);
+   int processRtcmFromFile(void);
+
+   std::shared_ptr<IDgnssManager> dgnssManager_ = nullptr;
+   int ntcSocketFd_ = -1;
+   int dgnssSourceFd_ = -1;
+   DgnssSourceType dgnssSourceType_;
+
+
 };
-/** @} */ /* end_addtogroup telematics_location */
-}  // end of namespace loc
-
-}  // end of namespace telux
-
-#endif  // LocationFactory_HPP
+#endif  // DGNSMENU_HPP

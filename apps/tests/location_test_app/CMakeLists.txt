@@ -3,12 +3,14 @@ cmake_minimum_required(VERSION 2.8.9)
 set(TARGET_LOCATION_TEST_APP location_test_app)
 
 set(LOCATION_TEST_APP_SOURCES
+    DgnssMenu.cpp
     LocationMenu.cpp
     MyLocationListener.cpp
     MyLocationCommandCallback.cpp
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
+    ../../common/ConfigParser.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

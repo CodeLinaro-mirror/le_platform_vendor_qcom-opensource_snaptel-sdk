@@ -79,6 +79,7 @@ public:
    void enableSvInfoLogs();
    void enableDataInfoLogs();
    void enableNmeaInfoLogs();
+   void dgnssInject(std::vector<std::string> userInput);
 
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>

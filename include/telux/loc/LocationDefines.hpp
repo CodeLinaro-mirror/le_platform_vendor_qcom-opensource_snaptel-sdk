@@ -59,6 +59,37 @@ const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consu
                                                   uncertainty. The default here means that the
                                                   engine is allowed to use infinite power.
                                                   Units: 100 micro watt second. */
+/**
+ * Defines RTCM injection data format
+ */
+enum class DgnssDataFormat{
+  /** Source data format is unknown */
+  DATA_FORMAT_UNKNOWN                = 0,
+  /** Source data format is RTCM_3 */
+  DATA_FORMAT_RTCM_3                 = 1,
+  /** Source data format is 3GPP RTK Rel-15 */
+  DATA_FORMAT_3GPP_RTK_R15           = 2
+};
+
+/**
+ * Defines status reported by cdfw for RTCM injection.
+ */
+enum class DgnssStatus{
+  /** Dgnss subsystem doesn't support the data source */
+  DATA_SOURCE_NOT_SUPPORTED          = 1,
+  /** Dgnss subsystem doesn't support the data format */
+  DATA_FORMAT_NOT_SUPPORTED          = 2,
+  /** After the source injects the data, dgnss subsystem discovers there is
+   *  another higher priority source injecting the data at the
+   *  same time, and the current injected data is dropped */
+  OTHER_SOURCE_IN_USE                = 3,
+  /** There is a parsing error such as unrecognized format, CRC
+   *  check failure, value range check failure, etc.; the injected
+   *  data is dropped */
+  MESSAGE_PARSE_ERROR                = 4,
+  /** Data source is not usable anymore */
+  DATA_SOURCE_NOT_USABLE             = 5,
+};
 
 /**
  * Defines recurrence type of the fix.

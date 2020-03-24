@@ -34,10 +34,10 @@
 #include <sstream>
 
 #include <telux/loc/LocationFactory.hpp>
-
 #include "../../common/utils/Utils.hpp"
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
+#include "DgnssMenu.hpp"
 
 const int DEFAULT_UNKNOWN = 0;
 
@@ -177,10 +177,15 @@ int LocationMenu::init() {
       ConsoleAppCommand("11", "Configure robust location", {}, std::bind(
                         &LocationMenu::configureRobustLocation, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> dgnssInjectCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("12", "Dgnss_Correction_Injection", {},
+                        std::bind(&LocationMenu::dgnssInject, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
-         deleteAidingData, configureLeverArm, configureConstellation, configureRobustLocation};
+         deleteAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
+         dgnssInjectCommand};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -762,7 +767,6 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
    }
 }
 
-
 void LocationMenu::enableSvInfoLogs() {
    int opt = enableReportLogsUtility();
    if((opt == 0) || (opt == 1)) {
@@ -780,6 +784,14 @@ void LocationMenu::enableDataInfoLogs() {
       std::cout << "ERROR: invalid input, please enter 0 or 1\n";
    }
 }
+void LocationMenu::dgnssInject(std::vector<std::string> userInput) {
+   auto dgnssMenu = std::make_shared<DgnssMenu>("Dgnss Menu", "location> ");
+   if (dgnssMenu->init() == -1) {
+       std::cout << "ERROR - Subsystem not ready, Exiting !!!" << std::endl;
+       return;
+   }
+   dgnssMenu->mainLoop();
+}
 
 void LocationMenu::enableNmeaInfoLogs() {
   int opt = enableReportLogsUtility();
@@ -793,7 +805,6 @@ void LocationMenu::enableNmeaInfoLogs() {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
-
    LocationMenu locationMenu("Location Menu", "location> ");
     std::vector<std::string> supplementaryGrps{"system"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);

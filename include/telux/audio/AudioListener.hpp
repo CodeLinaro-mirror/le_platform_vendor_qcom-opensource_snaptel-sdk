@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are
@@ -43,6 +43,7 @@
 #define AUDIOLISTENER_HPP
 
 #include <telux/audio/AudioDefines.hpp>
+#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace audio {
@@ -120,6 +121,16 @@ public:
      * Destructor of ITranscodeListener
      */
     virtual ~ITranscodeListener() {}
+};
+
+class IAudioListener : public telux::common::IServiceStatusListener {
+public:
+
+    /**
+     * Destructor of IAudioListener
+     */
+    virtual ~IAudioListener() {
+    }
 };
 
 /** @} */ /* end_addtogroup telematics_audio */

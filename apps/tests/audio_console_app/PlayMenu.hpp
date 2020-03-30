@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -40,14 +40,13 @@ class PlayMenu : public ConsoleApp,
                  public std::enable_shared_from_this<PlayMenu>{
 public:
     PlayMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
-
     ~PlayMenu();
-
+    void init();
+    void cleanup();
+    void setSystemReady();
     void onReadyForWrite() override;
-
     void onPlayStopped() override;
 
-    void init();
 private:
     void createStream(std::vector<std::string> userInput);
     void deleteStream(std::vector<std::string> userInput);
@@ -67,6 +66,7 @@ private:
 
     void registerListener();
     void deRegisterListener();
+    void closeFile();
 
     std::shared_ptr<IAudioPlayStream> audioPlayStream_;
     std::shared_ptr<AudioClient> audioClient_;
@@ -75,10 +75,11 @@ private:
     std::mutex mutex_;
     std::condition_variable cv_;
     std::vector<std::thread> runningThreads_;
-    bool playStatus_;
+    std::atomic<bool> playStatus_;
     AudioFormat playFormat_;
-    bool pipeLineEmpty_;
+    std::atomic<bool> pipeLineEmpty_;
     FILE * file_;
+    std::atomic<bool> ready_;
 };
 
 #endif // PLAYMENU_HPP

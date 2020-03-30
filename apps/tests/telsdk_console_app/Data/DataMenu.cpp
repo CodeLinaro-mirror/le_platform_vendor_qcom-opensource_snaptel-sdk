@@ -93,54 +93,53 @@ bool DataMenu::initializeSDK() {
     dataConnectionManager_ = telux::data::DataFactory::getInstance().getDataConnectionManager();
 
     // Check if data subsystem is ready
-    bool subSystemStatus = dataConnectionManager_->isSubsystemReady();
+    bool dcmSubSystemStatus = dataConnectionManager_->isSubsystemReady();
+    dataListener_ = std::make_shared<DataListener>();
+    if (dataListener_ == nullptr) {
+        std::cout << "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
+        exit(1);
+    }
+    dataConnectionManager_->registerListener(dataListener_);
 
     // If data subsystem is not ready, wait for it to be ready
-    if (!subSystemStatus) {
+    if (!dcmSubSystemStatus) {
         std::cout << "\n\nData subsystem is not ready, Please wait" << std::endl;
         std::future<bool> f = dataConnectionManager_->onSubsystemReady();
         // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
+        dcmSubSystemStatus = f.get();
     }
 
     dataProfileManager_ = dataFactory.getDataProfileManager();
 
     // Check if data subsystem is ready
-    subSystemStatus = dataProfileManager_->isSubsystemReady();
+    bool dpmSubSystemStatus = dataProfileManager_->isSubsystemReady();
 
     // If data subsystem is not ready, wait for it to be ready
-    if (!subSystemStatus) {
+    if (!dpmSubSystemStatus) {
         std::cout << "\n\nData profile manager subsystem is not ready, Please wait" << std::endl;
         std::future<bool> f = dataProfileManager_->onSubsystemReady();
         // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
+        dpmSubSystemStatus = f.get();
     }
 
-    // Exit the application, if SDK is unable to initialize data subsystems
-    if (subSystemStatus) {
+    // Check if the SDK is able to initialize data subsystems
+    if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
         endTime = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                   << std::endl;
     } else {
-        std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-        exit(0);
+        std::cout << "Unable to initialize subSystem" << std::endl;
     }
 
-    if (subSystemStatus) {
-        dataListener_ = std::make_shared<DataListener>();
-
-        if (dataListener_) {
-            dataConnectionManager_->registerListener(dataListener_);
-
-            //Update dataListener_'s data call list
-            requestDataCallList(OperationType::DATA_LOCAL,
-                                std::bind(&DataListener::initDataCallListResponseCb, dataListener_,
-                                          std::placeholders::_1, std::placeholders::_2));
-            requestDataCallList(OperationType::DATA_REMOTE,
-                                std::bind(&DataListener::initDataCallListResponseCb, dataListener_,
-                                          std::placeholders::_1, std::placeholders::_2));
-        }
+    if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
+        //Update dataListener_'s data call list
+        requestDataCallList(OperationType::DATA_LOCAL,
+                            std::bind(&DataListener::initDataCallListResponseCb, dataListener_,
+                                        std::placeholders::_1, std::placeholders::_2));
+        requestDataCallList(OperationType::DATA_REMOTE,
+                            std::bind(&DataListener::initDataCallListResponseCb, dataListener_,
+                                        std::placeholders::_1, std::placeholders::_2));
     }
 
     myDataProfileListCb_ = std::make_shared<MyDataProfilesCallback>();

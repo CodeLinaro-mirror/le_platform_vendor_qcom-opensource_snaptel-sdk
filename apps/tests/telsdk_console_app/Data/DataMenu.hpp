@@ -142,5 +142,20 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
         int &srcPort, int &destPort, int &srcPortRange, int &dstPortRange, std::string &protoStr);
     void displayFirewallEntry();
     void getProfileParamsFromUser();
+    std::shared_ptr<telux::data::net::IFirewallManager>
+        getFirewallManagerInstance(telux::data::OperationType opType);
+
+
+    // get IPV4 Firewall params from user and set IPV4Info
+    void getIPV4ParamsFromUser(telux::data::IpProtocol proto,
+        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
+    // get IPV6 Firewall params from user and set IPV6Info
+    void getIPV6ParamsFromUser(telux::data::IpProtocol proto,
+        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
+    // get Transport Firewall params from user and set TCP/UDP Info
+    void getProtocolParams(telux::data::IpProtocol proto,
+        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
+    void getProtocolParamsFromUser (std::string proto, std::string &srcPort,
+        std::string &srcRange, std::string &destPort, std::string &destRange);
 };
 #endif

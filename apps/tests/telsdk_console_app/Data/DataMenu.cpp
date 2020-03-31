@@ -824,6 +824,7 @@ telux::data::IpProtocol DataMenu::getProtcol(std::string protoStr) {
         protoMap_["igmp"] = 2;
         protoMap_["icmp"] = 1;
         protoMap_["esp"] = 50;
+        protoMap_["tcp_udp"] = 253;
     }
     if (protoMap_.find(protoStrToCompare) != std::end(protoMap_)) {
         return protoMap_[protoStrToCompare];
@@ -865,11 +866,26 @@ void DataMenu::parseProtoInfo(std::shared_ptr<IIpFilter> filter,
     return;
 }
 
+std::shared_ptr<telux::data::net::IFirewallManager>
+    DataMenu::getFirewallManagerInstance(telux::data::OperationType opType) {
+    std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr = nullptr;
+    bool subSystemStatus = false;
+
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    firewallMgr = dataFactory.getFirewallManager(opType);
+    subSystemStatus = firewallMgr->isSubsystemReady();
+    if (not subSystemStatus) {
+        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
+        std::future<bool> f = firewallMgr->onSubsystemReady();
+        // Wait unconditionally for data subsystem to be ready
+        subSystemStatus = f.get();
+    }
+    return firewallMgr;
+}
 
 void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     bool fwEnable = false;
     bool allowPackets = false;
     telux::common::Status retStat;
@@ -884,16 +900,7 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     int enableFwFlag;
     std::cout << "Enter Enable Firewall (1 - On, 0 - Off): ";
     std::cin >> enableFwFlag;
@@ -926,7 +933,6 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
 void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     telux::common::Status retStat;
 
     std::cout << "request Firewall Status\n";
@@ -939,16 +945,7 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     auto respCb = [](bool enable, bool allowPackets, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
@@ -967,10 +964,225 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     Utils::printStatus(retStat);
 }
 
+void DataMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
+    std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp) {
+    std::string srcAddr = "", srcSubnetMask = "", destAddr = "", destSubnetMask = "";
+    std::string tosVal = "", tosMask = "";
+    char delimiter = '\n';
+
+    int option;
+    std::cout << "Do you want to enter IPV4 source address and subnet mask: [1-YES 0-NO]:";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cin.get();
+        std::cout << "Enter IPv4 Source address: ";
+        std::getline(std::cin, srcAddr, delimiter);
+        std::cout << "Enter IPv4 Source subnet mask: ";
+        std::getline(std::cin, srcSubnetMask, delimiter);
+        std::cout << "Enter IPv4 Destination address: ";
+        std::getline(std::cin, destAddr, delimiter);
+        std::cout << "Enter IPv4 Destination subnet mask: ";
+        std::getline(std::cin, destSubnetMask, delimiter);
+    }
+
+    std::cout << "Do you want to enter IPV4 TOS value and TOS mask: [1-YES 0-NO]:";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cin.get();
+        std::cout << "Enter Type of service value [0 to 255]: ";
+        std::getline(std::cin, tosVal, delimiter);
+        std::cout << "Enter Type of service mask [0 to 255]: ";
+        std::getline(std::cin, tosMask, delimiter);
+    }
+
+    IPv4Info info;
+    info.srcAddr = srcAddr;
+    info.srcSubnetMask = srcSubnetMask;
+    info.destAddr = destAddr;
+    info.destSubnetMask = destSubnetMask;
+    if (tosVal.empty()) {
+        info.value = (uint8_t)0;
+    } else {
+        info.value = (uint8_t)atoi(tosVal.c_str());
+    }
+    if (tosMask.empty()) {
+        info.mask = (uint8_t)0;
+    } else {
+        info.mask = (uint8_t)atoi(tosMask.c_str());
+    }
+    info.nextProtoId = proto;
+
+    if (proto == 253) {
+        info.nextProtoId = 6;
+        ipFilter->setIPv4Info(info);
+        info.nextProtoId = 17;
+        ipFilterTcpUdp->setIPv4Info(info);
+    } else {
+        ipFilter->setIPv4Info(info);
+    }
+}
+
+void DataMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
+    std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp) {
+    std::string srcAddr = "", destAddr = "";
+    int trfVal = 0, trfMask = 0, flowLabel = 0;
+    char delimiter = '\n';
+
+    int option;
+    std::cout << "Do you want to enter IPV6 source address and subnet mask: [1-YES 0-NO]:";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cin.get();
+        std::cout << "Enter IPv6 Source address: ";
+        std::getline(std::cin, srcAddr, delimiter);
+        std::cout << "Enter IPv6 Destination address: ";
+        std::getline(std::cin, destAddr, delimiter);
+    }
+
+    std::cout << "Do you want to enter IPV6 Traffic Class value and mask: [1-YES 0-NO]:";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cout << "Enter IPv6 Traffic class value: ";
+        std::cin >> trfVal;
+        Utils::validateInput(trfVal);
+
+        std::cout << "Enter IPv6 Traffic class mask: ";
+        std::cin >> trfMask;
+        Utils::validateInput(trfMask);
+
+        std::cout << "Enter IPv6 flow label : ";
+        std::cin >> flowLabel;
+        Utils::validateInput(flowLabel);
+    }
+
+
+    int natEnabled;
+    std::cout << "Enter IPv6 nat enabled (1-Enable, 0-Disabled): ";
+    std::cin >> natEnabled;
+    Utils::validateInput(natEnabled);
+
+    IPv6Info info;
+    info.srcAddr = srcAddr;
+    info.destAddr = destAddr;
+    info.nextProtoId = proto;
+    info.val = (uint8_t)trfVal;
+    info.mask = (uint8_t)trfMask;
+    info.flowLabel = (uint32_t)flowLabel;
+    info.natEnabled = (uint8_t)natEnabled;
+
+    if (proto == 253) {
+        info.nextProtoId = 6;
+        ipFilter->setIPv6Info(info);
+        info.nextProtoId = 17;
+        ipFilterTcpUdp->setIPv6Info(info);
+    } else {
+        ipFilter->setIPv6Info(info);
+    }
+}
+
+void DataMenu::getProtocolParamsFromUser(std::string proto, std::string &srcPort,
+    std::string &srcRange, std::string &destPort, std::string &destRange) {
+    char delimiter = '\n';
+    int option;
+    std::cout << "Do you want to enter Source Port and Range [1-YES 0-NO]";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cin.get();
+        std::cout << "Enter "<< proto <<" source port: ";
+        std::getline(std::cin, srcPort, delimiter);
+        std::cout << "Enter "<< proto <<" source range: ";
+        std::getline(std::cin, srcRange, delimiter);
+    }
+    std::cout << "Do you want to enter Destination Port and Range [1-YES 0-NO]";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cin.get();
+        std::cout << "Enter "<< proto <<" destination port: ";
+        std::getline(std::cin, destPort, delimiter);
+        std::cout << "Enter "<< proto <<" destination range: ";
+        std::getline(std::cin, destRange, delimiter);
+    }
+}
+
+void DataMenu::getProtocolParams(telux::data::IpProtocol proto,
+    std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp) {
+    switch (proto) {
+    case 6:  // TCP
+    {
+        TcpInfo tcpInfo;
+        std::string srcPort = "", srcRange = "";
+        std::string destPort = "", destRange = "";
+
+        getProtocolParamsFromUser("TCP", srcPort, srcRange, destPort, destRange);
+        tcpInfo.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
+        tcpInfo.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
+        tcpInfo.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
+        tcpInfo.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
+
+        auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
+        if(tcpFilter) {
+            tcpFilter->setTcpInfo(tcpInfo);
+        }
+    } break;
+    case 17:  // UDP
+    {
+        UdpInfo info;
+        std::string srcPort = "", srcRange = "";
+        std::string destPort = "", destRange = "";
+
+        getProtocolParamsFromUser("UDP", srcPort, srcRange, destPort, destRange);
+        info.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
+        info.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
+        info.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
+        info.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
+
+        auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipFilter);
+        if(udpFilter) {
+            udpFilter->setUdpInfo(info);
+        }
+    } break;
+    case 253:  // TCP_UDP
+    {
+        TcpInfo tcpInfo;
+        UdpInfo udpInfo;
+        std::string srcPort = "", srcRange = "";
+        std::string destPort = "", destRange = "";
+
+        getProtocolParamsFromUser("", srcPort, srcRange, destPort, destRange);
+        tcpInfo.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
+        tcpInfo.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
+        tcpInfo.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
+        tcpInfo.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
+
+        udpInfo.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
+        udpInfo.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
+        udpInfo.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
+        udpInfo.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
+
+        auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
+        if(tcpFilter) {
+            tcpFilter->setTcpInfo(tcpInfo);
+        }
+
+        auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipFilterTcpUdp);
+        if(udpFilter) {
+            udpFilter->setUdpInfo(udpInfo);
+        }
+    } break;
+    default:
+        break;
+    }
+}
+
 void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     telux::common::Status retStat;
     std::cout << "add Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -982,16 +1194,7 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     int fwDirection;
     std::cout << "Enter Firewall Direction (1-Uplink, 2-Downlink): ";
     std::cin >> fwDirection;
@@ -1001,7 +1204,7 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     char delimiter = '\n';
     std::string protoStr;
     std::cin.get();
-    std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
+    std::cout << "Enter Protocol (TCP, UDP, TCP_UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
     telux::data::IpProtocol proto = getProtcol(protoStr);
 
@@ -1010,167 +1213,32 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::cin >> ipFamilyType;
     Utils::validateInput(ipFamilyType);
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+    std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry = nullptr;
+    // To handle creation of TCP_UDP firewall entry
+    std::shared_ptr<telux::data::net::IFirewallEntry> fwEntryTcpUdp = nullptr;
+    auto &dataFactory = telux::data::DataFactory::getInstance();
 
-    std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry
-        = dataFactory.getNewFirewallEntry(proto, fwDir, ipFamType);
+    if (proto == 253) {
+        fwEntry = dataFactory.getNewFirewallEntry(6, fwDir, ipFamType);
+        fwEntryTcpUdp = dataFactory.getNewFirewallEntry(17, fwDir, ipFamType);
+    } else {
+        fwEntry = dataFactory.getNewFirewallEntry(proto, fwDir, ipFamType);
+    }
 
     std::shared_ptr<IIpFilter> ipFilter = fwEntry->getIProtocolFilter();
+    std::shared_ptr<IIpFilter> ipFilterTcpUdp = nullptr;
+    if (proto == 253) {
+        ipFilterTcpUdp = fwEntryTcpUdp->getIProtocolFilter();
+    }
 
     if (fwEntry) {
-        // Entry IPv4 info
         if (ipFamilyType == 4) {
-            std::string srcAddr;
-            std::cin.get();
-            std::cout << "Enter IPv4 Source address: ";
-            std::getline(std::cin, srcAddr, delimiter);
-
-            std::string srcSubnetMask;
-            std::cout << "Enter IPv4 Source subnet mask: ";
-            std::getline(std::cin, srcSubnetMask, delimiter);
-
-            std::string destAddr;
-            std::cout << "Enter IPv4 Destination address: ";
-            std::getline(std::cin, destAddr, delimiter);
-
-            std::string destSubnetMask;
-            std::cout << "Enter IPv4 Destination subnet mask: ";
-            std::getline(std::cin, destSubnetMask, delimiter);
-
-            int tosVal;
-            std::cout << "Enter Type of service value: ";
-            std::cin >> tosVal;
-            Utils::validateInput(tosVal);
-
-            int tosMask;
-            std::cout << "Enter Type of service mask: ";
-            std::cin >> tosMask;
-            Utils::validateInput(tosMask);
-
-            IPv4Info info;
-            info.srcAddr = srcAddr;
-            info.srcSubnetMask = srcSubnetMask;
-            info.destAddr = destAddr;
-            info.destSubnetMask = destSubnetMask;
-            info.value = (uint8_t)tosVal;
-            info.mask = (uint8_t)tosMask;
-            info.nextProtoId = proto;
-
-            ipFilter->setIPv4Info(info);
+            getIPV4ParamsFromUser(proto,ipFilter, ipFilterTcpUdp);
         }
-
-        // Entry IPv6 info
         if (ipFamilyType == 6) {
-            std::string srcAddr;
-            std::cin.get();
-            std::cout << "Enter IPv6 Source address: ";
-            std::getline(std::cin, srcAddr, delimiter);
-
-            std::string destAddr;
-            std::cout << "Enter IPv6 Destination address: ";
-            std::getline(std::cin, destAddr, delimiter);
-
-            int trfVal;
-            std::cout << "Enter IPv6 Traffic class value: ";
-            std::cin >> trfVal;
-            Utils::validateInput(trfVal);
-
-            int trfMask;
-            std::cout << "Enter IPv6 Traffic class mask: ";
-            std::cin >> trfMask;
-            Utils::validateInput(trfMask);
-
-            int flowLabel;
-            std::cout << "Enter IPv6 flow label : ";
-            std::cin >> flowLabel;
-            Utils::validateInput(flowLabel);
-
-            int natEnabled;
-            std::cout << "Enter IPv6 nat enabled (1-Enable, 0-Disabled): ";
-            std::cin >> natEnabled;
-            Utils::validateInput(natEnabled);
-
-            IPv6Info info;
-            info.srcAddr = srcAddr;
-            info.destAddr = destAddr;
-            info.nextProtoId = proto;
-            info.val = (uint8_t)trfVal;
-            info.mask = (uint8_t)trfMask;
-            info.flowLabel = (uint32_t)flowLabel;
-            info.natEnabled = (uint8_t)natEnabled;
-
-            ipFilter->setIPv6Info(info);
+            getIPV6ParamsFromUser(proto,ipFilter, ipFilterTcpUdp);
         }
-
-        switch (proto) {
-        case 6:  // TCP
-        {
-            TcpInfo tcpInfo;
-            int srcPort;
-            std::cout << "Enter TCP source port: ";
-            std::cin >> srcPort;
-            Utils::validateInput(srcPort);
-
-            int srcRange;
-            std::cout << "Enter TCP source range: ";
-            std::cin >> srcRange;
-            Utils::validateInput(srcRange);
-
-            int destPort;
-            std::cout << "Enter TCP destination port: ";
-            std::cin >> destPort;
-            Utils::validateInput(destPort);
-
-            int destRange;
-            std::cout << "Enter TCP destination range: ";
-            std::cin >> destRange;
-            Utils::validateInput(destRange);
-
-            tcpInfo.src.port = (uint16_t)srcPort;
-            tcpInfo.src.range = (uint16_t)srcRange;
-            tcpInfo.dest.port = (uint16_t)destPort;
-            tcpInfo.dest.range = (uint16_t)destRange;
-
-            auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
-            if(tcpFilter) {
-                tcpFilter->setTcpInfo(tcpInfo);
-            }
-        } break;
-        case 17:  // UDP
-        {
-            UdpInfo info;
-            int srcPort;
-            std::cout << "Enter UDP source port: ";
-            std::cin >> srcPort;
-            Utils::validateInput(srcPort);
-
-            int srcRange;
-            std::cout << "Enter UDP source range: ";
-            std::cin >> srcRange;
-            Utils::validateInput(srcRange);
-
-            int destPort;
-            std::cout << "Enter UDP destination port: ";
-            std::cin >> destPort;
-            Utils::validateInput(destPort);
-
-            int destRange;
-            std::cout << "Enter UDP destination range: ";
-            std::cin >> destRange;
-            Utils::validateInput(destRange);
-
-            info.src.port = (uint16_t)srcPort;
-            info.src.range = (uint16_t)srcRange;
-            info.dest.port = (uint16_t)destPort;
-            info.dest.range = (uint16_t)destRange;
-
-            auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipFilter);
-            if(udpFilter) {
-                udpFilter->setUdpInfo(info);
-            }
-        } break;
-        default:
-            break;
-        }
+        getProtocolParams(proto,ipFilter, ipFilterTcpUdp);
     } else {
         std::cout << "\nERROR: unable to get firewall entry instance\n";
     }
@@ -1186,12 +1254,16 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
 
     retStat = firewallMgr->addFirewallEntry(profileId, fwEntry, respCb);
     Utils::printStatus(retStat);
+
+    if (proto == 253) {
+        retStat = firewallMgr->addFirewallEntry(profileId, fwEntryTcpUdp, respCb);
+        Utils::printStatus(retStat);
+    }
 }
 
 void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     telux::common::Status retStat;
 
     std::cout << "request Firewall Entry\n";
@@ -1204,16 +1276,7 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     auto respCb = [this](
         std::vector<shared_ptr<IFirewallEntry>> entries,
             telux::common::ErrorCode error) {
@@ -1281,7 +1344,6 @@ void DataMenu::displayFirewallEntry() {
 void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     telux::common::Status retStat;
 
     std::cout << "remove Firewall Entry\n";
@@ -1294,16 +1356,7 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     int entryHandle;
     std::cout << "Enter handle of firewall entry to be removed: ";
     std::cin >> entryHandle;
@@ -1325,7 +1378,6 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
 void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     telux::common::Status retStat;
 
     std::cout << "Add DMZ\n";
@@ -1338,16 +1390,7 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';
     std::string ipAddr;
     std::cin.get();
@@ -1369,7 +1412,6 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
 void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     telux::common::Status retStat;
 
     std::cout << "Remove DMZ\n";
@@ -1382,16 +1424,7 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';
     int ipType;
     std::cin.get();
@@ -1414,7 +1447,6 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
 void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
-    bool subSystemStatus = false;
     telux::common::Status retStat;
 
     std::cout << "request Dmz Entries\n";
@@ -1427,16 +1459,7 @@ void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    firewallMgr = dataFactory.getFirewallManager(opType);
-    subSystemStatus = firewallMgr->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nFirewall Manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = firewallMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-
+    firewallMgr = getFirewallManagerInstance(opType);
     auto respCb = [](std::vector<std::string> dmzEntries, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "

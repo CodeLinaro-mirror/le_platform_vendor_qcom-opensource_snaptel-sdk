@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -69,13 +69,15 @@ public:
      * @param [in] msdData      MSD data to be used
      * @param [in] category     ECallCategory
      * @param [in] variant      ECallVariant
+     * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] callListener pointer to CallStatusListener to notify call status changes
      *
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
     telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-                    ECallVariant variant, std::shared_ptr<CallStatusListener> callListener);
+                    ECallVariant variant, bool transmitMsd,
+                    std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function starts a voice eCall procedure to the specified phone number.
@@ -85,13 +87,15 @@ public:
      * @param [in] msdData      MSD data to be used
      * @param [in] category     ECallCategory
      * @param [in] dialNumber   phone number to be dialed
+     * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] callListener pointer to CallStatusListener to notify call status changes
      *
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
     telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-                    const std::string dialNumber, std::shared_ptr<CallStatusListener> callListener);
+                    const std::string dialNumber, bool transmitMsd,
+                    std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function updates the cached MSD data stored in Modem, which would be used in MSD pull
@@ -127,6 +131,16 @@ public:
     telux::common::Status hangup(int phoneId);
 
     /**
+     * This function requests status of various eCall HLAP timers
+     *
+     * @param [in] phoneId  Represents phone corresponding to which the operation will be performed
+     *
+     * @returns Status of requestECallHlapTimerStatus i.e success or suitable status code.
+     *
+     */
+    telux::common::Status requestECallHlapTimerStatus(int phoneId);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.
@@ -139,6 +153,7 @@ public:
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
     void onECallMsdTransmissionStatus(int phoneId,
                     ECallMsdTransmissionStatus msdTransmissionStatus) override;
+    void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) override;
     void makeCallResponse(telux::common::ErrorCode error,
                                     std::shared_ptr<telux::tel::ICall>) override;
 

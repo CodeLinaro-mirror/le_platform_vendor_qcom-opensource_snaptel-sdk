@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018,2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -98,7 +98,7 @@ public:
    }
 
    /**
-    * This function is called when device completes MSD Transmission.
+    * This function is called when MSD Transmission status is changed.
     *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
     * @param [in] msdTransmissionStatus - Indicates MSD Transmission status
@@ -106,6 +106,20 @@ public:
     */
    virtual void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
+   }
+
+   /**
+    * This function is called when the eCall High Level Application Protocol(HLAP) timers status
+    * is changed.
+    *
+    * @param [in] phoneId - Unique Id of phone on which HLAP timer status is being reported
+    * @param [in] timersStatus - Indicates the HLAP timer event
+    *                            @Ref ECallHlapTimerEvents
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    *          change and could break backwards compatibility.
+    */
+   virtual void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timersStatus) {
    }
 
    virtual ~ICallListener() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -88,7 +88,8 @@ telux::common::Status ECallManager::init() {
 /**
  * Function to trigger the standard eCall procedure(eg.112)
  */
-telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category, ECallVariant variant) {
+telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category,
+                                                 ECallVariant variant, bool transmitMsd) {
     if(!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
@@ -99,7 +100,7 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
     }
     phoneId_ = phoneId;
     setup(phoneId_);
-    if(!isLocationReceived()) {
+    if(transmitMsd && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
@@ -107,7 +108,8 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
-    auto status = telClient_->startECall(phoneId, msdData_, category, variant, shared_from_this());
+    auto status = telClient_->startECall(phoneId, msdData_, category, variant, transmitMsd,
+                                         shared_from_this());
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate eCall " << std::endl;
         cleanup();
@@ -122,7 +124,7 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
  * Function to trigger a voice eCall procedure to the specified phone number
  */
 telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category,
-                                                const std::string dialNumber) {
+                                                const std::string dialNumber, bool transmitMsd) {
     if(!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
@@ -133,7 +135,7 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
     }
     phoneId_ = phoneId;
     setup(phoneId_);
-    if(!isLocationReceived()) {
+    if(transmitMsd && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
@@ -141,7 +143,7 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
-    auto status = telClient_->startECall(phoneId, msdData_, category, dialNumber,
+    auto status = telClient_->startECall(phoneId, msdData_, category, dialNumber, transmitMsd,
                                         shared_from_this());
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate Voice eCall " << std::endl;
@@ -196,6 +198,24 @@ telux::common::Status ECallManager::hangupCall() {
         return telux::common::Status::FAILED;
     } else {
         std::cout << CLIENT_NAME << "Call hang-up successful" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request status of various eCall HLAP timers
+ */
+telux::common::Status ECallManager::requestHlapTimerStatus(int phoneId) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->requestECallHlapTimerStatus(phoneId);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request for HLAP timers status" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request for HLAP timers status" << std::endl;
     }
     return telux::common::Status::SUCCESS;
 }

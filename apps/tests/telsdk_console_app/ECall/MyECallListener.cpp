@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -121,6 +121,10 @@ std::string MyECallListener::eCallMsdTransmissionStatusToString(
          return std::string("NACK OUT OF ORDER");
       case telux::tel::ECallMsdTransmissionStatus::ACK_OUT_OF_ORDER:
          return std::string("ACK OUT OF ORDER");
+      case telux::tel::ECallMsdTransmissionStatus::START_RECEIVED:
+          return std::string("SEND-MSD(START) Received");
+      case telux::tel::ECallMsdTransmissionStatus::LL_ACK_RECEIVED:
+          return std::string("LL-ACK Recieved");
       default:
          std::stringstream ss;
          ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;

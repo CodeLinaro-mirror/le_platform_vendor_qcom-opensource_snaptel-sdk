@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,8 +46,9 @@
 #define ECALL_CATEGORY_AUTO 1
 #define ECALL_CATEGORY_MANUAL 2
 #define ECALL_VARIANT_EMERGENCY 1
-#define ECALL_VARIANT_VOICE 2
-#define ECALL_VARIANT_TEST 3
+#define ECALL_VARIANT_TEST 2
+#define ECALL_TRANSMIT_MSD 1
+#define ECALL_DO_NOT_TRANSMIT_MSD 2
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
@@ -82,8 +83,12 @@ void ECallApp::init() {
     std::shared_ptr<ConsoleAppCommand> hangupCallCommand = std::make_shared<ConsoleAppCommand>(
         ConsoleAppCommand("4", "Hangup_Call", {}, std::bind(&ECallApp::hangupCall, this)));
 
+    std::shared_ptr<ConsoleAppCommand> hlapTimerStatusCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("5", "Get_ECall_HLAP_Timers_Status", {},
+                          std::bind(&ECallApp::requestECallHlapTimerStatus, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
-            customNumberECallCommand, answerCallCommand, hangupCallCommand};
+        customNumberECallCommand, answerCallCommand, hangupCallCommand, hlapTimerStatusCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -138,11 +143,17 @@ void ECallApp::makeECall() {
         std::cout << "Invalid Emergency Call Variant" << std::endl;
         return;
     }
+    // Configure MSD transmission at call connect
+    bool transmitMsd = true;
+    if( telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd)) {
+        return;
+    }
+
     // Get phoneId from user
     int phoneId = getPhoneId();
 
     std::cout << "eCall Triggered" << std::endl;
-    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant);
+    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, eCallVariant, transmitMsd);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
@@ -164,6 +175,11 @@ void ECallApp::makeCustomNumberECall() {
     if( -1 == getEcallCategory(emergencyCategory)) {
         return;
     }
+    // Configure MSD transmission at call connect
+    bool transmitMsd = true;
+    if( telux::common::Status::SUCCESS != getMsdTransmissionConfig(transmitMsd)) {
+        return;
+    }
     // Get phone number from user
     char delimiter = '\n';
     std::string dialNumber = "";
@@ -177,7 +193,7 @@ void ECallApp::makeCustomNumberECall() {
     int phoneId = getPhoneId();
 
     std::cout << "Custom number eCall Triggered" << std::endl;
-    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, dialNumber);
+    auto ret = eCallMgr_->triggerECall(phoneId, emergencyCategory, dialNumber, transmitMsd);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "ECall request failed" << std::endl;
     } else {
@@ -212,6 +228,22 @@ void ECallApp::hangupCall() {
     auto ret = eCallMgr_->hangupCall();
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to hangup the call" << std::endl;
+    }
+}
+
+/**
+ * Request eCall High Level Application Protocol(HLAP) timers status
+ */
+void ECallApp::requestECallHlapTimerStatus() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    auto ret = eCallMgr_->requestHlapTimerStatus(phoneId);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to get eCall HLAP timers status" << std::endl;
     }
 }
 
@@ -274,6 +306,39 @@ int ECallApp::getEcallCategory(telux::tel::ECallCategory &emergencyCategory) {
         return -1;
     }
     return 0;
+}
+
+/**
+ * Function to configure MSD transmission at call connect
+ */
+telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd) {
+    char delimiter = '\n';
+    std::string temp;
+    int opt = -1;
+    // Get user input to transmit MSD or not
+    std::cout << "Configure MSD transmission at MO call connect:\n"
+              << "1) Transmit MSD on call connect \n"
+              << "2) Do not transmit MSD on call connect " << std::endl;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            opt = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt << std::endl;
+        }
+    } else {
+        std::cout << "No input, proceeding with MSD transmission " << std::endl;
+        opt = ECALL_TRANSMIT_MSD;
+    }
+    if(opt == ECALL_TRANSMIT_MSD) {  // Transmit MSD
+        transmitMsd = true;
+    } else if(opt == ECALL_DO_NOT_TRANSMIT_MSD) {  // Do not transmit MSD
+        transmitMsd = false;
+    } else {
+        std::cout << "Invalid MSD transmission configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
 }
 
 void signalHandler(int sig) {

@@ -831,11 +831,11 @@ public:
     * @param  [in] freq         Accepts the composition of frequencies (in Hz) to be played
     *                           such as single tone or dual tone. Any additional
     *                           frequencies provided will be ignored.
-    *         [in] duration     Duration (in milliseconds) for which the tone needs to be played.
+    * @param  [in] duration     Duration (in milliseconds) for which the tone needs to be played.
     *                           The constant infiniteToneDuration(=0xFFFF) represents infinte
     *                           duration.
-    *         [in] gain         Tone Gain.
-    *         [in] callback     callback to get the response of play tone.
+    * @param  [in] gain         Tone Gain.
+    * @param  [in] callback     callback to get the response of play tone.
     *
     * @returns Status of the request i.e. success or suitable status code.
     *

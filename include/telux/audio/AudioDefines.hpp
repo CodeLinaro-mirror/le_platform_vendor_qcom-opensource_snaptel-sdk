@@ -165,8 +165,8 @@ enum class AmrwbpFrameFormat {
  * two ways force stop and after playing all buffers in the pipeline.
  */
 enum class StopType {
-    FORCE_STOP,    /**Stop Playing Immediately and clear buffer pipeline */
-    STOP_AFTER_PLAY,    /**Stop Play once after all buffers in pipeline are played */
+    FORCE_STOP,    /**< Stop Playing Immediately and clear buffer pipeline */
+    STOP_AFTER_PLAY,    /**< Stop Play once after all buffers in pipeline are played */
 };
 
 /**

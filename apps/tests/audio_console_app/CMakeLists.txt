@@ -32,7 +32,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_AUDIO_CONSOLE_APP} ${AUDIO_CONSOLE_APP_SOURCES})
-target_link_libraries(${TARGET_AUDIO_CONSOLE_APP} telux_audio pthread)
+target_link_libraries(${TARGET_AUDIO_CONSOLE_APP} telux_audio telux_common pthread)
 
 # install to target
 install ( TARGETS ${TARGET_AUDIO_CONSOLE_APP}

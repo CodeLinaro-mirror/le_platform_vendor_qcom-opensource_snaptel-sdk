@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018,2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -82,7 +82,8 @@ using MakeCallCallback
 class ICallManager {
 public:
    /**
-    * Initiate a voice call.
+    * Initiate a voice call. This API can also be used for e911/e112 type of regular emergency call.
+    * This is not meant for an automotive eCall.
     *
     * @param [in] phoneId      Represents phone corresponding to which on make
     *                          call operation is performed
@@ -117,7 +118,7 @@ public:
       = 0;
 
    /**
-    * Initiate an emergency call to the emergency number(e.g. 112)
+    * Initiate an automotive eCall.
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -147,8 +148,8 @@ public:
       = 0;
 
    /**
-    * Initiate an emergency call to the specified phone number. It is similar to a regular voice
-    * call, except that it facilitates MSD transmission.
+    * Initiate an automotive eCall to the specified phone number for TPS eCall. It will be
+    * treated like a regular voice call by the UE and the network.
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -181,7 +182,7 @@ public:
       = 0;
 
    /**
-    * Initiate an emergency call with raw MSD pdu, to the emergency number(e.g. 112)
+    * Initiate an automotive eCall with raw MSD pdu.
     *
     * @param [in] phoneId   Represents phone corresponding to which on make eCall
     *                       operation is performed
@@ -211,8 +212,8 @@ public:
       = 0;
 
    /**
-    * Initiate an emergency call with raw MSD pdu, to the specified phone number. It is similar to a
-    * regular voice call, except that it facilitates MSD transmission.
+    * Initiate an automotive eCall with raw MSD pdu, to the specified phone number for TPS eCall. It
+    * will be treated like a regular voice call by the UE and the network.
     *
     * @param [in] phoneId   Represents phone corresponding to which on make eCall
     *                       operation is performed
@@ -241,6 +242,62 @@ public:
     */
    virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
                                            const std::vector<uint8_t> &msdPdu, int category,
+                                           MakeCallCallback callback = nullptr)
+      = 0;
+
+   /**
+    * Initiate an automotive eCall without transmitting Minimum Set of Data (MSD) at call connect.
+    *
+    * @param [in] phoneId      Represents phone corresponding to which make
+    *                          eCall operation is performed
+    * @param [in] category     @ref ECallCategory
+    * @param [in] variant      @ref ECallVariant
+    * @param [in] callback     Optional callback function to get the response of
+    *                          makeECall request.
+    *                          Possible(not exhaustive) error codes for callback response
+    *                          - @ref telux::common::ErrorCode::SUCCESS
+    *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                          - @ref telux::common::ErrorCode::NO_MEMORY
+    *                          - @ref telux::common::ErrorCode::MODEM_ERR
+    *                          - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                          - @ref telux::common::ErrorCode::INVALID_STATE
+    *                          - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                          - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                          - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of makeECall i.e. success or suitable status code.
+    */
+   virtual telux::common::Status makeECall(int phoneId, int category, int variant,
+                                           MakeCallCallback callback = nullptr)
+      = 0;
+
+   /**
+    * Initiate an automotive eCall to the specified phone number for TPS eCall, without transmitting
+    * Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice call by the
+    * UE and the network.
+    *
+    * @param [in] phoneId      Represents phone corresponding to which make
+    *                          eCall operation is performed
+    * @param [in] dialNumber   String representing the dialing number
+    * @param [in] category     @ref ECallCategory
+    * @param [in] callback     Optional callback function to get the response of
+    *                          makeECall request.
+    *                          Possible(not exhaustive) error codes for callback response
+    *                          - @ref telux::common::ErrorCode::SUCCESS
+    *                          - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *                          - @ref telux::common::ErrorCode::NO_MEMORY
+    *                          - @ref telux::common::ErrorCode::MODEM_ERR
+    *                          - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *                          - @ref telux::common::ErrorCode::INVALID_STATE
+    *                          - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *                          - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *                          - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *                          - @ref telux::common::ErrorCode::GENERIC_FAILURE
+    *
+    * @returns Status of makeECall i.e. success or suitable status code.
+    */
+   virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber, int category,
                                            MakeCallCallback callback = nullptr)
       = 0;
 
@@ -278,6 +335,24 @@ public:
    virtual telux::common::Status updateECallMsd(int phoneId, const std::vector<uint8_t> &msdPdu,
                                                 telux::common::ResponseCallback callback)
       = 0;
+
+   /**
+    * Request for status of eCall High Level Application Protocol(HLAP) timers that are maintained
+    * by the UE state machine. This does not retrieve status of timers maintained by the PSAP.
+    * The provided timers are as per EN 16062:2015 standard.
+    *
+    * @param [in] phoneId   Represents phone corresponding on which getECallHlapTimerStatus
+    *                       operation is performed
+    * @param [out] hlapTimerStatus reference argument to store ECallHlapTimerStatus information
+    *                             @Ref ECallHlapTimerStatus
+    *
+    * @returns Status of getECallHlapTimerStatus i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    *          change and could break backwards compatibility.
+    */
+   virtual telux::common::Status getECallHlapTimerStatus(int phoneId,
+                                                         ECallHlapTimerStatus &hlapTimerStatus) = 0;
 
    /**
     * Get in-progress calls.

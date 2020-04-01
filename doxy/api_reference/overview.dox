@@ -420,4 +420,42 @@ Modem Config APIs in the Telematics SDK provides modem config related functional
    - Get/Set config auto selection mode.
    - Delete a modem config file from modem's storage.
    - Ability to get notified whenever a SW config file is activated.
+
+@section Security
+@subsection SELinux
+    SELinux is an access control framework provided by the Linux kernel. It provides a mechanism to restrict/control access to system resources such as file nodes and sockets. SELinux framework expects any process running in userspace to declare all its interactions with the system resources in the form of SELinux policies. On platforms enabled with SELinux, an app that uses an SDK API would also need to declare its usage through SELinux policies to ensure that it has all the required permissions. In order for an application to use the SDK's APIs on such a platform, SELinux interfaces have been defined that the app needs to declare in its policies.
+
+    Listed below are the interfaces to be used when an app uses APIs belonging to a given namespace/class of the SDK.
+
+    <b>Note</b> For the below list, let us consider the application's security context to be ``app_t`` (also called domain context).
+
+@table{4,{\raggedright}p{1.52in},{\raggedright}p{1.63in},{\raggedright}p{1.43in},{\raggedright}p{1.63in}}
+@trfirsthdg
+@thmultcol{1,|c|} SDK Namespace/Class @thmultcolend @thmultcol{1,c|} SELinux interface @thmultcolend @thmultcol{1,c|} Arguments @thmultcolend @thmultcollast{1,c|} Usage @thmultcollastend
+@trfirsthdgend
+@trhdg
+@thdg{1,|c|, SDK Namespace/Class} @thdg{1,c|,SELinux interface} @thdg{1,c|,Arguments} @thdglast{1,c|,Usage}
+@trhdgend
+@tr @td tel @tdend @td telux_allow_tel() @tdend @td domain context @tdend @tdlast telux_allow_tel(app_t) @tdlastend @trend
+@tr @td data @tdend @td telux_allow_data() @tdend @td domain context @tdend @tdlast telux_allow_data(app_t) @tdlastend @trend
+@tr @td audio @tdend @td telux_allow_audio() @tdend @td domain context @tdend @tdlast telux_allow_audio(app_t) @tdlastend @trend
+@tr @td loc @tdend @td telux_allow_loc() @tdend @td domain context @tdend @tdlast telux_allow_loc(app_t) @tdlastend @trend
+@tr @td IThermalManager @tdend @td telux_allow_thermalmanager() @tdend @td domain context @tdend @tdlast telux_allow_thermalmanager(app_t) @tdlastend @trend
+@tr @td IThermalShutdownManager @tdend @td telux_allow_thermalshutdown() @tdend @td domain context @tdend @tdlast telux_allow_thermalshutdown(app_t) @tdlastend @trend
+@tr @td power @tdend @td telux_allow_power() @tdend @td domain context @tdend @tdlast telux_allow_power(app_t) @tdlastend @trend
+@tr @td config @tdend @td telux_allow_modemconfig() @tdend @td domain context @tdend @tdlast telux_allow_modemconfig(app_t) @tdlastend @trend
+@tableend
+
+The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform all SDK data operations.
+\code{.cpp}
+
+    policy_module(application, 1.0)
+    type app_t;
+
+    #Granting SDK data client permissions to the application
+
+    telux_allow_data(app_t);
+\endcode
+
+
 */

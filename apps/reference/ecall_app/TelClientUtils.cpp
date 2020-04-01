@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -91,6 +91,10 @@ std::string TelClientUtils::eCallMsdTransmissionStatusToString(
             return std::string("NACK OUT OF ORDER");
         case telux::tel::ECallMsdTransmissionStatus::ACK_OUT_OF_ORDER:
             return std::string("ACK OUT OF ORDER");
+        case telux::tel::ECallMsdTransmissionStatus::START_RECEIVED:
+            return std::string("SEND-MSD(START) Received");
+        case telux::tel::ECallMsdTransmissionStatus::LL_ACK_RECEIVED:
+            return std::string("LL-ACK Recieved");
         default:
             std::stringstream ss;
             ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;
@@ -235,6 +239,40 @@ std::string TelClientUtils::callEndCauseToString(telux::tel::CallEndCause callEn
         default:
             std::stringstream ss;
             ss << "Unknown call fail cause = " << (int)callEndCause;
+            return ss.str();
+    }
+}
+
+std::string TelClientUtils::eCallHlapTimerStatusToString(telux::tel::HlapTimerStatus status) {
+    switch(status) {
+        case telux::tel::HlapTimerStatus::INACTIVE:
+            return std::string("INACTIVE");
+        case telux::tel::HlapTimerStatus::ACTIVE:
+            return std::string("ACTIVE");
+        case telux::tel::HlapTimerStatus::UNKNOWN:
+            return std::string("UNKNOWN");
+        default:
+            std::stringstream ss;
+            ss << "Unknown HlapTimerStatus  = " << (int)status;
+            return ss.str();
+    }
+}
+
+std::string TelClientUtils::eCallHlapTimerEventToString(telux::tel::HlapTimerEvent event) {
+    switch(event) {
+        case telux::tel::HlapTimerEvent::STARTED:
+            return std::string("STARTED");
+        case telux::tel::HlapTimerEvent::STOPPED:
+            return std::string("STOPPED");
+        case telux::tel::HlapTimerEvent::EXPIRED:
+            return std::string("EXPIRED");
+        case telux::tel::HlapTimerEvent::UNKNOWN:
+            return std::string("UNKNOWN");
+        case telux::tel::HlapTimerEvent::UNCHANGED:
+            return std::string("UNCHANGED");
+        default:
+            std::stringstream ss;
+            ss << "Unknown HlapTimerEvent  = " << (int)event;
             return ss.str();
     }
 }

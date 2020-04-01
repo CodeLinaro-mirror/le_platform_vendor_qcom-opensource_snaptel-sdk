@@ -67,7 +67,6 @@ void ModemConfigurator::init() {
         std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
         return;
     }
-
     telux::common::Status status = modemConfigManager_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Reg Listener Request Failed" << std::endl;
@@ -381,6 +380,24 @@ void ModemConfigurator::onConfigUpdateStatus(ConfigUpdateStatus status, int slot
         state = " Completed.";
     }
     std::cout << "Config update on slot id: "<< slotId << state <<std::endl;
+}
+
+void ModemConfigurator::onServiceStatusChange(telux::common::ServiceStatus status) {
+    if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        bool status = modemConfigManager_->isSubsystemReady();
+
+        // If modem config subsystem is not ready, wait for it to be ready
+        if (!status) {
+            std::cout << "Modem Config subsystem is not ready, Please wait" << std::endl;
+            std::future<bool> f = modemConfigManager_->onSubsystemReady();
+            // Waiting for modem config subsystem to be ready
+            status = f.get();
+        }
+        std::cout << "Modem Config service AVAILABLE" << std::endl;
+    }
+    if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        std::cout << "Modem Config Service NOT AVAILABLE" << std::endl;
+    }
 }
 
 void ModemConfigurator::printConfigList() {

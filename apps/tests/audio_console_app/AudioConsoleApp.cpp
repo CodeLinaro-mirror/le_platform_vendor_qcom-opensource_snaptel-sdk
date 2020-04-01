@@ -52,10 +52,9 @@ extern "C" {
 #include "ToneMenu.hpp"
 #include "TransCodeMenu.hpp"
 
-#define APP_NAME "audio_console_app"
-
 #include "AudioConsoleApp.hpp"
 #include "../../common/utils/Utils.hpp"
+#include <telux/common/Version.hpp>
 
 AudioConsoleApp::AudioConsoleApp(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
@@ -239,8 +238,12 @@ void AudioConsoleApp::setSystemReady() {
 
 int main(int argc, char **argv) {
 
-    auto audioConsoleApp = std::make_shared<AudioConsoleApp>(APP_NAME, "audio> ");
+    auto sdkVersion = telux::common::Version::getSdkVersion();
+    std::string appName = "Audio console app - SDK v" + std::to_string(sdkVersion.major) + "."
+                            + std::to_string(sdkVersion.minor) + "."
+                            + std::to_string(sdkVersion.patch);
 
+    auto audioConsoleApp = std::make_shared<AudioConsoleApp>(appName, "audio> ");
     std::vector<std::string> supplementaryGrps{"system"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {

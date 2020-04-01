@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -167,6 +167,38 @@ void TelClient::onECallMsdTransmissionStatus(
                       << std::endl;
 }
 
+// Callback to notify eCall HLAP timers status
+void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) {
+    std::string infoStr = "\n";
+    std::cout << CLIENT_NAME << " eCall HLAP Timer event on phoneId: " << phoneId << std::endl;
+    if((timerEvents.t2 != HlapTimerEvent::UNCHANGED) &&
+       (timerEvents.t2 != HlapTimerEvent::UNKNOWN)) {
+        infoStr.append("T2 HLAP Timer event : " +
+                   TelClientUtils::eCallHlapTimerEventToString(timerEvents.t2) + "\n");
+    }
+    if((timerEvents.t5 != HlapTimerEvent::UNCHANGED) &&
+       (timerEvents.t5 != HlapTimerEvent::UNKNOWN)) {
+        infoStr.append("T5 HLAP Timer event : " +
+                   TelClientUtils::eCallHlapTimerEventToString(timerEvents.t5) + "\n");
+    }
+    if((timerEvents.t6 != HlapTimerEvent::UNCHANGED) &&
+       (timerEvents.t6 != HlapTimerEvent::UNKNOWN)) {
+        infoStr.append("T6 HLAP Timer event : " +
+                   TelClientUtils::eCallHlapTimerEventToString(timerEvents.t6) + "\n");
+    }
+    if((timerEvents.t7 != HlapTimerEvent::UNCHANGED) &&
+       (timerEvents.t7 != HlapTimerEvent::UNKNOWN)) {
+        infoStr.append("T7 HLAP Timer event : " +
+                   TelClientUtils::eCallHlapTimerEventToString(timerEvents.t7) + "\n");
+    }
+    if((timerEvents.t9 != HlapTimerEvent::UNCHANGED) &&
+       (timerEvents.t9 != HlapTimerEvent::UNKNOWN)) {
+        infoStr.append("T9 HLAP Timer event : " +
+                   TelClientUtils::eCallHlapTimerEventToString(timerEvents.t9) + "\n");
+    }
+    std::cout << CLIENT_NAME << infoStr << std::endl;
+}
+
 // Callback which provides response to makeECall
 void TelClient::makeCallResponse(telux::common::ErrorCode errorCode,
                                       std::shared_ptr<telux::tel::ICall> call) {
@@ -233,7 +265,7 @@ void TelClient::HangupCommandCallback::commandResponse(telux::common::ErrorCode 
 
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
-                                ECallCategory category, ECallVariant variant,
+                                ECallCategory category, ECallVariant variant, bool transmitMsd,
                                 std::shared_ptr<CallStatusListener> callListener) {
     if(!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
@@ -242,8 +274,15 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
     }
     setECallProgressState(true);
     // Initiate an eCall
-    auto status = callMgr_->makeECall(phoneId, msdData, (int)category,
-                                     (int)variant, shared_from_this());
+    telux::common::Status status = telux::common::Status::FAILED;
+    if(transmitMsd) {
+        status = callMgr_->makeECall(phoneId, msdData, (int)category, (int)variant,
+                                     shared_from_this());
+    } else {
+        status = callMgr_->makeECall(phoneId, (int)category, (int)variant,
+                                     std::bind(&TelClient::makeCallResponse, this,
+                                     std::placeholders::_1, std::placeholders::_2));
+    }
     if(status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make an ECall is sent successfully" << std::endl;
     } else {
@@ -258,7 +297,7 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
 // Initiate a voice eCall procedure to the specified phone number
 telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
                                 ECallCategory category, const std::string dialNumber,
-                                std::shared_ptr<CallStatusListener> callListener) {
+                                bool transmitMsd, std::shared_ptr<CallStatusListener> callListener){
     if(!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
             << std::endl;
@@ -266,8 +305,15 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
     }
     setECallProgressState(true);
     // Initiate voice eCall
-    auto status = callMgr_->makeECall(phoneId, dialNumber, msdData, (int)category,
+    telux::common::Status status = telux::common::Status::FAILED;
+    if(transmitMsd) {
+        status = callMgr_->makeECall(phoneId, dialNumber, msdData, (int)category,
                                             shared_from_this());
+    } else {
+        status = callMgr_->makeECall(phoneId, dialNumber, (int)category,
+                                     std::bind(&TelClient::makeCallResponse, this,
+                                     std::placeholders::_1, std::placeholders::_2));
+    }
     if(status == telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Request to make a Voice ECall is sent successfully"
             << std::endl;
@@ -358,5 +404,33 @@ telux::common::Status TelClient::hangup(int phoneId) {
     } else {
         std::cout << CLIENT_NAME << "No active or on-hold call found to hangup" << std::endl;
     }
+    return telux::common::Status::SUCCESS;
+}
+
+// Get eCall HLAP timers status
+telux::common::Status TelClient::requestECallHlapTimerStatus(int phoneId) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to request for HLAP timers status"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    ECallHlapTimerStatus timersStatus;
+    auto status = callMgr_->getECallHlapTimerStatus(phoneId, timersStatus);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request for HLAP timers status" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    std::string infoStr = "\n";
+    infoStr.append("T2 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t2) + "\n");
+    infoStr.append("T5 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t5) + "\n");
+    infoStr.append("T6 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t6) + "\n");
+    infoStr.append("T7 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t7) + "\n");
+    infoStr.append("T9 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t9) + "\n");
+    std::cout << CLIENT_NAME << infoStr << std::endl;
     return telux::common::Status::SUCCESS;
 }

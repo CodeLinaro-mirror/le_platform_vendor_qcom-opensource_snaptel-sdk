@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -73,6 +73,10 @@ enum class ECallMsdTransmissionStatus {
                                  detected */
    ACK_OUT_OF_ORDER = 4,         /**< Out of order ACK message
                                  detected */
+   START_RECEIVED = 5,           /**< SEND-MSD(START) is received
+                                 and SYNC is Locked */
+   LL_ACK_RECEIVED = 6,          /**< Link-Layer Acknowledgement(LL-ACK)
+                                 is received */
 };
 
 /**
@@ -258,6 +262,64 @@ struct ECallModeInfo {
    ECallMode mode;         /**< Represents eCall operating mode */
    ECallModeReason reason; /**< Represents eCall operating mode change reason */
 };
+
+/**
+ * Represents the status of an eCall High Level Application Protocol(HLAP) timer that is maintained
+ * by the UE state machine.
+ */
+enum class HlapTimerStatus {
+   UNKNOWN = -1,             /**< Unknown */
+   INACTIVE,                 /**< eCall Timer is Inactive i.e
+                                  it has not started or it has stopped/expired */
+   ACTIVE,                   /**< eCall Timer is Active i.e
+                                  it has started but not yet stopped/expired */
+};
+
+/**
+ * Represents an event causing a change in the the status of eCall High Level Application Protocol
+ * (HLAP) timer that is maintained by the UE state machine.
+ *
+ * Timer STARTED notification is provided when the timer moves from INACTIVE to ACTIVE state.
+ * Timer STOPPED notification is provided when the timer moves from ACTIVE to INACTIVE state, after
+ * its underlying condition is satisfied.
+ * Timer EXPIRED notification is provided when the timer moves from ACTIVE to INACTIVE state, after
+ * its underlying condition not satisfied until its timeout.
+ */
+enum class HlapTimerEvent {
+   UNKNOWN = -1,             /**< Unknown */
+   UNCHANGED,                /**< No change in timer status */
+   STARTED,                  /**< eCall Timer is Started */
+   STOPPED,                  /**< eCall Timer is Stopped */
+   EXPIRED,                  /**< eCall Timer is expired */
+};
+
+/**
+ * Represents status of various eCall High Level Application Protocol(HLAP) timers that are
+ * maintained by UE state machine. This does not retrieve status of timers maintained by the PSAP.
+ * The timers are represented according to EN 16062:2015 standard.
+ */
+struct ECallHlapTimerStatus {
+   HlapTimerStatus t2;   /**< T2 Timer status */
+   HlapTimerStatus t5;   /**< T5 Timer status */
+   HlapTimerStatus t6;   /**< T6 Timer status */
+   HlapTimerStatus t7;   /**< T7 Timer status */
+   HlapTimerStatus t9;   /**< T9 Timer status */
+};
+
+/**
+ * Represents events that changes the status of various eCall High Level Application Protocol(HLAP)
+ * timers that are maintained by UE state machine. This does not retrieve events of timers
+ * maintained by the PSAP.
+ * The timers are represented according to EN 16062:2015 standard.
+ */
+struct ECallHlapTimerEvents {
+   HlapTimerEvent t2;   /**< T2 Timer event */
+   HlapTimerEvent t5;   /**< T5 Timer event */
+   HlapTimerEvent t6;   /**< T6 Timer event */
+   HlapTimerEvent t7;   /**< T7 Timer event */
+   HlapTimerEvent t9;   /**< T9 Timer event */
+};
+
 /** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel

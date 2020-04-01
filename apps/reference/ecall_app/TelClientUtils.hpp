@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -54,6 +54,14 @@ public:
      * Get ECallMsdTransmissionStatus in string
      */
     static std::string eCallMsdTransmissionStatusToString(ECallMsdTransmissionStatus status);
+    /*
+     * Get eCall HLAP timer status in string
+     */
+    static std::string eCallHlapTimerStatusToString(HlapTimerStatus status);
+    /*
+     * Get eCall HLAP timer event in string
+     */
+    static std::string eCallHlapTimerEventToString(HlapTimerEvent event);
 
     TelClientUtils();
     ~TelClientUtils();

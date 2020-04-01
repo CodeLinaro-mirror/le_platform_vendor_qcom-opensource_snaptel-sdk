@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -54,22 +54,26 @@ public:
      *
      * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
      * @param [in] category     ECallCategory
+     * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] variant      ECallVariant
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(int phoneId, ECallCategory category, ECallVariant variant);
+    telux::common::Status triggerECall(int phoneId, ECallCategory category, ECallVariant variant,
+                                       bool transmitMsd);
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number
      *
      * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
      * @param [in] category     ECallCategory
+     * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] dialNumber   phone number to be dialed
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(int phoneId, ECallCategory category, const std::string dialNumber);
+    telux::common::Status triggerECall(int phoneId, ECallCategory category,
+                                       const std::string dialNumber, bool transmitMsd);
 
     /**
      * This function answers an incoming call
@@ -88,6 +92,16 @@ public:
      *
      */
     telux::common::Status hangupCall();
+
+    /**
+     * This function requests status of various eCall HLAP timers
+     *
+     * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
+     *
+     * @returns Status of requestHlapTimerStatus i.e success or suitable status code.
+     *
+     */
+    telux::common::Status requestHlapTimerStatus(int phoneId);
 
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;

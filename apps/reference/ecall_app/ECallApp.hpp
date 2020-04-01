@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -86,6 +86,11 @@ private:
     void hangupCall();
 
     /**
+     * Request eCall High Level Application Protocol(HLAP) timers status
+     */
+    void requestECallHlapTimerStatus();
+
+    /**
      * Function to get phoneId from the user-interface
      */
     int getPhoneId();
@@ -94,6 +99,11 @@ private:
      * Function to get eCall category from the user-interface
      */
     int getEcallCategory(telux::tel::ECallCategory &emergencyCategory);
+
+    /**
+     * Function to configure MSD transmission at call connect
+     */
+    telux::common::Status getMsdTransmissionConfig(bool &transmitMsd);
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;

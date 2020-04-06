@@ -33,7 +33,8 @@
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationListener.hpp>
 
-class MyLocationListener : public telux::loc::ILocationListener {
+class MyLocationListener : public telux::loc::ILocationListener, public
+    telux::loc::ILocationSystemInfoListener {
 public:
    void onBasicLocationUpdate(
       const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) override;
@@ -49,12 +50,18 @@ public:
    void onDetailedEngineLocationUpdate(const std::vector<std::shared_ptr<telux::loc::ILocationInfoEx>>
        &locationEngineInfo) override;
 
+   void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) override;
+
+   void onLocationSystemInfo(telux::loc::LocationSystemInfo &locationSystemInfo) override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setDetailedEngineLocReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
    void setSvInfoFlag(bool enable);
    void setDataInfoFlag(bool enable);
    void setNmeaInfoFlag(bool enable);
+   void setMeasurementsInfoFlag(bool enable);
+   void setLocSystemInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -63,7 +70,8 @@ private:
    bool isSvInfoFlagEnabled_ = false, isDetailedReportFlagEnabled_ = false;
    bool isBasicReportFlagEnabled_ = false, isDataInfoFlagEnabled_ = false;
    bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
-   bool isTimerExpired = false;
+   bool isMeasurementsInfoFlagEnabled_ = false, isTimerExpired = false;
+   bool isLocSysInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
@@ -85,6 +93,12 @@ private:
    void printCalibrationStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineType(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineMask(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printMeasurementsClockValidity(telux::loc::GnssMeasurementsClockValidity flags);
+   void printMeasurementsDataValidity(telux::loc::GnssMeasurementsDataValidity flags);
+   void printMeasurementState(telux::loc::GnssMeasurementsStateValidity mask);
+   void printMeasurementAdrState(telux::loc::GnssMeasurementsAdrStateValidity mask);
+   void printMeasurementsMultipathIndicator(telux::loc::
+       GnssMeasurementsMultipathIndicator indicator);
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

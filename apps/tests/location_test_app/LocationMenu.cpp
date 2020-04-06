@@ -90,6 +90,8 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setDataInfoFlag(false);
       posListener->setNmeaInfoFlag(false);
       posListener->setDetailedEngineLocReportFlag(false);
+      posListener->setMeasurementsInfoFlag(false);
+      posListener->setLocSystemInfoFlag(false);
 
       //Registering listener for fixes
       locationManager->registerListenerEx(posListener_);
@@ -177,14 +179,27 @@ int LocationMenu::init() {
       ConsoleAppCommand("11", "Configure robust location", {}, std::bind(
                         &LocationMenu::configureRobustLocation, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> registerLocationSystemInfo = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("12", "Register Location System Info", {},
+                        std::bind(&LocationMenu::registerLocationSystemInfo, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> deRegisterLocationSystemInfo = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("13", "Deregister Location System Info", {},
+                        std::bind(&LocationMenu::deRegisterLocationSystemInfo, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> requestEnergyConsumedInfo = std::make_shared<
+       ConsoleAppCommand>(ConsoleAppCommand("14", "Request for energy consumed Info", {},
+           std::bind(&LocationMenu::requestEnergyConsumedInfo, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> dgnssInjectCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("12", "Dgnss_Correction_Injection", {},
+      ConsoleAppCommand("15", "Dgnss_Correction_Injection", {},
                         std::bind(&LocationMenu::dgnssInject, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
          deleteAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
+         registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
          dgnssInjectCommand};
 
    addCommands(commandsListGnssSubMenu);
@@ -331,6 +346,18 @@ void LocationMenu::startBasicReports(std::vector<std::string> userInput) {
    }
 }
 
+void LocationMenu::registerLocationSystemInfo(std::vector<std::string> userInput) {
+  myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Register Location System Info");
+   locationManager_->registerForSystemInfoUpdates(posListener_, std::bind(
+       &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_, std::placeholders::_1));
+}
+
+void LocationMenu::deRegisterLocationSystemInfo(std::vector<std::string> userInput) {
+  myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Deregister Location System Info");
+   locationManager_->deRegisterForSystemInfoUpdates(posListener_, std::bind(
+       &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_, std::placeholders::_1));
+}
+
 void LocationMenu::stopReports(std::vector<std::string> userInput) {
    myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Stop request");
    locationManager_->stopReports(std::bind(&MyLocationCommandCallback::commandResponse,
@@ -449,7 +476,7 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
             int leverArmTypeOption = 1;
             if(!type.empty()) {
                 try {
-                    leverArmTypeOption = std::stof(type);
+                    leverArmTypeOption = std::stoi(type);
                 } catch(const std::exception &e) {
                     std::cout << "ERROR: invalid input, please enter numerical values " <<
                         leverArmTypeOption << std::endl;
@@ -471,59 +498,51 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
             std::cout << "leverArmTypeOption : " << leverArmTypeOption << std::endl;
             std::cout << "leverArmType : " << leverArmType << std::endl;
             std::string forwardOffset;
+            float optForwardOffset = 0.0;
             std::cout << " Enter the LeverArm Parameters : " << std::endl;
             std::cout << " Enter forward offset : " << std::endl;
-            forwardOffset = std::cin.get();
-            std::cin.ignore();
-            float optForwardOffset = 0.0;
-            if(!forwardOffset.empty()) {
-                try {
-                    optForwardOffset = std::stof(forwardOffset);
-                } catch(const std::exception &e) {
-                    std::cout << "ERROR: invalid input, please enter numerical values " <<
-                        optForwardOffset << std::endl;
+            if (std::getline(std::cin, forwardOffset)) {
+                std::stringstream inputStream(forwardOffset);
+                if(!(inputStream >> optForwardOffset)) {
+                    std::cout << "Invalid Input" << std::endl;
+                    return;
                 }
-            } else {
-                 optForwardOffset = 0.0;
-            }
+             } else {
+                 std::cout << "Invalid Input" << std::endl;
+             }
+
             leverArmParams.forwardOffset = optForwardOffset;
             std::cout << " leverArmParams.forwardOffset" << leverArmParams.forwardOffset
                 << std::endl;
 
             std::string sidewaysOffset;
-            std::cout << " Enter sideways offset : " << std::endl;
-            sidewaysOffset = std::cin.get();
-            std::cin.ignore();
             float optSidewaysOffset = 0.0;
-            if(!sidewaysOffset.empty()) {
-                try {
-                    optSidewaysOffset = std::stof(sidewaysOffset);
-                } catch(const std::exception &e) {
-                    std::cout << "ERROR: invalid input, please enter numerical values " <<
-                        optSidewaysOffset << std::endl;
+            std::cout << " Enter sideways offset : " << std::endl;
+            if (std::getline(std::cin, sidewaysOffset)) {
+                std::stringstream inputStream(sidewaysOffset);
+                if(!(inputStream >> optSidewaysOffset)) {
+                    std::cout << "Invalid Input" << std::endl;
+                    return;
                 }
-            } else {
-                 optSidewaysOffset = 0.0;
-            }
+             } else {
+                 std::cout << "Invalid Input" << std::endl;
+             }
             leverArmParams.sidewaysOffset = optSidewaysOffset;
             std::cout << " leverArmParams.sidewaysOffset" << leverArmParams.sidewaysOffset <<
                 std::endl;
 
             std::string upOffset;
-            std::cout << " Enter up offset : " << std::endl;
-            upOffset = std::cin.get();
-            std::cin.ignore();
             float optUpOffset = 0.0;
-            if(!upOffset.empty()) {
-                try {
-                    optUpOffset = std::stof(upOffset);
-                } catch(const std::exception &e) {
-                    std::cout << "ERROR: invalid input, please enter numerical values " <<
-                    optUpOffset << std::endl;
+            std::cout << " Enter up offset : " << std::endl;
+            if (std::getline(std::cin, upOffset)) {
+                std::stringstream inputStream(upOffset);
+                if(!(inputStream >> optUpOffset)) {
+                    std::cout << "Invalid Input" << std::endl;
+                    return;
                 }
-            } else {
-                 optUpOffset = 0.0;
-            }
+             } else {
+                 std::cout << "Invalid Input" << std::endl;
+             }
             leverArmParams.upOffset = optUpOffset;
             std::cout << " leverArmParams.upOffset" << leverArmParams.upOffset;
 
@@ -673,6 +692,15 @@ void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
    }
 }
 
+void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput) {
+  myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+      "Request GNSS Energy Consumed Info");
+  auto gnssEnergyConsumedCb = std::bind(
+      &MyLocationCommandCallback::onGnssEnergyConsumedInfo, myLocCmdResponseCb_,
+          std::placeholders::_1, std::placeholders::_2);
+   locationManager_->requestEnergyConsumedInfo(gnssEnergyConsumedCb);
+}
+
 int LocationMenu::enableReportLogsUtility() {
    char delimiter = '\n';
    std::string usrInput;
@@ -733,7 +761,9 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  3 - SV_info_notifications" << std::endl;
      std::cout << "  4 - Data_info_notifications" << std::endl;
      std::cout << "  5 - Detailed_Engine_location_notifications" << std::endl;
-     std::cout << "  6 - Nmea_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  6 - Nmea_info_notifications" << std::endl;
+     std::cout << "  7 - Measurements_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  8 - Location_system_information " << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -752,9 +782,13 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      } else if(usrInput == "4") {
          LocationMenu::enableDataInfoLogs();
      } else if(usrInput == "5") {
-		 LocationMenu::enableDetailedEngineLocReportLogs();
-	 } else if(usrInput == "6") {
+         LocationMenu::enableDetailedEngineLocReportLogs();
+     } else if(usrInput == "6") {
          LocationMenu::enableNmeaInfoLogs();
+     } else if(usrInput == "7") {
+         LocationMenu::enableMeasurementsInfoLogs();
+     } else if(usrInput == "8") {
+         LocationMenu::enableLocationSystemInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -801,6 +835,24 @@ void LocationMenu::enableNmeaInfoLogs() {
     std::cout << "ERROR: invalid input, please enter 0 or 1\n";
   }
 
+}
+
+void LocationMenu::enableMeasurementsInfoLogs() {
+  int opt = enableReportLogsUtility();
+  if((opt == 0) || (opt == 1)) {
+    posListener_->setMeasurementsInfoFlag(opt);
+  } else {
+    std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+  }
+}
+
+void LocationMenu::enableLocationSystemInfoLogs() {
+  int opt = enableReportLogsUtility();
+  if((opt == 0) || (opt == 1)) {
+    posListener_->setLocSystemInfoFlag(opt);
+  } else {
+    std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+  }
 }
 
 // Main function that displays the console and processes user input

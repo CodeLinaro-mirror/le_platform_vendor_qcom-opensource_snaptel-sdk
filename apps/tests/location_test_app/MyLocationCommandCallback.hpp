@@ -31,11 +31,14 @@
 #define MYLOCATIONCOMMANDCALLACK_HPP
 
 #include "telux/common/CommonDefines.hpp"
+#include "telux/loc/LocationDefines.hpp"
 
 class MyLocationCommandCallback : public telux::common::ICommandResponseCallback {
 public:
    MyLocationCommandCallback(std::string cmdName);
    void commandResponse(telux::common::ErrorCode error);
+   void onGnssEnergyConsumedInfo(telux::loc::GnssEnergyConsumedInfo gnssEnergyConsumed,
+       telux::common::ErrorCode error);
 
 private:
    std::string commandName_;

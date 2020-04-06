@@ -813,6 +813,27 @@ When reports are no longer required, the app needs to stop the report and de-reg
 4. Status of configureConstellations i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for configureConstellations is received by the application.
 
+@subsection location_configurator_configure_robust_location_callflow Call flow to configure robust location
+
+@anchor fig_location_configurator_configure_robust_location_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_robust_location_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure robust location}
+  \label{fig_location_configurator_configure_robust_location_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_robust_location_callflow.png,Call flow to configure robust location,80,80,Call flow to configure robust location}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures robust location using configureRobustLocation API.
+4. Status of configureRobustLocation i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureRobustLocation is received by the application.
+
 @section data_call_flow Data
 
 @subsection data_connection_manager_callflow Start/Stop for data connection manager call flow

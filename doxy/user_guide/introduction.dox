@@ -49,6 +49,7 @@ when       who     what, where, why
 01/15/20   SM      Added software bridge management support in Telematics SDK
 01/15/20   FS      Added Socks Proxy Feature Support in Telematics SDK
 02/14/20   SD      Added location configurator support to Telematics SDK
+03/12/20   SD      Added robust location support to location configurator in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

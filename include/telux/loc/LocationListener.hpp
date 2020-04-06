@@ -71,7 +71,7 @@ public:
  * This function is called when device receives location update.
  *
  * @param [in] locationInfo - Location information  like latitude, longitude,
- * timeStamp other information such as heading, altitude and velocity etc.
+ * timeInfo other information such as heading, altitude and velocity etc.
  *
  */
   virtual void
@@ -81,7 +81,7 @@ public:
  * This function is called when device receives location update.
  *
  * @param [in] locationInfo - Location information  like latitude, longitude,
- * timeStamp other information such as heading, altitude and velocity etc.
+ * timeInfo other information such as heading, altitude and velocity etc.
  *
  */
   virtual void onBasicLocationUpdate(
@@ -91,7 +91,7 @@ public:
  * This function is called when device receives Gnss location update.
  *
  * @param [in] locationInfo - Contains richer set of location information
- * like latitude, longitude, timeStamp, heading, altitude, velocity and other
+ * like latitude, longitude, timeInfo, heading, altitude, velocity and other
  * information such as deviations, elliptical accuracies etc.
  *
  */
@@ -135,11 +135,41 @@ public:
  */
   virtual void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {}
 
+/**
+ * This function is called when device receives signal measurement information
+ * such as satellite vehicle pseudo range, satellite vehicle clock time, carrier phase
+ * measurement etc.
+ *
+ * @param [in] measurementInfo - GNSS measurement information
+ *
+ * @note  Eval: This is a new API and is being evaluated. It is subject to change
+ *              and could break backwards compatibility.
+ */
+  virtual void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) {}
+
 
 /**
  * Destructor of ILocationListener
  */
   virtual ~ILocationListener() {}
+};
+
+class ILocationSystemInfoListener {
+public:
+/**
+ * This function is called when device receives location related system information
+ * such as leap second change.
+ *
+ * @param [in] locationSystemInfo - contains location system information such as
+ *                                  current leap seconds change
+ */
+  virtual void onLocationSystemInfo(LocationSystemInfo &locationSystemInfo) {}
+
+/**
+ * Destructor of ILocationSystemInfoListener
+ */
+  virtual ~ILocationSystemInfoListener() {}
+
 };
 /** @} */ /* end_addtogroup telematics_location */
 }         // end of namespace loc

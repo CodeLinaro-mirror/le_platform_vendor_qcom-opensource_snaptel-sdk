@@ -334,23 +334,17 @@ void MyLocationListener::printGnssSystemTime(
    telux::loc::GnssSystem system = sysTime.gnssSystemTimeSrc;
    if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GPS) {
       std::cout << "GPS satellite" << std::endl;
-   }
-   if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
+   } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GALILEO) {
       std::cout << "GALILEO satellite" << std::endl;
-   }
-   if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
+   } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_SBAS) {
       std::cout << "SBAS satellite" << std::endl;
-   }
-   if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
+   } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_GLONASS) {
       std::cout << "GLONASS satellite " << std::endl;
-   }
-   if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
+   } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
       std::cout << "BDS satellite" << std::endl;
-   }
-   if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
+   } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
       std::cout << "QZSS satellite" << std::endl;
-   }
-   else {
+   } else {
       std::cout << "UNKNOWN satellite" << std::endl;
    }
 
@@ -666,15 +660,181 @@ void MyLocationListener::printLocOutputEngineMask(
     std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
   telux::loc::PositioningEngine posEngineBits = locationInfo->getLocOutputEngMask();
   if(posEngineBits & telux::loc::STANDARD_POSITIONING_ENGINE) {
-    std::cout << " SPE used in the Fused reports" << std::endl;
+    std::cout << " SPE used in the reports" << std::endl;
   }
   if(posEngineBits & telux::loc::DEAD_RECKONING_ENGINE) {
-    std::cout << " DRE used in the Fused reports" << std::endl;
+    std::cout << " DRE used in the reports" << std::endl;
   }
   if(posEngineBits & telux::loc::PRECISE_POSITIONING_ENGINE) {
-    std::cout << " PPE used in the Fused reports" << std::endl;
+    std::cout << " PPE used in the reports" << std::endl;
   }
 
+}
+
+void MyLocationListener::printMeasurementsClockValidity(
+    telux::loc::GnssMeasurementsClockValidity flags) {
+  if(flags & telux::loc::LEAP_SECOND_BIT) {
+    std::cout << " Valid leap seconds " << std::endl;
+  }
+  if(flags & telux::loc::TIME_BIT) {
+    std::cout << " Valid time " << std::endl;
+  }
+  if(flags & telux::loc::TIME_UNCERTAINTY_BIT) {
+    std::cout << " Valid time uncertainty " << std::endl;
+  }
+  if(flags & telux::loc::FULL_BIAS_BIT) {
+    std::cout << " Valid full bias " << std::endl;
+  }
+  if(flags & telux::loc::BIAS_BIT) {
+    std::cout << " Valid bias " << std::endl;
+  }
+  if(flags & telux::loc::BIAS_UNCERTAINTY_BIT) {
+    std::cout << " Valid bias uncertainty " << std::endl;
+  }
+  if(flags & telux::loc::DRIFT_BIT) {
+    std::cout << " Valid drift " << std::endl;
+  }
+  if(flags & telux::loc::DRIFT_UNCERTAINTY_BIT) {
+    std::cout << " Valid drift uncertainty " << std::endl;
+  }
+  if(flags & telux::loc::HW_CLOCK_DISCONTINUITY_COUNT_BIT) {
+    std::cout << " Valid hw clock discontinuity count " << std::endl;
+  }
+}
+
+void MyLocationListener::printMeasurementsDataValidity(
+    telux::loc::GnssMeasurementsDataValidity flags) {
+  if(flags & telux::loc::SV_ID_BIT) {
+    std::cout << " valid sv id" << std::endl;
+  }
+  if(flags & telux::loc::SV_TYPE_BIT) {
+    std::cout << " valid svType" << std::endl;
+  }
+  if(flags & telux::loc::STATE_BIT) {
+    std::cout << " valid stateMask" << std::endl;
+  }
+  if(flags & telux::loc::RECEIVED_SV_TIME_BIT) {
+    std::cout << " valid receivedSvTimeNs" << std::endl;
+  }
+  if(flags & telux::loc::RECEIVED_SV_TIME_UNCERTAINTY_BIT) {
+    std::cout << " valid receivedSvTimeUncertaintyNs" << std::endl;
+  }
+  if(flags & telux::loc::CARRIER_TO_NOISE_BIT) {
+    std::cout << " valid carrierToNoiseDbHz" << std::endl;
+  }
+  if(flags & telux::loc::PSEUDORANGE_RATE_BIT) {
+    std::cout << " valid pseudorangeRateMps" << std::endl;
+  }
+  if(flags & telux::loc::PSEUDORANGE_RATE_UNCERTAINTY_BIT) {
+    std::cout << " valid pseudorangeRateUncertaintyMps" << std::endl;
+  }
+  if(flags & telux::loc::ADR_STATE_BIT) {
+    std::cout << " valid adrStateMask" << std::endl;
+  }
+  if(flags & telux::loc::ADR_BIT) {
+    std::cout << " valid adrMeters" << std::endl;
+  }
+  if(flags & telux::loc::ADR_UNCERTAINTY_BIT) {
+    std::cout << " valid adrUncertaintyMeters" << std::endl;
+  }
+  if(flags & telux::loc::CARRIER_FREQUENCY_BIT) {
+    std::cout << " valid carrierFrequencyHz" << std::endl;
+  }
+  if(flags & telux::loc::CARRIER_CYCLES_BIT) {
+    std::cout << " valid carrierCycles" << std::endl;
+  }
+  if(flags & telux::loc::CARRIER_PHASE_BIT) {
+    std::cout << " valid carrierPhase" << std::endl;
+  }
+  if(flags & telux::loc::CARRIER_PHASE_UNCERTAINTY_BIT) {
+    std::cout << " valid carrierPhaseUncertainty" << std::endl;
+  }
+  if(flags & telux::loc::MULTIPATH_INDICATOR_BIT) {
+    std::cout << " valid multipathIndicator" << std::endl;
+  }
+  if(flags & telux::loc::SIGNAL_TO_NOISE_RATIO_BIT) {
+    std::cout << " valid signalToNoiseRatioDb" << std::endl;
+  }
+  if(flags & telux::loc::AUTOMATIC_GAIN_CONTROL_BIT) {
+    std::cout << " valid agcLevelDb" << std::endl;
+  }
+}
+
+void MyLocationListener::printMeasurementState(telux::loc::GnssMeasurementsStateValidity mask) {
+  if(mask & telux::loc::UNKNOWN_BIT) {
+    std::cout << " State is unknown" << std::endl;
+  }
+  if(mask & telux::loc::CODE_LOCK_BIT) {
+    std::cout << " State is code lock" << std::endl;
+  }
+  if(mask & telux::loc::BIT_SYNC_BIT) {
+    std::cout << " State is bit sync" << std::endl;
+  }
+  if(mask & telux::loc::SUBFRAME_SYNC_BIT) {
+    std::cout << " State is subframe sync" << std::endl;
+  }
+  if(mask & telux::loc::TOW_DECODED_BIT) {
+    std::cout << " State is tow decoded" << std::endl;
+  }
+  if(mask & telux::loc::MSEC_AMBIGUOUS_BIT) {
+    std::cout << " State is msec ambiguous" << std::endl;
+  }
+  if(mask & telux::loc::SYMBOL_SYNC_BIT) {
+    std::cout << " State is symbol sync" << std::endl;
+  }
+  if(mask & telux::loc::GLO_STRING_SYNC_BIT) {
+    std::cout << " State is GLONASS string sync" << std::endl;
+  }
+  if(mask & telux::loc::GLO_TOD_DECODED_BIT) {
+    std::cout << " State is GLONASS TOD decoded" << std::endl;
+  }
+  if(mask & telux::loc::BDS_D2_BIT_SYNC_BIT) {
+    std::cout << " State is BDS D2 bit sync" << std::endl;
+  }
+  if(mask & telux::loc::BDS_D2_SUBFRAME_SYNC_BIT) {
+    std::cout << " State is BDS D2 subframe sync" << std::endl;
+  }
+  if(mask & telux::loc::GAL_E1BC_CODE_LOCK_BIT) {
+    std::cout << " State is Galileo E1BC code lock" << std::endl;
+  }
+  if(mask & telux::loc::GAL_E1C_2ND_CODE_LOCK_BIT) {
+    std::cout << " State is Galileo E1C second code lock" << std::endl;
+  }
+  if(mask & telux::loc::GAL_E1B_PAGE_SYNC_BIT) {
+    std::cout << " State is Galileo E1B page sync" << std::endl;
+  }
+  if(mask & telux::loc::SBAS_SYNC_BIT) {
+    std::cout << " State is SBAS sync" << std::endl;
+  }
+}
+
+void MyLocationListener::printMeasurementAdrState(
+    telux::loc::GnssMeasurementsAdrStateValidity mask) {
+  if(mask & telux::loc::UNKNOWN_STATE) {
+    std::cout << " State is unknown" << std::endl;
+  }
+  if(mask & telux::loc::VALID_BIT) {
+    std::cout << " State is valid" << std::endl;
+  }
+  if(mask & telux::loc::RESET_BIT) {
+    std::cout << " State is reset" << std::endl;
+  }
+  if(mask & telux::loc::CYCLE_SLIP_BIT) {
+    std::cout << " State is cycle slip" << std::endl;
+  }
+}
+
+void MyLocationListener::printMeasurementsMultipathIndicator(
+    telux::loc::GnssMeasurementsMultipathIndicator indicator) {
+  if(indicator == telux::loc::UNKNOWN_INDICATOR) {
+    std::cout << " Multipath indicator is unknown" << std::endl;
+  }
+  if(indicator == telux::loc::PRESENT) {
+    std::cout << " Multipath indicator is present" << std::endl;
+  }
+  if(indicator == telux::loc::NOT_PRESENT) {
+    std::cout << " Multipath indicator is not present" << std::endl;
+  }
 }
 
 void MyLocationListener::onBasicLocationUpdate(
@@ -796,8 +956,8 @@ void MyLocationListener::onDetailedLocationUpdate(
       }
       std::cout << std::endl;
    }
-   std::cout << "Caibration confidence percent : " <<
-       locationInfo->getCalibrationConfidencePercent() << std::endl;
+   std::cout << "Calibration confidence percent : " <<
+       unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
    printCalibrationStatus(locationInfo);
    printLocOutputEngineType(locationInfo);
    printLocOutputEngineMask(locationInfo);
@@ -893,8 +1053,8 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
       }
       std::cout << std::endl;
    }
-   std::cout << "Caibration confidence percent : " <<
-       locationInfo->getCalibrationConfidencePercent() << std::endl;
+   std::cout << "Calibration confidence percent : " <<
+       unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
    printCalibrationStatus(locationInfo);
    printLocOutputEngineType(locationInfo);
    printLocOutputEngineMask(locationInfo);
@@ -971,6 +1131,104 @@ void MyLocationListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &n
    std::cout << " Nmea String : " << nmea << std::endl;
 }
 
+void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
+     GnssMeasurements &measurementInfo) {
+   if(!isMeasurementsInfoFlagEnabled_) {
+      return;
+   }
+   std::cout << std::endl;
+   PRINT_NOTIFICATION << "\n**************** Gnss Measurements Information ***************"
+       << std::endl;
+   std::cout << "<<< onGnssMeasurementsCb\n" << std::endl;
+   printMeasurementsClockValidity(measurementInfo.clock.valid);
+   std::cout
+      << " Leap second, in unit of seconds " << measurementInfo.clock.leapSecond << std::endl
+      << " Time, in unit of ns" << measurementInfo.clock.timeNs << std::endl
+      << " Time uncertainty in unit of ns" << measurementInfo.clock.timeUncertaintyNs << std::endl
+      << " Full bias, in unit of ns" << measurementInfo.clock.fullBiasNs << std::endl
+      << " Sub-nanoseconds bias in unit of ns" << measurementInfo.clock.biasNs << std::endl
+      << " Bias uncertainty in unit of ns" << measurementInfo.clock.biasUncertaintyNs << std::endl
+      << " Clock drift" << measurementInfo.clock.driftNsps << std::endl
+      << " Clock drift uncertainty" << measurementInfo.clock.driftUncertaintyNsps << std::endl
+      << " HW clock discontinuity count" << measurementInfo.clock.hwClockDiscontinuityCount
+      << std::endl;
+
+   for( auto &measData : measurementInfo.measurements) {
+     std::cout << "\n*************** Measurement Data ******************* " << std::endl;
+     printMeasurementsDataValidity(measData.valid);
+     std::cout << " Specify satellite vehicle ID number" << measData.svId << std::endl;
+     printConstellationType(measData.svType);
+     std::cout << " Time offset when the measurement was taken, in ns" << measData.timeOffsetNs
+         << std::endl;
+     printMeasurementState(measData.stateMask);
+     std::cout << " Received GNSS time of the week in nanoseconds" << measData.receivedSvTimeNs
+         << std::endl
+               << " Satellite time, in ns" << measData.receivedSvTimeUncertaintyNs << std::endl
+               << " Signal strength, carrier to noise ratio" << measData.carrierToNoiseDbHz
+         << std::endl
+               << " Uncorrected pseudorange rate" << measData.pseudorangeRateMps
+         << std::endl
+               << " Uncorrected pseudorange rate uncertainty" <<
+         measData.pseudorangeRateUncertaintyMps << std::endl;
+     printMeasurementAdrState(measData.adrStateMask);
+     std::cout << " Accumulated delta range" << measData.adrMeters << std::endl
+               << " Accumulated delta range uncertainty" << measData.adrUncertaintyMeters
+         << std::endl
+               << " Carrier frequency of the tracked signal" << measData.carrierFrequencyHz
+         << std::endl
+               << " The number of full carrier cycles between the receiver and the satellite"
+         << measData.carrierCycles << std::endl
+               << " The RF carrier phase" << measData.carrierPhase <<std::endl
+               << " RF carrier phase uncertainty" << measData.carrierPhaseUncertainty
+         <<std::endl;
+     printMeasurementsMultipathIndicator(measData.multipathIndicator);
+     std::cout << " Signal to noise ratio" << measData.signalToNoiseRatioDb << std::endl
+               << " Automatic gain control level" << measData.agcLevelDb << std::endl;
+
+     std::cout << "\n********************** " << std::endl;
+   }
+   std::cout << "*************************************************************" << std::endl;
+}
+
+void MyLocationListener::onLocationSystemInfo(telux::loc::LocationSystemInfo &locationSystemInfo) {
+   if(!isLocSysInfoFlagEnabled_) {
+      return;
+   }
+   std::cout << std::endl;
+   PRINT_NOTIFICATION << "\n**************** Location System Information ***************" << std::endl;
+   std::cout << "<<< onLocationSystemInfoCb\n" << std::endl;
+   std::cout << " LocationSystemInfoValidity : " << std::endl;
+   telux::loc::LocationSystemInfoValidity locationSystemInfoMask = locationSystemInfo.valid;
+   if(locationSystemInfoMask & telux::loc::LOCATION_SYS_INFO_LEAP_SECOND) {
+       std::cout << " Contains current leap second or leap second change info" << std::endl;
+   }
+   std::cout << " LeapSecondInfoValidity : " << std::endl;
+   telux::loc::LeapSecondInfoValidity leapSecondSysInfoMask = locationSystemInfo.info.
+       valid;
+   if(leapSecondSysInfoMask & telux::loc::LEAP_SECOND_SYS_INFO_CURRENT_LEAP_SECONDS_BIT) {
+       std::cout << " Current leap second info is available." << std::endl;
+   }
+   if(leapSecondSysInfoMask & telux::loc::LEAP_SECOND_SYS_INFO_LEAP_SECOND_CHANGE_BIT) {
+       std::cout << " The last known leap change event is available." << std::endl;
+   }
+   std::cout << " leapSecondCurrent : " << unsigned(locationSystemInfo.info.current) << std::endl;
+   telux::loc::TimeInfo timeInfo = locationSystemInfo.info.info.
+       timeInfo;
+   std::cout << "TimeInfo : " << std::endl;
+
+   std::cout << "System time week: " << timeInfo.systemWeek;
+   std::cout << "System time week ms: " << timeInfo.systemMsec;
+   std::cout << "System clk time: " << timeInfo.systemClkTimeBias;
+   std::cout << "System clk time uncertainty valid: " << timeInfo.systemClkTimeUncMs;
+   std::cout << "System reference valid: " << timeInfo.refFCount;
+   std::cout << "System num clock reset valid: " << timeInfo.numClockResets;
+
+   std::cout << " leapSecondsBeforeChange" << unsigned(locationSystemInfo.info.
+       info.leapSecondsBeforeChange) << std::endl;
+   std::cout << " leapSecondsAfterChange" << unsigned(locationSystemInfo.info.
+       info.leapSecondsAfterChange) << std::endl;
+}
+
 void MyLocationListener::setDetailedLocationReportFlag(bool enable) {
    isDetailedReportFlagEnabled_ = enable;
 }
@@ -993,4 +1251,12 @@ void MyLocationListener::setNmeaInfoFlag(bool enable) {
 
 void MyLocationListener::setDetailedEngineLocReportFlag(bool enable) {
    isDetailedEngineReportFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setMeasurementsInfoFlag(bool enable) {
+   isMeasurementsInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setLocSystemInfoFlag(bool enable) {
+   isLocSysInfoFlagEnabled_ = enable;
 }

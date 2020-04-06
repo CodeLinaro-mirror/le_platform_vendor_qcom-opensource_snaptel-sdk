@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -65,6 +65,21 @@ namespace loc {
  */
 class ILocationManager {
 public:
+
+/**
+ * This function is called with the response to getEnergyConsumedInfoUpdate API.
+ *
+ * @param[in] energyConsumed - Information regarding energy consumed by Gnss engine.
+ *
+ * @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+ using GetEnergyConsumedCallback = std::function<void(telux::loc::GnssEnergyConsumedInfo
+     energyConsumed, telux::common::ErrorCode error)>;
 
 /**
  * Checks the status of location subsystems and returns the result.
@@ -203,6 +218,58 @@ public:
   virtual telux::common::Status
       startBasicReports(uint32_t distanceInMeters, uint32_t intervalInMs,
                         telux::common::ResponseCallback callback) = 0;
+/**
+ * This API registers a ILocationSystemInfoListener listener and will receive information related
+ * to location system that are not tied with location fix session, e.g.: next leap second event.
+ * The startBasicReports, startDetailedReports, startDetailedEngineReports does not need to be
+ * called before calling this API, in order to receive updates.
+ *
+ * @param [in] listener - Pointer of ILocationSystemInfoListener object.
+ *
+ * @param [in] callback - Optional callback to get the response of location
+ *                        system info.
+ *
+ * @returns Status of getLocationSystemInfo i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status
+      registerForSystemInfoUpdates(std::weak_ptr<ILocationSystemInfoListener> listener,
+          telux::common::ResponseCallback callback) = 0;
+
+/**
+ * This API removes a previously registered listener and will also stop receiving informations
+ * related to location system for that particular listener.
+ *
+ * @param [in] listener - Previously registered ILocationSystemInfoListener that needs to be
+ *                        removed.
+ *
+ * @param [in] callback - Optional callback to get the response of location
+ *                        system info.
+ *
+ * @returns Status of deRegisterForSystemInfoUpdates success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status
+      deRegisterForSystemInfoUpdates(std::weak_ptr<ILocationSystemInfoListener> listener,
+      telux::common::ResponseCallback callback) = 0;
+
+/**
+ * This API receives information on energy consumed by modem GNSS engine.
+ *
+ * @param [in] cb - callback to get the information of Gnss energy consumed.
+ *
+ * @returns Status of requestEnergyConsumedInfo i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *       break backwards compatibility.
+ */
+  virtual telux::common::Status requestEnergyConsumedInfo(GetEnergyConsumedCallback cb) = 0;
 
 /**
  * This API will stop reports started using startDetailedReports or startBasicReports

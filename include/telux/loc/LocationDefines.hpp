@@ -60,6 +60,26 @@ const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consu
                                                   engine is allowed to use infinite power.
                                                   Units: 100 micro watt second. */
 /**
+ * Specifies which measurements were aided by sensors.
+ */
+enum MeasurementType {
+  UNKNOWN, /**< Unknown measurement type*/
+  HEADING, /**<  Bitmask to specify whether a sensor was used to calculate heading */
+  SPEED, /**<  Bitmask to specify whether a sensor was used to calculate speed */
+  POSITION, /**<  Bitmask to specify whether a sensor was used to calculate
+            position */
+  VELOCITY, /**<  Bitmask to specify whether a sensor was used to calculate
+           velocity */
+  MEASUREMENT_COUNT  /**< Bitset */
+};
+
+/**
+ * 8 bit mask that denotes which of the measurements in MeasurementType enum are
+ * aided by sensor data.
+ */
+using Measurement = std::bitset<MEASUREMENT_COUNT>;
+
+/**
  * Defines RTCM injection data format
  */
 enum class DgnssDataFormat{
@@ -139,7 +159,7 @@ using PositionTech = std::bitset<TECH_COUNT> ;
  * Specifies the reliability of the position.
  */
 enum class LocationReliability {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown location reliability*/
   NOT_SET = 0, /**<  Location reliability is not set */
   VERY_LOW = 1, /**<  Location reliability is very low */
   LOW = 2, /**<  Location reliability is low, little or no cross-checking is possible */
@@ -179,7 +199,7 @@ using SbasCorrection = std::bitset<SBAS_COUNT>;
  * Defines status of the session that is requested by user application.
  */
 enum class SessionStatus {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown session status*/
   SUCCESS = 0, /**< Session successful */
   IN_PROGRESS = 1, /**< Session is still in progress, further position reports will be generated
                         until either the fix criteria specified by the client are met or the
@@ -196,7 +216,7 @@ enum class SessionStatus {
  * Indicates whether altitude is assumed or calculated.
  */
 enum class AltitudeType {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown altitude type*/
   CALCULATED = 0, /**< Altitude is calculated  */
   ASSUMED = 1, /**< Altitude is assumed, there may not be enough
                     satellites to determine the precise altitude */
@@ -206,7 +226,7 @@ enum class AltitudeType {
  * Defines constellation type of GNSS.
  */
 enum class GnssConstellationType {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown constellation type*/
   GPS = 1, /**< GPS satellite */
   GALILEO = 2, /**< GALILEO satellite */
   SBAS = 3, /**< SBAS satellite */
@@ -215,6 +235,7 @@ enum class GnssConstellationType {
   GLONASS = 5, /**< GLONASS satellite */
   BDS = 6, /**< BDS satellite */
   QZSS = 7, /**< QZSS satellite */
+  NAVIC = 8 /**< NAVIC satellite*/
 };
 
 /**
@@ -223,7 +244,7 @@ enum class GnssConstellationType {
  * almanacs.
  */
 enum class SVHealthStatus {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown sv health status*/
   UNHEALTHY = 0, /**< satellite is not operational and cannot be
                       used in position calculations */
   HEALTHY = 1 /**< satellite is fully operational */
@@ -233,7 +254,7 @@ enum class SVHealthStatus {
  * Satellite vehicle processing status.
  */
 enum class SVStatus {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown sv status*/
   IDLE = 0, /**< SV is not being actively processed  */
   SEARCH = 1, /**< The system is searching for this SV */
   TRACK = 2 /**< SV is being tracked */
@@ -244,7 +265,7 @@ enum class SVStatus {
  * almanac are present or not
  */
 enum class SVInfoAvailability {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown sv info availability*/
   YES = 0, /**< Ephemeris or Almanac exits  */
   NO = 1 /**< Ephemeris or Almanac doesn't exist */
 };
@@ -254,30 +275,10 @@ enum class SVInfoAvailability {
  * report
  */
 enum class SensorType {
-  UNKNOWN = -1,
+  UNKNOWN = -1, /**< Unknown sensor type*/
   ACCELEROMETER = 1, /**<  Bitmask to specify whether an accelerometer was used */
   GYROSCOPE = 2 /**<  Bitmask to specify whether a gyroscope was used */
 };
-
-/**
- * Specifies which measurements were aided by sensors.
- */
-enum MeasurementType {
-  UNKNOWN,
-  HEADING, /**<  Bitmask to specify whether a sensor was used to calculate heading */
-  SPEED, /**<  Bitmask to specify whether a sensor was used to calculate speed */
-  POSITION, /**<  Bitmask to specify whether a sensor was used to calculate
-            position */
-  VELOCITY, /**<  Bitmask to specify whether a sensor was used to calculate
-           velocity */
-  MEASUREMENT_COUNT  /**< Bitset */
-};
-
-/**
- * 8 bit mask that denotes which of the measurements in MeasurementType enum are
- * aided by sensor data.
- */
-using Measurement = std::bitset<MEASUREMENT_COUNT>;
 
 /**
  * Specifies which position technology was used.
@@ -861,6 +862,331 @@ struct LeverArmParams {
 
 typedef std::unordered_map<LeverArmType, LeverArmParams> LeverArmConfigInfo;
 
+/** Specify valid fields in
+ *  GnssMeasurementsData.*/
+enum GnssMeasurementsDataValidityType{
+    /** Validity of svId.*/
+    SV_ID_BIT                        = (1<<0),
+    /** Validity of svType.*/
+    SV_TYPE_BIT                      = (1<<1),
+    /** Validity of stateMask.*/
+    STATE_BIT                        = (1<<2),
+    /** Validity of receivedSvTimeNs.*/
+    RECEIVED_SV_TIME_BIT             = (1<<3),
+    /** Validity of receivedSvTimeUncertaintyNs.*/
+    RECEIVED_SV_TIME_UNCERTAINTY_BIT = (1<<4),
+    /** Validity of carrierToNoiseDbHz.*/
+    CARRIER_TO_NOISE_BIT             = (1<<5),
+    /** Validity of pseudorangeRateMps.*/
+    PSEUDORANGE_RATE_BIT             = (1<<6),
+    /** Validity of pseudorangeRateUncertaintyMps.*/
+    PSEUDORANGE_RATE_UNCERTAINTY_BIT = (1<<7),
+    /** Validity of adrStateMask.*/
+    ADR_STATE_BIT                    = (1<<8),
+    /** Validity of adrMeters.*/
+    ADR_BIT                          = (1<<9),
+    /** Validity of adrUncertaintyMeters.*/
+    ADR_UNCERTAINTY_BIT              = (1<<10),
+    /** Validity of carrierFrequencyHz.*/
+    CARRIER_FREQUENCY_BIT            = (1<<11),
+    /** Validity of carrierCycles.*/
+    CARRIER_CYCLES_BIT               = (1<<12),
+    /** Validity of carrierPhase.*/
+    CARRIER_PHASE_BIT                = (1<<13),
+    /** Validity of carrierPhaseUncertainty.*/
+    CARRIER_PHASE_UNCERTAINTY_BIT    = (1<<14),
+    /** Validity of multipathIndicator.*/
+    MULTIPATH_INDICATOR_BIT          = (1<<15),
+    /** Validity of signalToNoiseRatioDb.*/
+    SIGNAL_TO_NOISE_RATIO_BIT        = (1<<16),
+    /** Validity of agcLevelDb.*/
+    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17)
+};
+
+/** Specifies GnssMeasurementsDataValidityType.*/
+using GnssMeasurementsDataValidity = uint32_t;
+
+/** Specify GNSS measurement state in
+ *  GnssMeasurementsData::stateMask.*/
+enum GnssMeasurementsStateValidityType {
+    /** State is unknown.*/
+    UNKNOWN_BIT                 = 0,
+    /** State is "code lock".*/
+    CODE_LOCK_BIT               = (1<<0),
+    /** State is "bit sync".*/
+    BIT_SYNC_BIT                = (1<<1),
+    /** State is "subframe sync".*/
+    SUBFRAME_SYNC_BIT           = (1<<2),
+    /** State is "tow decoded".*/
+    TOW_DECODED_BIT             = (1<<3),
+    /** State is "msec ambiguous".*/
+    MSEC_AMBIGUOUS_BIT          = (1<<4),
+    /** State is "symbol sync".*/
+    SYMBOL_SYNC_BIT             = (1<<5),
+    /** State is "GLONASS string sync".*/
+    GLO_STRING_SYNC_BIT         = (1<<6),
+    /** State is "GLONASS TOD decoded".*/
+    GLO_TOD_DECODED_BIT         = (1<<7),
+    /** State is "BDS D2 bit sync".*/
+    BDS_D2_BIT_SYNC_BIT         = (1<<8),
+    /** State is "BDS D2 subframe sync".*/
+    BDS_D2_SUBFRAME_SYNC_BIT    = (1<<9),
+    /** State is "Galileo E1BC code lock".*/
+    GAL_E1BC_CODE_LOCK_BIT      = (1<<10),
+    /** State is "Galileo E1C second code lock".*/
+    GAL_E1C_2ND_CODE_LOCK_BIT   = (1<<11),
+    /** State is "Galileo E1B page sync".*/
+    GAL_E1B_PAGE_SYNC_BIT       = (1<<12),
+    /** State is "SBAS sync".*/
+    SBAS_SYNC_BIT               = (1<<13)
+};
+
+/** Specifies GnssMeasurementsStateValidityType.*/
+using GnssMeasurementsStateValidity = uint32_t;
+
+/** Specify accumulated delta range state in
+ *  GnssMeasurementsData::adrStateMask.*/
+enum GnssMeasurementsAdrStateValidityType {
+    /** State is unknown.*/
+    UNKNOWN_STATE   = 0,
+    /** State is valid.*/
+    VALID_BIT       = (1<<0),
+    /** State is "reset".*/
+    RESET_BIT       = (1<<1),
+    /** State is "cycle slip".*/
+    CYCLE_SLIP_BIT  = (1<<2)
+};
+
+/** Specifies GnssMeasurementsAdrStateValidityType.*/
+using GnssMeasurementsAdrStateValidity = uint32_t;
+
+/** Specify the GNSS multipath indicator state in
+ *  GnssMeasurementsData::multipathIndicator.*/
+enum GnssMeasurementsMultipathIndicator {
+    /** Multipath indicator is unknown.*/
+    UNKNOWN_INDICATOR     = 0,
+    /** Multipath indicator is present.*/
+    PRESENT               = 1,
+    /** Multipath indicator is not present.*/
+    NOT_PRESENT           = 2
+};
+
+/** Specify the valid fields in
+ *  GnssMeasurementsClock.
+ */
+enum GnssMeasurementsClockValidityType {
+    /** Validity of leapSecond.*/
+    LEAP_SECOND_BIT                   = (1<<0),
+    /** Validity of timeNs.*/
+    TIME_BIT                          = (1<<1),
+    /** Validity of timeUncertaintyNs.*/
+    TIME_UNCERTAINTY_BIT              = (1<<2),
+    /** Validity of fullBiasNs.*/
+    FULL_BIAS_BIT                     = (1<<3),
+    /** Validity of biasNs.*/
+    BIAS_BIT                          = (1<<4),
+    /** Validity of biasUncertaintyNs.*/
+    BIAS_UNCERTAINTY_BIT              = (1<<5),
+    /** Validity of driftNsps.*/
+    DRIFT_BIT                         = (1<<6),
+    /** Validity of driftUncertaintyNsps.*/
+    DRIFT_UNCERTAINTY_BIT             = (1<<7),
+    /** Validity of hwClockDiscontinuityCount.*/
+    HW_CLOCK_DISCONTINUITY_COUNT_BIT  = (1<<8)
+};
+
+/** Specifies GnssMeasurementsClockValidityType.*/
+using GnssMeasurementsClockValidity = uint32_t;
+
+/** Specify the signal measurement information such as satellite vehicle pseudo range,
+ *  satellite vehicle time, carrier phase measurement etc. from GNSS positioning engine.
+ */
+struct GnssMeasurementsData {
+    /** Bitwise OR of GnssMeasurementsDataValidityType to specify the
+     *  valid fields in GnssMeasurementsData. */
+    GnssMeasurementsDataValidity valid;
+    /** Specify satellite vehicle ID number.*/
+    int16_t svId;
+    /** SV constellation type.*/
+    GnssConstellationType svType;
+    /** Time offset when the measurement was taken,
+     *  in unit of nanoseconds.*/
+    double timeOffsetNs;
+    /** Bitwise OR of GnssMeasurementsStateValidityType to specify the
+     *  GNSS measurement state.*/
+    GnssMeasurementsStateValidity stateMask;
+    /** Received GNSS time of the week in nanoseconds when the
+     *  measurement was taken.*/
+    int64_t receivedSvTimeNs;
+    /** Satellite time.
+     *  All SV times in the current measurement block are already
+     *  propagated to a common reference time epoch, in unit of
+     *  nano seconds.*/
+    int64_t receivedSvTimeUncertaintyNs;
+    /** Signal strength, carrier to noise ratio, in unit of dB-Hz.*/
+    double carrierToNoiseDbHz;
+    /** Uncorrected pseudorange rate, in unit of metres/second.*/
+    double pseudorangeRateMps;
+    /** Uncorrected pseudorange rate uncertainty, in unit of
+     *  meters/second.*/
+    double pseudorangeRateUncertaintyMps;
+    /** Bitwise OR of GnssMeasurementsAdrStateValidityType.*/
+    GnssMeasurementsAdrStateValidity adrStateMask;
+    /** Accumulated delta range, in unit of meters.*/
+    double adrMeters;
+    /** Accumulated delta range uncertainty, in unit of meters.*/
+    double adrUncertaintyMeters;
+    /** Carrier frequency of the tracked signal, in unit of Hertz.*/
+    float carrierFrequencyHz;
+    /** The number of full carrier cycles between the receiver and
+     *  the satellite.*/
+    int64_t carrierCycles;
+    /** The RF carrier phase that the receiver has detected.*/
+    double carrierPhase;
+    /** The RF carrier phase uncertainty.*/
+    double carrierPhaseUncertainty;
+    /** Multipath indicator, could be unknown, present or not
+     *  present.*/
+    GnssMeasurementsMultipathIndicator multipathIndicator;
+    /** Signal to noise ratio, in unit of dB.*/
+    double signalToNoiseRatioDb;
+    /** Automatic gain control level, in unit of dB.*/
+    double agcLevelDb;
+};
+
+/** Specify GNSS measurements clock.
+ *  The main equation describing the relationship between
+ *  various components is:
+ *  utcTimeNs = timeNs - (fullBiasNs + biasNs) - leapSecond *
+ *  1,000,000,000*/
+struct GnssMeasurementsClock {
+    /** Bitwise OR of GnssMeasurementsClockValidityType.*/
+    GnssMeasurementsClockValidity valid;
+    /** Leap second, in unit of seconds.*/
+    int16_t leapSecond;
+    /** Time, monotonically increasing as long as the power is on,
+     *  in unit of nanoseconds.*/
+    int64_t timeNs;
+    /** Time uncertainty (one sigma), in unit of nanoseconds.*/
+    double timeUncertaintyNs;
+    /** Full bias, in uint of nanoseconds.*/
+    int64_t fullBiasNs;
+    /** Sub-nanoseconds bias, in unit of nonoseconds.*/
+    double biasNs;
+    /** Bias uncertainty (one sigma), in unit of nanoseconds.*/
+    double biasUncertaintyNs;
+    /** Clock drift, in unit of nanoseconds/second.*/
+    double driftNsps;
+    /** Clock drift uncertainty (one sigma), in unit of
+     *  nanoseconds/second.*/
+    double driftUncertaintyNsps;
+    /** HW clock discontinuity count - incremented
+     *  for each discontinuity in HW clock.*/
+    uint32_t hwClockDiscontinuityCount;
+};
+
+/** Specify GNSS measurements clock and data.
+ *  GnssMeasurementInfo is used to convey the satellite vehicle info whose measurements are
+ *  actually used to generate the current position report. While GnssMeasurements contains the
+ *  satellite measurements that device observed during tracking session, regardless the measurement
+ *  is used or not used to compute the fix. Furthermore GnssMeasurements contains much richer set
+ *  of information which can enable other third party engines to utilize the measurements and
+ *  compute the position by itself.
+ */
+struct GnssMeasurements {
+    /** GNSS measurements clock info.*/
+    GnssMeasurementsClock clock;
+    /** GNSS measurements data.*/
+    std::vector<GnssMeasurementsData> measurements;
+};
+
+struct LeapSecondChangeInfo {
+    /** GPS timestamp that corrresponds to the last known leap
+        second change event.
+        The info can be available on two scenario:
+        1: This leap second change event has been scheduled and yet
+           to happen
+        2: This leap second change event has already happened and
+           next leap second change event has not yet been
+           scheduled. */
+    TimeInfo timeInfo;
+    /** Number of leap seconds prior to the leap second change event
+      that corresponds to the timestamp at timeInfo. */
+    uint8_t leapSecondsBeforeChange;
+    /** Number of leap seconds after the leap second change event
+      that corresponds to the timestamp at timeInfo. */
+    uint8_t leapSecondsAfterChange;
+};
+
+/** Specify the valid fields in LeapSecondInfo*/
+enum LeapSecondInfoValidityType{
+    /** Current leap second info is available. This info will only
+      be available if the leap second change info is not available
+      If leap second change info is avaiable, to figure out the
+      current leap second info, compare current gps time with the
+      gps timestamp of leap second change to know whether to choose
+      leapSecondBefore or leapSecondAfter as current leap second. */
+    LEAP_SECOND_SYS_INFO_CURRENT_LEAP_SECONDS_BIT = (1ULL << 0),
+    /** The last known leap change event is available.
+        The info can be available on two scenario:
+        1: This leap second change event has been scheduled and yet
+           to happen
+        2: This leap second change event has already happened and
+           next leap second change event has not yet been scheduled.
+    */
+    LEAP_SECOND_SYS_INFO_LEAP_SECOND_CHANGE_BIT = (1ULL << 1)
+};
+
+/** Specifies LeapSecondInfoValidityType mask */
+using LeapSecondInfoValidity = uint32_t;
+
+struct LeapSecondInfo {
+    LeapSecondInfoValidity valid;
+
+/** Current leap seconds, in unit of seconds.
+ *  This info will only be available only if the leap second change info
+ *  is not available.
+ */
+    uint8_t               current;
+    LeapSecondChangeInfo  info;
+};
+
+/** Specify the set of valid fields in LocationSystemInfo*/
+enum LocationSystemInfoValidityType{
+    /** contains current leap second or leap second change info */
+    LOCATION_SYS_INFO_LEAP_SECOND = (1ULL << 0),
+};
+
+/** Specifies LocationSystemInfoValidityType mask */
+using LocationSystemInfoValidity = uint32_t;
+
+struct LocationSystemInfo {
+    LocationSystemInfoValidity valid;
+    LeapSecondInfo   info;
+};
+
+/**
+ *  Specify the valid fields in GnssEnergyConsumedInfo. */
+enum GnssEnergyConsumedInfoValidityType {
+    /** validity of GnssEnergyConsumedInfo*/
+    ENERGY_CONSUMED_SINCE_FIRST_BOOT_BIT = (1<<0)
+};
+
+/** Specifies GnssEnergyConsumedInfoValidityType */
+using GnssEnergyConsumedInfoValidity = uint16_t;
+
+/** Specify the info regarding energy consumed by GNSS
+ *  engine.*/
+struct GnssEnergyConsumedInfo {
+    /** Bitwise OR of GnssEnergyConsumedInfoValidityType to
+     *  specify the valid fields in GnssEnergyConsumedInfo.*/
+    GnssEnergyConsumedInfoValidity valid;
+
+    /** Energy consumed by the modem GNSS engine since device first
+     *  ever bootup, in unit of 0.1 milli watt seconds.*/
+    uint64_t energySinceFirstBoot;
+};
+
 /**
  * @brief IGpsTime provides interface to get current GPS week and elapsed
  *        time in current GPS week
@@ -979,7 +1305,7 @@ public:
   virtual float getVerticalUncertainty() = 0;
 
 /**
- * Retrieves UTC timeStamp for the location fix.
+ * Retrieves UTC timeInfo for the location fix.
  *    - Units: Milliseconds since Jan 1, 1970
  *
  * @returns TimeStamp in seconds if available else returns 0
@@ -1345,7 +1671,7 @@ public:
   virtual float getVerticalUncertainty() = 0;
 
 /**
- * Retrieves UTC timeStamp for the location fix.
+ * Retrieves UTC timeInfo for the location fix.
  *    - Units: Milliseconds since Jan 1, 1970
  *
  * @returns TimeStamp in seconds if available else returns 0

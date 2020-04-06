@@ -47,3 +47,33 @@ void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) 
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
+
+void MyLocationCommandCallback::onGnssEnergyConsumedInfo(telux::loc::GnssEnergyConsumedInfo
+    gnssEnergyConsumed, telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+       std::cout << " SUCCESS" << std::endl;
+   }
+   if(error == telux::common::ErrorCode::NOT_SUPPORTED) {
+       std::cout << " NOT_SUPPORTED" << std::endl;
+   }
+   if(error == telux::common::ErrorCode::INVALID_ARGUMENTS) {
+       std::cout << " INVALID_ARGUMENTS" << std::endl;
+   }
+   if(error == telux::common::ErrorCode::GENERIC_FAILURE) {
+       std::cout << " GENERIC_FAILURE" << std::endl;
+   }
+
+   PRINT_CB << "\n**************** Gnss Energy Consumed Information ***************"
+       << std::endl;
+   std::cout << "<<< onGnssEnergyConsumedInfoCb\n" << std::endl;
+   std::cout << " GnssEnergyConsumedInfoValidity : " << std::endl;
+   if(gnssEnergyConsumed.valid & telux::loc::ENERGY_CONSUMED_SINCE_FIRST_BOOT_BIT) {
+     std::cout << " Energy consumed is valid" << std::endl;
+   }
+   else {
+     std::cout << " Energy consumed is invalid" << std::endl;
+   }
+   std::cout << " Energy consumed : " << gnssEnergyConsumed.energySinceFirstBoot
+       << std::endl;
+   std::cout << "*******************************" << std::endl;
+}

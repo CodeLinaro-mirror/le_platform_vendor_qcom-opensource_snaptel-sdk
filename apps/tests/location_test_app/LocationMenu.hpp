@@ -65,20 +65,25 @@ public:
    void startDetailedEngineReports(std::vector<std::string> userInput);
    void startBasicReports(std::vector<std::string> userInput);
    void stopReports(std::vector<std::string> userInput);
+   void registerLocationSystemInfo(std::vector<std::string> userInput);
+   void deRegisterLocationSystemInfo(std::vector<std::string> userInput);
    void enableDisableTunc(std::vector<std::string> userInput);
    void enableDisablePace(std::vector<std::string> userInput);
    void deleteAidingData(std::vector<std::string> userInput);
    void configureLeverArm(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
    void configureRobustLocation(std::vector<std::string> userInput);
+   void requestEnergyConsumedInfo(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();
    void enableDetailedLocationReportLogs();
    void enableDetailedEngineLocReportLogs();
+   void enableLocationSystemInfoLogs();
    void enableSvInfoLogs();
    void enableDataInfoLogs();
    void enableNmeaInfoLogs();
+   void enableMeasurementsInfoLogs();
    void dgnssInject(std::vector<std::string> userInput);
 
 private:

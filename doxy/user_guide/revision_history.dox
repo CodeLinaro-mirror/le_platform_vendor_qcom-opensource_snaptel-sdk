@@ -74,6 +74,7 @@ when       who     what, where, why
 @tr @td Jan 2020 @tdend @tdlast Addition of Data software bridge management APIs and call flows @tdlastend @trend
 @tr @td Jan 2020 @tdend @tdlast Addition of Socks Proxy to Data Networking APIs and call flows @tdlastend @trend
 @tr @td Feb 2020 @tdend @tdlast Addition of Location Configurator APIs and call flows @tdlastend @trend
+@tr @td Mar 2020 @tdend @tdlast Addition of Robust Location API in Location Configurator and call flows @tdlastend @trend
 
 @tableend
 

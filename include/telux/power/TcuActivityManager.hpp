@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -32,9 +32,6 @@
  *
  * @brief      TcuActivityManager class provides interface to register and receive notifications
  *             related to TCU-activity states, initiate TCU-activity state transition.
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to change and could
- *             break backwards compatibility.
  */
 
 #ifndef TCUACTIVITYMANAGER_HPP
@@ -55,9 +52,6 @@ namespace power {
 /**
  * @brief   ITcuActivityManager provides interface to register and de-register listeners (to get
  *          TCU-activity state updates). And also API to initiate TCU-activity state transition.
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could break
- *          backwards compatibility.
  */
 class ITcuActivityManager {
 public:
@@ -66,9 +60,6 @@ public:
      * and returns the result.
      *
      * @returns  True if the services are ready otherwise false.
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual bool isReady() = 0;
 
@@ -77,9 +68,6 @@ public:
      *
      * @returns  A future that caller can wait on to be notified when TCU-activity services
      *           are ready.
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual std::future<bool> onReady() = 0;
 
@@ -89,9 +77,6 @@ public:
      * @param [in] listener Pointer of ITcuActivityListener object that processes the notification
      *
      * @returns Status of registerListener i.e success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<ITcuActivityListener> listener) =0;
 
@@ -101,9 +86,6 @@ public:
      * @param [in] listener Previously registered ITcuActivityListener that needs to be removed
      *
      * @returns Status of deregisterListener, success or suitable status code
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<ITcuActivityListener> listener)
                         = 0;
@@ -114,9 +96,6 @@ public:
      * @param [in] listener Pointer of IServiceStatusListener object that processes the notification
      *
      * @returns Status of registerServiceStateListener i.e success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status registerServiceStateListener(
                         std::weak_ptr<telux::common::IServiceStatusListener> listener) = 0;
@@ -127,9 +106,6 @@ public:
      * @param [in] listener Previously registered IServiceStatusListener that needs to be removed
      *
      * @returns Status of deregisterServiceStateListener, success or suitable status code
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status deregisterServiceStateListener(
                         std::weak_ptr<telux::common::IServiceStatusListener> listener) = 0;
@@ -145,9 +121,6 @@ public:
      *                      transition command
      *
      * @returns Status of setActivityState i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setActivityState( TcuActivityState state,
                         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -156,9 +129,6 @@ public:
      * Get the current TCU-activity state.
      *
      * @returns TcuActivityState
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual TcuActivityState getActivityState() = 0;
 
@@ -170,9 +140,6 @@ public:
      * @param [in] ack Acknowledgement for a TCU-activity state notification.
      *
      * @returns Status of sendActivityStateAck i.e. success or suitable status code.
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status sendActivityStateAck(TcuActivityStateAck ack) = 0;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -59,9 +59,6 @@ namespace rsp {
  * @param [in] info       Profiles information @Ref SimProfile.
  * @param [in] error      Return code which indicates whether the operation
  *                         succeeded or not.  @ref ErrorCode.
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using ProfileListResponseCb = std::function<void(
     const std::vector<std::shared_ptr<SimProfile>> &profiles, telux::common::ErrorCode error)>;
@@ -72,9 +69,6 @@ using ProfileListResponseCb = std::function<void(
 /**
  *@brief ISimProfileManager is a primary interface for remote eUICCs (eSIMs or embedded SIMs)
  * provisioning.This interface provides APIs to add, delete, set profile on the eUICC.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
- *          break backwards compatibility.
  */
 class ISimProfileManager {
  public:
@@ -82,9 +76,6 @@ class ISimProfileManager {
      * Checks if the eUICC subsystem is ready.
      *
      * @returns True if ISimProfileManager is ready for service, otherwise returns false.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -92,9 +83,6 @@ class ISimProfileManager {
      * Wait for eUICC subsystem to be ready.
      *
      * @returns A future that caller can wait on to be notified when card manager is ready.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -109,9 +97,6 @@ class ISimProfileManager {
      * @param [in] slotId                Slot identifier corresponding to the card.
      *
      * @returns Status of add profile i.e. success or suitable error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status addProfile(const std::string &activationCode,
         common::ResponseCallback callback = nullptr, const std::string &confirmationCode = "",
@@ -126,9 +111,6 @@ class ISimProfileManager {
      * @param [in] slotId            Slot identifier corresponding to the card.
      *
      * @returns Status of delete profile i.e. success or suitable error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status deleteProfile(
         int profileId, common::ResponseCallback callback = nullptr, int slotId = DEFAULT_SLOT_ID)
@@ -144,9 +126,6 @@ class ISimProfileManager {
      * @param [in] slotId            Slot identifier corresponding to the card.
      *
      * @returns Status of set profile i.e. success or suitable error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status setProfile(int profileId, bool enable,
         common::ResponseCallback callback = nullptr, int slotId = DEFAULT_SLOT_ID)
@@ -161,9 +140,6 @@ class ISimProfileManager {
      * @param [in] slotId          Slot identifier corresponding to the card.
      *
      * @returns Status of update nick name i.e. success or suitable error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status updateNickName(int profileId, const std::string &nickName,
         common::ResponseCallback callback = nullptr, int slotId = DEFAULT_SLOT_ID)
@@ -176,9 +152,6 @@ class ISimProfileManager {
      * @param [in] slotId            Slot identifier corresponding to the card.
      *
      * @returns  Status of request profile list i.e. success or suitable error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status requestProfileList(
         ProfileListResponseCb = nullptr, int slotId = DEFAULT_SLOT_ID)
@@ -192,9 +165,6 @@ class ISimProfileManager {
      * notification.
      *
      * @returns Status of registerListener success or suitable status code
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<ISimProfileListener> listener) = 0;
 
@@ -204,9 +174,6 @@ class ISimProfileManager {
      * @param [in] listener    Pointer of ISimProfileListener object that needs to be removed
      *
      * @returns Status of deregisterListener success or suitable status code
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<ISimProfileListener> listener)
         = 0;

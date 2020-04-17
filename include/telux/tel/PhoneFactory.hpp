@@ -49,6 +49,7 @@
 #include <telux/tel/ServingSystemManager.hpp>
 #include <telux/tel/SmsManager.hpp>
 #include <telux/tel/SubscriptionManager.hpp>
+#include <telux/tel/MultiSimManager.hpp>
 
 namespace telux {
 
@@ -150,11 +151,20 @@ public:
     */
    std::shared_ptr<IRemoteSimManager> getRemoteSimManager(int slotId = DEFAULT_SLOT_ID);
 
+   /**
+    * Get Multi SIM Manager instance to handle operations like high capabilty
+    * switch.
+    *
+    * @returns Pointer of IMultiSimManager object.
+    */
+   std::shared_ptr<IMultiSimManager> getMultiSimManager();
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
    std::shared_ptr<ICardManager> cardManager_;
    std::shared_ptr<ISubscriptionManager> subscriptionManager_;
+   std::shared_ptr<IMultiSimManager> multiSimManager_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
    std::map<int, std::shared_ptr<INetworkSelectionManager>> networkSelectionManagerMap_;

@@ -81,13 +81,17 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor)
       if (status == telux::common::Status::SUCCESS) {
           for (auto index = 1; index <= phoneIds.size(); index++) {
               auto smsMgr = phoneFactory.getSmsManager(index);
-              if (smsMgr != nullptr) {
+              if (smsMgr) {
                   // add listeners for incoming SMS notification
                   telux::common::Status status = smsMgr->registerListener(smsListener_);
                   if(status != telux::common::Status::SUCCESS) {
                      std::cout << "Unable to register Listener" << std::endl;
                   }
                   smsManagers_.emplace_back(smsMgr);
+              } else {
+                  std::cout << " SMS Manager is NULL,"
+                            <<" so cannot register a listener to receive incoming SMS"
+                            << std::endl;
               }
           }
       }

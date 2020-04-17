@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,9 +33,6 @@
  * @brief      Listener interface for receiving remote SIM notifications. The methods
  *             in listener can be invoked from multiple different threads. The
  *             implementation should be thread safe.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to change
- *             and could break backwards compatibility.
  */
 
 #ifndef REMOTESIMLISTENER_HPP
@@ -65,63 +62,42 @@ public:
     * @param    [in] id     Identifier for a command and response APDU pair
     * @param    [in] apdu   APDU request sent to the control point (max size = 261, per ETSI TS
     *                                                               102 221, section 10.1.4)
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
     virtual void onApduTransfer(const unsigned int id, const std::vector<uint8_t> &apdu) {
     }
 
    /**
     * This function is called when the modem wants to establish a connection.
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
     virtual void onCardConnect() {
     }
 
    /**
     * This function is called when the modem wants to tear down a connection.
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
     virtual void onCardDisconnect() {
     }
 
    /**
     * This function is called when the modem wants to power up the card.
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
     virtual void onCardPowerUp() {
     }
 
    /**
     * This function is called when the modem wants to power down the card.
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
     virtual void onCardPowerDown() {
     }
 
    /**
     * This function is called when the modem wants to warm reset the card.
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
     virtual void onCardReset() {
     }
 
    /**
     * Destructor of IRemoteSimListener
-    *
-    * @note     Eval: This is a new API and is being evaluated. It is subject to
-    *           change and could break backwards compatibility.
     */
     virtual ~IRemoteSimListener() {
     }

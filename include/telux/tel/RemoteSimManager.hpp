@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -38,8 +38,6 @@
  *             transmit APDU, etc.), and is notified of events (e.g. card errors,
  *             resets, etc.). This API is used by the SIM provider endpoint to provide
  *             a SIM card to the modem.
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef REMOTESIMMANAGER_HPP
@@ -74,9 +72,6 @@ public:
      * Checks the status of remote SIM subsystem and returns the result.
      *
      * @returns True if remote SIM subsystem is ready for service otherwise false.
-     *
-     * @note  Eval: This is a new API and is being evaluated. It is
-     *        subject to change and could break backwards compatibility.
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -85,9 +80,6 @@ public:
      *
      * @returns  A future that caller can wait on to be notified when remote SIM
      *           subsystem is ready.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to
-     *           change and could break backwards compatibility.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -97,9 +89,6 @@ public:
      * @param [out] callback   Callback function pointer to get the response of sendReset.
      *
      * @returns Status of sendReset i.e. success or suitable status code.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to
-     *           change and could break backwards compatibility.
      */
     virtual telux::common::Status sendReset(telux::common::ResponseCallback callback = nullptr) = 0;
 
@@ -109,9 +98,6 @@ public:
      * @param [out] callback        Callback function pointer to get the response.
      *
      * @returns Status of sendConnectionAvailable i.e. success or suitable status code.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to
-     *           change and could break backwards compatibility.
      */
     virtual telux::common::Status sendConnectionAvailable(
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -122,9 +108,6 @@ public:
      * @param [out] callback    Callback function pointer to get the response.
      *
      * @returns Status of sendConnectionUnavailable i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status sendConnectionUnavailable(
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -137,9 +120,6 @@ public:
      * @param [out] callback    Callback function pointer to get the response of sendCardReset.
      *
      * @returns Status of sendCardReset i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status sendCardReset(const std::vector<uint8_t> &atr,
                                                 telux::common::ResponseCallback callback = nullptr)
@@ -152,9 +132,6 @@ public:
      * @param [out] callback    Callback function pointer to get the response of sendCardError.
      *
      * @returns Status of sendCardError i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status sendCardError(
         const CardErrorCause cause = CardErrorCause::INVALID,
@@ -168,9 +145,6 @@ public:
      * @param [out] callback    Callback function pointer to get the response of sendCardInserted.
      *
      * @returns Status of sendCardInserted i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status sendCardInserted(const std::vector<uint8_t> &atr,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -181,9 +155,6 @@ public:
      * @param [out] callback    Callback function pointer to get the response of sendCardRemoved.
      *
      * @returns Status of sendCardRemoved i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status sendCardRemoved(
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -194,9 +165,6 @@ public:
      * @param [out] callback    Callback function pointer to get the response of sendCardWakeup.
      *
      * @returns Status of sendCardWakeup i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status sendCardWakeup(
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -214,9 +182,6 @@ public:
      * @param [out] callback    Callback function pointer to get the response of sendApdu.
      *
      * @returns Status of sendApdu i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status sendApdu(const unsigned int id, const std::vector<uint8_t> &apdu,
                                            const bool isSuccess = true,
@@ -231,9 +196,6 @@ public:
      *                         processes the notification
      *
      * @returns Status of registerListener i.e success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IRemoteSimListener> listener) = 0;
 
@@ -244,9 +206,6 @@ public:
      *                         that needs to be deregistered
      *
      * @returns Status of deregisterListener success or suitable status code
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IRemoteSimListener> listener)
         = 0;
@@ -255,17 +214,11 @@ public:
      * Get associated slot ID for the RemoteSimManager
      *
      * @returns The slot ID associated with this IRemoteSimManager
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual int getSlotId() = 0;
 
     /**
      * Destructor of IRemoteSimManager
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to
-     *           change and could break backwards compatibility.
      */
     virtual ~IRemoteSimManager(){};
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -66,9 +66,6 @@ public:
      *
      * @param [in] status - CV2X radio status.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
-     *
      * @deprecated use onStatusChanged in Cv2xListener
      */
     virtual void onStatusChanged(Cv2xStatusEx status) {}
@@ -95,9 +92,6 @@ public:
      * Called when SPS scheduling has changed.
      *
      * @param [in] schedulingInfo - SPS scheduling information .
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void onSpsSchedulingChanged(const SpsSchedulingInfo & schedulingInfo) {}
 
@@ -105,9 +99,6 @@ public:
      * Called when Cv2x radio capabilities have changed.
      *
      * @param [in] capabilities - Capabilities of the CV2X radio .
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void onCapabilitiesChanged(const Cv2xRadioCapabilities & capabilities) {}
 

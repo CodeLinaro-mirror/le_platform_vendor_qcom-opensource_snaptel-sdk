@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,9 +30,6 @@
 /**
  * @file       SimProfileDefines.hpp
  * @brief      SimProfileDefines provides the enumerations required for eUICC operations.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef SIMPROFILETYPES_HPP

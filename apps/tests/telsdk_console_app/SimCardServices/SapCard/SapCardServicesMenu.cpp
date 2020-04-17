@@ -46,41 +46,46 @@ SapCardServicesMenu::SapCardServicesMenu(std::string appName, std::string cursor
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
 
-   //  Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager->isSubsystemReady();
+   if(phoneManager) {
+      //  Check if telephony subsystem is ready
+      bool subSystemStatus = phoneManager->isSubsystemReady();
 
-   //  If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
-   }
+      //  If telephony subsystem is not ready, wait for it to be ready
+      if(!subSystemStatus) {
+         std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
+         std::future<bool> f = phoneManager->onSubsystemReady();
+         // If we want to wait unconditionally for telephony subsystem to be ready
+         subSystemStatus = f.get();
+      }
 
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-      exit(0);
-   }
+      //  Exit the application, if SDK is unable to initialize telephony subsystems
+      if(subSystemStatus) {
+         endTime = std::chrono::system_clock::now();
+         std::chrono::duration<double> elapsedTime = endTime - startTime;
+         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                   << std::endl;
+      } else {
+         std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+         exit(0);
+      }
 
-   if(subSystemStatus) {
-       std::vector<int> phoneIds;
-       telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
-       if (status == telux::common::Status::SUCCESS) {
-           for (auto index = 1; index <= phoneIds.size(); index++) {
-               auto sapMgr = phoneFactory.getSapCardManager(index);
-               if (sapMgr != nullptr) {
-                   sapManagers_.emplace_back(sapMgr);
+       if(subSystemStatus) {
+           std::vector<int> phoneIds;
+           telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
+           if (status == telux::common::Status::SUCCESS) {
+               for (auto index = 1; index <= phoneIds.size(); index++) {
+                   auto sapMgr = phoneFactory.getSapCardManager(index);
+                   if (sapMgr != nullptr) {
+                       sapManagers_.emplace_back(sapMgr);
+                   }
                }
            }
        }
+   } else {
+       std::cout << "ERROR - PhoneManager is NULL, failed to initialize SapCardServicesMenu"
+                 << std::endl;
+       exit(1);
    }
-
    mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
    myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
    mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();

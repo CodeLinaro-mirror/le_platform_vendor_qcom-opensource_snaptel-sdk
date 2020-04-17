@@ -926,7 +926,7 @@ void MyLocationListener::onDetailedLocationUpdate(
    printGnssMeasurementInfo(locationInfo);
    printGnssSystemTime(locationInfo);
    std::cout << " Time Uncertainty : " << locationInfo->getTimeUncMs() << std::endl;
-   uint8_t leapSeconds;
+   uint8_t leapSeconds = 0;
 
    if(locationInfo->getLeapSeconds(leapSeconds) == telux::common::Status::SUCCESS) {
       std::cout << "Leap seconds: " << static_cast<int>(leapSeconds) << std::endl;
@@ -1023,7 +1023,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
    printGnssMeasurementInfo(locationInfo);
    printGnssSystemTime(locationInfo);
    std::cout << " Time Uncertainty : " << locationInfo->getTimeUncMs() << std::endl;
-   uint8_t leapSeconds;
+   uint8_t leapSeconds = 0;
 
    if(locationInfo->getLeapSeconds(leapSeconds) == telux::common::Status::SUCCESS) {
       std::cout << "Leap seconds: " << static_cast<int>(leapSeconds) << std::endl;

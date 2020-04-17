@@ -85,33 +85,38 @@ void MyCardListener::onCardInfoChanged(int slotId) {
    PRINT_NOTIFICATION << "\tSlotId :" << slotId << std::endl;
    auto cardMgr = telux::tel::PhoneFactory::getInstance().getCardManager();
    // CardState cardState = cardMgr->getCardState(slotId);
-   telux::tel::CardState cardState;
-   telux::common::Status status;
-   auto card = cardMgr->getCard(slotId, &status);
-   if(status == telux::common::Status::NOTREADY) {
-       PRINT_NOTIFICATION << "\tCardManager is not ready" << std::endl;
-       return;
-   } else if(status != telux::common::Status::SUCCESS) {
-       PRINT_NOTIFICATION << "\tCouldn't get get Card details" << std::endl;
-       return;
-   }
-   card->getState(cardState);
-   PRINT_NOTIFICATION << "\tCardState:" << (int)cardState << std::endl;
-   switch(cardState) {
-      case telux::tel::CardState::CARDSTATE_ABSENT:
-         PRINT_NOTIFICATION << "Card State is Absent" << std::endl;
-         break;
-      case telux::tel::CardState::CARDSTATE_PRESENT:
-         PRINT_NOTIFICATION << "Card State is  Present" << std::endl;
-         break;
-      case telux::tel::CardState::CARDSTATE_ERROR:
-         PRINT_NOTIFICATION << "Card State is either Error or Absent" << std::endl;
-         break;
-      case telux::tel::CardState::CARDSTATE_RESTRICTED:
-         PRINT_NOTIFICATION << "Card State is Restricted" << std::endl;
-         break;
-      default:
-         PRINT_NOTIFICATION << "Unknown Card State" << std::endl;
-         break;
-   }
+   if (cardMgr) {
+       telux::tel::CardState cardState;
+       telux::common::Status status;
+       auto card = cardMgr->getCard(slotId, &status);
+       if(status == telux::common::Status::NOTREADY) {
+           PRINT_NOTIFICATION << "\tCardManager is not ready" << std::endl;
+           return;
+       } else if(status != telux::common::Status::SUCCESS) {
+           PRINT_NOTIFICATION << "\tCouldn't get get Card details" << std::endl;
+           return;
+       }
+       card->getState(cardState);
+       PRINT_NOTIFICATION << "\tCardState:" << (int)cardState << std::endl;
+       switch(cardState) {
+          case telux::tel::CardState::CARDSTATE_ABSENT:
+             PRINT_NOTIFICATION << "Card State is Absent" << std::endl;
+             break;
+          case telux::tel::CardState::CARDSTATE_PRESENT:
+             PRINT_NOTIFICATION << "Card State is  Present" << std::endl;
+             break;
+          case telux::tel::CardState::CARDSTATE_ERROR:
+             PRINT_NOTIFICATION << "Card State is either Error or Absent" << std::endl;
+             break;
+          case telux::tel::CardState::CARDSTATE_RESTRICTED:
+             PRINT_NOTIFICATION << "Card State is Restricted" << std::endl;
+             break;
+          default:
+             PRINT_NOTIFICATION << "Unknown Card State" << std::endl;
+             break;
+       }
+   } else {
+       PRINT_NOTIFICATION << " Card Manager is NULL, failed to notify card state change"
+                          << std::endl;
+}
 }

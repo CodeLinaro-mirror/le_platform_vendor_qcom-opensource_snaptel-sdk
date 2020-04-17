@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -31,9 +31,6 @@
  * @file       PowerFactory.hpp
  *
  * @brief      PowerFactory allows creation of TCU-activity manager class
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to change and could
- *             break backwards compatibility.
  */
 
 #ifndef POWERFACTORY_HPP
@@ -52,9 +49,6 @@ namespace power {
 
 /**
  * @brief   PowerFactory allows creation of TCU-activity manager instance.
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could break
- *          backwards compatibility.
  */
 class PowerFactory {
 public:
@@ -67,9 +61,6 @@ public:
      * API to get the TCU-activity Manager instance
      *
      * @returns Pointer of ITcuActivityManager object.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
      */
     std::shared_ptr<ITcuActivityManager> getTcuActivityManager();
 

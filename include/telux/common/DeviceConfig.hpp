@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -26,47 +26,36 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
+ * @brief DeviceConfig provides utility functions to get device configuration details
+ * such as multi SIM support.
  */
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
+#ifndef DEVICECONFIG_HPP
+#define DEVICECONFIG_HPP
 
-#include <string>
-#include <vector>
+namespace telux {
+namespace common {
 
-#include "ModemStatus.hpp"
-#include "console_app_framework/ConsoleApp.hpp"
+/** @addtogroup telematics_common
+ * @{ */
 
-class TelSdkConsoleApp : public ConsoleApp {
+/*
+ * DeviceConfig provides utility functions to get device configuration details.
+ */
+class DeviceConfig {
 public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
-
    /**
-    * Used for creating a menus of high level features
+    * Check whether multi SIM support available.
+    *
+    * @returns bool to determine multi SIM support
     */
-   void init();
+    static bool isMultiSimSupported();
 
-   // Displays main menu
-   void displayMenu();
-
-   // Check Modem availability for Telephony
-    void onModemAvailable();
-
-private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
 };
+/** @} */ /* end_addtogroup telematics_common */
 
-#endif  // TELSDKCONSOLEAPP_HPP
+}  // End of namespace common
+}  // End of namespace telux
+
+#endif  // DEVICECONFIG_HPP

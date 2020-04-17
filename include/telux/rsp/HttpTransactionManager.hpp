@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -66,9 +66,6 @@ enum class HttpResult {
 /**
  *@brief IHttpTransactionManager is the interface to service HTTP related requests
  * from the modem, for Sim profile update related operations.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
- *          break backwards compatibility.
  */
 class IHttpTransactionManager {
  public:
@@ -76,9 +73,6 @@ class IHttpTransactionManager {
      * Checks if the eUICC subsystem is ready.
      *
      * @returns True if EuiccManager is ready for service, otherwise returns false.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -86,9 +80,6 @@ class IHttpTransactionManager {
      * Wait for eUICC subsystem to be ready.
      *
      * @returns A future that caller can wait on to be notified when card manager is ready.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -104,9 +95,6 @@ class IHttpTransactionManager {
      * @param [in] slotId            Slot identifier corresponding to the card.
      *
      * @returns  Status of send HTTP transaction request i.e. success or suitable error code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status sendHttpTransactionResult(uint32_t token, HttpResult result,
         const std::vector<CustomHeader> &headers, const std::vector<uint8_t> &response,
@@ -120,9 +108,6 @@ class IHttpTransactionManager {
      *                         notification.
      *
      * @returns Status of registerHttpListener success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IHttpTransactionListener> listener)
         = 0;
@@ -133,9 +118,6 @@ class IHttpTransactionManager {
      * @param [in] listener    Pointer of IHttpTransactionListener object that needs to be removed.
      *
      * @returns Status of deregisterHttpListener success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<IHttpTransactionListener> listener)

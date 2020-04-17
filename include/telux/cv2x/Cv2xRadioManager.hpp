@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -61,9 +61,6 @@ public:
      *
      * @param [in] status - CV2X radio status.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
-     *
      * @deprecated use onStatusChanged(Cv2xStatusEx status)
      */
     virtual void onStatusChanged(Cv2xStatus status) {}
@@ -72,17 +69,11 @@ public:
      * Called when the status of the CV2X radio has changed.
      *
      * @param [in] status - CV2X radio status.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual void onStatusChanged(Cv2xStatusEx status) {}
 
     /**
      * Destructor for ICv2xListener
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual ~ICv2xListener() {}
 };
@@ -130,9 +121,6 @@ using RequestCv2xStatusCallback = std::function<void (Cv2xStatus status,
  * @param [in] error     - SUCCESS if Cv2x status was successully retrieved
  *                       - @ref SUCCESS
  *                       - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using RequestCv2xStatusCallbackEx = std::function<void (Cv2xStatusEx status,
                                                         telux::common::ErrorCode error)>;
@@ -229,9 +217,6 @@ public:
      * Registers a listener for this manager.
      *
      * @param [in] listener - Listener that implements Cv2xListener interface.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<ICv2xListener> listener) = 0;
 
@@ -240,9 +225,6 @@ public:
      *
      * @param [in] listener - Previously registered CvListener that is to be
      *        deregistered.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<ICv2xListener> listener) = 0;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -31,9 +31,6 @@
  * @file       SimProfile.hpp
  * @brief      This is a container class represents single eUICC profile on the card.
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
- *
  */
 
 #ifndef SIMPROFILE_HPP
@@ -52,9 +49,6 @@ namespace rsp {
 
 /**
  * @brief  SimProfile class represents single eUICC profile on the card.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
- *          break backwards compatibility.
  */
 class SimProfile {
  public:
@@ -66,9 +60,6 @@ class SimProfile {
      * Get slot id associated for this profile
      *
      * @returns SlotId
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
      */
     int getSlotId();
 
@@ -76,9 +67,6 @@ class SimProfile {
      * Get profile identifier.
      *
      * @returns unique identifier for the profile
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     int getProfileId();
 
@@ -86,9 +74,6 @@ class SimProfile {
      * Get profile ICCID.
      *
      * @returns profile ICCID coded as in EF-ICCID
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     const std::string &getIccid();
 
@@ -96,9 +81,6 @@ class SimProfile {
      * Indicates the profile state whether active or not.
      *
      * @returns true if profile is Active
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     bool isActive();
 
@@ -106,9 +88,6 @@ class SimProfile {
      * Get profile nick name.
      *
      * @returns profile nick name
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     const std::string &getNickName();
 
@@ -116,9 +95,6 @@ class SimProfile {
      * Get profile service provider name.
      *
      * @returns profile service provider name.
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     const std::string &getSPN();
 
@@ -126,9 +102,6 @@ class SimProfile {
      * Get profile name.
      *
      * @returns profile name
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     const std::string &getName();
 
@@ -136,9 +109,6 @@ class SimProfile {
      * Get profile icon type.
      *
      * @returns profile icon type
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     IconType getIconType();
 
@@ -146,9 +116,6 @@ class SimProfile {
      * Get profile icon content.
      *
      * @returns profile icon content
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     std::vector<uint8_t> getIcon();
 
@@ -156,9 +123,6 @@ class SimProfile {
      * Get profile class.
      *
      * @returns profile class
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     ProfileClass getClass();
 
@@ -166,9 +130,6 @@ class SimProfile {
      * Get profile policy rules.
      *
      * @returns mask of profile policy rules
-     *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     PolicyRuleMask getPolicyRule();
 

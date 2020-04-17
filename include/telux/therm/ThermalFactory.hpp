@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,9 +30,6 @@
 /**
  * @file       ThermalFactory.hpp
  * @brief      ThermalFactory allows creation of thermal manager.
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef THERMALFACTORY_HPP
@@ -53,9 +50,6 @@ namespace therm {
 
 /**
  * @brief   ThermalFactory allows creation of thermal manager.
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change
- *          and could break backwards compatibility.
  */
 class ThermalFactory {
 public:
@@ -69,9 +63,6 @@ public:
     * cooling devices supported by the device
     *
     * @returns Pointer of IThermalManager object.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    std::shared_ptr<IThermalManager> getThermalManager();
 
@@ -80,9 +71,6 @@ public:
     * notifications
     *
     * @returns Pointer of IThermalShutdownManager object.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    std::shared_ptr<IThermalShutdownManager> getThermalShutdownManager();
 

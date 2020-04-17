@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -31,9 +31,6 @@
  * @file       DataProfileListener.hpp
  *
  * @brief      Listener interface for receiving data profile change events.
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to change
- *             and could break backwards compatibility.
  */
 
 #ifndef DATAPROFILELISTENER_HPP
@@ -53,9 +50,6 @@ namespace data {
  *
  *        The methods in the listener can be invoked from multiple threads.
  *        It is client's responsibility to make sure the implementation is thread safe.
- *
- * @note  Eval: This is a new API and is being evaluated.It is subject to change
- *        and could break backwards compatibility.
  */
 class IDataProfileListener {
 public:
@@ -65,9 +59,6 @@ public:
     * @param [in] profileId - ID of the updated profile.
     * @param [in] techPreference - @Ref TechPreference.
     * @param [in] event - Event that caused the change in profile.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual void onProfileUpdate(int profileId, TechPreference techPreference,
       ProfileChangeEvent event) {

@@ -50,6 +50,8 @@ namespace data {
  */
 class DataProfile {
 public:
+   static constexpr int PROFILE_ID_INVALID = -1;
+
    DataProfile(int id, const std::string &name, const std::string &apn, const std::string &username,
                const std::string &password, IpFamilyType ipFamilyType, TechPreference techPref,
                AuthProtocolType authType);

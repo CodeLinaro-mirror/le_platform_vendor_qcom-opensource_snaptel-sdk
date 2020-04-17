@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -163,9 +163,6 @@ using ChangeEventFlowInfoCallback =
  * @param [in] error       - SUCCESS if capabilities request succeeded
  *                         - @ref SUCCESS
  *                         - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 using RequestCapabilitiesCallback =
     std::function<void(const Cv2xRadioCapabilities & capabilities,
@@ -178,9 +175,6 @@ using RequestCapabilitiesCallback =
  * @param [in] error       - SUCCESS if data session settings request succeeded
  *                         - @ref SUCCESS
  *                         - @ref GENERIC_FAILURE
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using RequestDataSessionSettingsCallback =
     std::function<void (const DataSessionSettings & settings,
@@ -194,9 +188,6 @@ using RequestDataSessionSettingsCallback =
  *                         - @ref SUCCESS
  *                         - @ref GENERIC_FAILURE
  *                         - @ref INVALID_ARGUMENTS
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using UpdateTrustedUEListCallback =
     std::function<void(telux::common::ErrorCode error)>;
@@ -385,9 +376,6 @@ public:
      *      the IP socket.
      *
      * @returns SUCCESS upon success. Error status otherwise.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status createTxEventFlow(
         TrafficIpType ipType,
@@ -475,9 +463,6 @@ public:
      *                            capability info. Must not be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status requestCapabilities(
         RequestCapabilitiesCallback cb) = 0;
@@ -489,9 +474,6 @@ public:
      *                            data session settings. Must not be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status requestDataSessionSettings(
         RequestDataSessionSettingsCallback cb) = 0;
@@ -515,9 +497,6 @@ public:
      *                            Must not be null.
      *
      * @returns SUCCESS if no error occurred.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual telux::common::Status updateTrustedUEList(
         const TrustedUEInfoList & infoList,

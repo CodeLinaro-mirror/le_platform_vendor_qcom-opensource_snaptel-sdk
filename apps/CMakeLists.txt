@@ -72,6 +72,7 @@ if(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
     add_subdirectory( samples/cv2x_get_status_app )
     add_subdirectory( samples/cv2x_tx_service_status_app )
     add_subdirectory( tests/cv2x_get_capabilities_app )
+    add_subdirectory( tests/cv2x_update_configuration_app )
     add_subdirectory( reference/cv2x-daemon )
 endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 

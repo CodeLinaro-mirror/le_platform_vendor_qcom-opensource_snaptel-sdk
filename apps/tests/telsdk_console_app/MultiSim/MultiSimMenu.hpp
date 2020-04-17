@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,46 +27,38 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
- */
+#ifndef MULTISIMMENU_HPP
+#define MULTISIMMENU_HPP
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
-
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "ModemStatus.hpp"
+#include "telux/tel/MultiSimManager.hpp"
+
 #include "console_app_framework/ConsoleApp.hpp"
 
-class TelSdkConsoleApp : public ConsoleApp {
+#define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
+
+class MultiSimMenu : public ConsoleApp {
 public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
+    /**
+     * Initialize commands and SDK
+     */
+    void init();
 
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
+    MultiSimMenu(std::string appName, std::string cursor);
 
-   // Displays main menu
-   void displayMenu();
+    ~MultiSimMenu();
 
-   // Check Modem availability for Telephony
-    void onModemAvailable();
+    void getSlotCount(std::vector<std::string> userInput);
+    void requestHighCapability(std::vector<std::string> userInput);
+    void setHighCapability(std::vector<std::string> userInput);
 
 private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
+    // Member variable to keep the Listener object alive till application ends.
+    std::shared_ptr<telux::tel::IMultiSimListener> multiSimListener_;
+    std::shared_ptr<telux::tel::IMultiSimManager> multiSimMgr_;
 };
 
-#endif  // TELSDKCONSOLEAPP_HPP
+#endif  // MULTISIMMENU_HPP

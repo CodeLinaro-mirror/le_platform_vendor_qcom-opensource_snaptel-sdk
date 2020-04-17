@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -38,9 +38,6 @@
  *             automatic shutdown after the notified imminent duration.
  *             IThermalShutdownManager class provides APIs to enable/disable automatic thermal
  *             shutdown and receive relevant notifications.
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to change and could
- *             break backwards compatibility.
  */
 
 #ifndef THERMALSHUTDOWNMANAGER_HPP
@@ -65,9 +62,6 @@ namespace therm {
  * The implementation should be thread safe.
  *
  * @param [in] mode  AutoShutdownMode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using GetAutoShutdownModeResponseCb = std::function<void(AutoShutdownMode mode)>;
 
@@ -75,9 +69,6 @@ using GetAutoShutdownModeResponseCb = std::function<void(AutoShutdownMode mode)>
  * @brief   IThermalShutdownManager class provides interface to enable/disable automatic thermal
  *          shutdown. Additionally it facilitates to register for notifications when the automatic
  *          shutdown mode changes.
- *
- * @note    Eval: This is a new API and is being evaluated.It is subject to change and could break
- *          backwards compatibility.
  */
 class IThermalShutdownManager {
 public:
@@ -86,9 +77,6 @@ public:
      * use and returns the result.
      *
      * @returns  True if the services are ready otherwise false.
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual bool isReady() = 0;
 
@@ -97,9 +85,6 @@ public:
      *
      * @returns  A future that caller can wait on to be notified when thermal shutdown management
      *           service is ready.
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual std::future<bool> onReady() = 0;
 
@@ -110,9 +95,6 @@ public:
      *                      notification
      *
      * @returns Status of registerListener i.e success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IThermalShutdownListener> listener)
                                         = 0;
@@ -123,9 +105,6 @@ public:
      * @param [in] listener Previously registered IThermalShutdownListener that needs to be removed
      *
      * @returns Status of deregisterListener, success or suitable status code
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
                                         std::weak_ptr<IThermalShutdownListener> listener) = 0;
@@ -140,9 +119,6 @@ public:
      * @param [in] timeout Optional timeout(in seconds) for which auto-shutdown remains disabled.
      *
      * @returns Status of setAutoShutdownMode i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setAutoShutdownMode(AutoShutdownMode mode,
                                         telux::common::ResponseCallback callback = nullptr,
@@ -154,9 +130,6 @@ public:
      * @param [in] callback GetAutoShutdownModeResponseCb to get response of the request
      *
      * @returns Status of getAutoShutdownMode i.e. success or suitable status code.
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status getAutoShutdownMode(GetAutoShutdownModeResponseCb callback) = 0;
 

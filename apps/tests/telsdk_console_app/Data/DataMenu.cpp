@@ -518,9 +518,9 @@ void DataMenu::deleteProfile(std::vector<std::string> inputCommand) {
         return;
     }
     telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
-    if (techPrefId == 1) {
+    if (techPrefId == 0) {
         tp = telux::data::TechPreference::TP_3GPP;
-    } else if (techPrefId == 2) {
+    } else if (techPrefId == 1) {
         tp = telux::data::TechPreference::TP_3GPP2;
     }
     telux::common::Status status
@@ -840,20 +840,28 @@ void DataMenu::parseProtoInfo(std::shared_ptr<IIpFilter> filter,
 
     if (protocol == PROTO_TCP) {
         auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(filter);
-        TcpInfo tcpInfo = tcpFilter->getTcpInfo();
-        srcPort = tcpInfo.src.port;
-        srcPortRange = tcpInfo.src.range;
-        dstPort = tcpInfo.dest.port;
-        dstPortRange = tcpInfo.dest.range;
-        protoStr = "TCP";
+        if(tcpFilter) {
+            TcpInfo tcpInfo = tcpFilter->getTcpInfo();
+            srcPort = tcpInfo.src.port;
+            srcPortRange = tcpInfo.src.range;
+            dstPort = tcpInfo.dest.port;
+            dstPortRange = tcpInfo.dest.range;
+            protoStr = "TCP";
+        } else {
+            std::cout << " TCP filter is NULL so couldn't get TCP info\n ";
+        }
     } else if (protocol == PROTO_UDP) {
         auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(filter);
-        UdpInfo udpInfo = udpFilter->getUdpInfo();
-        srcPort = udpInfo.src.port;
-        srcPortRange = udpInfo.src.range;
-        dstPort = udpInfo.dest.port;
-        dstPortRange = udpInfo.dest.range;
-        protoStr = "UDP";
+        if(udpFilter) {
+            UdpInfo udpInfo = udpFilter->getUdpInfo();
+            srcPort = udpInfo.src.port;
+            srcPortRange = udpInfo.src.range;
+            dstPort = udpInfo.dest.port;
+            dstPortRange = udpInfo.dest.range;
+            protoStr = "UDP";
+        } else {
+            std::cout << " UDP filter is NULL so couldn't get UDP info\n ";
+        }
     } else if (protocol == PROTO_ICMP) {
         protoStr = "ICMP";
     } else if (protocol == PROTO_IGMP) {

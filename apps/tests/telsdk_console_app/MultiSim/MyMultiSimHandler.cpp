@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,46 +27,26 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
- */
+#include "iostream"
+#include "MyMultiSimHandler.hpp"
+#include "Utils.hpp"
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
-#include <string>
-#include <vector>
+void MyMultiSimCallback::requestHighCapabilityResponse(int slotId, telux::common::ErrorCode error) {
+    if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Slot with high capability: " << slotId << std::endl;
+    } else {
+        PRINT_CB << "Request high capability request failed, errorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
 
-#include "ModemStatus.hpp"
-#include "console_app_framework/ConsoleApp.hpp"
-
-class TelSdkConsoleApp : public ConsoleApp {
-public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
-
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
-
-   // Displays main menu
-   void displayMenu();
-
-   // Check Modem availability for Telephony
-    void onModemAvailable();
-
-private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
-};
-
-#endif  // TELSDKCONSOLEAPP_HPP
+void MyMultiSimCallback::setHighCapabilityResponse(telux::common::ErrorCode error) {
+    if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Set high capability request executed successfully" << std::endl;
+    } else {
+        PRINT_CB << "Set high capability request failed, errorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -34,9 +34,6 @@
  *             config file, get active config file information, deactivate a config file,
  *             remove config file from the modem's storage, get and set mode of config
  *             auto selection, register and deregister listener for config update in modem.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to change
- *             and could break backwards compatibility.
  */
 
 #include <vector>
@@ -62,9 +59,6 @@ namespace config {
  * @param [in] error       -  Return code which indicates whether the operation
  *                            succeeded or not.
  *                            @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using ConfigListCallback = std::function<void (std::vector<ConfigInfo> configList,
                                     telux::common::ErrorCode error)>;
@@ -76,8 +70,6 @@ using ConfigListCallback = std::function<void (std::vector<ConfigInfo> configLis
  * @param [in] error          -  Return code which indicates whether the operation
  *                               succeeded or not.
  *                               @ref ErrorCode
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using GetAutoSelectionModeCallback = std::function<void (AutoSelectionMode mode,
                                     telux::common::ErrorCode error)>;
@@ -89,9 +81,6 @@ using GetAutoSelectionModeCallback = std::function<void (AutoSelectionMode mode,
  * @param [in] error          -  Return code which indicates whether the operation
  *                               succeeded or not.
  *                               @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using GetActiveConfigCallback = std::function<void (ConfigInfo configInfo,
                                     telux::common::ErrorCode error)>;
@@ -102,9 +91,6 @@ using GetActiveConfigCallback = std::function<void (ConfigInfo configInfo,
  *          information, deactivate a config file, delete config file from the modem's storage,
  *          get and set mode of config auto selection, register and deregister listener
  *          for config update in modem. The config files are also referred to as MBNs.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 class IModemConfigManager {
 public:
@@ -113,9 +99,6 @@ public:
     * Checks the status of modem config subsystem and returns the result.
     *
     * @returns    If true that means ModemConfigManager is ready for performing config operations.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to change
-    *             and could break backwards compatibility.
     */
     virtual bool isSubsystemReady() = 0;
 
@@ -124,9 +107,6 @@ public:
     *
     * @returns    A future that caller can wait on to be notified when modem config
     *             subsystem is ready.
-    *
-    * @note       Eval: This is a new API and is being evaluated. It is subject to change
-    *             and could break backwards compatibility.
     */
     virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -136,9 +116,6 @@ public:
     * @param [in] cb - callback to the Response function.
     *
     * returns SUCCESS if the request to get config list is sent successfully.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status requestConfigList(ConfigListCallback cb) = 0;
 
@@ -151,9 +128,6 @@ public:
     * @param [in] cb          - callback to the response function.
     *
     * returns SUCCESS if the request to load config file is sent successfully.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status loadConfigFile(std::string filePath, ConfigType configType,
             telux::common::ResponseCallback cb = nullptr) = 0;
@@ -168,9 +142,6 @@ public:
     * @param [in] cb              - callback to the response function.
     *
     * @returns SUCCESS if the request to activate config file is sent successfully.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status activateConfig(ConfigType configType, ConfigId configId,
             int slotId = DEFAULT_SLOT_ID, telux::common::ResponseCallback cb = nullptr) = 0;
@@ -184,9 +155,6 @@ public:
     * @param [in] slotId       - it defines the slot id to be selected.
     *
     * @returns SUCCESS if the request to get active config information is sent successfully.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status getActiveConfig(ConfigType configType,
             GetActiveConfigCallback cb, int slotId = DEFAULT_SLOT_ID) = 0;
@@ -199,9 +167,6 @@ public:
     * @param [in] cb           - callback to the response function.
     *
     * @returns SUCCESS if the request to deactivate config file is sent successfully
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status deactivateConfig(ConfigType configType,
             int slotId = DEFAULT_SLOT_ID, telux::common::ResponseCallback cb = nullptr) = 0;
@@ -216,9 +181,6 @@ public:
     * @param [in] cb              - callback to the Response function.
     *
     * @returns SUCCESS if the request to delete config file is sent successfully
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status deleteConfig(ConfigType configType,
             ConfigId configId = "", telux::common::ResponseCallback cb = nullptr) = 0;
@@ -230,9 +192,6 @@ public:
     * @param [in] slotId    - slot id of config.
     *
     * @returns SUCCESS if the request to get selection mode is sent successfully
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status getAutoSelectionMode(
             GetAutoSelectionModeCallback cb, int slotId = DEFAULT_SLOT_ID) = 0;
@@ -245,9 +204,6 @@ public:
     * @param [in] cb              - callback to the response function.
     *
     * @returns SUCCESS if the request to set selection mode is sent successfully.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status setAutoSelectionMode(AutoSelectionMode mode,
             int slotId = DEFAULT_SLOT_ID, telux::common::ResponseCallback cb = nullptr) = 0;
@@ -258,9 +214,6 @@ public:
     * @param [in] listener      - pointer to implemented listener.
     *
     * @returns SUCCESS if the request to register listener is sent successfully.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status registerListener(
             std::weak_ptr<IModemConfigListener> listener) = 0;
@@ -271,9 +224,6 @@ public:
     * @param [in] listener      - pointer to registered listener.
     *
     * @returns SUCCESS if the request to deregister listener is sent successfully.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status deregisterListener(
             std::weak_ptr<IModemConfigListener> listener) = 0;

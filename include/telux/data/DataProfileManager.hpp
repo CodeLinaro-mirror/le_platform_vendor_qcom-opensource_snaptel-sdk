@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -68,9 +68,6 @@ public:
     * Checks if the data profile manager is ready.
     *
     * @returns True if data profile subsystem is ready for service otherwise false.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -79,9 +76,6 @@ public:
     *
     * @returns  A future that caller can wait on to be notified when data profile
     *           subsystem is ready.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -189,9 +183,6 @@ public:
     * @param [in] listener - Listener that processes the notification.
     *
     * @returns @ref Status.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(
       std::weak_ptr<telux::data::IDataProfileListener> listener) = 0;
@@ -202,9 +193,6 @@ public:
     * @param [in] listener - Listener to be de-registered.
     *
     * @returns @ref Status.
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status deregisterListener(
       std::weak_ptr<telux::data::IDataProfileListener> listener) = 0;

@@ -60,6 +60,21 @@ class ILocationConfigurator {
 public:
 
 /**
+ * This function is called with the response to requestMinGpsWeek API.
+ *
+ * @param[in] minGpsWeek - minimum gps week.
+ *
+ * @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+ using GetMinGpsWeekCallback = std::function<void(uint16_t minGpsWeek,
+     telux::common::ErrorCode error)>;
+
+/**
  * Checks the status of location configuration subsystems and returns the result.
  *
  * @returns True if location configuration subsystem is ready for service otherwise false.
@@ -183,6 +198,57 @@ public:
   virtual telux::common::Status configureRobustLocation(bool enable,
       bool enableForE911 = false,
           telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+  * This API configures the minimum GPS week used by the modem GNSS engine.
+  *
+  * @param [in] minGpsWeek - minimum GPS week to be used by modem GNSS engine.
+  *
+  * @param [in] callback - Optional callback to get the response of configure
+  *                        minimum GPS week.
+  *
+  * @returns Status of configureMinGpsWeek i.e. success or suitable status code.
+  *
+  * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+  virtual telux::common::Status configureMinGpsWeek(uint16_t minGpsWeek,
+      telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+  * This API retrieves the minimum GPS week configuration used by the modem GNSS engine.
+  *
+  * @param [in] cb - callback to retrieve the minimum gps week.
+  *
+  * @returns Status of requestMinGpsWeek i.e. success or suitable status code.
+  *
+  * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+  virtual telux::common::Status requestMinGpsWeek(GetMinGpsWeekCallback cb) = 0;
+
+/**
+  * This API deletes specified aiding data from all position engines on the device. For
+  * example, removing ephemeris data may trigger GNSS engine to do a warm start.
+  *
+  * @param [in] aidingDataMask - specify the set of aiding data to be deleted from all position
+  *                              engines. Currently, only ephemeris deletion is supported.
+  *
+  * @param [in] callback - Optional callback to get the response of delete aiding data.
+  *
+  * @returns Status of deleteAidingData i.e. success or suitable status code.
+  *
+  * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+  virtual telux::common::Status deleteAidingData(AidingData aidingDataMask,
+      telux::common::ResponseCallback callback = nullptr) = 0;
 
 
 /**

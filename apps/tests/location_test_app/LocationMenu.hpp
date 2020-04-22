@@ -69,11 +69,14 @@ public:
    void deRegisterLocationSystemInfo(std::vector<std::string> userInput);
    void enableDisableTunc(std::vector<std::string> userInput);
    void enableDisablePace(std::vector<std::string> userInput);
-   void deleteAidingData(std::vector<std::string> userInput);
+   void deleteAllAidingData(std::vector<std::string> userInput);
+   void deleteAidingDataWarm(std::vector<std::string> userInput);
    void configureLeverArm(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
    void configureRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);
+   void configureMinGpsWeek(std::vector<std::string> userInput);
+   void requestMinGpsWeek(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();

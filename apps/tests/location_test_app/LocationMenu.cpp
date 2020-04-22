@@ -34,6 +34,7 @@
 #include <sstream>
 
 #include <telux/loc/LocationFactory.hpp>
+#include <telux/common/Version.hpp>
 #include "../../common/utils/Utils.hpp"
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
@@ -163,9 +164,9 @@ int LocationMenu::init() {
       ConsoleAppCommand("7", "Configure PACE", {},
                         std::bind(&LocationMenu::enableDisablePace, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> deleteAidingData = std::make_shared<ConsoleAppCommand>(
+   std::shared_ptr<ConsoleAppCommand> deleteAllAidingData = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("8", "Delete_data", {},
-                        std::bind(&LocationMenu::deleteAidingData, this, std::placeholders::_1)));
+                        std::bind(&LocationMenu::deleteAllAidingData, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureLeverArm = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("9", "Lever_arm", {},
@@ -195,12 +196,24 @@ int LocationMenu::init() {
       ConsoleAppCommand("15", "Dgnss_Correction_Injection", {},
                         std::bind(&LocationMenu::dgnssInject, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureMinGpsWeek = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("16", "Configure minimum gps week", {},
+                        std::bind(&LocationMenu::configureMinGpsWeek, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> requestMinGpsWeek = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("17", "Request minimum gps week", {},
+                        std::bind(&LocationMenu::requestMinGpsWeek, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> deleteAidingDataWarm = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("18", "Delete aiding data", {}, std::bind(
+                        &LocationMenu::deleteAidingDataWarm, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
-         deleteAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
+         deleteAllAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
          registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
-         dgnssInjectCommand};
+         dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -447,7 +460,7 @@ void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
    }
 }
 
-void LocationMenu::deleteAidingData(std::vector<std::string> userInput) {
+void LocationMenu::deleteAllAidingData(std::vector<std::string> userInput) {
    if(locationConfigurator_) {
         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Delete Aiding Data");
         telux::common::Status status = locationConfigurator_->deleteAllAidingData(
@@ -458,6 +471,49 @@ void LocationMenu::deleteAidingData(std::vector<std::string> userInput) {
         }
    }
 }
+
+void LocationMenu::deleteAidingDataWarm(std::vector<std::string> userInput) {
+   if(locationConfigurator_) {
+      char delimiter = '\n';
+      std::string deleteDataPreference;
+      AidingData dataType = DEFAULT_UNKNOWN;
+      std::vector<int> options;
+      std::cout << " Enter the types of data to be deleted : \n"
+                   " (0 - EPHEMERIS\n) \n"
+                   " Enter your delete data preference\n"
+                   " (For example: enter 0 to choose EPHEMERIS) : \n";
+      std::getline(std::cin,deleteDataPreference,delimiter);
+      std::stringstream ss(deleteDataPreference);
+      int i = -1;
+      while(ss >> i) {
+        options.push_back(i);
+        if(ss.peek() == ',' || ss.peek() == ' ')
+          ss.ignore();
+      }
+      for(auto &opt : options) {
+        if(opt == 0) {
+          try {
+            dataType |= 1UL << opt;
+          } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                         << std::endl;
+          }
+        } else {
+            std::cout << "Delete data preference should not be out of range" << std::endl;
+        }
+      }
+
+         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+             "Delete Aiding Data Warm Start");
+        telux::common::Status status = locationConfigurator_->deleteAidingData(dataType,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+
 //TODO : split configureLeverArm into smaller sub functions
 void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
    if(locationConfigurator_) {
@@ -701,6 +757,48 @@ void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput)
    locationManager_->requestEnergyConsumedInfo(gnssEnergyConsumedCb);
 }
 
+void LocationMenu::configureMinGpsWeek(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+       char delimiter = '\n';
+       std::string option;
+       std::cout << "Enter minimum gps week : ";
+       std::getline(std::cin, option, delimiter);
+       uint16_t minGpsWeek = 0;
+        if(!option.empty()) {
+            try {
+                minGpsWeek = std::stoi(option);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << minGpsWeek
+                          << std::endl;
+            }
+        } else {
+             minGpsWeek = 0;
+        }
+        std::cout << " Entered value is : " << minGpsWeek << std::endl;
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure-Minimum Gps Week");
+        telux::common::Status status = locationConfigurator_->configureMinGpsWeek(minGpsWeek,
+            std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+
+void LocationMenu::requestMinGpsWeek(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Request-Minimum Gps Week");
+        auto minGpsWeekCb = std::bind(&MyLocationCommandCallback::onMinGpsWeekInfo,
+            myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
+        telux::common::Status status = locationConfigurator_->requestMinGpsWeek(minGpsWeekCb);
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+
 int LocationMenu::enableReportLogsUtility() {
    char delimiter = '\n';
    std::string usrInput;
@@ -857,16 +955,19 @@ void LocationMenu::enableLocationSystemInfoLogs() {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
-   LocationMenu locationMenu("Location Menu", "location> ");
+    auto sdkVersion = telux::common::Version::getSdkVersion();
+    std::string appName = "Location Menu - SDK v" + std::to_string(sdkVersion.major) + "."
+        + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch);
+    LocationMenu locationMenu(appName, "location> ");
     std::vector<std::string> supplementaryGrps{"system"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
-   if( locationMenu.init() == -1) {
-       std::cout << "ERROR - Subsystem not ready, Exiting !!!" << std::endl;
-       return -1;
-   }
-   locationMenu.mainLoop();
-   return 0;
+    if( locationMenu.init() == -1) {
+        std::cout << "ERROR - Subsystem not ready, Exiting !!!" << std::endl;
+        return -1;
+    }
+    locationMenu.mainLoop();
+    return 0;
 }

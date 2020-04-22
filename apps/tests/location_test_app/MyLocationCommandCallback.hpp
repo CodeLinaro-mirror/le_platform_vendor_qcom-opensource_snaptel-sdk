@@ -39,6 +39,7 @@ public:
    void commandResponse(telux::common::ErrorCode error);
    void onGnssEnergyConsumedInfo(telux::loc::GnssEnergyConsumedInfo gnssEnergyConsumed,
        telux::common::ErrorCode error);
+   void onMinGpsWeekInfo(uint16_t minGpsWeek, telux::common::ErrorCode error);
 
 private:
    std::string commandName_;

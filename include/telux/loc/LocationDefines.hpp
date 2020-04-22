@@ -1188,6 +1188,17 @@ struct GnssEnergyConsumedInfo {
 };
 
 /**
+ *  Specifies the set of aiding data. This is referenced in the
+ *  deleteAidingData for deleting any aiding data. */
+enum AidingDataType {
+    /** Mask to delete ephemeris aiding data */
+    AIDING_DATA_EPHEMERIS  = (1 << 0)
+};
+
+/** Specifies AidingDataType mask */
+using AidingData = uint32_t;
+
+/**
  * @brief IGpsTime provides interface to get current GPS week and elapsed
  *        time in current GPS week
  */

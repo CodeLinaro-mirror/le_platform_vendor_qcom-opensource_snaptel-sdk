@@ -77,3 +77,26 @@ void MyLocationCommandCallback::onGnssEnergyConsumedInfo(telux::loc::GnssEnergyC
        << std::endl;
    std::cout << "*******************************" << std::endl;
 }
+
+void MyLocationCommandCallback::onMinGpsWeekInfo(uint16_t minGpsWeek,
+    telux::common::ErrorCode error) {
+  if (error == telux::common::ErrorCode::SUCCESS) {
+    std::cout << " SUCCESS" << std::endl;
+  }
+  if (error == telux::common::ErrorCode::GENERIC_FAILURE) {
+    std::cout << " GENERIC_FAILURE" << std::endl;
+  }
+  if (error == telux::common::ErrorCode::NOT_SUPPORTED) {
+    std::cout << " NOT_SUPPORTED" << std::endl;
+  }
+  if (error == telux::common::ErrorCode::INVALID_ARGUMENTS) {
+    std::cout << " INVALID_ARGUMENTS" << std::endl;
+  }
+  if (error == telux::common::ErrorCode::UNKNOWN) {
+    std::cout << " UNKNOWN" << std::endl;
+  }
+
+  PRINT_CB << " ************ Request Minimum GPS Week ***************" << std::endl;
+  std::cout << " Minimum Gps Week is : " << minGpsWeek << std::endl;
+  std::cout << " ****************************************************" << std::endl;
+}

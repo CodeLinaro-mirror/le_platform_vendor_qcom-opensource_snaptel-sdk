@@ -229,13 +229,13 @@ public:
 };
 
 /**
- * @brief A listener class for monitoring  incoming SMS.
+ * @brief A listener class for monitoring  incoming SMS and notify subsystem status changes.
  * Override the methods for the state that you wish to receive updates for.
  *
  * The methods in listener can be invoked from multiple different threads. The
  * implementation should be thread safe.
  */
-class ISmsListener {
+class ISmsListener : public telux::common::IServiceStatusListener {
 public:
    /**
     * This function is called when device receives an incoming message

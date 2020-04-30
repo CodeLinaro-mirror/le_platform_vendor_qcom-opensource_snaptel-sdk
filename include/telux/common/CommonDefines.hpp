@@ -39,10 +39,15 @@
 
 #include <functional>
 
-#define DEFAULT_SLOT_ID 1
-#define SLOT_ID_1 1
-#define SLOT_ID_2 2
-#define INVALID_SLOT_ID -1
+/**
+ * Specifies the slot id where the Uicc card is inserted
+ */
+typedef enum {
+   INVALID_SLOT_ID = -1,
+   DEFAULT_SLOT_ID =  1,
+   SLOT_ID_1 = DEFAULT_SLOT_ID,
+   SLOT_ID_2 = 2,
+}SlotId;
 
 namespace telux {
 namespace common {

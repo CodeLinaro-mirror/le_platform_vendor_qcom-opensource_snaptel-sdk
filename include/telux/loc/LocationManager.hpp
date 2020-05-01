@@ -130,10 +130,14 @@ public:
 
 /**
  * Starts the richer location reports by configuring the time between them as
- * the interval.
+ * the interval. Any of the 3 APIs that is startDetailedReports or startDetailedEngineReports
+ * or startBasicReports can be called one after the other irrespective of order, without
+ * calling stopReports in between any of them and the API which is called last will be honored
+ * for providing the callbacks. If multiple clients invoke this API with different interval,
+ * then all the clients will be benefited with interval which is smallest among all the intervals.
  *
- * This Api enables the onDetailedLocationUpdate, onGnssSVInfo and
- * onGnssSignalInfo Apis on the listener.
+ * This Api enables the onDetailedLocationUpdate, onGnssSVInfo,
+ * onGnssSignalInfo, onGnssNmeaInfo and onGnssMeasurementsInfo Apis on the listener.
  *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
@@ -151,15 +155,20 @@ public:
  */
   virtual telux::common::Status
       startDetailedReports(uint32_t interval,
-                           telux::common::ResponseCallback callback) = 0;
+                           telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Starts a session which may provide richer default combined position reports
  * and position reports from other engines. The fused position report type will
  * always be supported if at least one engine in the system is producing valid report.
- *
- * This Api enables the onDetailedLocationUpdate, onGnssSVInfo and
- * onGnssSignalInfo Apis on the listener.
+ * Any of the 3 APIs that is startDetailedReports or startDetailedEngineReports
+ * or startBasicReports can be called one after the other irrespective of order, without
+ * calling stopReports in between any of them and the API which is called last will be
+ * honored for providing the callbacks. If multiple clients invoke this API with different
+ * interval, then all the clients will be benefited with interval which is smallest among
+ * all the intervals.
+ * This Api enables the onDetailedLocationUpdate, onGnssSVInfo,
+ * onGnssSignalInfo, onGnssNmeaInfo and onGnssMeasurementsInfo Apis on the listener.
  *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
@@ -181,11 +190,16 @@ public:
  */
   virtual telux::common::Status
       startDetailedEngineReports(uint32_t interval, LocReqEngine engineType,
-                           telux::common::ResponseCallback callback) = 0;
+                           telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Starts the Location report by configuring the time and distance between
- * the consecutive reports.
+ * the consecutive reports. Any of the 3 APIs that is startDetailedReports or
+ * startDetailedEngineReports or startBasicReports can be called one after the other
+ * irrespective of order, without calling stopReports in between any of them and the
+ * API which is called last will be honored for providing the callbacks. If multiple
+ * clients invoke this API with different interval, then all the clients will be benefited
+ * with interval which is smallest among all the intervals.
  *
  * This Api enables the onBasicLocationUpdate Api on the listener.
  *
@@ -195,10 +209,8 @@ public:
  * reports in milliseconds.
  *
  * E.g. If intervalInMs is 1000 milliseconds and distanceInMeters is 100m,
- * reports will be
- * provided according to the condition that happens first. So we need to
- * provide both the
- * parameters for evaluating the report.
+ * reports will be provided according to the condition that happens first. So we need to
+ * provide both the parameters for evaluating the report.
  *
  * The underlying system may have a minimum distance threshold(e.g. 1 meter).
  * Effective distance will not be smaller than this lower bound.
@@ -217,7 +229,7 @@ public:
  */
   virtual telux::common::Status
       startBasicReports(uint32_t distanceInMeters, uint32_t intervalInMs,
-                        telux::common::ResponseCallback callback) = 0;
+                        telux::common::ResponseCallback callback = nullptr) = 0;
 /**
  * This API registers a ILocationSystemInfoListener listener and will receive information related
  * to location system that are not tied with location fix session, e.g.: next leap second event.
@@ -237,7 +249,7 @@ public:
  */
   virtual telux::common::Status
       registerForSystemInfoUpdates(std::weak_ptr<ILocationSystemInfoListener> listener,
-          telux::common::ResponseCallback callback) = 0;
+          telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * This API removes a previously registered listener and will also stop receiving informations
@@ -257,10 +269,13 @@ public:
  */
   virtual telux::common::Status
       deRegisterForSystemInfoUpdates(std::weak_ptr<ILocationSystemInfoListener> listener,
-      telux::common::ResponseCallback callback) = 0;
+      telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
- * This API receives information on energy consumed by modem GNSS engine.
+ * This API receives information on energy consumed by modem GNSS engine. If this API
+ * is called on this object while this is already a pending request, then it will overwrite
+ * the callback to be invoked and the callback from the previous invocation will not be
+ * called.
  *
  * @param [in] cb - callback to get the information of Gnss energy consumed.
  *
@@ -281,7 +296,7 @@ public:
  *
  */
   virtual telux::common::Status
-      stopReports(telux::common::ResponseCallback callback) = 0;
+      stopReports(telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Register a listener for specific updates from location manager like location and satellite

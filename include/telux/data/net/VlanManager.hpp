@@ -171,13 +171,14 @@ class IVlanManager {
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
     /**
-     * Bind a Vlan with a particular profile ID. When a WWAN network interface is
-     * brought up using IDataConnectionManager::startDataCall on that profile ID,
+     * Bind a Vlan with a particular profile ID and slot ID. When a WWAN network interface is
+     * brought up using IDataConnectionManager::startDataCall on that profile ID and slot ID,
      * that interface will be accessible from this Vlan
      *
      * @param [in] profileId    profile id for vlan association
      * @param [in] vlanId       sets vlan id
      * @param [out] callback    callback to get the response of associateWithProfileId API
+     * @param [in] slotId       Specify slot id which has the sim that contains profile id.
      *
      * @returns Immediate status of associateWithProfileId() request sent i.e. success or
      * suitable status code.
@@ -185,16 +186,16 @@ class IVlanManager {
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    virtual telux::common::Status bindWithProfile(
-        int profileId, int vlanId, telux::common::ResponseCallback callback)
-        = 0;
+    virtual telux::common::Status bindWithProfile(int profileId, int vlanId,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
-     * Unbind VLAN id with given profile id
+     * Unbind VLAN id from given slot id and profile id
      *
      * @param [in] profileId    profile id for vlan association
      * @param [in] vlanId       vlan id
      * @param [in] callback     callback to get the response of associateWithProfileId API
+     * @param [in] slotId       Specify slot id which has the sim that contains profile id .
      *
      * @returns Immediate status of disassociateFromProfileId() request sent i.e. success or
      * suitable status code
@@ -202,14 +203,15 @@ class IVlanManager {
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    virtual telux::common::Status unbindFromProfile(
-        int profileId, int vlanId, telux::common::ResponseCallback callback)
-        = 0;
+    virtual telux::common::Status unbindFromProfile(int profileId, int vlanId,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
-     * Query VLAN mapping list with associated profile id and vlan id
+     * Query VLAN mapping of profile id and vlan id on specified sim
      *
      * @param [in] callback    callback to get the response of queryVlanMappingList API
+     * @param [in] slotId      Specify slot id which has the sim that contains profile id
+     *                         mapping to vlan id.
      *
      * @returns Immediate status of queryVlanMappingList() request sent i.e. success or
      * suitable status code
@@ -217,7 +219,8 @@ class IVlanManager {
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback) = 0;
+    virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback,
+        SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Get the associated operation type for this instance.

@@ -116,23 +116,23 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void bridgeMenu(std::vector<std::string> inputCommand);
     void l2tpMenu(std::vector<std::string> inputCommand);
  private:
-    void requestDataCallList(OperationType operationType, DataCallListResponseCb cb);
+    void requestDataCallList(OperationType operationType, SlotId slotId, DataCallListResponseCb cb);
 
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
-    std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;
-    std::shared_ptr<telux::data::IDataProfileManager> dataProfileManager_;
+    std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>> dataConnectionManagers_;
+    std::map<SlotId, std::shared_ptr<telux::data::IDataProfileManager>>    dataProfileManagers_;
     telux::data::ProfileParams params_;
 
-    std::shared_ptr<MyDataProfilesCallback> myDataProfileListCb_;
-    std::shared_ptr<MyDataProfilesCallback> myDataProfileListCbForQuery_;
-    std::shared_ptr<MyDataProfileCallback> myDataProfileCb_;
-    std::shared_ptr<MyDataCreateProfileCallback> myDataCreateProfileCb_;
-    std::shared_ptr<MyDataProfileCallback> myDataProfileCbForGetProfileById_;
-    std::shared_ptr<MyDeleteProfileCallback> myDeleteProfileCb_;
-    std::shared_ptr<MyModifyProfileCallback> myModifyProfileCb_;
-    std::shared_ptr<MyProfileListener> profileListener_;
+    std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCb_;
+    std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCbForQuery_;
+    std::map<SlotId, std::shared_ptr<MyDataProfileCallback>> myDataProfileCb_;
+    std::map<SlotId, std::shared_ptr<MyDataCreateProfileCallback>> myDataCreateProfileCb_;
+    std::map<SlotId, std::shared_ptr<MyDataProfileCallback>> myDataProfileCbForGetProfileById_;
+    std::map<SlotId, std::shared_ptr<MyDeleteProfileCallback>> myDeleteProfileCb_;
+    std::map<SlotId, std::shared_ptr<MyModifyProfileCallback>> myModifyProfileCb_;
+    std::map<SlotId, std::shared_ptr<MyProfileListener>> profileListeners_;
 
-    std::shared_ptr<DataListener> dataListener_;
+    std::map<SlotId, std::shared_ptr<DataListener>> dataListeners_;
 
     std::map<std::string, telux::data::IpProtocol> protoMap_;
     std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;
@@ -144,7 +144,8 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void getProfileParamsFromUser();
     std::shared_ptr<telux::data::net::IFirewallManager>
         getFirewallManagerInstance(telux::data::OperationType opType);
-
+    bool initConnectionManagerAndListener(SlotId slotId);
+    bool initDataProfileManagerAndListener(SlotId slotId);
 
     // get IPV4 Firewall params from user and set IPV4Info
     void getIPV4ParamsFromUser(telux::data::IpProtocol proto,

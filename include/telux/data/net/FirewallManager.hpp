@@ -136,21 +136,22 @@ class IFirewallManager {
      * @param [in] allowPackets      Indicates whether to accept or drop packets
      *                               matching the rules
      * @param [in] callback          optional callback to get the response setFirewall
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of setFirewall i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status setFirewall(int profileId,
-        bool enable, bool allowPackets, telux::common::ResponseCallback callback = nullptr)
-        = 0;
+    virtual telux::common::Status setFirewall(int profileId, bool enable, bool allowPackets,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Request status of firewall
      *
      * @param [in] profileId         Profile identifier for which firewall status is requested.
      * @param [in] callback          callback to get the response of requestFirewallStatus
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of requestFirewallStatus i.e. success or suitable status code.
      *
@@ -158,14 +159,15 @@ class IFirewallManager {
      *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestFirewallStatus(int profileId,
-        FirewallStatusCb callback) = 0;
+        FirewallStatusCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Adds the firewall rule
      *
      * @param [in] profileId        Profile identifier on which firewall rule will be added.
-     * @param[in] entry             Firewall entry based on protocol type
-     * @param[in] callback          optional callback to get the response addFirewallEntry
+     * @param [in] entry            Firewall entry based on protocol type
+     * @param [in] callback         optional callback to get the response addFirewallEntry
+     * @param [in] slotId           Specify slot id which has the sim that contains profile id
      *
      * @returns Status of addFirewallEntry i.e. success or suitable status code.
      *
@@ -173,14 +175,15 @@ class IFirewallManager {
      *          and could break backwards compatibility.
      */
     virtual telux::common::Status addFirewallEntry(int profileId,
-        std::shared_ptr<IFirewallEntry> entry, telux::common::ResponseCallback callback = nullptr)
-        = 0;
+        std::shared_ptr<IFirewallEntry> entry, telux::common::ResponseCallback callback = nullptr,
+        SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Request Firewall rules
      *
-     * @param[in] profileId         Profile identifier on which firewall entries are retrieved.
-     * @param[in] callback          callback to get the response requestFirewallEntries.
+     * @param [in] profileId         Profile identifier on which firewall entries are retrieved.
+     * @param [in] callback          callback to get the response requestFirewallEntries.
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of requestFirewallEntries i.e. success or suitable status code.
      *
@@ -188,7 +191,7 @@ class IFirewallManager {
      *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestFirewallEntries(int profileId,
-        FirewallEntriesCb callback) = 0;
+        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Remove firewall entry
@@ -198,6 +201,7 @@ class IFirewallManager {
      *                              first use requestFirewallEntries() to get the list of entries
      *                              added in the system. And then use IFirewallEntry::getHandle()
      * @param[in] callback          callback to get the response removeFirewallEntry
+     * @param[in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of removeFirewallEntry i.e. success or suitable status code.
      *
@@ -205,7 +209,7 @@ class IFirewallManager {
      *          and could break backwards compatibility.
      */
     virtual telux::common::Status removeFirewallEntry(int profileId, uint32_t handle,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Enable demilitarized zone (DMZ)
@@ -213,14 +217,15 @@ class IFirewallManager {
      * @param [in] profileId     Profile identifier on which DMZ will be enabled.
      * @param [in] ipAddr        IP address for which DMZ will be enabled
      * @param [in] callback      optional callback to get the response addDmz
+     * @param [in] slotId        Specify slot id which has the sim that contains profile id
      *
      * @returns Status of enableDmz i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status enableDmz(int profileId,
-        const std::string ipAddr, telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status enableDmz(int profileId, const std::string ipAddr,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Disable demilitarized zone (DMZ)
@@ -228,6 +233,7 @@ class IFirewallManager {
      * @param [in] profileId     Profile identifier on which DMZ will be disabled.
      * @param [in] ipType        Specify IP type of the DMZ to be disabled
      * @param [in] callback      optional callback to get the response removeDmz
+     * @param [in] slotId        Specify slot id which has the sim that contains profile id
      *
      * @returns Status of disableDmz i.e. success or suitable status code.
      *
@@ -235,20 +241,22 @@ class IFirewallManager {
      *          and could break backwards compatibility.
      */
     virtual telux::common::Status disableDmz(int profileId, const telux::data::IpFamilyType ipType,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Request DMZ entry that was previously set using enableDmz API
      *
      * @param [in] profileId     Profile identifier on which DMZ entries are requested.
      * @param [in] dmzCb         callback to get the response requestDmzEntry
+     * @param [in] slotId        Specify slot id which has the sim that contains profile id
      *
      * @returns Status of requestDmzEntry i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestDmzEntry(int profileId, DmzEntriesCb dmzCb) = 0;
+    virtual telux::common::Status requestDmzEntry(int profileId,
+        DmzEntriesCb dmzCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Get the associated operation type for this instance.

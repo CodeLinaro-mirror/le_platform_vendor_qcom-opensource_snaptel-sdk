@@ -244,9 +244,8 @@ class IDataConnectionManager {
      * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
      *          break backwards compatibility.
      */
-    virtual telux::common::Status requestDataCallList(
-        OperationType type, DataCallListResponseCb callback)
-        = 0;
+    virtual telux::common::Status requestDataCallList(OperationType type,
+        DataCallListResponseCb callback) = 0;
 
     /**
      * Destructor for IDataConnectionManager
@@ -324,6 +323,14 @@ class IDataCall {
      *
      */
     virtual int getProfileId() = 0;
+
+    /**
+     * Get Slot Id
+     *
+     * @returns Subscription Slot Identifier.
+     *
+     */
+    virtual SlotId getSlotId() = 0;
 
     /**
      * Get data operation used for the DataCall.

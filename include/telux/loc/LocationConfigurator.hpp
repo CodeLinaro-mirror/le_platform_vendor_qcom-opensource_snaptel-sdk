@@ -53,8 +53,9 @@ namespace loc {
 
 /**
  * @brief ILocationConfigurator allows for the enablement/disablement of the
- * time uncertainty. It also allows to set the threshold and the required power level for
- * the configureCTunc API.
+ * APIs such as CTunc, PACE, deleteAllAidingData, configureLeverArm, configureConstellations,
+ * configureRobustLocation, configureMinGpsWeek, requestMinGpsWeek, deleteAidingData.
+ * ILocationConfigurator APIs strictly adheres to the principle of single client per process.
  */
 class ILocationConfigurator {
 public:
@@ -93,7 +94,9 @@ public:
 
 /**
  * This API enables or disables the constrained time uncertainty(C-TUNC) feature. When the
- * vehicle is turned off this API helps to put constraint on the time uncertainty.
+ * vehicle is turned off this API helps to put constraint on the time uncertainty. For multiple
+ * invocations of this API, client should wait for the command to finish, e.g.: via
+ * ResponseCallback recieved before issuing a second configureCTunc command.
  *
  * @param [in] enable - true for enable C-TUNC feature and false for disable C-TUNC
  *                      feature.
@@ -117,7 +120,9 @@ public:
                 DEFAULT_TUNC_ENERGY_THRESHOLD) = 0;
 
  /**
-  * This API enables or disables position assisted clock estimator feature.
+  * This API enables or disables position assisted clock estimator feature. For multiple
+  * invocations of this API, client should wait for the command to finish, e.g.: via
+  * ResponseCallback recieved before issuing a second configurePACE command.
   *
   * @param [in] enable - to enable/disable position assisted clock estimator feature.
   *
@@ -131,6 +136,9 @@ public:
 /**
   * This API deletes all form of aiding data from all position engines. This API deletes all
   * assistance data used by GPS engine and force engine to do a cold start for next session.
+  * Invoking this API will trigger cold start of all position engines on the device.
+  * This will cause significant delay for the position engines to produce next fix and may have
+  * other performance impact.
   *
   * @param [in] callback - Optional callback to get the response of delete aiding data.
   *
@@ -140,7 +148,9 @@ public:
         = nullptr) = 0;
 
 /**
-  * This API sets the lever arm parameters for the vehicle.
+  * This API sets the lever arm parameters for the vehicle. For multiple invocations of this API
+  * client should wait for the command to finish, e.g.: via ResponseCallback recieved before
+  * issuing a second configureLeverArm command.
   *
   * @param [in] info - lever arm configuration info regarding below three
   *                   types of lever arm info:
@@ -162,7 +172,14 @@ public:
 
 /**
   * This API blacklists some constellations or subset of SVs from the constellation from being used
-  * by the GNSS engine on modem.
+  * by the GNSS engine on modem. For multiple invocations of this API, client should wait for the
+  * command to finish, e.g.: via ResponseCallback recieved before issuing a second
+  * configureConstellations command. This API call is not incremental and the new settings will
+  * completely overwrite the previous call.
+  * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO and SBAS. For other
+  * constellations NOTSUPPORTED status will be returned.
+  * Nullptr of list will be interpreted as to reset the constellation configuration to
+  * device default.
   *
   * @param [in] SvIdBlackList - specify the set of constellations and SVs that should not be used
   *                             by the GNSS engine on modem. Constellations and SVs not specified
@@ -200,7 +217,9 @@ public:
           telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
-  * This API configures the minimum GPS week used by the modem GNSS engine.
+  * This API configures the minimum GPS week used by the modem GNSS engine. Client should
+  * wait for the command to finish, e.g.: via ResponseCallback recieved before issuing
+  * a second configureMinGpsWeek command.
   *
   * @param [in] minGpsWeek - minimum GPS week to be used by modem GNSS engine.
   *

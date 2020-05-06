@@ -163,7 +163,7 @@ public:
  * @param [in] locationSystemInfo - contains location system information such as
  *                                  current leap seconds change
  */
-  virtual void onLocationSystemInfo(LocationSystemInfo &locationSystemInfo) {}
+  virtual void onLocationSystemInfo(const LocationSystemInfo &locationSystemInfo) {}
 
 /**
  * Destructor of ILocationSystemInfoListener

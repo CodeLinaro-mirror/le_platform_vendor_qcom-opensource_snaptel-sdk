@@ -74,9 +74,12 @@ public:
    void configureLeverArm(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
    void configureRobustLocation(std::vector<std::string> userInput);
+   void requestRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);
    void configureMinGpsWeek(std::vector<std::string> userInput);
+   void configureMinSVElevation(std::vector<std::string> userInput);
    void requestMinGpsWeek(std::vector<std::string> userInput);
+   void requestMinSVElevation(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();

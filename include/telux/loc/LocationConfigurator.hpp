@@ -76,6 +76,35 @@ public:
      telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to requestMinSVElevation API.
+ *
+ * @param[in] minSVElevation - minimum SV Elevation angle in units of degree.
+ *
+ * @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+ using GetMinSVElevationCallback = std::function<void(uint8_t minSVElevation,
+     telux::common::ErrorCode error)>;
+
+/** This function is called with the response to requestRobustLocation API.
+ *
+ * @param[in] rLConfig - robust location settings information.
+ *
+ *  @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ *  @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+using GetRobustLocationCallback = std::function<void(const telux::loc::
+     RobustLocationConfiguration rLConfig, telux::common::ErrorCode error)>;
+
+/**
  * Checks the status of location configuration subsystems and returns the result.
  *
  * @returns True if location configuration subsystem is ready for service otherwise false.
@@ -217,6 +246,20 @@ public:
           telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
+  * This API retrieves the robust location settings used by the GNSS engine.
+  *
+  * @param [in] cb - callback to retrieve robust location information.
+  *
+  * @returns Status of requestRobustLocation i.e. success or suitable status code.
+  *
+  * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+  virtual telux::common::Status requestRobustLocation(GetRobustLocationCallback cb) = 0;
+
+/**
   * This API configures the minimum GPS week used by the modem GNSS engine. Client should
   * wait for the command to finish, e.g.: via ResponseCallback recieved before issuing
   * a second configureMinGpsWeek command.
@@ -249,6 +292,60 @@ public:
   */
 
   virtual telux::common::Status requestMinGpsWeek(GetMinGpsWeekCallback cb) = 0;
+
+/**
+  * This API configures the minimum SV elevation angle setting used by the GNSS standard position
+  * engine. Configuring minimum SV elevation setting will not cause position engine to stop
+  * tracking low elevation SVs. This elevation mask is used to filter out the SVs that are used in
+  * determining the position. SVs with an elevation below this setting will be excluded from
+  * position determination. So configuring this to a large angle will filter out most of the SVs
+  * and will have adverse affects on the performance of the position engine.
+  *
+  * This setting does not impact the SV information and SV measurement reports retrieved from APIs
+  * such as IGnssSvINfo::getSVInfoList, ILocationListener::onGnssMeasurementsInfo.
+  *
+  * Client should wait for the command to finish, e.g.: via ResponseCallback received, before
+  * issuing a second configureMinElevation command. If this API is called while the GNSS Position
+  * Engine is in the middle of a session, ResponseCallback will still be invoked shortly after to
+  * indicate the setting has been received by the SPE engine. However the enigne can take some time
+  * to apply this setting if it is in middle of a session (as long as 255 seconds in some
+  * implementations). It is advised to use this API with caution and only for very limited usage
+  * scenario, e.g.: for performance test, certification process and for one-time device
+  * configuration.
+  *
+  * @param [in] minSVElevation - minimum SV elevation to be used by GNSS standard position
+  *                              engine (SPE). Valid range is [0, 90] in unit of degree.
+  *
+  * @param [in] callback - Optional callback to get the response of configure
+  *                        minimum SV Elevation angle.
+  *
+  * @returns Status of configureMinSVElevation i.e. success or suitable status code.
+  *
+  * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+  virtual telux::common::Status configureMinSVElevation(uint8_t minSVElevation,
+      telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+  * This API retrieves the minimum SV Elevation configuration used by the modem GNSS SPE engine.
+  * If this API is invoked right after the configureMinSVElevation, the returned setting may not
+  * match the one specified in configureMinSVElevation, as the setting received via
+  * configureMinSVElevation might not have been applied yet as it takes time to apply the
+  * setting if the GNSS SPE engine has an on-going session.
+  *
+  * @param [in] cb - callback to retrieve the minimum SV elevation.
+  *
+  * @returns Status of requestMinSVElevation i.e. success or suitable status code.
+  *
+  * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+  virtual telux::common::Status requestMinSVElevation(GetMinSVElevationCallback cb) = 0;
 
 /**
   * This API deletes specified aiding data from all position engines on the device. For

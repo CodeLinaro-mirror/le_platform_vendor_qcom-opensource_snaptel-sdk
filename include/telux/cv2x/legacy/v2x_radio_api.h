@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -718,6 +718,30 @@ typedef struct {
 } v2x_tx_flow_info_t;
 
 /**
+    Parameters to identify a Tx or Rx socket.
+ */
+typedef struct {
+    int sock;
+    /**< Pointer to the file descriptor for the socket. */
+
+    struct sockaddr_in6 sockaddr;
+    /**< IPv6 socket address. The sockaddr_in6 buffer is
+    initialized with the IPv6 source address and source port
+    that are used for the bind() function. */
+} v2x_sock_info_t;
+
+/**
+    Parameters to identify a service ID list.
+ */
+typedef struct {
+    int length;
+    /**< number of services IDs included in the array of sid. */
+
+    uint32_t sid[MAX_SUBSCRIBE_SIDS_LIST_LEN];
+    /**< array of service IDs. */
+} v2x_sid_list_t;
+
+/**
     Advanced parameters that can be specified for Tx SPS flows.
  */
 typedef struct {
@@ -922,7 +946,7 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
 extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *sock, struct sockaddr_in6 *rx_sockaddr);
 
 /**
-    Opens a new V2X radio receive socket with specified service IDs for subscription,
+    Opens a new V2X radio receive socket with specific service IDs for subscription,
     and initializes the given sockaddr buffer. The socket is also bound as an
     AF_INET6 UDP type socket.
 
@@ -944,8 +968,218 @@ extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *soc
     You can execute any sockopts that are appropriate for this type of socket
     (AF_INET6).
     @par
-    @note1hang The port number for the receive path is not exposed, but it is
-               in the sockaddr_ll structure (if the caller is interested).
+    @note1hang This API can be used to subscribe wildcard, catchall port, or specifc
+               service IDs. The Rx port should be set with v2x_set_rx_port()
+               before any subscription via this API, otherwise a default port
+               number will be used.
+    @par
+    Wildcard is used to receive all traffic. Only one port can be registered as
+    wildcard port. Once wildcard is registered successfully, all received packets
+    will be directed to wildcard port, and any subscription for specific service
+    IDs or catchall port at other ports will be invalid. The parameter id_list
+    of this API should be set to a null list for wildcard subscription.
+    @par
+    Catchall port is used to receive packets with non-registered service IDs
+    (via specific service IDs subscription). Only one port can be registered
+    as catchall port. If catchall port is registered successfully, received
+    packets with non-registered service ID will be directed to catchall port.
+    All specific service IDs subscription (if any) should be performed before
+    catchall port subscription. The parameter id_list of this API should include
+    all non-registered service IDs for catchall port subscription.
+    @par
+    Any port different from catchall port can be used to receive packets with specific
+    service IDs. Only one port can be registered for a single service ID, a list of
+    service IDs can be registered at a single port. To subscribe specific service IDs
+    at a given Rx port, a Tx flow must be pre-setup with the Tx service ID set to any
+    service ID included in the list of specific service IDs and the Tx source port set
+    to the same port number as Rx port. The parameter id_list of this API should include
+    all interested service IDs for the given Rx port.
+
+    @return
+    0 -- On success.
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device.
+
+    @dependencies
+    The interface must be pre-initialized with v2x_radio_init(). The handle from
+    that function must be used as the parameter in this function. The Rx port
+    must be pre-set with v2x_set_rx_port(), otherwise a default port number will
+    be used. For any specific service ID subscription, a Tx flow must be pre-setup
+    using one of the following methods:
+    - v2x_radio_tx_sps_sock_create_and_bind()
+    - v2x_radio_tx_sps_sock_create_and_bind_v2()
+    - v2x_radio_tx_sps_only_create()
+    - v2x_radio_tx_sps_only_create_v2()
+    - v2x_radio_tx_event_sock_create_and_bind()
+    - v2x_radio_tx_event_sock_create_and_bind_v2()
+    - v2x_radio_tx_event_sock_create_and_bind_v3() @newpage
+ */
+extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
+    int id_ist_len,
+    uint32_t *id_list,
+    int *sock,
+    struct sockaddr_in6 *rx_sockaddr);
+
+/**
+    Opens a new V2X radio receive socket with specific service IDs for subscription
+    and specifc port number for the receive path, and initializes the given sockaddr
+    buffer. The socket is also bound as an AF_INET6 UDP type socket.
+
+    This %v2x_radio_rx_sock_create_and_bind_v3() method differs from
+    v2x_radio_rx_sock_create_and_bind_v2() in that you can use the
+    port_num parameter to specify the port number for the receive path.
+
+    @datatypes
+    #v2x_radio_handle_t
+
+    @param[in] handle        Identifies the initialized Radio interface.
+    @param[in] port_num      Identifies the port number for the receive path.
+    @param[in] id_ist_len    Identifies the length of service ID list.
+    @param[in] id_list       Pointer to the service ID list for subscription,
+                             subscribe wildcard if input nullptr.
+    @param[out] sock         Pointer to the socket that, on success, returns
+                             the socket descriptor. The caller must release
+                             this socket with v2x_radio_sock_close().
+    @param[out] rx_sockaddr  Pointer to the IPv6 UDP socket. The sockaddr_in6
+                             buffer is initialized with the IPv6 source address
+                             and source port that are used for the bind.
+
+    @detdesc
+    You can execute any sockopts that are appropriate for this type of socket
+    (AF_INET6).
+    @par
+    @note1hang This API can be used to subscribe wildcard, catchall port, or
+               specifc service IDs.
+    @par
+    Wildcard is used to receive all traffic. Only one port can be registered as
+    wildcard port. Once wildcard is registered successfully, all received packets
+    will be directed to wildcard port, and any subscription for specific service
+    IDs or catchall port at other ports will be invalid. The parameter id_list
+    of this API should be set to a null list for wildcard subscription.
+    @par
+    Catchall port is used to receive packets with non-registered service IDs
+    (via specific service IDs subscription). Only one port can be registered
+    as catchall port. If catchall port is registered successfully, received
+    packets with non-registered service ID will be directed to catchall port.
+    All specific service IDs subscription (if any) should be performed before
+    catchall port subscription. The parameter id_list of this API should include
+    all non-registered service IDs for catchall port subscription.
+    @par
+    Any port different from catchall port can be used to receive packets with specific
+    service IDs. Only one port can be registered for a single service ID, a list of
+    service IDs can be registered at a single port. To subscribe specific service IDs
+    at a given Rx port, a Tx flow must be pre-setup with the Tx service ID set to any
+    service ID included in the list of specific service IDs and the Tx source port set
+    to the same port number as Rx port. The parameter id_list of this API should include
+    all interested service IDs for the given Rx port.
+
+    @return
+    0 -- On success.
+    @par
+    Otherwise:
+     - EPERM -- Socket creation failed; for more details, check errno.h.
+     - EAFNOSUPPORT -- On failure to find the interface.
+     - EACCES -- On failure to get the MAC address of the device.
+
+    @dependencies
+    The interface must be pre-initialized with v2x_radio_init(). The handle from
+    that function must be used as the parameter in this function. For any specific
+    service ID subscription, a Tx flow must be pre-setup using one of the following
+    methods:
+    - v2x_radio_tx_sps_sock_create_and_bind()
+    - v2x_radio_tx_sps_sock_create_and_bind_v2()
+    - v2x_radio_tx_sps_only_create()
+    - v2x_radio_tx_sps_only_create_v2()
+    - v2x_radio_tx_event_sock_create_and_bind()
+    - v2x_radio_tx_event_sock_create_and_bind_v2()
+    - v2x_radio_tx_event_sock_create_and_bind_v3() @newpage
+ */
+extern int v2x_radio_rx_sock_create_and_bind_v3(v2x_radio_handle_t handle,
+    uint16_t port_num,
+    int id_ist_len,
+    uint32_t *id_list,
+    int *sock,
+    struct sockaddr_in6 *rx_sockaddr);
+
+/**
+    Creates Tx SPS socket, Tx Event socket and Rx socket with specified parameters.
+    The socket is also bound as an AF_INET6 UDP type socket.
+
+    This %v2x_radio_sock_create_and_bind() method is the combination of function
+    v2x_radio_tx_sps_sock_create_and_bind_v2()/v2x_radio_tx_event_sock_create_and_bind_v2
+    in the transmit direction and function v2x_radio_rx_sock_create_and_bind_v3()
+    in the receiving direction.
+
+    @datatypes
+    #v2x_radio_handle_t
+
+    @param[in]  handle           Identifies the initialized Radio interface.
+    @param[in]  tx_flow_info     Pointer to the Tx SPS or event flow information.
+                                 To create event flow, set reservation.v2xid
+                                 and flow_info in this structure.
+    @param[in]  calls            Pointer to reservation callbacks or listeners.
+                                 \n @vertspace{3}
+                                 This parameter is called when underlying radio
+                                 MAC parameters change related to the SPS
+                                 bandwidth contract.
+                                 For example, the callback after a
+                                 reservation change, or if the timing offset of
+                                 the SPS adjusts itself in response to
+                                 traffic. \n @vertspace{3}
+                                 This parameter passes NULL if no callbacks are
+                                 required.
+    @param[in]  tx_sps_portnum   Requested Tx source port number for SPS transmissions,
+                                 or -1 for no Tx sps flow.
+    @param[in]  tx_event_portnum Requested Tx source port number for event transmissions,
+                                 or -1 for no Tx event flow.
+    @param[in]  rx_portnum       Requested Rx destination port number, or -1 for no Rx
+                                 subscription.
+    @param[in]  rx_id_list       Pointer to the Rx service ID list for subscription,
+                                 subscribe wildcard if input nullptr.
+    @param[out] tx_sps_sock      Pointer to the Tx sps socket that, on success, returns
+                                 the socket descriptor and the IPv6 socket address. The
+                                 caller must release this socket with v2x_radio_sock_close().
+    @param[out] tx_event_sock    Pointer to the Tx event socket that, on success, returns
+                                 the socket descriptor and the IPv6 socket address. The
+                                 caller must release this socket with v2x_radio_sock_close().
+    @param[out] rx_sock          Pointer to the Rx socket that, on success, returns
+                                 the socket descriptor and the IPv6 socket address. The
+                                 caller must release this socket with v2x_radio_sock_close().
+
+    @detdesc
+    You can execute any sockopts that are appropriate for this type of socket
+    (AF_INET6).
+    @par
+    @note1hang This API can be used for the registeration of both Tx and Rx.
+               It sets up sockets on the requested port numbers. A negative
+               port number corresponds to no actions for Tx or Rx.
+
+    @par
+    Wildcard is used to receive all traffic. Only one port can be registered as
+    wildcard port. Once wildcard is registered successfully, all received packets
+    will be directed to wildcard port, and any subscription for specific service
+    IDs or catchall port at other ports will be invalid. The parameter rx_id_list
+    of this API should be set to a null list for wildcard subscription.
+    @par
+    Catchall port is used to receive packets with non-registered service IDs
+    (via specific service IDs subscription). Only one port can be registered
+    as catchall port. If catchall port is registered successfully, received
+    packets with non-registered service ID will be directed to catchall port.
+    All specific service IDs subscription (if any) should be performed before
+    catchall port subscription. The parameter rx_id_list of this API should
+    include all non-registered service IDs for catchall port subscription.
+    @par
+    Any port different from catchall port can be used to receive packets with specific
+    service IDs. Only one port can be registered for a single service ID, a list of
+    service IDs can be registered at a single port. To subscribe specific service IDs
+    at a given Rx port, a Tx flow should also be set up using this API. The parameter
+    rx_id_list should include all interested service IDs for the given Rx port, the
+    parameter tx_flow_info.reservation.v2xid should be set to one of the service ID
+    included in rx_id_list, the parmenter tx_sps_portnum or tx_event_portnum should
+    be set to the same port number as rx_portnum.
 
     @return
     0 -- On success.
@@ -959,11 +1193,17 @@ extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *soc
     The interface must be pre-initialized with v2x_radio_init(). The handle from
     that function must be used as the parameter in this function. @newpage
  */
-extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
-    int id_ist_len,
-    uint32_t *id_list,
-    int *sock,
-    struct sockaddr_in6 *rx_sockaddr);
+extern int v2x_radio_sock_create_and_bind(
+    v2x_radio_handle_t handle,
+    v2x_tx_sps_flow_info_t *tx_flow_info,
+    v2x_per_sps_reservation_calls_t *calls,
+    int tx_sps_portnum,
+    int tx_event_portnum,
+    int rx_portnum,
+    v2x_sid_list_t *rx_id_list,
+    v2x_sock_info_t *tx_sps_sock,
+    v2x_sock_info_t *tx_event_sock,
+    v2x_sock_info_t *rx_sock);
 
 /**
     Creates and binds a socket with a bandwidth-reserved (SPS) Tx flow with the

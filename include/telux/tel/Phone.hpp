@@ -119,6 +119,7 @@ public:
     *
     * @returns @ref RadioState
     *
+    * @deprecated Use IPhoneManager::requestOperatingMode() API instead
     */
    virtual RadioState getRadioState() = 0;
 
@@ -164,6 +165,8 @@ public:
     *                       radio power request
     *
     * @returns Status of setRadioPower i.e. success or suitable error code.
+    *
+    * @deprecated Use IPhoneManager::setOperatingMode() API instead
     */
    virtual telux::common::Status setRadioPower(
       bool enable, std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)

@@ -367,7 +367,7 @@ void MyLocationListener::printGnssSystemTime(
       std::cout << " Single sided maximum time bias uncertainty: " << info.gloClkTimeUncMs;
       std::cout << " FCount (free running HW timer) value: " << info.refFCount;
       std::cout << " Number of clock resets/discontinuities detected: " << info.numClockResets;
-      std::cout << " GLONASS four year number: " << info.gloFourYear << std::endl;;
+      std::cout << " GLONASS four year number: " << info.gloFourYear << std::endl;
    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_BDS) {
       std::cout << "BDS satellite is valid" << std::endl;
       telux::loc::TimeInfo timeInfo = sysTimeInfo.bds;

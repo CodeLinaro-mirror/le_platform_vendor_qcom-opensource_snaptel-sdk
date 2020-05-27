@@ -481,42 +481,48 @@ void MyPhoneListener::onVoiceServiceStateChanged(
 
 std::string MyCellularCapabilityCallback::voiceServiceTechnologiesMaskToString(
     telux::tel::VoiceServiceTechnologiesMask vstMask) {
-    std::string vocSrvTechStr = "Unknown";
+    std::string vocSrvTechStr = "";
     if (vstMask[static_cast<int>(telux::tel::VoiceServiceTechnology::VOICE_TECH_GW_CSFB)]) {
-        vocSrvTechStr = "GW_CSFB";
+        vocSrvTechStr = "GW_CSFB ";
     }
     if (vstMask[static_cast<int>(telux::tel::VoiceServiceTechnology::VOICE_TECH_1x_CSFB)]) {
-        vocSrvTechStr = "1x_CSFB";
+        vocSrvTechStr += "1x_CSFB ";
     }
     if (vstMask[static_cast<int>(telux::tel::VoiceServiceTechnology::VOICE_TECH_VOLTE)]) {
-        vocSrvTechStr = "VOLTE";
+        vocSrvTechStr += "VOLTE";
+    }
+    if (vocSrvTechStr.empty()) {
+        vocSrvTechStr = "Unknown";
     }
     return vocSrvTechStr;
 }
 
 std::string MyCellularCapabilityCallback::ratCapabilitiesMaskToString(
     telux::tel::RATCapabilitiesMask ratCapabilitiesMask) {
-    std::string ratCapStr = "Unknown";
+    std::string ratCapStr = "";
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::AMPS)]) {
         ratCapStr = "AMPS ";
     }
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::CDMA)]) {
-        ratCapStr = "CDMA ";
+        ratCapStr += "CDMA ";
     }
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::HDR)]) {
-        ratCapStr = "HDR ";
+        ratCapStr += "HDR ";
     }
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::GSM)]) {
-        ratCapStr = "GSM ";
+        ratCapStr += "GSM ";
     }
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::WCDMA)]) {
-        ratCapStr = "WCDMA ";
+        ratCapStr += "WCDMA ";
     }
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::LTE)]) {
-        ratCapStr = "LTE ";
+        ratCapStr += "LTE ";
     }
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::TDS)]) {
-        ratCapStr = "TDS ";
+        ratCapStr += "TDS ";
+    }
+    if (ratCapStr.empty()) {
+        ratCapStr = "Unknown";
     }
     return ratCapStr;
 }

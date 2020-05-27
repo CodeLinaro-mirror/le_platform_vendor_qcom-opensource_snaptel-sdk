@@ -41,6 +41,8 @@
 #include <cstring>
 #include <vector>
 
+#include <telux/common/CommonDefines.hpp>
+
 namespace telux {
 
 namespace audio {
@@ -58,57 +60,57 @@ const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
  * Represent type of device like SPEAKER, MIC, etc.
  */
 enum DeviceType {
-   DEVICE_TYPE_NONE = -1,
-   /* output devices */
-   DEVICE_TYPE_SPEAKER = 1,
-   /* input devices */
-   DEVICE_TYPE_MIC = 257,
+    DEVICE_TYPE_NONE = -1,
+    /* output devices */
+    DEVICE_TYPE_SPEAKER = 1,
+    /* input devices */
+    DEVICE_TYPE_MIC = 257,
 };
 
 /**
  * Represent Device Direction RX (Sink), Tx (Source)
  */
 enum class DeviceDirection {
-   NONE = -1,
-   RX = 1,
-   TX = 2,
+    NONE = -1,
+    RX = 1,
+    TX = 2,
 };
 
 /**
  * Represent Voice Direction RX (Sink), Tx (Source)
  */
 enum class Direction {
-   RX = 1,
-   TX = 2,
+    RX = 1,
+    TX = 2,
 };
 
 /**
  * Represent Stream Type
  */
 enum class StreamType {
-   NONE = -1,
-   VOICE_CALL = 1, /**< Voice Call, Provides Audio Session for an active Voice */
-   PLAY = 2, /**< Plaback, Provides Audio Playback Session */
-   CAPTURE = 3, /**< Capture, Provides Audio Capture/Record Session */
-   LOOPBACK = 4, /**< Loopback, Provides loopback between source and sink devices */
-   TONE_GENERATOR = 5, /**< Tone Generator, Generates tone on sink device */
+    NONE = -1,
+    VOICE_CALL = 1, /**< Voice Call, Provides Audio Session for an active Voice */
+    PLAY = 2, /**< Plaback, Provides Audio Playback Session */
+    CAPTURE = 3, /**< Capture, Provides Audio Capture/Record Session */
+    LOOPBACK = 4, /**< Loopback, Provides loopback between source and sink devices */
+    TONE_GENERATOR = 5, /**< Tone Generator, Generates tone on sink device */
 };
 
 /**
  * Represent Stream Direction
  */
 enum class StreamDirection {
-   NONE = -1,
-   RX = 1, /**< Represents Session Directed towards Sink Device */
-   TX = 2, /**< Represents Session Directed from Source Device*/
+    NONE = -1,
+    RX = 1, /**< Represents Session Directed towards Sink Device */
+    TX = 2, /**< Represents Session Directed from Source Device*/
 };
 
 /**
  * Represent Stream's types of Channel
  */
 enum ChannelType {
-   LEFT = (1 << 0), /**< Represents left channel   */
-   RIGHT = (1 << 1), /**< Represents right channel */
+    LEFT = (1 << 0), /**< Represents left channel   */
+    RIGHT = (1 << 1), /**< Represents right channel */
 };
 
 /**
@@ -120,11 +122,11 @@ using ChannelTypeMask = int;
  * Specifies Stream data format
  */
 enum class AudioFormat {
-   UNKNOWN = -1,         /**< Unknown format */
-   PCM_16BIT_SIGNED = 1, /**< 16 bit signed PCM format */
-   AMRNB = 20,           /**< AMRNB format */
-   AMRWB,                /**< AMRWB format */
-   AMRWB_PLUS,           /**< AMRWB+ format */
+    UNKNOWN = -1,         /**< Unknown format */
+    PCM_16BIT_SIGNED = 1, /**< 16 bit signed PCM format */
+    AMRNB = 20,           /**< AMRNB format */
+    AMRWB,                /**< AMRWB format */
+    AMRWB_PLUS,           /**< AMRWB+ format */
 };
 
 /**
@@ -177,24 +179,25 @@ struct FormatParams {
  *  Frame format codec specific parameters
  */
 struct AmrwbpParams : FormatParams {
-   uint32_t bitWidth; /**< Bitwidth of Stream, Typical Values <16/24>. */
-   AmrwbpFrameFormat frameFormat;
+    uint32_t bitWidth; /**< Bitwidth of Stream, Typical Values <16/24>. */
+    AmrwbpFrameFormat frameFormat;
 };
 
 /**
  *  Common Stream configuration parameters
  */
 struct StreamConfig {
-   StreamType type;
-   int modemSubId = 1; /**<  Represents modem Subscription ID, Default set to 1.
-                             Applicable only for Voice Call */
-   uint32_t sampleRate; /**< Sample Rate of Stream, Typical Values <8k/16k/32k/48k> */
-   ChannelTypeMask channelTypeMask;
-   AudioFormat format;
-   std::vector<DeviceType> deviceTypes;
-   std::vector<Direction> voicePaths; /**< Represent voice path direction for in call audio.
-                                           TX for Uplink and RX for Downlink.> */
-   FormatParams *formatParams;
+    StreamType type;
+    int modemSubId = 1; /**<  @deprecated Represents modem Subscription ID, Default set to 1.
+                                Applicable only for Voice Call */
+    SlotId slotId = INVALID_SLOT_ID; /**< Represents slotId, applicable for voice call only */
+    uint32_t sampleRate; /**< Sample Rate of Stream, Typical Values <8k/16k/32k/48k> */
+    ChannelTypeMask channelTypeMask;
+    AudioFormat format;
+    std::vector<DeviceType> deviceTypes;
+    std::vector<Direction> voicePaths; /**< Represent voice path direction for in call audio.
+                                            TX for Uplink and RX for Downlink.> */
+    FormatParams *formatParams;
 };
 
 /**
@@ -211,34 +214,34 @@ struct FormatInfo {
  *  Stream Channel Volume parameters
  */
 struct ChannelVolume {
-   ChannelType channelType;
-   float vol; /**< Volume range in float <0 to 1.0>.
-                    0 represents min volume, 1 represents max volume */
+    ChannelType channelType;
+    float vol; /**< Volume range in float <0 to 1.0>.
+                        0 represents min volume, 1 represents max volume */
 };
 
 /**
  *  Stream Channel Volume parameters consolidating entire Stream
  */
 struct StreamVolume {
-   std::vector<ChannelVolume> volume;
-   StreamDirection dir;
+    std::vector<ChannelVolume> volume;
+    StreamDirection dir;
 };
 
 /**
  *  Stream Mute parameters
  */
 struct StreamMute {
-   bool enable; /**< enable or disable mute on stream */
-   StreamDirection dir;
+    bool enable; /**< enable or disable mute on stream */
+    StreamDirection dir;
 };
 
 /**
  *  Stream Data Buffer
  */
 struct StreamBuffer {
-   std::vector<uint8_t> buffer; /**< Buffer with Size encapsulated */
-   size_t offset; /**< Actual Buffer Content starting position */
-   int64_t timestamp; /**< For future use */
+    std::vector<uint8_t> buffer; /**< Buffer with Size encapsulated */
+    size_t offset; /**< Actual Buffer Content starting position */
+    int64_t timestamp; /**< For future use */
 };
 
 /**

@@ -52,7 +52,7 @@ public:
     void cleanup();
 
     // AudioClient creates stream for any type of stream and any SubMenu can request for stream
-    std::shared_ptr<IAudioStream> getStream(StreamType streamtype);
+    std::shared_ptr<IAudioStream> getStream(StreamType streamtype, SlotId slotId = DEFAULT_SLOT_ID);
 
     // since path of file is taken during stream creation it is stored for future use
     void getPlayConfig(std::string &filePath, AudioFormat &playFormat);
@@ -61,21 +61,21 @@ public:
     // is required during the time of writting to file.
     void getCaptureConfig(uint32_t &sampleRate, uint32_t &channelType);
 
-    Status createStream(StreamType streamType);
-    Status deleteStream(StreamType streamType);
+    Status createStream(StreamType streamType, SlotId slotId = DEFAULT_SLOT_ID);
+    Status deleteStream(StreamType streamType, SlotId slotId = DEFAULT_SLOT_ID);
 
-    void getStreamDevice(StreamType streamtype);
-    void setStreamDevice(StreamType streamtype);
-    void getVolume(StreamType streamtype);
-    void setVolume(StreamType streamtype);
-    void getMute(StreamType streamtype);
-    void setMute(StreamType streamtype);
+    void getStreamDevice(StreamType streamtype, SlotId slotId = DEFAULT_SLOT_ID);
+    void setStreamDevice(StreamType streamtype, SlotId slotId = DEFAULT_SLOT_ID);
+    void getVolume(StreamType streamtype, SlotId slotId = DEFAULT_SLOT_ID);
+    void setVolume(StreamType streamtype, SlotId slotId = DEFAULT_SLOT_ID);
+    void getMute(StreamType streamtype, SlotId slotId = DEFAULT_SLOT_ID);
+    void setMute(StreamType streamtype, SlotId slotId = DEFAULT_SLOT_ID);
 
 private:
     // Since all functions need streamType so a common stream resolver
-    void resolveStreamType(StreamType streamType);
+    void resolveStreamType(StreamType streamType, SlotId slotId = DEFAULT_SLOT_ID);
     // Input functions for different cases
-    void takeUserModemIdInput(int &modemId);
+    void takeUserSlotIdInput(SlotId &slotId);
     void takeAudioFormatInput(AudioFormat &audioFormat);
     void takeUserSampleRateInput(uint32_t &userSampleRate);
     void takeUserChannelInput(telux::audio::ChannelTypeMask &channelType);
@@ -98,6 +98,7 @@ private:
     std::shared_ptr<IAudioManager> audioManager_;
     std::shared_ptr<IAudioStream> stream_;
     std::shared_ptr<IAudioVoiceStream> audioVoiceStream_;
+    std::shared_ptr<IAudioVoiceStream> audioVoiceStream2_;
     std::shared_ptr<IAudioPlayStream> audioPlayStream_;
     std::shared_ptr<IAudioCaptureStream> audioCaptureStream_;
     std::shared_ptr<IAudioLoopbackStream> audioLoopbackStream_;

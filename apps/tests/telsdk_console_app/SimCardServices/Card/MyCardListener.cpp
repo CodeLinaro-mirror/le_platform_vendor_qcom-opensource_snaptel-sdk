@@ -33,6 +33,7 @@
 #include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 /**
  *  Implementation of MyOpenLogicalChannelCallback
@@ -41,10 +42,10 @@ void MyOpenLogicalChannelCallback::onChannelResponse(int channel, telux::tel::Ic
                                                      telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << "onChannelResponse successful, channel: " << channel << "\n iccResult "
+      PRINT_CB << "onChannelResponse successful, channel: " << channel << "\n iccResult "
                          << result.toString() << std::endl;
    } else {
-      PRINT_NOTIFICATION << "onChannelResponse failed\n error: " << static_cast<int>(error)
+      PRINT_CB << "onChannelResponse failed\n error: " << static_cast<int>(error)
                          << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
@@ -55,9 +56,9 @@ void MyOpenLogicalChannelCallback::onChannelResponse(int channel, telux::tel::Ic
 void MyCardCommandResponseCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << "onCloseLogicalChannel successful." << std::endl;
+      PRINT_CB << "onCloseLogicalChannel successful." << std::endl;
    } else {
-      PRINT_NOTIFICATION << "onCloseLogicalChannel failed\n error: " << static_cast<int>(error)
+      PRINT_CB << "onCloseLogicalChannel failed\n error: " << static_cast<int>(error)
                          << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
@@ -69,10 +70,10 @@ void MyTransmitApduResponseCallback::onResponse(telux::tel::IccResult result,
                                                 telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_NOTIFICATION << "onResponse successful, " << result.toString() << std::endl
+      PRINT_CB << "onResponse successful, " << result.toString() << std::endl
                          << std::endl;
    } else {
-      PRINT_NOTIFICATION << "onResponse failed\n error: " << static_cast<int>(error)
+      PRINT_CB << "onResponse failed\n error: " << static_cast<int>(error)
                          << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }

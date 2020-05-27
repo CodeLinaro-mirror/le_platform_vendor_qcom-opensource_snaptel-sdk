@@ -51,7 +51,7 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
    ~~~~~~{.cpp}
     StreamConfig config;
     config.type = StreamType::PLAY;
-    config.modemSubId = MODEM_SUB_ID;
+    config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = SAMPLE_RATE;
     config.format = AudioFormat::AMRWB_PLUS;
     // here both channel selected, this can be selected according to requirement

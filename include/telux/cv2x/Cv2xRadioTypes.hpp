@@ -77,7 +77,7 @@ enum class Cv2xCauseType {
     TIMING,     /**< Timing is invalid */
     CONFIG,     /**< Config is invalid */
     UE_MODE,    /**< UE Mode is invalid */
-    GEOPOLYGON, /**< V2x is not supported in current geopolygon */
+    GEOPOLYGON, /**< Left current geopolygon */
     UNKNOWN,    /**< Cause is unknown */
 };
 

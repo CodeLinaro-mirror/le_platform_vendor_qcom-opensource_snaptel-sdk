@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -79,6 +79,18 @@ enum class Cv2xCauseType {
     UE_MODE,    /**< UE Mode is invalid */
     GEOPOLYGON, /**< V2x is not supported in current geopolygon */
     UNKNOWN,    /**< Cause is unknown */
+};
+
+/**
+ * Encapsulates parameters of a CV2X socket.
+ *
+ * Used in @ref createCv2xTcpSocket.
+ */
+struct SocketInfo {
+    uint32_t serviceId;
+    /**< V2X service ID bound to the socket. */
+    uint16_t localPort;
+    /**< Local port number of the socket used for binding. */
 };
 
 /**

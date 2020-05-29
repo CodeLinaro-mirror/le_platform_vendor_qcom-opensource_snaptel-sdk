@@ -89,8 +89,8 @@ typedef int v2x_radio_handle_t;
  */
 #define MAX_TRUSTED_IDS_LIST_LEN   (50)
 
- /** Maximum length for the subscribed service ID list that can
-     be passed in v2x_radio_rx_sock_create_and_bind_v2(). @newpage
+/** Maximum length for the subscribed service ID list that can
+     be passed in v2x_radio_rx_sock_create_and_bind_v2().
   */
 #define MAX_SUBSCRIBE_SIDS_LIST_LEN (10)
 
@@ -674,7 +674,7 @@ typedef enum {
     V2X_AUTO_RETRANSMIT_DISABLED = 0,  /**< Retransmit mode is disabled. */
     V2X_AUTO_RETRANSMIT_ENABLED = 1,   /**< Retransmit mode is enabled. */
     V2X_AUTO_RETRANSMIT_DONT_CARE = 2, /**< Modem falls back to its default
-                                            behavior. @newpage */
+                                            behavior. */
 } v2x_auto_retransmit_policy_t;
 
 /**
@@ -749,17 +749,27 @@ typedef struct {
     /**< Transmit reservation information. */
 
     v2x_tx_flow_info_t flow_info;
-    /**< Transmit resource information about the SPS Tx flow.
-         @newpagetable */
+    /**< Transmit resource information about the SPS Tx flow.*/
 
 } v2x_tx_sps_flow_info_t;
+
+/**
+    Parameters that can be specified for the creation of CV2X socket.
+ */
+typedef struct {
+    uint32_t service_id;
+    /**< V2X service ID bound to the CV2X socket. */
+
+    uint16_t local_port;
+    /**< Local port number of the CV2X socket used for binding. */
+} socket_info_t;
 
 /**
     V2X Ip Types
  */
 typedef enum {
     TRAFFIC_IP = 0,     /**< Use Ip type traffic. */
-    TRAFFIC_NON_IP = 1  /**< Use Non-Ip type traffic. */
+    TRAFFIC_NON_IP = 1  /**< Use Non-Ip type traffic. @newpage */
 } traffic_ip_type_t;
 
 typedef traffic_ip_type_t traffic_ip_type;
@@ -1437,6 +1447,7 @@ extern void v2x_radio_tx_flush(char *interface);
 @{ */
 /**
     Opens and binds an event-driven socket (one with no bandwidth reservation).
+    The socket is bound as an AF_INET6 UDP type socket.
 
     @param[in]  interface        Pointer to the operating system name to use.
                                  This interface is an RmNet interface (HLOS).
@@ -1872,6 +1883,7 @@ extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
     Deprecated. Pass #traffic_ip_type_t on flow creation.
 
     Opens and binds an event-driven socket (one with no bandwidth reservation).
+    The socket is bound as an AF_INET6 UDP type socket.
 
     This %v2x_radio_tx_event_sock_create_and_bind_v2() method differs from
     v2x_radio_tx_event_sock_create_and_bind() in that you can use the
@@ -2065,6 +2077,7 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
                                      void *ctx_p);
 /**
     Opens and binds an event-driven socket (one with no bandwidth reservation).
+    The socket is bound as an AF_INET6 UDP type socket.
 
     This %v2x_radio_tx_event_sock_create_and_bind_v3() method differs from
     v2x_radio_tx_event_sock_create_and_bind_v2() in that you can use the traffic_ip_type_t
@@ -2131,6 +2144,67 @@ int v2x_radio_tx_event_sock_create_and_bind_v3(
  */
 v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char * iface_name, size_t buffer_len);
 
+/**
+    Creates a TCP socket for event Tx and Rx. The socket is bound as an AF_INET6 TCP
+    type socket.
+
+    This %v2x_radio_tcp_sock_create_and_bind() API creates a new TCP socket and binds
+    the socket to the IPv6 address of local IP interface with specified source port.
+    Additionally, this API also registers a Tx event flow and subscribes Rx with specified
+    service ID to enable TCP control and data packets in both transmitting and receiving
+    directions.
+    @par
+    If the created socket is expected to work as TCP client mode, the caller must establish
+    a connection to the address specifed using function connect(), and then use the socket
+    for send() and recv() on successful connection. The caller must release the created
+    socket and associated resources with v2x_radio_sock_close().
+    @par
+    If the created socket is expected to work as TCP server mode, the caller must mark the
+    created socket as a listening socket with function listen(), that is, as a socket that
+    will be used to accept incoming connection requests using accept(). The caller can then
+    use the connected socket returned by accept() for send() and recv(). The caller must close
+    all connected sockets returned by accept() with function close() first, and then release
+    the listening socket and associated resources with v2x_radio_sock_close().
+    @par
+    This call is a blocking call. When it returns, the created TCP socket is ready to
+    use, assuming there is no error.
+
+    @datatypes
+    #v2x_radio_handle_t
+
+    @param[in]  handle           Identifies the initialized Radio interface. The caller
+                                 must specify IP interface for raido initilization.
+    @param[in]  event_info       Pointer to the Tx event flow information.
+    @param[in]  sock_info        Pointer to the TCP socket information. \n @vertspace{3}
+    @param[out] sock_fd          Pointer to the socket that, on success, returns the TCP socket
+                                 descriptor. \n @vertspace{3}
+                                 The caller must release this socket with v2x_radio_sock_close().
+    @param[out] sockaddr         Pointer to the address of TCP socket. The sockaddr_in6 buffer is
+                                 initialized with the IPv6 source address and source port that
+                                 are used for the bind.
+
+    @detdesc
+    You can execute any sockopts that are appropriate for this type of socket
+    (AF_INET6).
+    @par
+    @return
+    0 -- On success.
+    @par
+    Otherwise:
+     - EINVAL -- On failure to find the interface or get bad parameters.
+     - EPERM -- Socket operation failed; for more details, check errno.h.
+
+    @dependencies
+    The interface used for IP communication must be pre-initialized with
+    v2x_radio_init(). The handle from that function must be used as the
+    parameter in this function. @newpage
+ */
+extern int v2x_radio_tcp_sock_create_and_bind(
+    v2x_radio_handle_t handle,
+    const v2x_tx_flow_info_t *event_info,
+    const socket_info_t *sock_info,
+    int *sock_fd,
+    struct sockaddr_in6 *sockaddr);
 /** @} *//* end_addtogroup v2x_api_radio */
 
 /*

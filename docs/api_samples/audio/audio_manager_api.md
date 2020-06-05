@@ -124,7 +124,7 @@ Below methods provides details on supported Device Types and Stream Types
     //Create an Audio Stream (Voice Call Session)
     StreamConfig config;
     config.type = StreamType::VOICE_CALL;
-    config.modemSubId = 1;
+    config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;

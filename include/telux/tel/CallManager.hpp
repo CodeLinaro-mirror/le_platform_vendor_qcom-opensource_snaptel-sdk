@@ -71,6 +71,22 @@ class IMakeCallCallback;
 using MakeCallCallback
    = std::function<void(telux::common::ErrorCode error, std::shared_ptr<ICall> call)>;
 
+/**
+ * This function is called with response to request for eCall High Level Application Protocol(HLAP)
+ * timers status.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] error         @ref ErrorCode
+ * @param [out] phoneId       Represents the phone corresponding to which the response is being
+ *                            reported.
+ * @param [out] timersStatus  @ref ECallHlapTimerStatus
+ *
+ */
+using ECallHlapTimerStatusCallback = std::function<void(telux::common::ErrorCode error, int phoneId,
+                                                        ECallHlapTimerStatus timersStatus)>;
+
 /** @addtogroup telematics_call
  * @{ */
 
@@ -341,18 +357,17 @@ public:
     * by the UE state machine. This does not retrieve status of timers maintained by the PSAP.
     * The provided timers are as per EN 16062:2015 standard.
     *
-    * @param [in] phoneId   Represents phone corresponding on which getECallHlapTimerStatus
+    * @param [in] phoneId   Represents phone corresponding on which requestECallHlapTimerStatus
     *                       operation is performed
-    * @param [out] hlapTimerStatus reference argument to store ECallHlapTimerStatus information
-    *                             @Ref ECallHlapTimerStatus
+    * @param [in] callback  Callback function to get the response of requestECallHlapTimerStatus
     *
-    * @returns Status of getECallHlapTimerStatus i.e. success or suitable error code.
+    * @returns Status of requestECallHlapTimerStatus i.e. success or suitable error code.
     *
     * @note    Eval: This is a new API and is being evaluated. It is subject to
     *          change and could break backwards compatibility.
     */
-   virtual telux::common::Status getECallHlapTimerStatus(int phoneId,
-                                                         ECallHlapTimerStatus &hlapTimerStatus) = 0;
+   virtual telux::common::Status requestECallHlapTimerStatus(int phoneId,
+                                                         ECallHlapTimerStatusCallback callback) = 0;
 
    /**
     * Get in-progress calls.

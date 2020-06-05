@@ -91,8 +91,8 @@ class ISocksManager {
      *          and could break backwards compatibility.
      */
 
-    virtual  telux::common::Status enableSocks(
-        bool enable, telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual  telux::common::Status enableSocks(bool enable,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
      * Get the associated operation type for this instance.

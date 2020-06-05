@@ -44,6 +44,7 @@ extern "C" {
 }
 
 #include <telux/common/Version.hpp>
+#include <telux/common/DeviceConfig.hpp>
 
 #include "Call/CallMenu.hpp"
 #include "ECall/ECallMenu.hpp"
@@ -51,6 +52,7 @@ extern "C" {
 #include "Sms/SmsMenu.hpp"
 #include "Data/DataMenu.hpp"
 #include "SimCardServices/SimCardServicesMenu.hpp"
+#include "MultiSim/MultiSimMenu.hpp"
 #include "../../common/utils/Utils.hpp"
 
 #include "TelSdkConsoleApp.hpp"
@@ -87,6 +89,13 @@ void TelSdkConsoleApp::init() {
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
              dataMenuCommand};
+
+    if(telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
+            std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
+        mainMenuCommands.emplace_back(multiSimMenuCommand);
+    }
 
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();
@@ -136,6 +145,13 @@ void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
     DataMenu dataMenu("Data Menu", "data> ");
     dataMenu.init();
     dataMenu.mainLoop();
+    TelSdkConsoleApp::displayMenu();
+}
+
+void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
+    MultiSimMenu multiSimMenu("MultiSim Menu", "multisim> ");
+    multiSimMenu.init();
+    multiSimMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
 }
 

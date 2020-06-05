@@ -42,6 +42,10 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Phone/MyNetworkSelectionHandler.cpp
    Phone/NetworkMenu.cpp
 
+   MultiSim/MyMultiSimHandler.cpp
+   MultiSim/MyMultiSimListener.cpp
+   MultiSim/MultiSimMenu.cpp
+
    TelSdkConsoleApp.cpp
 
    ModemStatus.cpp

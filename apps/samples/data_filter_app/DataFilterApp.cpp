@@ -62,6 +62,7 @@ public:
 private:
    void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
       std::cout << " ** DataCall Details **\n";
+      std::cout << " SlotID: " << dataCall->getSlotId() << std::endl;
       std::cout << " ProfileID: " << dataCall->getProfileId() << std::endl;
       std::cout << " interfaceName: " << dataCall->getInterfaceName() << std::endl;
       std::cout << " DataCallStatus: " << (int)dataCall->getDataCallStatus() << std::endl;

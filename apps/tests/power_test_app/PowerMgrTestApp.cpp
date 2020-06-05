@@ -255,52 +255,56 @@ int main(int argc, char ** argv) {
         return -1;
     }
     std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
-    std::vector<std::string> supplementaryGrps{"system"};
-    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
-        std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
-    }
-    if( 0 != myPowerMgmtTest->start()) {
-        std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
-            << std::endl;
-        return -1;
-    }
-    for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "-l") {
-            listenerEnabled =true;
-        } else if (std::string(argv[i]) == "-s") {
-            inputCommand=true;
-            state=TcuActivityState::SUSPEND;
-        } else if (std::string(argv[i]) == "-r") {
-            inputCommand=true;
-            state=TcuActivityState::RESUME;
-        } else if (std::string(argv[i]) == "-p") {
-            inputCommand=true;
-            state=TcuActivityState::SHUTDOWN;
-        } else if (std::string(argv[i]) == "-c") {
-            myPowerMgmtTest->registerForUpdates();
-            listenerEnabled =true;
-            myPowerMgmtTest->consoleinit();
-            myPowerMgmtTest->mainLoop();
-            myPowerMgmtTest->deregisterForUpdates();
-            return 0;
-        } else {
-            printHelp();
+    if (myPowerMgmtTest) {
+        std::vector<std::string> supplementaryGrps{"system"};
+        int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+        if (rc == -1){
+            std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
+        }
+        if( 0 != myPowerMgmtTest->start()) {
+            std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
+                << std::endl;
             return -1;
         }
-    }
-    if(listenerEnabled) {
-        myPowerMgmtTest->registerForUpdates();
-    }
-    signal(SIGINT, signalHandler);
-    std::unique_lock<std::mutex> lock(mutex);
-    if(inputCommand) {
-        myPowerMgmtTest->sendActivityStateCommand(state);
-    }
-    std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
-    cv.wait(lock);
-    if(listenerEnabled) {
-        myPowerMgmtTest->deregisterForUpdates();
+        for (int i = 1; i < argc; ++i) {
+            if (std::string(argv[i]) == "-l") {
+                listenerEnabled =true;
+            } else if (std::string(argv[i]) == "-s") {
+                inputCommand=true;
+                state=TcuActivityState::SUSPEND;
+            } else if (std::string(argv[i]) == "-r") {
+                inputCommand=true;
+                state=TcuActivityState::RESUME;
+            } else if (std::string(argv[i]) == "-p") {
+                inputCommand=true;
+                state=TcuActivityState::SHUTDOWN;
+            } else if (std::string(argv[i]) == "-c") {
+                myPowerMgmtTest->registerForUpdates();
+                listenerEnabled =true;
+                myPowerMgmtTest->consoleinit();
+                myPowerMgmtTest->mainLoop();
+                myPowerMgmtTest->deregisterForUpdates();
+                return 0;
+            } else {
+                printHelp();
+                return -1;
+            }
+        }
+        if(listenerEnabled) {
+            myPowerMgmtTest->registerForUpdates();
+        }
+        signal(SIGINT, signalHandler);
+        std::unique_lock<std::mutex> lock(mutex);
+        if(inputCommand) {
+            myPowerMgmtTest->sendActivityStateCommand(state);
+        }
+        std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
+        cv.wait(lock);
+        if(listenerEnabled) {
+            myPowerMgmtTest->deregisterForUpdates();
+        }
+    } else {
+        std::cout << "Failed to instantiate PowerMgmtTestApp" << std::endl;
     }
     std::cout << "Exiting application..." << std::endl;
     return 0;

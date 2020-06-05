@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -58,9 +58,6 @@ namespace tel {
  * @param [in] eid        eUICC identifier.
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not.  @ref ErrorCode
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using EidResponseCallback
     = std::function<void(const std::string &eid, telux::common::ErrorCode error)>;
@@ -267,9 +264,6 @@ class ICard {
      * Get associated slot id for ICard
      *
      * @returns SlotId
-     *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual int getSlotId() = 0;
 
@@ -281,9 +275,6 @@ class ICard {
     * @returns  Status of request eid i.e. success or suitable error code.
     *
     * @dependencies card should be eUICC capable
-    *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and could
-    *          break backwards compatibility.
     */
     virtual telux::common::Status requestEid(EidResponseCallback = nullptr)
         = 0;

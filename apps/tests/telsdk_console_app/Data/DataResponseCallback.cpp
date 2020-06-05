@@ -176,7 +176,8 @@ void MyDataCallResponseCallback::dataCallListResponseCb(
    if(error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << " ** Found "<<dataCallList.size()<<" DataCalls in the list **\n";
       for(auto dataCall:dataCallList) {
-         std::cout << " ProfileID: " << dataCall->getProfileId()
+         std::cout << " SlotID: " << dataCall->getSlotId()
+             << "\n ProfileID: " << dataCall->getProfileId()
              << "\n InterfaceName: " << dataCall->getInterfaceName()
              << "\n DataCallStatus: " << DataUtils::dataCallStatusToString(dataCall->getDataCallStatus())
              << "\n DataCallEndReason:\n   Type: "

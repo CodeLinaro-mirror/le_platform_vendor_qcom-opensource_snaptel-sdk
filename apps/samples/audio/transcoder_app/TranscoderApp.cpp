@@ -38,7 +38,6 @@ using std::promise;
 using namespace telux::common;
 using namespace telux::audio;
 
-const uint32_t MODEM_SUB_ID = 1;
 const uint32_t SAMPLE_RATE = 48000;
 const uint32_t CHANNEL_MASK = 3;
 const uint32_t GAURD_FOR_WAITING = 100;

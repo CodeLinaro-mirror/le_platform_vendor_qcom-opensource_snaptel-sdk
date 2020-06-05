@@ -59,83 +59,92 @@ void ServingSystemMenu::init() {
    auto phoneManager = phoneFactory.getPhoneManager();
 
    std::vector<int> phoneIds;
-   telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
-   if (status == telux::common::Status::SUCCESS) {
-       for (auto index = 1; index <= phoneIds.size(); index++) {
-           auto servingSystemMgr
-               = telux::tel::PhoneFactory::getInstance().getServingSystemManager(index);
-           if (servingSystemMgr != nullptr) {
-               servingSystemMgrs_.emplace_back(servingSystemMgr);
+   if (phoneManager) {
+       telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
+       if (status == telux::common::Status::SUCCESS) {
+           for (auto index = 1; index <= phoneIds.size(); index++) {
+               auto servingSystemMgr
+                   = telux::tel::PhoneFactory::getInstance().getServingSystemManager(index);
+               if (servingSystemMgr != nullptr) {
+                   servingSystemMgrs_.emplace_back(servingSystemMgr);
+               }
            }
        }
-   }
 
-   for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
-       std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-       startTime = std::chrono::system_clock::now();
-       //  Check if serving subsystem is ready
-       bool subSystemStatus = servingSystemMgrs_[index]->isSubsystemReady();
+       for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
+           std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+           startTime = std::chrono::system_clock::now();
+           //  Check if serving subsystem is ready
+           bool subSystemStatus = servingSystemMgrs_[index]->isSubsystemReady();
 
-       //  If serving subsystem is not ready, wait for it to be ready
-       if(!subSystemStatus) {
-          std::cout << "\n\nServing subsystem is not ready, Please wait!!!..." << std::endl;
-          std::future<bool> f = servingSystemMgrs_[index]->onSubsystemReady();
-          // If we want to wait unconditionally for serving subsystem to be ready
-          subSystemStatus = f.get();
+           //  If serving subsystem is not ready, wait for it to be ready
+           if(!subSystemStatus) {
+              std::cout << "\n\nServing subsystem is not ready, Please wait!!!..." << std::endl;
+              std::future<bool> f = servingSystemMgrs_[index]->onSubsystemReady();
+              // If we want to wait unconditionally for serving subsystem to be ready
+              subSystemStatus = f.get();
+           }
+
+           //  Exit the application, if SDK is unable to initialize serving subsystems
+           if(subSystemStatus) {
+              endTime = std::chrono::system_clock::now();
+              std::chrono::duration<double> elapsedTime = endTime - startTime;
+              std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                        << std::endl;
+           } else {
+              std::cout << " *** ERROR - Unable to initialize serving subsystem" << std::endl;
+              exit(0);
+           }
+
+           servingSystemListener_ = std::make_shared<MyServingSystemListener>();
+           auto status = servingSystemMgrs_[index]->registerListener(servingSystemListener_);
+           if(status != telux::common::Status::SUCCESS) {
+              std::cout << "Failed to registerListener for Serving system Manager" << std::endl;
+           }
        }
 
-       //  Exit the application, if SDK is unable to initialize serving subsystems
-       if(subSystemStatus) {
-          endTime = std::chrono::system_clock::now();
-          std::chrono::duration<double> elapsedTime = endTime - startTime;
-          std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                    << std::endl;
-       } else {
-          std::cout << " *** ERROR - Unable to initialize serving subsystem" << std::endl;
-          exit(0);
+       std::shared_ptr<ConsoleAppCommand> getRatModePreferenceCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "1", "Get_RAT_mode_preference", {},
+             std::bind(&ServingSystemMenu::getRatModePreference, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> setRatModePreferenceCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "2", "Set_RAT_mode_preference", {},
+             std::bind(&ServingSystemMenu::setRatModePreference, this, std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getServiceDomainPreferenceCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "3", "Get_service_domain_preference", {},
+             std::bind(&ServingSystemMenu::getServiceDomainPreference, this,
+                std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> setServiceDomainPreferenceCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "4", "Set_service_domain_preference", {},
+             std::bind(&ServingSystemMenu::setServiceDomainPreference, this,
+                std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getDcStatusCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "5", "Get_NR_Dual_Connectivity_Status", {},
+             std::bind(&ServingSystemMenu::getDualConnectivityStatus, this,
+                std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "6", "Select_sim_slot", {},
+             std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
+       std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
+          = {getRatModePreferenceCommand, setRatModePreferenceCommand,
+             getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
+             getDcStatusCommand };
+
+       if (servingSystemMgrs_.size() > 1) {
+           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
        }
 
-       servingSystemListener_ = std::make_shared<MyServingSystemListener>();
-       auto status = servingSystemMgrs_[index]->registerListener(servingSystemListener_);
-       if(status != telux::common::Status::SUCCESS) {
-          std::cout << "Failed to registerListener for Serving system Manager" << std::endl;
-       }
+       addCommands(commandsListNetworkSubMenu);
+       ConsoleApp::displayMenu();
+   } else {
+     std::cout << " PhoneManager is NULL, failed to initialize ServingSystemMenu" << std::endl;
+     exit(1);
    }
-
-   std::shared_ptr<ConsoleAppCommand> getRatModePreferenceCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Get_RAT_mode_preference", {},
-         std::bind(&ServingSystemMenu::getRatModePreference, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> setRatModePreferenceCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "2", "Set_RAT_mode_preference", {},
-         std::bind(&ServingSystemMenu::setRatModePreference, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getServiceDomainPreferenceCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Get_service_domain_preference", {},
-         std::bind(&ServingSystemMenu::getServiceDomainPreference, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> setServiceDomainPreferenceCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Set_service_domain_preference", {},
-         std::bind(&ServingSystemMenu::setServiceDomainPreference, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getDcStatusCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Get_NR_Dual_Connectivity_Status", {},
-         std::bind(&ServingSystemMenu::getDualConnectivityStatus, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "6", "Select_sim_slot", {},
-         std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
-   std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
-      = {getRatModePreferenceCommand, setRatModePreferenceCommand,
-         getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand, getDcStatusCommand };
-
-   if (servingSystemMgrs_.size() > 1) {
-       commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
-   }
-
-   addCommands(commandsListNetworkSubMenu);
-   ConsoleApp::displayMenu();
 }
 
 void ServingSystemMenu::getRatModePreference(std::vector<std::string> userInput) {

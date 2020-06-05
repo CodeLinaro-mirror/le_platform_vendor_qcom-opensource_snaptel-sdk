@@ -64,12 +64,13 @@ void DataListener::onServiceStatusChange(telux::common::ServiceStatus status) {
          break;
    }
 }
-std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int profileId) {
+std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int slotId, int profileId) {
    std::lock_guard<std::mutex> lk(mtx_);
    std::shared_ptr<telux::data::IDataCall> dataCall = nullptr;
-   auto it = dataCallMap_.find(profileId);
-   if(it != dataCallMap_.end()) {
-      dataCall = it->second;
+   for (auto& dc : dataCallMap_) {
+      if ((dc.first == profileId) && (slotId == dc.second->getSlotId())) {
+          dataCall = dc.second;
+      }
    }
    return dataCall;
 }
@@ -85,7 +86,8 @@ void DataListener::updateDataCallMap(const std::shared_ptr<telux::data::IDataCal
 void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall) {
    std::cout << "\n\n";
    PRINT_NOTIFICATION << " ** DataCall Details **\n";
-   std::cout << " ProfileID: " << dataCall->getProfileId()
+   std::cout << " SlotID: " << dataCall->getSlotId()
+             << "\n ProfileID: " << dataCall->getProfileId()
              << "\n InterfaceName: " << dataCall->getInterfaceName()
              << "\n DataCallStatus: " << DataUtils::dataCallStatusToString(dataCall->getDataCallStatus())
              << "\n DataCallEndReason:\n   Type: "

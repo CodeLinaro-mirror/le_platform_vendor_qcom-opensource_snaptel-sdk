@@ -156,6 +156,8 @@ public:
     void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) override;
     void makeCallResponse(telux::common::ErrorCode error,
                                     std::shared_ptr<telux::tel::ICall>) override;
+    void hlapTimerStatusResponse(telux::common::ErrorCode error, int phoneId,
+                                 ECallHlapTimerStatus timersStatus);
 
     TelClient();
     ~TelClient();

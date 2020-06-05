@@ -52,7 +52,7 @@ namespace loc {
 
 const float UNKNOWN_CARRIER_FREQ = -1;
 const int UNKNOWN_SIGNAL_MASK = 0;
-const uint64_t UNKNOWN_TIMESTAMP = -1;
+const uint64_t UNKNOWN_TIMESTAMP = 0;
 const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
                                                Units: milli-seconds. */
 const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consumed of time
@@ -377,7 +377,9 @@ enum class GnssSystem {
   /** BDS satellite. */
   GNSS_LOC_SV_SYSTEM_BDS = 6,
   /** QZSS satellite. */
-  GNSS_LOC_SV_SYSTEM_QZSS = 7
+  GNSS_LOC_SV_SYSTEM_QZSS = 7,
+  /** NAVIC satellite. */
+  GNSS_LOC_SV_SYSTEM_NAVIC = 8
 };
 
 /**
@@ -1319,9 +1321,8 @@ public:
  * Retrieves UTC timeInfo for the location fix.
  *    - Units: Milliseconds since Jan 1, 1970
  *
- * @returns TimeStamp in seconds if available else returns 0
- * (as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
- * If the value is invalid then UNKNOWN_TIMESTAMP is reported.
+ * @returns TimeStamp in milliseconds if available else returns UNKNOWN_TIMESTAMP,
+ * which is zero(as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
  *
  */
   virtual uint64_t getTimeStamp() = 0;
@@ -1685,9 +1686,8 @@ public:
  * Retrieves UTC timeInfo for the location fix.
  *    - Units: Milliseconds since Jan 1, 1970
  *
- * @returns TimeStamp in seconds if available else returns 0
- * (as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
- * If the value is invalid then UNKNOWN_TIMESTAMP is reported.
+ * @returns TimeStamp in milliseconds if available else returns UNKNOWN_TIMESTAMP
+ * which is zero(as UTC timeStamp has elapsed since January 1, 1970, it cannot be 0)
  *
  */
   virtual uint64_t getTimeStamp() = 0;

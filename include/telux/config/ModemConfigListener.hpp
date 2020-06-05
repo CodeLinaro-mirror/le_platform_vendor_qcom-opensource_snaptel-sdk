@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are
@@ -34,9 +34,6 @@
  *          config change detection. Client need to implement these methods.
  *          The methods in listener can be invoked from multiple threads.So the client needs to
  *          make sure that the implementation is thread-safe.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 
 #ifndef MODEMCONFIGLISTENER_HPP
@@ -56,9 +53,6 @@ namespace config {
  *        The client needs to implement these methods as briefly as possible and avoid blocking
  *        calls in it. The methods in this class can be invoked from multiple different threads.
  *        Client needs to make sure that the implementation is thread-safe.
- *
- * @note  Eval: This is a new API and is being evaluated. It is subject to change
- *        and could break backwards compatibility.
  */
 class IModemConfigListener : public common::IServiceStatusListener {
 public:
@@ -68,9 +62,6 @@ public:
      *
      * @param [in] status     update status of config.
      * @param [in] slotId     slotId where update is detected.
-     *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual void onConfigUpdateStatus(ConfigUpdateStatus status, int slotId) {}
 

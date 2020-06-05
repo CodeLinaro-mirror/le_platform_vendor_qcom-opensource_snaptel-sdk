@@ -64,9 +64,13 @@ void AudioClient::cleanup() {
     audioToneStream_ = nullptr;
 }
 
-void AudioClient::resolveStreamType(StreamType streamType) {
-    if(streamType == StreamType::VOICE_CALL){
-        stream_ = audioVoiceStream_;
+void AudioClient::resolveStreamType(StreamType streamType, SlotId slotId) {
+    if (streamType == StreamType::VOICE_CALL) {
+        if (slotId == SLOT_ID_1) {
+            stream_ = audioVoiceStream_;
+        } else if (slotId == SLOT_ID_2) {
+            stream_ = audioVoiceStream2_;
+        }
     } else if( streamType == StreamType::PLAY) {
         stream_ = audioPlayStream_;
     } else if( streamType == StreamType::CAPTURE) {
@@ -80,13 +84,15 @@ void AudioClient::resolveStreamType(StreamType streamType) {
     }
 }
 
-void AudioClient::takeUserModemIdInput(int &modemId) {
+void AudioClient::takeUserSlotIdInput(SlotId &slotId) {
     std::string userInput = "";
+    int input = INVALID_SLOT_ID;
     while(1) {
-        std::cout << "Enter Modem Id: ";
+        std::cout << "Enter Slot Id: ";
         if (std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
-            if(inputStream >> modemId) {
+            if(inputStream >> input) {
+                slotId = static_cast<SlotId>(input);
                 break;
             } else {
                 std::cout << "Invalid Input" << std::endl;
@@ -289,7 +295,11 @@ void AudioClient::takeAudioFormatInput(AudioFormat &audioFormat) {
 void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
 {
     config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    takeUserModemIdInput(config.modemSubId);
+    // For Voice Call the slot Id is provided from Voice Menu. Voice Menu by default uses the
+    // DEFAULT_SLOT_ID, if user switches sub then corresponding slotId is used.
+    if (config.type != StreamType::VOICE_CALL) {
+        takeUserSlotIdInput(config.slotId);
+    }
     takeUserSampleRateInput(config.sampleRate);
     takeUserChannelInput(config.channelTypeMask);
     sampleRate_ = config.sampleRate;
@@ -348,8 +358,8 @@ void AudioClient::takeUserDirectionInput(StreamDirection &direction) {
     }
 }
 
-std::shared_ptr<IAudioStream> AudioClient::getStream(StreamType streamtype) {
-    resolveStreamType(streamtype);
+std::shared_ptr<IAudioStream> AudioClient::getStream(StreamType streamtype, SlotId slotId) {
+    resolveStreamType(streamtype, slotId);
     return stream_;
 }
 
@@ -363,12 +373,15 @@ void AudioClient::getPlayConfig(std::string &filePath, AudioFormat &playFormat) 
     playFormat = playFormat_;
 }
 
-Status AudioClient::createStream(StreamType streamType) {
+Status AudioClient::createStream(StreamType streamType, SlotId slotId) {
 
     std::promise<bool> p;
     StreamConfig streamConfig;
     // Initialising the Configuration of stream
     streamConfig.type = streamType;
+    if (streamType == StreamType::VOICE_CALL) {
+        streamConfig.slotId = slotId;
+    }
     takeUserCreateStreamInput(streamConfig);
     AmrwbpParams formatParams{};
     if (streamConfig.format == AudioFormat::AMRWB_PLUS) {
@@ -410,9 +423,16 @@ Status AudioClient::createStream(StreamType streamType) {
     if (p.get_future().get()) {
         std::cout<< "Audio Stream is Created" << std::endl;
         if(myAudioStream->getType() == StreamType::VOICE_CALL) {
-            audioVoiceStream_ = std::dynamic_pointer_cast<
-                        telux::audio::IAudioVoiceStream>(myAudioStream);
-            std::cout<< "Audio Voice Stream is Created" << std::endl;
+            if (streamConfig.slotId == SLOT_ID_1) {
+                audioVoiceStream_ = std::dynamic_pointer_cast<
+                            telux::audio::IAudioVoiceStream>(myAudioStream);
+            }
+            if (streamConfig.slotId == SLOT_ID_2) {
+                audioVoiceStream2_ = std::dynamic_pointer_cast<
+                            telux::audio::IAudioVoiceStream>(myAudioStream);
+            }
+            std::cout<< "Voice Stream is Created on slot id "<< streamConfig.slotId << std::endl;
+
         } else if(myAudioStream->getType() == StreamType::PLAY) {
             audioPlayStream_ = std::dynamic_pointer_cast<
                         telux::audio::IAudioPlayStream>(myAudioStream);
@@ -438,8 +458,8 @@ Status AudioClient::createStream(StreamType streamType) {
     return Status::SUCCESS;
 }
 
-Status AudioClient::deleteStream(StreamType streamType) {
-    resolveStreamType(streamType);
+Status AudioClient::deleteStream(StreamType streamType, SlotId slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::common::Status deleteStreamStatus = audioManager_-> deleteStream(
     stream_, [&p,this](telux::common::ErrorCode error) {
@@ -457,7 +477,12 @@ Status AudioClient::deleteStream(StreamType streamType) {
     }
     if (p.get_future().get()) {
         if(streamType == StreamType::VOICE_CALL) {
-            audioVoiceStream_= nullptr;
+            if (slotId == SLOT_ID_1) {
+                audioVoiceStream_= nullptr;
+            }
+            if (slotId == SLOT_ID_2) {
+                audioVoiceStream2_ = nullptr;
+            }
         } else if(streamType == StreamType::PLAY) {
             audioPlayStream_= nullptr;
         } else if(streamType == StreamType::CAPTURE) {
@@ -476,8 +501,8 @@ Status AudioClient::deleteStream(StreamType streamType) {
     return Status::SUCCESS;
 }
 
-void AudioClient::getStreamDevice(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     std::vector<telux::audio::DeviceType> devices_;
     if(stream_) {
@@ -509,8 +534,8 @@ void AudioClient::getStreamDevice(StreamType streamType) {
     }
 }
 
-void AudioClient::setStreamDevice(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::setStreamDevice(StreamType streamType, SlotId slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     if(stream_) {
         std::vector<telux::audio::DeviceType> devices;
@@ -537,8 +562,8 @@ void AudioClient::setStreamDevice(StreamType streamType) {
     }
 }
 
-void AudioClient::setVolume(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::setVolume(StreamType streamType, SlotId slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     if(stream_) {
         telux::audio::StreamVolume streamVol;
@@ -565,8 +590,8 @@ void AudioClient::setVolume(StreamType streamType) {
     }
 }
 
-void AudioClient::getVolume(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::audio::StreamVolume vol;
     if(stream_) {
@@ -598,8 +623,8 @@ void AudioClient::getVolume(StreamType streamType) {
     }
 }
 
-void AudioClient::setMute(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::setMute(StreamType streamType, SlotId slotId) {
+    resolveStreamType(streamType, slotId);
     StreamMute mute;
     std::promise<bool> p;
     if(stream_) {
@@ -654,8 +679,8 @@ void AudioClient::setMute(StreamType streamType) {
     }
 }
 
-void AudioClient::getMute(StreamType streamType) {
-    resolveStreamType(streamType);
+void AudioClient::getMute(StreamType streamType, SlotId slotId) {
+    resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::audio::StreamMute mute_;
     if (stream_) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -52,9 +52,6 @@ namespace tel {
  * @param [in] retryCount         No of retry attempts left
  * @param [in] error              Return code for whether the operation
  *                                succeeded or failed
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 
 using PinOperationResponseCb = std::function<void(int retryCount, telux::common::ErrorCode error)>;
@@ -66,9 +63,6 @@ using PinOperationResponseCb = std::function<void(int retryCount, telux::common:
  * @param [in] isEnabled       Determine FDN lock state i.e enable or disable
  * @param [in] error           Return code for whether the operation
  *                             succeeded or failed
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 
 using QueryFdnLockResponseCb
@@ -80,9 +74,6 @@ using QueryFdnLockResponseCb
  * @param [in] state  Determine state whether enabled or disabled
  * @param [in] error  Return code for whether the operation
  *                    succeeded or failed
- *
- * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
- *         break backwards compatibility.
  */
 
 using QueryPin1LockResponseCb = std::function<void(bool state, telux::common::ErrorCode error)>;
@@ -125,9 +116,6 @@ public:
     * @param [in] newPwd    New password
     * @param [in] callback  Callback function to get the response of change pin password.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    *
     */
    virtual telux::common::Status changeCardPassword(CardLockType lockType, std::string oldPwd,
                                                std::string newPwd, PinOperationResponseCb callback)
@@ -140,9 +128,6 @@ public:
     * @param [in] puk       PUK1/PUK2
     * @param [in] pin       New PIN1/PIN2
     * @param [in] callback  Callback function to get the response of unlock card lock.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     *
     */
    virtual telux::common::Status unlockCardByPuk(CardLockType lockType, std::string puk,
@@ -157,9 +142,6 @@ public:
     * @param [in] pin       New PIN1/PIN2
     * @param [in] callback  Callback function to get the response of unlock card lock.
     *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
-    *
     */
    virtual telux::common::Status unlockCardByPin(CardLockType lockType, std::string pin,
                                                  PinOperationResponseCb callback)
@@ -169,9 +151,6 @@ public:
     * Query Pin1 lock state.
     *
     * @param [in] callback  Callback function to get the response of query pin1 lock state.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual telux::common::Status queryPin1LockState(QueryPin1LockResponseCb callback) = 0;
 
@@ -179,9 +158,6 @@ public:
     * Query FDN lock state.
     *
     * @param [in] callback  Callback function to get the response of query fdn lock state.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual telux::common::Status queryFdnLockState(QueryFdnLockResponseCb callback) = 0;
 
@@ -192,9 +168,6 @@ public:
     * @param [in] password   Password of PIN1 and FDN
     * @param [in] isEnabled  If true then enable else disable.
     * @param [in] callback   Callback function to get the response of set card lock.
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual telux::common::Status setCardLock(CardLockType lockType, std::string password,
                                              bool isEnabled, PinOperationResponseCb callback)

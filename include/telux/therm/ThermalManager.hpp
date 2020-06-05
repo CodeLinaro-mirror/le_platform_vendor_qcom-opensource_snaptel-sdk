@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,9 +33,6 @@
  * @brief      Thermal Manager is a primary interface for thermal zones (sensors) and
  *             thermal cooling devices to get list of sensor temperature readings,
  *             trip point information.
- *
- * @note       Eval: This is a new API and is being evaluated. It is subject to
- *             change and could break backwards compatibility.
  */
 
 #ifndef THERMALMANAGER_HPP
@@ -83,9 +80,6 @@ struct BoundCoolingDevice {
 
 /**
  * @brief   IThermalManager provides interface to get thermal zone and cooling device information.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could break
- *          backwards compatibility.
  */
 class IThermalManager {
 public:
@@ -93,9 +87,6 @@ public:
     * Retrieves the list of thermal zone info like type, temperature and trip points.
     *
     * @returns List of thermal zones.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::vector<std::shared_ptr<IThermalZone>> getThermalZones() = 0;
 
@@ -104,9 +95,6 @@ public:
     * currently requested throttle state.
     *
     * @returns List of cooling devices.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::vector<std::shared_ptr<ICoolingDevice>> getCoolingDevices() = 0;
 
@@ -117,9 +105,6 @@ public:
     * @param [in] thermalZoneId     Thermal zone identifier
     *
     * @returns Pointer to thermal zone.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::shared_ptr<IThermalZone> getThermalZone(int thermalZoneId) = 0;
 
@@ -130,9 +115,6 @@ public:
     * @param [in] coolingDeviceId     Cooling device identifier
     *
     * @returns Pointer to cooling device.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::shared_ptr<ICoolingDevice> getCoolingDevice(int coolingDeviceId) = 0;
 
@@ -145,9 +127,6 @@ public:
 /**
  * @brief   ITripPoint provides interface to get trip point type, trip point temperature
  *          and hysteresis value for that trip point.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could break
- *          backwards compatibility.
  */
 class ITripPoint {
 public:
@@ -156,9 +135,6 @@ public:
     *
     * @returns Type of trip point if available else return UNKNOWN.
     *          - @ref TripType
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual TripType getType() = 0;
 
@@ -167,9 +143,6 @@ public:
     *        - Units: MilliDegree Celsius
     *
     * @returns Threshold temperature
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getThresholdTemp() = 0;
 
@@ -178,9 +151,6 @@ public:
     * and the temperature above which certain trip point will be fired. Units: MilliDegree Celsius
     *
     * @returns Hysteresis value
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getHysteresis() = 0;
 
@@ -193,9 +163,6 @@ public:
 /**
  * @brief   IThermalZone provides interface to get type of the sensor, the current temperature
  *          reading, trip points and the cooling devices binded etc.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could break
- *          backwards compatibility.
  */
 class IThermalZone {
 public:
@@ -203,9 +170,6 @@ public:
     * Retrieves the identifier for thermal zone.
     *
     * @returns Identifier for thermal zone
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getId() = 0;
 
@@ -213,9 +177,6 @@ public:
     * Retrieves the type of sensor.
     *
     * @returns Sensor type
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::string getDescription() = 0;
 
@@ -223,9 +184,6 @@ public:
     * Retrieves the current temperature of the device. Units: MilliDegree Celsius
     *
     * @returns Current temperature
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getCurrentTemp() = 0;
 
@@ -234,9 +192,6 @@ public:
     *  Valid values: 0 (disabled) or greater than 1000 (enabled), Units: MilliDegree Celsius
     *
     * @returns Temperature of passive trip point
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getPassiveTemp() = 0;
 
@@ -244,9 +199,6 @@ public:
     * Retrieves trip point information like trip type, trip temperature and hysteresis.
     *
     * @returns Trip point info list
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::vector<std::shared_ptr<ITripPoint>> getTripPoints() = 0;
 
@@ -255,9 +207,6 @@ public:
     * in given thermal zone.
     *
     * @returns  List of bound cooling device for the given thermal zone.
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::vector<BoundCoolingDevice> getBoundCoolingDevices() = 0;
 
@@ -270,9 +219,6 @@ public:
 /**
  * @brief   ICoolingDevice provides interface to get type of the cooling device, the maximum
  *          throttle state and the currently requested throttle state of the cooling device.
- *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could break
- *          backwards compatibility.
  */
 class ICoolingDevice {
 public:
@@ -280,9 +226,6 @@ public:
     * Retrieves the identifier of the thermal cooling device.
     *
     * @returns Cooling device identifier
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getId() = 0;
 
@@ -290,9 +233,6 @@ public:
     * Retrieves the type of the cooling device.
     *
     * @returns Cooling device type
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual std::string getDescription() = 0;
 
@@ -300,9 +240,6 @@ public:
     * Retrieves the maximum cooling level of the cooling device.
     *
     * @returns Maximum cooling level of the thermal cooling device
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getMaxCoolingLevel() = 0;
 
@@ -313,9 +250,6 @@ public:
     * like fan, processor etc.
     *
     * @returns Current cooling level of the thermal cooling device
-    *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-    *          break backwards compatibility.
     */
    virtual int getCurrentCoolingLevel() = 0;
 

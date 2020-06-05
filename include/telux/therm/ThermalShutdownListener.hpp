@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -36,9 +36,6 @@
  *             Client need to implement these methods. The methods in listener can be invoked from
  *             multiple threads.So the client needs to make sure that the implementation is
  *             thread-safe.
- *
- * @note       Eval: This is a new API and is being evaluated.It is subject to change and could
- *             break backwards compatibility.
  */
 
 #ifndef THERMALSHUTDOWNLISTENER_HPP
@@ -58,26 +55,17 @@ namespace therm {
  *        The client needs to implement these methods as briefly as possible and avoid blocking
  *        calls in it. The methods in this class can be invoked from multiple different threads.
  *        Client needs to make sure that the implementation is thread-safe.
- *
- * @note  Eval: This is a new API and is being evaluated.It is subject to change
- *        and could break backwards compatibility.
  */
 class IThermalShutdownListener : public common::IServiceStatusListener {
 public:
     /**
      * This function is called when the automatic shutdown mode changes to ENABLE
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual void onShutdownEnabled() {
     }
 
     /**
      * This function is called when the automatic shutdown mode changes to DISABLE
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual void onShutdownDisabled() {
     }
@@ -89,9 +77,6 @@ public:
      * timer for auto-enablement will be reset.
      *
      * @param [in] imminentDuration Time elapsed(in seconds) for the shutdown mode to be enabled
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual void onImminentShutdownEnablement(uint32_t imminentDuration) {
     }

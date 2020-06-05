@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -153,9 +153,6 @@ public:
     * @param [in] phoneId - Unique Id of phone for which eCall operating mode changed
     * @param [in] info - Indicates eCall operating mode change reason
     * @Ref ECallModeInfo
-    *
-    * @note   Eval: This is a new API and is being evaluated.It is subject to change and could
-    *         break backwards compatibility.
     */
    virtual void onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo info) {
    }

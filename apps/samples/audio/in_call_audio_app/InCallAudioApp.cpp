@@ -38,7 +38,7 @@ using std::promise;
 using namespace telux::common;
 using namespace telux::audio;
 
-const uint32_t MODEM_SUB_ID = 1;
+
 const uint32_t SAMPLE_RATE = 48000;
 // Below constant represents number of buffers allocated to pass Bitstream. Additional number of
 // buffers would provide flexibility in copying Bitsream from source and write to Stream Interface
@@ -79,7 +79,7 @@ Status InCallAudioApp::init() {
 Status InCallAudioApp::createVoiceStream() {
     StreamConfig config;
     config.type = StreamType::VOICE_CALL;
-    config.modemSubId = 1;
+    config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
@@ -114,7 +114,7 @@ Status InCallAudioApp::createVoiceStream() {
 Status InCallAudioApp::createPlayStream() {
     StreamConfig config;
     config.type = StreamType::PLAY;
-    config.modemSubId = MODEM_SUB_ID;
+    config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = SAMPLE_RATE;
     config.format = AudioFormat::AMRWB_PLUS;
     // here both channel selected, this can be selected according to requirement

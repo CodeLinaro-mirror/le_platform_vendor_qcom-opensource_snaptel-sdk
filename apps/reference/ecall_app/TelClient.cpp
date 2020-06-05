@@ -68,25 +68,31 @@ telux::common::Status TelClient::init() {
     // Get Phone Manager from PhoneFactory
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
     auto phoneManager = phoneFactory.getPhoneManager();
-    auto defaultPhone = phoneFactory.getPhoneManager()->getPhone();
+    if(phoneManager) {
+        auto defaultPhone = phoneManager->getPhone();
 
-    //  Wait for the telephony subsystem to be ready
-    bool isReady = phoneManager->isSubsystemReady();
-    if(!isReady) {
-        std::cout << CLIENT_NAME << "Telephony subsystem is not ready, waiting for it to be ready.."
-                    << std::endl;
-        std::future<bool> f = phoneManager->onSubsystemReady();
-        isReady = f.get();
-        if(isReady) {
-            std::cout << CLIENT_NAME << "Telephony subsystem is ready" << std::endl;
+        //  Wait for the telephony subsystem to be ready
+        bool isReady = phoneManager->isSubsystemReady();
+        if(!isReady) {
+            std::cout << CLIENT_NAME 
+                      << " Telephony subsystem is not ready, waiting for it to be ready.."
+                     << std::endl;
+            std::future<bool> f = phoneManager->onSubsystemReady();
+            isReady = f.get();
+            if(isReady) {
+                std::cout << CLIENT_NAME << "Telephony subsystem is ready" << std::endl;
+            } else {
+                std::cout << CLIENT_NAME << "Unable to initialize Telephony subSystem" << std::endl;
+                return telux::common::Status::FAILED;
+            }
         } else {
-            std::cout << CLIENT_NAME << "Unable to initialize Telephony subSystem" << std::endl;
-            return telux::common::Status::FAILED;
+            std::cout << CLIENT_NAME << "Telephony subsystem is ready" << std::endl;
         }
     } else {
-        std::cout << CLIENT_NAME << "Telephony subsystem is ready" << std::endl;
+       std::cout << CLIENT_NAME << " Phone Manager is NULL, failed to initialize subsystem"
+                 << std::endl;
+       return telux::common::Status::FAILED;
     }
-
     // Get Call Manager from PhoneFactory
     callMgr_ = phoneFactory.getCallManager();
     if(!callMgr_) {
@@ -263,6 +269,29 @@ void TelClient::HangupCommandCallback::commandResponse(telux::common::ErrorCode 
     std::cout << CLIENT_NAME << infoStr << std::endl;
 }
 
+// Callback which provides response to HLAP timer status request
+void TelClient::hlapTimerStatusResponse(telux::common::ErrorCode error, int phoneId,
+    ECallHlapTimerStatus timersStatus) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Get HLAP timers status failed with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    }
+    std::string infoStr = "eCall HLAP Timers status on phoneId - " +
+                           std::to_string(static_cast<int>(phoneId)) + "\n";
+    infoStr.append("T2 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t2) + "\n");
+    infoStr.append("T5 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t5) + "\n");
+    infoStr.append("T6 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t6) + "\n");
+    infoStr.append("T7 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t7) + "\n");
+    infoStr.append("T9 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t9) + "\n");
+    std::cout << CLIENT_NAME << infoStr << std::endl;
+}
+
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
                                 ECallCategory category, ECallVariant variant, bool transmitMsd,
@@ -414,23 +443,12 @@ telux::common::Status TelClient::requestECallHlapTimerStatus(int phoneId) {
             << std::endl;
         return telux::common::Status::FAILED;
     }
-    ECallHlapTimerStatus timersStatus;
-    auto status = callMgr_->getECallHlapTimerStatus(phoneId, timersStatus);
+    auto status = callMgr_->requestECallHlapTimerStatus(phoneId,
+                            std::bind(&TelClient::hlapTimerStatusResponse, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request for HLAP timers status" << std::endl;
         return telux::common::Status::FAILED;
     }
-    std::string infoStr = "\n";
-    infoStr.append("T2 HLAP Timer Status : " +
-                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t2) + "\n");
-    infoStr.append("T5 HLAP Timer Status : " +
-                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t5) + "\n");
-    infoStr.append("T6 HLAP Timer Status : " +
-                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t6) + "\n");
-    infoStr.append("T7 HLAP Timer Status : " +
-                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t7) + "\n");
-    infoStr.append("T9 HLAP Timer Status : " +
-                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t9) + "\n");
-    std::cout << CLIENT_NAME << infoStr << std::endl;
     return telux::common::Status::SUCCESS;
 }

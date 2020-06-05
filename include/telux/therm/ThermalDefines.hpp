@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -31,9 +31,6 @@
  * @file       ThermalDefines.hpp
  *
  * @brief      This file contains types related to Thermal management activities.
- *
- * @note       Eval: These are new APIs and are being evaluated. They are subject to change and
- *             could break backwards compatibility.
  */
 
 #ifndef THERMALDEFINES_HPP

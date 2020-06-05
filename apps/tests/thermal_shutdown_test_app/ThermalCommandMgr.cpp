@@ -129,7 +129,9 @@ void ThermalCommandMgr::sendAutoShutdownModeCommand(AutoShutdownMode state) {
     } else {
         status = thermShutdownMgr_->setAutoShutdownMode(state, RspCb, timeout);
     }
-    if (status != telux::common::Status::SUCCESS) {
+    if (status == telux::common::Status::NOTREADY) {
+        std::cout << APP_NAME << "Thermal Shutdown Mangement service is UNAVAILABLE" << std::endl;
+    } else if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME <<
             " *** ERROR - Failed to send set auto-shutdown mode command" << std::endl;
     }
@@ -145,9 +147,12 @@ std::future<bool> ThermalCommandMgr::getAutoShutdownModeCommand() {
     telux::common::Status status =
        thermShutdownMgr_->getAutoShutdownMode(
           std::bind(&ThermalCommandCallback::getCmdResponse, cmdRspCb_, std::placeholders::_1));
-    if (status != telux::common::Status::SUCCESS) {
+
+    if (status == telux::common::Status::NOTREADY) {
+        std::cout << APP_NAME << "Thermal Shutdown Mangement service is UNAVAILABLE" << std::endl;
+    } else if (status != telux::common::Status::SUCCESS) {
         std::cout << APP_NAME <<
-             " *** ERROR - Failed to send get auto-shutdown mode command" << std::endl;
+            " *** ERROR - Failed to send get auto-shutdown mode command" << std::endl;
     }
     return cmdRspCb_->getPromValue();
 }

@@ -91,29 +91,40 @@ int L2tpMenu::init() {
 void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Unamanged Tunnel\n";
     telux::common::Status retStat;
-    bool enable = false;
+    bool enable = true;
     bool enableMss =  false;
     bool enableMtu = false;
+    uint32_t mtuSize = 0;
     int inputFlag;
     std::cout << "Enable/Disable L2TP for unmanaged tunnels\n (1-enable, 0-disable): ";
     std::cin >> inputFlag;
     Utils::validateInput(inputFlag);
-    if(inputFlag) {
-        enable = true;
+    if(inputFlag == 0) {
+        enable = false;
     }
-    std::cout << "Enable/Disable TCP MSS clampping on L2TP interfaces to avoid segmentation\n"
-        "(1-enable, 0-disable): ";
-    std::cin >> inputFlag;
-    Utils::validateInput(inputFlag);
-    if(inputFlag) {
-        enableMss = true;
-    }
-    std::cout << "Enable/Disable MTU size setting on underlying interfaces to avoid segmentation\n"
-        "(1-enable, 0-disable): ";
-    std::cin >> inputFlag;
-    Utils::validateInput(inputFlag);
-    if(inputFlag) {
-        enableMtu = true;
+    else {
+        std::cout << "Enable/Disable TCP MSS clampping on L2TP interfaces to avoid segmentation\n"
+            "(1-enable, 0-disable): ";
+        std::cin >> inputFlag;
+        Utils::validateInput(inputFlag);
+        if(inputFlag) {
+            enableMss = true;
+        }
+        std::cout << "Enable/Disable MTU size setting on underlying interfaces to avoid "
+            "segmentation" << std::endl << "(1-enable, 0-disable): ";
+        std::cin >> inputFlag;
+        Utils::validateInput(inputFlag);
+        if(inputFlag) {
+            enableMtu = true;
+            std::cout << "Use Default MTU size - 1422 bytes? (1-yes, 0-no): ";
+            std::cin >> inputFlag;
+            Utils::validateInput(inputFlag);
+            if(inputFlag == 0) {
+                std::cout << "Enter MTU size : ";
+                std::cin >> mtuSize;
+                Utils::validateInput(mtuSize);
+            }
+        }
     }
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -123,7 +134,7 @@ void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    retStat = l2tpManager_->setConfig(enable, enableMss, enableMtu, respCb);
+    retStat = l2tpManager_->setConfig(enable, enableMss, enableMtu, respCb, mtuSize);
     Utils::printStatus(retStat);
 }
 
@@ -213,6 +224,16 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
                   << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::NOT_SUPPORTED) {
+            std::cout << "L2TP is not enabled, please enable L2TP";
+        }
+        else if (error == telux::common::ErrorCode::INCOMPATIBLE_STATE) {
+            std::cout << "L2TP config can not be enabled...\n";
+            std::cout << "Please map VLAN to default PDN first.\n";
+        }
+        else if (error == telux::common::ErrorCode::NO_EFFECT) {
+            std::cout << "L2TP Config already set";
+        }
     };
     retStat = l2tpManager_->addTunnel(l2tpTunnelConfig, respCb);
     Utils::printStatus(retStat);
@@ -221,6 +242,10 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
 void L2tpMenu::requestConfig(std::vector<std::string> inputCommand) {
     auto respCb = [](const L2tpSysConfig &l2tpSysConfig, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
+        if (error == telux::common::ErrorCode::NOT_SUPPORTED) {
+            std::cout << "L2TP Unmanaged tunnel state is not enabled" <<std::endl;
+            return;
+        }
         std::cout << "CALLBACK: "
                   << "Get L2TP Config Response"
                   << (telux::common::ErrorCode::SUCCESS == error ? " is successful" : " failed")
@@ -229,6 +254,9 @@ void L2tpMenu::requestConfig(std::vector<std::string> inputCommand) {
         std::cout << std::endl;
         std::cout <<  "MTU Config is " <<
             (true == l2tpSysConfig.enableMtu ? "Enabled" : "Disabled") << std::endl;
+        if (l2tpSysConfig.mtuSize > 0) {
+            std::cout <<  "MTU Size is " << l2tpSysConfig.mtuSize << std::endl;
+        }
         std::cout <<  "TCP MSS Config is " <<
             (true == l2tpSysConfig.enableTcpMss ? "Enabled" : "Disabled") << std::endl;
         if (l2tpSysConfig.configList.empty()) {

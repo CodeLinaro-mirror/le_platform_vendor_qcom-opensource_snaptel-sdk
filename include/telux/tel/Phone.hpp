@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -91,9 +91,6 @@ using CellInfoCallback = std::function<void(std::vector<std::shared_ptr<CellInfo
  *
  * @param [out] eCallMode    @ref ECallMode
  * @param [out] error        Return code for whether the operation succeeded or failed
- *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using ECallGetOperatingModeCallback
    = std::function<void(ECallMode eCallMode, telux::common::ErrorCode error)>;
@@ -222,9 +219,6 @@ public:
     * request.
     *
     * @returns Status of setECallOperatingMode i.e. success or suitable error
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual telux::common::Status setECallOperatingMode(ECallMode eCallMode,
                                                        telux::common::ResponseCallback callback)
@@ -236,9 +230,6 @@ public:
     * @param [in] callback - Callback function to get the response of eCall operating mode request
     *
     * @returns Status of requestECallOperatingMode i.e. success or suitable error
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject to
-    *             change and could break backwards compatibility.
     */
    virtual telux::common::Status requestECallOperatingMode(ECallGetOperatingModeCallback callback)
       = 0;

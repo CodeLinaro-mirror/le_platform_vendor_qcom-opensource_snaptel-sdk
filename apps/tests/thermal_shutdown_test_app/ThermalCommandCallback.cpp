@@ -41,9 +41,9 @@ ThermalCommandCallback::ThermalCommandCallback(std::string cmdName) {
 void ThermalCommandCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << commandName_ << " sent successfully" << std::endl;
+      PRINT_CB << commandName_ << " command sent successfully" << std::endl;
    } else {
-      PRINT_CB << commandName_ << " failed\n errorCode: " << static_cast<int>(error)
+      PRINT_CB << commandName_ << " command failed\n errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
@@ -56,7 +56,7 @@ void ThermalCommandCallback::getCmdResponse(AutoShutdownMode state) {
         PRINT_CB << commandName_ <<" Current auto shutdown mode is Disable" << std::endl;
     } else {
         PRINT_CB << commandName_ <<
-           " *** ERROR - Failed to send get auto-shutdown mode " << std::endl;
+           " Current auto shutdown mode is Unknown  " << std::endl;
     }
     prom_.set_value(true);
 }

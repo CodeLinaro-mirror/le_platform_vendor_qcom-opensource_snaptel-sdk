@@ -133,9 +133,9 @@ void AudioConsoleApp::initConsole() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "TransCode", {},
         std::bind(&AudioConsoleApp::transCodeMenu, this, std::placeholders::_1)));
 
-     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-        = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
-            toneMenuCommand, transCodeMenuCommand};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+    = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
+        toneMenuCommand, transCodeMenuCommand};
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ", audioClient_);
     voiceMenu_->init();
@@ -186,9 +186,15 @@ void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
 
 void AudioConsoleApp::closeAllStreams() {
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(
-        audioClient_->getStream(StreamType::VOICE_CALL));
+        audioClient_->getStream(StreamType::VOICE_CALL, SLOT_ID_1));
     if (audioVoiceStream_) {
-        audioClient_->deleteStream(StreamType::VOICE_CALL);
+        audioClient_->deleteStream(StreamType::VOICE_CALL, SLOT_ID_1);
+    }
+
+    auto audioVoiceStream2_ = std::dynamic_pointer_cast<IAudioVoiceStream>(
+        audioClient_->getStream(StreamType::VOICE_CALL, SLOT_ID_2));
+    if (audioVoiceStream2_) {
+        audioClient_->deleteStream(StreamType::VOICE_CALL, SLOT_ID_2);
     }
 
     auto audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(

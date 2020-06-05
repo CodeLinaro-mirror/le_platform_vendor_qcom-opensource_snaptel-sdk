@@ -80,7 +80,8 @@ class DataFactory {
      * @returns instance of IDataConnectionManager
      *
      */
-    std::shared_ptr<IDataConnectionManager> getDataConnectionManager(int slotId = DEFAULT_SLOT_ID);
+    std::shared_ptr<IDataConnectionManager> getDataConnectionManager(
+        SlotId slotId = DEFAULT_SLOT_ID);
 
     /**
      * Get Data Profile Manager
@@ -90,7 +91,7 @@ class DataFactory {
      * @returns instance of IDataProfileManager
      *
      */
-    std::shared_ptr<IDataProfileManager> getDataProfileManager(int slotId = DEFAULT_SLOT_ID);
+    std::shared_ptr<IDataProfileManager> getDataProfileManager(SlotId slotId = DEFAULT_SLOT_ID);
 
     /**
      * Get Data Filter Manager instance
@@ -213,8 +214,8 @@ class DataFactory {
  private:
     // mutex to protect member variables
     std::mutex dataMutex_;
-    std::shared_ptr<IDataConnectionManager> dataConnectionManager_;
-    std::shared_ptr<IDataProfileManager> dataProfileManager_;
+    std::map<SlotId, std::shared_ptr<IDataConnectionManager>> dataConnectionManagerMap_;
+    std::map<SlotId, std::shared_ptr<IDataProfileManager>> dataProfileManagerMap_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::INatManager>>
         natManagerMap_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IFirewallManager>>

@@ -35,12 +35,14 @@ extern "C" {
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
 
 #include "../../common/utils/Utils.hpp"
 
 #include "DataUtils.hpp"
 #include "DataMenu.hpp"
 #include "DataResponseCallback.hpp"
+
 #define PROTO_ICMP 1
 #define PROTO_IGMP 2
 #define PROTO_TCP 6
@@ -56,72 +58,120 @@ DataMenu::DataMenu(std::string appName, std::string cursor)
 
 DataMenu::~DataMenu() {
 
-    myDataProfileListCb_ = nullptr;
-    myDataProfileListCb_ = nullptr;
-    myDataProfileListCbForQuery_ = nullptr;
-    myDataCreateProfileCb_ = nullptr;
-    myDataProfileCb_ = nullptr;
-    myDeleteProfileCb_ = nullptr;
-    myModifyProfileCb_ = nullptr;
-    myDataProfileCbForGetProfileById_ = nullptr;
+    myDataProfileListCb_.clear();
+    myDataProfileListCbForQuery_.clear();
+    myDataCreateProfileCb_.clear();
+    myDataProfileCb_.clear();
+    myDeleteProfileCb_.clear();
+    myModifyProfileCb_.clear();
+    myDataProfileCbForGetProfileById_.clear();
 
-    if (dataConnectionManager_) {
-        dataConnectionManager_->deregisterListener(dataListener_);
-        dataConnectionManager_ = nullptr;
+
+    for (auto& conMgr : dataConnectionManagers_) {
+        conMgr.second->deregisterListener(dataListeners_[conMgr.first]);
+    }
+    dataConnectionManagers_.clear();
+
+    for (auto& profMgr : dataProfileManagers_) {
+        profMgr.second->deregisterListener(profileListeners_[profMgr.first]);
+    }
+    dataProfileManagers_.clear();
+
+    dataListeners_.clear();
+    profileListeners_.clear();
+}
+
+bool DataMenu::initConnectionManagerAndListener(SlotId slotId){
+    // Get the DataFactory instances.
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    auto conMgr = telux::data::DataFactory::getInstance().getDataConnectionManager(slotId);
+
+    // Check if data subsystem is ready
+    bool subSystemStatus = conMgr->isSubsystemReady();
+    if (!subSystemStatus) {
+        std::cout << "\n\nData subsystem on slot " << slotId <<
+            "is not ready, Please wait" << std::endl;
+        std::future<bool> f = conMgr->onSubsystemReady();
+        // Wait unconditionally for data subsystem to be ready
+        subSystemStatus = f.get();
     }
 
-    if (dataProfileManager_) {
-        dataProfileManager_->deregisterListener(profileListener_);
-        dataProfileManager_ = nullptr;
+    //If this is newly created Manager
+    if (dataConnectionManagers_.find(slotId) == dataConnectionManagers_.end()) {
+        dataConnectionManagers_.emplace(slotId, conMgr);
+        auto dataListener = std::make_shared<DataListener>();
+        if (dataListener == nullptr) {
+            std::cout <<
+            "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
+            exit(1);
+        }
+        dataListeners_.emplace(slotId, dataListener);
+        dataConnectionManagers_[slotId]->registerListener(dataListeners_[slotId]);
+
+        //Update dataListener_'s data call list
+        requestDataCallList(OperationType::DATA_LOCAL, slotId,
+            std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
+            std::placeholders::_1, std::placeholders::_2));
+        requestDataCallList(OperationType::DATA_REMOTE, slotId,
+            std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
+            std::placeholders::_1, std::placeholders::_2));
+    }
+    return subSystemStatus;
+}
+
+bool DataMenu::initDataProfileManagerAndListener(SlotId slotId) {
+    // Get the DataFactory instances.
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    auto profMgr = dataFactory.getDataProfileManager(slotId);
+
+    // Check if data subsystem is ready
+    bool subSystemStatus = profMgr->isSubsystemReady();
+
+    // If data subsystem is not ready, wait for it to be ready
+    if (!subSystemStatus) {
+        std::cout << "\n\nData profile manager subsystem on slot " <<
+        slotId << "is not ready, Please wait" << std::endl;
+        std::future<bool> f = profMgr->onSubsystemReady();
+        // Wait unconditionally for data subsystem to be ready
+        subSystemStatus = f.get();
     }
 
-    if (profileListener_) {
-        profileListener_ = nullptr;
-    }
+    //If this is newly created Manager
+    if (dataProfileManagers_.find(slotId) == dataProfileManagers_.end()) {
+        dataProfileManagers_.emplace(slotId, profMgr);
+        myDataProfileListCb_.emplace(slotId, std::make_shared<MyDataProfilesCallback>());
+        myDataProfileListCbForQuery_.emplace(slotId, std::make_shared<MyDataProfilesCallback>());
+        myDataCreateProfileCb_.emplace(slotId, std::make_shared<MyDataCreateProfileCallback>());
+        myDataProfileCb_.emplace(slotId, std::make_shared<MyDataProfileCallback>());
+        myDeleteProfileCb_.emplace(slotId, std::make_shared<MyDeleteProfileCallback>());
+        myModifyProfileCb_.emplace(slotId, std::make_shared<MyModifyProfileCallback>());
+        myDataProfileCbForGetProfileById_.emplace(slotId,std::make_shared<MyDataProfileCallback>());
+        profileListeners_.emplace(slotId, std::make_shared<MyProfileListener>());
 
-    if (dataListener_) {
-        dataListener_ = nullptr;
+        telux::common::Status status =
+            dataProfileManagers_[slotId]->registerListener(profileListeners_[slotId]);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Unable to register data profile manager listener on slot " <<
+            slotId << std::endl;
+        }
     }
+    return subSystemStatus;
 }
 
 bool DataMenu::initializeSDK() {
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
-    // Get the DataFactory instances.
-    auto &dataFactory = telux::data::DataFactory::getInstance();
 
-    dataConnectionManager_ = telux::data::DataFactory::getInstance().getDataConnectionManager();
-
-    // Check if data subsystem is ready
-    bool dcmSubSystemStatus = dataConnectionManager_->isSubsystemReady();
-    dataListener_ = std::make_shared<DataListener>();
-    if (dataListener_ == nullptr) {
-        std::cout << "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
-        exit(1);
+    // Instantiate Connection Managers
+    bool dcmSubSystemStatus = initConnectionManagerAndListener(DEFAULT_SLOT_ID);
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        dcmSubSystemStatus |= initConnectionManagerAndListener(SLOT_ID_2);
     }
-    dataConnectionManager_->registerListener(dataListener_);
-
-    // If data subsystem is not ready, wait for it to be ready
-    if (!dcmSubSystemStatus) {
-        std::cout << "\n\nData subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = dataConnectionManager_->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        dcmSubSystemStatus = f.get();
+    // Instantiate Data Profile Managers
+    bool dpmSubSystemStatus = initDataProfileManagerAndListener(DEFAULT_SLOT_ID);
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        dpmSubSystemStatus |= initDataProfileManagerAndListener(SLOT_ID_2);
     }
-
-    dataProfileManager_ = dataFactory.getDataProfileManager();
-
-    // Check if data subsystem is ready
-    bool dpmSubSystemStatus = dataProfileManager_->isSubsystemReady();
-
-    // If data subsystem is not ready, wait for it to be ready
-    if (!dpmSubSystemStatus) {
-        std::cout << "\n\nData profile manager subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = dataProfileManager_->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        dpmSubSystemStatus = f.get();
-    }
-
     // Check if the SDK is able to initialize data subsystems
     if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
         endTime = std::chrono::system_clock::now();
@@ -131,31 +181,6 @@ bool DataMenu::initializeSDK() {
     } else {
         std::cout << "Unable to initialize subSystem" << std::endl;
     }
-
-    if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
-        //Update dataListener_'s data call list
-        requestDataCallList(OperationType::DATA_LOCAL,
-                            std::bind(&DataListener::initDataCallListResponseCb, dataListener_,
-                                        std::placeholders::_1, std::placeholders::_2));
-        requestDataCallList(OperationType::DATA_REMOTE,
-                            std::bind(&DataListener::initDataCallListResponseCb, dataListener_,
-                                        std::placeholders::_1, std::placeholders::_2));
-    }
-
-    myDataProfileListCb_ = std::make_shared<MyDataProfilesCallback>();
-    myDataProfileListCbForQuery_ = std::make_shared<MyDataProfilesCallback>();
-    myDataCreateProfileCb_ = std::make_shared<MyDataCreateProfileCallback>();
-    myDataProfileCb_ = std::make_shared<MyDataProfileCallback>();
-    myDeleteProfileCb_ = std::make_shared<MyDeleteProfileCallback>();
-    myModifyProfileCb_ = std::make_shared<MyModifyProfileCallback>();
-    myDataProfileCbForGetProfileById_ = std::make_shared<MyDataProfileCallback>();
-    profileListener_ = std::make_shared<MyProfileListener>();
-
-    telux::common::Status status = dataProfileManager_->registerListener(profileListener_);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Unable to register data profile manager listener" << std::endl;
-    }
-
     return true;
 }
 
@@ -258,7 +283,8 @@ void DataMenu::init() {
             std::bind(&DataMenu::createProfile, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> deleteProfileMenu = std::make_shared<ConsoleAppCommand>(
-        ConsoleAppCommand("102", "delete_profile", {"profileId", "techPref (0-3GPP, 1-3GPP2)"},
+        ConsoleAppCommand("102", "delete_profile",
+            {"slotId (1-Primary, 2-Secondary)", "profileId", "techPref (0-3GPP, 1-3GPP2)"},
             std::bind(&DataMenu::deleteProfile, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> modifyProfileMenu
@@ -271,7 +297,7 @@ void DataMenu::init() {
 
     std::shared_ptr<ConsoleAppCommand> requestProfileByIdMenu
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("105", "request_profile_by_id",
-            {"profileId", "techPref (0-3GPP, 1-3GPP2)"},
+            {"slotId (1-Primary, 2-Secondary)", "profileId", "techPref (0-3GPP, 1-3GPP2)"},
             std::bind(&DataMenu::requestProfileById, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
@@ -299,6 +325,12 @@ void DataMenu::openDataFilterMenu(std::vector<std::string> userInput) {
 
 void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStart data call" << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     telux::common::Status retStat;
     int profileId;
     std::cout << "Enter Profile Id : ";
@@ -317,7 +349,9 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
 
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-    retStat = dataConnectionManager_->startDataCall(profileId, ipFamType,
+
+    retStat =
+        dataConnectionManagers_[static_cast<SlotId>(slotId)]->startDataCall(profileId, ipFamType,
         MyDataCallResponseCallback::startDataCallResponseCallBack, opType);
     Utils::printStatus(retStat);
 }
@@ -325,6 +359,13 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
 void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStop data call" << std::endl;
     telux::common::Status retStat;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     int profileId;
     std::cout << "Enter Profile Id : ";
     std::cin >> profileId;
@@ -342,7 +383,8 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
 
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-    retStat = dataConnectionManager_->stopDataCall(profileId, ipFamType,
+    retStat =
+        dataConnectionManagers_[static_cast<SlotId>(slotId)]->stopDataCall(profileId, ipFamType,
         MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
     Utils::printStatus(retStat);
 }
@@ -350,12 +392,20 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
 void DataMenu::requestDataCallStatistics(std::vector<std::string> inputCommand) {
     std::cout << "\nRequest DataCall Statistics" << std::endl;
 
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
 
-    auto dataCall = dataListener_->getDataCall(profileId);
+    auto dataCall = dataListeners_[static_cast<SlotId>(slotId)]->getDataCall(
+        static_cast<SlotId>(slotId), profileId);
     if (dataCall) {
         dataCall->requestDataCallStatistics(
             &DataCallStatisticsResponseCb::requestStatisticsResponse);
@@ -367,11 +417,19 @@ void DataMenu::requestDataCallStatistics(std::vector<std::string> inputCommand) 
 void DataMenu::resetDataCallStatistics(std::vector<std::string> inputCommand) {
     std::cout << "\nReset DataCall Statistics" << std::endl;
 
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
 
-    auto dataCall = dataListener_->getDataCall(profileId);
+    auto dataCall = dataListeners_[static_cast<SlotId>(slotId)]->getDataCall(
+        static_cast<SlotId>(slotId), profileId);
     if (dataCall) {
         dataCall->resetDataCallStatistics(&DataCallStatisticsResponseCb::resetStatisticsResponse);
     } else {
@@ -379,11 +437,12 @@ void DataMenu::resetDataCallStatistics(std::vector<std::string> inputCommand) {
     }
 }
 
-void DataMenu::requestDataCallList(OperationType operationType, DataCallListResponseCb cb) {
+void DataMenu::requestDataCallList(OperationType operationType,
+    SlotId slotId, DataCallListResponseCb cb) {
     telux::common::Status retStat;
-    if (dataConnectionManager_) {
+    if (dataConnectionManagers_[slotId]) {
         telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-        retStat = dataConnectionManager_->requestDataCallList(opType,cb);
+        retStat = dataConnectionManagers_[slotId]->requestDataCallList(opType,cb);
         Utils::printStatus(retStat);
     }
 }
@@ -391,48 +450,60 @@ void DataMenu::requestDataCallList(OperationType operationType, DataCallListResp
 void DataMenu::requestDataCallList() {
     std::cout << "\nRequest DataCall List" << std::endl;
     telux::common::Status retStat;
-    if (dataConnectionManager_) {
-        int operationType;
-        std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
-        std::cin >> operationType;
-        Utils::validateInput(operationType);
-
-        telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-        retStat = dataConnectionManager_->requestDataCallList(
-            opType,MyDataCallResponseCallback::dataCallListResponseCb);
-        Utils::printStatus(retStat);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
     }
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    Utils::validateInput(operationType);
+
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    retStat = dataConnectionManagers_[static_cast<SlotId>(slotId)]->requestDataCallList(
+        opType,MyDataCallResponseCallback::dataCallListResponseCb);
+    Utils::printStatus(retStat);
 }
 
 void DataMenu::setDefaultProfile() {
     std::cout << "\nSet Default Profile" << std::endl;
     telux::common::Status retStat;
-    if (dataConnectionManager_) {
-        int operationType;
-        std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
-        std::cin >> operationType;
-        Utils::validateInput(operationType);
-        telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-
-        // Callback
-        auto respCb = [](telux::common::ErrorCode error) {
-            std::cout << std::endl << std::endl;
-            std::cout << "CALLBACK: "
-                      << "setDefaultProfile Response"
-                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                      << ". ErrorCode: " << static_cast<int>(error)
-                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        };
-
-        retStat = dataConnectionManager_->setDefaultProfile(opType, profileId, respCb);
-        Utils::printStatus(retStat);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
     }
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    Utils::validateInput(operationType);
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "setDefaultProfile Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = dataConnectionManagers_[static_cast<SlotId>(slotId)]->setDefaultProfile(
+        opType, profileId, respCb);
+    Utils::printStatus(retStat);
 }
+
 void DataMenu::commandCallback(ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {
         std::cout << " Command initiated successfully " << std::endl;
@@ -486,7 +557,17 @@ void DataMenu::getProfileParamsFromUser() {
 }
 
 void DataMenu::requestProfileList(std::vector<std::string> inputCommand) {
-    telux::common::Status status = dataProfileManager_->requestProfileList(myDataProfileListCb_);
+    std::cout << "\nRequest Profile List" << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
+    telux::common::Status status =
+        dataProfileManagers_[static_cast<SlotId>(slotId)]->requestProfileList(
+            myDataProfileListCb_[static_cast<SlotId>(slotId)]);
 
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Request profile list sent successfully" << std::endl;
@@ -496,10 +577,17 @@ void DataMenu::requestProfileList(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::createProfile(std::vector<std::string> inputCommand) {
+    std::cout << "\nCreate Profile Request" << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     getProfileParamsFromUser();
 
-    telux::common::Status status
-        = dataProfileManager_->createProfile(params_, myDataCreateProfileCb_);
+    telux::common::Status status = dataProfileManagers_[static_cast<SlotId>(slotId)]->createProfile(
+        params_, myDataCreateProfileCb_[static_cast<SlotId>(slotId)]);
 
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Create profile request sent successfully" << std::endl;
@@ -509,22 +597,24 @@ void DataMenu::createProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::deleteProfile(std::vector<std::string> inputCommand) {
-    int profileId, techPrefId;
+    int slotId, profileId, techPrefId;
     try {
-        profileId = std::stoi(inputCommand[1]);
-        techPrefId = std::stoi(inputCommand[2]);
+        slotId = std::stoi(inputCommand[1]);
+        profileId = std::stoi(inputCommand[2]);
+        techPrefId = std::stoi(inputCommand[3]);
     } catch (const std::exception &e) {
         std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
         return;
     }
+    std::cout << "\nDeleting Profile " << profileId << " on slotId " << slotId << std::endl;
     telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
-    if (techPrefId == 1) {
+    if (techPrefId == 0) {
         tp = telux::data::TechPreference::TP_3GPP;
-    } else if (techPrefId == 2) {
+    } else if (techPrefId == 1) {
         tp = telux::data::TechPreference::TP_3GPP2;
     }
-    telux::common::Status status
-        = dataProfileManager_->deleteProfile(profileId, tp, myDeleteProfileCb_);
+    telux::common::Status status = dataProfileManagers_[static_cast<SlotId>(slotId)]->deleteProfile(
+        profileId, tp, myDeleteProfileCb_[static_cast<SlotId>(slotId)]);
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Delete profile request sent successfully" << std::endl;
     } else {
@@ -533,6 +623,14 @@ void DataMenu::deleteProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::modifyProfile(std::vector<std::string> inputCommand) {
+    std::cout << "\nModify Profile Request" << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     int profileId;
     std::cout << "Enter profile Id to Modify : ";
     std::cin >> profileId;
@@ -541,7 +639,8 @@ void DataMenu::modifyProfile(std::vector<std::string> inputCommand) {
     getProfileParamsFromUser();
 
     telux::common::Status status
-        = dataProfileManager_->modifyProfile(profileId, params_, myModifyProfileCb_);
+        = dataProfileManagers_[static_cast<SlotId>(slotId)]->modifyProfile(
+            profileId, params_, myModifyProfileCb_[static_cast<SlotId>(slotId)]);
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Modify profile request sent successfully" << std::endl;
     } else {
@@ -550,6 +649,14 @@ void DataMenu::modifyProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
+    std::cout << "\nQuery Profile Request" << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     char delimiter = '\n';
     int techPref;
     std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
@@ -592,8 +699,8 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
     params_.userName = username;
     params_.password = password;
 
-    telux::common::Status status
-        = dataProfileManager_->queryProfile(params_, myDataProfileListCbForQuery_);
+    telux::common::Status status = dataProfileManagers_[static_cast<SlotId>(slotId)]->queryProfile(
+        params_, myDataProfileListCbForQuery_[static_cast<SlotId>(slotId)]);
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Query profile request sent successfully" << std::endl;
     } else {
@@ -602,23 +709,25 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
 }
 
 void DataMenu::requestProfileById(std::vector<std::string> inputCommand) {
-    int profileId, techPrefId;
+    int slotId, profileId, techPrefId;
     try {
-        profileId = std::stoi(inputCommand[1]);
-        techPrefId = std::stoi(inputCommand[2]);
+        slotId = std::stoi(inputCommand[1]);
+        profileId = std::stoi(inputCommand[2]);
+        techPrefId = std::stoi(inputCommand[3]);
     } catch (const std::exception &e) {
         std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
         return;
     }
 
+    std::cout << "\nRequest Profile By Id " << profileId << " on slotId " << slotId << std::endl;
     telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
     if (techPrefId == 0) {
         tp = telux::data::TechPreference::TP_3GPP;
     } else if (techPrefId == 1) {
         tp = telux::data::TechPreference::TP_3GPP2;
     }
-    telux::common::Status status
-        = dataProfileManager_->requestProfile(profileId, tp, myDataProfileCbForGetProfileById_);
+    telux::common::Status status =dataProfileManagers_[static_cast<SlotId>(slotId)]->requestProfile(
+        profileId, tp, myDataProfileCbForGetProfileById_[static_cast<SlotId>(slotId)]);
     if (status == telux::common::Status::SUCCESS) {
         std::cout << "Request profile by ID request sent successfully" << std::endl;
     } else {
@@ -638,6 +747,13 @@ void DataMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
 
     int profileId;
     std::cout << "Enter Profile Id: ";
@@ -692,7 +808,7 @@ void DataMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = natMgr->addStaticNatEntry(profileId, natConfig, respCb);
+    retStat = natMgr->addStaticNatEntry(profileId, natConfig, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -707,6 +823,14 @@ void DataMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -760,7 +884,8 @@ void DataMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = natMgr->removeStaticNatEntry(profileId, natConfig, respCb);
+    retStat = natMgr->removeStaticNatEntry(
+        profileId, natConfig, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -775,6 +900,12 @@ void DataMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -808,7 +939,7 @@ void DataMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
                       << "\n==========================================\n";
         }
     };
-    retStat = natMgr->requestStaticNatEntries(profileId, respCb);
+    retStat = natMgr->requestStaticNatEntries(profileId, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -840,20 +971,28 @@ void DataMenu::parseProtoInfo(std::shared_ptr<IIpFilter> filter,
 
     if (protocol == PROTO_TCP) {
         auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(filter);
-        TcpInfo tcpInfo = tcpFilter->getTcpInfo();
-        srcPort = tcpInfo.src.port;
-        srcPortRange = tcpInfo.src.range;
-        dstPort = tcpInfo.dest.port;
-        dstPortRange = tcpInfo.dest.range;
-        protoStr = "TCP";
+        if(tcpFilter) {
+            TcpInfo tcpInfo = tcpFilter->getTcpInfo();
+            srcPort = tcpInfo.src.port;
+            srcPortRange = tcpInfo.src.range;
+            dstPort = tcpInfo.dest.port;
+            dstPortRange = tcpInfo.dest.range;
+            protoStr = "TCP";
+        } else {
+            std::cout << " TCP filter is NULL so couldn't get TCP info\n ";
+        }
     } else if (protocol == PROTO_UDP) {
         auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(filter);
-        UdpInfo udpInfo = udpFilter->getUdpInfo();
-        srcPort = udpInfo.src.port;
-        srcPortRange = udpInfo.src.range;
-        dstPort = udpInfo.dest.port;
-        dstPortRange = udpInfo.dest.range;
-        protoStr = "UDP";
+        if(udpFilter) {
+            UdpInfo udpInfo = udpFilter->getUdpInfo();
+            srcPort = udpInfo.src.port;
+            srcPortRange = udpInfo.src.range;
+            dstPort = udpInfo.dest.port;
+            dstPortRange = udpInfo.dest.range;
+            protoStr = "UDP";
+        } else {
+            std::cout << " UDP filter is NULL so couldn't get UDP info\n ";
+        }
     } else if (protocol == PROTO_ICMP) {
         protoStr = "ICMP";
     } else if (protocol == PROTO_IGMP) {
@@ -895,6 +1034,12 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -926,7 +1071,8 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = firewallMgr->setFirewall(profileId, fwEnable, allowPackets, respCb);
+    retStat = firewallMgr->setFirewall(
+        profileId, fwEnable, allowPackets, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -940,6 +1086,12 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -960,7 +1112,7 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
         }
     };
 
-    retStat = firewallMgr->requestFirewallStatus(profileId, respCb);
+    retStat = firewallMgr->requestFirewallStatus(profileId, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -1189,6 +1341,12 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1252,11 +1410,13 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = firewallMgr->addFirewallEntry(profileId, fwEntry, respCb);
+    retStat = firewallMgr->addFirewallEntry(
+        profileId, fwEntry, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 
     if (proto == 253) {
-        retStat = firewallMgr->addFirewallEntry(profileId, fwEntryTcpUdp, respCb);
+        retStat = firewallMgr->addFirewallEntry(
+        profileId, fwEntryTcpUdp, respCb, static_cast<SlotId>(slotId));
         Utils::printStatus(retStat);
     }
 }
@@ -1271,6 +1431,12 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1292,7 +1458,7 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
         this->displayFirewallEntry();
     };
 
-    retStat = firewallMgr->requestFirewallEntries(profileId, respCb);
+    retStat = firewallMgr->requestFirewallEntries(profileId, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -1351,6 +1517,12 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1371,7 +1543,8 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = firewallMgr->removeFirewallEntry(profileId, entryHandle, respCb);
+    retStat = firewallMgr->removeFirewallEntry(
+        profileId, entryHandle, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -1385,6 +1558,12 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1405,7 +1584,7 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    retStat = firewallMgr->enableDmz(profileId, ipAddr, respCb);
+    retStat = firewallMgr->enableDmz(profileId, ipAddr, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -1419,6 +1598,12 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1440,7 +1625,8 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    retStat = firewallMgr->disableDmz(profileId, static_cast<telux::data::IpFamilyType>(ipType), respCb);
+    retStat = firewallMgr->disableDmz(profileId,
+        static_cast<telux::data::IpFamilyType>(ipType), respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -1454,6 +1640,12 @@ void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1477,7 +1669,7 @@ void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
         }
     };
 
-    retStat = firewallMgr->requestDmzEntry(profileId, respCb);
+    retStat = firewallMgr->requestDmzEntry(profileId, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -1709,6 +1901,13 @@ void DataMenu::bindWithProfile(std::vector<std::string> inputCommand) {
         subSystemStatus = f.get();
     }
 
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1728,7 +1927,7 @@ void DataMenu::bindWithProfile(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = vlanMgr->bindWithProfile(profileId, vlanId, respCb);
+    retStat = vlanMgr->bindWithProfile(profileId, vlanId, respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }
 
@@ -1754,6 +1953,13 @@ void DataMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
         subSystemStatus = f.get();
     }
 
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
+
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -1773,7 +1979,7 @@ void DataMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-   retStat = vlanMgr->unbindFromProfile(profileId, vlanId, respCb);
+   retStat = vlanMgr->unbindFromProfile(profileId, vlanId, respCb, static_cast<SlotId>(slotId));
    Utils::printStatus(retStat);
 }
 
@@ -1788,6 +1994,13 @@ void DataMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+        std::cin >> slotId;
+        Utils::validateInput(slotId);
+    }
 
     auto &dataFactory = telux::data::DataFactory::getInstance();
     vlanMgr = dataFactory.getVlanManager(opType);
@@ -1812,6 +2025,6 @@ void DataMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
         }
     };
 
-    retStat = vlanMgr->queryVlanMappingList(respCb);
+    retStat = vlanMgr->queryVlanMappingList(respCb, static_cast<SlotId>(slotId));
     Utils::printStatus(retStat);
 }

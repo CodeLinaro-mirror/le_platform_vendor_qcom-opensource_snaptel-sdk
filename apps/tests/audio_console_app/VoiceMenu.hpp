@@ -60,6 +60,7 @@ private:
     void stopDtmf(std::vector<std::string> userInput);
     void registerListener(std::vector<std::string> userInput);
     void deRegisterListener(std::vector<std::string> userInput);
+    void changeSlotId();
 
     telux::common::Status lowFrequencyHelper(uint32_t lowFreq,
                              telux::audio::DtmfLowFreq &lowFrequency);
@@ -70,7 +71,9 @@ private:
     std::shared_ptr<IAudioVoiceStream> audioVoiceStream_;
     std::shared_ptr<AudioClient> audioClient_;
     std::atomic<bool> audioStarted_;
+    std::map<int, bool> startFlagCache_;
     std::atomic<bool> ready_;
+    SlotId slotId_;
 };
 
 #endif // VOICEMENU_HPP

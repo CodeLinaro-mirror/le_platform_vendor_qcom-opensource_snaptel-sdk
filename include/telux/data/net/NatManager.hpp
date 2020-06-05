@@ -116,14 +116,15 @@ class INatManager {
      * @param [in] profileId         Profile identifier to which static entry will be mapped to.
      * @param [in] snatConfig        snatConfiguration @ref telux::net::NatConfig
      * @param [in] callback          optional callback to get the response addStaticNatEntry
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of addStaticNatEntry i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status addStaticNatEntry(int profileId,
-        const NatConfig &snatConfig, telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status addStaticNatEntry(int profileId, const NatConfig &snatConfig,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Removes a static Network Address Translation (NAT) entry in the NAT table,
@@ -132,21 +133,23 @@ class INatManager {
      * @param [in] profileId         Profile identifier to which static entry will be removed from.
      * @param [in] snatConfig        snatConfiguration @ref telux::net::NatConfig
      * @param [in] callback          optional callback to get the response removeStaticNatEntry
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of removeStaticNatEntry i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status removeStaticNatEntry(int profileId,
-        const NatConfig &snatConfig, telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status removeStaticNatEntry(int profileId, const NatConfig &snatConfig,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Request list of static nat entries available in the NAT table
      *
      * @param [in] profileId         Profile identifier to which static entries will be retrieved.
-     * @param[in] snatEntriesCb      Asynchronous callback to get the list of static
+     * @param [in] snatEntriesCb     Asynchronous callback to get the list of static
      *                               Network Address Translation (NAT) entries
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of requestStaticNatEntries i.e. success or suitable status code.
      *
@@ -154,7 +157,7 @@ class INatManager {
      *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestStaticNatEntries(int profileId,
-        StaticNatEntriesCb snatEntriesCb) = 0;
+        StaticNatEntriesCb snatEntriesCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Get the associated operation type for this instance.

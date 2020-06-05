@@ -93,6 +93,7 @@ struct L2tpSysConfig {
     std::vector<L2tpTunnelConfig>configList;       /**< List of L2tp tunnel configurations */
     bool enableMtu;   /**< Enable MTU size setting on underlying interfaces to avoid segmentation */
     bool enableTcpMss;   /**< Enable TCP MSS clampping on L2TP interfaces to avoid segmentation */
+    uint32_t mtuSize; /**< Current MTU size in bytes */
 };
 /** @} */ /* end_addtogroup telematics_net */
 
@@ -148,13 +149,15 @@ class IL2tpManager {
      *                            avoid fragmentation
      * @param [in] callback       optional callback to get the response setConfig
      *
+     * @param [in] mtuSize        optional MTU size in bytes. If not set, MTU size will be set to
+     *                            default 1422 bytes
      * @returns Status of setConfig i.e. success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
-    virtual telux::common::Status setConfig(bool enable, bool enableMss,
-        bool enableMtu, telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status setConfig(bool enable, bool enableMss, bool enableMtu,
+        telux::common::ResponseCallback callback = nullptr, uint32_t mtuSize = 0) = 0;
 
     /**
      * Set L2TP Configuration for one tunnel

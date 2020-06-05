@@ -34,7 +34,7 @@
 #include <telux/audio/AudioFactory.hpp>
 #include <telux/audio/AudioManager.hpp>
 
-#define MODEM_SUB_ID 1
+
 #define SAMPLE_RATE 16000
 #define TIMEOUT 5
 
@@ -122,7 +122,7 @@ int main(int, char **) {
     // ### 3. Create an Audio Capture Stream
     StreamConfig config;
     config.type = StreamType::CAPTURE;
-    config.modemSubId = MODEM_SUB_ID;
+    config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = SAMPLE_RATE;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     // here both channel selected, this can be selected according to requirement

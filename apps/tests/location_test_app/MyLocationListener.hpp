@@ -52,7 +52,7 @@ public:
 
    void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) override;
 
-   void onLocationSystemInfo(telux::loc::LocationSystemInfo &locationSystemInfo) override;
+   void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
    void setDetailedLocationReportFlag(bool enable);
    void setDetailedEngineLocReportFlag(bool enable);
@@ -70,7 +70,7 @@ private:
    bool isSvInfoFlagEnabled_ = false, isDetailedReportFlagEnabled_ = false;
    bool isBasicReportFlagEnabled_ = false, isDataInfoFlagEnabled_ = false;
    bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
-   bool isMeasurementsInfoFlagEnabled_ = false, isTimerExpired = false;
+   bool isMeasurementsInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);

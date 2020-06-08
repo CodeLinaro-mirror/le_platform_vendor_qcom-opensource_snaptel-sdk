@@ -143,19 +143,17 @@ DataConnectionListener::DataConnectionListener(std::weak_ptr<Cv2xTelux> instance
 }
 
 void DataConnectionListener::waitDataCallConnect(DataCallType callType, bool &connect) {
-    if (callType == CV2X_DATA_CALL_IP) {
-        std::unique_lock<std::mutex> cvLock(dmutex_);
-        while (ipStatus_ == DataCallStatus::INVALID) {
-            dcv_.wait(cvLock);
-        }
-        connect = (ipStatus_ == DataCallStatus::NET_CONNECTED) ? true : false;
-    } else {
-        std::unique_lock<std::mutex> cvLock(dmutex_);
-        while (nonIpStatus_ == DataCallStatus::INVALID) {
-            dcv_.wait(cvLock);
-        }
-        connect = (nonIpStatus_ == DataCallStatus::NET_CONNECTED) ? true : false;
+    DataCallStatus *callStatus = &ipStatus_;
+    if( callType == CV2X_DATA_CALL_NON_IP) {
+        callStatus = &nonIpStatus_;
     }
+
+    std::unique_lock<std::mutex> cvLock(dmutex_);
+    do {
+        dcv_.wait(cvLock);
+    } while ((*callStatus) == DataCallStatus::INVALID);
+    connect = ((*callStatus) == DataCallStatus::NET_CONNECTED) ? true : false;
+
     LOGI("V2X data call type:%d connect status:%d\n", callType, connect);
 }
 
@@ -201,10 +199,16 @@ void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCa
 void DataConnectionListener::onServiceStatusChange(ServiceStatus status) {
     Status res = Status::FAILED;
 
-    LOGD("DataConnectionListener Service Status changed to %s\n",
+    LOGI("DataConnectionListener Service Status changed to %s\n",
             convertServiceStatusToString[status].c_str() );
-    if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
-    } else if (status == ServiceStatus::SERVICE_AVAILABLE){
+    if (status == ServiceStatus::SERVICE_AVAILABLE){
+
+        {
+            /*reset cached data call state upon SSR complete*/
+            std::lock_guard<std::mutex> lock(dmutex_);
+            ipStatus_    = DataCallStatus::INVALID;
+            nonIpStatus_ = DataCallStatus::INVALID;
+        }
 
         auto sp = cv2xTelux_.lock();
         if(sp) {

@@ -66,17 +66,20 @@ enum class EmergencyCallType {
  * MSD Transmission Status
  */
 enum class ECallMsdTransmissionStatus {
-   SUCCESS = 0,                  /**< Success */
-   FAILURE = 1,                  /**< Generic failure */
-   MSD_TRANSMISSION_STARTED = 2, /**< MSD Transmission Started */
-   NACK_OUT_OF_ORDER = 3,        /**< Out of order NACK message
-                                 detected */
-   ACK_OUT_OF_ORDER = 4,         /**< Out of order ACK message
-                                 detected */
-   START_RECEIVED = 5,           /**< SEND-MSD(START) is received
-                                 and SYNC is Locked */
-   LL_ACK_RECEIVED = 6,          /**< Link-Layer Acknowledgement(LL-ACK)
-                                 is received */
+   SUCCESS = 0,                  /**< In-band MSD transmission is successful */
+   FAILURE = 1,                  /**< In-band MSD transmission failed */
+   MSD_TRANSMISSION_STARTED = 2, /**< In-band MSD transmission started */
+   NACK_OUT_OF_ORDER = 3,        /**< Out of order NACK message detected during in-band MSD
+                                      transmission*/
+   ACK_OUT_OF_ORDER = 4,         /**< Out of order ACK message detected during in-band MSD
+                                      transmission*/
+   START_RECEIVED = 5,           /**< SEND-MSD(START) is received and SYNC is locked during in-band
+                                      MSD transmission*/
+   LL_ACK_RECEIVED = 6,          /**< Link-Layer Acknowledgement(LL-ACK) is received during in-band
+                                      MSD transmission*/
+   OUTBAND_MSD_TRANSMISSION_STARTED = 10,    /**< Outband MSD transmission started in NG eCall */
+   OUTBAND_MSD_TRANSMISSION_SUCCESS = 11,    /**< Outband MSD transmission succeeded in NG eCall */
+   OUTBAND_MSD_TRANSMISSION_FAILURE = 12,    /**< Outband MSD transmission failed in NG eCall */
 };
 
 /**

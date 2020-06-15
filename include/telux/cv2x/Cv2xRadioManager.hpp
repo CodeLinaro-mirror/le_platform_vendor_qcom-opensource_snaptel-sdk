@@ -236,6 +236,8 @@ public:
      * @param [in] configFilePath - Path to config file.
      * @param [in] cb             - Callback that is invoked when the send is complete.
      *                              This may be null.
+     *
+     * @deprecated Use ICv2xConfig instead
      */
     virtual telux::common::Status updateConfiguration(const std::string & configFilePath,
                                                       UpdateConfigurationCallback cb) = 0;

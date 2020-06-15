@@ -445,7 +445,43 @@ struct DataSessionSettings {
     /**< IPv6 address. */
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
+/**
+ * V2X configuration source types listed in ascending order of priority.
+ * The system always uses the V2X configuration with the highest priority
+ * if multiple V2X configuration sources exist.
+ *
+ * Used in @ref ConfigEventInfo
+ */
+enum class ConfigSourceType {
+    UNKNOWN = 0u,   /**< V2X config file source is unknown */
+    PRECONFIG = 1u, /**< V2X config file source is preconfig */
+    SIM_CARD = 2u,  /**< V2X config file source is SIM card */
+    OMA_DM = 4u,    /**< V2X config file source is OMA-DM */
+};
+
+/**
+ * Defines possible values for the events relevant to CV2X config file.
+ *
+ * Used in @ref ConfigEventInfo
+ */
+enum class ConfigEvent {
+    CHANGED = 0u,  /**< V2X config file is changed */
+    EXPIRED = 1u,  /**< V2X config file is expired */
+};
+
+/**
+ * Information about any update to a CV2X config file.
+ *
+ * Used in @ref onConfigFileChanged
+ */
+struct ConfigEventInfo {
+    ConfigSourceType source;
+    /**< The type of the V2X config file. */
+    ConfigEvent event;
+    /**< V2X config event. */
+};
+
+/** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x
 

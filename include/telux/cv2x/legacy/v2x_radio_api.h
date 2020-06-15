@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 #include "v2x_common.pb.h"
+#include "v2x_config_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1960,30 +1961,6 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
 extern v2x_status_enum_type v2x_radio_tx_event_flow_info_change(
     int *sock,
     v2x_tx_flow_info_t *updated_flow_info);
-
-/**
-    Updates the V2X radio configuration file.
-
-    @param[in] config_file_path  Pointer to the path of the configuration file.
-
-    @detdesc
-    The V2X radio status must be INACTIVE. If the V2X status is
-    ACTIVE or SUSPENDED (see #v2x_event_t), call stop_v2x_mode() first.
-    @par
-    This call is a blocking call. When it returns the configuration has
-    been updated, assuming no error.
-
-    @return
-    #V2X_STATUS_SUCCESS.
-    @par
-    Otherwise:
-    - #V2X_STATUS_EALREADY -- Failure because V2X status is not #V2X_INACTIVE.
-    - #V2X_STATUS_FAIL -- Other failure.
-
-    @dependencies
-    V2X radio status must be #V2X_INACTIVE (#v2x_event_t). @newpage
- */
-extern v2x_status_enum_type v2x_update_configuration(const char *config_file_path);
 
 /**
     Starts V2X mode.

@@ -90,7 +90,7 @@ bool DataMenu::initConnectionManagerAndListener(SlotId slotId){
     bool subSystemStatus = conMgr->isSubsystemReady();
     if (!subSystemStatus) {
         std::cout << "\n\nData subsystem on slot " << slotId <<
-            "is not ready, Please wait" << std::endl;
+            " is not ready, Please wait" << std::endl;
         std::future<bool> f = conMgr->onSubsystemReady();
         // Wait unconditionally for data subsystem to be ready
         subSystemStatus = f.get();
@@ -130,7 +130,7 @@ bool DataMenu::initDataProfileManagerAndListener(SlotId slotId) {
     // If data subsystem is not ready, wait for it to be ready
     if (!subSystemStatus) {
         std::cout << "\n\nData profile manager subsystem on slot " <<
-        slotId << "is not ready, Please wait" << std::endl;
+        slotId << " is not ready, Please wait" << std::endl;
         std::future<bool> f = profMgr->onSubsystemReady();
         // Wait unconditionally for data subsystem to be ready
         subSystemStatus = f.get();

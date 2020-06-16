@@ -96,6 +96,9 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
    Data Network Management sub-system consists of APIs to setup VLAN, static NAT, Firewall, Socks, etc.
 
+<b>Debug Logger</b>
+
+   Logger consists of API that can be utilized to log messages from SDK Applications.
 
 Telematics SDK classes can be broadly divided into the following types:
 
@@ -191,6 +194,14 @@ Data Firewall Manager APIs provide functionality such as
    - Query current status of Firewall
    - Add / remove Firewall entry
    - Query Firewall entry rules
+
+Data Socks Manager APIs provide functionality such as
+   - Enable/Disable Socks feature
+
+Data L2TP Manager APIs provides functionality such as
+   - Set L2TP configuration to enable/disable L2TP, TCP Mss and MTU size
+   - Add / remove L2TP tunnel
+   - Query active L2TP configuration
 
 Data Software Bridge Manager provides interface to enable packet acceleration for non-standard WLAN and Ethernet physical interfaces.
 It facilitates to configure a software bridge between the interface and Hardware accelerator.
@@ -420,6 +431,11 @@ Modem Config APIs in the Telematics SDK provides modem config related functional
    - Get/Set config auto selection mode.
    - Delete a modem config file from modem's storage.
    - Ability to get notified whenever a SW config file is activated.
+
+@subsection debug_logger Debug Logger
+Logging APIs in the Telematics SDK provides logging related functionalities such as
+   - Runtime configurable logging to console, diag and file.
+   - Possible LOG_LEVEL values are NONE, PERF, ERROR, WARNING, INFO, DEBUG.
 
 @section Security
 @subsection SELinux

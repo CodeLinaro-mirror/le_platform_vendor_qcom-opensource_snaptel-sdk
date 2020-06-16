@@ -123,12 +123,20 @@ public:
     /**
      * This function is used to hangup an ongoing call
      *
-     * @param [in] phoneId  Represents phone corresponding to which the operation will be performed
+     * @param [in] phoneId    Represents phone corresponding to which the operation is performed
+     * @param [in] callIndex  Represents the call on which the operation is performed
      *
      * @returns Status of hangup i.e success or suitable status code.
      *
      */
-    telux::common::Status hangup(int phoneId);
+    telux::common::Status hangup(int phoneId, int callIndex);
+
+    /**
+     * This function dumps the list of calls in progress
+     *
+     * @returns Status of getCurrentCalls i.e success or suitable status code.
+     */
+    telux::common::Status getCurrentCalls();
 
     /**
      * This function requests status of various eCall HLAP timers

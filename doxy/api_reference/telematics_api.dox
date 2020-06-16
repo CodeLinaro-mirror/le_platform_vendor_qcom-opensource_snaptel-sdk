@@ -63,7 +63,8 @@ Jun 2017   SVM      Created to support V2X API
     @defgroup telematics_serving_system Serving System
     Serving System Manager class provides the interface to request and set service domain preference and radio access technology mode preference for  searching and registering (CS/PS domain, RAT and operation mode)
     @defgroup telematics_common Common
-    This section contains APIs related to Command Callbacks, Error Codes and Version information.
+    This section contains APIs related to Logger, Command Callbacks, Error Codes and Version information.
+    Also contains Macros to print message at different log level.
     @defgroup telematics_cv2x C-V2X
     This section contains APIs related to Cellular-V2X operation.
     @defgroup telematics_audio Audio

@@ -86,6 +86,11 @@ private:
     void hangupCall();
 
     /**
+     * Dump the list of calls in progress
+     */
+    void getCalls();
+
+    /**
      * Request eCall High Level Application Protocol(HLAP) timers status
      */
     void requestECallHlapTimerStatus();

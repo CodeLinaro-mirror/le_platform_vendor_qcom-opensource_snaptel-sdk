@@ -83,12 +83,16 @@ void ECallApp::init() {
     std::shared_ptr<ConsoleAppCommand> hangupCallCommand = std::make_shared<ConsoleAppCommand>(
         ConsoleAppCommand("4", "Hangup_Call", {}, std::bind(&ECallApp::hangupCall, this)));
 
+    std::shared_ptr<ConsoleAppCommand> getCallsCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("5", "Get_InProgress_Calls", {}, std::bind(&ECallApp::getCalls, this)));
+
     std::shared_ptr<ConsoleAppCommand> hlapTimerStatusCommand = std::make_shared<ConsoleAppCommand>(
-        ConsoleAppCommand("5", "Get_ECall_HLAP_Timers_Status", {},
+        ConsoleAppCommand("6", "Get_ECall_HLAP_Timers_Status", {},
                           std::bind(&ECallApp::requestECallHlapTimerStatus, this)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
-        customNumberECallCommand, answerCallCommand, hangupCallCommand, hlapTimerStatusCommand};
+        customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
+        hlapTimerStatusCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -225,9 +229,40 @@ void ECallApp::hangupCall() {
         std::cout << "Invalid eCall Manager" << std::endl;
         return;
     }
-    auto ret = eCallMgr_->hangupCall();
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    int callIndex = -1;
+    char delimiter = '\n';
+    std::string temp = "";
+    std::cout << "Enter call index (if more than one call exists): ";
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            callIndex = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values, " << callIndex
+                    << std::endl;
+        }
+    } else {
+        std::cout << "Trying to hangup the existing call" << std::endl;
+    }
+    auto ret = eCallMgr_->hangupCall(phoneId, callIndex);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to hangup the call" << std::endl;
+    }
+}
+
+/**
+ * Dump the list of calls in progress
+ */
+void ECallApp::getCalls() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->getCalls();
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to get current calls" << std::endl;
     }
 }
 
@@ -248,10 +283,10 @@ void ECallApp::requestECallHlapTimerStatus() {
 }
 
 /**
- * Hangs up a triggered eCall and gracefully clears down the subsystems.
+ * Executes any cleanup procedure if necessary
  */
 void ECallApp::cleanup() {
-    hangupCall();
+    std::cout << "Exiting the application.." << std::endl;
 }
 
 /**

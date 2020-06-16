@@ -208,12 +208,24 @@ int LocationMenu::init() {
       ConsoleAppCommand("18", "Delete aiding data", {}, std::bind(
                         &LocationMenu::deleteAidingDataWarm, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureMinSVElevation = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("19", "Configure minimum sv elevation", {},
+                        std::bind(&LocationMenu::configureMinSVElevation, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> requestMinSVElevation = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("20", "Request minimum sv elevation", {},
+                        std::bind(&LocationMenu::requestMinSVElevation, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestRobustLocation = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("21", "Request robust Location", {},
+                        std::bind(&LocationMenu::requestRobustLocation, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
          deleteAllAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
          registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
-         dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm};
+         dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
+         configureMinSVElevation, requestMinSVElevation, requestRobustLocation};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -748,6 +760,19 @@ void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
    }
 }
 
+void LocationMenu::requestRobustLocation(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Request-Robust Location");
+        auto robustLocationCb = std::bind(&MyLocationCommandCallback::onRobustLocationInfo,
+            myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
+        telux::common::Status status = locationConfigurator_->requestRobustLocation(robustLocationCb);
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+   }
+}
+
 void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput) {
   myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
       "Request GNSS Energy Consumed Info");
@@ -760,7 +785,7 @@ void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput)
 void LocationMenu::configureMinGpsWeek(std::vector<std::string> userInput) {
   if(locationConfigurator_) {
        char delimiter = '\n';
-       std::string option;
+       std::string option{};
        std::cout << "Enter minimum gps week : ";
        std::getline(std::cin, option, delimiter);
        uint16_t minGpsWeek = 0;
@@ -797,6 +822,53 @@ void LocationMenu::requestMinGpsWeek(std::vector<std::string> userInput) {
           std::cout << "Not implemented" << std::endl;
         }
    }
+}
+
+void LocationMenu::configureMinSVElevation(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+       char delimiter = '\n';
+       std::string option{};
+       std::cout << "Enter minimum sv elevation : ";
+       std::getline(std::cin, option, delimiter);
+       uint8_t minSVElevation = 0;
+        if(!option.empty()) {
+            try {
+                minSVElevation = static_cast<uint8_t>(std::stoi(option));
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " <<
+                    minSVElevation << std::endl;
+            }
+        } else {
+             minSVElevation = 0;
+        }
+        std::cout << " Entered value is : " << (uint32_t)minSVElevation << std::endl;
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure-Minimum SV Elevation");
+        telux::common::Status status = locationConfigurator_->configureMinSVElevation(
+            minSVElevation, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << __FUNCTION__ << "Not implemented" << std::endl;
+        } else if (status != telux::common::Status::SUCCESS) {
+          std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+   }
+}
+
+void LocationMenu::requestMinSVElevation(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Request-Minimum SV Elevation");
+        auto minSVElevationCb = std::bind(&MyLocationCommandCallback::onMinSVElevationInfo,
+            myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
+        telux::common::Status status =
+            locationConfigurator_->requestMinSVElevation(minSVElevationCb);
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << __FUNCTION__ << "Not implemented" << std::endl;
+        } else if (status != telux::common::Status::SUCCESS) {
+          std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+    }
 }
 
 int LocationMenu::enableReportLogsUtility() {
@@ -860,7 +932,7 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  4 - Data_info_notifications" << std::endl;
      std::cout << "  5 - Detailed_Engine_location_notifications" << std::endl;
      std::cout << "  6 - Nmea_info_notifications" << std::endl;
-     std::cout << "  7 - Measurements_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  7 - Measurements_info_notifications" << std::endl;
      std::cout << "  8 - Location_system_information " << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;

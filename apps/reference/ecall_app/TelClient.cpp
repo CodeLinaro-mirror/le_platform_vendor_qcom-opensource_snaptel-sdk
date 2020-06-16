@@ -74,7 +74,7 @@ telux::common::Status TelClient::init() {
         //  Wait for the telephony subsystem to be ready
         bool isReady = phoneManager->isSubsystemReady();
         if(!isReady) {
-            std::cout << CLIENT_NAME 
+            std::cout << CLIENT_NAME
                       << " Telephony subsystem is not ready, waiting for it to be ready.."
                      << std::endl;
             std::future<bool> f = phoneManager->onSubsystemReady();
@@ -406,32 +406,56 @@ telux::common::Status TelClient::answer(int phoneId, std::shared_ptr<CallStatusL
 }
 
 // Hangup an ongoing call
-telux::common::Status TelClient::hangup(int phoneId) {
+telux::common::Status TelClient::hangup(int phoneId, int callIndex) {
     if(!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to hangup call" << std::endl;
         return telux::common::Status::FAILED;
     }
     std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-    // Iterate through the call list in the application and hangup the first Call that is
-    // Active or on Hold
+    // If callIndex is not provided, iterate through the call list in the application and hangup if
+    // only one call is Active or on Hold. If callIndex is provided, hangup the corresponding call.
     std::vector<std::shared_ptr<telux::tel::ICall>> callList = callMgr_->getInProgressCalls();
+    int numOfCalls = 0;
     for(auto callIterator = std::begin(callList); callIterator != std::end(callList);
                     ++callIterator) {
-        telux::tel::CallState callState = (*callIterator)->getCallState();
-        if((callState != telux::tel::CallState::CALL_ENDED)
-                    && (phoneId == (*callIterator)->getPhoneId())) {
-            spCall = *callIterator;
-            break;
+        if(phoneId == (*callIterator)->getPhoneId()) {
+            telux::tel::CallState callState = (*callIterator)->getCallState();
+            if((callState != telux::tel::CallState::CALL_ENDED) &&
+               ((callIndex == -1) || (callIndex == (*callIterator)->getCallIndex()))) {
+                spCall = *callIterator;
+                numOfCalls++;
+                break;
+            }
         }
     }
-    if(spCall) {
+    if(spCall && (numOfCalls == 1)) {
         telux::common::Status status = spCall->hangup(hangupCommandCallback_);
         if(status != telux::common::Status::SUCCESS) {
             std::cout << CLIENT_NAME << "Failed to hangup call " << std::endl;
             return telux::common::Status::FAILED;
         }
     } else {
-        std::cout << CLIENT_NAME << "No active or on-hold call found to hangup" << std::endl;
+        std::cout << CLIENT_NAME << "No relevant call found to hangup" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+// Dump the list of current calls
+telux::common::Status TelClient::getCurrentCalls() {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to get current calls" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    std::vector<std::shared_ptr<telux::tel::ICall>> calls = callMgr_->getInProgressCalls();
+    for(auto callIterator = std::begin(calls); callIterator != std::end(calls); ++callIterator) {
+        std::cout << " Call Index: " << static_cast<int>((*callIterator)->getCallIndex())
+                  << ", Phone ID: " << static_cast<int>((*callIterator)->getPhoneId())
+                  << ", Call State: "
+                      << TelClientUtils::callStateToString((*callIterator)->getCallState())
+                  << ", Call Direction: "
+                      << TelClientUtils::callDirectionToString((*callIterator)->getCallDirection())
+                  << ", Phone Number: " << (*callIterator)->getRemotePartyNumber() << std::endl;
     }
     return telux::common::Status::SUCCESS;
 }

@@ -79,7 +79,7 @@ void DataListener::updateDataCallMap(const std::shared_ptr<telux::data::IDataCal
    if(dataCall) {
       std::lock_guard<std::mutex> lk(mtx_);
       int profileId = dataCall->getProfileId();
-      dataCallMap_[profileId] = dataCall;
+      dataCallMap_.emplace(profileId, dataCall);
    }
 }
 

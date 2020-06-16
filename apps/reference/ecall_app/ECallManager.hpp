@@ -88,10 +88,20 @@ public:
     /**
      * This function hangs up an ongoing call dialed/answered previously
      *
+     * @param [in] phoneId     Represents phone corresponding to which the operation is performed
+     * @param [in] callIndex   Represents the call on which the operation is performed
+     *
      * @returns Status of hangupCall i.e success or suitable status code.
      *
      */
-    telux::common::Status hangupCall();
+    telux::common::Status hangupCall(int phoneId, int callIndex);
+
+    /**
+     * Dump the list of calls in progress
+     *
+     * @returns Status of getCalls i.e success or suitable status code.
+     */
+    telux::common::Status getCalls();
 
     /**
      * This function requests status of various eCall HLAP timers

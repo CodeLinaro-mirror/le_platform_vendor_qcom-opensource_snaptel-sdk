@@ -89,7 +89,8 @@ int main(int argc, char *argv[]) {
     /* Attempt config file retrieval */
     cout << "Retrieve configuration into file: " << configFilePath << endl;
     if (Status::SUCCESS !=
-        cv2xConfig->requestConfiguration(configFilePath, cv2xRetrieveConfigurationCallback)) {
+        cv2xConfig->retrieveConfiguration(configFilePath,
+                                          cv2xRetrieveConfigurationCallback)) {
         cout << "Error : Config file retrieval failed." << endl;
         return EXIT_FAILURE;
     }

@@ -277,7 +277,8 @@ INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.hpp \
                          *.dox \
                          *.md \
-                         *.dot
+                         *.dot \
+                         *.h
 RECURSIVE              = YES
 EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO

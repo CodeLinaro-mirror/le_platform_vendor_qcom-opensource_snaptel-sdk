@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,9 +30,8 @@
 /**
   @file v2x_common.pb.h
 
-  @addtogroup v2x_api_common
-  The following common typedefs and macros are used across all parts of this
-  platform.
+  @addtogroup telematics_cv2x_c_common
+  The following common typedefs and macros are used by the C-V2X C APIs.
  */
 
 #ifndef PB_V2X_COMMON_PB_H_INCLUDED
@@ -48,7 +47,7 @@
 extern "C" {
 #endif
 
-/** @addtogroup v2x_api_common
+/** @addtogroup telematics_cv2x_c_common
 @{ */
 
 /* Enum definitions */
@@ -121,7 +120,7 @@ typedef struct /** @cond */_v2x_api_ver_t/** @endcond */ {
 /* @@protoc_insertion_point(struct:v2x_api_ver_t) */
 } v2x_api_ver_t;
 
-/** @} *//* end_addtogroup v2x_api_common */
+/** @} *//* end_addtogroup telematics_cv2x_c_common */
 
 
 /** @cond *//* Not to be published in PDF */

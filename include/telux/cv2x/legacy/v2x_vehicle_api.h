@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,7 +30,7 @@
 /**
   @file v2x_vehicle_api.h
 
-  @addtogroup v2x_api_vehicle
+  @addtogroup telematics_cv2x_c_vehicle
   Abstraction of the vehicle system parameters required for CAM/BSM ITS
   beacons.
  */
@@ -44,7 +44,7 @@
 extern "C" {
 #endif
 
-/** @addtogroup v2x_api_vehicle
+/** @addtogroup telematics_cv2x_c_vehicle
 @{ */
 
 /** Vehicle data handle to the interface */
@@ -699,7 +699,7 @@ v2x_vehicle_handle_t v2x_vehicle_register_listener(v2x_vehicle_event_listener_t 
  */
 v2x_status_enum_type v2x_vehicle_deregister_for_callback(v2x_vehicle_handle_t handle);
 
-/** @} *//* end_addtogroup v2x_api_vehicle */
+/** @} *//* end_addtogroup telematics_cv2x_c_vehicle */
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -48,7 +48,7 @@ namespace telux {
 
 namespace cv2x {
 
-/** @addtogroup telematics_cv2x
+/** @addtogroup telematics_cv2x_cpp
  * @{ */
 
 /**
@@ -112,7 +112,7 @@ public:
     virtual ~ICv2xRxSubscription() {}
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
+/** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x
 

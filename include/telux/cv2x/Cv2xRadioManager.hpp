@@ -138,7 +138,7 @@ using UpdateConfigurationCallback =
     std::function<void (telux::common::ErrorCode error)>;
 
 
-/** @addtogroup telematics_cv2x
+/** @addtogroup telematics_cv2x_cpp
  * @{ */
 
 /**
@@ -236,6 +236,8 @@ public:
      * @param [in] configFilePath - Path to config file.
      * @param [in] cb             - Callback that is invoked when the send is complete.
      *                              This may be null.
+     *
+     * @deprecated Use ICv2xConfig instead
      */
     virtual telux::common::Status updateConfiguration(const std::string & configFilePath,
                                                       UpdateConfigurationCallback cb) = 0;
@@ -243,7 +245,7 @@ public:
     virtual ~ICv2xRadioManager() {}
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
+/** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,7 +43,7 @@ namespace telux {
 
 namespace cv2x {
 
-/** @addtogroup telematics_cv2x
+/** @addtogroup telematics_cv2x_cpp
  * @{ */
 
 /**
@@ -79,6 +79,18 @@ enum class Cv2xCauseType {
     UE_MODE,    /**< UE Mode is invalid */
     GEOPOLYGON, /**< Left current geopolygon */
     UNKNOWN,    /**< Cause is unknown */
+};
+
+/**
+ * Encapsulates parameters of a CV2X socket.
+ *
+ * Used in @ref createCv2xTcpSocket.
+ */
+struct SocketInfo {
+    uint32_t serviceId;
+    /**< V2X service ID bound to the socket. */
+    uint16_t localPort;
+    /**< Local port number of the socket used for binding. */
 };
 
 /**
@@ -433,7 +445,43 @@ struct DataSessionSettings {
     /**< IPv6 address. */
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
+/**
+ * V2X configuration source types listed in ascending order of priority.
+ * The system always uses the V2X configuration with the highest priority
+ * if multiple V2X configuration sources exist.
+ *
+ * Used in @ref ConfigEventInfo
+ */
+enum class ConfigSourceType {
+    UNKNOWN = 0u,   /**< V2X config file source is unknown */
+    PRECONFIG = 1u, /**< V2X config file source is preconfig */
+    SIM_CARD = 2u,  /**< V2X config file source is SIM card */
+    OMA_DM = 4u,    /**< V2X config file source is OMA-DM */
+};
+
+/**
+ * Defines possible values for the events relevant to CV2X config file.
+ *
+ * Used in @ref ConfigEventInfo
+ */
+enum class ConfigEvent {
+    CHANGED = 0u,  /**< V2X config file is changed */
+    EXPIRED = 1u,  /**< V2X config file is expired */
+};
+
+/**
+ * Information about any update to a CV2X config file.
+ *
+ * Used in @ref onConfigFileChanged
+ */
+struct ConfigEventInfo {
+    ConfigSourceType source;
+    /**< The type of the V2X config file. */
+    ConfigEvent event;
+    /**< V2X config event. */
+};
+
+/** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x
 

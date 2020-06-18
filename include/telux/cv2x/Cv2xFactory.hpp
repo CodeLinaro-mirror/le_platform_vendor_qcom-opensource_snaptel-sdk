@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -45,11 +45,12 @@ namespace telux {
 
 namespace cv2x {
 
-/** @addtogroup telematics_cv2x
+/** @addtogroup telematics_cv2x_cpp
  * @{ */
 
 class ICv2xRadio;
 class ICv2xRadioManager;
+class ICv2xConfig;
 
 /**
  *@brief Cv2xFactory is the factory that creates the Cv2x Radio.
@@ -66,20 +67,29 @@ public:
     /**
      * Get Cv2xRadioManager instance.
      *
-     * @returns shared pointer to Radio upon success.
+     * @returns shared pointer to Cv2x Radio Manager upon success.
      *          nullptr otherwise.
      */
     std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager();
+
+    /**
+     * Get Cv2xConfig instance.
+     *
+     * @returns shared pointer to Cv2x Config upon success.
+     *          nullptr otherwise.
+     */
+    std::shared_ptr<ICv2xConfig> getCv2xConfig();
 
 private:
 
     std::mutex mutex_;
     std::shared_ptr<ICv2xRadioManager> radioManager_;
+    std::shared_ptr<ICv2xConfig> config_;
 
     Cv2xFactory();
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
+/** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,17 +28,18 @@
  */
 
 /**
-* @file       Cv2xTxFlow.hpp
+* @file       Cv2xTxRxSocket.hpp
 *
-* @brief      Cv2xRadio class encapsulates a CV2X radio (channel) resource.
-* @brief      Represents both Cv2x SPS and Event flows. Encapsulates the Tx
-*             socket and associated socket address.
+* @brief      Cv2xRadio class encapsulates CV2X radio resource (socket for Tx and Rx).
+* @brief      Represents a Cv2x socket associated with both Tx flow and
+*             Rx subscription. Encapsulates the socket and socket address
+*             for Tx and Rx.
 */
 
 
 
-#ifndef CV2XTXFLOW_HPP
-#define CV2XTXFLOW_HPP
+#ifndef CV2XTXRXSOCKET_HPP
+#define CV2XTXRXSOCKET_HPP
 
 #include <netinet/in.h>
 
@@ -49,68 +50,60 @@ namespace telux {
 
 namespace cv2x {
 
-/** @addtogroup telematics_cv2x_cpp
+/** @addtogroup telematics_cv2x
  * @{ */
 
 /**
- * This is class encapsulates a Cv2xRadio Tx flows. It contains the Tx socket
- * associated with the flow through which client applications can send data. This
- * class is referenced in @ref Cv2xRadio::createTxSpsFlow, Cv2xRadio::createTxEventFlow,
- * and Cv2xRadio::closeTxFlow
+ * This is class encapsulates a Cv2xRadio socket for both Tx and Rx. It contains
+ * the socket through which client applications can send and receive data. This class
+ * is referenced in @ref Cv2xRadio::createCv2xTcpSocket and Cv2xRadio::closeCv2xTcpSocket.
  */
-class ICv2xTxFlow {
+class ICv2xTxRxSocket {
 public:
 
     /**
-     * Accessor for flow ID. The flow ID should be unique within a process but will
-     * not be unique between processes.
+     * Accessor for Cv2xRadio socket ID. The socket ID should be unique within a process
+     * but will not be unique between processes.
      *
-     * @returns flow ID
+     * @returns Cv2xRadio socket ID
      */
-    virtual uint32_t getFlowId() const = 0;
-
-    /**
-     * Accessor for IP traffic type
-     *
-     * @returns The flow's IP traffic type (IP or NON-IP)
-     */
-    virtual TrafficIpType getIpType() const = 0;
+    virtual uint32_t getId() const = 0;
 
     /**
      * Accessor for service ID
      *
-     * @returns The flow's Service ID.
+     * @returns The Service ID bound to the socket.
      */
     virtual uint32_t getServiceId() const = 0;
 
     /**
      * Accessor for the socket file descriptor
      *
-     * @returns The flow's socket fd.
+     * @returns The socket fd.
      */
-    virtual int getSock() const = 0;
+    virtual int getSocket() const = 0;
 
     /**
      * Accessor for the socket address description
      *
-     * @returns The flow's socket address
+     * @returns The socket address
      */
-    virtual struct sockaddr_in6 getSockAddr() const = 0;
+    virtual struct sockaddr_in6 getSocketAddr() const = 0;
 
     /**
-     * Accessor for the flow's source port number
+     * Accessor for the local port number bound to the socket
      *
-     * @returns The flow's source port num
+     * @returns The local port number
      */
     virtual uint16_t getPortNum() const = 0;
 
-    virtual ~ICv2xTxFlow() {}
+    virtual ~ICv2xTxRxSocket() {}
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x_cpp */
+/** @} */ /* end_addtogroup telematics_cv2x */
 
 } // namespace cv2x
 
 } // namespace telux
 
-#endif // #ifndef CV2XTXFLOW_HPP
+#endif // #ifndef CV2XTXRXSOCKET_HPP

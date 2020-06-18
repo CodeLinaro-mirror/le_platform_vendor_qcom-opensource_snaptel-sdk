@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -66,7 +66,25 @@ Jun 2017   SVM      Created to support V2X API
     This section contains APIs related to Logger, Command Callbacks, Error Codes and Version information.
     Also contains Macros to print message at different log level.
     @defgroup telematics_cv2x C-V2X
-    This section contains APIs related to Cellular-V2X operation.
+    This section contains APIs related to Cellular-V2X operation. The SDK has C and C++ APIs. The C APIs are legacy and are being maintained for backwards compatibility purposes. These APIs are mostly wrappers over the C++ APIs. New features and functionality will be added to C++ APIs. For anyone writing new Cv2x software, it is recommended to use the C++ APIs.
+
+    @addtogroup telematics_cv2x
+    @{
+      @addtogroup telematics_cv2x_c C APIs
+      This section contains C APIs related to Cellular-V2X operation.
+      @{
+        @defgroup telematics_cv2x_c_common C Common APIs
+        This section contains C Common APIs related to Cellular-V2X operation.
+        @defgroup telematics_cv2x_c_kinematics C Kinematics APIs
+        This section contains C Kinematics APIs related to Cellular-V2X operation. For any new CV2x development, it is recommended to use the C++ telux::loc::ILocationManager APIs.
+        @defgroup telematics_cv2x_c_radio C Radio APIs
+        This section contains C Radio APIs related to Cellular-V2X operation. For any new CV2x development, it is recommended to use the C++ telux::cv2x::* APIs
+        @defgroup telematics_cv2x_c_vehicle C Vehicle APIs
+        This section contains C Vehicle APIs related to Cellular-V2X operation. These APIs are provided as reference APIs to work with QTI reference hardware. Customers would need to modify the implementation of these APIs based on the specific H/W and CAN controller being used.
+      @}
+      @defgroup telematics_cv2x_cpp CPP APIs
+      This section contains C++ APIs related to Cellular-V2X operation.
+    @}
     @defgroup telematics_audio Audio
     This section contains APIs related to Audio Stream operation.
     @defgroup telematics_therm Thermal Management

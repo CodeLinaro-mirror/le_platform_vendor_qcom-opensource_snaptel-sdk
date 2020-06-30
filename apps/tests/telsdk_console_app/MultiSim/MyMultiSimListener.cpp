@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include "MyMultiSimListener.hpp"
+#include "MyMultiSimHandler.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
@@ -36,5 +37,18 @@ void MyMultiSimListener::onHighCapabilityChanged(int slotId) {
     std::cout << "\n";
     PRINT_NOTIFICATION << "onHighCapabilityChanged called" << std::endl;
     PRINT_NOTIFICATION << "High capability changed to slot " << slotId << std::endl;
+}
+
+void MyMultiSimListener::onSlotStatusChanged(std::map<SlotId, telux::tel::SlotStatus> slotStatus) {
+    PRINT_NOTIFICATION << "Slot status change notification received" << std::endl;
+    for(auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
+        auto slotId = it->first;
+        auto slotStatus = it->second;
+        PRINT_NOTIFICATION << " SlotId: " << static_cast<int>(slotId)
+                     << ", SlotState: " << MyMultiSimHelper::slotStateToString(slotStatus.slotState)
+                     << ", CardState: " << MyMultiSimHelper::cardStateToString(slotStatus.cardState)
+                     << ", CardError: " << MyMultiSimHelper::cardErrorToString(slotStatus.cardError)
+                     << std::endl;
+    }
 }
 

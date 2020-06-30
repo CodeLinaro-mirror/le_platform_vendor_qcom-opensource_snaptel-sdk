@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,16 +27,22 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MYMULTISIMLISTENER_HPP
-#define MYMULTISIMLISTENER_HPP
+#ifndef RSPLISTENER_HPP
+#define RSPLISTENER_HPP
 
-#include <telux/tel/MultiSimManager.hpp>
+#include <telux/rsp/SimProfileListener.hpp>
+#include <telux/rsp/SimProfileDefines.hpp>
 
-class MyMultiSimListener : public telux::tel::IMultiSimListener {
-public:
-    void onHighCapabilityChanged(int slotId);
-    void onSlotStatusChanged(std::map<SlotId, telux::tel::SlotStatus> slotStatus);
-    ~MyMultiSimListener() {}
+class RspListener : public telux::rsp::ISimProfileListener {
+ public:
+    void onAddProfileUpdate(SlotId slotId, bool userConsentRequired, telux::rsp::DownloadStatus status,
+        uint8_t percentage, telux::rsp::DownloadErrorCause cause,
+        telux::rsp::PolicyRuleMask mask) override;
+
+ private:
+    std::string profileDownloadStatusToString(telux::rsp::DownloadStatus status);
+    std::string profileDownloadErrorCauseToString(telux::rsp::DownloadErrorCause cause);
+    std::string pprMaskToString(telux::rsp::PolicyRuleMask mask);
 };
 
-#endif  // MYMULTISIMLISTENER_HPP
+#endif  // RSPLISTENER_HPP

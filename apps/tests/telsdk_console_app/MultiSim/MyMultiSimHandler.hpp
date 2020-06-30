@@ -30,12 +30,25 @@
 #ifndef MYMULTISIMHANDLER_HPP
 #define MYMULTISIMHANDLER_HPP
 
+#include <map>
+
 #include <telux/common/CommonDefines.hpp>
+#include <telux/tel/MultiSimDefines.hpp>
 
 class MyMultiSimCallback {
 public:
     static void requestHighCapabilityResponse(int slotId, telux::common::ErrorCode error);
     static void setHighCapabilityResponse(telux::common::ErrorCode error);
+    static void setActiveSlotResponse(telux::common::ErrorCode error);
+    static void requestsSlotsStatusResponse(std::map<SlotId, telux::tel::SlotStatus> slotStatus,
+                                           telux::common::ErrorCode error);
+};
+
+class MyMultiSimHelper {
+public:
+   static std::string slotStateToString(telux::tel::SlotState slotState);
+   static std::string cardStateToString(telux::tel::CardState cardState);
+   static std::string cardErrorToString(telux::tel::CardError cardError);
 };
 
 #endif  // MYMULTISIMHANDLER_HPP

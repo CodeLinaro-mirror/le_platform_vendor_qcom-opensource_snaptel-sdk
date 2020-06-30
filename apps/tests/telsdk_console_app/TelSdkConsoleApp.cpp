@@ -86,16 +86,12 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> dataMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "6", "Data", {}, std::bind(&TelSdkConsoleApp::dataMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
+        std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand};
-
-    if(telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
-            std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
-        mainMenuCommands.emplace_back(multiSimMenuCommand);
-    }
+             dataMenuCommand, multiSimMenuCommand};
 
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();

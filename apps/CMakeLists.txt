@@ -16,6 +16,7 @@ add_subdirectory( tests/thermal_test_app )
 add_subdirectory( tests/location_test_app )
 add_subdirectory( tests/thermal_shutdown_test_app )
 add_subdirectory( reference/chrony-sock)
+add_subdirectory( reference/remote_sim_provisioning )
 add_subdirectory( tests/modem_configurator )
 
 pkg_check_modules(PWR_MGR_QMI_LIB powermanagerqmi)

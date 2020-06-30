@@ -27,16 +27,45 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MYMULTISIMLISTENER_HPP
-#define MYMULTISIMLISTENER_HPP
+/**
+ * @file       MultiSimDefines.hpp
+ * @brief      MultiSimDefines contains enumerations, structures and variables relevant for multi
+ *             SIM management
+ *
+ */
 
-#include <telux/tel/MultiSimManager.hpp>
+#ifndef MULTISIMDEFINES_HPP
+#define MULTISIMDEFINES_HPP
 
-class MyMultiSimListener : public telux::tel::IMultiSimListener {
-public:
-    void onHighCapabilityChanged(int slotId);
-    void onSlotStatusChanged(std::map<SlotId, telux::tel::SlotStatus> slotStatus);
-    ~MyMultiSimListener() {}
+#include <telux/tel/CardDefines.hpp>
+
+namespace telux {
+namespace tel {
+
+/** @addtogroup telematics_multi_sim
+ * @{ */
+
+/**
+ * Represents state of the physical SIM slot
+ */
+enum class SlotState {
+   UNKNOWN = -1,
+   INACTIVE,   /**< Slot is inactive */
+   ACTIVE,     /**< Slot is active */
 };
 
-#endif  // MYMULTISIMLISTENER_HPP
+/**
+ * Represents status of a physical SIM slot
+ */
+struct SlotStatus {
+   SlotState slotState;         /**< State of the physical SIM slot */
+   CardState cardState;         /**< Status of the card in the physical slot */
+   CardError cardError;         /**< Indicates the reason for the card error, and is valid
+                                     only when the card state is CARDSTATE_ERROR. */
+};
+
+/** @} */ /* end_addtogroup telematics_multi_sim */
+}
+}
+
+#endif  // MULTISIMDEFINES_HPP

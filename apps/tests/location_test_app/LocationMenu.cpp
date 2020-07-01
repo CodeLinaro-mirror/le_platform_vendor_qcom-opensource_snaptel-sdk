@@ -173,7 +173,7 @@ int LocationMenu::init() {
                         std::bind(&LocationMenu::configureLeverArm, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureConstellation = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Configure constellation", {}, std::bind(
+      ConsoleAppCommand("10", "Configure blacklist constellation or SVs ", {}, std::bind(
                         &LocationMenu::configureConstellation, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> configureRobustLocation = std::make_shared<ConsoleAppCommand>(
@@ -215,9 +215,18 @@ int LocationMenu::init() {
    std::shared_ptr<ConsoleAppCommand> requestMinSVElevation = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("20", "Request minimum sv elevation", {},
                         std::bind(&LocationMenu::requestMinSVElevation, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> requestRobustLocation = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("21", "Request robust Location", {},
                         std::bind(&LocationMenu::requestRobustLocation, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> configureConstellationEmpty = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("22", "Configure constellation, enable all", {}, std::bind(
+                        &LocationMenu::configureConstellationEmpty, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> configureConstellationDeviceDefault = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("23", "Configure constellation, device default", {}, std::bind(
+                        &LocationMenu::configureConstellationDeviceDefault, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
@@ -225,7 +234,8 @@ int LocationMenu::init() {
          deleteAllAidingData, configureLeverArm, configureConstellation, configureRobustLocation,
          registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
          dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
-         configureMinSVElevation, requestMinSVElevation, requestRobustLocation};
+         configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
+         configureConstellationEmpty, configureConstellationDeviceDefault};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -640,6 +650,7 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
   if(locationConfigurator_) {
         typedef std::vector<telux::loc::SvBlackListInfo> SvBlackList;
         SvBlackList svBlackList;
+        bool deviceReset = false;
         char delimiter = '\n';
         while(true) {
             telux::loc::SvBlackListInfo blackListInfo;
@@ -711,7 +722,40 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
             ("Configure constellation");
         telux::common::Status status = locationConfigurator_->configureConstellations(svBlackList,
                 std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                        std::placeholders::_1));
+                    std::placeholders::_1), deviceReset);
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+  }
+}
+
+void LocationMenu::configureConstellationEmpty(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+        typedef std::vector<telux::loc::SvBlackListInfo> SvBlackList;
+        SvBlackList svBlackList;
+        bool deviceReset = false;
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure constellation");
+        telux::common::Status status = locationConfigurator_->configureConstellations(svBlackList,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                    std::placeholders::_1), deviceReset);
+        if (status == telux::common::Status::NOTIMPLEMENTED) {
+          std::cout << "Not implemented" << std::endl;
+        }
+  }
+}
+
+void LocationMenu::configureConstellationDeviceDefault(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+        typedef std::vector<telux::loc::SvBlackListInfo> SvBlackList;
+        SvBlackList svBlackList;
+        bool deviceReset = true;
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure constellation");
+        telux::common::Status status = locationConfigurator_->configureConstellations(svBlackList,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                        std::placeholders::_1), deviceReset);
         if (status == telux::common::Status::NOTIMPLEMENTED) {
           std::cout << "Not implemented" << std::endl;
         }

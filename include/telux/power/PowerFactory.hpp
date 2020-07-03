@@ -60,9 +60,13 @@ public:
     /**
      * API to get the TCU-activity Manager instance
      *
+     * @param [in] type Type of the client that is going to access ITcuActivityManager APIs
+     *                  @ref ClientType
+     *
      * @returns Pointer of ITcuActivityManager object.
      */
-    std::shared_ptr<ITcuActivityManager> getTcuActivityManager();
+    std::shared_ptr<ITcuActivityManager> getTcuActivityManager(ClientType clientType
+                                                                = ClientType::SLAVE);
 
 private:
     std::shared_ptr<ITcuActivityManager> tcuActivityManager_;

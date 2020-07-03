@@ -116,6 +116,9 @@ public:
      * This API needs to be used cautiously, as it could change the power-state of the system and
      * may affect other processes.
      *
+     * This API is meant for clients that have instantiated the ITcuActivityManager instance using
+     * ClientType::MASTER
+     *
      * @param [in] state    TCU-activity state that the System is intended to enter
      * @param [in] callback Optional callback to get the response for the TCU-activity state
      *                      transition command

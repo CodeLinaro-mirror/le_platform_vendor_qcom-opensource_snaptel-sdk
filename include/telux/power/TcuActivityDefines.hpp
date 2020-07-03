@@ -66,6 +66,21 @@ enum class TcuActivityStateAck {
     SHUTDOWN_ACK,   /**< processed TcuActivityState::SHUTDOWN notification */
 };
 
+/**
+ * Defines the type of the client that would be using the ITcuActivityManager APIs. Client
+ * that just needs the TcuActivityState notifications needs to choose ClientType::SLAVE.
+ * And the client that determines the TcuActivityState would choose ClientType::MASTER.
+ * Only a Master client can set the TcuActivityState. In a system, there should be a single Master
+ * client.
+ *
+ * The ClientType needs to be chosen while instantiating the ITcuActivityManager, using the API
+ * PowerFactory::getTcuActivityManager
+ */
+enum class ClientType {
+    SLAVE,     /**< Client is a slave and interested in state change notification */
+    MASTER,    /**< Client makes the decision on when the TcuActivityState should change */
+};
+
 /** @} */ /* end_addtogroup telematics_power */
 
 }  // end of namespace power

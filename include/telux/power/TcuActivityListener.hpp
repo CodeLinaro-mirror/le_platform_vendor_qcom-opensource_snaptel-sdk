@@ -67,6 +67,19 @@ public:
     }
 
     /**
+     * This function is called with the overall acknowledgement status from all the SLAVE clients,
+     * for state change triggered previously by MASTER client.
+     *
+     * This API will be invoked only for the MASTER client.
+     * If at least one SLAVE client does not acknowledge within the configured timeout, then
+     * Status::EXPIRED would be reported.
+     *
+     * @param [in] status status of the SLAVE clients acknowledgements
+     */
+    virtual void onSlaveAckStatusUpdate(telux::common::Status status) {
+    }
+
+    /**
      * Destructor of ITcuActivityListener
      */
     virtual ~ITcuActivityListener() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -69,11 +69,11 @@ static void printTcuActivityState(TcuActivityState state) {
 static void printHelp() {
     std::cout << "-----------------------------------------------" << std::endl;
     std::cout << "./telux_power_test_app <-l> <-s> <-r> <-p> <-c> <-h>" << std::endl;
-    std::cout << "   -l : listen to TCU-activity state updates" << std::endl;
-    std::cout << "   -s : send SUSPEND command" << std::endl;
-    std::cout << "   -r : send RESUME command" << std::endl;
-    std::cout << "   -p : send SHUT-DOWN command" << std::endl;
-    std::cout << "   -c : open interactive console" << std::endl;
+    std::cout << "   -l : listen to TCU-activity state updates (as SLAVE)" << std::endl;
+    std::cout << "   -s : send SUSPEND command (as MASTER)" << std::endl;
+    std::cout << "   -r : send RESUME command (as MASTER)" << std::endl;
+    std::cout << "   -p : send SHUT-DOWN command (as MASTER)" << std::endl;
+    std::cout << "   -c : open interactive console (as MASTER)" << std::endl;
     std::cout << "   -h : print the help menu" << std::endl;
 }
 
@@ -102,6 +102,20 @@ void PowerMgmtTestApp::onTcuActivityStateUpdate(TcuActivityState tcuState) {
         } else {
             std::cout << APP_NAME << " Failed to send SHUTDOWN acknowledgement !" << std::endl;
         }
+    }
+}
+
+void PowerMgmtTestApp::onSlaveAckStatusUpdate(telux::common::Status status) {
+    std::cout << std::endl;
+    if(status == telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " Slave applications successfully acknowledged the state" <<
+                                 " transition" << std::endl;
+    } else if(status == telux::common::Status::EXPIRED) {
+        std::cout << APP_NAME << " Timeout occured while waiting for acknowledgements from slave" <<
+                                 " applications" << std::endl;
+    } else {
+        std::cout << APP_NAME << " Failed to receive acknowledgements from slave applications"
+                              << std::endl;
     }
 }
 
@@ -152,11 +166,11 @@ TcuActivityState PowerMgmtTestApp::getTcuActivityState() {
     return state;
 }
 
-int PowerMgmtTestApp::start() {
+int PowerMgmtTestApp::start(ClientType clientType) {
     // Get power factory instance
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
-    tcuActivityMgr_ = powerFactory.getTcuActivityManager();
+    tcuActivityMgr_ = powerFactory.getTcuActivityManager(clientType);
     if(tcuActivityMgr_ == nullptr)
     {
         std::cout << APP_NAME << " ERROR - Failed to get manager instance" << std::endl;
@@ -242,71 +256,84 @@ void PowerMgmtTestApp::consoleinit() {
    ConsoleApp::displayMenu();
 }
 
+std::shared_ptr<PowerMgmtTestApp> init(ClientType clientType) {
+    std::shared_ptr<PowerMgmtTestApp> powerMgmtTest = std::make_shared<PowerMgmtTestApp>();
+    if (!powerMgmtTest) {
+        std::cout << "Failed to instantiate PowerMgmtTestApp" << std::endl;
+        return nullptr;
+    }
+    if( 0 != powerMgmtTest->start(clientType)) {
+        std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
+            << std::endl;
+        return nullptr;
+    }
+    return powerMgmtTest;
+}
+
 /**
  * Main routine
  */
 int main(int argc, char ** argv) {
 
     bool inputCommand = false;
-    TcuActivityState state=TcuActivityState::UNKNOWN;
+    TcuActivityState state = TcuActivityState::UNKNOWN;
+    ClientType clientType = ClientType::SLAVE;
 
     if(argc <= 1) {
         printHelp();
         return -1;
     }
-    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
-    if (myPowerMgmtTest) {
-        // Setting required secondary groups for SDK file/diag logging
-        std::vector<std::string> supplementaryGrps{"system", "diag"};
-        int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-        if (rc == -1){
-            std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
-        }
-        if( 0 != myPowerMgmtTest->start()) {
-            std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
-                << std::endl;
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
+    }
+
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "-l") {
+            listenerEnabled =true;
+        } else if (std::string(argv[i]) == "-s") {
+            clientType = ClientType::MASTER;
+            inputCommand=true;
+            state=TcuActivityState::SUSPEND;
+        } else if (std::string(argv[i]) == "-r") {
+            clientType = ClientType::MASTER;
+            inputCommand=true;
+            state=TcuActivityState::RESUME;
+        } else if (std::string(argv[i]) == "-p") {
+            clientType = ClientType::MASTER;
+            inputCommand=true;
+            state=TcuActivityState::SHUTDOWN;
+        } else if (std::string(argv[i]) == "-c") {
+            clientType = ClientType::MASTER;
+            std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType);
+            myPowerMgmtTest->registerForUpdates();
+            listenerEnabled =true;
+            myPowerMgmtTest->consoleinit();
+            myPowerMgmtTest->mainLoop();
+            myPowerMgmtTest->deregisterForUpdates();
+            return 0;
+        } else {
+            printHelp();
             return -1;
         }
-        for (int i = 1; i < argc; ++i) {
-            if (std::string(argv[i]) == "-l") {
-                listenerEnabled =true;
-            } else if (std::string(argv[i]) == "-s") {
-                inputCommand=true;
-                state=TcuActivityState::SUSPEND;
-            } else if (std::string(argv[i]) == "-r") {
-                inputCommand=true;
-                state=TcuActivityState::RESUME;
-            } else if (std::string(argv[i]) == "-p") {
-                inputCommand=true;
-                state=TcuActivityState::SHUTDOWN;
-            } else if (std::string(argv[i]) == "-c") {
-                myPowerMgmtTest->registerForUpdates();
-                listenerEnabled =true;
-                myPowerMgmtTest->consoleinit();
-                myPowerMgmtTest->mainLoop();
-                myPowerMgmtTest->deregisterForUpdates();
-                return 0;
-            } else {
-                printHelp();
-                return -1;
-            }
-        }
-        if(listenerEnabled) {
-            myPowerMgmtTest->registerForUpdates();
-        }
-        signal(SIGINT, signalHandler);
-        std::unique_lock<std::mutex> lock(mutex);
-        if(inputCommand) {
-            myPowerMgmtTest->sendActivityStateCommand(state);
-        }
-        std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
-        cv.wait(lock);
-        if(listenerEnabled) {
-            myPowerMgmtTest->deregisterForUpdates();
-        }
-    } else {
-        std::cout << "Failed to instantiate PowerMgmtTestApp" << std::endl;
     }
+    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType);
+    if(listenerEnabled) {
+        myPowerMgmtTest->registerForUpdates();
+    }
+    signal(SIGINT, signalHandler);
+    std::unique_lock<std::mutex> lock(mutex);
+    if(inputCommand) {
+        myPowerMgmtTest->sendActivityStateCommand(state);
+    }
+    std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
+    cv.wait(lock);
+    if(listenerEnabled) {
+        myPowerMgmtTest->deregisterForUpdates();
+    }
+
     std::cout << "Exiting application..." << std::endl;
     return 0;
 }

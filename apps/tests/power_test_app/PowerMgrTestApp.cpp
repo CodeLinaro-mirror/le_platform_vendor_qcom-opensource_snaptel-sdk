@@ -256,7 +256,8 @@ int main(int argc, char ** argv) {
     }
     std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
     if (myPowerMgmtTest) {
-        std::vector<std::string> supplementaryGrps{"system"};
+        // Setting required secondary groups for SDK file/diag logging
+        std::vector<std::string> supplementaryGrps{"system", "diag"};
         int rc = Utils::setSupplementaryGroups(supplementaryGrps);
         if (rc == -1){
             std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;

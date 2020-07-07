@@ -92,7 +92,7 @@ Status ThermalShutdownTestApp::parseArguments(int argc, char **argv) {
             case 'c':
                 isConsole_ = true;
                 break;
-            case'h':
+            case 'h':
                 printHelp();
                 break;
             default:
@@ -211,7 +211,8 @@ void ThermalShutdownTestApp::consoleinit() {
 int main(int argc, char ** argv) {
 
     Status ret = Status::FAILED;
-    std::vector<std::string> supplementaryGrps{"system"};
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;

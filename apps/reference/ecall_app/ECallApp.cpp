@@ -394,7 +394,8 @@ void setupSignalHandler() {
 // Main function that displays the interactive console for eCall related operations
 int main(int argc, char **argv) {
     setupSignalHandler();
-    std::vector<std::string> supplementaryGrps{"system"};
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,7 +30,7 @@
 /**
   @file v2x_kinematics_data_types.pb.h
 
-  @addtogroup v2x_api_kinematics
+  @addtogroup telematics_cv2x_c_kinematics
   Common types are used for the motion and location reporting system of the
   platform. These types include the structures that are used to both configure
   the Kinematics subsystem and to report periodic fixes. The fixes are
@@ -52,7 +52,7 @@
 extern "C" {
 #endif
 
-/** @addtogroup v2x_api_kinematics
+/** @addtogroup telematics_cv2x_c_kinematics
 @{ */
 
 /* Enum definitions */
@@ -506,7 +506,7 @@ typedef struct /** @cond */_v2x_location_fix_t/** @endcond */ {
 /* @@protoc_insertion_point(struct:v2x_location_fix_t) */
 } v2x_location_fix_t;
 
-/** @} *//* end_addtogroup v2x_api_kinematics */
+/** @} *//* end_addtogroup telematics_cv2x_c_kinematics */
 
 
 /** @cond *//* Not to be published in PDF */

@@ -43,6 +43,7 @@
 #include <thread>
 #include <chrono>
 
+#include <telux/cv2x/Cv2xConfig.hpp>
 #include <telux/cv2x/Cv2xRadioManager.hpp>
 #include <telux/cv2x/Cv2xFactory.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
@@ -192,10 +193,20 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    auto cv2xConfig = cv2xFactory.getCv2xConfig();
+
+    // Wait for radio manager to complete initialization
+    if (not cv2xConfig->isReady()) {
+        if (!cv2xConfig->onReady().get()) {
+            cout << "Error : C-V2X Radio Manager initialization failed" << endl;
+            return EXIT_FAILURE;
+        }
+    }
+
     /* Attempt config file update */
     cout << "Updating configuration with file: " << configFilePath << endl;
     if (Status::SUCCESS !=
-        cv2xRadioManager->updateConfiguration(configFilePath, cv2xUpdateConfigurationCallback)) {
+        cv2xConfig->updateConfiguration(configFilePath, cv2xUpdateConfigurationCallback)) {
         cout << "Error : Config file update failed." << endl;
         return EXIT_FAILURE;
     }

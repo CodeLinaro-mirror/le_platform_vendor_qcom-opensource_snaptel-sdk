@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,7 +30,7 @@
 /**
   @file v2x_kinematics_api.h
 
-  @addtogroup v2x_api_kinematics
+  @addtogroup telematics_cv2x_c_kinematics
   Abstraction of the system GNSS + DR solution for returning precision fixes
   with low latency via callbacks. This solution is used each time a fix is
   available, and it supports multiple callbacks to a short list of clients.
@@ -46,7 +46,7 @@
 extern "C" {
 #endif
 
-/** @addtogroup v2x_api_kinematics
+/** @addtogroup telematics_cv2x_c_kinematics
 @{ */
 
 /** Kinematics data handle to the interface. */
@@ -233,7 +233,7 @@ extern v2x_status_enum_type v2x_kinematics_start_rate_notification(v2x_kinematic
 v2x_status_enum_type v2x_kinematics_set_rate(v2x_kinematics_handle_t handle, v2x_rates_t *rate,
         v2x_kinematics_set_rate_callback_t cb,
         void *context);
-/** @} *//* end_addtogroup v2x_api_kinematics */
+/** @} *//* end_addtogroup telematics_cv2x_c_kinematics */
 
 /** @ingroup v2x_deprecated_kinematics
     Obsolete. This function is not supported and will be removed in the future.
@@ -259,7 +259,7 @@ v2x_status_enum_type v2x_kinematics_get_capabilities(v2x_kinematics_handle_t han
         v2x_kinematics_get_capability_callback_t cb,
         void *context);
 
-/** @addtogroup v2x_api_kinematics
+/** @addtogroup telematics_cv2x_c_kinematics
 @{ */
 /**
     Registers for a Kinematics result listener callback at the requested rate.
@@ -355,7 +355,7 @@ void v2x_kinematics_enable_fixes(v2x_kinematics_handle_t handle);
  */
 void v2x_kinematics_disable_fixes(v2x_kinematics_handle_t handle);
 
-/** @} *//* end_addtogroup v2x_api_kinematics */
+/** @} *//* end_addtogroup telematics_cv2x_c_kinematics */
 
 #ifdef __cplusplus
 }

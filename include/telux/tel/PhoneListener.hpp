@@ -109,6 +109,8 @@ public:
     *                         changed
     *
     * @param [in] radioState  Radio state of the phone @ref RadioState
+    *
+    * @deprecated Use onOperatingModeChanged() API instead
     */
    virtual void onRadioStateChanged(int phoneId, RadioState radioState) {
    }

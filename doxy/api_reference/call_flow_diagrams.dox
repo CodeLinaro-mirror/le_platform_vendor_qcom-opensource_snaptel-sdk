@@ -834,7 +834,7 @@ When reports are no longer required, the app needs to stop the report and de-reg
 4. Status of configureRobustLocation i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for configureRobustLocation is received by the application.
 
-@section data_call_flow Data
+@section data_call_flow Data Services
 
 @subsection data_connection_manager_callflow Start/Stop for data connection manager call flow
 
@@ -1270,7 +1270,7 @@ If DMZ is needed:
 @html_image{enable_disable_Socks_call_flow.png,Socks Enablement in data Socks manager call flow,60,60,Socks Enablement in data Socks manager call flow}
 
 1. Application requests data factory for data ISocksManager object.
-   1.1. If IFirewallManager object does not exist, data factory will create new object.
+   1.1. If ISocksManager object does not exist, data factory will create new object.
 2. Data factory returns SocksManager object to application.
 3. Application can use ISocksManager::isSubsystemReady to determine if the system is ready.
 4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
@@ -1280,6 +1280,36 @@ If DMZ is needed:
 5. On Readiness, application calls ISocksManager::enableSocks with enable/disable.
 6. Application receives synchronous Status which indicates if the ISocksManager::enableSocks request was sent successfully.
 7. Application is notified of the Status of the ISocksManager::enableSocks request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsubsection data_l2tp_enablement_callflow L2TP Enablement and Configuration in data L2TP manager call flow
+
+@anchor fig_data_l2tp_enablement_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{enable_disable_l2tp_and_create_tunnel_session.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{L2TP enablement and Configuration in data L2TP manager call flow}
+  \label{fig_data_l2tp_enablement_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{enable_disable_l2tp_and_create_tunnel_session.png,L2TP Enablement and Configuration in data L2TP manager call flow,60,60,L2TP Enablement and Configuration in data L2TP manager call flow}
+
+1. Application requests data factory for data IL2tpManager object.
+   1.1. If IL2tpManager object does not exist, data factory will create new object.
+2. Data factory returns IL2tpManager object to application.
+3. Application can use IL2tpManager::isSubsystemReady to determine if the system is ready.
+4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
+   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
+   4.2. Application gets future for IL2tpManager readiness.
+   4.3. Application wait for indefinitely for IL2tpManager readiness.
+5. On Readiness, application calls IL2tpManager::setConfig with enable/disable, enable/disable Mss, enable/disable MTU size and MTU size
+6. Application receives synchronous Status which indicates if the IL2tpManager::setConfig request was sent successfully.
+7. Application is notified of the Status of the IL2tpManager::setConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+8. Application calls IL2tpManager::addTunnel with all required configurations to setup tunnel and session
+9. Application receives synchronous Status which indicates if the IL2tpManager::addTunnel request was sent successfully.
+10. Application is notified of the Status of the IL2tpManager::addTunnel request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection add_enable_software_bridge Call flow to add and enable software bridge
 

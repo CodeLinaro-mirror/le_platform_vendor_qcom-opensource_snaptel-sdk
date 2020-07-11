@@ -92,9 +92,15 @@ std::string TelClientUtils::eCallMsdTransmissionStatusToString(
         case telux::tel::ECallMsdTransmissionStatus::ACK_OUT_OF_ORDER:
             return std::string("ACK OUT OF ORDER");
         case telux::tel::ECallMsdTransmissionStatus::START_RECEIVED:
-            return std::string("SEND-MSD(START) Received");
+            return std::string("SEND-MSD(START) RECEIVED");
         case telux::tel::ECallMsdTransmissionStatus::LL_ACK_RECEIVED:
-            return std::string("LL-ACK Recieved");
+            return std::string("LL-ACK RECEIVED");
+        case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_STARTED:
+            return std::string("OUTBAND MSD TRANSMISSION STARTED");
+        case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_SUCCESS:
+            return std::string("OUTBAND MSD TRANSMISSION SUCCESS");
+        case telux::tel::ECallMsdTransmissionStatus::OUTBAND_MSD_TRANSMISSION_FAILURE:
+            return std::string("OUTBAND MSD TRANSMISSION FAILURE");
         default:
             std::stringstream ss;
             ss << "Unknown ECallMsdTransmissionStatus  = " << (int)status;

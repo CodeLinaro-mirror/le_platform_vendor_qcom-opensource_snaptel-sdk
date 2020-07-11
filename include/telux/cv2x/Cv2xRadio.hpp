@@ -42,6 +42,7 @@
 #include <telux/cv2x/Cv2xRadioListener.hpp>
 #include <telux/cv2x/Cv2xRxSubscription.hpp>
 #include <telux/cv2x/Cv2xTxFlow.hpp>
+#include <telux/cv2x/Cv2xTxRxSocket.hpp>
 
 #include <future>
 #include <memory>
@@ -54,6 +55,7 @@ namespace cv2x {
 class ICv2xRadioListener;
 class ICv2xRxSubscription;
 class ICv2xTxFlow;
+class ICv2xTxRxSocket;
 
 
 /**
@@ -202,7 +204,30 @@ using UpdateTrustedUEListCallback =
 using UpdateSrcL2InfoCallback =
     std::function<void (telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_cv2x
+/**
+ * This function is called with the response to @ref createCv2xTcpSocket.
+ *
+ * @param [in] sock      - TCP socket
+ * @param [in] error     - Indicates whether TCP socket creation succeeded
+ *                       - @ref SUCCESS
+ *                       - @ref GENERIC_FAILURE
+ */
+using CreateTcpSocketCallback =
+    std::function<void (std::shared_ptr<ICv2xTxRxSocket> sock,
+                        telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to @ref closeCv2xTcpSocket.
+ *
+ * @param [in] sock      - Closed TCP socket
+ * @param [in] error     - Indicates whether close operation succeeded
+ *                       - @ref SUCCESS
+ *                       - @ref GENERIC_FAILURE
+ */
+using CloseTcpSocketCallback = std::function<void (std::shared_ptr<ICv2xTxRxSocket> sock,
+                                             telux::common::ErrorCode error)>;
+
+/** @addtogroup telematics_cv2x_cpp
  * @{ */
 
 /**
@@ -518,9 +543,54 @@ public:
      *          change and could break backwards compatibility.
      */
     virtual std::string getIfaceNameFromIpType(TrafficIpType ipType) = 0;
+
+    /**
+     * Creates a CV2X TCP socket with specified event flow information and TCP socket
+     * information. The TCP socket will be created and bound to the IPv6 address of local
+     * IP interface with specifed source port. Additionally, this API also registers a Tx
+     * event flow and subscribes Rx with specified service ID. If the created socket is
+     * expected to work as TCP client mode, the caller must connect the created socket to
+     * a destination using connect() and then use the socket for send() and recv() on
+     * successful connection. If the created socket is expected to work as TCP server mode,
+     * the caller must mark this socket as a listening socket using listen() and accept
+     * connections received from this listening socket using accept(), and then use the
+     * accepted sockets returned from accept() for send() or recv().
+     *
+     * @param [in] eventInfo    - Information for the Event flow.
+     * @param [in] sockInfo     - Information for the TCP socket.
+     * @param [in] cb           - Callback function that is invoked when socket
+     *                            creation is complete. This must not be null.
+     *
+     * @par The caller is expected to identify an unused local port number as the source
+     * port number in structure @ref SocketInfo to use for binding.
+     * @par The caller must release the created socket and associated resources with
+     * @ref closeCv2xTcpSocket. Additionally, if the created socket is marked as a listening
+     * socket, the caller must close all the accepted sockets returned by accept() using
+     * close() first, and then release the listening socket and associated resources by
+     * calling @ref closeCv2xTcpSocket.
+     * @returns SUCCESS upon success. Error status otherwise.
+     */
+    virtual telux::common::Status createCv2xTcpSocket(
+        const EventFlowInfo &eventInfo,
+        const SocketInfo &sockInfo,
+        CreateTcpSocketCallback cb) = 0;
+
+
+    /**
+     * Closes the CV2X TCP socket and frees resources associated with it (such as
+     * registered event Tx flow and subscribed Rx service ID and created TCP socket).
+     *
+     * @param [in] sock   - CV2X TCP socket to close.
+     * @param [in] cb     - Callback that is invoked when CV2X TCP socket close is complete.
+     *                      This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status closeCv2xTcpSocket(std::shared_ptr<ICv2xTxRxSocket> sock,
+                                                     CloseTcpSocketCallback cb) = 0;
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
+/** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x
 

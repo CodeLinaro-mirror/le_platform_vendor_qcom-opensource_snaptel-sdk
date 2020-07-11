@@ -29,15 +29,22 @@
 
 Steps to setup Socks Proxy:
 1. Run vlan_sample_app/telsdk_console_app to create vlan.
-2. From shell, open file " /etc/data/l2tp_cfg.xml" for editing and set DeviceModeCfg to 2
+2. Update VLAN mode at IPA
+   echo vlan:eth > /etc/data/ipa_config.txt
+3. Modify /etc/data/ipa/IPACM_cfg.xml to the following:
+   <IPACMMPDN>
+      <IPACMMPDNEnabled>0</IPACMMPDNEnabled> -> This should be set to 0.
+   </IPACMMPDN>
+4. From shell, open file " /etc/data/l2tp_cfg.xml" for editing and set DeviceModeCfg to 2
    <DeviceModeCfg>2</DeviceModeCfg>
-3. From shell, open file "/etc/data/qti_socksv5_auth.xml" for editing and set authentication method.
+5. From shell, open file "/etc/data/qti_socksv5_auth.xml" for editing and set authentication method.
     <SOCKSV5_AUTH_METHOD_CFG>
             <SOCKSV5_AUTH_METHOD>USERNAME_PASSWORD</SOCKSV5_AUTH_METHOD>
     </SOCKSV5_AUTH_METHOD_CFG>
-4. From shell, open file "/etc/data/qti_socksv5_conf.xml" to set LAN configuration.
+6. From shell, open file "/etc/data/qti_socksv5_conf.xml" to set LAN configuration.
    Lan configuration is <vlan if>0.<vlan id>
    For instance, if vlan in step 1 was created on ETH interface with Vlan id 8, LAN config will be
     <LAN_CFG>
             <LAN_IFACE>eth0.8</LAN_IFACE>
     </LAN_CFG>
+7. Reboot

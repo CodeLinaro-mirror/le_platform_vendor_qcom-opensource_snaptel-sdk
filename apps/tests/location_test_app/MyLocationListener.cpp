@@ -276,6 +276,9 @@ void MyLocationListener::printGnssSignalType(telux::loc::GnssSignal signalTypeMa
    if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2AQ) {
      std::cout << "Beidou B2AQ signal is present" << std::endl;
    }
+   if (signalTypeMask == telux::loc::UNKNOWN_SIGNAL_MASK) {
+     std::cout << " No signal present" << std::endl;
+   }
 }
 
 void MyLocationListener::printGnssMeasurementInfo(
@@ -313,7 +316,6 @@ void MyLocationListener::printGnssMeasurementInfo(
    }
 }
 
-//TODO: print Svs in printSvUsedInPosition in hex form
 void MyLocationListener::printSvUsedInPosition(
       telux::loc::SvUsedInPosition svUsedInPosition) {
    std::cout << "SV used in position :" << std::endl;
@@ -327,7 +329,6 @@ void MyLocationListener::printSvUsedInPosition(
    std::cout << "SVs from QZSS constellation " << svUsedInPosition.qzss << std::endl;
 }
 
-//TODO: print validity masks in printGnssSystemTime in hex form
 void MyLocationListener::printGnssSystemTime(
    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
    telux::loc::SystemTime sysTime = locationInfo->getGnssSystemTime();
@@ -553,13 +554,13 @@ void MyLocationListener::printConstellationType(telux::loc::GnssConstellationTyp
 void MyLocationListener::printSVHealthStatus(telux::loc::SVHealthStatus healthStatus) {
    switch(healthStatus) {
       case telux::loc::SVHealthStatus::UNHEALTHY:
-         std::cout << "SV health status: UNHEALTHY";
+         std::cout << "SV health status: UNHEALTHY" << std::endl;
          break;
       case telux::loc::SVHealthStatus::HEALTHY:
-         std::cout << "SV health status: HEALTHY";
+         std::cout << "SV health status: HEALTHY" << std::endl;
          break;
       default:
-         std::cout << "SV health status: UNKNOWN";
+         std::cout << "SV health status: UNKNOWN" << std::endl;
    }
 }
 
@@ -582,13 +583,13 @@ void MyLocationListener::printSVStatus(telux::loc::SVStatus svStatus) {
 void MyLocationListener::printEphimerisAvailability(telux::loc::SVInfoAvailability availability) {
    switch(availability) {
       case telux::loc::SVInfoAvailability::YES:
-         std::cout << "Ephemeris availability: YES";
+         std::cout << "Ephemeris availability: YES" << std::endl;
          break;
       case telux::loc::SVInfoAvailability::NO:
-         std::cout << "Ephemeris availability: NO";
+         std::cout << "Ephemeris availability: NO" << std::endl;
          break;
       default:
-         std::cout << "Ephemeris availability: UNKNOWN";
+         std::cout << "Ephemeris availability: UNKNOWN" << std::endl;
    }
 }
 
@@ -608,13 +609,13 @@ void MyLocationListener::printAlmanacAvailability(telux::loc::SVInfoAvailability
 void MyLocationListener::printFixAvailability(telux::loc::SVInfoAvailability availability) {
    switch(availability) {
       case telux::loc::SVInfoAvailability::YES:
-         std::cout << "Fix availability: YES";
+         std::cout << "Fix availability: YES" << std::endl;
          break;
       case telux::loc::SVInfoAvailability::NO:
-         std::cout << "Fix availability: NO";
+         std::cout << "Fix availability: NO" << std::endl;
          break;
       default:
-         std::cout << "Fix availability: UNKNOWN";
+         std::cout << "Fix availability: UNKNOWN" << std::endl;
    }
 }
 
@@ -1118,28 +1119,27 @@ void MyLocationListener::onGnssSignalInfo(
    for(int sig = 0; sig < static_cast<int>(
                              telux::loc::GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES);
        sig++) {
+      std::cout << "Signal Type : " << sig << std::endl;
       if(telux::loc::GnssDataValidityType::HAS_JAMMER
-         == (gnssDatainfo->getGnssData().gnssDataMask[sig]
-             & telux::loc::GnssDataValidityType::HAS_JAMMER)) {
-         std::cout << "sig: " << sig
-                   << " gnssDataMask[sig]: " << gnssDatainfo->getGnssData().gnssDataMask[sig]
+         == ((gnssDatainfo->getGnssData().gnssDataMask[sig])
+             & (telux::loc::GnssDataValidityType::HAS_JAMMER))) {
+         std::cout << " gnssDataMask: " << gnssDatainfo->getGnssData().gnssDataMask[sig]
                    << std::endl;
-         std::cout << "sig: " << sig
-                   << "jammerInd[sig]: " << gnssDatainfo->getGnssData().jammerInd[sig] << std::endl;
+         std::cout << " jammerInd: " << gnssDatainfo->getGnssData().jammerInd[sig] << std::endl;
       } else {
          std::cout << "JAMMER Ind Not Present  " << std::endl;
       }
       if(telux::loc::GnssDataValidityType::HAS_AGC
-         == (gnssDatainfo->getGnssData().gnssDataMask[sig]
-             & telux::loc::GnssDataValidityType::HAS_AGC)) {
-         std::cout << "sig: " << sig
-                   << "gnssDataMask[sig]: " << gnssDatainfo->getGnssData().gnssDataMask[sig]
+         == ((gnssDatainfo->getGnssData().gnssDataMask[sig])
+             & (telux::loc::GnssDataValidityType::HAS_AGC))) {
+         std::cout << " gnssDataMask: " << gnssDatainfo->getGnssData().gnssDataMask[sig]
                    << std::endl;
-         std::cout << "sig: " << sig << "agc[sig]: " << gnssDatainfo->getGnssData().agc[sig]
+         std::cout << " agc: " << gnssDatainfo->getGnssData().agc[sig]
                    << std::endl;
       } else {
          std::cout << "AGC Not Present  " << std::endl;
       }
+      std::cout << std::endl;
    }
    std::cout << "*************************************************************" << std::endl;
 }
@@ -1167,47 +1167,47 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
    printMeasurementsClockValidity(measurementInfo.clock.valid);
    std::cout
       << " Leap second, in unit of seconds " << measurementInfo.clock.leapSecond << std::endl
-      << " Time, in unit of ns" << measurementInfo.clock.timeNs << std::endl
-      << " Time uncertainty in unit of ns" << measurementInfo.clock.timeUncertaintyNs << std::endl
-      << " Full bias, in unit of ns" << measurementInfo.clock.fullBiasNs << std::endl
-      << " Sub-nanoseconds bias in unit of ns" << measurementInfo.clock.biasNs << std::endl
-      << " Bias uncertainty in unit of ns" << measurementInfo.clock.biasUncertaintyNs << std::endl
-      << " Clock drift" << measurementInfo.clock.driftNsps << std::endl
-      << " Clock drift uncertainty" << measurementInfo.clock.driftUncertaintyNsps << std::endl
-      << " HW clock discontinuity count" << measurementInfo.clock.hwClockDiscontinuityCount
+      << " Time, in unit of ns " << measurementInfo.clock.timeNs << std::endl
+      << " Time uncertainty in unit of ns " << measurementInfo.clock.timeUncertaintyNs << std::endl
+      << " Full bias, in unit of ns " << measurementInfo.clock.fullBiasNs << std::endl
+      << " Sub-nanoseconds bias in unit of ns " << measurementInfo.clock.biasNs << std::endl
+      << " Bias uncertainty in unit of ns " << measurementInfo.clock.biasUncertaintyNs << std::endl
+      << " Clock drift " << measurementInfo.clock.driftNsps << std::endl
+      << " Clock drift uncertainty " << measurementInfo.clock.driftUncertaintyNsps << std::endl
+      << " HW clock discontinuity count " << measurementInfo.clock.hwClockDiscontinuityCount
       << std::endl;
 
    for( auto &measData : measurementInfo.measurements) {
      std::cout << "\n*************** Measurement Data ******************* " << std::endl;
      printMeasurementsDataValidity(measData.valid);
-     std::cout << " Specify satellite vehicle ID number" << measData.svId << std::endl;
+     std::cout << " Specify satellite vehicle ID number " << measData.svId << std::endl;
      printConstellationType(measData.svType);
-     std::cout << " Time offset when the measurement was taken, in ns" << measData.timeOffsetNs
+     std::cout << " Time offset when the measurement was taken, in ns " << measData.timeOffsetNs
          << std::endl;
      printMeasurementState(measData.stateMask);
-     std::cout << " Received GNSS time of the week in nanoseconds" << measData.receivedSvTimeNs
+     std::cout << " Received GNSS time of the week in nanoseconds " << measData.receivedSvTimeNs
          << std::endl
-               << " Satellite time, in ns" << measData.receivedSvTimeUncertaintyNs << std::endl
-               << " Signal strength, carrier to noise ratio" << measData.carrierToNoiseDbHz
+               << " Satellite time, in ns " << measData.receivedSvTimeUncertaintyNs << std::endl
+               << " Signal strength, carrier to noise ratio " << measData.carrierToNoiseDbHz
          << std::endl
-               << " Uncorrected pseudorange rate" << measData.pseudorangeRateMps
+               << " Uncorrected pseudorange rate " << measData.pseudorangeRateMps
          << std::endl
-               << " Uncorrected pseudorange rate uncertainty" <<
+               << " Uncorrected pseudorange rate uncertainty " <<
          measData.pseudorangeRateUncertaintyMps << std::endl;
      printMeasurementAdrState(measData.adrStateMask);
-     std::cout << " Accumulated delta range" << measData.adrMeters << std::endl
-               << " Accumulated delta range uncertainty" << measData.adrUncertaintyMeters
+     std::cout << " Accumulated delta range " << measData.adrMeters << std::endl
+               << " Accumulated delta range uncertainty " << measData.adrUncertaintyMeters
          << std::endl
-               << " Carrier frequency of the tracked signal" << measData.carrierFrequencyHz
+               << " Carrier frequency of the tracked signal " << measData.carrierFrequencyHz
          << std::endl
-               << " The number of full carrier cycles between the receiver and the satellite"
+               << " The number of full carrier cycles between the receiver and the satellite "
          << measData.carrierCycles << std::endl
-               << " The RF carrier phase" << measData.carrierPhase <<std::endl
-               << " RF carrier phase uncertainty" << measData.carrierPhaseUncertainty
+               << " The RF carrier phase " << measData.carrierPhase <<std::endl
+               << " RF carrier phase uncertainty " << measData.carrierPhaseUncertainty
          <<std::endl;
      printMeasurementsMultipathIndicator(measData.multipathIndicator);
-     std::cout << " Signal to noise ratio" << measData.signalToNoiseRatioDb << std::endl
-               << " Automatic gain control level" << measData.agcLevelDb << std::endl;
+     std::cout << " Signal to noise ratio " << measData.signalToNoiseRatioDb << std::endl
+               << " Automatic gain control level " << measData.agcLevelDb << std::endl;
 
      std::cout << "\n********************** " << std::endl;
    }
@@ -1241,12 +1241,12 @@ void MyLocationListener::onLocationSystemInfo(const telux::loc::LocationSystemIn
        timeInfo;
    std::cout << "TimeInfo : " << std::endl;
 
-   std::cout << "System time week: " << timeInfo.systemWeek;
-   std::cout << "System time week ms: " << timeInfo.systemMsec;
-   std::cout << "System clk time: " << timeInfo.systemClkTimeBias;
-   std::cout << "System clk time uncertainty valid: " << timeInfo.systemClkTimeUncMs;
-   std::cout << "System reference valid: " << timeInfo.refFCount;
-   std::cout << "System num clock reset valid: " << timeInfo.numClockResets;
+   std::cout << "System time week: " << timeInfo.systemWeek << std::endl;
+   std::cout << "System time week ms: " << timeInfo.systemMsec << std::endl;
+   std::cout << "System clk time: " << timeInfo.systemClkTimeBias << std::endl;
+   std::cout << "System clk time uncertainty valid: " << timeInfo.systemClkTimeUncMs << std::endl;
+   std::cout << "System reference valid: " << timeInfo.refFCount << std::endl;
+   std::cout << "System num clock reset valid: " << timeInfo.numClockResets << std::endl;
 
    std::cout << " leapSecondsBeforeChange" << unsigned(locationSystemInfo.info.
        info.leapSecondsBeforeChange) << std::endl;

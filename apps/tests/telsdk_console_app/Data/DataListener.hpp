@@ -48,7 +48,7 @@ public:
 private:
    std::mutex mtx_;
    // Associate profileId, ipfamily type with data call impl
-   std::map<int, std::shared_ptr<telux::data::IDataCall>> dataCallMap_;
+   std::multimap<int, std::shared_ptr<telux::data::IDataCall>> dataCallMap_;
 
    void updateDataCallMap(const std::shared_ptr<telux::data::IDataCall> &dataCall);
    void logDataCallDetails(const std::shared_ptr<telux::data::IDataCall> &dataCall);

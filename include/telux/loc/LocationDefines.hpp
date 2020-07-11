@@ -1200,6 +1200,45 @@ enum AidingDataType {
 /** Specifies AidingDataType mask */
 using AidingData = uint32_t;
 
+/** Specify the valid mask for robust location configuration
+ *  used by the GNSS standard position engine (SPE). */
+enum RobustLocationConfigType {
+    /** Validity of enabled */
+    VALID_ENABLED          = (1<<0),
+    /** Validity of enabledForE911. */
+    VALID_ENABLED_FOR_E911 = (1<<1),
+    /** Validity of version. */
+    VALID_VERSION          = (1<<2)
+};
+
+/** Specifies RobustLocationConfigType mask */
+using RobustLocationConfig = uint16_t;
+
+/** Specify the versioning info of robust location module for
+ *  the GNSS standard position engine (SPE). */
+struct RobustLocationVersion {
+    /** Major version number. */
+    uint8_t major;
+    /** Minor version number. */
+    uint16_t minor;
+};
+
+/** Specify the robust location configuration used by the GNSS
+ *  standard position engine (SPE) */
+struct RobustLocationConfiguration {
+    /** Validity mask */
+    RobustLocationConfig validMask;
+    /** Specify whether robust location feature is enabled or
+     *  not. */
+    bool enabled;
+    /** Specify whether robust location feature is enabled or not
+     *  when device is on E911 call. */
+    bool enabledForE911;
+    /** Specify the version info of robust location module used
+     *  by the GNSS standard position engine (SPE). */
+    RobustLocationVersion version;
+};
+
 /**
  * @brief IGpsTime provides interface to get current GPS week and elapsed
  *        time in current GPS week

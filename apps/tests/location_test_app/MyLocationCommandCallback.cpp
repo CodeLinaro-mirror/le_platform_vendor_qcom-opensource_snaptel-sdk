@@ -50,18 +50,7 @@ void MyLocationCommandCallback::commandResponse(telux::common::ErrorCode error) 
 
 void MyLocationCommandCallback::onGnssEnergyConsumedInfo(telux::loc::GnssEnergyConsumedInfo
     gnssEnergyConsumed, telux::common::ErrorCode error) {
-   if(error == telux::common::ErrorCode::SUCCESS) {
-       std::cout << " SUCCESS" << std::endl;
-   }
-   if(error == telux::common::ErrorCode::NOT_SUPPORTED) {
-       std::cout << " NOT_SUPPORTED" << std::endl;
-   }
-   if(error == telux::common::ErrorCode::INVALID_ARGUMENTS) {
-       std::cout << " INVALID_ARGUMENTS" << std::endl;
-   }
-   if(error == telux::common::ErrorCode::GENERIC_FAILURE) {
-       std::cout << " GENERIC_FAILURE" << std::endl;
-   }
+   std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
 
    PRINT_CB << "\n**************** Gnss Energy Consumed Information ***************"
        << std::endl;
@@ -80,23 +69,38 @@ void MyLocationCommandCallback::onGnssEnergyConsumedInfo(telux::loc::GnssEnergyC
 
 void MyLocationCommandCallback::onMinGpsWeekInfo(uint16_t minGpsWeek,
     telux::common::ErrorCode error) {
-  if (error == telux::common::ErrorCode::SUCCESS) {
-    std::cout << " SUCCESS" << std::endl;
-  }
-  if (error == telux::common::ErrorCode::GENERIC_FAILURE) {
-    std::cout << " GENERIC_FAILURE" << std::endl;
-  }
-  if (error == telux::common::ErrorCode::NOT_SUPPORTED) {
-    std::cout << " NOT_SUPPORTED" << std::endl;
-  }
-  if (error == telux::common::ErrorCode::INVALID_ARGUMENTS) {
-    std::cout << " INVALID_ARGUMENTS" << std::endl;
-  }
-  if (error == telux::common::ErrorCode::UNKNOWN) {
-    std::cout << " UNKNOWN" << std::endl;
-  }
+  std::cout << __FUNCTION__ <<  " : " << Utils::getErrorCodeAsString(error) << std::endl;
 
   PRINT_CB << " ************ Request Minimum GPS Week ***************" << std::endl;
   std::cout << " Minimum Gps Week is : " << minGpsWeek << std::endl;
+  std::cout << " ****************************************************" << std::endl;
+}
+
+void MyLocationCommandCallback::onMinSVElevationInfo(uint8_t minSVElevation,
+    telux::common::ErrorCode error) {
+  std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
+
+  PRINT_CB << " ************ Request Minimum SV Elevation Angle ***************" << std::endl;
+  std::cout << " Minimum SV Elevation is : " << (uint32_t)minSVElevation << std::endl;
+}
+
+void MyLocationCommandCallback::onRobustLocationInfo(const telux::loc::RobustLocationConfiguration
+     rLConfig, telux::common::ErrorCode error) {
+  std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
+
+  PRINT_CB << " ************ Request Robust Location ***************" << std::endl;
+  if (rLConfig.validMask & telux::loc::VALID_ENABLED) {
+    std::cout << " Enabled is valid" << std::endl;
+  }
+  if (rLConfig.validMask & telux::loc::VALID_ENABLED_FOR_E911) {
+    std::cout << " Enabled for E911 is valid" << std::endl;
+  }
+  if (rLConfig.validMask & telux::loc::VALID_VERSION) {
+    std::cout << " Version is valid" << std::endl;
+  }
+  std::cout << " Enabled is : " << rLConfig.enabled << std::endl;
+  std::cout << " Enabled for E911 is : " << rLConfig.enabledForE911 << std::endl;
+  std::cout << " Major version is : " << unsigned(rLConfig.version.major) << std::endl;
+  std::cout << " Minor version is : " << rLConfig.version.minor << std::endl;
   std::cout << " ****************************************************" << std::endl;
 }

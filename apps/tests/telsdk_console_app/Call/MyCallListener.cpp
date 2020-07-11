@@ -43,6 +43,7 @@ extern "C" {
 void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
    PRINT_NOTIFICATION << getCurrentTime() << std::endl;
+   std::cout << "Incoming call on slot Id: " << call->getPhoneId() << std::endl;
    std::cout << "Enter 2 to answer call" << std::endl;
    std::cout << "Enter 3 to reject call" << std::endl;
    std::cout << "Enter 4 to reject call with an SMS message" << std::endl;
@@ -53,7 +54,8 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
    PRINT_NOTIFICATION << " Call State: " << getCallStateString(call->getCallState())
                       << "\n Call Index: " << (int)call->getCallIndex()
                       << ", Call Direction: " << (int)call->getCallDirection()
-                      << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
+                      << ", Phone Number: " << call->getRemotePartyNumber()
+                      << ", Slot Id: " << call->getPhoneId() << std::endl;
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
       PRINT_NOTIFICATION << getCurrentTime() << " Cause of call termination: "
                          << getCallEndCauseString(call->getCallEndCause()) << std::endl;
@@ -251,7 +253,8 @@ void MyDialCallback::makeCallResponse(telux::common::ErrorCode error,
                                       std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
    PRINT_NOTIFICATION << "makeCall response ErrorCode: " << int(error)
-                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                      << ", description: " << Utils::getErrorCodeAsString(error)
+                      << ", slot id: " << call->getPhoneId() << std::endl;
    callObj_ = call;
 }
 

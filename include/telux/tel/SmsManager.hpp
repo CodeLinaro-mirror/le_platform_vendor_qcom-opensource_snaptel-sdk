@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -56,14 +56,14 @@ class ISmscAddressCallback;
  * @brief Specifies the encoding of the SMS message
  */
 enum class SmsEncoding {
-   GSM7,    /**< Message is made up of GSM7 septets */
-   GSM8,    /**< Message is made up of GSM8 septets */
-   UCS2,    /**< Message is made up of UCS2 septets */
-   UNKNOWN, /**< Message encoding is unknown */
+   GSM7,    /**< GSM 7-bit default alphabet encoding */
+   GSM8,    /**< GSM 8-bit data encoding */
+   UCS2,    /**< UCS-2 encoding */
+   UNKNOWN, /**< Unknown encoding */
 };
 
 /**
- * @brief   Contains structure of message attributes like encoding type, number
+ * @brief Contains structure of message attributes like encoding type, number
  * of segments, characters left in last segment
  */
 struct MessageAttributes {
@@ -139,7 +139,8 @@ private:
 class ISmsManager {
 public:
    /**
-    * Send Sms to destination address.
+    * Send SMS to destination address. Only support UCS2 format, GSM 7 bit default alphabet
+    * and does not support National language shift tables.
     *
     * @param [in] message           Message or payload text to be sent
     * @param [in] receiverAddress   Receiver or destination address

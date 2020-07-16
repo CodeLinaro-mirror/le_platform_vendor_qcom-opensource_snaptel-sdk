@@ -42,7 +42,6 @@ CONSOLE_LOG_LEVEL, FILE_LOG_LEVEL specifies the threshold for console log messag
    FILE_LOG_LEVEL=DEBUG
    DIAG_LOG_LEVEL=DEBUG
    ~~~~~~
-
 ### 2. Diag level logging
 
 DIAG_LOG_LEVEL specifies the threshold for logs messages displayed in QXDM. Possible LOG_LEVEL values are NONE, PERF, ERROR, WARNING, INFO, DEBUG.
@@ -55,12 +54,13 @@ The mapping of SDK log levels to QXDM log levels in shown below:
    # INFO --> MED (MSG_LEGACY_MED)
    # DEBUG --> LOW (MSG_LEGACY_LOW)
    ~~~~~~
-
 ### 3. Set Max file size
 
 MAX_LOG_FILE_SIZE specifies the maximum allowed size(in bytes) of the log file
--  When max size is reached, logger backs up the log file once, for example: tel.log will be renamed to tel.log.backup and a new log file will be created.
--  Default MAX_LOG_FILE_SIZE is 5 Mega Bytes
+When the log file reaches its maximum size, it is saved as tel.log.backup.
+-  If the log file again reaches the max, it will be saved again overwriting the previous tel.log.backup file.
+-  So at a given time only one tel.log and tel.backup will exist in system.
+-  Default MAX_LOG_FILE_SIZE is 5 Mega Bytes.
 
    ~~~~~~{.sh}
    MAX_LOG_FILE_SIZE=5242880
@@ -79,8 +79,7 @@ Used to prefix date and time on every log Message
 
 ### 5. Set log file path
 
-Specifies the path of the log file. In an external application processor, the path needs to be in a writable partition.
-
+Specifies the path of the log file. In an external application processor, the path needs to be in a writable partition. If this default path does not exist in the system or it is not writable, this path needs to be updated accordingly.
    ~~~~~~{.sh}
    LOG_FILE_PATH=/data/vendor/telsdk
    ~~~~~~

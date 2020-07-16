@@ -84,8 +84,6 @@ private:
    void printVerticalReliability(telux::loc::LocationReliability locReliability);
    void printConstellationType(telux::loc::GnssConstellationType constellation);
    void printGnssSignalType(telux::loc::GnssSignal signalTypeMask);
-   void printSVHealthStatus(telux::loc::SVHealthStatus healthStatus);
-   void printSVStatus(telux::loc::SVStatus svStatus);
    void printEphimerisAvailability(telux::loc::SVInfoAvailability availability);
    void printAlmanacAvailability(telux::loc::SVInfoAvailability availability);
    void printFixAvailability(telux::loc::SVInfoAvailability availability);

@@ -67,15 +67,6 @@ class IGnssSVInfo;
  */
 class ILocationListener {
 public:
-/**
- * This function is called when device receives location update.
- *
- * @param [in] locationInfo - Location information  like latitude, longitude,
- * timeInfo other information such as heading, altitude and velocity etc.
- *
- */
-  virtual void
-  onLocationUpdate(const std::shared_ptr<ILocationInfo> &locationInfo) {}
 
 /**
  * This function is called when device receives location update.

@@ -551,35 +551,6 @@ void MyLocationListener::printConstellationType(telux::loc::GnssConstellationTyp
    }
 }
 
-void MyLocationListener::printSVHealthStatus(telux::loc::SVHealthStatus healthStatus) {
-   switch(healthStatus) {
-      case telux::loc::SVHealthStatus::UNHEALTHY:
-         std::cout << "SV health status: UNHEALTHY" << std::endl;
-         break;
-      case telux::loc::SVHealthStatus::HEALTHY:
-         std::cout << "SV health status: HEALTHY" << std::endl;
-         break;
-      default:
-         std::cout << "SV health status: UNKNOWN" << std::endl;
-   }
-}
-
-void MyLocationListener::printSVStatus(telux::loc::SVStatus svStatus) {
-   switch(svStatus) {
-      case telux::loc::SVStatus::IDLE:
-         std::cout << "SV status: IDLE" << std::endl;
-         break;
-      case telux::loc::SVStatus::SEARCH:
-         std::cout << "SV status: SEARCH" << std::endl;
-         break;
-      case telux::loc::SVStatus::TRACK:
-         std::cout << "SV status: TRACK" << std::endl;
-         break;
-      default:
-         std::cout << "SV status: UNKNOWN" << std::endl;
-   }
-}
-
 void MyLocationListener::printEphimerisAvailability(telux::loc::SVInfoAvailability availability) {
    switch(availability) {
       case telux::loc::SVInfoAvailability::YES:

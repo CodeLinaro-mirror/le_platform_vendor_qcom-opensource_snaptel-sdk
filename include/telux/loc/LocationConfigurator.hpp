@@ -207,20 +207,27 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
   * completely overwrite the previous call.
   * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO and SBAS. For other
   * constellations NOTSUPPORTED status will be returned.
-  * Nullptr of list will be interpreted as to reset the constellation configuration to
-  * device default.
+  * When resetToDefault is false then the list is expected to contain the constellations or SVs
+  * that should be blacklisted. An empty list could be specified to allow all constellations/SVs
+  * (i.e. none will be blacklisted) in determining the fix.
+  * When resetToDefault is set to true, the device will revert to the default list of SV/
+  * constellations to be blacklisted.
   *
-  * @param [in] SvIdBlackList - specify the set of constellations and SVs that should not be used
-  *                             by the GNSS engine on modem. Constellations and SVs not specified
-  *                             in blacklistedSvList could get used by the GNSS engine on modem.
+  * @param [in] list - specify the set of constellations and SVs that should not be used
+  *                    by the GNSS engine on modem. Constellations and SVs not specified
+  *                    in blacklistedSvList could get used by the GNSS engine on modem.
   *
   * @param [in] callback - Optional callback to get the response of configure constellations.
+  *
+  * @param [in] resetToDefault - when set to true, the device will revert to the default list of
+  *                              SV/constellation to be blacklisted. When set to false, list will
+  *                              be inspected to determine what should be blacklisted.
   *
   */
 
 
   virtual telux::common::Status configureConstellations(const SvBlackList& list,
-        telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr, bool resetToDefault = false) = 0;
 
 /**
   * This API enables/disables robust location feature and enables/disables robust location while

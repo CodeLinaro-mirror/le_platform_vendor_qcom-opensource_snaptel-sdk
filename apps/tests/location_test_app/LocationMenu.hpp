@@ -73,6 +73,8 @@ public:
    void deleteAidingDataWarm(std::vector<std::string> userInput);
    void configureLeverArm(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
+   void configureConstellationEmpty(std::vector<std::string> userInput);
+   void configureConstellationDeviceDefault(std::vector<std::string> userInput);
    void configureRobustLocation(std::vector<std::string> userInput);
    void requestRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);

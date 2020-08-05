@@ -359,7 +359,7 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
   * example, removing ephemeris data may trigger GNSS engine to do a warm start.
   *
   * @param [in] aidingDataMask - specify the set of aiding data to be deleted from all position
-  *                              engines. Currently, only ephemeris deletion is supported.
+  *                              engines.
   *
   * @param [in] callback - Optional callback to get the response of delete aiding data.
   *
@@ -373,6 +373,26 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
   virtual telux::common::Status deleteAidingData(AidingData aidingDataMask,
       telux::common::ResponseCallback callback = nullptr) = 0;
 
+/**
+ * This API configures various parameters for dead reckoning position engine. Clients should
+ * wait for the command to finish e.g.: via ResponseCallback to be received before issuing a
+ * second configureDREngineParams command. Behavior is not defined if client issues a second
+ * request of configureDREngineParams without waiting for the completion of the previous
+ * configureDREngineParams request.
+ *
+ * @param [in] config - specify dead reckoning engine configuration.
+ *
+ * @param [in] callback - Optional callback to get the response of configureDREngineParams.
+ *
+ * @returns Status of configureDREngineParams i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureDR(const
+      DREngineConfiguration& config, telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Destructor of ILocationConfigurator

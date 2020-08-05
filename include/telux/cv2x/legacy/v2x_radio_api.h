@@ -716,6 +716,17 @@ typedef struct {
     uint8_t tx_pool_id;
     /**< ID of the Tx pool. */
 
+    uint8_t is_unicast_valid;
+    /**< Indicates whether is_unicast is specified.
+
+         @values
+         - 0 -- Is unicast is not specified
+         - 1 -- Is unicast is specified and is valid @tablebulletend */
+
+    uint8_t is_unicast;
+    /**< Non zero if requested flow is unicast.
+         Note: Unicast flows ignore subscribed Service Ids */
+
 } v2x_tx_flow_info_t;
 
 /**

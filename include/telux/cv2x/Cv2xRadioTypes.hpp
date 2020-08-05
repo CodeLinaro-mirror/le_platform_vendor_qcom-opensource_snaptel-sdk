@@ -242,6 +242,9 @@ struct EventFlowInfo {
          default setting. */
     uint8_t txPoolId = 0u;
     /**< Transmission Pool ID. */
+    bool isUnicast = false;
+    /**< Set to true if isUnicast flow.  If false, Non-Unicast flow will be created.
+         Note: Unicast flows ignore subscribed Service Ids*/
 };
 
 /**
@@ -345,6 +348,8 @@ struct Cv2xRadioCapabilities {
     /**< Minimum supported transmission power. */
     std::vector<TxPoolIdInfo> txPoolIdsSupported;
     /**< Vector of supported transmission pool IDs. */
+    uint8_t isUnicastSupported;
+    /**< Non zero value if UDP event unicast is supported. */
 };
 
 /**

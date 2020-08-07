@@ -312,17 +312,18 @@ std::vector<gid_t> getGidByName(std::vector<std::string> names) {
 }
 
 int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
+    int ret = 0;
     std::vector<gid_t> groupIds = getGidByName(grps);
     int numGroups = getgroups(0, NULL);
     gid_t gid[numGroups]{};
-    getgroups(numGroups, gid);
+    ret = getgroups(numGroups, gid);
     std::vector<gid_t> existingGidList(gid, gid+numGroups);
     existingGidList.insert(std::end(existingGidList), std::begin(groupIds), std::end(groupIds));
     uint32_t gidListSize = existingGidList.size();
     gid_t newGidList[gidListSize]{};
     std::copy(existingGidList.begin(), existingGidList.end(), newGidList);
-    int status = setgroups(gidListSize, newGidList);
-    return status;
+    ret = setgroups(gidListSize, newGidList);
+    return ret;
 }
 
 void Utils::printStatus(telux::common::Status status) {

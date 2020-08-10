@@ -33,7 +33,7 @@ set(SOURCES
 # Daemon app
 add_executable(${TARGET_CV2X_DAEMON_APP} ${SOURCES})
 target_compile_options(${TARGET_CV2X_DAEMON_APP} PRIVATE -std=c++11 -Wall -Werror)
-target_link_libraries(${TARGET_CV2X_DAEMON_APP} telux_data telux_cv2x telux_power ${SYSTEMD_LIB} ${GLIB_LIBRARIES})
+target_link_libraries(${TARGET_CV2X_DAEMON_APP} pthread telux_data telux_cv2x telux_power ${SYSTEMD_LIB} ${GLIB_LIBRARIES})
 
 set(EXEC_PERM OWNER_EXECUTE OWNER_WRITE OWNER_READ
               GROUP_EXECUTE GROUP_READ

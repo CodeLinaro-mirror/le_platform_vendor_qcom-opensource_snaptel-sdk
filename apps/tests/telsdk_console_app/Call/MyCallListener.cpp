@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,6 +35,8 @@ extern "C" {
 #include <sys/time.h>
 }
 
+#include <telux/tel/PhoneFactory.hpp>
+
 #include "MyCallListener.hpp"
 #include "Utils.hpp"
 
@@ -57,6 +59,16 @@ void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {
                       << ", Phone Number: " << call->getRemotePartyNumber()
                       << ", Slot Id: " << call->getPhoneId() << std::endl;
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
+       int phoneId = call->getPhoneId();
+        AudioClient& audioClient = AudioClient::getInstance();
+        if (audioClient.isReady()) {
+            int numCalls = getCallsOnSlot(static_cast<SlotId>(phoneId));
+            std::cout << "In progress call for slotID : " << phoneId
+                << " are : " << numCalls << std::endl;
+            if (numCalls < 1) {
+                audioClient.stopVoiceSession(static_cast<SlotId>(phoneId));
+            }
+        }
       PRINT_NOTIFICATION << getCurrentTime() << " Cause of call termination: "
                          << getCallEndCauseString(call->getCallEndCause()) << std::endl;
    }
@@ -280,4 +292,19 @@ void MyCallCommandCallback::commandResponse(telux::common::ErrorCode error) {
    }
    PRINT_NOTIFICATION << commandName_ << " operation - ErrorCode " << (int)error
                       << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+int MyCallListener::getCallsOnSlot(SlotId slotId) {
+    int numCalls = 0;
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto callManager = phoneFactory.getCallManager();
+    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
+      = callManager->getInProgressCalls();
+    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
+        ++callIterator) {
+        if (slotId == static_cast<SlotId>((*callIterator)->getPhoneId())) {
+            numCalls++;
+        }
+    }
+    return numCalls;
 }

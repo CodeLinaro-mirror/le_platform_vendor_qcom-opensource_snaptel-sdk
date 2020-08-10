@@ -55,7 +55,7 @@ using namespace telux::data::net;
 class BridgeMenu : public ConsoleApp {
  public:
     // initialize menu and sdk
-    int init();
+    bool init();
 
     // Bridge Manager APIs
     void enableBridge(std::vector<std::string> inputCommand);

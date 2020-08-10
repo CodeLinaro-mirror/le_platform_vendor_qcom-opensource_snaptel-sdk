@@ -41,8 +41,10 @@
 #define MULTISIMMANAGER_HPP
 
 #include <future>
+#include <map>
 
 #include <telux/common/CommonDefines.hpp>
+#include "MultiSimDefines.hpp"
 
 namespace telux {
 namespace tel {
@@ -62,6 +64,20 @@ class IMultiSimListener;
  */
 using HighCapabilityCallback
    = std::function<void(int slotId, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to requestSlotStatus API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] slotStatus   list of slots status @ref SlotStatus
+ * @param [in] error        Return code which indicates whether the operation
+ *                          succeeded or not @ref ErrorCode
+ */
+using SlotStatusCallback
+    = std::function<void(std::map<SlotId, SlotStatus> slotStatus,
+        telux::common::ErrorCode error)>;
 
 /** @addtogroup telematics_multi_sim
  * @{ */
@@ -149,6 +165,33 @@ public:
       common::ResponseCallback callback = nullptr) = 0;
 
    /**
+    * Choose the physical SIM slot to be used by modem on Single-SIM TCU platforms. After
+    * switching the slot, only the SIM on chosen physical slot can be used for WWAN functionality.
+    *
+    * @param [in] slotId       physical slot to be made active
+    * @param [in] callback     Callback function to get the response of slot switch request
+    *
+    * @returns Status of switchActiveSlot i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status switchActiveSlot(SlotId slotId,
+      common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Request the status of physical slots.
+    *
+    * @param [in] callback     Callback function to get the response of slot status request
+    *
+    * @returns Status of requestSlotStatus i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestSlotStatus(SlotStatusCallback callback) = 0;
+
+   /**
     * Register a listener for specific events in the Multi SIM subsystem.
     *
     * @param [in] listener  Pointer to IMultiSimListener object that processes the
@@ -194,6 +237,17 @@ public:
     *          and could break backwards compatibility.
     */
    virtual void onHighCapabilityChanged(int slotId) {
+   }
+
+   /**
+    * This function is called whenever there is change in physical SIM slots status.
+    *
+    * @param [in] slotStatus   list of slots status @ref SlotStatus
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual void onSlotStatusChanged(std::map<SlotId, SlotStatus> slotStatus) {
    }
 
    /**

@@ -36,6 +36,7 @@
 #define CALLMENU_HPP
 
 #include "console_app_framework/ConsoleApp.hpp"
+#include "./../Audio/AudioClient.hpp"
 #include "MyCallListener.hpp"
 
 class CallMenu : public ConsoleApp {
@@ -59,6 +60,8 @@ private:
    void playDtmfTone(std::vector<std::string> userInput);
    void startDtmfTone(std::vector<std::string> userInput);
    void stopDtmfTone(std::vector<std::string> userInput);
+   void enableAudio(std::vector<std::string> userInput);
+   bool queryAudioState();
 
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
    std::shared_ptr<telux::tel::ICallListener> callListener_;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -34,6 +34,8 @@
 #include <telux/tel/CallListener.hpp>
 #include <telux/common/CommonDefines.hpp>
 
+#include "../Audio/AudioClient.hpp"
+
 class MyCallListener : public telux::tel::ICallListener {
 public:
    void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
@@ -46,6 +48,8 @@ public:
 
    ~MyCallListener() {
    }
+private:
+    int getCallsOnSlot(SlotId slotId);
 };
 
 class MyDialCallback : public telux::tel::IMakeCallCallback {

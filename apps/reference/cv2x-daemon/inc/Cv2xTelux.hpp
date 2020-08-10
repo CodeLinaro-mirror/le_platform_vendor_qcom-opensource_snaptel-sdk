@@ -131,10 +131,17 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
 
     public:
 
+        Cv2xTelux();
+
         /**
          * Initialize the library, allocate state variables
          */
         Status initV2xLibrary();
+
+        /**
+         * Initialize the data library
+         */
+        Status initDataLibrary();
 
         /**
          * De-initializes the library, de-allocates memory
@@ -145,6 +152,11 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
          * Register for V2x Radio Listener
          */
         Status registerListeners();
+
+        /**
+         * Register for Data Listener
+         */
+        Status registerDataListeners();
 
         /**
          * Read the V2X radio status for TX and RX into the status variable.

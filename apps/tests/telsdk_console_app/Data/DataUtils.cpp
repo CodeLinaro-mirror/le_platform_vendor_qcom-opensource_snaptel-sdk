@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 #include "DataUtils.hpp"
 
@@ -201,4 +202,34 @@ std::string DataUtils::protocolToString(telux::data::IpProtocol proto) {
          return "Unknown";
       }
    }
+}
+
+telux::data::IpProtocol DataUtils::getProtcol(std::string protoStr) {
+    std::string protoStrToCompare = protoStr;
+    std::transform(protoStrToCompare.begin(), protoStrToCompare.end(), protoStrToCompare.begin(),
+        [](unsigned char ch) { return std::tolower(ch); });
+
+    telux::data::IpProtocol prot = 0;
+    if(protoStrToCompare.compare("udp") == 0) {
+        prot = 17;
+    }
+    else if (protoStrToCompare.compare("tcp") == 0) {
+        prot = 6;
+    }
+    else if (protoStrToCompare.compare("igmp") == 0) {
+        prot = 2;
+    }
+    else if (protoStrToCompare.compare("icmp") == 0) {
+        prot = 1;
+    }
+    else if (protoStrToCompare.compare("esp") == 0) {
+        prot = 50;
+    }
+    else if (protoStrToCompare.compare("tcp_udp") == 0) {
+        prot = 253;
+    }
+    else {
+        std::cout << "Error: invalid protocol \n ";
+    }
+    return prot;
 }

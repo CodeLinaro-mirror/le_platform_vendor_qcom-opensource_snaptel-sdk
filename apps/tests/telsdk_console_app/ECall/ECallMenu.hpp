@@ -50,6 +50,7 @@ extern "C" {
 
 #include "console_app_framework/ConsoleApp.hpp"
 #include "MsdSettings.hpp"
+#include "./../Audio/AudioClient.hpp"
 
 #define CATEGORY_AUTO 1
 #define CATEGORY_MANUAL 2
@@ -151,6 +152,16 @@ private:
     * This method is useful to trim the spaces in options and converting them into LOWERCASE
     */
    std::string toLowerCase(std::string inputOption);
+
+   /**
+    * This method is used to initialize audio subsystem for the ecall.
+    */
+   void enableAudio(std::vector<std::string> userInput);
+
+   /**
+    * This method is used to query whether audio to be enabled for a particular call.
+    */
+   bool queryAudioState();
 
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::tel::ICallListener> callListener_;

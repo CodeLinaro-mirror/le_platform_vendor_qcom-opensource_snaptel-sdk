@@ -40,6 +40,7 @@
 #include <assert.h>
 #include <ifaddrs.h>
 #include <cstring>
+#include <string>
 #include <sys/time.h>
 #include <unistd.h>
 #include <iostream>
@@ -74,7 +75,6 @@ static constexpr uint16_t DEFAULT_PORT = 5000u;
 static constexpr int      PRIORITY = 5;
 static constexpr uint32_t PACKET_LEN = 128u;
 static constexpr uint32_t PACKET_NUM = 2u;
-static constexpr char IFACE_NAME[] = "rmnet_data0";
 
 static constexpr char TEST_VERNO_MAGIC = 'Q';
 static constexpr char CLIENT_UEID = 1;
@@ -259,7 +259,7 @@ static int parseOpts(int argc, char *argv[]) {
         case 'd':
             if (optarg) {
                 gDstAddr = optarg;
-                cout << "dstAddr: " << gDstAddr.c_str() << endl;
+                cout << "dstAddr: " << gDstAddr << endl;
             }
             break;
         case 'm':
@@ -284,7 +284,7 @@ static int parseOpts(int argc, char *argv[]) {
         default:
             rc = -1;
             printUsage(argv[0]);
-            break;
+            return rc;
         }
     }
 
@@ -357,7 +357,6 @@ int main(int argc, char *argv[]) {
 
     // Parse parameters
     if (parseOpts(argc, argv) < 0) {
-        cout << "Options error" << endl;
         return EXIT_FAILURE;
     }
 
@@ -418,11 +417,10 @@ int main(int argc, char *argv[]) {
     int sock = gTcpSock->getSocket();
     if (gTcpMode == TCP_CLIENT) {
         // For TCP client, establish connection with the created sock
-        struct sockaddr_in6 dstSockAddr;
+        struct sockaddr_in6 dstSockAddr = {0}; //must reset the sockaddr
         dstSockAddr.sin6_port = htons((uint16_t)gDstPort);
         inet_pton(AF_INET6, gDstAddr.c_str(), (void *)&dstSockAddr.sin6_addr);
         dstSockAddr.sin6_family = AF_INET6;
-        dstSockAddr.sin6_scope_id = if_nametoindex(IFACE_NAME);
 
         cout << "connecting sock:" << sock << endl;
         if (connect(sock, (struct sockaddr *)&dstSockAddr, sizeof(struct sockaddr_in6))) {

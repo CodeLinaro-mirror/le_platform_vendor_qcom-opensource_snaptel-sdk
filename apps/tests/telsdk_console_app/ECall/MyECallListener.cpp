@@ -34,8 +34,12 @@
 extern "C" {
 #include <sys/time.h>
 }
+
+#include <telux/tel/PhoneFactory.hpp>
+
 #include "Utils.hpp"
 #include "MyECallListener.hpp"
+#include "../Audio/AudioClient.hpp"
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
 #define BUFSIZE 120
@@ -54,6 +58,16 @@ void MyECallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) 
                       << ", Call Direction: " << callDirectionToString(call->getCallDirection())
                       << ", Phone Number: " << call->getRemotePartyNumber() << std::endl;
    if(call->getCallState() == telux::tel::CallState::CALL_ENDED) {
+       int phoneId = call->getPhoneId();
+        AudioClient& audioClient = AudioClient::getInstance();
+        if (audioClient.isReady()) {
+            int numCalls = getCallsOnSlot(static_cast<SlotId>(phoneId));
+            std::cout << "In progress call for slotID : " << phoneId
+                << " are : " << numCalls << std::endl;
+            if (numCalls < 1) {
+                audioClient.stopVoiceSession(static_cast<SlotId>(phoneId));
+            }
+        }
       PRINT_NOTIFICATION << getCurrentTime() << "  Cause of call termination: "
                          << callEndCauseToString(call->getCallEndCause()) << std::endl;
    }
@@ -296,4 +310,19 @@ std::string MyECallListener::getCurrentTime() {
    char currTime[BUFSIZE];
    snprintf(currTime, BUFSIZE, "%s.%ld", buffer, tod.tv_usec / 1000);
    return std::string(currTime);
+}
+
+int MyECallListener::getCallsOnSlot(SlotId slotId) {
+    int numCalls = 0;
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto callManager = phoneFactory.getCallManager();
+    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
+      = callManager->getInProgressCalls();
+    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
+        ++callIterator) {
+        if (slotId == static_cast<SlotId>((*callIterator)->getPhoneId())) {
+            numCalls++;
+        }
+    }
+    return numCalls;
 }

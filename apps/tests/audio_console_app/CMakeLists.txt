@@ -14,6 +14,9 @@ set(AUDIO_CONSOLE_APP_SOURCES
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
+    ../../common/Audio/VoiceSession.cpp
+    ../../common/Audio/AudioSession.cpp
+    ../../common/Audio/AudioHelper.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

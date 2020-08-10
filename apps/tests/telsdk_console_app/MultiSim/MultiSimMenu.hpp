@@ -54,6 +54,8 @@ public:
     void getSlotCount(std::vector<std::string> userInput);
     void requestHighCapability(std::vector<std::string> userInput);
     void setHighCapability(std::vector<std::string> userInput);
+    void switchActiveSlot(std::vector<std::string> userInput);
+    void requestsSlotStatus(std::vector<std::string> userInput);
 
 private:
     // Member variable to keep the Listener object alive till application ends.

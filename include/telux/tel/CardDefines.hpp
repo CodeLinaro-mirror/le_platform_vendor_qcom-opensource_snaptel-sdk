@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,6 +57,23 @@ enum class CardState {
    CARDSTATE_PRESENT = 1,    /**< Card is present */
    CARDSTATE_ERROR = 2,      /**< Card is having error, either card is removed and not readable */
    CARDSTATE_RESTRICTED = 3, /**< Card is present but not usable due to carrier restrictions.*/
+};
+
+/**
+ * Defines the reasons for error in CardState
+ */
+enum class CardError {
+   UNKNOWN,             /**< Unknown error */
+   POWER_DOWN,          /**< Power down */
+   POLL_ERROR,          /**< Poll error */
+   NO_ATR_RECEIVED,     /**< No ATR received */
+   VOLT_MISMATCH,       /**< Volt mismatch */
+   PARITY_ERROR,        /**< Parity error */
+   POSSIBLY_REMOVED,    /**< Unknown, possibly removed */
+   TECHNICAL_PROBLEMS,  /**< Card returned technical problems */
+   NULL_BYTES,          /**< Card returned NULL bytes */
+   SAP_CONNECTED,       /**< Terminal in SAP mode */
+   CMD_TIMEOUT,         /**< Command timeout error */
 };
 
 /**

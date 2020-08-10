@@ -42,6 +42,7 @@
 
 #include "ModemStatus.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
+#include "Audio/AudioClient.hpp"
 
 class TelSdkConsoleApp : public ConsoleApp {
 public:

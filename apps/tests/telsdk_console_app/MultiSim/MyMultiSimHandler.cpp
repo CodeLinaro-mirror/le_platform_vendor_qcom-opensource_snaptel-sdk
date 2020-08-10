@@ -50,3 +50,112 @@ void MyMultiSimCallback::setHighCapabilityResponse(telux::common::ErrorCode erro
             << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
+
+void MyMultiSimCallback::setActiveSlotResponse(telux::common::ErrorCode error) {
+    if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Set active slot request executed successfully" << std::endl;
+    } else {
+        PRINT_CB << "Set active slot request failed, errorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
+void MyMultiSimCallback::requestsSlotsStatusResponse(std::map<SlotId,
+        telux::tel::SlotStatus> slotStatus, telux::common::ErrorCode error) {
+    if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Slots status request executed successfully" << std::endl;
+        for(auto it = slotStatus.begin(); it != slotStatus.end(); ++it) {
+            auto slotId = it->first;
+            auto slotStatus = it->second;
+            PRINT_CB << " SlotId: " << static_cast<int>(slotId)
+                     << ", SlotState: " << MyMultiSimHelper::slotStateToString(slotStatus.slotState)
+                     << ", CardState: " << MyMultiSimHelper::cardStateToString(slotStatus.cardState)
+                     << ", CardError: " << MyMultiSimHelper::cardErrorToString(slotStatus.cardError)
+                     << std::endl;
+        }
+    } else {
+        PRINT_CB << "Slots status request failed, errorCode: " << static_cast<int>(error)
+            << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
+std::string MyMultiSimHelper::slotStateToString(telux::tel::SlotState slotState) {
+   std::string slotStateString = "UNKNOWN";
+   switch(slotState) {
+    case telux::tel::SlotState::ACTIVE:
+        slotStateString = "ACTIVE";
+        break;
+    case telux::tel::SlotState::INACTIVE:
+        slotStateString = "INACTIVE";
+        break;
+    default:
+        slotStateString = "UNKNOWN";
+        break;
+   }
+   return slotStateString;
+}
+
+std::string MyMultiSimHelper::cardStateToString(telux::tel::CardState cardState) {
+   std::string cardStateString = "UNKNOWN";
+   switch(cardState) {
+    case telux::tel::CardState::CARDSTATE_ABSENT:
+        cardStateString = "ABSENT";
+        break;
+    case telux::tel::CardState::CARDSTATE_PRESENT:
+        cardStateString = "PRESENT";
+        break;
+    case telux::tel::CardState::CARDSTATE_ERROR:
+        cardStateString = "ERROR";
+        break;
+    case telux::tel::CardState::CARDSTATE_UNKNOWN:
+        cardStateString = "UNKNOWN";
+        break;
+    default:
+        cardStateString = "UNKNOWN";
+        break;
+   }
+   return cardStateString;
+}
+
+std::string MyMultiSimHelper::cardErrorToString(telux::tel::CardError cardError) {
+   std::string cardErrorString = "UNKNOWN";
+   switch(cardError) {
+    case telux::tel::CardError::POWER_DOWN:
+        cardErrorString = "POWER_DOWN";
+        break;
+    case telux::tel::CardError::POLL_ERROR:
+        cardErrorString = "POLL_ERROR";
+        break;
+    case telux::tel::CardError::NO_ATR_RECEIVED:
+        cardErrorString = "NO_ATR_RECEIVED";
+        break;
+    case telux::tel::CardError::VOLT_MISMATCH:
+        cardErrorString = "VOLT_MISMATCH";
+        break;
+    case telux::tel::CardError::PARITY_ERROR:
+        cardErrorString = "PARITY_ERROR";
+        break;
+    case telux::tel::CardError::POSSIBLY_REMOVED:
+        cardErrorString = "POSSIBLY_REMOVED";
+        break;
+    case telux::tel::CardError::TECHNICAL_PROBLEMS:
+        cardErrorString = "TECHNICAL_PROBLEMS";
+        break;
+    case telux::tel::CardError::NULL_BYTES:
+        cardErrorString = "NULL_BYTES";
+        break;
+    case telux::tel::CardError::SAP_CONNECTED:
+        cardErrorString = "SAP_CONNECTED";
+        break;
+    case telux::tel::CardError::CMD_TIMEOUT:
+        cardErrorString = "CMD_TIMEOUT";
+        break;
+    case telux::tel::CardError::UNKNOWN:
+        cardErrorString = "UNKNOWN";
+        break;
+    default:
+        cardErrorString = "UNKNOWN";
+        break;
+   }
+   return cardErrorString;
+}

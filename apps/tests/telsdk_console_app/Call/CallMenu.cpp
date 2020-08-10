@@ -36,9 +36,9 @@
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
 
 #include "CallMenu.hpp"
-#include <telux/common/DeviceConfig.hpp>
 
 #define MIN_SIM_SLOT_COUNT 1
 #define MAX_SIM_SLOT_COUNT 2
@@ -49,8 +49,7 @@
 #define NO_OF_SIMULTANEOUS_INCOMING_CALL 2
 
 CallMenu::CallMenu(std::string appName, std::string cursor)
-   : ConsoleApp(appName, cursor) {
-
+    : ConsoleApp(appName, cursor) {
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
    startTime = std::chrono::system_clock::now();
    // Get the PhoneFactory and PhoneManager instances.
@@ -161,6 +160,10 @@ void CallMenu::init() {
    std::shared_ptr<ConsoleAppCommand> stopDtmfToneCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("14", "Stop_DTMF_tone", {},
                         std::bind(&CallMenu::stopDtmfTone, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> enableAudioCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Enable_Audio", {},
+            std::bind(&CallMenu::enableAudio, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCallSubMenu
       = {dialCommand,
          acceptCallCommand,
@@ -175,7 +178,8 @@ void CallMenu::init() {
          getCallsCommand,
          playDtmfTonesCommand,
          startDtmfToneCommand,
-         stopDtmfToneCommand};
+         stopDtmfToneCommand,
+         enableAudioCommand};
    addCommands(commandsListCallSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -211,9 +215,17 @@ void CallMenu::dial(std::vector<std::string> userInput) {
          }
       }
    }
-   telux::common::Status makeCallStatus
-      = callManager_->makeCall(phoneId, phoneNumber, myDialCallCmdCb_);
-   std::cout << (makeCallStatus == telux::common::Status::SUCCESS ? "MakeCall is successful"
+    AudioClient &audioClient = AudioClient::getInstance();
+    if (audioClient.isReady()) {
+        bool audioState = queryAudioState();
+        std::cout << "Audio enablement status is : " << audioState << std::endl;
+        if (audioState) {
+            audioClient.startVoiceSession(static_cast<SlotId>(phoneId));
+        }
+    }
+    telux::common::Status makeCallStatus
+        = callManager_->makeCall(phoneId, phoneNumber, myDialCallCmdCb_);
+    std::cout << (makeCallStatus == telux::common::Status::SUCCESS ? "MakeCall is successful"
                                                                   : "MakeCall failed")
              << '\n';
 }
@@ -280,11 +292,19 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
          }
       }
    }
-   if(spCall) {
-      spCall->answer(myAnswerCb_);
-   } else {
-      std::cout << "No incoming call" << std::endl;
-   }
+    if(spCall) {
+        AudioClient &audioClient = AudioClient::getInstance();
+        if (audioClient.isReady()) {
+            int phoneId = spCall->getPhoneId();
+            bool audioState = queryAudioState();
+            if (audioState) {
+                audioClient.startVoiceSession(static_cast<SlotId>(phoneId));
+            }
+        }
+        spCall->answer(myAnswerCb_);
+    } else {
+        std::cout << "No incoming call" << std::endl;
+    }
 }
 
 void CallMenu::rejectCall(std::vector<std::string> userInput) {
@@ -936,4 +956,45 @@ void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
    } else {
       std::cout << "No active call found" << std::endl;
    }
+}
+
+void CallMenu::enableAudio(std::vector<std::string> userInput) {
+    AudioClient &audioClient = AudioClient::getInstance();
+    if (!audioClient.isReady()) {
+        std::cout << "Initializing Audio Subsystem...." << std::endl;
+        auto status = audioClient.init();
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Audio Subsystem Initialized." << std::endl;
+        } else {
+            std::cout << "Audio SubSystem not initialized" << std::endl;
+        }
+    } else {
+        std::cout << "Audio subsystem already initialized." << std::endl;
+    }
+}
+
+bool CallMenu::queryAudioState() {
+    std::string audioSelection;
+    char delimiter = '\n';
+    int audioFlag = 0;
+    int consoleFlag = 0;
+
+    std::cout << "Enter 1 to enable audio for voice call else press 0 : ";
+    std::getline(std::cin, audioSelection, delimiter);
+    if (!audioSelection.empty()) {
+        try {
+        audioFlag = std::stoi(audioSelection);
+            if (audioFlag < 0 || audioFlag > 1) {
+                std::cout << "ERROR: Invalid selection" << std::endl;
+                return false;
+            }
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, enter a numerical value. INPUT: " << std::endl;
+            return false;
+        }
+    } else {
+        std::cout << "Empty input, enter correct choice" << std::endl;
+        return false;
+    }
+    return true;
 }

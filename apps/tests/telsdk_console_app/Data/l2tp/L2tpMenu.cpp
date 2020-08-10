@@ -44,47 +44,53 @@ using namespace std;
 L2tpMenu::L2tpMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     l2tpManager_ = nullptr;
+    initComplete_ = false;
 }
 
 L2tpMenu::~L2tpMenu() {
 }
 
-int L2tpMenu::init() {
+bool L2tpMenu::init() {
     bool subSystemStatus = false;
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    l2tpManager_ = dataFactory.getL2tpManager();
-    subSystemStatus = l2tpManager_->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nL2TP Manager is not ready, Please wait" << std::endl;
-        std::future<bool> f = l2tpManager_->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-        if(not subSystemStatus) {
-            return -1;
-        } else {
-            std::cout << "\nL2TP Manager is ready" << std::endl;
+    if (initComplete_ == false) {
+        initComplete_ = true;
+        auto &dataFactory = telux::data::DataFactory::getInstance();
+        l2tpManager_ = dataFactory.getL2tpManager();
+        subSystemStatus = l2tpManager_->isSubsystemReady();
+        if (not subSystemStatus) {
+            std::cout << "\nInitializing L2TP Manager, Please wait" << std::endl;
+            std::future<bool> f = l2tpManager_->onSubsystemReady();
+            // Wait unconditionally for data subsystem to be ready
+            subSystemStatus = f.get();
         }
+        std::shared_ptr<ConsoleAppCommand> setConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set_Configuration",
+                {}, std::bind(&L2tpMenu::setConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> addTunnel
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Add_Tunnel", {},
+                std::bind(&L2tpMenu::addTunnel, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Request_Configuration", {},
+                std::bind(&L2tpMenu::requestConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> removeTunnel
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Remove_Tunnel", {},
+                std::bind(&L2tpMenu::removeTunnel, this, std::placeholders::_1)));
+
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {setConfig,
+            addTunnel, requestConfig, removeTunnel};
+
+        addCommands(commandsList);
     }
-
-    std::shared_ptr<ConsoleAppCommand> setConfig
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set_Configuration",
-            {}, std::bind(&L2tpMenu::setConfig, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> addTunnel
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Add_Tunnel", {},
-            std::bind(&L2tpMenu::addTunnel, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> requestConfig
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Request_Configuration", {},
-            std::bind(&L2tpMenu::requestConfig, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> removeTunnel
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Remove_Tunnel", {},
-            std::bind(&L2tpMenu::removeTunnel, this, std::placeholders::_1)));
-
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {setConfig,
-        addTunnel, requestConfig, removeTunnel};
-
-    addCommands(commandsList);
+    subSystemStatus = l2tpManager_->isSubsystemReady();
+    if (subSystemStatus) {
+        std::cout << "\nL2TP Manager is ready" << std::endl;
+    }
+    else {
+        std::cout << "\nL2TP Manager is not ready" << std::endl;
+        return false;
+    }
     ConsoleApp::displayMenu();
-    return 0;
+    return true;
 }
 
 

@@ -52,8 +52,14 @@
 #include "DataListener.hpp"
 #include "DataResponseCallback.hpp"
 #include "MyProfileListener.hpp"
+#include "data_connection/DataConnectionMenu.hpp"
+#include "data_profile/DataProfileMenu.hpp"
 #include "bridge/BridgeMenu.hpp"
 #include "l2tp/L2tpMenu.hpp"
+#include "snat/SnatMenu.hpp"
+#include "firewall/FirewallMenu.hpp"
+#include "vlan/VlanMenu.hpp"
+#include "socks/SocksMenu.hpp"
 #include "data_filter/DataFilterMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
@@ -72,91 +78,31 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     // initialize menu and sdk
     void init();
     void openDataFilterMenu(std::vector<std::string> userInput);
-    void startDataCall(std::vector<std::string> inputCommand);
-    void stopDataCall(std::vector<std::string> inputCommand);
-    void requestDataCallStatistics(std::vector<std::string> inputCommand);
-    void resetDataCallStatistics(std::vector<std::string> inputCommand);
-    void requestDataCallList();
-    void setDefaultProfile();
 
     ResponseCallback responseCb;
     void commandCallback(ErrorCode errorCode);
 
-    // Profile Management APIs
-    void requestProfileList(std::vector<std::string> inputCommand);
-    void createProfile(std::vector<std::string> inputCommand);
-    void deleteProfile(std::vector<std::string> inputCommand);
-    void modifyProfile(std::vector<std::string> inputCommand);
-    void queryProfile(std::vector<std::string> inputCommand);
-    void requestProfileById(std::vector<std::string> inputCommand);
-
     DataMenu(std::string appName, std::string cursor);
     ~DataMenu();
 
-    void addStaticNatEntry(std::vector<std::string> inputCommand);
-    void removeStaticNatEntry(std::vector<std::string> inputCommand);
-    void requestStaticNatEntries(std::vector<std::string> inputCommand);
-    void setFirewall(std::vector<std::string> inputCommand);
-    void requestFirewallStatus(std::vector<std::string> inputCommand);
-    void addFirewallEntry(std::vector<std::string> inputCommand);
-    void requestFirewallEntries(std::vector<std::string> inputCommand);
-    void removeFirewallEntry(std::vector<std::string> inputCommand);
-    void enableDmz(std::vector<std::string> inputCommand);
-    void disableDmz(std::vector<std::string> inputCommand);
-    void requestDmzEntry(std::vector<std::string> inputCommand);
-
-    void createVlan(std::vector<std::string> inputCommand);
-    void removeVlan(std::vector<std::string> inputCommand);
-    void queryVlanInfo(std::vector<std::string> inputCommand);
-    void bindWithProfile(std::vector<std::string> inputCommand);
-    void unbindFromProfile(std::vector<std::string> inputCommand);
-    void queryVlanMappingList(std::vector<std::string> inputCommand);
-
-    void enableSocks(std::vector<std::string> inputCommand);
+    void dataConnectionMenu(std::vector<std::string> inputCommand);
+    void dataProfileMenu(std::vector<std::string> inputCommand);
+    void snatMenu(std::vector<std::string> inputCommand);
+    void firewallMenu(std::vector<std::string> inputCommand);
+    void vlanMenu(std::vector<std::string> inputCommand);
+    void socksMenu(std::vector<std::string> inputCommand);
     void bridgeMenu(std::vector<std::string> inputCommand);
     void l2tpMenu(std::vector<std::string> inputCommand);
  private:
-    void requestDataCallList(OperationType operationType, SlotId slotId, DataCallListResponseCb cb);
-
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
-    std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>> dataConnectionManagers_;
-    std::map<SlotId, std::shared_ptr<telux::data::IDataProfileManager>>    dataProfileManagers_;
-    telux::data::ProfileParams params_;
 
-    std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCb_;
-    std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCbForQuery_;
-    std::map<SlotId, std::shared_ptr<MyDataProfileCallback>> myDataProfileCb_;
-    std::map<SlotId, std::shared_ptr<MyDataCreateProfileCallback>> myDataCreateProfileCb_;
-    std::map<SlotId, std::shared_ptr<MyDataProfileCallback>> myDataProfileCbForGetProfileById_;
-    std::map<SlotId, std::shared_ptr<MyDeleteProfileCallback>> myDeleteProfileCb_;
-    std::map<SlotId, std::shared_ptr<MyModifyProfileCallback>> myModifyProfileCb_;
-    std::map<SlotId, std::shared_ptr<MyProfileListener>> profileListeners_;
-
-    std::map<SlotId, std::shared_ptr<DataListener>> dataListeners_;
-
-    std::map<std::string, telux::data::IpProtocol> protoMap_;
-    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;
-
-    telux::data::IpProtocol getProtcol(std::string protoStr);
-    void parseProtoInfo(std::shared_ptr<IIpFilter> filter, telux::data::IpProtocol protocol,
-        int &srcPort, int &destPort, int &srcPortRange, int &dstPortRange, std::string &protoStr);
-    void displayFirewallEntry();
-    void getProfileParamsFromUser();
-    std::shared_ptr<telux::data::net::IFirewallManager>
-        getFirewallManagerInstance(telux::data::OperationType opType);
-    bool initConnectionManagerAndListener(SlotId slotId);
-    bool initDataProfileManagerAndListener(SlotId slotId);
-
-    // get IPV4 Firewall params from user and set IPV4Info
-    void getIPV4ParamsFromUser(telux::data::IpProtocol proto,
-        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
-    // get IPV6 Firewall params from user and set IPV6Info
-    void getIPV6ParamsFromUser(telux::data::IpProtocol proto,
-        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
-    // get Transport Firewall params from user and set TCP/UDP Info
-    void getProtocolParams(telux::data::IpProtocol proto,
-        std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
-    void getProtocolParamsFromUser (std::string proto, std::string &srcPort,
-        std::string &srcRange, std::string &destPort, std::string &destRange);
+    std::shared_ptr<DataConnectionMenu> dataConnectionMenu_;
+    std::shared_ptr<DataProfileMenu> dataProfileMenu_;
+    std::shared_ptr<BridgeMenu> bridgeMenu_;
+    std::shared_ptr<L2tpMenu> l2tpMenu_;
+    std::shared_ptr<SnatMenu> snatMenu_;
+    std::shared_ptr<FirewallMenu> firewallMenu_;
+    std::shared_ptr<VlanMenu> vlanMenu_;
+    std::shared_ptr<SocksMenu> socksMenu_;
 };
 #endif

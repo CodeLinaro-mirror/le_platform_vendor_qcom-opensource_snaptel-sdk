@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,7 +27,7 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ConfigParser.hpp"
+#include "DataConfigParser.hpp"
 
 /**
  * Check if a file exists.
@@ -53,7 +53,7 @@ bool isEqual(std::string &str1, std::string &str2) {
    * @param [in] section       - Parse the config file for given section and build the hashmap with
    *                             key=value pair
    */
-ConfigParser::ConfigParser(std::string section, std::string configFile) {
+DataConfigParser::DataConfigParser(std::string section, std::string configFile) {
   std::string configFilePath = configFile;
   if (fileExists(configFilePath)) {
     section_ = section;
@@ -63,14 +63,14 @@ ConfigParser::ConfigParser(std::string section, std::string configFile) {
   }
 }
 
-ConfigParser::~ConfigParser() {}
+DataConfigParser::~DataConfigParser() {}
 
 
   /**
    * Returns the vector of key,value map from config file
    *
    */
-std::vector<std::map<std::string, std::string>> ConfigParser::getFilters() {
+std::vector<std::map<std::string, std::string>> DataConfigParser::getFilters() {
   return configVector_; // return an empty string when the setting is not configured.
 }
 
@@ -81,7 +81,7 @@ std::vector<std::map<std::string, std::string>> ConfigParser::getFilters() {
    *
    * @returns valid value or empty string in case of Error.
    */
-std::string ConfigParser::getValue(std::map<std::string, std::string> pairMap, std::string key) {
+std::string DataConfigParser::getValue(std::map<std::string, std::string> pairMap, std::string key) {
   auto settingsIterator = pairMap.find(key);
   if (settingsIterator != pairMap.end()) {
     return settingsIterator->second;
@@ -96,7 +96,7 @@ std::string ConfigParser::getValue(std::map<std::string, std::string> pairMap, s
  * location from where application is running.
  *
  */
-std::string ConfigParser::getConfigFilePath() {
+std::string DataConfigParser::getConfigFilePath() {
   char path[PATH_MAX];
   ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
   std::string fullPath = std::string(path, (count > 0) ? count : 0);
@@ -110,7 +110,7 @@ std::string ConfigParser::getConfigFilePath() {
  * Discards leading spaces, blank lines and lines starting with #
  * Removes any leading or trailing spaces around Key and Value if any.
  */
-void ConfigParser::readConfigFile(std::string configFile) {
+void DataConfigParser::readConfigFile(std::string configFile) {
 
   std::string current;
 

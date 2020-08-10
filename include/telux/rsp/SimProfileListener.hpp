@@ -65,7 +65,7 @@ class ISimProfileListener : public telux::common::IServiceStatusListener {
      * @param [in] cause                    @Ref ProfileDownloadErrorCause.
      * @param [in] mask                     @Ref PprMask (Profile policy rules Mask)
      */
-    virtual void onAddProfileUpdate(int slotId, bool userConsentRequired, DownloadStatus status,
+    virtual void onAddProfileUpdate(SlotId slotId, bool userConsentRequired, DownloadStatus status,
         uint8_t percentage, DownloadErrorCause cause, PolicyRuleMask mask) {
     }
 

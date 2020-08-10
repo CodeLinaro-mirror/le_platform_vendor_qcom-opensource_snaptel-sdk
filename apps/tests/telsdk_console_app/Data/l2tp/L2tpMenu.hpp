@@ -55,7 +55,7 @@ using namespace telux::data::net;
 class L2tpMenu : public ConsoleApp {
  public:
     // initialize menu and sdk
-    int init();
+    bool init();
 
     // L2TP Manager APIs
     void setConfig(std::vector<std::string> inputCommand);
@@ -66,6 +66,7 @@ class L2tpMenu : public ConsoleApp {
     L2tpMenu(std::string appName, std::string cursor);
     ~L2tpMenu();
  private:
+    bool initComplete_;
     std::shared_ptr<telux::data::net::IL2tpManager> l2tpManager_;
 };
 #endif

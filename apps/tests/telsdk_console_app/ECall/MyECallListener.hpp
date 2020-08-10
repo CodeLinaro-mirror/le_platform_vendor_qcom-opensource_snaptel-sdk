@@ -62,6 +62,10 @@ class MyECallListener : public telux::tel::ICallListener {
     * Get ECallMsdTransmissionStatus in string
     */
    std::string eCallMsdTransmissionStatusToString(telux::tel::ECallMsdTransmissionStatus status);
+   /*
+   * Get count of active calls on a slotId.
+   */
+   int getCallsOnSlot(SlotId slotId);
 };
 
 #endif  // MYCALLLISTENER_HPP

@@ -105,9 +105,16 @@ void MultiSimMenu::init() {
     std::shared_ptr<ConsoleAppCommand> setHighCapabilityCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Set_high_capability", {},
         std::bind(&MultiSimMenu::setHighCapability, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setActiveSlotCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Set_Active_slot", {},
+        std::bind(&MultiSimMenu::switchActiveSlot, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> getSlotsStatusCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Get_slots_status", {},
+        std::bind(&MultiSimMenu::requestsSlotStatus, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListMultiSimMenu
-        = { getSlotCountCommand, requestHighCapabilityCommand, setHighCapabilityCommand };
+        = { getSlotCountCommand, requestHighCapabilityCommand, setHighCapabilityCommand,
+            setActiveSlotCommand, getSlotsStatusCommand};
 
     addCommands(commandsListMultiSimMenu);
     ConsoleApp::displayMenu();
@@ -174,4 +181,53 @@ void MultiSimMenu::setHighCapability(std::vector<std::string> userInput) {
            std::cout << "ERROR - MultiSimManger is null" << std::endl;
        }
    } while(0);
+}
+
+void MultiSimMenu::switchActiveSlot(std::vector<std::string> userInput) {
+    if(multiSimMgr_) {
+        char delimiter = '\n';
+        std::string slotId = "";
+        std::cout  << "Enter SlotId (1-Primary, 2-Secondary) : ";
+        std::getline(std::cin, slotId, delimiter);
+        int opt = -1;
+        if(!slotId.empty()) {
+            try {
+                opt = std::stoi(slotId);
+            } catch(const std::exception &e) {
+                std::cout
+                    << "ERROR: Invalid input, enter numerical value " << opt << std::endl;
+                return;
+            }
+        } else {
+            std::cout << "ERROR: Input cannot be empty string " << std::endl;
+            return;
+        }
+        SlotId slot = SlotId::INVALID_SLOT_ID;
+        if(opt == 1) {
+            slot = SlotId::SLOT_ID_1;
+        } else if(opt == 2) {
+            slot = SlotId::SLOT_ID_2;
+        } else {
+            std::cout << "ERROR: Invalid input " << std::endl;
+            return;
+        }
+        auto ret = multiSimMgr_->switchActiveSlot(slot,
+                                    MyMultiSimCallback::setActiveSlotResponse);
+        std::cout << (ret == telux::common::Status::SUCCESS
+               ? "Set active slot request is successful \n"
+               : "Set active slot request failed") << '\n';
+   } else {
+       std::cout << "ERROR - MultiSimManger is null" << std::endl;
+   }
+}
+
+void MultiSimMenu::requestsSlotStatus(std::vector<std::string> userInput) {
+    if(multiSimMgr_) {
+        auto ret = multiSimMgr_->requestSlotStatus(MyMultiSimCallback::requestsSlotsStatusResponse);
+        std::cout << (ret == telux::common::Status::SUCCESS
+                ? "Slots status request is successful \n"
+                : "Slots status request failed") << '\n';
+    } else {
+        std::cout << "ERROR - MultiSimManger is null" << std::endl;
+    }
 }

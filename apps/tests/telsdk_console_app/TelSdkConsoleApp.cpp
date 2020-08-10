@@ -86,16 +86,16 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> dataMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "6", "Data", {}, std::bind(&TelSdkConsoleApp::dataMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
+        std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand};
+             dataMenuCommand, multiSimMenuCommand};
 
-    if(telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
-            std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
-        mainMenuCommands.emplace_back(multiSimMenuCommand);
-    }
+    // This instance is needed to hold the audio for the voice call in case the user comes out of
+    // dialer menu.
+    AudioClient &audioClient_ = AudioClient::getInstance();
 
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();

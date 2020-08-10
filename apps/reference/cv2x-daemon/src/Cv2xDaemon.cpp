@@ -206,18 +206,56 @@ Status Cv2xDaemon::runAsDaemon() {
     Status ret = Status::FAILED;
 
     LOGI("Starting the CV2X Daemon\n");
+    // This is a good place to initialize data subsytem, as in daemon mode we are supposed to
+    // run the complete cv2x include v2x radio and data calls.
+    // Initializing data subsytem in async task as this is a blocking call and can be started
+    // independant of cv2x radio.
+    // TODO: make sure the future is release in case the daemon needs to exit soon enough.
+    auto f = std::async(std::launch::async , [this]()
+    {
+        Status ret = Status::FAILED;
+        bootkpilog("cv2x-daemon: Initializing Data subsytem");
+        ret = cv2xTelux_->initDataLibrary();
+        if (ret != Status::SUCCESS) {
+            LOGE("Failed to initialize data library\n");
+            bootkpilog("cv2x-daemon: Failed to initialize data library");
+            return Status::FAILED;
+        } else {
+            // Register for Data Connection, SSR
+            ret = cv2xTelux_->registerDataListeners();
+            if (ret != Status::SUCCESS) {
+                LOGE("Failed to register data listener\n");
+                bootkpilog("cv2x-daemon: Failed to register data listener");
+            } else{
+                bootkpilog("cv2x-daemon: Data subsytem ready");
+            }
+        }
+        return Status::SUCCESS;
+    });
 
     // Register for Radio Status, Data Connection, SSR
     ret = cv2xTelux_->registerListeners();
     if (ret != Status::SUCCESS) {
         LOGE("Failed to register listener\n");
+        // We dont have to wait for f.get() for async task as the function will be blocked until
+        // the async task is completed, before returing from this function.
+        // f.get();
         return ret;
     }
 
     ret = startV2xMode();
     if (ret != Status::SUCCESS) {
         LOGE("Failed to start v2x mode\n");
+        // We dont have to wait for f.get() for async task as the function will be blocked until
+        // the async task is completed, before returing from this function.
+        // f.get();
         return ret;
+    }
+
+    Status retData = f.get();
+    if (retData != Status::SUCCESS) {
+        LOGE("Failed to intialize data subsystem\n");
+        return Status::FAILED;
     }
 
     // Find Profiles and Start Data calls
@@ -230,7 +268,7 @@ Status Cv2xDaemon::runAsDaemon() {
     return Status::SUCCESS;
 }
 
-Status Cv2xDaemon::init() {
+Status Cv2xDaemon::initV2X() {
 
     Status ret = Status::FAILED;
 
@@ -402,13 +440,15 @@ int main(int argc, char **argv) {
     Status ret = Status::FAILED;
     auto &cv2xDaemon = Cv2xDaemon::getInstance();
 
+    bootkpilog("cv2x-daemon: Starting CV2X Daemon Service");
+
     ret = cv2xDaemon.parseArguments(argc, argv);
     if (ret != Status::SUCCESS) {
         return -1;
     }
 
     cv2xDaemon.setupSignalHandler();
-    ret = cv2xDaemon.init();
+    ret = cv2xDaemon.initV2X();
     if (ret != Status::SUCCESS) {
         return -1;
     }

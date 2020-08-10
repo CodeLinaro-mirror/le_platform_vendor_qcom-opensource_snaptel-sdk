@@ -49,42 +49,46 @@ BridgeMenu::BridgeMenu(std::string appName, std::string cursor)
 BridgeMenu::~BridgeMenu() {
 }
 
-int BridgeMenu::init() {
+bool BridgeMenu::init() {
     bool subSystemStatus = false;
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    bridgeMgr_ = dataFactory.getBridgeManager();
-    subSystemStatus = bridgeMgr_->isSubsystemReady();
-    if (not subSystemStatus) {
-        std::cout << "\nBridge Manager is not ready, Please wait" << std::endl;
-        std::future<bool> f = bridgeMgr_->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-        if(not subSystemStatus) {
-            return -1;
-        } else {
-            std::cout << "\nBridge Manager is ready" << std::endl;
+    if (bridgeMgr_ == nullptr) {
+        auto &dataFactory = telux::data::DataFactory::getInstance();
+        bridgeMgr_ = dataFactory.getBridgeManager();
+        subSystemStatus = bridgeMgr_->isSubsystemReady();
+        if (not subSystemStatus) {
+            std::cout << "\nInitializing Bridge Manager, Please wait" << std::endl;
+            std::future<bool> f = bridgeMgr_->onSubsystemReady();
+            // Wait unconditionally for data subsystem to be ready
+            subSystemStatus = f.get();
         }
+        std::shared_ptr<ConsoleAppCommand> enableBridge
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set_Bridge_State", {},
+                std::bind(&BridgeMenu::enableBridge, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> addBridge
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Add_Bridge", {},
+                std::bind(&BridgeMenu::addBridge, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getBridgeInfo
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Get_Bridge_Info", {},
+                std::bind(&BridgeMenu::getBridgeInfo, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> removeBridge
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Remove_Bridge", {},
+                std::bind(&BridgeMenu::removeBridge, this, std::placeholders::_1)));
+
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {enableBridge, addBridge,
+            getBridgeInfo, removeBridge};
+
+        addCommands(commandsList);
     }
-
-    std::shared_ptr<ConsoleAppCommand> enableBridge
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set_Bridge_State", {},
-            std::bind(&BridgeMenu::enableBridge, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> addBridge
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Add_Bridge", {},
-            std::bind(&BridgeMenu::addBridge, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> getBridgeInfo
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Get_Bridge_Info", {},
-            std::bind(&BridgeMenu::getBridgeInfo, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> removeBridge
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Remove_Bridge", {},
-            std::bind(&BridgeMenu::removeBridge, this, std::placeholders::_1)));
-
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {enableBridge, addBridge,
-        getBridgeInfo, removeBridge};
-
-    addCommands(commandsList);
+    subSystemStatus = bridgeMgr_->isSubsystemReady();
+    if (subSystemStatus) {
+        std::cout << "\nBridge Manager is ready" << std::endl;
+    }
+    else {
+        std::cout << "\nBridge Manager is not ready" << std::endl;
+        return false;
+    }
     ConsoleApp::displayMenu();
-    return 0;
+    return true;
 }
 
 

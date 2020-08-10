@@ -128,9 +128,14 @@ void ECallMenu::init() {
       ConsoleAppCommand("i", "Select_Phone_Id", {},
                         std::bind(&ECallMenu::selectPhoneId, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> enableAudioCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ea", "Enable_Audio", {},
+         std::bind(&ECallMenu::enableAudio, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
       = {eCallSosCommand, eCallCommand, customECallCommand, updateMsdCommand, dialCommad,
-         hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu, updateEcallMsd};
+         hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu, updateEcallMsd,
+         enableAudioCommand};
 
    if(ECallMenu::initalizeSDK()) {
       if (phoneIds_.size() > 1) {
@@ -210,6 +215,14 @@ void ECallMenu::makeCall(std::vector<std::string> inputCommand) {
        std::shared_ptr<telux::tel::ICall> spCall;
        const std::string phoneNumber = inputCommand[1];  // Phone Number mandatory
        if(callManager) {
+          AudioClient &audioClient = AudioClient::getInstance();
+          if (audioClient.isReady()) {
+             bool audioState = queryAudioState();
+             std::cout << "Audio enablement status is : " << audioState << std::endl;
+             if (audioState) {
+                audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+             }
+          }
           telux::common::Status status = callManager->makeCall(phoneId_, phoneNumber,
                                                         callCommandCallback_);
           std::cout
@@ -242,6 +255,15 @@ void ECallMenu::answerCall(std::vector<std::string> inputCommand) {
           }
           if(spCall) {
              std::cout << "Sending request to accept call " << std::endl;
+             int phoneId = spCall->getPhoneId();
+             AudioClient &audioClient = AudioClient::getInstance();
+             if (audioClient.isReady()) {
+                bool audioState = queryAudioState();
+                std::cout << "Audio enablement status is : " << audioState << std::endl;
+                if (audioState) {
+                   audioClient.startVoiceSession(static_cast<SlotId>(phoneId));
+                }
+             }
              spCall->answer(answerCommandCallback_);
           } else {
              std::cout << "No incoming call to accept " << std::endl;
@@ -305,6 +327,14 @@ void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
       auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       auto callManager = phoneFactory.getCallManager();
       if (callManager) {
+         AudioClient &audioClient = AudioClient::getInstance();
+         if (audioClient.isReady()) {
+            bool audioState = queryAudioState();
+            std::cout << "Audio enablement status is : " << audioState << std::endl;
+            if (audioState) {
+               audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+            }
+         }
          auto ret = callManager->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
                                      (int)eCallVariant, callCommandCallback_);
          std::cout
@@ -359,6 +389,14 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
       auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       auto callManager = phoneFactory.getCallManager();
       if (callManager) {
+         AudioClient &audioClient = AudioClient::getInstance();
+         if (audioClient.isReady()) {
+            bool audioState = queryAudioState();
+            std::cout << "Audio enablement status is : " << audioState << std::endl;
+            if (audioState) {
+               audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+            }
+         }
          auto ret = callManager->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
                                      (int)eCallVariant, callCommandCallback_);
          std::cout
@@ -402,6 +440,14 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
       auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
       auto callManager = phoneFactory.getCallManager();
       if (callManager) {
+         AudioClient &audioClient = AudioClient::getInstance();
+         if (audioClient.isReady()) {
+            bool audioState = queryAudioState();
+            std::cout << "Audio enablement status is : " << audioState << std::endl;
+            if (audioState) {
+               audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+            }
+         }
          auto ret = callManager->makeECall(phoneId_, dialNumber, eCallMsdData,
                                             (int)emergencyCategory, callCommandCallback_);
          std::cout
@@ -521,6 +567,14 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
       }
 
       telux::common::Status ret;
+      AudioClient &audioClient = AudioClient::getInstance();
+      if (audioClient.isReady()) {
+         bool audioState = queryAudioState();
+         std::cout << "Audio enablement status is : " << audioState << std::endl;
+         if (audioState) {
+            audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+         }
+      }
       if(eCallVariant != telux::tel::ECallVariant::ECALL_VOICE) {
          ret = callManager->makeECall(phoneId_, rawData, (int)emergencyCategory, (int)eCallVariant,
                                         &makeEcallResponse);
@@ -726,3 +780,45 @@ std::vector<uint8_t> ECallMenu::convertHexToBytes(std::string msdData) {
    }
    return rawMsd;
 }
+
+void ECallMenu::enableAudio(std::vector<std::string> userInput) {
+   AudioClient &audioClient = AudioClient::getInstance();
+   if (!audioClient.isReady()) {
+      std::cout << "Initializing Audio Subsystem...." << std::endl;
+      auto status = audioClient.init();
+      if (status == telux::common::Status::SUCCESS) {
+         std::cout << "Audio Subsystem Initialized." << std::endl;
+      } else {
+         std::cout << "Audio SubSystem not initialized" << std::endl;
+      }
+   } else {
+      std::cout << "Audio subsystem already initialized" << std::endl;
+   }
+}
+
+bool ECallMenu::queryAudioState() {
+   std::string audioSelection;
+   char delimiter = '\n';
+   int audioFlag = 0;
+   int consoleFlag = 0;
+
+   std::cout << "Enter 1 to enable audio for voice call else press 0 : ";
+   std::getline(std::cin, audioSelection, delimiter);
+   if (!audioSelection.empty()) {
+      try {
+      audioFlag = std::stoi(audioSelection);
+         if (audioFlag < 0 || audioFlag > 1) {
+               std::cout << "ERROR: Invalid selection" << std::endl;
+               return false;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, enter a numerical value. INPUT: " << std::endl;
+         return false;
+      }
+   } else {
+      std::cout << "Empty input, enter correct choice" << std::endl;
+      return false;
+   }
+   return true;
+}
+

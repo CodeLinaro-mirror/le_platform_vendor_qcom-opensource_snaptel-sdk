@@ -264,7 +264,7 @@ void DataFilterMenu::getFilterMode() {
 }
 
 IpProtocol DataFilterMenu::getTypeOfFilter(
-    ConfigParser instance, std::map<std::string, std::string> filter) {
+    DataConfigParser instance, std::map<std::string, std::string> filter) {
     IpProtocol type = PROTO_UDP;
     if (instance.getValue(filter, "FILTER_PROTOCOL_TYPE") != "") {
         std::string protoType = instance.getValue(filter, "FILTER_PROTOCOL_TYPE");
@@ -279,7 +279,7 @@ IpProtocol DataFilterMenu::getTypeOfFilter(
 }
 
 void DataFilterMenu::addIPParameters(std::shared_ptr<telux::data::IIpFilter> &dataFilter,
-    ConfigParser instance, std::map<std::string, std::string> filterMap) {
+    DataConfigParser instance, std::map<std::string, std::string> filterMap) {
 
     if (instance.getValue(filterMap, "SOURCE_IPV4_ADDRESS") != ""
         || instance.getValue(filterMap, "DESTINATION_IPV4_ADDRESS") != "") {
@@ -348,7 +348,7 @@ void DataFilterMenu::addFilter() {
         ipFamType = IpFamilyType::UNKNOWN;
     }
 
-    ConfigParser cfgParser("filter", DEFAULT_CONFIG_FILE_NAME);
+    DataConfigParser cfgParser("filter", DEFAULT_DATA_CONFIG_FILE_NAME);
     std::vector<std::map<std::string, std::string>> vectorFilter = cfgParser.getFilters();
 
     std::cout << "Total Filter = " << vectorFilter.size() << std::endl;

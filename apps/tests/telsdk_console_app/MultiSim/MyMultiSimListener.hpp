@@ -35,6 +35,7 @@
 class MyMultiSimListener : public telux::tel::IMultiSimListener {
 public:
     void onHighCapabilityChanged(int slotId);
+    void onSlotStatusChanged(std::map<SlotId, telux::tel::SlotStatus> slotStatus);
     ~MyMultiSimListener() {}
 };
 

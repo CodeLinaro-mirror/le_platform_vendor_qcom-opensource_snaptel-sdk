@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,49 +28,44 @@
  */
 
 /**
- * @brief ConfigParser class reads config file and caches the app config
- * settings. It provides utility functions to read the config values (key=value pair).
+ * @file       MultiSimDefines.hpp
+ * @brief      MultiSimDefines contains enumerations, structures and variables relevant for multi
+ *             SIM management
+ *
  */
 
-#ifndef CONFIGPARSER_HPP
-#define CONFIGPARSER_HPP
+#ifndef MULTISIMDEFINES_HPP
+#define MULTISIMDEFINES_HPP
 
-#include <map>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <regex>
+#include <telux/tel/CardDefines.hpp>
 
-extern "C" {
-#include <limits.h>
-#include <unistd.h>
-}
+namespace telux {
+namespace tel {
 
+/** @addtogroup telematics_multi_sim
+ * @{ */
 
-#define DEFAULT_CONFIG_FILE_NAME "/etc/Datafilter.conf"
-
-/*
- * ConfigParser class caches the config settings from conf file
- * It provides utility methods to get value from configuration file in key,value form.
+/**
+ * Represents state of the physical SIM slot
  */
-class ConfigParser {
-public:
-  ConfigParser(std::string section, std::string configFile = DEFAULT_CONFIG_FILE_NAME);
-  ~ConfigParser();
-  // Get the user defined value for configured key
-  std::string getValue(std::map<std::string, std::string> pairMap_, std::string key);
-  std::vector< std::map < std::string, std::string>>  getFilters();
-
-private:
-  std::string section_;
-  // Function to read config file containing key value pairs
-  void readConfigFile(std::string configFile);
-  // Get the path where config file is located
-  std::string getConfigFilePath();
-  // Hashmap to store all settings as key-value pairs
-  std::vector<std::map<std::string, std::string>> configVector_;
+enum class SlotState {
+   UNKNOWN = -1,
+   INACTIVE,   /**< Slot is inactive */
+   ACTIVE,     /**< Slot is active */
 };
 
-#endif // CONFIGPARSER_HPP
+/**
+ * Represents status of a physical SIM slot
+ */
+struct SlotStatus {
+   SlotState slotState;         /**< State of the physical SIM slot */
+   CardState cardState;         /**< Status of the card in the physical slot */
+   CardError cardError;         /**< Indicates the reason for the card error, and is valid
+                                     only when the card state is CARDSTATE_ERROR. */
+};
+
+/** @} */ /* end_addtogroup telematics_multi_sim */
+}
+}
+
+#endif  // MULTISIMDEFINES_HPP

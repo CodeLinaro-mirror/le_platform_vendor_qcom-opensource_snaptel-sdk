@@ -30,11 +30,17 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/DataListener.cpp
    Data/MyProfileListener.cpp
    Data/DataUtils.cpp
+   Data/data_profile/DataProfileMenu.cpp
+   Data/data_connection/DataConnectionMenu.cpp
    Data/data_filter/MyDataFilterListener.cpp
    Data/data_filter/DataFilterMenu.cpp
-   Data/data_filter/ConfigParser.cpp
+   Data/data_filter/DataConfigParser.cpp
    Data/bridge/BridgeMenu.cpp
    Data/l2tp/L2tpMenu.cpp
+   Data/snat/SnatMenu.cpp
+   Data/firewall/FirewallMenu.cpp
+   Data/vlan/VlanMenu.cpp
+   Data/socks/SocksMenu.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp
@@ -50,11 +56,23 @@ set(TELSDK_CONSOLE_APP_SOURCES
 
    ModemStatus.cpp
 
+   Audio/AudioClient.cpp
+
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
-
+   ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
 )
+
+# To disable audio from telsdk_console_app please disable flag AUDIO_ENABLED
+if (AUDIO_ENABLED)
+    add_definitions(-DAUDIO_SUPPORTED)
+    set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
+    ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
+    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
+    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
+    )
+endif (AUDIO_ENABLED)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -65,7 +83,14 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_executable (${TARGET_TELSDK_CONSOLE_APP} ${TELSDK_CONSOLE_APP_SOURCES})
+
+if (AUDIO_ENABLED)
+target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common telux_audio)
+else (!AUDIO_ENABLED)
 target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common)
+endif (AUDIO_ENABLED)
+
+
 
 # install to target
 install ( TARGETS ${TARGET_TELSDK_CONSOLE_APP}

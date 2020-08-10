@@ -43,7 +43,7 @@ public:
    static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
    static std::string operationTypeToString(telux::data::OperationType oprType);
    static std::string protocolToString(telux::data::IpProtocol proto);
-
+   static telux::data::IpProtocol getProtcol(std::string protoStr);
 };
 
 #endif  // DATAUTILS_HPP

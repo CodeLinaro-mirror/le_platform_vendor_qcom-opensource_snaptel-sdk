@@ -51,6 +51,11 @@ static std::map<ServiceStatus, std::string> convertServiceStatusToString = {
     {ServiceStatus::SERVICE_UNAVAILABLE, "Unavailable"},
 };
 
+Cv2xTelux::Cv2xTelux() {
+    isInitializationDone_ = false;
+    isPostSSRV2XDone_ = false;
+}
+
 void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
 
     logStatusChanged(status);
@@ -79,6 +84,14 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
          (status.rxStatus !=  Cv2xStatusType::INACTIVE))) {
 
         LOGD("State Transition From Inactive to Active/Suspended\n");
+
+        if (status.txStatus == Cv2xStatusType::SUSPENDED) {
+            bootkpilog("cv2x-daemon: V2X TX status is suspended");
+        }
+
+        if (status.rxStatus == Cv2xStatusType::SUSPENDED) {
+            bootkpilog("cv2x-daemon: V2X RX status is suspended");
+        }
 
         // Checks if data calls were ever started before.
         // If not, then this state change is a result of daemon starting up and not
@@ -123,7 +136,6 @@ void Cv2xTelux::logStatusChanged(Cv2xStatus &status) {
          cv2xStatus_.rxStatus != status.rxStatus or
          cv2xStatus_.txCause != status.txCause or
          cv2xStatus_.rxCause != status.rxCause)) {
-
         LOGI("tx_status=%d, rx_status=%d, tx_cause=%d, rx_cause=%d\n",
             Cv2xUtils::convertStatus(status.txStatus),
             Cv2xUtils::convertStatus(status.rxStatus),
@@ -287,8 +299,6 @@ Status Cv2xTelux::initV2xLibrary() {
     auto &cv2xFactory = Cv2xFactory::getInstance();
     cv2xRadioMgr_ = cv2xFactory.getCv2xRadioManager();
 
-    auto &dataFactory = DataFactory::getInstance();
-
     /* Check that V2X radio is initialized */
     if (not cv2xRadioMgr_->isReady()) {
         if (not cv2xRadioMgr_->onReady().get()) {
@@ -296,7 +306,12 @@ Status Cv2xTelux::initV2xLibrary() {
             return Status::FAILED;
         }
     }
+    return Status::SUCCESS;
+}
 
+Status Cv2xTelux::initDataLibrary() {
+
+    auto &dataFactory = DataFactory::getInstance();
     dataConnectionMgr_ = dataFactory.getDataConnectionManager();
     if (not dataConnectionMgr_->isSubsystemReady()) {
         if (not dataConnectionMgr_->onSubsystemReady().get()) {
@@ -315,9 +330,6 @@ Status Cv2xTelux::initV2xLibrary() {
 
     dcInfoIP_ = nullptr;
     dcInfoNonIP_ = nullptr;
-    isInitializationDone_ = false;
-    isPostSSRV2XDone_ = false;
-
     return Status::SUCCESS;
 }
 
@@ -402,7 +414,6 @@ Status Cv2xTelux::stopV2xRadio() {
 
 Status Cv2xTelux::registerListeners() {
     Status ret = Status::FAILED;
-    dataConnectionListener_ = std::make_shared<DataConnectionListener>(shared_from_this());
 
     cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
     cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
@@ -412,6 +423,12 @@ Status Cv2xTelux::registerListeners() {
         LOGE("Failed to register cv2xRadioMgr listener\n");
         return ret;
     }
+    return Status::SUCCESS;
+}
+
+Status Cv2xTelux::registerDataListeners() {
+    Status ret = Status::FAILED;
+    dataConnectionListener_ = std::make_shared<DataConnectionListener>(shared_from_this());
 
     ret = dataConnectionMgr_->registerListener(dataConnectionListener_);
     if (ret != Status::SUCCESS) {
@@ -504,22 +521,31 @@ Status Cv2xTelux::findProfiles() {
 }
 
 Status Cv2xTelux::startDataCalls() {
-    Status res = Status::FAILED;
 
-    LOGI("Start Data Call IP\n");
-    res = startDataCall(dcInfoIP_,IpFamilyType::IPV6);
-    if(res != Status::SUCCESS) {
-        LOGE("Failed Starting IP Data Call\n");
-        return res;
-    }
+    auto f = std::async(std::launch::async , [this]()
+    {
+        Status ret = Status::FAILED;
+        LOGI("Start Data Call IP\n");
+        bootkpilog("cv2x-daemon: Start Data Call IP");
+        ret = startDataCall(dcInfoIP_,IpFamilyType::IPV6);
+        if(ret != Status::SUCCESS) {
+            LOGE("Failed Starting IP Data Call\n");
+        }
+        return ret;
+    });
 
     LOGI("Start Data Call NON-IP\n");
-    res = startDataCall(dcInfoNonIP_,IpFamilyType::IPV6);
-    if(res != Status::SUCCESS) {
+    bootkpilog("cv2x-daemon: Start Data Call NON-IP");
+    Status resNonIP = startDataCall(dcInfoNonIP_,IpFamilyType::IPV6);
+    if(resNonIP != Status::SUCCESS) {
         LOGE("Failed Starting NON-IP Data Call\n");
-        return res;
     }
 
+    Status resIP  = f.get();
+    if(resIP != Status::SUCCESS || resNonIP != Status::SUCCESS) {
+        bootkpilog("cv2x-daemon: Failed Starting Data Call");
+        return Status::FAILED;
+    }
     return Status::SUCCESS;
 }
 
@@ -547,18 +573,18 @@ Status Cv2xTelux::findProfilesAndStartDataCalls() {
         }
     }
 
+    res = findProfiles();
+    if(res != Status::SUCCESS) {
+        LOGE("Error finding data profiles\n");
+        return res;
+    }
+    LOGI("APN profiles found\n");
+
     if ((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
         (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) {
         // will re-start data calls on v2x status change
         LOGI("not start data calls if V2X status is inactive\n");
     } else {
-        res = findProfiles();
-        if(res != Status::SUCCESS) {
-            LOGE("Error finding data profiles\n");
-            return res;
-        }
-        LOGI("APN profiles setup done\n");
-
         res = startDataCalls();
         if(res != Status::SUCCESS) {
             LOGE("Error starting data calls\n");

@@ -30,15 +30,18 @@
 #ifndef VOICEMENU_HPP
 #define VOICEMENU_HPP
 
+#include <map>
+
 #include "ConsoleApp.hpp"
-#include "AudioClient.hpp"
+#include "../../common/Audio/VoiceSession.hpp"
+#include "../../common/Audio/AudioHelper.hpp"
 #include <telux/audio/AudioListener.hpp>
 
 class VoiceMenu : public ConsoleApp,
                   public telux::audio::IVoiceListener,
                   public std::enable_shared_from_this<VoiceMenu>{
 public:
-    VoiceMenu(std::string appName, std::string cursor, std::shared_ptr<AudioClient> audioClient);
+    VoiceMenu(std::string appName, std::string cursor);
     ~VoiceMenu();
     void init();
     void setSystemReady();
@@ -61,17 +64,11 @@ private:
     void registerListener(std::vector<std::string> userInput);
     void deRegisterListener(std::vector<std::string> userInput);
     void changeSlotId();
+    void setActiveSession(SlotId slotId);
 
-    telux::common::Status lowFrequencyHelper(uint32_t lowFreq,
-                             telux::audio::DtmfLowFreq &lowFrequency);
-
-    telux::common::Status highFrequencyHelper(uint32_t highFreq,
-                             telux::audio::DtmfHighFreq &highFrequency);
-
-    std::shared_ptr<IAudioVoiceStream> audioVoiceStream_;
-    std::shared_ptr<AudioClient> audioClient_;
-    std::atomic<bool> audioStarted_;
-    std::map<int, bool> startFlagCache_;
+    std::shared_ptr<VoiceSession> activeSession_;
+    std::mutex mutex_;
+    std::map<SlotId, std::shared_ptr<VoiceSession>> voiceSessions_;
     std::atomic<bool> ready_;
     SlotId slotId_;
 };

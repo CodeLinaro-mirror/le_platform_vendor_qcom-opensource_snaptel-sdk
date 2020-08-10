@@ -52,9 +52,10 @@ namespace rsp {
  */
 class SimProfile {
  public:
-    SimProfile(int profileId, const std::string &iccid, bool isActive, const std::string &nickName,
-        const std::string &spn, const std::string &name, IconType iconType,
-        std::vector<uint8_t> icon, ProfileClass profileClass, PolicyRuleMask policyRuleMask);
+    SimProfile(int profileId, ProfileType profileType, const std::string &iccid, bool isActive,
+        const std::string &nickName, const std::string &spn, const std::string &name,
+        IconType iconType, std::vector<uint8_t> icon, ProfileClass profileClass,
+        PolicyRuleMask policyRuleMask);
 
     /**
      * Get slot id associated for this profile
@@ -69,6 +70,13 @@ class SimProfile {
      * @returns unique identifier for the profile
      */
     int getProfileId();
+
+    /**
+     * Get profile Type.
+     *
+     * @returns profile type
+     */
+    ProfileType getType();
 
     /**
      * Get profile ICCID.
@@ -143,6 +151,7 @@ class SimProfile {
 
  private:
     int profileId_;
+    ProfileType profileType_;
     std::string iccid_;
     bool isActive_;
     std::string nickName_;

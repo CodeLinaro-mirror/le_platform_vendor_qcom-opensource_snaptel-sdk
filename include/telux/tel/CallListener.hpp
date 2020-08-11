@@ -70,7 +70,7 @@ class ICall;
 class ICallListener : public common::IServiceStatusListener{
 public:
    /**
-    * This function is called when device receives an incoming call.
+    * This function is called when device receives an incoming/waiting call.
     *
     * @param [in] call -  Pointer to ICall instance
     */

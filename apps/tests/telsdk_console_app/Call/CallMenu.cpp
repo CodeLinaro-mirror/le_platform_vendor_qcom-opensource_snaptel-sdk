@@ -210,10 +210,11 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
-   // Fetch the list of in progress calls from CallManager and accept the incoming call.
+   // Fetch the list of in progress calls from CallManager and accept the incoming/waiting call.
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+      if(((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING)
+         ||((*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING)) {
          spCall = *callIterator;
          break;
       }
@@ -221,18 +222,19 @@ void CallMenu::acceptCall(std::vector<std::string> userInput) {
    if(spCall) {
       spCall->answer(myAnswerCb_);
    } else {
-      std::cout << "No incoming call" << std::endl;
+      std::cout << "No incoming/waiting call" << std::endl;
    }
 }
 
 void CallMenu::rejectCall(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-   // Fetch the list of in progress calls from CallManager and reject the incoming call.
+   // Fetch the list of in progress calls from CallManager and reject the incoming/waiting call.
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING
+         || (*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING) {
          spCall = *callIterator;
          break;
       }
@@ -240,19 +242,20 @@ void CallMenu::rejectCall(std::vector<std::string> userInput) {
    if(spCall) {
       spCall->reject(myRejectCb_);
    } else {
-      std::cout << "No incoming call" << std::endl;
+      std::cout << "No incoming/waiting call" << std::endl;
    }
 }
 
 void CallMenu::rejectWithSms(std::vector<std::string> userInput) {
    std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-   // Fetch the list of in progress calls from CallManager and reject the incoming call with
+   // Fetch the list of in progress calls from CallManager and reject the incoming/waiting call with
    // sms.
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING) {
+      if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING
+         ||(*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING) {
          spCall = *callIterator;
          break;
       }
@@ -260,7 +263,7 @@ void CallMenu::rejectWithSms(std::vector<std::string> userInput) {
    if(spCall) {
       spCall->reject("Testing reject with reason", myRejectCb_);
    } else {
-      std::cout << "No incoming call" << std::endl;
+      std::cout << "No incoming/waiting call" << std::endl;
    }
 }
 

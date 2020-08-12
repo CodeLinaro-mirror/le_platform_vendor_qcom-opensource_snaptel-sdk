@@ -43,6 +43,8 @@ extern "C" {
 void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
    PRINT_NOTIFICATION << getCurrentTime() << std::endl;
+   std::cout <<  getCallStateString(call->getCallState())
+             << " on slot Id: " << call->getPhoneId() << std::endl;
    std::cout << "Enter 2 to answer call" << std::endl;
    std::cout << "Enter 3 to reject call" << std::endl;
    std::cout << "Enter 4 to reject call with an SMS message" << std::endl;

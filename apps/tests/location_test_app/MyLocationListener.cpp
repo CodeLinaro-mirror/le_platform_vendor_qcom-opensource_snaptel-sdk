@@ -308,6 +308,9 @@ void MyLocationListener::printGnssMeasurementInfo(
       else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_QZSS) {
          std::cout << "QZSS satellite" << std::endl;
       }
+      else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
+         std::cout << "NAVIC satellite" << std::endl;
+      }
       else {
          std::cout << "UNKNOWN satellite" << std::endl;
       }

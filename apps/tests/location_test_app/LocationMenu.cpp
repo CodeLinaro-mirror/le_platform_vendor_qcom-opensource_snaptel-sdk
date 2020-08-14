@@ -228,6 +228,22 @@ int LocationMenu::init() {
       ConsoleAppCommand("23", "Configure constellation, device default", {}, std::bind(
                         &LocationMenu::configureConstellationDeviceDefault, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureDR = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("24", "Configure dead reckoning engine", {}, std::bind(
+                        &LocationMenu::configureDR, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> configureSecondaryBand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("25", "Configure secondary band constellation", {}, std::bind(
+                        &LocationMenu::configureSecondaryBand, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> enableDefaultSecondaryBand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("26", "Enable default secondary band constellation", {}, std::bind(
+                        &LocationMenu::enableDefaultSecondaryBand, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> requestSecondaryBand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("27", "Request secondary band constellation", {}, std::bind(
+                        &LocationMenu::requestSecondaryBand, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -235,7 +251,8 @@ int LocationMenu::init() {
          registerLocationSystemInfo, deRegisterLocationSystemInfo, requestEnergyConsumedInfo,
          dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
          configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
-         configureConstellationEmpty, configureConstellationDeviceDefault};
+         configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
+         configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -413,7 +430,7 @@ void LocationMenu::enableDisableTunc(std::vector<std::string> userInput) {
        std::getline(std::cin, energyBudget, delimiter);
 
        bool enable = false;
-       if(option == "Y") {
+       if(option == "Y" || option == "y") {
             enable = true;
        } else if(option == "N") {
             enable = false;
@@ -463,9 +480,9 @@ void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
        std::getline(std::cin, option, delimiter);
 
        bool enable = false;
-       if(option == "Y") {
+       if(option == "Y" || option == "y") {
             enable = true;
-       } else if(option == "N") {
+       } else if(option == "N" || option == "n") {
             enable = false;
        } else {
             std::cout << " BAD input " << std::endl;
@@ -500,10 +517,11 @@ void LocationMenu::deleteAidingDataWarm(std::vector<std::string> userInput) {
       std::string deleteDataPreference;
       AidingData dataType = DEFAULT_UNKNOWN;
       std::vector<int> options;
-      std::cout << " Enter the types of data to be deleted : \n"
-                   " (0 - EPHEMERIS\n) \n"
-                   " Enter your delete data preference\n"
-                   " (For example: enter 0 to choose EPHEMERIS) : \n";
+      std::cout << "Enter the types of data to be deleted : \n"
+                   "0 - EPHEMERIS \n"
+                   "1 - DR_SENSOR_CALIBRATION \n"
+                   "Enter your delete data preference\n"
+                   "(Example: enter 0,1 to choose both EPHEMERIS and DR_SENSOR_CALIBRATION):\n";
       std::getline(std::cin,deleteDataPreference,delimiter);
       std::stringstream ss(deleteDataPreference);
       int i = -1;
@@ -513,7 +531,7 @@ void LocationMenu::deleteAidingDataWarm(std::vector<std::string> userInput) {
           ss.ignore();
       }
       for(auto &opt : options) {
-        if(opt == 0) {
+        if(opt == 0 || opt == 1) {
           try {
             dataType |= 1UL << opt;
           } catch(const std::exception &e) {
@@ -525,14 +543,14 @@ void LocationMenu::deleteAidingDataWarm(std::vector<std::string> userInput) {
         }
       }
 
-         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-             "Delete Aiding Data Warm Start");
-        telux::common::Status status = locationConfigurator_->deleteAidingData(dataType,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                        std::placeholders::_1));
-        if (status == telux::common::Status::NOTIMPLEMENTED) {
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+          "Delete Aiding Data Warm Start");
+      telux::common::Status status = locationConfigurator_->deleteAidingData(dataType,
+          std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+              std::placeholders::_1));
+      if (status == telux::common::Status::NOTIMPLEMENTED) {
           std::cout << "Not implemented" << std::endl;
-        }
+      }
    }
 }
 
@@ -629,7 +647,7 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
             std::cout << "Do you want to insert more : " << std::endl;
             std::cout << "enter Y/N : " << std::endl;
             std::getline(std::cin, option, delimiter);
-            if(option == "Y") {
+            if(option == "Y" || option == "y") {
                 continue;
             } else {
                 break;
@@ -644,6 +662,115 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
           std::cout << "Not implemented" << std::endl;
         }
    }
+}
+
+void LocationMenu::bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig) {
+    char delimiter = '\n';
+    std::string option;
+    std::cout << "Is body to sensor mount parameters valid ?" << std::endl;
+    std::cout << "Enter Y/N" << std::endl;
+    std::getline(std::cin, option, delimiter);
+    if(option == "Y" || option == "y") {
+        drConfig.validMask |= telux::loc::DRConfigValidityType::
+            BODY_TO_SENSOR_MOUNT_PARAMS_VALID;
+        std::cout << "Enter Body to sensor parameters" << std::endl;
+        std::string rollOffset, yawOffset, pitchOffset, offsetUnc;
+        std::cout << "Enter rollOffset :" << std::endl;
+        std::getline(std::cin, rollOffset, delimiter);
+        drConfig.mountParam.rollOffset = std::stof(rollOffset);
+        std::cout << "Enter yawOffset :" << std::endl;
+        std::getline(std::cin, yawOffset, delimiter);
+        drConfig.mountParam.yawOffset = std::stof(yawOffset);
+        std::cout << "Enter pitchOffset :" << std::endl;
+        std::getline(std::cin, pitchOffset, delimiter);
+        drConfig.mountParam.pitchOffset = std::stof(pitchOffset);
+        std::cout << "Enter offsetUnc :" << std::endl;
+        std::getline(std::cin, offsetUnc, delimiter);
+        drConfig.mountParam.offsetUnc = std::stof(offsetUnc);
+    } else {
+        std::cout << "Body to sensor mount parameters is invalid " << std::endl;
+    }
+}
+
+void LocationMenu::speedScaleUtility(telux::loc::DREngineConfiguration& drConfig) {
+    char delimiter = '\n';
+    std::string option;
+    std::cout << "Is vehicle speed scale factor valid ?" << std::endl;
+    std::cout << "Enter Y/N" << std::endl;
+    std::getline(std::cin, option, delimiter);
+    if(option == "Y" || option == "y") {
+        drConfig.validMask |= telux::loc::DRConfigValidityType::
+            VEHICLE_SPEED_SCALE_FACTOR_VALID;
+        std::string speedFactor;
+        std::cout << "Enter speedFactor :" << std::endl;
+        std::getline(std::cin, speedFactor, delimiter);
+        drConfig.speedFactor = std::stof(speedFactor);
+    } else {
+        std::cout << "Vehicle speed scale factor is invalid " << std::endl;
+    }
+    std::cout << "Is vehicle speed scale factor uncertainty valid ?" << std::endl;
+    std::cout << "Enter Y/N" << std::endl;
+    std::getline(std::cin, option, delimiter);
+    if(option == "Y" || option == "y") {
+        drConfig.validMask |= telux::loc::DRConfigValidityType::
+            VEHICLE_SPEED_SCALE_FACTOR_UNC_VALID;
+        std::string speedFactorUnc;
+        std::cout << "Enter speedFactorUnc :" << std::endl;
+        std::getline(std::cin, speedFactorUnc, delimiter);
+        drConfig.speedFactorUnc = std::stof(speedFactorUnc);
+    } else {
+        std::cout << "Vehicle speed scale factor uncertainty is invalid " << std::endl;
+    }
+}
+
+void LocationMenu::gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig) {
+    char delimiter = '\n';
+    std::string option;
+    std::cout << "Is gyro scale factor valid ?" << std::endl;
+    std::cout << "Enter Y/N" << std::endl;
+    std::getline(std::cin, option, delimiter);
+    if(option == "Y" || option == "y") {
+        drConfig.validMask |= telux::loc::DRConfigValidityType::
+            GYRO_SCALE_FACTOR_VALID;
+        std::string gyroFactor;
+        std::cout << "Enter gyroFactor :" << std::endl;
+        std::getline(std::cin, gyroFactor, delimiter);
+        drConfig.gyroFactor = std::stof(gyroFactor);
+    } else {
+        std::cout << "Gyro scale factor is invalid " << std::endl;
+    }
+    std::cout << "Is gyro scale factor uncertainty valid ?" << std::endl;
+    std::cout << "Enter Y/N" << std::endl;
+    std::getline(std::cin, option, delimiter);
+    if(option == "Y" || option == "y") {
+        drConfig.validMask |= telux::loc::DRConfigValidityType::
+            GYRO_SCALE_FACTOR_UNC_VALID;
+        std::string gyroFactorUnc;
+        std::cout << "Enter gyroFactorUnc :" << std::endl;
+        std::getline(std::cin, gyroFactorUnc, delimiter);
+        drConfig.gyroFactorUnc = std::stof(gyroFactorUnc);
+    } else {
+        std::cout << "Gyro scale factor uncertainty is invalid " << std::endl;
+    }
+}
+
+void LocationMenu::configureDR(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        telux::loc::DREngineConfiguration drConfig;
+        drConfig.validMask = static_cast<telux::loc::DRConfigValidity>(0);
+        bodyToSensorUtility(drConfig);
+        speedScaleUtility(drConfig);
+        gyroScaleUtility(drConfig);
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "Configure DREngineParameters");
+        telux::common::Status status = locationConfigurator_->configureDR(
+            drConfig, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status == telux::common::Status::FAILED) {
+          std::cout << "Failed" << std::endl;
+        }
+    }
 }
 
 void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
@@ -706,7 +833,7 @@ void LocationMenu::configureConstellation(std::vector<std::string> userInput) {
             std::string option;
             std::cout << "Do you want to insert more, enter Y/N : " << std::endl;
             std::getline(std::cin, option, delimiter);
-            if(option == "Y") {
+            if(option == "Y" || option == "y") {
                 continue;
             } else {
                 break;
@@ -762,6 +889,82 @@ void LocationMenu::configureConstellationDeviceDefault(std::vector<std::string> 
   }
 }
 
+void LocationMenu::configureSecondaryBand(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+      telux::loc::ConstellationSet constellationSet{};
+      char delimiter = '\n';
+      std::string constellations;
+      std::cout << " Enter the constellations whose secondary bands need to be disabled : \n"
+                   " 1 - GPS\n"
+                   " 2 - GALILEO\n"
+                   " 3 - SBAS\n"
+                   " 5 - GLONASS\n"
+                   " 6 - BDS\n"
+                   " 7 - QZSS\n"
+                   " 8 - NAVIC\n"
+                   " (For example: enter 3,6 to disable secondary band for SBAS and BDS) : \n";
+      std::getline(std::cin,constellations,delimiter);
+      std::stringstream ss(constellations);
+      std::vector<int> options;
+      int i = -1;
+      while(ss >> i) {
+          options.push_back(i);
+          if(ss.peek() == ',' || ss.peek() == ' ')
+              ss.ignore();
+      }
+      for(auto &opt : options) {
+          if (opt == 1) {
+              constellationSet.insert(telux::loc::GnssConstellationType::GPS);
+          } else if (opt == 2) {
+              constellationSet.insert(telux::loc::GnssConstellationType::GALILEO);
+          } else if (opt == 3) {
+              constellationSet.insert(telux::loc::GnssConstellationType::SBAS);
+          } else if (opt == 5) {
+              constellationSet.insert(telux::loc::GnssConstellationType::GLONASS);
+          } else if (opt == 6) {
+              constellationSet.insert(telux::loc::GnssConstellationType::BDS);
+          } else if (opt == 7) {
+              constellationSet.insert(telux::loc::GnssConstellationType::QZSS);
+          } else if (opt == 8){
+              constellationSet.insert(telux::loc::GnssConstellationType::NAVIC);
+          } else {
+              std::cout << "Ignoring option as not supported: " << opt << std::endl;
+          }
+      }
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure secondary band constellations");
+      telux::common::Status status = locationConfigurator_->configureSecondaryBand(
+          constellationSet, std::bind(&MyLocationCommandCallback::commandResponse,
+              myLocCmdResponseCb_, std::placeholders::_1));
+      Utils::printStatus(status);
+  }
+}
+
+void LocationMenu::enableDefaultSecondaryBand(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+      telux::loc::ConstellationSet constellationSet{};
+
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+          ("Configure secondary band empty constellations");
+      telux::common::Status status = locationConfigurator_->configureSecondaryBand(
+          constellationSet, std::bind(&MyLocationCommandCallback::commandResponse,
+              myLocCmdResponseCb_, std::placeholders::_1));
+      Utils::printStatus(status);
+  }
+}
+
+void LocationMenu::requestSecondaryBand(std::vector<std::string> userInput) {
+  if(locationConfigurator_) {
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Request secondary band constellations");
+      auto secondaryBandCb = std::bind(&MyLocationCommandCallback::onSecondaryBandInfo,
+          myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
+      telux::common::Status status = locationConfigurator_->requestSecondaryBandConfig(
+          secondaryBandCb);
+      Utils::printStatus(status);
+   }
+}
+
 void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
   if(locationConfigurator_) {
        char delimiter = '\n';
@@ -770,9 +973,9 @@ void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
        std::getline(std::cin, option, delimiter);
 
        bool enable = false;
-       if(option == "Y") {
+       if(option == "Y" || option == "y") {
             enable = true;
-       } else if(option == "N") {
+       } else if(option == "N" || option == "n") {
             enable = false;
        } else {
             std::cout << " BAD input " << std::endl;
@@ -784,9 +987,9 @@ void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {
        std::getline(std::cin, optionE911, delimiter);
 
        bool enableE911 = false;
-       if(optionE911 == "Y") {
+       if(optionE911 == "Y" || optionE911 == "y") {
             enableE911 = true;
-       } else if(optionE911 == "N") {
+       } else if(optionE911 == "N" || optionE911 == "n") {
             enableE911 = false;
        } else {
             std::cout << " BAD input " << std::endl;

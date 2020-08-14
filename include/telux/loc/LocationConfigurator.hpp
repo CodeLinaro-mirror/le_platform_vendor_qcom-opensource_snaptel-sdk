@@ -61,6 +61,22 @@ class ILocationConfigurator {
 public:
 
 /**
+ * This function is called with the response to requestSecondaryBandConfig API.
+ *
+ * @param[in] set - disabled secondary band constellation configuration used by the GNSS
+ *                  standard position engine (SPE).
+ *
+ * @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+ using GetSecondaryBandCallback = std::function<void(const telux::loc::ConstellationSet set,
+     telux::common::ErrorCode error)>;
+
+/**
  * This function is called with the response to requestMinGpsWeek API.
  *
  * @param[in] minGpsWeek - minimum gps week.
@@ -207,6 +223,7 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
   * completely overwrite the previous call.
   * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO and SBAS. For other
   * constellations NOTSUPPORTED status will be returned.
+  * If SBAS is disabled via NV in modem, then it cannot be enabled.
   * When resetToDefault is false then the list is expected to contain the constellations or SVs
   * that should be blacklisted. An empty list could be specified to allow all constellations/SVs
   * (i.e. none will be blacklisted) in determining the fix.
@@ -228,6 +245,53 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
 
   virtual telux::common::Status configureConstellations(const SvBlackList& list,
         telux::common::ResponseCallback callback = nullptr, bool resetToDefault = false) = 0;
+
+/**
+ * This API configures the secondary band constellations used by the GNSS standard position
+ * engine. This API call is not incremental and the new settings will completely overwrite the
+ * previous call.
+ * The set specifies the supported constellations whose secondary band information should be
+ * disabled. The absence of a constellation in the set will result in the secondary band being
+ * enabled for that constellation. The modem has its own configuration in NV (persistent memory)
+ * about which constellation's secondary bands are allowed to be enabled. When a constellation is
+ * omitted when this API is invoked the secondary band for that constellation will only be enabled
+ * if the modem configuration allows it. If not allowed then this API would be a no-op for that
+ * constellation.
+ * Passing an empty set to this API will result in all constellations as allowed by the modem
+ * configuration to be enabled.
+ * For multiple invocations of this API, client should wait for the command to finish, e.g.:
+ * via ResponseCallback recieved, before issuing a second configureSecondaryBand command.
+ * Behavior is not defined if client issues a second request of configureSecondaryBand without
+ * waiting for the finish of the previous configureSecondaryBand request.
+ *
+ * @param [in] set - specifies the set of constellations whose secondary bands need to be
+ *                   disabled.
+ *
+ * @param [in] callback - Optional callback to get the response of configureSecondaryBand.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureSecondaryBand(const ConstellationSet& set,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API retrieves the secondary band configurations for constellation used by the standard
+ * GNSS engine (SPE).
+ *
+ * @param [in] cb - callback to retrieve secondary band information about constellations.
+ *
+ * @returns Status of requestSecondaryBandConfig i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status requestSecondaryBandConfig(GetSecondaryBandCallback cb) = 0;
+
 
 /**
   * This API enables/disables robust location feature and enables/disables robust location while
@@ -359,7 +423,7 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
   * example, removing ephemeris data may trigger GNSS engine to do a warm start.
   *
   * @param [in] aidingDataMask - specify the set of aiding data to be deleted from all position
-  *                              engines. Currently, only ephemeris deletion is supported.
+  *                              engines.
   *
   * @param [in] callback - Optional callback to get the response of delete aiding data.
   *
@@ -373,6 +437,26 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
   virtual telux::common::Status deleteAidingData(AidingData aidingDataMask,
       telux::common::ResponseCallback callback = nullptr) = 0;
 
+/**
+ * This API configures various parameters for dead reckoning position engine. Clients should
+ * wait for the command to finish e.g.: via ResponseCallback to be received before issuing a
+ * second configureDR command. Behavior is not defined if client issues a second
+ * request of configureDR without waiting for the completion of the previous
+ * configureDR request.
+ *
+ * @param [in] config - specify dead reckoning engine configuration.
+ *
+ * @param [in] callback - Optional callback to get the response of configureDR.
+ *
+ * @returns Status of configureDR i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureDR(const
+      DREngineConfiguration& config, telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Destructor of ILocationConfigurator

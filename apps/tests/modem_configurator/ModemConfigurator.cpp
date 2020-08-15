@@ -124,7 +124,6 @@ void ModemConfigurator::getActiveConfig() {
 
     if (p.get_future().get()) {
         std::cout << "Active Config Details" << std::endl;
-        std::cout << "Id         : " << activeConfig.id << std::endl;
         std::string type;
         if (activeConfig.type == telux::config::ConfigType::HARDWARE) {
             type = "HARDWARE";

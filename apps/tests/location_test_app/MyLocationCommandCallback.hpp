@@ -43,6 +43,8 @@ public:
    void onMinSVElevationInfo(uint8_t minSVElevation, telux::common::ErrorCode error);
    void onRobustLocationInfo(const telux::loc::RobustLocationConfiguration rLConfig,
        telux::common::ErrorCode error);
+   void onSecondaryBandInfo(const telux::loc::ConstellationSet set,
+     telux::common::ErrorCode error);
 
 private:
    std::string commandName_;

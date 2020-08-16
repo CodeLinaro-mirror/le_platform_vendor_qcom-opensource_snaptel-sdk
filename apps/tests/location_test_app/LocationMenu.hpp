@@ -72,9 +72,13 @@ public:
    void deleteAllAidingData(std::vector<std::string> userInput);
    void deleteAidingDataWarm(std::vector<std::string> userInput);
    void configureLeverArm(std::vector<std::string> userInput);
+   void configureDR(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
    void configureConstellationEmpty(std::vector<std::string> userInput);
    void configureConstellationDeviceDefault(std::vector<std::string> userInput);
+   void configureSecondaryBand(std::vector<std::string> userInput);
+   void enableDefaultSecondaryBand(std::vector<std::string> userInput);
+   void requestSecondaryBand(std::vector<std::string> userInput);
    void configureRobustLocation(std::vector<std::string> userInput);
    void requestRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);
@@ -93,6 +97,9 @@ public:
    void enableNmeaInfoLogs();
    void enableMeasurementsInfoLogs();
    void dgnssInject(std::vector<std::string> userInput);
+   void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
+   void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);
+   void gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig);
 
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>

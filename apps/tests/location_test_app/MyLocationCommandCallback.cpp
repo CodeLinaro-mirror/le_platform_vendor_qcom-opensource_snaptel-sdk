@@ -104,3 +104,31 @@ void MyLocationCommandCallback::onRobustLocationInfo(const telux::loc::RobustLoc
   std::cout << " Minor version is : " << rLConfig.version.minor << std::endl;
   std::cout << " ****************************************************" << std::endl;
 }
+
+void MyLocationCommandCallback::onSecondaryBandInfo(telux::loc::ConstellationSet set,
+     telux::common::ErrorCode error) {
+  std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
+
+  PRINT_CB << "************ Request Secondary Band Info ***************" << std::endl;
+  std::cout << "Disabled secondary band constellations :" << std::endl;
+  for (auto item : set) {
+      if (item == telux::loc::GnssConstellationType::GPS) {
+          std::cout << "GPS" << std::endl;
+      } else if (item == telux::loc::GnssConstellationType::GALILEO) {
+          std::cout << "GALILEO" << std::endl;
+      } else if (item == telux::loc::GnssConstellationType::SBAS) {
+          std::cout << "SBAS" << std::endl;
+      } else if (item == telux::loc::GnssConstellationType::GLONASS) {
+          std::cout << "GLONASS" << std::endl;
+      } else if (item == telux::loc::GnssConstellationType::BDS) {
+          std::cout << "BDS" << std::endl;
+      } else if (item == telux::loc::GnssConstellationType::QZSS) {
+          std::cout << "QZSS" << std::endl;
+      } else if (item == telux::loc::GnssConstellationType::NAVIC) {
+          std::cout << "NAVIC" << std::endl;
+      } else {
+          std::cout << "Not supported" << std::endl;
+      }
+  }
+    std::cout << " ****************************************************" << std::endl;
+}

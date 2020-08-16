@@ -38,6 +38,7 @@
 #include <vector>
 #include <bitset>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "telux/common/CommonDefines.hpp"
 
@@ -1113,7 +1114,9 @@ struct GnssEnergyConsumedInfo {
  *  deleteAidingData for deleting any aiding data. */
 enum AidingDataType {
     /** Mask to delete ephemeris aiding data */
-    AIDING_DATA_EPHEMERIS  = (1 << 0)
+    AIDING_DATA_EPHEMERIS  = (1 << 0),
+    /** Mask to delete calibration data from dead reckoning position engine */
+    AIDING_DATA_DR_SENSOR_CALIBRATION = (1 << 1),
 };
 
 /** Specifies AidingDataType mask */
@@ -1157,6 +1160,91 @@ struct RobustLocationConfiguration {
      *  by the GNSS standard position engine (SPE). */
     RobustLocationVersion version;
 };
+
+/** Specify the valid mask for the configuration parameters of
+ *  dead reckoning position engine */
+enum DRConfigValidityType {
+    /** Validity of body to sensor mount parameters. */
+    BODY_TO_SENSOR_MOUNT_PARAMS_VALID    = (1<<0),
+    /** Validity of vehicle speed scale factor. */
+    VEHICLE_SPEED_SCALE_FACTOR_VALID     = (1<<1),
+    /** Validity of vehicle speed scale factor uncertainty. */
+    VEHICLE_SPEED_SCALE_FACTOR_UNC_VALID = (1<<2),
+    /** Validity of gyro scale factor. */
+    GYRO_SCALE_FACTOR_VALID              = (1<<3),
+    /** Validity of gyro scale factor uncertainty. */
+    GYRO_SCALE_FACTOR_UNC_VALID          = (1<<4),
+};
+
+/** Specifies DRConfigValidityType */
+using DRConfigValidity = uint16_t;
+
+/**
+ * Specify vehicle body-to-Sensor mount parameters for use
+ * by dead reckoning positioning engine. */
+struct BodyToSensorMountParams {
+    /** The misalignment of the sensor board along the
+     *  horizontal plane of the vehicle chassis measured looking
+     *  from the vehicle to forward direction.
+     *  In unit of degrees.
+     *  Range: [-180.0, 180.0].*/
+    float rollOffset;
+    /** The misalignment along the horizontal plane of the vehicle
+     *  chassis measured looking from the vehicle to the right
+     *  side. Positive pitch indicates vehicle is inclined such
+     *  that forward wheels are at higher elevation than rear
+     *  wheels.
+     *  In unit of degrees.
+     *  Range: [-180.0, 180.0].*/
+    float yawOffset;
+    /** The angle between the vehicle forward direction and the
+     *  sensor axis as seen from the top of the vehicle, and
+     *  measured in counterclockwise direction.
+     *  In unit of degrees.
+     *  Range: [-180.0, 180.0].*/
+    float pitchOffset;
+    /** Single uncertainty number that may be the largest of the
+     *  uncertainties for roll offset, pitch offset and yaw
+     *  offset.
+     *  In unit of degrees.
+     *  Range: [-180.0, 180.0].*/
+    float offsetUnc;
+};
+
+/** Specify the dead reckoning engine configuration parameters.
+ */
+struct DREngineConfiguration {
+    /** Specify the valid fields. */
+    DRConfigValidity validMask;
+    /** Body to sensor mount parameters used by dead reckoning
+     *  positioning engine. */
+    BodyToSensorMountParams mountParam;
+    /** Vehicle Speed Scale Factor configuration input for the dead reckoning positioning engine.
+     *  The multiplicative scale factor is applied to the received Vehicle Speed value
+     *  (in meter/second) to obtain the true Vehicle Speed. Range is [0.9 to 1.1].
+     *  Note: The scale factor is specific to a given vehicle make & model. */
+    float speedFactor;
+    /** Vehicle Speed Scale Factor Uncertainty (68% confidence) configuration input for the dead
+     *  reckoning positioning engine. Range is [0.0 to 0.1].
+     *  Note: The scale factor uncertainty is specific to a given vehicle make & model. */
+    float speedFactorUnc;
+    /** Gyroscope Scale Factor configuration input for the dead reckoning positioning engine. The
+     *  multiplicative scale factor is applied to received gyroscope value to obtain the true
+     *  value. Range is [0.9 to 1.1].
+     *  Note: The scale factor is specific to the Gyroscope sensor and typically derived from
+     *  either sensor data-sheet or from actual calibration. */
+    float gyroFactor;
+    /** Gyroscope Scale Factor uncertainty (68% confidence) configuration input for the dead
+     *  reckoning positioning engine. Range is [0.0 to 0.1].
+     *  Note: The scale factor uncertainty is specific to the Gyroscope sensor and typically
+     *  derived from either sensor data-sheet or from actual calibration. */
+    float gyroFactorUnc;
+};
+
+/**
+ * Define the set of constellations for secondary band.
+ */
+typedef std::unordered_set<GnssConstellationType> ConstellationSet;
 
 /**
  * @brief ILocationInfoBase provides interface to get basic position related

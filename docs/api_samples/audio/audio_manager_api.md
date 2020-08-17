@@ -24,12 +24,16 @@ This Section demonstrates how to use the Audio Manager API for audio subsystem/s
 ### 2. Check if Audio subsystem is ready
 
    ~~~~~~{.cpp}
-   bool subSystemsStatus = audioManager->isSubsystemReady();
-   if (subSystemsStatus) {
-       std::cout << "Audio Subsystem is ready." << std::endl;
-   } else {
-       std::cout << "Audio Subsystem is NOT ready." << std::endl;
-   }
+   if (audioManager) {
+        bool subSystemsStatus = audioManager->isSubsystemReady();
+        if (subSystemsStatus) {
+            std::cout << "Audio Subsystem is ready." << std::endl;
+        } else {
+            std::cout << "Audio Subsystem is NOT ready." << std::endl;
+        }
+    } else {
+        std::cout << "Invalid Audio manager" << std::endl;
+    }
    ~~~~~~
 
 ### 2.1 If Audio subsystem is not ready, wait for it to be ready

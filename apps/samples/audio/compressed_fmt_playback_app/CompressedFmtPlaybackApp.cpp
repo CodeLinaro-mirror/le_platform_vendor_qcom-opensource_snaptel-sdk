@@ -58,7 +58,13 @@ Status AmrPlaybackApp::init() {
     audioManager_ = audioFactory.getAudioManager();
 
     // Requesting to get audio subsystem state
-    bool subSystemStatus = audioManager_->isSubsystemReady();
+    bool subSystemStatus = false;
+    if (audioManager_) {
+        subSystemStatus = audioManager_->isSubsystemReady();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+        return Status::FAILED;
+    }
 
     //  Checking state of audio subsystem if it is ready or not, if not ready waiting for it to
     //  get ready.

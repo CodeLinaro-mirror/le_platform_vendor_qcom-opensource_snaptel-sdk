@@ -79,18 +79,24 @@ void AudioConsoleApp::init() {
     audioManager_ = audioFactory.getAudioManager();
 
     //  Check if audio subsystem is ready
-    bool ready_ = audioManager_->isSubsystemReady();
+    bool ready = false;
+    if (audioManager_) {
+        ready = audioManager_->isSubsystemReady();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+        return;
+    }
 
     //  If audio subsystem is not ready, wait for it to be ready
-    if(!ready_) {
+    if (!ready) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         std::future<bool> f = audioManager_->onSubsystemReady();
         // If we want to wait unconditionally for audio subsystem to be ready
-        ready_ = f.get();
+        ready = f.get();
     }
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
-    if(ready_) {
+    if (ready) {
         endTime = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
@@ -185,34 +191,35 @@ void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
 }
 
 void AudioConsoleApp::closeAllStreams() {
-    auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(
+    if (audioManager_) {
+        auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(
         audioClient_->getStream(StreamType::VOICE_CALL));
-    if (audioVoiceStream_) {
-        audioClient_->deleteStream(StreamType::VOICE_CALL);
-    }
+        if (audioVoiceStream_) {
+            audioClient_->deleteStream(StreamType::VOICE_CALL);
+        }
+        auto audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(
+            audioClient_->getStream(StreamType::PLAY));
+        if (audioPlayStream_) {
+            audioClient_->deleteStream(StreamType::PLAY);
+        }
 
-    auto audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(
-        audioClient_->getStream(StreamType::PLAY));
-    if (audioPlayStream_) {
-        audioClient_->deleteStream(StreamType::PLAY);
-    }
+        auto audioCaptureStream_ = std::dynamic_pointer_cast<IAudioCaptureStream>(
+            audioClient_->getStream(StreamType::CAPTURE));
+        if (audioCaptureStream_) {
+            audioClient_->deleteStream(StreamType::CAPTURE);
+        }
 
-    auto audioCaptureStream_ = std::dynamic_pointer_cast<IAudioCaptureStream>(
-        audioClient_->getStream(StreamType::CAPTURE));
-    if (audioCaptureStream_) {
-        audioClient_->deleteStream(StreamType::CAPTURE);
-    }
+        auto audioToneStream_ = std::dynamic_pointer_cast<IAudioToneGeneratorStream>(
+            audioClient_->getStream(StreamType::TONE_GENERATOR));
+        if (audioToneStream_) {
+            audioClient_->deleteStream(StreamType::TONE_GENERATOR);
+        }
 
-    auto audioToneStream_ = std::dynamic_pointer_cast<IAudioToneGeneratorStream>(
-        audioClient_->getStream(StreamType::TONE_GENERATOR));
-    if (audioToneStream_) {
-        audioClient_->deleteStream(StreamType::TONE_GENERATOR);
-    }
-
-    auto audioLoopbackStream_ = std::dynamic_pointer_cast<IAudioLoopbackStream>(
-        audioClient_->getStream(StreamType::LOOPBACK));
-    if (audioLoopbackStream_) {
-        audioClient_->deleteStream(StreamType::LOOPBACK);
+        auto audioLoopbackStream_ = std::dynamic_pointer_cast<IAudioLoopbackStream>(
+            audioClient_->getStream(StreamType::LOOPBACK));
+        if (audioLoopbackStream_) {
+            audioClient_->deleteStream(StreamType::LOOPBACK);
+        }
     }
 }
 

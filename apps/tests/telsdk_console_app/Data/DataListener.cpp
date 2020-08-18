@@ -67,9 +67,12 @@ void DataListener::onServiceStatusChange(telux::common::ServiceStatus status) {
 std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int profileId) {
    std::lock_guard<std::mutex> lk(mtx_);
    std::shared_ptr<telux::data::IDataCall> dataCall = nullptr;
-   auto it = dataCallMap_.find(profileId);
-   if(it != dataCallMap_.end()) {
-      dataCall = it->second;
+   for (auto& dc : dataCallMap_) {
+      //If datacall with same profile id and slot id is found and it is in connected state
+      if ((dc.first == profileId) &&
+          (telux::data::DataCallStatus::NET_CONNECTED == dc.second->getDataCallStatus())) {
+          dataCall = dc.second;
+      }
    }
    return dataCall;
 }
@@ -78,7 +81,37 @@ void DataListener::updateDataCallMap(const std::shared_ptr<telux::data::IDataCal
    if(dataCall) {
       std::lock_guard<std::mutex> lk(mtx_);
       int profileId = dataCall->getProfileId();
-      dataCallMap_[profileId] = dataCall;
+      //Find if datacall object exist
+      std::multimap<int, std::shared_ptr<telux::data::IDataCall>>::iterator dataCallMapItr =
+          dataCallMap_.end();
+      for (auto dcItr = dataCallMap_.begin(); dcItr != dataCallMap_.end(); ++dcItr) {
+         if (dcItr->first == profileId) {
+            dataCallMapItr = dcItr;
+            break;
+         }
+      }
+      //If data call object not found
+      if((dataCallMapItr == dataCallMap_.end())) {
+         //If it is not disconnect notification
+         if(telux::data::DataCallStatus::NET_NO_NET != dataCall->getDataCallStatus()) {
+            //Add it to list
+            dataCallMap_.emplace(profileId, dataCall);
+         }
+         else {
+            // it is disconnect notification, ignore it
+         }
+      }
+      else {
+         //If it is not disconnect notification
+         if(telux::data::DataCallStatus::NET_NO_NET != dataCall->getDataCallStatus()) {
+            //Update data call object
+            dataCallMapItr->second = dataCall;
+         }
+         else {
+            // it is disconnect notification, remove it from list
+            dataCallMap_.erase(dataCallMapItr);
+         }
+      }
    }
 }
 

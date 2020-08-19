@@ -192,12 +192,16 @@ void FirewallMenu::setFirewall(std::vector<std::string> inputCommand) {
         fwEnable = true;
     }
 
-    int allowPacketsFlag;
-    std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
-    std::cin >> allowPacketsFlag;
-    Utils::validateInput(allowPacketsFlag);
-    if (allowPacketsFlag) {
-        allowPackets = true;
+    if (fwEnable) {
+        int allowPacketsFlag;
+        std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
+        std::cin >> allowPacketsFlag;
+        Utils::validateInput(allowPacketsFlag);
+        if (allowPacketsFlag) {
+            allowPackets = true;
+        }
+    } else {
+        allowPackets = false;
     }
 
     auto respCb = [](telux::common::ErrorCode error) {
@@ -263,6 +267,13 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
         std::getline(std::cin, srcAddr, delimiter);
         std::cout << "Enter IPv4 Source subnet mask: ";
         std::getline(std::cin, srcSubnetMask, delimiter);
+    }
+
+    std::cout << "Do you want to enter IPV4 destination address and subnet mask: [1-YES 0-NO]:";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cin.get();
         std::cout << "Enter IPv4 Destination address: ";
         std::getline(std::cin, destAddr, delimiter);
         std::cout << "Enter IPv4 Destination subnet mask: ";
@@ -310,6 +321,7 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
 void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp) {
     std::string srcAddr = "", destAddr = "";
+    uint8_t srcPrefixLen = 0, dstPrefixLen = 0;
     int trfVal = 0, trfMask = 0, flowLabel = 0;
     char delimiter = '\n';
 
@@ -321,8 +333,23 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
         std::cin.get();
         std::cout << "Enter IPv6 Source address: ";
         std::getline(std::cin, srcAddr, delimiter);
+        std::cout << "Enter IPv6 Source prefix length: ";
+        std::cin >> srcPrefixLen;
+        Utils::validateInput(srcPrefixLen);
+        std::cin.get();
+    }
+
+    std::cout << "Do you want to enter IPv6 destination address and subnet mask: [1-YES 0-NO]:";
+    std::cin >> option;
+    Utils::validateInput(option);
+    if (option == 1) {
+        std::cin.get();
         std::cout << "Enter IPv6 Destination address: ";
         std::getline(std::cin, destAddr, delimiter);
+        std::cout << "Enter IPv6 Destination prefix length: ";
+        std::cin >> dstPrefixLen;
+        Utils::validateInput(dstPrefixLen);
+        std::cin.get();
     }
 
     std::cout << "Do you want to enter IPV6 Traffic Class value and mask: [1-YES 0-NO]:";
@@ -351,6 +378,8 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     IPv6Info info;
     info.srcAddr = srcAddr;
     info.destAddr = destAddr;
+    info.srcPrefixLen = (uint8_t)srcPrefixLen;
+    info.dstPrefixLen = (uint8_t)dstPrefixLen;
     info.nextProtoId = proto;
     info.val = (uint8_t)trfVal;
     info.mask = (uint8_t)trfMask;

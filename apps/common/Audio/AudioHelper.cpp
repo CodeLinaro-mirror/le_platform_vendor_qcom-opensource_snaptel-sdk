@@ -306,7 +306,7 @@ void AudioHelper::getUserMuteStatusInput(StreamMute &mute) {
     }
 }
 
-Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t duration, uint16_t gain) {
+Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_t &gain) {
     std::string userInput = "";
     std::cout << "Enter the Gain : ";
     if (std::getline(std::cin, userInput)) {

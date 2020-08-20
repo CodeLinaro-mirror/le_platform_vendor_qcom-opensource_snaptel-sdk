@@ -58,6 +58,14 @@ class IDataConnectionListener;
 class IDataCall;
 
 /**
+ * IP Family related Info
+ */
+struct IpFamilyInfo {
+    DataCallStatus status;
+    IpAddrInfo addr;
+};
+
+/**
  * This function is called with the response to startDataCall / stopDataCall API.
  *
  * The callback can be invoked from multiple different threads.
@@ -292,6 +300,22 @@ class IDataCall {
      *
      */
     virtual DataCallStatus getDataCallStatus() = 0;
+
+    /**
+     * Get IPv4 Family info like connected, disconnected and IP address changes.
+     *
+     * @returns @ref IpFamilyInfo.
+     *
+     */
+    virtual IpFamilyInfo getIpv4Info() = 0;
+
+    /**
+     * Get IPv6 Family info like connected, disconnected and IP address changes.
+     *
+     * @returns @ref IpFamilyInfo.
+     *
+     */
+    virtual IpFamilyInfo getIpv6Info() = 0;
 
     /**
      * Get the technology on which the call was brought up.

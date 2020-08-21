@@ -132,7 +132,7 @@ std::string DataUtils::dataCallStatusToString(telux::data::DataCallStatus dcStat
          return "NEWADDR";
       case telux::data::DataCallStatus::NET_DELADDR:
          return "DELADDR";
-      default: { return "INVALID"; }
+      default: { return "UNKNOWN"; }
    }
 }
 

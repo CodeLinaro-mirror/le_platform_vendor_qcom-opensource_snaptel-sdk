@@ -125,6 +125,12 @@ void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCa
              << "\n DataCallEndReason:\n   Type: "
              << DataUtils::callEndReasonTypeToString(dataCall->getDataCallEndReason().type)
              << ", Code: " << DataUtils::callEndReasonCode(dataCall->getDataCallEndReason()) << std::endl;
+   if (telux::data::IpFamilyType::IPV4V6 == dataCall->getIpFamilyType()) {
+      std::cout << " IPv4 Status: " << DataUtils::dataCallStatusToString(
+         dataCall->getIpv4Info().status) << std::endl;
+      std::cout << " IPv6 Status: " << DataUtils::dataCallStatusToString(
+         dataCall->getIpv6Info().status) << std::endl;
+   }
    std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
    for(auto &it : ipAddrList) {
       std::cout << "\n ifAddress: " << it.ifAddress << "\n gwAddress: " << it.gwAddress

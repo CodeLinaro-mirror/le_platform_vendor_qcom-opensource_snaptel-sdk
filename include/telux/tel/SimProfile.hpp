@@ -39,10 +39,10 @@
 #include <vector>
 #include <string>
 
-#include <telux/rsp/SimProfileDefines.hpp>
+#include <telux/tel/SimProfileDefines.hpp>
 
 namespace telux {
-namespace rsp {
+namespace tel {
 
 /** @addtogroup telematics_rsp
  * @{ */

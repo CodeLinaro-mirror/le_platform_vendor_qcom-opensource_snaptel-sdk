@@ -46,6 +46,10 @@ set(TELSDK_CONSOLE_APP_SOURCES
    MultiSim/MyMultiSimListener.cpp
    MultiSim/MultiSimMenu.cpp
 
+   Rsp/RspListener.cpp
+   Rsp/MyRspHandler.cpp
+   Rsp/RspMenu.cpp
+
    TelSdkConsoleApp.cpp
 
    ModemStatus.cpp

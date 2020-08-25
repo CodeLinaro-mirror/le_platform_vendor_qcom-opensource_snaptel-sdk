@@ -105,7 +105,6 @@ void VoiceMenu::init() {
          deregListenerCmd,
          changeSlotIdCmd};
     ready_ = true;
-    setActiveSession(DEFAULT_SLOT_ID);
     ConsoleApp::addCommands(voiceMenuCommandsList);
 }
 
@@ -114,11 +113,15 @@ void VoiceMenu::setSystemReady() {
 }
 
 void VoiceMenu::cleanup() {
+    std::lock_guard<std::mutex> lk(mutex_);
     ready_ = false;
+    voiceSessions_.clear();
+    activeSession_= nullptr;
 }
 
 void VoiceMenu::createStream(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         StreamConfig config;
         config.slotId = slotId_;
         config.type = StreamType::VOICE_CALL;
@@ -136,8 +139,11 @@ void VoiceMenu::createStream(std::vector<std::string> userInput) {
 
 void VoiceMenu::deleteStream(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         auto status = activeSession_->deleteStream();
         if (status == Status::SUCCESS) {
+            voiceSessions_.erase(slotId_);
+            activeSession_= nullptr;
             std::cout << "Voice stream deleted on slotId : "<< slotId_ << std::endl;
         } else {
             std::cout << "Voice stream deletion failed on slotId : "<< slotId_ << std::endl;
@@ -149,6 +155,7 @@ void VoiceMenu::deleteStream(std::vector<std::string> userInput) {
 
 void VoiceMenu::getDevice(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         std::vector<DeviceType> devices;
         auto status = activeSession_->getStreamDevice(devices);
         if (status == Status::SUCCESS) {
@@ -166,6 +173,7 @@ void VoiceMenu::getDevice(std::vector<std::string> userInput) {
 
 void VoiceMenu::setDevice(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         std::vector<DeviceType> devices;
         AudioHelper::getUserDeviceInput(devices);
         auto status = activeSession_->setStreamDevice(devices);
@@ -181,6 +189,7 @@ void VoiceMenu::setDevice(std::vector<std::string> userInput) {
 
 void VoiceMenu::getVolume(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         StreamVolume volume;
         AudioHelper::getUserDirectionInput(volume.dir);
         auto status = activeSession_->getVolume(volume);
@@ -198,6 +207,7 @@ void VoiceMenu::getVolume(std::vector<std::string> userInput) {
 
 void VoiceMenu::setVolume(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         StreamVolume volume;
         AudioHelper::getUserVolumeInput(volume);
         auto status = activeSession_->setVolume(volume);
@@ -213,6 +223,7 @@ void VoiceMenu::setVolume(std::vector<std::string> userInput) {
 
 void VoiceMenu::getMute(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         StreamMute muteStatus;
         AudioHelper::getUserDirectionInput(muteStatus.dir);
         auto status = activeSession_->getMute(muteStatus);
@@ -228,6 +239,7 @@ void VoiceMenu::getMute(std::vector<std::string> userInput) {
 
 void VoiceMenu::setMute(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         StreamMute muteStatus;
         AudioHelper::getUserMuteStatusInput(muteStatus);
         auto status = activeSession_->setMute(muteStatus);
@@ -243,6 +255,7 @@ void VoiceMenu::setMute(std::vector<std::string> userInput) {
 
 void VoiceMenu::startAudio(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         Status status = activeSession_->startAudio();
         if (status == Status::SUCCESS) {
             std::cout << "Audio started on slotId : " << slotId_ << std::endl;
@@ -256,6 +269,7 @@ void VoiceMenu::startAudio(std::vector<std::string> userInput) {
 
 void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         Status status = activeSession_->stopAudio();
         if (status == Status::SUCCESS) {
             std::cout << "Audio stopped on slotId : " << slotId_ << std::endl;
@@ -269,6 +283,7 @@ void VoiceMenu::stopAudio(std::vector<std::string> userInput) {
 
 void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         DtmfTone tone;
         tone.direction = StreamDirection::RX;
         uint32_t duration = 0;
@@ -288,6 +303,7 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
 
 void VoiceMenu::stopDtmf(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         auto status = activeSession_->stopDtmf();
         if (status == Status::SUCCESS){
             std::cout << "Dtmf Tone Stopped on slotId : "<< slotId_ << std::endl;
@@ -301,6 +317,7 @@ void VoiceMenu::stopDtmf(std::vector<std::string> userInput) {
 
 void VoiceMenu::registerListener(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         auto status = activeSession_->registerListener(shared_from_this());
         if (status == Status::SUCCESS){
             std::cout << "Voice listener registered" << std::endl;
@@ -314,6 +331,7 @@ void VoiceMenu::registerListener(std::vector<std::string> userInput) {
 
 void VoiceMenu::deRegisterListener(std::vector<std::string> userInput) {
     if (ready_) {
+        setActiveSession(slotId_);
         auto status = activeSession_->deRegisterListener(shared_from_this());
         if (status == Status::SUCCESS){
             std::cout << "Voice listener deregistered" << std::endl;

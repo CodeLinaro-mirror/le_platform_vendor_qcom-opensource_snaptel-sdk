@@ -93,7 +93,13 @@ int main(int, char **) {
     static std::shared_ptr<IAudioManager> audioManager = audioFactory.getAudioManager();
 
     // ### 2. Requesting to get audio subsystem state
-    bool subSystemsStatus = audioManager->isSubsystemReady();
+    bool subSystemsStatus = false;
+    if (audioManager) {
+        subSystemsStatus = audioManager->isSubsystemReady();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+        return EXIT_FAILURE;
+    }
 
     // #### 2.1  Checking state of audio subsystem if it is ready or not ready
     if (subSystemsStatus) {

@@ -10,17 +10,21 @@ Please follow the below steps to start/stop loopback on a loopback session.
 
 ### 2. Wait for the Audio subsystem to be initialized and ready ###
    ~~~~~~{.cpp}
-    bool isReady = audioManager->isSubsystemReady();
-    if(!isReady) {
-        std::cout << "Audio subsystem is not ready, waiting for it to be ready " << std::endl;
-        std::future<bool> f = audioManager->onSubsystemReady();
-        isReady = f.get();
+    if (audioManager) {
+        bool isReady = audioManager->isSubsystemReady();
+        if (!isReady) {
+            std::cout << "Audio subsystem is not ready, waiting for it to be ready " << std::endl;
+            std::future<bool> f = audioManager->onSubsystemReady();
+            isReady = f.get();
+        }
+    } else {
+        std::cout << "Invalid Audio manager" << std::endl;
     }
    ~~~~~~
 
 ### 3. Exit the application, if SDK is unable to initialize Audio subsystem ###
    ~~~~~~{.cpp}
-    if(isReady) {
+    if (isReady) {
         std::cout << " *** Audio subsystem is Ready *** " << std::endl;
     } else {
         std::cout << " *** ERROR - Unable to initialize Audio subsystem " << std::endl;
@@ -90,7 +94,7 @@ Please follow the below steps to start/stop loopback on a loopback session.
         std::cout << "deleteStream() succeeded." << std::endl;
         audioLoopbackStream.reset();
     }
-    //Delete the Audio Stream
+    // Delete the Audio Stream
     status = audioManager->deleteStream(std::dynamic_pointer_cast<IAudioStream>(audioLoopbackStream),
                                     deleteStreamCallback);
    ~~~~~~

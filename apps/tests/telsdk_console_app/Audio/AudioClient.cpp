@@ -74,7 +74,12 @@ Status AudioClient::init() {
     audioMgr_ = audioFactory.getAudioManager();
 
     //  Check if audio subsystem is ready
-    ready_ = audioMgr_->isSubsystemReady();
+    if (audioMgr_) {
+        ready_ = audioMgr_->isSubsystemReady();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+        return Status::FAILED;
+    }
     //  If audio subsystem is not ready, wait for it to be ready
     if (!ready_) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;

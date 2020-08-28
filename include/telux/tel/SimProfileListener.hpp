@@ -28,67 +28,56 @@
  */
 
 /**
- * @file       HttpListener.hpp
+ * @file       SimProfileListener.hpp
  *
- * @brief      The interface listens for indication to perform HTTP POST request and send back the
- *             response for HTTP request to modem.
+ * @brief      The interface listens for profile download indication and keep track of
+ *             download and install progress of profile.
  */
 
-#ifndef HTTPLISTENER_HPP
-#define HTTPLISTENER_HPP
+#ifndef SIMPROFILELISTENER_HPP
+#define SIMPROFILELISTENER_HPP
 
-#include <string>
-#include <vector>
-
-#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/SimProfileDefines.hpp>
 
 namespace telux {
-namespace rsp {
+namespace tel {
 
 /** @addtogroup telematics_rsp
  * @{ */
 
 /**
- *Header information to be sent along with HTTP post request.
- */
-struct CustomHeader {
-    std::string name;  /**< Header name */
-    std::string value; /**< Header value */
-};
-
-/**
- * @brief The interface listens for indication to perform HTTP request and send back the
- *        response for HTTP request to modem.
+ * @brief The interface listens for profile download indication and keep track of
+ *         download and install progress of profile.
  *
  *        The methods in the listener can be invoked from multiple threads.
  *        It is client's responsibility to make sure the implementation is thread safe.
  */
-class IHttpTransactionListener : public telux::common::IServiceStatusListener {
+class ISimProfileListener : public telux::common::IServiceStatusListener {
  public:
     /**
-     * An application handling this indication should perform the HTTP request and call the
-     * IHttpTransactionManager::sendHttpTransactionReq to provide the result of the HTTP
-     * transaction.
+     * This function is called when indication about status of profile download and installation
+     * comes.
      *
-     * @param [in] slotId                Slot identifier corresponding to the card.
-     * @param [in] url                   URL to sent HTTP post request.
-     * @param [in] tokenId               Token identifier.
-     * @param [in] headers               Header information to be sent along with HTTP post request.
-     * @param [in] reqPayload            Request payload.
+     * @param [in] slotId                   Slot on which profile get downloaded and installed.
+     * @param [in] userConsentRequired      User consent required or not.
+     * @param [in] status                   @Ref ProfileDownloadStatus.
+     * @param [in] percentage               Download and installation percentage.
+     * @param [in] cause                    @Ref ProfileDownloadErrorCause.
+     * @param [in] mask                     @Ref PprMask (Profile policy rules Mask)
      */
-    virtual void onNewHttpRequest(int slotId, const std::string &url, int tokenId,
-        const std::vector<CustomHeader> &headers, const std::string &reqPayload) {
+    virtual void onAddProfileUpdate(SlotId slotId, bool userConsentRequired, DownloadStatus status,
+        uint8_t percentage, DownloadErrorCause cause, PolicyRuleMask mask) {
     }
 
     /**
-     * Destructor of IHttpTransactionListener
+     * Destructor of ISimProfileListener
      */
-    virtual ~IHttpTransactionListener() {
+    virtual ~ISimProfileListener() {
     }
 };
 /** @} */ /* end_addtogroup telematics_rsp */
+}  // end of namespace tel
 
-}  // end of namespace rsp
 }  // end of namespace telux
 
-#endif  // HTTPLISTENER_HPP
+#endif  // SIMPROFILELISTENER_HPP

@@ -53,6 +53,7 @@ extern "C" {
 #include "Data/DataMenu.hpp"
 #include "SimCardServices/SimCardServicesMenu.hpp"
 #include "MultiSim/MultiSimMenu.hpp"
+#include "Rsp/RspMenu.hpp"
 #include "../../common/utils/Utils.hpp"
 
 #include "TelSdkConsoleApp.hpp"
@@ -89,9 +90,13 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
         std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> rspMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "8", "Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::rspMenu, this,
+               std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand, multiSimMenuCommand};
+             dataMenuCommand, multiSimMenuCommand, rspMenuCommand};
 
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();
@@ -148,6 +153,13 @@ void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
     MultiSimMenu multiSimMenu("MultiSim Menu", "multisim> ");
     multiSimMenu.init();
     multiSimMenu.mainLoop();
+    TelSdkConsoleApp::displayMenu();
+}
+
+void TelSdkConsoleApp::rspMenu(std::vector<std::string> userInput) {
+    RemoteSimProfileMenu rspMenu("Sim Profile Management Menu", "sim_profile_management> ");
+    rspMenu.init();
+    rspMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
 }
 

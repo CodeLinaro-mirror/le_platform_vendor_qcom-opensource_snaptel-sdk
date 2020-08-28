@@ -28,59 +28,46 @@
  */
 
 /**
- * @file      RspApp.cpp
+ * @file      RspMenu.hpp
  * @brief     The reference application to demonstrate Remote SIM Provisioning features
- *            like addProfile, deleteProfile, setProfile, requestProfileList, updateNickName,
- *            provideUserConsent, requestEid.
+ *            like addProfile, deleteProfile, setProfile, requestProfileList, update nickname,
+ *            provide user consent, request Eid.
  */
 
-#ifndef RSPAPP_HPP
-#define RSPAPP_HPP
+#ifndef RSPMENU_HPP
+#define RSPMENU_HPP
 
 #include <telux/common/CommonDefines.hpp>
-#include <telux/rsp/SimProfileFactory.hpp>
+#include <telux/tel/SimProfileManager.hpp>
 
 #include "RspListener.hpp"
+#include "console_app_framework/ConsoleApp.hpp"
 
 using telux::common::Status;
 
-class RemoteSimProfile {
+class RemoteSimProfileMenu : public ConsoleApp {
  public:
-    static RemoteSimProfile &getInstance();
-    Status parseArguments(int arg, char *argv[]);
+    RemoteSimProfileMenu(std::string appName, std::string cursor);
+    ~RemoteSimProfileMenu();
     void init();
 
  private:
-    SlotId slotId_;
-    int profileId_;
-    bool enableProfile_;
-    bool userConsent_;
-    // Profile activation code
-    std::string activationCode_;
-    std::string confirmationCode_;
-    std::string nickname_;
-    std::shared_ptr<telux::rsp::ISimProfileManager> simProfileManager_ = nullptr;
+    std::shared_ptr<telux::tel::ISimProfileManager> simProfileManager_ = nullptr;
     std::shared_ptr<RspListener> rspListener_ = nullptr;
 
-    RemoteSimProfile();
-    ~RemoteSimProfile();
-    void printUsage(char **argv);
 
     // Wrapper function for request Profile list, add, delete, enable or update profile
-    void requestProfileList();
-    void addProfile(const std::string &actCode, const std::string &confCode,
-                    bool isUserConsentRequired);
-    void deleteProfile(int profileId);
-    void setProfile(int profileId, bool enable);
-    void updateNickName(int profileId, const std::string &nickname);
-    void provideUserConsent(bool isUserConsentRequired);
-    void requestEid();
+    void requestProfileList(std::vector<std::string> userInput);
+    void addProfile(std::vector<std::string> userInput);
+    void deleteProfile(std::vector<std::string> userInput);
+    void setProfile(std::vector<std::string> userInput);
+    void updateNickName(std::vector<std::string> userInput);
+    void requestEid(std::vector<std::string> userInput);
+    void provideUserConsent(std::vector<std::string> userInput);
 
-    // Response callbacks
-    void onProfileListResponse(const std::vector<std::shared_ptr<telux::rsp::SimProfile>> &profiles,
-        telux::common::ErrorCode errorCode);
-    void onEidResponse(std::string eid, telux::common::ErrorCode errorCode);
     void onResponseCallback(telux::common::ErrorCode error);
+
+    SlotId getSlotIdInput();
 };
 
 #endif

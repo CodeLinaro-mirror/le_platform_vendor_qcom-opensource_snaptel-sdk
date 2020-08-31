@@ -50,6 +50,7 @@
 #include <telux/tel/SmsManager.hpp>
 #include <telux/tel/SubscriptionManager.hpp>
 #include <telux/tel/MultiSimManager.hpp>
+#include <telux/tel/SimProfileManager.hpp>
 
 namespace telux {
 
@@ -159,12 +160,23 @@ public:
     */
    std::shared_ptr<IMultiSimManager> getMultiSimManager();
 
+   /**
+    * Get SimProfileManager. SimProfileManager is a primary interface for remote
+    * eUICC(eSIM) provisioning and local profile assistance.
+    *
+    * @returns Pointer of ISimProfileManager object or nullptr in case of failure.
+    *
+    */
+   std::shared_ptr<ISimProfileManager> getSimProfileManager();
+
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
    std::shared_ptr<ICardManager> cardManager_;
    std::shared_ptr<ISubscriptionManager> subscriptionManager_;
    std::shared_ptr<IMultiSimManager> multiSimManager_;
+   std::shared_ptr<ISimProfileManager> simProfileManager_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
    std::map<int, std::shared_ptr<INetworkSelectionManager>> networkSelectionManagerMap_;

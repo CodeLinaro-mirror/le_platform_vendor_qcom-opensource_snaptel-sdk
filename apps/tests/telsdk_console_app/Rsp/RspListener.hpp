@@ -30,19 +30,19 @@
 #ifndef RSPLISTENER_HPP
 #define RSPLISTENER_HPP
 
-#include <telux/rsp/SimProfileListener.hpp>
-#include <telux/rsp/SimProfileDefines.hpp>
+#include <telux/tel/SimProfileListener.hpp>
+#include <telux/tel/SimProfileDefines.hpp>
 
-class RspListener : public telux::rsp::ISimProfileListener {
+class RspListener : public telux::tel::ISimProfileListener {
  public:
-    void onAddProfileUpdate(SlotId slotId, bool userConsentRequired, telux::rsp::DownloadStatus status,
-        uint8_t percentage, telux::rsp::DownloadErrorCause cause,
-        telux::rsp::PolicyRuleMask mask) override;
+    void onAddProfileUpdate(SlotId slotId, bool userConsentRequired, telux::tel::DownloadStatus status,
+        uint8_t percentage, telux::tel::DownloadErrorCause cause,
+        telux::tel::PolicyRuleMask mask) override;
 
  private:
-    std::string profileDownloadStatusToString(telux::rsp::DownloadStatus status);
-    std::string profileDownloadErrorCauseToString(telux::rsp::DownloadErrorCause cause);
-    std::string pprMaskToString(telux::rsp::PolicyRuleMask mask);
+    std::string profileDownloadStatusToString(telux::tel::DownloadStatus status);
+    std::string profileDownloadErrorCauseToString(telux::tel::DownloadErrorCause cause);
+    std::string pprMaskToString(telux::tel::PolicyRuleMask mask);
 };
 
 #endif  // RSPLISTENER_HPP

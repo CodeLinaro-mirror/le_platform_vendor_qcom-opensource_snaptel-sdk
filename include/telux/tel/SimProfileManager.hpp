@@ -44,11 +44,11 @@
 
 #include <telux/common/CommonDefines.hpp>
 
-#include <telux/rsp/SimProfileListener.hpp>
-#include <telux/rsp/SimProfile.hpp>
+#include <telux/tel/SimProfileListener.hpp>
+#include <telux/tel/SimProfile.hpp>
 
 namespace telux {
-namespace rsp {
+namespace tel {
 
 /**
  * This function is called with the response to requestProfileList API.

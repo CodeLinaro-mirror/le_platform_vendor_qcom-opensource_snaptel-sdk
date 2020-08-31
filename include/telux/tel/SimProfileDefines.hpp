@@ -41,7 +41,7 @@
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
-namespace rsp {
+namespace tel {
 
 /** @addtogroup telematics_rsp
  * @{ */

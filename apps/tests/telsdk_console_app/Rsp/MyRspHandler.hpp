@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,49 +27,22 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
- */
+#ifndef MYRSPHANDLER_HPP
+#define MYRSPHANDLER_HPP
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/SimProfile.hpp>
+#include <memory>
 
-#include <string>
-#include <vector>
-
-#include "ModemStatus.hpp"
-#include "console_app_framework/ConsoleApp.hpp"
-#include "Audio/AudioClient.hpp"
-
-class TelSdkConsoleApp : public ConsoleApp {
+class MyRspCallback {
 public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
+    static void onProfileListResponse(
+        const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
+        telux::common::ErrorCode error);
 
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
-
-   // Displays main menu
-   void displayMenu();
-
-   // Check Modem availability for Telephony
-    void onModemAvailable();
-
-private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
-   void rspMenu(std::vector<std::string> userInput);
-
+    static void onEidResponse(std::string eid, telux::common::ErrorCode errorCode);
+    static void onResponseCallback(telux::common::ErrorCode error);
 };
 
-#endif  // TELSDKCONSOLEAPP_HPP
+#endif  // MYRSPHANDLER_HPP
+

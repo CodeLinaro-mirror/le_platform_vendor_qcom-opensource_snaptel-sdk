@@ -35,13 +35,13 @@
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 void RspListener::onAddProfileUpdate(SlotId slotId, bool userConsentRequired,
-    telux::rsp::DownloadStatus status, uint8_t percentage, telux::rsp::DownloadErrorCause cause,
-    telux::rsp::PolicyRuleMask mask) {
+    telux::tel::DownloadStatus status, uint8_t percentage, telux::tel::DownloadErrorCause cause,
+    telux::tel::PolicyRuleMask mask) {
     PRINT_NOTIFICATION << " onAddProfileUpdate" << std::endl;
     PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
     PRINT_NOTIFICATION << " Profile Download Status: " << profileDownloadStatusToString(status)
                        << std::endl;
-    PRINT_NOTIFICATION << " Percentage: " << percentage << std::endl;
+    PRINT_NOTIFICATION << " Percentage: " << static_cast<int>(percentage) << std::endl;
     PRINT_NOTIFICATION
         << " Profile Download Error Cause: " << profileDownloadErrorCauseToString(cause)
         << std::endl;
@@ -49,22 +49,22 @@ void RspListener::onAddProfileUpdate(SlotId slotId, bool userConsentRequired,
     PRINT_NOTIFICATION << " Profile Policy Rule: " << policyRule << std::endl;
 }
 
-std::string RspListener::profileDownloadStatusToString(telux::rsp::DownloadStatus status) {
+std::string RspListener::profileDownloadStatusToString(telux::tel::DownloadStatus status) {
     std::string downloadStatus;
     switch (status) {
-        case telux::rsp::DownloadStatus::DOWNLOAD_ERROR:
+        case telux::tel::DownloadStatus::DOWNLOAD_ERROR:
             downloadStatus = "DOWNLOAD_ERROR";
             break;
-        case telux::rsp::DownloadStatus::DOWNLOAD_IN_PROGRESS:
+        case telux::tel::DownloadStatus::DOWNLOAD_IN_PROGRESS:
             downloadStatus = "DOWNLOAD_IN_PROGRESS";
             break;
-        case telux::rsp::DownloadStatus::DOWNLOAD_COMPLETE_INSTALLATION_IN_PROGRESS:
+        case telux::tel::DownloadStatus::DOWNLOAD_COMPLETE_INSTALLATION_IN_PROGRESS:
             downloadStatus = "DOWNLOAD_COMPLETE_INSTALLATION_IN_PROGRESS";
             break;
-        case telux::rsp::DownloadStatus::INSTALLATION_COMPLETE:
+        case telux::tel::DownloadStatus::INSTALLATION_COMPLETE:
             downloadStatus = "INSTALLATION_COMPLETE";
             break;
-        case telux::rsp::DownloadStatus::USER_CONSENT_REQUIRED:
+        case telux::tel::DownloadStatus::USER_CONSENT_REQUIRED:
             downloadStatus = "USER_CONSENT_REQUIRED";
             break;
         default:
@@ -74,19 +74,19 @@ std::string RspListener::profileDownloadStatusToString(telux::rsp::DownloadStatu
     return downloadStatus;
 }
 
-std::string RspListener::profileDownloadErrorCauseToString(telux::rsp::DownloadErrorCause cause) {
+std::string RspListener::profileDownloadErrorCauseToString(telux::tel::DownloadErrorCause cause) {
     std::string errorCause;
     switch (cause) {
-        case telux::rsp::DownloadErrorCause::GENERIC:
+        case telux::tel::DownloadErrorCause::GENERIC:
             errorCause = "GENERIC";
             break;
-        case telux::rsp::DownloadErrorCause::SIM:
+        case telux::tel::DownloadErrorCause::SIM:
             errorCause = "SIM";
             break;
-        case telux::rsp::DownloadErrorCause::NETWORK:
+        case telux::tel::DownloadErrorCause::NETWORK:
             errorCause = "NETWORK";
             break;
-        case telux::rsp::DownloadErrorCause::MEMORY:
+        case telux::tel::DownloadErrorCause::MEMORY:
             errorCause = "MEMORY";
             break;
         default:
@@ -96,16 +96,16 @@ std::string RspListener::profileDownloadErrorCauseToString(telux::rsp::DownloadE
     return errorCause;
 }
 
-std::string RspListener::pprMaskToString(telux::rsp::PolicyRuleMask mask) {
+std::string RspListener::pprMaskToString(telux::tel::PolicyRuleMask mask) {
     std::string ppr = "UNKNOWN";
     if (
-       mask[(telux::rsp::PolicyRuleType)(telux::rsp::PolicyRuleType::PROFILE_DISABLE_NOT_ALLOWED)]){
+       mask[(telux::tel::PolicyRuleType)(telux::tel::PolicyRuleType::PROFILE_DISABLE_NOT_ALLOWED)]){
         ppr = "Profile disable not allowed";
     }
-    if (mask[(telux::rsp::PolicyRuleType)(telux::rsp::PolicyRuleType::PROFILE_DELETE_NOT_ALLOWED)]){
+    if (mask[(telux::tel::PolicyRuleType)(telux::tel::PolicyRuleType::PROFILE_DELETE_NOT_ALLOWED)]){
         ppr = "Profile delete not allowed";
     }
-    if (mask[(telux::rsp::PolicyRuleType)(telux::rsp::PolicyRuleType::PROFILE_DELETE_ON_DISABLE)]) {
+    if (mask[(telux::tel::PolicyRuleType)(telux::tel::PolicyRuleType::PROFILE_DELETE_ON_DISABLE)]) {
         ppr = "Profile delete on disable";
     }
     return ppr;

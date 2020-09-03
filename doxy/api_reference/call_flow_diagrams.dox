@@ -663,19 +663,21 @@ When reports are no longer required, the app needs to stop the report and de-reg
 
 1. Application requests location factory for location manager object.
 2. Location factory returns ILocationManager object using which application will register or remove a listener.
-3. Application can register a listener for getting notifications for location, satellite vehicle and jammer signal updates.
+3. Application can register a listener for getting notifications for location, satellite vehicle, jammer signal, nmea and measurements updates.
 4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-5. Application starts the detailed reports using startDetailedReports API for getting location, satellite vehicle and jammer signal updates.
+5. Application starts the detailed reports using startDetailedReports API for getting location, satellite vehicle, jammer signal, nmea and measurements updates.
 6. Status of startDetailedReports i.e. either SUCCESS or FAILED will be returned to the application.
 7. The response for startDetailedReports is received by the application.
 8. Application will get location updates like latitude, longitude and altitude etc.
 9. Application will receive satellite vehicle information like SV status and constellation etc.
-10. Application will receive jammer information etc.
-11. Application stops receiving all the reports through stopReports API.
-12. Status of stopReports i.e. either SUCCESS or FAILED will be returned to the application.
-13. The response for stopReports is received by the application.
-14. Application can remove listener and when the number of listeners are zero then location service will get stopped automatically.
-15. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+10. Application will receive nmea information.
+11. Application will receive jammer information etc.
+12. Application will receive measurement information.
+13. Application stops receiving all the reports through stopReports API.
+14. Status of stopReports i.e. either SUCCESS or FAILED will be returned to the application.
+15. The response for stopReports is received by the application.
+16. Application can remove listener and when the number of listeners are zero then location service will get stopped automatically.
+17. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 @subsection location_manager_detailed_engine_reports_callflow Call flow to register/remove listener for generating detailed engine reports
 
@@ -694,19 +696,67 @@ When reports are no longer required, the app needs to stop the report and de-reg
 
 1. Application requests location factory for location manager object.
 2. Location factory returns ILocationManager object using which application will register or remove a listener.
-3. Application can register a listener for getting notifications for location, satellite vehicle and jammer signal updates.
+3. Application can register a listener for getting notifications for location, satellite vehicle and jammer signal, nmea and measurements updates.
 4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-5. Application starts the detailed engine reports using startDetailedEngineReports API for getting location, satellite vehicle and jammer signal updates.
+5. Application starts the detailed engine reports using startDetailedEngineReports API for getting location, satellite vehicle, jammer signal, nmea and measurements updates.
 6. Status of startDetailedReports i.e. either SUCCESS or FAILED will be returned to the application.
 7. The response for startDetailedReports is received by the application.
 8. Application will get location updates like latitude, longitude and altitude etc from the requested engine type(SPE/PPE/Fused).
 9. Application will receive satellite vehicle information like SV status and constellation etc depending on the requested SPE/PPE/Fused engine type.
-10. Application will receive jammer information etc depending on the requested SPE/PPE/Fused engine type.
-11. Application stops receiving all the reports through stopReports API.
-12. Status of stopReports i.e. either SUCCESS or FAILED will be returned to the application.
-13. The response for stopReports is received by the application.
-14. Application can remove listener and when the number of listeners are zero then location service will get stopped automatically.
-15. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+10. Application will receive nmea information depending on the requested SPE/PPE/Fused engine type
+11. Application will receive jammer information etc depending on the requested SPE/PPE/Fused engine type.
+12. Application will receive measurement information etc depending on the requested SPE/PPE/Fused engine type.
+13. Application stops receiving all the reports through stopReports API.
+14. Status of stopReports i.e. either SUCCESS or FAILED will be returned to the application.
+15. The response for stopReports is received by the application.
+16. Application can remove listener and when the number of listeners are zero then location service will be stopped automatically.
+17. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@subsection location_manager_system_info_updates_callflow Call flow to register/remove listener for system info updates
+
+@anchor fig_location_manager_system_info_updates_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_manager_system_info_updates_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to register/remove listener for system info updates}
+  \label{fig_location_manager_system_info_updates_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_manager_system_info_updates_callflow.png,Call flow to register/remove listener for system info updates,80,80,Call flow to register/remove listener for system info updates}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object using which application will register or remove a listener.
+3. Application can register a listener for system information updates with registerForSystemInfoUpdates.
+4. Status of registerForSystemInfoUpdates i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for registerForSystemInfoUpdates is received by the application.
+6. Application will get system information update.
+7. Application can remove listener with deRegisterForSystemInfoUpdates.
+8. Status of deRegisterForSystemInfoUpdates i.e. either SUCCESS or FAILED will be returned to the application.
+9. The response for deRegisterForSystemInfoUpdates is received by the application.
+
+@subsection location_manager_request_energy_consumed_callflow Call flow to request energy consumed information
+
+@anchor fig_location_manager_request_energy_consumed_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_manager_request_energy_consumed_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to request energy consumed information}
+  \label{fig_location_manager_request_energy_consumed_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_manager_request_energy_consumed_callflow.png,Call flow to request energy consumed information,80,80,Call flow to request energy consumed information}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object.
+3. Application can request for energy consumed information with requestEnergyConsumedInfo.
+4. Status of requestEnergyConsumedInfo i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for requestEnergyConsumedInfo is received by the application.
 
 @subsection location_configurator_constraint_tunc_callflow Call flow to enable/disable constraint time uncertainty
 
@@ -833,6 +883,195 @@ When reports are no longer required, the app needs to stop the report and de-reg
 3. Application configures robust location using configureRobustLocation API.
 4. Status of configureRobustLocation i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for configureRobustLocation is received by the application.
+
+@subsection location_configurator_configure_min_gps_week_callflow Call flow to configure min gps week
+
+@anchor fig_location_configurator_configure_min_gps_week_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_min_gps_week_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure min gps week}
+  \label{fig_location_configurator_configure_min_gps_week_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_min_gps_week_callflow.png,Call flow to configure min gps week,80,80,Call flow to configure min gps week}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures min gps week using configureMinGpsWeek API.
+4. Status of configureMinGpsWeek i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureMinGpsWeek is received by the application.
+
+@subsection location_configurator_request_min_gps_week_callflow Call flow to request min gps week
+
+@anchor fig_location_configurator_request_min_gps_week_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_request_min_gps_week_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to request min gps week}
+  \label{fig_location_configurator_request_min_gps_week_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_request_min_gps_week_callflow.png,Call flow to request min gps week,80,80,Call flow to request min gps week}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application requests min gps week using requestMinGpsWeek API.
+4. Status of requestMinGpsWeek i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for requestMinGpsWeek is received by the application.
+
+@subsection location_configurator_delete_aiding_data_warm_callflow Call flow to delete specified data
+
+@anchor fig_location_configurator_delete_aiding_data_warm_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_delete_aiding_data_warm_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to delete specified data}
+  \label{fig_location_configurator_delete_aiding_data_warm_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_delete_aiding_data_warm_callflow.png,Call flow to delete specified data,80,80,Call flow to delete specified data}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application requests delete specified data using deleteAidingData API.
+4. Status of deleteAidingData i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for deleteAidingData is received by the application.
+
+@subsection location_configurator_configure_min_sv_elevation_callflow Call flow to configure min sv elevation
+
+@anchor fig_location_configurator_configure_min_sv_elevation_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_min_sv_elevation_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure min sv elevation}
+  \label{fig_location_configurator_configure_min_sv_elevation_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_min_sv_elevation_callflow.png,Call flow to configure min sv elevation,80,80,Call flow to configure min sv elevation}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures min SV elevation using configureMinSVElevation API.
+4. Status of configureMinSVElevation i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureMinSVElevation is received by the application.
+
+@subsection location_configurator_request_min_sv_elevation_callflow Call flow to request min sv elevation
+
+@anchor fig_location_configurator_request_min_sv_elevation_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_request_min_sv_elevation_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to request min sv elevation}
+  \label{fig_location_configurator_request_min_sv_elevation_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_request_min_sv_elevation_callflow.png,Call flow to request min sv elevation,80,80,Call flow to request min sv elevation}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application requests min SV elevation using requestMinSVElevation API.
+4. Status of requestMinSVElevation i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for requestMinSVElevation is received by the application.
+
+@subsection location_configurator_request_robust_location_callflow Call flow to request robust location
+
+@anchor fig_location_configurator_request_robust_location_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_request_robust_location_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to request robust location}
+  \label{fig_location_configurator_request_robust_location_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_request_robust_location_callflow.png,Call flow to request robust location,80,80,Call flow to request robust location}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application requests robust location using requestRobustLocation API.
+4. Status of requestRobustLocation i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for requestRobustLocation is received by the application.
+
+@subsection location_configurator_configure_dr_engine_callflow Call flow to configure dead reckoning engine
+
+@anchor fig_location_configurator_configure_dr_engine_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_dr_engine_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure dead reckoning engine}
+  \label{fig_location_configurator_configure_dr_engine_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_dr_engine_callflow.png,Call flow to configure dead reckoning engine,80,80,Call flow to configure dead reckoning engine}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures dead reckoning engine using configureDR API.
+4. Status of configureDR i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureDR is received by the application.
+
+@subsection location_configurator_configure_secondary_band_callflow Call flow to configure secondary band
+
+@anchor fig_location_configurator_configure_secondary_band_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_secondary_band_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure secondary band}
+  \label{fig_location_configurator_configure_secondary_band_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_secondary_band_callflow.png,Call flow to configure secondary band,80,80,Call flow to configure secondary band}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures secondary band using configureSecondaryBand API.
+4. Status of configureSecondaryBand i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureSecondaryBand is received by the application.
+
+@subsection location_configurator_request_secondary_band_callflow Call flow to request secondary band
+
+@anchor fig_location_configurator_request_secondary_band_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_request_secondary_band_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to request secondary band}
+  \label{fig_location_configurator_request_secondary_band_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_request_secondary_band_callflow.png,Call flow to request secondary band,80,80,Call flow to request secondary band}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application requests secondary band using requestSecondaryBandConfig API.
+4. Status of requestSecondaryBandConfig i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for requestSecondaryBandConfig is received by the application.
 
 @section data_call_flow Data Services
 

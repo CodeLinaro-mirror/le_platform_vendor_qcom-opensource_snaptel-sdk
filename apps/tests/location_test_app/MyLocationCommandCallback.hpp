@@ -39,6 +39,7 @@ public:
    void commandResponse(telux::common::ErrorCode error);
    void onGnssEnergyConsumedInfo(telux::loc::GnssEnergyConsumedInfo gnssEnergyConsumed,
        telux::common::ErrorCode error);
+   void onGetYearOfHwInfo(uint16_t yearOfHw, telux::common::ErrorCode error);
    void onMinGpsWeekInfo(uint16_t minGpsWeek, telux::common::ErrorCode error);
    void onMinSVElevationInfo(uint8_t minSVElevation, telux::common::ErrorCode error);
    void onRobustLocationInfo(const telux::loc::RobustLocationConfiguration rLConfig,

@@ -82,6 +82,21 @@ public:
      energyConsumed, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to getYearOfHw API.
+ *
+ * @param[in] yearOfHw - Year of hardware information.
+ *
+ * @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ *
+ */
+  using GetYearOfHwCallback = std::function<void(uint16_t yearOfHw,
+      telux::common::ErrorCode error)>;
+
+/**
  * Checks the status of location subsystems and returns the result.
  *
  * @returns True if location subsystem is ready for service otherwise false.
@@ -297,6 +312,20 @@ public:
  */
   virtual telux::common::Status
       stopReports(telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API retrieves the year of hardware information.
+ *
+ * @param[in] cb - callback to get information of year of hardware.
+ *
+ * @returns Status of getYearOfHw i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status getYearOfHw(GetYearOfHwCallback cb) = 0;
+
 
 /**
  * Destructor of ILocationManager

@@ -135,7 +135,9 @@ public:
     /**
      * Changes the Data Powersave filter mode and auto exit feature.
      *
-     * This API enables or disables the powersave filtering mode of the packet data session..
+     * This API enables or disables the powersave filtering mode of the running packet data
+     * session. If a data connection is torn down and brought up again, then previous filter
+     * mode setting does not persist for that data call session, and requires to be enabled again.
      *
      * @param [in] mode - Enable or disable the powersave filtering mode.
      * @param [in] callback - Optional callback to get the response for the change in filter mode.
@@ -143,7 +145,7 @@ public:
      *                         the profile id, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its profile id can be specified as input.
-     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType. If user does not specify
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType.If user does not specify
      *                         the ip family type, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its ip family type can be specified as input.

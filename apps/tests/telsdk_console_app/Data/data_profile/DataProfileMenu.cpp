@@ -39,6 +39,7 @@ extern "C" {
 #include "../../../../common/utils/Utils.hpp"
 
 #include "DataProfileMenu.hpp"
+#include "../DataUtils.hpp"
 
 using namespace std;
 
@@ -223,9 +224,7 @@ void DataProfileMenu::requestProfileList(std::vector<std::string> inputCommand) 
     std::cout << "\nRequest Profile List" << std::endl;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     telux::common::Status status =
@@ -243,9 +242,7 @@ void DataProfileMenu::createProfile(std::vector<std::string> inputCommand) {
     std::cout << "\nCreate Profile Request" << std::endl;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
     getProfileParamsFromUser();
 
@@ -270,6 +267,11 @@ void DataProfileMenu::deleteProfile(std::vector<std::string> inputCommand) {
         std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
         return;
     }
+    if (slotId != SLOT_ID_1 && slotId != SLOT_ID_2) {
+        std::cout << "Invalid slot id"  << std::endl;
+        std::cin.get();
+        return;
+    }
     std::cout << "\nDeleting Profile " << profileId << " on slotId " << slotId << std::endl;
     telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
     if (techPrefId == 0) {
@@ -291,9 +293,7 @@ void DataProfileMenu::modifyProfile(std::vector<std::string> inputCommand) {
     std::cout << "\nModify Profile Request" << std::endl;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     int profileId;
@@ -317,9 +317,7 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     std::cout << "\nQuery Profile Request" << std::endl;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     char delimiter = '\n';
@@ -382,6 +380,11 @@ void DataProfileMenu::requestProfileById(std::vector<std::string> inputCommand) 
         techPrefId = std::stoi(inputCommand[3]);
     } catch (const std::exception &e) {
         std::cout << "ERROR: Invalid input, please enter numerical values " << std::endl;
+        return;
+    }
+    if (slotId != SLOT_ID_1 && slotId != SLOT_ID_2) {
+        std::cout << "Invalid slot id"  << std::endl;
+        std::cin.get();
         return;
     }
 

@@ -258,9 +258,7 @@ void VlanMenu::bindWithProfile(std::vector<std::string> inputCommand) {
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -305,9 +303,7 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -352,9 +348,7 @@ void VlanMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";

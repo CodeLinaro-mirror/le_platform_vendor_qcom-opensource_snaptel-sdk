@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -60,6 +60,31 @@ void Utils::validateNumericString(std::string &input) {
          invalidChar = false;
       }
    } while(invalidChar);
+}
+
+int Utils::getValidSlotId() {
+
+   int slotId = DEFAULT_SLOT_ID;
+   bool valid = true;
+   std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
+   std::cin >> slotId;
+   do {
+      Utils::validateInput(slotId);
+      if (slotId != SLOT_ID_1 && slotId != SLOT_ID_2) {
+         // If an error occurs then an error flag is set and future attempts to get
+         // input will fail. Cear the error flag on cin.
+         std::cin.clear();
+         // Extracts characters from the previous input sequence and discards them,
+         // until entire stream have been extracted, or one compares equal to newline.
+         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+         std::cout << "ERROR: Invalid Slot Id, re-enter Slot Id (1-Primary, 2-Secondary): ";
+         std::cin >> slotId;
+         valid = false;
+      } else {
+         valid = true;
+      }
+   } while(!valid);
+   return slotId;
 }
 
 std::map<telux::common::ErrorCode, std::string> errorCodeToStringMap_ = {

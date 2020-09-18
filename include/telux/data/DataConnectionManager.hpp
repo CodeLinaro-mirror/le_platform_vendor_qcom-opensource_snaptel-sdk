@@ -58,6 +58,14 @@ class IDataConnectionListener;
 class IDataCall;
 
 /**
+ * IP Family related Info
+ */
+struct IpFamilyInfo {
+    DataCallStatus status;
+    IpAddrInfo addr;
+};
+
+/**
  * This function is called with the response to startDataCall / stopDataCall API.
  *
  * The callback can be invoked from multiple different threads.
@@ -97,6 +105,20 @@ using StatisticsResponseCb
  */
 using DataCallListResponseCb = std::function<void(
     const std::vector<std::shared_ptr<IDataCall>> &dataCallList, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to getDefaultProfile API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] profileId       Current default profile id
+ * @param [in] slotId          Slot id that contains current default profile id
+ * @param [in] error           Return code for whether the operation
+ *                             succeeded or failed
+ */
+using DefaultProfileIdResponseCb
+    = std::function<void(int profileId, SlotId slotId, telux::common::ErrorCode error)>;
 
 /** @addtogroup telematics_data
  * @{ */
@@ -143,6 +165,19 @@ class IDataConnectionManager {
     */
    virtual telux::common::Status setDefaultProfile(OperationType oprType, uint8_t profileId,
        telux::common::ResponseCallback callback = nullptr)  = 0;
+
+   /**
+    * Get current default profile to which associated network traffic is routed through bridge 0
+    * and default system routes.
+    *
+    * @param [in] callback          callback to get the response getDefaultProfile
+    *
+    * @returns Immediate status of getDefaultProfile i.e. success or suitable status.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
+    */
+   virtual telux::common::Status getDefaultProfile(DefaultProfileIdResponseCb callback)  = 0;
 
     /**
      * Starts a data call corresponding to default or specified profile identifier.
@@ -291,6 +326,22 @@ class IDataCall {
      *
      */
     virtual DataCallStatus getDataCallStatus() = 0;
+
+    /**
+     * Get IPv4 Family info like connected, disconnected and IP address changes.
+     *
+     * @returns @ref IpFamilyInfo.
+     *
+     */
+    virtual IpFamilyInfo getIpv4Info() = 0;
+
+    /**
+     * Get IPv6 Family info like connected, disconnected and IP address changes.
+     *
+     * @returns @ref IpFamilyInfo.
+     *
+     */
+    virtual IpFamilyInfo getIpv6Info() = 0;
 
     /**
      * Get the technology on which the call was brought up.

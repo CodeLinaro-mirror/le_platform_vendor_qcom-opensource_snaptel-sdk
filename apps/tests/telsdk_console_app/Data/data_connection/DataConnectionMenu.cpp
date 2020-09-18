@@ -84,9 +84,13 @@ bool DataConnectionMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "6", "set_default_profile", {}, std::bind(
             &DataConnectionMenu::setDefaultProfile, this)));
+    std::shared_ptr<ConsoleAppCommand> getDefaultProfile
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "7", "get_default_profile", {}, std::bind(
+            &DataConnectionMenu::getDefaultProfile, this)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
-        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile};
+        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile, getDefaultProfile};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -167,11 +171,9 @@ void DataConnectionMenu::startDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStart data call" << std::endl;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     int profileId;
     std::cout << "Enter Profile Id : ";
     std::cin >> profileId;
@@ -198,12 +200,10 @@ void DataConnectionMenu::startDataCall(std::vector<std::string> inputCommand) {
 
 void DataConnectionMenu::stopDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStop data call" << std::endl;
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     int profileId;
@@ -234,9 +234,7 @@ void DataConnectionMenu::requestDataCallStatistics(std::vector<std::string> inpu
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     int profileId;
@@ -259,9 +257,7 @@ void DataConnectionMenu::resetDataCallStatistics(std::vector<std::string> inputC
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     int profileId;
@@ -279,7 +275,7 @@ void DataConnectionMenu::resetDataCallStatistics(std::vector<std::string> inputC
 
 void DataConnectionMenu::requestDataCallList(OperationType operationType,
     SlotId slotId, DataCallListResponseCb cb) {
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     if (dataConnectionManagerMap_[slotId]) {
         telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
         retStat = dataConnectionManagerMap_[slotId]->requestDataCallList(opType,cb);
@@ -288,12 +284,10 @@ void DataConnectionMenu::requestDataCallList(OperationType operationType,
 
 void DataConnectionMenu::requestDataCallList() {
     std::cout << "\nRequest DataCall List" << std::endl;
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     int operationType;
@@ -309,12 +303,10 @@ void DataConnectionMenu::requestDataCallList() {
 
 void DataConnectionMenu::setDefaultProfile() {
     std::cout << "\nSet Default Profile" << std::endl;
-    telux::common::Status retStat;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     int operationType;
@@ -340,5 +332,29 @@ void DataConnectionMenu::setDefaultProfile() {
 
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->setDefaultProfile(
         opType, profileId, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::getDefaultProfile() {
+    std::cout << "\nGet Default Profile" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    SlotId slotId = DEFAULT_SLOT_ID;
+    int profileId;
+
+    // Callback
+    auto respCb = [](int profileId, SlotId slotId, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "GetDefaultProfile Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Slot Id: " << slotId << endl
+                      << "Profile Id: " << profileId << endl;
+        }
+    };
+
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->getDefaultProfile(respCb);
     Utils::printStatus(retStat);
 }

@@ -293,6 +293,7 @@ void AudioHelper::getUserMuteStatusInput(StreamMute &mute) {
             std::stringstream inputStream(userInput);
             if(inputStream >> muteStatus) {
                 if(muteStatus == 0 || muteStatus == 1) {
+                    mute.enable = muteStatus;
                     break;
                 } else {
                     std::cout << "Invalid Input" << std::endl;

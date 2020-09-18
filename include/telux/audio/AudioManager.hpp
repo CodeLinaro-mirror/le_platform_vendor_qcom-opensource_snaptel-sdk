@@ -479,7 +479,9 @@ public:
    virtual telux::common::Status stopAudio(telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Plays in-band DTMF tone on the active voice stream
+    * Plays in-band DTMF tone on the active voice stream. This API supports DTMF tone playback on
+    * local device on the RX path, for playing DTMF on the TX path so that it is heard on far end
+    * use @ref telux::tel::ICall::startDtmfTone API.
     *
     * @param [in] dtmfTone     DTMF tone properties
     *        [in] duration     Duration (in milliseconds) for which the tone needs to be played. The

@@ -68,6 +68,9 @@ private:
    void simCardMenu(std::vector<std::string> userInput);
    void dataMenu(std::vector<std::string> userInput);
    void multiSimMenu(std::vector<std::string> userInput);
+   void cellbroadcastMenu(std::vector<std::string> userInput);
+   void rspMenu(std::vector<std::string> userInput);
+
 };
 
 #endif  // TELSDKCONSOLEAPP_HPP

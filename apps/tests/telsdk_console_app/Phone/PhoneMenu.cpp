@@ -112,7 +112,6 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
 
       mySignalStrengthCb_ = std::make_shared<MySignalStrengthCallback>();
       myVoiceRadioTechCb_ = std::make_shared<MyVoiceRadioTechnologyCallback>();
-      myRadioPowerCb_ = std::make_shared<MyRadioPowerCallback>();
       myVoiceSrvStateCb_ = std::make_shared<MyVoiceServiceStateCallback>();
       myCellularCapabilityCb_ = std::make_shared<MyCellularCapabilityCallback>();
       myGetOperatingModeCb_ = std::make_shared<MyGetOperatingModeCallback>();
@@ -133,66 +132,58 @@ void PhoneMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Get_signal_strength", {},
          std::bind(&PhoneMenu::requestSignalStrength, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> setRadioPowerCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("2", "Set_radio_power", {},
-                        std::bind(&PhoneMenu::setRadioPower, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getRadioStateCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("3", "Get_radio_state", {},
-                        std::bind(&PhoneMenu::getRadioState, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestRadioTechnologyCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Request_radio_technology", {},
+         "2", "Request_radio_technology", {},
          std::bind(&PhoneMenu::requestRadioTechnology, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestVoiceServiceStateCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Request_voice_service_state", {},
+         "3", "Request_voice_service_state", {},
          std::bind(&PhoneMenu::requestVoiceServiceState, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> requestCellularCapabilitiesCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "6", "Request_cellular_capabilities", {},
+         "4", "Request_cellular_capabilities", {},
          std::bind(&PhoneMenu::requestCellularCapabilities, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> getSubscriptionCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("7", "Get_subscription", {},
+      ConsoleAppCommand("5", "Get_subscription", {},
                         std::bind(&PhoneMenu::getSubscription, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("8", "Get_operating_mode", {},
+      ConsoleAppCommand("6", "Get_operating_mode", {},
                         std::bind(&PhoneMenu::getOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("9", "Set_operating_mode", {},
+      ConsoleAppCommand("7", "Set_operating_mode", {},
                         std::bind(&PhoneMenu::setOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestCellInfoListCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "10", "Request_cell_info_list", {},
+         "8", "Request_cell_info_list", {},
          std::bind(&PhoneMenu::requestCellInfoList, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setCellInfoListRateCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "11", "Set_cell_info_list_rate", {},
+         "9", "Set_cell_info_list_rate", {},
          std::bind(&PhoneMenu::setCellInfoListRate, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> networkMenuCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("12", "Network_Selection", {},
+      ConsoleAppCommand("10", "Network_Selection", {},
                         std::bind(&PhoneMenu::networkMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> servingSystemMenuCommand
       = std::make_shared<ConsoleAppCommand>(
-         ConsoleAppCommand("13", "Serving_System", {},
+         ConsoleAppCommand("11", "Serving_System", {},
                            std::bind(&PhoneMenu::servingSystemMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setECallOperatingModeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "14", "Set_eCall_operating_mode", {},
+         "12", "Set_eCall_operating_mode", {},
          std::bind(&PhoneMenu::setECallOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestECallOperatingModeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "15", "Request_eCall_operating_mode", {},
+         "13", "Request_eCall_operating_mode", {},
          std::bind(&PhoneMenu::requestECallOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("16", "Select_sim_slot", {},
+      ConsoleAppCommand("14", "Select_sim_slot", {},
                         std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
-         setRadioPowerCommand,
-         getRadioStateCommand,
          requestRadioTechnologyCommand,
          requestVoiceServiceStateCommand,
          requestCellularCapabilitiesCommand,
@@ -225,34 +216,6 @@ void PhoneMenu::requestSignalStrength(std::vector<std::string> userInput) {
    } else {
       std::cout << "No default phone found" << std::endl;
    }
-}
-
-void PhoneMenu::getRadioState(std::vector<std::string> userInput) {
-   auto phone = phones_[slot_ - 1];
-   if(phone) {
-      auto radioState = phone->getRadioState();
-      std::cout << "RadioState is " << getRadioStateAsString(radioState) << std::endl;
-   } else {
-      std::cout << "No default phone found" << std::endl;
-   }
-}
-
-std::string PhoneMenu::getRadioStateAsString(telux::tel::RadioState radioState) {
-   std::string radioStateString = "";
-   switch(radioState) {
-      case telux::tel::RadioState::RADIO_STATE_OFF:
-         radioStateString = "Off";
-         break;
-      case telux::tel::RadioState::RADIO_STATE_UNAVAILABLE:
-         radioStateString = "Unavailable";
-         break;
-      case telux::tel::RadioState::RADIO_STATE_ON:
-         radioStateString = "On";
-         break;
-      default:
-         break;
-   }
-   return radioStateString;
 }
 
 std::string PhoneMenu::getServiceStateAsString(telux::tel::ServiceState serviceState) {
@@ -318,28 +281,6 @@ void PhoneMenu::getSubscription(std::vector<std::string> userInput) {
                 << "\nImsi : " << subscription->getImsi() << std::endl;
    } else {
       std::cout << "Subscription is empty" << std::endl;
-   }
-}
-
-void PhoneMenu::setRadioPower(std::vector<std::string> userInput) {
-   auto phone = phones_[slot_ - 1];
-   if(phone) {
-      int radioPowerFlag;
-      std::cout << "Enter radio power (1 - On, 0 - Off): ";
-      std::cin >> radioPowerFlag;
-      Utils::validateInput(radioPowerFlag);
-      if(radioPowerFlag == 1) {
-         std::cout << "Turning Radio Power On" << std::endl;
-         phone->setRadioPower(true, myRadioPowerCb_);
-      } else if(radioPowerFlag == 0) {
-         std::cout << "Turning Radio Power Off" << std::endl;
-         phone->setRadioPower(false, myRadioPowerCb_);
-      } else {
-         std::cout << " Invalid input " << std::endl;
-      }
-      radioPowerFlag = -1;
-   } else {
-      std::cout << "No default phone found" << std::endl;
    }
 }
 

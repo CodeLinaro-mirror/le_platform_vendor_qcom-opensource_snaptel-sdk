@@ -242,6 +242,17 @@ public:
     virtual telux::common::Status updateConfiguration(const std::string & configFilePath,
                                                       UpdateConfigurationCallback cb) = 0;
 
+    /**
+     * Set RF peak cv2x transmit power.
+     * This affects the power for all existing flows and for any flow created int the future
+     *
+     * @param [in] txPower - Desired global Cv2x peak tx power in dbm
+     * @param [in] cb      - Callback that is invoked when Cv2x peak tx power is set
+     *
+     * @returns SUCCESS on success. Error status otherwise.
+     */
+    virtual telux::common::Status setPeakTxPower(int8_t txPower, common::ResponseCallback cb) = 0;
+
     virtual ~ICv2xRadioManager() {}
 };
 

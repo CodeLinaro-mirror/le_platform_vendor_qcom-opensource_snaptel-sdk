@@ -244,6 +244,10 @@ int LocationMenu::init() {
       ConsoleAppCommand("27", "Request secondary band constellation", {}, std::bind(
                         &LocationMenu::requestSecondaryBand, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> getYearOfHw = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("28", "Request year of hardware information", {}, std::bind(
+                        &LocationMenu::getYearOfHw, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -252,7 +256,7 @@ int LocationMenu::init() {
          dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
          configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
          configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
-         configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand};
+         configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -925,7 +929,7 @@ void LocationMenu::configureSecondaryBand(std::vector<std::string> userInput) {
               constellationSet.insert(telux::loc::GnssConstellationType::BDS);
           } else if (opt == 7) {
               constellationSet.insert(telux::loc::GnssConstellationType::QZSS);
-          } else if (opt == 8){
+          } else if (opt == 8) {
               constellationSet.insert(telux::loc::GnssConstellationType::NAVIC);
           } else {
               std::cout << "Ignoring option as not supported: " << opt << std::endl;
@@ -1027,6 +1031,15 @@ void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput)
       &MyLocationCommandCallback::onGnssEnergyConsumedInfo, myLocCmdResponseCb_,
           std::placeholders::_1, std::placeholders::_2);
    locationManager_->requestEnergyConsumedInfo(gnssEnergyConsumedCb);
+}
+
+void LocationMenu::getYearOfHw(std::vector<std::string> userInput) {
+  myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+      "Request year of hardware info");
+  auto getYearOfHwCb = std::bind(
+      &MyLocationCommandCallback::onGetYearOfHwInfo, myLocCmdResponseCb_,
+          std::placeholders::_1, std::placeholders::_2);
+  locationManager_->getYearOfHw(getYearOfHwCb);
 }
 
 void LocationMenu::configureMinGpsWeek(std::vector<std::string> userInput) {

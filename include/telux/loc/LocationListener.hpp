@@ -69,7 +69,9 @@ class ILocationListener {
 public:
 
 /**
- * This function is called when device receives location update.
+ * This function is called when device receives location update. When there are
+ * multiple engines running on the system, the received location information is
+ * fused report from all engines.
  *
  * @param [in] locationInfo - Location information  like latitude, longitude,
  * timeInfo other information such as heading, altitude and velocity etc.
@@ -79,7 +81,9 @@ public:
       const std::shared_ptr<ILocationInfoBase> &locationInfo) {}
 
 /**
- * This function is called when device receives Gnss location update.
+ * This function is called when device receives Gnss location update. When there
+ * are multiple engines running on the system, the received location information
+ * is fused report from all engines.
  *
  * @param [in] locationInfo - Contains richer set of location information
  * like latitude, longitude, timeInfo, heading, altitude, velocity and other

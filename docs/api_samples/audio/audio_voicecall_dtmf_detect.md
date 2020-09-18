@@ -18,11 +18,15 @@ Please follow the below steps to detect DTMF tones in an active voice call. Note
 
 ### 3. Wait for the Audio subsystem to be initialized and ready ###
    ~~~~~~{.cpp}
-    bool isReady = audioManager->isSubsystemReady();
-    if(!isReady) {
-        std::cout << "Audio subsystem is not ready, waiting for it to be ready " << std::endl;
-        std::future<bool> f = audioManager->onSubsystemReady();
-        isReady = f.get();
+    if (audioManager) {
+        bool isReady = audioManager->isSubsystemReady();
+        if (!isReady) {
+            std::cout << "Audio subsystem is not ready, waiting for it to be ready " << std::endl;
+            std::future<bool> f = audioManager->onSubsystemReady();
+            isReady = f.get();
+        }
+    } else {
+        std::cout << "Invalid Audio manager" << std::endl;
     }
    ~~~~~~
 

@@ -53,6 +53,8 @@ extern "C" {
 #include "Data/DataMenu.hpp"
 #include "SimCardServices/SimCardServicesMenu.hpp"
 #include "MultiSim/MultiSimMenu.hpp"
+#include "Cellbroadcast/CellbroadcastMenu.hpp"
+#include "Rsp/RspMenu.hpp"
 #include "../../common/utils/Utils.hpp"
 
 #include "TelSdkConsoleApp.hpp"
@@ -89,14 +91,20 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> multiSimMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "MultiSim", {},
         std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> cbMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "CellBroadcast", {},
+            std::bind(&TelSdkConsoleApp::cellbroadcastMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> rspMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "9", "Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::rspMenu, this,
+               std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand, multiSimMenuCommand};
+             dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand};
 
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
     AudioClient &audioClient_ = AudioClient::getInstance();
-
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();
 }
@@ -155,6 +163,19 @@ void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
     TelSdkConsoleApp::displayMenu();
 }
 
+void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
+    CellbroadcastMenu cbMenu("Cellbroadcast Menu", "cb> ");
+    cbMenu.init();
+    cbMenu.mainLoop();
+}
+
+void TelSdkConsoleApp::rspMenu(std::vector<std::string> userInput) {
+    RemoteSimProfileMenu rspMenu("Sim Profile Management Menu", "sim_profile_management> ");
+    rspMenu.init();
+    rspMenu.mainLoop();
+    TelSdkConsoleApp::displayMenu();
+}
+
 void TelSdkConsoleApp::displayMenu() {
     ConsoleApp::displayMenu();
 }
@@ -191,7 +212,7 @@ int main(int argc, char **argv) {
                           + std::to_string(sdkVersion.patch);
     setupSignal();
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "radio"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

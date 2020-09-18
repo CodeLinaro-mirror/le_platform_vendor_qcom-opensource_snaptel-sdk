@@ -111,9 +111,7 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
 
     int profileId;
@@ -169,11 +167,8 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
-
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
@@ -228,9 +223,7 @@ void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
     std::cout << "List Static NAT entries\n";
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        std::cout << "Enter Slot Id (1-Primary, 2-Secondary): ";
-        std::cin >> slotId;
-        Utils::validateInput(slotId);
+        slotId = Utils::getValidSlotId();
     }
     int profileId;
     std::cout << "Enter Profile Id: ";

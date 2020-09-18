@@ -66,6 +66,13 @@ void MyLocationListener::printSbasCorrectionEx(
    if(correction[(telux::loc::SbasCorrectionType)telux::loc::SBAS_CORRECTION_PPP]) {
       std::cout << "SBAS PPP correction information is used" << std::endl;
    }
+   if(correction[(telux::loc::SbasCorrectionType)telux::loc::SBAS_CORRECTION_RTK_FIXED]) {
+      std::cout << "SBAS RTK fixed correction information is used" << std::endl;
+   }
+   if(correction[(telux::loc::SbasCorrectionType)
+       telux::loc::SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_]) {
+      std::cout << "SBAS PPP correction information is used" << std::endl;
+   }
 }
 
 void MyLocationListener::printLocationExValidity(
@@ -157,6 +164,15 @@ void MyLocationListener::printLocationExValidity(
     }
     if((validityMask & telux::loc::HAS_OUTPUT_ENG_MASK)) {
       std::cout << "valid output engine mask" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_CONFORMITY_INDEX_FIX)) {
+      std::cout << "valid conformity index" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_LLA_VRP_BASED)) {
+      std::cout << "valid lla vrp based" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_ENU_VELOCITY_VRP_BASED)) {
+      std::cout << "valid enu velocity vrp based" << std::endl;
     }
 
 }
@@ -330,6 +346,7 @@ void MyLocationListener::printSvUsedInPosition(
    std::cout << "SVs from BEIDOU constellation " << svUsedInPosition.bds
      << std::endl;
    std::cout << "SVs from QZSS constellation " << svUsedInPosition.qzss << std::endl;
+   std::cout << "SVs from NAVIC constellation " << svUsedInPosition.navic << std::endl;
 }
 
 void MyLocationListener::printGnssSystemTime(
@@ -394,6 +411,14 @@ void MyLocationListener::printGnssSystemTime(
       std::cout << " System num clock reset valid: " << timeInfo.numClockResets << std::endl;
    } else if(system == telux::loc::GnssSystem::GNSS_LOC_SV_SYSTEM_NAVIC) {
       std::cout << "NAVIC satellite is valid" << std::endl;
+      telux::loc::TimeInfo timeInfo = sysTimeInfo.navic;
+      std::cout << "Validity mask: " << timeInfo.validityMask;
+      std::cout << " System time week: " << timeInfo.systemWeek;
+      std::cout << " System time week ms: " << timeInfo.systemMsec;
+      std::cout << " System clk time: " << timeInfo.systemClkTimeBias;
+      std::cout << " System clk time uncertainty valid: " << timeInfo.systemClkTimeUncMs;
+      std::cout << " System reference valid: " << timeInfo.refFCount;
+      std::cout << " System num clock reset valid: " << timeInfo.numClockResets << std::endl;
    } else {
       std::cout << "UNKNOWN satellite" << std::endl;
    }
@@ -434,6 +459,30 @@ void MyLocationListener::printLocationPositionDynamics(
    if((kinematicDataValidity & telux::loc::HAS_PITCH_UNC)) {
       std::cout << "Navigation data has Body pitch Uncertainty" << std::endl;
    }
+   if((kinematicDataValidity & telux::loc::HAS_PITCH_RATE_BIT)) {
+      std::cout << "Navigation data has pitch rate" << std::endl;
+   }
+   if((kinematicDataValidity & telux::loc::HAS_PITCH_RATE_UNC_BIT)) {
+      std::cout << "Navigation data has pitch rate uncertainty" << std::endl;
+   }
+   if((kinematicDataValidity & telux::loc::HAS_ROLL_BIT)) {
+      std::cout << "Navigation data has roll" << std::endl;
+   }
+   if((kinematicDataValidity & telux::loc::HAS_ROLL_UNC_BIT)) {
+      std::cout << "Navigation data has roll Uncertainty" << std::endl;
+   }
+   if((kinematicDataValidity & telux::loc::HAS_ROLL_RATE_BIT)) {
+      std::cout << "Navigation data has roll rate" << std::endl;
+   }
+   if((kinematicDataValidity & telux::loc::HAS_ROLL_RATE_UNC_BIT)) {
+      std::cout << "Navigation data has roll rate Uncertainty" << std::endl;
+   }
+   if((kinematicDataValidity & telux::loc::HAS_YAW_BIT)) {
+      std::cout << "Navigation data has yaw" << std::endl;
+   }
+   if((kinematicDataValidity & telux::loc::HAS_YAW_UNC_BIT)) {
+      std::cout << "Navigation data has yaw Uncertainty" << std::endl;
+   }
    std::cout << "Forward Acceleration in body frame (m/s2): " << posDynamics_.longAccel;
    std::cout << " Sideward Acceleration in body frame (m/s2): " << posDynamics_.latAccel;
    std::cout << " Vertical Acceleration in body frame (m/s2): " << posDynamics_.vertAccel
@@ -446,7 +495,15 @@ void MyLocationListener::printLocationPositionDynamics(
    std::cout << " Uncertainty of Vertical Acceleration in body frame: " <<
              posDynamics_.vertAccelUnc;
    std::cout << " Uncertainty of Heading Rate: " << posDynamics_.yawRateUnc;
-   std::cout << " Uncertainty of Body pitch: " << posDynamics_.pitchUnc << std::endl;
+   std::cout << " Uncertainty of Body pitch: " << posDynamics_.pitchUnc;
+   std::cout << " Body pitch rate: " << posDynamics_.pitchRate;
+   std::cout << " Uncertainty of pitch rate: " << posDynamics_.pitchRateUnc;
+   std::cout << " Roll of body frame, clockwise is positive: " << posDynamics_.roll;
+   std::cout << " Uncertainty of roll, 68% confidence level: " << posDynamics_.rollUnc;
+   std::cout << " Roll rate of body frame, clockwise is positive: " << posDynamics_.rollRate;
+   std::cout << " Uncertainty of roll rate, 68% confidence level: " << posDynamics_.rollRateUnc;
+   std::cout << " Yaw of body frame, clockwise is positive: " << posDynamics_.yaw;
+   std::cout << " Uncertainty of yaw, 68% confidence level: " << posDynamics_.yawUnc << std::endl;
 }
 
 void MyLocationListener::printLocationPositionTech(
@@ -808,6 +865,20 @@ void MyLocationListener::printMeasurementsMultipathIndicator(
   }
 }
 
+void MyLocationListener::printLLAVRPBasedInfo(telux::loc::LLAInfo llaInfo) {
+  std::cout << "LLAVRPBased Information :" << std::endl;
+  std::cout << " Latitude : " << llaInfo.latitude << std::endl;
+  std::cout << " Longitude : " << llaInfo.longitude << std::endl;
+  std::cout << " Altitude : " << llaInfo.altitude << std::endl;
+}
+
+void MyLocationListener::printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased) {
+  std::cout << "East, North, Up Velocity VRP based :" << std::endl;
+  std::cout << " East velocity : " << enuVelocityVRPBased[0] << std::endl;
+  std::cout << " North velocity : " << enuVelocityVRPBased[1] << std::endl;
+  std::cout << " Up velocity : " << enuVelocityVRPBased[2] << std::endl;
+}
+
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -946,8 +1017,9 @@ void MyLocationListener::onDetailedLocationUpdate(
    printCalibrationStatus(locationInfo);
    printLocOutputEngineType(locationInfo);
    printLocOutputEngineMask(locationInfo);
-   std::cout << " Conformity index : " << locationInfo->getConformityIndex() << std::endl;
-
+   std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
+   printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
+   printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -965,6 +1037,8 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
     std::cout << std::endl;
     for (auto locationInfo : locationEngineInfo) {
       std::cout << "For Engine[ " << ++engReportCount << " ]" << std::endl;
+      printLocationValidity(locationInfo->getLocationInfoValidity());
+      printLocationExValidity(locationInfo->getLocationInfoExValidity());
       if(locationInfo->getTimeStamp() != telux::loc::UNKNOWN_TIMESTAMP) {
         time_t realtime;
         realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
@@ -1054,7 +1128,9 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      printCalibrationStatus(locationInfo);
      printLocOutputEngineType(locationInfo);
      printLocOutputEngineMask(locationInfo);
-     std::cout << " Conformity index : " << locationInfo->getConformityIndex() << std::endl;
+     std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
+     printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
+     printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
      std::cout << "*************************************************************" << std::endl;
     }
 }

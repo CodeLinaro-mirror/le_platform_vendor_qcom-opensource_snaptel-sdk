@@ -69,6 +69,7 @@ public:
     void resetDataCallStatistics(std::vector<std::string> inputCommand);
     void requestDataCallList();
     void setDefaultProfile();
+    void getDefaultProfile();
 
     DataConnectionMenu(std::string appName, std::string cursor);
     ~DataConnectionMenu();

@@ -58,7 +58,11 @@ class IPhone;
 class ICall {
 public:
    /**
-    * Allows the client to answer the call. This is only applicable for CallDirection::INCOMING.
+    * Allows the client to answer the call. This is only applicable for CallState::INCOMING and
+    * CallState::WAITING calls.
+    * If a Waiting call is being answered and the existing call is Active, then existing call
+    * will move to Hold state.If the existing call is on Hold already, then it will remain on Hold.
+    * The waiting call state transition from Waiting to Active.
     *
     * @param [in] callback - optional callback pointer to get the response of answer request
     * below are possible error codes for callback response
@@ -124,7 +128,8 @@ public:
       = 0;
 
    /**
-    * Reject the incoming call. Only applicable for CallDirection::INCOMING.
+    * Reject the incoming/waiting call. Only applicable for CallState::INCOMING and
+    * CallState::WAITING calls.
     *
     * @param [in] callback - optional callback pointer to get the response of reject request
     * below are possible error codes for callback response
@@ -146,7 +151,8 @@ public:
       = 0;
 
    /**
-    * Reject the call and  send an SMS to caller. Only applicable for CallDirection::INCOMING.
+    * Reject the call and  send an SMS to caller. Only applicable for CallState::INCOMING
+    * and CallState::WAITING calls.
     *
     * @param [in] rejectSMS SMS string used to send in response to a call rejection.
     * @param [in] callback - optional callback pointer to get the response of rejectwithSMS request
@@ -170,7 +176,7 @@ public:
       = 0;
 
    /**
-    * Hang up the active call.
+    * Hangup the call if the call state is either active, hold, dialing, waiting or alerting.
     *
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
@@ -192,9 +198,10 @@ public:
       = 0;
 
    /**
-    * Play a DTMF tone and stop it.
-    * The interval for which the tone is played is dependent on the system implementation.
-    * If continuous DTMF tone is playing, it will be stopped.
+    * Play a DTMF tone and stop it. The interval for which the tone is played is dependent on the
+    * system implementation. If continuous DTMF tone is playing, it will be stopped.
+    * This API is used to play DTMF tone on TX path so that it is heard on far end. For DTMF
+    * playback on local device on the RX path use @ref telux::audio::IAudioVoiceStream::playDtmfTone
     *
     * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
     *
@@ -208,8 +215,10 @@ public:
       = 0;
 
    /**
-    * Starts a continuous DTMF tone.
-    * To terminate the continous DTMF tone,stopDtmfTone API needs to be invoked explicitly.
+    * Starts a continuous DTMF tone. To terminate the continous DTMF tone,stopDtmfTone API needs to
+    * be invoked explicitly. This API is used to play DTMF tone on TX path so that it is heard on
+    * far end. For DTMF playback on local device on the RX path use
+    * @ref telux::audio::IAudioVoiceStream::playDtmfTone
     *
     * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
     * @param [in] callback - Optional callback pointer to get the result of

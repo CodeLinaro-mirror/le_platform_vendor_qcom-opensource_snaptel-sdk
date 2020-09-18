@@ -43,6 +43,7 @@
 -Wl,--defsym=v2x_retrieve_configuration=so_stub_for_libv2x_radio
 -Wl,--defsym=v2x_set_dest_ipv6_addr=so_stub_for_libv2x_radio
 -Wl,--defsym=v2x_set_dest_port=so_stub_for_libv2x_radio
+-Wl,--defsym=v2x_set_peak_tx_power=so_stub_for_libv2x_radio
 -Wl,--defsym=v2x_set_rx_port=so_stub_for_libv2x_radio
 -Wl,--defsym=v2x_update_configuration=so_stub_for_libv2x_radio
 -Wl,--defsym=v2x_use_syslog=so_stub_for_libv2x_radio

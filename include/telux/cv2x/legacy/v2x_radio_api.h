@@ -2190,6 +2190,19 @@ extern int v2x_radio_tcp_sock_create_and_bind(
     const socket_info_t *sock_info,
     int *sock_fd,
     struct sockaddr_in6 *sockaddr);
+
+/**
+    Set RF peak cv2x transmit power.
+    This affects the power for all existing flows and for any flow created int the future.
+
+    Precondition -- v2x mode enabled.
+
+    @param [in] txPower   Desired global Cv2x peak tx power in dbm
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_peak_tx_power(int8_t txPower);
+
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 
 /*
@@ -2200,7 +2213,6 @@ extern void v2x_set_dest_ipv6_addr(char *new_addr);
 extern void v2x_set_dest_port(uint16_t portnum);
 extern void v2x_set_rx_port(uint16_t portnum);
 void v2x_disable_socket_connect();
-
 
 #ifdef __cplusplus
 }

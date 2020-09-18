@@ -248,9 +248,9 @@ struct StreamBuffer {
  *  DTMF tone parameters
  */
 struct DtmfTone {
-    DtmfLowFreq lowFreq;    /* Lower frequency associated with DTMF tone */
-    DtmfHighFreq highFreq;  /* Higher frequency associated with DTMF tone */
-    StreamDirection direction; /* Direction associated with DTMF tone */
+    DtmfLowFreq lowFreq;    /**< Lower frequency associated with DTMF tone */
+    DtmfHighFreq highFreq;  /**< Higher frequency associated with DTMF tone */
+    StreamDirection direction; /**< Direction associated with DTMF tone */
 };
 
 /** @} */ /* end_addtogroup telematics_audio */

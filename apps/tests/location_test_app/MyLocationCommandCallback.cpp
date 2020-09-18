@@ -67,6 +67,16 @@ void MyLocationCommandCallback::onGnssEnergyConsumedInfo(telux::loc::GnssEnergyC
    std::cout << "*******************************" << std::endl;
 }
 
+void MyLocationCommandCallback::onGetYearOfHwInfo(uint16_t yearOfHw,
+    telux::common::ErrorCode error) {
+   std::cout << __FUNCTION__ << " : " << Utils::getErrorCodeAsString(error) << std::endl;
+
+   PRINT_CB << "\n**************** Year Of Hardware Information ***************"
+       << std::endl;
+   std::cout << "Year of Hardware is : " << yearOfHw << std::endl;
+   std::cout << "*******************************" << std::endl;
+}
+
 void MyLocationCommandCallback::onMinGpsWeekInfo(uint16_t minGpsWeek,
     telux::common::ErrorCode error) {
   std::cout << __FUNCTION__ <<  " : " << Utils::getErrorCodeAsString(error) << std::endl;

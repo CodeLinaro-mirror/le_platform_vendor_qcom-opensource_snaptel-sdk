@@ -52,11 +52,18 @@ set(TELSDK_CONSOLE_APP_SOURCES
    MultiSim/MyMultiSimListener.cpp
    MultiSim/MultiSimMenu.cpp
 
+   Rsp/RspListener.cpp
+   Rsp/MyRspHandler.cpp
+   Rsp/RspMenu.cpp
+
    TelSdkConsoleApp.cpp
 
    ModemStatus.cpp
 
    Audio/AudioClient.cpp
+   Cellbroadcast/CellbroadcastMenu.cpp
+   Cellbroadcast/CellbroadcastListener.cpp
+   Cellbroadcast/CellbroadcastHandler.cpp
 
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
@@ -89,8 +96,6 @@ target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_co
 else (!AUDIO_ENABLED)
 target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common)
 endif (AUDIO_ENABLED)
-
-
 
 # install to target
 install ( TARGETS ${TARGET_TELSDK_CONSOLE_APP}

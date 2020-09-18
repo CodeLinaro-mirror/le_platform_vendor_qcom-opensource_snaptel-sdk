@@ -43,7 +43,6 @@ public:
    void onServiceStateChanged(int phoneId, telux::tel::ServiceState state) override;
    void onSignalStrengthChanged(
       int phoneId, std::shared_ptr<telux::tel::SignalStrength> signalStrength) override;
-   void onRadioStateChanged(int phoneId, telux::tel::RadioState radioState) override;
    void onVoiceRadioTechnologyChanged(int phoneId,
                                       telux::tel::RadioTechnology radioTechnology) override;
    void onVoiceServiceStateChanged(
@@ -62,11 +61,6 @@ private:
    std::string serviceStateToString(telux::tel::ServiceState serviceState);
    std::string eCallModeReasonToString(telux::tel::ECallModeReason reason);
    telux::tel::VoiceServiceState voiceSrvcState_ = telux::tel::VoiceServiceState::UNKNOWN;
-};
-
-class MyRadioPowerCallback : public telux::common::ICommandResponseCallback {
-public:
-   void commandResponse(telux::common::ErrorCode error);
 };
 
 class MyCellularCapabilityCallback : public telux::tel::ICellularCapabilityCallback {

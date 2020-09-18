@@ -283,23 +283,6 @@ std::string MyPhoneListener::getCurrentTime() {
     return std::string(currTime);
 }
 
-void MyRadioPowerCallback::commandResponse(telux::common::ErrorCode error) {
-    std::cout << "\n";
-    if (error == telux::common::ErrorCode::SUCCESS) {
-        PRINT_CB << "Radio power request successful" << std::endl;
-    } else {
-        PRINT_CB << "Radio power request failed" << std::endl;
-    }
-    PRINT_CB << "RadioPowerRequest error: " << static_cast<int>(error)
-             << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-}
-
-void MyPhoneListener::onRadioStateChanged(int phoneId, telux::tel::RadioState state) {
-    std::cout << "\n";
-    PRINT_NOTIFICATION << "OnRadioStateChanged for PhoneId " << phoneId
-                       << " , RadioState: " << radioStateToString(state) << std::endl;
-}
-
 std::string MyPhoneListener::radioStateToString(telux::tel::RadioState radioState) {
     std::string state = "";
     switch (radioState) {

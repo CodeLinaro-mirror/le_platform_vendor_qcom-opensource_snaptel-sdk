@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -70,6 +70,11 @@ public:
    // Validate input string(Ex: 1, 2, 3) which should contain
    // atleast one number or numbers seperated by either comma, space or both.
    static void validateNumericString(std::string &input);
+
+   // Validate the slot id and in case of invalid slot id request
+   // for proper input from user.
+   static int getValidSlotId();
+
    /**
     * Get error description for given ErrorCode
     */

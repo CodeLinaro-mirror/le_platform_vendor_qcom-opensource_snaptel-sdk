@@ -134,45 +134,52 @@ bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto profMgr = dataFactory.getDataProfileManager(slotId);
 
-    // Check if data subsystem is ready
-    bool subSystemStatus = profMgr->isSubsystemReady();
+    if (profMgr) {
+        // Check if data subsystem is ready
+        bool subSystemStatus = profMgr->isSubsystemReady();
 
-    // If data subsystem is not ready, wait for it to be ready
-    if (!subSystemStatus) {
-        std::cout << "\n\nInitializing Data profile manager subsystem on slot " <<
-        slotId << ", Please wait ..." << endl;
-        std::future<bool> f = profMgr->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
-    }
-    if (subSystemStatus) {
-        std::cout << "\nData Profile Manager on slot "<< slotId << " is ready" << std::endl;
-    }
-    else {
-        std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+        // If data subsystem is not ready, wait for it to be ready
+        if (!subSystemStatus) {
+            std::cout << "\n\nInitializing Data profile manager subsystem on slot " <<
+            slotId << ", Please wait ..." << endl;
+            std::future<bool> f = profMgr->onSubsystemReady();
+            // Wait unconditionally for data subsystem to be ready
+            subSystemStatus = f.get();
+        }
+        if (subSystemStatus) {
+            std::cout << "\nData Profile Manager on slot "<< slotId << " is ready" << std::endl;
+        }
+        else {
+            std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+            return false;
+        }
+
+        //If this is newly created Manager
+        if (dataProfileManagerMap_.find(slotId) == dataProfileManagerMap_.end()) {
+            dataProfileManagerMap_.emplace(slotId, profMgr);
+            myDataProfileListCb_.emplace(slotId, std::make_shared<MyDataProfilesCallback>());
+            myDataProfileListCbForQuery_.emplace(slotId,
+                                                 std::make_shared<MyDataProfilesCallback>());
+            myDataCreateProfileCb_.emplace(slotId, std::make_shared<MyDataCreateProfileCallback>());
+            myDataProfileCb_.emplace(slotId, std::make_shared<MyDataProfileCallback>());
+            myDeleteProfileCb_.emplace(slotId, std::make_shared<MyDeleteProfileCallback>());
+            myModifyProfileCb_.emplace(slotId, std::make_shared<MyModifyProfileCallback>());
+            myDataProfileCbForGetProfileById_.emplace(slotId,
+                                                      std::make_shared<MyDataProfileCallback>());
+            profileListeners_.emplace(slotId, std::make_shared<MyProfileListener>());
+
+            telux::common::Status status =
+                dataProfileManagerMap_[slotId]->registerListener(profileListeners_[slotId]);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "Unable to register data profile manager listener on slot " <<
+                slotId << std::endl;
+            }
+        }
+        return subSystemStatus;
+    } else {
+        std::cout << "Profile manager instance is NULL" << std::endl;
         return false;
     }
-
-    //If this is newly created Manager
-    if (dataProfileManagerMap_.find(slotId) == dataProfileManagerMap_.end()) {
-        dataProfileManagerMap_.emplace(slotId, profMgr);
-        myDataProfileListCb_.emplace(slotId, std::make_shared<MyDataProfilesCallback>());
-        myDataProfileListCbForQuery_.emplace(slotId, std::make_shared<MyDataProfilesCallback>());
-        myDataCreateProfileCb_.emplace(slotId, std::make_shared<MyDataCreateProfileCallback>());
-        myDataProfileCb_.emplace(slotId, std::make_shared<MyDataProfileCallback>());
-        myDeleteProfileCb_.emplace(slotId, std::make_shared<MyDeleteProfileCallback>());
-        myModifyProfileCb_.emplace(slotId, std::make_shared<MyModifyProfileCallback>());
-        myDataProfileCbForGetProfileById_.emplace(slotId,std::make_shared<MyDataProfileCallback>());
-        profileListeners_.emplace(slotId, std::make_shared<MyProfileListener>());
-
-        telux::common::Status status =
-            dataProfileManagerMap_[slotId]->registerListener(profileListeners_[slotId]);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Unable to register data profile manager listener on slot " <<
-            slotId << std::endl;
-        }
-    }
-    return subSystemStatus;
 }
 
 void DataProfileMenu::getProfileParamsFromUser() {

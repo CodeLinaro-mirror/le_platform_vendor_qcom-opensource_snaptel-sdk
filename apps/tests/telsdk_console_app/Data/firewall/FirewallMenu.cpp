@@ -790,10 +790,10 @@ void FirewallMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
 
         if (dmzEntries.size() > 0) {
             std::cout << "=============================================\n";
-        }
-        for (auto entry : dmzEntries) {
-            std::cout << "address: " << entry
-                      << "\n=============================================\n";
+            for (auto entry : dmzEntries) {
+                std::cout << "address: " << entry
+                    << "\n=============================================\n";
+            }
         }
     };
 

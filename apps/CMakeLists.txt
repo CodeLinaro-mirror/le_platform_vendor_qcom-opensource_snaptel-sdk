@@ -11,6 +11,7 @@ if (MACHINE_HAS_CV2X_ONLY)
     add_definitions(-DFEATURE_CV2X_ONLY)
 endif (MACHINE_HAS_CV2X_ONLY)
 
+add_subdirectory( common/console_app_framework )
 add_subdirectory( tests/telsdk_console_app )
 add_subdirectory( tests/thermal_test_app )
 add_subdirectory( tests/location_test_app )

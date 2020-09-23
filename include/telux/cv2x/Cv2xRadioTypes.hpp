@@ -78,6 +78,7 @@ enum class Cv2xCauseType {
     CONFIG,     /**< Config is invalid */
     UE_MODE,    /**< UE Mode is invalid */
     GEOPOLYGON, /**< Left current geopolygon */
+    LPM,        /**< Low Power Mode */
     UNKNOWN,    /**< Cause is unknown */
 };
 

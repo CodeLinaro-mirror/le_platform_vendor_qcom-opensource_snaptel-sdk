@@ -38,6 +38,7 @@ Type=notify
 ExecStart=/usr/bin/cv2x-daemon -s
 Restart=always
 RestartSec=5
+SupplementaryGroups=system diag radio
 
 [Install]
 WantedBy=multi-user.target cv2x.target

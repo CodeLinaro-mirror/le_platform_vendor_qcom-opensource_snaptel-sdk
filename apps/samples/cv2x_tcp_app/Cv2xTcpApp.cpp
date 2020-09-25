@@ -75,6 +75,7 @@ static constexpr uint16_t DEFAULT_PORT = 5000u;
 static constexpr int      PRIORITY = 5;
 static constexpr uint32_t PACKET_LEN = 128u;
 static constexpr uint32_t PACKET_NUM = 2u;
+static constexpr uint32_t MAX_DUMMY_PACKET_LEN = 10000;
 
 static constexpr char TEST_VERNO_MAGIC = 'Q';
 static constexpr char CLIENT_UEID = 1;
@@ -85,13 +86,15 @@ static std::shared_ptr<ICv2xRadio> gCv2xRadio;
 static Cv2xStatus gCv2xStatus;
 static promise<ErrorCode> gCallbackPromise;
 static shared_ptr<ICv2xTxRxSocket> gTcpSock;
-static array<char, PACKET_LEN> gBuf;
+static array<char, MAX_DUMMY_PACKET_LEN> gBuf;
 
 static uint8_t gTcpMode = TCP_CLIENT;
 static uint16_t gSrcPort = DEFAULT_PORT;
 static uint16_t gDstPort = DEFAULT_PORT;
 static string gDstAddr;
 static int32_t gAcceptedSock = -1;
+static uint32_t gServiceId = SERVIC_ID;
+static uint32_t gPacketLen = PACKET_LEN;
 
 static int g_terminate = 0;
 static int g_terminate_pipe[2];
@@ -148,13 +151,13 @@ static void fillBuffer(void) {
     dataPtr += sizeof(uint16_t);
 
     // Timestamp
-    dataPtr += snprintf(dataPtr, PACKET_LEN - (2 + sizeof(uint16_t)),
+    dataPtr += snprintf(dataPtr, gPacketLen - (2 + sizeof(uint16_t)),
                         "<%llu> ", static_cast<long long unsigned>(timestamp));
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;
-    auto i = 2 + sizeof(uint16_t) - sizeof(long long unsigned);
-    for (; i < PACKET_LEN; ++i) {
+    auto i = 2 + sizeof(uint16_t) + sizeof(long long unsigned);
+    for (; i < gPacketLen; ++i) {
         gBuf[i] = 'a' + ((seq_num + i) % NUM_LETTERS);
     }
 }
@@ -181,7 +184,7 @@ static int sampleTx(void) {
 
     // Send data using sendmsg to provide IPV6_TCLASS per packet
     iov[0].iov_base = gBuf.data();
-    iov[0].iov_len = PACKET_LEN;
+    iov[0].iov_len = gPacketLen;
     message.msg_iov = iov;
     message.msg_iovlen = 1;
     message.msg_control = control;
@@ -244,17 +247,19 @@ static void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> chan, ErrorCode e
 
 static void printUsage(const char *Opt) {
     cout << "Usage: " << Opt << endl;
-    cout << "-d <dstAddr>   Destination IPV6 address used for connecting" << endl;
-    cout << "-m <tcpMode>   0--Client, 1--Server" << endl;
-    cout << "-s <srcPort>   Source port used for binding" << endl;
-    cout << "-t <dstPort>   Destination port used for connecting" << endl;
+    cout << "-d <dstAddr>       Destination IPV6 address used for connecting" << endl;
+    cout << "-m <tcpMode>       0--Client, 1--Server" << endl;
+    cout << "-s <srcPort>       Source port used for binding, default is 5000" << endl;
+    cout << "-t <dstPort>       Destination port used for connecting, default is 5000" << endl;
+    cout << "-p <service ID>    Service ID used for Tx and Rx flows, default is " << gServiceId << endl;
+    cout << "-l <packet length> Tx Packet length, default is " << gPacketLen <<endl;
 }
 
 // Parse options
 static int parseOpts(int argc, char *argv[]) {
     int rc = 0;
     int c;
-    while ((c = getopt(argc, argv, "?d:m:s:t:")) != -1) {
+    while ((c = getopt(argc, argv, "?d:m:s:t:p:l:")) != -1) {
         switch (c) {
         case 'd':
             if (optarg) {
@@ -278,6 +283,18 @@ static int parseOpts(int argc, char *argv[]) {
             if (optarg) {
                 gDstPort = atoi(optarg);
                 cout << "dstPort: " << gDstPort << endl;
+            }
+            break;
+        case 'p':
+            if (optarg) {
+                gServiceId = atoi(optarg);
+                cout << "service ID: " << gServiceId << endl;
+            }
+            break;
+        case 'l':
+            if (optarg) {
+                gPacketLen = atoi(optarg);
+                cout << "packet length: " << gPacketLen << endl;
             }
             break;
         case '?':
@@ -403,7 +420,7 @@ int main(int argc, char *argv[]) {
     // Create TCP Socket
     cout << "creating Tcp Socket" << endl;
     SocketInfo tcpInfo;
-    tcpInfo.serviceId = SERVIC_ID;
+    tcpInfo.serviceId = gServiceId;
     tcpInfo.localPort = gSrcPort;
     EventFlowInfo eventInfo;
     resetCallbackPromise();

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -36,6 +36,7 @@
 #include <iostream>
 
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
 #include <Utils.hpp>
 
 #include "MultiSimMenu.hpp"
@@ -106,7 +107,7 @@ void MultiSimMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Set_high_capability", {},
         std::bind(&MultiSimMenu::setHighCapability, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> setActiveSlotCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Set_Active_slot", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Switch_Active_slot", {},
         std::bind(&MultiSimMenu::switchActiveSlot, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> getSlotsStatusCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Get_slots_status", {},
@@ -184,6 +185,12 @@ void MultiSimMenu::setHighCapability(std::vector<std::string> userInput) {
 }
 
 void MultiSimMenu::switchActiveSlot(std::vector<std::string> userInput) {
+    // Blocking this command in DSDA configuration, to avoid using it unintentionally, as this is
+    // intended for DSSA(Dual Sim Single Active) configuration
+    if(telux::common::DeviceConfig::isMultiSimSupported()) {
+       std::cout << " ERROR: Invalid operation" << std::endl;
+       return;
+    }
     if(multiSimMgr_) {
         char delimiter = '\n';
         std::string slotId = "";

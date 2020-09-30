@@ -307,6 +307,7 @@ struct ECallHlapTimerStatus {
    HlapTimerStatus t6;   /**< T6 Timer status */
    HlapTimerStatus t7;   /**< T7 Timer status */
    HlapTimerStatus t9;   /**< T9 Timer status */
+   HlapTimerStatus t10;  /**< T10 Timer status */
 };
 
 /**
@@ -321,6 +322,7 @@ struct ECallHlapTimerEvents {
    HlapTimerEvent t6;   /**< T6 Timer event */
    HlapTimerEvent t7;   /**< T7 Timer event */
    HlapTimerEvent t9;   /**< T9 Timer event */
+   HlapTimerEvent t10;  /**< T10 Timer event */
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

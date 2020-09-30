@@ -202,6 +202,11 @@ void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEve
         infoStr.append("T9 HLAP Timer event : " +
                    TelClientUtils::eCallHlapTimerEventToString(timerEvents.t9) + "\n");
     }
+    if((timerEvents.t10 != HlapTimerEvent::UNCHANGED) &&
+       (timerEvents.t10 != HlapTimerEvent::UNKNOWN)) {
+        infoStr.append("T10 HLAP Timer event : " +
+                   TelClientUtils::eCallHlapTimerEventToString(timerEvents.t10) + "\n");
+    }
     std::cout << CLIENT_NAME << infoStr << std::endl;
 }
 
@@ -289,6 +294,8 @@ void TelClient::hlapTimerStatusResponse(telux::common::ErrorCode error, int phon
                    TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t7) + "\n");
     infoStr.append("T9 HLAP Timer Status : " +
                    TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t9) + "\n");
+    infoStr.append("T10 HLAP Timer Status : " +
+                   TelClientUtils::eCallHlapTimerStatusToString(timersStatus.t10) + "\n");
     std::cout << CLIENT_NAME << infoStr << std::endl;
 }
 

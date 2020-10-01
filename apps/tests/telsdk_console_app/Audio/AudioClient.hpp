@@ -71,6 +71,15 @@ public:
      */
     void stopVoiceSession(SlotId slotId);
 
+    /**
+     * This function helps in muting the audio path for voice call for both RX and TX path.
+     *
+     * @param [in] slotId    Represents slotId for the voice call.
+     * @param [in] status    mute status.
+     *
+     */
+    void setMuteStatus(SlotId slotId, bool muteStatus);
+
     ~AudioClient();
 
 private:

@@ -42,6 +42,8 @@
 
 #define MIN_SIM_SLOT_COUNT 1
 #define MAX_SIM_SLOT_COUNT 2
+#define MUTE 1
+#define UNMUTE 0
 
 //Minimum number of calls required to perform conference or swap
 #define MIN_PROGRESS_CALLS 2
@@ -609,6 +611,13 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
       }
    }
    if(spCall) {
+        AudioClient &audioClient = AudioClient::getInstance();
+        if (audioClient.isReady()) {
+            // Ask the user for the mute functionality.
+            if (queryMuteState(MUTE)) {
+                audioClient.setMuteStatus(static_cast<SlotId>(phoneId), MUTE);
+            }
+        }
       spCall->hold(myHoldCb_);
    } else {
       std::cout << "No active call found" << std::endl;
@@ -796,6 +805,13 @@ void CallMenu::resumeCall(std::vector<std::string> userInput) {
       }
    }
    if(spCall) {
+        AudioClient &audioClient = AudioClient::getInstance();
+        if (audioClient.isReady()) {
+            // Ask the user for the mute functionality.
+            if (queryMuteState(UNMUTE)) {
+                audioClient.setMuteStatus(static_cast<SlotId>(phoneId), UNMUTE);
+            }
+        }
       spCall->resume(myResumeCb_);
    } else {
       std::cout << "No call to resume which is on hold " << std::endl;
@@ -1005,5 +1021,42 @@ bool CallMenu::queryAudioState() {
         std::cout << "Empty input, enter correct choice" << std::endl;
         return false;
     }
-    return true;
+    if (audioFlag) {
+        return true;
+    }
+    return false;
+}
+
+bool CallMenu::queryMuteState(bool muteStatus) {
+    std::string muteSelection;
+    char delimiter = '\n';
+    int muteFlag = 0;
+    std::string operationName = "";
+    if (muteStatus == MUTE) {
+        operationName = "Mute";
+    } else {
+        operationName = "Unmute";
+    }
+
+    std::cout << "Enter 1 to " << operationName << " audio for voice call else press 0 : ";
+    std::getline(std::cin, muteSelection, delimiter);
+    if (!muteSelection.empty()) {
+        try {
+        muteFlag = std::stoi(muteSelection);
+            if (muteFlag < 0 || muteFlag > 1) {
+                std::cout << "ERROR: Invalid selection" << std::endl;
+                return false;
+            }
+        } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, enter a numerical value. INPUT: " << std::endl;
+            return false;
+        }
+    } else {
+        std::cout << "Empty input, enter correct choice" << std::endl;
+        return false;
+    }
+    if (muteFlag) {
+        return true;
+    }
+    return false;
 }

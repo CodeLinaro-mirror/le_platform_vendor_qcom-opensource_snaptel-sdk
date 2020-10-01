@@ -62,6 +62,7 @@ private:
    void stopDtmfTone(std::vector<std::string> userInput);
    void enableAudio(std::vector<std::string> userInput);
    bool queryAudioState();
+   bool queryMuteState(bool muteStatus);
 
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
    std::shared_ptr<telux::tel::ICallListener> callListener_;

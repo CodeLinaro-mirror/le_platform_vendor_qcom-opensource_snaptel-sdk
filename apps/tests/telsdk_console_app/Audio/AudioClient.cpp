@@ -193,6 +193,35 @@ void AudioClient::loadConfFileData() {
     return;
 }
 
+void AudioClient::setMuteStatus(SlotId slotId, bool muteStatus) {
+#ifdef AUDIO_SUPPORTED
+    setActiveSession(slotId);
+    std::string operationName = "";
+    if (muteStatus) {
+        operationName = "Mute";
+    } else {
+        operationName = "Unmute";
+    }
+    StreamMute mute{};
+    mute.enable = muteStatus;
+    mute.dir = StreamDirection::RX;
+    auto status = activeSession_->setMute(mute);
+    if (status == Status::SUCCESS) {
+        mute.dir = StreamDirection::TX;
+        status = activeSession_->setMute(mute);
+    } else {
+        std::cout << operationName << " failed on RX path on slotId " << slotId << std::endl;
+    }
+    if (status == Status::SUCCESS) {
+        std::cout << operationName << " operation Succeded on slotId " << slotId << std::endl;
+    } else {
+        std::cout << operationName << " failed on TX path on slotId " << slotId << std::endl;
+    }
+#else
+    return;
+#endif
+}
+
 void AudioClient::queryInputType() {
 #ifdef AUDIO_SUPPORTED
     std::string inputSelection;

@@ -355,6 +355,7 @@ static void installSignalHandler() {
 
 Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
     Status status = Status::SUCCESS;
+    bool tryEvtFlow = false;
 
     if (gOperationMode == OperationMode::OBU) {
         // If in OBU mode, register tx/rx flow to listen to WSA
@@ -460,10 +461,28 @@ Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to create broadcast Tx SPS Flow." << endl;
-            return Status::FAILED;
+            tryEvtFlow = true;
         }
 
-        cout << "Succeeded in creating broadcast Tx SPS Flow, sock:";
+        if (tryEvtFlow) {
+            cout << "now try with event flow" << endl;
+            resetCallbackPromise();
+            auto txEventFlowCallback = [&state](std::shared_ptr<ICv2xTxFlow> txEventFlow,
+                                                telux::common::ErrorCode error) {
+                if (ErrorCode::SUCCESS == error) {
+                    state.txBroadcastFlow = txEventFlow;
+                }
+                gCallbackPromise.set_value(error);
+            };
+            status = cv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
+                state.broadcastServiceId, state.broadcastPort, txEventFlowCallback);
+            if (Status::SUCCESS != status or
+                ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+                cerr << "Failed to create broadcast Tx event Flow." << endl;
+                return Status::FAILED;
+            }
+        }
+        cout << "Succeeded in creating broadcast Tx Flow, sock:";
         cout << state.txBroadcastFlow->getSock();
         cout << " , port:"<< state.broadcastPort << endl;
     }

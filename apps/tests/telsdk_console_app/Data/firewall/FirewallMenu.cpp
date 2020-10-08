@@ -317,7 +317,7 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
 void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp) {
     std::string srcAddr = "", destAddr = "";
-    uint8_t srcPrefixLen = 0, dstPrefixLen = 0;
+    int srcPrefixLen = 0, dstPrefixLen = 0;
     int trfVal = 0, trfMask = 0, flowLabel = 0;
     char delimiter = '\n';
 

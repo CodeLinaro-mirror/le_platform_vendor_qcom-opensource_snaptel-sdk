@@ -341,6 +341,12 @@ void DataConnectionMenu::getDefaultProfile() {
     SlotId slotId = DEFAULT_SLOT_ID;
     int profileId;
 
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    Utils::validateInput(operationType);
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
     // Callback
     auto respCb = [](int profileId, SlotId slotId, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -355,6 +361,7 @@ void DataConnectionMenu::getDefaultProfile() {
         }
     };
 
-    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->getDefaultProfile(respCb);
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->getDefaultProfile(
+        opType, respCb);
     Utils::printStatus(retStat);
 }

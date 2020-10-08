@@ -170,6 +170,7 @@ class IDataConnectionManager {
     * Get current default profile to which associated network traffic is routed through bridge 0
     * and default system routes.
     *
+    * @param [in] operationType     @ref telux::data::OperationType
     * @param [in] callback          callback to get the response getDefaultProfile
     *
     * @returns Immediate status of getDefaultProfile i.e. success or suitable status.
@@ -177,7 +178,8 @@ class IDataConnectionManager {
     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
     *           break backwards compatibility.
     */
-   virtual telux::common::Status getDefaultProfile(DefaultProfileIdResponseCb callback)  = 0;
+   virtual telux::common::Status getDefaultProfile(
+       OperationType oprType, DefaultProfileIdResponseCb callback)  = 0;
 
     /**
      * Starts a data call corresponding to default or specified profile identifier.

@@ -358,6 +358,18 @@ enum class ServiceStatus {
 };
 
 /**
+ * This applies in system architectures where the modem is attached to an External Application
+ * Processor(EAP). The operations associated with the ProcType can be performed by SDK either
+ * on EAP or the modem's Internal Application Processor(IAP). This type specifies where the
+ * operation is carried out.
+ */
+enum class ProcType {
+    LOCAL_PROC = 0, /**< Perform the operation on the processor where the API is invoked.*/
+    REMOTE_PROC,    /**< Perform the operation on the application processor other than where the API
+                    is invoked. */
+};
+
+/**
  * Base command callback class is responsible for single shot asynchronous callback.
  * This callback will be invoked only once when the operation succeeds or fails.
  */

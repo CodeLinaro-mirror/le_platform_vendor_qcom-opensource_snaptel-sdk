@@ -53,7 +53,7 @@ public:
     PowerMgmtTestApp();
     ~PowerMgmtTestApp();
 
-    int start(ClientType clientType);
+    int start(ClientType clientType, ProcType procType);
     void onTcuActivityStateUpdate(TcuActivityState state) override;
     void onSlaveAckStatusUpdate(telux::common::Status status) override;
     void onServiceStatusChange(ServiceStatus status) override;

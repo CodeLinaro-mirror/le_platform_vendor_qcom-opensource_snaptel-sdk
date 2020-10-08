@@ -74,6 +74,8 @@ static void printHelp() {
     std::cout << "   -r : send RESUME command (as MASTER)" << std::endl;
     std::cout << "   -p : send SHUT-DOWN command (as MASTER)" << std::endl;
     std::cout << "   -c : open interactive console (as MASTER)" << std::endl;
+    std::cout << "   -L : carry out operation on LOCAL Application processor" << std::endl;
+    std::cout << "   -R : carry out operation on REMOTE Application processor" << std::endl;
     std::cout << "   -h : print the help menu" << std::endl;
 }
 
@@ -166,11 +168,21 @@ TcuActivityState PowerMgmtTestApp::getTcuActivityState() {
     return state;
 }
 
-int PowerMgmtTestApp::start(ClientType clientType) {
+int PowerMgmtTestApp::start(ClientType clientType, ProcType procType) {
+    if(procType == ProcType::LOCAL_PROC) {
+        std::cout << APP_NAME << " Connecting to LOCAL TCU Activity Manager " << std::endl;
+    } else {
+        std::cout << APP_NAME << " Connecting to REMOTE TCU Activity Manager " << std::endl;
+    }
+    if(clientType == ClientType::MASTER) {
+        std::cout << APP_NAME << " Initializing the client as a MASTER " << std::endl;
+    } else {
+        std::cout << APP_NAME << " Initializing the client as a SLAVE " << std::endl;
+    }
     // Get power factory instance
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
-    tcuActivityMgr_ = powerFactory.getTcuActivityManager(clientType);
+    tcuActivityMgr_ = powerFactory.getTcuActivityManager(clientType, procType);
     if(tcuActivityMgr_ == nullptr)
     {
         std::cout << APP_NAME << " ERROR - Failed to get manager instance" << std::endl;
@@ -256,13 +268,13 @@ void PowerMgmtTestApp::consoleinit() {
    ConsoleApp::displayMenu();
 }
 
-std::shared_ptr<PowerMgmtTestApp> init(ClientType clientType) {
+std::shared_ptr<PowerMgmtTestApp> init(ClientType clientType, ProcType procType) {
     std::shared_ptr<PowerMgmtTestApp> powerMgmtTest = std::make_shared<PowerMgmtTestApp>();
     if (!powerMgmtTest) {
         std::cout << "Failed to instantiate PowerMgmtTestApp" << std::endl;
         return nullptr;
     }
-    if( 0 != powerMgmtTest->start(clientType)) {
+    if( 0 != powerMgmtTest->start(clientType, procType)) {
         std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
             << std::endl;
         return nullptr;
@@ -278,6 +290,7 @@ int main(int argc, char ** argv) {
     bool inputCommand = false;
     TcuActivityState state = TcuActivityState::UNKNOWN;
     ClientType clientType = ClientType::SLAVE;
+    ProcType procType = ProcType::LOCAL_PROC;
 
     if(argc <= 1) {
         printHelp();
@@ -305,9 +318,13 @@ int main(int argc, char ** argv) {
             clientType = ClientType::MASTER;
             inputCommand=true;
             state=TcuActivityState::SHUTDOWN;
+        } else if (std::string(argv[i]) == "-L") {
+            procType = ProcType::LOCAL_PROC;
+        } else if (std::string(argv[i]) == "-R") {
+            procType = ProcType::REMOTE_PROC;
         } else if (std::string(argv[i]) == "-c") {
             clientType = ClientType::MASTER;
-            std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType);
+            std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType, procType);
             myPowerMgmtTest->registerForUpdates();
             listenerEnabled =true;
             myPowerMgmtTest->consoleinit();
@@ -319,7 +336,7 @@ int main(int argc, char ** argv) {
             return -1;
         }
     }
-    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType);
+    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType, procType);
     if(listenerEnabled) {
         myPowerMgmtTest->registerForUpdates();
     }

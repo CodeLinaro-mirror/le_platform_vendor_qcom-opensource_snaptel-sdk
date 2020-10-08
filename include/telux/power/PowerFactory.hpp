@@ -38,6 +38,7 @@
 
 #include <memory>
 #include <mutex>
+#include <map>
 
 #include <telux/power/TcuActivityManager.hpp>
 
@@ -63,13 +64,17 @@ public:
      * @param [in] type Type of the client that is going to access ITcuActivityManager APIs
      *                  @ref ClientType
      *
+     * @param [in] procType  Required processor type on which the operations will be performed
+     *                       @ref telux::common::ProcType
+     *
      * @returns Pointer of ITcuActivityManager object.
      */
-    std::shared_ptr<ITcuActivityManager> getTcuActivityManager(ClientType clientType
-                                                                = ClientType::SLAVE);
+    std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
+        ClientType clientType = ClientType::SLAVE,
+        common::ProcType procType = common::ProcType::LOCAL_PROC);
 
 private:
-    std::shared_ptr<ITcuActivityManager> tcuActivityManager_;
+    std::map<common::ProcType, std::shared_ptr<ITcuActivityManager>> tcuActivityManagerMap_;
     std::mutex tcuActivityFactoryMutex_;
     PowerFactory();
     PowerFactory(const PowerFactory &) = delete;

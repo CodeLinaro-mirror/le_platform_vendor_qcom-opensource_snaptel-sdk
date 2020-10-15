@@ -62,7 +62,7 @@ private:
 
     void printUsage(char **argv);
 
-    telux::common::Status readArguments(int argc, char **argv);
+    telux::common::Status readArguments(int argc, char **argv, int& slotId);
 
     telux::common::Status initDaemon();
 
@@ -92,6 +92,7 @@ private:
     std::shared_ptr<telux::tel::IRemoteSimListener> listener_;
     SimConnection &simConnection_ = SimConnection::getInstance();
     bool modemConnected_ = false;
+    int slotId_ = DEFAULT_SLOT_ID;
 };
 
 class RemoteSimListener : public telux::tel::IRemoteSimListener {

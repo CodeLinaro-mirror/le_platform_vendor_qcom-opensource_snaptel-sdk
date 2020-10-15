@@ -59,7 +59,7 @@ RemoteSimDaemon & RemoteSimDaemon::getInstance()
 
 int RemoteSimDaemon::runDaemon(int argc, char **argv)
 {
-    if (readArguments(argc, argv) != Status::SUCCESS) {
+    if (readArguments(argc, argv, slotId_) != Status::SUCCESS) {
         return EXIT_FAILURE;
     }
 
@@ -126,9 +126,11 @@ void RemoteSimDaemon::eventCallback(ErrorCode errorCode)
 void RemoteSimDaemon::printUsage(char **argv)
 {
     std::cout << std::endl;
-    std::cout << "\tUsage: " << argv[0] << " [-flag]" << std::endl;
+    std::cout << "\tUsage: " << argv[0] << " -i <Slot Id> [-flag]" << std::endl;
     std::cout << std::endl;
 
+    std::cout << "\t-i <Slot Id> \tThe slot Id of the DUT which needs to be bounded to remote SIM"
+        << std::endl;
     std::cout << "\t-d \t\tEnables debug-level log messages" << std::endl;
     std::cout << "\t-s \t\tEnables the printing of log messages to console (instead of syslog)"
         << std::endl;
@@ -136,12 +138,19 @@ void RemoteSimDaemon::printUsage(char **argv)
     std::cout << std::endl;
 }
 
-Status RemoteSimDaemon::readArguments(int argc, char **argv)
+Status RemoteSimDaemon::readArguments(int argc, char **argv, int& slotId)
 {
     while (1) {
-        switch (getopt(argc, argv, "dsh")) {
+        switch (getopt(argc, argv, "i:dsh")) {
             case -1:
                 return Status::SUCCESS;
+            case 'i':
+                slotId = atoi(optarg);
+                if (slotId <= 0) {
+                    LOGE("Invalid slotId entered!\n");
+                    return Status::FAILED;
+                }
+                continue;
             case 'd':
                 RemoteSimUtils::enableDebug_ = true;
                 continue;
@@ -158,7 +167,7 @@ Status RemoteSimDaemon::readArguments(int argc, char **argv)
 
 Status RemoteSimDaemon::initDaemon()
 {
-    remoteSimMgr_ = PhoneFactory::getInstance().getRemoteSimManager(DEFAULT_SLOT_ID);
+    remoteSimMgr_ = PhoneFactory::getInstance().getRemoteSimManager(slotId_);
     listener_ = std::make_shared<RemoteSimListener>();
 
     if (remoteSimMgr_ != nullptr) {

@@ -171,12 +171,6 @@ Status CardControl::init()
         return Status::FAILED;
     }
 
-    listener_ = std::make_shared<CardListener>();
-    if (cardMgr_->registerListener(listener_) != Status::SUCCESS) {
-        LOGE("Listener registration failed!\n");
-        return Status::FAILED;
-    }
-
     int timeoutSec = SUBSYSTEM_READY_TIMEOUT_SEC;
     if (!(cardMgr_->isSubsystemReady())) {
         LOGD("Card subsystem not ready yet, waiting...\n");
@@ -195,6 +189,41 @@ Status CardControl::init()
     resetCb_ = std::make_shared<ResetCallback>();
     atrResetRespCb_ = std::make_shared<AtrResponseCallback>(CARD_RESET_MSG);
     atrInsertedRespCb_ = std::make_shared<AtrResponseCallback>(CARD_INSERTED_MSG);
+
+    Status status = Status::FAILED;
+    std::shared_ptr<ICard> card = CardControl::getInstance().getSimCard(DEFAULT_SLOT_ID, &status);
+    if (status != Status::SUCCESS) {
+        LOGE("Getting card from CardManager failed after subsystem ready!\n");
+        return status;
+    }
+
+    CardState cardState = CardState::CARDSTATE_UNKNOWN;
+    status = card->getState(cardState);
+    if (status != Status::SUCCESS) {
+        LOGE("Getting card state failed!\n");
+        return status;
+    }
+
+    switch (cardState) {
+        case CardState::CARDSTATE_ABSENT: {
+            LOGD("Card is not present.\n");
+            setCardPresent(false);
+            setCardConnected(false);
+        } break;
+        case CardState::CARDSTATE_PRESENT: {
+            LOGD("Card is present.\n");
+            setCardPresent(true);
+        } break;
+        default:
+            LOGD("Card state = %d.\n", static_cast<int>(cardState));
+            break;
+    }
+
+    listener_ = std::make_shared<CardListener>();
+    if (cardMgr_->registerListener(listener_) != Status::SUCCESS) {
+        LOGE("Listener registration failed!\n");
+        return Status::FAILED;
+    }
 
     return Status::SUCCESS;
 }
@@ -399,7 +428,7 @@ Status CardControl::openSapConn()
     }
 
     if (openConnFuture.get() == true) {
-        cardConnected_ = true;
+        setCardConnected(true);
         return Status::SUCCESS;
     } else {
         LOGE("Open connection failed!\n");

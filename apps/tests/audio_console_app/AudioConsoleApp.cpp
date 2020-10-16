@@ -230,14 +230,25 @@ void AudioConsoleApp::cleanup() {
 }
 
 void AudioConsoleApp::setSystemReady() {
-    voiceMenu_->setSystemReady();
-    playMenu_->setSystemReady();
-    captureMenu_->setSystemReady();
-    loopbackMenu_->setSystemReady();
-    toneMenu_->setSystemReady();
-    transCodeMenu_->setSystemReady();
+    if (voiceMenu_) {
+        voiceMenu_->setSystemReady();
+    }
+    if (playMenu_) {
+        playMenu_->setSystemReady();
+    }
+    if (captureMenu_) {
+        captureMenu_->setSystemReady();
+    }
+    if (loopbackMenu_) {
+        loopbackMenu_->setSystemReady();
+    }
+    if (toneMenu_) {
+        toneMenu_->setSystemReady();
+    }
+    if (transCodeMenu_) {
+        transCodeMenu_->setSystemReady();
+    }
 }
-
 
 int main(int argc, char **argv) {
 

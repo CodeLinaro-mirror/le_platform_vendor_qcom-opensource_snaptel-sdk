@@ -74,6 +74,8 @@ void NetworkMenu::init() {
            }
        }
 
+       // Same listener used for both the slots
+       networkListener_ = std::make_shared<MyNetworkSelectionListener>();
        for (auto index = 0; index < networkManagers_.size(); index++) {
            std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
            startTime = std::chrono::system_clock::now();
@@ -100,7 +102,6 @@ void NetworkMenu::init() {
               exit(0);
            }
 
-           networkListener_ = std::make_shared<MyNetworkSelectionListener>();
            auto status = networkManagers_[index]->registerListener(networkListener_);
 
            if(status != telux::common::Status::SUCCESS) {
@@ -297,14 +298,16 @@ void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
 
 void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
    auto networkManager = networkManagers_[slot_ - 1];
-   if(networkManager) {
+   if (networkManager) {
       auto ret = networkManager->performNetworkScan(
-         MyPerformNetworkScanCallback::performNetworkScanResponse);
-      if(ret == telux::common::Status::SUCCESS) {
+         MyPerformNetworkScanCallback::performNetworkScanResponseCb);
+      if (ret == telux::common::Status::SUCCESS) {
          std::cout << "\nPerform network scan request sent successfully\n";
       } else {
          std::cout << "\nPerform network scan request failed \n";
       }
+   } else {
+      std::cout << " ERROR - Network manager is NULL" <<std::endl;
    }
 }
 

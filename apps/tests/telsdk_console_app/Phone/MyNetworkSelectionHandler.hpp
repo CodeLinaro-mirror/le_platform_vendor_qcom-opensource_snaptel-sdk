@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -59,8 +59,7 @@ public:
 
 class MyPerformNetworkScanCallback {
 public:
-   static void performNetworkScanResponse(std::vector<telux::tel::OperatorInfo> operatorInfos,
-                                          telux::common::ErrorCode error);
+   static void performNetworkScanResponseCb(telux::common::ErrorCode error);
 };
 
 class MyNetworkSelectionHelper {
@@ -76,6 +75,10 @@ public:
 class MyNetworkSelectionListener : public telux::tel::INetworkSelectionListener {
 public:
    void onSelectionModeChanged(telux::tel::NetworkSelectionMode mode) override;
+   void onNetworkScanResults(telux::tel::NetworkScanStatus scanStatus,
+      std::vector<telux::tel::OperatorInfo> operatorInfos) override;
+   static std::string networkScanStatusToString(telux::tel::NetworkScanStatus scanStatus);
+   static std::string convertRatTypeAsString(telux::tel::RadioTechnology rat);
 };
 
 #endif  // MYNETWORKSELECTIONHANDLER_HPP

@@ -193,28 +193,77 @@ void MyNetworkSelectionHelper::logPreferredStatus(int status) {
    }
 }
 
-void MyPerformNetworkScanCallback::performNetworkScanResponse(
-   std::vector<telux::tel::OperatorInfo> operatorInfos, telux::common::ErrorCode error) {
+void MyPerformNetworkScanCallback::performNetworkScanResponseCb(
+   telux::common::ErrorCode error) {
    std::cout << std::endl;
-   PRINT_CB << "\n************ Perform network scan response ************" << std::endl;
-   if(error == telux::common::ErrorCode::SUCCESS) {
-      std::cout << "Operator Info size: " << operatorInfos.size() << std::endl;
-
-      for(auto it : operatorInfos) {
-         std::cout << "Name: " << it.getName() << "\nMcc: " << it.getMcc()
-                   << "\nMnc: " << it.getMnc() << std::endl;
-         MyNetworkSelectionHelper::logInUseStatus(static_cast<int>(it.getStatus().inUse));
-         MyNetworkSelectionHelper::logRoamingStatus(static_cast<int>(it.getStatus().roaming));
-         std::cout << std::endl;
-         MyNetworkSelectionHelper::logForbiddenStatus(static_cast<int>(it.getStatus().forbidden));
-         MyNetworkSelectionHelper::logPreferredStatus(static_cast<int>(it.getStatus().preferred));
-         std::cout << std::endl;
-      }
-      std::cout << "\n*********************************************************\n";
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "Network scan is successful" << std::endl;
    } else {
-      PRINT_CB << "Request failed with errorCode: " << static_cast<int>(error)
+      PRINT_CB << "Network scan failed, errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
+}
+
+std::string MyNetworkSelectionListener::networkScanStatusToString(
+   telux::tel::NetworkScanStatus scanStatus) {
+   std::string status = "";
+   switch (scanStatus) {
+      case telux::tel::NetworkScanStatus::COMPLETE:
+         status = "COMPLETE";
+         break;
+      case telux::tel::NetworkScanStatus::PARTIAL:
+         status = "PARTIAL";
+         break;
+      case telux::tel::NetworkScanStatus::FAILED:
+         status = "FAILED";
+         break;
+    }
+    return status;
+}
+
+std::string MyNetworkSelectionListener::convertRatTypeAsString(telux::tel::RadioTechnology rat) {
+   std::string ratType = "";
+   switch (rat) {
+      case telux::tel::RadioTechnology::RADIO_TECH_EDGE:
+         ratType = "GERAN";
+         break;
+      case telux::tel::RadioTechnology::RADIO_TECH_UMTS:
+         ratType = "UMTS";
+         break;
+      case telux::tel::RadioTechnology::RADIO_TECH_LTE:
+         ratType = "LTE";
+         break;
+      case telux::tel::RadioTechnology::RADIO_TECH_TD_SCDMA:
+         ratType = "TDSCDMA";
+         break;
+      case telux::tel::RadioTechnology::RADIO_TECH_NR5G:
+         ratType = "NR5G";
+         break;
+      default:
+         ratType = "UNKNOWN";
+         break;
+    }
+    return ratType;
+}
+
+void MyNetworkSelectionListener::onNetworkScanResults(NetworkScanStatus scanStatus,
+   std::vector<telux::tel::OperatorInfo> operatorInfos) {
+   std::cout << std::endl;
+   PRINT_NOTIFICATION << "\n************ Perform network scan response ************" << std::endl;
+   std::cout << "Operator Info size: " << operatorInfos.size() << std::endl;
+   std::cout << "Network Scan Results Status: " << networkScanStatusToString(scanStatus);
+   for(auto it : operatorInfos) {
+      std::cout << "\nName: " << it.getName() << "\nMcc: " << it.getMcc()
+                << "\nMnc: " << it.getMnc() << "\nRat: "
+                << convertRatTypeAsString(it.getRat()) << std::endl;
+      MyNetworkSelectionHelper::logInUseStatus(static_cast<int>(it.getStatus().inUse));
+      MyNetworkSelectionHelper::logRoamingStatus(static_cast<int>(it.getStatus().roaming));
+      std::cout << std::endl;
+      MyNetworkSelectionHelper::logForbiddenStatus(static_cast<int>(it.getStatus().forbidden));
+      MyNetworkSelectionHelper::logPreferredStatus(static_cast<int>(it.getStatus().preferred));
+      std::cout << std::endl;
+   }
+   std::cout << "\n*********************************************************\n";
 }
 
 void MyNetworkSelectionListener::onSelectionModeChanged(telux::tel::NetworkSelectionMode mode) {

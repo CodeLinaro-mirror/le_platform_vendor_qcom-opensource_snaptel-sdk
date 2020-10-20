@@ -44,6 +44,7 @@
 #include <vector>
 
 #include <telux/common/CommonDefines.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 
 namespace telux {
 namespace tel {
@@ -85,6 +86,18 @@ struct PreferredNetworkInfo {
    uint16_t mnc;    /**< mobile network code */
    RatMask ratMask; /**< bit mask denotes which of the radio access technologies are
                          set */
+};
+
+/**
+ * Defines the status of the network scan results
+ */
+enum class NetworkScanStatus {
+   COMPLETE = 0,         /**<  Network scan is successful and completed. No more indications are
+                               expected for the scan request */
+   PARTIAL = 1,          /**<  Network scan results are partial, further results are expected in
+                               subsequent indication */
+   FAILED = 2,           /**<  Network scan failed either due to radio link failure or it is
+                               aborted or due to problem in performing incremental search. */
 };
 
 /**
@@ -289,8 +302,28 @@ public:
     *                         network scan request
     *
     * @returns Status of performNetworkScan i.e. success or suitable error code.
+    *
+    * @deprecated Use INetworkSelectionManager::performNetworkScan(
+    *     common::ResponseCallback callback) API instead
     */
    virtual telux::common::Status performNetworkScan(NetworkScanCallback callback) = 0;
+
+   /**
+    * Perform the network scan. The available networks list is returned incrementally as they
+    * become available, without waiting for the entire scan to complete through the
+    * indication API (INetworkSelectionListener::onNetworkScanResults).
+    * The scan status in indication will indicate if its a partial result or complete result.
+    *
+    * @param [in] callback    Callback function to get the response of network scan request
+    *
+    * @returns Status of performNetworkScan i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    *
+    */
+   virtual telux::common::Status performNetworkScan(
+      common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * Register a listener for specific updates from network access service.
@@ -326,6 +359,9 @@ public:
    OperatorInfo(std::string networkName, std::string mcc, std::string mnc,
                 OperatorStatus operatorStatus);
 
+   OperatorInfo(std::string networkName, std::string mcc, std::string mnc, RadioTechnology rat,
+      OperatorStatus operatorStatus);
+
    /**
     * Get Operator name or description
     *
@@ -348,6 +384,13 @@ public:
    std::string getMnc();
 
    /**
+    * Get radio access technology.
+    *
+    * @returns Radio access technology(RAT) @ref RadioTechnology.
+    */
+   RadioTechnology getRat();
+
+   /**
     * Get status of operator.
     *
     * @returns status of the operator @ref OperatorStatus.
@@ -358,6 +401,7 @@ private:
    std::string networkName_;
    std::string mcc_;
    std::string mnc_;
+   RadioTechnology rat_;
    OperatorStatus operatorStatus_;
 };
 
@@ -375,6 +419,26 @@ public:
     * @param [in] mode    Network selection mode @ref NetworkSelectionMode
     */
    virtual void onSelectionModeChanged(NetworkSelectionMode mode) {
+   }
+
+   /**
+    * This function is called in response to performNetworkScan API.
+    * This API will be invoked multiple times in case of partial network scan results.
+    * In case of network scan failure and network scan completed this API will not be invoked
+    * further.
+    *
+    * @param [in] scanStatus      Status of the network scan results @ref NetworkScanStatus
+    * @param [in] operatorInfos   Operators info with details of network operator name, MCC,
+    *                             MNC, etc. In case of partial network scan results, the
+    *                             operator info will have the information of the new set of
+    *                             operator info along with previous partial network scan results.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    *
+    */
+   virtual void onNetworkScanResults(NetworkScanStatus scanStatus,
+      std::vector<telux::tel::OperatorInfo> operatorInfos) {
    }
 
    /**

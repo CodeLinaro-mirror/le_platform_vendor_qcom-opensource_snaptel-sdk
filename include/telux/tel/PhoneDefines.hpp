@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -197,6 +197,7 @@ enum class RadioTechnology {
    RADIO_TECH_TD_SCDMA, /**< Network type is TD SCDMA */
    RADIO_TECH_IWLAN,    /**< Network type is TD IWLAN */
    RADIO_TECH_LTE_CA,   /**< Network type is LTE CA */
+   RADIO_TECH_NR5G,     /**< Network type is NR5G */
 };
 
 /**

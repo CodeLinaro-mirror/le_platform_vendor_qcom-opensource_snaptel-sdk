@@ -54,6 +54,10 @@ set(TELSDK_CONSOLE_APP_SOURCES
 
    ModemStatus.cpp
 
+   Cellbroadcast/CellbroadcastMenu.cpp
+   Cellbroadcast/CellbroadcastListener.cpp
+   Cellbroadcast/CellbroadcastHandler.cpp
+
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp

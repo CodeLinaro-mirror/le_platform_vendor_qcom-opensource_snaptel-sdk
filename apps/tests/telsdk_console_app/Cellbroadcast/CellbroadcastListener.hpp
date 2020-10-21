@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,48 +27,29 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
- */
+#ifndef CELLBROADCASTLISTENER_HPP
+#define CELLBROADCASTLISTENER_HPP
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
-
-#include <string>
 #include <vector>
+#include <memory>
+#include <telux/tel/CellBroadcastDefines.hpp>
+#include <telux/tel/CellBroadcastManager.hpp>
 
-#include "ModemStatus.hpp"
-#include "console_app_framework/ConsoleApp.hpp"
-
-class TelSdkConsoleApp : public ConsoleApp {
-public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
-
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
-
-   // Displays main menu
-   void displayMenu();
-
-   // Check Modem availability for Telephony
-    void onModemAvailable();
+class CellbroadcastListener : public telux::tel::ICellBroadcastListener {
+ public:
+    void onIncomingMessage(SlotId slotId,
+        const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) override;
 
 private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
-   void rspMenu(std::vector<std::string> userInput);
-   void cellbroadcastMenu(std::vector<std::string> userInput);
+    std::string geograhicalScopeToString(telux::tel::GeographicalScope scope);
+    std::string priorityToString(telux::tel::MessagePriority priority);
+    std::string msgTypeToString(telux::tel::MessageType type);
+    std::string cmasMessageClassToString(telux::tel::CmasMessageClass msgClass);
+    std::string cmasSeverityToString(telux::tel::CmasSeverity severity);
+    std::string cmasUrgencyToString(telux::tel::CmasUrgency urgency);
+    std::string cmasCertaintyToString(telux::tel::CmasCertainty certainity);
+    std::string etwsWarningTypeToString(telux::tel::EtwsWarningType warningtype);
+
 };
 
-#endif  // TELSDKCONSOLEAPP_HPP
+#endif  // CELLBROADCASTLISTENER_HPP

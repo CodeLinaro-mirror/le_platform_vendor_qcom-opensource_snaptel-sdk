@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,47 +28,44 @@
  */
 
 /**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
+ * @file      CellbroadcastMenu.hpp
+ * @brief     The reference application to demonstrate Cellbroadcast features
+ *            like update message filters, request message filters, set and get
+ *            activation status and receive cell broadcast message
  */
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
+#ifndef CELLBROADCASTMENU_HPP
+#define CELLBROADCASTMENU_HPP
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "ModemStatus.hpp"
+#include <telux/tel/CellBroadcastManager.hpp>
+#include "CellbroadcastListener.hpp"
 #include "console_app_framework/ConsoleApp.hpp"
 
-class TelSdkConsoleApp : public ConsoleApp {
+class CellbroadcastMenu : public ConsoleApp {
 public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
-
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
-
-   // Displays main menu
-   void displayMenu();
-
-   // Check Modem availability for Telephony
-    void onModemAvailable();
+    CellbroadcastMenu(std::string appName, std::string cursor);
+    ~CellbroadcastMenu();
+    void init();
 
 private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
-   void rspMenu(std::vector<std::string> userInput);
-   void cellbroadcastMenu(std::vector<std::string> userInput);
+    std::vector<std::shared_ptr<telux::tel::ICellBroadcastManager>> cbManagers_;
+    std::shared_ptr<CellbroadcastListener> cbListener_ = nullptr;
+    void updateMessageFilters(std::vector<std::string> userInput);
+    void setActivationStatus(std::vector<std::string> userInput);
+    void requestMessageFilters(std::vector<std::string> userInput);
+    void requestActivationStatus(std::vector<std::string> userInput);
+    void selectSimSlot(std::vector<std::string> userInput);
+    int slot_;
+
+    void onRequestMsgFilterResponse(std::vector<telux::tel::CellBroadcastFilter> filters,
+        bool isActivated, telux::common::ErrorCode errorCode);
+    void onResponseCallback(telux::common::ErrorCode error);
+
 };
 
-#endif  // TELSDKCONSOLEAPP_HPP
+#endif  // CELLBROADCASTMENU_HPP
+

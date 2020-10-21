@@ -40,6 +40,7 @@
 #include <memory>
 
 #include <telux/tel/CallManager.hpp>
+#include <telux/tel/CellBroadcastManager.hpp>
 #include <telux/tel/CardManager.hpp>
 #include <telux/tel/NetworkSelectionManager.hpp>
 #include <telux/tel/Phone.hpp>
@@ -169,6 +170,15 @@ public:
     */
    std::shared_ptr<ISimProfileManager> getSimProfileManager();
 
+   /* 
+    * Get CellBroadcast Manager instance for Slot ID. CellBroadcast manager used to receive
+    * broacast messages and configure broadcast messages.
+    *
+    * @param [in] SlotId   @ref telux::common::SlotId
+    *
+    * @returns Pointer of ICellBroadcastManager object or nullptr in case of failure.
+    */
+   std::shared_ptr<ICellBroadcastManager> getCellBroadcastManager(SlotId slotId = DEFAULT_SLOT_ID);
 
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
@@ -178,6 +188,7 @@ private:
    std::shared_ptr<IMultiSimManager> multiSimManager_;
    std::shared_ptr<ISimProfileManager> simProfileManager_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
+   std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
    std::map<int, std::shared_ptr<INetworkSelectionManager>> networkSelectionManagerMap_;
    std::map<int, std::shared_ptr<ISapCardManager>> sapCardManagerMap_;

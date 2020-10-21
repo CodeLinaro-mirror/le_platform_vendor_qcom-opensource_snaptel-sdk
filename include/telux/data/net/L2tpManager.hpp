@@ -51,6 +51,9 @@ namespace telux {
 namespace data {
 namespace net {
 
+// Forward declarations
+class IL2tpListener;
+
 /** @addtogroup telematics_net
  * @{ */
 /**
@@ -113,7 +116,9 @@ using L2tpConfigCb
 /** @addtogroup telematics_net
  * @{ */
 /**
- *@brief    L2tpManager is a primary interface for configuring L2TP Service
+ *@brief    L2tpManager is a primary interface for configuring L2TP Service.
+ *          It also provides interface to Subsystem Restart events by registering as listener.
+ *          Notifications will be received when modem is ready/not ready.
  */
 class IL2tpManager {
  public:
@@ -200,10 +205,55 @@ class IL2tpManager {
         uint32_t tunnelId, telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
+     * Register L2TP Manager as listener for Data Service heath events like data service available
+     * or data service not available.
+     *
+     * @param [in] listener    pointer of IL2tpListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<IL2tpListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of IL2tpListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IL2tpListener> listener) = 0;
+
+    /**
      * Destructor for IL2tpManager
      */
     virtual ~IL2tpManager(){};
 };  // end of IL2tpManager
+
+/**
+ * Interface for L2TP listener object. Client needs to implement this interface to get
+ * access to L2TP services notifications like onServiceStatusChange.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ */
+class IL2tpListener {
+ public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * Destructor for IL2tpListener
+     */
+    virtual ~IL2tpListener(){};
+};
 
 /** @} */ /* end_addtogroup telematics_net */
 }

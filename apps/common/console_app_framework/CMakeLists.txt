@@ -3,6 +3,9 @@
 
 cmake_minimum_required(VERSION 2.8.9)
 
+# provides install directory variables CMAKE_INSTALL_<dir>
+include(GNUInstallDirs)
+
 set(TARGET_CONSOLE_APP_FRAMEWORK telux_app_framework)
 
 set(CONSOLE_APP_FRAMEWORK_SOURCES

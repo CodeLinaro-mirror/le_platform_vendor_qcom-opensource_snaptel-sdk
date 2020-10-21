@@ -41,6 +41,7 @@
 #include "DgnssMenu.hpp"
 
 const int DEFAULT_UNKNOWN = 0;
+using namespace telux::common;
 
 LocationMenu::LocationMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -62,26 +63,30 @@ LocationMenu::~LocationMenu() {
 telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocationManager>
         &locationManager, std::shared_ptr<MyLocationListener> &posListener) {
     if(locationManager == nullptr) {
+      std::promise<ServiceStatus> prom{};
       auto &locationFactory = LocationFactory::getInstance();
-      locationManager = locationFactory.getLocationManager();
-
+      locationManager = locationFactory.getLocationManager([&](ServiceStatus status) {
+          if (status == ServiceStatus::SERVICE_AVAILABLE) {
+                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+            } else {
+                prom.set_value(ServiceStatus::SERVICE_FAILED);
+            }
+        });
       std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
       startTime = std::chrono::system_clock::now();
-      bool subSystemsStatus = locationManager->isSubsystemReady();
-      if(!subSystemsStatus) {
+      ServiceStatus locMgrStatus = locationManager->getServiceStatus();
+      if(locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
          std::cout << "Location subsystem is not ready, Please wait" << std::endl;
-         std::future<bool> f = locationManager->onSubsystemReady();
-         subSystemsStatus = f.get();
       }
-
-      if(subSystemsStatus) {
+      locMgrStatus = prom.get_future().get();
+      if(locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
           endTime = std::chrono::system_clock::now();
           std::chrono::duration<double> elapsedTime = endTime - startTime;
-          std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                            << std::endl;
+          std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count()
+              << "s\n" << std::endl;
       } else {
           std::cout << "ERROR - Unable to initialize Location subsystem" << std::endl;
-          return telux::common::Status::NOTREADY;
+          return telux::common::Status::FAILED;
       }
 
       posListener = std::make_shared<MyLocationListener>();
@@ -105,30 +110,36 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
 telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILocationConfigurator>
         &locationConfigurator) {
     if(locationConfigurator == nullptr) {
+        std::promise<ServiceStatus> prom{};
         auto &locationFactory = LocationFactory::getInstance();
-        locationConfigurator = locationFactory.getLocationConfigurator();
+        locationConfigurator = locationFactory.getLocationConfigurator([&](ServiceStatus status) {
+            if (status == ServiceStatus::SERVICE_AVAILABLE) {
+                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+            } else {
+                prom.set_value(ServiceStatus::SERVICE_FAILED);
+            }
+        });
         std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
         startTime = std::chrono::system_clock::now();
-        bool subSystemsStatus = locationConfigurator->isSubsystemReady();
-        if(!subSystemsStatus) {
-            std::cout << "Location configuration subsystem is not ready, Please wait" << std::endl;
-            std::future<bool> f = locationConfigurator->onSubsystemReady();
-            subSystemsStatus = f.get();
-        }
 
-        if(subSystemsStatus) {
+        ServiceStatus locCfgStatus = locationConfigurator->getServiceStatus();
+        if(locCfgStatus != ServiceStatus::SERVICE_AVAILABLE) {
+         std::cout << "Location configuration subsystem is not ready, Please wait" << std::endl;
+        }
+        locCfgStatus = prom.get_future().get();
+        if(locCfgStatus == ServiceStatus::SERVICE_AVAILABLE) {
             endTime = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsedTime = endTime - startTime;
             std::cout << "Elapsed Time for configuration subsystems to ready : "
-                << elapsedTime.count() << "s\n"  << std::endl;
+                << elapsedTime.count() << "s\n" << std::endl;
         } else {
             std::cout << "ERROR - Unable to initialize Location configuration subsystem"
                 << std::endl;
-            return telux::common::Status::NOTREADY;
+            return telux::common::Status::FAILED;
         }
-   } else {
+    } else {
        std::cout<< "Location configurator is already initialized" << std::endl;
-   }
+    }
    return telux::common::Status::SUCCESS;
 }
 
@@ -1292,7 +1303,7 @@ int main(int argc, char **argv) {
         + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch);
     LocationMenu locationMenu(appName, "location> ");
     // Setting required secondary groups for SDK file/diag logging
-    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "locclient"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

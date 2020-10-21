@@ -73,13 +73,17 @@
  */
 #define PERF telux::common::LogLevel::LEVEL_PERF
 
+#if !defined(TELUX_TECH_AREA)
+#define TELUX_TECH_AREA 0
+#endif
+
 /**
  * Public utility macro for logging at different log level(i.e INFO, DEBUG) with variable argument
  * list. More information like file name, line number are automatically added to each logs.
  * Example for using Macro: LOG(DEBUG, "Message").
  */
 #define LOG(logLevel, args...) \
-   telux::common::Log::logMessage(logLevel, __FILE__, LINE_NO(__LINE__), args)
+   telux::common::Log::logMessage(logLevel, __FILE__, LINE_NO(__LINE__), TELUX_TECH_AREA, args)
 
 namespace telux {
 namespace common {
@@ -104,7 +108,7 @@ public:
     */
    template <typename... MessageArgs>
    static void logMessage(LogLevel logLevel, const std::string &fileName, const std::string &lineNo,
-                          MessageArgs... params);
+                          const int &component, MessageArgs... params);
 
 private:
    /*

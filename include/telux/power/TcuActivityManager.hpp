@@ -50,8 +50,15 @@ namespace power {
  * @{ */
 
 /**
- * @brief   ITcuActivityManager provides interface to register and de-register listeners (to get
- *          TCU-activity state updates). And also API to initiate TCU-activity state transition.
+ * @brief   ITcuActivityManager provides interface to register and de-register listeners to get
+ *          TCU-activity state updates. And also API to initiate TCU-activity state transition.
+ *          The system can be configured to be operated in ACTIVE or PASSIVE mode with respect to
+ *          TcuActivity management.
+ *          In ACTIVE mode, the TCU-activity management service leads the system into desired
+ *          activity state after receiving the acknowledgements from all the clients or after the
+ *          configured timeout. In PASSIVE mode, the management service just notifies the clients
+ *          about the state transition and conveys their acknowledgement status back to the Master
+ *          application that triggered the state transition.
  */
 class ITcuActivityManager {
 public:

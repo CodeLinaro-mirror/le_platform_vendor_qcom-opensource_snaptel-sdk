@@ -54,6 +54,7 @@ namespace net {
 
 // Forward declarations
 class IFirewallEntry;
+class IFirewallListener;
 
 /**
  * This function is called as a response to @ref requestFirewallStatus()
@@ -102,6 +103,8 @@ using DmzEntriesCb
 /**
  *@brief    FirewallManager is a primary interface that filters and controls the network
  *          traffic on a pre-configured set of rules.
+ *          It also provides interface to Subsystem Restart events by registering as listener.
+ *          Notifications will be received when modem is ready/not ready.
  */
 class IFirewallManager {
  public:
@@ -259,6 +262,28 @@ class IFirewallManager {
         DmzEntriesCb dmzCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
+     * Register Firewall Manager as listener for Data Service heath events like data service
+     * available or data service not available.
+     *
+     * @param [in] listener    pointer of IFirewallListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<IFirewallListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of IFirewallListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IFirewallListener> listener) = 0;
+
+    /**
      * Get the associated operation type for this instance.
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
@@ -317,6 +342,29 @@ class IFirewallEntry {
      * Destructor for IFirewallEntry
      */
     virtual ~IFirewallEntry(){};
+};
+
+/**
+ * Interface for Firewall listener object. Client needs to implement this interface to get
+ * access to Firewall services notifications like onServiceStatusChange.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ */
+class IFirewallListener {
+ public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * Destructor for IFirewallListener
+     */
+    virtual ~IFirewallListener(){};
 };
 
 /** @} */ /* end_addtogroup telematics_net */

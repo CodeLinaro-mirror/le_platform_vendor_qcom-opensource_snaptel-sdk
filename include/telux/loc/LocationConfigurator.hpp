@@ -133,6 +133,18 @@ public:
   virtual bool isSubsystemReady() = 0;
 
 /**
+ * This status indicates whether the object is in a usable state.
+ *
+ * @returns SERVICE_AVAILABLE    -  If location configurator is ready for service.
+ *          SERVICE_UNAVAILABLE  -  If location configurator is temporarily unavailable.
+ *          SERVICE_FAILED       -  If location configurator encountered an irrecoverable failure.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+  virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+/**
  * Wait for location configuration subsystem to be ready.
  *
  * @returns  A future that caller can wait on to be notified when location

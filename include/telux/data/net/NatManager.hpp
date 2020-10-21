@@ -51,6 +51,9 @@ namespace telux {
 namespace data {
 namespace net {
 
+// Forward declarations
+class INatListener;
+
 /** @addtogroup telematics_net
  * @{ */
 /**
@@ -80,8 +83,10 @@ using StaticNatEntriesCb
 /** @addtogroup telematics_net
  * @{ */
 /**
- *@brief    NatManager is a primary interface for configuring static network
- *          address translation(SNAT) and DMZ (demilitarized zone)
+ *@brief    NatManager is a primary interface for configuring static network address
+ *          translation(SNAT) and DMZ (demilitarized zone).
+ *          It also provides interface to Subsystem Restart events by registering as listener.
+ *          Notifications will be received when modem is ready/not ready.
  */
 class INatManager {
  public:
@@ -160,6 +165,28 @@ class INatManager {
         StaticNatEntriesCb snatEntriesCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
+     * Register Nat Manager as listener for Data Service heath events like data service available
+     * or data service not available.
+     *
+     * @param [in] listener    pointer of INatListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<INatListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of INatListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<INatListener> listener) = 0;
+
+    /**
      * Get the associated operation type for this instance.
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
@@ -174,6 +201,29 @@ class INatManager {
      */
     virtual ~INatManager(){};
 };  // end of INatManager
+
+/**
+ * Interface for Nat listener object. Client needs to implement this interface to get
+ * access to Nat services notifications like onServiceStatusChange.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ */
+class INatListener {
+ public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * Destructor for INatListener
+     */
+    virtual ~INatListener(){};
+};
 
 /** @} */ /* end_addtogroup telematics_net */
 }

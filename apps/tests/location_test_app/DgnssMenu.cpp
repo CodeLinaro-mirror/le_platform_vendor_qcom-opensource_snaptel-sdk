@@ -48,6 +48,8 @@
 #define RESP_BUFFER_SIZE    1032
 #define ACK_STRING "ICY 200 OK\r\n"
 
+using namespace telux::common;
+
 DgnssMenu::DgnssMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
 }
@@ -62,20 +64,30 @@ DgnssMenu::~DgnssMenu() {
 telux::common::Status DgnssMenu::initDgnssManager(std::shared_ptr<IDgnssManager>
         &dgnssManager) {
     if(dgnssManager == nullptr) {
+        std::promise<ServiceStatus> prom{};
         auto &locationFactory = LocationFactory::getInstance();
-        dgnssManager = locationFactory.getDgnssManager();
+        dgnssManager = locationFactory.getDgnssManager(DgnssDataFormat::DATA_FORMAT_RTCM_3,
+            [&](ServiceStatus status) {
+                if (status == ServiceStatus::SERVICE_AVAILABLE) {
+                    prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+                } else {
+                    prom.set_value(ServiceStatus::SERVICE_FAILED);
+                }
+            });
+        if (!dgnssManager) {
+            std::cout << "Failed to get Gnss manager object" << std::endl;
+            return Status::FAILED;
+        }
         // The dgnssManager object is associated with a default source which support
         // injection of RCTM3 format data.
         std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
         startTime = std::chrono::system_clock::now();
-        bool subSystemsStatus = dgnssManager->isSubsystemReady();
-        if(!subSystemsStatus) {
+        ServiceStatus dgnssMgrStatus = dgnssManager->getServiceStatus();
+        if(dgnssMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Dgnss subsystem is not ready, Please wait" << std::endl;
-            std::future<bool> f = dgnssManager->onSubsystemReady();
-            subSystemsStatus = f.get();
         }
-
-        if(subSystemsStatus) {
+        dgnssMgrStatus = prom.get_future().get();
+        if(dgnssMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
             endTime = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsedTime = endTime - startTime;
             std::cout << "Elapsed Time for Dgnss subsystems to ready : "
@@ -112,7 +124,6 @@ int DgnssMenu::init() {
    if (status != telux::common::Status::SUCCESS) {
        rc = -1;
    }
-
    return rc;
 }
 

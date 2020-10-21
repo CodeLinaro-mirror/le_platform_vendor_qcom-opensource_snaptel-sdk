@@ -127,6 +127,8 @@ using DefaultProfileIdResponseCb
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
  *       This interface provides APIs for start and stop data call connections,
  *       get data call information and listener for monitoring data calls.
+ *       It also provides interface to Subsystem Restart events by registering as listener.
+ *       Notifications will be received when modem is ready/not ready.
  */
 class IDataConnectionManager {
  public:

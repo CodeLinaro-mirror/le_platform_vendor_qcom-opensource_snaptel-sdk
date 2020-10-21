@@ -799,12 +799,12 @@ using GnssDataValidity = uint32_t;
 struct GnssData {
   /** bitwise OR of GnssDataValidityType */
   GnssDataValidity gnssDataMask[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
-  /** Jammer Indication
-   * Each index represents the measurement for the signal type in GnssDataSignalTypes
+  /** Jammer Indication for each signal type. Each index represents the signal type in
+   *  GnssDataSignalTypes.
    */
   double jammerInd[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
-  /** Automatic gain control
-   * Each index represents the measurement for the signal type in GnssDataSignalTypes
+  /** Automatic gain control for each signal type. Each index corresponds to the signal type
+   *  in GnssDataSignalTypes.
    */
   double agc[GnssDataSignalTypes::GNSS_DATA_MAX_NUMBER_OF_SIGNAL_TYPES];
 };

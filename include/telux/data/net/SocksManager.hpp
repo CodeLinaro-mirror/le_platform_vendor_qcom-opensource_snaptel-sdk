@@ -49,11 +49,15 @@ namespace telux {
 namespace data {
 namespace net {
 
+// Forward declarations
+class ISocksListener;
+
 /** @addtogroup telematics_net
  * @{ */
 /**
- *@brief    SocksManager is a primary interface for configuring legacy
- *          Socks proxy server
+ *@brief    SocksManager is a primary interface for configuring legacy Socks proxy server.
+ *          It also provides interface to Subsystem Restart events by registering as listener.
+ *          Notifications will be received when modem is ready/not ready.
  */
 class ISocksManager {
  public:
@@ -95,6 +99,28 @@ class ISocksManager {
         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
+     * Register Socks Manager as listener for Data Service heath events like data service available
+     * or data service not available.
+     *
+     * @param [in] listener    pointer of ISocksListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<ISocksListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of ISocksListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<ISocksListener> listener) = 0;
+
+    /**
      * Get the associated operation type for this instance.
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
@@ -109,6 +135,29 @@ class ISocksManager {
      */
     virtual ~ISocksManager(){};
 };  // end of ISocksManager
+
+/**
+ * Interface for Socks listener object. Client needs to implement this interface to get
+ * access to Socks services notifications like onServiceStatusChange.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ */
+class ISocksListener {
+ public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * Destructor for ISocksListener
+     */
+    virtual ~ISocksListener(){};
+};
 
 /** @} */ /* end_addtogroup telematics_net */
 }

@@ -2341,8 +2341,11 @@ As a reference, auto-shutdown management in an eCall application is described in
 
 @section tcuactivity_management_call_flow TCU Activity Management
 
-Application will get the TCU-activity manager object from power factory. The application can register a listener for updates on TCU-activity state and its management service status. The application can also set the system to a desired activity state.
+Application will get appropriate TCU-activity manager object from power factory. A Master/Slave client can register a listener for updates on TCU-activity state and its management service status. A Master client application can also set the system to a desired activity state.
 When the application is notified about the service being unavailable, the TCU-activity state notifications will be inactive. After the service becomes available, the existing listener registrations will be maintained.
+
+The framework can work in ACTIVE or PASSIVE mode, based on the configuration of TCU-activity management service. In ACTIVE mode, the management service leads the system into desired activity state after receiving the acknowledgements from all the clients or after the configured timeout.
+However, in PASSIVE mode, the framework just notifies the clients about the state transition and conveys their acknowledgement status back to the Master application that triggered the transition.
 
 @subsection tcuactivity_manager_listener_callflow Call flow to register/remove listener for TCU-activity manager
 
@@ -2359,7 +2362,7 @@ When the application is notified about the service being unavailable, the TCU-ac
 
 @html_image{tcuactivity_manager_listener_callflow.png,Call flow to register/remove listener for TCU-activity manager,80,80,Register/Remove listener for TCU-activity manager call flow}
 
-1. Application requests power factory for TCU-activity manager object.
+1. Application requests power factory for TCU-activity manager object, with clientType as SLAVE.
 2. Power factory returns ITcuActivityManager object using which application will register or remove a listener.
 3. Application can register a listener for getting notifications on TCU-activity state updates.
 4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
@@ -2369,22 +2372,22 @@ When the application is notified about the service being unavailable, the TCU-ac
 8. Application can remove listener.
 9. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
-@subsection tcuactivity_manager_commands_callflow Call flow to set the TCU-activity state
+@subsection tcuactivity_manager_commands_callflow_active_mode Call flow to set the TCU-activity state in ACTIVE mode
 
-@anchor fig_tcuactivity_manager_commands_callflow
+@anchor fig_tcuactivity_manager_commands_callflow_active_mode
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{tcuactivity_manager_commands_callflow.png}
+  \includegraphics[scale=0.5]{tcuactivity_manager_commands_callflow_active_mode.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Call flow to set the TCU-activity state}
-  \label{fig_tcuactivity_manager_commands_callflow}
+  \caption{Call flow to set the TCU-activity state in ACTIVE mode}
+  \label{fig_tcuactivity_manager_commands_callflow_active_mode}
 \end{figure}
 @endlatexonly
 
-@html_image{tcuactivity_manager_commands_callflow.png,Call flow to set the TCU-activity state,80,80,Call flow to set the TCU-activity state}
+@html_image{tcuactivity_manager_commands_callflow_active_mode.png,Call flow to set the TCU-activity state in ACTIVE mode,80,80,Call flow to set the TCU-activity state in ACTIVE mode}
 
-1. Application requests power factory for TCU-activity manager object.
+1. Application requests power factory for TCU-activity manager object, with clientType as MASTER.
 2. Power factory returns ITcuActivityManager object using which application will set the TCU-activity state.
 3. Application can register a listener for getting notifications on TCU-activity state.
 4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
@@ -2396,6 +2399,35 @@ When the application is notified about the service being unavailable, the TCU-ac
 10. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
 11. Application can remove listener.
 12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@subsection tcuactivity_manager_commands_callflow_passive_mode Call flow to set the TCU-activity state in PASSIVE mode
+
+@anchor fig_tcuactivity_manager_commands_callflow_passive_mode
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{tcuactivity_manager_commands_callflow_passive_mode.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to set the TCU-activity state in PASSIVE mode}
+  \label{fig_tcuactivity_manager_commands_callflow_passive_mode}
+\end{figure}
+@endlatexonly
+
+@html_image{tcuactivity_manager_commands_callflow_passive_mode.png,Call flow to set the TCU-activity state in PASSIVE mode,80,80,Call flow to set the TCU-activity state in PASSIVE mode}
+
+1. Application requests power factory for TCU-activity manager object, with clientType as MASTER.
+2. Power factory returns ITcuActivityManager object using which application will set the TCU-activity state.
+3. Application can register a listener for getting notifications on TCU-activity state.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
+5. Application can set the TCU-activity state to SUSPEND, RESUME or SHUTDOWN.
+6. Application receives synchronous status which indicates if the request was sent successfully.
+7. Optionally, the response to setActivityState request can be received by the application.
+8. Application waits for TCU-activity state update to confirm the state change.
+9. Application will send one(despite multiple listeners) acknowledgement, after processing(save any required information) SUSPEND/SHUTDOWN notifications. This indicates the readiness of application for state-transition. However the TCU-activity management service doesn't wait for acknowledgement indefinitely, before performing the state transition.
+10. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
+11. Application waits for the acknowledgement status of all the clients, for the state transition in the system
+12. Application can remove listener.
+13. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 @section remote_sim_call_flow Remote SIM call flow
 

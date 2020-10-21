@@ -316,13 +316,18 @@ int MyECallListener::getCallsOnSlot(SlotId slotId) {
     int numCalls = 0;
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
     auto callManager = phoneFactory.getCallManager();
-    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
-      = callManager->getInProgressCalls();
-    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
-        ++callIterator) {
-        if (slotId == static_cast<SlotId>((*callIterator)->getPhoneId())) {
-            numCalls++;
+    if (callManager) {
+        std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
+          = callManager->getInProgressCalls();
+        for(auto callIterator = std::begin(inProgressCalls);
+            callIterator != std::end(inProgressCalls); ++callIterator) {
+            if (slotId == static_cast<SlotId>((*callIterator)->getPhoneId())) {
+                numCalls++;
+            }
         }
+    } else {
+        std::cout << "ERROR - CallManager is NULL, failed to get in progress calls on slot Id: "
+                  << static_cast<int>(slotId) << std::endl;
     }
     return numCalls;
 }

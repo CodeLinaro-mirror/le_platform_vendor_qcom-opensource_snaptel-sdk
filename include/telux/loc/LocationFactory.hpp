@@ -64,30 +64,53 @@ public:
    /**
     * Get instance of Location Manager
     *
+    * @param[in] callback   Optional callback to get the response of the manager
+    *                       initialization.
+    *
     * @returns Pointer of ILocationManager object.
     */
-   std::shared_ptr<ILocationManager> getLocationManager();
+   std::shared_ptr<ILocationManager> getLocationManager(telux::common::InitResponseCb
+        callback = nullptr);
 
    /**
     * Get instance of Location Configurator.
     *
+    * @param[in] callback   Optional callback pointer to get the response of the manager
+    *                       initialisation.
+    *
     * @returns Pointer of ILocationConfigurator object.
     */
-   std::shared_ptr<ILocationConfigurator> getLocationConfigurator();
+   std::shared_ptr<ILocationConfigurator> getLocationConfigurator(telux::common::InitResponseCb
+        callback = nullptr);
 
    /**
     * Get instance of Dgnss manager
     *
+    * @param[in] callback   Optional callback pointer to get the response of the manager
+    *                       initialisation.
+    *
     * @returns Pointer of IDgnssManager object.
     */
    std::shared_ptr<IDgnssManager> getDgnssManager(
-           DgnssDataFormat dataFormat = DgnssDataFormat::DATA_FORMAT_RTCM_3);
+           DgnssDataFormat dataFormat = DgnssDataFormat::DATA_FORMAT_RTCM_3,
+                    telux::common::InitResponseCb callback = nullptr);
 
 private:
+   /**
+    * These callbacks are invoked after manager initialisation
+    */
+   void onGetConfiguratorResponse(telux::common::ServiceStatus status);
+   void onGetDgnssManagerResponse(telux::common::ServiceStatus status);
+
    std::shared_ptr<ILocationManager> locationManager_;
    std::shared_ptr<ILocationConfigurator> locConfigurator_;
    std::shared_ptr<IDgnssManager> dgnssManager_;
    std::mutex locationFactoryMutex_;
+   std::vector<telux::common::InitResponseCb> configuratorCallbacks_;
+   std::vector<telux::common::InitResponseCb> dgnssCallbacks_;
+   telux::common::ServiceStatus configuratorInitStatus_;
+   telux::common::ServiceStatus dgnssInitStatus_;
+   std::condition_variable cv_;
    LocationFactory();
    LocationFactory(const LocationFactory &) = delete;
    LocationFactory &operator=(const LocationFactory &) = delete;

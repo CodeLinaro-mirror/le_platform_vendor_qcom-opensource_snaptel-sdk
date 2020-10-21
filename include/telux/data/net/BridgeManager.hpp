@@ -50,6 +50,9 @@ namespace telux {
 namespace data {
 namespace net {
 
+// Forward declarations
+class IBridgeListener;
+
 /**
  * Interface types supported for bridge configuration
  */
@@ -88,7 +91,8 @@ using BridgeInfoResponseCb
 /**
  * @brief      IBridgeManager provides APIs to enable/disable and set/get/delete software bridges
  *             for various WLAN and Ethernet interfaces.
- *
+ *             It also provides interface to Subsystem Restart events by registering as listener.
+ *             Notifications will be received when modem is ready/not ready.
  */
 class IBridgeManager {
  public:
@@ -164,10 +168,55 @@ class IBridgeManager {
                         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
+     * Register Bridge Manager as listener for Data Service heath events like data service available
+     * or data service not available.
+     *
+     * @param [in] listener    pointer of IBridgeListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<IBridgeListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of IBridgeListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IBridgeListener> listener) = 0;
+
+    /**
      * Destructor for IBridgeManager
      */
     virtual ~IBridgeManager(){};
 };  // end of IBridgeManager
+
+/**
+ * Interface for Bridge listener object. Client needs to implement this interface to get
+ * access to Bridge services notifications like onServiceStatusChange.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ */
+class IBridgeListener {
+ public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * Destructor for IBridgeListener
+     */
+    virtual ~IBridgeListener(){};
+};
 
 /** @} */ /* end_addtogroup telematics_net */
 }

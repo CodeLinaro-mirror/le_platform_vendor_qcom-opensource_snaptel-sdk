@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -52,6 +52,9 @@ namespace telux {
 namespace data {
 namespace net {
 
+// Forward declarations
+class IVlanListener;
+
 /**
  * This function is called as a response to @ref createVlan()
  *
@@ -97,7 +100,9 @@ using VlanMappingResponseCb = std::function<void(
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).
  *             it provide APIs for create, query, remove VLAN interfaces and associate or
-               disassociate with profile IDs
+ *             disassociate with profile IDs.
+ *             It also provides interface to Subsystem Restart events by registering as listener.
+ *             Notifications will be received when modem is ready/not ready.
  */
 class IVlanManager {
  public:
@@ -223,6 +228,28 @@ class IVlanManager {
         SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
+     * Register Vlan Manager as a listener for Data Service health events like data service
+     * available or data service not available.
+     *
+     * @param [in] listener    pointer of IVlanListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<IVlanListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of IVlanListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IVlanListener> listener) = 0;
+
+    /**
      * Get the associated operation type for this instance.
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
@@ -237,6 +264,29 @@ class IVlanManager {
      */
     virtual ~IVlanManager(){};
 };  // end of IVlanManager
+
+/**
+ * Interface for Vlan listener object. Client needs to implement this interface to get
+ * access to Socks services notifications like onServiceStatusChange.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ */
+class IVlanListener {
+ public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * Destructor for IVlanListener
+     */
+    virtual ~IVlanListener(){};
+};
 
 /** @} */ /* end_addtogroup telematics_net */
 }

@@ -49,7 +49,7 @@ public:
 
     Status startAudio();
     Status stopAudio();
-    Status startDtmf(DtmfTone tone, uint16_t gain, uint32_t duration);
+    Status startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain);
     Status stopDtmf();
     Status registerListener(std::weak_ptr<IVoiceListener> listener);
     Status deRegisterListener(std::weak_ptr<IVoiceListener> listener);

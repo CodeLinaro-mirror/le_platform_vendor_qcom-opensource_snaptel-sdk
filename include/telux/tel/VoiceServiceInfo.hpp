@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       VoiceServiceInfo.hpp
  *
@@ -38,6 +43,7 @@
 #define VOICESERVICEINFO_HPP
 
 #include <memory>
+#include <telux/tel/PhoneDefines.hpp>
 
 namespace telux {
 namespace tel {
@@ -157,7 +163,8 @@ enum class VoiceServiceDenialCause {
  */
 class VoiceServiceInfo {
 public:
-   VoiceServiceInfo(VoiceServiceState voiceServiceState, VoiceServiceDenialCause denialCause);
+   VoiceServiceInfo(VoiceServiceState voiceServiceState, VoiceServiceDenialCause denialCause,
+      RadioTechnology radioTech);
 
    /**
     * Get voice service state.
@@ -190,9 +197,17 @@ public:
     */
    bool isOutOfService();
 
+   /**
+    * Get voice radio technology
+    *
+    * @returns @ref RadioTechnology
+    */
+   RadioTechnology getRadioTechnology();
+
 private:
    VoiceServiceState voiceServiceState_;
    VoiceServiceDenialCause denialCause_;
+   RadioTechnology radioTech_;
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

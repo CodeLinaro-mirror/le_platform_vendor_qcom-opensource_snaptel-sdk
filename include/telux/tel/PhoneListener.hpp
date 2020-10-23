@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       PhoneListener.hpp
  * @brief      Interface for Phone listener object. Client needs to implement
@@ -123,6 +128,8 @@ public:
     *
     * @param [in] radioTech   Radio state of the phone
     *                         @ref telux::tel::RadioTechnology
+    *
+    * @deprecated Use onVoiceServiceStateChanged() API instead
     */
    virtual void onVoiceRadioTechnologyChanged(int phoneId, RadioTechnology radioTech) {
    }

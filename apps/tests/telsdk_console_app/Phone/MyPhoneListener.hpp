@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYPHONELISTENER_HPP
 #define MYPHONELISTENER_HPP
 
@@ -80,15 +85,6 @@ private:
    std::string ratCapabilitiesMaskToString(telux::tel::RATCapabilitiesMask ratCapabilitiesMask);
 };
 
-class MyVoiceRadioTechnologyCallback {
-public:
-   void voiceRadioTechnologyResponse(telux::tel::RadioTechnology radioTechnology,
-                                     telux::common::ErrorCode error);
-
-private:
-   std::string radioTechToString(telux::tel::RadioTechnology radioTech);
-};
-
 class MyVoiceServiceStateCallback : public telux::tel::IVoiceServiceStateCallback {
 public:
    void voiceServiceStateResponse(const std::shared_ptr<telux::tel::VoiceServiceInfo> &serviceInfo,
@@ -124,6 +120,7 @@ public:
    static std::string eCallOperatingModeToString(telux::tel::ECallMode eCallMode);
    static std::string voiceServiceStateToString(telux::tel::VoiceServiceState vocSrvState);
    static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
+   static std::string radioTechToString(telux::tel::RadioTechnology radioTech);
 };
 
 #endif  // MYPHONELISTENER_HPP

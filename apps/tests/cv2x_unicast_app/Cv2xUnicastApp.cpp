@@ -54,6 +54,11 @@ using std::endl;
 using std::future;
 using std::promise;
 using std::shared_ptr;
+using std::atomic;
+using std::mutex;
+using std::lock_guard;
+using std::unique_lock;
+using std::condition_variable;
 using telux::common::ErrorCode;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
@@ -69,6 +74,8 @@ using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::ICv2xRxSubscription;
 using telux::cv2x::TrafficIpType;
 using telux::cv2x::ICv2xRadioListener;
+using telux::cv2x::ICv2xListener;
+using telux::cv2x::ICv2xRadioManager;
 
 static constexpr uint32_t BROADCAST_SERVICE_ID = 1u;
 static constexpr uint32_t UNICAST_SERVICE_ID = 10u;  // differ from broadcast SID
@@ -76,44 +83,55 @@ static constexpr uint16_t DEFAULT_BROADCAST_PORT = 5000u;
 static constexpr uint16_t DEFUALT_UNICAST_PORT = 6000u; // differ from broadcast port
 static constexpr uint32_t BROADCAST_PACKET_LEN = 128u;
 static constexpr uint32_t UNICAST_PACKET_LEN = 256u;
-static constexpr uint32_t DUMMY_PACKET_LEN = UNICAST_PACKET_LEN; //cv2x msg buffer length
+static constexpr uint32_t DUMMY_PACKET_LEN = 10000; //cv2x msg buffer length
+static constexpr uint32_t SUCCESSIVE_MISSED_ECHO_NUM = 6;
 static constexpr char TEST_VERNO_MAGIC = 'U'; // magic word for WSA and unicast msgs
 static constexpr int PRIORITY = 3; // WSA priority
 static constexpr char RSU_ID = 1;
 static constexpr char OBU_ID = 2;
 
+static std::mutex gCv2xStatusMutex;
 static Cv2xStatus gCv2xStatus;
+static condition_variable gStatusCv;
 static promise<ErrorCode> gCallbackPromise;
-static volatile std::atomic<uint8_t> gTerminate = { 0 };
 static uint32_t gTxUnicastCount = 0;
 static uint32_t gRxUnicastCount = 0;
+static uint32_t gMissedTxUnicastCount = 0;
+static uint32_t gMissedRxUnicastCount = 0;
 static struct sockaddr_in6 gRsuAddr = { 0 };
 static bool gWsaReceived = false;
+static uint32_t gUnicastPktLen = UNICAST_PACKET_LEN;
+static uint32_t gSuccessiveMissedEcho = 0;
+static char gUnicastBuf[DUMMY_PACKET_LEN];
+static char gBroadcastBuf[BROADCAST_PACKET_LEN];
+static uint32_t gBroadcastServiceId = BROADCAST_SERVICE_ID;
+static uint16_t gBroadcastPort = DEFAULT_BROADCAST_PORT;
+static shared_ptr<ICv2xTxFlow> gTxBroadcastFlow = nullptr;
+static shared_ptr<ICv2xRxSubscription> gRxBroadcastFlow = nullptr;
+static shared_ptr<ICv2xTxFlow> gTxUnicastFlow = nullptr;
+static shared_ptr<ICv2xRxSubscription> gRxUnicastFlow = nullptr;
+static shared_ptr<ICv2xRadioManager> gCv2xRadioMgr = nullptr;
+static shared_ptr<ICv2xRadio> gCv2xRadio = nullptr;
+static shared_ptr<ICv2xRadioListener> gRadioListener = nullptr;
+static shared_ptr<ICv2xListener> gStatusListener = nullptr;
+static bool gWsaThreadValid = false;
+static future<void> gWsaThread;
+static future<void> gTerminateThread;
+static atomic<int> gTerminate{0};
+static int gTerminatePipe[2];
+static mutex gOperationMutex;
 
 // Two operation modes are supported by this app.
 // If in OBU mode, after receiving broadcast WSA msg from RSU, it starts transmitting
 // unicast msgs and waits for the unicast echo msgs from RSU.
 // If in RSU mode, it transmits broadcast WSA msgs periodically and sends unicast echo
 // msg to OBU for each received unicast msg.
-enum class OperationMode {
+enum class UnicastTestMode {
     OBU,
     RSU
 };
 
-static OperationMode gOperationMode;
-
-class State {
-public:
-    shared_ptr<ICv2xTxFlow> txBroadcastFlow = nullptr;
-    shared_ptr<ICv2xRxSubscription> rxBroadcastFlow = nullptr;
-    uint32_t broadcastServiceId = BROADCAST_SERVICE_ID;
-    uint16_t broadcastPort = DEFAULT_BROADCAST_PORT;
-    shared_ptr<ICv2xTxFlow> txUnicastFlow = nullptr;
-    shared_ptr<ICv2xRxSubscription> rxUnicastFlow = nullptr;
-    bool isWsaThreadValid = false;
-    future<void> wsaThread;
-    shared_ptr<ICv2xRadioListener> radioListener = nullptr;
-};
+static UnicastTestMode gUnicastTestMode;
 
 class RadioListener : public ICv2xRadioListener {
 public:
@@ -121,6 +139,45 @@ public:
         cout << "Src L2 Addr updated to:" << newL2Address << endl;
     }
 };
+
+class Cv2xStatusListener : public ICv2xListener {
+public:
+    void onStatusChanged(Cv2xStatus status) override {
+        lock_guard<mutex> lock(gCv2xStatusMutex);
+        if (status.rxStatus != gCv2xStatus.rxStatus
+            or status.txStatus != gCv2xStatus.txStatus) {
+            cout << "cv2x status changed, Tx: " << static_cast<int>(status.txStatus);
+            cout << ", Rx: " << static_cast<int>(status.rxStatus) << endl;
+            gCv2xStatus = status;
+
+            if (status.rxStatus == Cv2xStatusType::ACTIVE and
+                status.txStatus == Cv2xStatusType::ACTIVE) {
+                gStatusCv.notify_all();
+            }
+        }
+    }
+};
+
+static bool isV2xReady() {
+    lock_guard<mutex> lock(gCv2xStatusMutex);
+    if (Cv2xStatusType::ACTIVE == gCv2xStatus.rxStatus and
+        Cv2xStatusType::ACTIVE == gCv2xStatus.txStatus) {
+        return true;
+    }
+
+    cout << "cv2x Tx/Rx not active!" << endl;
+    return false;
+}
+
+static void waitV2xStatusActive() {
+    std::unique_lock<std::mutex> cvLock(gCv2xStatusMutex);
+    while (!gTerminate and
+           (Cv2xStatusType::ACTIVE != gCv2xStatus.rxStatus or
+            Cv2xStatusType::ACTIVE != gCv2xStatus.txStatus)) {
+        cout << "wait for Cv2x status active." << endl;
+        gStatusCv.wait(cvLock);
+    }
+}
 
 // Resets the global callback promise
 static inline void resetCallbackPromise(void) {
@@ -130,6 +187,7 @@ static inline void resetCallbackPromise(void) {
 // Callback function for ICv2xRadioManager->requestCv2xStatus()
 static void cv2xStatusCallback(Cv2xStatus status, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
+        lock_guard<mutex> lock(gCv2xStatusMutex);
         gCv2xStatus = status;
     }
     gCallbackPromise.set_value(error);
@@ -143,55 +201,54 @@ static uint64_t getCurrentTimestamp(void) {
 }
 
 struct cv2x_common_message_t {
-    char v2x_family_id;
+    char familyId;
     char ueId;
-    bool has_seq_num;
-    uint16_t seq_num;
-    bool has_timestamp;
+    uint16_t seqNum;
     uint64_t timestamp;
 };
 
 struct cv2x_message_t {
-    union {
-        struct cv2x_common_message_t contents;
-        char buffer[DUMMY_PACKET_LEN];
-    };
+    struct cv2x_common_message_t contents;
     uint32_t length;
+    char *buffer;
 };
 
 // Fills buffer
 void createBuffer(cv2x_message_t &cv2xMsg) {
-
-    static uint16_t seq_num = 0u;
-    auto timestamp = getCurrentTimestamp();
-
+    static uint16_t seq = 0u;
+    uint64_t timestamp = getCurrentTimestamp();
     cv2xMsg = { 0 };
 
+    if (gUnicastTestMode == UnicastTestMode::OBU) {
+        cv2xMsg.length = gUnicastPktLen;
+        cv2xMsg.buffer = gUnicastBuf;
+    } else {
+        cv2xMsg.length = BROADCAST_PACKET_LEN;
+        cv2xMsg.buffer = gBroadcastBuf;
+    }
+    memset(cv2xMsg.buffer, 0, cv2xMsg.length);
+
     // Very first payload is test magic number
-    cv2xMsg.contents.v2x_family_id = TEST_VERNO_MAGIC;
+    cv2xMsg.contents.familyId = TEST_VERNO_MAGIC;
+    cv2xMsg.buffer[0] = cv2xMsg.contents.familyId;
 
     // Next byte is the UEID value
-    if (gOperationMode == OperationMode::OBU) {
+    if (gUnicastTestMode == UnicastTestMode::OBU) {
         cv2xMsg.contents.ueId = OBU_ID;
     } else {
         cv2xMsg.contents.ueId = RSU_ID;
     }
+    cv2xMsg.buffer[1] = cv2xMsg.contents.ueId;
 
     // Sequence number
-    cv2xMsg.contents.seq_num = htons(seq_num++);
-    cv2xMsg.contents.has_seq_num = true;
+    cv2xMsg.contents.seqNum = seq++;
+    auto dataPtr = &cv2xMsg.buffer[2];
+    *(uint16_t *)dataPtr = htons(cv2xMsg.contents.seqNum);
+    dataPtr += sizeof(uint16_t);
 
     // Timestamp
-    cv2xMsg.contents.timestamp = htobe64(timestamp);
-    cv2xMsg.contents.has_timestamp = true;
-
-    if (gOperationMode == OperationMode::OBU) {
-         //unicast msg length
-        cv2xMsg.length = UNICAST_PACKET_LEN;
-    } else {
-        //WSA msg length
-        cv2xMsg.length = BROADCAST_PACKET_LEN;
-    }
+    cv2xMsg.contents.timestamp = timestamp;
+    *(uint64_t *)dataPtr = htobe64(cv2xMsg.contents.timestamp);
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;
@@ -256,12 +313,12 @@ static int sampleTx(int sock,
 // Function for reading from Rx socket
 static int sampleRx(int sock, cv2x_message_t &cv2xMsg, struct sockaddr_in6 &srcAddr) {
     static uint32_t rxCount = 0u;
-    char buffer[DUMMY_PACKET_LEN];
     struct sockaddr_in6 from;
     socklen_t fromLen = sizeof(from);
 
     // Attempt to read from socket
-    int recvBytes = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&from, &fromLen);
+    int recvBytes = recvfrom(sock, gUnicastBuf, DUMMY_PACKET_LEN, 0,
+                             (struct sockaddr *)&from, &fromLen);
 
     if (recvBytes <= 0) {
         // EAGAIN and EWOULDBLOCK are possible return values when
@@ -279,14 +336,26 @@ static int sampleRx(int sock, cv2x_message_t &cv2xMsg, struct sockaddr_in6 &srcA
 
     cout << "sampleRx(" << sock << ")" << " bytes:" << recvBytes << endl;
 
-    memcpy(cv2xMsg.buffer, buffer, recvBytes);
     cv2xMsg.length = recvBytes;
+    cv2xMsg.buffer = gUnicastBuf;
 
     // check the magic number for WSA and unicast msgs
-    if (cv2xMsg.contents.v2x_family_id != TEST_VERNO_MAGIC) {
+    cv2xMsg.contents.familyId = cv2xMsg.buffer[0];
+    if (cv2xMsg.contents.familyId != TEST_VERNO_MAGIC) {
         cout << "Ignore msg with mismatched magic character."<< endl;
         return -1;
     }
+
+    // get ueId
+    cv2xMsg.contents.ueId = cv2xMsg.buffer[1];
+
+    // get seq num
+    auto dataPtr = &cv2xMsg.buffer[2];
+    cv2xMsg.contents.seqNum = ntohs(*(uint16_t *)dataPtr);
+    dataPtr += sizeof(uint16_t);
+
+    // get timestamp
+    cv2xMsg.contents.timestamp = be64toh(*(uint64_t *)dataPtr);
 
     srcAddr = from;
 
@@ -299,31 +368,38 @@ static void printUsage(const char *Opt) {
     cout << "Usage: " << Opt << "\n"
          << "-m<Mode>             0--OBU 1--RSU, default to OBU\n"
          << "-s<Broadcast Service Id>  Broadcast service Id, default to 1\n"
-         << "-p<Broadcast Port>  Broadcast port used, default to 5000" << endl;
+         << "-p<Broadcast Port>  Broadcast port used, default to 5000\n"
+         << "-l<Unicast packet length>  default to 256 Bytes" << endl;
 }
 
 // Parse options
-static int parseOpts(int argc, char *argv[], State &state) {
+static int parseOpts(int argc, char *argv[]) {
     int rc = 0;
     int c;
-    while ((c = getopt(argc, argv, "?:m::p::s::")) != -1) {
+    while ((c = getopt(argc, argv, "?m:p:s:l:")) != -1) {
         switch (c) {
         case 'm':
             if (optarg) {
-                gOperationMode = static_cast<OperationMode>(atoi(optarg));
-                cout << "mode: " << static_cast<int>(gOperationMode) << endl;
+                gUnicastTestMode = static_cast<UnicastTestMode>(atoi(optarg));
+                cout << "mode: " << static_cast<int>(gUnicastTestMode) << endl;
             }
             break;
         case 'p':
             if (optarg) {
-                state.broadcastPort = atoi(optarg);
-                cout << "broadcast port: " << state.broadcastPort << endl;
+                gBroadcastPort = atoi(optarg);
+                cout << "broadcast port: " << gBroadcastPort << endl;
             }
             break;
         case 's':
             if (optarg) {
-                state.broadcastServiceId = atoi(optarg);
-                cout << "broadcast service id: " << state.broadcastServiceId << endl;
+                gBroadcastServiceId = atoi(optarg);
+                cout << "broadcast service id: " << gBroadcastServiceId << endl;
+            }
+            break;
+        case 'l':
+            if (optarg) {
+                gUnicastPktLen = atoi(optarg);
+                cout << "unicast packet length: " << gUnicastPktLen << endl;
             }
             break;
         case '?':
@@ -338,7 +414,12 @@ static int parseOpts(int argc, char *argv[], State &state) {
 }
 
 static void terminationHandler(int signum) {
+    cout << "terminate handler" << endl;
     gTerminate = 1;
+    write(gTerminatePipe[1], &gTerminate, sizeof(int));
+
+    // notify threads waiting for active status
+    gStatusCv.notify_all();
 }
 
 static void installSignalHandler() {
@@ -353,17 +434,22 @@ static void installSignalHandler() {
     sigaction(SIGTERM, &sig_action, NULL);
 }
 
-Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
+static Status registerBroadcastFlows() {
     Status status = Status::SUCCESS;
     bool tryEvtFlow = false;
 
-    if (gOperationMode == OperationMode::OBU) {
+    if (!gCv2xRadio) {
+        cerr << "Invalid radio!" << endl;
+        return Status::FAILED;
+    }
+
+    if (gUnicastTestMode == UnicastTestMode::OBU) {
         // If in OBU mode, register tx/rx flow to listen to WSA
         cout << "Registering broadcast Tx event Flow" << endl;
-        auto createTxEventFlowCallback = [&state](shared_ptr<ICv2xTxFlow> txEventFlow,
-                                                  ErrorCode error) {
+        auto createTxEventFlowCallback = [](shared_ptr<ICv2xTxFlow> txEventFlow,
+                                            ErrorCode error) {
             if (ErrorCode::SUCCESS == error) {
-                state.txBroadcastFlow = txEventFlow;
+                gTxBroadcastFlow = txEventFlow;
             }
             gCallbackPromise.set_value(error);
         };
@@ -373,11 +459,11 @@ Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
 
         // Register non-Ip Tx event flow with broadcast SID and broadcast port
         EventFlowInfo flowInfo;
-        status = cv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                              state.broadcastServiceId,
-                                              flowInfo,
-                                              state.broadcastPort,
-                                              createTxEventFlowCallback);
+        status = gCv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
+                                               gBroadcastServiceId,
+                                               flowInfo,
+                                               gBroadcastPort,
+                                               createTxEventFlowCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to create broadcast Tx event flow!" << endl;
@@ -385,16 +471,16 @@ Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
         }
 
         cout << "Succeeded in creating broadcast Tx event Flow, sock:";
-        cout << state.txBroadcastFlow->getSock();
-        cout << " , port:"<< state.broadcastPort << endl;
+        cout << gTxBroadcastFlow->getSock();
+        cout << " , port:"<< gBroadcastPort << endl;
 
         cout << "Registering broadcast Rx flow" << endl;
 
         // Callback function for ICv2xRadio->createRxSubscription()
-        auto createRxSubscriptionCallback = [&state](shared_ptr<ICv2xRxSubscription> rxSub,
-                                                     ErrorCode error) {
+        auto createRxSubscriptionCallback = [](shared_ptr<ICv2xRxSubscription> rxSub,
+                                               ErrorCode error) {
             if (ErrorCode::SUCCESS == error) {
-                state.rxBroadcastFlow = rxSub;
+                gRxBroadcastFlow = rxSub;
             }
             gCallbackPromise.set_value(error);
         };
@@ -403,42 +489,31 @@ Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
         resetCallbackPromise();
 
         // Subscribe to broadcast SID and broadcast port
-        auto idList = std::make_shared<std::vector<uint32_t>>(1, state.broadcastServiceId);
-        status = cv2xRadio->createRxSubscription(TrafficIpType::TRAFFIC_NON_IP,
-                                                 state.broadcastPort,
-                                                 createRxSubscriptionCallback,
-                                                 idList);
+        auto idList = std::make_shared<std::vector<uint32_t>>(1, gBroadcastServiceId);
+        status = gCv2xRadio->createRxSubscription(TrafficIpType::TRAFFIC_NON_IP,
+                                                  gBroadcastPort,
+                                                  createRxSubscriptionCallback,
+                                                  idList);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to create broadcast Rx flow." << endl;
             return Status::FAILED;
         }
 
-        // Adding 100ms timeout to avoid indefinite read wait
-        struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = 100000;
-
-        if (setsockopt(state.rxBroadcastFlow->getSock(),
-                       SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-            cerr << "Failed to set Rx socket timeout" << endl;
-            return Status::FAILED;
-        }
-
         cout << "Succeeded in creating broadcast Rx Flow, sock:";
-        cout << state.rxBroadcastFlow->getSock();
-        cout << " , port:"<< state.broadcastPort << endl;
+        cout << gRxBroadcastFlow->getSock();
+        cout << " , port:"<< gBroadcastPort << endl;
 
     } else {
         // If in RSU mode, register tx sps flow for the sending of WSA
         cout << "Registering broadcast Tx SPS Flow" << endl;
 
-        auto createTxSpsFlowCallback = [&state](shared_ptr<ICv2xTxFlow> txSpsFlow,
-                                                shared_ptr<ICv2xTxFlow> txEventFlow,
-                                                ErrorCode spsError,
-                                                ErrorCode unused) {
+        auto createTxSpsFlowCallback = [](shared_ptr<ICv2xTxFlow> txSpsFlow,
+                                          shared_ptr<ICv2xTxFlow> txEventFlow,
+                                          ErrorCode spsError,
+                                          ErrorCode unused) {
             if (ErrorCode::SUCCESS == spsError) {
-                state.txBroadcastFlow = txSpsFlow;
+                gTxBroadcastFlow = txSpsFlow;
             }
             gCallbackPromise.set_value(spsError);
         };
@@ -453,11 +528,11 @@ Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
         spsInfo.nbytesReserved = BROADCAST_PACKET_LEN;
         spsInfo.autoRetransEnabledValid = true;
         spsInfo.autoRetransEnabled = true;
-        status = cv2xRadio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                            state.broadcastServiceId,
-                                            spsInfo, state.broadcastPort,
-                                            true, state.broadcastPort+1,
-                                            createTxSpsFlowCallback);
+        status = gCv2xRadio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
+                                             gBroadcastServiceId,
+                                             spsInfo, gBroadcastPort,
+                                             true, gBroadcastPort+1,
+                                             createTxSpsFlowCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to create broadcast Tx SPS Flow." << endl;
@@ -467,15 +542,17 @@ Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
         if (tryEvtFlow) {
             cout << "now try with event flow" << endl;
             resetCallbackPromise();
-            auto txEventFlowCallback = [&state](std::shared_ptr<ICv2xTxFlow> txEventFlow,
-                                                telux::common::ErrorCode error) {
+            auto txEventFlowCallback = [](std::shared_ptr<ICv2xTxFlow> txEventFlow,
+                                          telux::common::ErrorCode error) {
                 if (ErrorCode::SUCCESS == error) {
-                    state.txBroadcastFlow = txEventFlow;
+                    gTxBroadcastFlow = txEventFlow;
                 }
                 gCallbackPromise.set_value(error);
             };
-            status = cv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
-                state.broadcastServiceId, state.broadcastPort, txEventFlowCallback);
+            status = gCv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
+                                                   gBroadcastServiceId,
+                                                   gBroadcastPort,
+                                                   txEventFlowCallback);
             if (Status::SUCCESS != status or
                 ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
                 cerr << "Failed to create broadcast Tx event Flow." << endl;
@@ -483,22 +560,27 @@ Status registerBroadcastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
             }
         }
         cout << "Succeeded in creating broadcast Tx Flow, sock:";
-        cout << state.txBroadcastFlow->getSock();
-        cout << " , port:"<< state.broadcastPort << endl;
+        cout << gTxBroadcastFlow->getSock();
+        cout << " , port:"<< gBroadcastPort << endl;
     }
 
     return Status::SUCCESS;
 }
 
-Status registerUnicastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
+static Status registerUnicastFlows() {
     Status status = Status::SUCCESS;
+
+    if (!gCv2xRadio) {
+        cerr << "Invalid radio!" << endl;
+        return Status::FAILED;
+    }
 
     cout << "Registering Unicast Tx Flow" << endl;
 
-    auto createTxEventFlowCallback = [&state](shared_ptr<ICv2xTxFlow> txEventFlow,
-                                              ErrorCode error) {
+    auto createTxEventFlowCallback = [](shared_ptr<ICv2xTxFlow> txEventFlow,
+                                        ErrorCode error) {
         if (ErrorCode::SUCCESS == error) {
-            state.txUnicastFlow = txEventFlow;
+            gTxUnicastFlow = txEventFlow;
         }
         gCallbackPromise.set_value(error);
     };
@@ -509,11 +591,11 @@ Status registerUnicastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
     // Register unicast non-Ip Tx flow with unicast port, SID is ignored for unicast flows
     EventFlowInfo flowInfo;
     flowInfo.isUnicast = true;
-    status = cv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                          UNICAST_SERVICE_ID,
-                                          flowInfo,
-                                          DEFUALT_UNICAST_PORT,
-                                          createTxEventFlowCallback);
+    status = gCv2xRadio->createTxEventFlow(TrafficIpType::TRAFFIC_NON_IP,
+                                           UNICAST_SERVICE_ID,
+                                           flowInfo,
+                                           DEFUALT_UNICAST_PORT,
+                                           createTxEventFlowCallback);
     if (Status::SUCCESS != status or
         ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cerr << "Failed to create unicast Tx Flow." << endl;
@@ -521,15 +603,15 @@ Status registerUnicastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
     }
 
     cout << "Succeeded in creating unicast Tx event Flow, sock:";
-    cout << state.txUnicastFlow->getSock();
+    cout << gTxUnicastFlow->getSock();
     cout << " , port:"<< DEFUALT_UNICAST_PORT << endl;
 
     cout << "Registering unicast Rx Flow" << endl;
 
-    auto createRxSubCallback = [&state](shared_ptr<ICv2xRxSubscription> rxSub,
-                                        ErrorCode error) {
+    auto createRxSubCallback = [](shared_ptr<ICv2xRxSubscription> rxSub,
+                                  ErrorCode error) {
         if (ErrorCode::SUCCESS == error) {
-            state.rxUnicastFlow = rxSub;
+            gRxUnicastFlow = rxSub;
         }
         gCallbackPromise.set_value(error);
     };
@@ -540,41 +622,42 @@ Status registerUnicastFlows(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
     // Subscribe to unicast port
     // Unicast SID is specified to avoid creating wildcard for broadcast Rx
     auto idList = std::make_shared<std::vector<uint32_t>>(1, UNICAST_SERVICE_ID);
-    status = cv2xRadio->createRxSubscription(TrafficIpType::TRAFFIC_NON_IP,
-                                             DEFUALT_UNICAST_PORT,
-                                             createRxSubCallback,
-                                             idList);
+    status = gCv2xRadio->createRxSubscription(TrafficIpType::TRAFFIC_NON_IP,
+                                              DEFUALT_UNICAST_PORT,
+                                              createRxSubCallback,
+                                              idList);
     if (Status::SUCCESS != status or
         ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cerr << "Failed to create unicast Rx Flow!" << endl;
         return Status::FAILED;
     }
 
-    // Adding 100ms timeout to avoid indefinite read wait
+    // Adding 500ms timeout to avoid indefinite read wait
+    // Expand the timeout value can avoid Rx failure due to transmission delay in tunnel mode
     struct timeval tv;
     tv.tv_sec = 0;
-    tv.tv_usec = 100000;
-    if (setsockopt(state.txUnicastFlow->getSock(),
-                   SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+    tv.tv_usec = 500000;
+    if (setsockopt(gTxUnicastFlow->getSock(),
+                   SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
         cerr << "Failed to set Tx socket timeout!" << endl;
         return Status::FAILED;
     }
 
-    if (setsockopt(state.rxUnicastFlow->getSock(),
+    if (setsockopt(gRxUnicastFlow->getSock(),
                    SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
         cerr << "Failed to set Rx socket timeout!" << endl;
         return Status::FAILED;
     }
 
     cout << "Succeeded in creating unicast Rx Flow, sock:";
-    cout << state.rxUnicastFlow->getSock();
+    cout << gRxUnicastFlow->getSock();
     cout << " , port:"<< DEFUALT_UNICAST_PORT << endl;
 
     return Status::SUCCESS;
 }
 
-void terminationCleanup(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
-    cout << "Terminating, deregistering all flows" << endl;
+static Status deregisterBroadcastFlows() {
+    Status status = Status::SUCCESS;
 
     auto closeTxFlowCallback = [](shared_ptr<ICv2xTxFlow> txFlow, ErrorCode error) {
         gCallbackPromise.set_value(error);
@@ -584,88 +667,123 @@ void terminationCleanup(shared_ptr<ICv2xRadio> cv2xRadio, State &state) {
         gCallbackPromise.set_value(error);
     };
 
-    if (state.txBroadcastFlow) {
-        cout << "closing broadcast tx flow, sock:" << state.txBroadcastFlow->getSock() << endl;
+    if (gCv2xRadio and gTxBroadcastFlow) {
+        cout << "closing broadcast tx flow, sock:" << gTxBroadcastFlow->getSock() << endl;
 
         // Reset global callback
         resetCallbackPromise();
 
-        auto status = cv2xRadio->closeTxFlow(state.txBroadcastFlow, closeTxFlowCallback);
+        auto status = gCv2xRadio->closeTxFlow(gTxBroadcastFlow, closeTxFlowCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to close broadcast tx flow!" << endl;
+            status = Status::FAILED;
         }
+        gTxBroadcastFlow = nullptr;
     }
 
-    if (state.rxBroadcastFlow) {
-        cout << "closing broadcast rx flow, sock:" << state.rxBroadcastFlow->getSock() << endl;
+    if (gCv2xRadio and gRxBroadcastFlow) {
+        cout << "closing broadcast rx flow, sock:" << gRxBroadcastFlow->getSock() << endl;
 
         // Reset global callback
         resetCallbackPromise();
 
-        auto status = cv2xRadio->closeRxSubscription(state.rxBroadcastFlow, closeRxSubCallback);
+        auto status = gCv2xRadio->closeRxSubscription(gRxBroadcastFlow, closeRxSubCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to close broadcast rx flow!" << endl;
+            status = Status::FAILED;
         }
+        gRxBroadcastFlow = nullptr;
     }
 
-    if (state.txUnicastFlow) {
-        cout << "closing unicast tx flow, sock:" << state.txUnicastFlow->getSock() << endl;
+    return status;
+}
+
+static Status deregisterUnicastFlows() {
+    Status status = Status::SUCCESS;
+
+    auto closeTxFlowCallback = [](shared_ptr<ICv2xTxFlow> txFlow, ErrorCode error) {
+        gCallbackPromise.set_value(error);
+    };
+
+    auto closeRxSubCallback = [](shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error) {
+        gCallbackPromise.set_value(error);
+    };
+
+    if (gCv2xRadio and gTxUnicastFlow) {
+        cout << "closing unicast tx flow, sock:" << gTxUnicastFlow->getSock() << endl;
 
         // Reset global callback
         resetCallbackPromise();
 
-        auto status = cv2xRadio->closeTxFlow(state.txUnicastFlow, closeTxFlowCallback);
+        auto status = gCv2xRadio->closeTxFlow(gTxUnicastFlow, closeTxFlowCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to close unicast tx flow!" << endl;
+            status = Status::FAILED;
         }
+        gTxUnicastFlow = nullptr;
     }
 
-    if (state.rxUnicastFlow) {
-        cout << "closing unicast rx flow, sock:" << state.rxUnicastFlow->getSock() << endl;
+    if (gCv2xRadio and gRxUnicastFlow) {
+        cout << "closing unicast rx flow, sock:" << gRxUnicastFlow->getSock() << endl;
 
         // Reset global callback
         resetCallbackPromise();
 
-        auto status = cv2xRadio->closeRxSubscription(state.rxUnicastFlow, closeRxSubCallback);
+        auto status = gCv2xRadio->closeRxSubscription(gRxUnicastFlow, closeRxSubCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cerr << "Failed to close unicast rx flow!" << endl;
+            status = Status::FAILED;
         }
+        gRxUnicastFlow = nullptr;
     }
 
-    // Deregister listener
-    if (state.radioListener) {
-        cv2xRadio->deregisterListener(state.radioListener);
-    }
-
-    // Wait for wave advertisment thread to end
-    if (state.isWsaThreadValid) {
-        state.wsaThread.get();
-    }
+    return status;
 }
 
-int main(int argc, char *argv[]) {
-    cout << "Running Sample C-V2X Unicast app" << endl;
+void terminationCleanup() {
+    lock_guard<mutex> lock(gOperationMutex);
 
-    installSignalHandler();
+    cout << "Terminating" << endl;
 
-    State state;
+    // close broadcast flows
+    deregisterBroadcastFlows();
 
-    // Parse parameters
-    if (parseOpts(argc, argv, state) < 0) {
+    // close unicast flows
+    deregisterUnicastFlows();
+
+    // Deregister listener
+    if (gCv2xRadio and gRadioListener) {
+        gCv2xRadio->deregisterListener(gRadioListener);
+    }
+
+    if (gCv2xRadioMgr and gStatusListener) {
+        gCv2xRadioMgr->deregisterListener(gStatusListener);
+    }
+
+    cout << "Unicast Tx count:" << gTxUnicastCount << endl;
+    cout << "Unicast Rx count:" << gRxUnicastCount << endl;
+    cout << "Missed unicast Tx count:" << gMissedTxUnicastCount << endl;
+    cout << "Missed unicast Rx count:" << gMissedRxUnicastCount << endl;
+}
+
+static int init() {
+    lock_guard<mutex> lock(gOperationMutex);
+
+    if (gTerminate) {
         return EXIT_FAILURE;
     }
 
     // Get handle to Cv2xRadioManager
     auto &cv2xFactory = Cv2xFactory::getInstance();
-    auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager();
+    gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager();
 
     // Wait for radio manager to complete initialization
-    if (not cv2xRadioManager->isReady()) {
-        if (cv2xRadioManager->onReady().get()) {
+    if (not gCv2xRadioMgr->isReady()) {
+        if (gCv2xRadioMgr->onReady().get()) {
             cout << "C-V2X Radio Manager is ready" << endl;
         } else {
             cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
@@ -674,24 +792,20 @@ int main(int argc, char *argv[]) {
     }
 
     // Get C-V2X status and make sure Tx/Rx enabled
-    assert(Status::SUCCESS == cv2xRadioManager->requestCv2xStatus(cv2xStatusCallback));
+    assert(Status::SUCCESS == gCv2xRadioMgr->requestCv2xStatus(cv2xStatusCallback));
     assert(ErrorCode::SUCCESS == gCallbackPromise.get_future().get());
 
-    if (Cv2xStatusType::ACTIVE == gCv2xStatus.txStatus &&
-        Cv2xStatusType::ACTIVE == gCv2xStatus.rxStatus) {
-        cout << "C-V2X TX/RX status is active" << endl;
-    } else {
-        cerr << "C-V2X TX/RX is not active exiting" << endl;
+    // ensure V2X Tx and Rx active status before running the test
+    if (!isV2xReady()) {
         return EXIT_FAILURE;
     }
 
     // Get handle to Cv2xRadio
-    shared_ptr<ICv2xRadio> cv2xRadio;
-    cv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
+    gCv2xRadio = gCv2xRadioMgr->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
 
     // Wait for radio to complete initialization
-    if (not cv2xRadio->isReady()) {
-        if (Status::SUCCESS == cv2xRadio->onReady().get()) {
+    if (not gCv2xRadio->isReady()) {
+        if (Status::SUCCESS == gCv2xRadio->onReady().get()) {
             cout << "C-V2X Radio is ready" << endl;
         } else {
             cerr << "C-V2X Radio initialization failed." << endl;
@@ -700,126 +814,260 @@ int main(int argc, char *argv[]) {
     }
 
     // Register for Src L2 Id Update callbacks
-    state.radioListener = std::make_shared<RadioListener>();
-    if (Status::SUCCESS != cv2xRadio->registerListener(state.radioListener)) {
-        cerr << "Listener registration failed." << endl;
+    gRadioListener = std::make_shared<RadioListener>();
+    if (Status::SUCCESS != gCv2xRadio->registerListener(gRadioListener)) {
+        cerr << "Radio listener registration failed." << endl;
         return EXIT_FAILURE;
     }
 
-    // Register broadcast flows
-    if (Status::SUCCESS != registerBroadcastFlows(cv2xRadio, state)) {
-        cerr << "Broadcast flows creation failed." << endl;
-        goto bail;
+    // Register for cv2x status update
+    gStatusListener = std::make_shared<Cv2xStatusListener>();
+    if (Status::SUCCESS != gCv2xRadioMgr->registerListener(gStatusListener)) {
+        cerr << "Status listener registration failed." << endl;
+        return EXIT_FAILURE;
     }
 
-    // Register unicast flows
-    if (Status::SUCCESS != registerUnicastFlows(cv2xRadio, state)) {
-        cerr << "Unicast flows creation failed." << endl;
-        goto bail;
+    return EXIT_SUCCESS;
+}
+
+// Register broadcast and unicast flows
+static int setupFlows() {
+    lock_guard<mutex> lock(gOperationMutex);
+
+    if (gTerminate) {
+        return EXIT_FAILURE;
     }
 
-    if (OperationMode::RSU == gOperationMode) {
-        // If in RSU mode, create thread for broadcasting WSA with interval 100ms
-        cout << "Start sending WSA." << endl;
-        int sock = state.txBroadcastFlow->getSock();
-        state.wsaThread = std::async(std::launch::async, [sock]() {
-            cv2x_message_t cv2xMsg;
-            struct sockaddr_in6 dstAddr = {0};
-            while (!gTerminate) {
-                createBuffer(cv2xMsg);
-                sampleTx(sock, cv2xMsg, false, dstAddr);
-                usleep(100000u);
+    // deregister flows if exist
+    if (Status::SUCCESS != deregisterBroadcastFlows() or
+        Status::SUCCESS != deregisterUnicastFlows()) {
+        return EXIT_FAILURE;
+    }
+
+    // register flows
+    if (Status::SUCCESS != registerBroadcastFlows() or
+        Status::SUCCESS != registerUnicastFlows()) {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+// If in RSU mode, create thread for broadcasting WSA with interval 100ms
+static void startTxWSARSU() {
+    cout << "Start sending WSA." << endl;
+    int sock = gTxBroadcastFlow->getSock();
+    gWsaThread = std::async(std::launch::async, [sock]() {
+        cv2x_message_t cv2xMsg;
+        struct sockaddr_in6 dstAddr = {0};
+        while (!gTerminate) {
+            waitV2xStatusActive();
+            if (!isV2xReady()) {
+                continue;
             }
-        });
-        state.isWsaThreadValid = true;
-    }
-
-    // Main operation loop
-    while (!gTerminate) {
-
-        cv2x_message_t cv2xMsg = { 0 };
-
-        if (OperationMode::OBU == gOperationMode) {
-
-            // wait for WSA to get the original RSU's address
-            if (not gWsaReceived) {
-                cout << "Waiting for WSA from RSU." << endl;
-                if (sampleRx(state.rxBroadcastFlow->getSock(), cv2xMsg, gRsuAddr) <= 0) {
-                    continue;
-                }
-
-                cout << "Received WSA from RSU L2 ID: ";
-                cout << ntohl(gRsuAddr.sin6_addr.s6_addr32[3]) << endl;
-
-                // Modify destination port of unicast msgs to unicast port
-                gRsuAddr.sin6_port = htons((uint16_t)DEFUALT_UNICAST_PORT);
-                gWsaReceived = true;
-            }
-
-            // send unicast msg and wait for the echo from RSU with interval 100ms
-            cout << "Sending unicast msg to RSU L2 ID:";
-            cout << ntohl(gRsuAddr.sin6_addr.s6_addr32[3]) << endl;
-
             createBuffer(cv2xMsg);
-            if (sampleTx(state.txUnicastFlow->getSock(), cv2xMsg, true, gRsuAddr) < 0) {
-                cerr << "Failed to send unicast msg!" << endl;
-                continue;
-            }
-            gTxUnicastCount++;
-
-            cout << "Waiting for unicast echo msg from RSU." << endl;
-            cv2x_message_t echoCv2xMsg = { 0 };
-            struct sockaddr_in6 tmpRsuAddr = { 0 };
-            if (sampleRx(state.rxUnicastFlow->getSock(), echoCv2xMsg, tmpRsuAddr) > 0) {
-                if (cv2xMsg.length == echoCv2xMsg.length and
-                    0 == memcmp(cv2xMsg.buffer, echoCv2xMsg.buffer, cv2xMsg.length)) {
-                    gRxUnicastCount++;
-                    cout << "Received echo msg from RSU L2 ID:";
-                    cout << ntohl(tmpRsuAddr.sin6_addr.s6_addr32[3]) << endl;
-
-                    // update RSU's address according to echo msg.
-                    // echo msg always has the latest RSU's address
-                    if (memcmp(&tmpRsuAddr, &gRsuAddr, sizeof(struct sockaddr_in6))) {
-                        cout << "RSU L2 address updated." << endl;
-                        gRsuAddr = tmpRsuAddr;
-                    }
-                } else {
-                    cerr << "Received mismatched echo msg from RSU L2 ID: ";
-                    cerr << ntohl(tmpRsuAddr.sin6_addr.s6_addr32[3]) << endl;
-                }
-            } else {
-                cerr << "Failed to receive echo msg." << endl;
-                goto bail;
-            }
-
+            sampleTx(sock, cv2xMsg, false, dstAddr);
             usleep(100000u);
-        } else {
+        }
+    });
+    gWsaThreadValid = true;
+}
 
-            cout << "Waiting for unicast msg from OBU." << endl;
+int startRxWSAOBU() {
+    cv2x_message_t cv2xMsg = { 0 };
 
-            // On error or timeout of socket resume waiting for unicast Tx
-            struct sockaddr_in6 obuAddr = { 0 };
-            if (sampleRx(state.rxUnicastFlow->getSock(), cv2xMsg, obuAddr) <= 0) {
-                continue;
+    cout << "Waiting for WSA from RSU." << endl;
+    if (sampleRx(gRxBroadcastFlow->getSock(), cv2xMsg, gRsuAddr) <= 0) {
+        return EXIT_FAILURE;
+    }
+
+    cout << "Received WSA from RSU L2 ID: ";
+    cout << ntohl(gRsuAddr.sin6_addr.s6_addr32[3]) << endl;
+
+    // Modify port number to unicast port for the Tx of unicast msgs
+    gRsuAddr.sin6_port = htons((uint16_t)DEFUALT_UNICAST_PORT);
+    gWsaReceived = true;
+
+    return EXIT_SUCCESS;
+}
+
+static int startUnicastRSU() {
+    cv2x_message_t cv2xMsg = { 0 };
+
+    cout << "Waiting for unicast msg from OBU." << endl;
+
+    // On error or timeout of socket resume waiting for unicast Tx
+    struct sockaddr_in6 obuAddr = { 0 };
+    if (sampleRx(gRxUnicastFlow->getSock(), cv2xMsg, obuAddr) <= 0) {
+        return EXIT_FAILURE;
+    }
+    gRxUnicastCount++;
+    cout << "Received unicast msg from OBU L2 ID: ";
+    cout << ntohl(obuAddr.sin6_addr.s6_addr32[3]);
+    cout << ", Rx seq num:" << cv2xMsg.contents.seqNum << endl;
+
+    cout << "Sending unicast echo msg to OBU." << endl;
+    if (sampleTx(gTxUnicastFlow->getSock(), cv2xMsg, true, obuAddr) < 0) {
+        cerr << "Failed to echo OBU!" << endl;
+        gMissedTxUnicastCount++;
+        return EXIT_FAILURE;
+    }
+
+    gTxUnicastCount++;
+    return EXIT_SUCCESS;
+}
+
+static int startUnicastOBU() {
+    cv2x_message_t cv2xMsg = { 0 };
+
+    // send unicast msg and wait for the echo from RSU
+    cout << "Sending unicast msg to RSU L2 ID:";
+    cout << ntohl(gRsuAddr.sin6_addr.s6_addr32[3]) << endl;
+
+    createBuffer(cv2xMsg);
+    if (sampleTx(gTxUnicastFlow->getSock(), cv2xMsg, true, gRsuAddr) < 0) {
+        cerr << "Failed to send unicast msg!" << endl;
+        gMissedTxUnicastCount++;
+        return EXIT_FAILURE;
+    }
+    gTxUnicastCount++;
+
+    cout << "Waiting for unicast echo msg from RSU." << endl;
+    cv2x_message_t echoCv2xMsg = { 0 };
+    struct sockaddr_in6 tmpRsuAddr = { 0 };
+    bool recvEcho = false;
+    while (sampleRx(gRxUnicastFlow->getSock(), echoCv2xMsg, tmpRsuAddr) > 0) {
+        gRxUnicastCount++;
+        gSuccessiveMissedEcho = 0;
+
+        // received matched echo
+        if (cv2xMsg.length == echoCv2xMsg.length and
+            0 == memcmp(&cv2xMsg.contents, &echoCv2xMsg.contents,
+                        sizeof(cv2x_common_message_t))) {
+            cout << "Received echo msg from RSU L2 ID:";
+            cout << ntohl(tmpRsuAddr.sin6_addr.s6_addr32[3]) << endl;
+
+            // update RSU's address according to echo msg.
+            // echo msg always has the latest RSU's address
+            if (memcmp(&tmpRsuAddr, &gRsuAddr, sizeof(struct sockaddr_in6))) {
+                cout << "RSU L2 address updated." << endl;
+                gRsuAddr = tmpRsuAddr;
             }
-            gRxUnicastCount++;
-            cout << "Received unicast msg from OBU L2 ID: ";
-            cout << ntohl(obuAddr.sin6_addr.s6_addr32[3]) << endl;
+            recvEcho = true;
+            break;
+        } else {
+            // received mismatched echo
+            cout << "Received mismatched echo msg from RSU L2 ID: ";
+            cout << ntohl(tmpRsuAddr.sin6_addr.s6_addr32[3]);
+            cout << ", Tx seq num: " << cv2xMsg.contents.seqNum;
+            cout << ", Rx seq num: " << echoCv2xMsg.contents.seqNum << endl;
 
-            cout << "Sending unicast echo msg to OBU." << endl;
-            if (sampleTx(state.txUnicastFlow->getSock(), cv2xMsg, true, obuAddr) < 0) {
-                cerr << "Failed to echo OBU!" << endl;
-            } else {
-                gTxUnicastCount++;
+            // received out-of-sequence pkt, might caused by RSU suspended status
+            // continually Rx unicast msg until Rx failure or Rx matched seq num
+            if (echoCv2xMsg.contents.seqNum < cv2xMsg.contents.seqNum) {
+                if (gMissedRxUnicastCount > 0) {
+                    gMissedRxUnicastCount--;
+                }
+                continue;
             }
         }
     }
 
-bail:
-    terminationCleanup(cv2xRadio, state);
+    if (!recvEcho) {
+        gMissedRxUnicastCount++;
+        gSuccessiveMissedEcho++;
+        cerr << "Failed to receive echo msg of seq num: ";
+        cerr << cv2xMsg.contents.seqNum;
+        cerr << ", successive missed num:" << gSuccessiveMissedEcho << endl;
 
-    cout << "Unicast Tx count:" << gTxUnicastCount << endl;
-    cout << "Unicast Rx count:" << gRxUnicastCount << endl;
+        if (gSuccessiveMissedEcho >= SUCCESSIVE_MISSED_ECHO_NUM) {
+            // the RSU's address might have changed,
+            // re-regiter flows and wait for new WSA
+            cout << "Re-create flows to get new WSA." << endl;
+            if (setupFlows()) {
+                return EXIT_FAILURE;
+            }
+            gWsaReceived = false;
+            gSuccessiveMissedEcho = 0;
+        }
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int main(int argc, char *argv[]) {
+    cout << "Running Sample C-V2X Unicast app" << endl;
+
+    if (pipe(gTerminatePipe) == -1) {
+        cout << "Pipe error" << endl;
+        return EXIT_FAILURE;
+    }
+
+    installSignalHandler();
+
+    // create async task to handle termination
+    gTerminateThread = std::async(std::launch::async, []() {
+        int terminate = 0;
+        read(gTerminatePipe[0], &terminate, sizeof(int));
+        cout << "Read terminate:" << terminate << endl;
+        terminationCleanup();
+    });
+
+    // parse options
+    if (parseOpts(argc, argv)) {
+        goto bail;
+    }
+
+    // get cv2x handles
+    if (init()) {
+        goto bail;
+    }
+
+    // setup flows for broadcast and unicast
+    if (setupFlows()) {
+        goto bail;
+    }
+
+    // create async task in RSU mode to Tx WSA
+    if (UnicastTestMode::RSU == gUnicastTestMode) {
+        startTxWSARSU();
+    }
+
+    // main operation loop
+    while (!gTerminate) {
+        // wait for V2X active status before Tx/Rx
+        waitV2xStatusActive();
+        if (!isV2xReady()) {
+            continue;
+        }
+
+        if (UnicastTestMode::OBU == gUnicastTestMode) {
+            // wait for WSA to get the original RSU's address
+            if (not gWsaReceived) {
+                if (startRxWSAOBU()) {
+                    continue;
+                }
+            }
+
+            // start Tx unicast msg with interval 100ms and wait for echo
+            if (EXIT_SUCCESS == startUnicastOBU()) {
+                usleep(100000u);
+            }
+        } else {
+            // wait for unicast msg and send echo
+            startUnicastRSU();
+        }
+    }
+
+bail:
+    // teminate
+    gTerminate = 1;
+    write(gTerminatePipe[1], &gTerminate, sizeof(int));
+    gTerminateThread.get();
+    if (gWsaThreadValid) {
+        gWsaThread.get();
+    }
     cout << "Done." << endl;
 
     return EXIT_SUCCESS;

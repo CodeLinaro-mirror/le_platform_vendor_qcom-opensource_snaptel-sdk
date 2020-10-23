@@ -123,6 +123,8 @@ public:
     *
     * @param [in] radioTech   Radio state of the phone
     *                         @ref telux::tel::RadioTechnology
+    *
+    * @deprecated Use onVoiceServiceStateChanged() API instead
     */
    virtual void onVoiceRadioTechnologyChanged(int phoneId, RadioTechnology radioTech) {
    }

@@ -102,7 +102,6 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
       }
 
       mySignalStrengthCb_ = std::make_shared<MySignalStrengthCallback>();
-      myVoiceRadioTechCb_ = std::make_shared<MyVoiceRadioTechnologyCallback>();
       myRadioPowerCb_ = std::make_shared<MyRadioPowerCallback>();
       myVoiceSrvStateCb_ = std::make_shared<MyVoiceServiceStateCallback>();
       myCellularCapabilityCb_ = std::make_shared<MyCellularCapabilityCallback>();
@@ -130,58 +129,53 @@ void PhoneMenu::init() {
    std::shared_ptr<ConsoleAppCommand> getRadioStateCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("3", "Get_radio_state", {},
                         std::bind(&PhoneMenu::getRadioState, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> requestRadioTechnologyCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Request_radio_technology", {},
-         std::bind(&PhoneMenu::requestRadioTechnology, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestVoiceServiceStateCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Request_voice_service_state", {},
+         "4", "Request_voice_service_state", {},
          std::bind(&PhoneMenu::requestVoiceServiceState, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> requestCellularCapabilitiesCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "6", "Request_cellular_capabilities", {},
+         "5", "Request_cellular_capabilities", {},
          std::bind(&PhoneMenu::requestCellularCapabilities, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> getSubscriptionCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("7", "Get_subscription", {},
+      ConsoleAppCommand("6", "Get_subscription", {},
                         std::bind(&PhoneMenu::getSubscription, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("8", "Get_operating_mode", {},
+      ConsoleAppCommand("7", "Get_operating_mode", {},
                         std::bind(&PhoneMenu::getOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("9", "Set_operating_mode", {},
+      ConsoleAppCommand("8", "Set_operating_mode", {},
                         std::bind(&PhoneMenu::setOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestCellInfoListCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "10", "Request_cell_info_list", {},
+         "9", "Request_cell_info_list", {},
          std::bind(&PhoneMenu::requestCellInfoList, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setCellInfoListRateCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "11", "Set_cell_info_list_rate", {},
+         "10", "Set_cell_info_list_rate", {},
          std::bind(&PhoneMenu::setCellInfoListRate, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> networkMenuCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("12", "Network_Selection", {},
+      ConsoleAppCommand("11", "Network_Selection", {},
                         std::bind(&PhoneMenu::networkMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> servingSystemMenuCommand
       = std::make_shared<ConsoleAppCommand>(
-         ConsoleAppCommand("13", "Serving_System", {},
+         ConsoleAppCommand("12", "Serving_System", {},
                            std::bind(&PhoneMenu::servingSystemMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setECallOperatingModeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "14", "Set_eCall_operating_mode", {},
+         "13", "Set_eCall_operating_mode", {},
          std::bind(&PhoneMenu::setECallOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestECallOperatingModeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "15", "Request_eCall_operating_mode", {},
+         "14", "Request_eCall_operating_mode", {},
          std::bind(&PhoneMenu::requestECallOperatingMode, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
          setRadioPowerCommand,
          getRadioStateCommand,
-         requestRadioTechnologyCommand,
          requestVoiceServiceStateCommand,
          requestCellularCapabilitiesCommand,
          getSubscriptionCommand,
@@ -255,21 +249,6 @@ std::string PhoneMenu::getServiceStateAsString(telux::tel::ServiceState serviceS
          break;
    }
    return serviceStateString;
-}
-
-void PhoneMenu::requestRadioTechnology(std::vector<std::string> userInput) {
-   if(phone_) {
-      auto voiceTechResponseCb
-         = std::bind(&MyVoiceRadioTechnologyCallback::voiceRadioTechnologyResponse,
-                     myVoiceRadioTechCb_, std::placeholders::_1, std::placeholders::_2);
-      auto ret = phone_->requestVoiceRadioTechnology(voiceTechResponseCb);
-      std::cout << (ret == telux::common::Status::SUCCESS
-                       ? "Request Voice Radio Technology is successful \n"
-                       : "Request Voice Radio Technology failed")
-                << '\n';
-   } else {
-      std::cout << "No default phone found" << std::endl;
-   }
 }
 
 void PhoneMenu::requestVoiceServiceState(std::vector<std::string> userInput) {

@@ -50,7 +50,6 @@ public:
 private:
    void requestSignalStrength(std::vector<std::string> userInput);
    void getRadioState(std::vector<std::string> userInput);
-   void requestRadioTechnology(std::vector<std::string> userInput);
    void setRadioPower(std::vector<std::string> userInput);
    void getSubscription(std::vector<std::string> userInput);
    void requestVoiceServiceState(std::vector<std::string> userInput);
@@ -72,7 +71,6 @@ private:
    std::shared_ptr<telux::tel::ISubscriptionManager> subscriptionMgr_;
    std::shared_ptr<MySubscriptionListener> subscriptionListener_;
    std::shared_ptr<MySignalStrengthCallback> mySignalStrengthCb_;
-   std::shared_ptr<MyVoiceRadioTechnologyCallback> myVoiceRadioTechCb_;
    std::shared_ptr<MyRadioPowerCallback> myRadioPowerCb_;
    std::shared_ptr<MyVoiceServiceStateCallback> myVoiceSrvStateCb_;
    std::shared_ptr<MyCellularCapabilityCallback> myCellularCapabilityCb_;

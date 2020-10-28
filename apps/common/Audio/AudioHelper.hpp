@@ -61,6 +61,7 @@ public:
     static void getUserVoicePathInput(std::vector<Direction> &direction);
     static void getUserMuteStatusInput(StreamMute &mute);
     static Status getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_t &gain);
+    static void getUserEcnrModeInput(EcnrMode &ecnrMode);
 
 private:
     static Status lowFrequencyHelper(uint32_t lowFreq, DtmfLowFreq &lowFrequency);

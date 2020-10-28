@@ -147,8 +147,7 @@ void AudioClient::setVoiceState(bool state) {
 
 // Function to start an active voice session
 telux::common::Status AudioClient::startVoiceSession(int phoneId, DeviceType deviceType,
-                                        uint32_t sampleRate, AudioFormat voiceFormat,
-                                        ChannelTypeMask channels) {
+    uint32_t sampleRate, AudioFormat voiceFormat, ChannelTypeMask channels, EcnrMode ecnrMode) {
     if(isVoiceEnabled()) {
         std::cout << CLIENT_NAME << "Voice stream is enabled already" << std::endl;
         return telux::common::Status::SUCCESS;
@@ -166,6 +165,7 @@ telux::common::Status AudioClient::startVoiceSession(int phoneId, DeviceType dev
         config.format = voiceFormat;
         config.channelTypeMask = channels;
         config.deviceTypes.emplace_back(deviceType);
+        config.ecnrMode = ecnrMode;
         auto status = audioMgr_->createStream(config, std::bind(&AudioClient::createStreamCallback,
                                             this, std::placeholders::_1, std::placeholders::_2));
         if (status == telux::common::Status::SUCCESS) {

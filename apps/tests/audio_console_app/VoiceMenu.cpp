@@ -126,6 +126,7 @@ void VoiceMenu::createStream(std::vector<std::string> userInput) {
         config.slotId = slotId_;
         config.type = StreamType::VOICE_CALL;
         AudioHelper::getUserCreateStreamInput(config);
+        AudioHelper::getUserEcnrModeInput(config.ecnrMode);
         auto status = activeSession_->createStream(config);
         if (status == Status::SUCCESS) {
             std::cout << "Stream created on slotId : " << slotId_ << std::endl;

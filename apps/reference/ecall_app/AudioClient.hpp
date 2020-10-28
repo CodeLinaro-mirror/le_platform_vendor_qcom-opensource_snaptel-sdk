@@ -54,12 +54,13 @@ public:
      * @param [in] sampleRate      Audio sample Rate of voice stream
      * @param [in] voiceFormat     Audio stream data format
      * @param [in] channels        Channels to be used
+     * @param [in] ecnrMode        ECNR mode status
      *
      * @returns Status of startVoiceSession i.e success or suitable status code.
      *
      */
     telux::common::Status startVoiceSession(int phoneId, DeviceType deviceType, uint32_t sampleRate,
-                                AudioFormat voiceFormat, ChannelTypeMask channels);
+        AudioFormat voiceFormat, ChannelTypeMask channels, EcnrMode ecnrMode);
 
     /**
      * This function stops the voice session.

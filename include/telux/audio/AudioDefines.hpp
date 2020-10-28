@@ -169,6 +169,16 @@ enum class StopType {
 };
 
 /**
+ * Enable/Disable ECNR(Echo Cancellation and Noise Reduction) on the audio stream. When enabling
+ * this the audio stream should be associated with devices that are capable of doing ECNR. It is
+ * only applicable to @ref StreamType::VOICE_CALL.
+ */
+enum class EcnrMode {
+    DISABLE = 0,    /**< To disable the ECNR mode*/
+    ENABLE = 1,   /**< To enable the ECNR mode. Applicable only to @ref StreamType::VOICE_CALL */
+};
+
+/**
  *  Frame format common parameters
  */
 struct FormatParams {
@@ -198,6 +208,8 @@ struct StreamConfig {
     std::vector<Direction> voicePaths; /**< Represent voice path direction for in call audio.
                                             TX for Uplink and RX for Downlink.> */
     FormatParams *formatParams;
+    EcnrMode ecnrMode = EcnrMode::DISABLE; /**< Represents ECNR mode for stream. It is applicable
+                                                only to @ref StreamType::VOICE_CALL */
 };
 
 /**

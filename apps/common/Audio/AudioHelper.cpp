@@ -364,6 +364,34 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
     }
 }
 
+void AudioHelper::getUserEcnrModeInput(EcnrMode &ecnrMode) {
+    std::string userInput = "";
+    int command = -1;
+    while(1) {
+        std::cout << "Enter 0 to disable and 1 to enable ECNR mode: " ;
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if (inputStream >> command) {
+                if (command == 0 || command == 1) {
+                    break;
+                } else {
+                    std::cout << "Invalid Input" << std::endl;
+                }
+            } else {
+                std::cout << "Invalid Input" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid Input" << std::endl;
+        }
+    }
+    if (command == 0) {
+        ecnrMode = EcnrMode::DISABLE;
+    } else if (command == 1) {
+        ecnrMode = EcnrMode::ENABLE;
+    }
+}
+
+
 Status AudioHelper::lowFrequencyHelper(uint32_t lowFreq,
                              DtmfLowFreq &lowFrequency) {
     switch(lowFreq) {

@@ -55,7 +55,8 @@ ECallManager::ECallManager()
     , audioDevice_(DeviceType::DEVICE_TYPE_SPEAKER)
     , voiceSampleRate_(16000)
     , voiceFormat_(AudioFormat::PCM_16BIT_SIGNED)
-    , voiceChannels_(ChannelType::LEFT | ChannelType::RIGHT) {
+    , voiceChannels_(ChannelType::LEFT | ChannelType::RIGHT)
+    , ecnrMode_(EcnrMode::ENABLE) {
 }
 
 ECallManager::~ECallManager() {
@@ -243,7 +244,7 @@ void ECallManager::setup(int phoneId) {
                 << std::endl;
     } else {
         audioClient_->startVoiceSession(phoneId, audioDevice_, voiceSampleRate_, voiceFormat_,
-                                voiceChannels_);
+                                voiceChannels_, ecnrMode_);
     }
     // Get the location updates
     setLocationReceived(false);
@@ -392,6 +393,15 @@ void ECallManager::parseAppConfig() {
         voiceFormat_ = AudioFormat::PCM_16BIT_SIGNED;
     } else {
         std::cout << CLIENT_NAME << "Using default audio stream format" << std::endl;
+    }
+    // Get the ecnr mode status
+    param = appSettings->getValue("ECNR_MODE");
+    if(param.compare("DISABLE") == 0) {
+        ecnrMode_ = EcnrMode::DISABLE;
+    } else if(param.compare("ENABLE") == 0) {
+        ecnrMode_ = EcnrMode::ENABLE;
+    } else {
+        std::cout << CLIENT_NAME << "Enabling ecnr mode by default" << std::endl;
     }
 }
 

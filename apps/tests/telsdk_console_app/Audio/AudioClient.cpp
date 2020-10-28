@@ -46,6 +46,7 @@
 #define DEFAULT_CHANNEL_MASK 1
 #define DEFAULT_DEVICE 1
 #define DEFAULT_AUDIO_FORMAT 1
+#define DEFAULT_ECNR_MODE 0
 
 AudioClient::AudioClient()
     : audioMgr_(nullptr) {
@@ -178,6 +179,8 @@ void AudioClient::loadConfFileData() {
         config_.deviceTypes.emplace_back(device);
         input = parser.getValue("CHANNEL_MASK");
         config_.channelTypeMask = static_cast<ChannelTypeMask>(std::stoi(input));
+        input = parser.getValue("ECNR_MODE");
+        config_.ecnrMode = static_cast<EcnrMode>(std::stoi(input));
     } catch (const std::exception &e) {
         std::cout << "ERROR: "<< "Unable to read from file" << std::endl;
         std::cout << "Using default parameters" << std::endl;
@@ -185,11 +188,13 @@ void AudioClient::loadConfFileData() {
         config_.format = static_cast<AudioFormat>(DEFAULT_AUDIO_FORMAT);
         config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE));
         config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
+        config_.ecnrMode = static_cast<EcnrMode>(DEFAULT_ECNR_MODE);
     }
     std::cout << "The sample rate is " << config_.sampleRate << std::endl;
     std::cout << "The audio format is " << static_cast<int>(config_.format) << std::endl;
     std::cout << "The device is " << static_cast<int>(config_.deviceTypes[0]) << std::endl;
     std::cout << "Channel mask is " << static_cast<int>(config_.channelTypeMask) << std::endl;
+    std::cout << "ECNR Mode is " << static_cast<int>(config_.ecnrMode) << std::endl;
     return;
 }
 
@@ -249,6 +254,7 @@ void AudioClient::queryInputType() {
         AudioHelper::getUserChannelInput(config_.channelTypeMask);
         AudioHelper::getAudioFormatInput(config_.format);
         AudioHelper::getUserDeviceInput(config_.deviceTypes);
+        AudioHelper::getUserEcnrModeInput(config_.ecnrMode);
     }
     return;
 #else

@@ -178,6 +178,7 @@ private:
     uint32_t voiceSampleRate_;
     AudioFormat voiceFormat_;
     ChannelTypeMask voiceChannels_;
+    EcnrMode ecnrMode_;
 };
 
 #endif  // ECALLMANAGER_HPP

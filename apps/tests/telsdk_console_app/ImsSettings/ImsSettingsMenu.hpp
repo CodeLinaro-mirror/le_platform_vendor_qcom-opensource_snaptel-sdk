@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,49 +27,34 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       TelSdkConsoleApp.hpp
- *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
- */
+#ifndef IMSSETTINGSMENU_HPP
+#define IMSSETTINGSMENU_HPP
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
-
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "ModemStatus.hpp"
+#include <telux/tel/ImsSettingsManager.hpp>
 #include "console_app_framework/ConsoleApp.hpp"
+#include "ImsSettingsListener.hpp"
 
-class TelSdkConsoleApp : public ConsoleApp {
+class ImsSettingsMenu : public ConsoleApp {
 public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
+    /**
+     * Initialize commands and SDK
+     */
+    void init();
 
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
+    ImsSettingsMenu(std::string appName, std::string cursor);
+    ~ImsSettingsMenu();
 
-   // Displays main menu
-   void displayMenu();
-
-   // Check Modem availability for Telephony
-    void onModemAvailable();
+    void requestImsServiceConfig(std::vector<std::string> userInput);
+    void setImsServiceConfig(std::vector<std::string> userInput);
 
 private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
-   void rspMenu(std::vector<std::string> userInput);
-   void cellbroadcastMenu(std::vector<std::string> userInput);
-   void imsSettingsMenu(std::vector<std::string> userInput);
+    // Member variable to keep the Listener object alive till application ends.
+    std::shared_ptr<telux::tel::IImsSettingsListener> imsSettingsListener_;
+    std::shared_ptr<telux::tel::IImsSettingsManager> imsSettingsMgr_;
 };
 
-#endif  // TELSDKCONSOLEAPP_HPP
+#endif  // IMSSETTINGSMENU_HPP

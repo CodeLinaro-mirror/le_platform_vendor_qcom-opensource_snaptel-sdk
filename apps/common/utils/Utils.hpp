@@ -142,6 +142,10 @@ public:
    // Validate input string(Ex: 1, 2, 3) which should contain
    // atleast one number or numbers seperated by either comma, space or both.
    static void validateNumericString(std::string &input);
+   // Validate the slot id and in case of invalid slot id request
+   // for proper input from user.
+   static int getValidSlotId();
+
    /**
     * Get error description for given ErrorCode
     */

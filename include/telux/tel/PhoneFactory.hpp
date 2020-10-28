@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -89,6 +89,7 @@
 #include <telux/tel/MultiSimManager.hpp>
 #include <telux/tel/SimProfileManager.hpp>
 #include <telux/tel/EcallManager.hpp>
+#include <telux/tel/ImsSettingsManager.hpp>
 
 namespace telux {
 
@@ -236,6 +237,21 @@ public:
     */
    std::shared_ptr<IEcallManager> getEcallManager(telux::common::InitResponseCb callback = nullptr);
 
+   /**
+    * Get Ims Settings Manager instance to handle IMS service enable configuation parameters like
+    * enable/disable voIMS.
+    *
+    * @param[in] callback   Optional callback pointer to get the response of the manager
+    *                       initialisation.
+    *
+    * @returns Pointer of IImsSettingsManager object.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
+       telux::common::InitResponseCb  callback = nullptr);
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
@@ -243,6 +259,7 @@ private:
    std::shared_ptr<ISubscriptionManager> subscriptionManager_;
    std::shared_ptr<IMultiSimManager> multiSimManager_;
    std::shared_ptr<ISimProfileManager> simProfileManager_;
+   std::shared_ptr<IImsSettingsManager> imsSettingsManager_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
    std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
@@ -252,12 +269,14 @@ private:
    std::shared_ptr<IEcallManager> ecallManager_;
    telux::common::ServiceStatus ecallMgrInitStatus_;
    std::vector<telux::common::InitResponseCb> ecallMgrCallbacks_;
-
-   void onEcallMgrInitResponse(telux::common::ServiceStatus status);
-
    std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
    std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
+   std::vector<telux::common::InitResponseCb> imssCallbacks_;
+   telux::common::ServiceStatus imssInitStatus_;
+
+   void onEcallMgrInitResponse(telux::common::ServiceStatus status);
    void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
+   void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
 
    PhoneFactory();
    ~PhoneFactory();

@@ -92,7 +92,7 @@ Status VoiceSession::stopAudio() {
     return status;
 }
 
-Status VoiceSession::startDtmf(DtmfTone tone, uint16_t gain, uint32_t duration) {
+Status VoiceSession::startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain) {
     auto audioVoiceStream_ = std::dynamic_pointer_cast<IAudioVoiceStream>(stream_);
     auto status = Status::FAILED;
     if (audioVoiceStream_ && audioStarted_) {

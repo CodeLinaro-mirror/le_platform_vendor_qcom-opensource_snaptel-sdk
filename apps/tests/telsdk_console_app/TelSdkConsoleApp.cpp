@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,6 +55,7 @@ extern "C" {
 #include "MultiSim/MultiSimMenu.hpp"
 #include "Cellbroadcast/CellbroadcastMenu.hpp"
 #include "Rsp/RspMenu.hpp"
+#include "ImsSettings/ImsSettingsMenu.hpp"
 #include "../../common/utils/Utils.hpp"
 
 #include "TelSdkConsoleApp.hpp"
@@ -98,9 +99,12 @@ void TelSdkConsoleApp::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "9", "Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::rspMenu, this,
                std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> imssMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "IMS_Settings", {},
+            std::bind(&TelSdkConsoleApp::imsSettingsMenu, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand};
+             dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand, imssMenuCommand};
 
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
@@ -173,6 +177,13 @@ void TelSdkConsoleApp::rspMenu(std::vector<std::string> userInput) {
     RemoteSimProfileMenu rspMenu("Sim Profile Management Menu", "sim_profile_management> ");
     rspMenu.init();
     rspMenu.mainLoop();
+    TelSdkConsoleApp::displayMenu();
+}
+
+void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
+    ImsSettingsMenu imsSettingsMenu("IMS Settings Menu", "ims_settings> ");
+    imsSettingsMenu.init();
+    imsSettingsMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
 }
 

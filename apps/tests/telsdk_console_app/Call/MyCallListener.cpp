@@ -127,6 +127,8 @@ std::string MyCallListener::getCallEndCauseString(telux::tel::CallEndCause callE
          return std::string("No user responding");
       case telux::tel::CallEndCause::NO_ANSWER_FROM_USER:
          return std::string("No answer from user");
+      case telux::tel::CallEndCause::NOT_REACHABLE:
+         return std::string("Not reachable");
       case telux::tel::CallEndCause::CALL_REJECTED:
          return std::string("Call rejected");
       case telux::tel::CallEndCause::NUMBER_CHANGED:

@@ -86,6 +86,7 @@ enum class CallEndCause {
    BUSY = 17,
    NO_USER_RESPONDING = 18,
    NO_ANSWER_FROM_USER = 19,
+   NOT_REACHABLE = 20,
    CALL_REJECTED = 21,
    NUMBER_CHANGED = 22,
    PREEMPTION = 25,

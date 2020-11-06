@@ -178,9 +178,16 @@ TcuActivityState Cv2xDaemon::getSystemState() {
 
 Status Cv2xDaemon::enableSysPowerNotification() {
     telux::common::Status regStatus;
-    sysStateMgr_ =
-        telux::power::PowerFactory::getInstance().getTcuActivityManager();
-
+    // Get TCU-activity manager object. If TCU-activity management framework doesn't exist on the
+    // processor(for example, when a third party application processor is involved) where this
+    // daemon is running on, connect to TCU-activity manager on the REMOTE processor.
+    telux::power::ClientType clientType = telux::power::ClientType::SLAVE;
+    telux::common::ProcType procType = telux::common::ProcType::LOCAL_PROC;
+#if defined(TELUX_FOR_EXTERNAL_AP) && !defined(TELUX_QTI_EXTERNAL_AP)
+    procType = telux::common::ProcType::REMOTE_PROC;
+#endif
+    sysStateMgr_ = telux::power::PowerFactory::getInstance().getTcuActivityManager(clientType,
+                                                                procType);
     if (sysStateMgr_ == nullptr){
         LOGE("Failed to get sysStateMgr_\n");
         return Status::FAILED;

@@ -53,6 +53,8 @@
 #include <telux/tel/MultiSimManager.hpp>
 #include <telux/tel/SimProfileManager.hpp>
 #include <telux/tel/ImsSettingsManager.hpp>
+#include <telux/tel/HttpTransactionManager.hpp>
+
 
 namespace telux {
 
@@ -196,6 +198,21 @@ public:
    std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
        telux::common::InitResponseCb  callback = nullptr);
 
+   /**
+    * Get HttpTransactionManager instance to handle HTTP related requests
+    * from the modem for SIM profile update related operations.
+    *
+    * @param[in] callback   Optional callback pointer to get the response of the manager
+    *                       initialisation.
+    *
+    * @returns Pointer of IHttpTransactionManager object or nullptr in case of failure.
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    *
+    */
+   std::shared_ptr<IHttpTransactionManager> getHttpTransactionManager(
+      telux::common::InitResponseCb  callback = nullptr);
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
@@ -204,6 +221,7 @@ private:
    std::shared_ptr<IMultiSimManager> multiSimManager_;
    std::shared_ptr<ISimProfileManager> simProfileManager_;
    std::shared_ptr<IImsSettingsManager> imsSettingsManager_;
+   std::shared_ptr<IHttpTransactionManager> httpTransactionManager_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
    std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
@@ -212,8 +230,11 @@ private:
    std::map<int, std::shared_ptr<IRemoteSimManager>> remoteSimManagerMap_;
    std::vector<telux::common::InitResponseCb> imssCallbacks_;
    telux::common::ServiceStatus imssInitStatus_;
+   std::vector<telux::common::InitResponseCb> httpTransactionCallbacks_;
+   telux::common::ServiceStatus httpTransactionInitStatus_;
 
    void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
+   void onHttpTransactionManagerResponse(telux::common::ServiceStatus status);
 
    PhoneFactory();
    ~PhoneFactory();

@@ -65,7 +65,9 @@ class SimProfile {
     int getSlotId();
 
     /**
-     * Get profile identifier.
+     * Get profile identifier. The profile identifier is not persistently unique. It is
+     * unique for give snapshot of SIM profiles state. The profile identifier could
+     * change when any profile is deleted and added.
      *
      * @returns unique identifier for the profile
      */

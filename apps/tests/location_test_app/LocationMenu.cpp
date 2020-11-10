@@ -259,6 +259,10 @@ int LocationMenu::init() {
       ConsoleAppCommand("28", "Request year of hardware information", {}, std::bind(
                         &LocationMenu::getYearOfHw, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureEngineState = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("29", "Configure engine state", {}, std::bind(
+                        &LocationMenu::configureEngineState, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -267,7 +271,8 @@ int LocationMenu::init() {
          dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
          configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
          configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
-         configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw};
+         configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
+         configureEngineState};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -582,7 +587,7 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
             std::string type;
             std::cout << "Enter the LeverArmType : " << std::endl;
             std::cout << " Enter 1 for GNSS_TO_VRP or 2 for DR_IMU_TO_GNSS" << std::endl;
-            std::cout << "  or 3 for VEPP_IMU_TO_GNSS " << std::endl;
+            std::cout << "  or 3 for VPE_IMU_TO_GNSS " << std::endl;
             std::getline(std::cin, type, delimiter);
             int leverArmTypeOption = 1;
             if(!type.empty()) {
@@ -601,10 +606,10 @@ void LocationMenu::configureLeverArm(std::vector<std::string> userInput) {
             }
             if(leverArmTypeOption == 1) {
                 leverArmType = LEVER_ARM_TYPE_GNSS_TO_VRP;
-            } else if(leverArmTypeOption == 2) {
+            } else if (leverArmTypeOption == 2) {
                 leverArmType = LEVER_ARM_TYPE_DR_IMU_TO_GNSS;
-            }else {
-                leverArmType = LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS;
+            } else if (leverArmTypeOption == 3){
+                leverArmType = LEVER_ARM_TYPE_VPE_IMU_TO_GNSS;
             }
             std::cout << "leverArmTypeOption : " << leverArmTypeOption << std::endl;
             std::cout << "leverArmType : " << leverArmType << std::endl;
@@ -784,6 +789,52 @@ void LocationMenu::configureDR(std::vector<std::string> userInput) {
                 myLocCmdResponseCb_, std::placeholders::_1));
         if (status == telux::common::Status::FAILED) {
           std::cout << "Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::configureEngineState(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        char delimiter = '\n';
+        telux::loc::EngineType engineType;
+        std::string type;
+        std::cout << "Enter the type of engine : " << std::endl;
+        std::cout << "Enter 1 for SPE" << std::endl;
+        std::cout << "Enter 2 for PPE" << std::endl;
+        std::cout << "Enter 3 for DRE" << std::endl;
+        std::cout << "Enter 4 for VPE" << std::endl;
+        std::getline(std::cin, type, delimiter);
+        int engineTypeOption = std::stoi(type);
+        if (engineTypeOption == 1) {
+            engineType = telux::loc::EngineType::SPE;
+        } else if (engineTypeOption == 2) {
+            engineType = telux::loc::EngineType::PPE;
+        } else if (engineTypeOption == 3){
+            engineType = telux::loc::EngineType::DRE;
+        } else {
+            engineType = telux::loc::EngineType::VPE;
+        }
+
+        telux::loc::LocationEngineRunState engineState;
+        std::string state;
+        std::cout << "Enter the state of engine : " << std::endl;
+        std::cout << "Enter 1 to bring engine to suspend state" << std::endl;
+        std::cout << "Enter 2 to bring engine to running state" << std::endl;
+        std::getline(std::cin, state, delimiter);
+        int engineStateOption = std::stoi(state);
+        if (engineStateOption == 1) {
+            engineState = telux::loc::LocationEngineRunState::SUSPENDED;
+        } else {
+            engineState = telux::loc::LocationEngineRunState::RUNNING;
+        }
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure engine state");
+        telux::common::Status status = locationConfigurator_->configureEngineState(engineType,
+            engineState, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status == telux::common::Status::FAILED) {
+            std::cout << "FAILED" << std::endl;
         }
     }
 }

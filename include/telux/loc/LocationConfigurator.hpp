@@ -514,6 +514,34 @@ public:
       DREngineConfiguration& config, telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
+ * This API is used to instruct the specified engine to be in the suspended/running state.
+ * When the engine is placed in suspended state, the engine will stop. If there is an on-going
+ * session, engine will no longer produce fixes. In the suspended state, calling API to delete
+ * aiding data from the paused engine may not have effect. Request to delete Aiding data shall
+ * be issued after engine resume.
+ *
+ * Currently, only DR engine will support this request. The request to suspend/running DR engine
+ * can be made with or without an on-going session. With DR engine, on resume, GNSS position &
+ * heading re-acquisition may be needed for DR to engage.
+ *
+ * @param [in] engineType - the engine that is instructed to change its run state.
+ *
+ * @param [in] engineState - the new engine run state that the engine is instructed to be in.
+ *
+ * @param [in] callback - Optional callback to get the response of configureEngineState.
+ *
+ * @returns Status of configureEngineState i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureEngineState(const EngineType engineType,
+      const LocationEngineRunState engineState,
+          telux::common::ResponseCallback callback = nullptr ) = 0;
+
+/**
  * Destructor of ILocationConfigurator
  */
   virtual ~ILocationConfigurator() {};

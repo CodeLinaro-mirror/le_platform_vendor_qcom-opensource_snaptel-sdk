@@ -668,73 +668,75 @@ using LocationInfoValidity = uint32_t;
  */
 enum LocationInfoExValidityType {
   /** valid altitude mean sea level */
-  HAS_ALTITUDE_MEAN_SEA_LEVEL = (1 << 0),
+  HAS_ALTITUDE_MEAN_SEA_LEVEL = (1ULL << 0),
   /** valid pdop, hdop, and vdop */
-  HAS_DOP = (1 << 1),
+  HAS_DOP = (1ULL << 1),
   /** valid magnetic deviation */
-  HAS_MAGNETIC_DEVIATION = (1 << 2),
+  HAS_MAGNETIC_DEVIATION = (1ULL << 2),
   /** valid horizontal reliability */
-  HAS_HOR_RELIABILITY = (1 << 3),
+  HAS_HOR_RELIABILITY = (1ULL << 3),
   /** valid vertical reliability */
-  HAS_VER_RELIABILITY = (1 << 4),
+  HAS_VER_RELIABILITY = (1ULL << 4),
   /** valid elipsode semi major */
-  HAS_HOR_ACCURACY_ELIP_SEMI_MAJOR = (1 << 5),
+  HAS_HOR_ACCURACY_ELIP_SEMI_MAJOR = (1ULL << 5),
   /** valid elipsode semi minor */
-  HAS_HOR_ACCURACY_ELIP_SEMI_MINOR = (1 << 6),
+  HAS_HOR_ACCURACY_ELIP_SEMI_MINOR = (1ULL << 6),
   /** valid accuracy elipsode azimuth */
-  HAS_HOR_ACCURACY_ELIP_AZIMUTH = (1 << 7),
+  HAS_HOR_ACCURACY_ELIP_AZIMUTH = (1ULL << 7),
   /** valid gnss sv used in pos data */
-  HAS_GNSS_SV_USED_DATA = (1 << 8),
+  HAS_GNSS_SV_USED_DATA = (1ULL << 8),
   /** valid navSolutionMask */
-  HAS_NAV_SOLUTION_MASK = (1 << 9),
+  HAS_NAV_SOLUTION_MASK = (1ULL << 9),
   /** valid LocPosTechMask */
-  HAS_POS_TECH_MASK = (1 << 10),
+  HAS_POS_TECH_MASK = (1ULL << 10),
   /** valid LocSvInfoSource */
-  HAS_SV_SOURCE_INFO = (1 << 11),
+  HAS_SV_SOURCE_INFO = (1ULL << 11),
   /** valid position dynamics data */
-  HAS_POS_DYNAMICS_DATA = (1 << 12),
+  HAS_POS_DYNAMICS_DATA = (1ULL << 12),
   /** valid gdop, tdop */
-  HAS_EXT_DOP = (1 << 13),
+  HAS_EXT_DOP = (1ULL << 13),
   /**valid North standard deviation */
-  HAS_NORTH_STD_DEV = (1 << 14),
+  HAS_NORTH_STD_DEV = (1ULL << 14),
   /** valid East standard deviation*/
-  HAS_EAST_STD_DEV = (1 << 15),
+  HAS_EAST_STD_DEV = (1ULL << 15),
   /** valid North Velocity */
-  HAS_NORTH_VEL = (1 << 16),
+  HAS_NORTH_VEL = (1ULL << 16),
   /** valid East Velocity */
-  HAS_EAST_VEL = (1 << 17),
+  HAS_EAST_VEL = (1ULL << 17),
   /** valid Up Velocity */
-  HAS_UP_VEL = (1 << 18),
+  HAS_UP_VEL = (1ULL << 18),
   /** valid North Velocity Uncertainty */
-  HAS_NORTH_VEL_UNC = (1 << 19),
+  HAS_NORTH_VEL_UNC = (1ULL << 19),
   /** valid East Velocity Uncertainty */
-  HAS_EAST_VEL_UNC = (1 << 20),
+  HAS_EAST_VEL_UNC = (1ULL << 20),
   /** valid Up Velocity Uncertainty */
-  HAS_UP_VEL_UNC = (1 << 21),
+  HAS_UP_VEL_UNC = (1ULL << 21),
   /** valid leap_seconds */
-  HAS_LEAP_SECONDS = (1 << 22),
+  HAS_LEAP_SECONDS = (1ULL << 22),
   /** valid timeUncMs */
-  HAS_TIME_UNC = (1 << 23),
+  HAS_TIME_UNC = (1ULL << 23),
   /** valid number of sv used */
-  HAS_NUM_SV_USED_IN_POSITION = (1 << 24),
+  HAS_NUM_SV_USED_IN_POSITION = (1ULL << 24),
   /** valid sensor calibrationConfidencePercent */
-  HAS_CALIBRATION_CONFIDENCE_PERCENT = (1 << 25),
+  HAS_CALIBRATION_CONFIDENCE_PERCENT = (1ULL << 25),
   /** valid sensor calibrationConfidence */
-  HAS_CALIBRATION_STATUS = (1 << 26),
+  HAS_CALIBRATION_STATUS = (1ULL << 26),
   /** valid output engine type */
-  HAS_OUTPUT_ENG_TYPE = (1 << 27),
+  HAS_OUTPUT_ENG_TYPE = (1ULL << 27),
   /** valid output engine mask */
-  HAS_OUTPUT_ENG_MASK = (1 << 28),
+  HAS_OUTPUT_ENG_MASK = (1ULL << 28),
   /** valid conformity index */
-  HAS_CONFORMITY_INDEX_FIX = (1 << 29),
+  HAS_CONFORMITY_INDEX_FIX = (1ULL << 29),
   /** valid lla vrp based*/
-  HAS_LLA_VRP_BASED = (1 << 30),
+  HAS_LLA_VRP_BASED = (1ULL << 30),
   /** valid enu velocity vrp based*/
-  HAS_ENU_VELOCITY_VRP_BASED = (1 << 31)
+  HAS_ENU_VELOCITY_VRP_BASED = (1ULL << 31),
+  /** valid altitude type*/
+  HAS_ALTITUDE_TYPE = (1ULL << 32)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
-using LocationInfoExValidity = uint32_t;
+using LocationInfoExValidity = uint64_t;
 
 /** Specify the GNSS signal type and RF band for jammer info and
  *  automatic gain control metric in GnssData.*/
@@ -874,7 +876,6 @@ enum PositioningEngineType{
 /** Specifies PositioningEngineType mask */
 using PositioningEngine = uint32_t;
 
-
 /**
  * Specify parameters related to enable/disable SVs */
 struct SvBlackListInfo {
@@ -905,8 +906,13 @@ enum LeverArmType {
     LEVER_ARM_TYPE_DR_IMU_TO_GNSS = 2,
     /** Lever arm regarding GNSS Antenna w.r.t the origin at the
      *  IMU (inertial measurement unit) for VEPP (vision enhanced
-     *  precise positioning engine) */
+     *  precise positioning engine)
+     *  @deprecated enum type is not supported.*/
     LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS = 3,
+    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
+     *  IMU (inertial measurement unit) for VPE (vision positioning
+     *  engine) */
+    LEVER_ARM_TYPE_VPE_IMU_TO_GNSS = 3,
 };
 
 /**
@@ -1389,6 +1395,32 @@ struct DREngineConfiguration {
 typedef std::unordered_set<GnssConstellationType> ConstellationSet;
 
 /**
+ * Specify the position engine types */
+enum class EngineType {
+    /** Unknown engine type. */
+    UNKNOWN = -1,
+    /** Standard GNSS position engine. */
+    SPE = 1,
+    /** Precise position engine. */
+    PPE = 2,
+    /** Dead reckoning position engine. */
+    DRE = 3,
+    /** Vision positioning engine. */
+    VPE = 4
+};
+
+/**
+ * Specify the position engine run state */
+enum class LocationEngineRunState {
+    /** Unknown engine run state. */
+    UNKNOWN = -1,
+    /** Request the position engine to be put into suspended state. */
+    SUSPENDED = 1,
+    /** Request the position engine to be put into running state. */
+    RUNNING = 2
+};
+
+/**
  * @brief ILocationInfoBase provides interface to get basic position related
  * information like latitude, longitude, altitude, timestamp.
  *
@@ -1816,6 +1848,13 @@ public:
  *            up velocity}
  */
   virtual std::vector<float> getVRPBasedENUVelocity() = 0;
+
+/**
+ * Determination of altitude is assumed or calculated. ASSUMED means there may not be
+ * enough satellites to determine the precise altitude.
+ * @returns altitude type ASSUMED/CALCULATED or if not avalilable then UNKNOWN.
+ */
+  virtual AltitudeType getAltitudeType() = 0;
 };
 
 /**

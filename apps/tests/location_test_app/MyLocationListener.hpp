@@ -99,6 +99,7 @@ private:
        GnssMeasurementsMultipathIndicator indicator);
    void printLLAVRPBasedInfo(telux::loc::LLAInfo llaInfo);
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
+   void printAltitudeType(telux::loc::AltitudeType type);
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

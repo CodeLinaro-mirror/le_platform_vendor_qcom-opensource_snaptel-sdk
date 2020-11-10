@@ -82,6 +82,7 @@ if(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
     add_subdirectory( tests/cv2x_update_configuration_app )
     add_subdirectory( tests/cv2x_retrieve_configuration_app )
     add_subdirectory( tests/cv2x_set_tx_power_app)
+    add_subdirectory( tests/cv2x_l2_id_filter_app)
     add_subdirectory( reference/cv2x-daemon )
 endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,7 +43,8 @@
 void ChangeCardPinResponseCb(int retryCount, telux::common::ErrorCode error) {
    if(error != telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "Change Card Pin Request failed with errorCode: " << static_cast<int>(error)
-               << ":" << Utils::getErrorCodeAsString(error) << std::endl;
+               << ":" << Utils::getErrorCodeAsString(error) << " retry count: " <<
+               retryCount << std::endl;
    } else {
       PRINT_CB << "Change Card Pin Request successful retryCount:" << retryCount << std::endl;
    }
@@ -52,7 +53,8 @@ void ChangeCardPinResponseCb(int retryCount, telux::common::ErrorCode error) {
 void unlockCardByPinResponseCb(int retryCount, telux::common::ErrorCode error) {
    if(error != telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "Unlock Card By Pin Request failed with errorCode: " << static_cast<int>(error)
-               << ":" << Utils::getErrorCodeAsString(error) << std::endl;
+               << ":" << Utils::getErrorCodeAsString(error) << " retry count: " <<
+               retryCount << std::endl;
    } else {
       PRINT_CB << "Unlock Card By Pin Request successful retryCount:" << retryCount << std::endl;
    }
@@ -61,7 +63,8 @@ void unlockCardByPinResponseCb(int retryCount, telux::common::ErrorCode error) {
 void unlockCardByPukResponseCb(int retryCount, telux::common::ErrorCode error) {
    if(error != telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "Unlock Card By Puk Request failed with errorCode: " << static_cast<int>(error)
-               << ":" << Utils::getErrorCodeAsString(error) << std::endl;
+               << ":" << Utils::getErrorCodeAsString(error) << " retry count: " <<
+               retryCount << std::endl;
    } else {
       PRINT_CB << "Unlock Card By Puk request successful retryCount:" << retryCount << std::endl;
    }
@@ -70,7 +73,8 @@ void unlockCardByPukResponseCb(int retryCount, telux::common::ErrorCode error) {
 void setCardLockResponseCb(int retryCount, telux::common::ErrorCode error) {
    if(error != telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "Set Card Lock Request failed with errorCode: " << static_cast<int>(error) << ":"
-               << Utils::getErrorCodeAsString(error) << std::endl;
+               << Utils::getErrorCodeAsString(error) << " retry count: " <<
+               retryCount << std::endl;
    } else {
       PRINT_CB << "Set Card Lock request successful retryCount:" << retryCount << std::endl;
    }

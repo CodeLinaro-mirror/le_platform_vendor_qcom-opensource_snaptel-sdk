@@ -95,6 +95,11 @@ typedef int v2x_radio_handle_t;
   */
 #define MAX_SUBSCRIBE_SIDS_LIST_LEN (10)
 
+/** Maximum length for the L2 ID list that can
+     be passed in v2x_set_l2_filters() and v2x_cancel_l2_filters.
+  */
+#define MAX_FILTER_IDS_LIST_LEN (50)
+
 /**
     Describes whether the radio chip modem should attempt or support concurrent
     3GPP CV2X operation with a WWAN 4G/5G data call.
@@ -785,6 +790,21 @@ typedef enum {
 } traffic_ip_type_t;
 
 typedef traffic_ip_type_t traffic_ip_type;
+
+/**
+ * Contains remote UE source L2 ID that expecting to filter.
+ */
+typedef struct src_l2_filter_info_t {
+    /**< remote UE L2 addr to filter. */
+    uint32_t src_l2_id;
+
+    /**< Duration, in millisec (resolution 100 msec).*/
+    uint32_t duration_ms;
+
+    /**</* Proximity service per packet priority (PPPP), packets with priority above this value
+         will be dropped. Range 0-7, 0 mean all of the pkts will be dropped*/
+    uint8_t pppp;
+} src_l2_filter_info;
 
 /**
     Method used to query the platform SDK for its version number, build
@@ -2202,6 +2222,28 @@ extern int v2x_radio_tcp_sock_create_and_bind(
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
 v2x_status_enum_type v2x_set_peak_tx_power(int8_t txPower);
+
+/**
+    Set src L2 ID list for filtering.
+    This affects/disables receiving packets from the src L2 IDs in the list.
+
+    @param [in] list_len   number of rc L2 IDs, max value 50
+    @param [in] list_array array that stores the src L2 IDs, durations and pppp values for filter
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_l2_filters(uint32_t list_len, src_l2_filter_info* list_array);
+
+/**
+    Remove specific src L2 ID list for filtering.
+    This affects/enables receiving packets from the src L2 IDs in the list.
+
+    @param [in] list_len   number of rc L2 IDs, max value 50
+    @param [in] l2_id_list array that stores the src L2 IDs
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_remove_l2_filters(uint32_t list_len, uint32_t* l2_id_list);
 
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 

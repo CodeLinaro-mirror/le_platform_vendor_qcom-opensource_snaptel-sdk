@@ -487,6 +487,23 @@ struct ConfigEventInfo {
     /**< V2X config event. */
 };
 
+/**
+ * Contains remote UE source L2 ID that modem will drop on Rx.
+ *
+ * Used in @ref setL2Filters
+ */
+struct L2FilterInfo {
+    /**< remote UE L2 MAC addr to filter. */
+    uint32_t srcL2Id;
+
+    /**< Duration, in millisec (resolution 100 msec). 0 means delete the filter*/
+    uint32_t durationMs;
+
+    /**</* Proximity service per packet priority (PPPP), packets with priority above this value
+           will be dropped. Range 0-7, 0 mean all priority pkts from that UE would be dropped*/
+    uint8_t pppp;
+};
+
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x

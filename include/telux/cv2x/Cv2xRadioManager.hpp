@@ -253,6 +253,30 @@ public:
      */
     virtual telux::common::Status setPeakTxPower(int8_t txPower, common::ResponseCallback cb) = 0;
 
+    /**
+     * Request to install remote UE src L2 filters.
+     * This affects receiving of the UEs' packets in specified period with specified PPPP
+     *
+     * @param [in] filterList - remote UE src L2 Id, filter duration and PPPP list, max size 50
+     * @param [in] cb         - Callback that is invoked when the request is sent
+     *
+     * @returns SUCCESS on success. Error status otherwise.
+     */
+    virtual telux::common::Status setL2Filters(const std::vector<L2FilterInfo> &filterList,
+        common::ResponseCallback cb) = 0;
+
+    /**
+     * Remove the previously installed filters matching src L2 address list.
+     * Hence forth this would allow reception of packets from specified UE's
+     *
+     * @param [in] l2IdList - remote UE src L2 Id list, max size 50
+     * @param [in] cb       - Callback that is invoked when the request is sent
+     *
+     * @returns SUCCESS on success. Error status otherwise.
+     */
+    virtual telux::common::Status removeL2Filters(const std::vector<uint32_t> &l2IdList,
+        common::ResponseCallback cb) = 0;
+
     virtual ~ICv2xRadioManager() {}
 };
 

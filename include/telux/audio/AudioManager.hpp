@@ -306,6 +306,8 @@ public:
     *          and could break backwards compatibility.
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
+
+   virtual ~IAudioManager() {};
 };
 
 /**
@@ -327,6 +329,8 @@ public:
     * @returns    DeviceDirection
     */
    virtual DeviceDirection getDirection() = 0;
+
+   virtual ~IAudioDevice() {};
 
  };
 
@@ -450,8 +454,9 @@ public:
     * @returns Status of the request i.e. success or suitable status code.
     */
    virtual telux::common::Status getMute(StreamDirection dir,
-                                         GetStreamMuteResponseCb callback = nullptr)
-      = 0;
+                                         GetStreamMuteResponseCb callback = nullptr) = 0;
+
+   virtual ~IAudioStream() {};
 };
 
 /**
@@ -523,6 +528,8 @@ public:
     * @returns Status of deRegisterListener, success or suitable status code
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IVoiceListener> listener) = 0;
+
+   virtual ~IAudioVoiceStream() {};
 };
 
 /**
@@ -613,6 +620,8 @@ public:
     *          and could break backwards compatibility.
     */
     virtual telux::common::Status deRegisterListener(std::weak_ptr<IPlayListener> listener) = 0;
+
+    virtual ~IAudioPlayStream() {};
 };
 
 
@@ -659,6 +668,8 @@ public:
     */
    virtual telux::common::Status read(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytesToRead,
                                       ReadResponseCb callback = nullptr) = 0;
+
+   virtual ~IAudioCaptureStream() {};
 };
 
 /**
@@ -687,6 +698,7 @@ public:
    virtual telux::common::Status
             stopLoopback(telux::common::ResponseCallback callback = nullptr) = 0;
 
+   virtual ~IAudioLoopbackStream() {};
 };
 
 /**
@@ -723,6 +735,7 @@ public:
     */
    virtual telux::common::Status stopTone(telux::common::ResponseCallback callback = nullptr) = 0;
 
+   virtual ~IAudioToneGeneratorStream() {};
 };
 
 /** @} */ /* end_addtogroup telematics_audio */

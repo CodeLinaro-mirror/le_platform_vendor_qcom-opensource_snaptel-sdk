@@ -158,6 +158,18 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_OUTPUT_ENG_MASK)) {
       std::cout << "valid output engine mask" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_CONFORMITY_INDEX_FIX)) {
+      std::cout << "valid conformity index" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_LLA_VRP_BASED)) {
+      std::cout << "valid lla vrp based" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_ENU_VELOCITY_VRP_BASED)) {
+      std::cout << "valid enu velocity vrp based" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_ALTITUDE_TYPE)) {
+      std::cout << "valid altitude type" << std::endl;
+    }
 
 }
 
@@ -808,6 +820,33 @@ void MyLocationListener::printMeasurementsMultipathIndicator(
   }
 }
 
+void MyLocationListener::printLLAVRPBasedInfo(telux::loc::LLAInfo llaInfo) {
+  std::cout << "LLAVRPBased Information :" << std::endl;
+  std::cout << " Latitude : " << llaInfo.latitude << std::endl;
+  std::cout << " Longitude : " << llaInfo.longitude << std::endl;
+  std::cout << " Altitude : " << llaInfo.altitude << std::endl;
+}
+
+void MyLocationListener::printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased) {
+  std::cout << "East, North, Up Velocity VRP based :" << std::endl;
+  std::cout << " East velocity : " << enuVelocityVRPBased[0] << std::endl;
+  std::cout << " North velocity : " << enuVelocityVRPBased[1] << std::endl;
+  std::cout << " Up velocity : " << enuVelocityVRPBased[2] << std::endl;
+}
+
+void MyLocationListener::printAltitudeType(telux::loc::AltitudeType type) {
+  std::cout << "Altitude Type is :" << std::endl;
+  if (type == telux::loc::AltitudeType::UNKNOWN) {
+    std::cout << "UNKNOWN" << std::endl;
+  }
+  if (type == telux::loc::AltitudeType::CALCULATED) {
+    std::cout << "CALCULATED" << std::endl;
+  }
+  if (type == telux::loc::AltitudeType::ASSUMED) {
+    std::cout << "ASSUMED" << std::endl;
+  }
+}
+
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -946,8 +985,10 @@ void MyLocationListener::onDetailedLocationUpdate(
    printCalibrationStatus(locationInfo);
    printLocOutputEngineType(locationInfo);
    printLocOutputEngineMask(locationInfo);
-   std::cout << " Conformity index : " << locationInfo->getConformityIndex() << std::endl;
-
+   std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
+   printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
+   printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
+   printAltitudeType(locationInfo->getAltitudeType());
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -1054,7 +1095,10 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      printCalibrationStatus(locationInfo);
      printLocOutputEngineType(locationInfo);
      printLocOutputEngineMask(locationInfo);
-     std::cout << " Conformity index : " << locationInfo->getConformityIndex() << std::endl;
+     std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
+     printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
+     printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
+     printAltitudeType(locationInfo->getAltitudeType());
      std::cout << "*************************************************************" << std::endl;
     }
 }

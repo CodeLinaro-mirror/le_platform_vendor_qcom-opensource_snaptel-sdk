@@ -160,8 +160,10 @@ public:
  * the interval. Any of the 3 APIs that is startDetailedReports or startDetailedEngineReports
  * or startBasicReports can be called one after the other irrespective of order, without
  * calling stopReports in between any of them and the API which is called last will be honored
- * for providing the callbacks. If multiple clients invoke this API with different interval,
- * then all the clients will be benefited with interval which is smallest among all the intervals.
+ * for providing the callbacks. In case of multiple clients invoking this API with different
+ * intervals, if the platforms is configured, then the clients will receive the reports at their
+ * requested intervals. If not configured then all the clients will be serviced at the smallest
+ * interval among all clients' intervals.
  * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
  * caller send which is not one of these will result in the implementation picking one of these
  * periodicities.
@@ -193,9 +195,10 @@ public:
  * Any of the 3 APIs that is startDetailedReports or startDetailedEngineReports
  * or startBasicReports can be called one after the other irrespective of order, without
  * calling stopReports in between any of them and the API which is called last will be
- * honored for providing the callbacks. If multiple clients invoke this API with different
- * interval, then all the clients will be benefited with interval which is smallest among
- * all the intervals.
+ * honored for providing the callbacks. In case of multiple clients invoking this API with
+ * different intervals, if the platforms is configured, then the clients will receive the reports
+ * at their requested intervals. If not configured then all the clients will be serviced at the
+ * smallest interval among all clients' intervals.
  * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
  * caller send which is not one of these will result in the implementation picking one of these
  * periodicities.
@@ -229,9 +232,10 @@ public:
  * the consecutive reports. Any of the 3 APIs that is startDetailedReports or
  * startDetailedEngineReports or startBasicReports can be called one after the other
  * irrespective of order, without calling stopReports in between any of them and the
- * API which is called last will be honored for providing the callbacks. If multiple
- * clients invoke this API with different interval, then all the clients will be benefited
- * with interval which is smallest among all the intervals.
+ * API which is called last will be honored for providing the callbacks. In case of multiple
+ * clients invoking this API with different intervals, if the platforms is configured, then the
+ * clients will receive the reports at their requested intervals. If not configured then all the
+ * clients will be serviced at the smallest interval among all clients' intervals.
  * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
  * caller send which is not one of these will result in the implementation picking one of these
  * periodicities.

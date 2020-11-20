@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -50,6 +50,11 @@ namespace data {
  * Default data profile id.
  */
 #define PROFILE_ID_MAX 0x7FFFFFFF
+
+/**
+ * Max filters in one flow
+ */
+#define MAX_QOS_FILTERS 16
 
 /**
  * Preferred IP family for the connection
@@ -699,6 +704,82 @@ struct VlanConfig {
     int16_t vlanId;      /**< Vlan identifier (i.e 1-4094)*/
     bool isAccelerated;  /**< is acceleration allowed */
 };
+
+/**
+ * QOS flow state change type
+ */
+enum class QosFlowStateChangeEvent {
+    UNKNOWN = -1,  /**< UNKNOWN state */
+    ACTIVATED = 0, /**< Flow activated */
+    MODIFIED = 1,  /**< Flow modified */
+    DELETED = 2,   /**< Flow deleted */
+};
+
+/**
+ * QOS Flow identifier
+ */
+using QosFlowId = uint32_t;
+
+/**
+ * QOS flow IP traffic class type
+ */
+enum class IpTrafficClassType {
+    UNKNOWN = -1,       /**< UNKNOWN type */
+    CONVERSATIONAL = 0, /**< Conversational IP Traffic class */
+    STREAMING = 1,      /**< Streaming IP Traffic class */
+    INTERACTIVE = 2,    /**< Interactive IP Traffic class */
+    BACKGROUND = 3,     /**< Background IP Traffic class */
+};
+
+/**
+ * QOS Flow data min max rate bits per seconds
+ */
+struct FlowDataRate {
+    uint64_t maxRate;      /**< QOS Flow maximum data rate */
+    uint64_t minRate;      /**< QOS Flow minimum data rate */
+};
+
+/**
+ * Specifies QOS IP Flow parameter mask
+ */
+enum QosIPFlowMaskType {
+    MASK_IP_FLOW_NONE = 0,                        /** No parameters set  */
+    MASK_IP_FLOW_TRF_CLASS = 1,                   /** Traffic class */
+    MASK_IP_FLOW_DATA_RATE_MIN_MAX = 2,           /** Data rate min/max */
+};
+
+/**
+ * 16 bit mask that denotes which of the flow paramaters defined in
+ * QosIPFlowMaskType enum are used for TFT @QosIPFlowInfo.
+ */
+using QosIPFlowMask = std::bitset<16>;
+
+/**
+ * QOS Flow IP info
+ */
+struct QosIPFlowInfo {
+    QosIPFlowMask mask;                     /**< Valid parameters of QosIPFlowInfo
+                                                 ref @QosIPFlowMaskType */
+    IpTrafficClassType tfClass;             /**< IP Traffic class type @ref IpFamilyType */
+    FlowDataRate dataRate;                  /**< Flow data rate @ref FlowDataRate */
+};
+
+/**
+ * Specifies QOS Flow parameter mask
+ */
+enum QosFlowMaskType {
+    MASK_FLOW_NONE = 0,           /** No parameters set  */
+    MASK_FLOW_TX_GRANTED = 1,     /** TX Granted flow set */
+    MASK_FLOW_RX_GRANTED = 2,     /** RX Granted flow set */
+    MASK_FLOW_TX_FILTERS = 3,     /** TX filters set */
+    MASK_FLOW_RX_FILTERS = 4,     /** RX filters set */
+};
+
+/**
+ * 16 bit mask that denotes which of the flow paramaters defined in
+ * QosFlowMaskType enum are used for TFT @TrafficFlowTemplate.
+ */
+using QosFlowMask = std::bitset<16>;
 
 /** @} */ /* end_addtogroup telematics_data */
 }

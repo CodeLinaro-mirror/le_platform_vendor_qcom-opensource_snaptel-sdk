@@ -47,6 +47,7 @@
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataProfile.hpp>
+#include <telux/data/IpFilter.hpp>
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -63,6 +64,48 @@ class IDataCall;
 struct IpFamilyInfo {
     DataCallStatus status;
     IpAddrInfo addr;
+};
+
+/**
+ * Encapsulate the Qos Filter rule
+ */
+struct QosFilterRule{
+    std::vector<std::shared_ptr<IIpFilter>> filter; /**< @ref IIpFilter */
+    uint16_t filterId;                              /**< Unique identifier for each filter. */
+    uint16_t filterPrecedence;                      /**< Specifies the order in which filters are
+                                                         applied. A lower numerical value has a
+                                                         higher precedence. */
+};
+
+/**
+ * QOS TFT Flow info
+ */
+struct TrafficFlowTemplate {
+    /** Mandatory */
+    QosFlowId qosId;                            /**< defines current flow id */
+    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
+
+    QosFlowMask mask;                           /**< bitmask to denote which of the optional fields
+                                                     in TrafficFlowTemplate are valid */
+    /** Optional */
+    QosIPFlowInfo txGrantedFlow;                /* Tx Granted Flow IP info */
+    QosIPFlowInfo rxGrantedFlow;                /* Rx Granted Flow IP info */
+
+    uint32_t txFiltersLength;                   /* Tx Filters length */
+    QosFilterRule txFilters[MAX_QOS_FILTERS];   /* Tx QoS Filters that apply to a
+                                                   granted Tx QoS flow. */
+
+    uint32_t rxFiltersLength;                   /* Rx Filters length*/
+    QosFilterRule rxFilters[MAX_QOS_FILTERS];   /* Rx QoS Filters that apply to a
+                                                   granted Rx QoS flow. */
+};
+
+/**
+ * QOS TFT flow change info
+ */
+struct TftChangeInfo {
+    std::shared_ptr<TrafficFlowTemplate> tft;   /**< TFT flow info @ref TrafficFlowTemplate */
+    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
 };
 
 /**
@@ -105,6 +148,17 @@ using StatisticsResponseCb
  */
 using DataCallListResponseCb = std::function<void(
     const std::vector<std::shared_ptr<IDataCall>> &dataCallList, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in the response to requestTrafficFlowTemplate().
+ *
+ * @param [in] tft        Vector of TFT flow info. @ref TrafficFlowTemplate
+ * @param [in] error      Code which indicates whether the operation succeeded or not.
+ *                        @ref ErrorCode.
+ */
+using TrafficFlowTemplateCb =
+    std::function<void(const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft,
+        telux::common::ErrorCode error)>;
 
 /** @addtogroup telematics_data
  * @{ */
@@ -357,6 +411,21 @@ class IDataCall {
     virtual OperationType getOperationType() = 0;
 
     /**
+     * Get the current installed QOS Traffic flow template information.
+     *
+     * @param [in]  ipFamilyType    - IP Family type @ref IpFamilyType. TFT's are installed per IP
+     *                                Family.
+     * @param [in]  callback        - callback function to get the result of API.
+     *
+     * @returns Status of requestTrafficFlowTemplate i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestTrafficFlowTemplate(IpFamilyType ipFamilyType,
+        TrafficFlowTemplateCb callback) = 0;
+
+    /**
      * Request the data transfer statistics for data call corresponding
      * to specified profile identifier.
      *
@@ -399,11 +468,22 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
     /**
      * This function is called when there is a change in the data call.
      *
-     * @param [in] status     Data Call Status
      * @param [in] dataCall   Pointer to IDataCall
      *
      */
     virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
+
+    /**
+     * This function is called when the TFT's parameters are changed for a packet data session.
+     *
+     * @param [in] dataCall     Pointer to IDataCall
+     * @param [in] tft          vector of TftChangeInfo info @ref TftChangeInfo
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual void onTrafficFlowTemplateChange(const std::shared_ptr<IDataCall> &dataCall,
+        const std::vector<std::shared_ptr<TftChangeInfo>> &tft) {};
 
     /**
      * Destructor for IDataConnectionListener

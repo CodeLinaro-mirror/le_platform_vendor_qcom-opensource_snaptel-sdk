@@ -75,10 +75,10 @@ struct IPv6Info {
                                      at the network layer. */
 
     TrafficClass mask = 0;
-    FlowLabel flowLabel; /**< Indicates that this packet belongs to a specific sequence of
+    FlowLabel flowLabel = 0; /**< Indicates that this packet belongs to a specific sequence of
                             packets between a source and destination, requiring special
                              handling by intermediate IPv6 routers.*/
-    uint8_t natEnabled;
+    uint8_t natEnabled = 0;
 };
 
 /**
@@ -174,6 +174,16 @@ class IIpFilter {
      *          break backwards compatibility.
      */
     virtual IpProtocol getIpProtocol() = 0;
+
+    /**
+     * Get the IP family type
+     *
+     * @returns @ref telux::data::IpFamilyType
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backwards compatibility.
+     */
+    virtual IpFamilyType getIpFamily() = 0;
 
     /**
      * Destructor for IIpFilter

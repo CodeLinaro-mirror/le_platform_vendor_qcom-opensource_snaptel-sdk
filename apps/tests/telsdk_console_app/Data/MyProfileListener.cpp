@@ -37,6 +37,26 @@
 
 #define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
+void MyProfileListener::onServiceStatusChange(telux::common::ServiceStatus status, SlotId slotId) {
+   std::string stat;
+
+   switch(status) {
+      case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+         stat = " SERVICE_AVAILABLE";
+         break;
+      case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
+         stat =  " SERVICE_UNAVAILABLE";
+         break;
+      default:
+         stat = " Unknown service status";
+         break;
+   }
+
+   print_notification <<
+       " ** Data Profile onServiceStatusChange Slot: " << static_cast<int>(slotId) <<
+       " **\n" << stat << std::endl;
+}
+
 void MyProfileListener::onProfileUpdate(int profileId, telux::data::TechPreference techPreference,
                                         telux::data::ProfileChangeEvent event) {
    print_notification << "Profile updated: " << std::endl;
@@ -45,7 +65,8 @@ void MyProfileListener::onProfileUpdate(int profileId, telux::data::TechPreferen
                       << " ProfileChangeEvent: " << getProfileEventString(event) << std::endl;
 }
 
-std::string MyProfileListener::getProfileEventString(telux::data::ProfileChangeEvent event) {
+std::string MyProfileListener::getProfileEventString(
+   telux::data::ProfileChangeEvent event) {
    switch(event) {
       case telux::data::ProfileChangeEvent::CREATE_PROFILE_EVENT:
          return std::string("CREATE PROFILE");

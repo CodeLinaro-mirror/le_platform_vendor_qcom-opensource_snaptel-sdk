@@ -97,7 +97,7 @@ and others. if subsystems were not ready, wait for unconditionally.
    eCallMsdData.recentVehicleLocationN1.latitudeDelta = false;
    eCallMsdData.recentVehicleLocationN1.longitudeDelta = 0;
    eCallMsdData.recentVehicleLocationN2.latitudeDelta = true;
-   eCallMsdData.recentVehicleLocationN2.
+   eCallMsdData.recentVehicleLocationN2.longitudeDelta = 0;
    ~~~~~~
 
 ### 8. Send a eCall request

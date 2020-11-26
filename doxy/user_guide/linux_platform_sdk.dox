@@ -1,7 +1,7 @@
 /**
 @page linux_platform_sdk  Building Yocto Platform SDK
 
-This section has instructions to build a platform SDK using code aurora forum (CAF) / open source
+This section has instructions to build a yocto platform SDK using code aurora forum (CAF) / open source
 
  - These instructions are applicable for QTI Processor builds only, <b>For external APs the platform SDK corresponding to specific external AP would have to be used.</b>
 
@@ -21,41 +21,38 @@ You need to have the following in order to proceed:
 
 - Sync the CAF build
 
+   </br>
    repo init and sync the sources
-
-   </br>
-   For LE.UM.1.3.2 target
    \code{.sh}
-   $ repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m caf_AU_LINUX_EMBEDDED_LE.UM.1.3.2_TARGET_ALL.01.105.149.xml
-   $ repo sync -j 32
-   //
-   // Note: AU_LINUX_EMBEDDED_LE.UM.1.3.2_TARGET_ALL.01.105.149 should be replaced the AU tag
-   // corresponding to the desired device build.
-   \endcode
-
-   </br>
-   For LE.UM.1.3.r5 target
-   \code{.sh}
-   $ repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m caf_AU_LINUX_EMBEDDED_LE.UM.1.3.R5_TARGET_ALL.01.66.138.xml
+   $ repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m <caf_ insert label here. xml>
    $ repo sync -j 32
    \endcode
+   For example: Using AU label
+   <br>
+   repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m caf_AU_LINUX_EMBEDDED_LE.UM.4.1.1_RB1_TARGET_ALL.01.147.055.xml
+   <br>
+   or using CRM build-id label
+   <br>
+   repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m LE.UM.4.1.1-05510-sa515m.xml
 
-   The tags are listed here - https://source.codeaurora.org/quic/le/le/manifest/refs/?h=IMM.LE.1.0
+   <b>NOTE:</b> AU_LINUX_EMBEDDED_LE.UM.4.1.1_RB1_TARGET_ALL.01.147.055 should be replaced to the AU tag corresponding to the desired device build. "caf_" needs to be prefixed to the AU label.
+
+   The tags are listed here - https://source.codeaurora.org/quic/le/le/manifest/refs/tags
 
 </br>
-- Update Telux and Telephony libs
+- Update Telux and Telematics SDK
 
    Add the following lines at the end of poky/build/conf/local.conf:
 
    </br>
-   For LE.UM.1.3.2 target
+   For all targets except LE.UM.1.3.r5, use
    \code{.sh}
    CORE_IMAGE_EXTRA_INSTALL += "telux"
    CORE_IMAGE_EXTRA_INSTALL += "telux-lib"
    \endcode
 
    </br>
-   For LE.UM.1.3.r5 target
+   <b>NOTE:</b> For LE.UM.1.3.r5 target, use below.
    \code{.sh}
    CORE_IMAGE_EXTRA_INSTALL += "telux"
    CORE_IMAGE_EXTRA_INSTALL += "telephony-lib"
@@ -70,20 +67,41 @@ You need to have the following in order to proceed:
    $ source build/conf/set_bb_env.sh
    \endcode
 
+   Set MACHINE and DISTRO values
+   <br>
+   For LE.UM.3.2.1, Use:
+   \code{.sh}
+   $ export MACHINE=sa415m
+   $ export DISTRO=auto
+   \endcode
+   For LE.UM.4.1.1, Use:
+   \code{.sh}
+   $ export MACHINE=sa515m
+   $ export DISTRO=auto
+   \endcode
+   For LE.UM.3.2.3, Use:
+   \code{.sh}
+   $ export MACHINE=sa2150p
+   $ export DISTRO=msm
+   \endcode
+
 </br>
 - Build and install the Yocto Platform SDK
 
-   Run the following command to create a platform sdk
+   Run the following command to create a yocto platform sdk
    \code{.sh}
    $ bitbake core-image-minimal -c do_populate_sdk
    \endcode
+   <b>NOTE:</b> core-image-minimal provides least number of packages including telematics sdk, sufficient for allowing one to develop application using the telematics sdk API's. Any additional packages necessary for application development might need to be added in yocto platform (bitbake) before the build.
 
 </br>
-- Location of sdk installer script
+- Location of Yocto Platform SDK
 
    After successful compilation, you will have have sdk installer on this location
    \code{.sh}
-   poky/build/tmp-glibc/deploy/sdk/oecore-x86_64-cortexa8hf-vfp-neon-toolchain-nodistro.0.sh
+   poky/build/tmp-glibc/deploy/sdk/oecore-x86_64-<arch_name_here>-toolchain-nodistro.0.sh
    \endcode
+   For LE.UM.3.2.1, it will be generated with name
+   poky/build/tmp-glibc/deploy/sdk/oecore-x86_64-armv7at2hf-neon-toolchain-nodistro.0.sh
 
 */

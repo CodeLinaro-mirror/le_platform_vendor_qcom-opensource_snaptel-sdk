@@ -122,6 +122,25 @@ public:
    virtual void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timersStatus) {
    }
 
+    /**
+    * This function is called whenever there is a scan failure after one round of network scan
+    * during origination of emergency call or at any time during the emergency call.
+    *
+    * During origination of an ecall or in between an ongoing ecall, if the UE is in an area of
+    * no/poor coverage and loses service, the modem will perform network scan and try to register
+    * on any available network.
+    * If the scan completes successfully and the device finds a suitable cell, the ecall will be
+    * placed and the call state changes to the active state.
+    * If the network scan fails then this function will be invoked after one round of network scan.
+    *
+    * @param [in] phoneId - Unique Id of phone on which network scan failure reported.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual void onEmergencyNetworkScanFail(int phoneId) {
+   }
+
    virtual ~ICallListener() {
    }
 };

@@ -80,7 +80,7 @@ struct IPv6Info {
     FlowLabel flowLabel; /**< Indicates that this packet belongs to a specific sequence of
                             packets between a source and destination, requiring special
                              handling by intermediate IPv6 routers.*/
-    uint8_t natEnabled;
+    uint8_t natEnabled = 0;
 };
 
 /**

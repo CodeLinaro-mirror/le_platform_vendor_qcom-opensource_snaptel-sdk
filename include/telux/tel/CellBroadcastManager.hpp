@@ -83,6 +83,158 @@ using RequestActivationStatusResponseCallback
    = std::function<void(bool isActivated, telux::common::ErrorCode error)>;
 
 /**
+ * Point represented by latitude and longitude.
+ */
+struct Point {
+   double latitude;
+   double longitude;
+};
+
+/**
+ * This class represents a simple polygon with different points.
+ */
+class Polygon {
+public:
+   /**
+    * Polygon constructor.
+    * @param [in] vertices           List of @ref telux::tel::Point
+    */
+   Polygon(std::vector<Point> vertices);
+
+   /**
+    * Get vertices of polygon.
+    *
+    * @returns List of @ref telux::tel::Point.
+    */
+   std::vector<Point> getVertices();
+
+private:
+   std::vector<Point> vertices_;
+};
+
+/**
+ * This class represents a geometry represented as simple circle.
+ */
+class Circle {
+public:
+   /**
+    * Circle constructor.
+    * @param [in] center          Center of circle represented by telux::tel::Point
+    * @param [in] radius          Radius of circle in meters
+    */
+   Circle(Point center, double radius);
+
+   /**
+    * Get center point of circle.
+    *
+    * @returns Center of circle.
+    */
+   Point getCenter();
+
+   /**
+    * Get radius of circle.
+    *
+    * @returns Radius of circle.
+    */
+   double getRadius();
+
+private:
+   Point center_;
+   double radius_;
+};
+
+/**
+ * This class represents warning area geometry to perform geofencing on alert.
+ */
+class Geometry {
+public:
+   /**
+    * Geometry constructor.
+    * @param [in] polygon            @ref Polygon
+    */
+   Geometry(std::shared_ptr<Polygon> polygon);
+
+   /**
+    * Geometry constructor.
+    * @param [in] circle             @ref Circle
+    */
+   Geometry(std::shared_ptr<Circle> circle);
+
+   /**
+    * Get the geometry type.
+    *
+    * @returns @ref GeometryType.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   GeometryType getType() const;
+
+   /**
+    * Get polygon goemetry as warning area to perform geofencing. This method should be called
+    * only if geometry type returned by getType() API is GeometryType::POLYGON
+    *
+    * @return Polygon geometry object.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   std::shared_ptr<Polygon> getPolygon() const;
+
+   /**
+    * Get circle goemetry as warning area to perform geofencing. This method should be called
+    * only if geometry type returned by getType() API is GeometryType::CIRCLE
+    *
+    * @return Circle geometry object.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   std::shared_ptr<Circle> getCircle() const;
+
+private:
+   GeometryType type_;
+   std::shared_ptr<Polygon> polygon_;
+   std::shared_ptr<Circle> circle_;
+
+};
+
+/**
+ * This class represents warning area information for alert.
+ */
+class WarningAreaInfo {
+public:
+   /**
+    * Warning Area Information constructor.
+    * @param [in] maxWaitTime         Maximum wait time allowed to determine position for alert
+    *                                 Range is  0 to 255 where 0 means Zero wait time,
+    *                                 1 - 254 is Geo-Fencing Maximum Wait Time in seconds and
+    *                                 255 means use device default wait time.
+    * @param [in] geometries          Geometries to perform geofencing on alert
+    */
+   WarningAreaInfo(int maxWaitTime, std::vector<Geometry> geometries);
+
+   /**
+    * Get maximum wait time allowed to determine position for alert.
+    *
+    * @returns Maximum wait time for alert in seconds.
+    */
+   int getGeoFenceMaxWaitTime();
+
+   /**
+    * Get geometries to perform geofencing on alert.
+    *
+    * @returns List of @ref telux::tel::Geometry.
+    */
+   std::vector<Geometry> getGeometries();
+
+
+private:
+   int maxWaitTime_;
+   std::vector<Geometry> geometries_;
+};
+
+/**
  * Contains information elements for a GSM/UMTS/E-UTRAN/NG-RAN ETWS warning notification.
  * Supported values for each element are defined in 3GPP TS 23.041.
  */
@@ -290,7 +442,7 @@ public:
    CmasInfo(GeographicalScope geographicalScope, int msgId, int serialNumber,
       std::string languageCode, std::string messageText, MessagePriority priority,
       CmasMessageClass messageClass, CmasSeverity severity, CmasUrgency urgency,
-      CmasCertainty certainty);
+      CmasCertainty certainty, std::shared_ptr<WarningAreaInfo> warningAreaInfo);
 
    /**
     * Get the geographicalScope of cellbroadcast message.
@@ -417,19 +569,32 @@ public:
     */
    CmasCertainty getCertainty();
 
+   /**
+    * Returns warning area information for alert. This is applicable for LTE and NR5G
+    *
+    * @return  pointer to WarningAreaInfo or null if there is no warning area information available.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+
+   std::shared_ptr<WarningAreaInfo> getWarningAreaInfo();
+
 private:
    GeographicalScope scope_;
    int messageId_;
    int serialNum_;
    int messageCode_;
    int updateNumber_;
-   std::string languageCode_;
-   std::string body_;
+   std::string languageCode_ = "";
+   std::string body_ = "";
    MessagePriority priority_;
    CmasMessageClass messageClass_;
    CmasSeverity severity_;
    CmasUrgency urgency_;
    CmasCertainty certainity_;
+   std::shared_ptr<WarningAreaInfo> warningAreaInfo_;
+
 };
 
 /**
@@ -440,12 +605,15 @@ public:
 
    /**
     * CellBroadcastMessage constructor.
-    * @param [in] type               @ref MessageType
-    * @param [in] etwsWarningInfo    @ref EtwsInfo
-    * @param [in] cmasWarningInfo    @ref CmasInfo
+    * @param [in] etwsInfo    @ref EtwsInfo
     */
-   CellBroadcastMessage(MessageType type, std::shared_ptr<EtwsInfo> etwsWarningInfo,
-      std::shared_ptr<CmasInfo> cmasWarningInfo);
+   CellBroadcastMessage(std::shared_ptr<EtwsInfo> etwsInfo);
+
+   /**
+    * CellBroadcastMessage constructor.
+    * @param [in] cmasInfo    @ref CmasInfo
+    */
+   CellBroadcastMessage(std::shared_ptr<CmasInfo> cmasInfo);
 
    /**
     * Get the cellbroadcast message type.
@@ -467,7 +635,7 @@ public:
     * @note    Eval: This is a new API and is being evaluated. It is subject to change
     *          and could break backwards compatibility.
     */
-   std::shared_ptr<EtwsInfo> getEtwsWarningInfo() const;
+   std::shared_ptr<EtwsInfo> getEtwsInfo() const;
 
    /**
     * Get CMAS warning notification containing information about the CMAS message class, severity,
@@ -479,7 +647,7 @@ public:
     * @note    Eval: This is a new API and is being evaluated. It is subject to change
     *          and could break backwards compatibility.
     */
-   std::shared_ptr<CmasInfo> getCmasWarningInfo() const;
+   std::shared_ptr<CmasInfo> getCmasInfo() const;
 
 private:
    MessageType messageType_;
@@ -622,12 +790,14 @@ public:
    /**
     * This function is called when device receives an incoming cell broadcast message.
     *
+    * @param [in] slotId    - Slot Id on which broadcast message is received.
     * @param [in] cbMessage - Broadcast message with information related to ETWS/CMAS notification.
     *
     * @note    Eval: This is a new API and is being evaluated. It is subject to change
     *          and could break backwards compatibility.
     */
-   virtual void onIncomingMessage(const std::shared_ptr<CellBroadcastMessage> cbMessage) {
+   virtual void onIncomingMessage(SlotId slotId,
+      const std::shared_ptr<CellBroadcastMessage> cbMessage) {
    }
 
    virtual ~ICellBroadcastListener() {

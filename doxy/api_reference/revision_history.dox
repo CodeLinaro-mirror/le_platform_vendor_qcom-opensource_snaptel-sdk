@@ -79,6 +79,8 @@ when       who     what, where, why
 @tr @td May 2020 @tdend @tdlast Addition of L2TP to Data Networking APIs and call flows @tdlastend @trend
 @tr @td May 2020 @tdend @tdlast Addition of Public Logging API @tdlastend @trend
 @tr @td Aug 2020 @tdend @tdlast Addition of Location Manager APIs, Location Configurator APIs and callflows @tdlastend @trend
+@tr @td Nov 2020 @tdend @tdlast Addition of cv2x SE-linux interface documentation @tdlastend @trend
+@tr @td Nov 2020 @tdend @tdlast Addition of Year of hardware and configure engine state APIs in location and callflows @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

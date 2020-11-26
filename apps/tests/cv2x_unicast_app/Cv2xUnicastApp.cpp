@@ -436,7 +436,7 @@ static void installSignalHandler() {
 
 static Status registerBroadcastFlows() {
     Status status = Status::SUCCESS;
-    bool tryEvtFlow = false;
+    bool spsFlowCreated = false;
 
     if (!gCv2xRadio) {
         cerr << "Invalid radio!" << endl;
@@ -533,13 +533,22 @@ static Status registerBroadcastFlows() {
                                              spsInfo, gBroadcastPort,
                                              true, gBroadcastPort+1,
                                              createTxSpsFlowCallback);
-        if (Status::SUCCESS != status or
-            ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        if (Status::SUCCESS == status) {
+            auto error = gCallbackPromise.get_future().get();
+            if (ErrorCode::SUCCESS == error) {
+                spsFlowCreated = true;
+            } else {
+                cerr << "Failed to create broadcast Tx SPS Flow." << endl;
+                if (ErrorCode::V2X_ERR_EXCEED_MAX != error) {
+                    return Status::FAILED;
+                }
+            }
+        } else {
             cerr << "Failed to create broadcast Tx SPS Flow." << endl;
-            tryEvtFlow = true;
+            return Status::FAILED;
         }
 
-        if (tryEvtFlow) {
+        if (not spsFlowCreated) {
             cout << "now try with event flow" << endl;
             resetCallbackPromise();
             auto txEventFlowCallback = [](std::shared_ptr<ICv2xTxFlow> txEventFlow,

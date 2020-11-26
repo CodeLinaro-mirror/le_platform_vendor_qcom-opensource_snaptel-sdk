@@ -146,6 +146,16 @@ enum class CmasCertainty {
    LIKELY = 1,           /**< Likely (probability > ~50%) */
 };
 
+/**
+ * Defines geometry type specified in wireless emergency alert.
+ */
+enum class GeometryType {
+   UNKNOWN = -1,    /**< Unknown geometry type */
+   POLYGON = 0,     /**< Polygon geometry type */
+   CIRCLE = 1       /**< Circle geometry type */
+};
+
+
 
 /** @} */ /* end_addtogroup telematics_cellbroadcast */
 

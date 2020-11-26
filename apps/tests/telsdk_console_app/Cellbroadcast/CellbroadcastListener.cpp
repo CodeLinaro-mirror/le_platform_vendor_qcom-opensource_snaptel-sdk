@@ -34,11 +34,12 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void CellbroadcastListener::onIncomingMessage(
+void CellbroadcastListener::onIncomingMessage(SlotId slotId,
     const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) {
-
+    PRINT_NOTIFICATION << " Received CB Message on slot id " <<
+        static_cast<int>(slotId) << std::endl;
     if(cbMessage->getMessageType() == telux::tel::MessageType::ETWS) {
-        std::shared_ptr<telux::tel::EtwsInfo> etwsInfo = cbMessage->getEtwsWarningInfo();
+        std::shared_ptr<telux::tel::EtwsInfo> etwsInfo = cbMessage->getEtwsInfo();
         if(etwsInfo) {
             std::string languageCode =
                 (etwsInfo->getLanguageCode() == "") ? "UNAVAILABLE": etwsInfo->getLanguageCode();
@@ -56,11 +57,11 @@ void CellbroadcastListener::onIncomingMessage(
                 etwsInfo->isPrimary() << " \nWarningType: " <<
                 etwsWarningTypeToString(etwsInfo->getEtwsWarningType()) << std::endl;
         } else {
-            PRINT_NOTIFICATION << " ETWS info is null " << std::endl;
+            PRINT_NOTIFICATION << " ETWS Info is null " << std::endl;
         }
     } else if(cbMessage->getMessageType() == telux::tel::MessageType::CMAS) {
-        std::shared_ptr<telux::tel::CmasInfo> cmasInfo = cbMessage->getCmasWarningInfo();
-        if(cmasInfo) {
+        std::shared_ptr<telux::tel::CmasInfo> cmasInfo = cbMessage->getCmasInfo();
+        if (cmasInfo) {
             std::string languageCode =
                 (cmasInfo->getLanguageCode() == "") ? "UNAVAILABLE": cmasInfo->getLanguageCode();
             PRINT_NOTIFICATION << " Incoming Cellbroadcast Message:" <<
@@ -76,8 +77,45 @@ void CellbroadcastListener::onIncomingMessage(
                 cmasSeverityToString(cmasInfo->getSeverity()) << " \nCmasUrgency: " <<
                 cmasUrgencyToString(cmasInfo->getUrgency()) << " \nCmasCertainty: " <<
                 cmasCertaintyToString(cmasInfo->getCertainty()) << std::endl;
+            std::shared_ptr<telux::tel::WarningAreaInfo> wac = cmasInfo->getWarningAreaInfo();
+            if (wac) {
+                int maxWaitTime = wac->getGeoFenceMaxWaitTime();
+                PRINT_NOTIFICATION << " WAC Information: GeoFenceMaxWaitTime: " << maxWaitTime <<
+                    std::endl;
+                std::vector<telux::tel::Geometry> geometries = wac->getGeometries();
+                for (int index = 0 ; index < geometries.size(); index++) {
+                    if (geometries[index].getType() == telux::tel::GeometryType::CIRCLE) {
+                        std::shared_ptr<telux::tel::Circle> circle = geometries[index].getCircle();
+                        if (circle) {
+                            PRINT_NOTIFICATION << " Circle with Radius: " <<
+                                circle->getRadius() << " Center = (" << circle->getCenter().latitude
+                                << ", " << circle->getCenter().longitude << ")" << std::endl;
+                        } else {
+                            PRINT_NOTIFICATION << " Invalid circle geometry" << std::endl;
+                        }
+                    } else if(geometries[index].getType() == telux::tel::GeometryType::POLYGON) {
+                        std::shared_ptr<telux::tel::Polygon> polygon =
+                            geometries[index].getPolygon();
+                        if (polygon) {
+                            PRINT_NOTIFICATION << " Polygon with Vertices: " << std::endl;
+                            std::vector<telux::tel::Point> points = polygon->getVertices();
+                            for (int index = 0 ; index < points.size(); index++) {
+                                PRINT_NOTIFICATION << " Vertices [" << index + 1 << "] : " << "(" <<
+                                    points[index].latitude << ", " <<
+                                    points[index].longitude << ")" << std::endl;
+                            }
+                        } else {
+                            PRINT_NOTIFICATION << " Invalid polygon geometry" << std::endl;
+                        }
+                    } else {
+                        PRINT_NOTIFICATION << " Invalid geometry" << std::endl;
+                    }
+                }
+            } else {
+                PRINT_NOTIFICATION << " WAC Info is null " << std::endl;
+            }
         } else {
-            PRINT_NOTIFICATION << " CMAS info is null " << std::endl;
+            PRINT_NOTIFICATION << " CMAS Info is null " << std::endl;
         }
     }
 }

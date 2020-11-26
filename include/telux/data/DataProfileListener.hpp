@@ -36,6 +36,7 @@
 #ifndef DATAPROFILELISTENER_HPP
 #define DATAPROFILELISTENER_HPP
 
+#include <telux/common/CommonDefines.hpp>
 #include "telux/data/DataDefines.hpp"
 
 namespace telux {
@@ -53,6 +54,15 @@ namespace data {
  */
 class IDataProfileListener {
 public:
+   /**
+    *
+    * This function is called when service status changes.
+    *
+    *  @param [in] status - @ref ServiceStatus
+    *  @param [in] slotId - @ref SlotId
+    */
+   virtual void onServiceStatusChange(telux::common::ServiceStatus status, SlotId slotId) {};
+
    /**
     * This function is called when profile change happens.
     *

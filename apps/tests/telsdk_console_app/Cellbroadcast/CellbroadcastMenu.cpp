@@ -47,6 +47,7 @@
 
 #define MIN_SIM_SLOT_COUNT 1
 #define MAX_SIM_SLOT_COUNT 2
+#define INVALID_MSG_ID -1
 #define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
 
 CellbroadcastMenu::CellbroadcastMenu(std::string appName, std::string cursor)
@@ -169,7 +170,9 @@ void CellbroadcastMenu::updateMessageFilters(std::vector<std::string> userInput)
     std::string noOfFilters = "";
     std::string fromId = "";
     std::string toId = "";
-    int noOfMsgIds, fromMsgId, toMsgId;
+    int noOfMsgIds = 0;
+    int fromMsgId = INVALID_MSG_ID;
+    int toMsgId = INVALID_MSG_ID;
     std::vector<telux::tel::CellBroadcastFilter> filterList = {};
     char delimiter = '\n';
 
@@ -231,7 +234,7 @@ void CellbroadcastMenu::setActivationStatus(std::vector<std::string> userInput) 
 
     char delimiter = '\n';
     std::string isActivate = "";
-    bool activate;
+    bool activate = false;
     std::cout << "Activate message ids: (1-Activate 0-De-activate) ";
         std::getline(std::cin, isActivate, delimiter);
         if(!isActivate.empty()) {

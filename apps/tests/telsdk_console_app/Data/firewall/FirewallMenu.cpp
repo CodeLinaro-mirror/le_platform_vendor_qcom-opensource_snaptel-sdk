@@ -483,6 +483,50 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
             udpFilter->setUdpInfo(udpInfo);
         }
     } break;
+    case 1:  // ICMP
+    {
+        int icmpType = 0;
+        int icmpCode = 0;
+        int option = 0;
+
+        std::cout << "Do you want to enter ICMP Type [1-YES 0-NO] ";
+        std::cin >> option;
+        if (option ==1) {
+            std::cout << "enter the ICMP Type value: ";
+            std::cin >> icmpType;
+        }
+        option = 0;
+        std::cout << "Do you want to enter ICMP Code [1-YES 0-NO] ";
+        std::cin >> option;
+        if (option ==1) {
+            std::cout << "enter the ICMP Code value: ";
+            std::cin >> icmpCode;
+        }
+        IcmpInfo icmpInfo {};
+        icmpInfo.type = static_cast<uint8_t>(icmpType);
+        icmpInfo.code = static_cast<uint8_t>(icmpCode);
+        auto icmpFilter = std::dynamic_pointer_cast<IIcmpFilter>(ipFilter);
+        if(icmpFilter) {
+            icmpFilter->setIcmpInfo(icmpInfo);
+        }
+    } break;
+    case 50:  // ESP
+    {
+        int esp_spi = 0;
+        int option = 0;
+        std::cout << "Do you want to enter ESP SPI [1-YES 0-NO] ";
+        std::cin >> option;
+        if (option ==1) {
+            std::cout << "enter ESP SPI value: ";
+            std::cin >> esp_spi;
+        }
+        EspInfo espInfo {};
+        espInfo.spi = static_cast<uint32_t>(esp_spi);
+        auto espFilter = std::dynamic_pointer_cast<IEspFilter>(ipFilter);
+        if(espFilter) {
+            espFilter->setEspInfo(espInfo);
+        }
+    } break;
     default:
         break;
     }
@@ -512,7 +556,6 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::cout << "Enter Protocol (TCP, UDP, TCP_UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
-
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6): ";
     std::cin >> ipFamilyType;
@@ -601,59 +644,82 @@ void FirewallMenu::requestFirewallEntries(std::vector<std::string> inputCommand)
 }
 
 void FirewallMenu::displayFirewallEntry() {
-    std::cout << std::setw(2)
-        << "+-----------------------------------------------------------------------"
-        << "------------------------------------------------------------------------"
-        << "-+"
-        << std::endl;
-    std::cout << "|    Handle    | "
-        << "Direction | "
-        << "IPv4 Src Address | "
-        << "       IPv6 Src Address        | "
-        << "Protocol | "
-        << "Src Port | "
-        << "Src PortRange | "
-        << "Dst Port | "
-        << "Dst PortRange  | " << std::endl;
-    std::cout << std::setw(2)
-        << "+-----------------------------------------------------------------------"
-        << "------------------------------------------------------------------------"
-        << "-+"
-        << std::endl;
 
     for (uint8_t i = 0; i < fwEntries_.size(); i++) {
         std::shared_ptr<IIpFilter> ipfilter = fwEntries_[i]->getIProtocolFilter();
+        telux::data::IpFamilyType ipFamType = fwEntries_[i]->getIpFamilyType();;
+
         IPv4Info ipv4Info = ipfilter->getIPv4Info();
         IPv6Info ipv6Info = ipfilter->getIPv6Info();
         IpProtocol proto = ipfilter->getIpProtocol();
+
         int srcPort, destPort, srcPortRange, dstPortRange;
         srcPort = destPort = srcPortRange = dstPortRange = 0;
         std::string protoStr;
         parseProtoInfo(ipfilter, proto, srcPort, destPort, srcPortRange, dstPortRange, protoStr);
+
+        std::cout << "### Start Displaying firewall configuration of handle  = "
+            << fwEntries_[i]->getHandle() << " ###" << std::endl;
+
         std::string dir  = (static_cast<uint32_t>(
                     fwEntries_[i]->getDirection()) == 1)? "UPLINK":"DOWNLINK";
-        ipv4Info.srcAddr = (ipv4Info.srcAddr.empty()) ? "Any":ipv4Info.srcAddr;
-        ipv6Info.srcAddr = (ipv6Info.srcAddr.empty()) ? "Any":ipv6Info.srcAddr ;
-        protoStr = (protoStr.empty())? "Any":protoStr;
+        std::cout << dir << " Firewall Rule"<< std::endl;
 
-        std::cout << std::left << std::setw(2) << "  " << std::setw(13)
-            << fwEntries_[i]->getHandle()
-            << "  " << std::setw(12) << dir
-            << "  " << std::setw(18) << ipv4Info.srcAddr
-            << std::setw(32) << ipv6Info.srcAddr << "  "
-            << std::setw(9)  << protoStr << " "
-            << std::setw(9)  << ((srcPort)? std::to_string(srcPort):"Any") << " "
-            << std::setw(14) << ((srcPortRange)? std::to_string(srcPortRange):"Any") << " "
-            << std::setw(12) << ((destPort)? std::to_string(destPort):"Any") << " "
-            << std::setw(18) << ((dstPortRange)? std::to_string(dstPortRange):"Any") << std::endl;
+        if (ipFamType == IpFamilyType::IPV4) {
+            std::cout << "Ip version : IPv4" << std::endl;
+            if (ipv4Info.srcAddr.empty()) {
+                std::cout << "SRC Addr : Any" << std::endl;
+            } else {
+                std::cout << "SRC Addr : " << ipv4Info.srcAddr << std::endl;
+                std::cout << "SRC Addr Mask : " << ipv4Info.srcSubnetMask << std::endl;
+            }
 
-//            << "  " << std::setw(18) << ipv4Info.srcAddr
-//            << std::setw(32) << ipv6Info.srcAddr << "  "
-//            << std::setw(9) << protoStr<< " "
-//            << std::setw(9) << srcPort << " "
-//            << std::setw(14) << srcPortRange << " "
-//            << std::setw(12) << destPort << " "
-//            << std::setw(18) << dstPortRange << std::endl;
+            if (ipv4Info.destAddr.empty()) {
+                std::cout << "DST Addr : Any" << std::endl;
+            } else {
+                std::cout << "DST Addr : " << ipv4Info.destAddr << std::endl;
+                std::cout << "DST Addr Mask : " << ipv4Info.destSubnetMask << std::endl;
+            }
+
+            if (!ipv4Info.value) {
+                std::cout << "Tos value : Any" << std::endl;
+            } else {
+                std::cout << "Tos value : " << (uint32_t)ipv4Info.value << std::endl;
+                std::cout << "Tos Mask : " << (uint32_t)ipv4Info.mask << std::endl;
+            }
+        } else if (ipFamType == IpFamilyType::IPV6) {
+            std::cout << "Ip version : IPv6" << std::endl;
+            if (ipv6Info.srcAddr.empty()) {
+                std::cout << "SRC Addr : Any" << std::endl;
+            } else {
+                std::cout << "SRC Addr : " << ipv6Info.srcAddr << std::endl;
+                std::cout << "SRC Addr Mask : " << (uint32_t)ipv6Info.srcPrefixLen << std::endl;
+            }
+
+            if (ipv6Info.destAddr.empty()) {
+                std::cout << "DST Addr : Any" << std::endl;
+            } else {
+                std::cout << "DST Addr : " << ipv6Info.destAddr << std::endl;
+                std::cout << "DST Addr Mask : " << (uint32_t)ipv6Info.dstPrefixLen << std::endl;
+            }
+
+            if (!ipv6Info.val) {
+                std::cout << "Traffic class value : Any" << std::endl;
+            } else {
+                std::cout << "Traffic class value : " << (uint32_t)ipv6Info.val << std::endl;
+                std::cout << "Traffic class Mask : " << (uint32_t)ipv6Info.mask << std::endl;
+            }
+            std::cout << "Ipv6 nat enabled fw entry is " <<
+                (uint32_t)ipv6Info.natEnabled << std::endl;
+        }
+
+        std::cout << "Protocol : " << protoStr << std::endl;
+        std::cout << "Src port : " << srcPort << std::endl;
+        std::cout << "Src portrange  : " << srcPortRange << std::endl;
+        std::cout << "Dst port  : " << destPort << std::endl;
+        std::cout << "Dst portrange : " << dstPortRange << std::endl;
+        std::cout << "### End of Firewall configuration of handle  = "
+            << fwEntries_[i]->getHandle() << " ###" << std::endl << std::endl;
     }
 }
 

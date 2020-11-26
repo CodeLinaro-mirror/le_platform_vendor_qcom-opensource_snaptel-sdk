@@ -331,3 +331,10 @@ int MyECallListener::getCallsOnSlot(SlotId slotId) {
     }
     return numCalls;
 }
+
+void MyECallListener::onEmergencyNetworkScanFail(int phoneId) {
+    std::cout << "\n";
+    PRINT_NOTIFICATION << "onEmergencyNetworkScanFail called \n"
+                       << "Network scan completed and no service reported on slotId: " << phoneId
+                       << std::endl;
+}

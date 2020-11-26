@@ -37,7 +37,7 @@
 
 class CellbroadcastListener : public telux::tel::ICellBroadcastListener {
  public:
-    void onIncomingMessage(
+    void onIncomingMessage(SlotId slotId,
         const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) override;
 
 private:

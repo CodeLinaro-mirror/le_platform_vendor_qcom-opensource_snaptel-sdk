@@ -617,6 +617,9 @@ asynchronous response using CommandResponseCallback.
 Application will get the location manager object from location factory. The caller needs to register a listener. Application would then need to start the reports using one of 2 APIs depending on if the detailed or basic reports are needed.
 When reports are no longer required, the app needs to stop the report and de-register the listener.
 
+
+<b>NOTE:</b> Applications need to have "locclient" Linux group permissions to be able to operate successfully with underlying services.
+
 @subsection location_manager_basic_reports_callflow Call flow to register/remove listener for generating basic reports
 
 @anchor fig_location_manager_basic_reports_callflow
@@ -757,6 +760,27 @@ When reports are no longer required, the app needs to stop the report and de-reg
 3. Application can request for energy consumed information with requestEnergyConsumedInfo.
 4. Status of requestEnergyConsumedInfo i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for requestEnergyConsumedInfo is received by the application.
+
+@subsection location_manager_get_year_of_hardware_callflow Call flow to get year of hardware information
+
+@anchor fig_location_manager_get_year_of_hardware_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_manager_get_year_of_hardware_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to get year of hardware information}
+  \label{fig_location_manager_get_year_of_hardware_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_manager_get_year_of_hardware_callflow.png,Call flow to get year of hardware information,80,80,Call flow to get year of hardware information}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object.
+3. Application can request for year of hardware information with getYearOfHw.
+4. Status of getYearOfHw i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for getYearOfHw is received by the application.
 
 @subsection location_configurator_constraint_tunc_callflow Call flow to enable/disable constraint time uncertainty
 
@@ -1073,7 +1097,30 @@ When reports are no longer required, the app needs to stop the report and de-reg
 4. Status of requestSecondaryBandConfig i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for requestSecondaryBandConfig is received by the application.
 
+@subsection location_configurator_configure_engine_state_callflow Call flow to configure engine state
+
+@anchor fig_location_configurator_configure_engine_state_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_engine_state_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure engine state}
+  \label{fig_location_configurator_configure_engine_state_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_engine_state_callflow.png,Call flow to configure engine state,80,80,Call flow to configure engine state}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures engine state using configureEngineState API.
+4. Status of configureEngineState i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureEngineState is received by the application.
+
 @section data_call_flow Data Services
+
+Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services.
 
 @subsection data_connection_manager_callflow Start/Stop for data connection manager call flow
 

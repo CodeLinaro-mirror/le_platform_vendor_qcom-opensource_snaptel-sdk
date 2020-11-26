@@ -307,6 +307,14 @@ enum class ErrorCode {
    REG_RESULT_ERR_VALID_FLAG_NOT_SET = 2017,            /**< A valid flag is not set */
    REG_RESULT_ERR_OUT_OF_PROFILES = 2018,               /**< Out of profiles */
    REG_RESULT_NO_EMERGENCY_PDN_SUPPORT = 2019,          /**< No emergency PDN support */
+
+   /*cv2x specific error codes*/
+   V2X_ERR_EXCEED_MAX                     = 3000,       /**< Exceed max allowed number */
+   V2X_ERR_V2X_DISABLED                   = 3001,       /**< V2x mode was not enabled*/
+   V2X_ERR_UNKNOWN_SERVICE_ID             = 3002,       /**< The service id unknown*/
+   V2X_ERR_SRV_ID_L2_ADDRS_NOT_COMPATIBLE = 3003,       /**< The service Id mismatch with L2 addr*/
+   V2X_ERR_PORT_UNAVAIL                   = 3004,       /**< The port was occupied by others*/
+
    // WDS extended error codes without offset
    DS_PROFILE_3GPP_INVAL_PROFILE_FAMILY = 4097,           /**< Request contains an invalid
                                                                3GPP profile family */

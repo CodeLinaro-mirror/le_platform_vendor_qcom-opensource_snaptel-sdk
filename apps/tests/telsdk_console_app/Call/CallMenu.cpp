@@ -850,17 +850,13 @@ void CallMenu::playDtmfTone(std::vector<std::string> userInput) {
          }
       }
    }
-   // Fetch the list of in progress calls from CallManager and accept the
-   // incoming call.
+   // Fetch the list of in progress calls from CallManager and if there is atleast one in progress
+   // calls on user provided slot, send DTMF request
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
       if ((*callIterator)->getPhoneId() == phoneId) {
-         telux::tel::CallState callState = (*callIterator)->getCallState();
-         if(callState == telux::tel::CallState::CALL_ACTIVE
-            || callState == telux::tel::CallState::CALL_ALERTING) {
-            spCall = *callIterator;
-            break;
-         }
+         spCall = *callIterator;
+         break;
       }
    }
 
@@ -879,7 +875,7 @@ void CallMenu::playDtmfTone(std::vector<std::string> userInput) {
                    << '\n';
       }
    } else {
-      std::cout << "No active call found" << std::endl;
+      std::cout << "No call found on slot Id: " << phoneId << std::endl;
    }
 }
 
@@ -915,21 +911,19 @@ void CallMenu::startDtmfTone(std::vector<std::string> userInput) {
          }
       }
    }
-   // Fetch the list of in progress calls from CallManager and accept the
-   // incoming call.
+   // Fetch the list of in progress calls from CallManager and if there is atleast one in progress
+   // calls on user provided slot, send DTMF start request
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if ((*callIterator)->getPhoneId() == phoneId
-         && ((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE
-            || (*callIterator)->getCallState() == telux::tel::CallState::CALL_ALERTING)) {
-            spCall = *callIterator;
-            break;
+      if ((*callIterator)->getPhoneId() == phoneId) {
+         spCall = *callIterator;
+         break;
       }
    }
    if(spCall) {
       spCall->startDtmfTone('1', myStartToneCb_);
    } else {
-      std::cout << "No active call found" << std::endl;
+      std::cout << "No call found on slot Id: " << phoneId << std::endl;
    }
 }
 
@@ -965,21 +959,19 @@ void CallMenu::stopDtmfTone(std::vector<std::string> userInput) {
          }
       }
    }
-   // Fetch the list of in progress calls from CallManager and accept the
-   // incoming call.
+   // Fetch the list of in progress calls from CallManager and if there is atleast one in progress
+   // calls on user provided slot, send DTMF stop request
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
-      if ((*callIterator)->getPhoneId() == phoneId
-         && ((*callIterator)->getCallState() == telux::tel::CallState::CALL_ACTIVE
-            || (*callIterator)->getCallState() == telux::tel::CallState::CALL_ALERTING)) {
-            spCall = *callIterator;
-            break;
+      if ((*callIterator)->getPhoneId() == phoneId) {
+         spCall = *callIterator;
+         break;
       }
    }
    if(spCall) {
       spCall->stopDtmfTone(myStopToneCb_);
    } else {
-      std::cout << "No active call found" << std::endl;
+      std::cout << "No call found on slot Id: " << phoneId << std::endl;
    }
 }
 

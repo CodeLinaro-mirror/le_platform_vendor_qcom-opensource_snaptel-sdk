@@ -170,6 +170,9 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_ALTITUDE_TYPE)) {
       std::cout << "valid altitude type" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_REPORT_STATUS)) {
+      std::cout << "valid report status" << std::endl;
+    }
 
 }
 
@@ -847,6 +850,22 @@ void MyLocationListener::printAltitudeType(telux::loc::AltitudeType type) {
   }
 }
 
+void MyLocationListener::printReportStatus(telux::loc::ReportStatus status) {
+  std::cout << "Report Status is :" << std::endl;
+  if (status == telux::loc::ReportStatus::UNKNOWN) {
+    std::cout << "UNKNOWN" << std::endl;
+  }
+  if (status == telux::loc::ReportStatus::SUCCESS) {
+    std::cout << "SUCCESS" << std::endl;
+  }
+  if (status == telux::loc::ReportStatus::INTERMEDIATE) {
+    std::cout << "INTERMEDIATE" << std::endl;
+  }
+  if (status == telux::loc::ReportStatus::FAILURE) {
+    std::cout << "FAILURE" << std::endl;
+  }
+}
+
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -989,6 +1008,7 @@ void MyLocationListener::onDetailedLocationUpdate(
    printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
    printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
    printAltitudeType(locationInfo->getAltitudeType());
+   printReportStatus(locationInfo->getReportStatus());
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -1099,6 +1119,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      printLLAVRPBasedInfo(locationInfo->getVRPBasedLLA());
      printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
      printAltitudeType(locationInfo->getAltitudeType());
+     printReportStatus(locationInfo->getReportStatus());
      std::cout << "*************************************************************" << std::endl;
     }
 }

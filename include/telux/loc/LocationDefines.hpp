@@ -640,7 +640,9 @@ enum LocationInfoExValidityType {
   /** valid enu velocity vrp based*/
   HAS_ENU_VELOCITY_VRP_BASED = (1ULL << 31),
   /** valid altitude type*/
-  HAS_ALTITUDE_TYPE = (1ULL << 32)
+  HAS_ALTITUDE_TYPE = (1ULL << 32),
+  /** valid report status*/
+  HAS_REPORT_STATUS = (1ULL << 33)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -1263,6 +1265,23 @@ struct DREngineConfiguration {
 };
 
 /**
+ * Specify the status of the report */
+enum class ReportStatus {
+    /** Report status is unknown. */
+    UNKNOWN = -1,
+    /** Report status is successful. The engine is able to calculate the desired fix. Most
+     *  of the fields in ILocationInfoEx will be valid. */
+    SUCCESS = 0,
+    /** Report is still in progress. The engine has not completed its calculations when this
+     *  report was generated. Accuracy of various fields is non-optimal. Only some of the fields
+     *  in ILocationInfoEx will be valid. */
+    INTERMEDIATE = 1,
+    /** Report status has failed. The engine is not able to calculate the fix. Most of the fields
+     *  in ILocationInfoEx will be invalid. */
+    FAILURE = 2
+};
+
+/**
  * @brief ILocationInfoBase provides interface to get basic position related
  * information like latitude, longitude, altitude, timestamp.
  *
@@ -1697,6 +1716,15 @@ public:
  * @returns altitude type ASSUMED/CALCULATED or if not avalilable then UNKNOWN.
  */
   virtual AltitudeType getAltitudeType() = 0;
+
+/**
+ * Indicates the status of this report in terms of how optimally the report was calculated
+ * by the engine.
+ *
+ * @returns Status of the report. Returns ReportStatus::UNKNOWN if status is unavailable.
+ */
+  virtual ReportStatus getReportStatus() = 0;
+
 };
 
 /**

@@ -502,6 +502,9 @@ std::string MyCellularCapabilityCallback::ratCapabilitiesMaskToString(
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::TDS)]) {
         ratCapStr += "TDS ";
     }
+    if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::NR5G)]) {
+        ratCapStr += "NR5G ";
+    }
     if (ratCapStr.empty()) {
         ratCapStr = "Unknown";
     }

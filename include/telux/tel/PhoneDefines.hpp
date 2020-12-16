@@ -212,6 +212,7 @@ enum class RATCapability {
    WCDMA,
    LTE,
    TDS,
+   NR5G,
 };
 /** @} */ /* end_addtogroup telematics_phone */
 

@@ -63,7 +63,7 @@ LocationMenu::~LocationMenu() {
 telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocationManager>
         &locationManager, std::shared_ptr<MyLocationListener> &posListener) {
     if(locationManager == nullptr) {
-      std::promise<ServiceStatus> prom{};
+      std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
       auto &locationFactory = LocationFactory::getInstance();
       locationManager = locationFactory.getLocationManager([&](ServiceStatus status) {
           if (status == ServiceStatus::SERVICE_AVAILABLE) {
@@ -110,7 +110,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
 telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILocationConfigurator>
         &locationConfigurator) {
     if(locationConfigurator == nullptr) {
-        std::promise<ServiceStatus> prom{};
+        std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
         auto &locationFactory = LocationFactory::getInstance();
         locationConfigurator = locationFactory.getLocationConfigurator([&](ServiceStatus status) {
             if (status == ServiceStatus::SERVICE_AVAILABLE) {

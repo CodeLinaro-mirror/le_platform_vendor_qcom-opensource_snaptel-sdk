@@ -64,7 +64,7 @@ DgnssMenu::~DgnssMenu() {
 telux::common::Status DgnssMenu::initDgnssManager(std::shared_ptr<IDgnssManager>
         &dgnssManager) {
     if(dgnssManager == nullptr) {
-        std::promise<ServiceStatus> prom{};
+        std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
         auto &locationFactory = LocationFactory::getInstance();
         dgnssManager = locationFactory.getDgnssManager(DgnssDataFormat::DATA_FORMAT_RTCM_3,
             [&](ServiceStatus status) {

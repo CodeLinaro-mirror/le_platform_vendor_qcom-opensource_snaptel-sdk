@@ -152,6 +152,7 @@ public:
      * @returns True if Cv2x Radio Manager is ready for service, otherwise
      * returns false.
      *
+     * @deprecated use getServiceStatus instead
      */
     virtual bool isReady() = 0;
 
@@ -161,8 +162,23 @@ public:
      * @returns A future that caller can wait on to be notified
      * when Cv2x Radio Manager is ready.
      *
+     * @deprecated the readiness can be notified via the callback passed to
+     *             Cv2xFactory::getCv2xRadioManager.
+     *
      */
     virtual std::future<bool> onReady() = 0;
+
+    /**
+     * This status indicates whether the Cv2xRadioManager is in a usable state.
+     *
+     * @returns SERVICE_AVAILABLE    -  If cv2x radio manager is ready for service.
+     *          SERVICE_UNAVAILABLE  -  If cv2x radio manager is temporarily unavailable.
+     *          SERVICE_FAILED       -  If cv2x radio manager encountered an irrecoverable failure.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
      * Get Cv2xRadio instance

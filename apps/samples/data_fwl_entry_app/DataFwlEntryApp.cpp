@@ -42,18 +42,25 @@
  *
  * @brief: Simple application to add Firewall Entry. This application assumes firewall is enabled
  *         by running data_fwl_enable_app
- *         ./fwlEntry_sample_app <configuration file>
+ *         ./fwl_entry_sample_app <configuration file>
  */
 
-std::promise<int> promise;
-
 int main(int argc, char *argv[]) {
+   std::promise<int> promise;
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::net::IFirewallManager> dataFwMgr = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+
    if(argc == 2) {
       std::string configFile = argv[1];
       std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>(configFile);
 
       telux::data::OperationType opType = static_cast<telux::data::OperationType>
           (std::atoi(configParser->getValue(std::string("OPERATION_TYPE")).c_str()));
+      SlotId slotId = static_cast<SlotId>
+          (std::atoi(configParser->getValue(std::string("SLOT_ID")).c_str()));
       bool fwEnable = false;
       int profileId = std::atoi(configParser->getValue(std::string("PROFILE_ID")).c_str());
       telux::data::Direction fwDir = static_cast<telux::data::Direction>(
@@ -84,29 +91,39 @@ int main(int argc, char *argv[]) {
        int protDestRange = std::atoi(configParser->getValue(
           std::string("PROTOCOL_DEST_RANGE")).c_str());
 
-      // [1] Get the DataFactory and Firewall Manager instance
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
+
+      // [2] Get the DataFactory and Firewall Manager instance
       auto &dataFactory = telux::data::DataFactory::getInstance();
-      auto dataFwMgr  = dataFactory.getFirewallManager(opType);
+      do {
+         subSystemStatusUpdated = false;
+         dataFwMgr  = dataFactory.getFirewallManager(opType, initCb);
+         if (dataFwMgr) {
+            // [3] Check if Firewall manager is ready
+            subSystemStatus = dataFwMgr->getServiceStatus();
 
-      // [2] Check if data subsystem is ready
-      bool subSystemStatus = dataFwMgr->isSubsystemReady();
-
-      // [2.1] If data subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "Firewall subsystem is not ready" << std::endl;
-         std::cout << "wait unconditionally for it to be ready " << std::endl;
-         std::future<bool> f = dataFwMgr->onSubsystemReady();
-         // If we want to wait unconditionally for data subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      // [3] Exit the application, if SDK is unable to initialize firewall subsystems
-      if(subSystemStatus) {
-         std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
-      } else {
-         std::cout << " *** ERROR - Unable to initialize Firewall subsystem *** " << std::endl;
-         return 1;
-      }
+            // [3.1] If Firewall manager is not ready, wait for it to be ready
+            if(subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                     "\n\nInitializing Firewall Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataFwMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize Firewall subsystem *** " << std::endl;
+         }
+      } while(1);
 
       // [4] Get firewall Entry instance
       std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry
@@ -178,7 +195,7 @@ int main(int argc, char *argv[]) {
       }
 
       // [8] Instantiate add firewall entry callback instance - this is optional
-      auto respCb = [](telux::common::ErrorCode error) {
+      auto respCb = [&](telux::common::ErrorCode error) {
          std::cout << std::endl << std::endl;
          std::cout << "CALLBACK: "
                   << "addFirewallEntry Response"
@@ -188,17 +205,18 @@ int main(int argc, char *argv[]) {
       };
 
       std::future<int> future = promise.get_future();
-      dataFwMgr->addFirewallEntry(profileId, fwEntry, respCb);
+      dataFwMgr->addFirewallEntry(profileId, fwEntry, respCb, slotId);
 
       // [9] Wait for callback - this is optional
       int tmp = future.get();
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./fwlEntry_sample_app <configuration file>";
+      std::cout << "\n\t ./fwl_entry_sample_app <configuration file>";
       std::cout << std::endl;
       std::cout << "\n\t\t Configuration File Parameters";
       std::cout << "\n\t\t OPERATION_TYPE  (0-LOCAL, 1-REMOTE)";
+      std::cout << "\n\t\t SLOT_ID         Slot id that contains modem profile";
       std::cout << "\n\t\t PROFILE_ID      modem profile id to add firewall entry on";
       std::cout << "\n\t\t DIRECTION       (1-Uplink, 2-Downlink)";
       std::cout << "\n\t\t PROTOCOL        (TCP, UDP)";
@@ -217,7 +235,7 @@ int main(int argc, char *argv[]) {
       std::cout << "\n\t\t PROTOCOL_DEST_PORT      Destination port number";
       std::cout << "\n\t\t PROTOCOL_DEST_RANGE     Destination port range";
       std::cout << std::endl;
-      std::cout << "\n\t   ./fwlEntry_sample_app firewall_config.conf";
+      std::cout << "\n\t   ./fwl_entry_sample_app DataFwlEntryApp.conf";
    }
 
    // [7] Cleaning up and exit the application

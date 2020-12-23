@@ -34,10 +34,12 @@
 #include "telux/tel/PhoneManager.hpp"
 #include "telux/tel/SubscriptionManager.hpp"
 #include <telux/tel/Phone.hpp>
+#include <telux/tel/CallManager.hpp>
 
 #include "MyPhoneListener.hpp"
 #include "MySignalStrengthHandler.hpp"
 #include "MySubscriptionListener.hpp"
+#include "../Call/MyCallListener.hpp"
 
 #include "console_app_framework/ConsoleApp.hpp"
 
@@ -49,7 +51,6 @@ public:
 
 private:
    void requestSignalStrength(std::vector<std::string> userInput);
-   void requestRadioTechnology(std::vector<std::string> userInput);
    void getSubscription(std::vector<std::string> userInput);
    void requestVoiceServiceState(std::vector<std::string> userInput);
    void requestCellularCapabilities(std::vector<std::string> userInput);
@@ -61,6 +62,8 @@ private:
    void networkMenu(std::vector<std::string> userInput);
    void setECallOperatingMode(std::vector<std::string> userInput);
    void requestECallOperatingMode(std::vector<std::string> userInput);
+   void requestEcbm(std::vector<std::string> userInput);
+   void exitEcbm(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
 
    std::string getRadioStateAsString(telux::tel::RadioState radioState);
@@ -70,8 +73,9 @@ private:
    std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
    std::shared_ptr<telux::tel::ISubscriptionManager> subscriptionMgr_;
    std::shared_ptr<MySubscriptionListener> subscriptionListener_;
+   std::shared_ptr<telux::tel::ICallListener> callListener_;
+   std::shared_ptr<telux::tel::ICallManager> callManager_;
    std::shared_ptr<MySignalStrengthCallback> mySignalStrengthCb_;
-   std::shared_ptr<MyVoiceRadioTechnologyCallback> myVoiceRadioTechCb_;
    std::shared_ptr<MyVoiceServiceStateCallback> myVoiceSrvStateCb_;
    std::shared_ptr<MyCellularCapabilityCallback> myCellularCapabilityCb_;
    std::shared_ptr<MyGetOperatingModeCallback> myGetOperatingModeCb_;

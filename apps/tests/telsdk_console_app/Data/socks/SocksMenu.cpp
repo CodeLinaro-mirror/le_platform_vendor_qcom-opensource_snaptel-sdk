@@ -46,22 +46,26 @@ using namespace std;
 SocksMenu::SocksMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     socksManager_ = nullptr;
-    initComplete_ = false;
+    menuOptionsAdded_ = false;
+    subSystemStatusUpdated_ = false;
 }
 
 SocksMenu::~SocksMenu() {
 }
 
 bool SocksMenu::init() {
-    bool subSystemStatus = false;
-    if (initComplete_ == false) {
-        initComplete_ = true;
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    subSystemStatusUpdated_ = false;
+    if (socksManager_ == nullptr) {
+        auto initCb = std::bind(&SocksMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
-        auto localSocksMgr = dataFactory.getSocksManager(telux::data::OperationType::DATA_LOCAL);
+        auto localSocksMgr = dataFactory.getSocksManager(
+            telux::data::OperationType::DATA_LOCAL, initCb);
         if(localSocksMgr) {
             socksManager_ = localSocksMgr;
         }
-        auto remoteSocksMgr = dataFactory.getSocksManager(telux::data::OperationType::DATA_REMOTE);
+        auto remoteSocksMgr = dataFactory.getSocksManager(
+            telux::data::OperationType::DATA_REMOTE, initCb);
         if(remoteSocksMgr) {
             socksManager_ = remoteSocksMgr;
         }
@@ -69,13 +73,31 @@ bool SocksMenu::init() {
             std::cout << "\nUnable to create Socks Manager ... " << std::endl;
             return false;
         }
-        subSystemStatus = socksManager_->isSubsystemReady();
-        if (not subSystemStatus) {
-            std::cout << "\nInitializing Socks Manager subsystem, Please wait" << std::endl;
-            std::future<bool> f = socksManager_->onSubsystemReady();
-            // Wait unconditionally for data subsystem to be ready
-            subSystemStatus = f.get();
+        socksManager_->registerListener(shared_from_this());
+        {
+            std::unique_lock<std::mutex> lck(mtx_);
+            //Socks Manager is guaranteed to be valid pointer at this point. If manager
+            //initialization fails and factory invalidated it's own pointer to Socks manager before
+            //reaching this point, reference count of Socks manager should still be 1
+            telux::common::ServiceStatus subSystemStatus = socksManager_->getServiceStatus();
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+                std::cout << "\nInitializing Socks Manager, Please wait ..." << std::endl;
+                cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+                subSystemStatus = socksManager_->getServiceStatus();
+            }
+            //At this point, initialization should be either AVAILABLE or FAIL
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+                std::cout << "\nSocks Manager is ready" << std::endl;
+            }
+            else {
+                std::cout << "\nSocks Manager initialization failed" << std::endl;
+                socksManager_ = nullptr;
+                return false;
+            }
         }
+    }
+    if (menuOptionsAdded_ == false) {
+        menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> enableSocks
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "socks_enablement",
                 {}, std::bind(&SocksMenu::enableSocks, this, std::placeholders::_1)));
@@ -84,16 +106,14 @@ bool SocksMenu::init() {
 
         addCommands(commandsList);
     }
-    subSystemStatus = socksManager_->isSubsystemReady();
-    if (subSystemStatus) {
-        std::cout << "\nSocks Manager is ready" << std::endl;
-    }
-    else {
-        std::cout << "\nSocks Manager is not ready" << std::endl;
-        return false;
-    }
     ConsoleApp::displayMenu();
     return true;
+}
+
+void SocksMenu::onInitComplete(telux::common::ServiceStatus status) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    subSystemStatusUpdated_ = true;
+    cv_.notify_all();
 }
 
 void SocksMenu::enableSocks(std::vector<std::string> inputCommand) {

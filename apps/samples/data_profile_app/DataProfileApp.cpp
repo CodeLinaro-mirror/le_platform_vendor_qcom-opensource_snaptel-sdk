@@ -93,38 +93,68 @@ class MyDataProfilesCallback : public telux::data::IDataProfileListCallback {
 };
 
 int main(int argc, char *argv[]) {
-   // 1. Get the DataFactory and DataProfileManager instances
-   auto &dataFactory = telux::data::DataFactory::getInstance();
-   std::shared_ptr<telux::data::IDataProfileManager> dataProfileMgr
-      = dataFactory.getDataProfileManager();
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::IDataProfileManager> dataProfileMgr = nullptr;
+   std::shared_ptr<MyDataProfilesCallback> myDataProfileListCb = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
-   // [2] Check if data subsystem is ready
-   bool subSystemStatus = dataProfileMgr->isSubsystemReady();
+   if(argc == 2) {
+      SlotId slotId = static_cast<SlotId>(std::atoi(argv[1]));
 
-   // [2.1] If data subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "DATA Profile subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = dataProfileMgr->onSubsystemReady();
-      // If we want to wait unconditionally for data subsystem to be ready
-      subSystemStatus = f.get();
-   }
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
 
-   // [3] Exit the application, if SDK is unable to initialize data subsystems
-   if(subSystemStatus) {
-      std::cout << " *** DATA Profile Subsystem is Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize data subsystem *** " << std::endl;
-      return 1;
+      // [2] Get the DataFactory and DataProfileManager instances
+      auto &dataFactory = telux::data::DataFactory::getInstance();
+      do {
+         subSystemStatusUpdated = false;
+         dataProfileMgr = dataFactory.getDataProfileManager(slotId, initCb);
+         if (dataProfileMgr) {
+            // [3] Check if data profile manager is ready
+            subSystemStatus = dataProfileMgr->getServiceStatus();
+
+            // [3.1] If data profile manager is not ready, wait for it to be ready
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                   "\n\nInitializing Data Profile Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataProfileMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** Data Profile Sub System is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize Data Profile subsystem *** " << std::endl;
+         }
+      } while(1);
+
+      // [4] Instantiate requestProfileList callback
+      myDataProfileListCb = std::make_shared<MyDataProfilesCallback>();
+      // [5] Send a requestProfileList along with required callback function
+      if(dataProfileMgr) {
+         dataProfileMgr->requestProfileList(myDataProfileListCb);
+      }
    }
-   // 2. Instantiate requestProfileList callback
-   std::shared_ptr<MyDataProfilesCallback> myDataProfileListCb_
-      = std::make_shared<MyDataProfilesCallback>();
-   // 4. Send a requestProfileList along with required callback function
-   if(dataProfileMgr) {
-      dataProfileMgr->requestProfileList(myDataProfileListCb_);
+   else {
+      std::cout << "\n Invalid argument!!! \n\n";
+      std::cout << "\n Sample command is: \n";
+      std::cout << "\n\t ./data_profile_app <slotId>";
+      std::cout << std::endl;
+      std::cout << "\n\t\t slot id        Slot id on which profile list to be retrieved";
+      std::cout << std::endl;
+      std::cout << "\n\t ./data_profile_app 1  --> to retrieve profile list on Slot 1\n";
+
    }
-   // 6. Exit logic for the application
+   // [6] Exit logic for the application
    std::cout << "\n\nPress ENTER to exit \n\n";
    std::cin.ignore();
    return 0;

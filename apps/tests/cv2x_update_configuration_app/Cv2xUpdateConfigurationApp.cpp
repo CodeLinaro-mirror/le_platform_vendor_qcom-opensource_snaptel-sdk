@@ -114,15 +114,30 @@ int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Update Configuration app" << endl;
 
     // Get handle to Cv2xRadioManager
-    auto & cv2xFactory = Cv2xFactory::getInstance();
-    auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager();
+    bool cv2xRadioManagerStatusUpdated = false;
+    telux::common::ServiceStatus cv2xRadioManagerStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::condition_variable cv;
+    std::mutex mtx;
+    auto statusCb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2xRadioManagerStatusUpdated = true;
+        cv2xRadioManagerStatus = status;
+        cv.notify_all();
+    };
 
-    // Wait for radio manager to complete initialization
-    if (not cv2xRadioManager->isReady()) {
-        if (!cv2xRadioManager->onReady().get()) {
-            cout << "Error : C-V2X Radio Manager initialization failed" << endl;
-            return EXIT_FAILURE;
-        }
+    auto & cv2xFactory = Cv2xFactory::getInstance();
+    auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
+    if (!cv2xRadioManager) {
+        cout << "Error: failed to get Cv2xRadioManager." << endl;
+        return EXIT_FAILURE;
+    }
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv2xRadioManagerStatus) {
+        cout << "C-V2X Radio Manager initialization failed, exiting" << endl;
+        return EXIT_FAILURE;
     }
 
     auto cv2xListener = make_shared<Listener>();
@@ -193,14 +208,28 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    auto cv2xConfig = cv2xFactory.getCv2xConfig();
+    bool cv2xConfigStatusUpdated = false;
+    telux::common::ServiceStatus cv2xConfigStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
-    // Wait for radio manager to complete initialization
-    if (not cv2xConfig->isReady()) {
-        if (!cv2xConfig->onReady().get()) {
-            cout << "Error : C-V2X Radio Manager initialization failed" << endl;
-            return EXIT_FAILURE;
-        }
+    auto cb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2xConfigStatusUpdated = true;
+        cv2xConfigStatus = status;
+        cv.notify_all();
+    };
+
+    auto cv2xConfig = cv2xFactory.getCv2xConfig(cb);
+    if (!cv2xConfig) {
+        cout << "Failed to get Cv2xConfig" << endl;;
+        return EXIT_FAILURE;
+    }
+    std::unique_lock<std::mutex> lk(mtx);
+    cv.wait(lk, [&] { return cv2xConfigStatusUpdated; });
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv2xConfigStatus) {
+        cout << "Failed to initialize Cv2xConfig" << endl;
+        return EXIT_FAILURE;
     }
 
     /* Attempt config file update */

@@ -52,7 +52,9 @@ using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class FirewallMenu : public ConsoleApp {
+class FirewallMenu : public ConsoleApp,
+                     public IFirewallListener,
+                     public std::enable_shared_from_this<FirewallMenu> {
  public:
     // initialize menu and sdk
     bool init();
@@ -67,10 +69,12 @@ class FirewallMenu : public ConsoleApp {
     void disableDmz(std::vector<std::string> inputCommand);
     void requestDmzEntry(std::vector<std::string> inputCommand);
 
+    //Initialization callback
+    void onInitComplete(telux::common::ServiceStatus status);
+
     FirewallMenu(std::string appName, std::string cursor);
     ~FirewallMenu();
  private:
-    bool initComplete_;
     // get IPV4 Firewall params from user and set IPV4Info
     void getIPV4ParamsFromUser(telux::data::IpProtocol proto,
         std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
@@ -86,6 +90,10 @@ class FirewallMenu : public ConsoleApp {
         int &srcPort, int &destPort, int &srcPortRange, int &dstPortRange, std::string &protoStr);
     void displayFirewallEntry();
 
+    std::mutex mtx_;
+    bool menuOptionsAdded_;
+    bool subSystemStatusUpdated_;
+    std::condition_variable cv_;
     std::shared_ptr<telux::data::net::IFirewallManager> firewallManager_;
     std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;
 };

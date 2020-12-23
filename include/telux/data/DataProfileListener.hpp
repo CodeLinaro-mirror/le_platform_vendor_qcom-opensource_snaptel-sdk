@@ -59,9 +59,8 @@ public:
     * This function is called when service status changes.
     *
     *  @param [in] status - @ref ServiceStatus
-    *  @param [in] slotId - @ref SlotId
     */
-   virtual void onServiceStatusChange(telux::common::ServiceStatus status, SlotId slotId) {};
+   virtual void onServiceStatusChange(telux::common::ServiceStatus status) {};
 
    /**
     * This function is called when profile change happens.

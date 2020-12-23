@@ -52,62 +52,84 @@ using namespace std;
 FirewallMenu::FirewallMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     firewallManager_ = nullptr;
-    initComplete_ = false;
+    menuOptionsAdded_ = false;
+    subSystemStatusUpdated_ = false;
 }
 
 FirewallMenu::~FirewallMenu() {
 }
 
 bool FirewallMenu::init() {
-    bool subSystemStatus = false;
-    if (initComplete_ == false) {
-        initComplete_ = true;
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    subSystemStatusUpdated_ = false;
+    if (firewallManager_ == nullptr) {
+        auto initCb = std::bind(&FirewallMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
         auto localFirewallMgr = dataFactory.getFirewallManager(
-            telux::data::OperationType::DATA_LOCAL);
+            telux::data::OperationType::DATA_LOCAL, initCb);
         if (localFirewallMgr) {
             firewallManager_ = localFirewallMgr;
         }
         auto remoteFirewallMgr = dataFactory.getFirewallManager(
-            telux::data::OperationType::DATA_REMOTE);
+            telux::data::OperationType::DATA_REMOTE, initCb);
         if (remoteFirewallMgr) {
             firewallManager_ = remoteFirewallMgr;
         }
         if(firewallManager_ == nullptr ) {
-            std::cout << "\nUnable to create Firewall Manager ... " << std::endl;
+            //Return immediately
+            std::cout << "\nError encountered in initializing Firewall Manager" << std::endl;
             return false;
         }
-        subSystemStatus = firewallManager_->isSubsystemReady();
-        if (not subSystemStatus) {
-            std::cout << "\nInitializing Firewall Manager subsystem, Please wait" << std::endl;
-            std::future<bool> f = firewallManager_->onSubsystemReady();
-            // Wait unconditionally for data subsystem to be ready
-            subSystemStatus = f.get();
+        firewallManager_->registerListener(shared_from_this());
+    }
+    {
+        std::unique_lock<std::mutex> lck(mtx_);
+        //Firewall Manager is guaranteed to be valid pointer at this point. If manager
+        //initialization fails and factory invalidated it's own pointer to firewall manager before
+        //reaching this point, reference count of Firewall manager should still be 1
+        telux::common::ServiceStatus subSystemStatus = firewallManager_->getServiceStatus();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            std::cout << "\nInitializing Firewall Manager, Please wait" << std::endl;
+            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            subSystemStatus = firewallManager_->getServiceStatus();
         }
+        //At this point, initialization should be either AVAILABLE or FAIL
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nFirewall Manager is ready" << std::endl;
+        }
+        else {
+            std::cout << "\nFirewall Manager initialization failed" << std::endl;
+            firewallManager_ = nullptr;
+            return false;
+        }
+    }
+
+    if (menuOptionsAdded_ == false) {
+        menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> setFirewall
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "set_firewall", {},
                 std::bind(&FirewallMenu::setFirewall, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> requestFirewallStatus
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "request_firewall_status", {},
-                std::bind(&FirewallMenu::requestFirewallStatus, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> addFirewallEntry
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "add_firewall_entry", {},
-                std::bind(&FirewallMenu::addFirewallEntry, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> removeFirewallEntry
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "remove_firewall_entry", {},
-                std::bind(&FirewallMenu::removeFirewallEntry, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> requestFirewallEntries
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "request_firewall_entries", {},
-                std::bind(&FirewallMenu::requestFirewallEntries, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> enableDmz
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "enable_dmz", {},
+        std::shared_ptr<ConsoleAppCommand> requestFirewallStatus =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "request_firewall_status",
+            {}, std::bind(&FirewallMenu::requestFirewallStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> addFirewallEntry =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "add_firewall_entry", {},
+            std::bind(&FirewallMenu::addFirewallEntry, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> removeFirewallEntry =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "remove_firewall_entry", {},
+            std::bind(&FirewallMenu::removeFirewallEntry, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestFirewallEntries =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "request_firewall_entries",
+            {}, std::bind(&FirewallMenu::requestFirewallEntries, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> enableDmz =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "enable_dmz", {},
             std::bind(&FirewallMenu::enableDmz, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> disableDmz
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "disable_dmz",{},
+        std::shared_ptr<ConsoleAppCommand> disableDmz =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "disable_dmz",{},
             std::bind(&FirewallMenu::disableDmz, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> requestDmzEntry
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "request_dmz_entry", {},
-                std::bind(&FirewallMenu::requestDmzEntry, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestDmzEntry =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "request_dmz_entry", {},
+            std::bind(&FirewallMenu::requestDmzEntry, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {setFirewall,
             requestFirewallStatus, addFirewallEntry, removeFirewallEntry, requestFirewallEntries,
@@ -115,16 +137,14 @@ bool FirewallMenu::init() {
 
         addCommands(commandsList);
     }
-    subSystemStatus = firewallManager_->isSubsystemReady();
-    if (subSystemStatus) {
-        std::cout << "\nFirewall Manager is ready" << std::endl;
-    }
-    else {
-        std::cout << "\nFirewall Manager is not ready" << std::endl;
-        return false;
-    }
     ConsoleApp::displayMenu();
     return true;
+}
+
+void FirewallMenu::onInitComplete(telux::common::ServiceStatus status) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    subSystemStatusUpdated_ = true;
+    cv_.notify_all();
 }
 
 void FirewallMenu::parseProtoInfo(std::shared_ptr<IIpFilter> filter,

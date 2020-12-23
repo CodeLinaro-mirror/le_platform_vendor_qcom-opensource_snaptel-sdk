@@ -46,15 +46,21 @@
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
+#include <telux/data/net/VlanManager.hpp>
 
 using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class VlanMenu : public ConsoleApp {
- public:
+class VlanMenu : public ConsoleApp,
+                 public IVlanListener,
+                 public std::enable_shared_from_this<VlanMenu> {
+public:
     // initialize menu and sdk
     bool init();
+
+    // Initialization Callback
+    void onInitComplete(telux::common::ServiceStatus status);
 
     // Vlan Manager APIs
     void createVlan(std::vector<std::string> inputCommand);
@@ -66,8 +72,13 @@ class VlanMenu : public ConsoleApp {
 
     VlanMenu(std::string appName, std::string cursor);
     ~VlanMenu();
- private:
-    bool initComplete_;
+private:
+    bool initVlanManager(telux::data::OperationType opType);
+
+    bool menuOptionsAdded_;
+    bool subSystemStatusUpdated_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
     std::map<telux::data::OperationType,
         std::shared_ptr<telux::data::net::IVlanManager>> vlanManagerMap_;
 };

@@ -47,38 +47,55 @@
 std::promise<int> promise;
 
 int main(int argc, char *argv[]) {
-   if(argc == 7) {
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::net::INatManager> dataSnatMgr = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+
+   if(argc == 8) {
       telux::data::OperationType opType = static_cast<telux::data::OperationType>
           (std::atoi(argv[1]));
-      int profileId = std::atoi(argv[2]);
-      std::string ipAddr = static_cast<std::string>(argv[3]);
-      int localIpPort = std::atoi(argv[4]);
-      int globalIpPort = std::atoi(argv[5]);
-      int proto = std::atoi(argv[6]);
+      SlotId slotId = static_cast<SlotId>(std::atoi(argv[2]));
+      int profileId = std::atoi(argv[3]);
+      std::string ipAddr = static_cast<std::string>(argv[4]);
+      int localIpPort = std::atoi(argv[5]);
+      int globalIpPort = std::atoi(argv[6]);
+      int proto = std::atoi(argv[7]);
 
-      // [1] Get the DataFactory and Nat Manager instance
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
+
+      // [2] Get the DataFactory and Nat Manager instance
       auto &dataFactory = telux::data::DataFactory::getInstance();
-      auto dataSnatMgr  = dataFactory.getNatManager(opType);
+      do {
+         subSystemStatusUpdated = false;
+         dataSnatMgr  = dataFactory.getNatManager(opType, initCb);
+         if (dataSnatMgr) {
+            // [3] Check if Nat manager is ready
+            subSystemStatus = dataSnatMgr->getServiceStatus();
 
-      // [2] Check if data subsystem is ready
-      bool subSystemStatus = dataSnatMgr->isSubsystemReady();
-
-      // [2.1] If data subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "Static NAT subsystem is not ready" << std::endl;
-         std::cout << "wait unconditionally for it to be ready " << std::endl;
-         std::future<bool> f = dataSnatMgr->onSubsystemReady();
-         // If we want to wait unconditionally for data subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      // [3] Exit the application, if SDK is unable to initialize Static NAT subsystems
-      if(subSystemStatus) {
-         std::cout << " *** Static NAT Sub System is Ready *** " << std::endl;
-      } else {
-         std::cout << " *** ERROR - Unable to initialize Static NAT subsystem *** " << std::endl;
-         return 1;
-      }
+            // [3.1] If Nat manager is not ready, wait for it to be ready
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                   "\n\nInitializing Nat Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataSnatMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** Nat SubSystem is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize Nat subsystem *** " << std::endl;
+         }
+      } while(1);
 
       // [4] Instantiate create static NAT callback instance - this is optional
       auto respCb = [](telux::common::ErrorCode error) {
@@ -103,17 +120,19 @@ int main(int argc, char *argv[]) {
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./snat_sample_app <operation type> <profileid> <ip address> <private port>"
-                   "\n\t                   <global port> <protocol>";
+      std::cout << "\n\t ./snat_sample_app <operation type> <slotid> <profileid> <ip address> "
+                   "\n\t                   <private port> <global port> <protocol>";
       std::cout << std::endl;
       std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
+      std::cout << "\n\t\t slot id        Slot id that contains modem profile";
       std::cout << "\n\t\t profile id     modem profile id to add static entry on ";
       std::cout << "\n\t\t ip address (IPv4 or IPv6 format)";
       std::cout << "\n\t\t protocol (1-ICMP, 2-IGMP, 6-TCP, 17-UDP, 50-ESP)";
       std::cout << std::endl;
-      std::cout << "\n\t ./snat_sample_app 1 5 192.168.225.22 500 500 6 --> to add Static NAT entry"
-                   "\n\t                   on profile id 5 for specified IPv4 address over TCP"
-                   "\n\t                   protocol and map local port 500 to global port 500\n";
+      std::cout << "\n\t ./snat_sample_app 1 1 5 192.168.225.22 500 500 6 --> to add Static NAT"
+                   "\n\t                   entry on slot 1 profile id 5 for specified IPv4 address"
+                   "\n\t                   over TCP protocol and map local port 500 to global port";
+                   "\n\t                   500\n";
    }
 
    // [7] Cleaning up and exit the application

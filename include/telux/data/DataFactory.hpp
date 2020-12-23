@@ -75,23 +75,30 @@ class DataFactory {
     /**
      * Get Data Connection Manager
      *
-     * @param [in] slotId    Unique identifier for the SIM slot
+     * @param [in] slotId           Unique identifier for the SIM slot
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              DataConnectionManager
+     *                              @ref telux::data::DataInitSlotIdResponseCb.
      *
      * @returns instance of IDataConnectionManager
      *
      */
-    std::shared_ptr<IDataConnectionManager> getDataConnectionManager(
-        SlotId slotId = DEFAULT_SLOT_ID);
+    std::shared_ptr<IDataConnectionManager> getDataConnectionManager(SlotId slotId = DEFAULT_SLOT_ID,
+        telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
      * Get Data Profile Manager
      *
-     * @param [in] slotId    Unique identifier for the SIM slot
+     * @param [in] slotId           Unique identifier for the SIM slot
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              DataProfileManager
+     *                              @ref telux::data::DataInitSlotIdResponseCb.
      *
      * @returns instance of IDataProfileManager
      *
      */
-    std::shared_ptr<IDataProfileManager> getDataProfileManager(SlotId slotId = DEFAULT_SLOT_ID);
+    std::shared_ptr<IDataProfileManager> getDataProfileManager(SlotId slotId = DEFAULT_SLOT_ID,
+        telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
      * Get Data Filter Manager instance
@@ -108,7 +115,9 @@ class DataFactory {
     /**
      * Get Network Address Translation(NAT) Manager
      *
-     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              NAT manager @ref telux::common::InitResponseCb
      *
      * @returns instance of INatManager
      *
@@ -116,12 +125,14 @@ class DataFactory {
      *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::INatManager> getNatManager(
-        telux::data::OperationType oprType);
+        telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
      * Get Firewall Manager
      *
-     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              Firewall manager @ref telux::common::InitResponseCb
      *
      * @returns instance of IFirewallManager
      *
@@ -129,22 +140,22 @@ class DataFactory {
      *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IFirewallManager> getFirewallManager(
-        telux::data::OperationType oprType);
+        telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
      * Get Firewall entry based on IP protocol and set respective filter (i.e. TCP or UDP)
      *
-     * @param [in] proto         @ref telux::data::IpProtocol
-     * @param [in] direction     @ref telux::data::Direction
-     * @param [in] ipFamilyType  Identifies IP family type @ref telux::data::IpFamilyType
+     * @param [in] proto            @ref telux::data::IpProtocol
+     * @param [in] direction        @ref telux::data::Direction
+     * @param [in] ipFamilyType     Identifies IP family type @ref telux::data::IpFamilyType
      *
      * @returns instance of IFirewallEntry
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    std::shared_ptr<telux::data::net::IFirewallEntry> getNewFirewallEntry(
-        IpProtocol proto, Direction direction, IpFamilyType ipFamilyType);
+    std::shared_ptr<telux::data::net::IFirewallEntry> getNewFirewallEntry(IpProtocol proto,
+        Direction direction, IpFamilyType ipFamilyType);
 
     /**
     * Get IIpFilter instance based on IP Protocol, This can be used in Firewall Manager and
@@ -168,7 +179,9 @@ class DataFactory {
     /**
      * Get VLAN Manager
      *
-     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              Vlan manager @ref telux::common::InitResponseCb
      *
      * @returns instance of IVlanManager
      *
@@ -176,12 +189,14 @@ class DataFactory {
      *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IVlanManager> getVlanManager(
-        telux::data::OperationType oprType);
+        telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
      * Get Socks Manager
      *
-     * @param [in] oprType      Required operation type @ref telux::data::OperationType
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              Socks manager @ref telux::common::InitResponseCb
      *
      * @returns instance of ISocksManager
      *
@@ -189,29 +204,43 @@ class DataFactory {
      *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::ISocksManager> getSocksManager(
-        telux::data::OperationType oprType);
+        telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
      * Get Software Bridge Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              Bridge manager @ref telux::common::InitResponseCb
      *
      * @returns instance of IBridgeManager
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    std::shared_ptr<telux::data::net::IBridgeManager> getBridgeManager();
+    std::shared_ptr<telux::data::net::IBridgeManager> getBridgeManager(
+        telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
      * Get L2TP Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              L2TP manager @ref telux::common::InitResponseCb
      *
      * @returns instance of IL2tpManager
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager();
+    std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager(
+        telux::common::InitResponseCb clientCallback = nullptr);
 
  private:
+    /**
+     * Call client callbacks after manager initialisation
+     */
+    void initCompleteNotifier(std::vector<telux::common::InitResponseCb>& initCbs,
+                              telux::common::ServiceStatus status);
+
     // mutex to protect member variables
     std::mutex dataMutex_;
     std::map<SlotId, std::shared_ptr<IDataConnectionManager>> dataConnectionManagerMap_;
@@ -227,6 +256,14 @@ class DataFactory {
     std::shared_ptr<telux::data::net::IBridgeManager> bridgeManager_;
     std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
 
+    std::vector<telux::common::InitResponseCb> dataProfileCallbacks_;
+    std::vector<telux::common::InitResponseCb> dataConnectionCallbacks_;
+    std::vector<telux::common::InitResponseCb> natCallbacks_;
+    std::vector<telux::common::InitResponseCb> fwCallbacks_;
+    std::vector<telux::common::InitResponseCb> socksCallbacks_;
+    std::vector<telux::common::InitResponseCb> vlanCallbacks_;
+    std::vector<telux::common::InitResponseCb> bridgeCallbacks_;
+    std::vector<telux::common::InitResponseCb> l2tpCallbacks_;
     DataFactory();
     ~DataFactory();
     DataFactory(const DataFactory &) = delete;

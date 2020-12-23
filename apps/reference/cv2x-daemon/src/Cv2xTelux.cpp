@@ -296,16 +296,29 @@ void QueryProfileCallback::onProfileListResponse(
 }
 
 Status Cv2xTelux::initV2xLibrary() {
-    auto &cv2xFactory = Cv2xFactory::getInstance();
-    cv2xRadioMgr_ = cv2xFactory.getCv2xRadioManager();
+    bool cv2xRadioManagerStatusUpdated = false;
+    telux::common::ServiceStatus cv2xRadioManagerStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::condition_variable cv;
+    std::mutex mtx;
+    auto statusCb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2xRadioManagerStatusUpdated = true;
+        cv2xRadioManagerStatus = status;
+        cv.notify_all();
+    };
 
+    auto &cv2xFactory = Cv2xFactory::getInstance();
+    cv2xRadioMgr_ = cv2xFactory.getCv2xRadioManager(statusCb);
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
     /* Check that V2X radio is initialized */
-    if (not cv2xRadioMgr_->isReady()) {
-        if (not cv2xRadioMgr_->onReady().get()) {
-            LOGE("V2X cv2xRadioMgr initialization failed\n");
-            return Status::FAILED;
-        }
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv2xRadioManagerStatus) {
+        LOGE("V2X cv2xRadioMgr initialization failed\n");
+        return Status::FAILED;
     }
+
     return Status::SUCCESS;
 }
 

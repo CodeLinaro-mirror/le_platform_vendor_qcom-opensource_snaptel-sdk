@@ -38,6 +38,7 @@
 
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -51,6 +52,7 @@ namespace cv2x {
 class ICv2xRadio;
 class ICv2xRadioManager;
 class ICv2xConfig;
+class ICv2xThrottleManager;
 
 /**
  *@brief Cv2xFactory is the factory that creates the Cv2x Radio.
@@ -67,24 +69,46 @@ public:
     /**
      * Get Cv2xRadioManager instance.
      *
+     * @param[in] cb - Optional callback to get Cv2xRadioManager initialization status
+     *
      * @returns shared pointer to Cv2x Radio Manager upon success.
      *          nullptr otherwise.
      */
-    std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager();
+    std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager(
+        telux::common::InitResponseCb cb = nullptr);
 
     /**
      * Get Cv2xConfig instance.
      *
+     * @param[in] cb - Optional callback to get Cv2xConfig initialization status
+     *
      * @returns shared pointer to Cv2x Config upon success.
      *          nullptr otherwise.
      */
-    std::shared_ptr<ICv2xConfig> getCv2xConfig();
+    std::shared_ptr<ICv2xConfig> getCv2xConfig(
+        telux::common::InitResponseCb cb = nullptr);
+
+    /**
+     * Get Cv2xThrottleManager instance.
+     *
+     * @returns shared pointer to Cv2x ThrottleManager upon success.
+     *          nullptr otherwise.
+     */
+    std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager();
 
 private:
 
+    void onGetCv2xConfigResponse(telux::common::ServiceStatus status);
+    void onGetCv2xRadioManagerResponse(telux::common::ServiceStatus status);
+
     std::mutex mutex_;
-    std::shared_ptr<ICv2xRadioManager> radioManager_;
-    std::shared_ptr<ICv2xConfig> config_;
+    std::shared_ptr<ICv2xRadioManager> radioManager_ = nullptr;
+    std::shared_ptr<ICv2xConfig> config_ = nullptr;
+    std::vector<telux::common::InitResponseCb> cv2xManagerInitCallbacks_;
+    std::vector<telux::common::InitResponseCb> cv2xConfigInitCallbacks_;
+    telux::common::ServiceStatus cv2xManagerInitStatus_;
+    telux::common::ServiceStatus cv2xConfigInitStatus_;
+    std::shared_ptr<ICv2xThrottleManager> throttleManager_;
 
     Cv2xFactory();
 };

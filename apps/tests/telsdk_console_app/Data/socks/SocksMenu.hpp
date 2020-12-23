@@ -46,12 +46,15 @@
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
+#include <telux/data/net/SocksManager.hpp>
 
 using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class SocksMenu : public ConsoleApp {
+class SocksMenu : public ConsoleApp,
+                  public ISocksListener,
+                  public std::enable_shared_from_this<SocksMenu> {
  public:
     // initialize menu and sdk
     bool init();
@@ -59,10 +62,16 @@ class SocksMenu : public ConsoleApp {
     // Socks Manager APIs
     void enableSocks(std::vector<std::string> inputCommand);
 
+   //Initialization callback
     SocksMenu(std::string appName, std::string cursor);
+    void onInitComplete(telux::common::ServiceStatus status);
+
     ~SocksMenu();
  private:
-    bool initComplete_;
+    bool menuOptionsAdded_;
+    bool subSystemStatusUpdated_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
     std::shared_ptr<telux::data::net::ISocksManager> socksManager_;
 };
 #endif

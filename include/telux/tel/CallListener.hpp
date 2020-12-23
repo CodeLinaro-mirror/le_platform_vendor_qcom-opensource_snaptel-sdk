@@ -141,6 +141,19 @@ public:
    virtual void onEmergencyNetworkScanFail(int phoneId) {
    }
 
+   /**
+    * This function is called whenever emergency callback mode(ECBM) changes.
+    *
+    * @param [in] mode   - Indicates the status of the ECBM.
+    *                      @ref EcbMode
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    *          change and could break backwards compatibility.
+    */
+   virtual void onEcbmChange(telux::tel::EcbMode mode) {
+   }
+
+
    virtual ~ICallListener() {
    }
 };

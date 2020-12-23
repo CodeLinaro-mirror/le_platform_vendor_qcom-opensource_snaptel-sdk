@@ -43,41 +43,57 @@
  *         ./dmz_sample_app <operation type> <profile id> <ip address>
  */
 
-std::promise<int> promise;
-
 int main(int argc, char *argv[]) {
-   if(argc == 4) {
+   std::promise<int> promise;
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::net::IFirewallManager> dataFwMgr = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+
+   if(argc == 5) {
       telux::data::OperationType opType = static_cast<telux::data::OperationType>
           (std::atoi(argv[1]));
-      int profileId = std::atoi(argv[2]);
-      std::string ipAddr = static_cast<std::string>(argv[3]);
+      SlotId slotId = static_cast<SlotId>(std::atoi(argv[2]));
+      int profileId = std::atoi(argv[3]);
+      std::string ipAddr = static_cast<std::string>(argv[4]);
 
-      // [1] Get the DataFactory and Firewall Manager instance
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
+
+      // [2] Get the DataFactory and Firewall Manager instance
       auto &dataFactory = telux::data::DataFactory::getInstance();
-      auto dataFwMgr  = dataFactory.getFirewallManager(opType);
+      do {
+         subSystemStatusUpdated = false;
+         dataFwMgr  = dataFactory.getFirewallManager(opType, initCb);
+         if (dataFwMgr) {
+            // [3] Check if Firewall manager is ready
+            subSystemStatus = dataFwMgr->getServiceStatus();
 
-      // [2] Check if data subsystem is ready
-      bool subSystemStatus = dataFwMgr->isSubsystemReady();
-
-      // [2.1] If data subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "Firewall subsystem is not ready" << std::endl;
-         std::cout << "wait unconditionally for it to be ready " << std::endl;
-         std::future<bool> f = dataFwMgr->onSubsystemReady();
-         // If we want to wait unconditionally for data subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      // [3] Exit the application, if SDK is unable to initialize data subsystems
-      if(subSystemStatus) {
-         std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
-      } else {
-         std::cout << " *** ERROR - Unable to initialize Firewall subsystem *** " << std::endl;
-         return 1;
-      }
+            // [3.1] If Firewall manager is not ready, wait for it to be ready
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                   "\n\nInitializing Firewall Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataFwMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize Firewall subsystem *** " << std::endl;
+         }
+      } while(1);
 
       // [4] Instantiate add DMZ callback instance - this is optional
-      auto respCb = [](telux::common::ErrorCode error) {
+      auto respCb = [&](telux::common::ErrorCode error) {
          std::cout << std::endl << std::endl;
          std::cout << "CALLBACK: "
                    << "addDmz Response"
@@ -87,21 +103,22 @@ int main(int argc, char *argv[]) {
 
       // [5] Add DMZ entry
       std::future<int> future = promise.get_future();
-      dataFwMgr->enableDmz(profileId, ipAddr, respCb);
+      dataFwMgr->enableDmz(profileId, ipAddr, respCb, slotId);
 
       // [6] Wait for callback - this is optional
       int tmp = future.get();
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./dmz_sample_app <operation type> <ip address>";
+      std::cout << "\n\t ./dmz_sample_app <operation type> <slotId> <profileId> <ip address>";
       std::cout << std::endl;
       std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
+      std::cout << "\n\t\t slot id        Slot id that contains modem profile";
       std::cout << "\n\t\t profile id     modem profile id to enable dmz on";
       std::cout << "\n\t\t ip address (IPv4 or IPv6 format)";
       std::cout << std::endl;
-      std::cout << "\n\t ./dmz_sample_app 1 5 192.168.225.22 --> to enable local DMZ on specified";
-      std::cout << "\n\t                  IPv4 address\n";
+      std::cout << "\n\t ./dmz_sample_app 0 1 5 192.168.225.22 --> to enable local DMZ on specified";
+      std::cout << "\n\t                  I                        IPv4 address\n";
    }
 
    // [7] Cleaning up and exit the application

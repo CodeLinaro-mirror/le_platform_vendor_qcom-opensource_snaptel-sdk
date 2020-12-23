@@ -133,11 +133,24 @@ using DefaultProfileIdResponseCb
 class IDataConnectionManager {
  public:
     /**
+     * Checks the status of data connection manager and returns the result.
+     *
+     * @returns SERVICE_AVAILABLE    If data connection manager is ready for service.
+     *          SERVICE_UNAVAILABLE  If data connection manager is temporarily unavailable.
+     *          SERVICE_FAILED       If data connection manager encountered an irrecoverable failure.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+    /**
      * Checks if the data subsystem is ready.
      *
      * @returns True if Data Connection Manager is ready for service, otherwise
      * returns false.
      *
+     *  @deprecated Use getServiceStatus API.
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -147,6 +160,7 @@ class IDataConnectionManager {
      * @returns A future that caller can wait on to be notified
      * when card manager is ready.
      *
+     * @deprecated Use InitResponseCb callback in factory API getDataConnectionManager.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 

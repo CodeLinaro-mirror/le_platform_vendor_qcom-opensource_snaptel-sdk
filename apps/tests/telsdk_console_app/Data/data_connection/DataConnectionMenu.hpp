@@ -60,7 +60,7 @@ public:
     // initialize Profile Managers
     bool init();
     // Display Profile Management Menu
-    void displayMenu();
+    bool displayMenu();
 
     // Data Connection Management APIs
     void startDataCall(std::vector<std::string> inputCommand);
@@ -71,9 +71,16 @@ public:
     void setDefaultProfile();
     void getDefaultProfile();
 
+    //Initialization Callback
+    void onInitCompleted(telux::common::ServiceStatus status);
+
     DataConnectionMenu(std::string appName, std::string cursor);
     ~DataConnectionMenu();
 private:
+    bool subSystemStatusUpdated_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
+
     bool initConnectionManagerAndListener(SlotId slotId);
     void requestDataCallList(OperationType operationType, SlotId slotId, DataCallListResponseCb cb);
 

@@ -46,36 +46,62 @@ using namespace std;
 SnatMenu::SnatMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     snatManager_ = nullptr;
-    initComplete_ = false;
+    menuOptionsAdded_ = false;
+    subSystemStatusUpdated_ = false;
 }
 
 SnatMenu::~SnatMenu() {
 }
 
 bool SnatMenu::init() {
-    bool subSystemStatus = false;
-    if (initComplete_ == false) {
-        initComplete_ = true;
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    subSystemStatusUpdated_ = false;
+    if (snatManager_ == nullptr) {
+        auto initCb = std::bind(&SnatMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
-        auto localSnatMgr = dataFactory.getNatManager(telux::data::OperationType::DATA_LOCAL);
+        //Try both local and remote operation type. If operation type is not supported,
+        // nullptr is returned. snatManager_ pointer will be associated with valid return pointer
+        auto localSnatMgr = dataFactory.getNatManager(
+            telux::data::OperationType::DATA_LOCAL, initCb);
         if (localSnatMgr) {
             snatManager_ = localSnatMgr;
         }
-        auto remoteSnatMgr = dataFactory.getNatManager(telux::data::OperationType::DATA_REMOTE);
+        auto remoteSnatMgr = dataFactory.getNatManager(
+            telux::data::OperationType::DATA_REMOTE, initCb);
         if (remoteSnatMgr) {
             snatManager_ = remoteSnatMgr;
         }
         if(snatManager_ == nullptr ) {
-            std::cout << "\nUnable to create SNAT Manager ... " << std::endl;
+            //Return immediately
+            std::cout << "\nError encountered in initializing SNAT Manager" << std::endl;
             return false;
         }
-        subSystemStatus = snatManager_->isSubsystemReady();
-        if (not subSystemStatus) {
-            std::cout << "\nInitializing SNAT Manager, Please wait" << std::endl;
-            std::future<bool> f = snatManager_->onSubsystemReady();
-            // Wait unconditionally for data subsystem to be ready
-            subSystemStatus = f.get();
+        snatManager_->registerListener(shared_from_this());
+    }
+    {
+        std::unique_lock<std::mutex> lck(mtx_);
+        //Snat Manager is guaranteed to be valid pointer at this point. If manager initialization
+        //fails and factory invalidated it's own pointer to snat manager before reaching this point,
+        //reference count of Snat manager should still be 1
+        telux::common::ServiceStatus subSystemStatus = snatManager_->getServiceStatus();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            std::cout << "\nInitializing SNAT Manager, Please wait ..." << std::endl;
+            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            subSystemStatus = snatManager_->getServiceStatus();
         }
+        //At this point, initialization should be either AVAILABLE or FAIL
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nSNAT Manager is ready" << std::endl;
+        }
+        else {
+            std::cout << "\nSNAT Manager initialization failed" << std::endl;
+            snatManager_ = nullptr;
+            return false;
+        }
+    }
+
+    if (menuOptionsAdded_ == false) {
+        menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> addStaticNatEntry
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "add_static_nat", {},
                 std::bind(&SnatMenu::addStaticNatEntry, this, std::placeholders::_1)));
@@ -88,21 +114,17 @@ bool SnatMenu::init() {
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {addStaticNatEntry,
             removeStaticNatEntry, reqStaticNatEntries};
-
         addCommands(commandsList);
-    }
-    subSystemStatus = snatManager_->isSubsystemReady();
-    if (subSystemStatus) {
-        std::cout << "\nSNAT Manager is ready" << std::endl;
-    }
-    else {
-        std::cout << "\nSNAT Manager is not ready" << std::endl;
-        return false;
     }
     ConsoleApp::displayMenu();
     return true;
 }
 
+void SnatMenu::onInitComplete(telux::common::ServiceStatus status) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    subSystemStatusUpdated_ = true;
+    cv_.notify_all();
+}
 
 void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;

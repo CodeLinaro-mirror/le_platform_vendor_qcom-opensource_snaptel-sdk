@@ -106,11 +106,6 @@ public:
     */
     Cv2xStatusEx gCv2xStatus;
 
-    /*
-    * Radio Interface contructor.
-    */
-    RadioInterface();
-
     /**
      * Method that clears the value in gCallbackPromise.
      * @see Cv2xStatus.

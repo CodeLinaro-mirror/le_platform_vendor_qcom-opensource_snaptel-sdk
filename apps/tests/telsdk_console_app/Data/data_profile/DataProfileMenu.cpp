@@ -45,6 +45,7 @@ using namespace std;
 
 DataProfileMenu::DataProfileMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
+   subSystemStatusUpdated_ = false;
 }
 
 DataProfileMenu::~DataProfileMenu() {
@@ -103,52 +104,58 @@ bool DataProfileMenu::init() {
     return dpmSubSystemStatus;
 }
 
-void DataProfileMenu::displayMenu() {
-    bool subSystemStatus = false;
-    if (dataProfileManagerMap_.find(DEFAULT_SLOT_ID) != dataProfileManagerMap_.end()) {
-        subSystemStatus = dataProfileManagerMap_[DEFAULT_SLOT_ID]->isSubsystemReady();
-        if (subSystemStatus) {
+bool DataProfileMenu::displayMenu() {
+    bool retVal = true;
+    if ((dataProfileManagerMap_.find(DEFAULT_SLOT_ID) != dataProfileManagerMap_.end()) &&
+        (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
+        dataProfileManagerMap_[DEFAULT_SLOT_ID]->getServiceStatus())) {
             std::cout << "\nData Profile Manager on slot "<< DEFAULT_SLOT_ID <<
             " is ready" << std::endl;
-        }
-        else {
-            std::cout << "\nData Profile Manager on slot "<< DEFAULT_SLOT_ID <<
-            " is not ready" << std::endl;
-        }
     }
-    if (dataProfileManagerMap_.find(SLOT_ID_2) != dataProfileManagerMap_.end()) {
-        subSystemStatus = dataProfileManagerMap_[SLOT_ID_2]->isSubsystemReady();
-        if (subSystemStatus) {
-            std::cout << "\nData Profile Manager on slot "<< SLOT_ID_2 <<
-            " is ready" << std::endl;
+    else {
+        std::cout << "\nData Profile Manager on slot "<< DEFAULT_SLOT_ID <<
+        " is not ready" << std::endl;
+        retVal = false;
+    }
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        if ((dataProfileManagerMap_.find(SLOT_ID_2) != dataProfileManagerMap_.end()) &&
+            (telux::common::ServiceStatus::SERVICE_AVAILABLE ==
+            dataProfileManagerMap_[SLOT_ID_2]->getServiceStatus())) {
+            std::cout << "\nData Profile Manager on slot "<< SLOT_ID_2 << " is ready" << std::endl;
+            retVal = true;
         }
         else {
             std::cout << "\nData Profile Manager on slot "<< SLOT_ID_2 <<
             " is not ready" << std::endl;
+            //Intentionally did not set retVal = false to not overwrite slot 1 value
         }
     }
     ConsoleApp::displayMenu();
+    return retVal;
 }
 
 bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    bool retValue = false;
+    subSystemStatusUpdated_ = false;
+    auto initCb = std::bind(&DataProfileMenu::onInitCompleted, this, std::placeholders::_1);
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();
-    auto profMgr = dataFactory.getDataProfileManager(slotId);
+    auto profMgr = dataFactory.getDataProfileManager(slotId, initCb);
 
     if (profMgr) {
-        // Check if data subsystem is ready
-        bool subSystemStatus = profMgr->isSubsystemReady();
-
-        // If data subsystem is not ready, wait for it to be ready
-        if (!subSystemStatus) {
+        // Check if data subsystem status
+        subSystemStatus = profMgr->getServiceStatus();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
             std::cout << "\n\nInitializing Data profile manager subsystem on slot " <<
-            slotId << ", Please wait ..." << endl;
-            std::future<bool> f = profMgr->onSubsystemReady();
-            // Wait unconditionally for data subsystem to be ready
-            subSystemStatus = f.get();
+                slotId << ", Please wait ..." << endl;
+            std::unique_lock<std::mutex> lck(mtx_);
+            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            subSystemStatus = profMgr->getServiceStatus();
         }
-        if (subSystemStatus) {
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nData Profile Manager on slot "<< slotId << " is ready" << std::endl;
+            retValue = true;
         }
         else {
             std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
@@ -176,11 +183,16 @@ bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
                 slotId << std::endl;
             }
         }
-        return subSystemStatus;
     } else {
-        std::cout << "Profile manager instance is NULL" << std::endl;
-        return false;
+        std::cout << "Data Profile Manager failed to initialize" << std::endl;
     }
+    return retValue;
+}
+
+void DataProfileMenu::onInitCompleted(telux::common::ServiceStatus status) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    subSystemStatusUpdated_ = true;
+    cv_.notify_all();
 }
 
 void DataProfileMenu::getProfileParamsFromUser() {
@@ -233,16 +245,16 @@ void DataProfileMenu::requestProfileList(std::vector<std::string> inputCommand) 
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }
+    if (dataProfileManagerMap_.find(static_cast<SlotId>(slotId)) == dataProfileManagerMap_.end()) {
+        std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
 
     telux::common::Status status =
         dataProfileManagerMap_[static_cast<SlotId>(slotId)]->requestProfileList(
             myDataProfileListCb_[static_cast<SlotId>(slotId)]);
 
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Request profile list sent successfully" << std::endl;
-    } else {
-        std::cout << "Request profile list failed, status:" << int(status) << std::endl;
-    }
+    Utils::printStatus(status);
 }
 
 void DataProfileMenu::createProfile(std::vector<std::string> inputCommand) {
@@ -251,17 +263,18 @@ void DataProfileMenu::createProfile(std::vector<std::string> inputCommand) {
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
     }
+    if (dataProfileManagerMap_.find(static_cast<SlotId>(slotId)) == dataProfileManagerMap_.end()) {
+        std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+
     getProfileParamsFromUser();
 
     telux::common::Status status =
         dataProfileManagerMap_[static_cast<SlotId>(slotId)]->createProfile(
         params_, myDataCreateProfileCb_[static_cast<SlotId>(slotId)]);
 
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Create profile request sent successfully" << std::endl;
-    } else {
-        std::cout << "Failed to send create profile request, Status:" << int(status) << std::endl;
-    }
+    Utils::printStatus(status);
 }
 
 void DataProfileMenu::deleteProfile(std::vector<std::string> inputCommand) {
@@ -279,6 +292,10 @@ void DataProfileMenu::deleteProfile(std::vector<std::string> inputCommand) {
         std::cin.get();
         return;
     }
+    if (dataProfileManagerMap_.find(static_cast<SlotId>(slotId)) == dataProfileManagerMap_.end()) {
+        std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
     std::cout << "\nDeleting Profile " << profileId << " on slotId " << slotId << std::endl;
     telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
     if (techPrefId == 0) {
@@ -289,11 +306,7 @@ void DataProfileMenu::deleteProfile(std::vector<std::string> inputCommand) {
     telux::common::Status status =
         dataProfileManagerMap_[static_cast<SlotId>(slotId)]->deleteProfile(
         profileId, tp, myDeleteProfileCb_[static_cast<SlotId>(slotId)]);
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Delete profile request sent successfully" << std::endl;
-    } else {
-        std::cout << "Failed to send delete profile request, Status:" << int(status) << std::endl;
-    }
+    Utils::printStatus(status);
 }
 
 void DataProfileMenu::modifyProfile(std::vector<std::string> inputCommand) {
@@ -301,6 +314,10 @@ void DataProfileMenu::modifyProfile(std::vector<std::string> inputCommand) {
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
+    }
+    if (dataProfileManagerMap_.find(static_cast<SlotId>(slotId)) == dataProfileManagerMap_.end()) {
+        std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
     }
 
     int profileId;
@@ -313,11 +330,7 @@ void DataProfileMenu::modifyProfile(std::vector<std::string> inputCommand) {
     telux::common::Status status
         = dataProfileManagerMap_[static_cast<SlotId>(slotId)]->modifyProfile(
             profileId, params_, myModifyProfileCb_[static_cast<SlotId>(slotId)]);
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Modify profile request sent successfully" << std::endl;
-    } else {
-        std::cout << "Failed to send Modify profile request, Status:" << int(status) << std::endl;
-    }
+    Utils::printStatus(status);
 }
 
 void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
@@ -325,6 +338,10 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
+    }
+    if (dataProfileManagerMap_.find(static_cast<SlotId>(slotId)) == dataProfileManagerMap_.end()) {
+        std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
     }
 
     char delimiter = '\n';
@@ -372,11 +389,7 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     telux::common::Status status =
         dataProfileManagerMap_[static_cast<SlotId>(slotId)]->queryProfile(
         params_, myDataProfileListCbForQuery_[static_cast<SlotId>(slotId)]);
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Query profile request sent successfully" << std::endl;
-    } else {
-        std::cout << "Failed to send Query profile request, Status:" << int(status) << std::endl;
-    }
+    Utils::printStatus(status);
 }
 
 void DataProfileMenu::requestProfileById(std::vector<std::string> inputCommand) {
@@ -394,6 +407,10 @@ void DataProfileMenu::requestProfileById(std::vector<std::string> inputCommand) 
         std::cin.get();
         return;
     }
+    if (dataProfileManagerMap_.find(static_cast<SlotId>(slotId)) == dataProfileManagerMap_.end()) {
+        std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
 
     std::cout << "\nRequest Profile By Id " << profileId << " on slotId " << slotId << std::endl;
     telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
@@ -405,10 +422,5 @@ void DataProfileMenu::requestProfileById(std::vector<std::string> inputCommand) 
     telux::common::Status status =
         dataProfileManagerMap_[static_cast<SlotId>(slotId)]->requestProfile(
         profileId, tp, myDataProfileCbForGetProfileById_[static_cast<SlotId>(slotId)]);
-    if (status == telux::common::Status::SUCCESS) {
-        std::cout << "Request profile by ID request sent successfully" << std::endl;
-    } else {
-        std::cout << "Failed to send Request profile by ID request, Status:" << int(status)
-                  << std::endl;
-    }
+    Utils::printStatus(status);
 }

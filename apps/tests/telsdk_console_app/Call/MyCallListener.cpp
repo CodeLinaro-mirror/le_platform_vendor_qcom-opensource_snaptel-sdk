@@ -41,6 +41,7 @@ extern "C" {
 #include "Utils.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
    std::cout << std::endl << std::endl;
@@ -297,6 +298,32 @@ void MyCallCommandCallback::commandResponse(telux::common::ErrorCode error) {
                       << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 }
 
+
+void MyEcbmCallback::onRequestEcbmResponseCallback(telux::tel::EcbMode ecbMode,
+   telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      if (static_cast<int>(ecbMode)) {
+          PRINT_CB << " ECBM mode: EMERGENCY \n";
+      } else {
+          PRINT_CB << " ECBM mode: NORMAL \n";
+      }
+   } else {
+      PRINT_CB << "Request ECBM response failed with ErrorCode: " << (int)error
+               << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+
+void MyEcbmCallback::onResponseCallback(telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << " Exit Ecbm request executed successfully \n";
+    } else {
+        PRINT_CB << " Exit Ecbm request failed with error: " << Utils::getErrorCodeAsString(error)
+                 << "\n";
+   }
+}
+
 int MyCallListener::getCallsOnSlot(SlotId slotId) {
     int numCalls = 0;
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
@@ -315,4 +342,14 @@ int MyCallListener::getCallsOnSlot(SlotId slotId) {
                   << static_cast<int>(slotId) << std::endl;
     }
     return numCalls;
+}
+
+
+void MyCallListener::onEcbmChange(telux::tel::EcbMode mode) {
+   std::cout << "\n";
+   if (static_cast<int>(mode)) {
+       PRINT_NOTIFICATION << "ECBM mode: EMERGENCY\n";
+   } else {
+       PRINT_NOTIFICATION << "ECBM mode: NORMAL\n";
+   }
 }

@@ -46,12 +46,16 @@
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
+#include <telux/data/net/NatManager.hpp>
+
 
 using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class SnatMenu : public ConsoleApp {
+class SnatMenu : public ConsoleApp ,
+                 public INatListener,
+                 public std::enable_shared_from_this<SnatMenu> {
  public:
     // initialize menu and sdk
     bool init();
@@ -61,10 +65,16 @@ class SnatMenu : public ConsoleApp {
     void removeStaticNatEntry(std::vector<std::string> inputCommand);
     void requestStaticNatEntries(std::vector<std::string> inputCommand);
 
+    //Initialization callback
+    void onInitComplete(telux::common::ServiceStatus status);
+
     SnatMenu(std::string appName, std::string cursor);
     ~SnatMenu();
  private:
-    bool initComplete_;
+    bool menuOptionsAdded_;
+    bool subSystemStatusUpdated_;
     std::shared_ptr<telux::data::net::INatManager> snatManager_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
 };
 #endif

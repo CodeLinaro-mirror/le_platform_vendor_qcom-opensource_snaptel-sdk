@@ -52,7 +52,9 @@ using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class BridgeMenu : public ConsoleApp {
+class BridgeMenu : public ConsoleApp ,
+                   public IBridgeListener,
+                   public std::enable_shared_from_this<BridgeMenu> {
  public:
     // initialize menu and sdk
     bool init();
@@ -63,9 +65,16 @@ class BridgeMenu : public ConsoleApp {
     void getBridgeInfo(std::vector<std::string> inputCommand);
     void removeBridge(std::vector<std::string> inputCommand);
 
+    //Initialization callback
+    void onInitComplete(telux::common::ServiceStatus status);
+
     BridgeMenu(std::string appName, std::string cursor);
     ~BridgeMenu();
  private:
+    bool menuOptionsAdded_;
+    bool subSystemStatusUpdated_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
     std::shared_ptr<telux::data::net::IBridgeManager> bridgeMgr_;
 };
 #endif

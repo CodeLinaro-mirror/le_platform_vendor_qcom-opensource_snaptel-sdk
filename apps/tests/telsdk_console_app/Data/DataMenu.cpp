@@ -74,7 +74,7 @@ bool DataMenu::initializeSDK() {
         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                   << std::endl;
     } else {
-        std::cout << "Unable to initialize subSystem" << std::endl;
+        std::cout << "Unable to initialize all subSystems" << std::endl;
     }
     return true;
 }
@@ -131,8 +131,9 @@ void DataMenu::init() {
 
 void DataMenu::dataConnectionMenu(std::vector<std::string> userInput) {
     if(dataConnectionMenu_) {
-        dataConnectionMenu_->displayMenu();
-        dataConnectionMenu_->mainLoop();
+        if (dataConnectionMenu_->displayMenu()) {
+            dataConnectionMenu_->mainLoop();
+        }
     }
     else {
         std::cout << "Error Creating Data Connection Manager" << std::endl;
@@ -158,8 +159,9 @@ void DataMenu::commandCallback(ErrorCode errorCode) {
 
 void DataMenu::dataProfileMenu(std::vector<std::string> userInput) {
     if(dataProfileMenu_) {
-        dataProfileMenu_->displayMenu();
-        dataProfileMenu_->mainLoop();
+        if (dataProfileMenu_->displayMenu()) {
+            dataProfileMenu_->mainLoop();
+        }
     }
     else {
         std::cout << "Error Creating Data Profile Manager" << std::endl;
@@ -174,6 +176,7 @@ void DataMenu::bridgeMenu(std::vector<std::string> userInput) {
     if (bridgeMenu_->init()) {
         bridgeMenu_->mainLoop();
     }
+    bridgeMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 
@@ -184,6 +187,7 @@ void DataMenu::l2tpMenu(std::vector<std::string> userInput) {
     if(l2tpMenu_->init()) {
         l2tpMenu_->mainLoop();
     }
+    l2tpMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 
@@ -194,6 +198,7 @@ void DataMenu::snatMenu(std::vector<std::string> userInput) {
     if(snatMenu_->init()) {
         snatMenu_->mainLoop();
     }
+    snatMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 
@@ -204,6 +209,7 @@ void DataMenu::firewallMenu(std::vector<std::string> userInput) {
     if(firewallMenu_->init()) {
         firewallMenu_->mainLoop();
     }
+    firewallMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 
@@ -214,6 +220,7 @@ void DataMenu::vlanMenu(std::vector<std::string> userInput) {
     if(vlanMenu_->init()) {
         vlanMenu_->mainLoop();
     }
+    vlanMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 
@@ -224,5 +231,6 @@ void DataMenu::socksMenu(std::vector<std::string> userInput) {
     if(socksMenu_->init()) {
         socksMenu_->mainLoop();
     }
+    socksMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }

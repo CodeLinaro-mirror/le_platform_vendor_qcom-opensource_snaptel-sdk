@@ -91,13 +91,24 @@ using StaticNatEntriesCb
 class INatManager {
  public:
     /**
+     * Checks the status of location manager and returns the result.
+     *
+     * @returns SERVICE_AVAILABLE      If Nat manager object is ready for service.
+     *          SERVICE_UNAVAILABLE    If Nat manager object is temporarily unavailable.
+     *          SERVICE_FAILED       - If Nat manager object encountered an irrecoverable failure.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+    /**
      * Checks if the NAT manager subsystem is ready.
      *
      * @returns True if NAT Manager is ready for service, otherwise
      * returns false.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     * @deprecated Use getServiceStatus API.
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -107,8 +118,7 @@ class INatManager {
      * @returns A future that caller can wait on to be notified
      * when NAT manager is ready.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     * @deprecated Use InitResponseCb callback in factory API getNatManager.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 

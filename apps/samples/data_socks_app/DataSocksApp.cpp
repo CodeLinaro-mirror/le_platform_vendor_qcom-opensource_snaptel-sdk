@@ -49,6 +49,12 @@ std::promise<int> promise;
 
 
 int main(int argc, char *argv[]) {
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::net::ISocksManager> dataSocksMgr = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+
    if(argc == 3) {
       telux::data::OperationType opType = static_cast<telux::data::OperationType>
           (std::atoi(argv[1]));
@@ -57,29 +63,39 @@ int main(int argc, char *argv[]) {
          enable = true;
       }
 
-      // [1] Get the DataFactory and Socks Manager instance
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
+
+      // [2] Get the DataFactory and Socks Manager instance
       auto &dataFactory = telux::data::DataFactory::getInstance();
-      auto dataSocksMgr  = dataFactory.getSocksManager(opType);
+      do {
+         subSystemStatusUpdated = false;
+         dataSocksMgr  = dataFactory.getSocksManager(opType, initCb);
+         if (dataSocksMgr) {
+            // [3] Check if Socks manager is ready
+            subSystemStatus = dataSocksMgr->getServiceStatus();
 
-      // [2] Check if data subsystem is ready
-      bool subSystemStatus = dataSocksMgr->isSubsystemReady();
-
-      // [2.1] If data subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "Socks subsystem is not ready" << std::endl;
-         std::cout << "wait unconditionally for it to be ready " << std::endl;
-         std::future<bool> f = dataSocksMgr->onSubsystemReady();
-         // If we want to wait unconditionally for data subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      // [3] Exit the application, if SDK is unable to initialize Socks subsystems
-      if(subSystemStatus) {
-         std::cout << " *** Socks Subsystem is Ready *** " << std::endl;
-      } else {
-         std::cout << " *** ERROR - Unable to initialize Socks subsystem *** " << std::endl;
-         return 1;
-      }
+            // [3.1] If Socks manager is not ready, wait for it to be ready
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                   "\n\nInitializing Socks Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataSocksMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** Socks SubSystem is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize Socks subsystem *** " << std::endl;
+         }
+      } while (1);
 
       // [4] Instantiate enable Socks callback instance - this is optional
       auto respCb = [](telux::common::ErrorCode error) {

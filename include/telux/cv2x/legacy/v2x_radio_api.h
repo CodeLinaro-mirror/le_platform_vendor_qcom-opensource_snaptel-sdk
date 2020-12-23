@@ -153,6 +153,7 @@ typedef enum {
 typedef enum  {
     SERVICE_UNAVAILABLE = 0,
     SERVICE_AVAILABLE = 1,
+    SERVICE_FAILED = 2,
 } v2x_service_status_t;
 
 /**
@@ -2036,7 +2037,9 @@ extern v2x_status_enum_type start_v2x_mode();
  */
 extern v2x_status_enum_type stop_v2x_mode();
 
-/**
+/** @ingroup v2x_deprecated_radio
+    @deprecated This API has been deprecated. Please use %v2x_radio_init_v3() instead.
+
     Initializes the Radio interface and sets the callback that will be used
     when events in the radio change (including when radio initialization is
     complete).
@@ -2080,6 +2083,57 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
                                      v2x_concurrency_sel_t mode,
                                      v2x_radio_calls_t *callbacks_p,
                                      void *ctx_p);
+
+/**
+    Initializes Cv2x radio and sets the callback that will be used when events
+    in the radio change (including when radio initialization is complete).
+    The callers can get the handles of Cv2x IP and non-IP interface on success.
+    The handle of interface is used for reconfiguring, opening or changing,
+    and closing reservations.
+
+    @datatypes
+    #v2x_concurrency_sel_t \n
+    #v2x_radio_calls_t
+
+    @param[in] mode              WAN concurrency mode, although the radio might
+                                 not support concurrency. Errors can be generated.
+    @param[in] callbacks         Pointer to the v2x_radio_calls_t structure that
+                                 is prepopulated with function pointers used
+                                 during radio events (such as loss of time
+                                 synchronization or accuracy) for subscribers. \n
+                                 @vertspace{3}
+                                 This parameter also points to a callback for
+                                 this initialization function.
+    @param[in] context           Voluntary pointer to the first parameter on the
+                                 callback.
+    @param[out] ip_handle_p      Pointer to the handle of IP interface. Pass nullptr
+                                 if IP interface is not used.
+    @param[out] non_ip_handle_p  Pointer to the handle of non-IP interface. Pass nullptr
+                                 if non-IP interface is not used.
+
+    @detdesc
+    This function call is a nonblocking, and it is a control plane action.
+    @par
+    Use v2x_radio_deinit() with either IP or non-IP handle when radio operations are complete.
+    @par
+    @note1hang Currently, the channel and transmit power are not specified.
+               They are specified with a subsequent call to
+               #v2x_radio_calls_t::v2x_radio_init_complete() when
+               initialization is complete.
+
+    @return
+    0 -- On success.
+    @par
+    Otherwise:
+     - EINVAL -- Invalid input parmaters.
+     - EPERM -- Radio initialization failed.
+ */
+int v2x_radio_init_v3(v2x_concurrency_sel_t mode,
+                      v2x_radio_calls_t *callbacks_p,
+                      void *ctx_p,
+                      v2x_radio_handle_t *ip_handle_p,
+                      v2x_radio_handle_t *non_ip_handle_p);
+
 /**
     Opens and binds an event-driven socket (one with no bandwidth reservation).
     The socket is bound as an AF_INET6 UDP type socket.

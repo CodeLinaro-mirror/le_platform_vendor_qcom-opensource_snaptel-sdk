@@ -44,41 +44,24 @@ using namespace std;
 
 VlanMenu::VlanMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-   initComplete_ = false;
+   menuOptionsAdded_ = false;
+   subSystemStatusUpdated_ = false;
 }
 
 VlanMenu::~VlanMenu() {
 }
 
 bool VlanMenu::init() {
-    bool subSystemStatus = false;
-    if (initComplete_ == false) {
-        initComplete_ = true;
-        auto &dataFactory = telux::data::DataFactory::getInstance();
-        telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
-        auto localVlanMgr = dataFactory.getVlanManager(opType);
-        if (localVlanMgr) {
-            vlanManagerMap_[opType] = localVlanMgr;
-            subSystemStatus = vlanManagerMap_[opType]->isSubsystemReady();
-            if (not subSystemStatus) {
-                std::cout << "\nInitializing Local VLAN Manager subsystem, Please wait \n";
-                std::future<bool> f = vlanManagerMap_[opType]->onSubsystemReady();
-                // Wait unconditionally for data subsystem to be ready
-                subSystemStatus = f.get();
-            }
-        }
-        opType = telux::data::OperationType::DATA_REMOTE;
-        auto remoteVlanMgr = dataFactory.getVlanManager(opType);
-        if (remoteVlanMgr) {
-            vlanManagerMap_[opType] = remoteVlanMgr;
-            subSystemStatus = vlanManagerMap_[opType]->isSubsystemReady();
-            if (not subSystemStatus) {
-                std::cout << "\nInitializing Remote VLAN Manager subsystem, Please wait\n";
-                std::future<bool> f = vlanManagerMap_[opType]->onSubsystemReady();
-                // Wait unconditionally for data subsystem to be ready
-                subSystemStatus = f.get();
-            }
-        }
+    bool initStatus = initVlanManager(telux::data::OperationType::DATA_LOCAL);
+    initStatus |= initVlanManager(telux::data::OperationType::DATA_REMOTE);
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+
+    //If both local and remote vlan managers fail, exit
+    if (not initStatus) {
+        return false;
+    }
+    if (menuOptionsAdded_ == false) {
+        menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> createVlan
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "create_vlan", {},
                 std::bind(&VlanMenu::createVlan, this, std::placeholders::_1)));
@@ -103,27 +86,45 @@ bool VlanMenu::init() {
 
         addCommands(commandsList);
     }
-    bool locSubSystemStatus = vlanManagerMap_[
-        telux::data::OperationType::DATA_LOCAL]->isSubsystemReady();
-    if (locSubSystemStatus) {
-        std::cout << "\nLocal VLAN Manager is ready" << std::endl;
-    }
-    else {
-        std::cout << "\nLocal VLAN Manager is not ready" << std::endl;
-    }
-    bool rmtSubSystemStatus = false;
-    if (vlanManagerMap_.find(telux::data::OperationType::DATA_REMOTE) != vlanManagerMap_.end()) {
-        rmtSubSystemStatus = vlanManagerMap_[
-            telux::data::OperationType::DATA_REMOTE]->isSubsystemReady();
-        if (rmtSubSystemStatus) {
-            std::cout << "\nRemote VLAN Manager is ready" << std::endl;
+    ConsoleApp::displayMenu();
+    return true;
+}
+
+bool VlanMenu::initVlanManager(telux::data::OperationType opType) {
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    subSystemStatusUpdated_ = false;
+    bool retVal = false;
+
+    auto initCb = std::bind(&VlanMenu::onInitComplete, this, std::placeholders::_1);
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    auto vlanMgr = dataFactory.getVlanManager(opType, initCb);
+    std:: string opTypeStr = (opType == telux::data::OperationType::DATA_LOCAL)? "Local" : "Remote";
+    if (vlanMgr) {
+        vlanMgr->registerListener(shared_from_this());
+        std::unique_lock<std::mutex> lck(mtx_);
+        telux::common::ServiceStatus subSystemStatus = vlanMgr->getServiceStatus();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            std::cout << "\nInitializing " << opTypeStr << " VLAN Manager subsystem, Please wait \n";
+            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            subSystemStatus = vlanMgr->getServiceStatus();
+        }
+        //At this point, initialization should be either AVAILABLE or FAIL
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\n" << opTypeStr << " Vlan Manager is ready" << std::endl;
+            retVal = true;
+            vlanManagerMap_[opType] = vlanMgr;
         }
         else {
-            std::cout << "\nRemote VLAN Manager is not ready" << std::endl;
+            std::cout << "\n" << opTypeStr << " Vlan Manager is not ready" << std::endl;
         }
     }
-    ConsoleApp::displayMenu();
-    return (locSubSystemStatus | rmtSubSystemStatus);
+    return retVal;
+}
+
+void VlanMenu::onInitComplete(telux::common::ServiceStatus status) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    subSystemStatusUpdated_ = true;
+    cv_.notify_all();
 }
 
 void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
@@ -137,7 +138,7 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
-        std::cout << "Invalid entry: Operation is not supported" << std::endl;
+        std::cout << "Vlan Manager is not ready" << std::endl;
         return;
     }
     int ifaceType;
@@ -190,7 +191,7 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
-        std::cout << "Invalid entry: Operation is not supported" << std::endl;
+        std::cout << "Vlan Manager is not ready" << std::endl;
         return;
     }
 
@@ -228,7 +229,7 @@ void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
-        std::cout << "Invalid entry: Operation is not supported" << std::endl;
+        std::cout << "Vlan Manager is not ready" << std::endl;
         return;
     }
 
@@ -266,7 +267,7 @@ void VlanMenu::bindWithProfile(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
-        std::cout << "Invalid entry: Operation is not supported" << std::endl;
+        std::cout << "Vlan Manager is not ready" << std::endl;
         return;
     }
 
@@ -311,7 +312,7 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
-        std::cout << "Invalid entry: Operation is not supported" << std::endl;
+        std::cout << "Vlan Manager is not ready" << std::endl;
         return;
     }
 
@@ -356,7 +357,7 @@ void VlanMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
-        std::cout << "Invalid entry: Operation is not supported" << std::endl;
+        std::cout << "Vlan Manager is not ready" << std::endl;
         return;
     }
 

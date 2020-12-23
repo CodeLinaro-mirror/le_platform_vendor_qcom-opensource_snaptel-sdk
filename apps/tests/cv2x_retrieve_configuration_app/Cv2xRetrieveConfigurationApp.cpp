@@ -67,23 +67,36 @@ static void cv2xRetrieveConfigurationCallback(ErrorCode error) {
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Retrieve Configuration app" << endl;
 
-    // Get handle to Cv2xRadioManager
-    auto & cv2xFactory = Cv2xFactory::getInstance();
-
     string configFilePath = "";
     gCallbackPromise = std::promise<ErrorCode>();
 
     cout << "Enter absolute config file path with filename: ";
     cin >> configFilePath;
 
-    auto cv2xConfig = cv2xFactory.getCv2xConfig();
+    auto & cv2xFactory = Cv2xFactory::getInstance();
+    bool cv2xConfigStatusUpdated = false;
+    telux::common::ServiceStatus cv2xConfigStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::condition_variable cv;
+    std::mutex mtx;
+    auto statusCb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2xConfigStatusUpdated = true;
+        cv2xConfigStatus = status;
+        cv.notify_all();
+    };
 
-    // Wait for radio manager to complete initialization
-    if (not cv2xConfig->isReady()) {
-        if (!cv2xConfig->onReady().get()) {
-            cout << "Error : C-V2X Radio Manager initialization failed" << endl;
-            return EXIT_FAILURE;
-        }
+    auto cv2xConfig = cv2xFactory.getCv2xConfig(statusCb);
+    if (!cv2xConfig) {
+        cout << "Failed to get Cv2xConfig" << endl;;
+        return EXIT_FAILURE;
+    }
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&] { return cv2xConfigStatusUpdated; });
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv2xConfigStatus) {
+        cout << "Failed to initialize Cv2xConfig" << endl;
+        return EXIT_FAILURE;
     }
 
     /* Attempt config file retrieval */

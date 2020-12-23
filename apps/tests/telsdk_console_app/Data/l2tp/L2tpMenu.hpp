@@ -52,7 +52,9 @@ using namespace telux::data;
 using namespace telux::common;
 using namespace telux::data::net;
 
-class L2tpMenu : public ConsoleApp {
+class L2tpMenu : public ConsoleApp ,
+                 public IL2tpListener,
+                 public std::enable_shared_from_this<L2tpMenu> {
  public:
     // initialize menu and sdk
     bool init();
@@ -63,10 +65,17 @@ class L2tpMenu : public ConsoleApp {
     void requestConfig(std::vector<std::string> inputCommand);
     void removeTunnel(std::vector<std::string> inputCommand);
 
+    //Initialization callback
+    void onInitComplete(telux::common::ServiceStatus status);
+
     L2tpMenu(std::string appName, std::string cursor);
     ~L2tpMenu();
  private:
-    bool initComplete_;
+    bool menuOptionsAdded_;
+    bool subSystemStatusUpdated_;
     std::shared_ptr<telux::data::net::IL2tpManager> l2tpManager_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
+
 };
 #endif

@@ -50,31 +50,46 @@
 
 int main(int argc, char *argv[]) {
    std::promise<int> promise;
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::net::IL2tpManager> dataL2tpMgr = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
 
    if(argc == 2) {
-      // [1] Get the DataFactory and L2tp Manager instance
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
+
+      // [2] Get the DataFactory and L2tp Manager instance
       auto &dataFactory = telux::data::DataFactory::getInstance();
-      auto dataL2tpMgr  = dataFactory.getL2tpManager();
+      do {
+         subSystemStatusUpdated = false;
+         dataL2tpMgr  = dataFactory.getL2tpManager(initCb);
+         if (dataL2tpMgr) {
+            // [2] Check if L2TP manager is ready
+            subSystemStatus = dataL2tpMgr->getServiceStatus();
 
-      // [2] Check if data subsystem is ready
-      bool subSystemStatus = dataL2tpMgr->isSubsystemReady();
-
-      // [2.1] If data subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "L2tp subsystem is not ready" << std::endl;
-         std::cout << "wait unconditionally for it to be ready " << std::endl;
-         std::future<bool> f = dataL2tpMgr->onSubsystemReady();
-         // If we want to wait unconditionally for data subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      // [3] Exit the application, if SDK is unable to initialize L2tp subsystems
-      if(subSystemStatus) {
-         std::cout << " *** L2tp Subsystem is Ready *** " << std::endl;
-      } else {
-         std::cout << " *** ERROR - Unable to initialize L2tp subsystem *** " << std::endl;
-         return 1;
-      }
+            // [2.1] If L2TP manager is not ready, wait for it to be ready
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                   "\n\nInitializing L2tp Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataL2tpMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** L2tp Sub System is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize L2tp subsystem *** " << std::endl;
+         }
+      } while(1);
 
       std::string configFile = argv[1];
       std::shared_ptr<ConfigParser> configParser = std::make_shared<ConfigParser>(configFile);
@@ -97,7 +112,7 @@ int main(int argc, char *argv[]) {
       int mtuSize = std::atoi(configParser->getValue(std::string("MTU_SIZE_BYTES")).c_str());
 
       // [4] Instantiate setConfig callback instance - this is optional
-      auto setConfigCb = [&setConfigPass, &promise](telux::common::ErrorCode error) {
+      auto setConfigCb = [&](telux::common::ErrorCode error) {
          std::cout << std::endl << std::endl;
          std::cout << "CALLBACK: "
                    << "setConfig Response"

@@ -100,6 +100,7 @@ private:
    void printLLAVRPBasedInfo(telux::loc::LLAInfo llaInfo);
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
+   void printReportStatus(telux::loc::ReportStatus status);
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

@@ -44,25 +44,51 @@ using namespace std;
 L2tpMenu::L2tpMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     l2tpManager_ = nullptr;
-    initComplete_ = false;
+    menuOptionsAdded_ = false;
+    subSystemStatusUpdated_ = false;
 }
 
 L2tpMenu::~L2tpMenu() {
+    l2tpManager_ = nullptr;
 }
 
 bool L2tpMenu::init() {
-    bool subSystemStatus = false;
-    if (initComplete_ == false) {
-        initComplete_ = true;
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    subSystemStatusUpdated_ = false;
+    if (l2tpManager_ == nullptr) {
+        auto initCb = std::bind(&L2tpMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
-        l2tpManager_ = dataFactory.getL2tpManager();
-        subSystemStatus = l2tpManager_->isSubsystemReady();
-        if (not subSystemStatus) {
-            std::cout << "\nInitializing L2TP Manager, Please wait" << std::endl;
-            std::future<bool> f = l2tpManager_->onSubsystemReady();
-            // Wait unconditionally for data subsystem to be ready
-            subSystemStatus = f.get();
+        l2tpManager_ = dataFactory.getL2tpManager(initCb);
+        if (l2tpManager_ == nullptr) {
+            std::cout << "\nError encountered in initializing Bridge Manager" << std::endl;
+            return false;
         }
+        l2tpManager_->registerListener(shared_from_this());
+    }
+    {
+        std::unique_lock<std::mutex> lck(mtx_);
+        //L2TP Manager is guaranteed to be valid pointer at this point. If manager initialization
+        //fails and factory invalidated it's own pointer to L2TP manager before reaching this
+        //point, reference count of L2TP manager should still be 1
+        telux::common::ServiceStatus subSystemStatus = l2tpManager_->getServiceStatus();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            std::cout << "\nInitializing L2TP Manager, Please wait ..." << std::endl;
+            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            subSystemStatus = l2tpManager_->getServiceStatus();
+        }
+        //At this point, initialization should be either AVAILABLE or FAIL
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nL2TP Manager is ready" << std::endl;
+        }
+        else {
+            std::cout << "\nL2TP Manager initialization failed" << std::endl;
+            l2tpManager_ = nullptr;
+            return false;
+        }
+    }
+
+    if (menuOptionsAdded_ == false) {
+        menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> setConfig
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set_Configuration",
                 {}, std::bind(&L2tpMenu::setConfig, this, std::placeholders::_1)));
@@ -81,18 +107,15 @@ bool L2tpMenu::init() {
 
         addCommands(commandsList);
     }
-    subSystemStatus = l2tpManager_->isSubsystemReady();
-    if (subSystemStatus) {
-        std::cout << "\nL2TP Manager is ready" << std::endl;
-    }
-    else {
-        std::cout << "\nL2TP Manager is not ready" << std::endl;
-        return false;
-    }
     ConsoleApp::displayMenu();
     return true;
 }
 
+void L2tpMenu::onInitComplete(telux::common::ServiceStatus status) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    subSystemStatusUpdated_ = true;
+    cv_.notify_all();
+}
 
 void L2tpMenu::setConfig(std::vector<std::string> inputCommand) {
     std::cout << "Set L2TP Unamanged Tunnel\n";

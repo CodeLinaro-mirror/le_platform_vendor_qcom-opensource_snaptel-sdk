@@ -43,48 +43,64 @@
  *         ./fwlEnbl_sample_app <operation type> <profile id > <enable/disable> <allow/drop packets>
  */
 
-std::promise<int> promise;
-
 int main(int argc, char *argv[]) {
-   if(argc == 5) {
+   std::promise<int> promise;
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::net::IFirewallManager> dataFwMgr = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+
+   if(argc == 6) {
       telux::data::OperationType opType = static_cast<telux::data::OperationType>
           (std::atoi(argv[1]));
       bool fwEnable = false;
-      int profileId = std::atoi(argv[2]);
-      if(std::atoi(argv[3])) {
+      SlotId slotId = static_cast<SlotId>(std::atoi(argv[2]));
+      int profileId = std::atoi(argv[3]);
+      if(std::atoi(argv[4])) {
          fwEnable = true;
       }
       bool allowPackets = false;
-      if(std::atoi(argv[4])) {
+      if(std::atoi(argv[5])) {
          allowPackets = true;
       }
 
-      // [1] Get the DataFactory and Firewall Manager instance
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
+
+      // [2] Get the DataFactory and Firewall Manager instance
       auto &dataFactory = telux::data::DataFactory::getInstance();
-      auto dataFwMgr  = dataFactory.getFirewallManager(opType);
+      do {
+         subSystemStatusUpdated = false;
+         dataFwMgr  = dataFactory.getFirewallManager(opType, initCb);
+         if (dataFwMgr) {
+            // [3] Check if Firewall manager is ready
+            subSystemStatus = dataFwMgr->getServiceStatus();
 
-      // [2] Check if data subsystem is ready
-      bool subSystemStatus = dataFwMgr->isSubsystemReady();
-
-      // [2.1] If data subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "Firewall subsystem is not ready" << std::endl;
-         std::cout << "wait unconditionally for it to be ready " << std::endl;
-         std::future<bool> f = dataFwMgr->onSubsystemReady();
-         // If we want to wait unconditionally for data subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      // [3] Exit the application, if SDK is unable to initialize firewall subsystems
-      if(subSystemStatus) {
-         std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
-      } else {
-         std::cout << " *** ERROR - Unable to initialize Firewall subsystem *** " << std::endl;
-         return 1;
-      }
+            // [3.1] If Firewall manager is not ready, wait for it to be ready
+            if(subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                     "\n\nInitializing Firewall Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataFwMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** Firewall Sub System is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize Firewall subsystem *** " << std::endl;
+         }
+      } while(1);
 
       // [4] Instantiate set firewall callback instance - this is optional
-      auto respCb = [](telux::common::ErrorCode error) {
+      auto respCb = [&](telux::common::ErrorCode error) {
          std::cout << std::endl << std::endl;
          std::cout << "CALLBACK: "
                    << "setFirewall Response"
@@ -94,7 +110,7 @@ int main(int argc, char *argv[]) {
 
       // [5] Configure firewall
       std::future<int> future = promise.get_future();
-      dataFwMgr->setFirewall(profileId, fwEnable, allowPackets, respCb);
+      dataFwMgr->setFirewall(profileId, fwEnable, allowPackets, respCb, slotId);
 
       // [6] Wait for callback - this is optional
       int tmp = future.get();
@@ -104,12 +120,13 @@ int main(int argc, char *argv[]) {
       std::cout << "\n\t ./fwlEnbl_sample_app <operation type> <enable> <allow>";
       std::cout << std::endl;
       std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
+      std::cout << "\n\t\t slot id        Slot id that contains modem profile";
       std::cout << "\n\t\t profile id     modem profile id to enable firewall on";
       std::cout << "\n\t\t enable (1-On, 0-Off)";
       std::cout << "\n\t\t allow (1-Accept, 0-Drop)";
       std::cout << std::endl;
-      std::cout << "\n\t ./fwlEnbl_sample_app 1 5 1 1 ->enable firewall on remote host and allow ";
-      std::cout << "\n\t                      packets";
+      std::cout << "\n\t ./fwl_enable_sample_app 1 1 5 1 1 ->enable firewall on remote host and ";
+      std::cout << "\n\t                                     allow packets";
    }
 
    // [7] Cleaning up and exit the application

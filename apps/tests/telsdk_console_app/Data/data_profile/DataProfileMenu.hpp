@@ -60,7 +60,7 @@ public:
     // initialize Profile Managers
     bool init();
     // Display Profile Management Menu
-    void displayMenu();
+    bool displayMenu();
 
     // Profile Management APIs
     void requestProfileList(std::vector<std::string> inputCommand);
@@ -71,11 +71,16 @@ public:
     void requestProfileById(std::vector<std::string> inputCommand);
 
     DataProfileMenu(std::string appName, std::string cursor);
+    //Initialization Callback
+    void onInitCompleted(telux::common::ServiceStatus status);
     ~DataProfileMenu();
 private:
     bool initDataProfileManagerAndListener(SlotId slotId);
     void getProfileParamsFromUser();
 
+    bool subSystemStatusUpdated_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
     std::map<SlotId, std::shared_ptr<telux::data::IDataProfileManager>> dataProfileManagerMap_;
     std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCb_;
     std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCbForQuery_;

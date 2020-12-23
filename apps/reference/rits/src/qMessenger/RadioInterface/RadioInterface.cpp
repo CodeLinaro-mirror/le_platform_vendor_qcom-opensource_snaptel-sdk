@@ -43,11 +43,6 @@ map<Cv2xStatusType, string> RadioInterface:: gCv2xStatusToString = {
     {Cv2xStatusType::UNKNOWN, "UNKNOWN"},
 };
 
-RadioInterface::RadioInterface() {
-    Cv2xFactory& cv2xFactory = Cv2xFactory::getInstance();
-    cv2xRadioManager = cv2xFactory.getCv2xRadioManager();
-}
-
 void RadioInterface::resetCallbackPromise() {
     this->gCallbackPromise = promise<ErrorCode>();
 };
@@ -90,17 +85,32 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {
+    bool cv2xRadioManagerStatusUpdated = false;
+    telux::common::ServiceStatus cv2xRadioManagerStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::condition_variable cv;
+    std::mutex mtx;
+    auto statusCb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2xRadioManagerStatusUpdated = true;
+        cv2xRadioManagerStatus = status;
+        cv.notify_all();
+    };
 
-    // Wait for radio manager to complete initialization
-    if (not cv2xRadioManager->isReady()) {
-        if (cv2xRadioManager->onReady().get()) {
-            cout << "C-V2X Radio Manager is ready" << endl;
-        } else {
-            cout << "cv2xRadioManager init failure" << endl;
-            return false;
-        }
+    auto &cv2xFactory = Cv2xFactory::getInstance();
+    cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
+    if (!cv2xRadioManager) {
+        LOGE("Fail to get cv2xRadioMgr\n");
+        return false;
     }
-
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+    /* Check that V2X radio is initialized */
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv2xRadioManagerStatus) {
+        LOGE("V2X cv2xRadioMgr initialization failed\n");
+        return false;
+    }
     // Get C-V2X status and make sure requested radio(Tx or Rx) is enabled
     if (statusCheck(type) != Cv2xStatusType::ACTIVE) {
         return false;

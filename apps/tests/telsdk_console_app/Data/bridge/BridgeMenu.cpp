@@ -44,23 +44,50 @@ using namespace std;
 BridgeMenu::BridgeMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     bridgeMgr_ = nullptr;
+    menuOptionsAdded_ = false;
+    subSystemStatusUpdated_ = false;
 }
 
 BridgeMenu::~BridgeMenu() {
 }
 
 bool BridgeMenu::init() {
-    bool subSystemStatus = false;
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    subSystemStatusUpdated_ = false;
     if (bridgeMgr_ == nullptr) {
+        auto initCb = std::bind(&BridgeMenu::onInitComplete, this, std::placeholders::_1);
         auto &dataFactory = telux::data::DataFactory::getInstance();
-        bridgeMgr_ = dataFactory.getBridgeManager();
-        subSystemStatus = bridgeMgr_->isSubsystemReady();
-        if (not subSystemStatus) {
-            std::cout << "\nInitializing Bridge Manager, Please wait" << std::endl;
-            std::future<bool> f = bridgeMgr_->onSubsystemReady();
-            // Wait unconditionally for data subsystem to be ready
-            subSystemStatus = f.get();
+        bridgeMgr_ = dataFactory.getBridgeManager(initCb);
+        if (bridgeMgr_ == nullptr) {
+            std::cout << "\nError encountered in initializing Bridge Manager" << std::endl;
+            return false;
         }
+        bridgeMgr_->registerListener(shared_from_this());
+    }
+    {
+        std::unique_lock<std::mutex> lck(mtx_);
+        //Bridge Manager is guaranteed to be valid pointer at this point. If manager initialization
+        //fails and factory invalidated it's own pointer to Bridge manager before reaching this
+        //point, reference count of L2TP manager should still be 1
+        telux::common::ServiceStatus subSystemStatus = bridgeMgr_->getServiceStatus();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            std::cout << "\nInitializing Bridge Manager, Please wait ..." << std::endl;
+            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
+            subSystemStatus = bridgeMgr_->getServiceStatus();
+        }
+        //At this point, initialization should be either AVAILABLE or FAIL
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nBridge Manager is ready" << std::endl;
+        }
+        else {
+            std::cout << "\nBridge Manager initialization failed" << std::endl;
+            bridgeMgr_ = nullptr;
+            return false;
+        }
+    }
+
+    if (menuOptionsAdded_ == false) {
+        menuOptionsAdded_ = true;
         std::shared_ptr<ConsoleAppCommand> enableBridge
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Set_Bridge_State", {},
                 std::bind(&BridgeMenu::enableBridge, this, std::placeholders::_1)));
@@ -79,18 +106,15 @@ bool BridgeMenu::init() {
 
         addCommands(commandsList);
     }
-    subSystemStatus = bridgeMgr_->isSubsystemReady();
-    if (subSystemStatus) {
-        std::cout << "\nBridge Manager is ready" << std::endl;
-    }
-    else {
-        std::cout << "\nBridge Manager is not ready" << std::endl;
-        return false;
-    }
     ConsoleApp::displayMenu();
     return true;
 }
 
+void BridgeMenu::onInitComplete(telux::common::ServiceStatus status) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    subSystemStatusUpdated_ = true;
+    cv_.notify_all();
+}
 
 void BridgeMenu::enableBridge(std::vector<std::string> inputCommand) {
     bool enableBridge = false;

@@ -123,13 +123,24 @@ using L2tpConfigCb
 class IL2tpManager {
  public:
     /**
+     * Checks the status of location manager and returns the result.
+     *
+     * @returns SERVICE_AVAILABLE      If L2tp manager is ready for service.
+     *          SERVICE_UNAVAILABLE    If L2tp manager is temporarily unavailable.
+     *          SERVICE_FAILED       - If L2tp manager encountered an irrecoverable failure.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+    /**
      * Checks if the L2tp manager subsystem is ready.
      *
      * @returns True if L2tp Manager is ready for service, otherwise
      *          returns false.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     * @note    This API will be deprecated. getServiceStatus API is recommended as an alternative
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -139,8 +150,8 @@ class IL2tpManager {
      * @returns A future that caller can wait on to be notified
      *          when L2tp manager is ready.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     * @note    This API will be deprecated. Callback of type InitResponseCb argument in data
+     *          factory API getNatManager is recommended as an alternative.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 

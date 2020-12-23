@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -74,15 +74,6 @@ private:
    std::string ratCapabilitiesMaskToString(telux::tel::RATCapabilitiesMask ratCapabilitiesMask);
 };
 
-class MyVoiceRadioTechnologyCallback {
-public:
-   void voiceRadioTechnologyResponse(telux::tel::RadioTechnology radioTechnology,
-                                     telux::common::ErrorCode error);
-
-private:
-   std::string radioTechToString(telux::tel::RadioTechnology radioTech);
-};
-
 class MyVoiceServiceStateCallback : public telux::tel::IVoiceServiceStateCallback {
 public:
    void voiceServiceStateResponse(const std::shared_ptr<telux::tel::VoiceServiceInfo> &serviceInfo,
@@ -118,6 +109,7 @@ public:
    static std::string eCallOperatingModeToString(telux::tel::ECallMode eCallMode);
    static std::string voiceServiceStateToString(telux::tel::VoiceServiceState vocSrvState);
    static std::string signalLevelToString(telux::tel::SignalStrengthLevel level);
+   static std::string radioTechToString(telux::tel::RadioTechnology radioTech);
 };
 
 #endif  // MYPHONELISTENER_HPP

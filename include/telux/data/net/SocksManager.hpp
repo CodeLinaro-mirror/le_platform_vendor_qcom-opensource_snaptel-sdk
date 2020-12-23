@@ -62,13 +62,24 @@ class ISocksListener;
 class ISocksManager {
  public:
     /**
+     * Checks the status of location manager and returns the result.
+     *
+     * @returns SERVICE_AVAILABLE      If Socks manager object is ready for service.
+     *          SERVICE_UNAVAILABLE    If Socks manager object is temporarily unavailable.
+     *          SERVICE_FAILED       - If Socks manager object encountered an irrecoverable failure.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+    /**
      * Checks if the SocksManager subsystem is ready.
      *
      * @returns True if SocksManager is ready for service, otherwise
      * returns false.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     * @deprecated Use getServiceStatus API..
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -78,8 +89,7 @@ class ISocksManager {
      * @returns A future that caller can wait on to be notified
      * when Socksanager is ready.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
+     *  @deprecated Use InitResponseCb callback in factory API getSocksManager.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 

@@ -37,7 +37,7 @@
 
 #define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void MyProfileListener::onServiceStatusChange(telux::common::ServiceStatus status, SlotId slotId) {
+void MyProfileListener::onServiceStatusChange(telux::common::ServiceStatus status) {
    std::string stat;
 
    switch(status) {
@@ -53,8 +53,7 @@ void MyProfileListener::onServiceStatusChange(telux::common::ServiceStatus statu
    }
 
    print_notification <<
-       " ** Data Profile onServiceStatusChange Slot: " << static_cast<int>(slotId) <<
-       " **\n" << stat << std::endl;
+       " ** Data Profile onServiceStatusChange **\n" << stat << std::endl;
 }
 
 void MyProfileListener::onProfileUpdate(int profileId, telux::data::TechPreference techPreference,

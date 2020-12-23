@@ -47,41 +47,58 @@ std::promise<int> promise;
 
 
 int main(int argc, char *argv[]) {
-   if(argc == 6) {
+   bool subSystemStatusUpdated = false;
+   std::condition_variable initCv;
+   std::mutex mtx;
+   std::shared_ptr<telux::data::net::IVlanManager> dataVlanMgr = nullptr;
+   telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+
+   if(argc == 7) {
       telux::data::OperationType opType = static_cast<telux::data::OperationType>
           (std::atoi(argv[1]));
       telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>
           (std::atoi(argv[2]));
       int vlanId         = std::atoi(argv[3]);
-      int profileId      = std::atoi(argv[4]);
+      SlotId slotId = static_cast<SlotId>(std::atoi(argv[4]));
+      int profileId      = std::atoi(argv[5]);
       bool isAccelerated = false;
-      if(std::atoi(argv[5])) {
+      if(std::atoi(argv[6])) {
          isAccelerated = true;
       }
 
-      // [1] Get the DataFactory and VLAN Manager instance
+      // [1] Instantiate initialization callback - this is optional
+      auto initCb = [&](telux::common::ServiceStatus status) {
+         std::lock_guard<std::mutex> lock(mtx);
+         subSystemStatusUpdated = true;
+         initCv.notify_all();
+      };
+
+      // [2] Get the DataFactory and VLAN Manager instance
       auto &dataFactory = telux::data::DataFactory::getInstance();
-      auto dataVlanMgr  = dataFactory.getVlanManager(opType);
+      do {
+         subSystemStatusUpdated = false;
+         dataVlanMgr  = dataFactory.getVlanManager(opType, initCb);
+         if(dataVlanMgr) {
+            // [3] Check if Vlan manager is ready
+            subSystemStatus = dataVlanMgr->getServiceStatus();
 
-      // [2] Check if data subsystem is ready
-      bool subSystemStatus = dataVlanMgr->isSubsystemReady();
-
-      // [2.1] If data subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "VLAN subsystem is not ready" << std::endl;
-         std::cout << "wait unconditionally for it to be ready " << std::endl;
-         std::future<bool> f = dataVlanMgr->onSubsystemReady();
-         // If we want to wait unconditionally for data subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      // [3] Exit the application, if SDK is unable to initialize vlan subsystems
-      if(subSystemStatus) {
-         std::cout << " *** VLAN Sub System is Ready *** " << std::endl;
-      } else {
-         std::cout << " *** ERROR - Unable to initialize VLAN subsystem *** " << std::endl;
-         return 1;
-      }
+            // [3.1] If Vlan manager is not ready, wait for it to be ready
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+               std::cout <<
+                   "\n\nInitializing Vlan Manager subsystem Please wait ..." << std::endl;
+               std::unique_lock<std::mutex> lck(mtx);
+               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
+               subSystemStatus = dataVlanMgr->getServiceStatus();
+            }
+         }
+         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << " *** Vlan SubSystem is Ready *** " << std::endl;
+            break;
+         }
+         else {
+            std::cout << " *** Unable to initialize Vlan subsystem *** " << std::endl;
+         }
+      } while(1);
 
       // [4] Instantiate create vlan callback instance - this is optional
       auto respCbCreate = [](bool isAccelerated, telux::common::ErrorCode error) {
@@ -118,21 +135,22 @@ int main(int argc, char *argv[]) {
 
       // [8] Bind newly created vlan with modem profile
       future = promise.get_future();
-      dataVlanMgr->bindWithProfile(profileId, vlanId, respCbBind);
+      dataVlanMgr->bindWithProfile(profileId, vlanId, respCbBind, slotId);
       tmp = future.get();
    } else {
       std::cout << "\n Invalid argument!!! \n\n";
       std::cout << "\n Sample command is: \n";
-      std::cout << "\n\t ./vlan_sample_app <operation> <interface > <vlan id> <profile id> <acc>";
+      std::cout << "\n\t ./vlan_sample_app <operation> <interface > <vlan id> <slotId> <profileId> <acc>";
       std::cout << std::endl;
       std::cout << "\n\t\t operation type (0-LOCAL, 1-REMOTE)";
       std::cout << "\n\t\t interface type (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI)";
       std::cout << "\n\t\t vlan id        id to be assigned to newly created vlan";
+      std::cout << "\n\t\t slot id        Slot id that contains modem profile";
       std::cout << "\n\t\t profile id     modem profile id to be bind to newly created vlan";
       std::cout << "\n\t\t acceleration type       (0-false, 1-true)";
       std::cout << std::endl;
-      std::cout << "\n\t ./vlan_sample_app 1 3 5 0 --> Creat remote vlan id 5 with ECM interface";
-      std::cout << "\n\t                               and no acceleration \n";
+      std::cout << "\n\t ./vlan_sample_app 1 3 5 1 1 0 --> Creat remote vlan id 5 with ECM interface";
+      std::cout << "\n\t                                   and slot 1 profile 1 no acceleration \n";
    }
 
    // [7] Cleaning up and exit the application

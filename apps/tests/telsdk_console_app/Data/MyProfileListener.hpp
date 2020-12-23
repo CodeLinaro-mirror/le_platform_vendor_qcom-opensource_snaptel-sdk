@@ -35,7 +35,7 @@
 
 class MyProfileListener : public telux::data::IDataProfileListener {
 public:
-   void onServiceStatusChange(telux::common::ServiceStatus status, SlotId slotId) override;
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
    void onProfileUpdate(int profileId, telux::data::TechPreference techPreference,
                         telux::data::ProfileChangeEvent event) override;
    std::string getProfileEventString(telux::data::ProfileChangeEvent event);

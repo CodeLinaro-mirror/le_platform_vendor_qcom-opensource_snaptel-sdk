@@ -273,6 +273,14 @@ enum class OperatingMode {
    PERSISTENT_LOW_POWER, /**< Persists low power mode even on reset*/
 };
 
+/**
+ * Emergency callback mode
+ */
+enum class EcbMode {
+   NORMAL = 0, /**< Device is not in emergency callback mode(ECBM) */
+   EMERGENCY,  /**< Device is in emergency callback mode(ECBM) */
+};
+
 /** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel

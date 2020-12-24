@@ -39,6 +39,8 @@ class CellbroadcastListener : public telux::tel::ICellBroadcastListener {
  public:
     void onIncomingMessage(SlotId slotId,
         const std::shared_ptr<telux::tel::CellBroadcastMessage> cbMessage) override;
+    void onMessageFilterChange(SlotId slotId,
+        std::vector<telux::tel::CellBroadcastFilter> filters) override;
 
 private:
     std::string geograhicalScopeToString(telux::tel::GeographicalScope scope);

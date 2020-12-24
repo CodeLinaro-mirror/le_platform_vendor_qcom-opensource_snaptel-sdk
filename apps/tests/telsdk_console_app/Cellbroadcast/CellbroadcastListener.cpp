@@ -120,6 +120,17 @@ void CellbroadcastListener::onIncomingMessage(SlotId slotId,
     }
 }
 
+void CellbroadcastListener::onMessageFilterChange(SlotId slotId,
+    std::vector<telux::tel::CellBroadcastFilter> filters) {
+    PRINT_NOTIFICATION << " Received Message filter change on slot id " <<
+        static_cast<int>(slotId) << std::endl;
+    for (int index = 0; index < filters.size(); index++) {
+        PRINT_NOTIFICATION << "Filter: " << index + 1 << ", StartMsgId: " <<
+            filters[index].startMessageId << ", EndMsgId: " << filters[index].endMessageId <<
+            std::endl;
+    }
+};
+
 std::string CellbroadcastListener::geograhicalScopeToString(telux::tel::GeographicalScope scope) {
     switch(scope) {
         case telux::tel::GeographicalScope::CELL_WIDE_IMMEDIATE:

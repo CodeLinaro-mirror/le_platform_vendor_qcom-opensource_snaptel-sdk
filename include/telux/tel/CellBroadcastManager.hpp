@@ -408,8 +408,8 @@ private:
    int serialNum_;
    int messageCode_;
    int updateNumber_;
-   std::string languageCode_;
-   std::string body_;
+   std::string languageCode_ = "";
+   std::string body_ = "";
    MessagePriority priority_;
    EtwsWarningType warningType_;
    bool emergencyUserAlert_;

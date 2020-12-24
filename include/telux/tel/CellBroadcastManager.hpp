@@ -800,6 +800,19 @@ public:
       const std::shared_ptr<CellBroadcastMessage> cbMessage) {
    }
 
+   /**
+    * This function is called when there is change in broadcast configuration like updation
+    * of message filters by the client using @ref ICellBroadcastManager::updateMessageFilters.
+    *
+    * @param [in] slotId  - Slot Id on which change in message filters is received.
+    * @param [in] filters - Complete list of configured broadcast message filters.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual void onMessageFilterChange(SlotId slotId, std::vector<CellBroadcastFilter> filters) {
+   }
+
    virtual ~ICellBroadcastListener() {
    }
 };

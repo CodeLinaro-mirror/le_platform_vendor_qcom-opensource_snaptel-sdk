@@ -923,10 +923,21 @@ static int startUnicastRSU() {
     if (sampleRx(gRxUnicastFlow->getSock(), cv2xMsg, obuAddr) <= 0) {
         return EXIT_FAILURE;
     }
+
+    // latency in milliseconds
+    uint64_t timestamp = getCurrentTimestamp();
+    uint64_t latency = 0;
+    if (timestamp > cv2xMsg.contents.timestamp) {
+        latency = (timestamp - cv2xMsg.contents.timestamp)/1000;
+    } else {
+        cerr << " negative latency!" << endl;
+    }
+
     gRxUnicastCount++;
     cout << "Received unicast msg from OBU L2 ID: ";
     cout << ntohl(obuAddr.sin6_addr.s6_addr32[3]);
-    cout << ", Rx seq num:" << cv2xMsg.contents.seqNum << endl;
+    cout << ", Rx seq num:" << cv2xMsg.contents.seqNum;
+    cout << ", latency:" << latency << "ms" << endl;
 
     cout << "Sending unicast echo msg to OBU." << endl;
     if (sampleTx(gTxUnicastFlow->getSock(), cv2xMsg, true, obuAddr) < 0) {

@@ -107,7 +107,7 @@ using VlanMappingResponseCb = std::function<void(
 class IVlanManager {
  public:
     /**
-     * Checks the status of location manager and returns the result.
+     * Checks the status of Vlan manager and returns the result.
      *
      * @returns SERVICE_AVAILABLE      If Vlan manager object is ready for service.
      *          SERVICE_UNAVAILABLE    If Vlan manager object is temporarily unavailable.
@@ -119,7 +119,7 @@ class IVlanManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the data subsystem is ready.
+     * Checks if the Vlan manager subsystem is ready.
      *
      * @returns True if VLAN Manager is ready for service, otherwise
      * returns false.
@@ -129,7 +129,7 @@ class IVlanManager {
     virtual bool isSubsystemReady() = 0;
 
     /**
-     * Wait for data subsystem to be ready.
+     * Wait for Vlan manager subsystem to be ready.
      *
      * @returns A future that caller can wait on to be notified
      * when VLAN manager is ready.

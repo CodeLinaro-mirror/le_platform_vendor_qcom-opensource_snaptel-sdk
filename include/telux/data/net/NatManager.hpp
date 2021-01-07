@@ -91,7 +91,7 @@ using StaticNatEntriesCb
 class INatManager {
  public:
     /**
-     * Checks the status of location manager and returns the result.
+     * Checks the status of NAT manager and returns the result.
      *
      * @returns SERVICE_AVAILABLE      If Nat manager object is ready for service.
      *          SERVICE_UNAVAILABLE    If Nat manager object is temporarily unavailable.

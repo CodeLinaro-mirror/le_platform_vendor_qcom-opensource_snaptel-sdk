@@ -123,7 +123,7 @@ using L2tpConfigCb
 class IL2tpManager {
  public:
     /**
-     * Checks the status of location manager and returns the result.
+     * Checks the status of L2tp manager and returns the result.
      *
      * @returns SERVICE_AVAILABLE      If L2tp manager is ready for service.
      *          SERVICE_UNAVAILABLE    If L2tp manager is temporarily unavailable.
@@ -151,7 +151,7 @@ class IL2tpManager {
      *          when L2tp manager is ready.
      *
      * @note    This API will be deprecated. Callback of type InitResponseCb argument in data
-     *          factory API getNatManager is recommended as an alternative.
+     *          factory API getL2tpManager is recommended as an alternative.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 

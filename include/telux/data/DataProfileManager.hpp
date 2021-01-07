@@ -65,11 +65,11 @@ class IDataProfileCallback;
 class IDataProfileManager {
 public:
     /**
-     * Checks the status of location manager and returns the result.
+     * Checks the status of Data profile manager and returns the result.
      *
-     * @returns SERVICE_AVAILABLE      If Nat manager is ready for service.
-     *          SERVICE_UNAVAILABLE    If Nat manager is temporarily unavailable.
-     *          SERVICE_FAILED       - If Nat manager encountered an irrecoverable failure.
+     * @returns SERVICE_AVAILABLE      If Data profile manager is ready for service.
+     *          SERVICE_UNAVAILABLE    If Data profile manager is temporarily unavailable.
+     *          SERVICE_FAILED       - If Data profile manager encountered an irrecoverable failure.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.

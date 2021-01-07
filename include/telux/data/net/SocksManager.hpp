@@ -62,7 +62,7 @@ class ISocksListener;
 class ISocksManager {
  public:
     /**
-     * Checks the status of location manager and returns the result.
+     * Checks the status of SocksManager and returns the result.
      *
      * @returns SERVICE_AVAILABLE      If Socks manager object is ready for service.
      *          SERVICE_UNAVAILABLE    If Socks manager object is temporarily unavailable.

@@ -42,9 +42,11 @@
 #include <mutex>
 
 #include <telux/common/CommonDefines.hpp>
+#include <telux/data/DataDefines.hpp>
 
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/DataProfileManager.hpp>
+#include <telux/data/ServingSystemManager.hpp>
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/IpFilter.hpp>
 
@@ -98,6 +100,18 @@ class DataFactory {
      *
      */
     std::shared_ptr<IDataProfileManager> getDataProfileManager(SlotId slotId = DEFAULT_SLOT_ID,
+        telux::common::InitResponseCb clientCallback = nullptr);
+
+    /**
+     * Get Serving System Manager
+     *
+     * @param [in] slotId            Unique identifier for the SIM slot
+     * @param [in] clientCallback    Callback to be called with initialization result
+     *
+     * @returns instance of IServingSystemManager
+     *
+     */
+    std::shared_ptr<IServingSystemManager> getServingSystemManager(SlotId slotId = DEFAULT_SLOT_ID,
         telux::common::InitResponseCb clientCallback = nullptr);
 
     /**
@@ -245,6 +259,7 @@ class DataFactory {
     std::mutex dataMutex_;
     std::map<SlotId, std::shared_ptr<IDataConnectionManager>> dataConnectionManagerMap_;
     std::map<SlotId, std::shared_ptr<IDataProfileManager>> dataProfileManagerMap_;
+    std::map<SlotId, std::shared_ptr<IServingSystemManager>> dataServingSystemManagerMap_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::INatManager>>
         natManagerMap_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IFirewallManager>>
@@ -264,10 +279,13 @@ class DataFactory {
     std::vector<telux::common::InitResponseCb> vlanCallbacks_;
     std::vector<telux::common::InitResponseCb> bridgeCallbacks_;
     std::vector<telux::common::InitResponseCb> l2tpCallbacks_;
+    std::vector<telux::common::InitResponseCb> servingSystemCallbacks_;
     DataFactory();
     ~DataFactory();
     DataFactory(const DataFactory &) = delete;
     DataFactory &operator=(const DataFactory &) = delete;
+    // Callbacks invoked after manager initialisation
+    void onServingSystemInitCompleted(telux::common::ServiceStatus status, SlotId slotId);
 };
 
 /** @} */ /* end_addtogroup telematics_data */

@@ -31,6 +31,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/MyProfileListener.cpp
    Data/DataUtils.cpp
    Data/data_profile/DataProfileMenu.cpp
+   Data/serving_system/ServingSystemMenu.cpp
    Data/data_connection/DataConnectionMenu.cpp
    Data/data_filter/MyDataFilterListener.cpp
    Data/data_filter/DataFilterMenu.cpp

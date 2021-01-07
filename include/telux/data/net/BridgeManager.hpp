@@ -97,7 +97,7 @@ using BridgeInfoResponseCb
 class IBridgeManager {
  public:
     /**
-     * Checks the status of location manager and returns the result.
+     * Checks the status of Bridge manager and returns the result.
      *
      * @returns SERVICE_AVAILABLE     If Bridge manager object is ready for service.
      *          SERVICE_UNAVAILABLE   If Bridge manager object is temporarily unavailable.
@@ -109,7 +109,7 @@ class IBridgeManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the data subsystem is ready.
+     * Checks if the Bridge manager subsystem is ready.
      *
      * @returns True if the Bridge Manager is ready for service, otherwise returns false.
      *
@@ -118,7 +118,7 @@ class IBridgeManager {
     virtual bool isSubsystemReady() = 0;
 
     /**
-     * Wait for data subsystem to be ready.
+     * Wait for Bridge manager subsystem to be ready.
      *
      * @returns A future that caller can wait until the Bridge Manager succeed/fail to be ready.
      *

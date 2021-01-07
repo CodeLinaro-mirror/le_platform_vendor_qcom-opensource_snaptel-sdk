@@ -113,14 +113,18 @@ void DataMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "L2tp_Menu",
             {}, std::bind(&DataMenu::l2tpMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> servingSystemMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Serving_System_Menu",
+            {}, std::bind(&DataMenu::servingSystemMenu, this, std::placeholders::_1)));
+
     std::shared_ptr<ConsoleAppCommand> dataProfileManagerMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "9", "Data_Profile_Management_Menu",
+            "10", "Data_Profile_Management_Menu",
             {}, std::bind(&DataMenu::dataProfileMenu, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
-        socksMenuCommand, l2tpMenuCommand, dataProfileManagerMenuCommand};
+        socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand};
 
     addCommands(commandsList);
 
@@ -232,5 +236,16 @@ void DataMenu::socksMenu(std::vector<std::string> userInput) {
         socksMenu_->mainLoop();
     }
     socksMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::servingSystemMenu(std::vector<std::string> userInput) {
+    if (dataServingSystemMenu_ == nullptr) {
+        dataServingSystemMenu_ =
+            make_shared<DataServingSystemMenu>("Serving System Menu", "serving_system> ");
+    }
+    if(dataServingSystemMenu_->init()) {
+        dataServingSystemMenu_->mainLoop();
+    }
     ConsoleApp::displayMenu();
 }

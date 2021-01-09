@@ -54,6 +54,7 @@
 #include "MyProfileListener.hpp"
 #include "data_connection/DataConnectionMenu.hpp"
 #include "data_profile/DataProfileMenu.hpp"
+#include "serving_system/ServingSystemMenu.hpp"
 #include "bridge/BridgeMenu.hpp"
 #include "l2tp/L2tpMenu.hpp"
 #include "snat/SnatMenu.hpp"
@@ -87,6 +88,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
 
     void dataConnectionMenu(std::vector<std::string> inputCommand);
     void dataProfileMenu(std::vector<std::string> inputCommand);
+    void servingSystemMenu(std::vector<std::string> inputCommand);
     void snatMenu(std::vector<std::string> inputCommand);
     void firewallMenu(std::vector<std::string> inputCommand);
     void vlanMenu(std::vector<std::string> inputCommand);
@@ -98,6 +100,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
 
     std::shared_ptr<DataConnectionMenu> dataConnectionMenu_;
     std::shared_ptr<DataProfileMenu> dataProfileMenu_;
+    std::shared_ptr<DataServingSystemMenu> dataServingSystemMenu_;
     std::shared_ptr<BridgeMenu> bridgeMenu_;
     std::shared_ptr<L2tpMenu> l2tpMenu_;
     std::shared_ptr<SnatMenu> snatMenu_;

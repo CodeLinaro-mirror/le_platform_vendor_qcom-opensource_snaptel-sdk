@@ -109,7 +109,7 @@ using DmzEntriesCb
 class IFirewallManager {
  public:
     /**
-     * Checks the status of location manager and returns the result.
+     * Checks the status of Firewall manager and returns the result.
      *
      * @returns SERVICE_AVAILABLE    If Firewall manager object is ready for service.
      *          SERVICE_UNAVAILABLE  If Firewall manager object is temporarily unavailable.
@@ -121,7 +121,7 @@ class IFirewallManager {
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the data subsystem is ready.
+     * Checks if the Firewall manager subsystem is ready.
      *
      * @returns True if Firewall Manager is ready for service, otherwise
      * returns false.
@@ -131,12 +131,12 @@ class IFirewallManager {
     virtual bool isSubsystemReady() = 0;
 
     /**
-     * Wait for data subsystem to be ready.
+     * Wait for Firewall manager subsystem to be ready.
      *
      * @returns A future that caller can wait on to be notified
      * when firewall manager is ready.
      *
-     * @deprecated Use InitResponseCb callback in factory API getNewFirewallEntry.
+     * @deprecated Use InitResponseCb callback in factory API getFirewallManager.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 

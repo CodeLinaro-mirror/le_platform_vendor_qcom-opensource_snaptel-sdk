@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       Call.hpp
  * @brief      Phone Call class is the primary interface to process Call requests.
@@ -282,6 +288,17 @@ public:
     * @returns Phone Id.
     */
    virtual int getPhoneId() = 0;
+
+   /**
+    *  To check if call is in multi party call(conference) or not
+    *
+    * @returns True if call is in conference otherwise false.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
+    */
+   virtual bool isMultiPartyCall() = 0;
+
 
    virtual ~ICall() {
    }

@@ -28,39 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
-
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -219,6 +189,11 @@ void CallMenu::init() {
    std::shared_ptr<ConsoleAppCommand> stopDtmfToneCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("14", "Stop_DTMF_tone", {},
                         std::bind(&CallMenu::stopDtmfTone, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> hangupForegroundResumeBackgroundCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "15", "Hangup_foreground_call(s)_resume_background", {},
+         std::bind(&CallMenu::hangupForegroundResumeBackground, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCallSubMenu
       = {dialCommand,
          acceptCallCommand,
@@ -233,7 +208,8 @@ void CallMenu::init() {
          getCallsCommand,
          playDtmfTonesCommand,
          startDtmfToneCommand,
-         stopDtmfToneCommand};
+         stopDtmfToneCommand,
+         hangupForegroundResumeBackgroundCommand};
    addCommands(commandsListCallSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -534,6 +510,53 @@ void CallMenu::hangupDialingOrAlerting(std::vector<std::string> userInput) {
    }
 }
 
+void CallMenu::hangupForegroundResumeBackground(std::vector<std::string> userInput) {
+   std::shared_ptr<telux::tel::ICall> spCall = nullptr;
+   // Iterate through the call list in the application and hangup the active call(s)
+   // and accept held or waiting call.
+   std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
+      = callManager_->getInProgressCalls();
+   int phoneId = DEFAULT_PHONE_ID;
+
+   if (telux::common::DeviceConfig::isMultiSimSupported()) {
+      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
+         std::string slotSelection = "";
+         char delimiter = '\n';
+         std::cout << "Enter the desired Phone ID / SIM slot: ";
+         std::getline(std::cin, slotSelection, delimiter);
+         if (!slotSelection.empty()) {
+            try {
+               phoneId = std::stoi(slotSelection);
+               if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
+                  std::cout << "ERROR: Invalid slot entered\n";
+                  return;
+               }
+             } catch (const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+                          << slotSelection << "\n";
+                return;
+             }
+         } else {
+             std::cout << "ERROR: Empty input, enter the correct slot\n";
+             return;
+         }
+      }
+   }
+   for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
+      ++callIterator) {
+      if ((*callIterator)->getPhoneId() == phoneId) {
+         spCall = *callIterator;
+         break;
+      }
+   }
+   if(spCall) {
+      callManager_->hangupForegroundResumeBackground(phoneId,
+         MyHangupCallback::hangupFgResumeBgResponse);
+   } else {
+      std::cout << "No call found\n";
+   }
+}
+
 void CallMenu::hangupWithCallIndex(std::vector<std::string> userInput) {
    int callIndex;
    try {
@@ -775,7 +798,8 @@ void CallMenu::getCalls(std::vector<std::string> userInput) {
                 << " Call Index: " << (int)(*callIterator)->getCallIndex()
                 << " Call Direction: " << (int)(*callIterator)->getCallDirection()
                 << " Phone Number: " << (*callIterator)->getRemotePartyNumber()
-                << " SlotId: " << (*callIterator)->getPhoneId() << std::endl;
+                << " SlotId: " << (*callIterator)->getPhoneId()
+                << " isMpty: " << (*callIterator)->isMultiPartyCall() << std::endl;
    }
 }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017,2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -285,6 +285,17 @@ public:
     * @returns Phone Id.
     */
    virtual int getPhoneId() = 0;
+
+   /**
+    *  To check if call is in multi party call(conference) or not
+    *
+    * @returns True if call is in conference otherwise false.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
+    */
+   virtual bool isMultiPartyCall() = 0;
+
 
    virtual ~ICall() {
    }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,9 +46,13 @@ public:
        telux::common::ErrorCode error);
    void onSecondaryBandInfo(const telux::loc::ConstellationSet set,
      telux::common::ErrorCode error);
+   void onTerrestrialPositionInfo(const std::shared_ptr<
+       telux::loc::ILocationInfoBase> locationInfo);
 
 private:
    std::string commandName_;
+   void printLocationTech(telux::loc::LocationTechnology techMask);
+   void printLocationValidity(telux::loc::LocationInfoValidity validityMask);
 };
 
 #endif  // MYLOCATIONCOMMANDCALLACK_HPP

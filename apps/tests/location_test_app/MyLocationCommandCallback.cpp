@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,6 +28,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 
 #include "MyLocationCommandCallback.hpp"
 #include "../telsdk_console_app/Utils.hpp"
@@ -65,6 +66,104 @@ void MyLocationCommandCallback::onGnssEnergyConsumedInfo(telux::loc::GnssEnergyC
    std::cout << " Energy consumed : " << gnssEnergyConsumed.energySinceFirstBoot
        << std::endl;
    std::cout << "*******************************" << std::endl;
+}
+
+void MyLocationCommandCallback::printLocationValidity(telux::loc::LocationInfoValidity validityMask) {
+   std::cout << "Location Basic Validity :" << std::endl;
+   if((validityMask & telux::loc::HAS_LAT_LONG_BIT)) {
+      std::cout << "valid latitude longitude" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_ALTITUDE_BIT)) {
+      std::cout << "valid altitude" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_SPEED_BIT)) {
+      std::cout << "valid speed" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_HEADING_BIT)) {
+      std::cout << "valid heading" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_HORIZONTAL_ACCURACY_BIT)) {
+      std::cout << "valid horizontal accuracy" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_VERTICAL_ACCURACY_BIT)) {
+      std::cout << "valid vertical accuracy" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_SPEED_ACCURACY_BIT)) {
+      std::cout << "valid speed accuracy" << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_HEADING_ACCURACY_BIT)) {
+      std::cout << "valid heading accuracy " << std::endl;
+   }
+   if((validityMask & telux::loc::HAS_TIMESTAMP_BIT)) {
+      std::cout << "valid timestamp" << std::endl;
+   }
+}
+
+void MyLocationCommandCallback::printLocationTech(telux::loc::LocationTechnology techMask) {
+   std::cout << "Position Technology used :" << std::endl;
+   if((techMask & telux::loc::LOC_GNSS)) {
+      std::cout << "location calculated using GNSS" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_CELL)) {
+      std::cout << "location calculated using CELL" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_WIFI)) {
+      std::cout << "location calculated using WIFI" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_SENSORS)) {
+      std::cout << "location calculated using SENSORS" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_REFERENCE_LOCATION)) {
+      std::cout << "location calculated using Reference location" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_INJECTED_COARSE_POSITION)) {
+      std::cout << "location calculated using Coarse position injected into the location engine"
+                << std::endl;
+   }
+   if((techMask & telux::loc::LOC_AFLT)) {
+      std::cout << "location calculated using AFLT" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_HYBRID)) {
+      std::cout << "location calculated using GNSS and network-provided measurements"
+                << std::endl;
+   }
+   if((techMask & telux::loc::LOC_PPE)) {
+      std::cout << "location calculated using Precise position engine" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_VEH)) {
+      std::cout << "location calculated using Vehicular data" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_VIS)) {
+      std::cout << "location calculated using Visual data" << std::endl;
+   }
+}
+
+void MyLocationCommandCallback::onTerrestrialPositionInfo(
+       const std::shared_ptr<telux::loc::ILocationInfoBase> locationInfo) {
+   PRINT_CB << "\n*********************** Terrestrial Position Report *********************"
+                      << std::endl;
+   printLocationValidity(locationInfo->getLocationInfoValidity());
+   printLocationTech(locationInfo->getTechMask());
+
+   if(locationInfo->getTimeStamp() != telux::loc::UNKNOWN_TIMESTAMP) {
+     time_t realtime;
+     realtime = (time_t)((locationInfo->getTimeStamp() / 1000));
+     std::cout << "Time stamp: " << locationInfo->getTimeStamp() << " mSec" << std::endl;
+     std::cout << "GMT Time stamp: " << ctime(&realtime);
+   } else {
+     std::cout << "Time stamp Not Valid" << std::endl;
+   }
+   std::cout << "Latitude: " << std::setprecision(15) << locationInfo->getLatitude() << std::endl
+             << "Longitude: " << std::setprecision(15) << locationInfo->getLongitude() << std::endl
+             << "Altitude: " << std::setprecision(15) << locationInfo->getAltitude() << std::endl
+             << "Speed: " << locationInfo->getSpeed() << std::endl
+             << "Heading: " << locationInfo->getHeading() << std::endl
+             << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
+             << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
+             << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
+             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl;
+
+   std::cout << "*************************************************************" << std::endl;
 }
 
 void MyLocationCommandCallback::onGetYearOfHwInfo(uint16_t yearOfHw,

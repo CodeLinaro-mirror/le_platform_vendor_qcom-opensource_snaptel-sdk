@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -540,6 +540,33 @@ public:
   virtual telux::common::Status configureEngineState(const EngineType engineType,
       const LocationEngineRunState engineState,
           telux::common::ResponseCallback callback = nullptr ) = 0;
+
+/**
+ * Clients can request Terrestrial Positioning using @ref ILocationManager::
+ * getTerrestrialPosition. Terrestrial Positioning requires sending device data to the cloud to
+ * get the position.
+ * This functionality requires user consent. This API needs to be invoked to provide the user
+ * consent.
+ *
+ * The consent will remain effective across power cycles, until this API is called with a
+ * different value.
+ *
+ * @param [in] userConsent - true indicates user consents to sending device data to cloud,
+ *                           false indicates user does not consent.
+ *
+ * @param [in] callback - Optional callback to get the response of
+ *                        provideConsentForTerrestrialPositioning.
+ *
+ * @returns Status of provideConsentForTerrestrialPositioning i.e. success or suitable
+ *          status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status provideConsentForTerrestrialPositioning(bool userConsent,
+      telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Destructor of ILocationConfigurator

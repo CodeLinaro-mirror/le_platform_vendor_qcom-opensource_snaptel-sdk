@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -56,7 +56,6 @@ using telux::data::IpFamilyType;
 using telux::cv2x::Cv2xFactory;
 using telux::data::DataFactory;
 using telux::data::IDataProfileManager;
-using telux::data::TechPreference;
 using telux::data::IpFamilyType;
 using telux::cv2x::ICv2xRadioManager;
 using telux::common::IServiceStatusListener;
@@ -74,14 +73,18 @@ struct ProfileIds {
 enum DataCallType {
     CV2X_DATA_CALL_IP = 0,
     CV2X_DATA_CALL_NON_IP,
+    CV2X_DATA_CALL_MAX
 };
 
 class DataCallInfo {
     public:
-        DataCallType type;
-        uint8_t profileIndex;
-        std::string ifaceName;
+        int profileIndex;
+        DataCallStatus callStatus;
+        std::string apnName;
 };
+
+const std::string APN_NAME_V2X_IP = std::string("v2x_ip");
+const std::string APN_NAME_V2X_NON_IP = std::string("v2x_non_ip");
 
 /** TELUX callbacks */
 class Cv2xTelux;
@@ -93,12 +96,6 @@ class QueryProfileCallback : public telux::data::IDataProfileListCallback
         void onProfileListResponse(const std::vector<std::shared_ptr<DataProfile>> &profiles,
                 telux::common::ErrorCode error) override;
     private:
-        const std::string APN_NAME_V2X_IP = std::string("v2x_ip");
-        const std::string APN_NAME_V2X_NON_IP = std::string("v2x_non_ip");
-        // V2x profile Ids set by the modem in the HW MBN
-        const int MIN_V2X_PROFILE_ID = 38;
-        const int MAX_V2X_PROFILE_ID = 40;
-
         std::shared_ptr<std::promise<ProfileIds>> prom_;
 };
 
@@ -116,14 +113,8 @@ class DataConnectionListener: public telux::data::IDataConnectionListener
 
         DataConnectionListener(std::weak_ptr<Cv2xTelux> instance);
 
-        void waitDataCallConnect(DataCallType callType, bool& connect);
-
     private:
         std::weak_ptr<Cv2xTelux> cv2xTelux_;
-        std::condition_variable dcv_;
-        std::mutex dmutex_;
-        DataCallStatus ipStatus_;
-        DataCallStatus nonIpStatus_;
 };
 
 class Cv2xTelux : public telux::cv2x::ICv2xListener,
@@ -206,19 +197,18 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
          */
         bool isNonIpDataCall(uint8_t profileID);
 
+        void setIpCallStatus(DataCallStatus newStatus);
+        void setNonipCallStatus(DataCallStatus newStatus);
+
         bool isPostSSRV2XDone_;
         std::condition_variable cv_;
         std::mutex mutex_;
 
     private:
-        const std::string APN_NAME_V2X_IP = std::string("v2x_ip");
-        const std::string APN_NAME_V2X_NON_IP = std::string("v2x_non_ip");
 
         std::mutex dcMutex_;
-        std::shared_ptr<DataCallInfo> dcInfoIP_;
-        std::shared_ptr<DataCallInfo> dcInfoNonIP_;
+        DataCallInfo callInfo_[CV2X_DATA_CALL_MAX];
         Cv2xStatus cv2xStatus_;
-        bool isInitializationDone_;
         bool cv2xRxActiveDone_ = false;
         bool cv2xTxActiveDone_ = false;
 
@@ -231,7 +221,7 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
         /**
          * Stop data call, used internally by stopV2xDataCall()
          */
-        int stopDataCall(std::shared_ptr<DataCallInfo>, IpFamilyType ipFamilyType);
+        int stopDataCall(DataCallType callType, IpFamilyType ipFamilyType);
 
         /**
          * Handle finding V2X data profile, used internally by findProfilesAndStartDataCalls()
@@ -251,6 +241,6 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
         /**
          * Start data call, used internally by startV2xDataCall()
          */
-        Status startDataCall(std::shared_ptr<DataCallInfo> dataCall, IpFamilyType ipFamilyType);
+        Status startDataCall(DataCallType callType, IpFamilyType ipFamilyType);
 };
 #endif /* CV2XTELUX_H */

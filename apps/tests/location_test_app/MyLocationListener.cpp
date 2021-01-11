@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -227,6 +227,29 @@ void MyLocationListener::printLocationTech(telux::loc::LocationTechnology techMa
    }
    if((techMask & telux::loc::LOC_SENSORS)) {
       std::cout << "location calculated using SENSORS" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_REFERENCE_LOCATION)) {
+      std::cout << "location calculated using Reference location" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_INJECTED_COARSE_POSITION)) {
+      std::cout << "location calculated using Coarse position injected into the location engine"
+                << std::endl;
+   }
+   if((techMask & telux::loc::LOC_AFLT)) {
+      std::cout << "location calculated using AFLT" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_HYBRID)) {
+      std::cout << "location calculated using GNSS and network-provided measurements"
+                << std::endl;
+   }
+   if((techMask & telux::loc::LOC_PPE)) {
+      std::cout << "location calculated using Precise position engine" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_VEH)) {
+      std::cout << "location calculated using Vehicular data" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_VIS)) {
+      std::cout << "location calculated using Visual data" << std::endl;
    }
 }
 

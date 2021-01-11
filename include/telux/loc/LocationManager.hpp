@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -95,6 +95,17 @@ public:
  */
   using GetYearOfHwCallback = std::function<void(uint16_t yearOfHw,
       telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to getTerrestrialPosition API.
+ *
+ * @param[in] terrestrialInfo - basic position related information.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+  using GetTerrestrialInfoCallback = std::function<void(
+      const std::shared_ptr<ILocationInfoBase> terrestrialInfo)>;
 
 /**
  * Checks the status of location subsystems and returns the result.
@@ -348,6 +359,59 @@ public:
  *
  */
   virtual telux::common::Status getYearOfHw(GetYearOfHwCallback cb) = 0;
+
+/**
+ * This API retrieves single-shot terrestrial position using the set of specified terrestrial
+ * technologies.
+ * This API can be invoked even while there is an on-going tracking session that was started using
+ * startBasicReports/startDetailedReports/startDetailedEngineReports.
+ * If this API is invoked while there is already a pending request for terrestrial position, the
+ * request will fail and @ref ResponseCallback will get invoked with @ref
+ * ErrorCode::OP_IN_PROGRESS.
+ * To cancel a pending request, use @ref ILocationManager::cancelTerrestrialPositionRequest.
+ * Before using this API, user consent needs to be set true via @ref ILocationConfigurator::
+ * provideConsentForTerrestrialPositioning.
+ *
+ * @param[in] timeoutMsec - the time in milliseconds within which the client is expecting a
+ *                          response. If the system is unable to provide a report within this
+ *                          time, the @ref ResponseCallback will be invoked with @ref ErrorCode::
+ *                          OPERATION_TIMEOUT.
+ *
+ * @param[in] techMask - the set of terrestrial technologies that are allowed to be used for
+ *                       producing the position.
+ *
+ * @param[in] cb - callback to receive terrestrial position. This callback will only
+ *                 be invoked when ResponseCallback is invoked with SUCCESS.
+ *
+ * @param [in] callback - Optional callback to get the response of getTerrestrialPosition.
+ *
+ * @returns Status of getTerrestrialPosition i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status getTerrestrialPosition(uint32_t timeoutMsec,
+      TerrestrialTechnology techMask, GetTerrestrialInfoCallback cb, telux::common::
+          ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API cancels the pending request invoked by @ref ILocationManager::getTerrestrialPosition.
+ * If this API is invoked while there is no pending request for terrestrial position from
+ * @ref ILocationManager::getTerrestrialPosition, then @ref ResponseCallback will be invoked
+ * with @ref ErrorCode::INVALID_ARGUMENTS.
+ *
+ * @param [in] callback - Optional callback to get the response of
+ *                        cancelTerrestrialPositionRequest.
+ *
+ * @returns Status of cancelTerrestrialPositionRequest i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status cancelTerrestrialPositionRequest(telux::common::
+      ResponseCallback callback = nullptr) = 0;
 
 
 /**

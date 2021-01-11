@@ -354,6 +354,7 @@ enum class ErrorCode {
    TRANSPORT_BUSY_ERROR = -21, /**< Transport busy error */
 
    SUBSYSTEM_UNAVAILABLE = 5000, /**< Underlying service currently unavailable */
+   OPERATION_TIMEOUT = 5001,   /**< Timeout error */
 };
 
 /**

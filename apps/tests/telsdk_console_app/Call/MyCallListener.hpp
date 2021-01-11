@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef MYCALLLISTENER_HPP
 #define MYCALLLISTENER_HPP
 
@@ -67,6 +73,11 @@ public:
 
 private:
    std::string commandName_;
+};
+
+class MyHangupCallback {
+public:
+   static void hangupFgResumeBgResponse(telux::common::ErrorCode error);
 };
 
 #endif  // MYCALLLISTENER_HPP

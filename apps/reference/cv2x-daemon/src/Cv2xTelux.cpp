@@ -82,18 +82,8 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
          (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) &&
          ((status.txStatus !=  Cv2xStatusType::INACTIVE) &&
          (status.rxStatus !=  Cv2xStatusType::INACTIVE))) {
-
         LOGD("State Transition From Inactive to Active/Suspended\n");
-
-        if (status.txStatus == Cv2xStatusType::SUSPENDED) {
-            bootkpilog("cv2x-daemon: V2X TX status is suspended");
-        }
-
-        if (status.rxStatus == Cv2xStatusType::SUSPENDED) {
-            bootkpilog("cv2x-daemon: V2X RX status is suspended");
-        }
-
-            startDataCalls = true;
+        startDataCalls = true;
     }
 
     cv2xStatus_ = status;
@@ -107,26 +97,23 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
 
 void Cv2xTelux::logStatusChanged(Cv2xStatus &status) {
     static uint8_t previousCbr = 255;
-    if (not cv2xTxActiveDone_ and
-        status.txStatus == Cv2xStatusType::ACTIVE) {
-        cv2xTxActiveDone_ = true;
-        LOGI("V2X TX status is active\n");
-        bootkpilog("cv2x-daemon: V2X TX status is active");
-    }
-
-    if (not cv2xRxActiveDone_ and
-        status.rxStatus == Cv2xStatusType::ACTIVE) {
-        cv2xRxActiveDone_ = true;
-        LOGI("V2X Rx status is active\n");
-        bootkpilog("cv2x-daemon: V2X RX status is active");
-    }
 
     if ((status.txStatus != Cv2xStatusType::UNKNOWN or
          status.rxStatus != Cv2xStatusType::UNKNOWN) and
         (cv2xStatus_.txStatus != status.txStatus or
-         cv2xStatus_.rxStatus != status.rxStatus or
-         cv2xStatus_.txCause != status.txCause or
-         cv2xStatus_.rxCause != status.rxCause)) {
+         cv2xStatus_.rxStatus != status.rxStatus)) {
+
+        if (status.txStatus == Cv2xStatusType::ACTIVE) {
+            bootkpilog("cv2x-daemon: V2X TX status is active");
+        } else if (status.txStatus == Cv2xStatusType::SUSPENDED) {
+            bootkpilog("cv2x-daemon: V2X TX status is suspended");
+        }
+        if (status.rxStatus == Cv2xStatusType::ACTIVE) {
+            bootkpilog("cv2x-daemon: V2X RX status is active");
+        } else if (status.rxStatus == Cv2xStatusType::SUSPENDED) {
+            bootkpilog("cv2x-daemon: V2X RX status is suspended");
+        }
+
         LOGI("tx_status=%d, rx_status=%d, tx_cause=%d, rx_cause=%d\n",
             Cv2xUtils::convertStatus(status.txStatus),
             Cv2xUtils::convertStatus(status.rxStatus),
@@ -223,7 +210,7 @@ bool Cv2xTelux::isNonIpDataCall(uint8_t profileID) {
 void Cv2xTelux::onServiceStatusChange(ServiceStatus status) {
     Status res = Status::FAILED;
 
-    LOGD("Cv2xTelux Service Status changed to %s\n",
+    LOGI("Cv2xTelux Service Status changed to %s\n",
          convertServiceStatusToString[status].c_str());
 
     if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
@@ -440,15 +427,19 @@ Status Cv2xTelux::startDataCall(DataCallType callType, IpFamilyType ipFamilyType
     if (res == Status::SUCCESS) {
         if (response.get_future().get()) {
             LOGI("start cv2x data call for:%s in progress\n", apnName.c_str());
-            res = Status::SUCCESS;
+        } else {
+            res = Status::FAILED;
         }
     } else {
         LOGE("start cv2x data call for:%s failed\n", apnName.c_str());
+        res = Status::FAILED;
+    }
+
+    if (res != Status::SUCCESS) {
         std::lock_guard<std::mutex> lock(dcMutex_);
         if (callInfo_[callType].callStatus == DataCallStatus::NET_CONNECTING) {
             callInfo_[callType].callStatus = DataCallStatus::NET_NO_NET;
         }
-        res = Status::FAILED;
     }
 
     return res;

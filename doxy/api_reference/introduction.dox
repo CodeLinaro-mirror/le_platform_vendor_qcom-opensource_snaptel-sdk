@@ -56,6 +56,7 @@ when       who     what, where, why
 08/17/20   SD      Added measurement, nmea, system info, minGpsWeek, minSVElevation, delete data, dREngine and secondaryBand support in Telematics SDK
 11/18/20   ZH      Added cv2x SE-linux interface details in Telematics SDK
 11/20/20   SD      Added year of hardware and configure engine state support in Telematics SDK
+01/12/21   SD      Added terrestrial positioning support in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

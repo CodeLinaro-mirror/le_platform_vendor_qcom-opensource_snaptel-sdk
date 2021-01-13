@@ -209,8 +209,6 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
         std::mutex dcMutex_;
         DataCallInfo callInfo_[CV2X_DATA_CALL_MAX];
         Cv2xStatus cv2xStatus_;
-        bool cv2xRxActiveDone_ = false;
-        bool cv2xTxActiveDone_ = false;
 
         /* Telux objects */
         std::shared_ptr<ICv2xRadioManager> cv2xRadioMgr_;

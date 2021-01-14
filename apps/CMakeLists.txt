@@ -68,6 +68,7 @@ if(BUILD_ALL_APPS)
 endif(BUILD_ALL_APPS)
 
 if(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
+    add_subdirectory( samples/cv2x_tm_app )
     add_subdirectory( samples/cv2x_rx_app )
     add_subdirectory( samples/cv2x_tx_app )
     add_subdirectory( samples/cv2x_get_status_app )

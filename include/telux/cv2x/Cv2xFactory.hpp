@@ -51,6 +51,7 @@ namespace cv2x {
 class ICv2xRadio;
 class ICv2xRadioManager;
 class ICv2xConfig;
+class ICv2xThrottleManager;
 
 /**
  *@brief Cv2xFactory is the factory that creates the Cv2x Radio.
@@ -80,11 +81,20 @@ public:
      */
     std::shared_ptr<ICv2xConfig> getCv2xConfig();
 
+    /**
+     * Get Cv2xThrottleManager instance.
+     *
+     * @returns shared pointer to Cv2x ThrottleManager upon success.
+     *          nullptr otherwise.
+     */
+    std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager();
+
 private:
 
     std::mutex mutex_;
     std::shared_ptr<ICv2xRadioManager> radioManager_;
     std::shared_ptr<ICv2xConfig> config_;
+    std::shared_ptr<ICv2xThrottleManager> throttleManager_;
 
     Cv2xFactory();
 };

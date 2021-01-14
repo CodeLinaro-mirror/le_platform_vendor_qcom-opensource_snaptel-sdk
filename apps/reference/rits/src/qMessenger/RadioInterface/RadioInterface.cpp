@@ -100,7 +100,7 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     auto &cv2xFactory = Cv2xFactory::getInstance();
     cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioManager) {
-        LOGE("Fail to get cv2xRadioMgr\n");
+        std::cout << "Fail to get cv2xRadioMgr" << std::endl;
         return false;
     }
     std::unique_lock<std::mutex> lck(mtx);
@@ -108,7 +108,7 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     /* Check that V2X radio is initialized */
     if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
         cv2xRadioManagerStatus) {
-        LOGE("V2X cv2xRadioMgr initialization failed\n");
+        std::cout << "V2X cv2xRadioMgr initialization failed" << std::endl;
         return false;
     }
     // Get C-V2X status and make sure requested radio(Tx or Rx) is enabled

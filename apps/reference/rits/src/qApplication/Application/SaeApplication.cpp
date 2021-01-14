@@ -27,12 +27,30 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
  /**
   * @file: SaeApplication.cpp
   *
   * @brief: class for ITS stack application - SAE
   */
 #include "SaeApplication.hpp"
+
+// Each thread that is receiving and verifying will use this for logging purposes
+thread_local int verifStatIdx = 0;
+thread_local int verif_fails = 0;
+thread_local std::vector<VerifStats> verifStats;
+thread_local msg_contents* mc;
+thread_local msg_contents msg_cont;
+thread_local int rxFail = 0;
+thread_local int txFail = 0;
+thread_local int rxSuccess = 0;
+thread_local int txSuccess = 0;
+thread_local int verifFail = 0;
+thread_local int verifSuccess = 0;
+thread_local int signFail = 0;
+thread_local int signSuccess = 0;
+
+
 SaeApplication::SaeApplication(char *fileConfiguration):ApplicationBase(fileConfiguration) {
     MsgType = MessageType::BSM;
 
@@ -49,6 +67,8 @@ SaeApplication::SaeApplication(char *fileConfiguration):ApplicationBase(fileConf
     for (auto mc : receivedContents) {
         mc->stackId = STACK_ID_SAE;
     }
+    sem_init(&this->rx_sem, 0, 1);
+    sem_init(&this->log_sem, 0, 1);
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
@@ -69,8 +89,183 @@ SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
     for (auto mc : receivedContents) {
         mc->stackId = STACK_ID_SAE;
     }
+    sem_init(&this->rx_sem, 0, 1);
+    sem_init(&this->log_sem, 0, 1);
 }
 SaeApplication::~SaeApplication() {
+    printf("Total number of transmitted packets: %d\n",totalTxSuccess);
+    printf("Total number of received packets: %d\n",totalRxSuccess);
+}
+
+void SaeApplication::printRxStats(){
+    sem_wait(&this->log_sem);
+    std::thread::id tid = std::this_thread::get_id();
+    printf("Thread (%04x) rx fails is: %d\n", tid, rxFail);
+    printf("Thread (%04x) rx successes is: %d\n", tid, rxSuccess);
+    if(verifFail)
+        printf("Thread (%04x) verif fails is: %d\n", tid, verifFail);
+    if(verifSuccess)
+        printf("Thread (%04x) verif success is: %d\n", tid, verifSuccess);
+    totalRxSuccess+=rxSuccess;
+    sem_post(&this->log_sem);
+}
+
+void SaeApplication::printTxStats(){
+    printf("Printing tx stats\n");
+    sem_wait(&this->log_sem);
+    std::thread::id tid = std::this_thread::get_id();
+    printf("Thread (%04x) tx fails is: %d\n", tid, txFail);
+    printf("Thread (%04x) tx successes is: %d\n", tid, txSuccess);
+    if(signFail)
+        printf("Thread (%04x) sign fails is: %d\n", tid, signFail);
+    if(signSuccess)
+        printf("Thread (%04x) sign success is: %d\n", tid, signSuccess);
+    totalTxSuccess+=txSuccess;
+    sem_post(&this->log_sem);
+}
+
+int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
+
+    // Allocate msg_contents struct and copy actual packet into it
+    const auto i = index;
+    int ret = 0;
+    int packet_len = 0;
+    if(&msg_cont.abuf == NULL || msg_cont.abuf.size == 0){
+        abuf_alloc(&msg_cont.abuf, ABUF_LEN, ABUF_HEADROOM);
+        // for SAE only
+        msg_cont.stackId = STACK_ID_SAE;
+        if(msg_cont.wsmp == nullptr)
+            msg_cont.wsmp = new char[sizeof(wsmp_data_t)];
+        if(msg_cont.j2735_msg == nullptr)
+            msg_cont.j2735_msg = new char[sizeof(bsm_value_t)];
+        if(msg_cont.ieee1609_2data == nullptr)
+            msg_cont.ieee1609_2data = new char[sizeof(ieee1609_2_data)];
+    }
+    else{
+        abuf_reset(&msg_cont.abuf, ABUF_HEADROOM);
+    }
+    mc = &msg_cont;
+
+    // receive packet
+    if (isRxSim)
+    {
+        sem_wait(&rx_sem);
+        ret = simReceive->receive(msg_cont.abuf.data);
+        sem_post(&rx_sem);
+        packet_len = ret;
+    }
+    else {
+        sem_wait(&rx_sem);
+        ret = radioReceives[0].receive(mc->abuf.data);
+        sem_post(&rx_sem);
+    }
+
+    // Make sure packet is successfully received
+    if(ret < 0 || mc == nullptr){
+        rxFail++;
+        return -1;
+    }else{
+        rxSuccess++;
+    }
+
+    // needs to be done for data pointer to not override tail pointer
+    mc->abuf.tail = mc->abuf.data+ret;
+
+    if(appVerbosity > 7){
+       printf("\n 2) Full rx packet with length %d\n", ret);
+       print_buffer((uint8_t*)mc->abuf.data, ret);
+       printf("\n");
+    }
+
+    // Decode packet as WSMP Packet and IEEE 1609.2 Header
+    ret = decode_msg(mc);
+    // Determine if we are expecting signed packet or not
+    if(this->configuration.enableSecurity){
+        // check if the message is signed/encrypted IEEE1609.2 content.
+        if (ret == 1) { // message is secured
+            // Prepare for verification
+            SecurityOpt sopt;
+            sopt.psidValue = this->configuration.psid;
+            if (this->configuration.sspLength)
+                memcpy(sopt.sspValue, this->configuration.ssp,
+                    this->configuration.sspLength);
+            sopt.sspLength = this->configuration.sspLength;
+            sopt.enableAsync = this->configuration.enableAsync;
+            sopt.enableEnc  = this->configuration.enableEncrypt;
+            sopt.secVerbosity = this->configuration.secVerbosity;
+            std::thread::id tid = std::this_thread::get_id();
+            if (thrVerifLatencies[tid].size() > verifStatIdx[tid]) {
+                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            }else{
+                verifStatIdx[tid] = 0;
+                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            }
+
+            uint32_t dot2HdrLen;
+            // Verify packet signature
+            ret = SecService->VerifyMsg(sopt,
+            (uint8_t*)mc->l3_payload,(uint32_t)mc->l3_payload_len,dot2HdrLen);
+
+            if(ret == -1){
+                verifFail++;
+            }
+            else{
+                verifSuccess++;
+                // successful verification, increment the verif stat idx
+                std::thread::id tid = std::this_thread::get_id();
+                verifStatIdx[tid]++;
+                verifStatIdx[tid]%=thrVerifLatencies[tid].size();
+                mc->l3_payload=mc->l3_payload+dot2HdrLen;
+                // ieee header is 3 bytes long typically
+                abuf_pull(&mc->abuf, dot2HdrLen - IEEE_1609_2_HDR_LEN);
+                mc->payload_len=ret;
+                if(appVerbosity > 4){
+                    printf("Total security header length is: %d bytes\n",
+                            dot2HdrLen);
+                    printf("payload length is %d bytes\n", ret);
+                }
+                ret = decode_as_j2735(mc);
+            }
+        }else if(ret >= 0){
+            if(appVerbosity > 3)
+                printf("Error in decoding unsigned packet - security enabled.\n");
+            ret = -1;
+        }else{
+            if(appVerbosity > 3)
+                printf("Error in decoding packet\n");
+            ret = -1;
+        }
+    }else{
+        // determine if unsigned packet decoded properly
+        switch(ret){
+            case 0:
+                if(appVerbosity > 3)
+                    printf("Successful decode\n");
+                ret = 0;
+                break;
+            case 1:
+                if(appVerbosity > 3)
+                    printf("Error in decoding packet. Expecting unsigned packet.\n");
+                ret = -1;
+                break;
+            default:
+                if(appVerbosity > 3)
+                    printf("Error in decoding unsigned packet\n");
+                ret = -1;
+                break;
+        }
+    }
+    return ret;
+}
+
+int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
+                     const uint32_t ldmIndex) {
+    int ret = receive(index, bufLen);
+    if (ret > 0) {
+        auto bsm = reinterpret_cast<bsm_value_t *>(mc->j2735_msg);
+        this->ldm->setIndex(bsm->id, ldmIndex);
+    }
+    return ret;
 }
 
 void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc) {
@@ -94,7 +289,6 @@ void SaeApplication::fillMsg(std::shared_ptr<msg_contents> mc) {
     fillSecurity(static_cast<ieee1609_2_data *>(mc->ieee1609_2data));
     fillBsm(static_cast<bsm_value_t *>(mc->j2735_msg));
     mc->msgId = 20;
-    std::cout << "fillMsg SAE" << std::endl;
 }
 
 void SaeApplication::fillWsmp(wsmp_data_t *wsmp) {
@@ -142,27 +336,26 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
 
 void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 {
-    //ref_app code
-    current_dynamic_vehicle_state_t* dp = this->vehicleReceive->vehicleData;
-    bsm->TransmissionState = (j2735_transmission_state_e)(int) dp->prndl; //fixing enum problem
-    if (dp->events.data != 0) {
-        bsm->has_safety_extension = (v2x_bool_t)1;
-        bsm->vehsafeopts = (v2x_bool_t)(bsm->vehsafeopts | (1 << 3));
-        bsm->events.data = (v2x_bool_t)((dp->events.data) >> 3);
-    }
-    bsm->SteeringWheelAngle = dp->steering_wheel_angle;
-    bsm->brakes.word = dp->brake_status.word;
+    //fill data with values that may not make sense, these data should come from vehicle
+    //CAN network.
 
-    if (dp->exterior_lights.data != 0) {
-        bsm->has_safety_extension = (v2x_bool_t)1;
-        bsm->vehsafeopts = bsm->vehsafeopts | (1 << 0);
-        bsm->lights_in_use.data = dp->exterior_lights.data;
-    }
+    bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
+
+    bsm->has_safety_extension = (v2x_bool_t)1;
+    bsm->vehsafeopts = (v2x_bool_t)(bsm->vehsafeopts | (1 << 3));
+    bsm->events.data = (v2x_bool_t)0;
+
+    bsm->SteeringWheelAngle = 0;
+    bsm->brakes.word = 0;
+
+    bsm->has_safety_extension = (v2x_bool_t)1;
+    bsm->vehsafeopts = bsm->vehsafeopts | (1 << 0);
+    bsm->lights_in_use.data = 0;
 
     bsm->has_supplemental_extension = (v2x_bool_t)1;
     bsm->suppvehopts |= (SUPPLEMENT_VEH_EXT_OPTION_WEATHER_PROBE);
     bsm->weatheropts = bsm->weatheropts | (1 << 0);
-    bsm->statusFront = dp->front_wiper_status;
+    bsm->statusFront = 0;
 
     bsm->wiperopts = bsm->wiperopts | (1 << 1);
 }
@@ -308,13 +501,25 @@ void SaeApplication::initRecordedBsm(bsm_value_t* bsm) {
     bsm->statusFront = (int) 0;
     bsm->statusRear = (int) 0;
 }
-void SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc, int16_t bufLen,
-        TransmitType txType) {
-    // insert family ID of 0x01
-    char *p = abuf_push(&mc->abuf, 1);
-    *p = 0x01;
-    ApplicationBase::transmit(index, mc, bufLen + 1, txType);
+
+int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
+                                int16_t bufLen, TransmitType txType) {
+    int encLength = bufLen;
+    int ret = -1;
+    // let the transmit function handle the actual transmission
+    if (encLength){
+        // insert family ID of 0x01
+        char *p = abuf_push(&mc_->abuf, 1);
+        *p = 0x01;
+        ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
+    }
+    if(ret > 0)
+        txSuccess++;
+    else
+        txFail++;
+    return ret;
 }
+
 void SaeApplication::receiveTuncBsm(const uint8_t index, const uint16_t bufLen, const uint32_t ldmIndex) {
     const auto i = index;
     float tunc = -1;

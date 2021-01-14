@@ -57,7 +57,7 @@ public:
         std::cout << "NULL security VerifyMsg() " << std::endl;
         return false;
     }
-    int init() { }
+    int init() {return 0; }
     void deinit() { }
 };
 #endif

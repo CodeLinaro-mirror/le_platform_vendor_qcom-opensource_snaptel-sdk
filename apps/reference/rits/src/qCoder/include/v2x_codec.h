@@ -25,7 +25,7 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * @file v2x_codec.h
  * @purpose top-level asn encode/decode APIs header file.
  */
@@ -40,16 +40,19 @@
 #include "wsmp.h"
 #include "ieee1609.2.h"
 #include "j2735.h"
+#ifdef ETSI
 #include "CAM.h"
 #include "DENM.h"
 #include "etsi.h"
 #include "btp.h"
+#endif
 
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
 void set_codec_verbosity(int value);
 /**
  * decode_msg top-level codec API, decode message stored in mc->abuf and
@@ -81,7 +84,7 @@ int decode_msg_continue(msg_contents *mc);
  *         = 1 requested to sign/encrypt the message, need security service to
  *         perform operation before continuing encode the rest of the message.
  *         < 0 failure.
- * 
+ *
  * NOTE: if mc->stackId is ETSI, then mc->etsi_msg_id shall be set by the caller
  * and correspdong data structure(mc->cam or mc->denm) shall be intialized by
  * the caller before calling this function.

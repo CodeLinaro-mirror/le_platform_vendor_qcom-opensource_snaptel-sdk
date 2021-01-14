@@ -44,7 +44,7 @@ void RadioReceive::rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCod
 };
 
 RadioReceive::RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
-const uint16_t port){
+                            const uint16_t port){
 
     if (!this->ready(category, RadioType::RX)) {
         cout << "Radio Checks on RadioReceive creation fail\n";
@@ -73,15 +73,112 @@ const uint16_t port){
     this->resetCallbackPromise();
 }
 
+/*
+ * RadioReceive ctor for only simulation purposes. Communication over Ethernet.
+ */
+RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
+                             const uint16_t port) {
+    struct sockaddr_in address;
+    isSim = true;
+    this->enableUdp = radioOpt.enableUdp;
+    this->ipv4_src = radioOpt.ipv4_src;
+    // Creating socket file descriptor
+
+    if (!this->enableUdp) {
+        this->simListenSock = socket(AF_INET, SOCK_STREAM, 0);
+    } else {
+        this->simListenSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        address = this->srcAddress;
+    }
+
+    if (this->simListenSock <= 0)
+    {
+        cout << "Error Creating Socket";
+    }
+
+    if(!this->enableUdp){
+        address.sin_family = AF_INET;
+        // convert values between host and network byte order
+        address.sin_port = htons(port);
+        if (ipv4_src.compare("*") == 0)
+        {
+            address.sin_addr.s_addr = INADDR_ANY;
+        }
+        else {
+            if (inet_pton(AF_INET, ipv4_dst.data(), &address.sin_addr) <= 0) {
+                cout << "TCP; simulation:: Invalid ip address: " << ipv4_dst << endl;
+            }
+            else {
+                if (bind(simListenSock, (struct sockaddr*) & address,
+                    sizeof(address)) < 0)
+                {
+                    cout << "Socket " << simListenSock <<
+                            " with IP: " << ipv4_dst << " and port: " << endl;
+                    cout << port << " failed binding" << endl;
+                }
+                else {
+                    if (listen(simListenSock, 1) < 0) {
+                        cout << "Socket fails to listen\n";
+                    }
+                    else {
+                        const auto len = sizeof(address);
+                         simRxSock = accept(simListenSock, (struct sockaddr*) & address,
+                                    (socklen_t*)& len);
+                        cout << "Connection Received";
+                    }
+                }
+            }
+        }
+
+    }else{
+        /* UDP Communication */
+        // setting up network parameters for sender and receiving devices
+        this->srcAddress.sin_family = AF_INET;
+        this->srcAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, ipv4_dst.data(),
+                              &(this->srcAddress.sin_addr)) <= 0){
+            cerr << "UDP: Invalid ip address of other device " << ipv4_dst << endl;
+            cout << "UDP: Will attempt accepting from any ip address now " << endl;
+            this->srcAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+        }
+
+        this->serverAddress.sin_family = AF_INET;
+        this->serverAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, ipv4_src.data(),
+                             &(this->serverAddress.sin_addr)) <= 0){
+            cerr << "Invalid ip address for this device: " << ipv4_src << endl;
+        }
+        // bind to socket
+        if (bind(this->simListenSock,
+               (struct sockaddr *) &this->serverAddress,
+               sizeof(this->serverAddress)) < 0){
+            cerr << "ERROR on UDP binding" << endl;
+            exit(0);
+        }else{
+            cout << "UDP bind successful" << endl;
+        }
+    }
+}
+
+
 uint32_t RadioReceive::receive(const char* buf) {
     int socket = -1;
     // check if this receive is for simulation and/or for UDP
     if(isSim) {
-        cout << "Setting up simulation receive socket\n";
         socket = simListenSock;
     }else {
         socket = this->gRxSub->getSock();
     }
+
+
+    struct pollfd fd;
+    int ret;
+    fd.fd = socket;
+    fd.events = POLLIN;
+    ret = poll(&fd, 1, 1000); // 1sec timeout
+    // timed out or had error receiving
+    if(ret <= 0)
+        return -1;
 
     uint32_t srcAddressSize = sizeof(this->srcAddress);
     uint32_t bytesReceived;
@@ -91,16 +188,12 @@ uint32_t RadioReceive::receive(const char* buf) {
             (struct sockaddr *) & (this->srcAddress), & srcAddressSize);
         if(returnVal != -1 && returnVal != 0)
             bytesReceived = returnVal;
-        else
-            cout << "Errno is: "<< errno <<"\n";
     }else{ //tcp
          bytesReceived = recv(socket, (char*) buf, RadioReceive::MAX_BUF_LEN, 0);
     }
     if (returnVal  <= 0 && this->enableUdp) {
-        cout << "Radio Receive error in receive. Return value is: " << returnVal << "\n";
         return returnVal;
     }else{
-        cout << "Number of bytes received is: "  << bytesReceived << "\n";
         return bytesReceived;
     }
 }
@@ -137,82 +230,3 @@ uint8_t RadioReceive::closeFlow(){
     this->resetCallbackPromise();
 }
 
-
-RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst, const uint16_t port) {
-    struct sockaddr_in address;
-    isSim = true;
-    this->enableUdp = radioOpt.enableUdp;
-    this->ipv4_src = radioOpt.ipv4_src;
-    // Creating socket file descriptor
-
-    if (!this->enableUdp) {
-        this->simListenSock = socket(AF_INET, SOCK_STREAM, 0);
-    } else {
-        this->simListenSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        address = this->srcAddress;
-    }
-
-    if (this->simListenSock <= 0)
-    {
-        cout << "Error Creating Socket";
-    }
-
-    if(!this->enableUdp){
-        address.sin_family = AF_INET;
-        // convert values between host and network byte order
-        address.sin_port = htons(port);
-        if (ipv4_src.compare("*") == 0)
-        {
-            address.sin_addr.s_addr = INADDR_ANY;
-        }
-        else {
-            if (inet_pton(AF_INET, ipv4_dst.data(), &address.sin_addr) <= 0) {
-                cout << "TCP; simulation:: Invalid ip address: " << ipv4_dst << endl;
-            }
-            else {
-                if (bind(simListenSock, (struct sockaddr*) & address,
-                    sizeof(address)) < 0)
-                {
-                    cout << "Socket " << simListenSock << " with IP: " << ipv4_dst << " and port: " << endl;
-                    cout << port << " failed binding" << endl;
-                }
-                else {
-                    if (listen(simListenSock, 1) < 0) {
-                        cout << "Socket fails to listen\n";
-                    }
-                    else {
-                        const auto len = sizeof(address);
-                        // accept is only for tcp, probably need to make this for udp as well
-                            simRxSock = accept(simListenSock, (struct sockaddr*) & address,
-                                    (socklen_t*)& len);
-                        cout << "Connection Received";
-                    }
-                }
-            }
-        }
-
-    }else{
-        this->srcAddress.sin_family = AF_INET;
-        this->srcAddress.sin_port = htons(port);
-        if(inet_pton(AF_INET, ipv4_dst.data(), &(this->srcAddress.sin_addr)) <= 0){
-            cout << "Invalid ip address for other device: " << ipv4_dst << endl;
-        }
-        // Can set to listening to anybody instead
-        //this->srcAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-
-        this->serverAddress.sin_family = AF_INET;
-        this->serverAddress.sin_port = htons(port);
-
-        if(inet_pton(AF_INET, ipv4_src.data(), &(this->serverAddress.sin_addr)) <= 0){
-            cout << "Invalid ip address for this device: " << ipv4_src << endl;
-        }
-
-        // bind to socket
-        if (bind(this->simListenSock, (struct sockaddr *) &this->serverAddress,
-               sizeof(this->serverAddress)) < 0){
-            cout << "ERROR on UDP binding" << endl;
-        }else{
-            cout << "UDP bind successful" << endl;
-        }
-    }
-}

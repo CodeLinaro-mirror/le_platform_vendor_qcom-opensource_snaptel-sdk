@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <string>
+#include <poll.h>
 
 using std::array;
 using std::make_shared;
@@ -82,7 +83,6 @@ public:
     /**
     * Constructor for Simulation of Radio Receives.
     */
-    //RadioReceive(const string ipv4, const uint16_t port);
     RadioReceive(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port);
 
     /**

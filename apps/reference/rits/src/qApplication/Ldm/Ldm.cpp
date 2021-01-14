@@ -48,6 +48,8 @@ using std::cout;
 using std::endl;
 using telux::cv2x::TrustedUEInfo;
 using telux::cv2x::TrafficCategory;
+static bool stopThread = false;
+static sem_t gbSem;
 
 Ldm::Ldm(const uint16_t size) {
     this->bsmContents.reserve(2 * size);
@@ -114,16 +116,18 @@ bool Ldm::hasBsm(const uint32_t id){
 }
 
 void Ldm::gbCollector(const uint16_t waitTime, const uint8_t timeThreshold) {
-
-    while (true) {
-        cout << "Running LDM Garbage Collector... \n";
-        cout << "Current LDM status: \n";
-        printLdmIdMap();
+    while (!stopThread) {
+        if (ldmVerbosity) {
+            cout << "Running LDM Garbage Collector... \n";
+            cout << "Current LDM status: \n";
+            printLdmIdMap();
+        }
         lock_guard<mutex> lk(this->sync);
         for (pair<uint32_t, int> element : this->bsmIdMap) {
             if(hasBsm(element.first) && this->bsmIdMap[element.first] != DIRTY_DATA){
                 const auto now = timestamp_now();
-                bsm_value_t *bsmp = reinterpret_cast<bsm_value_t *>(this->bsmContents[element.second].j2735_msg);
+                bsm_value_t *bsmp = reinterpret_cast<bsm_value_t *>
+                                    (this->bsmContents[element.second].j2735_msg);
                 const auto dif = now - bsmp->timestamp_ms;
                 if (timeThreshold * 10000 < dif) {
                     cout << "Dif: " << dif << endl;
@@ -133,9 +137,12 @@ void Ldm::gbCollector(const uint16_t waitTime, const uint8_t timeThreshold) {
             }
         }
         lk.~lock_guard();
-        cout << "End of LDM Garbage Collector... \n";
+        if(ldmVerbosity)
+            cout << "End of LDM Garbage Collector... \n";
         sleep(waitTime);
     }
+    if(ldmVerbosity)
+        cout << ("LDM GB Collector stopped\n");
 }
 
 void Ldm::startGb(const uint16_t gbTime, const uint8_t timeThreshold) {
@@ -145,10 +152,25 @@ void Ldm::startGb(const uint16_t gbTime, const uint8_t timeThreshold) {
     if (!gbStarted) {
         this->gbThread = thread(gbThread, gbTime, timeThreshold);
         gbStarted = true;
+        sem_init(&gbSem, 0, 1);
     }
     else {
-        cout << "Garbage Collector already started.";
+        if(ldmVerbosity)
+            cout << "Garbage Collector already started.";
     }
+}
+
+void Ldm::stopGb(){
+    sem_wait(&gbSem);
+    if(gbStopped){
+        sem_post(&gbSem);
+        return;
+    }
+    if(ldmVerbosity)
+        cout << "Stopping Garbage Collector.\n";
+    stopThread = true;
+    gbStopped = true;
+    sem_post(&gbSem);
 }
 
 void Ldm::cv2xUpdateTrustedUEListCallback(ErrorCode error) {
@@ -184,7 +206,8 @@ void Ldm::startTrusted() {
         trustedStarted = true;
     }
     else {
-        cout << "Trust and Malicious list scan already started running.";
+        if(ldmVerbosity)
+            cout << "Trust and Malicious list scan already started running.";
     }
 }
 
@@ -322,4 +345,6 @@ bool Ldm::filterBsm(const uint32_t index) {
             //TODO Add to trusted
         }
     }
+
+    return false;
 }

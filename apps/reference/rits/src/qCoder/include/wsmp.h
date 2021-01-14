@@ -39,7 +39,7 @@ extern "C"
 /**
  * There are at least three versions of WSMP protocols out in the wild
  * although going forward, the 2016 (Ver #3) is expected to be used as per J2945/1
- * but there are stacks and messages over the air from vehicles and RSE out in 
+ * but there are stacks and messages over the air from vehicles and RSE out in
  * the wild which still send the older formats
  */
 

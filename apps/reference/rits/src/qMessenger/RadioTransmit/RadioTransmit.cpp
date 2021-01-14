@@ -57,7 +57,7 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
             //return static_cast<uint8_t>(Status::SUCCESS);
         }
         else{
-            cout<<"Sps Flow creation fails\n";
+            cout<<"Sps Flow creation fails, future.get\n";
             //return static_cast<uint8_t>(Status::FAILED);
         }
     }
@@ -68,7 +68,8 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
     this->resetCallbackPromise();
 }
 
-RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo, const TrafficCategory category,
+RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
+                            const TrafficCategory category,
                             const TrafficIpType trafficType, const uint16_t port,
                             const uint32_t serviceId){
     if (!this->ready(category, RadioType::TX)) {
@@ -141,8 +142,6 @@ RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, con
     }
 }
 
-
-
 void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress, const char* iface) {
     this->destSock.sin6_family = AF_INET6;
     this->destSock.sin6_port = htons((uint16_t)port);
@@ -154,9 +153,9 @@ void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress, 
 uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
     if (isSim)
     {
-        uint8_t  bytes_sent;
+        int  bytes_sent;
         if(enableUdp){ //udp
-            cout << "\nTransmitting data via udp...\n";
+            //cout << "\nTransmitting data via udp...\n";
             bytes_sent = sendto(this->simSock, buf, bufLen,  0,
                         (const struct sockaddr *) &(this->destAddress), sizeof(this->destAddress));
         } else{ //tcp - default
@@ -164,9 +163,9 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
         }
         return bytes_sent;
     }
-
+    // Radio-based Communication
     auto resp = -1;
-    cout << "Sending data in Flow: len=" << bufLen << endl;
+    //cout << "Sending data in Flow: len=" << bufLen << endl;
     auto sock = this->flow->getSock();
 
     if (sock == -1) {
@@ -197,9 +196,9 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
     //auto bytes_sent = sendmsg(sock, &message, 0);
     auto bytes_sent = send(sock, buf, bufLen, 0);
     if(bytes_sent == bufLen){
-        resp = static_cast<uint8_t>(Status::SUCCESS);
-
-#if 1
+//        resp = static_cast<uint8_t>(Status::SUCCESS);
+        resp = bytes_sent;
+#if 0
         printf("RadioTransmit::transmit\n");
         for (int i = 0; i < bufLen; i++) {
             printf("%02x ", *(buf + i));
@@ -209,7 +208,8 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
 #endif
     }else{
         cout << "Error Sending Data.\n";
-        resp = static_cast<uint8_t>(Status::FAILED);
+//        resp = static_cast<uint8_t>(Status::FAILED);
+        resp = -1;
     }
 
     return resp;
@@ -244,7 +244,7 @@ void RadioTransmit::spsFlowCallbackOnChanges(shared_ptr<ICv2xTxFlow> txEventFlow
 }
 
 
-uint8_t RadioTransmit::updteSpsFlow(const SpsFlowInfo spsInfo) {
+uint8_t RadioTransmit::updateSpsFlow(const SpsFlowInfo spsInfo) {
     auto resp = -1;
     auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txSpsFlow,

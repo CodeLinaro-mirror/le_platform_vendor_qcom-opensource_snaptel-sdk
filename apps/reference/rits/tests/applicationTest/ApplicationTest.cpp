@@ -41,9 +41,12 @@
 #include <mutex>
 #include <unistd.h>
 #include <sys/timerfd.h>
+#include <sys/time.h>
 #include <regex>
 #include "SaeApplication.hpp"
+#ifdef ETSI
 #include "EtsiApplication.hpp"
+#endif
 #include "safetyapp_util.h"
 #include "bsm_utils.h"
 
@@ -54,14 +57,17 @@ using std::ref;
 using std::lock_guard;
 using std::mutex;
 
-// Comment it out if you don't want to dump the raw received packets.
-//#define DUMP_RAW    1
-
 // Global variables
 static ApplicationBase* application = nullptr;
 static vector<thread> threads;
 static bool csv = false;
 static string csvFileName;
+static sem_t cnt_sem;
+static auto rxsuccess = 0;
+static auto rxfail = 0;
+static bool stopThread = false;
+static bool dump_raw = false;
+static bool print_rv = true;
 
 static void joinThreads() {
     for (int i = 0; i < threads.size(); i++)
@@ -72,9 +78,11 @@ static void joinThreads() {
 
 static void signalHandler(int signum) {
     cout << "Interrupt signal (" << signum << ") received.\n";
-    application->closeAllRadio();
-    exit(signum);
+    cout << "Exiting..." << endl;
+    stopThread = true;
+    return;
 }
+
 /**
  * receiving thread function.
  *
@@ -84,59 +92,64 @@ static void receive(MessageType msgType) {
     std::signal(SIGINT, signalHandler);
     auto count = 0;
     FILE *fp;
+    struct timeval currTime;
+    gettimeofday(&currTime, NULL);
+    time_t startTime = currTime.tv_sec;
+
     if (csv == true) {
         fp = fopen(csvFileName.c_str(), "w+");
         if (!fp) {
-            cerr << "Failed to open file " << csvFileName << " for writting" << endl;
+            cerr << "Failed to open file " << csvFileName << " for writing" << endl;
             return;
         }
     }
-    while (true)
+    if (application->configuration.driverVerbosity > 4) {
+        cout << "Thread id: " << std::this_thread::get_id()
+                << " Wating for message..." << endl;
+    }
+    if(application->configuration.enableVerifStatLog)
+        application->initVerifLogging();
+
+    // will need to make this compatible for multiple rx ports
+    int ret;
+    while (!stopThread)
     {
-        const auto mc = application->receivedContents[0];
-        abuf_reset(&mc->abuf, 256);
-        auto recCount = application->radioReceives[0].receive(mc->abuf.data);
-        abuf_put(&mc->abuf, recCount);
-        if(recCount <= 0){
-            cout << "Nothing received, continuing\n";
-            continue;
-        }
-#ifdef DUMP_RAW
-        cout << "Packet # " << count << " with length " << recCount << endl << endl;
-        cout << "Hex: ";
-        for (uint16_t t = 0; t < recCount; t++) {
-            if (t > 0) printf(":");
-            printf("%02X", mc->abuf.data[t]);
-        }
-        cout << endl;
-        count += 1;
-#endif
         // call application's receive() function to process the packet across
         // stack layers.
-        if (application->receive(0, recCount) == 0) {
-            if (msgType == MessageType::BSM) {
-                print_summary_RV(mc.get());
-                if(csv){
-                    write_to_csv(mc.get(), fp);
+        ret = application->receive(0, ret);
+
+        sem_wait(&cnt_sem);
+        if(ret >= 0){
+            rxsuccess++;
+            if (application->configuration.driverVerbosity) {
+                if (rxsuccess % 50 == 0 && rxsuccess > 0){
+                    gettimeofday(&currTime, NULL);
+                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
+                        " Decode/Rx Success #: " << rxsuccess <<
+                        " Decode/Rx Fail #: " << rxfail << std::endl;
                 }
-            } else if (msgType == MessageType::CAM) {
-                print_cam(mc->cam);
-            } else {
-                print_denm(mc->denm);
             }
+        } else {
+            rxfail++;
         }
+        sem_post(&cnt_sem);
     }
+    if(application->configuration.enableVerifStatLog){
+        application->writeVerifLogging();
+    }
+    if(msgType == MessageType::BSM)
+        ((SaeApplication*)application)->printRxStats();
+    printf("Total of RX packets is: %d\n", application->totalRxSuccess);
+
+    if(application->ldm != nullptr)
+        application->ldm->stopGb();
 }
 /**
  * receive function for LDM functionality test.
  *
  * @param [in] msgType, so far only BSM is supported.
  */
-static void ldmRx(MessageType msgType) {
-    if (msgType != MessageType::BSM) {
-        cerr << "Only BSM is supported in ldmRx" << endl;
-        return;
-    }
+static void ldmRx(void) {
     std::signal(SIGINT, signalHandler);
     while (true)
     {
@@ -186,34 +199,73 @@ static void transmit(MessageType msgType) {
     int timer_misses = 0;
     uint64_t exp;
     ssize_t s;
-    //auto timer = timestamp_now();
     tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
     if (tx_timer_fd == -1) {
         cerr << "Failed to start Tx timer" << endl;
         return;
     }
+
+    int txsuccess = 0;
+    int txfail = 0;
+    int ret = 0;
+
+    // check if sign stat logging on
+    // check off for now
+    if(application->configuration.enableSignStatLog)
+        application->initSignLogging();
+
+     struct timeval currTime;
+    gettimeofday(&currTime, NULL);
+    time_t startTime = currTime.tv_sec;
+
+
     switch (msgType)
     {
     case MessageType::CAM:
     case MessageType::BSM:
-        while (true)
+        printf("Sending BSM messages via radio\n");
+        while (!stopThread)
         {
-            if (application->send(0, TransmitType::SPS) < 0) {
-                cerr << "Failed to send message" << endl;
-                return;
+            ret = application->send(0, TransmitType::SPS);
+            if(ret > 0){
+                txsuccess++;
+                if (application->configuration.driverVerbosity) {
+                    if (txsuccess % 50 == 0 && txsuccess > 0){
+                        gettimeofday(&currTime, NULL);
+                        cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
+                            " Encode/Tx Success #: " << txsuccess <<
+                            " Encode/Tx Fail #: " << txfail << std::endl;
+                    }
+                }
+            } else {
+                txfail++;
             }
+
             s = read(tx_timer_fd, &exp, sizeof(uint64_t));
             if (s == sizeof(uint64_t) && exp > 1) {
                 timer_misses += (exp-1);
                 cout << "TX timer overruns: Total missed: " << timer_misses << endl;
             }
         }
+        printf("Sending thread stopped\n");
         break;
     case MessageType::DENM:
         cerr << "DENM transmit is not supported" << endl;
     default:
         break;
     }
+
+    // dump out any logging information related to signing
+    if(application->configuration.enableSignStatLog){
+        application->writeSignLogging();
+    }
+    if(msgType == MessageType::BSM)
+        ((SaeApplication*)application)->printTxStats();
+    printf("Total of TX packets is: %d\n", application->totalTxSuccess);
+
+    if(application->ldm != nullptr)
+        application->ldm->stopGb();
+
     if (tx_timer_fd != -1) {
         close(tx_timer_fd);
     }
@@ -225,16 +277,12 @@ static void transmit(MessageType msgType) {
  * @msgType type of the message, so far only BSM is supported for this test.
  * @returns none.
  */
-static void txRecorded(string file, MessageType msgType) {
+static void txRecorded(string file) {
     srand(timestamp_now());
     ifstream configFile(file);
     string line;
     bool go = true;
 
-    if (msgType != MessageType::CAM) {
-        cerr << "Only BSM message is supported in this mode" << endl;
-        return;
-    }
     if (configFile.is_open())
     {
         auto timer = timestamp_now();
@@ -278,18 +326,14 @@ static void txRecorded(string file, MessageType msgType) {
  * @param [in] msgType , so far only BSM is supported in this mode
  * @returns none.
  */
-static void simTxRecorded(string file, MessageType msgType) {
-
-    if (msgType != MessageType::BSM) {
-        cerr << "Only BSM is supported in this test mode" << endl;
-        return;
-    }
+static void simTxRecorded(string file)
+{
     ifstream configFile(file);
     string line;
     if (configFile.is_open())
     {
         auto timer = timestamp_now();
-        while (true)
+        while (!stopThread)
         {
             if (timer + application->configuration.transmitRate < timestamp_now()) {
                 if (getline(configFile, line))
@@ -310,14 +354,10 @@ static void simTxRecorded(string file, MessageType msgType) {
     }
 }
 
-static void tunnelModeTx(MessageType msgType) {
-    if (msgType != MessageType::BSM) {
-        cerr << "Only BSM is supported in tunnelModeTx" << endl;
-        return;
-    }
+static void tunnelModeTx(void) {
     std::signal(SIGINT, signalHandler);
     auto timer = timestamp_now();
-    while (true)
+    while (!stopThread)
     {
         if (timer + application->configuration.transmitRate < timestamp_now()) {
             SaeApplication *SaeApp = dynamic_cast<SaeApplication *>(application);
@@ -327,8 +367,8 @@ static void tunnelModeTx(MessageType msgType) {
     }
 }
 
-static void tunnelModeRx(MessageType msgType) {
-    while (true)
+static void tunnelModeRx(void) {
+    while (!stopThread)
     {
         SaeApplication *SaeApp = dynamic_cast<SaeApplication *>(application);
         const auto mc = SaeApp->receivedContents[0];
@@ -346,15 +386,11 @@ static void tunnelModeRx(MessageType msgType) {
 /**
  * run safety application.
  */
-static void runApps(MessageType msgType) {
-    if (msgType != MessageType::BSM) {
-        cerr << "Only BSM is supported in tunnelModeTx" << endl;
-        return;
-    }
+static void runApps(void) {
     auto hostMsg = std::make_shared<msg_contents>();
     rv_specs* rvSpecs = new rv_specs;
     std::signal(SIGINT, signalHandler);
-    while (true) {
+    while (!stopThread) {
         for (auto rvMsg : application->ldm->bsmSnapshot()) {
             application->fillMsg(hostMsg);
             fill_RV_specs(hostMsg.get(), &rvMsg, rvSpecs);
@@ -368,54 +404,63 @@ static void runApps(MessageType msgType) {
 
 static void simReceive(MessageType msgType) {
     std::signal(SIGINT, signalHandler);
-    auto count = 0;
+    auto recCount = 0;
     auto empty = 0;
     FILE *fp;
-    /*if (csv == true) {
+    if (csv == true) {
         fp = fopen(csvFileName.c_str(), "w+");
         if (!fp) {
-            cerr << "Failed to open file " << csvFileName << " for writting" << endl;
+            cerr << "Failed to open file " << csvFileName << " for writing" << endl;
             return;
         }
-    }*/
-    while (true)
-    {
-        // begin waiting and receiving packets
-        auto recCount = application->simReceive->receive(application->rxSimMsg->abuf.data);
-        abuf_put(&application->rxSimMsg->abuf, recCount);
-        if (recCount == 0) {
-            cout << "Received empty packet # " << empty << ".\n";
-            if (empty > 10) {
-                cout << "Received more than 10, empty packets... Closing connections.\n";
-                application->closeAllRadio();
-            }
-            else {
-                empty++;
-            }
-        }
-        else {
-#ifdef DUMP_RAW
-            cout << "Packet # " << count << " with length " << recCount << endl << endl;
-            cout << "Hex: ";
-            for (uint16_t t = 0; t < recCount; t++) {
-                if (t > 0) printf(":");
-                printf("%02X", application->rxSimMsg->abuf.data[t]);
-            }
-            cout << endl;
-            count += 1;
-#endif
-
-            application->receive(0, recCount);
-            auto mc = application->rxSimMsg;
-            print_summary_RV(mc.get());
-            if (csv) {
-                write_to_csv(mc.get(), fp);
-            }
-        }
     }
+    struct timeval currTime;
+    gettimeofday(&currTime, NULL);
+    time_t startTime = currTime.tv_sec;
+    if (application->configuration.driverVerbosity > 4) {
+        cout << "Thread (" << std::this_thread::get_id()
+                    << ")  is wating for a message..." << endl;
+    }
+    if (application->configuration.enableVerifStatLog) {
+        application->initVerifLogging();
+    }
+    int ret = 0;
+    while(!stopThread){
+        ret = application->receive(0, recCount);
+
+        sem_wait(&cnt_sem);
+        if(ret == 0){
+            rxsuccess++;
+            if (msgType == MessageType::BSM) {
+                if (application->configuration.driverVerbosity) {
+                    if (rxsuccess % 50 == 0 && rxsuccess > 0){
+                        gettimeofday(&currTime, NULL);
+                        cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
+                            " Decode/Rx Success #: " << rxsuccess <<
+                            " Decode/Rx Fail #: " << rxfail << std::endl;
+                    }
+                }
+            }
+        } else {
+            rxfail++;
+        }
+        sem_post(&cnt_sem);
+    }
+
+    // Print out performance information upon closure
+    if(application->configuration.enableVerifStatLog){
+        application->writeVerifLogging();
+    }
+    if(msgType == MessageType::BSM)
+        ((SaeApplication*)application)->printRxStats();
+
+    printf("Total of RX packets is: %d\n", application->totalRxSuccess);
+
+    if(application->ldm != nullptr)
+        application->ldm->stopGb();
 }
 
-static void simLdmRx(MessageType msgType) {
+static void simLdmRx(void) {
     std::signal(SIGINT, signalHandler);
     auto count = 0;
     auto empty=0;
@@ -427,57 +472,66 @@ static void simLdmRx(MessageType msgType) {
             return;
         }
     }
-    switch (msgType)
+    while (!stopThread)
     {
-    case MessageType::CAM:
-    case MessageType::DENM:
-        cerr << "CAM and DENM LDM is not supported" << endl;
-        break;
-    case MessageType::BSM:
-        while (true)
-        {
-            auto recCount = application->simReceive->receive(application->rxSimMsg->abuf.data);
-            abuf_put(&application->rxSimMsg->abuf, recCount);
-            if (recCount == 0) {
-                cout << "Received empty packet # " << empty << ".\n";
-                if (empty > 10) {
-                    cout << "Received more than 10, empty packets... Closing connections.\n";
-                    application->closeAllRadio();
-                }
-                else {
-                    empty++;
-                }
+        auto recCount = application->simReceive->receive(application->rxSimMsg->abuf.data);
+        abuf_put(&application->rxSimMsg->abuf, recCount);
+        if (recCount == 0) {
+            cout << "Received empty packet # " << empty << ".\n";
+            if (empty > 10) {
+                cout << "Received more than 10, empty packets... Closing connections.\n";
+                application->closeAllRadio();
+                stopThread = true;
+                continue;
             }
             else {
-#ifdef DUMP_RAW
-            cout << "Packet # " << count << " with length " << recCount << endl << endl;
-            cout << "Hex: ";
-            for (uint16_t t = 0; t < recCount; t++) {
-                if (t > 0) printf(":");
-                printf("%02X", application->rxSimMsg->abuf.data[t]);
+                empty++;
             }
-            cout << endl;
-            count += 1;
-#endif
-                const auto ldmIndex = application->ldm->getFreeBsm();
-                application->receive(0, recCount, ldmIndex);
-                auto msg = &application->ldm->bsmContents[ldmIndex];
-                if (csv) {
-                    write_to_csv(msg, fp);
+        } else {
+            if (dump_raw) {
+                cout << "Packet # " << count << " with length " << recCount << endl << endl;
+                cout << "Hex: ";
+                for (uint16_t t = 0; t < recCount; t++) {
+                    if (t > 0) printf(":");
+                    printf("%02X", application->rxSimMsg->abuf.data[t]);
                 }
-                count += 1;
+                cout << endl;
             }
+            const auto ldmIndex = application->ldm->getFreeBsm();
+            application->receive(0, recCount, ldmIndex);
+            auto msg = &application->ldm->bsmContents[ldmIndex];
+            if (csv) {
+                write_to_csv(msg, fp);
+            }
+            count += 1;
         }
-        break;
-    default:
-        break;
     }
-
 }
 
 static void simTransmit(MessageType msgType) {
     std::signal(SIGINT, signalHandler);
+    int txsuccess = 0;
+    int txfail = 0;
+    int ret = 0;
+
+    int tx_timer_fd = -1;
+    int timer_misses = 0;
+    uint64_t exp;
+    ssize_t s;
+    tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+    if (tx_timer_fd == -1) {
+        cerr << "Failed to start Tx timer" << endl;
+        return;
+    }
+
+    // check if sign stat logging on
+    // check off for now
+    if(application->configuration.enableSignStatLog)
+        application->initSignLogging();
     auto timer = timestamp_now();
+    struct timeval currTime;
+    gettimeofday(&currTime, NULL);
+    time_t startTime = currTime.tv_sec;
     switch (msgType)
     {
     case MessageType::DENM:
@@ -485,18 +539,45 @@ static void simTransmit(MessageType msgType) {
         break;
     case MessageType::CAM:
     case MessageType::BSM:
-
-        while (true)
+        while (!stopThread)
         {
-            if (timer + application->configuration.transmitRate < timestamp_now()) {
-                application->send(0, TransmitType::SPS);
-                timer = timestamp_now();
+            ret = application->send(0, TransmitType::SPS);
+            timer = timestamp_now();
+            if(ret > 0){
+                txsuccess++;
+                if (msgType == MessageType::BSM) {
+                    if (application->configuration.driverVerbosity) {
+                        if (txsuccess % 50 == 0 && txsuccess > 0){
+                            gettimeofday(&currTime, NULL);
+                            cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
+                                " Encode/Tx Success #: " << txsuccess <<
+                                " Encode/Tx Fail #: " << txfail << std::endl;
+                        }
+                    }
+                }
+            } else {
+                txfail++;
+            }
+            s = read(tx_timer_fd, &exp, sizeof(uint64_t));
+            if (s == sizeof(uint64_t) && exp > 1) {
+                timer_misses += (exp-1);
+                cout << "TX timer overruns: Total missed: " << timer_misses << endl;
             }
         }
         break;
     default:
         break;
     }
+    // dump out any logging information related to signing
+    if(application->configuration.enableSignStatLog){
+        application->writeSignLogging();
+    }
+    if(msgType == MessageType::BSM)
+        ((SaeApplication*)application)->printTxStats();
+    printf("Total of TX packets is: %d\n", application->totalTxSuccess);
+
+    if(application->ldm != nullptr)
+        application->ldm->stopGb();
 }
 
 void printUse() {
@@ -516,8 +597,12 @@ void printUse() {
     cout << "-x Tunnel Receive. It automatically calls -l. See: -l.\n";
     cout << "-l LDM mode; Adds -r if nothing specified. Use it with -r or -j.\n";
     cout << "-b Transmits and Receives BSMS.\n";
+#ifdef ETSI
     cout << "-c Transmits and Receives CAMs.\n";
     cout << "-d Transmits and Receives DENMs.\n";
+#endif
+    cout << "-D Dump raw received packet.\n";
+    cout << "-v Don't print received remote vehicle summary(for performance measurement).\n";
     cout << "-i <other_device_ip_address> <port>  Simulating CV2x with kinematics";
     cout << " and can interfaces. Transmit only.\n";
     cout << "           note: You may enable UDP if desired via the config file\n";
@@ -543,11 +628,14 @@ void configFileCheck(string& configFile)
     }
 }
 
-void getModes(char mode, int& argc, char** argv, bool& tx, bool& rx,
+/* Sets parameters according to runtime arguments */
+void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
     bool& ldm, bool& help, bool& safetyApps, bool& bsm,
     bool& cam, bool& denm, bool& preRecorded, string& preRecordedFile,
-    bool& txSim, bool& rxSim, bool& tunnelTx, bool& tunnelRx, bool& csv, string& txSimIp,
-    string& rxSimIp, uint16_t& txSimPort, uint16_t& rxSimPort) {
+    bool& txSim, bool& rxSim, bool& tunnelTx, bool& tunnelRx,
+    bool& csv, string& txSimIp, string& rxSimIp,
+    uint16_t& txSimPort, uint16_t& rxSimPort) {
+
     bsm = true; //default
     switch (mode)
     {
@@ -586,74 +674,135 @@ void getModes(char mode, int& argc, char** argv, bool& tx, bool& rx,
     case 'b':
         bsm = true;
         break;
+#ifdef ETSI
     case 'c':
         cam = true;
         bsm = false;
         break;
     case 'd':
         denm = true;
-        bsm =false;
+        bsm = false;
         break;
+#endif
     case 'i':
         txSim = true;
-        argc += 1;
-        txSimIp = string(argv[argc]);
-        argc += 1;
-        txSimPort = stoi(string(argv[argc]), nullptr, 10);
+        if(idx+2 > argc-1){
+           printUse();
+           fprintf(stderr, "\nInvalid usage of -i option\n");
+           exit(0);
+        }
+        // need to test for valid num of arguments here
+        idx += 1;
+        try {
+            txSimIp = string(argv[idx]);
+        }catch (std::invalid_argument& e){
+            fprintf(stderr, "Invalid IP Address argument\n");
+            exit(0);
+        }
+        idx += 1;
+        try {
+            txSimPort = stoi(string(argv[idx]), nullptr, 10);
+        }catch (std::invalid_argument& e){
+            fprintf(stderr, "Invalid port argument\n");
+            fprintf(stdout, "Changing to 9000 by default\n");
+            txSimPort = 9000;
+        }
         break;
     case 'j':
         rxSim = true;
-        argc += 1;
-        rxSimIp = string(argv[argc]);
-        argc += 1;
-        rxSimPort = stoi(string(argv[argc]), nullptr, 10);
+        if(idx+2 > argc-1){
+           printUse();
+           fprintf(stderr, "\nInvalid usage of -j option\n");
+           exit(0);
+        }
+        idx += 1;
+        try {
+            rxSimIp = string(argv[idx]);
+        }catch (std::invalid_argument& e){
+            fprintf(stderr, "Invalid IP Address argument\n");
+            fprintf(stdout, "Changing to accept all\n");
+            rxSimIp = stoi(string("0.0.0.0"), nullptr, 10);
+        }
+        idx += 1;
+        try {
+            rxSimPort = stoi(string(argv[idx]), nullptr, 10);
+        }catch (std::invalid_argument& e){
+            fprintf(stderr, "Invalid port argument\n");
+            fprintf(stdout, "Changing to 9000 by default\n");
+            rxSimPort = 9000;
+        }
         break;
     case 'o':
         csv = true;
         argc+=1;
         csvFileName = string(argv[argc]);
         break;
+    case 'D':
+        dump_raw = true;
+        break;
+    case 'v':
+        print_rv = false;
+        break;
     default:
         break;
     }
 }
 
-void setup(const bool tx, const bool rx,
+int setup(const bool tx, const bool rx,
     const bool ldm, const bool help, const bool safetyApps,
     const bool bsm, const bool cam, const bool denm, const bool preRecorded,
-    const string preRecordedFile, const bool txSim, const bool rxSim, const bool tunnelTx,
-    const bool tunnelRx, const string txSimIp, const string  rxSimIp, const  uint16_t txSimPort,
-    const uint16_t rxSimPort, char* configFile) {
+    const string preRecordedFile, const bool txSim, const bool rxSim,
+    const bool tunnelTx,const bool tunnelRx, const string txSimIp,
+    const string  rxSimIp, const  uint16_t txSimPort,
+    const uint16_t rxSimPort, char* configFile)
+{
+    std::signal(SIGINT, signalHandler);
     if (help)
     {
         printUse();
+        return 0;
     }
 
     if (bsm) {
         if (txSim)
-            application = new SaeApplication(txSimIp, txSimPort, string(""), 0, configFile);
+            application =
+                new SaeApplication(txSimIp, txSimPort, string(""), 0, configFile);
         else if (rxSim)
-            application = new SaeApplication(string(""), 0, rxSimIp, rxSimPort, configFile);
+            application =
+                new SaeApplication(string(""), 0, rxSimIp, rxSimPort, configFile);
         else
             application = new SaeApplication(configFile);
+
     } else {
+#ifdef ETSI
         if (txSim)
-            application = new EtsiApplication(txSimIp, txSimPort, string(""), 0, configFile);
+            application =
+                new EtsiApplication(txSimIp, txSimPort, string(""), 0, configFile);
         else if (rxSim)
-            application = new EtsiApplication(string(""), 0, rxSimIp, rxSimPort, configFile);
+            application =
+                new EtsiApplication(string(""), 0, rxSimIp, rxSimPort, configFile);
         else
             application = new EtsiApplication(configFile);
+#endif
     }
-    if (tx && !txSim)
+    // check if we want to have tx on at same time as rx (either ethernet or radio)
+    if(application->configuration.enableTxAlways &&
+        (rx || rxSim) && application->configuration.driverVerbosity){
+            printf("Device will be sending AND receiving packets\n");
+    }else if(!tx && !txSim && application->configuration.driverVerbosity){
+            printf("Device will be in receive-only mode\n");
+    }
+
+    if ((tx || application->configuration.enableTxAlways) && !txSim && !rxSim)
     {
+        if (application->configuration.driverVerbosity)
+            printf("Creating BSM transmit thread\n");
         if (tunnelTx) {
-            if (bsm) {
-                threads.push_back(thread(tunnelModeTx, MessageType::CAM));
-            } else if (cam) {
-                threads.push_back(thread(tunnelModeTx, MessageType::CAM));
-            } else {
-                threads.push_back(thread(tunnelModeTx, MessageType::DENM));
+            if (cam || denm) {
+                cout << "Tunnel Mode only supports BSM" << endl;
+                return -1;
             }
+            threads.push_back(thread(tunnelModeTx));
         } else {
             if (bsm) {
                 threads.push_back(thread(transmit, MessageType::BSM));
@@ -665,33 +814,22 @@ void setup(const bool tx, const bool rx,
         }
     }
 
+    if(application->configuration.driverVerbosity > 4)
+        printf("Number of threads after tx is: %d\n", threads.size());
+
     if (rx && !rxSim)
     {
         if (ldm)
         {
+            if (cam || denm) {
+                cout << "LDM Mode only supports BSM" << endl;
+                return -1;
+            }
             if (tunnelRx) {
-                if (cam) {
-                    threads.push_back(thread(tunnelModeRx, MessageType::CAM));
-                }
-                else if (denm)
-                {
-                    threads.push_back(thread(tunnelModeRx, MessageType::DENM));
-                }
-                else {
-                    threads.push_back(thread(tunnelModeRx, MessageType::BSM));
-                }
+                threads.push_back(thread(tunnelModeRx));
             }
             else {
-                if (cam) {
-                    threads.push_back(thread(ldmRx, MessageType::CAM));
-                }
-                else if (denm)
-                {
-                    threads.push_back(thread(ldmRx, MessageType::DENM));
-                }
-                else {
-                    threads.push_back(thread(ldmRx, MessageType::BSM));
-                }
+                threads.push_back(thread(ldmRx));
             }
         }
         else {
@@ -703,33 +841,41 @@ void setup(const bool tx, const bool rx,
                 threads.push_back(thread(receive, MessageType::DENM));
             }
             else {
-                threads.push_back(thread(receive, MessageType::BSM));
+                // TODO: Implement for CAM, DENM as well
+                sem_init(&cnt_sem, 0, 1);
+                if (application->configuration.driverVerbosity) {
+                    cout << "Number of Radio RX Threads: " <<
+                            (int)application->configuration.numRxThreads << endl;
+                }
+                for (int i = 0; i < application->configuration.numRxThreads; i++) {
+                    threads.push_back(thread(receive, MessageType::BSM));
+                }
             }
         }
 
     }
 
+    if(application->configuration.driverVerbosity > 4)
+        printf("Number of threads after rx is: %d\n", threads.size());
 
     if (txSim && rxSim) {
-        cout << "Per building specifications, Simulating tx and rx is not supported.\n";
-        return;
+        cout <<
+            "Per building specifications, Simulating tx and rx is not supported.\n";
+        return -1;
     }
 
-
-    if (txSim)
+    if (txSim || (application->configuration.enableTxAlways && !tx && !rx))
     {
+        if(application->configuration.driverVerbosity)
+            cout << "Starting sim transmit thread\n";
         if (preRecorded)
         {
-            if (cam) {
-                threads.push_back(thread(simTxRecorded, string(preRecordedFile), MessageType::CAM));
+            if (cam || denm) {
+                    cout <<
+                        "Transmit from pre-recorded file only supports BSM" << endl;
+                return -1;
             }
-            else if (denm)
-            {
-                threads.push_back(thread(simTxRecorded, string(preRecordedFile), MessageType::DENM));
-            }
-            else {
-                threads.push_back(thread(simTxRecorded, string(preRecordedFile), MessageType::BSM));
-            }
+            threads.push_back(thread(simTxRecorded, string(preRecordedFile)));
         }
         else {
             if (cam) {
@@ -745,21 +891,17 @@ void setup(const bool tx, const bool rx,
         }
 
     }
+    if(application->configuration.driverVerbosity > 4)
+        printf("Number of threads after simtransmit is: %d\n", threads.size());
 
     if (rxSim)
     {
         if (ldm) {
-
-            if (cam) {
-                threads.push_back(thread(simLdmRx, MessageType::CAM));
+            if (cam || denm) {
+                    cout << "LDM Mode only supports BSM" << endl;
+                return -1;
             }
-            else if (denm)
-            {
-                threads.push_back(thread(simLdmRx, MessageType::DENM));
-            }
-            else {
-                threads.push_back(thread(simLdmRx, MessageType::BSM));
-            }
+            threads.push_back(thread(simLdmRx));
         }
         else {
 
@@ -771,48 +913,53 @@ void setup(const bool tx, const bool rx,
                 threads.push_back(thread(simReceive, MessageType::DENM));
             }
             else {
-                threads.push_back(thread(simReceive, MessageType::BSM));
-            }
+                sem_init(&cnt_sem, 0, 1);
+                // Multi-Threading Capability for RxSim Only So Far
+                int rxnumthreads = application->configuration.numRxThreads;
+
+                if (application->configuration.driverVerbosity) {
+                    cout << "Number of Simulation RX Threads is: " <<
+                             rxnumthreads << endl;
+                }
+                for(int i = 0; i < rxnumthreads; i++){
+                    threads.push_back(thread(simReceive, MessageType::BSM));
+                }
+           }
         }
     }
 
+    if(application->configuration.driverVerbosity > 4)
+        printf("Number of threads after simreceive is %d\n", threads.size());
+
     if (preRecorded && !txSim)
     {
-        if (cam) {
-            threads.push_back(thread(txRecorded, string(preRecordedFile), MessageType::CAM));
+        if (cam || denm) {
+            cout << "Only BSM is supported for pre-recorded transmit" << endl;
+            return -1;
         }
-        else if (denm)
-        {
-            threads.push_back(thread(txRecorded, string(preRecordedFile), MessageType::DENM));
-        }
-        else {
-            threads.push_back(thread(txRecorded, string(preRecordedFile), MessageType::BSM));
-        }
+        threads.push_back(thread(txRecorded, string(preRecordedFile)));
     }
 
     if (safetyApps)
     {
-        if (cam) {
-            threads.push_back(thread(runApps, MessageType::CAM));
+        if (cam || denm) {
+            cout << "Only BSM is supported for safetyApp demo" << endl;
+            return -1;
         }
-        else if (denm)
-        {
-            threads.push_back(thread(runApps,MessageType::DENM));
-        }
-        else {
-            threads.push_back(thread(runApps, MessageType::BSM));
-        }
+        threads.push_back(thread(runApps));
     }
-
+    return 0;
 }
 
 int main(int argc, char** argv) {
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
-    bool tx, rx, ldm, help, safetyApps, bsm, cam, denm, preRecorded, txSim, rxSim, tunnelRx;
-    bool tunnelTx;
+    bool tx, rx, ldm, help, safetyApps, bsm, cam, denm, preRecorded, txSim, rxSim;
+    bool tunnelTx, tunnelRx;
     tx = rx = ldm = help = safetyApps = cam = denm = tunnelTx = tunnelRx = false;
-    bsm = preRecorded = txSim = rxSim = false;
+    preRecorded = txSim = rxSim = false;
+    // by default bsm is true
+    bsm = true;
     if (argc <= 2)
     {
         printUse();
@@ -820,20 +967,52 @@ int main(int argc, char** argv) {
     }
     string configFile = string(argv[argc-1]);
     configFileCheck(configFile);
-
     string preRecordedFile;
-    int count = 1;
+    int idx = 1;
     //Get all options and file path
-    for (; count < (argc - 1); count++) {
-        getModes(argv[count][1], count, argv, tx, rx, ldm, help,
+    for (; idx < (argc - 1); idx++) {
+        getModes(argv[idx][1], idx, argc, argv, tx, rx, ldm, help,
             safetyApps, bsm, cam, denm, preRecorded, preRecordedFile, txSim,
             rxSim, tunnelTx, tunnelRx, csv, txSimIp, rxSimIp, txSimPort, rxSimPort);
     }
 
-    setup(tx, rx, ldm, help, safetyApps, bsm, cam, denm, preRecorded,
+    // Let user know how QITS will be running
+    printf("Enabled Settings Are: ");
+    // communication settings
+    if(txSim)
+        printf("TX SIM ON; ");
+    if(tx)
+        printf("TX RADIO ON; ");
+    if(rxSim)
+        printf("RX SIM ON; ");
+    if(rx)
+        printf("RX RADIO ON; ");
+    if(tunnelTx)
+        printf("TUNNEL TX ON; ");
+    if(tunnelRx)
+        printf("TUNNEL RX ON; ");
+    if(ldm)
+        printf("LDM ON; ");
+
+    // Packet/protocol type information
+    if(bsm)
+        printf("BSM; ");
+    if(cam)
+        printf("CAM; ");
+    if(denm)
+        printf("DENM; ");
+    std::cout << "CONFIG_FILE: " <<  configFile << std::endl;
+
+    if (setup(tx, rx, ldm, help, safetyApps, bsm, cam, denm, preRecorded,
         preRecordedFile, txSim, rxSim, tunnelTx, tunnelRx, txSimIp, rxSimIp,
-        txSimPort, rxSimPort, (char*)configFile.data());
+        txSimPort, rxSimPort, (char*)configFile.data()) < 0) {
+        cout << "Failed to launch program" << endl;
+    }
 
     joinThreads();
+    printf("Deleting application\n");
+    printf("Attempting to close all flows\n");
+    if(!rxSim && !txSim)
+        application->closeAllRadio();
     return 0;
 }

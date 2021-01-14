@@ -138,15 +138,13 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
     auto conMgr = telux::data::DataFactory::getInstance().getDataConnectionManager(slotId, initCb);
 
     if (conMgr) {
-        // Check if data subsystem status
+        // Initialize data connection manager
+        std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
+            slotId << ", Please wait ..." << endl;
+        std::unique_lock<std::mutex> lck(mtx_);
+        cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
         subSystemStatus = conMgr->getServiceStatus();
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
-                slotId << ", Please wait ..." << endl;
-            std::unique_lock<std::mutex> lck(mtx_);
-            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
-            subSystemStatus = conMgr->getServiceStatus();
-        }
+
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nData Connection Manager on slot "<< slotId << " is ready" << std::endl;
             retValue = true;

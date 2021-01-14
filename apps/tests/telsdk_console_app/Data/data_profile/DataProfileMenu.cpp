@@ -144,15 +144,12 @@ bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
     auto profMgr = dataFactory.getDataProfileManager(slotId, initCb);
 
     if (profMgr) {
-        // Check if data subsystem status
+        //  Initialize data profile manager
+        std::cout << "\n\nInitializing Data profile manager subsystem on slot " <<
+            slotId << ", Please wait ..." << endl;
+        std::unique_lock<std::mutex> lck(mtx_);
+        cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
         subSystemStatus = profMgr->getServiceStatus();
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\n\nInitializing Data profile manager subsystem on slot " <<
-                slotId << ", Please wait ..." << endl;
-            std::unique_lock<std::mutex> lck(mtx_);
-            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
-            subSystemStatus = profMgr->getServiceStatus();
-        }
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nData Profile Manager on slot "<< slotId << " is ready" << std::endl;
             retValue = true;

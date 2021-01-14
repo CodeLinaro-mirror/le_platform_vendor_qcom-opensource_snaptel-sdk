@@ -254,6 +254,9 @@ class DataFactory {
      */
     void initCompleteNotifier(std::vector<telux::common::InitResponseCb>& initCbs,
                               telux::common::ServiceStatus status);
+    void initCompleteNotifierWithSlotId(
+        std::map<SlotId, std::vector<telux::common::InitResponseCb>>& initCbs,
+        telux::common::ServiceStatus status, SlotId slotId);
 
     // mutex to protect member variables
     std::mutex dataMutex_;
@@ -271,8 +274,8 @@ class DataFactory {
     std::shared_ptr<telux::data::net::IBridgeManager> bridgeManager_;
     std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
 
-    std::vector<telux::common::InitResponseCb> dataProfileCallbacks_;
-    std::vector<telux::common::InitResponseCb> dataConnectionCallbacks_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataConnectionCallbacks_;
     std::vector<telux::common::InitResponseCb> natCallbacks_;
     std::vector<telux::common::InitResponseCb> fwCallbacks_;
     std::vector<telux::common::InitResponseCb> socksCallbacks_;

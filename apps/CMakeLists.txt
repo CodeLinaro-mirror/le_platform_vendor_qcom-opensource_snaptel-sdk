@@ -81,6 +81,7 @@ if(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
     add_subdirectory( tests/cv2x_update_configuration_app )
     add_subdirectory( tests/cv2x_retrieve_configuration_app )
     add_subdirectory( reference/cv2x-daemon )
+    add_subdirectory( reference/rits )
 endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 
 if(NOT MACHINE_HAS_CV2X_ONLY)

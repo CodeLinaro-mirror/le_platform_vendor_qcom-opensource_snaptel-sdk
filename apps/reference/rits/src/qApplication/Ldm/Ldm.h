@@ -44,6 +44,8 @@
 #include <mutex>
 #include <iostream>
 #include <algorithm>
+#include <semaphore.h>
+#include <csignal>
 #include "v2x_codec.h"
 #include "bsm_utils.h"
 #include <telux/cv2x/Cv2xRadio.hpp>
@@ -89,6 +91,11 @@ private:
       * Garbage collection thread.
       */
      bool gbStarted = false;
+
+     /**
+     * Variable to handle stop of garbage collection thread
+     */
+     bool gbStopped = false;
 
     /**
      * Scans for remote vehicles that can be trusted.
@@ -221,9 +228,9 @@ private:
     uint32_t getFreeBsm();
 
     /**
-     * Starts garbage collector thread. This garbage collector has 
-     * especifically been design to not deallocate memory but to 
-     * mark them as available resources so they can be overwritten. 
+     * Starts garbage collector thread. This garbage collector has
+     * especifically been design to not deallocate memory but to
+     * mark them as available resources so they can be overwritten.
      * @param gbTime a uint16_t value representing the frequency
      * of the thread execution in seconds.
      * @param timeThreshold a uint8_t value that represents the allowed
@@ -232,9 +239,20 @@ private:
     void startGb(const uint16_t gbTime, const uint8_t timeThreshold);
 
     /**
+    * Function to stop garbage collection thread.
+    **/
+    void stopGb();
+
+
+    /**
      * Prints current available contents of the LDM
      */
     void printLdmIdMap();
+
+    /* Function to permit different levels of verbosity */
+    void setVerbosity(int value) {
+        ldmVerbosity = value;
+    }
 
     /*
     * Thresholds for Tunnel Mode Filtering
@@ -244,5 +262,12 @@ private:
     uint32_t distanceThresh = 0;
     uint32_t positionCertaintyThresh = 0;
     uint32_t tuncThresh = 0;
+
+protected:
+    /*
+     * Verbosity variablee
+     */
+    int ldmVerbosity = 0;
+
 };
 #endif

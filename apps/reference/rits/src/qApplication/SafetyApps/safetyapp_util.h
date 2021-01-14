@@ -39,7 +39,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "v2x_codec.h"
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 /** This is the lane types enum */
 typedef enum {
     SAME_LANE_AHEAD_SAMEDIR = 1,    /**< Remote Vehicle is in Same lane ahead of HV and moving in the same direction. */
@@ -138,4 +140,7 @@ void EEBL_warning(msg_contents *remote, rv_specs *rvsp);
 void forward_collision_warning(msg_contents *remote, rv_specs *rvsp);
 void print_rvspecs(rv_specs* rv);;
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef _SAFETYAPP_UTIL_H_

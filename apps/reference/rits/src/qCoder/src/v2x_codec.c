@@ -34,8 +34,10 @@
 #include <string.h>
 #include "v2x_codec.h"
 
-int gVerbosity = 8;
+int gVerbosity = 0;
 void set_codec_verbosity(int value) {
+    if(value)
+        printf("Codec verbosity will be set to: %d\n", value);
     gVerbosity = value;
 }
 /**
@@ -58,7 +60,8 @@ int decode_msg(msg_contents *mc)
     }
     if (mc->stackId == STACK_ID_SAE) {
         // skip one byte C-V2X family ID
-        //abuf_pull(&mc->abuf, 1);
+        abuf_pull(&mc->abuf, 1);
+
         if ((ret = wsmp_decode(mc)) < 0) {
             fprintf(stderr, "WSMP decode failure\n");
             return ret;
@@ -73,11 +76,13 @@ int decode_msg(msg_contents *mc)
         }
         if ((ret = decode_as_j2735(mc)) < 0) {
             fprintf(stderr, "J2735 decode failure\n");
+            return -1;
         } else {
             // decode_as_j2735 returned msg_id after successful decoding.
             ret = 0;
         }
     } else {
+#ifdef ETSI
         // family ID is removed by GeoNetwork router.
         if ((ret = btp_decode(mc)) < 0) {
             fprintf(stderr, "BTP decode failure\n");
@@ -86,6 +91,7 @@ int decode_msg(msg_contents *mc)
         if ((ret = decode_as_etsi(mc)) < 0) {
             fprintf(stderr, "ETSI decode failure\n");
         }
+#endif
     }
 
     return ret;
@@ -147,6 +153,7 @@ int encode_msg(msg_contents *mc)
             return ret;
         }
     } else {
+#ifdef ETSI
         if ((ret = encode_as_etsi(mc)) < 0) {
             fprintf(stderr, "ETSI encode failure\n");
             return ret;
@@ -155,6 +162,7 @@ int encode_msg(msg_contents *mc)
             fprintf(stderr, "BTP encode failure\n");
             return ret;
         }
+#endif
     }
     if (mc->abuf.tail_bits_left != 8)
         ret = mc->abuf.tail - mc->abuf.data + 1;

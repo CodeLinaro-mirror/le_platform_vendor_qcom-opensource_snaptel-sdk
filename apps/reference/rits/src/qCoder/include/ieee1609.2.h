@@ -37,6 +37,8 @@ extern "C"
 {
 #endif
 
+#define IEEE_1609_2_HDR_LEN (3)
+
 typedef enum {
     unsecuredData = 0,
     signedData = 1,

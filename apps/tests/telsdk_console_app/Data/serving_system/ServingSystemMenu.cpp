@@ -108,14 +108,12 @@ bool DataServingSystemMenu::initServingSystemManagerAndListener(SlotId slotId) {
     auto ServingSystemMgr =
         dataFactory.getServingSystemManager(slotId, initCb);
     if(ServingSystemMgr) {
+        std::cout << "\nInitializing Serving Manager on Slot "
+                    << static_cast<int>(slotId) << ", Please wait..." << std::endl;
+        std::unique_lock<std::mutex> lck(mtx_);
+        cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
         subSystemStatus = ServingSystemMgr->getServiceStatus();
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-            std::cout << "\nInitializing Serving Manager on Slot "
-                      << static_cast<int>(slotId) << ", Please wait..." << std::endl;
-            std::unique_lock<std::mutex> lck(mtx_);
-            cv_.wait(lck, [this]{return this->subSystemStatusUpdated_;});
-            subSystemStatus = ServingSystemMgr->getServiceStatus();
-        }
+
         if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "\nServing System Manager on slot "
                       << static_cast<int>(slotId)  << " is ready" << std::endl;

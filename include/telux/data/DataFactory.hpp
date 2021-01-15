@@ -282,13 +282,11 @@ class DataFactory {
     std::vector<telux::common::InitResponseCb> vlanCallbacks_;
     std::vector<telux::common::InitResponseCb> bridgeCallbacks_;
     std::vector<telux::common::InitResponseCb> l2tpCallbacks_;
-    std::vector<telux::common::InitResponseCb> servingSystemCallbacks_;
+    std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
     DataFactory();
     ~DataFactory();
     DataFactory(const DataFactory &) = delete;
     DataFactory &operator=(const DataFactory &) = delete;
-    // Callbacks invoked after manager initialisation
-    void onServingSystemInitCompleted(telux::common::ServiceStatus status, SlotId slotId);
 };
 
 /** @} */ /* end_addtogroup telematics_data */

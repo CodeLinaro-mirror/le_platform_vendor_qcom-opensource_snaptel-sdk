@@ -782,6 +782,49 @@ When reports are no longer required, the app needs to stop the report and de-reg
 4. Status of getYearOfHw i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for getYearOfHw is received by the application.
 
+@subsection location_manager_get_terrestrial_positioning_callflow Call flow to get terrestrial positioning information
+
+@anchor fig_location_manager_get_terrestrial_positioning_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_manager_get_terrestrial_positioning_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to get terrestrial positioning information}
+  \label{fig_location_manager_get_terrestrial_positioning_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_manager_get_terrestrial_positioning_callflow.png,Call flow to get terrestrial positioning information,80,80,Call flow to get terrestrial positioning information}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object.
+3. Application can request for terrestrial positioning information with getTerrestrialPosition API.
+4. Status of getTerrestrialPosition i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for getTerrestrialPosition is received by the application.
+6. Single shot terrestrial position information is received by the application.
+
+@subsection location_manager_cancel_terrestrial_positioning_callflow Call flow to cancel terrestrial positioning information
+
+@anchor fig_location_manager_cancel_terrestrial_positioning_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_manager_cancel_terrestrial_positioning_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to cancel terrestrial positioning information}
+  \label{fig_location_manager_cancel_terrestrial_positioning_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_manager_cancel_terrestrial_positioning_callflow.png,Call flow to cancel terrestrial positioning information,80,80,Call flow to cancel terrestrial positioning information}
+
+1. Application requests location factory for location manager object.
+2. Location factory returns ILocationManager object.
+3. Application can cancel request for terrestrial positioning information with cancelTerrestrialPositionRequest API.
+4. Status of cancelTerrestrialPositionRequest i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for cancelTerrestrialPositionRequest is received by the application.
+
 @subsection location_configurator_constraint_tunc_callflow Call flow to enable/disable constraint time uncertainty
 
 @anchor fig_location_configurator_constraint_tunc_callflow
@@ -1117,6 +1160,27 @@ When reports are no longer required, the app needs to stop the report and de-reg
 3. Application configures engine state using configureEngineState API.
 4. Status of configureEngineState i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for configureEngineState is received by the application.
+
+@subsection location_configurator_provide_user_consent_terrestrial_positioning_callflow Call flow to provide user consent for terrestrial positioning
+
+@anchor fig_location_configurator_provide_user_consent_terrestrial_positioning_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_provide_user_consent_terrestrial_positioning_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to provide user consent for terrestrial positioning}
+  \label{fig_location_configurator_provide_user_consent_terrestrial_positioning_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_provide_user_consent_terrestrial_positioning_callflow.png,Call flow to provide user consent for terrestrial positioning,80,80,Call flow to provide user consent for terrestrial positioning}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application provides user consent for terrestrial positioning using provideConsentForTerrestrialPositioning API.
+4. Status of provideConsentForTerrestrialPositioning i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for provideConsentForTerrestrialPositioning is received by the application.
 
 @section data_call_flow Data Services
 

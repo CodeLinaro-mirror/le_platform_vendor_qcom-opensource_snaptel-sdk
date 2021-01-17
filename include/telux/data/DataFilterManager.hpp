@@ -164,6 +164,8 @@ public:
      * Get the current Data Powersave filter mode
      *
      * @param [in]  ifaceName - Interface name for data connection.
+     *                          Note: For global pdn , ifaceName must be empty, as global restrict
+     *                          mode is reported. Per-pdn requests are not supported.
      * @param [in]  callback - callback function to get the result of API.
      *
      * @returns Status of requestDataRestrictMode i.e. success or suitable status code.

@@ -249,15 +249,11 @@ void DataFilterMenu::getFilterMode() {
         return;
     }
 
-    std::string interfaceName;
-    std::cout << "Enter Network Interface Name: ";
-    std::cin >> interfaceName;
-    Utils::validateInput(interfaceName);
-
     std::cout << " Sending command to get Data Filter" << std::endl;
 
+    // pass empty interface name as string.
     telux::common::Status status = dataFilterMgr_->requestDataRestrictMode(
-        interfaceName, &DataFilterModeResponseCb::requestDataRestrictModeResponse);
+        "", &DataFilterModeResponseCb::requestDataRestrictModeResponse);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
     }

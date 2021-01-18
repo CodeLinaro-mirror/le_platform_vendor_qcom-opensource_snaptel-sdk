@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -118,10 +118,19 @@ void RemoteSimProfileMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Provide_User_Consent", {},
         std::bind(&RemoteSimProfileMenu::provideUserConsent,
         this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> getServerAddress
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "Get_Server_Address", {},
+        std::bind(&RemoteSimProfileMenu::requestServerAddress,
+        this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setServerAddress
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Set_Server_Address", {},
+        std::bind(&RemoteSimProfileMenu::setServerAddress,
+        this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListRemoteSimProfileMenu
         = { getEIDCommand, addProfileCommand, deleteProfileCommand, requestProfileListCommand,
-            setProfileCommand, updateNickNameCommand, setUserConsent };
+            setProfileCommand, updateNickNameCommand, setUserConsent, getServerAddress,
+            setServerAddress};
 
     addCommands(commandsListRemoteSimProfileMenu);
     ConsoleApp::displayMenu();
@@ -420,6 +429,59 @@ void RemoteSimProfileMenu::provideUserConsent(std::vector<std::string> userInput
             std::cout << "ERROR - Failed to send provide user consent request,"
                       << "Status:" << static_cast<int>(status) << std::endl;
             Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - SimProfileManger is null" << std::endl;
+    }
+}
+
+void RemoteSimProfileMenu::setServerAddress(std::vector<std::string> userInput) {
+    if(simProfileManager_) {
+        SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+        if (telux::common::DeviceConfig::isMultiSimSupported()) {
+           slotId =  getSlotIdInput();
+           if (slotId == SlotId::INVALID_SLOT_ID)
+              return;
+        }
+
+        std::string smdpAddress = "";
+        char delimiter = '\n';
+        int profileId = DEFAULT_PROFILE_ID;
+
+        std::cout << "Enter the SMDP Address: ";
+        std::getline(std::cin, smdpAddress, delimiter);
+
+        Status status = simProfileManager_->setServerAddress(slotId, smdpAddress,
+            MyRspCallback::onResponseCallback);
+        if (status == Status::SUCCESS) {
+            std::cout << "setServerAddress request sent successfully" << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to send setServerAddress request, Status:"
+                      << static_cast<int>(status) << std::endl;
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - SimProfileManger is null" << std::endl;
+    }
+}
+
+void RemoteSimProfileMenu::requestServerAddress(std::vector<std::string> userInput) {
+    if(simProfileManager_) {
+        SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+        if (telux::common::DeviceConfig::isMultiSimSupported()) {
+           slotId =  getSlotIdInput();
+           if (slotId == SlotId::INVALID_SLOT_ID)
+              return;
+        }
+
+        telux::common::Status status =
+            simProfileManager_->requestServerAddress(slotId,
+                MyRspCallback::onServerAddressResponse);
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Request Server Address sent successfully" << std::endl;
+        } else {
+            std::cout << "Request Server Address failed, status:" << static_cast<int>(status)
+                << std::endl;
         }
     } else {
         std::cout << "ERROR - SimProfileManger is null" << std::endl;

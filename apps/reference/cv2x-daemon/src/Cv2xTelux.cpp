@@ -32,6 +32,8 @@
 #include <cstring>
 #include <map>
 #include <cstdlib>
+#include <chrono>
+#include <thread>
 
 #include "Cv2xTelux.hpp"
 #include "Cv2xLog.hpp"
@@ -45,6 +47,8 @@
 using telux::common::Status;
 using telux::common::ErrorCode;
 using telux::data::OperationType;
+
+#define CALL_RETRY_INTERVAL_MS (2000)
 
 static std::map<ServiceStatus, std::string> convertServiceStatusToString = {
     {ServiceStatus::SERVICE_AVAILABLE, "Available"},
@@ -76,18 +80,19 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
     }
 
     bool startDataCalls = false;
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        // Handle State Transition InActive to Active/Suspended
+        if (((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
+             (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) &&
+             ((status.txStatus !=  Cv2xStatusType::INACTIVE) &&
+             (status.rxStatus !=  Cv2xStatusType::INACTIVE))) {
+            LOGD("State Transition From Inactive to Active/Suspended\n");
+            startDataCalls = true;
+        }
 
-    // Handle State Transition InActive to Active/Suspended
-    if (((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
-         (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) &&
-         ((status.txStatus !=  Cv2xStatusType::INACTIVE) &&
-         (status.rxStatus !=  Cv2xStatusType::INACTIVE))) {
-        LOGD("State Transition From Inactive to Active/Suspended\n");
-        startDataCalls = true;
+        cv2xStatus_ = status;
     }
-
-    cv2xStatus_ = status;
-
     if (startDataCalls) {
         auto f = std::async(std::launch::async , [this]() {
             findProfilesAndStartDataCalls();
@@ -98,6 +103,7 @@ void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
 void Cv2xTelux::logStatusChanged(Cv2xStatus &status) {
     static uint8_t previousCbr = 255;
 
+    std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
     if ((status.txStatus != Cv2xStatusType::UNKNOWN or
          status.rxStatus != Cv2xStatusType::UNKNOWN) and
         (cv2xStatus_.txStatus != status.txStatus or
@@ -141,7 +147,9 @@ void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCa
     auto reason = Cv2xUtils::DataCallEndReasonToInt(dataCall->getDataCallEndReason());
     auto ip_type = Cv2xUtils::IpFamilyTypeToStr(dataCall->getIpFamilyType());
     auto profile_id = dataCall->getProfileId();
-    DataCallStatus callStatus = dataCall->getDataCallStatus();
+    DataCallStatus previousCallStatus = DataCallStatus::INVALID;
+    static DataCallStatus ipCallStatus = DataCallStatus::INVALID;
+    static DataCallStatus nonIpCallStatus = DataCallStatus::INVALID;
 
     if (iface == "") {
         iface = "unknown";
@@ -157,18 +165,34 @@ void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCa
     auto sp = cv2xTelux_.lock();
     if (sp) {
         if (sp->isIpDataCall(profile_id)) {
-            if (callStatus == DataCallStatus::NET_CONNECTED) {
+            previousCallStatus = ipCallStatus;
+            ipCallStatus = dataCall->getDataCallStatus();
+            if (ipCallStatus == DataCallStatus::NET_CONNECTED) {
                 bootkpilog("cv2x-daemon: V2X IP call is online");
             }
-            sp->setIpCallStatus(callStatus);
+            sp->setIpCallStatus(ipCallStatus);
         } else if (sp->isNonIpDataCall(profile_id)) {
-            if (callStatus == DataCallStatus::NET_CONNECTED) {
+            previousCallStatus = nonIpCallStatus;
+            nonIpCallStatus = dataCall->getDataCallStatus();
+            if (nonIpCallStatus == DataCallStatus::NET_CONNECTED) {
                 bootkpilog("cv2x-daemon: V2X Non-IP call is online");
             }
-            sp->setNonipCallStatus(callStatus);
+            sp->setNonipCallStatus(nonIpCallStatus);
         } else {
             LOGE("unknown profile ID %d.\n", profile_id);
             return;
+        }
+
+        if (ipCallStatus == DataCallStatus::NET_NO_NET &&
+            nonIpCallStatus == DataCallStatus::NET_NO_NET) {
+            if (previousCallStatus == DataCallStatus::NET_CONNECTED) {
+                sp->onNoNet();
+            } else if (!isPermanentFailure(dataCall->getDataCallEndReason())) {
+                auto f = std::async(std::launch::async , [&sp]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(CALL_RETRY_INTERVAL_MS));
+                    sp->findProfilesAndStartDataCalls();
+                });
+            }
         }
     }
 }
@@ -197,6 +221,13 @@ void DataConnectionListener::onServiceStatusChange(ServiceStatus status) {
             }
         }
     }
+}
+
+bool DataConnectionListener::isPermanentFailure(DataCallEndReason failure) const {
+    /*TODO: check exact failure cause to determine whether it permanent failure,
+     * data calls will be retried if it is NOT permanent failure.
+     */
+    return false;
 }
 
 bool Cv2xTelux::isIpDataCall(uint8_t profileID) {
@@ -379,10 +410,11 @@ Status Cv2xTelux::stopV2xRadio() {
 
 Status Cv2xTelux::registerListeners() {
     Status ret = Status::FAILED;
-
-    cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
-    cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
-
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
+        cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
+    }
     ret = cv2xRadioMgr_->registerListener(shared_from_this());
     if (ret != Status::SUCCESS) {
         LOGE("Failed to register cv2xRadioMgr listener\n");
@@ -551,16 +583,19 @@ Status Cv2xTelux::findProfilesAndStartDataCalls() {
         return res;
     }
 
-    if ((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
-        (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) {
-        // will re-start data calls on v2x status change
-        LOGI("not start data calls if V2X status is inactive\n");
-    } else {
-        res = startDataCalls();
-        if(res != Status::SUCCESS) {
-            LOGE("Error starting data calls\n");
-            return res;
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        if ((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
+            (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) {
+            // will re-start data calls on v2x status change
+            LOGI("not start data calls if V2X status is inactive\n");
+            return Status::SUCCESS;
         }
+    }
+    res = startDataCalls();
+    if(res != Status::SUCCESS) {
+        LOGE("Error starting data calls\n");
+        return res;
     }
 
     return Status::SUCCESS;
@@ -574,6 +609,28 @@ void Cv2xTelux::setIpCallStatus(DataCallStatus newStatus) {
 void Cv2xTelux::setNonipCallStatus(DataCallStatus newStatus) {
     std::lock_guard<std::mutex> lock(dcMutex_);
     callInfo_[CV2X_DATA_CALL_NON_IP].callStatus = newStatus;;
+}
+
+void Cv2xTelux::onNoNet() {
+    auto f = std::async(std::launch::async , [this]() {
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        if ((cv2xStatus_.rxStatus == Cv2xStatusType::INACTIVE &&
+            cv2xStatus_.txStatus == Cv2xStatusType::INACTIVE)) {
+            LOGE("calls end due to cv2x radio INACTIVE.\n");
+            /*calls end due to cv2x radio status change to INACTIVE,
+              calls will be triggered again upon cv2x radio status become ACTIVE*/
+            return;
+        }
+    }
+    /*Now the situation is, cv2x radio Active/Suspend while both the data calls down, this could
+     happen if some of Data Services daemons crash/restart, restart cv2x radio to recover,
+     data calls will be triggered upon cv2x radio status become ACTIVE again.
+    */
+    if (Status::SUCCESS == stopV2xRadio() ) {
+        startV2xRadio();
+    }
+    });
 }
 
 int Cv2xTelux::stopDataCall(DataCallType callType, IpFamilyType ipFamilyType) {

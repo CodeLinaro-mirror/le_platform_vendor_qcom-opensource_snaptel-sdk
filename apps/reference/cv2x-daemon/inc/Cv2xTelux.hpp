@@ -115,6 +115,8 @@ class DataConnectionListener: public telux::data::IDataConnectionListener
 
     private:
         std::weak_ptr<Cv2xTelux> cv2xTelux_;
+
+        bool isPermanentFailure(DataCallEndReason failure) const;
 };
 
 class Cv2xTelux : public telux::cv2x::ICv2xListener,
@@ -199,6 +201,7 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
 
         void setIpCallStatus(DataCallStatus newStatus);
         void setNonipCallStatus(DataCallStatus newStatus);
+        void onNoNet();
 
         bool isPostSSRV2XDone_;
         std::condition_variable cv_;
@@ -208,6 +211,7 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
 
         std::mutex dcMutex_;
         DataCallInfo callInfo_[CV2X_DATA_CALL_MAX];
+        std::mutex cv2xStatusMutex_;
         Cv2xStatus cv2xStatus_;
 
         /* Telux objects */

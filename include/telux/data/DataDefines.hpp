@@ -692,6 +692,14 @@ enum class InterfaceType {
 };
 
 /**
+ * State of Service
+ */
+enum class ServiceState {
+    INACTIVE = 0,   /**< Service is inactive */
+    ACTIVE   = 1,   /**< Service is Active */
+};
+
+/**
  * Structure for vlan configuration
  */
 struct VlanConfig {

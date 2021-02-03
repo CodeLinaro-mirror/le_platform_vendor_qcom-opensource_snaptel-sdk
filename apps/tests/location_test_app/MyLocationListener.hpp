@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,10 +44,13 @@ public:
 
    void onGnssSignalInfo(const std::shared_ptr<telux::loc::IGnssSignalInfo> &gnssDatainfo) override;
 
+   void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
    void setSvInfoFlag(bool enable);
    void setDataInfoFlag(bool enable);
+   void setNmeaInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -56,6 +59,7 @@ private:
    bool isSvInfoFlagEnabled_ = false, isDetailedReportFlagEnabled_ = false;
    bool isBasicReportFlagEnabled_ = false, isDataInfoFlagEnabled_ = false;
    bool isTimerExpired = false;
+   bool isNmeaInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);

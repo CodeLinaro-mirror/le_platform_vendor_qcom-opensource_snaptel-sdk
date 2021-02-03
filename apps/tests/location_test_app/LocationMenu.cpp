@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -87,6 +87,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setDetailedLocationReportFlag(false);
       posListener->setBasicLocationReportFlag(false);
       posListener->setDataInfoFlag(false);
+      posListener->setNmeaInfoFlag(false);
 
       //Registering listener for fixes
       locationManager->registerListenerEx(posListener_);
@@ -412,7 +413,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  1 - Basic_location_notifications" << std::endl;
      std::cout << "  2 - Detailed/Detailed_engine_location_notifications" << std::endl;
      std::cout << "  3 - SV_info_notifications" << std::endl;
-     std::cout << "  4 - Data_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  4 - Data_info_notifications" << std::endl;
+     std::cout << "  5 - Nmea_info_notifications" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -430,6 +432,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableSvInfoLogs();
      } else if(usrInput == "4") {
          LocationMenu::enableDataInfoLogs();
+     } else if(usrInput == "5") {
+         LocationMenu::enableNmeaInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -459,6 +463,16 @@ void LocationMenu::enableDataInfoLogs() {
    } else {
       std::cout << "ERROR: invalid input, please enter 0 or 1\n";
    }
+}
+
+void LocationMenu::enableNmeaInfoLogs() {
+  int opt = enableReportLogsUtility();
+  if((opt == 0) || (opt == 1)) {
+    posListener_->setNmeaInfoFlag(opt);
+  } else {
+    std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+  }
+
 }
 
 // Main function that displays the console and processes user input

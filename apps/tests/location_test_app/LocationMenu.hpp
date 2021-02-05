@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -76,6 +76,8 @@ public:
    void configureConstellation(std::vector<std::string> userInput);
    void configureConstellationEmpty(std::vector<std::string> userInput);
    void configureConstellationDeviceDefault(std::vector<std::string> userInput);
+   void configureNmeaSentence(std::vector<std::string> userInput);
+   void configureAllNmeaSentence(std::vector<std::string> userInput);
    void configureRobustLocation(std::vector<std::string> userInput);
    void requestRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);

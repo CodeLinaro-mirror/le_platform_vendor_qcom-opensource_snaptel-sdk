@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -457,6 +457,31 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
 
   virtual telux::common::Status configureDR(const
       DREngineConfiguration& config, telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API is used to configure the NMEA sentence types that clients will receive via
+ * @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ * Without prior invocation to this API, all NMEA sentences supported in the system will get
+ * generated and delivered to all the clients that register to receive NMEA sentences.
+ * The NMEA sentence type configuration is common across all clients and updating it will affect
+ * all clients.
+ * This API call is not incremental and the new NMEA sentence types will completely overwrite the
+ * previous call to this API.
+ *
+ * @param [in] nmeaType - specify the set of NMEA sentences
+ *
+ * @param [in] callback - Optional callback to get the response of configureNmeaTypes.
+ *
+ * @returns Status of configureNmeaTypes i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureNmeaTypes(const NmeaSentenceConfig nmeaType,
+      telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Destructor of ILocationConfigurator

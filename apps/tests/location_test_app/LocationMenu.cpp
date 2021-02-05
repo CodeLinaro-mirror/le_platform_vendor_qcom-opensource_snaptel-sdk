@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -248,6 +248,16 @@ int LocationMenu::init() {
       ConsoleAppCommand("28", "Request year of hardware information", {}, std::bind(
                         &LocationMenu::getYearOfHw, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureNmeaSentence =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("29",
+           "Configure Nmea sentences", {}, std::bind(&LocationMenu::
+               configureNmeaSentence, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> configureAllNmeaSentence =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("30",
+           "Configure All Nmea sentences", {}, std::bind(&LocationMenu::
+               configureAllNmeaSentence, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -256,7 +266,8 @@ int LocationMenu::init() {
          dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
          configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
          configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
-         configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw};
+         configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
+         configureNmeaSentence, configureAllNmeaSentence};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -775,6 +786,61 @@ void LocationMenu::configureDR(std::vector<std::string> userInput) {
           std::cout << "Failed" << std::endl;
         }
     }
+}
+
+void LocationMenu::configureNmeaSentence(std::vector<std::string> userInput) {
+   if(locationConfigurator_) {
+      char delimiter = '\n';
+      std::string nmeaSentencePreference;
+      NmeaSentenceConfig nmeaType = DEFAULT_UNKNOWN;
+      std::vector<int> options;
+      std::cout << "Enter the nmea sentence types to be enabled : \n"
+                   "0 - GGA, 1 - RMC, 2 - GSA, 3 - VTG, \n"
+                   "4 - GNS, 5 - DTM, 6 - GPGSV, 7 - GLGSV \n"
+                   "8 - GAGSV, 9 - GQGSV, 10 - GBGSV, 11 - GIGSV \n"
+                   "Enter your nmea type preference\n"
+                   "(Example: enter 0,1,3 to enable GGA, RMC and VTG):\n";
+      std::getline(std::cin,nmeaSentencePreference,delimiter);
+      std::stringstream ss(nmeaSentencePreference);
+      int i = -1;
+      while(ss >> i) {
+        options.push_back(i);
+        if(ss.peek() == ',' || ss.peek() == ' ')
+          ss.ignore();
+      }
+      for(auto &opt : options) {
+        if(opt >= 0 && opt <= 11) {
+            nmeaType |= 1UL << opt;
+        } else {
+            std::cout << "Nmea types should not be out of range" << std::endl;
+        }
+      }
+
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+          "Configure Nmea sentence types");
+      telux::common::Status status = locationConfigurator_->configureNmeaTypes(nmeaType,
+          std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+              std::placeholders::_1));
+      if (status != telux::common::Status::SUCCESS) {
+          std::cout << "Configure Nmea sentence types failed" << std::endl;
+      }
+   }
+}
+
+void LocationMenu::configureAllNmeaSentence(std::vector<std::string> userInput) {
+   if(locationConfigurator_) {
+
+      telux::loc::NmeaSentenceConfig nmeaType = telux::loc::NmeaSentenceType::ALL;
+
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+          "Configure All Nmea sentence types");
+      telux::common::Status status = locationConfigurator_->configureNmeaTypes(nmeaType,
+          std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+              std::placeholders::_1));
+      if (status != telux::common::Status::SUCCESS) {
+          std::cout << "Configure All Nmea sentence types failed" << std::endl;
+      }
+   }
 }
 
 void LocationMenu::configureConstellation(std::vector<std::string> userInput) {

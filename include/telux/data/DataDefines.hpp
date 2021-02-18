@@ -266,6 +266,7 @@ enum class MobileIpReasonCode {
  */
 enum class InternalReasonCode {
     /*Internal Error Call End reasons*/
+    CE_RETRY = 1,
     CE_INTERNAL_ERROR = 201,
     CE_CALL_ENDED = 202,
     CE_INTERNAL_UNKNOWN_CAUSE_CODE = 203,

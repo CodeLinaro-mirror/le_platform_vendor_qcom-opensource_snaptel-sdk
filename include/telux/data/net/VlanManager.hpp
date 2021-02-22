@@ -297,6 +297,14 @@ class IVlanListener {
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
 
     /**
+     * This function is called when there is a change in IPA Connection Manager daemon state.
+     *
+     * @param [in] state   New state of IPA connection Manager daemon Active/Inactive
+     *
+     */
+    virtual void onHwAccelerationChanged(const ServiceState state){};
+
+    /**
      * Destructor for IVlanListener
      */
     virtual ~IVlanListener(){};

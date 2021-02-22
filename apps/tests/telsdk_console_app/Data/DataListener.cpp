@@ -64,6 +64,22 @@ void DataListener::onServiceStatusChange(telux::common::ServiceStatus status) {
          break;
    }
 }
+
+void DataListener::onHwAccelerationChanged(telux::data::ServiceState state) {
+   PRINT_NOTIFICATION << " ** Data onHwAccelerationChanged **\n";
+   switch(state) {
+      case telux::data::ServiceState::ACTIVE:
+         std::cout << " HW_ACCELERATION_ACTIVE\n";
+         break;
+      case telux::data::ServiceState::INACTIVE:
+         std::cout << " HW_ACCELERATION_INACTIVE\n";
+         break;
+      default:
+         std::cout << " Unknown IPACM State \n";
+         break;
+   }
+}
+
 std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int slotId, int profileId) {
    std::lock_guard<std::mutex> lk(mtx_);
    std::shared_ptr<telux::data::IDataCall> dataCall = nullptr;

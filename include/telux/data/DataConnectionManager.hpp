@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -456,6 +456,14 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *
      */
     virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
+
+    /**
+     * This function is called when a change occur in hardware acceleration service.
+     *
+     * @param [in] state   New state of hardware Acceleration service (Active/Inactive)
+     *
+     */
+    virtual void onHwAccelerationChanged(const ServiceState state){};
 
     /**
      * Destructor for IDataConnectionListener

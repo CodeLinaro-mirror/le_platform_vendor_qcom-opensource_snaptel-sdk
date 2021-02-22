@@ -129,6 +129,8 @@ public:
  *
  * @returns True if location configuration subsystem is ready for service otherwise false.
  *
+ * @deprecated use getServiceStatus()
+ *
  */
   virtual bool isSubsystemReady() = 0;
 
@@ -149,6 +151,10 @@ public:
  *
  * @returns  A future that caller can wait on to be notified when location
  *           configuration subsystem is ready.
+ *
+ * @deprecated The callback mechanism introduced in the
+ * @ref LocationFactory::getLocationConfigurator() API will provide the similar notification
+ * mechanism as onSubsystemReady(). This API will soon be removed from further releases.
  *
  */
   virtual std::future<bool> onSubsystemReady() = 0;
@@ -542,9 +548,8 @@ public:
           telux::common::ResponseCallback callback = nullptr ) = 0;
 
 /**
- * Clients can request Terrestrial Positioning using @ref ILocationManager::
- * getTerrestrialPosition. Terrestrial Positioning requires sending device data to the cloud to
- * get the position.
+ * Clients can request Terrestrial Positioning using @ref ILocationManager::getTerrestrialPosition.
+ * Terrestrial Positioning requires sending device data to the cloud to get the position.
  * This functionality requires user consent. This API needs to be invoked to provide the user
  * consent.
  *
@@ -566,6 +571,31 @@ public:
  */
 
   virtual telux::common::Status provideConsentForTerrestrialPositioning(bool userConsent,
+      telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API is used to configure the NMEA sentence types that clients will receive via
+ * @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ * Without prior invocation to this API, all NMEA sentences supported in the system will get
+ * generated and delivered to all the clients that register to receive NMEA sentences.
+ * The NMEA sentence type configuration is common across all clients and updating it will affect
+ * all clients.
+ * This API call is not incremental and the new NMEA sentence types will completely overwrite the
+ * previous call to this API.
+ *
+ * @param [in] nmeaType - specify the set of NMEA sentences
+ *
+ * @param [in] callback - Optional callback to get the response of configureNmeaTypes.
+ *
+ * @returns Status of configureNmeaTypes i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureNmeaTypes(const NmeaSentenceConfig nmeaType,
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**

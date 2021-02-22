@@ -1,3 +1,6 @@
+Audio playback session {#audio_manager_playback}
+=======================================================================================
+
 # Audio Manager API Sample Reference for audio playback session
 
 This Section demonstrates how to use the Audio Manager API for audio playback session.

@@ -1,3 +1,6 @@
+Using Thermal Manager APIs {#thermal_manager}
+=============================================
+
 # Using Thermal Manager APIs
 
 Please follow below steps to get thermal zones and cooling devices

@@ -1,3 +1,6 @@
+Audio voice session volume/mute control {#audio_manager_voicecall_volume_mute}
+==============================================================================
+
 # Audio Manager API Sample Reference for voice session volume/mute control
 
 This Section demonstrates how to use the Audio Manager API for voice session volume/mute control.

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,13 +57,21 @@ public:
    /**
     * Get instance of audio manager.
     *
+    * @param[in] callback     Optional callback to get the response of AudioManager initialization.
+    *
     * @returns IAudioManager pointer.
     */
-   std::shared_ptr<IAudioManager> getAudioManager();
+   std::shared_ptr<IAudioManager> getAudioManager(telux::common::InitResponseCb callback = nullptr);
 
 private:
+   /*
+    * The below callback is invoked after manager initialization.
+    */
+   void initCompleteNotifier( std::vector<telux::common::InitResponseCb>& initCbs,
+      telux::common::ServiceStatus status);
    std::mutex audioFactoryMutex_;
    std::shared_ptr<IAudioManager> audioManager_;
+   std::vector<telux::common::InitResponseCb> audioManagerCallbacks_;
 
    AudioFactory();
    AudioFactory(const AudioFactory &) = delete;

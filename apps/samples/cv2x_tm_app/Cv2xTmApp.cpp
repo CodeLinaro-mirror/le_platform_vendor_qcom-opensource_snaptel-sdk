@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -61,18 +61,33 @@ static void cv2xsetVerificationLoadCallback(telux::common::ErrorCode error) {
 int main(int argc, char *argv[]) {
     int loop = 0, load = 2000;
     auto listener = std::make_shared<Cv2xTmListener>();
+    bool cv2xTmStatusUpdated = false;
+    telux::common::ServiceStatus cv2xTmStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::condition_variable cv;
+    std::mutex mtx;
+
     std::cout << "Running TM app" << std::endl;
 
-    // Get handle to Cv2xRadioManager
+    auto statusCb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2xTmStatusUpdated = true;
+        cv2xTmStatus = status;
+        cv.notify_all();
+    };
+    // Get handle to Cv2xThrottleManager
     auto & cv2xFactory = Cv2xFactory::getInstance();
-    auto cv2xThrottleManager = cv2xFactory.getCv2xThrottleManager();
-
-    // Wait for throttle manager to complete initialization
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=  cv2xThrottleManager->getServiceStatus()) {
-        if (!cv2xThrottleManager->onSubsystemReady().get()) {
-            std::cout << "Error : C-V2X Throttle Manager initialization failed" << std::endl;
-            return EXIT_FAILURE;
-        }
+    auto cv2xThrottleManager = cv2xFactory.getCv2xThrottleManager(statusCb);
+    if (!cv2xThrottleManager) {
+        std::cout << "Error: failed to get Cv2xThrottleManager." << std::endl;
+        return EXIT_FAILURE;
+    }
+    std::unique_lock<std::mutex> lck(mtx);
+    cv.wait(lck, [&] { return cv2xTmStatusUpdated; });
+    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv2xTmStatus) {
+        std::cout << "Error: failed to initialize Cv2xThrottleManager." << std::endl;
+        return EXIT_FAILURE;
     }
 
     // register listener

@@ -1,46 +1,64 @@
+Add Firewall Entry {#add_firewall}
+==================================
+
 # Add Firewall Entry
 
 Please follow below steps to create and add Firewall Entry
 
-### 1. Get the DataFactory and Firewall Manager instance
+### 1. Implement initialization callback and get the DataFactory instances ###
+Optionally initialization callback can be provided with get manager instance.
+Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
+   auto initCb = [&](telux::common::ServiceStatus status) {
+      std::lock_guard<std::mutex> lock(mtx);
+      status_ = status;
+      initCv.notify_all();
+   };
    auto &dataFactory = telux::data::DataFactory::getInstance();
-   auto dataFwMgr  = dataFactory.getFirewallManager(opType);
    ~~~~~~
 
-### 2. Check if data subsystem is ready
+### 2. Get the FirewallManager instances
 
    ~~~~~~{.cpp}
-   bool subSystemStatus = dataFwMgr->isSubsystemReady();
+   std::unique_lock<std::mutex> lck(mtx);
+   auto dataFwMgr  = dataFactory.getFirewallManager(opType, initCb);
    ~~~~~~
 
-### 2.1 If data subsystem is not ready, wait for it to be ready
-
-Data subsystems is to make sure that device is ready for services like create Firewall entry.
-if subsystems were not ready, wait for unconditionally.
+### 3. Wait for FirewallManager initialization to be complete
 
    ~~~~~~{.cpp}
-   if(!subSystemStatus) {
-      std::future<bool> f = dataFwMgr->onSubsystemReady();
-      subSystemStatus = f.get();
+   initCv.wait(lck);
+   ~~~~~~
+
+### 3.1 Check FirewallManager initialization state
+
+If FirewallManager initialization failed, new initialization attempt can be accomplished
+by calling step 2. If FirewallManager initialization succeed, proceed to step 4
+
+   ~~~~~~{.cpp}
+   if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      // Go to step 4
+   }
+   else {
+      //Go to step 2 for another initialization attempt
    }
    ~~~~~~
 
-### 3. Get firewall Entry instance
+### 4. Get firewall Entry instance
 
    ~~~~~~{.cpp}
    std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry
       = dataFactory.getNewFirewallEntry(proto, fwDir, ipFamType);
    ~~~~~~
 
-### 4. Get pointer to Ip Filter
+### 5. Get pointer to Ip Filter
 
    ~~~~~~{.cpp}
    std::shared_ptr<telux::data::IIpFilter> ipFilter = fwEntry->getIProtocolFilter();
    ~~~~~~
 
-### 5. Populate Ip Filter based on Ip Family type
+### 6. Populate Ip Filter based on Ip Family type
 
    ~~~~~~{.cpp}
    switch (ipFamType) {
@@ -77,7 +95,7 @@ if subsystems were not ready, wait for unconditionally.
    }
    ~~~~~~
 
-### 6. Populate Protocol information
+### 7. Populate Protocol information
 
    ~~~~~~{.cpp}
    switch (proto) {
@@ -108,7 +126,7 @@ if subsystems were not ready, wait for unconditionally.
    }
    ~~~~~~
 
-### 7. Instantiate add firewall entry callback instance - this is optional
+### 8. Instantiate add firewall entry callback instance - this is optional
 
    ~~~~~~{.cpp}
    auto respCb = [](telux::common::ErrorCode error) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -64,6 +64,8 @@ public:
  *
  * @returns True if location subsystem is ready for service otherwise false.
  *
+ * @deprecated use getServiceStatus()
+ *
  */
   virtual bool isSubsystemReady() = 0;
 
@@ -84,6 +86,10 @@ public:
  *
  * @returns  A future that caller can wait on to be notified when location
  *           subsystem is ready.
+ *
+ * @deprecated The callback mechanism introduced in the
+ * @ref LocationFactory::getDgnssManager() API will provide the similar notification
+ * mechanism as onSubsystemReady(). This API will soon be removed from further releases.
  *
  */
   virtual std::future<bool> onSubsystemReady() = 0;

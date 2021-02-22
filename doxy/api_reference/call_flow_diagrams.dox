@@ -1182,74 +1182,92 @@ When reports are no longer required, the app needs to stop the report and de-reg
 4. Status of provideConsentForTerrestrialPositioning i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for provideConsentForTerrestrialPositioning is received by the application.
 
+@subsection location_configurator_configure_nmea_types_callflow Call flow to configure NMEA sentence type
+
+@anchor fig_location_configurator_configure_nmea_types_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{location_configurator_configure_nmea_types_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to configure NMEA sentence type}
+  \label{fig_location_configurator_configure_nmea_types_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_configure_nmea_types_callflow.png,Call flow to configure NMEA sentence type,80,80,Call flow to configure NMEA sentence type}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application configures NMEA sentence type using configureNmeaTypes API.
+4. Status of configureNmeaTypes i.e. either SUCCESS or FAILED will be returned to the application.
+5. The response for configureNmeaTypes is received by the application.
+
 @section data_call_flow Data Services
 
 Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services.
 
-@subsection data_connection_manager_callflow Start/Stop for data connection manager call flow
+@subsection data_start_stop_data_call_callflow Start/Stop for data connection manager call flow
 
-@anchor fig_data_connection_callflow
+@anchor fig_data_start_stop_data_call_callflow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{data_connection_manager_call_flow.png}
+  \includegraphics[scale=0.5]{data_start_stop_data_call_callflow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Start/Stop for data connection manager call flow}
-  \label{fig_sub data_connection_callflow}
+  \caption{Start/Stop data call call flow}
+  \label{fig_sub data_start_stop_data_call_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{data_connection_manager_call_flow.png,Start/Stop for data connection manager call flow,60,60,Start/Stop for data connection manager call flow}
+@html_image{data_start_stop_data_call_callflow.png,Start/Stop data call call flow,60,60,Start/Stop data call call flow}
 
-1. Application requests data factory for data connection manager object.
-2. Data factory returns IDataConnectionManager object to application.
-3. Application registers the listener to get notifications for data call change.
-4. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
-5. Application requests for start data call and optionally gets asynchronous response using startDataCallback.
-6. Application receives the status i.e. either SUCCESS or FAILED based on the execution of startDataCall.
-7. Optionally, the application gets asynchronous response for startDataCall using startDataCallback.
-8. Application requests for stop data call and optionally gets asynchronous response using stopDataCallback.
-9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of stopDataCall.
-10. Optionally, the application gets asynchronous response for stopDataCall using stopDataCallback.
-11. Application receives a notification when there is a change in data call.
-12. Application removes the listener.
-13. Application receives the status i.e. SUCCESS or FAILED for the removal of listener.
+1. Application requests Data Connection Manager object associated with sim id from data factory.
+   Application can optionally provide callback to be called when manager initialization is completed.
+2. Data factory returns shared pointer to data connection manager object to application.
+3. Application request current service status of data connection manager returned by data factory.
+4. Data connection manager returns current service status.
+4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+4.2 Data connection manager calls application callback with initialization result (success/failure).
+5. Application registers as listener to get notifications for data call change.
+6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+7. Application requests for start data call and optionally gets asynchronous response using startDataCallback.
+8. Application receives the status i.e. either SUCCESS or FAILED based on the execution of startDataCall.
+9. Optionally, the application gets asynchronous response for startDataCall using startDataCallback.
+10. Application requests for stop data call and optionally gets asynchronous response using stopDataCallback.
+11. Application receives the status i.e. either SUCCESS or FAILED based on the execution of stopDataCall.
+12. Optionally, the application gets asynchronous response for stopDataCall using stopDataCallback.
 
-@subsection data_profile_manager_callflow Request/Create/Delete/Modify for data profile manager call flow
+@subsection data_request_profile_list_callflow Request data profile list call flow
 
-@anchor fig_data_profile_callflow
+@anchor fig_data_request_profile_list_callflow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{data_profile_create_delete_modify_call_flow.png}
+  \includegraphics[scale=0.5]{data_request_profile_list_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Request/Create/Delete/Modify for data profile manager call flow}
-  \label{fig_data_profile_callflow}
+  \caption{Request data profile list call flow}
+  \label{fig_data_request_profile_list_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{data_profile_create_delete_modify_call_flow.png,Request/Create/Delete/Modify for data profile call flow,60,60,Request/Create/Delete/Modify for data profile call flow}
+@html_image{data_request_profile_list_call_flow.png,Request data profile list call flow,60,60,Request data profile list call flow}
 
-1. Application requests data factory for data profile manager object.
-2. Data factory returns IDataProfileManager object to application.
-3. Application requests for profile list and optionally gets asynchronous response using dataProfilesCallback.
-4. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfileList.
-5. Optionally, the application gets asynchronous response for requestProfileList using dataProfilesCallback.
-6. Application requests for create profile and optionally gets asynchronous response using createProfilesCallback.
-7. Application receives the status i.e. either SUCCESS or FAILED based on the execution of createProfile.
-8. Optionally, the application gets asynchronous response for createProfile using createProfilesCallback.
-9. Application requests for delete profile and optionally gets asynchronous response using deleteProfilesCallback.
-10. Application receives the status i.e. either SUCCESS or FAILED based on the execution of deleteProfile.
-11. Optionally, the application gets asynchronous response for deleteProfile using deleteProfilesCallback.
-12. Application requests for modify profile and optionally gets asynchronous response using modifyProfilesCallback.
-13. Application receives the status i.e. either SUCCESS or FAILED based on the execution of modifyProfile.
-14. Optionally, the application gets asynchronous response for modifyProfile using modifyProfilesCallback.
-15. Application requests for query profile and optionally gets asynchronous response using queryProfilesCallback.
-16. Application receives the status i.e. either SUCCESS or FAILED based on the execution of queryProfile.
-17. Optionally, the application gets asynchronous response for queryProfile using queryProfilesCallback.
-18. Application requests for request profile and optionally gets asynchronous response using requestProfileByIdCallback.
-19. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfile.
-20. Optionally, the application gets asynchronous response for requestProfile using requestProfileByIdCallback.
+1. Application requests Data profile Manager object associated with sim id from data factory.
+   Application can optionally provide callback to be called when manager initialization is completed.
+2. Data factory returns shared pointer to data profile manager object to application.
+3. Application request current service status of data profile manager returned by data factory.
+4. Data profile manager returns current service status.
+4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+4.2 Data profile manager calls application callback with initialization result (success/failure).
+5. Application creates listener class of type IDataProfileListener
+6. Application register created object in step 5 as listener to data profile changes
+7. Application receives the status i.e. either SUCCESS or FAILED based on the execution of registerListener
+8. Application requests list of profile
+9. Application receives the status i.e. either SUCCESS or FAILED based on the execution of requestProfileList
+10. Application gets callback with list of all profiles
 
 @subsection data_filter_call_flow Data Filter Manager Call Flow
 
@@ -1353,24 +1371,25 @@ IFirewallManager is used to access all Firewall APIs.
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{create_and_bind_vlan_call_flow.png}
+  \includegraphics[scale=0.5]{data_create_and_bind_vlan_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Create VLAN and bind it to PDN for data VLAN manager call flow}
   \label{fig_data_vlan_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{create_and_bind_vlan_call_flow.png,Create VLAN and Bind it to PDN in data vlan manager call flow,60,60,Create VLAN and bind it to PDN in data vlan manager call flow}
+@html_image{data_create_and_bind_vlan_call_flow.png,Create VLAN and Bind it to PDN in data vlan manager call flow,60,60,Create VLAN and bind it to PDN in data vlan manager call flow}
 
 1. Application requests data factory for data IVlanManager object.
+   Application can optionally provide callback to be called when manager initialization is completed.
    1.1. If IVlanManager object does not exist, data factory will create new object.
-2. Data factory returns IVlanManager object to application.
-3. Application can use IVlanManager::isSubsystemReady to determine if the system is ready.
+2. Data factory returns shared pointer to IVlanManager object to application.
+3. Application request current service status of vlan manager returned by data factory
 4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-   4.2. Application gets future for IVlanManager readiness.
-   4.3. Application wait for indefinitely for IVlanManager readiness.
-5. On Readiness, application calls IVlanManager::createVlan with assigned id, interface, and acceleration type.
+   4.1. If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1
+   4.2. Vlan manager calls application callback with initialization result (success/failure).
+5. On success, application calls IVlanManager::createVlan with assigned id, interface, and acceleration type.
 6. Application receives synchronous Status which indicates if the IVlanManager::createVlan request was sent successfully.
 7. Application is notified of the Status of the IVlanManager::createVlan request (either SUCCESS or FAILED) via the application-supplied callback.
 8. Application calls IVlanManager::bindWithProfile with Vlan id and profile id.
@@ -1383,24 +1402,40 @@ IFirewallManager is used to access all Firewall APIs.
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.25]{lan2lan_vlan_config_from_eap.png}
+  \includegraphics[scale=0.25]{data_lan2lan_vlan_config_from_eap.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{LAN-LAN VLAN Configuration Usecase from EAP call flow}
   \label{fig_data_vlan_lan2lan_eap_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{lan2lan_vlan_config_from_eap.png,LAN to LAN VLAN Configuration Usecase from EAP call flow,60,60,LAN to LAN VLAN Configuration Usecase from EAP call flow}
+@html_image{data_lan2lan_vlan_config_from_eap.png,LAN to LAN VLAN Configuration Usecase from EAP call flow,60,60,LAN to LAN VLAN Configuration Usecase from EAP call flow}
 
 1. Application requests data factory for data IVlanManager for local operation object.
-2. Application use IVlanManager::isSubsystemReady to determine if the system is ready.
-   2.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-3. On readiness, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and no acceleration and wait for callback to indicate createVlan result
-4. Application requests data factory for data IVlanManager for remote operation object.
-5. Application use IVlanManager::isSubsystemReady to determine if the system is ready.
-   5.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-6. On readiness, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration and wait for callback to indicate createVlan result
-7. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration and wait for callback to indicate createVlan result
+   Aplication can optionally provide callback to be called when manager initialization is completed.
+2. Data factory returns shared pointer to local vlan manager object to application.
+3. Application request current service status of local vlan manager returned by data factory.
+4. Vlan manager returns current service status.
+4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+4.2 Vlan manager calls application callback with initialization result (success/failure).
+5. On success, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and no acceleration.
+6. Vlan manager returns synchronous response to application (success/fail).
+7. Vlan manager calls application provided callback in step 5 with createVlan results
+8. Application requests data factory for data IVlanManager for remote operation object.
+   Aplication can optionally provide callback to be called when manager initialization is completed.
+9. Data factory returns shared pointer to remote vlan manager object to application.
+10. Application request current service status of remote vlan manager returned by data factory.
+11. Vlan manager returns current service status.
+11.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+11.2 Vlan manager calls application callback with initialization result (success/failure).
+12. On success, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration.
+13. Vlan manager returns synchronous response to application (success/fail).
+14. Vlan manager calls application provided callback in step 12 with createVlan results.
+15. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration.
+16. Vlan manager returns synchronous response to application (success/fail).
+17. Vlan manager calls application provided callback in step 15 with createVlan results.
 
 @subsubsection data_vlan_lan2lan_a7 LAN-LAN VLAN Configuration from A7 usecase call flow
 
@@ -1408,20 +1443,29 @@ IFirewallManager is used to access all Firewall APIs.
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.25]{lan2lan_vlan_config_from_a7.png}
+  \includegraphics[scale=0.25]{data_lan2lan_vlan_config_from_a7.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{LAN-LAN VLAN Configuration Usecase from A7 call flow}
   \label{fig_data_vlan_lan2lan_a7_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{lan2lan_vlan_config_from_a7.png,LAN to LAN VLAN Configuration Usecase from A7 call flow,60,60,LAN to LAN VLAN Configuration Usecase from A7 call flow}
+@html_image{data_lan2lan_vlan_config_from_a7.png,LAN to LAN VLAN Configuration Usecase from A7 call flow,60,60,LAN to LAN VLAN Configuration Usecase from A7 call flow}
 
 1. Application requests data factory for data IVlanManager for local operation object.
-2. Application use IVlanManager::isSubsystemReady to determine if the system is ready.
-   2.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-3. On readiness, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration and wait for callback to indicate createVlan result
-3. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration and wait for callback to indicate createVlan result
+   Aplication can optionally provide callback to be called when manager initialization is completed.
+2. Data factory returns shared pointer to local vlan manager object to application.
+3. Application request current service status of local vlan manager returned by data factory.
+4. Vlan manager returns current service status.
+4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+4.2 Vlan manager calls application callback with initialization result (success/failure).
+5. On success, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration.
+6. Vlan manager returns synchronous response to application (success/fail).
+7. Vlan manager calls application provided callback in step 5 with createVlan results.
+8. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration.
+9. Vlan manager returns synchronous response to application (success/fail).
+10. Vlan manager calls application provided callback in step 8 with createVlan results.
 
 @subsubsection data_vlan_lan2wan_eap LAN-WAN VLAN Configuration from EAP usecase call flow
 
@@ -1429,34 +1473,62 @@ IFirewallManager is used to access all Firewall APIs.
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.22]{lan2wan_vlan_config_from_eap.png}
+  \includegraphics[scale=0.22]{data_lan2wan_vlan_config_from_eap.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{LAN-WAN VLAN Configuration Usecase from EAP call flow}
   \label{fig_data_vlan_lan2wan_eap_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{lan2wan_vlan_config_from_eap.png,LAN to WAN VLAN Configuration Usecase from EAP call flow,60,60,LAN to WAN VLAN Configuration Usecase from EAP call flow}
+@html_image{data_lan2wan_vlan_config_from_eap.png,LAN to WAN VLAN Configuration Usecase from EAP call flow,60,60,LAN to WAN VLAN Configuration Usecase from EAP call flow}
 
-1. Application requests data factory for data IVlanManager for local operation object.
-2. Application use IVlanManager::isSubsystemReady to determine if the system is ready.
-   2.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-3. On readiness, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and no acceleration and wait for callback to indicate createVlan result
-4. Application requests data factory for data IVlanManager for remote operation object.
-5. Application use IVlanManager::isSubsystemReady to determine if the system is ready.
-   5.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-6. On readiness, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration and wait for callback to indicate createVlan result
-7. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration and wait for callback to indicate createVlan result
-8. Application calls IVlanManager::bindWithProfile with profile id to bind with and wait for callback to indicate bindWithProfile result
+1. Application requests data factory for local data vlan manager object.
+2. Data factory returns shared pointer to local vlan manager to application.
+3. Application request current service status of local vlan manager returned by data factory.
+4. Vlan manager returns current service status.
+4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+4.2 Vlan manager calls application callback with initialization result (success/failure).
+5. On success, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and no acceleration.
+6. Vlan manager returns synchronous response to application (success/fail).
+7. Vlan manager calls application provided callback in step 5 with createVlan results.
+8. Application requests data factory for remote data vlan manager object.
+9. Data factory returns shared pointer to remote vlan manager to application.
+10. Application request current service status of remote vlan manager returned by data factory.
+11. Vlan manager returns current service status.
+11.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 8.
+11.2 Vlan manager calls application callback with initialization result (success/failure).
+12. On success, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration.
+13. Vlan manager returns synchronous response to application (success/fail).
+14. Vlan manager calls application provided callback in step 12 with createVlan results.
+15. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration.
+16. Vlan manager returns synchronous response to application (success/fail).
+17. Vlan manager calls application provided callback in step 15 with createVlan results.
+18. Application calls IVlanManager::bindWithProfile with profile id to bind with.
+19. Vlan manager returns synchronous response to application (success/fail).
+20. Vlan manager calls application provided callback in step 18 with bindWithProfile results.
 If DMZ is needed:
-   9. Application requests data factory for data IFirewallManager object
-   10. Application can use IFirewallManager::isSubsystemReady to determine if the system is ready.
-   10.1. If FirewallManager is not ready, then the application could use onSubsystemReady which returns std::future and wait for future.
-   11. Application can use IFirewallManager::enableDmz with profile id and local address to be enable Dmz on
-12. Application calls getDataConnectionManager to get object of IDataConnectionManager
-13. Application can use IDataConnectionManager::isSubsystemReady to determine if the system is ready.
-   13.1. If DataConnectionManager is not ready, then the application could use onSubsystemReady which returns std::future and wait for future.
-14. Application can use IDataConnectionManager::startDataCall with profile id to start data call on, Ip Family type, operation Type and APN Name
+  21. Application requests data factory for firewall manager object.
+  22. Data factory returns shared pointer to firewall manager to application.
+  23. Application request current service status of firewall manager returned by data factory.
+  24. Firewall manager returns current service status.
+    24.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+         provided in step 21.
+    24.2 Firewall manager calls application callback with initialization result (success/failure).
+  25. Application calls firewall manager enableDmz with profile id and local address to be enable Dmz on.
+  26. Firewall manager returns synchronous response to application (success/fail).
+  27. Firewall manager calls application provided callback in step 25 with enableDmz results.
+28. Application requests data factory for data connection manager object.
+29. Data factory returns shared pointer to data connection manager to application.
+30. Application request current service status of data connection manager returned by data factory.
+31. Data connection manager returns current service status.
+31.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 28.
+31.2 Data connection manager calls application callback with initialization result (success/failure).
+32. Application can call data Connection manager startDataCall with profile id to start data call on, Ip Family type, operation Type and APN Name.
+33. Data connection Manager returns synchronous response to application (success/fail).
+34. Data connection Manager returns notification to application with data call details.
 
 @subsubsection data_vlan_lan2wan_a7 LAN-WAN VLAN Configuration from A7 usecase call flow
 
@@ -1464,31 +1536,52 @@ If DMZ is needed:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.25]{lan2wan_vlan_config_from_a7.png}
+  \includegraphics[scale=0.25]{data_lan2wan_vlan_config_from_a7.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{LAN-WAN VLAN Configuration Usecase from A7 call flow}
   \label{fig_data_vlan_lan2wan_a7_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{lan2wan_vlan_config_from_a7.png,LAN to WAN VLAN Configuration Usecase from A7 call flow,60,60,LAN to WAN VLAN Configuration Usecase from A7 call flow}
+@html_image{data_lan2wan_vlan_config_from_a7.png,LAN to WAN VLAN Configuration Usecase from A7 call flow,60,60,LAN to WAN VLAN Configuration Usecase from A7 call flow}
 
-1. Application requests data factory for data IVlanManager for remote operation object.
-2. Application use IVlanManager::isSubsystemReady to determine if the system is ready.
-   2.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-3. On readiness, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration and wait for callback to indicate createVlan result
-4. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration and wait or callback to indicate createVlan result
-5. Application calls IVlanManager::bindWithProfile with profile id to bind with and wait for callback to indicate bindWithProfile result
+1. Application requests data factory for local data vlan manager object.
+2. Data factory returns shared pointer to local vlan manager to application.
+3. Application request current service status of local vlan manager returned by data factory.
+4. Vlan manager returns current service status.
+4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+4.2 Vlan manager calls application callback with initialization result (success/failure).
+5. On success, application calls IVlanManager::createVlan with USB interface, Vlan id 1 and acceleration.
+6. Vlan manager returns synchronous response to application (success/fail).
+7. Vlan manager calls application provided callback in step 5 with createVlan results.
+8. Application calls IVlanManager::createVlan with ETH interface, Vlan id 1 and acceleration.
+9. Vlan manager returns synchronous response to application (success/fail).
+10. Vlan manager calls application provided callback in step 8 with createVlan results.
+11. Application calls IVlanManager::bindWithProfile with profile id to bind with.
+12. Vlan manager returns synchronous response to application (success/fail).
+13. Vlan manager calls application provided callback in step 11 with bindWithProfile results.
 If DMZ is needed:
-   6. Application requests data factory for data IFirewallManager object
-   7. Application can use IFirewallManager::isSubsystemReady to determine if the system is ready.
-   7.1. If FirewallManager is not ready, then the application could use onSubsystemReady which returns std::future and wait for future.
-   8. Application can use IFirewallManager::enableDmz with profile id and local address to be enable Dmz on
-9. Application calls getDataConnectionManager to get object of IDataConnectionManager
-10. Application can use IDataConnectionManager::isSubsystemReady to determine if the system is ready.
-   10.1. If DataConnectionManager is not ready, then the application could use onSubsystemReady which returns std::future and wait for future.
-11. Application can use IDataConnectionManager::startDataCall with profile id to start data call on, Ip Family type, operation Type and APN Name
-
+  14. Application requests data factory for firewall manager object.
+  15. Data factory returns shared pointer to firewall manager to application.
+  16. Application request current service status of firewall manager returned by data factory.
+  17. Firewall manager returns current service status.
+    17.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+         provided in step 14.
+    17.2 Firewall manager calls application callback with initialization result (success/failure).
+  18. Application calls firewall manager enableDmz with profile id and local address to be enable Dmz on.
+  19. Firewall manager returns synchronous response to application (success/fail).
+  20. Firewall manager calls application provided callback in step 25 with enableDmz results.
+21. Application requests data factory for data connection manager object.
+22. Data factory returns shared pointer to data connection manager to application.
+23. Application request current service status of data connection manager returned by data factory.
+24. Data connection manager returns current service status.
+  24.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+       provided in step 21.
+  24.2 Data connection manager calls application callback with initialization result (success/failure).
+25. Application can call data Connection manager startDataCall with profile id to start data call on, Ip Family type, operation Type and APN Name.
+26. Data connection Manager returns synchronous response to application (success/fail).
+27. Data connection Manager returns notification to application with data call details.
 
 @subsubsection data_static_nat_manager_callflow Create Static NAT entry in data Static NAT manager call flow
 
@@ -1496,26 +1589,26 @@ If DMZ is needed:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{create_snat_entry_call_flow.png}
+  \includegraphics[scale=0.5]{data_create_snat_entry_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Create Static NAT entry for data NAT manager call flow}
   \label{fig_data_static_nat_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{create_snat_entry_call_flow.png,Create Static NAT entry in data Static NAT manager call flow,60,60,Create Static NAT entry in data Static NAT manager call flow}
+@html_image{data_create_snat_entry_call_flow.png,Create Static NAT entry in data Static NAT manager call flow,60,60,Create Static NAT entry in data Static NAT manager call flow}
 
-1. Application requests data factory for data INatManager object.
-   1.1. If INatManager object does not exist, data factory will create new object.
-2. Data factory returns NatManager object to application.
-3. Application can use INatManager::isSubsystemReady to determine if the system is ready.
-4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-   4.2. Application gets future for INatManager readiness.
-   4.3. Application wait for indefinitely for INatManager readiness.
-5. On Readiness, application calls INatManager::addStaticNatEntry with profileId, private IP address port, private port, global port and IP Protocol.
-6. Application receives synchronous Status which indicates if the INatManager::addStaticNatEntry request was sent successfully.
-7. Application is notified of the Status of the INatManager::addStaticNatEntry request (either SUCCESS or FAILED) via the application-supplied callback.
+1. Application requests data factory for data nat manager object.
+   1.1. If nat manager object does not exist, data factory will create new object.
+2. Data factory returns shared pointer to nat manager object to application.
+3. Application request current service status of nat manager returned by data factory.
+4. Nat manager returns current service status.
+  4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+      provided in step 1.
+  4.2 Nat manager calls application callback with initialization result (success/failure).
+5. On success, application calls nat manager addStaticNatEntry with profileId, private IP address port, private port, global port and IP Protocol.
+6. Application receives synchronous Status which indicates if the nat manager addStaticNatEntry request was sent successfully.
+7. Application is notified of the result of the nat manager addStaticNatEntry request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection data_firewall_enablement_callflow Firewall Enablement in data Firewall manager call flow
 
@@ -1523,26 +1616,26 @@ If DMZ is needed:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{enable_disable_firewall_call_flow.png}
+  \includegraphics[scale=0.5]{data_enable_disable_firewall_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Firewall enablement in data Firewall manager call flow}
   \label{fig_data_firwall_enablement_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{enable_disable_firewall_call_flow.png,Firewall Enablement in data Firewall manager call flow,60,60,Firewall Enablement in data Firewall manager call flow}
+@html_image{data_enable_disable_firewall_call_flow.png,Firewall Enablement in data Firewall manager call flow,60,60,Firewall Enablement in data Firewall manager call flow}
 
-1. Application requests data factory for data IFirewallManager object.
-   1.1. If IFirewallManager object does not exist, data factory will create new object.
-2. Data factory returns FirewallManager object to application.
-3. Application can use IFirewallManager::isSubsystemReady to determine if the system is ready.
-4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-   4.2. Application gets future for IFirewallManager readiness.
-   4.3. Application wait for indefinitely for IFirewallManager readiness.
-5. On Readiness, application calls IFirewallManager::setFirewall with enable/disable and allow/drop packets.
-6. Application receives synchronous Status which indicates if the IFirewallManager::setFirewall request was sent successfully.
-7. Application is notified of the Status of the IFirewallManager::setFirewall request (either SUCCESS or FAILED) via the application-supplied callback.
+1. Application requests data factory for data firewall manager object.
+   1.1. If firewall manager object does not exist, data factory will create new object.
+2. Data factory returns shared pointer to firewall manager object to application.
+3. Application request current service status of firewall manager returned by data factory.
+4. Firewall manager returns current service status.
+4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+4.2 Firewall manager calls application callback with initialization result (success/failure).
+5. On success, application calls firewall manager setFirewall with enable/disable and allow/drop packets.
+6. Application receives synchronous Status which indicates if the firewall manager setFirewall request was sent successfully.
+7. Application is notified of the Status of the firewall manager setFirewall request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection data_add_firewall_entry_callflow Add Firewall Entry in data Firewall manager call flow
 
@@ -1550,24 +1643,24 @@ If DMZ is needed:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{add_firewall_entry_call_flow.png}
+  \includegraphics[scale=0.5]{data_add_firewall_entry_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Add Firewall entry in data Firewall manager call flow}
   \label{fig_data_add_firwall_entry_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{add_firewall_entry_call_flow.png,Adding Firewall Entry in data Firewall manager call flow,60,60,Adding Firewall Entry in data Firewall manager call flow}
+@html_image{data_add_firewall_entry_call_flow.png,Adding Firewall Entry in data Firewall manager call flow,60,60,Adding Firewall Entry in data Firewall manager call flow}
 
-1. Application requests data factory for data IFirewallManager object.
-   1.1. If IFirewallManager object does not exist, data factory will create new object.
-2. Data factory returns FirewallManager object to application.
-3. Application can use IFirewallManager::isSubsystemReady to determine if the system is ready.
-4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-   4.2. Application gets future for IFirewallManager readiness.
-   4.3. Application wait for indefinitely for IFirewallManager readiness.
-5. On Readiness, application calls IFirewallManager::getNewFirewallEntry to get FirewallEntry object.
+1. Application requests data factory for data firewall manager object.
+   1.1. If firewall manager object does not exist, data factory will create new object.
+2. Data factory returns shared pointer to firewall manager object to application.
+3. Application request current service status of data profile manager returned by data factory.
+4. Firewall manager returns current service status.
+  4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+      provided in step 1.
+  4.2 Firewall manager calls application callback with initialization result (success/failure).
+5. On success, application calls firewall manager getNewFirewallEntry to get FirewallEntry object.
 6. Application receives Firewall Entry object.
 7. Using Firewall Entry object, application calls IFirewallEntry::getIProtocolFilter to get protocol filter object
 8. Application receives IpFilter object.
@@ -1583,26 +1676,26 @@ If DMZ is needed:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{create_firewall_dmz_call_flow.png}
+  \includegraphics[scale=0.5]{data_create_firewall_dmz_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Set Firewall DMZ in data Firewall manager call flow}
   \label{fig_data_firwall_dmz_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{create_firewall_dmz_call_flow.png,Set Firewall DMZ in data Firewall manager call flow,60,60,Set Firewall DMZ in data Firewall manager call flow}
+@html_image{data_create_firewall_dmz_call_flow.png,Set Firewall DMZ in data Firewall manager call flow,60,60,Set Firewall DMZ in data Firewall manager call flow}
 
-1. Application requests data factory for data IFirewallManager object.
-   1.1. If IFirewallManager object does not exist, data factory will create new object.
-2. Data factory returns FirewallManager object to application.
-3. Application can use IFirewallManager::isSubsystemReady to determine if the system is ready.
-4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-   4.2. Application gets future for IFirewallManager readiness.
-   4.3. Application wait for indefinitely for IFirewallManager readiness.
-5. On Readiness, application calls IFirewallManager::enableDmz with profileId and IP Address.
-6. Application receives synchronous Status which indicates if the IFirewallManager::enableDmz request was sent successfully.
-7. Application is notified of the Status of the IFirewallManager::enableDmz request (either SUCCESS or FAILED) via the application-supplied callback.
+1. Application requests data factory for data firewall manager object.
+   1.1. If firewall manager object does not exist, data factory will create new object.
+2. Data factory returns shared pointer to firewall manager object to application.
+3. Application request current service status of firewall manager returned by data factory.
+4. Firewall manager returns current service status.
+  4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+      provided in step 1.
+  4.2 Firewall manager calls application callback with initialization result (success/failure).
+5. On success, application calls firewall manager enableDmz with profileId and IP Address.
+6. Application receives synchronous Status which indicates if the firewall manager enableDmz request was sent successfully.
+7. Application is notified of the Status of the firewall manager enableDmz request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection data_socks_enablement_callflow Socks Enablement in data Socks manager call flow
 
@@ -1610,26 +1703,26 @@ If DMZ is needed:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{enable_disable_Socks_call_flow.png}
+  \includegraphics[scale=0.5]{data_enable_disable_Socks_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Socks enablement in data Socks manager call flow}
   \label{fig_data_socks_enablement_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{enable_disable_Socks_call_flow.png,Socks Enablement in data Socks manager call flow,60,60,Socks Enablement in data Socks manager call flow}
+@html_image{data_enable_disable_Socks_call_flow.png,Socks Enablement in data Socks manager call flow,60,60,Socks Enablement in data Socks manager call flow}
 
-1. Application requests data factory for data ISocksManager object.
-   1.1. If ISocksManager object does not exist, data factory will create new object.
-2. Data factory returns SocksManager object to application.
-3. Application can use ISocksManager::isSubsystemReady to determine if the system is ready.
-4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-   4.2. Application gets future for ISocksManager readiness.
-   4.3. Application wait for indefinitely for ISocksManager readiness.
-5. On Readiness, application calls ISocksManager::enableSocks with enable/disable.
-6. Application receives synchronous Status which indicates if the ISocksManager::enableSocks request was sent successfully.
-7. Application is notified of the Status of the ISocksManager::enableSocks request (either SUCCESS or FAILED) via the application-supplied callback.
+1. Application requests data factory for data socks manager object.
+   1.1. If socks manager object does not exist, data factory will create new object.
+2. Data factory returns shared pointer to socks manager object to application.
+3. Application request current service status of socks manager returned by data factory.
+4. Socks manager returns current service status.
+  4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+      provided in step 1.
+  4.2 Socks manager calls application callback with initialization result (success/failure).
+5. On success, application calls socks manager enableSocks with enable/disable.
+6. Application receives synchronous Status which indicates if the socks manager enableSocks request was sent successfully.
+7. Application is notified of the Status of the socks manager enableSocks request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection data_l2tp_enablement_callflow L2TP Enablement and Configuration in data L2TP manager call flow
 
@@ -1637,29 +1730,29 @@ If DMZ is needed:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{enable_disable_l2tp_and_create_tunnel_session.png}
+  \includegraphics[scale=0.5]{data_enable_disable_l2tp_and_create_tunnel_session.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{L2TP enablement and Configuration in data L2TP manager call flow}
   \label{fig_data_l2tp_enablement_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{enable_disable_l2tp_and_create_tunnel_session.png,L2TP Enablement and Configuration in data L2TP manager call flow,60,60,L2TP Enablement and Configuration in data L2TP manager call flow}
+@html_image{data_enable_disable_l2tp_and_create_tunnel_session.png,L2TP Enablement and Configuration in data L2TP manager call flow,60,60,L2TP Enablement and Configuration in data L2TP manager call flow}
 
-1. Application requests data factory for data IL2tpManager object.
-   1.1. If IL2tpManager object does not exist, data factory will create new object.
-2. Data factory returns IL2tpManager object to application.
-3. Application can use IL2tpManager::isSubsystemReady to determine if the system is ready.
-4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-   4.1. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-   4.2. Application gets future for IL2tpManager readiness.
-   4.3. Application wait for indefinitely for IL2tpManager readiness.
-5. On Readiness, application calls IL2tpManager::setConfig with enable/disable, enable/disable Mss, enable/disable MTU size and MTU size
-6. Application receives synchronous Status which indicates if the IL2tpManager::setConfig request was sent successfully.
-7. Application is notified of the Status of the IL2tpManager::setConfig request (either SUCCESS or FAILED) via the application-supplied callback.
-8. Application calls IL2tpManager::addTunnel with all required configurations to setup tunnel and session
-9. Application receives synchronous Status which indicates if the IL2tpManager::addTunnel request was sent successfully.
-10. Application is notified of the Status of the IL2tpManager::addTunnel request (either SUCCESS or FAILED) via the application-supplied callback.
+1. Application requests data factory for data l2tp manager object.
+   1.1. If l2tp manager object does not exist, data factory will create new object.
+2. Data factory returns shared pointer to l2tp manager object to application.
+3. Application request current service status of l2tp manager returned by data factory.
+4. L2tp manager returns current service status.
+  4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+      provided in step 1.
+  4.2 L2tp manager calls application callback with initialization result (success/failure).
+5. On success, application calls l2tp manager setConfig with enable/disable, enable/disable Mss, enable/disable MTU size and MTU size
+6. Application receives synchronous Status which indicates if the l2tp manager setConfig request was sent successfully.
+7. Application is notified of the Status of the l2tp manager setConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+8. Application calls l2tp manager setConfig with all required configurations to setup tunnel and session
+9. Application receives synchronous Status which indicates if the l2tp manager setConfig request was sent successfully.
+10. Application is notified of the Status of the l2tp manager setConfig request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsubsection add_enable_software_bridge Call flow to add and enable software bridge
 
@@ -1676,15 +1769,20 @@ If DMZ is needed:
 
 @html_image{data_software_bridge_add_enable.png,Call flow to add and enable a software bridge,80,80,Call flow to add and enable a software bridge}
 
-1. Application requests data factory for Bridge manager object.
-2. Data factory returns IBridgeManager object to application.
-3. On readiness, application requests to add software bridge configuration for an interface, providing an optional asynchronous response callback using addBridge API.
-4. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
-5. Optionally, the application gets asynchronous response for addBridge via the application-supplied callback.
-6. If the software bridge management is not enabled already, application requests to enable it, providing an optional asynchronous response callback using enableBridge API.
+1. Application requests data factory for bridge manager object.
+2. Data factory returns shared pointer to bridge manager object to application.
+3. Application request current service status of bridge manager returned by data factory.
+4. Bridge manager returns current service status.
+  4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+  4.2 Bridge manager calls application callback with initialization result (success/failure).
+5. On success, application requests to add software bridge configuration for an interface, providing an optional asynchronous response callback using addBridge API.
+6. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
+7. Optionally, the application gets asynchronous response for addBridge via the application-supplied callback.
+8. If the software bridge management is not enabled already, application requests to enable it, providing an optional asynchronous response callback using enableBridge API.
    Please note that this step affects all the software bridges configured in the system.
-7. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
-8. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
+9. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
+10. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
 
 @subsubsection remove_disable_software_bridge Call flow to remove and disable software bridge
 
@@ -1701,20 +1799,27 @@ If DMZ is needed:
 
 @html_image{data_software_bridge_remove_disable.png,Call flow to remove and disable a software bridge,80,80,Call flow to remove and disable a software bridge}
 
-1. Application requests data factory for Bridge manager object.
-2. Data factory returns IBridgeManager object to application.
-3. On readiness, application requests to get the list of software bridge configurations, providing an asynchronous response callback using requestBridgeInfo API.
-4. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
-5. The application gets asynchronous response for requestBridgeInfo via the application-supplied callback.
-6. Application requests to remove software bridge configuration for an interface, providing an optional asynchronous response callback using removeBridge API.
-7. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
-8. Optionally, the application gets asynchronous response for removeBridge via the application-supplied callback.
-9. If the software bridge management needs to be disabled, application requests to disable it, providing an optional asynchronous response callback using enableBridge API.
+1. Application requests data factory for bridge manager object.
+2. Data factory returns shared pointer to bridgeManager object to application.
+3. Application request current service status of bridge manager returned by data factory.
+4. Bridge manager returns current service status.
+  4.1 If status returned is SERVICE_UNAVAILABLE (manager is not ready), application should wait for init callback
+    provided in step 1.
+  4.2 Bridge manager calls application callback with initialization result (success/failure).
+5. On success, application requests to get the list of software bridge configurations, providing an asynchronous response callback using requestBridgeInfo API.
+6. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
+7. The application gets asynchronous response for requestBridgeInfo via the application-supplied callback.
+8. Application requests to remove software bridge configuration for an interface, providing an optional asynchronous response callback using removeBridge API.
+9. Application receives the synchronous status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
+10. Optionally, the application gets asynchronous response for removeBridge via the application-supplied callback.
+11. If the software bridge management needs to be disabled, application requests to disable it, providing an optional asynchronous response callback using enableBridge API.
    Please note that this step affects all the software bridges configured in the system.
-10. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
-11. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
+12. Application receives the status i.e. either SUCCESS or FAILED which indicates if the request was sent successfully.
+13. Optionally, the application gets asynchronous response for enableBridge via the application-supplied callback.
 
 @section cv2x_call_flows C-V2X
+
+Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services.
 
 @subsection cv2x_start_stop_callflow Start/Stop C-V2X Mode
 
@@ -1878,6 +1983,50 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 14. Application requests to close optional event-driven flow (if one was created).
 15. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
 16. C-V2X Radio sends asynchronous notification via the callback (if a callback was specified) indicating the status of the request.
+
+@subsection cv2x_tm_filter_rate_adjustment_callflow C-V2X Throttle Manager Filer rate adjustment notification flow
+
+@anchor fig_cv2x_tm_filter_rate_adjustment_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.41]{tm_filter_rate_adjustment_notification.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Throttle Manager filter rate adjustment notification call flow}
+  \label{fig_cv2x_tm_filter_rate_adjustment_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{tm_filter_rate_adjustment_notification.png,C-V2X Throttle Manager filter rate adjustment notification call flow,60,60,C-V2X Throttle Manager filter rate adjustment notification call flow}
+
+1. Application requests C-V2X factory for a C-V2X Throttle Manager.
+2. C-V2X factory return ICv2xThrottleManager object to application.
+3. Application register a listener for getting notifications of filter rate update.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application will get filter rate updates, positive value indicates to the application to filter more messages, and negative value indicates to the application to filter less messages
+6. Application deregister the listener.
+7. Status of deregistering listener, i.e. either SUCCESS or FAILED will be returned.
+
+@subsection cv2x_tm_set_verification_load_callflow C-V2X Throttle Manager set verification load flow
+
+@anchor fig_cv2x_tm_set_verificaton_load__callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.41]{tm_set_verification_load.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Throttle Manager set verification call flow}
+  \label{fig_cv2x_tm_set_verificaton_load__callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{tm_set_verification_load.png,C-V2X Throttle Manager set verification load call flow,60,60,C-V2X Throttle Manager set verification load call flow}
+
+1. Application requests C-V2X factory for a C-V2X Throttle Manager.
+2. C-V2X factory return ICv2xThrottleManager object to application.
+3. Application set verification load using setVerificationLoad method.
+4. Application receives synchronous status which indicates if the request was sent successfully.
+5. Application is notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @section audio_call_flows Audio
 
@@ -2321,6 +2470,33 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 14. Application requests delete audio play stream using deleteStream method.
 15. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
 16. Application is notified of the deleteStream request status(either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection audio_subsystem_restart_callflow Audio Subsystem Restart Callflow
+
+@anchor fig_audio_ssr_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.38]{audio_ssr_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Audio Subsystem Restart Callflow}
+  \label{fig_audio_ssr_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{audio_ssr_callflow.png,Audio Subsystem Restart Callflow,80,80,Audio Subsystem Restart Callflow}
+
+1. Application requests Audio factory for an Audio Manager.
+2. Audio factory return IAudioManager object to application.
+3. On Readiness, Application requests to register listener to IAudioManager object.
+4. Application receives synchronous status which indicates registerListener request was sent successfully.
+5. IAudioManager is notified that audio service is unavailable.
+6. Application receives a notification from the IAudioManager regarding service status as unavailable.
+   Application is supposed to relealse references to all the IAudioStream/ITranscoder objects and related resources.
+   Application should not send any new request to IAudioManager or IAudioStream/ITranscoder objects.
+7. IAudioManager is notified that audio service is available.
+8. Application receives a notification from the IAudioManager regarding service status as available.
+   IAudioManager object is now ready to accept new requests from application.
 
 @section thermal_manager_call_flow Thermal manager call flow
 

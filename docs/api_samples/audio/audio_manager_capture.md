@@ -1,3 +1,6 @@
+Audio capture session {#audio_manager_capture}
+=====================================================================================
+
 # Audio Manager API Sample Reference for audio capture session
 
 This Section demonstrates how to use the Audio Manager API for audio capture session.

@@ -1,33 +1,51 @@
+Start/Stop data call {#start_or_stop_data_call}
+===============================================
+
 # Cellular Data Call - Start/Stop
 
 Please follow below steps to start or stop cellular data call
 
-### 1. Get the DataFactory and DataConnectionManager instances
+### 1. Implement initialization callback and get the DataFactory instance
+Optionally initialization callback can be provided with get manager instance.
+Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
+   auto initCb = [&](telux::common::ServiceStatus status) {
+      std::lock_guard<std::mutex> lock(mtx);
+      status_ = status;
+      initCv.notify_all();
+   };
    auto &dataFactory = DataFactory::getInstance();
-   auto dataConnectionManager = dataFactory.getDataConnectionManager();
    ~~~~~~
 
-### 2. Check if data subsystem is ready
+### 2. Get the DataConnectionManager instances
 
    ~~~~~~{.cpp}
-   bool subSystemsStatus = dataConnectionManager->isSubsystemReady();
+   std::unique_lock<std::mutex> lck(mtx);
+   dataConnMgr = dataFactory.getDataConnectionManager(slotId, initCb);
    ~~~~~~
 
-### 2.1 If data subsystem is not ready, wait for it to be ready
-
-Data subsystems is to make sure that device is ready for services like bring-up or tear-down cellular data call.
-if subsystems were not ready, wait for unconditionally.
+### 3. Wait for DataConnectionManager initialization to be complete
 
    ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::future<bool> f = dataConnectionManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   initCv.wait(lck);
+   ~~~~~~
+
+### 3.1 Check data connection manager initialization state
+
+If DataConnectionManager initialization failed, new initialization attempt can be accomplished
+by calling step 2. If DataConnectionManager initialization succeed, proceed to step 4
+
+   ~~~~~~{.cpp}
+   if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      // Go to step 4
+   }
+   else {
+      //Go to step 2 for another initialization attempt
    }
    ~~~~~~
 
-### 3. Implement DataCallResponseCb callback for startDatacall###
+### 4. Implement DataCallResponseCb callback for startDatacall  ###
 
    ~~~~~~{.cpp}
    void startDataCallResponseCallBack(const std::shared_ptr<telux::data::IDataCall> &dataCall,
@@ -41,16 +59,16 @@ if subsystems were not ready, wait for unconditionally.
    }
    ~~~~~~
 
-### 4. Send a start data call request with profile ID, IpFamily type along with required callback function ###
+### 5. Send a start data call request with profile ID, IpFamily type along with required callback function ###
 
    ~~~~~~{.cpp}
    dataConnectionManager->startDataCall(profileId, telux::data::IpFamilyType::IPV4V6,
                                         startDataCallResponseCallBack);
    ~~~~~~
 
-### 5. Response callback will be called for the startDataCall response ###
+### 6. Response callback will be called for the startDataCall response ###
 
-### 6. Implement DataCallResponseCb callback for stopDatacall###
+### 7. Implement DataCallResponseCb callback for stopDatacall###
 
    ~~~~~~{.cpp}
    void stopDataCallResponseCallBack(const std::shared_ptr<telux::data::IDataCall> &dataCall,
@@ -63,11 +81,11 @@ if subsystems were not ready, wait for unconditionally.
    }
    ~~~~~~
 
-### 7. Send a stop data call request with profile ID, IpFamily type along with required callback function ###
+### 8. Send a stop data call request with profile ID, IpFamily type along with required callback function ###
 
    ~~~~~~{.cpp}
    dataConnectionManager->stopDataCall(profileId, telux::data::IpFamilyType::IPV4V6,
                                        stopDataCallResponseCallBack);
    ~~~~~~
 
-### 8. Response callback will be called for the stopDataCall response ###
+### 9. Response callback will be called for the stopDataCall response ###

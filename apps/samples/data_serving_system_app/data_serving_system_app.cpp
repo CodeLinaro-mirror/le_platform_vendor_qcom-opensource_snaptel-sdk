@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -64,12 +64,12 @@ int main(int argc, char *argv[]) {
 
    // [1] Get the DataFactory
    auto &dataFactory = telux::data::DataFactory::getInstance();
+   std::unique_lock<std::mutex> lck(mtx_);
    auto dataServingMgr = dataFactory.getServingSystemManager(DEFAULT_SLOT_ID, initCb);
 
    // [2] Wait for data serving system subsystem initialization
    std::cout << " Checking Data Serving System Manager readiness .. please wait " << std::endl;
    if (dataServingMgr) {
-      std::unique_lock<std::mutex> lck(mtx_);
       cv_.wait(lck, [&]{return subSystemStatusUpdated;});
       subSystemStatus = dataServingMgr->getServiceStatus();
    }

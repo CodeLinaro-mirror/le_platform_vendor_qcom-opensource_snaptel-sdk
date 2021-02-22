@@ -70,6 +70,7 @@ private:
    void multiSimMenu(std::vector<std::string> userInput);
    void cellbroadcastMenu(std::vector<std::string> userInput);
    void rspMenu(std::vector<std::string> userInput);
+   void imsSettingsMenu(std::vector<std::string> userInput);
 
 };
 

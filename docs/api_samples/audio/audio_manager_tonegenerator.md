@@ -1,3 +1,6 @@
+Audio tone generation {#audio_manager_tonegenerator}
+====================================================
+
 # Audio Manager API Sample Reference for audio tone generation.
 
 Please follow the below steps to play a tone in an active tone generator stream.

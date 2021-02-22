@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -74,29 +74,31 @@ AudioConsoleApp::~AudioConsoleApp() {
 void AudioConsoleApp::init() {
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
+    std::promise<ServiceStatus> prom{};
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
-    audioManager_ = audioFactory.getAudioManager();
-
-    //  Check if audio subsystem is ready
-    bool ready = false;
-    if (audioManager_) {
-        ready = audioManager_->isSubsystemReady();
-    } else {
-        std::cout << "Invalid Audio Manager" << std::endl;
+    audioManager_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {
+        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
+        }
+    });
+    if (!audioManager_) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
         return;
     }
 
+    //  Check if audio subsystem is ready
     //  If audio subsystem is not ready, wait for it to be ready
-    if (!ready) {
+    ServiceStatus managerStatus = audioManager_->getServiceStatus();
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
-        std::future<bool> f = audioManager_->onSubsystemReady();
-        // If we want to wait unconditionally for audio subsystem to be ready
-        ready = f.get();
+        managerStatus = prom.get_future().get();
     }
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
-    if (ready) {
+    if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         endTime = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"

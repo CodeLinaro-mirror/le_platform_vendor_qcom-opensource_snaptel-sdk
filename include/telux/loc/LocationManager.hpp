@@ -112,6 +112,8 @@ public:
  *
  * @returns True if location subsystem is ready for service otherwise false.
  *
+ * @deprecated use getServiceStatus()
+ *
  */
   virtual bool isSubsystemReady() = 0;
 
@@ -132,6 +134,10 @@ public:
  *
  * @returns  A future that caller can wait on to be notified when location
  *           subsystem is ready.
+ *
+ * @deprecated The callback mechanism introduced in the
+ * @ref LocationFactory::getLocationManager() API will provide the similar notification
+ * mechanism as onSubsystemReady(). This API will soon be removed from further releases.
  *
  */
   virtual std::future<bool> onSubsystemReady() = 0;
@@ -369,13 +375,13 @@ public:
  * request will fail and @ref ResponseCallback will get invoked with @ref
  * ErrorCode::OP_IN_PROGRESS.
  * To cancel a pending request, use @ref ILocationManager::cancelTerrestrialPositionRequest.
- * Before using this API, user consent needs to be set true via @ref ILocationConfigurator::
- * provideConsentForTerrestrialPositioning.
+ * Before using this API, user consent needs to be set true via
+ * @ref ILocationConfigurator::provideConsentForTerrestrialPositioning.
  *
  * @param[in] timeoutMsec - the time in milliseconds within which the client is expecting a
  *                          response. If the system is unable to provide a report within this
- *                          time, the @ref ResponseCallback will be invoked with @ref ErrorCode::
- *                          OPERATION_TIMEOUT.
+ *                          time, the @ref ResponseCallback will be invoked with
+ *                          @ref ErrorCode::OPERATION_TIMEOUT.
  *
  * @param[in] techMask - the set of terrestrial technologies that are allowed to be used for
  *                       producing the position.

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -48,6 +48,7 @@
 #include <memory>
 #include <telux/cv2x/Cv2xRadio.hpp>
 
+#include "../../common/utils/Utils.hpp"
 
 using std::array;
 using std::string;
@@ -698,6 +699,12 @@ int main(int argc, char *argv[]) {
     if (pipe(gTerminatePipe) == -1) {
         cout << "Pipe error" << endl;
         return EXIT_FAILURE;
+    }
+
+    std::vector<std::string> groups{"radio"};
+    int rc = Utils::setSupplementaryGroups(groups);
+    if (rc == -1){
+        cout << "Adding supplementary group failed!" << std::endl;
     }
 
     installSignalHandler();

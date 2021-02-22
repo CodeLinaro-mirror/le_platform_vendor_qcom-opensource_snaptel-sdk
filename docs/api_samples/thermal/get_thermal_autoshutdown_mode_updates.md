@@ -1,3 +1,6 @@
+Using Thermal Shutdown Manager APIs to get Thermal autoshutdown mode updates {#get_thermal_autoshutdown_mode_updates}
+=====================================================================================================================
+
 # Using Thermal Shutdown Manager APIs to get Thermal autoshutdown mode updates
 
 The below steps need to be followed by applications to listen to thermal auto-shutdown mode updates.

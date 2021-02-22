@@ -1,3 +1,6 @@
+Audio loopback session {#audio_manager_loopback}
+=======================================================================================
+
 # Audio Manager API Sample Reference for audio loopback session.
 
 Please follow the below steps to start/stop loopback on a loopback session.

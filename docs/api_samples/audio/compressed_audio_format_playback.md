@@ -1,3 +1,6 @@
+Compressed audio format playback {#compressed_audio_format_playback}
+====================================================================
+
 # Audio Manager APIs Sample Reference for compressed audio format playback
 
 This Section demonstrates how to use the Audio Manager API for compressed audio format playback.

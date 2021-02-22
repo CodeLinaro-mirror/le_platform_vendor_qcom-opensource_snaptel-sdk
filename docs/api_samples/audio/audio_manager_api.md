@@ -1,3 +1,6 @@
+Audio Manager API {#audio_manager_api}
+======================================
+
 # Audio Manager API Sample Reference
 
 This Section demonstrates how to use the Audio Manager API for audio subsystem/stream operations.

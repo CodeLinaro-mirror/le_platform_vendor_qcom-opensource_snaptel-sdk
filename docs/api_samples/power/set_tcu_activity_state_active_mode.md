@@ -1,3 +1,6 @@
+Using TCU Activity Manager APIs to set the TCU activity state in ACTIVE mode {#set_tcu_activity_state_active_mode}
+==================================================================================================================
+
 # Using TCU Activity Manager APIs to set the TCU activity state in ACTIVE mode
 
 The below steps need to be followed by the applications that control the TCU-activity state, to change the TCU-activity state in ACTIVE mode.

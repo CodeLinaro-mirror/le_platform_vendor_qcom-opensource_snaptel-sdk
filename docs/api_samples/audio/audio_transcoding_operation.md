@@ -1,3 +1,6 @@
+Audio transcoding operation {#audio_transcoding_operation}
+==========================================================
+
 # Audio Manager APIs Sample Reference for audio transcoding operation
 
 This Section demonstrates how to use the Audio Manager and Audio Transcoder APIs for transcoding operation.

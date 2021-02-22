@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -103,19 +103,14 @@ int main(int argc, char *argv[]) {
       auto &dataFactory = telux::data::DataFactory::getInstance();
       do {
          subSystemStatusUpdated = false;
+         std::unique_lock<std::mutex> lck(mtx);
          dataConnMgr = dataFactory.getDataConnectionManager(slotId, initCb);
          if (dataConnMgr) {
             // [3] Check if data connection manager is ready
+            std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
+                  slotId << ", Please wait ..." << std::endl;
+            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
             subSystemStatus = dataConnMgr->getServiceStatus();
-
-            // [3.1] If data connection manager is not ready, wait for it to be ready
-            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-               std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
-                     slotId << ", Please wait ..." << std::endl;
-               std::unique_lock<std::mutex> lck(mtx);
-               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-               subSystemStatus = dataConnMgr->getServiceStatus();
-            }
          }
          if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << " *** DATA Sub System is Ready *** " << std::endl;

@@ -1,3 +1,6 @@
+Using Location Service APIs {#location_services}
+================================================
+
 # Using Location Service APIs
 
 Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Info reports

@@ -51,6 +51,8 @@ when       who     what, where, why
 02/14/20   SD      Added location configurator support to Telematics SDK
 03/12/20   SD      Added robust location support to location configurator in Telematics SDK
 05/27/20   FS      Added L2TP Feature Support in Telematics SDK
+12/01/20   AK      Added Location SDK simulation libraries
+01/29/21   FS      Updated data subsystem readiness flow for new methodology
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

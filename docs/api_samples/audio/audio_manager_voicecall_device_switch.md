@@ -1,3 +1,6 @@
+Audio voice session device switch {#audio_audio_manager_voicecall_device_switch}
+=================================================================================================================
+
 # Audio Manager API Sample Reference for voice session device switch
 
 This Section demonstrates how to use the Audio Manager API for voice session device switch.

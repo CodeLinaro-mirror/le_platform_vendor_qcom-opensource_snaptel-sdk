@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -74,19 +74,14 @@ int main(int argc, char *argv[]) {
       auto &dataFactory = telux::data::DataFactory::getInstance();
       do {
          subSystemStatusUpdated = false;
+         std::unique_lock<std::mutex> lck(mtx);
          dataSnatMgr  = dataFactory.getNatManager(opType, initCb);
          if (dataSnatMgr) {
             // [3] Check if Nat manager is ready
+            std::cout <<
+                  "\n\nInitializing Nat Manager subsystem Please wait ..." << std::endl;
+            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
             subSystemStatus = dataSnatMgr->getServiceStatus();
-
-            // [3.1] If Nat manager is not ready, wait for it to be ready
-            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-               std::cout <<
-                   "\n\nInitializing Nat Manager subsystem Please wait ..." << std::endl;
-               std::unique_lock<std::mutex> lck(mtx);
-               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-               subSystemStatus = dataSnatMgr->getServiceStatus();
-            }
          }
          if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << " *** Nat SubSystem is Ready *** " << std::endl;

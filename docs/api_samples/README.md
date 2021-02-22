@@ -18,6 +18,8 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to get C-V2X radio status](cv2x/cv2x_get_status_app.md)
   * [How to use C-V2X API for RX](cv2x/cv2x_rx_app.md)
   * [How to use C-V2X API for TX](cv2x/cv2x_tx_app.md)
+  * [How to use C-V2X ThrottleManager API to set verification load](cv2x/cv2x_tm_load.md)
+  * [How to use C-V2X ThrottleManager API to get filter rate adjustment notification](cv2x/cv2x_tm_filter.md)
   * [How to use Audio Manager API's](audio/audio_manager_api.md)
   * [How to start/stop audio in voice call](audio/audio_manager_voicecall_start_stop.md)
   * [How to do device switch in voice call](audio/audio_manager_voicecall_device_switch.md)

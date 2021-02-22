@@ -1,3 +1,6 @@
+Using Thermal Shutdown Manager APIs to set Autoshutdown modes {#send_thermal_shutdown_mode_commands}
+====================================================================================================
+
 # Using Thermal Shutdown Manager APIs to set Autoshutdown modes
 
 Please follow below steps to set thermal autoshutdown modes

@@ -78,12 +78,12 @@ Jun 2017   SVM      Created to support V2X API
         @defgroup telematics_cv2x_c_kinematics C Kinematics APIs
         This section contains C Kinematics APIs related to Cellular-V2X operation. For any new CV2x development, it is recommended to use the C++ telux::loc::ILocationManager APIs.
         @defgroup telematics_cv2x_c_radio C Radio APIs
-        This section contains C Radio APIs related to Cellular-V2X operation. For any new CV2x development, it is recommended to use the C++ telux::cv2x::* APIs
+        This section contains C Radio APIs related to Cellular-V2X operation. Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services. For any new CV2x development, it is recommended to use the C++ telux::cv2x::* APIs.
         @defgroup telematics_cv2x_c_vehicle C Vehicle APIs
         This section contains C Vehicle APIs related to Cellular-V2X operation. These APIs are provided as reference APIs to work with QTI reference hardware. Customers would need to modify the implementation of these APIs based on the specific H/W and CAN controller being used.
       @}
       @defgroup telematics_cv2x_cpp CPP APIs
-      This section contains C++ APIs related to Cellular-V2X operation.
+      This section contains C++ APIs related to Cellular-V2X operation. Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services.
     @}
     @defgroup telematics_audio Audio
     This section contains APIs related to Audio Stream operation.

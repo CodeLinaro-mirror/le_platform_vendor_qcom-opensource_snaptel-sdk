@@ -1,3 +1,6 @@
+Using Location Configurator APIs {#location_services_configurator}
+==================================================================
+
 # Using Location Configurator APIs
 
 Please follow below steps to use Configurator APIs

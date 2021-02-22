@@ -31,7 +31,8 @@
  * @file    AudioTranscoder.hpp
  *
  * @brief   Audio Transcoder is a primary interface for audio transcoding operations. It provides
- *          APIs to convert one audio format to another.
+ *          APIs to convert one audio format to another. The supported transcoding is real time
+ *          transcoding, which takes the playback time of file for completing the opearation.
  *
  * @note    Eval: This is a new API and is being evaluated. It is subject to change
  *          and could break backwards compatibility.

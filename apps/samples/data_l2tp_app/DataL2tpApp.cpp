@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -68,19 +68,14 @@ int main(int argc, char *argv[]) {
       auto &dataFactory = telux::data::DataFactory::getInstance();
       do {
          subSystemStatusUpdated = false;
+         std::unique_lock<std::mutex> lck(mtx);
          dataL2tpMgr  = dataFactory.getL2tpManager(initCb);
          if (dataL2tpMgr) {
-            // [2] Check if L2TP manager is ready
+            // [3] Check if L2TP manager is ready
+            std::cout <<
+                  "\n\nInitializing L2tp Manager subsystem Please wait ..." << std::endl;
+            initCv.wait(lck, [&]{return subSystemStatusUpdated;});
             subSystemStatus = dataL2tpMgr->getServiceStatus();
-
-            // [2.1] If L2TP manager is not ready, wait for it to be ready
-            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
-               std::cout <<
-                   "\n\nInitializing L2tp Manager subsystem Please wait ..." << std::endl;
-               std::unique_lock<std::mutex> lck(mtx);
-               initCv.wait(lck, [&]{return subSystemStatusUpdated;});
-               subSystemStatus = dataL2tpMgr->getServiceStatus();
-            }
          }
          if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << " *** L2tp Sub System is Ready *** " << std::endl;

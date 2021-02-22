@@ -1,3 +1,6 @@
+Set radio power of the device {#set_radio_power}
+================================================
+
 # Set radio power of the device
 
 Please follow below steps to Radio Power state notifications.

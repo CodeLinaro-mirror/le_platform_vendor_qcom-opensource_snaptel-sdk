@@ -1,3 +1,6 @@
+Using Audio Manager APIs to play DTMF tone in a voice call. {#audio_voicecall_dtmf_play}
+========================================================================================
+
 # Using Audio Manager APIs to play DTMF tone in a voice call.
 
 Please follow the below steps to play a DTMF tone in an active voice call. Note that only Rx direction is supported now.

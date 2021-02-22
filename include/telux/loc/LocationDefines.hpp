@@ -1296,6 +1296,40 @@ enum TerrestrialTechnologyType {
 /** Specifies TerrestrialTechnologyType mask */
 using TerrestrialTechnology = uint32_t;
 
+/**
+ *  Specifies the HLOS generated NMEA sentence types. */
+enum NmeaSentenceType {
+    /** GGA NMEA sentence */
+    GGA = (1 << 0),
+    /** RMC NMEA sentence */
+    RMC = (1 << 1),
+    /** GSA NMEA sentence */
+    GSA = (1 << 2),
+    /** VTG NMEA sentence */
+    VTG = (1 << 3),
+    /** GNS NMEA sentence */
+    GNS = (1 << 4),
+    /** DTM NMEA sentence */
+    DTM = (1 << 5),
+    /** GPGSV NMEA sentence for SVs from GPS constellation */
+    GPGSV = (1 << 6),
+    /** GLGSV NMEA sentence for SVs from GLONASS constellation */
+    GLGSV = (1 << 7),
+    /** GAGSV NMEA sentence for SVs from GALILEO constellation */
+    GAGSV = (1 << 8),
+    /** GQGSV NMEA sentence for SVs from QZSS constellation */
+    GQGSV = (1 << 9),
+    /** GBGSV NMEA sentence for SVs from BEIDOU constellation */
+    GBGSV = (1 << 10),
+    /** GIGSV NMEA sentence for SVs from NAVIC constellation */
+    GIGSV = (1 << 11),
+    /** All NMEA sentences */
+    ALL = 0xffffffff,
+};
+
+/** Specifies NmeaSentenceType mask */
+using NmeaSentenceConfig = uint32_t;
+
 /** Specify the valid mask for robust location configuration
  *  used by the GNSS standard position engine (SPE). */
 enum RobustLocationConfigType {

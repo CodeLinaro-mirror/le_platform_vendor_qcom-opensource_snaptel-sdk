@@ -76,6 +76,8 @@ when       who     what, where, why
 @tr @td Feb 2020 @tdend @tdlast Addition of Location Configurator APIs and call flows @tdlastend @trend
 @tr @td Mar 2020 @tdend @tdlast Addition of Robust Location API in Location Configurator and call flows @tdlastend @trend
 @tr @td May 2020 @tdend @tdlast Addition of L2TP Feature to Data Networking APIs and call flows @tdlastend @trend
+@tr @td Jan 2021 @tdend @tdlast Addition of Location SDK Simulation libraries @tdlastend @trend
+@tr @td Jan 2021 @tdend @tdlast Updated Data Subsystem Readiness flow for new methodology @tdlastend @trend
 
 @tableend
 

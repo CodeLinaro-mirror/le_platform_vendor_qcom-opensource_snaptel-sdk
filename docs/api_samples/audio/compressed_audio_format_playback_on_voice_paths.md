@@ -1,3 +1,6 @@
+Compressed audio format playback on voice paths {#compressed_audio_format_playback_on_voice_paths}
+==================================================================================================
+
 # Audio Manager APIs Sample Reference for compressed audio format playback on voice paths
 
 This Section demonstrates how to use the Audio Manager API for compressed audio format playback on voice paths.

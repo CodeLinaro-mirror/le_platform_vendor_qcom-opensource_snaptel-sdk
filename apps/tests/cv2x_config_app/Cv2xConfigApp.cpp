@@ -46,6 +46,7 @@
 
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include <telux/cv2x/Cv2xFactory.hpp>
+#include "../../common/utils/Utils.hpp"
 #include "Cv2xConfigApp.hpp"
 
 using std::cout;
@@ -197,7 +198,7 @@ int Cv2xConfigApp::cv2xInit() {
         cv.notify_all();
     };
 
-    auto cv2xConfig_ = cv2xFactory.getCv2xConfig(statusCb);
+    cv2xConfig_ = cv2xFactory.getCv2xConfig(statusCb);
     if (!cv2xConfig_) {
         cout << "Failed to get Cv2xConfig" << endl;;
         return EXIT_FAILURE;
@@ -231,7 +232,7 @@ int Cv2xConfigApp::cv2xInit() {
         cv.notify_all();
     };
 
-    auto cv2xRadioManager_ = cv2xFactory.getCv2xRadioManager(cb);
+    cv2xRadioManager_ = cv2xFactory.getCv2xRadioManager(cb);
     if (!cv2xRadioManager_) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
         return EXIT_FAILURE;
@@ -535,7 +536,18 @@ void Cv2xConfigApp::enforceConfigExpirationCommand() {
 }
 
 int main(int argc, char *argv[]) {
-    shared_ptr<Cv2xConfigApp> cv2xConfig = make_shared<Cv2xConfigApp>();
+    std::vector<std::string> groups{"radio"};
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
+        cout << "Adding supplementary group failed!" << std::endl;
+    }
+    shared_ptr<Cv2xConfigApp> cv2xConfig = nullptr;
+    try {
+        cv2xConfig = make_shared<Cv2xConfigApp>();
+    } catch (std::bad_alloc & e) {
+        cout << "Error: Create cv2xConfig failed!" << endl;
+        return EXIT_FAILURE;
+    }
+
     if (EXIT_SUCCESS != cv2xConfig->initialize()){
         cout << "Error: Initialization failed!" << endl;
         return EXIT_FAILURE;

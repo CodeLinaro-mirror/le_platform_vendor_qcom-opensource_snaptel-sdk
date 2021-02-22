@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.9)
 set(TARGET_CV2X_TX_APP cv2x_tx_app)
 
 set(CV2X_TX_SOURCES
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     Cv2xTxApp.cpp
 )
 

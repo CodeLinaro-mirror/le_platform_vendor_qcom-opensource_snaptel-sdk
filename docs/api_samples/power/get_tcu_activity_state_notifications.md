@@ -1,3 +1,6 @@
+Using TCU Activity Manager APIs to get TCU activity state updates {#get_tcu_activity_state_notifications}
+=========================================================================================================
+
 # Using TCU Activity Manager APIs to get TCU activity state updates
 
 The below steps need to be followed by applications to listen to TCU-activity state notifications, for performing any tasks before the state transition.

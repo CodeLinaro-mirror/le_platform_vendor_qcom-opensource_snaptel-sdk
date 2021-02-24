@@ -71,9 +71,26 @@ struct IpFamilyInfo {
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
+ * When callback is used with startDataCall, expected behavior is as following:
+ *  - If this is first client to start datacall in the system and no error is detected, state of
+ *    data call will be NET_CONNECTING and onDataCallInfoChanged will be called once data call
+ *    is brought up successfully or failed.
+ *  - If client tries to start data call that is already up and no error is detected, state of data
+ *    call will NET_CONNECTED and onDataCallInfoChanged will not get called.
+ *  - If any client that start data call and error is detected, error argument will contain error
+ *    code and onDataCallInfoChanged will not get called.
+
+ * When callback is used with stopDataCall, expected behavior is as following:
+ *  - First/Last client that attempts to stop data call and no error is detected, state of data call
+ *    will be NET_DISCONNECTING and onDataCallInfoChanged will be called once data call is down.
+ *  - If a client starts a data call and then tries to stop it while there are other clients in
+ *    the system who also started the same data call, and no error is detected, data call status
+ *    will be NET_CONNECTED and onDataCallInfoChanged will not get called.
+ *  - If any client attemp to stop data call and error detected, error argument will contain error
+ *    code and onDataCallInfoChanged will not get called.
+ *
  * @param [in] dataCall        Pointer to IDataCall
- * @param [in] error           Return code for whether the operation
- *                             succeeded or failed
+ * @param [in] error           Return code for whether the operation succeeded or failed
  *
  */
 using DataCallResponseCb = std::function<void(
@@ -232,8 +249,9 @@ class IDataConnectionManager {
      *
      * This will tear down specific data call connection based on profile identifier.
      *
-     * @note       if application starts data call on IPV4V6 then it's expected to stop the
+     * @note       If application starts data call on IPV4V6 then it's expected to stop the
      *             data call on same ip family type (i.e IPV4V6).
+     *             Client can only stop data call it started.
      *
      * @param [in] profileId     Profile identifier corresponding to which data call tear down
      *                           will be done. Use data profile manager to get the list of

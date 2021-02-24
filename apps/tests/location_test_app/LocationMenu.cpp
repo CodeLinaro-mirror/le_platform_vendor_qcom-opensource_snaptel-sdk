@@ -317,7 +317,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
       LocReqEngine engineType = DEFAULT_UNKNOWN;
       std::vector<int> options;
       std::cout << " Enter the type of engine reports : \n"
-                   " (0 - FUSED\n 1 - SPE\n 2 - PPE) \n\n";
+                   " (0 - FUSED\n 1 - SPE\n 2 - PPE\n 3 - VPE) \n\n";
       std::cout << " Enter your engine preference\n"
                    " (For example: enter 0,1 to choose FUSED & SPE engine fixes) : ";
       std::getline(std::cin,enginePreference,delimiter);
@@ -329,7 +329,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           ss.ignore();
       }
       for(auto &opt : options) {
-        if(opt >= 0 && opt <= 2) {
+        if(opt >= 0 && opt <= 3) {
           try {
             engineType |= 1UL << opt;
           } catch(const std::exception &e) {

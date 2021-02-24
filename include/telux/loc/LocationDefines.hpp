@@ -543,7 +543,11 @@ enum LocationTechnologyType {
   /** location was calculated using WiFi */
   LOC_WIFI = (1 << 2),
   /** location was calculated using Sensors */
-  LOC_SENSORS = (1 << 3)
+  LOC_SENSORS = (1 << 3),
+  /** Location was calculated using Vehicular data. */
+  LOC_VEH = (1 << 9),
+  /** Location was calculated using Visual data. */
+  LOC_VIS = (1 << 10),
 };
 
 /*Bit mask containing bits from LocationTechnologyType */
@@ -719,19 +723,24 @@ using DrCalibrationStatus = uint32_t;
 /** Specifies the type of engine requested for fixes*/
 enum LocReqEngineType{
     /** Indicate that the fused/default position is needed to be reported back
-    for the tracking sessions. The default position is the propagated/aggregated
-    reports from all engines running on the system (e.g.: DR/SPE/PPE) according to
-    QTI algorithm.
-    */
+     *  for the tracking sessions. The default position is the propagated/aggregated
+     *  reports from all engines running on the system (e.g.: DR/SPE/PPE) according to
+     *  QTI algorithm.
+     */
     LOC_REQ_ENGINE_FUSED_BIT = (1<<0),
     /** Indicate that the unmodified SPE position is needed to be reported back for the
-    tracking sessions.
-    */
+     *  tracking sessions.
+     */
     LOC_REQ_ENGINE_SPE_BIT   = (1<<1),
     /** Indicate that the unmodified PPE position is needed to be reported back for the
-    tracking sessions.
-    */
+     *  tracking sessions.
+     */
     LOC_REQ_ENGINE_PPE_BIT   = (1<<2),
+     /**Indicate that the unmodified VPE position is needed to be reported back for the
+      * tracking sessions.
+      */
+    LOC_REQ_ENGINE_VPE_BIT  = (1<<3),
+
 };
 
 /** Specifies LocReqEngineType mask*/
@@ -739,21 +748,25 @@ using LocReqEngine = uint16_t;
 
 /** Specifies the type of engine for the reported fixes*/
 enum LocationAggregationType {
-  /** This is the propagated/aggregated reports from all engines
-  running on the system (e.g.: DR/SPE/PPE) according to QTI
-  algorithm. */
-  LOC_OUTPUT_ENGINE_FUSED = 0,
+  /** This is the propagated/aggregated report from the fixes of all engines
+   *  running on the system (e.g.: DR/SPE/PPE).*/
+    LOC_OUTPUT_ENGINE_FUSED = 0,
   /** This fix is the unmodified fix from modem GNSS engine */
-  LOC_OUTPUT_ENGINE_SPE   = 1,
-  /** This is the unmodified fix from PPP/RTK correction engine */
-  LOC_OUTPUT_ENGINE_PPE   = 2
+    LOC_OUTPUT_ENGINE_SPE   = 1,
+  /** This is the unmodified fix from PPP engine */
+    LOC_OUTPUT_ENGINE_PPE   = 2,
+  /** This is the unmodified fix from VPE engine. */
+    LOC_OUTPUT_ENGINE_VPE  = 3,
 };
 
 /** Specifies the type of engine responsible for fixes when the engine type is fused*/
 enum PositioningEngineType{
     STANDARD_POSITIONING_ENGINE = (1 << 0),
     DEAD_RECKONING_ENGINE       = (1 << 1),
-    PRECISE_POSITIONING_ENGINE  = (1 << 2)
+    /** For precise position engines.*/
+    PRECISE_POSITIONING_ENGINE  = (1 << 2),
+    /** For VP position engine.*/
+    VP_POSITIONING_ENGINE       = (1 << 3),
 };
 
 /** Specifies PositioningEngineType mask */

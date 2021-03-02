@@ -1624,9 +1624,13 @@ void DataMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        for (auto c : configs) {
-            std::cout << "iface: " << (int)c.iface << ", vlanId: " << c.vlanId
-                      << ", accelerated: " << (int)c.isAccelerated << "\n";
+        if (configs.size() == 0) {
+            std::cout << "No VLAN Entries Configured" << "\n";
+        } else {
+            for (auto c : configs) {
+                std::cout << "iface: " << (int)c.iface << ", vlanId: " << c.vlanId
+                    << ", accelerated: " << (int)c.isAccelerated << "\n";
+            }
         }
     };
 

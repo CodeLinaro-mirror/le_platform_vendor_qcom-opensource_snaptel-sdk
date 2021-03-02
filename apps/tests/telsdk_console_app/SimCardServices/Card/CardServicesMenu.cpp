@@ -577,8 +577,7 @@ void CardServicesMenu::unlockCardByPuk(std::vector<std::string> userInput) {
    applications = card->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
-         if((cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM)
-            && (cardApp->getAppState() == telux::tel::AppState::APPSTATE_PUK)) {
+         if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
             auto ret = cardApp->unlockCardByPuk(cardLockType, puk, newPin,
                &unlockCardByPukResponseCb);
             if(ret == telux::common::Status::SUCCESS) {

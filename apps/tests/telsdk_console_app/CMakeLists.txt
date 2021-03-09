@@ -65,6 +65,8 @@ set(TELSDK_CONSOLE_APP_SOURCES
    ImsSettings/MyImsSettingsHandler.cpp
    ImsSettings/ImsSettingsListener.cpp
    ImsSettings/ImsSettingsMenu.cpp
+   ImsServingSystem/ImsServingSystemMenu.cpp
+   ImsServingSystem/MyImsServSysListener.cpp
 
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,6 +57,7 @@ private:
     void loopbackMenu(std::vector<std::string> userInput);
     void toneMenu(std::vector<std::string> userInput);
     void transCodeMenu(std::vector<std::string> userInput);
+    void getCalStatus(std::vector<std::string> userInput);
 
     // Audio Client is Created by the Audio Console app and it is passed to every Menu
     std::shared_ptr<AudioClient> audioClient_;

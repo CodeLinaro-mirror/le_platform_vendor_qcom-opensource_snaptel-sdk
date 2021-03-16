@@ -203,6 +203,20 @@ using CreateTranscoderResponseCb = std::function<void(
 using DeleteStreamResponseCb = std::function<void(telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to getCalibrationInitStatus API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] calInitStatus  State of calibration initialization.
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not.
+ *                            @ref ErrorCode
+ */
+using GetCalInitStatusResponseCb
+   = std::function<void(CalibrationInitStatus calInitStatus, telux::common::ErrorCode error)>;
+
+/**
  * @brief   Audio Manager is a primary interface for audio operations. It provide
  *          APIs to manage Streams ( like voice, play, record etc) and sound cards.
  */
@@ -322,6 +336,21 @@ public:
     *          and could break backwards compatibility.
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
+
+   /**
+    * Get calibration status. Returns whether audio subsystem was able to successfully initialize
+    * calibration in system. Calibration init status is available after the initialization
+    * of the audio subsystem or after re-intialization of audio subsytem in case of sub system
+    * restart is triggered.
+    *
+    *  @param [in] callback    callback pointer to get the response of getCalibrationInitStatus.
+    *
+    * @returns @ref Status of getCalibrationInitStatus, success or suitable status code.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status getCalibrationInitStatus(GetCalInitStatusResponseCb callback) = 0;
 
    virtual ~IAudioManager() {};
 };

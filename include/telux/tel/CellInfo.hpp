@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,6 +55,7 @@ enum class CellType {
    LTE = 3,
    WCDMA = 4,
    TDSCDMA = 5,
+   NR5G = 6,
 };
 
 /**
@@ -334,6 +335,84 @@ private:
 };
 
 /**
+ * Nr5gCellIdentity class provides methods to get the mobile country code, mobile network
+ * code, cell identity, physical cell identifier, tracking area code and absolute RF channel number
+ * information of the Serving cell
+ */
+class Nr5gCellIdentity {
+public:
+   Nr5gCellIdentity(std::string mcc, std::string mnc, uint64_t ci, uint32_t pci, int32_t tac,
+        int32_t arfcn);
+   /**
+    * Get the Mobile Country Code.
+    *
+    * @returns Mcc value.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   const std::string getMobileCountryCode();
+
+   /**
+    * Get the Mobile Network Code.
+    *
+    * @returns Mnc value.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   const std::string getMobileNetworkCode();
+
+   /**
+    * Get the cell identity.
+    *
+    * @returns Cell identity.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   const uint64_t getIdentity();
+
+   /**
+    * Get the physical cell identifier.
+    *
+    * @returns Physical cell identifier.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   const uint32_t getPhysicalCellId();
+
+   /**
+    * Get the tracking area code.
+    *
+    * @returns Tracking area code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   const int32_t getTrackingAreaCode();
+
+   /**
+    * Get the absolute RF channel number.
+    *
+    * @returns Absolute RF channel number. '-1' denotes that the value is unknown.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   const int32_t getArfcn();
+
+private:
+   std::string mcc_;
+   std::string mnc_;
+   uint64_t ci_;
+   uint32_t pci_;
+   int32_t tac_;
+   int32_t arfcn_;
+};
+
+/**
  * CellInfo class provides cell info type and checks whether the current cell is registered
  * or not.
  */
@@ -521,6 +600,40 @@ public:
 private:
    TdscdmaCellIdentity id_;
    TdscdmaSignalStrengthInfo ssInfo_;
+};
+
+/**
+ * Nr5gCellInfo class provides methods to get cell type, cell registration status, cell
+ * identity and signal strength information corresponding to the Serving cell.
+ */
+class Nr5gCellInfo : public CellInfo {
+public:
+
+   Nr5gCellInfo(int registered, Nr5gCellIdentity id, Nr5gSignalStrengthInfo ssInfo);
+
+   /**
+    * Get NR5G cell identity information.
+    *
+    * @returns Nr5gCellIdentity.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   Nr5gCellIdentity getCellIdentity();
+
+   /**
+    * Get NR5G cell signal strength information.
+    *
+    * @returns Nr5gSignalStrengthInfo.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   Nr5gSignalStrengthInfo getSignalStrengthInfo();
+
+private:
+   Nr5gCellIdentity id_;
+   Nr5gSignalStrengthInfo ssInfo_;
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

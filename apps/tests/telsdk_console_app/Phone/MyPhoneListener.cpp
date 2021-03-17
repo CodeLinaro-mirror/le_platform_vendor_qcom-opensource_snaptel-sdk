@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -879,7 +879,62 @@ void MyPhoneHelper::printCellInfoDetails(
                << "TDSCDMA  Reference Signal Code Power(in dBm): "
                << tdsCdmaCellInfo->getSignalStrengthInfo().getRscp() << std::endl;
             }
-        }
+        } else if(cellinfo->getType() == telux::tel::CellType::NR5G) {
+            auto nr5gCellInfo = std::static_pointer_cast<telux::tel::Nr5gCellInfo>(cellinfo);
+            PRINT_NOTIFICATION << "NR5G isRegistered: " << nr5gCellInfo->isRegistered()
+                << std::endl;
+            PRINT_NOTIFICATION << "NR5G mcc: "
+                << nr5gCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
+            PRINT_NOTIFICATION << "NR5G mnc: "
+                << nr5gCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
+            PRINT_NOTIFICATION << "NR5G cid: " << nr5gCellInfo->getCellIdentity().getIdentity()
+                << std::endl;
+            PRINT_NOTIFICATION << "NR5G pid: "
+                << nr5gCellInfo->getCellIdentity().getPhysicalCellId() << std::endl;
+            PRINT_NOTIFICATION << "NR5G tac: "
+                << nr5gCellInfo->getCellIdentity().getTrackingAreaCode() << std::endl;
+            PRINT_NOTIFICATION << "NR5G arfcn: "
+                << nr5gCellInfo->getCellIdentity().getArfcn() << std::endl;
+            // NR5G Signal Strength
+            if(nr5gCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_NOTIFICATION << "NR5G Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_NOTIFICATION << "NR5G Signal Strength(in dBm): "
+                    << nr5gCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(nr5gCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_NOTIFICATION << "NR5G Reference Signal Receive Power(in dBm): "<< "UNAVAILABLE"
+               << std::endl;
+            } else {
+               PRINT_NOTIFICATION << "NR5G Reference Signal Receive Power(in dBm): "
+                    << nr5gCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
+            }
+
+            if(nr5gCellInfo->getSignalStrengthInfo().getReferenceSignalReceiveQuality()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_NOTIFICATION << "NR5G Reference Signal Receive Quality(in dB): "
+                   << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_NOTIFICATION << "NR5G Reference Signal Receive Quality(in dB): "
+                   << nr5gCellInfo->getSignalStrengthInfo().getReferenceSignalReceiveQuality()
+                   << std::endl;
+            }
+
+            if(nr5gCellInfo->getSignalStrengthInfo().getReferenceSignalSnr()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_NOTIFICATION << "NR5G Reference Signal SNR(in dB): "<< "UNAVAILABLE"
+                    << std::endl;
+            } else {
+               PRINT_NOTIFICATION << "NR5G Reference Signal SNR(in dB): "
+                    << nr5gCellInfo->getSignalStrengthInfo().getReferenceSignalSnr() * 0.1
+                    << std::endl;
+            }
+
+            PRINT_NOTIFICATION << "NR5G Signal Level: "
+            << signalLevelToString(nr5gCellInfo->getSignalStrengthInfo().getLevel())
+             << std::endl;
+         }
     }
 }
 

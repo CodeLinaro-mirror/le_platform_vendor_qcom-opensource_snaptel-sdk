@@ -46,7 +46,6 @@
 #include <unistd.h>
 
 #include "v2x_common.pb.h"
-#include "v2x_config_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1144,6 +1143,39 @@ extern int v2x_radio_rx_sock_create_and_bind_v3(v2x_radio_handle_t handle,
     int *sock,
     struct sockaddr_in6 *rx_sockaddr);
 
+/**
+     Enable or disable the meta data report for the packets corresponding to the service IDs.
+
+     If enabled, the meta data report would be generated in addition to the actual OTA payload
+     packet, and it comes from the same data interface as the OTA packet itself, it consist of
+     RF RSSI (received signal strength indicator) status, 32-bit SCI Format 1 (3GPP TS 36.213,
+     section 14.1), packet delay estimation, L2 destination ID, and the resource blocks used for
+     the packet's transmission: subframe, subchannel index.
+
+     @datatypes
+     #v2x_radio_handle_t
+
+     @param[in]  handle           Identifies the initialized Radio interface.
+     @param[in]  enable           enable or disable the meta data
+     @param[in]  id_list_len      number of the service IDs provided in the id_list
+     @param[in]  id_list          Pointer to the Rx service ID list
+
+     @detdesc
+     This function extracts the received packet's meta data from the payload, currently
+     only NON-IP packets can have the meta data reported, it is not supported yet for
+     IP packets.
+     @par
+     If the meta data report is enabled for certain services, call #v2x_parse_rx_meta_data to
+     extract the meta data by providing a pointer to a object of type #rx_packet_meta_data_t, and
+     the real payload.
+
+     @return
+     0 -- On success.
+ */
+extern int v2x_radio_enable_rx_meta_data(v2x_radio_handle_t handle,
+                                         bool enable,
+                                         int id_list_len,
+                                         uint32_t *id_list);
 /**
     Creates Tx SPS socket, Tx Event socket and Rx socket with specified parameters.
     The socket is also bound as an AF_INET6 UDP type socket.

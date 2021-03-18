@@ -312,6 +312,30 @@ public:
         std::shared_ptr<std::vector<uint32_t>> idList = nullptr) = 0;
 
     /**
+     * Enable or disable (depends on the parameter "bool enable") the received
+     * packets' meta data report for the service IDs provided.
+     *
+     * The meta data consist of RF RSSI (received signal strength indicator) status, 32-bit SCI
+     * Format 1 (3GPP TS 36.213, section 14.1), packet delay estimation, L2 destination ID,
+     * and the resource blocks used for the packet's transmission: subframe, subchannel index.
+     *
+     * @param [in] ipType  - IP traffic type (IP or NON-IP)
+     * @param [in] enable  - enable the rx meta data if set to true, otherwise disable
+     * @param [in] idList  - Service ID list of which the received packets' report are desired
+     * @param [in] cb      - Callback that is invoked when meta data is enabled or disabled.
+     *
+     * @returns SUCCESS if no error occurred
+     *
+     * @par Meta data report for IP packets is not supported yet, it will return NOSUPPORTED.
+     *
+     */
+    virtual telux::common::Status enableRxMetaDataReport(
+        TrafficIpType ipType,
+        bool enable,
+        std::shared_ptr<std::vector<std::uint32_t>> idList,
+        telux::common::ResponseCallback cb) = 0;
+
+    /**
      * Creates a Tx SPS flow with the specified IP type, serviceId, and other
      * parameters specified in reservation. Additionally, an option event flow
      * will be created with the same IP type and serviceId. A Tx socket will

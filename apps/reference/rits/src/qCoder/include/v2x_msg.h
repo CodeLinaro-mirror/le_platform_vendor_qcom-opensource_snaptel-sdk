@@ -93,6 +93,8 @@ typedef struct {
     int etsi_msg_id;
     void *cam;             /** decoded(or to be encoded) CAM data. */
     void *denm;            /** decoded(or to be encoded) DENM data */
+    void *wsa;             /** decoded(or to be encoded) 1609.3 WSA data */
+    void *wra;             /** decoded(or to be encoded) 1609.3 WRA data that is in WSA */
 
     /* Security */
     void *ieee1609_2data;  /** decoded(or to be encoded) IEEE1609.2 data */

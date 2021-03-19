@@ -91,8 +91,10 @@ namespace gn {
     }
 
     void LocationTable::RefreshTaskStart(void) {
-        auto f = std::async(std::launch::async, [this]() {this->RefreshTask();}).share();
-        taskQ_.add(f);
+        auto t = [&](void) {
+            RefreshTask();
+        };
+        RefreshThread = std::thread(t);
     }
 
     void LocationTable::RefreshTaskStop(void) {
@@ -101,7 +103,7 @@ namespace gn {
         TableEntries_.erase(TableEntries_.begin(), TableEntries_.end());
         lk.unlock();
         Cv_.notify_one();
-        RefreshTaskResult_.get_future().get(); //this will block untill refresh task is done.
+        RefreshThread.join();
     }
     const std::shared_ptr<LocTableEntry> LocationTable::Find(const gn_addr_t &GnAddr) {
         return Find(const_cast<uint8_t *>(GnAddr.mid));
@@ -237,7 +239,6 @@ namespace gn {
             else
                 break;
         } while(true);
-        RefreshTaskResult_.set_value(0);
     }
 
     void LocationTable::Dump(void) {

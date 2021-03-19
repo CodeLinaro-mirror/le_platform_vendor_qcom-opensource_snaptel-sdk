@@ -139,8 +139,10 @@ namespace gn {
      * Start the GeoNetRouer state machine.
      */
     void GeoNetRouterImpl::Start(void) {
-        auto f = std::async(std::launch::async, [this]() {this->CBFTimerTask();}).share();
-        taskQ_.add(f);
+        auto t = [&](void) {
+            this->CBFTimerTask();
+        };
+        CBFTimerThread_ = std::thread(t);
     }
 
     void GeoNetRouterImpl::Stop(void) {
@@ -253,9 +255,9 @@ namespace gn {
         if (!count)
             return;
 
-        auto f = std::async(std::launch::async, [this, Qid, Addr, Purge]() {
+        //TODO: this need to be improved.
+        aSyncFuture_ = std::async(std::launch::async, [this, Qid, Addr, Purge]() {
                 this->FlushQueueSync(Qid, Addr, Purge); }).share();
-        taskQ_.add(f);
     }
 
     void GeoNetRouterImpl::Enqueue(int Qid, const uint8_t *Buffer, size_t BufLen,
@@ -383,9 +385,10 @@ namespace gn {
     }
 
     void GeoNetRouterImpl::LocationServiceStart(const uint8_t *Addr) {
-        auto f = std::async(std::launch::async, [this, Addr]() {
-                this->LocationServiceSync(Addr);}).share();
-        taskQ_.add(f);
+        auto t = [&](const uint8_t *Addr) {
+            this->LocationServiceSync(Addr);
+        };
+        LocationServiceThread_ = std::thread(t, Addr);
     }
 
     /**

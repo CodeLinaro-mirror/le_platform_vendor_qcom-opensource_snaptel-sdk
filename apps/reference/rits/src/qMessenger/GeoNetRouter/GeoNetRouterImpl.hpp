@@ -197,6 +197,7 @@ private:
     int NeighborCount_;
     GnConfig_t Config_;
     LocationTable LocTable_;
+    std::thread LocationServiceThread_;
 
     // member variables for CBF (contention based forwarding) implementation.
     std::mutex CBFmutex_;
@@ -204,8 +205,10 @@ private:
     std::priority_queue<std::shared_ptr<Qelement>, std::vector<std::shared_ptr<Qelement>>, CompareTo> CBFqueue_;
     std::atomic<bool> CBFstop_;
     std::promise<int>CBFresult_;
+    std::thread CBFTimerThread_;
 
     std::mutex qMutex_;
+    std::shared_future<void> aSyncFuture_;
     // map use gn_addr->addr as key, each map element contains a deque.
     std::map<uint8_t *, std::shared_ptr<QueueT>, AddrCompare> LsMapQueue_;
     std::map<uint8_t *, std::shared_ptr<QueueT>, AddrCompare> UcMapQueue_;
@@ -214,7 +217,6 @@ private:
     // LsMap stores on-going LS request packets and status.
     std::map<uint8_t *, std::shared_ptr<Qelement>, AddrCompare> LsMap_;
 
-    AsyncTaskQueue<void> taskQ_;
     gn_addr_t itsGnLocalGnAddr_;
 
     std::shared_ptr<KinematicsReceive> kinematicsRx_;

@@ -643,6 +643,52 @@ public:
     virtual telux::common::Status deregisterTxStatusReportListener(
         uint16_t port,
         telux::common::ResponseCallback cb) = 0;
+
+    /**
+     * Set CV2X global IP address for the IP interface.
+     *
+     * Use case and Precondition:
+     * OBU:
+     * Registers a TX/RX *NON IP* flow for receiving the signed WSA/WRA for IP session initiation;
+     * Once receives the IP prefix in the WDS/WRA from RSU, call this method.
+     *
+     * RSU:
+     * Specifies its own global prefix via this method, and creates/composes WSA/WRA
+     * advertising the IP configs.
+     *
+     * @param [in] ipv6Addr   - CV2X global IP address.
+     * @param [in] cb     - Callback that is invoked when set the global IP address complete.
+     *                      This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status setGlobalIPInfo(const IPv6AddrType &ipv6Addr,
+        common::ResponseCallback cb) = 0;
+
+    /**
+     * Set CV2X IP interface global IP unicast routing information.
+     *
+     * Use case and Precondition:
+     * OBU:
+     * Registers a TX/RX *NON IP* flow for receiving the signed WSA/WRA for IP session initiation;
+     * Once receives the IP prefix in the WSA/WRA from RSU, call the @ref setGlobalIPInfo method
+     * to update the ip interface with global IP;
+     * Now call this method to set the routing information with dest L2 addr negotiated in WSA/WRA.
+     *
+     * RSU:
+     * Specifies its own global prefix via @ref setGlobalIPInfo, and creates/composes WSA/WRA
+     * advertising the IP configs;
+     * Now set routing information of its own via this method.
+     *
+     * @param [in] destL2Addr   - CV2X destination L2 address for unicast routing purpose.
+     * @param [in] cb     - Callback that is invoked when set global IP unicast routing
+     * information complete. This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status setGlobalIPUnicastRoutingInfo(
+        const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb) = 0;
+
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

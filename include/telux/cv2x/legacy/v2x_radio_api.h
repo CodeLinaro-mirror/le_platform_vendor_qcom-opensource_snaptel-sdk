@@ -2477,6 +2477,27 @@ v2x_status_enum_type v2x_register_tx_status_report_listener(
  */
 v2x_status_enum_type v2x_deregister_tx_status_report_listener(uint16_t port);
 
+/**
+    Set CV2X global IP address for the IP interface.
+
+    @param [in] prefix_len CV2X global IP address prefix length in bits, range [64, 128]
+    @param [in] ipv6_addr  CV2X global IP address.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_global_IPaddr(uint8_t prefix_len, uint8_t* ipv6_addr);
+
+/**
+    Set CV2X IP interface global IP unicast routing information.
+
+    @param [in] dest_mac_addr CV2X destination L2 address for unicast routing purpose.
+                              expecting a 6 bytes array address, in which the L2 addr stored in
+                              the last 3 entries in big endian order.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_ip_routing_info(uint8_t* dest_mac_addr);
+
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 
 /*

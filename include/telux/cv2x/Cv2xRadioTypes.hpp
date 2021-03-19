@@ -43,6 +43,11 @@ namespace telux {
 
 namespace cv2x {
 
+#define CV2X_IPV6_ADDR_ARRAY_LEN 16
+#define CV2X_MAC_ADDR_LEN        6
+#define IPV6_MIN_PREFIX_LENGTH   64
+#define IPV6_MAX_PREFIX_LEN      128
+
 /** @addtogroup telematics_cv2x_cpp
  * @{ */
 
@@ -586,6 +591,29 @@ struct TxStatusReport {
     uint16_t port;
     /**< Port number that can be used to link the report to a specific Tx
          flow which has the same source port number. */
+};
+
+/**
+ * Encapsulates ipv6 prefix length in bits and ipv6 prefix.
+ *
+ * Used in @ref setGlobalIPInfo.
+ */
+struct IPv6AddrType
+{
+    /**< ipv6 address prefix length in bits, range [64, 128] */
+    uint8_t prefixLen;
+    uint8_t ipv6Addr[CV2X_IPV6_ADDR_ARRAY_LEN];
+};
+
+/**
+ * Encapsulates destination L2 address.
+ *
+ * Used in @ref setGlobalIPUnicastRoutingInfo.
+ */
+struct GlobalIPUnicastRoutingInfo
+{
+    /**< Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order*/
+    uint8_t destMacAddr[CV2X_MAC_ADDR_LEN];
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

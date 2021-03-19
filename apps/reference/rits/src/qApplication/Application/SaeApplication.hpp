@@ -33,12 +33,16 @@
   * @brief: class for ITS stack - SAE
   */
 #include "ApplicationBase.hpp"
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 
 class SaeApplication : public ApplicationBase {
 public:
-    SaeApplication(char *fileConfiguration);
+    SaeApplication(char *fileConfiguration, MessageType msgType);
     SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration);
+        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, MessageType msgType);
     ~SaeApplication();
 
     /**
@@ -77,7 +81,16 @@ public:
     */
     void printTxStats();
 
+    int setGlobalIPv6Prefix(void);
+
 private:
+    bool GlobalIpSessionActive = false;
+    std::chrono::milliseconds wraInterval;
+    std::thread wraThread;
+    std::mutex wraMutex;
+    std::condition_variable wraCv;
+    std::chrono::time_point<std::chrono::high_resolution_clock> now;
+    void wraThreadFunc(int routerLifetime);
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access
@@ -101,6 +114,16 @@ private:
     */
     int receive(const uint8_t index, const uint16_t bufLen,
                      const uint32_t ldmIndex);
+
+#ifdef WITH_WSA
+    int onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr, int& MacAdrLen);
+    /**
+     * Method to setup and fill WSA related information.
+     * @param wsa - A pointer to the SrvAdvMsg_t struct
+     * @param wra - A pointer to RoutingAdvertisement_t struct
+     */
+    void fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra);
+#endif
 
     /**
     * Method to initialize SAE packets in msg_contents struct.
@@ -144,4 +167,6 @@ private:
     * @param bsm - A pointer to the BSM struct
     */
     void initRecordedBsm(bsm_value_t* bsm);
+
+    int parseIPv6Prefix(char *prefix, int& len);
 };

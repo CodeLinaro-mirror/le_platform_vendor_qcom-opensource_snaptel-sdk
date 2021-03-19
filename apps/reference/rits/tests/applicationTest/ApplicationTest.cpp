@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -151,13 +151,28 @@ static void receive(MessageType msgType) {
  */
 static void ldmRx(void) {
     std::signal(SIGINT, signalHandler);
+    if (nullptr == application) {
+        cerr << "application nullptr" << endl;
+        return;
+    }
     while (true)
     {
+        if (application->receivedContents.size() == 0 || application->radioReceives.size() == 0) {
+            cerr << "receivedContents size 0, please check configuration and prameters" << endl;
+            sleep(1);
+            continue;
+        }
         const auto mc = application->receivedContents[0];
+        if (nullptr == mc || mc->abuf.data == nullptr) {
+            cerr << "mc or mc->abuf.data nullptr" << endl;
+            continue;
+        }
         const auto recCount = application->radioReceives[0].receive(mc->abuf.data);
         abuf_put(&mc->abuf, recCount);
-        const auto ldmIndex = application->ldm->getFreeBsm();
-        application->receive(0, recCount, ldmIndex);
+        if (application->ldm != nullptr) {
+            const auto ldmIndex = application->ldm->getFreeBsm();
+            application->receive(0, recCount, ldmIndex);
+        }
     }
 }
 /**
@@ -223,6 +238,7 @@ static void transmit(MessageType msgType) {
     {
     case MessageType::CAM:
     case MessageType::BSM:
+    case MessageType::WSA:
         printf("Sending BSM messages via radio\n");
         while (!stopThread)
         {
@@ -597,6 +613,7 @@ void printUse() {
     cout << "-x Tunnel Receive. It automatically calls -l. See: -l.\n";
     cout << "-l LDM mode; Adds -r if nothing specified. Use it with -r or -j.\n";
     cout << "-b Transmits and Receives BSMS.\n";
+    cout << "-w Transmits and Receives WRA(in WSA).\n";
 #ifdef ETSI
     cout << "-c Transmits and Receives CAMs.\n";
     cout << "-d Transmits and Receives DENMs.\n";
@@ -630,7 +647,7 @@ void configFileCheck(string& configFile)
 
 /* Sets parameters according to runtime arguments */
 void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
-    bool& ldm, bool& help, bool& safetyApps, bool& bsm,
+    bool& ldm, bool& help, bool& safetyApps, bool& bsm, bool& wsa,
     bool& cam, bool& denm, bool& preRecorded, string& preRecordedFile,
     bool& txSim, bool& rxSim, bool& tunnelTx, bool& tunnelRx,
     bool& csv, string& txSimIp, string& rxSimIp,
@@ -673,6 +690,9 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
         break;
     case 'b':
         bsm = true;
+        break;
+    case 'w':
+        wsa = true;
         break;
 #ifdef ETSI
     case 'c':
@@ -750,7 +770,7 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
 
 int setup(const bool tx, const bool rx,
     const bool ldm, const bool help, const bool safetyApps,
-    const bool bsm, const bool cam, const bool denm, const bool preRecorded,
+    const bool bsm, const bool wsa, const bool cam, const bool denm, const bool preRecorded,
     const string preRecordedFile, const bool txSim, const bool rxSim,
     const bool tunnelTx,const bool tunnelRx, const string txSimIp,
     const string  rxSimIp, const  uint16_t txSimPort,
@@ -763,15 +783,17 @@ int setup(const bool tx, const bool rx,
         return 0;
     }
 
-    if (bsm) {
+    if (bsm || wsa) {
         if (txSim)
             application =
-                new SaeApplication(txSimIp, txSimPort, string(""), 0, configFile);
+                new SaeApplication(txSimIp, txSimPort, string(""), 0, configFile,
+                        bsm? MessageType::BSM : MessageType::WSA);
         else if (rxSim)
             application =
-                new SaeApplication(string(""), 0, rxSimIp, rxSimPort, configFile);
+                new SaeApplication(string(""), 0, rxSimIp, rxSimPort, configFile,
+                        bsm? MessageType::BSM : MessageType::WSA);
         else
-            application = new SaeApplication(configFile);
+            application = new SaeApplication(configFile, bsm? MessageType::BSM : MessageType::WSA);
 
     } else {
 #ifdef ETSI
@@ -808,6 +830,12 @@ int setup(const bool tx, const bool rx,
                 threads.push_back(thread(transmit, MessageType::BSM));
             } else if(cam) {
                 threads.push_back(thread(transmit, MessageType::CAM));
+            } else if (wsa) {
+                if (!rx) {
+                    //sending WSA, transmit only, we are simulating RSU, so set the IPV6
+                    (dynamic_cast<SaeApplication *>(application))->setGlobalIPv6Prefix();
+                }
+                threads.push_back(thread(transmit, MessageType::WSA));
             } else {
                 threads.push_back(thread(transmit, MessageType::DENM));
             }
@@ -954,9 +982,9 @@ int setup(const bool tx, const bool rx,
 int main(int argc, char** argv) {
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
-    bool tx, rx, ldm, help, safetyApps, bsm, cam, denm, preRecorded, txSim, rxSim;
+    bool tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded, txSim, rxSim;
     bool tunnelTx, tunnelRx;
-    tx = rx = ldm = help = safetyApps = cam = denm = tunnelTx = tunnelRx = false;
+    tx = rx = ldm = help = safetyApps = wsa = cam = denm = tunnelTx = tunnelRx = false;
     preRecorded = txSim = rxSim = false;
     // by default bsm is true
     bsm = true;
@@ -972,7 +1000,7 @@ int main(int argc, char** argv) {
     //Get all options and file path
     for (; idx < (argc - 1); idx++) {
         getModes(argv[idx][1], idx, argc, argv, tx, rx, ldm, help,
-            safetyApps, bsm, cam, denm, preRecorded, preRecordedFile, txSim,
+            safetyApps, bsm, wsa, cam, denm, preRecorded, preRecordedFile, txSim,
             rxSim, tunnelTx, tunnelRx, csv, txSimIp, rxSimIp, txSimPort, rxSimPort);
     }
 
@@ -993,6 +1021,10 @@ int main(int argc, char** argv) {
         printf("TUNNEL RX ON; ");
     if(ldm)
         printf("LDM ON; ");
+    if(wsa) {
+        bsm = false;
+        printf("WSA ON; ");
+    }
 
     // Packet/protocol type information
     if(bsm)
@@ -1003,7 +1035,7 @@ int main(int argc, char** argv) {
         printf("DENM; ");
     std::cout << "CONFIG_FILE: " <<  configFile << std::endl;
 
-    if (setup(tx, rx, ldm, help, safetyApps, bsm, cam, denm, preRecorded,
+    if (setup(tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded,
         preRecordedFile, txSim, rxSim, tunnelTx, tunnelRx, txSimIp, rxSimIp,
         txSimPort, rxSimPort, (char*)configFile.data()) < 0) {
         cout << "Failed to launch program" << endl;

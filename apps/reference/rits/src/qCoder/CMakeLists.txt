@@ -19,12 +19,15 @@ file(GLOB ASN1C_FILES
     ${ASN1C_SKELETONS}/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/etsi/dictionary/generated/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/etsi/CAM/generated/*.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/etsi/DENM/generated/*.c)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/etsi/DENM/generated/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sae/generated/*.c
+    )
 
 set(SOURCE_FILES ${SOURCE_FILES_TOP})
 
 if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
-    set(SOURCE_FILES ${SOURCE_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/src/etsi.c ${ASN1C_FILES})
+    set(SOURCE_FILES ${SOURCE_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/src/etsi.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/wsa.c ${ASN1C_FILES})
 endif()
 
 add_executable(v2xc v2xc.c)

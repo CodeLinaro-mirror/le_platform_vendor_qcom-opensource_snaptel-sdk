@@ -14,7 +14,7 @@ elseif(DEFINED ENV{AEROLINK_PATH})
 endif()
 
 if(ASN1C_PATH)
-    add_definitions(-DETSI -D_DEFAULT_SOURCE)
+    add_definitions(-DETSI -DWITH_WSA -D_DEFAULT_SOURCE)
     set(ASN1C_SKELETONS ${ASN1C_PATH}/skeletons)
 elseif(DEFINED ENV{ASN1C_PATH})
     add_definitions(-DETSI -D_DEFAULT_SOURCE)
@@ -46,6 +46,7 @@ if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
     ${PROJECT_SOURCE_DIR}/src/qCoder/src/etsi/CAM/generated
     ${PROJECT_SOURCE_DIR}/src/qCoder/src/etsi/DENM/generated
     ${PROJECT_SOURCE_DIR}/src/qCoder/src/etsi/dictionary/generated
+    ${PROJECT_SOURCE_DIR}/src/qCoder/src/sae/generated
     ${PROJECT_SOURCE_DIR}/src/qMessenger/GeoNetRouter)
 endif()
 add_subdirectory(src/qCoder/)

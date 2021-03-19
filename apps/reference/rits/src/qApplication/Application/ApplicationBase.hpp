@@ -71,7 +71,8 @@ enum class MessageType {
     BSM,
     CAM,
     DENM,
-    SPAT
+    SPAT,
+    WSA
 };
 
 struct Config{
@@ -150,6 +151,13 @@ struct Config{
     bool enableSignStatLog = true;
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
+
+    /* config data for Ieee1609.3 Wsa */
+    long routerLifetime;
+    string ipPrefix;
+    int ipPrefixLength;
+    string defaultGateway;
+    string primaryDns;
 };
 
 class ApplicationBase
@@ -335,9 +343,9 @@ protected:
                             int16_t bufLen, TransmitType txType);
 
     /**
-    * Object that holds all data and meta data of the LocationSDK
-    * and allows incoming fixes from such service.
-    */
+     * Object that holds all data and meta data of the LocationSDK
+     * and allows incoming fixes from such service.
+     */
     shared_ptr<KinematicsReceive> kinematicsReceive;
 
     /**

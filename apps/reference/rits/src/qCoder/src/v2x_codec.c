@@ -54,6 +54,7 @@ void set_codec_verbosity(int value) {
 int decode_msg(msg_contents *mc)
 {
     int ret = 0;
+    wsmp_data_t *wsmpp;
     if (!mc || !mc->abuf.data) {
         fprintf(stderr, "%s: invalid input\n", __func__);
         return -1;
@@ -66,6 +67,7 @@ int decode_msg(msg_contents *mc)
             fprintf(stderr, "WSMP decode failure\n");
             return ret;
         }
+        wsmpp = (wsmp_data_t *)mc->wsmp;
         if ((ret = ieee1609_2_decode_unsecured(mc)) < 0) {
             fprintf(stderr, "IEEE1609.2 decode failure\n");
             return ret;
@@ -74,12 +76,26 @@ int decode_msg(msg_contents *mc)
             if (ie->content != unsecuredData)
                 return 1;
         }
-        if ((ret = decode_as_j2735(mc)) < 0) {
-            fprintf(stderr, "J2735 decode failure\n");
-            return -1;
+        if (wsmpp->psid == PSID_WSA) {
+#ifdef WITH_WSA
+            if ((ret = decode_as_wsa(mc)) < 0) {
+                fprintf(stderr, "WSA decode failure\n");
+                return -1;
+            } else {
+                print_wsa(mc->wsa);
+                ret = 0;
+            }
+#else
+            fprintf(stderr, "WSA not supprted\n");
+#endif
         } else {
-            // decode_as_j2735 returned msg_id after successful decoding.
-            ret = 0;
+            if ((ret = decode_as_j2735(mc)) < 0) {
+                fprintf(stderr, "J2735 decode failure\n");
+                return -1;
+            } else {
+                // decode_as_j2735 returned msg_id after successful decoding.
+                ret = 0;
+            }
         }
     } else {
 #ifdef ETSI
@@ -132,15 +148,28 @@ int decode_msg_continue(msg_contents *mc) {
 int encode_msg(msg_contents *mc)
 {
     int ret = 0;
+    wsmp_data_t *wsmpp;
     if (!mc || !mc->abuf.data) {
         fprintf(stderr, "%s invalid input\n", __func__);
         return -1;
     }
     if (mc->stackId == STACK_ID_SAE) {
-        mc->j2735_msg_id = J2735_MSGID_BASIC_SAFETY;
-        if ((ret = encode_as_j2735(mc)) < 0) {
-            fprintf(stderr, "J2735 encode failure\n");
-            return ret;
+        wsmpp = (wsmp_data_t *)mc->wsmp;
+        if (wsmpp->psid == PSID_WSA) {
+#ifdef WITH_WSA
+            if ((ret = encode_as_wsa(mc)) < 0) {
+                fprintf(stderr, "WSA encode failure\n");
+                return ret;
+            }
+#else
+            fprintf(stderr, "WSA not supported\n");
+#endif
+        } else {
+            mc->j2735_msg_id = J2735_MSGID_BASIC_SAFETY;
+            if ((ret = encode_as_j2735(mc)) < 0) {
+                fprintf(stderr, "J2735 encode failure\n");
+                return ret;
+            }
         }
         if ((ret = ieee1609_2_encode_unsecured(mc)) < 0) {
             fprintf(stderr, "IEEE1609.2 encode failure\n");

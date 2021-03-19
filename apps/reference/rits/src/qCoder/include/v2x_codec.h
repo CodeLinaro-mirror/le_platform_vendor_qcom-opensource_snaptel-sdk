@@ -40,6 +40,11 @@
 #include "wsmp.h"
 #include "ieee1609.2.h"
 #include "j2735.h"
+#include "wsa.h"
+#ifdef WITH_WSA
+#include "SrvAdvMsg.h"
+#endif
+
 #ifdef ETSI
 #include "CAM.h"
 #include "DENM.h"

@@ -141,9 +141,13 @@ void AudioConsoleApp::initConsole() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "TransCode", {},
         std::bind(&AudioConsoleApp::transCodeMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> getCalStatusCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Get Calibration Status", {},
+        std::bind(&AudioConsoleApp::getCalStatus, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
     = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
-        toneMenuCommand, transCodeMenuCommand};
+        toneMenuCommand, transCodeMenuCommand, getCalStatusCommand};
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ");
     voiceMenu_->init();
@@ -190,6 +194,36 @@ void AudioConsoleApp::toneMenu(std::vector<std::string> userInput) {
 void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
     transCodeMenu_->displayMenu();
     transCodeMenu_->mainLoop();
+}
+
+void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
+    if (audioManager_) {
+        std::promise<bool> p;
+        auto status = audioManager_->getCalibrationInitStatus(
+            [&p](CalibrationInitStatus calStatus, telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                if (calStatus == CalibrationInitStatus::INIT_SUCCESS) {
+                    std::cout << "Calibration initialized successfully" << std::endl;
+                } else if (calStatus == CalibrationInitStatus::INIT_FAILED) {
+                    std::cout << "Calibration init failed" << std::endl;
+                } else {
+                    std::cout << "Calibration Status Unknown" << std::endl;
+                }
+                p.set_value(true);
+            } else {
+                p.set_value(false);
+                std::cout << "failed to get cal init status" << std::endl;
+            }
+            });
+        if (status == telux::common::Status::SUCCESS){
+            std::cout << "Request to get cal init status sent" << std::endl;
+        } else {
+            std::cout << "Request to get cal init status failed" << std::endl;
+        }
+        p.get_future().get();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+    }
 }
 
 void AudioConsoleApp::closeAllStreams() {

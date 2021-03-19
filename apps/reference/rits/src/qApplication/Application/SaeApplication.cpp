@@ -34,6 +34,7 @@
   * @brief: class for ITS stack application - SAE
   */
 #include "SaeApplication.hpp"
+#include <telux/cv2x/Cv2xRadioTypes.hpp>
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verifStatIdx = 0;
@@ -51,9 +52,11 @@ thread_local int signFail = 0;
 thread_local int signSuccess = 0;
 
 
-SaeApplication::SaeApplication(char *fileConfiguration):ApplicationBase(fileConfiguration) {
-    MsgType = MessageType::BSM;
+SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
+    ApplicationBase(fileConfiguration) {
+    MsgType = msgType;
 
+    wraInterval = std::chrono::milliseconds::zero();
     //init messages for sending.
     if (isTxSim) {
         initMsg(txSimMsg);
@@ -72,10 +75,11 @@ SaeApplication::SaeApplication(char *fileConfiguration):ApplicationBase(fileConf
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration) :
+        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, MessageType msgType) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
 
-    MsgType = MessageType::BSM;
+    wraInterval = std::chrono::milliseconds::zero();
+    MsgType = msgType;
     //init messages for sending.
     if (isTxSim) {
         initMsg(txSimMsg);
@@ -95,6 +99,10 @@ SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
 SaeApplication::~SaeApplication() {
     printf("Total number of transmitted packets: %d\n",totalTxSuccess);
     printf("Total number of received packets: %d\n",totalRxSuccess);
+
+    if (wraThread.joinable() == true) {
+        wraThread.join();
+    }
 }
 
 void SaeApplication::printRxStats(){
@@ -130,16 +138,29 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     const auto i = index;
     int ret = 0;
     int packet_len = 0;
+    wsmp_data_t *wsmpp;
+    uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
+    int macAddrLen = CV2X_MAC_ADDR_LEN;
+
     if(&msg_cont.abuf == NULL || msg_cont.abuf.size == 0){
         abuf_alloc(&msg_cont.abuf, ABUF_LEN, ABUF_HEADROOM);
         // for SAE only
         msg_cont.stackId = STACK_ID_SAE;
         if(msg_cont.wsmp == nullptr)
             msg_cont.wsmp = new char[sizeof(wsmp_data_t)];
-        if(msg_cont.j2735_msg == nullptr)
-            msg_cont.j2735_msg = new char[sizeof(bsm_value_t)];
         if(msg_cont.ieee1609_2data == nullptr)
             msg_cont.ieee1609_2data = new char[sizeof(ieee1609_2_data)];
+        if (MsgType == MessageType::BSM) {
+            if(msg_cont.j2735_msg == nullptr)
+                msg_cont.j2735_msg = new char[sizeof(bsm_value_t)];
+        } else {
+#ifdef WITH_WSA
+            if (msg_cont.wsa == nullptr)
+                msg_cont.wsa = new char[sizeof(SrvAdvMsg_t)];
+            if (msg_cont.wra == nullptr)
+                msg_cont.wra = new char[sizeof(RoutingAdvertisement_t)];
+#endif
+        }
     }
     else{
         abuf_reset(&msg_cont.abuf, ABUF_HEADROOM);
@@ -156,7 +177,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
     else {
         sem_wait(&rx_sem);
-        ret = radioReceives[0].receive(mc->abuf.data);
+        ret = radioReceives[0].receive(mc->abuf.data, sourceMacAddr, macAddrLen);
         sem_post(&rx_sem);
     }
 
@@ -224,7 +245,18 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                             dot2HdrLen);
                     printf("payload length is %d bytes\n", ret);
                 }
-                ret = decode_as_j2735(mc);
+                wsmpp = (wsmp_data_t *)mc->wsmp;
+                if (wsmpp->psid == PSID_WSA) {
+#ifdef WITH_WSA
+                    ret = decode_as_wsa(mc);
+                    if (!ret && mc->wra) {
+                        ret = onReceiveWra(static_cast<RoutingAdvertisement_t*>(mc->wra), 
+                                sourceMacAddr, macAddrLen);
+                    }
+#endif
+                } else {
+                    ret = decode_as_j2735(mc);
+                }
             }
         }else if(ret >= 0){
             if(appVerbosity > 3)
@@ -242,6 +274,15 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 if(appVerbosity > 3)
                     printf("Successful decode\n");
                 ret = 0;
+                wsmpp = (wsmp_data_t *)mc->wsmp;
+                if (wsmpp->psid == PSID_WSA) {
+#if WSA
+                    if (mc->wra) {
+                        ret = onReceiveWra(static_cast<RoutingAdvertisement_t*>(mc->wra), 
+                                sourceMacAddr, macAddrLen);
+                    }
+#endif
+                }
                 break;
             case 1:
                 if(appVerbosity > 3)
@@ -271,8 +312,19 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
 void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc) {
     mc->stackId = STACK_ID_SAE;
     mc->wsmp = new char[sizeof(wsmp_data_t)];
-    mc->j2735_msg = new char[sizeof(bsm_value_t)];
     mc->ieee1609_2data = new char[sizeof(ieee1609_2_data)];
+
+    if (MsgType == MessageType::BSM) {
+        mc->j2735_msg = new char[sizeof(bsm_value_t)];
+        mc->wsa = 0;
+    } else {
+#ifdef WITH_WSA
+        mc->wsa = new char[sizeof(SrvAdvMsg_t)];
+        mc->wra = new char [sizeof(RoutingAdvertisement_t)];
+        mc->j2735_msg = 0;
+#endif
+    }
+
 }
 
 void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
@@ -282,12 +334,27 @@ void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
         delete static_cast<char *>(mc->j2735_msg);
     if (mc->ieee1609_2data)
         delete static_cast<char *>(mc->ieee1609_2data);
+    if (mc->wsa)
+        delete static_cast<char *>(mc->wsa);
+    if (mc->wra)
+        delete static_cast<char *>(mc->wra);
 }
 
 void SaeApplication::fillMsg(std::shared_ptr<msg_contents> mc) {
     fillWsmp(static_cast<wsmp_data_t *>(mc->wsmp));
     fillSecurity(static_cast<ieee1609_2_data *>(mc->ieee1609_2data));
-    fillBsm(static_cast<bsm_value_t *>(mc->j2735_msg));
+
+    if (MsgType == MessageType::BSM) {
+        fillBsm(static_cast<bsm_value_t *>(mc->j2735_msg));
+    } else {
+#ifdef WITH_WSA
+        fillWsa(static_cast<SrvAdvMsg_t *>(mc->wsa),
+                static_cast<RoutingAdvertisement_t *>(mc->wra));
+        wsmp_data_t *wsmpp = (wsmp_data_t *)mc->wsmp;
+        wsmpp->psid = PSID_WSA;
+#endif
+    }
+
     mc->msgId = 20;
 }
 
@@ -300,6 +367,61 @@ void SaeApplication::fillWsmp(wsmp_data_t *wsmp) {
     wsmp->chan_load_len = 0;
 }
 
+int SaeApplication::parseIPv6Prefix(char *ipPrefix, int& bufLen)
+{
+    int i = 0;
+    auto pos = 0, prev = 0;
+    string prefixStr = configuration.ipPrefix + ":"; /* help parsing */
+    do {
+        if (i >= bufLen) {
+            std::cout << "ipPrefix " << i << " too long" << std::endl;
+            return -1;
+        }
+        pos = prefixStr.find(":", prev);
+        if (pos != std::string::npos) {
+            uint16_t val = stoi(prefixStr.substr(prev, pos), 0, 16);
+            ipPrefix[i] = (val >> 8);
+            ipPrefix[i + 1] = (val & 0xFF);
+        }
+        prev = pos + 1;
+        i += 2;
+    } while(pos != std::string::npos);
+
+    bufLen = i - 2;
+
+    return 0;
+}
+#ifdef WITH_WSA
+void SaeApplication::fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra) {
+    char ipPrefix[16];
+    int prefixLen = 16;
+    memset(wsa, 0, sizeof(SrvAdvMsg_t));
+    wsa->version = 3;  /* 1609.3 2016 */
+    wsa->body.routingAdvertisement = wra;
+    memset(wra, 0, sizeof(RoutingAdvertisement_t));
+    memset(ipPrefix, 0, 16);
+
+    wra->lifetime = configuration.routerLifetime;
+
+    if (parseIPv6Prefix(&ipPrefix[0], prefixLen) < 0) {
+        return;
+    }
+    if (OCTET_STRING_fromBuf(&wra->ipPrefix, ipPrefix, 16) < 0) {
+        std::cout << "wra conversion failure for ipPrefix" << std::endl;
+    }
+    wra->ipPrefixLength = configuration.ipPrefixLength;
+
+    /* Not actually using defaultGateway and primaryDns, but it can not be empty*/
+    if (OCTET_STRING_fromBuf(&wra->defaultGateway, configuration.defaultGateway.c_str(),
+                configuration.defaultGateway.length()) < 0) {
+        std::cout << "wra conversion failure for defaultGateway" << std::endl;
+    }
+    if (OCTET_STRING_fromBuf(&wra->primaryDns, configuration.primaryDns.c_str(),
+                configuration.primaryDns.length()) < 0) {
+        std::cout << "wra conversion failure for primaryDns" << std::endl;
+    }
+}
+#endif
 void SaeApplication::fillBsm(bsm_value_t *bsm) {
     memset(bsm, 0, sizeof(bsm_value_t));
     srand(timestamp_now());
@@ -337,7 +459,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
 void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 {
     //fill data with values that may not make sense, these data should come from vehicle
-    //CAN network.
+    //CAN network
 
     bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
 
@@ -347,7 +469,6 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 
     bsm->SteeringWheelAngle = 0;
     bsm->brakes.word = 0;
-
     bsm->has_safety_extension = (v2x_bool_t)1;
     bsm->vehsafeopts = bsm->vehsafeopts | (1 << 0);
     bsm->lights_in_use.data = 0;
@@ -579,4 +700,97 @@ void SaeApplication::sendTuncBsm(uint8_t index, TransmitType txType) {
     default:
         break;
     }
+}
+
+#ifdef WITH_WSA
+int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr,
+        int& macAdrLen) {
+    telux::cv2x::IPv6AddrType IpPrefix;
+    telux::cv2x::GlobalIPUnicastRoutingInfo RoutingInfo;
+    int ret = 0;
+    if (GlobalIpSessionActive == true) {
+        if (wraInterval == std::chrono::milliseconds::zero()) {
+            //received the second WRA message, need to determine the period of the WRA, 
+            //so that if within expected internal we didn't receive next WRA, we deem the 
+            //OBU went out of range of the associated RSU.
+            auto diff = std::chrono::high_resolution_clock::now() - now;
+            wraInterval = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
+            cout << "wraInterval=" << wraInterval.count() << endl;
+        }
+        wraCv.notify_all();
+        return ret;
+    }
+    if (wra->ipPrefix.size > CV2X_IPV6_ADDR_ARRAY_LEN) {
+        cout << "Invalid ip prefix length received: "<< wra->ipPrefix.size << endl;
+        ret = -1;
+    } else {
+        //Received first valid WRA.
+        now = std::chrono::high_resolution_clock::now();
+        memcpy(IpPrefix.ipv6Addr, wra->ipPrefix.buf, wra->ipPrefix.size);
+        IpPrefix.prefixLen = wra->ipPrefixLength;
+        memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
+        cout << "Setting Global IP address" << endl;
+        ret = radioReceives[0].onReceiveWra(IpPrefix, RoutingInfo);
+        if (!ret) {
+            GlobalIpSessionActive = true;
+            //Launch Wra thread to monitor WRA timeout.
+            if (wraThread.joinable() == false) {
+                auto func = [&](int routerLifetime) {
+                    wraThreadFunc(routerLifetime);
+                };
+                wraThread = std::thread(func, wra->lifetime);
+            } else {
+                //Notify Wra thread we got new WRA message
+                wraCv.notify_all();
+            }
+        }
+    }
+
+    return ret;
+}
+#endif
+void SaeApplication::wraThreadFunc(int routerLifetime)
+{
+    std::unique_lock<std::mutex> lk(wraMutex);
+    std::cv_status status;
+
+    lk.unlock();
+    while(true) {
+        lk.lock();
+        if (wraInterval == std::chrono::milliseconds::zero()) {
+            // we didn't receive 2nd WRA yet, no idea about the WRA interval. Use routerlifetime as
+            // wait time.
+            std::chrono::milliseconds wt(routerLifetime*1000);
+            status = wraCv.wait_for(lk, wt);
+        } else {
+            //if no WRA within 3*interval, deem it as out of range of RSU
+            status = wraCv.wait_for(lk, 3*wraInterval);
+        }
+        lk.unlock();
+        if (status == std::cv_status::timeout) {
+            radioReceives[0].onWraTimedout();
+            cout << "WRA timeout, global IP session stopped" << endl;
+            return;
+        }
+    }
+}
+
+/* For RSU use case only */
+int SaeApplication::setGlobalIPv6Prefix(void)
+{
+    char ipPrefix[16];
+    int prefixLen = 16;
+    telux::cv2x::IPv6AddrType IpPrefix;
+    int ret = 0;
+
+    if (GlobalIpSessionActive == false) {
+        memset(ipPrefix, 0, 16);
+        if (!parseIPv6Prefix(ipPrefix, prefixLen)) {
+            IpPrefix.prefixLen = configuration.ipPrefixLength;
+            memcpy(IpPrefix.ipv6Addr, ipPrefix, prefixLen);
+            ret = radioReceives[0].setGlobalIPInfo(IpPrefix);
+        }
+    }
+
+    return ret;
 }

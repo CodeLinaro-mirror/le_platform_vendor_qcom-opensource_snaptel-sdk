@@ -101,6 +101,14 @@ typedef enum {
     EXT_FIELD_MAX
 } ext_field_e;
 
+/* PSID: IEEE1609.12 only small portion that is needed are defined here */
+typedef enum {
+    PSID_SYSTEM = 0,
+    PSID_EFC,
+    /* 0x20 -0x22, 0x80 - 0x85 are defined for SAE J2735 */
+    PSID_WSA = 0x87,
+} PSID_e;
+
 /**
  * Transport TPID  -- an 8 bit field in IEEE 1609 (2016), but only 6 types
  * defined, #6-255=Reserved function is described in Tabled 23 of standard.

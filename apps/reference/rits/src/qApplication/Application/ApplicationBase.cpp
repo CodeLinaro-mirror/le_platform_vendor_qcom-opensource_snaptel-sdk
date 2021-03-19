@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -442,6 +442,25 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if(configs.find("numRxThreads") != configs.end()) {
         this->configuration.numRxThreads = (uint8_t)stoi(configs["numRxThreads"]);
     }
+    /* WSA */
+    configuration.routerLifetime = 0;
+    configuration.ipPrefixLength = 0;
+    if(configs.find("routerLifetime") != configs.end()){
+        configuration.routerLifetime = stoi(configs["routerLifetime"]);
+    }
+    if (configs.find("ipPrefix") != configs.end()) {
+        configuration.ipPrefix = configs["ipPrefix"];
+    }
+    if (configs.find("ipPrefixLength") != configs.end()) {
+        configuration.ipPrefixLength = stoi(configs["ipPrefixLength"]);
+    }
+    if (configs.find("defaultGateway") != configs.end()) {
+        configuration.defaultGateway = configs["defaultGateway"];
+    }
+    if (configs.find("primaryDns") != configs.end()) {
+        configuration.primaryDns = configs["primaryDns"];
+    }
+
 }
 
 void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
@@ -533,6 +552,7 @@ void ApplicationBase::setup() {
         this->ldm->ageThresh = this->configuration.age;
         this->ldm->setVerbosity(this->configuration.appVerbosity);
     }
+    cout << "ApplicationBase::setup complete." << endl;
 }
 void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
     secData->protocolVersion = 3;
@@ -660,7 +680,6 @@ void ApplicationBase::closeAllRadio() {
     {
         this->simReceive->closeFlow();
     }
-
 }
 
 /**
@@ -693,7 +712,6 @@ void ApplicationBase::writeVerifLogging() {
     file.open(configuration.verifStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<VerifStats> stats = thrVerifLatencies[std::this_thread::get_id()];
-    //file << "Thread (" << thrId << ") writing: " << std::endl;
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->timestamp != 0.0 && it->verifLatency != 0.0) {
             file << it->timestamp << ", " <<
@@ -703,6 +721,7 @@ void ApplicationBase::writeVerifLogging() {
     file.close();
     sem_post(&this->log_sem);
 }
+
 
 /**
  * Instantiate and initialize any variables associated with
@@ -734,7 +753,6 @@ void ApplicationBase::writeSignLogging() {
     file.open(configuration.signStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<SignStats> stats = thrSignLatencies[std::this_thread::get_id()];
-    //file << "Thread (" << thrId << ") writing: " << std::endl;
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->timestamp != 0.0 && it->signLatency != 0.0) {
             file << it->timestamp << ", " <<

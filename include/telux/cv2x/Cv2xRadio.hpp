@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,6 +43,7 @@
 #include <telux/cv2x/Cv2xRxSubscription.hpp>
 #include <telux/cv2x/Cv2xTxFlow.hpp>
 #include <telux/cv2x/Cv2xTxRxSocket.hpp>
+#include <telux/cv2x/Cv2xTxStatusReportListener.hpp>
 
 #include <future>
 #include <memory>
@@ -612,6 +613,36 @@ public:
      */
     virtual telux::common::Status closeCv2xTcpSocket(std::shared_ptr<ICv2xTxRxSocket> sock,
                                                      CloseTcpSocketCallback cb) = 0;
+
+    /**
+     * Registers a listener for Tx status report.
+     *
+     * @param [in] port     - Set this value to the port number of registered Tx Flow
+     *                        if user wants to receive Tx status report associated with
+     *                        its own Tx flow. If user wants to receive Tx status report
+     *                        associated with all Tx flows in system, set this value to 0.
+     * @param [in] listener - Listener that implements ICv2xTxStatusReportListener
+     *                        interface.
+     * @param [in] cb       - Callback that is invoked when the registration of CV2X Tx
+     *                        status report is complete.
+     */
+    virtual telux::common::Status registerTxStatusReportListener(
+        uint16_t port,
+        std::shared_ptr<ICv2xTxStatusReportListener> listener,
+        telux::common::ResponseCallback cb) = 0;
+
+    /**
+     * Deregisters a listener for Tx status report.
+     *
+     * @param [in] port     - Port number of previously registered ICv2xTxStatusReportListener
+     *                        that is to be deregistered. If the listener is registered with
+     *                        port number 0, set this value to 0 to deregister the listener.
+     * @param [in] cb       - Callback that is invoked when the deregistration of CV2X Tx
+     *                        status report is complete.
+     */
+    virtual telux::common::Status deregisterTxStatusReportListener(
+        uint16_t port,
+        telux::common::ResponseCallback cb) = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

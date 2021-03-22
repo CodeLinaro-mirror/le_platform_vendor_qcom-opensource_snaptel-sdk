@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -45,6 +45,13 @@ namespace cv2x {
 
 /** @addtogroup telematics_cv2x_cpp
  * @{ */
+
+/**
+ * Defines Maximum number of antennas that is supported.
+ *
+ * Used in @ref TxStatusReport
+ */
+constexpr uint8_t MAX_ANTENNAS_SUPPORTED = 2u;
 
 /**
  * Defines CV2X Traffic Types.
@@ -502,6 +509,83 @@ struct L2FilterInfo {
     /**</* Proximity service per packet priority (PPPP), packets with priority above this value
            will be dropped. Range 0-7, 0 mean all priority pkts from that UE would be dropped*/
     uint8_t pppp;
+};
+
+/**
+ * Fault detection of Tx chain that including PA and front end.
+ *
+ * Used in @ref RFTxInfo
+ */
+enum class RFTxStatus {
+    INACTIVE,        /**< The Tx chain is not working. */
+    OPERATIONAL,     /**< The Tx chain is operational. */
+    FAULT,           /**< Fault detected on the Tx chain. */
+};
+
+/**
+ * Information of Tx chains retrieved from RF per transport block.
+ *
+ * Used in @ref TxStatusReport
+ */
+struct RFTxInfo {
+    RFTxStatus status;
+    /**< The type of Tx chain status. */
+    int32_t power;
+    /**< Tx power of transmitted TB in dBm*10 format, invalid value is -700. */
+};
+
+/**
+ * Defines possible values for the segment type of a transport block.
+ *
+ * Used in @ref TxStatusReport
+ */
+enum class SegmentType {
+    FIRST,        /**< V2X packet is segmented, it's the first transport block. */
+    LAST,         /**< V2X packet is segmented, it's the last transport block. */
+    MIDDLE,       /**< V2X packet is segmented, it's a transport block between first and last. */
+    ONLY_ONE,     /**< V2X packet is not segmented, it's the only one transport block. */
+};
+
+/**
+ * Defines new Tx or re-Tx type relevant to a transport block.
+ *
+ * Used in @ref TxStatusReport
+ */
+enum class TxType {
+    NEW_TX,        /**< New Tx of the V2X transport block. */
+    RE_TX,       /**< Re-Tx of the V2X transport block. */
+};
+
+/**
+ * Information on Tx status of a V2X transport block that is reported
+ * from low layer. A V2X packet might trigger multiple reports
+ * because of the segmentaion and re-Tx in low layer. If a transport
+ * block is dropped in low layer, no report will be triggered for that
+ * transport block.
+ *
+ * Used in @ref onTxStatusReport
+ */
+struct TxStatusReport {
+    RFTxInfo rfInfo[MAX_ANTENNAS_SUPPORTED];
+    /**< RF information of one or two Tx chains. */
+    uint8_t numRb;
+    /**< Number of resource blocks used for the transport block. */
+    uint8_t startRb;
+    /**< Start resource block index used for the transport block. */
+    uint8_t mcs;
+    /**< Modulation and coding scheme used for the transport block
+         that is defined in 3GPP TS 36.213. */
+    uint8_t segNum;
+    /**< Total number of segments of a V2X packet. */
+    SegmentType segType;
+    /**< Segment type of the transport block. */
+    TxType txType;
+    /**< Indication of new Tx or re-Tx of the transport block. */
+    uint16_t otaTiming;
+    /**< OTA timing in format of system frame number*10 + subframe number. */
+    uint16_t port;
+    /**< Port number that can be used to link the report to a specific Tx
+         flow which has the same source port number. */
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

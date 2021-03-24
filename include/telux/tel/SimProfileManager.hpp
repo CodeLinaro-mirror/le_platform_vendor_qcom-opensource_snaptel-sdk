@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -74,6 +74,24 @@ using ProfileListResponseCb = std::function<void(
  *                        succeeded or not.  @ref ErrorCode.
  */
 using EidResponseCb = std::function<void(std::string eid, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestServerAddress API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] smdpAddress        Configured SM-DP+ address on the eUICC.
+ * @param [in] smdsAddress        Configured SMDS address on the eUICC.
+ * @param [in] error              Return code which indicates whether the operation
+ *                                succeeded or not.  @ref ErrorCode.
+ * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+ *           break backwards compatibility.
+ *
+ */
+using ServerAddressResponseCb = std::function<void(std::string smdpAddress,
+    std::string smdsAddress, telux::common::ErrorCode error)>;
+
 /** @addtogroup telematics_rsp
  * @{ */
 
@@ -210,6 +228,36 @@ class ISimProfileManager {
     virtual telux::common::Status provideUserConsent(SlotId slotId, bool userConsent = false,
         common::ResponseCallback callback = nullptr)
         = 0;
+
+    /**
+     * Get Subscription Manager Data Preparation (SM-DP+) address and the Subscription Manager
+     * Discovery Server (SMDS) address configured on the eUICC.
+     *
+     * @param [in] slotId            Slot identifier corresponding to the card.
+     * @param [in] callback          Callback function to get the result of server address request.
+     *
+     * @returns  Status of server address request i.e. success or suitable error code.
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status requestServerAddress(SlotId slotId,
+        ServerAddressResponseCb callback) = 0;
+
+    /**
+     * Set Subscription Manager Data Preparation (SM-DP+) address on the eUICC. If SMDP+
+     * address length is zero then the existing SM-DP+ address on the eUICC is removed
+     *
+     * @param [in] slotId            Slot identifier corresponding to the card.
+     * @param [in] smdpAddress       SM-DP+ address to be configured on the eUICC.
+     * @param [in] callback          Optional Callback function to get the result of set
+     *                               SM-DP+ request.
+     * @returns  Status of set server address request i.e. success or suitable error code.
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status setServerAddress(SlotId slotId, const std::string &smdpAddress,
+        common::ResponseCallback callback = nullptr) = 0;
+
     /**
      * Register a listener to listen for status of specific events like download and installation
      * of profile on eUICC.

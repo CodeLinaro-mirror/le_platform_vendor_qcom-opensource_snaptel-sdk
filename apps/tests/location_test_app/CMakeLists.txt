@@ -29,7 +29,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_LOCATION_TEST_APP} ${LOCATION_TEST_APP_SOURCES})
-target_link_libraries(${TARGET_LOCATION_TEST_APP} telux_loc telux_common)
+target_link_libraries(${TARGET_LOCATION_TEST_APP} telux_loc telux_common pthread)
 
 # install to target
 install ( TARGETS ${TARGET_LOCATION_TEST_APP}

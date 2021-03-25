@@ -30,11 +30,13 @@
 #ifndef MYLOCATIONLISTENER_HPP
 #define MYLOCATIONLISTENER_HPP
 
+#include <mutex>
+#include <condition_variable>
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationListener.hpp>
 
 class MyLocationListener : public telux::loc::ILocationListener, public
-    telux::loc::ILocationSystemInfoListener {
+    telux::loc::ILocationSystemInfoListener, public telux::loc::ILocationInjectionListener {
 public:
    void onBasicLocationUpdate(
       const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) override;
@@ -54,6 +56,10 @@ public:
 
    void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
+   void onStartInjection(const uint32_t timeInMilliSeconds) override;
+
+   void onStopInjection() override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setDetailedEngineLocReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
@@ -63,6 +69,10 @@ public:
    void setMeasurementsInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
 
+   bool getLocationInjectionFlag();
+   uint32_t getLocInjectionRate();
+
+   void waitForInjectionNotification();
    ~MyLocationListener() {
    }
 
@@ -72,6 +82,8 @@ private:
    bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
    bool isMeasurementsInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
+   bool enableLocationInjection_ = false;
+   uint32_t LocationInjectionRate_ = 0;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
@@ -101,6 +113,8 @@ private:
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
+   std::mutex mutex_;
+   std::condition_variable cv_;
 };
 
 #endif  // MYLOCATIONLISTENER_HPP

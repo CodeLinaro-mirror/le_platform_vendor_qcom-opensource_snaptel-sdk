@@ -102,6 +102,11 @@ public:
    void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
    void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);
    void gyroScaleUtility(telux::loc::DREngineConfiguration& drConfig);
+   void registerLocationInjector(std::vector<std::string> userInput);
+   void deregisterLocationInjector(std::vector<std::string> userInput);
+   void injectLocationData(std::vector<std::string> userInput);
+   void manualInjectLocationData();
+   void autoInjectLocationData();
 
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>

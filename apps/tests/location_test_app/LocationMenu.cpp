@@ -32,6 +32,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <thread>
 
 #include <telux/loc/LocationFactory.hpp>
 #include <telux/common/Version.hpp>
@@ -41,6 +42,10 @@
 #include "DgnssMenu.hpp"
 
 const int DEFAULT_UNKNOWN = 0;
+const uint64_t DEFAULT_TIMESTAMP = 1617077412;
+const double DEFAULT_LATITUDE = 12.97217517;
+const double DEFAULT_LONGITUDE = 77.72090993;
+const float DEFUALT_HORIZONTAL_ACCURACY = 68;
 
 LocationMenu::LocationMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -257,6 +262,18 @@ int LocationMenu::init() {
            "Cancel terrestrial positioning info", {}, std::bind(&LocationMenu::
                cancelTerrestrialPositioning, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> registerLocationInjector =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("30", "Register Location Injector",
+            {}, std::bind(&LocationMenu::registerLocationInjector, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> deregisterLocationInjector =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("31", "Deregister Location Injector",
+            {}, std::bind(&LocationMenu::deregisterLocationInjector, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> locationInjectCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("32", "inject Location data", {},
+                        std::bind(&LocationMenu::injectLocationData, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -267,7 +284,8 @@ int LocationMenu::init() {
          configureConstellationEmpty, configureConstellationDeviceDefault,
          configureDR, configureNmeaSentence, configureAllNmeaSentence,
          provideConsentForTerrestrialPositioning, requestTerrestrialPositioning,
-         cancelTerrestrialPositioning};
+         cancelTerrestrialPositioning, registerLocationInjector,
+         deregisterLocationInjector, locationInjectCommand};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -1216,6 +1234,139 @@ void LocationMenu::requestMinSVElevation(std::vector<std::string> userInput) {
           std::cout << __FUNCTION__ << " Command Failed" << std::endl;
         }
     }
+}
+
+void LocationMenu::registerLocationInjector(std::vector<std::string> userInput) {
+   if (locationConfigurator_) {
+       telux::common::Status status = telux::common::Status::FAILED;
+       status = locationConfigurator_->registerLocationInjector(posListener_);
+       if (status ==  telux::common::Status::SUCCESS) {
+           std::cout << "Registered injector successfully " << std::endl;
+        } else {
+           std::cout << "Registered injector Failed with Status: " << static_cast<int>(status)
+               << std::endl;
+        }
+   }
+}
+
+void LocationMenu::deregisterLocationInjector(std::vector<std::string> userInput) {
+    if (locationConfigurator_) {
+        telux::common::Status status = telux::common::Status::FAILED;
+        status = locationConfigurator_->deregisterLocationInjector(posListener_);
+        if (status ==  telux::common::Status::SUCCESS) {
+            std::cout << "deRegistered injector successfully " << std::endl;
+        } else {
+            std::cout << "deRegistered injector Failed with Status: " << static_cast<int>(status)
+                << std::endl;
+        }
+    }
+}
+
+void LocationMenu::injectLocationData(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        char delimiter = '\n';
+        std::string option{};
+        std::cout << "Press 1 for auto-inject reports at reported rate : " << std::endl;
+        std::cout << "Press 0 for manually injecting reports at your desired rate : "<< std::endl;
+        std::getline(std::cin, option, delimiter);
+        bool autoInject = false;
+        if(!option.empty()) {
+            try {
+                autoInject = static_cast<bool>(std::stoi(option));
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " <<
+                    autoInject << std::endl;
+            }
+        }
+       std::cout << " Entered value is : " << (bool)autoInject << std::endl;
+       if (autoInject) {
+           autoInjectLocationData();
+       } else {
+           manualInjectLocationData();
+       }
+       return;
+    }
+}
+
+void LocationMenu::manualInjectLocationData() {
+    char delimiter = '\n';
+    std::string option{};
+    if (!(posListener_->getLocationInjectionFlag())) {
+            std::cout << "The onStartInjection API is not received! " << std::endl;
+    }
+    std::getline(std::cin, option, delimiter);
+    uint32_t rateOfInjection = 0;
+    if(!option.empty()) {
+        try {
+            rateOfInjection = static_cast<uint32_t>(std::stoi(option));
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " <<
+                rateOfInjection << std::endl;
+        }
+    } else {
+        rateOfInjection = 200;
+    }
+    std::cout << " Entered value is : " << (uint32_t)rateOfInjection << std::endl;
+    std::cout << "Enter the number of reports to be injected: ";
+    std::getline(std::cin, option, delimiter);
+    uint32_t numOfReports = 0;
+    if(!option.empty()) {
+        try {
+            numOfReports = static_cast<uint32_t>(std::stoi(option));
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " <<
+                numOfReports << std::endl;
+        }
+    } else {
+        numOfReports = 10;
+    }
+    std::cout << " Entered value is : " << (uint32_t)numOfReports << std::endl;
+    // The location details to be injected are hardcoded for now.
+    telux::loc::ExternalLocationInfo info{};
+    info.timestamp = DEFAULT_TIMESTAMP;
+    info.latitude = DEFAULT_LATITUDE;
+    info.longitude = DEFAULT_LONGITUDE;
+    info.horizontalAccuracy = DEFUALT_HORIZONTAL_ACCURACY;
+    std::thread reportThread = std::thread{[=] {
+        for (uint32_t i = 0; i < numOfReports; i++) {
+            telux::common::Status status = locationConfigurator_->injectLocationData(info);
+            if (status == telux::common::Status::SUCCESS) {
+                std::cout << __FUNCTION__ << "location data sent successfully" << std::endl;
+            } else {
+                std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+            }
+                std::this_thread::sleep_for(std::chrono::milliseconds(rateOfInjection));
+            }
+        } };
+    reportThread.detach();
+    return;
+}
+
+void LocationMenu::autoInjectLocationData() {
+    std::thread reportThread = std::thread{[=] {
+        while (!(posListener_->getLocationInjectionFlag())) {
+            std::cout << "The onStartInjection API is not received! " << std::endl;
+            posListener_->waitForInjectionNotification();
+        }
+        uint32_t rateOfInjection = posListener_->getLocInjectionRate();
+        telux::loc::ExternalLocationInfo info{};
+        info.timestamp = DEFAULT_TIMESTAMP;
+        info.latitude = DEFAULT_LATITUDE;
+        info.longitude = DEFAULT_LONGITUDE;
+        info.horizontalAccuracy = DEFUALT_HORIZONTAL_ACCURACY;
+        while (!posListener_->getLocationInjectionFlag()) {
+            telux::common::Status status = locationConfigurator_->injectLocationData(info);
+            if (status == telux::common::Status::SUCCESS) {
+                std::cout << __FUNCTION__ << "location data sent successfully" << std::endl;
+            } else {
+                std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+            }
+                std::this_thread::sleep_for(std::chrono::milliseconds(rateOfInjection));
+            }
+        }
+    };
+    reportThread.detach();
+    return;
 }
 
 int LocationMenu::enableReportLogsUtility() {

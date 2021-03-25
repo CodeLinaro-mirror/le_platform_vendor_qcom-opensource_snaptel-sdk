@@ -446,6 +446,59 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
+ * This API registers an @ref ILocationInjectionListener listener and will receive notifications
+ * regarding when to start or stop the location report injection using the @ref injectLocationData
+ * API.
+ *
+ * @param [in] listener - Pointer of @ref ILocationInjectionListener object.
+ *
+ * @returns Status of registerLocationInjector i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status
+        registerLocationInjector(std::weak_ptr<ILocationInjectionListener> listener) = 0;
+
+/**
+ * This API removes a previously registered listener and will also stop receiving notifications
+ * related to location data injection for that particular listener.
+ *
+ * @param [in] listener - Pointer of @ref ILocationInjectionListener object.
+ *
+ * @returns Status of deregisterLocationInjector i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status
+        deregisterLocationInjector(std::weak_ptr<ILocationInjectionListener> listener) = 0;
+
+/**
+ * Inject best location data
+ *
+ * This API is used to inject the @ref ExternalLocationInfo data into the GNSS engine.
+ *
+ * This API is intended to be invoked after @ref ILocationInjectionListener::onStartInjection API
+ * call and is not expected to be invoked after @ref ILocationInjectionListener::onStopInjection
+ * API call.
+ * If this API is used without meeting the above mentioned pre-requisites, the GNSS engine
+ * might produce low quality GNSS position.
+ *
+ * @param [in] location  @ref ExternalLocationInfo data to be injected.
+ *
+ * @return , Status of injectLocationData i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ *
+ */
+  virtual telux::common::Status injectLocationData(const ExternalLocationInfo& location) = 0;
+
+
+/**
  * Destructor of ILocationConfigurator
  */
   virtual ~ILocationConfigurator() {};

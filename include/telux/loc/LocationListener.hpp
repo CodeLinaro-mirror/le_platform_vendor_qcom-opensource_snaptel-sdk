@@ -162,6 +162,32 @@ public:
   virtual ~ILocationSystemInfoListener() {}
 
 };
+
+class ILocationInjectionListener {
+public:
+/**
+ * This function is called when the Location service is ready to start receiving the location
+ * reports using the @ref LocationConfigurator::injectLocationData API.
+ *
+ * @param [in] timeInMillis - contains the time in milliseconds which represents the Max rate of
+ *                            at which the @ref LocationConfigurator::injectLocationData API can
+ *                            be called.
+ */
+  virtual void onStartInjection(const uint32_t timeInMilliSeconds) {}
+
+/**
+ * This function notifies the Location service's intent to stop injecting the location reports
+ * using the @ref LocationConfigurator::injectLocationData API.
+ */
+  virtual void onStopInjection() {}
+
+/**
+ * Destructor of ILocationSystemInfoListener
+ */
+  virtual ~ILocationInjectionListener() {}
+
+};
+
 /** @} */ /* end_addtogroup telematics_location */
 }         // end of namespace loc
 

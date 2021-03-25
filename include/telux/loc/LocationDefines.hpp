@@ -828,6 +828,23 @@ struct LeverArmParams {
     float upOffset;
 };
 
+/**
+ * Specifies parameters related to External Location information.
+ */
+struct ExternalLocationInfo {
+    /** UTC timestamp elapsed since January 1, 1970, in unit of milliseconds. */
+    uint64_t timestamp;
+    /** Latitude, in unit of degrees, range [-90.0, 90.0]. */
+    double latitude;
+    /** Longitude, in unit of degrees, range [-180.0, 180.0]. */
+    double longitude;
+    /** Horizontal accuracy, in unit of meters.
+     *  The best results are expected when the accuracy is estimated
+     *  with 68% horizontal confidence.
+     */
+    float horizontalAccuracy;
+};
+
 typedef std::unordered_map<LeverArmType, LeverArmParams> LeverArmConfigInfo;
 
 /** Specify valid fields in

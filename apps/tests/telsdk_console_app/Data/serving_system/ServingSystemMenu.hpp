@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,23 +27,51 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DATAUTILS_HPP
-#define DATAUTILS_HPP
+/**
+ * This is a Serving System Manager Sample Application using Telematics SDK.
+ * It is used to demonstrate API to exercise Serving System Features.
+ */
 
+#ifndef DATASERVINGSYSTEMMENU_HPP
+#define DATASERVINGSYSTEMMENU_HPP
+
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <iomanip>
+#include <telux/common/CommonDefines.hpp>
+#include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
-#include <telux/data/DataConnectionManager.hpp>
+#include "console_app_framework/ConsoleApp.hpp"
+#include "ServingSystemListener.hpp"
 
-class DataUtils {
+using namespace telux::data;
+using namespace telux::common;
+
+class DataServingSystemMenu : public ConsoleApp,
+                              public telux::data::IServingSystemListener,
+                              public std::enable_shared_from_this<DataServingSystemMenu> {
 public:
-   static std::string callEndReasonTypeToString(telux::data::EndReasonType type);
-   static int callEndReasonCode(telux::data::DataCallEndReason ceReason);
-   static std::string techPreferenceToString(telux::data::TechPreference techPref);
-   static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
-   static std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
-   static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
-   static std::string operationTypeToString(telux::data::OperationType oprType);
-   static std::string protocolToString(telux::data::IpProtocol proto);
-   static std::string serviceRatToString(telux::data::NetworkRat rat);
+    // initialize menu and sdk
+    bool init();
+    // Menu Functions
+
+    DataServingSystemMenu(std::string appName, std::string cursor);
+
+    //API
+    void requestServiceStatus(std::vector<std::string> inputCommand);
+    void requestRoamingStatus(std::vector<std::string> inputCommand);
+
+    ~DataServingSystemMenu();
+private:
+    bool addMenuCmds_;
+    bool subSystemStatusUpdated_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
+    std::shared_ptr<IServingSystemManager> dataServingSystemManager_;
+    std::shared_ptr<IServingSystemListener> dataServingSystemListener_;
+    bool initServingSystemManagerAndListener();
 };
 
-#endif  // DATAUTILS_HPP
+#endif

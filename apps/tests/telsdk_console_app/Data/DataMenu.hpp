@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,6 +55,7 @@
 #include "bridge/BridgeMenu.hpp"
 #include "l2tp/L2tpMenu.hpp"
 #include "data_filter/DataFilterMenu.hpp"
+#include "serving_system/ServingSystemMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -115,6 +116,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void enableSocks(std::vector<std::string> inputCommand);
     void bridgeMenu(std::vector<std::string> inputCommand);
     void l2tpMenu(std::vector<std::string> inputCommand);
+    void servingSystemMenu(std::vector<std::string> inputCommand);
  private:
     void requestDataCallList(OperationType operationType, DataCallListResponseCb cb);
 

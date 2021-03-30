@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -248,6 +248,9 @@ void DataMenu::init() {
     std::shared_ptr<ConsoleAppCommand> l2tpMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("31", "L2tp_Menu",
             {}, std::bind(&DataMenu::l2tpMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> servingSystemMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("32", "Serving_System_Menu",
+            {}, std::bind(&DataMenu::servingSystemMenu, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> reqProfile
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("100", "request_profile_list", {},
@@ -280,8 +283,8 @@ void DataMenu::init() {
         setFirewall, addFirewallEntry, requestFirewallEntries, removeFirewallEntry, enableDmz,
         disableDmz, requestDmzEntry, createVlan, removeVlan, queryVlanInfo, bindWithProfile,
         unbindFromProfile, queryVlanMappingList, enableSocks, bridgeMenuCommand, l2tpMenuCommand,
-        reqProfile, createProfileMenu, deleteProfileMenu, modifyProfileMenu, queryProfileMenu,
-        requestProfileByIdMenu};
+        servingSystemMenuCommand, reqProfile, createProfileMenu, deleteProfileMenu,
+        modifyProfileMenu, queryProfileMenu, requestProfileByIdMenu};
 
     addCommands(commandsList);
 
@@ -1695,6 +1698,14 @@ void DataMenu::l2tpMenu(std::vector<std::string> userInput) {
     L2tpMenu l2tpMenu("L2TP Menu", "l2tp> ");
     if(0 == l2tpMenu.init()) {
         l2tpMenu.mainLoop();
+    }
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::servingSystemMenu(std::vector<std::string> userInput) {
+    DataServingSystemMenu dataServingSystemMenu("Serving System Menu", "serving_system> ");
+    if(dataServingSystemMenu.init()) {
+        dataServingSystemMenu.mainLoop();
     }
     ConsoleApp::displayMenu();
 }

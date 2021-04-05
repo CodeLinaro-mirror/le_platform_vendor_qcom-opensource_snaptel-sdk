@@ -119,6 +119,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void servingSystemMenu(std::vector<std::string> inputCommand);
  private:
     void requestDataCallList(OperationType operationType, DataCallListResponseCb cb);
+    bool validateProfile(int profileId);
 
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
     std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;

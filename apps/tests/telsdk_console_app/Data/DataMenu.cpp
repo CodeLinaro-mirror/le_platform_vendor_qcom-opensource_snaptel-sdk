@@ -422,6 +422,14 @@ void DataMenu::setDefaultProfile() {
         std::cin >> profileId;
         Utils::validateInput(profileId);
 
+        bool profileFound = validateProfile(profileId);
+        // if profile does not exist , dont allow it to be set as default profile
+        if (!profileFound) {
+            std::cout << "\nCannot set "<< profileId
+                << " as default profile, Profile does not exist" << std::endl;
+            return;
+        }
+
         // Callback
         auto respCb = [](telux::common::ErrorCode error) {
             std::cout << std::endl << std::endl;
@@ -533,6 +541,36 @@ void DataMenu::deleteProfile(std::vector<std::string> inputCommand) {
     } else {
         std::cout << "Failed to send delete profile request, Status:" << int(status) << std::endl;
     }
+}
+
+bool DataMenu::validateProfile(int profileId) {
+
+    std::promise<telux::common::ErrorCode> prom{};
+    std::vector<std::shared_ptr<telux::data::DataProfile>> profileList{};
+    std::shared_ptr<MyDefaultProfilesCallback> profileListCb  =
+        std::make_shared<MyDefaultProfilesCallback>();
+
+    if (profileListCb == nullptr) {
+        std::cout << "ERROR - Unable to allocate profile list callback" << std::endl;
+        return false;
+    }
+
+    telux::common::Status status =
+        dataProfileManager_->requestProfileList(
+            std::shared_ptr<telux::data::IDataProfileListCallback>(profileListCb));
+
+    telux::common::ErrorCode errCode = profileListCb->prom_.get_future().get();
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\nError retriving profile list ErrorCode: " << static_cast<int>(errCode)
+            << std::endl;
+        return false;
+    }
+    for(auto it : profileListCb->profileList_) {
+        if (profileId == it->getId()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void DataMenu::modifyProfile(std::vector<std::string> inputCommand) {

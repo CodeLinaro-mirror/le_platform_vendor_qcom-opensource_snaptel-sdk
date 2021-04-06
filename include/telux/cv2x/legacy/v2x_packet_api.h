@@ -37,6 +37,8 @@
 #ifndef __V2X_PACKET_API_H__
 #define __V2X_PACKET_API_H__
 
+#include "telux/cv2x/legacy/v2x_common.pb.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,21 +80,27 @@ typedef struct {
      @datatypes
      #rx_packets_meta_data_t
 
-     @param[in]   payload       Pointer to the received message which may contains
-                                the meta data report
-     @param[in]   length        Length of the received message in byte
-     @param[out]  meta_data     Pointer to the meta data structure
+     @param[in]      payload       Pointer to the received message which may contains
+                                   the meta data reports
+     @param[in]      length        Length of the received message in byte
+     @param[out]     meta_data     Pointer to the meta data structure array
+     @param[in,out]  num           array size of meta_data as input,
+                                   be assigned to the number of meta data reports parsed out.
+                                   The caller can use this value to index the array meta_data.
+     @param[out]     meta_data_len length of the meta data in byte parsed out from the payload
 
      @detdesc
-     This function extracts the received packet's meta data from the payload
+     This function extracts the received packet's meta data from the payload, there maybe several
+     meta data reports in the received payload.
 
      @return
-     0               -- if no meta data found in the payload
-     meta data size  -- the meta data size in the payload in byte
+     #V2X_STATUS_SUCCESS.
+     @par
+     Otherwise:
+     - #V2X_STATUS_FAIL -- Other failure.
  */
-extern unsigned v2x_parse_rx_meta_data(const uint8_t *payload,
-                                       uint32_t length,
-                                       rx_packet_meta_data_t *meta_data);
+extern v2x_status_enum_type v2x_parse_rx_meta_data(const uint8_t *payload, uint32_t length,
+    rx_packet_meta_data_t *meta_data, size_t *num, size_t *meta_data_len);
 
 /** @} *//* end_addtogroup telematics_cv2x_c_packet */
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -93,10 +93,10 @@ void TelSdkConsoleApp::init() {
         std::bind(&TelSdkConsoleApp::multiSimMenu, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> rspMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "7", "Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::rspMenu, this,
+            "8", "Sim_Profile_Management", {}, std::bind(&TelSdkConsoleApp::rspMenu, this,
                std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> cbMenuCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "CellBroadcast", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "CellBroadcast", {},
             std::bind(&TelSdkConsoleApp::cellbroadcastMenu, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,

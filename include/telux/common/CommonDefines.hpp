@@ -425,8 +425,6 @@ using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>
  *
  * @param[in] status - @ref Service status
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *              could break backwards compatibility.
  */
 using InitResponseCb = std::function<void(telux::common::ServiceStatus status)>;
 

@@ -45,7 +45,7 @@
 namespace telux {
 namespace power {
 
-/** @addtogroup telematics_power
+/** @addtogroup telematics_power_manager
  * @{ */
 
 /**
@@ -83,7 +83,7 @@ private:
 
 };
 
-/** @} */ /* end_addtogroup telematics_power */
+/** @} */ /* end_addtogroup telematics_power_manager */
 
 }  // end of namespace power
 }  // end of namespace telux

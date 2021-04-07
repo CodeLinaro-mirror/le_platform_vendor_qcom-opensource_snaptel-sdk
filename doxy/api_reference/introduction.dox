@@ -60,6 +60,7 @@ when       who     what, where, why
 01/13/21   RV      Added SSR(sub system restart) support for Audio.
 02/08/21   SD      Added configuring NMEA types support for Location.
 01/29/21   FS      Updated data subsystem readiness flow for new methodology
+02/12/21   RV      Added new sub system Readiness APIs for Audio.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

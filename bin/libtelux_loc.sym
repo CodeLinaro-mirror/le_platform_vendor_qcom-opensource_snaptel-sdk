@@ -14,8 +14,10 @@
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl11setSVStatusENS0_8SVStatusE=so_stub_for_libtelux_loc
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl12getElevationEv=so_stub_for_libtelux_loc
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl12setElevationEf=so_stub_for_libtelux_loc
+-Wl,--defsym=_ZN5telux3loc10SVInfoImpl13getGlonassFcnEv=so_stub_for_libtelux_loc
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl13getHasAlmanacEv=so_stub_for_libtelux_loc
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl13getSignalTypeEv=so_stub_for_libtelux_loc
+-Wl,--defsym=_ZN5telux3loc10SVInfoImpl13setGlonassFcnEt=so_stub_for_libtelux_loc
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl13setHasAlmanacENS0_18SVInfoAvailabilityE=so_stub_for_libtelux_loc
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl13setSignalTypeEj=so_stub_for_libtelux_loc
 -Wl,--defsym=_ZN5telux3loc10SVInfoImpl15getHasEphemerisEv=so_stub_for_libtelux_loc

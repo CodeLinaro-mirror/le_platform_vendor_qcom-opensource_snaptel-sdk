@@ -83,8 +83,9 @@ when       who     what, where, why
 @tr @td Nov 2020 @tdend @tdlast Addition of Year of hardware and configure engine state APIs in location and callflows @tdlastend @trend
 @tr @td Jan 2021 @tdend @tdlast Addition of terrestrial positioning APIs and callflows in location SDK @tdlastend @trend
 @tr @td Jan 2021 @tdend @tdlast Addition of Audio Subsystem Restart Support @tdlastend @trend
-@tr @td Jan 2021 @tdend @tdlast Updated Data Subsystem Readiness flow for new methodology @tdlastend @trend
 @tr @td Feb 2021 @tdend @tdlast Addition of configure NMEA types in location SDK @tdlastend @trend
+@tr @td Jan 2021 @tdend @tdlast Updated Data Subsystem Readiness flow for new methodology @tdlastend @trend
+@tr @td Feb 2021 @tdend @tdlast Addition of new sub system Readiness APIs for Audio.
 @tableend
 
 @latexonly \rm @endlatexonly

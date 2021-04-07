@@ -5,55 +5,43 @@ Audio playback session {#audio_manager_playback}
 
 This Section demonstrates how to use the Audio Manager API for audio playback session.
 
-### 1. Get the AudioFactory and AudioManager instances
+### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
     auto &audioFactory = audioFactory::getInstance();
-    auto audioManager = audioFactory.getAudioManager();
    ~~~~~~
 
-### 2. Check if Audio subsystem is ready
+### 2. Get the AudioManager object and check for audio subsystem Readiness
 
    ~~~~~~{.cpp}
-    if (audioManager) {
-        bool subSystemsStatus = audioManager->isSubsystemReady();
-        if (subSystemsStatus) {
-            std::cout << "Audio Subsystem is ready." << std::endl;
-        } else {
-            std::cout << "Audio Subsystem is NOT ready." << std::endl;
-        }
+    std::promise<ServiceStatus> prom{};
+    //  Get AudioManager instance.
+    audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
+        prom.set_value(serviceStatus);
+    });
+    if (!audioManager) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
+        return;
+    }
+
+    //  Check if audio subsystem is ready
+    //  If audio subsystem is not ready, wait for it to be ready
+    ServiceStatus managerStatus = audioManager->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
+    }
+
+    //  Check the service status again.
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
-        std::cout << "Invalid Audio manager" << std::endl;
+        std::cout << "ERROR - Unable to initialize audio subsystem" << std::endl;
+        return;
     }
    ~~~~~~
-
-### 2.1 If Audio subsystem is not ready, wait for it to be ready
-
-Make sure that Audio subsystem is ready for services like audio play.
-If subsystem is not ready, wait unconditionally (or) until a timeout.
-
-   ~~~~~~{.cpp}
-    std::future<bool> f = audioManager->onSubsystemReady();
-    #if  //Timeout based wait
-        if (f.wait_for(std::chrono::seconds(timeoutSec)) == std::future_status::timeout) {
-            std::cout << "operation timed out." << std::endl;
-        } else {
-            subSystemsStatus = f.get();
-            if (subSystemsStatus) {
-                std::cout << "Audio Subsystem is ready." << std::endl;
-            }
-        }
-    #else //Unconditional wait
-        subSystemsStatus = f.get();
-        if (subSystemsStatus) {
-            std::cout << "Audio Subsystem is ready." << std::endl;
-        } else {
-            std::cout << "Audio Subsystem is NOT ready." << std::endl;
-        }
-    #endif
-   ~~~~~~
-
 ### 3. Create an Audio Stream (Audio Playback Session)
+
    ~~~~~~{.cpp}
    //Callback which provides response to createStream, with pointer to base interface IAudioStream.
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
@@ -77,6 +65,7 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
    ~~~~~~
 
 ### 4. Allocate Stream buffers for Playback operation
+
    ~~~~~~{.cpp}
     // Get an audio buffer (can get more than one)
     auto streamBuffer = audioPlayStream->getStreamBuffer();
@@ -95,6 +84,7 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
    ~~~~~~
 
 ### 5. Start write operation for playback to start
+
    ~~~~~~{.cpp}
     //Callback which provides response to write operation.
     void writeCallback(std::shared_ptr<IStreamBuffer> buffer, uint32_t size, ErrorCode error)
@@ -117,7 +107,9 @@ If subsystem is not ready, wait unconditionally (or) until a timeout.
         std::cout << "Request to write to stream sent" << std::endl;
     }
    ~~~~~~
-### 6. Delete an Audio Stream (Audio Playback Session), once reached end of operation.
+
+### 6. Delete an Audio Stream (Audio Playback Session), once reached end of operation
+
    ~~~~~~{.cpp}
     //Callback which provides response to deleteStream
     void deleteStreamCallback(ErrorCode error) {

@@ -50,6 +50,9 @@
 namespace telux {
 namespace tel {
 
+/** @addtogroup telematics_rsp
+ * @{ */
+
 /**
  * This function is called with the response to requestProfileList API.
  *
@@ -106,8 +109,6 @@ class ISimProfileManager {
      * Checks if the eUICC subsystem is ready.
      *
      * @returns True if ISimProfileManager is ready for service, otherwise returns false.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual bool isSubsystemReady() = 0;
 
@@ -115,8 +116,6 @@ class ISimProfileManager {
      * Wait for eUICC subsystem to be ready.
      *
      * @returns A future that caller can wait on to be notified when card manager is ready.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -131,8 +130,6 @@ class ISimProfileManager {
      * @param [in] callback              Callback function to get the result of add profile.
      *
      * @returns Status of add profile i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status addProfile(SlotId slotId,
         const std::string &activationCode, const std::string &confirmationCode = "",
@@ -147,8 +144,6 @@ class ISimProfileManager {
      * @param [in] callback          Callback function to get the result of delete profile.
      *
      * @returns Status of delete profile i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status deleteProfile(SlotId slotId, int profileId,
         common::ResponseCallback callback = nullptr)
@@ -164,8 +159,6 @@ class ISimProfileManager {
      * @param [in] callback          Callback function to get the result of set profile.
      *
      * @returns Status of set profile i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status setProfile(SlotId slotId, int profileId, bool enable = false,
         common::ResponseCallback callback = nullptr)
@@ -180,8 +173,6 @@ class ISimProfileManager {
      * @param [in] callback        Callback function to get the result of update nickname.
      *
      * @returns Status of update nick name i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status updateNickName(SlotId slotId, int profileId,
         const std::string &nickName, common::ResponseCallback callback = nullptr)
@@ -194,8 +185,6 @@ class ISimProfileManager {
      * @param [in] callback          Callback function to get the result of request profile list.
      *
      * @returns  Status of request profile list i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status requestProfileList(SlotId slotId, ProfileListResponseCb callback)
         = 0;
@@ -207,8 +196,6 @@ class ISimProfileManager {
      * @param [in] callback          Callback function to get the result of request EID.
      *
      * @returns  Status of request EID.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status requestEid(SlotId slotId, EidResponseCb callback)
         = 0;
@@ -222,8 +209,6 @@ class ISimProfileManager {
      * @param [in] callback          Callback function to get the result of user consent request.
      *
      * @returns  Status of user consent request i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status provideUserConsent(SlotId slotId, bool userConsent = false,
         common::ResponseCallback callback = nullptr)
@@ -237,8 +222,6 @@ class ISimProfileManager {
      * @param [in] callback          Callback function to get the result of server address request.
      *
      * @returns  Status of server address request i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status requestServerAddress(SlotId slotId,
         ServerAddressResponseCb callback) = 0;
@@ -252,8 +235,6 @@ class ISimProfileManager {
      * @param [in] callback          Optional Callback function to get the result of set
      *                               SM-DP+ request.
      * @returns  Status of set server address request i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status setServerAddress(SlotId slotId, const std::string &smdpAddress,
         common::ResponseCallback callback = nullptr) = 0;
@@ -266,8 +247,6 @@ class ISimProfileManager {
      * notification.
      *
      * @returns Status of registerListener success or suitable status code
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<ISimProfileListener> listener) = 0;
 
@@ -277,8 +256,6 @@ class ISimProfileManager {
      * @param [in] listener    Pointer of ISimProfileListener object that needs to be removed
      *
      * @returns Status of deregisterListener success or suitable status code
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<ISimProfileListener> listener)
         = 0;

@@ -102,8 +102,6 @@ struct DcStatus {
    DcnrRestriction  dcnrRestriction;      /**< DCNR restriction */
 };
 
-/** @} */ /* end_addtogroup telematics_serving_system */
-
 /**
  * 16 bit mask that denotes which of the radio access technology mode preference
  * defined in RatPrefType enum are used to set or get RAT preference.
@@ -138,9 +136,6 @@ using RatPreferenceCallback
  */
 using ServiceDomainPreferenceCallback
    = std::function<void(ServiceDomainPreference preference, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_serving_system
- * @{ */
 
 /**
  * @brief Serving System Manager class provides the API to request and set
@@ -223,8 +218,6 @@ public:
     *
     * @returns @ref DcStatus
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::tel::DcStatus getDcStatus() = 0;
 
@@ -287,8 +280,6 @@ public:
     *
     * @param [in] dcStatus       @ref DcStatus
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual void onDcStatusChanged(DcStatus dcStatus) {
    }

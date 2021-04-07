@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,9 +28,12 @@
  */
 
 /**
- * @file: Cv2xTxApp.cpp
+ * @file: Cv2xTxServiceStatusApp.cpp
  *
- * @brief: Simple application that demonstrates Tx in Cv2x
+ * @brief: Application that demonstrates Cv2x Tx while monitoring
+ *         cv2x service status. It attempts recreation of flows
+ *         and packet transmission after cv2x status transitions from
+ *         inactive to active.
  */
 
 #include <assert.h>
@@ -41,10 +44,14 @@
 
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <map>
 
 #include <telux/cv2x/Cv2xRadio.hpp>
+#include <telux/cv2x/Cv2xRadioManager.hpp>
+#include <telux/cv2x/Cv2xRadioListener.hpp>
 
-#include "../../common/utils/Utils.hpp"
+#include "../../../common/utils/Utils.hpp"
 
 using std::array;
 using std::cerr;
@@ -52,8 +59,15 @@ using std::cout;
 using std::endl;
 using std::promise;
 using std::shared_ptr;
+using std::static_pointer_cast;
+using std::make_shared;
+using std::mutex;
+using std::lock_guard;
+using std::string;
+using std::map;
 using telux::common::ErrorCode;
 using telux::common::Status;
+using telux::common::ServiceStatus;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
@@ -63,6 +77,9 @@ using telux::cv2x::Priority;
 using telux::cv2x::TrafficCategory;
 using telux::cv2x::TrafficIpType;
 using telux::cv2x::SpsFlowInfo;
+using telux::cv2x::ICv2xListener;
+using telux::cv2x::ICv2xRadioListener;
+using telux::cv2x::ICv2xRadio;
 
 static constexpr uint32_t SPS_SERVICE_ID = 1u;
 static constexpr uint16_t SPS_SRC_PORT_NUM = 2500u;
@@ -78,6 +95,41 @@ static promise<ErrorCode> gCallbackPromise;
 static shared_ptr<ICv2xTxFlow> gSpsFlow;
 static array<char, G_BUF_LEN> gBuf;
 
+static map<ServiceStatus, string> serviceStatusToString = {
+    {ServiceStatus::SERVICE_AVAILABLE, "AVAILABLE"},
+    {ServiceStatus::SERVICE_UNAVAILABLE, "UNAVAILABLE"},
+};
+
+static map<Cv2xStatusType, string> cv2xStatusToString = {
+    {Cv2xStatusType::INACTIVE, "INACTIVE"},
+    {Cv2xStatusType::ACTIVE, "ACTIVE"},
+    {Cv2xStatusType::SUSPENDED, "SUSPENDED"},
+    {Cv2xStatusType::UNKNOWN, "UNKNOWN"},
+};
+
+class Cv2xListener : public ICv2xListener {
+public:
+    Cv2xListener(Cv2xStatus status) : status_(status) { }
+
+    void onServiceStatusChange(ServiceStatus status) override {
+        cout << "Service status changed to: " << serviceStatusToString[status] << endl;
+    }
+
+    void onStatusChanged(Cv2xStatus status) override {
+        cout << "Cv2x TX status changed to: " <<  cv2xStatusToString[status.txStatus] << endl;
+        lock_guard<mutex> lock(mutex_);
+        status_ = status;
+    }
+
+    Cv2xStatus getStatus() {
+        lock_guard<mutex> lock(mutex_);
+        return status_;
+    }
+
+protected:
+    Cv2xStatus status_;
+    mutex mutex_;
+};
 
 // Resets the global callback promise
 static inline void resetCallbackPromise(void) {
@@ -129,8 +181,9 @@ static void fillBuffer(void) {
     dataPtr += sizeof(uint16_t);
 
     // Timestamp
+
     dataPtr += snprintf(dataPtr, G_BUF_LEN - (2 + sizeof(uint16_t)),
-                        "<%llu> ", static_cast<long long unsigned>(timestamp));
+            "<%llu> ", static_cast<long long unsigned>(timestamp));
 
     // Dummy payload
     constexpr int NUM_LETTERS = 26;
@@ -170,6 +223,7 @@ static void sampleSpsTx(void) {
     memcpy(CMSG_DATA(cmsghp), &priority, sizeof(int));
 
     // Send data
+    cout << "sending msg" << endl;
     auto bytes_sent = sendmsg(sock, &message, 0);
     cout << "bytes_sent=" << bytes_sent << endl;
 
@@ -196,7 +250,7 @@ static void closeFlowCallback(shared_ptr<ICv2xTxFlow> flow, ErrorCode error) {
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X TX app" << endl;
     std::vector<std::string> groups{"radio"};
-    if (-1 == Utils::setSupplementaryGroups(groups)){
+    if (-1 == Utils::setSupplementaryGroups(groups)) {
         cout << "Adding supplementary group failed!" << std::endl;
     }
 
@@ -212,7 +266,7 @@ int main(int argc, char *argv[]) {
         cv2xRadioManagerStatus = status;
         cv.notify_all();
     };
-    // Get handle to Cv2xRadioManager
+
     auto & cv2xFactory = Cv2xFactory::getInstance();
     auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!cv2xRadioManager) {
@@ -239,21 +293,10 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    // Get handle to Cv2xRadio
-    auto cv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
+    shared_ptr<Cv2xListener> listener = make_shared<Cv2xListener>(gCv2xStatus);
+    cv2xRadioManager->registerListener(static_pointer_cast<ICv2xListener>(listener));
 
-    // Wait for radio to complete initialization
-    if (not cv2xRadio->isReady()) {
-        if (Status::SUCCESS == cv2xRadio->onReady().get()) {
-            cout << "C-V2X Radio is ready" << endl;
-        }
-        else {
-            cerr << "C-V2X Radio initialization failed." << endl;
-            return EXIT_FAILURE;
-        }
-    }
-
-    // Create new Tx SPS flow
+     // Create new Tx SPS flow
     SpsFlowInfo spsInfo;
     spsInfo.priority = Priority::PRIORITY_2;
     spsInfo.periodicity = Periodicity::PERIODICITY_100MS;
@@ -261,21 +304,48 @@ int main(int argc, char *argv[]) {
     spsInfo.autoRetransEnabledValid = true;
     spsInfo.autoRetransEnabled = true;
 
-    resetCallbackPromise();
-    assert(Status::SUCCESS == cv2xRadio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
-                                                         SPS_SERVICE_ID,
-                                                         spsInfo,
-                                                         SPS_SRC_PORT_NUM,
-                                                         false,
-                                                         0,
-                                                         createSpsFlowCallback));
-    assert(ErrorCode::SUCCESS == gCallbackPromise.get_future().get());
+    bool flowUp = false;
+
+    std::shared_ptr<ICv2xRadio> cv2xRadio;
 
     // Send message in a loop
-    for (uint16_t i = 0; i < NUM_TEST_ITERATIONS; ++i) {
-        fillBuffer();
-        sampleSpsTx();
+    uint16_t i = 0;
+    while (i < NUM_TEST_ITERATIONS) {
+        gCv2xStatus = listener->getStatus();
+        if (gCv2xStatus.txStatus == Cv2xStatusType::INACTIVE) {
+            flowUp = false;
+        } else if (gCv2xStatus.txStatus == Cv2xStatusType::ACTIVE) {
+            if (not flowUp) {   // Get handle to Cv2xRadio
+                cv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
+
+                // Wait for radio to complete initialization
+                if (not cv2xRadio->isReady()) {
+                    if (Status::SUCCESS == cv2xRadio->onReady().get()) {
+                        cout << "C-V2X Radio is ready" << endl;
+                    } else {
+                        cerr << "C-V2X Radio initialization failed." << endl;
+                        return EXIT_FAILURE;
+                    }
+                }
+
+
+                resetCallbackPromise();
+                assert(Status::SUCCESS == cv2xRadio->createTxSpsFlow(TrafficIpType::TRAFFIC_NON_IP,
+                                                                     SPS_SERVICE_ID,
+                                                                     spsInfo,
+                                                                     SPS_SRC_PORT_NUM,
+                                                                     false,
+                                                                     0,
+                                                                     createSpsFlowCallback));
+                assert(ErrorCode::SUCCESS == gCallbackPromise.get_future().get());
+                flowUp = true;
+            }
+            fillBuffer();
+            sampleSpsTx();
+            ++i;
+        }
         usleep(100000u);
+
     }
 
     // Deregister SPS flow

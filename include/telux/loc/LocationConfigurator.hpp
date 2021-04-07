@@ -73,8 +73,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetSecondaryBandCallback = std::function<void(const telux::loc::ConstellationSet set,
@@ -88,8 +86,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetMinGpsWeekCallback = std::function<void(uint16_t minGpsWeek,
@@ -103,9 +99,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
- *
  */
  using GetMinSVElevationCallback = std::function<void(uint8_t minSVElevation,
      telux::common::ErrorCode error)>;
@@ -117,8 +110,6 @@ public:
  *  @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- *  @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetRobustLocationCallback = std::function<void(const telux::loc::
@@ -141,8 +132,6 @@ public:
  *          SERVICE_UNAVAILABLE  -  If location configurator is temporarily unavailable.
  *          SERVICE_FAILED       -  If location configurator encountered an irrecoverable failure.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -305,8 +294,6 @@ public:
  *
  * @param [in] callback - Optional callback to get the response of configureSecondaryBand.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -321,8 +308,6 @@ public:
  *
  * @returns Status of requestSecondaryBandConfig i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -345,8 +330,6 @@ public:
  *
  * @param [in] callback - Optional callback to get the response of configure robust location.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -362,8 +345,6 @@ public:
  *
  * @returns Status of requestRobustLocation i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -386,8 +367,6 @@ public:
  *
  * @returns Status of configureMinGpsWeek i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -408,8 +387,6 @@ public:
  *
  * @returns Status of requestMinGpsWeek i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -447,8 +424,6 @@ public:
  *
  * @returns Status of configureMinSVElevation i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -469,8 +444,6 @@ public:
  *
  * @returns Status of requestMinSVElevation i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -490,8 +463,6 @@ public:
  *
  * @returns Status of deleteAidingData i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -511,8 +482,6 @@ public:
  *
  * @returns Status of configureDR i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 

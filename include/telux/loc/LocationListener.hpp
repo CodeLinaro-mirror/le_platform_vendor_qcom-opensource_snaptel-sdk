@@ -137,8 +137,6 @@ public:
  *
  * @param [in] measurementInfo - GNSS measurement information
  *
- * @note  Eval: This is a new API and is being evaluated. It is subject to change
- *              and could break backwards compatibility.
  */
   virtual void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) {}
 

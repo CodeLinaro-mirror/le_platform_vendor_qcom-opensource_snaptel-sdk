@@ -41,7 +41,7 @@
 namespace telux {
 
 namespace audio {
-/** @addtogroup telematics_audio
+/** @addtogroup telematics_audio_stream
  * @{ */
 
 /**
@@ -79,7 +79,7 @@ private:
    ~AudioFactory();
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
+/** @} */ /* end_addtogroup telematics_audio_stream */
 }  // End of namespace audio
 
 }  // End of namespace telux

@@ -49,7 +49,7 @@
 namespace telux {
 
 namespace audio {
-/** @addtogroup telematics_audio
+/** @addtogroup telematics_audio_stream
  * @{ */
 
 class IAudioDevice;
@@ -184,8 +184,6 @@ using CreateStreamResponseCb
  * @param [in] error       Return code which indicates whether the operation succeeded or not.
  *                         @ref ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using CreateTranscoderResponseCb = std::function<void(
         std::shared_ptr<ITranscoder> &transcoder, telux::common::ErrorCode error)>;
@@ -295,8 +293,6 @@ public:
     *
     * @returns Status of request i.e. success or suitable status code.
     *
-    * @note        Eval: This is a new API and is being evaluated. It is subject to change
-    *              and could break backwards compatibility.
     */
     virtual telux::common::Status createTranscoder(FormatInfo input, FormatInfo output,
             CreateTranscoderResponseCb callback) = 0;
@@ -320,8 +316,6 @@ public:
     *
     * @returns Status of registerListener i.e success or suitable status code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<IAudioListener> listener) = 0;
 
@@ -332,8 +326,6 @@ public:
     *
     * @returns Status of deRegisterListener, success or suitable status code
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
 
@@ -641,8 +633,6 @@ public:
      *
      * @returns Status of the request i.e. success or suitable status code.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change
-     *         and could break backwards compatibility.
      */
     virtual telux::common::Status stopAudio(StopType stopType,
                     telux::common::ResponseCallback callback = nullptr) = 0;
@@ -655,8 +645,6 @@ public:
     *
     * @returns Status of registerListener i.e success or suitable status code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status registerListener(std::weak_ptr<IPlayListener> listener) = 0;
 
@@ -667,8 +655,6 @@ public:
     *
     * @returns Status of deRegisterListener, success or suitable status code
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status deRegisterListener(std::weak_ptr<IPlayListener> listener) = 0;
 
@@ -789,7 +775,7 @@ public:
    virtual ~IAudioToneGeneratorStream() {};
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
+/** @} */ /* end_addtogroup telematics_audio_stream */
 }  // End of namespace audio
 
 }  // End of namespace telux

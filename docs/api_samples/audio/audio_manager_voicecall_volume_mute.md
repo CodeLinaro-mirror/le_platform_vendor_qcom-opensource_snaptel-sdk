@@ -5,64 +5,44 @@ Audio voice session volume/mute control {#audio_manager_voicecall_volume_mute}
 
 This Section demonstrates how to use the Audio Manager API for voice session volume/mute control.
 
-### 1. Get the AudioFactory and AudioManager instances
+### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-   #include "AudioFactory.hpp"
-   #include "AudioManager.hpp"
-
-   using namespace telux::common;
-   using namespace telux::audio;
-
-   // Globals
-   static std::shared_ptr<IAudioManager> audioManager;
-   static std::shared_ptr<IAudioVoiceStream> audioVoiceStream;
-   static unsigned int timeoutSec = 5;
-   Status status;
-
-   auto &audioFactory = audioFactory::getInstance();
-   audioManager = audioFactory.getAudioManager();
+    auto &audioFactory = audioFactory::getInstance();
    ~~~~~~
 
-### 2. Check if Audio subsystem is ready
+### 2. Get the AudioManager object and check for audio subsystem Readiness
 
    ~~~~~~{.cpp}
-   if (audioManager) {
-        bool subSystemsStatus = audioManager->isSubsystemReady();
-        if (subSystemsStatus) {
-            std::cout << "Audio Subsystem is ready." << std::endl;
-        } else {
-            std::cout << "Audio Subsystem is NOT ready." << std::endl;
-        }
+    std::promise<ServiceStatus> prom{};
+    //  Get AudioManager instance.
+    audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
+        prom.set_value(serviceStatus);
+    });
+    if (!audioManager) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
+        return;
+    }
+
+    //  Check if audio subsystem is ready
+    //  If audio subsystem is not ready, wait for it to be ready
+    ServiceStatus managerStatus = audioManager->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
+    }
+
+    //  Check the service status again.
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
-        std::cout << "Invalid Audio manager" << std::endl;
+        std::cout << "ERROR - Unable to initialize audio subsystem" << std::endl;
+        return;
     }
    ~~~~~~
 
-### 2.1 If Audio subsystem is not ready, wait for it to be ready
-
-Make sure that Audio subsystem is ready for services like voice call.
-if subsystems were not ready, unconditionally wait or Timeout based wait.
-
-   ~~~~~~{.cpp}
-    std::future<bool> f = audioManager->onSubsystemReady();
-    #if  //Timeout based wait
-         if (f.wait_for(std::chrono::seconds(timeoutSec)) == std::future_status::timeout) {
-             std::cout << "operation timed out." << std::endl;
-         } else {
-             std::cout << "Audio Subsystem is ready." << std::endl;
-         }
-    #else //Unconditional wait
-         bool subSystemsStatus = f.get();
-         if (subSystemsStatus) {
-           std::cout << "Audio Subsystem is ready." << std::endl;
-         } else {
-           std::cout << "Audio Subsystem is NOT ready." << std::endl;
-         }
-    #endif
-   ~~~~~~
-
 ### 3. Create an Audio Stream (Voice Call Session)
+
    ~~~~~~{.cpp}
     //Callback which provides response to createStream, with pointer to base interface IAudioStream.
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
@@ -89,6 +69,7 @@ if subsystems were not ready, unconditionally wait or Timeout based wait.
    ~~~~~~
 
 ### 4. Start Created Audio Stream (Voice Call Session)
+
    ~~~~~~{.cpp}
     //Callback which provides response to startAudio.
     void startAudioCallback(ErrorCode error)
@@ -107,6 +88,7 @@ if subsystems were not ready, unconditionally wait or Timeout based wait.
    ~~~~~~
 
 ### 5. Set volume on Started Audio Stream (Voice Call Session) for specified direction
+
    ~~~~~~{.cpp}
     //Callback which provides response to setVolume.
     void setStreamVolumeCallback(ErrorCode error)
@@ -131,6 +113,7 @@ if subsystems were not ready, unconditionally wait or Timeout based wait.
    ~~~~~~
 
 ### 6. Get volume on Started Audio Stream (Voice Call Session)
+
    ~~~~~~{.cpp}
     //Callback which provides response to getVolume.
     void getStreamVolumeCallback(StreamVolume volume, ErrorCode error)
@@ -156,6 +139,7 @@ if subsystems were not ready, unconditionally wait or Timeout based wait.
    ~~~~~~
 
 ### 7. Set Mute on Started Audio Stream (Voice Call Session) for specified direction
+
    ~~~~~~{.cpp}
     //Callback which provides response to setMute.
     void setStreamMuteCallback(ErrorCode error)
@@ -177,6 +161,7 @@ if subsystems were not ready, unconditionally wait or Timeout based wait.
    ~~~~~~
 
 ### 8 Get Mute on Started Audio Stream (Voice Call Session) for specified direction
+
    ~~~~~~{.cpp}
     //Callback which provides response to getMute.
     void getStreamMuteCallback(StreamMute mute, ErrorCode error)
@@ -197,6 +182,7 @@ if subsystems were not ready, unconditionally wait or Timeout based wait.
    ~~~~~~
 
 ### 9. Stop Created Audio Stream (Voice Call Session)
+
    ~~~~~~{.cpp}
 
     //Callback which provides response to stopAudio.
@@ -216,6 +202,7 @@ if subsystems were not ready, unconditionally wait or Timeout based wait.
    ~~~~~~
 
 ### 10. Delete an Audio Stream (Voice Call Session), which was created earlier
+
    ~~~~~~{.cpp}
     //Callback which provides response to deleteStream
     void deleteStreamCallback(ErrorCode error) {

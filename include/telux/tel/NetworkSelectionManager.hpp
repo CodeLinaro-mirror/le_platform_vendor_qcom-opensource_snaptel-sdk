@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -155,6 +155,25 @@ struct OperatorStatus {
       = ForbiddenStatus::UNKNOWN; /**< Forbidden status of network operator */
    PreferredStatus preferred
       = PreferredStatus::UNKNOWN; /**< Preferred status of network operator */
+};
+
+/**
+ * Defines Network scan type
+ */
+enum class NetworkScanType {
+    CURRENT_RAT_PREFERENCE = 1,      /**< Network scan based on current RAT preference */
+    USER_SPECIFIED_RAT,              /**< Network scan based on user specified RAT(s) */
+    ALL_RATS                         /**< Network scan on GSM/WCDMA/LTE/NR5G */
+};
+
+/**
+ * Defines Network scan information
+ */
+struct NetworkScanInfo {
+    NetworkScanType scanType;  /**< Network scan type */
+    RatMask ratMask;           /**< Bit mask denotes which of the radio access technologies are
+                                    set. ratMask is valid/set only when scanType is provided as
+                                    NetworkScanType::USER_SPECIFIED_RAT */
 };
 
 /** @} */ /* end_addtogroup telematics_network_selection */
@@ -314,6 +333,8 @@ public:
     * indication API (INetworkSelectionListener::onNetworkScanResults).
     * The scan status in indication will indicate if its a partial result or complete result.
     *
+    * @param [in] info        Provides network scan type and if the network scan type is user
+    *                         prefered RAT, includes RAT(s) information. @ref NetworkScanInfo
     * @param [in] callback    Callback function to get the response of network scan request
     *
     * @returns Status of performNetworkScan i.e. success or suitable error code.
@@ -322,7 +343,7 @@ public:
     *             could break backwards compatibilty.
     *
     */
-   virtual telux::common::Status performNetworkScan(
+   virtual telux::common::Status performNetworkScan(NetworkScanInfo info,
       common::ResponseCallback callback = nullptr) = 0;
 
    /**

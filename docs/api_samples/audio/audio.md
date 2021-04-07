@@ -1,7 +1,7 @@
 audio {#audio}
 ==============
 
-# The List of sample apps related to audio:
+# The List of sample apps related to audio
 
 * @subpage audio_manager_api
 * @subpage audio_manager_playback

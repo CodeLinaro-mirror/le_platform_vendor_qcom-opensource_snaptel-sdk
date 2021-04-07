@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -49,6 +49,9 @@
 namespace telux {
 namespace tel {
 
+/** @addtogroup telematics_card
+ * @{ */
+
 /**
  * This function is called with the response to requestEid API.
  *
@@ -61,9 +64,6 @@ namespace tel {
  */
 using EidResponseCallback
     = std::function<void(const std::string &eid, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_card
- * @{ */
 
 // Forward declarations
 class ICardChannelCallback;
@@ -119,6 +119,40 @@ class ICardManager {
      */
     virtual std::shared_ptr<ICard> getCard(
         int slotId = DEFAULT_SLOT_ID, telux::common::Status *status = nullptr)
+        = 0;
+
+    /**
+     * Power on the SIM card.
+     *
+     * @param [in] slotId      Slot identifier corresponding to the card which needs to be
+     *                         powered up.
+     * @param [in] callback    Optional callback pointer to get the result of cardPowerUp
+     *
+     * @returns Status of cardPowerUp i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status cardPowerUp(SlotId slotId,
+        telux::common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
+     * Power off the SIM card.
+     * When the SIM card is powered down, the card state is absent and the SIM IO operations,
+     * PIN management API's like unlock card by pin, change card pin will fail.
+     *
+     * @param [in] slotId      Slot identifier corresponding to the card which needs to be
+     *                         powered down.
+     * @param [in] callback    Optional callback pointer to get the result of CardPowerDown
+     *
+     * @returns Status of cardPowerDown i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status cardPowerDown(SlotId slotId,
+        telux::common::ResponseCallback callback = nullptr)
         = 0;
 
     /**

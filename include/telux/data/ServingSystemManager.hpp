@@ -46,11 +46,11 @@
 namespace telux {
 namespace data {
 
+/** @addtogroup telematics_data
+ * @{ */
+
 // Forward declaration
 class IServingSystemListener;
-
-/** @addtogroup telematics_data_serving_system
- * @{ */
 
 /**
  * @brief Dedicated Radio Bearer (DRB) status.
@@ -155,7 +155,7 @@ public:
    virtual ~IServingSystemListener() {};
 };
 
-/** @} */ /* end_addtogroup telematics_data_serving_system */
+/** @} */ /* end_addtogroup telematics_data */
 }
 }
 

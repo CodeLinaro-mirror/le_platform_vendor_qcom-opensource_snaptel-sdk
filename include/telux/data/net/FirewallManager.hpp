@@ -52,6 +52,9 @@ namespace telux {
 namespace data {
 namespace net {
 
+/** @addtogroup telematics_data_net
+ * @{ */
+
 // Forward declarations
 class IFirewallEntry;
 class IFirewallListener;
@@ -65,8 +68,6 @@ class IFirewallListener;
  * @param [in] error       -     Return code which indicates whether the operation
  *                               succeeded or not. @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using FirewallStatusCb
     = std::function<void(bool enable, bool allowPackets, telux::common::ErrorCode error)>;
@@ -78,8 +79,6 @@ using FirewallStatusCb
  * @param [in] error       -     Return code which indicates whether the operation
  *                               succeeded or not. @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using FirewallEntriesCb = std::function<void(
     std::vector<std::shared_ptr<IFirewallEntry>> entries, telux::common::ErrorCode error)>;
@@ -91,14 +90,9 @@ using FirewallEntriesCb = std::function<void(
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not. @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using DmzEntriesCb
     = std::function<void(std::vector<std::string> dmzEntries, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_net
- * @{ */
 
 /**
  *@brief    FirewallManager is a primary interface that filters and controls the network
@@ -115,8 +109,6 @@ class IFirewallManager {
      *          SERVICE_UNAVAILABLE  If Firewall manager object is temporarily unavailable.
      *          SERVICE_FAILED       If Firewall manager object encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -153,8 +145,6 @@ class IFirewallManager {
      *
      * @returns Status of setFirewall i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setFirewall(int profileId, bool enable, bool allowPackets,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -168,8 +158,6 @@ class IFirewallManager {
      *
      * @returns Status of requestFirewallStatus i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestFirewallStatus(int profileId,
         FirewallStatusCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -184,8 +172,6 @@ class IFirewallManager {
      *
      * @returns Status of addFirewallEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status addFirewallEntry(int profileId,
         std::shared_ptr<IFirewallEntry> entry, telux::common::ResponseCallback callback = nullptr,
@@ -200,8 +186,6 @@ class IFirewallManager {
      *
      * @returns Status of requestFirewallEntries i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestFirewallEntries(int profileId,
         FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -218,8 +202,6 @@ class IFirewallManager {
      *
      * @returns Status of removeFirewallEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status removeFirewallEntry(int profileId, uint32_t handle,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -234,8 +216,6 @@ class IFirewallManager {
      *
      * @returns Status of enableDmz i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status enableDmz(int profileId, const std::string ipAddr,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -250,8 +230,6 @@ class IFirewallManager {
      *
      * @returns Status of disableDmz i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status disableDmz(int profileId, const telux::data::IpFamilyType ipType,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -265,8 +243,6 @@ class IFirewallManager {
      *
      * @returns Status of requestDmzEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestDmzEntry(int profileId,
         DmzEntriesCb dmzCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -298,8 +274,6 @@ class IFirewallManager {
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::data::OperationType getOperationType() = 0;
 
@@ -377,7 +351,7 @@ class IFirewallListener {
     virtual ~IFirewallListener(){};
 };
 
-/** @} */ /* end_addtogroup telematics_net */
+/** @} */ /* end_addtogroup telematics_data_net */
 }
 }
 }

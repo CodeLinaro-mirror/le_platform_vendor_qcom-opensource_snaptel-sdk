@@ -51,11 +51,12 @@ namespace telux {
 namespace data {
 namespace net {
 
+/** @addtogroup telematics_data_net
+ * @{ */
+
 // Forward declarations
 class INatListener;
 
-/** @addtogroup telematics_net
- * @{ */
 /**
  * Structure represents Network Address Translation (NAT) configuration
  */
@@ -65,7 +66,6 @@ struct NatConfig {
     uint16_t globalPort; /**< Global port */
     IpProtocol proto;    /**< IP protocol @ref telux::net::IpProtocol */
 };
-/** @} */ /* end_addtogroup telematics_net */
 
 /**
  * This function is called as a response to @ref requestStaticNatEntries()
@@ -74,14 +74,10 @@ struct NatConfig {
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using StaticNatEntriesCb
     = std::function<void(const std::vector<NatConfig> &snatEntries, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_net
- * @{ */
 /**
  *@brief    NatManager is a primary interface for configuring static network address
  *          translation(SNAT) and DMZ (demilitarized zone).
@@ -97,8 +93,6 @@ class INatManager {
      *          SERVICE_UNAVAILABLE    If Nat manager object is temporarily unavailable.
      *          SERVICE_FAILED       - If Nat manager object encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -135,8 +129,6 @@ class INatManager {
      *
      * @returns Status of addStaticNatEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status addStaticNatEntry(int profileId, const NatConfig &snatConfig,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -152,8 +144,6 @@ class INatManager {
      *
      * @returns Status of removeStaticNatEntry i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status removeStaticNatEntry(int profileId, const NatConfig &snatConfig,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -168,8 +158,6 @@ class INatManager {
      *
      * @returns Status of requestStaticNatEntries i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestStaticNatEntries(int profileId,
         StaticNatEntriesCb snatEntriesCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -201,8 +189,6 @@ class INatManager {
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::data::OperationType getOperationType() = 0;
 
@@ -235,7 +221,7 @@ class INatListener {
     virtual ~INatListener(){};
 };
 
-/** @} */ /* end_addtogroup telematics_net */
+/** @} */ /* end_addtogroup telematics_data_net */
 }
 }
 }

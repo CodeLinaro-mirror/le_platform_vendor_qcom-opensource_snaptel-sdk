@@ -53,6 +53,7 @@ when       who     what, where, why
 05/27/20   FS      Added L2TP Feature Support in Telematics SDK
 12/01/20   AK      Added Location SDK simulation libraries
 01/29/21   FS      Updated data subsystem readiness flow for new methodology
+02/12/21   RV      Added new sub system Readiness APIs for Audio.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

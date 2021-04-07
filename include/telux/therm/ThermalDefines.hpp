@@ -41,7 +41,7 @@
 namespace telux {
 namespace therm {
 
-/** @addtogroup telematics_therm
+/** @addtogroup telematics_therm_management
  * @{ */
 
 /**
@@ -59,7 +59,7 @@ enum class AutoShutdownMode {
     DISABLE    /**< Automatic thermal shutdown is disabled */
 };
 
-/** @} */ /* end_addtogroup telematics_therm */
+/** @} */ /* end_addtogroup telematics_therm_management */
 
 }  // end of namespace therm
 }  // end of namespace telux

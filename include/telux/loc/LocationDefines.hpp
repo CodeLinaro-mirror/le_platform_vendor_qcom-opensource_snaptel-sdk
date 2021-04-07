@@ -306,35 +306,43 @@ struct GnssKinematicsData {
   /** Body pitch (Radians) */
   float pitch;
   /** Uncertainty of Forward Acceleration in body
-   *  frame (meters/second^2)*/
+   *  frame (meters/second^2)
+   *  Uncertainty is defined with 68% confidence level. */
   float longAccelUnc;
   /** Uncertainty of Side-ward Acceleration in body
-   *  frame meters/second^2)*/
+   *  frame meters/second^2)
+   *  Uncertainty is defined with 68% confidence level. */
   float latAccelUnc;
   /** Uncertainty of Vertical Acceleration in body
-   *  frame (meters/second^2)*/
+   *  frame (meters/second^2)
+   *  Uncertainty is defined with 68% confidence level. */
   float vertAccelUnc;
-  /** Uncertainty of Heading Rate (Radians/second)*/
+  /** Uncertainty of Heading Rate (Radians/second)
+   *  Uncertainty is defined with 68% confidence level. */
   float yawRateUnc;
-  /** Uncertainty of Body pitch (Radians)*/
+  /** Uncertainty of Body pitch (Radians)
+   *  Uncertainty is defined with 68% confidence level. */
   float pitchUnc;
   /** Body pitch rate, in unit of radians/second.*/
   float pitchRate;
-  /** Uncertainty of pitch rate, in unit of radians/second.*/
+  /** Uncertainty of pitch rate, in unit of radians/second.
+   *  Uncertainty is defined with 68% confidence level. */
   float pitchRateUnc;
   /** Roll of body frame, clockwise is positive, in unit of radian. */
   float roll;
-  /** Uncertainty of roll, 68% confidence level, in unit of radian.*/
+  /** Uncertainty of roll, in unit of radian.
+   *  Uncertainty is defined with 68% confidence level. */
   float rollUnc;
   /** Roll rate of body frame, clockwise is positive, in unit of
-   * radian/second. */
+   *  radian/second.*/
   float rollRate;
-  /** Uncertainty of roll rate, 68% confidence level, in unit of
-   * radian/second. */
+  /** Uncertainty of roll rate, in unit of radian/second.
+   *  Uncertainty is defined with 68% confidence level. */
   float rollRateUnc;
   /** Yaw of body frame, clockwise is positive, in unit of radian. */
   float yaw;
-  /** Uncertainty of yaw, 68% confidence level, in unit of radian.*/
+  /** Uncertainty of yaw, in unit of radian.
+   *  Uncertainty is defined with 68% confidence level. */
   float yawUnc;
 };
 
@@ -579,7 +587,10 @@ struct GnssMeasurementInfo {
   GnssSystem gnssConstellation;
   /** GNSS SV ID.
    *  For GPS:      1 to 32.
-   *  For GLONASS:  65 to 96.
+   *  For GLONASS:  [65, 96] or [97, 110].
+                    [65, 96] if orbital slot number(OSN) is known.
+                    [97, 110] as frequency channel number(FCN) [-7, 6] plus 104.
+                    i.e. encode FCN (-7) as 97, FCN (0) as 104, FCN (6) as 110.
    *  For SBAS:     120 to 158 and 183 to 191.
    *  For QZSS:     193 to 197.
    *  For BDS:      201 to 263.
@@ -1572,6 +1583,8 @@ public:
 
 /**
  * Retrieves the horizontal uncertainty.
+ *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Horizontal uncertainty.
  *
@@ -1580,6 +1593,7 @@ public:
 /**
  * Retrieves the vertical uncertainty.
  *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Vertical uncertainty if available else returns NaN.
  *
@@ -1599,6 +1613,7 @@ public:
 /**
  * Retrieves 3-D speed uncertainty/accuracy.
  *    - Units: Meters per Second
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Speed uncertainty if available else returns NaN.
  *
@@ -1609,6 +1624,7 @@ public:
  * Retrieves heading uncertainty.
  *    - Units: Degrees
  *    - Range: 0 to 359.999
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Heading uncertainty if available else returns NaN.
  *
@@ -1718,6 +1734,7 @@ public:
 /**
  * Retrieves semi-major axis of horizontal elliptical uncertainty.
  *    - Units: Meters
+ * Uncertainty is defined with 39% confidence level.
  *
  * @returns Semi-major horizontal elliptical uncertainty if available else
  * returns NaN.
@@ -1728,6 +1745,7 @@ public:
 /**
  * Retrieves semi-minor axis of horizontal elliptical uncertainty.
  *    - Units: Meters
+ * Uncertainty is defined with 39% confidence level.
  *
  * @returns Semi-minor horizontal elliptical uncertainty
  * if available else returns NaN.
@@ -1739,6 +1757,7 @@ public:
  * Retrieves elliptical horizontal uncertainty azimuth of orientation.
  *    - Units: Decimal degrees
  *    - Range: 0 to 180
+ * Confidence for uncertainty is not specified.
  *
  * @returns Elliptical horizontal uncertainty azimuth of orientation
  * if available else returns NaN.
@@ -1748,6 +1767,7 @@ public:
 /**
  * Retrieves east standard deviation.
  *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns East Standard Deviation.
  *
@@ -1757,6 +1777,7 @@ public:
 /**
  * Retrieves north standard deviation.
  *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns North Standard Deviation.
  *
@@ -1824,6 +1845,8 @@ public:
 
 /**
  * Retrieves time uncertainity.
+ * For PVT report from SPE engine, confidence level is at 99%.
+ * For PVT reports from other engines, confidence level is undefined.
  *
  * @return - Time uncertainty in milliseconds.
  *
@@ -1855,6 +1878,7 @@ public:
 
 /**
  * Retrieves east, North, Up velocity uncertainty if available.
+ * Uncertainty is defined with 68% confidence level.
  *
  * @param [out] velocityUncertaintyEastNorthUp - east, North, Up velocity
  * uncertainty
@@ -1959,6 +1983,7 @@ public:
 
 /**
  * GNSS satellite vehicle ID.
+ * SV id range of each supported constellations mentioned in @ref GnssMeasurementInfo.
  *
  * @returns Identifier of the satellite vehicle otherwise 0(as 0 is not an ID
  * for any of the SVs)
@@ -2058,6 +2083,14 @@ public:
  * @returns signalType mask else return UNKNOWN_SIGNAL_MASK when not supported.
  */
   virtual GnssSignal getSignalType() = 0;
+
+ /**
+  * Retrieves GLONASS frequency channel number in the range [1, 14] which is calculated as
+  * FCN [-7, 6] + 8.
+  *
+  * @returns GLONASS frequency channel number.
+  */
+   virtual uint16_t getGlonassFcn() = 0;
 };
 
 /**

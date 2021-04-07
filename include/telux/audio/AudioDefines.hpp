@@ -53,7 +53,7 @@ const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
 /* Duration to play tone for infinite time */
 const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
 
-/** @addtogroup telematics_audio
+/** @addtogroup telematics_audio_stream
  * @{ */
 
 /**
@@ -275,7 +275,7 @@ struct DtmfTone {
     StreamDirection direction; /**< Direction associated with DTMF tone */
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
+/** @} */ /* end_addtogroup telematics_audio_stream */
 
 }  // End of namespace audio
 

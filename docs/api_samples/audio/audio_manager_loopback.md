@@ -1,41 +1,48 @@
 Audio loopback session {#audio_manager_loopback}
 =======================================================================================
 
-# Audio Manager API Sample Reference for audio loopback session.
+# Audio Manager API Sample Reference for audio loopback session
 
 Please follow the below steps to start/stop loopback on a loopback session.
 
-### 1. Get the Audio Factory and Audio Manager instances ###
+### 1. Get the AudioFactory instance
+
    ~~~~~~{.cpp}
-    auto &audioFactory = AudioFactory::getInstance();
-    auto audioManager = audioFactory.getAudioManager();
+    auto &audioFactory = audioFactory::getInstance();
    ~~~~~~
 
-### 2. Wait for the Audio subsystem to be initialized and ready ###
+### 2. Get the AudioManager object and check for audio subsystem Readiness
+
    ~~~~~~{.cpp}
-    if (audioManager) {
-        bool isReady = audioManager->isSubsystemReady();
-        if (!isReady) {
-            std::cout << "Audio subsystem is not ready, waiting for it to be ready " << std::endl;
-            std::future<bool> f = audioManager->onSubsystemReady();
-            isReady = f.get();
-        }
+    std::promise<ServiceStatus> prom{};
+    //  Get AudioManager instance.
+    audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
+        prom.set_value(serviceStatus);
+    });
+    if (!audioManager) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
+        return;
+    }
+
+    //  Check if audio subsystem is ready
+    //  If audio subsystem is not ready, wait for it to be ready
+    ServiceStatus managerStatus = audioManager->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
+    }
+
+    //  Check the service status again.
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
-        std::cout << "Invalid Audio manager" << std::endl;
+        std::cout << "ERROR - Unable to initialize audio subsystem" << std::endl;
+        return;
     }
    ~~~~~~
 
-### 3. Exit the application, if SDK is unable to initialize Audio subsystem ###
-   ~~~~~~{.cpp}
-    if (isReady) {
-        std::cout << " *** Audio subsystem is Ready *** " << std::endl;
-    } else {
-        std::cout << " *** ERROR - Unable to initialize Audio subsystem " << std::endl;
-        return 1;
-    }
-   ~~~~~~
+### 3. Create an audio Stream (to be associated with loopback)
 
-### 4. Create an audio Stream (to be associated with loopback)  ###
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error) {
@@ -56,7 +63,8 @@ Please follow the below steps to start/stop loopback on a loopback session.
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 6. Start loopback between the specified source and sink devices ###
+### 4. Start loopback between the specified source and sink devices
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void startLoopbackCallback(ErrorCode error)
@@ -71,7 +79,8 @@ Please follow the below steps to start/stop loopback on a loopback session.
     status = audioLoopbackStream->startLoopback(startLoopbackCallback);
    ~~~~~~
 
-### 7. Stop loopback between the specified source and sink devices ###
+### 5. Stop loopback between the specified source and sink devices
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void stopLoopbackCallback(ErrorCode error)
@@ -86,7 +95,8 @@ Please follow the below steps to start/stop loopback on a loopback session.
     status = audioLoopbackStream->stopLoopback(stopLoopbackCallback);
    ~~~~~~
 
-### 8. Delete the audio stream associated with the Loopback session ###
+### 6. Delete the audio stream associated with the Loopback session
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void deleteStreamCallback(ErrorCode error) {

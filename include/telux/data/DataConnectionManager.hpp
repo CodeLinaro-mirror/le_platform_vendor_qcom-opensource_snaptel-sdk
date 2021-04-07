@@ -47,11 +47,15 @@
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataProfile.hpp>
+#include <telux/data/IpFilter.hpp>
 
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace data {
+
+/** @addtogroup telematics_data
+ * @{ */
 
 // Forward declarations
 class IDataConnectionListener;
@@ -63,6 +67,48 @@ class IDataCall;
 struct IpFamilyInfo {
     DataCallStatus status;
     IpAddrInfo addr;
+};
+
+/**
+ * Encapsulate the Qos Filter rule
+ */
+struct QosFilterRule{
+    std::vector<std::shared_ptr<IIpFilter>> filter; /**< @ref IIpFilter */
+    uint16_t filterId;                              /**< Unique identifier for each filter. */
+    uint16_t filterPrecedence;                      /**< Specifies the order in which filters are
+                                                         applied. A lower numerical value has a
+                                                         higher precedence. */
+};
+
+/**
+ * QOS TFT Flow info
+ */
+struct TrafficFlowTemplate {
+    /** Mandatory */
+    QosFlowId qosId;                            /**< defines current flow id */
+    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
+
+    QosFlowMask mask;                           /**< bitmask to denote which of the optional fields
+                                                     in TrafficFlowTemplate are valid */
+    /** Optional */
+    QosIPFlowInfo txGrantedFlow;                /* Tx Granted Flow IP info */
+    QosIPFlowInfo rxGrantedFlow;                /* Rx Granted Flow IP info */
+
+    uint32_t txFiltersLength;                   /* Tx Filters length */
+    QosFilterRule txFilters[MAX_QOS_FILTERS];   /* Tx QoS Filters that apply to a
+                                                   granted Tx QoS flow. */
+
+    uint32_t rxFiltersLength;                   /* Rx Filters length*/
+    QosFilterRule rxFilters[MAX_QOS_FILTERS];   /* Rx QoS Filters that apply to a
+                                                   granted Rx QoS flow. */
+};
+
+/**
+ * QOS TFT flow change info
+ */
+struct TftChangeInfo {
+    std::shared_ptr<TrafficFlowTemplate> tft;   /**< TFT flow info @ref TrafficFlowTemplate */
+    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
 };
 
 /**
@@ -137,8 +183,16 @@ using DataCallListResponseCb = std::function<void(
 using DefaultProfileIdResponseCb
     = std::function<void(int profileId, SlotId slotId, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_data
- * @{ */
+/**
+ * This function is called in the response to requestTrafficFlowTemplate().
+ *
+ * @param [in] tft        Vector of TFT flow info. @ref TrafficFlowTemplate
+ * @param [in] error      Code which indicates whether the operation succeeded or not.
+ *                        @ref ErrorCode.
+ */
+using TrafficFlowTemplateCb =
+    std::function<void(const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft,
+        telux::common::ErrorCode error)>;
 
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
@@ -156,8 +210,6 @@ class IDataConnectionManager {
      *          SERVICE_UNAVAILABLE  If data connection manager is temporarily unavailable.
      *          SERVICE_FAILED       If data connection manager encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -193,8 +245,6 @@ class IDataConnectionManager {
     *
     * @returns Immediate status of setDefaultProfile i.e. success or suitable status.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status setDefaultProfile(OperationType oprType, uint8_t profileId,
        telux::common::ResponseCallback callback = nullptr)  = 0;
@@ -208,8 +258,6 @@ class IDataConnectionManager {
     *
     * @returns Immediate status of getDefaultProfile i.e. success or suitable status.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status getDefaultProfile(
        OperationType oprType, DefaultProfileIdResponseCb callback)  = 0;
@@ -235,8 +283,6 @@ class IDataConnectionManager {
      * @returns Immediate status of startDataCall() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      *
      */
     virtual telux::common::Status startDataCall(int profileId,
@@ -265,8 +311,6 @@ class IDataConnectionManager {
      *          suitable status code. The client receives asynchronous notifications
      *          indicating the data call tear-down.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      *
      */
     virtual telux::common::Status stopDataCall(int profileId,
@@ -312,8 +356,6 @@ class IDataConnectionManager {
      * @param [out] OperationType    @ref telux::data::OperationType
      * @param [out] callback         Callback with list of supported data calls
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status requestDataCallList(OperationType type,
         DataCallListResponseCb callback) = 0;
@@ -427,6 +469,21 @@ class IDataCall {
     virtual OperationType getOperationType() = 0;
 
     /**
+     * Get the current installed QOS Traffic flow template information.
+     *
+     * @param [in]  ipFamilyType    - IP Family type @ref IpFamilyType. TFT's are installed per IP
+     *                                Family.
+     * @param [in]  callback        - callback function to get the result of API.
+     *
+     * @returns Status of requestTrafficFlowTemplate i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestTrafficFlowTemplate(IpFamilyType ipFamilyType,
+        TrafficFlowTemplateCb callback) = 0;
+
+    /**
      * Request the data transfer statistics for data call corresponding
      * to specified profile identifier.
      *
@@ -469,7 +526,6 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
     /**
      * This function is called when there is a change in the data call.
      *
-     * @param [in] status     Data Call Status
      * @param [in] dataCall   Pointer to IDataCall
      *
      */
@@ -482,6 +538,18 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *
      */
     virtual void onHwAccelerationChanged(const ServiceState state){};
+
+    /**
+     * This function is called when the TFT's parameters are changed for a packet data session.
+     *
+     * @param [in] dataCall     Pointer to IDataCall
+     * @param [in] tft          vector of TftChangeInfo @ref TftChangeInfo
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual void onTrafficFlowTemplateChange(const std::shared_ptr<IDataCall> &dataCall,
+        const std::vector<std::shared_ptr<TftChangeInfo>> &tft) {};
 
     /**
      * Destructor for IDataConnectionListener

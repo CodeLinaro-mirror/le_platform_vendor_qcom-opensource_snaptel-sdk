@@ -45,6 +45,9 @@ namespace telux {
 
 namespace tel {
 
+/** @addtogroup telematics_card
+ * @{ */
+
 /**
  * This function is called with the response to pin operations like change pin password,
  * unlock card and set card lock.
@@ -77,9 +80,6 @@ using QueryFdnLockResponseCb
  */
 
 using QueryPin1LockResponseCb = std::function<void(bool state, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_card
- * @{ */
 
 /**
  * @brief Represents a single card application.

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -2045,25 +2045,23 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
 
 @html_image{audio_manager_api_call_flow.png,Audio Manager API call flow,80,80,Audio Manager API call flow}
 
-1. Application requests Audio factory for an Audio Manager.
+1. Application requests Audio factory for an Audio Manager and passes callback pointer.
 2. Audio factory return IAudioManager object to application.
-3. Application can use IAudioManager::isSubsystemReady to determine if the system is ready.
-4. The application receives the Status i.e. either true or false to indicate whether sub-system is ready or not.
-5. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-6. AudioManager notifies the application when the subsystem is ready through the std::future object.
-7. The application waits until the asynchronous operation i.e onSubsystemReady completes.
-8. On Readiness, Application requests supported device types using getDevices method.
-9. Application receives synchronous Status which indicates if the getDevices request was sent successfully.
-10. Application is notified of the Status of the getDevices request (either SUCCESS or FAILED) via the application-supplied callback, with array of supported device types.
-11. Application requests supported stream types using getStreamTypes method.
-12. Application receives synchronous Status which indicates if the getStreamTypes request was sent successfully.
-13. Application is notified of the Status of the getStreamTypes request (either SUCCESS or FAILED) via the application-supplied callback, with array of supported stream types.
-14. Application requests create audio stream using createStream method.
-15. Application receives synchronous Status which indicates if the createStream request was sent successfully.
-16. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface.
-17. Application requests delete audio stream using deleteStream method.
-18. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
-19. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
+3. Application can use IAudioManager::getServiceStatus to determine the state of sub system.
+4. The application receives the ServiceStatus of sub system which indicates the state of service.
+5. AudioManager notifies the application when the subsystem is ready through the callback mechanism.
+6. On Readiness, Application requests supported device types using getDevices method.
+7. Application receives synchronous Status which indicates if the getDevices request was sent successfully.
+8. Application is notified of the Status of the getDevices request (either SUCCESS or FAILED) via the application-supplied callback, with array of supported device types.
+9. Application requests supported stream types using getStreamTypes method.
+10. Application receives synchronous Status which indicates if the getStreamTypes request was sent successfully.
+11. Application is notified of the Status of the getStreamTypes request (either SUCCESS or FAILED) via the application-supplied callback, with array of supported stream types.
+12. Application requests create audio stream using createStream method.
+13. Application receives synchronous Status which indicates if the createStream request was sent successfully.
+14. Application is notified of the Status of the createStream request (either SUCCESS or FAILED) via the application-supplied callback, with pointer to stream interface.
+15. Application requests delete audio stream using deleteStream method.
+16. Application receives synchronous Status which indicates if the deleteStream request was sent successfully.
+17. Application is notified of the Status of the deleteStream request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsection audio_voicecall_start_stop_callflow Audio Voice Call Start/Stop call flow
 

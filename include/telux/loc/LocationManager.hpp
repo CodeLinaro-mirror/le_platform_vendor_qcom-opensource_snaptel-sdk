@@ -74,8 +74,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetEnergyConsumedCallback = std::function<void(telux::loc::GnssEnergyConsumedInfo
@@ -124,8 +122,6 @@ public:
  *          SERVICE_UNAVAILABLE  -  If location manager is temporarily unavailable.
  *          SERVICE_FAILED       -  If location manager encountered an irrecoverable failure.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -298,8 +294,6 @@ public:
  *
  * @returns Status of getLocationSystemInfo i.e success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  *
  */
   virtual telux::common::Status
@@ -318,8 +312,6 @@ public:
  *
  * @returns Status of deRegisterForSystemInfoUpdates success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  *
  */
   virtual telux::common::Status
@@ -336,8 +328,6 @@ public:
  *
  * @returns Status of requestEnergyConsumedInfo i.e success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *       break backwards compatibility.
  */
   virtual telux::common::Status requestEnergyConsumedInfo(GetEnergyConsumedCallback cb) = 0;
 

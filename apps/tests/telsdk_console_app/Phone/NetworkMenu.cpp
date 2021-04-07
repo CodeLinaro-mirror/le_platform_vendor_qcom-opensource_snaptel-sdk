@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,6 +35,7 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <regex>
 
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -299,7 +300,57 @@ void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
 void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
    auto networkManager = networkManagers_[slot_ - 1];
    if (networkManager) {
-      auto ret = networkManager->performNetworkScan(
+      char delimiter = '\n';
+      std::string ratPref = "";
+      std::string networkScanTypeSelection = "";
+      int networkScanType = UNKNOWN;
+      telux::tel::NetworkScanInfo info {} ;
+      telux::tel::RatMask rat(0);
+
+      std::cout << "Enter the network scan type \n"
+                << "(1 - RAT_Preference, 2 - Specify_RAT(s), 3 - All_RATs): ";
+      std::getline(std::cin, networkScanTypeSelection, delimiter);
+      if (networkScanTypeSelection.empty()) {
+            std::cout << "ERROR - Network Scan type is empty \n";
+            return;
+      }
+      try {
+         networkScanType = std::stoi(networkScanTypeSelection);
+         if ( networkScanType <= 0 || networkScanType > 3) {
+             std::cout << "ERROR - Invalid network scan type\n";
+             return;
+         }
+
+         info.scanType = static_cast<telux::tel::NetworkScanType>(networkScanType);
+         if (info.scanType == telux::tel::NetworkScanType::USER_SPECIFIED_RAT) {
+            std::cout << "\nSelect RAT types (1-GSM, 2-LTE, 3-UMTS, 4-NR5G) \n";
+            std::cout << "(For example: enter 1,2 to scan GSM, LTE RATs): ";
+            std::cin >> ratPref;
+            //Regular expression to check if the input is in RAT type range ie.1-4 and
+            //comma or space seperated values.
+            //For example, returns true in case of 1,2,3 and 2
+            //returns false in case of 1:2 and a,b.
+            std::regex rgx("([1-4][, ])*[1-4]$");
+            if (std::regex_match(ratPref.begin(),ratPref.end(), rgx)) {
+                //Regular expresssion to find only the digit for rat type
+                std::regex subMatchRgx ("([1-4])");
+                std::smatch ratOption {};
+                //Searches in input string for a digit in range 1-4 and stores in ratOption variable
+                while (std::regex_search (ratPref, ratOption, subMatchRgx)) {
+                    rat.set(convertToRatType(std::stoi(ratOption[0])));
+                    ratPref = ratOption.suffix().str();
+                }
+                info.ratMask = rat;
+            } else {
+                std::cout << "ERROR::Invalid input \n";
+                return;
+            }
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+         return;
+      }
+      auto ret = networkManager->performNetworkScan(info,
          MyPerformNetworkScanCallback::performNetworkScanResponseCb);
       if (ret == telux::common::Status::SUCCESS) {
          std::cout << "\nPerform network scan request sent successfully\n";
@@ -307,7 +358,7 @@ void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
          std::cout << "\nPerform network scan request failed \n";
       }
    } else {
-      std::cout << " ERROR - Network manager is NULL" <<std::endl;
+      std::cout << " ERROR - Network manager is NULL\n";
    }
 }
 

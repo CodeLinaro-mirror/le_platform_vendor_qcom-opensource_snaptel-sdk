@@ -85,10 +85,15 @@ public:
     * SMS messages.
     *
     * @param [in] phoneId   Unique identifier for the phone
+    * @param [in] callback  Optional callback pointer to get response of SMS Manager initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided SMS Manager object will no
+    *                       more be a valid object.
     *
     * @returns Pointer of ISmsManager object or nullptr in case of failure.
     */
-   std::shared_ptr<ISmsManager> getSmsManager(int phoneId = DEFAULT_PHONE_ID);
+   std::shared_ptr<ISmsManager> getSmsManager(int phoneId = DEFAULT_PHONE_ID,
+      telux::common::InitResponseCb callback = nullptr);
 
    /**
     * Get Call Manager instance to determine state of active calls and perform
@@ -212,8 +217,11 @@ private:
    std::map<int, std::shared_ptr<IRemoteSimManager>> remoteSimManagerMap_;
    std::vector<telux::common::InitResponseCb> imssCallbacks_;
    telux::common::ServiceStatus imssInitStatus_;
+   std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
+   std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
 
    void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
+   void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
 
    PhoneFactory();
    ~PhoneFactory();

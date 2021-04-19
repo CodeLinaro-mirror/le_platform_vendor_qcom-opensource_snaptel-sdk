@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -201,4 +201,34 @@ std::string DataUtils::protocolToString(telux::data::IpProtocol proto) {
          return "Unknown";
       }
    }
+}
+
+std::string DataUtils::serviceRatToString(telux::data::NetworkRat rat) {
+    std::string ratStr = "UNKNOWN";
+    switch (rat) {
+        case telux::data::NetworkRat::CDMA_1X:
+            ratStr = "CDMA 1X";
+            break;
+        case telux::data::NetworkRat::CDMA_EVDO:
+            ratStr = "CDMA EVDO";
+            break;
+        case telux::data::NetworkRat::GSM:
+            ratStr = "GSM";
+            break;
+        case telux::data::NetworkRat::WCDMA:
+            ratStr = "WCDMA";
+            break;
+        case telux::data::NetworkRat::LTE:
+            ratStr = "LTE";
+            break;
+        case telux::data::NetworkRat::TDSCDMA:
+            ratStr = "TDSCDMA";
+            break;
+        case telux::data::NetworkRat::NR5G:
+            ratStr = "NR5G";
+            break;
+        default:
+            break;
+    }
+    return ratStr;
 }

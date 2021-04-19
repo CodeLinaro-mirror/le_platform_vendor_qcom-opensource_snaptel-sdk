@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,23 +27,18 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DATAUTILS_HPP
-#define DATAUTILS_HPP
+#ifndef SERVINGSYSTEMLISTENER_HPP
+#define SERVINGSYSTEMLISTENER_HPP
 
 #include <telux/data/DataFactory.hpp>
-#include <telux/data/DataConnectionManager.hpp>
+#include <telux/data/ServingSystemManager.hpp>
 
-class DataUtils {
+class ServingSystemListener : public telux::data::IServingSystemListener {
 public:
-   static std::string callEndReasonTypeToString(telux::data::EndReasonType type);
-   static int callEndReasonCode(telux::data::DataCallEndReason ceReason);
-   static std::string techPreferenceToString(telux::data::TechPreference techPref);
-   static std::string ipFamilyTypeToString(telux::data::IpFamilyType ipType);
-   static std::string dataCallStatusToString(telux::data::DataCallStatus dcStatus);
-   static std::string bearerTechToString(telux::data::DataBearerTechnology bearerTech);
-   static std::string operationTypeToString(telux::data::OperationType oprType);
-   static std::string protocolToString(telux::data::IpProtocol proto);
-   static std::string serviceRatToString(telux::data::NetworkRat rat);
+    ServingSystemListener();
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onServiceStateChanged(telux::data::ServiceStatus status) override;
+    void onRoamingStatusChanged(telux::data::RoamingStatus status) override;
 };
 
-#endif  // DATAUTILS_HPP
+#endif  // SERVINGSYSTEMLISTENER_HPP

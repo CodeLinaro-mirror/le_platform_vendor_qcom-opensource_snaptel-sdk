@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -45,6 +45,7 @@
 
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/DataProfileManager.hpp>
+#include <telux/data/ServingSystemManager.hpp>
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/IpFilter.hpp>
 
@@ -103,6 +104,16 @@ class DataFactory {
      * change and could break backwards compatibility.
      */
     std::shared_ptr<IDataFilterManager> getDataFilterManager(int slotId = DEFAULT_SLOT_ID);
+
+    /**
+     * Get Serving System Manager
+     *
+     * @param [in] slotId            Unique identifier for the SIM slot
+     *
+     * @returns instance of IServingSystemManager
+     *
+     */
+    std::shared_ptr<IServingSystemManager> getServingSystemManager(SlotId slotId = DEFAULT_SLOT_ID);
 
     /**
      * Get Network Address Translation(NAT) Manager
@@ -215,6 +226,7 @@ class DataFactory {
     std::mutex dataMutex_;
     std::shared_ptr<IDataConnectionManager> dataConnectionManager_;
     std::shared_ptr<IDataProfileManager> dataProfileManager_;
+    std::shared_ptr<IServingSystemManager> dataServingSystemManager_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::INatManager>>
         natManagerMap_;
     std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IFirewallManager>>

@@ -51,16 +51,18 @@ Compile telsdk_console_app:
    user@machine:telsdk_console_app/build/install/bin$ adb push . /data/
    \endcode
 
-@subpage sample_apps_settings
-@subpage logger_settings
-@subpage audio
-@subpage common
-@subpage cv2x
-@subpage phone
-@subpage data
-@subpage location
-@subpage modem_config
-@subpage power
-@subpage thermal
+The following sections provide further information
+- @subpage sample_apps_settings
+- @subpage logger_settings
+- @subpage audio
+- @subpage common
+- @subpage cv2x
+- @subpage phone
+- @subpage data
+- @subpage location
+- @subpage modem_config
+- @subpage power
+- @subpage thermal
+- @subpage sensor
 
 */

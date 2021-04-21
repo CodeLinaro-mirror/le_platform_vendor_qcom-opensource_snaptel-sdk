@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -153,5 +153,15 @@ Jun 2017   SVM      Created to support V2X API
       This section contains APIs related to Modem Config operations.
     @}
 
+    @defgroup telematics_sensor sensor
+    This section contains APIs related to sensor configuration, control, data acquisition and sensor feature control.
+    @{
+      @defgroup telematics_sensor_service Sensor service
+      This section contains APIs, data structures and components to access the sensor sub-system.
+      @defgroup telematics_sensor_control Sensor control
+      This section contains APIs related to sensor configuration, sensor control and data acquisition from sensors.
+      @defgroup telematics_sensor_feature_control Sensor feature control
+      This section contains APIs related to contrlling the features the sensor sub-system offers.
+    @}
   @}
 */

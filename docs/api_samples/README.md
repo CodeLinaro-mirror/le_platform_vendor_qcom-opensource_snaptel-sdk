@@ -55,4 +55,6 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to enable/disable socks proxy](data/enable_disable_socks.md)
   * [How to use Location Configurator APIs](loc/location_services_configurator.md)
   * [How to use L2TP Configurator APIs](data/enable_and_add_tunnel_l2tp.md)
+  * [How to acquire sensor data](sensor/sensor_data_acquisition.md)
+  * [How to control sensor features](sensor/sensor_feature_control.md)
   * [How to use Logging APIs](common/public_logging.md)

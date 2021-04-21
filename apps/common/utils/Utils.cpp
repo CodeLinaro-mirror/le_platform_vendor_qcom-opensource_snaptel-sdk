@@ -418,3 +418,9 @@ int Utils::validateV2xSpsInterval(uint16_t interval) {
     }
     return EXIT_FAILURE;
 }
+
+uint64_t Utils::getNanosecondsSinceBoot() {
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
+}

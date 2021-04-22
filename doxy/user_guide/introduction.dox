@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -54,6 +54,7 @@ when       who     what, where, why
 12/01/20   AK      Added Location SDK simulation libraries
 01/29/21   FS      Updated data subsystem readiness flow for new methodology
 02/12/21   RV      Added new sub system Readiness APIs for Audio.
+04/04/21   BS      Added documentation for sensor sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

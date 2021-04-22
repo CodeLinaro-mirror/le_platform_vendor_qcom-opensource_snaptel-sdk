@@ -1,0 +1,154 @@
+/*
+ *  Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @file        SensorClient.cpp
+ *
+ * @brief       This file hosts the implementation for the sensor client to configure and acquire
+ *              data from the sensor framework
+ */
+
+#include <algorithm>
+#include <chrono>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
+#include <future>
+
+#include "SensorClient.hpp"
+
+#include "SensorUtils.hpp"
+#include "../../common/utils/Utils.hpp"
+#include <telux/common/Version.hpp>
+
+#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+
+SensorClient::SensorClient(int id, std::shared_ptr<ISensor> sensor, bool verboseNotification)
+   : id_(id)
+   , sensor_(sensor)
+   , verboseNotification_(verboseNotification)
+   , lastBatchReceivedAt_(0) {
+    tag_ = std::string("[")
+               .append(SensorUtils::getSensorType(sensor_->getSensorInfo().type))
+               .append(", Sensor ID: ")
+               .append(std::to_string(sensor_->getSensorInfo().id))
+               .append(", Client ID: ")
+               .append(std::to_string(id_))
+               .append("] ");
+}
+
+void SensorClient::init() {
+    sensor_->registerListener(shared_from_this());
+}
+
+void SensorClient::cleanup() {
+    sensor_->deregisterListener(shared_from_this());
+}
+
+SensorClient::~SensorClient() {
+    sensor_->deactivate();
+    sensor_ = nullptr;
+}
+
+void SensorClient::printInfo() {
+    std::cout << "Client ID: " << id_ << ": ";
+    SensorUtils::printSensorInfo(sensor_->getSensorInfo());
+}
+
+void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
+    uint64_t receivedTimeStamp = Utils::getNanosecondsSinceBoot();
+    float jitter = 0;
+
+    // Calculate jitter in microsecond
+    if (lastBatchReceivedAt_ > 0) {
+        jitter = 1.0 * (receivedTimeStamp - lastBatchReceivedAt_) / 1000;
+    }
+    print_notification << tag_ << receivedTimeStamp << ": Received " << events->size()
+                       << " events, jitter info: " << std::fixed << jitter << "us" << std::endl;
+    if (verboseNotification_) {
+        for (SensorEvent s : *(events.get())) {
+            SensorUtils::printSensorEvent(sensor_->getSensorInfo().type, s, tag_);
+        }
+    }
+    lastBatchReceivedAt_ = receivedTimeStamp;
+}
+void SensorClient::onConfigurationUpdate(SensorConfiguration configuration) {
+    print_notification << tag_ << "Received configuration update: [" << configuration.samplingRate
+                       << ", " << configuration.batchCount << "]" << std::endl;
+}
+
+void SensorClient::configure(SensorConfiguration config) {
+    telux::common::Status status = sensor_->configure(config);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << tag_ << "sensor configuration failed: ";
+        Utils::printStatus(status);
+        return;
+    }
+    std::cout << tag_ << "Sensor configuration successful" << std::endl;
+}
+
+void SensorClient::activate() {
+    telux::common::Status status = sensor_->activate();
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << tag_ << "sensor activation failed: ";
+        Utils::printStatus(status);
+        return;
+    }
+    std::cout << tag_ << "Sensor activation successful" << std::endl;
+}
+
+void SensorClient::deactivate() {
+    telux::common::Status status = sensor_->deactivate();
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << tag_ << "sensor deactivation failed: ";
+        Utils::printStatus(status);
+        return;
+    }
+    std::cout << tag_ << "Sensor deactivation successful" << std::endl;
+}
+
+void SensorClient::enableLowPowerMode() {
+    telux::common::Status status = sensor_->enableLowPowerMode();
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << tag_ << "low power mode enable request failed: ";
+        Utils::printStatus(status);
+        return;
+    }
+    std::cout << tag_ << "Low power mode enable request successful" << std::endl;
+}
+
+void SensorClient::disableLowPowerMode() {
+    telux::common::Status status = sensor_->disableLowPowerMode();
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << tag_ << "low power mode disable request failed: ";
+        Utils::printStatus(status);
+        return;
+    }
+    std::cout << tag_ << "Low power mode disable request successful" << std::endl;
+}

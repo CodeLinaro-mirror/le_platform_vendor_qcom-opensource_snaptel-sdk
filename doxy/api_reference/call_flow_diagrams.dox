@@ -2840,4 +2840,186 @@ The application can register a listener for updates reagrding modem config activ
 7. Application receives synchronous Status which indicates if the request to get config auto selection mode was sent successfully.
 8. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback, along with mode and slot id.
 
+@section sensor_callflow Sensor
+
+The sensor sub-system provides APIs to configure and acquire continuous stream of data from an
+underlying sensor, create multiple clients for a given sensor, each of which can have their own
+configuration (sampling rate, batch count) for data acquisition.
+
+The sensor sub-system APIs are synchronous in nature.
+
+@subsection sensor_subsystem_startup_call_flow Call flow for sensor sub-system start-up
+
+@anchor fig_sensor_subsystem_startup_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{sensor_subsystem_startup_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Sensor sub-system start-up call flow}
+  \label{fig_sensor_subsystem_startup_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sensor_subsystem_startup_call_flow.png,Sensor sub-system start-up call flow,80,80,Sensor sub-system start-up call flow}
+
+1. Get the reference to the SensorFactory, with which we can further acquire other sensor sub-system
+objects.
+2. Prepare an initialization callback method or lambda which will be called by the sensor sub-system
+once the initialization is complete.
+3. Request for the SensorManager from SensorFactory and provide the initalization callback. Retain
+the SensorManager shared_ptr as long as necessary. SensorFactory does not hold on to the returned
+instance. If the received shared_ptr is released, SensorManager would be destroyed and requesting
+SensorFactory for SensorManager again would result in the creation of a new instance. Similar is the
+approach for SensorFeatureManager.
+4. Wait for the initialization callback to be invoked.
+5. The sensor sub-system invokes the callback once the underlying sub-system and sensor framework is
+available for usage. If the service status is notified as SERVICE_FAILED, retry intitialization
+starting with step (3). If the service status is notified as SERVICE_AVAILABLE, the sensor
+sub-system is ready for usage.
+
+@subsection sensor_data_acquisition_call_flow Call flow for sensor data acquisition
+
+@anchor fig_sensor_data_acquisition_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{sensor_data_acquisition_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Sensor data acquisition call flow}
+  \label{fig_sensor_data_acquisition_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sensor_data_acquisition_call_flow.png,Sensor data acquisition call flow,80,80,Sensor data acquisition call flow}
+
+The sensor sub-system should have been initialized successfully with SERVICE_AVAILABLE as a
+pre-requisite for sensor data acquisition and a valid SensorManager object is available.
+1. Get the information about available sensors from ISensorManager. The information will be provided
+in the sensorInfo parameter that would be passed by reference.
+2. Given the information about different sensors, identify the required sensor (name of the sensor)
+using the provided attributes - type, name, vendor or required sampling frequency. Having identified the required sensor,
+request for the sensor object from ISensorManager with the required name of the sensor. If the request
+was successful, the provided reference to shared_ptr<ISensor> would be set by the ISensorManager
+which can be used to further configure and acquire data from the sensor. The ownership of the
+sensor object is with the application. SensorManager does not hold a reference to the returned
+instance. So, requesting ISensorManager for a sensor with the same name would result in a new
+sensor object being returned.
+3. Create a listener of type ISensorEventListener which would receive notifications about updates
+to sensor configuration and sensor events. Register the created listener with the sensor object.
+4. Create the desired sensor configuration. For continous data acquisition samplingRate and
+batchCount are necessary attributes to be set in the configuration. Be sure to set the validityMask
+in the SensorConfiguration structure.
+5. On successful configuration, a notification is sent to the registered listeners indicating the
+configuration set.
+6. Activate the sensor for acquiring sensor data.
+7. When the sensor is activated successfully, the sensor data is sent to the registered listeners.
+
+@subsection sensor_reconfiguration_call_flow Call flow for sensor reconfiguration
+
+@anchor fig_sensor_reconfiguration_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{sensor_reconfiguration_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Sensor reconfiguration call flow}
+  \label{fig_sensor_reconfiguration_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sensor_reconfiguration_call_flow.png,Sensor reconfiguration call flow,80,80,Sensor reconfiguration call flow}
+
+When the sensor sub-system has been initialized successfully with SERVICE_AVAILABLE and is already
+activated, reconfiguring the sensors involves the following steps.
+1. Deactivate the sensor. This will stop the notifications about sensor events to the registered
+listeners.
+2. Configure the sensor with the required attributes. Be sure to set the validityMask for the all
+required attributes in SensorConfiguration.
+3. The underlying sub-system notifies the registered listeners about the new configuration set.
+4. Activate the sensor.
+5. When the sensor is activated successfully, the sensor data is sent to the registered listeners
+as per the new configuration.
+
+@subsection sensor_subsystem_cleanup_call_flow Call flow for sensor sub-system cleanup
+
+@anchor fig_sensor_subsystem_cleanup_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{sensor_subsystem_cleanup_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Sensor sub-system cleanup call flow}
+  \label{fig_sensor_subsystem_cleanup_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sensor_subsystem_cleanup_call_flow.png,Sensor sub-system cleanup call flow,80,80,Sensor sub-system cleanup call flow}
+
+When the sensor sub-system has been initialized successfully with SERVICE_AVAILABLE and sensor
+objects have been created, the following steps ensure a cleanup of the sensor sub-system.
+1. Deactivate all the sensors. With this, the registered listeners will no longer be notified of the
+sensor events.
+2. Release all the sensor objects created by setting them to nullptr. Since the application owns the
+objects, this would result in all the sensor objects getting destroyed.
+3. Disable all the sensor features that were previously enabled.
+4. Release the instance of ISensorManager by setting it to nullptr. Since the application owns the
+object, this would result in the sensor manager getting destroyed.
+5. Release the instance of ISensorFeatureManager by setting it to nullptr. Since the application
+owns the object, this would result in the sensor feature manager getting destroyed.
+
+@subsection sensor_power_control_call_flow Call flow for sensor power control
+
+@anchor fig_sensor_power_control_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{sensor_power_control_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Sensor power control cleanup call flow}
+  \label{sensor_power_control_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sensor_power_control_call_flow.png,Sensor power control call flow,80,80,Sensor power control call flow}
+
+The below points are to be noted for sensor power control
+a) Power control is not offered by all sensor manufacturers. If the underlying hardware sensor does
+not support power control, the power control APIs fail.
+b) Enabling or disabling low power mode for the sensor is only possible when the sensor is not
+activated.
+
+For achieving power control, the following steps are to be followed
+1. Deactivate the sensor. This will stop the notifications about sensor events to the registered
+listeners.
+2. Perform the required power control by enabling or disabling low power mode for the sensor.
+3. Activate the sensor.
+4. When the sensor is activated successfully, the sensor data is sent to the registered listeners.
+
+@subsection sensor_feature_control_call_flow Call flow for sensor feature control
+
+@anchor fig_sensor_feature_control_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{sensor_feature_control_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Sensor feature control cleanup call flow}
+  \label{sensor_feature_control_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sensor_feature_control_call_flow.png,Sensor feature control call flow,80,80,Sensor feature control call flow}
+
+The sensor sub-system offers certain features in addition to the data acquisition and these could be
+features offered by the underlying sensor hardware or the sensor software framework. If there are no
+features offered collectively, the sensor feature manager initialization would fail.
+
+1. Retrieve a list of features offered by the sensor sub-system and identify the required feature
+that needs to be enabled. If the feature that needs to be enabled is known, this step is optional.
+2. Create a sensor feature event listener, which would be notified of the different events that
+occur. Register this listener with the sensor feature manager.
+3. Enable the required feature.
+4. Once the feature is enabled and an event related to the feature occurs, the listener is notified.
+
 */

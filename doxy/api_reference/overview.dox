@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -95,6 +95,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 <b>Data Network Management</b>
 
    Data Network Management sub-system consists of APIs to setup VLAN, static NAT, Firewall, Socks, etc.
+
+<b>Sensor services</b>
+
+   The sensor sub-system provides API to configure and acquire data from underlying hardware sensors like accelerometers, gyroscopes among others.
 
 <b>Debug Logger</b>
 
@@ -433,6 +437,15 @@ Modem Config APIs in the Telematics SDK provides modem config related functional
    - Delete a modem config file from modem's storage.
    - Ability to get notified whenever a SW config file is activated.
 
+@subsection sensor Sensors
+The sensor sub-system provides APIs to
+   - Configure and acquire continuous stream of data from an underlying sensor
+   - Create multiple clients for a given sensor, each of which can have their own configuration (sampling rate, batch count) for data acquisition.
+   - Query and control sensor features available on the hardware or those offerred by the software framework. Availability of sensor features depend on the sensor hardware being used and the capabilities it offers.
+
+In addition to the sensor sub-system APIs, configuration items relevant to the underlying sensors are also available in /etc/sensors.conf on the device filesystem.
+This includes the range for the sensors, the limits on sampling frequency and batch count among other parameters.
+
 @subsection debug_logger Debug Logger
 Logging APIs in the Telematics SDK provides logging related functionalities such as
    - Runtime configurable logging to console, diag and file.
@@ -462,6 +475,7 @@ Logging APIs in the Telematics SDK provides logging related functionalities such
 @tr @td power @tdend @td telux_allow_power() @tdend @td domain context @tdend @tdlast telux_allow_power(app_t) @tdlastend @trend
 @tr @td config @tdend @td telux_allow_modemconfig() @tdend @td domain context @tdend @tdlast telux_allow_modemconfig(app_t) @tdlastend @trend
 @tr @td cv2x @tdend @td telux_allow_v2x() @tdend @td domain context @tdend @tdlast telux_allow_v2x(app_t) @tdlastend @trend
+@tr @td sensor @tdend @td telux_allow_sensor() @tdend @td domain context @tdend @tdlast telux_allow_sensor(app_t) @tdlastend @trend
 @tableend
 
 The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform all SDK data operations.

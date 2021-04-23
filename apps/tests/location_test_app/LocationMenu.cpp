@@ -242,6 +242,21 @@ int LocationMenu::init() {
            "Configure All Nmea sentences", {}, std::bind(&LocationMenu::
                configureAllNmeaSentence, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> provideConsentForTerrestrialPositioning =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("27",
+           "Request user consent for terrestrial positioning", {}, std::bind(&LocationMenu::
+               provideConsentForTerrestrialPositioning, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> requestTerrestrialPositioning =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("28",
+           "Request terrestrial positioning info", {}, std::bind(&LocationMenu::
+               requestTerrestrialPositioning, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> cancelTerrestrialPositioning =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("29",
+           "Cancel terrestrial positioning info", {}, std::bind(&LocationMenu::
+               cancelTerrestrialPositioning, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -250,7 +265,9 @@ int LocationMenu::init() {
          dgnssInjectCommand, configureMinGpsWeek, requestMinGpsWeek, deleteAidingDataWarm,
          configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
          configureConstellationEmpty, configureConstellationDeviceDefault,
-         configureDR, configureNmeaSentence, configureAllNmeaSentence};
+         configureDR, configureNmeaSentence, configureAllNmeaSentence,
+         provideConsentForTerrestrialPositioning, requestTerrestrialPositioning,
+         cancelTerrestrialPositioning};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -495,6 +512,36 @@ void LocationMenu::enableDisablePace(std::vector<std::string> userInput) {
           std::cout << "Not implemented" << std::endl;
         }
    }
+}
+
+void LocationMenu::provideConsentForTerrestrialPositioning(
+    std::vector<std::string> userInput) {
+  if (locationConfigurator_) {
+       char delimiter = '\n';
+       std::string option;
+       std::cout << "Enter Y to set user consent to true or N to set user consent to false :";
+       std::getline(std::cin, option, delimiter);
+
+       bool userConsent = false;
+       if (option == "Y" || option == "y") {
+            userConsent = true;
+       } else if (option == "N" || option == "n") {
+            userConsent = false;
+       } else {
+            std::cout << " BAD input " << std::endl;
+       }
+        std::cout << " userConsent: " << userConsent << std::endl;
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "RequestUserConsent-TerrestrialPositioning");
+        telux::common::Status status = locationConfigurator_->
+            provideConsentForTerrestrialPositioning(userConsent,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                    std::placeholders::_1));
+        if (status == telux::common::Status::FAILED) {
+          std::cout << "FAILED" << std::endl;
+	    }
+    }
 }
 
 void LocationMenu::deleteAllAidingData(std::vector<std::string> userInput) {
@@ -1004,6 +1051,82 @@ void LocationMenu::requestEnergyConsumedInfo(std::vector<std::string> userInput)
       &MyLocationCommandCallback::onGnssEnergyConsumedInfo, myLocCmdResponseCb_,
           std::placeholders::_1, std::placeholders::_2);
    locationManager_->requestEnergyConsumedInfo(gnssEnergyConsumedCb);
+}
+
+void LocationMenu::requestTerrestrialPositioning(std::vector<std::string> userInput) {
+  if (locationManager_) {
+      std::string timeoutInput;
+      char delimiter = '\n';
+      std::cout << "Enter the timeout in msec (default 1000msec): ";
+      std::getline(std::cin, timeoutInput, delimiter);
+      int optTimeout = -1;
+      if (!timeoutInput.empty()) {
+         try {
+            optTimeout = std::stoi(timeoutInput);
+         } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << optTimeout
+                      << std::endl;
+         }
+      } else {
+         optTimeout = 1000;
+      }
+
+      std::string terrestrialTech;
+      TerrestrialTechnology techType = DEFAULT_UNKNOWN;
+      std::vector<int> options;
+      std::cout << "Enter the terrestrial technology : \n"
+                   "0 - GTP_WWAN \n"
+                   "Enter your preference\n"
+                   "(Example: enter 0 to choose GTP_WWAN)\n";
+      std::getline(std::cin, terrestrialTech,delimiter);
+      std::stringstream ss(terrestrialTech);
+      int i = -1;
+      while (ss >> i) {
+        options.push_back(i);
+        if (ss.peek() == ',' || ss.peek() == ' ')
+          ss.ignore();
+      }
+      for (auto &opt : options) {
+        if (opt == 0) {
+          try {
+            techType |= 1UL << opt;
+          } catch (const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                         << std::endl;
+          }
+        } else {
+            std::cout << "Terrestrial technology should not be out of range" << std::endl;
+        }
+      }
+
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+          "Request Terrestrial Technology");
+      auto terrestrialPositionCb = std::bind(
+          &MyLocationCommandCallback::onTerrestrialPositionInfo,
+              std::make_shared<MyLocationCommandCallback>("Terrestrial Info"),
+                  std::placeholders::_1);
+      telux::common::Status status = locationManager_->getTerrestrialPosition(
+          (uint32_t)optTimeout, techType, terrestrialPositionCb, std::bind(
+              &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                  std::placeholders::_1));
+      if (status == telux::common::Status::SUCCESS) {
+          std::cout << "Status SUCCESS" << std::endl;
+      }
+   }
+}
+
+void LocationMenu::cancelTerrestrialPositioning(std::vector<std::string> userInput) {
+  if (locationManager_) {
+
+      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+          "Cancel Terrestrial Technology");
+      telux::common::Status status = locationManager_->cancelTerrestrialPositionRequest(
+          std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+              std::placeholders::_1));
+      if (status == telux::common::Status::SUCCESS) {
+          std::cout << "Status SUCCESS" << std::endl;
+      }
+   }
 }
 
 void LocationMenu::configureMinGpsWeek(std::vector<std::string> userInput) {

@@ -544,6 +544,16 @@ enum LocationTechnologyType {
   LOC_WIFI = (1 << 2),
   /** location was calculated using Sensors */
   LOC_SENSORS = (1 << 3),
+  /** Location was calculated using Reference location. */
+  LOC_REFERENCE_LOCATION = (1 << 4),
+  /** Location was calculated using Coarse position injected into the location engine. */
+  LOC_INJECTED_COARSE_POSITION = (1 << 5),
+  /** Location was calculated using AFLT. */
+  LOC_AFLT = (1 << 6),
+  /** Location was calculated using GNSS and network-provided measurements. */
+  LOC_HYBRID = (1 << 7),
+  /** Location was calculated using Precise position engine. */
+  LOC_PPE = (1 << 8),
   /** Location was calculated using Vehicular data. */
   LOC_VEH = (1 << 9),
   /** Location was calculated using Visual data. */
@@ -1157,6 +1167,17 @@ enum AidingDataType {
 
 /** Specifies AidingDataType mask */
 using AidingData = uint32_t;
+
+/**
+ * Specifies the set of terrestrial technologies.
+ */
+enum TerrestrialTechnologyType {
+    /** Cell-based technology */
+    GTP_WWAN = (1 << 0),
+};
+
+/** Specifies TerrestrialTechnologyType mask */
+using TerrestrialTechnology = uint32_t;
 
 /** Specify the valid mask for robust location configuration
  *  used by the GNSS standard position engine (SPE). */

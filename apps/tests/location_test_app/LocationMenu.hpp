@@ -69,6 +69,7 @@ public:
    void deRegisterLocationSystemInfo(std::vector<std::string> userInput);
    void enableDisableTunc(std::vector<std::string> userInput);
    void enableDisablePace(std::vector<std::string> userInput);
+   void provideConsentForTerrestrialPositioning(std::vector<std::string> userInput);
    void deleteAllAidingData(std::vector<std::string> userInput);
    void deleteAidingDataWarm(std::vector<std::string> userInput);
    void configureLeverArm(std::vector<std::string> userInput);
@@ -81,6 +82,8 @@ public:
    void configureRobustLocation(std::vector<std::string> userInput);
    void requestRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);
+   void requestTerrestrialPositioning(std::vector<std::string> userInput);
+   void cancelTerrestrialPositioning(std::vector<std::string> userInput);
    void configureMinGpsWeek(std::vector<std::string> userInput);
    void configureMinSVElevation(std::vector<std::string> userInput);
    void requestMinGpsWeek(std::vector<std::string> userInput);

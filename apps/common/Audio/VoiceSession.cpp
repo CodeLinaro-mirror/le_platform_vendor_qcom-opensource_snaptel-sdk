@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -58,7 +58,9 @@ Status VoiceSession::startAudio() {
                     p.set_value(false);
                 }
             });
-            p.get_future().wait();
+            if(status == Status::SUCCESS) {
+                p.get_future().wait();
+            }
         } else {
             LOG(ERROR, "Audio already started");
             status = Status::SUCCESS;
@@ -84,7 +86,9 @@ Status VoiceSession::stopAudio() {
                 p.set_value(false);
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         status = Status::SUCCESS;
         LOG(ERROR, "Audio not started yet");
@@ -106,7 +110,9 @@ Status VoiceSession::startDtmf(DtmfTone tone, uint32_t duration, uint16_t gain) 
                 p.set_value(false);
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         LOG(ERROR, "Audio not started yet");
     }
@@ -127,7 +133,9 @@ Status VoiceSession::stopDtmf() {
                 p.set_value(false);
             }
             });
-        p.get_future().wait();
+            if(status == Status::SUCCESS) {
+                p.get_future().wait();
+            }
     } else {
         LOG(ERROR, "No stream exists");
     }
@@ -150,7 +158,9 @@ Status VoiceSession::registerListener(std::weak_ptr<IVoiceListener> listener) {
                 LOG(ERROR, "Failed to register Listener");
             }
             });
-        p.get_future().wait();
+            if(status == Status::SUCCESS) {
+                p.get_future().wait();
+            }
     } else {
         LOG(ERROR, "Audio is not started yet");
     }

@@ -38,6 +38,10 @@
 #define CV2X_RX_META_DATA_HELPER
 
 #include <bitset>
+#include <vector>
+#include <memory>
+
+#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace cv2x {
@@ -118,17 +122,18 @@ public:
      * use this method to extract the meta data report before processing the real cv2x
      * message in the payload.
      *
-     * @param [in] payload       - the pointer to the received packet's data
-     * @param [in] payloadLength - received packet's length
-     * @param [out] metaData     - value resulted, it contains the rx meta data information
+     * @param [in]  payload       - the pointer to the received packet's data
+     * @param [in]  payloadLength - received packet's length
+     * @param [out] metaDataLen   - meta data length parsed
+     * @param [out] metaDatas     - Rx meta data reports parsed out
      *
-     * Return the length of meta data, or 0 if no meta data presented
+     * @Returns SUCCESS if no error occurred.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to
+     *         change and could break backwards compatibility.
      */
-    static unsigned getRxMetaDataInfo(const uint8_t* payload,
-                                      uint32_t payloadLength,
-                                      RxPacketMetaDataReport& metaData);
-
-
+    static telux::common::Status getRxMetaDataInfo(const uint8_t* payload, uint32_t payloadLength,
+        size_t& metaDataLen, std::shared_ptr<std::vector<RxPacketMetaDataReport>> metaDatas);
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

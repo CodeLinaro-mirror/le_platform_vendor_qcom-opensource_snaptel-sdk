@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -78,7 +78,7 @@ public:
     }
 };
 
-Status Cv2xDaemon::startV2xMode() {
+Status Cv2xDaemon::startV2xMode(bool restart) {
 
     Status ret = Status::FAILED;
     Cv2xStatus v2xStatus;
@@ -93,11 +93,16 @@ Status Cv2xDaemon::startV2xMode() {
 
     LOGI("Read V2X radio status\n");
     if (v2xStatus.rxStatus != Cv2xStatusType::INACTIVE &&
-            v2xStatus.txStatus != Cv2xStatusType::INACTIVE) {
-        // Try stopping v2x mode post ssr for EAP
-        ret = cv2xTelux_->stopV2xRadio();
-        if (ret != Status::SUCCESS) {
-            LOGE("Failed to stop v2x mode, applicable post ssr on EAP\n");
+        v2xStatus.txStatus != Cv2xStatusType::INACTIVE) {
+        if (restart) {
+            // Try stopping v2x mode post ssr for EAP
+            ret = cv2xTelux_->stopV2xRadio();
+            if (ret != Status::SUCCESS) {
+                LOGE("Failed to stop v2x mode, applicable post ssr on EAP\n");
+            }
+        } else {
+            LOGI("V2x mode already started\n");
+            return Status::SUCCESS;
         }
     }
 
@@ -164,16 +169,15 @@ Status Cv2xDaemon::handleSystemStateChange() {
             break;
     }
 
-    setSystemState(TcuActivityState::UNKNOWN);
     return ret;
 }
 
 void Cv2xDaemon::setSystemState(TcuActivityState newState) {
-    systemState_ = newState;
+    cv2xTelux_->setSystemState(newState);
 }
 
 TcuActivityState Cv2xDaemon::getSystemState() {
-    return systemState_;
+    return cv2xTelux_->getSystemState();
 }
 
 Status Cv2xDaemon::enableSysPowerNotification() {
@@ -189,6 +193,9 @@ Status Cv2xDaemon::enableSysPowerNotification() {
         std::future<bool> future = sysStateMgr_->onReady();
         future.get();
     }
+
+    /*Initiate intial System Power State*/
+    setSystemState(sysStateMgr_->getActivityState());
 
     sysStateListener_ = std::make_shared<SystemStateListener>();
     regStatus = sysStateMgr_->registerListener(sysStateListener_);
@@ -243,7 +250,7 @@ Status Cv2xDaemon::runAsDaemon() {
         return ret;
     }
 
-    ret = startV2xMode();
+    ret = startV2xMode(true);
     if (ret != Status::SUCCESS) {
         LOGE("Failed to start v2x mode\n");
         // We dont have to wait for f.get() for async task as the function will be blocked until
@@ -363,6 +370,11 @@ Status Cv2xDaemon::handleArguments(bool &isRunningDaemonMode) {
     }
 
     if (daemonMode_) {
+        ret = enableSysPowerNotification();
+        if ( ret!= Status::SUCCESS) {
+            return ret;
+        }
+
         ret = runAsDaemon();
         if (ret != Status::SUCCESS) {
             LOGE("Failed to start in daemon mode\n");
@@ -464,12 +476,6 @@ int main(int argc, char **argv) {
 #ifdef WITH_SYSTEMD
         sd_notify(0, "READY=1");
 #endif
-
-        if (cv2xDaemon.enableSysPowerNotification() != Status::SUCCESS) {
-            cv2xDaemon.deInit();
-            return -1;
-        }
-
         while (1) {
             std::unique_lock<std::mutex> lock(cv2xDaemon.mutex_);
             cv2xDaemon.cv_.wait(lock);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -99,7 +99,7 @@ class Cv2xDaemon{
         /**
          * Switch the CV2X mode to start
          */
-        Status startV2xMode();
+        Status startV2xMode(bool restart = false);
 
         /**
          * Switch the CV2X mode to stop
@@ -141,7 +141,6 @@ class Cv2xDaemon{
         int daemonMode_;
         int startV2x_;
         int stopV2x_;
-        TcuActivityState systemState_;
 
         /**
          * Wrapper class to perform Telsdk Operations

@@ -77,6 +77,7 @@ when       who     what, where, why
 @tr @td Mar 2020 @tdend @tdlast Addition of Robust Location API in Location Configurator and call flows @tdlastend @trend
 @tr @td Apr 2020 @tdend @tdlast Addition of Security section with SE-linux interface documentation @tdlastend @trend
 @tr @td Sep 2020 @tdend @tdlast Addition of Location Manager APIs, Location Configurator APIs and callflows @tdlastend @trend
+@tr @td Apr 2021 @tdend @tdlast Addition of terrestrial positioning APIs and callflows in location SDK @tdlastend @trend
 @tableend
 
 @latexonly \rm @endlatexonly

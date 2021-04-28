@@ -52,6 +52,7 @@ when       who     what, where, why
 03/12/20   SD      Added robust location support to location configurator in Telematics SDK
 04/09/20   AK      Added security section with SE-linux details supported in Telematics SDK
 09/01/20   SD      Added measurement, nmea, system info, minGpsWeek, minSVElevation, delete data and dREngine support in Telematics SDK
+04/28/21   RV      Added terrestrial positioning support in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

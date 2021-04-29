@@ -41,6 +41,7 @@
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/DataFactory.hpp>
 #include <telux/cv2x/Cv2xRadioListener.hpp>
+#include <TcuActivityManager.hpp>
 
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
@@ -62,6 +63,7 @@ using telux::common::IServiceStatusListener;
 using telux::common::ServiceStatus;
 using telux::common::Status;
 using telux::cv2x::ICv2xListener;
+using telux::power::TcuActivityState;
 
 /** Internal class for data call */
 struct ProfileIds {
@@ -199,6 +201,8 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
 
         void setIpCallStatus(DataCallStatus newStatus);
         void setNonipCallStatus(DataCallStatus newStatus);
+        TcuActivityState getSystemState();
+        void setSystemState(TcuActivityState newState);
 
         bool isPostSSRV2XDone_;
         std::condition_variable cv_;
@@ -215,6 +219,8 @@ class Cv2xTelux : public telux::cv2x::ICv2xListener,
         std::shared_ptr<IDataProfileManager> dataProfileMgr_;
         std::shared_ptr<IDataConnectionManager> dataConnectionMgr_;
         std::shared_ptr<DataConnectionListener> dataConnectionListener_;
+        telux::power::TcuActivityState systemState_;
+        std::mutex systemStateMutex_;
 
         /**
          * Stop data call, used internally by stopV2xDataCall()

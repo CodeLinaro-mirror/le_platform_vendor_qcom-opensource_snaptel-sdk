@@ -322,6 +322,10 @@ Status Cv2xTelux::getV2xRadioStatus(Cv2xStatus &status) {
 Status Cv2xTelux::startV2xRadio() {
 
     LOGI("Starting V2X radio\n");
+    if (TcuActivityState::RESUME != getSystemState()) {
+        LOGE("startV2xRadio NOT allowed due to system not in RESUME state\n");
+        return Status::NOTALLOWED;
+    }
 
     std::promise<ErrorCode> prom;
     cv2xRadioMgr_->startCv2x([&prom](ErrorCode code) {
@@ -613,4 +617,15 @@ int Cv2xTelux::stopV2xDataCalls() {
     }
 
     return res;
+}
+
+TcuActivityState Cv2xTelux::getSystemState() {
+    std::unique_lock<std::mutex> lock(systemStateMutex_);
+    return systemState_;
+}
+
+void Cv2xTelux::setSystemState(TcuActivityState newState) {
+    std::unique_lock<std::mutex> lock(systemStateMutex_);
+    systemState_ = newState;
+    LOGI("set system State \n", static_cast<int>(newState));
 }

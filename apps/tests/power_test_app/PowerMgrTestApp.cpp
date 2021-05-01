@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -182,26 +182,23 @@ int PowerMgmtTestApp::start(ClientType clientType, ProcType procType) {
     // Get power factory instance
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
-    tcuActivityMgr_ = powerFactory.getTcuActivityManager(clientType, procType);
+    std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
+    tcuActivityMgr_ = powerFactory.getTcuActivityManager(clientType, procType,
+                        [&](telux::common::ServiceStatus status) {
+                             prom.set_value(status);
+                        });
     if(tcuActivityMgr_ == nullptr)
     {
         std::cout << APP_NAME << " ERROR - Failed to get manager instance" << std::endl;
         return -1;
     }
-    // Check TCU-activity manager service status
-    bool isReady = tcuActivityMgr_->isReady();
-    if(!isReady) {
-        std::cout << APP_NAME << " TCU-activity management services are not ready, waiting for it "
-                "to be ready " << std::endl;
-        std::future<bool> f = tcuActivityMgr_->onReady();
-        isReady = f.get();
-    }
-
-    if(isReady) {
-        std::cout << APP_NAME << " TCU-activity management services are ready !" << std::endl;
+    // Wait for TCU-activity manager to be ready
+    std::cout << " Waiting for TCU Activity Manager to be ready " << std::endl;
+    telux::common::ServiceStatus serviceStatus = prom.get_future().get();
+    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << APP_NAME << " TCU-activity manager is ready" << std::endl;
     } else {
-        std::cout << APP_NAME << " ERROR - Unable to initialize TCU-activity management services"
-                << std::endl;
+        std::cout << APP_NAME << " Failed to initialize TCU-activity manager" << std::endl;
         return -1;
     }
     getTcuActivityState();

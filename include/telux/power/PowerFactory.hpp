@@ -39,6 +39,7 @@
 #include <memory>
 #include <mutex>
 #include <map>
+#include <vector>
 
 #include <telux/power/TcuActivityManager.hpp>
 
@@ -61,22 +62,32 @@ public:
     /**
      * API to get the TCU-activity Manager instance
      *
-     * @param [in] type Type of the client that is going to access ITcuActivityManager APIs
-     *                  @ref ClientType
-     *
+     * @param [in] type      Type of the client that is going to access ITcuActivityManager APIs
+     *                       @ref ClientType
      * @param [in] procType  Required processor type on which the operations will be performed
      *                       @ref telux::common::ProcType
+     * @param [in] callback  Optional callback pointer to get the response of the manager
+     *                       initialization.
      *
      * @returns Pointer of ITcuActivityManager object.
      */
     std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
         ClientType clientType = ClientType::SLAVE,
-        common::ProcType procType = common::ProcType::LOCAL_PROC);
+        common::ProcType procType = common::ProcType::LOCAL_PROC,
+        telux::common::InitResponseCb callback = nullptr);
 
 private:
     std::map<std::pair<common::ProcType, ClientType>,
         std::shared_ptr<ITcuActivityManager>> tcuActivityManagerMap_;
     std::mutex tcuActivityFactoryMutex_;
+
+    void onTcuActivityMgrInitResponse(common::ProcType procType, ClientType clientType,
+        telux::common::ServiceStatus status);
+    std::map<std::pair<common::ProcType, ClientType>,
+        telux::common::ServiceStatus> tcuActivityMgrInitStatus_;
+    std::map<std::pair<common::ProcType, ClientType>,
+        std::vector<telux::common::InitResponseCb>> tcuActivityMgrCallbacks_;
+
     PowerFactory();
     PowerFactory(const PowerFactory &) = delete;
     PowerFactory &operator=(const PowerFactory &) = delete;

@@ -53,6 +53,7 @@ namespace loc {
 
 const float UNKNOWN_CARRIER_FREQ = -1;
 const int UNKNOWN_SIGNAL_MASK = 0;
+const double UNKNOWN_BASEBAND_CARRIER_NOISE = 0.0;
 const uint64_t UNKNOWN_TIMESTAMP = 0;
 const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
                                                Units: milli-seconds. */
@@ -1859,10 +1860,10 @@ public:
   virtual float getAzimuth() = 0;
 
 /**
- * Retrieves satellite vehicle signal-to-noise ratio.
+ * Retrieves signal-to-noise ratio of the signal measured at antenna of the satellite vehicle.
  *    - Units: dB-Hz
  *
- * @returns SNR if available else returns NaN.
+ * @returns SNR if available else returns 0.0 value.
  *
  */
   virtual float getSnr() = 0;
@@ -1882,6 +1883,15 @@ public:
  * @returns signalType mask else return UNKNOWN_SIGNAL_MASK when not supported.
  */
   virtual GnssSignal getSignalType() = 0;
+
+/**
+ * Carrier-to-noise ratio of the signal measured at baseband.
+ *    - Units: dB-Hz
+ *
+ * @returns carrier-to-noise ratio at baseband else returns UNKNOWN_BASEBAND_CARRIER_NOISE ratio
+ * when not supported.
+ */
+  virtual double getBasebandCnr() = 0;
 };
 
 /**

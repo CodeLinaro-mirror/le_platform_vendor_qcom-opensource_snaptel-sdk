@@ -276,7 +276,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 ret = 0;
                 wsmpp = (wsmp_data_t *)mc->wsmp;
                 if (wsmpp->psid == PSID_WSA) {
-#if WSA
+#ifdef WITH_WSA
                     if (mc->wra) {
                         ret = onReceiveWra(static_cast<RoutingAdvertisement_t*>(mc->wra), 
                                 sourceMacAddr, macAddrLen);
@@ -708,6 +708,10 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
     telux::cv2x::IPv6AddrType IpPrefix;
     telux::cv2x::GlobalIPUnicastRoutingInfo RoutingInfo;
     int ret = 0;
+    auto func = [&](int routerLifetime) {
+        wraThreadFunc(routerLifetime);
+    };
+
     if (GlobalIpSessionActive == true) {
         if (wraInterval == std::chrono::milliseconds::zero()) {
             //received the second WRA message, need to determine the period of the WRA, 
@@ -718,6 +722,12 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
             cout << "wraInterval=" << wraInterval.count() << endl;
         }
         wraCv.notify_all();
+        if (memcmp(sourceMacAddr, prevSourceMac, CV2X_MAC_ADDR_LEN)) {
+            memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
+            memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
+            cout << "Updating routing info" << endl;
+            ret = radioReceives[0].setRoutingInfo(RoutingInfo);
+        }
         return ret;
     }
     if (wra->ipPrefix.size > CV2X_IPV6_ADDR_ARRAY_LEN) {
@@ -728,20 +738,28 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
         now = std::chrono::high_resolution_clock::now();
         memcpy(IpPrefix.ipv6Addr, wra->ipPrefix.buf, wra->ipPrefix.size);
         IpPrefix.prefixLen = wra->ipPrefixLength;
-        memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
         cout << "Setting Global IP address" << endl;
-        ret = radioReceives[0].onReceiveWra(IpPrefix, RoutingInfo);
+        memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
+        ret = radioReceives[0].onReceiveWra(IpPrefix);
         if (!ret) {
-            GlobalIpSessionActive = true;
+            memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
+            ret = radioReceives[0].setRoutingInfo(RoutingInfo);
+            if (ret) {
+                return ret;
+            }
             //Launch Wra thread to monitor WRA timeout.
             if (wraThread.joinable() == false) {
-                auto func = [&](int routerLifetime) {
-                    wraThreadFunc(routerLifetime);
-                };
                 wraThread = std::thread(func, wra->lifetime);
+                GlobalIpSessionActive = true;
             } else {
-                //Notify Wra thread we got new WRA message
-                wraCv.notify_all();
+                if (GlobalIpSessionActive == false) {
+                    wraThread.join();
+                    wraThread = std::thread(func, wra->lifetime);
+                    GlobalIpSessionActive = true;
+                } else {
+                    //Notify Wra thread we got new WRA message
+                    wraCv.notify_all();
+                }
             }
         }
     }
@@ -769,6 +787,7 @@ void SaeApplication::wraThreadFunc(int routerLifetime)
         lk.unlock();
         if (status == std::cv_status::timeout) {
             radioReceives[0].onWraTimedout();
+            GlobalIpSessionActive = false;
             cout << "WRA timeout, global IP session stopped" << endl;
             return;
         }
@@ -790,7 +809,15 @@ int SaeApplication::setGlobalIPv6Prefix(void)
             memcpy(IpPrefix.ipv6Addr, ipPrefix, prefixLen);
             ret = radioReceives[0].setGlobalIPInfo(IpPrefix);
         }
+        GlobalIpSessionActive = true;
     }
 
     return ret;
 }
+
+int SaeApplication::clearGlobalIPv6Prefix(void)
+{
+    GlobalIpSessionActive = false;
+    return radioReceives[0].clearGlobalIPInfo();
+}
+

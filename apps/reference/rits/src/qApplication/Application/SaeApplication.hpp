@@ -82,8 +82,10 @@ public:
     void printTxStats();
 
     int setGlobalIPv6Prefix(void);
+    int clearGlobalIPv6Prefix(void);
 
 private:
+    uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
     bool GlobalIpSessionActive = false;
     std::chrono::milliseconds wraInterval;
     std::thread wraThread;

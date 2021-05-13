@@ -284,31 +284,6 @@ uint8_t RadioReceive::closeFlow(){
 /* For RSU use case only, set the Global IP addres prefix */
 int RadioReceive::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr)
 {
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
-    auto respCb = [&](ErrorCode error){
-                commonStatusCallback(error);
-        };
-    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Addr, respCb))
-    {
-        ErrorCode error =  this->gCallbackPromise.get_future().get();
-        if (ErrorCode::SUCCESS == error)
-        {
-            cout<<"setGlobalIPInfo succeeds." << endl;;
-        }else{
-            cout<<"setGlobalIPInfo fails:" << static_cast<int>(error) << endl;;
-            return -1;
-        }
-    } else{
-        cout<<"setGlobalIPInfo sync fails." << endl;
-        return -1;
-    }
-    this->resetCallbackPromise();
-
-    return 0;
-}
-int RadioReceive::onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr,
-        const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr) {
-
     SocketInfo tcpInfo;
     EventFlowInfo eventInfo;
     auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
@@ -330,22 +305,6 @@ int RadioReceive::onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr,
         return -1;
     }
     this->resetCallbackPromise();
-
-    if (Status::SUCCESS == cv2xRadio->setGlobalIPUnicastRoutingInfo(destL2Addr, respCb))
-    {
-        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
-        {
-            cout<<"setGlobalIPUnicastRoutingInfo succeeds." << endl;;
-        }else{
-            cout<<"setGlobalIPUnicastRoutingInfo fails." << endl;;
-             return -1;
-        }
-    }else{
-        cout<< "setGlobalIPUnicastRoutingInfo sync fails." << endl;
-        return -1;
-    }
-    this->resetCallbackPromise();
-
     /* Create IP unicast flow on port 0 */
     tcpInfo.serviceId = 1; //what should be service ID ?
     tcpInfo.localPort = 0;
@@ -367,12 +326,116 @@ int RadioReceive::onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr,
         return -1;
     }
 
-    cout << "Global IP session established" << endl;
+    cout << "Global IP Info Set" << endl;
+
     return 0;
 }
 
+//For RSU use case, clear Global IP info and unregister catch all flow
+int RadioReceive::clearGlobalIPInfo(void)
+{
+    return onWraTimedout();
+}
+int RadioReceive::onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr)
+{
+    int ret;
+    SocketInfo tcpInfo;
+    EventFlowInfo eventInfo;
+    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto respCb = [&](ErrorCode error){
+                commonStatusCallback(error);
+        };
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Addr, respCb))
+    {
+        ErrorCode error =  this->gCallbackPromise.get_future().get();
+        if (ErrorCode::SUCCESS == error)
+        {
+            ret = 0;
+            cout<<"setGlobalIPInfo succeeds." << endl;;
+        }else{
+            cout<<"setGlobalIPInfo fails:" << static_cast<int>(error) << endl;;
+            ret = -1;
+        }
+    } else{
+        cout<<"setGlobalIPInfo sync fails." << endl;
+        ret =  -1;
+    }
+#if 0
+    this->resetCallbackPromise();
+
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPUnicastRoutingInfo(destL2Addr, respCb))
+    {
+        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
+        {
+            cout<<"setGlobalIPUnicastRoutingInfo succeeds." << endl;;
+        }else{
+            cout<<"setGlobalIPUnicastRoutingInfo fails." << endl;;
+             return -1;
+        }
+    }else{
+        cout<< "setGlobalIPUnicastRoutingInfo sync fails." << endl;
+        return -1;
+    }
+#endif
+    this->resetCallbackPromise();
+    if (ret)
+        return ret;
+
+    /* Create IP unicast flow on port 0 */
+    tcpInfo.serviceId = 1; //what should be service ID ?
+    tcpInfo.localPort = 0;
+    eventInfo.isUnicast = true;
+    auto sockRespCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error){
+                createTcpSocketCallback(sock, error);
+        };
+    if (Status::SUCCESS == cv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, sockRespCb))
+    {
+        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
+        {
+            cout<<"createCv2xTcpSocket succeeds." << endl;;
+            ret = 0;
+        }else{
+            cout<<"createCv2xTcpSocket fails." << endl;;
+            ret = -1;
+        }
+    } else {
+        cout << "createCv2xTcpSocket sync fails" << endl;
+        ret = -1;
+    }
+    this->resetCallbackPromise();
+
+    cout << "Global IP session established" << endl;
+    return ret;
+}
+
+int RadioReceive::setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr)
+{
+    int ret;
+    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto respCb = [&](ErrorCode error){
+                commonStatusCallback(error);
+        };
+
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPUnicastRoutingInfo(destL2Addr, respCb))
+    {
+        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
+        {
+            ret = 0;
+            cout<<"setGlobalIPUnicastRoutingInfo succeeds." << endl;;
+        }else{
+            cout<<"setGlobalIPUnicastRoutingInfo fails." << endl;;
+            ret = -1;
+        }
+    }else{
+        cout<< "setGlobalIPUnicastRoutingInfo sync fails." << endl;
+        ret = -1;
+    }
+    this->resetCallbackPromise();
+    return ret;
+}
 int RadioReceive::onWraTimedout(void)
 {
+    int ret;
     telux::cv2x::IPv6AddrType ipv6Prefix;
     auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
     auto closeSockCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
@@ -383,13 +446,16 @@ int RadioReceive::onWraTimedout(void)
         if(Status::SUCCESS != cv2xRadio->closeCv2xTcpSocket(tcpSockInfo, closeSockCb) ||
                 ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             cout << "close Tcp socket err" << endl;
-            return -1;
+            ret = -1;
         }
     }
 
+    resetCallbackPromise();
+    if (ret)
+        return ret;
+
     ipv6Prefix.prefixLen = 64;
     memset(&ipv6Prefix.ipv6Addr[0], 0, CV2X_IPV6_ADDR_ARRAY_LEN);
-    resetCallbackPromise();
     auto respCb = [&](ErrorCode error) {
         commonStatusCallback(error);
     };
@@ -398,15 +464,17 @@ int RadioReceive::onWraTimedout(void)
         if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
         {
             cout<<"setGlobalIPInfo succeeds." << endl;;
+            ret = 0;
         }else{
             cout<<"setGlobalIPInfo fails." << endl;;
-            return -1;
+            ret = -1;
         }
     } else{
         cout<<"setGlobalIPInfo sync fails." << endl;
-        return -1;
+        ret = -1;
     }
 
+    resetCallbackPromise();
     cout << "Global IP session stopped" << endl;
-    return 0;
+    return ret;
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -373,6 +373,13 @@ void DataConnectionMenu::setDefaultProfile() {
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
+    bool profileFound = validateProfile(slotId,profileId);
+    // if profile does not exist , dont allow it to be set as default profile
+    if (!profileFound) {
+        std::cout << "\nCannot set "<< profileId
+            << " as default profile, Profile does not exist" << std::endl;
+        return;
+    }
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {
@@ -421,4 +428,72 @@ void DataConnectionMenu::getDefaultProfile() {
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->getDefaultProfile(
         opType, respCb);
     Utils::printStatus(retStat);
+}
+
+bool DataConnectionMenu::validateProfile(int slotId, int profileId) {
+
+    if (!initalizeDPM(static_cast<SlotId>(slotId))) {
+        return false;
+    }
+
+    std::promise<telux::common::ErrorCode> prom{};
+    std::vector<std::shared_ptr<telux::data::DataProfile>> profileList{};
+    std::shared_ptr<MyDefaultProfilesCallback> profileListCb  =
+        std::make_shared<MyDefaultProfilesCallback>();
+
+    if (profileListCb == nullptr) {
+        std::cout << "ERROR - Unable to allocate profile list callback" << std::endl;
+        return false;
+    }
+
+    telux::common::Status status =
+        dataProfileManagerMap_[static_cast<SlotId>(slotId)]->requestProfileList(
+            std::shared_ptr<telux::data::IDataProfileListCallback>(profileListCb));
+
+    telux::common::ErrorCode errCode = profileListCb->prom_.get_future().get();
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\nError retriving profile list ErrorCode: " << static_cast<int>(errCode)
+            << std::endl;
+        return false;
+    }
+    for(auto it : profileListCb->profileList_) {
+        if (profileId == it->getId()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DataConnectionMenu::initalizeDPM(SlotId slotId) {
+
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    bool retValue = false;
+    std::promise<telux::common::ServiceStatus> prom{};
+
+    // Get the DataFactory instances.
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    auto profMgr = dataFactory.getDataProfileManager(slotId,
+        [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
+
+    if (profMgr) {
+        //  Initialize data profile manager
+        std::cout << "\n\nInitializing Data profile manager subsystem on slot " <<
+            slotId << ", Please wait ..." << endl;
+        subSystemStatus = prom.get_future().get();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nData Profile Manager on slot "<< slotId << " is ready" << std::endl;
+            retValue = true;
+        } else {
+            std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+            return false;
+        }
+
+        //If this is newly created Manager
+        if (dataProfileManagerMap_.find(slotId) == dataProfileManagerMap_.end()) {
+            dataProfileManagerMap_.emplace(slotId, profMgr);
+        }
+    } else {
+        std::cout << "Data Profile Manager failed to initialize" << std::endl;
+    }
+    return retValue;
 }

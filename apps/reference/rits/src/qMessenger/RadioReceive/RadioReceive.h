@@ -109,10 +109,11 @@ public:
     */
     uint32_t receive(const char* buf, uint8_t *sourceMacAddr, int& macAddrLen);
 
-    int onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr,
-            const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
+    int onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr);
     int onWraTimedout(void);
     int setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr);
+    int clearGlobalIPInfo(void);
+    int setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
     /**
     * Method that closes Receive Subscription and returns fail or success
     * @param buf a char pointer to store the data received.

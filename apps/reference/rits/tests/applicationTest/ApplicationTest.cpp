@@ -239,6 +239,11 @@ static void transmit(MessageType msgType) {
     case MessageType::CAM:
     case MessageType::BSM:
     case MessageType::WSA:
+        //sending WSA, transmit only, we are simulating RSU, so set the IPV6
+        if ((dynamic_cast<SaeApplication *>(application))->setGlobalIPv6Prefix() < 0) {
+            printf("Failed to set global IP info\n");
+            return;
+        }
         printf("Sending BSM messages via radio\n");
         while (!stopThread)
         {
@@ -264,6 +269,7 @@ static void transmit(MessageType msgType) {
             }
         }
         printf("Sending thread stopped\n");
+        (dynamic_cast<SaeApplication *>(application))->clearGlobalIPv6Prefix();
         break;
     case MessageType::DENM:
         cerr << "DENM transmit is not supported" << endl;
@@ -831,10 +837,6 @@ int setup(const bool tx, const bool rx,
             } else if(cam) {
                 threads.push_back(thread(transmit, MessageType::CAM));
             } else if (wsa) {
-                if (!rx) {
-                    //sending WSA, transmit only, we are simulating RSU, so set the IPV6
-                    (dynamic_cast<SaeApplication *>(application))->setGlobalIPv6Prefix();
-                }
                 threads.push_back(thread(transmit, MessageType::WSA));
             } else {
                 threads.push_back(thread(transmit, MessageType::DENM));

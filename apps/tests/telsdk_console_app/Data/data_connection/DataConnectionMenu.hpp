@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -83,8 +83,11 @@ private:
 
     bool initConnectionManagerAndListener(SlotId slotId);
     void requestDataCallList(OperationType operationType, SlotId slotId, DataCallListResponseCb cb);
+    bool validateProfile(int slotId, int profileId);
+    bool initalizeDPM(SlotId slotId);
 
     std::map<SlotId, std::shared_ptr<DataListener>> dataListeners_;
     std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>>dataConnectionManagerMap_;
+    std::map<SlotId, std::shared_ptr<telux::data::IDataProfileManager>> dataProfileManagerMap_;
 };
 #endif

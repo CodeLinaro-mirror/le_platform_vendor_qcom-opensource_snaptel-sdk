@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019,2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -80,4 +80,15 @@ public:
   static void requestDataRestrictModeResponse(telux::data::DataRestrictMode mode,
                                               telux::common::ErrorCode error);
 };
+
+// Profile List callback class to be used for DCM default profile use-case
+class MyDefaultProfilesCallback : public telux::data::IDataProfileListCallback {
+public:
+   void onProfileListResponse(
+      const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
+         telux::common::ErrorCode error) override;
+    std::promise<telux::common::ErrorCode> prom_{};
+    std::vector<std::shared_ptr<telux::data::DataProfile>> profileList_{};
+};
+
 #endif

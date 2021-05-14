@@ -237,3 +237,12 @@ void DataFilterModeResponseCb::requestDataRestrictModeResponse(
              << std::endl;
   }
 }
+
+void MyDefaultProfilesCallback::onProfileListResponse(
+   const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
+   telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      this->profileList_ = profiles;
+   }
+   this->prom_.set_value(error);
+}

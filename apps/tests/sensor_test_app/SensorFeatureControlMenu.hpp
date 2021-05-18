@@ -32,6 +32,7 @@
 
 #include <vector>
 #include <memory>
+#include <set>
 #include <string>
 
 #include <telux/sensor/SensorFactory.hpp>
@@ -56,11 +57,13 @@ class SensorFeatureControlMenu : public ConsoleApp {
     void enableSensorFeature(std::vector<std::string> userInput);
     void disableSensorFeature(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);
+    void disableFeature(std::string name);
 
     // Instance of the sensor feature manager and corresponding event listener
     std::shared_ptr<ISensorFeatureManager> sensorFeatureManager_;
     std::shared_ptr<ISensorFeatureEventListener> sensorFeatureEventListener_;
     bool verboseNotification_;
+    std::set<std::string> enabledFeatures_;
 };
 
 #endif  // SENSORFEATURECONTROLMENU_HPP

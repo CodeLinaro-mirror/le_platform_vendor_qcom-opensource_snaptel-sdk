@@ -61,53 +61,42 @@ void NetworkMenu::init() {
    //  Get the PhoneFactory and NetworkManger instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
+   networkListener_ = std::make_shared<MyNetworkSelectionListener>();
 
    std::vector<int> phoneIds;
    if (phoneManager) {
        telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
        if (status == telux::common::Status::SUCCESS) {
-           for (auto index = 1; index <= phoneIds.size(); index++) {
-               auto networkManager
-                   = telux::tel::PhoneFactory::getInstance().getNetworkSelectionManager(index);
-               if (networkManager != nullptr) {
-                   networkManagers_.emplace_back(networkManager);
-               }
-           }
+          for (auto index = 1; index <= phoneIds.size(); index++) {
+             std::promise<telux::common::ServiceStatus> prom;
+             auto networkManager = phoneFactory.getNetworkSelectionManager(
+                index, [&](telux::common::ServiceStatus status) {
+                   prom.set_value(status);
+             });
+             if (!networkManager) {
+                std::cout << "ERROR - Failed to get Network Selection Manager instance \n";
+                exit(1);
+             }
+             std::cout << "Waiting for Network Selection Manager to be ready on slotId " << index
+                   << "\n";
+             telux::common::ServiceStatus networkSelMgrStatus = prom.get_future().get();
+             if (networkSelMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+                std::cout << "Network Selection Manager is ready on slotId " << index << "\n";
+                networkManagers_.emplace_back(networkManager);
+             } else {
+                std::cout << "ERROR - Unable to initialize,"
+                   << " network selection manager subsystem on slotId "
+                      << index << std::endl;
+                exit(1);
+             }
+          }
        }
-
-       // Same listener used for both the slots
-       networkListener_ = std::make_shared<MyNetworkSelectionListener>();
        for (auto index = 0; index < networkManagers_.size(); index++) {
-           std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-           startTime = std::chrono::system_clock::now();
-
-           //  Check if network subsystem is ready
-           bool subSystemStatus = networkManagers_[index]->isSubsystemReady();
-
-           //  If network subsystem is not ready, wait for it to be ready
-           if(!subSystemStatus) {
-              std::cout << "\n\n Network subsystem is not ready, Please wait." << std::endl;
-              std::future<bool> f = networkManagers_[index]->onSubsystemReady();
-              // If we want to wait unconditionally for network subsystem to be ready
-              subSystemStatus = f.get();
-           }
-
-           //  Exit the application, if SDK is unable to initialize network subsystems
-           if(subSystemStatus) {
-              endTime = std::chrono::system_clock::now();
-              std::chrono::duration<double> elapsedTime = endTime - startTime;
-              std::cout << "Elapsed Time for Subsystems to ready: " << elapsedTime.count() << "s\n"
-                        << std::endl;
-           } else {
-              std::cout << " *** ERROR - Unable to initialize network subsystem" << std::endl;
-              exit(0);
-           }
-
-           auto status = networkManagers_[index]->registerListener(networkListener_);
-
-           if(status != telux::common::Status::SUCCESS) {
-              std::cout << "Failed to registerListener for network Manager" << std::endl;
-           }
+          auto status = networkManagers_[index]->registerListener(networkListener_);
+          if (status != telux::common::Status::SUCCESS) {
+             std::cout << "Failed to registerListener for network Manager" << std::endl;
+             exit(1);
+          }
        }
 
        std::shared_ptr<ConsoleAppCommand> getNetworkSelectionModeCommand

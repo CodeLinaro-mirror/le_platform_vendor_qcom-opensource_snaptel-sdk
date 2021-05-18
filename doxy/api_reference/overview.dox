@@ -176,6 +176,11 @@ Data Profile Manager APIs provide functionality such as
    - Create / modify / delete / modify modem profiles
    - Query for the selected profile
 
+Data Serving System Manager APIs provide functionality such as
+   - Get dedicated radio bearer status
+   - Request Modem Service Status
+   - Request Modem Roaming Status
+
 Data Filter Manager APIs provide functionality such as
    - get / set data filter mode per data call
    - get / set data filter mode for all data call in up state

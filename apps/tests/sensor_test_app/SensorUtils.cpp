@@ -67,16 +67,18 @@ bool SensorUtils::isUncalibratedSensor(SensorType type) {
             || (type == SensorType::ACCELEROMETER_UNCALIBRATED));
 }
 
-void SensorUtils::printSensorInfo(SensorInfo info) {
-    std::cout << "ID: " << info.id << ", type: " << getSensorType(info.type)
-              << ", name: " << info.name << ", vendor: " << info.vendor << ", Sampling rates: [ ";
+void SensorUtils::printSensorInfo(SensorInfo info, bool more, std::ostream &os) {
+    os << "ID: " << info.id << ", type: " << getSensorType(info.type) << ", name: " << info.name
+       << ", vendor: " << info.vendor << ", Sampling rates: [ ";
     for (auto rate : info.samplingRates) {
-        std::cout << rate << ", ";
+        os << rate << ", ";
     }
-    std::cout << "\b\b ], Max sampling rate: " << info.maxSamplingRate
-              << ", Max count: " << info.maxBatchCountSupported
-              << ", Min count: " << info.minBatchCountSupported << ", Range: " << info.range
-              << std::endl;
+    os << "\b\b ], Max sampling rate: " << info.maxSamplingRate
+       << ", Max count: " << info.maxBatchCountSupported
+       << ", Min count: " << info.minBatchCountSupported << ", Range: " << info.range;
+    if (!more) {
+        os << std::endl;
+    }
 }
 
 std::string SensorUtils::getSupportedRates(SensorInfo info) {

@@ -42,7 +42,7 @@ using namespace telux::sensor;
 class SensorUtils {
  public:
     static std::string getSensorType(SensorType type);
-    static void printSensorInfo(SensorInfo info);
+    static void printSensorInfo(SensorInfo info, bool more = false, std::ostream &os = std::cout);
     static std::string getSupportedRates(SensorInfo info);
     static std::string getBatchCountLimits(SensorInfo info);
     static SensorConfiguration getSensorConfig(std::shared_ptr<SensorClient> s);

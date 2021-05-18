@@ -59,9 +59,9 @@ namespace tel {
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
- * @param [in] info       Profiles information @Ref SimProfile.
+ * @param [in] info       Profiles information @ref telux::tel::SimProfile.
  * @param [in] error      Return code which indicates whether the operation
- *                        succeeded or not.  @ref ErrorCode.
+ *                        succeeded or not.  @ref telux::common::ErrorCode.
  */
 using ProfileListResponseCb = std::function<void(
     const std::vector<std::shared_ptr<SimProfile>> &profiles, telux::common::ErrorCode error)>;
@@ -74,7 +74,7 @@ using ProfileListResponseCb = std::function<void(
  *
  * @param [in] eid        eUICC identifier.
  * @param [in] error      Return code which indicates whether the operation
- *                        succeeded or not.  @ref ErrorCode.
+ *                        succeeded or not.  @ref telux::common::ErrorCode.
  */
 using EidResponseCb = std::function<void(std::string eid, telux::common::ErrorCode error)>;
 
@@ -87,16 +87,13 @@ using EidResponseCb = std::function<void(std::string eid, telux::common::ErrorCo
  * @param [in] smdpAddress        Configured SM-DP+ address on the eUICC.
  * @param [in] smdsAddress        Configured SMDS address on the eUICC.
  * @param [in] error              Return code which indicates whether the operation
- *                                succeeded or not.  @ref ErrorCode.
- * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+ *                                succeeded or not.  @ref telux::common::ErrorCode.
+ * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
  *           break backwards compatibility.
  *
  */
 using ServerAddressResponseCb = std::function<void(std::string smdpAddress,
     std::string smdsAddress, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_rsp
- * @{ */
 
 /**
  *@brief ISimProfileManager is a primary interface for remote eUICCs (eSIMs or embedded SIMs)
@@ -202,15 +199,36 @@ class ISimProfileManager {
 
     /**
      * Provide user consent required for downloading and installing profile.
+     * This API should be called in response to
+     * @ref telux::tel::ISimProfileListener::onUserDisplayInfo.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] userConsent       Consent for proﬁle download and install.
-                                     True means user consent to download and install.
+                                     True means user consent given to download and install.
+     * @param [in] reason            Reason for not providing user consent to download and install.
+     *                               @ref telux::tel::UserConsentReasonType
      * @param [in] callback          Callback function to get the result of user consent request.
      *
      * @returns  Status of user consent request i.e. success or suitable error code.
      */
-    virtual telux::common::Status provideUserConsent(SlotId slotId, bool userConsent = false,
+    virtual telux::common::Status provideUserConsent(SlotId slotId, bool userConsent,
+        UserConsentReasonType reason, common::ResponseCallback callback = nullptr)
+        = 0;
+
+    /**
+     * Provide confirmation code required for downloading and installing profile.
+     * This API should be called in response to
+     * @ref telux::tel::ISimProfileListener::onConfirmationCodeRequired.
+     *
+     * @param [in] slotId            Slot identifier corresponding to the card.
+     * @param [in] code              Confirmation code for profile download and install.
+     * @param [in] callback          Callback function to get the result of confirmation request.
+     *
+     * @returns  Status of provide confirmation code i.e. success or suitable error code.
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status provideConfirmationCode(SlotId slotId, std::string code,
         common::ResponseCallback callback = nullptr)
         = 0;
 

@@ -701,7 +701,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::vector<std::string> groups{"radio"};
+    std::vector<std::string> groups{"system", "diag", "radio"};
     int rc = Utils::setSupplementaryGroups(groups);
     if (rc == -1){
         cout << "Adding supplementary group failed!" << std::endl;

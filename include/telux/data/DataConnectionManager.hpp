@@ -112,6 +112,16 @@ struct TftChangeInfo {
 };
 
 /**
+ * Data call bit rate info
+ */
+struct BitRateInfo {
+    uint64_t txRate;      /**< Instantaneous channel transmit rate in bits/sec                  */
+    uint64_t rxRate;      /**< Instantaneous channel receive rate in bits/sec                   */
+    uint64_t maxTxRate;   /**< Maximum transmit rate that can be assigned to device in bits/sec */
+    uint64_t maxRxRate;   /**< Maximum receive rate that can be assigned to device in bits/sec  */
+};
+
+/**
  * This function is called with the response to startDataCall / stopDataCall API.
  *
  * The callback can be invoked from multiple different threads.
@@ -193,6 +203,19 @@ using DefaultProfileIdResponseCb
 using TrafficFlowTemplateCb =
     std::function<void(const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft,
         telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to requestDataCallBitRate.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] bitRate         Bit Rate Info for requested data call
+ * @param [in] error           Return code for whether the operation succeeded or failed
+ *
+ */
+using requestDataCallBitRateResponseCb
+    = std::function<void(BitRateInfo& bitRate, telux::common::ErrorCode error)>;
 
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
@@ -507,6 +530,20 @@ class IDataCall {
         = 0;
 
     /**
+     * Request data call bit rate in (bits/sec).
+     *
+     * @param [out] callback     callback to be called with bit rate results
+     *                           @ref requestDataCallBitRateResponseCb
+     *
+     * @returns Status of requestDataCallBitRate success or suitable status code
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestDataCallBitRate(
+        requestDataCallBitRateResponseCb callback) = 0;
+
+    /**
      * Destructor for IDataCall
      */
     virtual ~IDataCall(){};
@@ -519,6 +556,12 @@ class IDataCall {
  *
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
+ *
+ * The notification delivery mechanism uses the same thread to deliver all the queued notifications
+ * to ensure they are delivered in order.
+ * Considering this, the thread on which the notifications are delivered should not be blocked for
+ * longer operations since this would result in delay in delivery of further notifications that are
+ * in the queue waiting to be dispatched.
  *
  */
 class IDataConnectionListener : public telux::common::IServiceStatusListener {

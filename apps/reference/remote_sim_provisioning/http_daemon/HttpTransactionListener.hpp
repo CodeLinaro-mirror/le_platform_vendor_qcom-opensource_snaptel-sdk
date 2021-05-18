@@ -47,6 +47,9 @@ class HttpTransactionListener : public telux::tel::IHttpTransactionListener {
     std::mutex mtx_;
     std::shared_ptr<telux::tel::IHttpTransactionManager> httpTransactionManager_;
 
+    void processHttpRequest(uint32_t tokenId, const std::string &url,
+         const std::string &reqPayload, const std::vector<telux::tel::CustomHeader> &headers);
+
     CURLcode curlPost(const std::string &url, const std::string &postParameters,
         std::string &postResponse, const std::vector<telux::tel::CustomHeader> &headers);
     void setPostParams(const std::string &url, const std::string &postParameters,

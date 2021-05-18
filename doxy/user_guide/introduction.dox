@@ -54,6 +54,7 @@ when       who     what, where, why
 12/01/20   AK      Added Location SDK simulation libraries
 01/29/21   FS      Updated data subsystem readiness flow for new methodology
 02/12/21   RV      Added new sub system Readiness APIs for Audio.
+04/01/21   FS      Added new serving system manager APIs for Data.
 04/04/21   BS      Added documentation for sensor sub-system.
 
 NOTE: for an appendix, the label must match the filename

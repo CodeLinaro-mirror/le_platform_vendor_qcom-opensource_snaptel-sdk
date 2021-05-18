@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -34,38 +34,42 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void RspListener::onAddProfileUpdate(SlotId slotId, bool userConsentRequired,
-    telux::tel::DownloadStatus status, uint8_t percentage, telux::tel::DownloadErrorCause cause,
-    telux::tel::PolicyRuleMask mask) {
-    PRINT_NOTIFICATION << " onAddProfileUpdate" << std::endl;
-    PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
+void RspListener::onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
+    telux::tel::DownloadErrorCause cause) {
+
     PRINT_NOTIFICATION << " Profile Download Status: " << profileDownloadStatusToString(status)
                        << std::endl;
-    PRINT_NOTIFICATION << " Percentage: " << static_cast<int>(percentage) << std::endl;
-    PRINT_NOTIFICATION
-        << " Profile Download Error Cause: " << profileDownloadErrorCauseToString(cause)
-        << std::endl;
+    PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
+    PRINT_NOTIFICATION << " Profile Download Error Cause: "
+        << profileDownloadErrorCauseToString(cause) << std::endl;
+}
+
+void RspListener::onUserDisplayInfo(SlotId slotId, bool userConsentRequired,
+    telux::tel::PolicyRuleMask mask) {
+
+    PRINT_NOTIFICATION << " Is User Consent Required: " << userConsentRequired
+                       << std::endl;
+    PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
     std::string policyRule = pprMaskToString(mask);
     PRINT_NOTIFICATION << " Profile Policy Rule: " << policyRule << std::endl;
+}
+
+void RspListener::onConfirmationCodeRequired(SlotId slotId, std::string profileName) {
+
+    PRINT_NOTIFICATION << " Confirmation Code Required" << std::endl;
+    PRINT_NOTIFICATION << " Slot Id: " << static_cast<int>(slotId) << std::endl;
+    PRINT_NOTIFICATION << " Profile Name: " << profileName
+                       << std::endl;
 }
 
 std::string RspListener::profileDownloadStatusToString(telux::tel::DownloadStatus status) {
     std::string downloadStatus;
     switch (status) {
         case telux::tel::DownloadStatus::DOWNLOAD_ERROR:
-            downloadStatus = "DOWNLOAD_ERROR";
+            downloadStatus = "DOWNLOAD ERROR";
             break;
-        case telux::tel::DownloadStatus::DOWNLOAD_IN_PROGRESS:
-            downloadStatus = "DOWNLOAD_IN_PROGRESS";
-            break;
-        case telux::tel::DownloadStatus::DOWNLOAD_COMPLETE_INSTALLATION_IN_PROGRESS:
-            downloadStatus = "DOWNLOAD_COMPLETE_INSTALLATION_IN_PROGRESS";
-            break;
-        case telux::tel::DownloadStatus::INSTALLATION_COMPLETE:
-            downloadStatus = "INSTALLATION_COMPLETE";
-            break;
-        case telux::tel::DownloadStatus::USER_CONSENT_REQUIRED:
-            downloadStatus = "USER_CONSENT_REQUIRED";
+        case telux::tel::DownloadStatus::DOWNLOAD_INSTALLATION_COMPLETE:
+            downloadStatus = "DOWNLOAD INSTALLATION COMPLETE";
             break;
         default:
             downloadStatus = "UNKNOWN";
@@ -89,6 +93,18 @@ std::string RspListener::profileDownloadErrorCauseToString(telux::tel::DownloadE
         case telux::tel::DownloadErrorCause::MEMORY:
             errorCause = "MEMORY";
             break;
+        case telux::tel::DownloadErrorCause::UNSUPPORTED_PROFILE_CLASS:
+            errorCause = "UNSUPPORTED PROFILE CLASS";
+            break;
+        case telux::tel::DownloadErrorCause::PPR_NOT_ALLOWED:
+            errorCause = "PPR NOT ALLOWED";
+            break;
+        case telux::tel::DownloadErrorCause::END_USER_REJECTION:
+            errorCause = "END USER REJECTION";
+            break;
+        case telux::tel::DownloadErrorCause::END_USER_POSTPONED:
+            errorCause = "END USER POSTPONED";
+            break;
         default:
             errorCause = "UNKNOWN";
             break;
@@ -97,16 +113,28 @@ std::string RspListener::profileDownloadErrorCauseToString(telux::tel::DownloadE
 }
 
 std::string RspListener::pprMaskToString(telux::tel::PolicyRuleMask mask) {
-    std::string ppr = "UNKNOWN";
-    if (
-       mask[(telux::tel::PolicyRuleType)(telux::tel::PolicyRuleType::PROFILE_DISABLE_NOT_ALLOWED)]){
-        ppr = "Profile disable not allowed";
+    std::string ppr = "";
+    bool pprAvailable = false;
+    if (mask[static_cast<int>(
+        telux::tel::PolicyRuleType::PROFILE_DISABLE_NOT_ALLOWED)]) {
+        ppr = "Profile disable not allowed. ";
+        pprAvailable = true;
     }
-    if (mask[(telux::tel::PolicyRuleType)(telux::tel::PolicyRuleType::PROFILE_DELETE_NOT_ALLOWED)]){
-        ppr = "Profile delete not allowed";
+
+    if (mask[static_cast<int>(
+        telux::tel::PolicyRuleType::PROFILE_DELETE_NOT_ALLOWED)]) {
+        ppr = ppr + "Profile delete not allowed. ";
+        pprAvailable = true;
     }
-    if (mask[(telux::tel::PolicyRuleType)(telux::tel::PolicyRuleType::PROFILE_DELETE_ON_DISABLE)]) {
-        ppr = "Profile delete on disable";
+
+    if (mask[static_cast<int>(
+        telux::tel::PolicyRuleType::PROFILE_DELETE_ON_DISABLE)]) {
+        ppr = ppr + "Profile delete on disable. ";
+        pprAvailable = true;
+    }
+
+    if (!pprAvailable) {
+        ppr = "UNKNOWN";
     }
     return ppr;
 }

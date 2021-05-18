@@ -712,6 +712,9 @@ void MyLocationListener::printLocOutputEngineType(
   if(locEngineType == telux::loc::LOC_OUTPUT_ENGINE_PPE) {
     std::cout << " This is PPE engine reports" << std::endl;
   }
+  if(locEngineType == telux::loc::LOC_OUTPUT_ENGINE_VPE) {
+    std::cout << " This is VPE engine reports" << std::endl;
+  }
 }
 
 void MyLocationListener::printLocOutputEngineMask(
@@ -725,6 +728,9 @@ void MyLocationListener::printLocOutputEngineMask(
   }
   if(posEngineBits & telux::loc::PRECISE_POSITIONING_ENGINE) {
     std::cout << " PPE used in the reports" << std::endl;
+  }
+  if(posEngineBits & telux::loc::VP_POSITIONING_ENGINE) {
+    std::cout << " VPE used in the reports" << std::endl;
   }
 }
 

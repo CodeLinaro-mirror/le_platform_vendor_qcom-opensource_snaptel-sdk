@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -54,7 +54,6 @@ private:
    std::shared_ptr<MySmscAddressCallback> mySmscAddrCb_ = nullptr;
    std::shared_ptr<MySmsDeliveryCallback> mySmsDeliveryCb_ = nullptr;
    std::shared_ptr<telux::tel::ISmsListener> smsListener_ = nullptr;
-   std::shared_ptr<telux::tel::IPhoneManager> phoneManager_ = nullptr;
    int slot_ = DEFAULT_SLOT_ID;
    std::vector<std::shared_ptr<telux::tel::ISmsManager>> smsManagers_;
 };

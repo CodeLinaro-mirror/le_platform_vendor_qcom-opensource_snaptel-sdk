@@ -680,6 +680,7 @@ void ApplicationBase::closeAllRadio() {
     {
         this->simReceive->closeFlow();
     }
+
 }
 
 /**
@@ -721,7 +722,6 @@ void ApplicationBase::writeVerifLogging() {
     file.close();
     sem_post(&this->log_sem);
 }
-
 
 /**
  * Instantiate and initialize any variables associated with

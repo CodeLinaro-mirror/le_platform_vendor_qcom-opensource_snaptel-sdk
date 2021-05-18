@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019,2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -39,6 +39,7 @@ using namespace telux::common;
 class MyDataFilterListener : public telux::data::IDataFilterListener {
 public:
    void onDataRestrictModeChange(DataRestrictMode mode) override;
+   void onServiceStatusChange(telux::common::ServiceStatus status) override;
    ~MyDataFilterListener() {
    }
 };

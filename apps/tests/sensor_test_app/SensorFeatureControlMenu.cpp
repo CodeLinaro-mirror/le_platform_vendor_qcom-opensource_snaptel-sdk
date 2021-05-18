@@ -160,19 +160,14 @@ void SensorFeatureControlMenu::enableSensorFeature(std::vector<std::string> user
         Utils::printStatus(status);
         return;
     }
-    std::cout << "Enable sensor feature request successful" << std::endl;
+    enabledFeatures_.emplace(name);
+    std::cout << "Enable sensor feature request successful for " << name << std::endl;
 }
 
 void SensorFeatureControlMenu::disableSensorFeature(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
-    telux::common::Status status = sensorFeatureManager_->disableFeature(name);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "disableFeature failed: " << std::endl;
-        Utils::printStatus(status);
-        return;
-    }
-    std::cout << "Disable sensor feature request successful" << std::endl;
+    disableFeature(name);
 }
 
 void SensorFeatureControlMenu::cleanupReinit(std::vector<std::string> userInput) {
@@ -184,7 +179,21 @@ void SensorFeatureControlMenu::cleanupReinit(std::vector<std::string> userInput)
     }
 }
 
+void SensorFeatureControlMenu::disableFeature(std::string name) {
+    telux::common::Status status = sensorFeatureManager_->disableFeature(name);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "disableFeature failed: " << std::endl;
+        Utils::printStatus(status);
+        return;
+    }
+    enabledFeatures_.erase(name);
+    std::cout << "Disable sensor feature request successful for " << name << std::endl;
+}
+
 void SensorFeatureControlMenu::cleanup() {
     sensorFeatureEventListener_ = nullptr;
+    for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ++it) {
+        disableFeature(*it);
+    }
     sensorFeatureManager_ = nullptr;
 }

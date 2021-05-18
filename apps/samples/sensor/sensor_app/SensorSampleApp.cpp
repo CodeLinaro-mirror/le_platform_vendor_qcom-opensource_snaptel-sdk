@@ -28,6 +28,7 @@
  */
 
 #include <future>
+#include <getopt.h>
 #include <iostream>
 #include <limits>
 #include <vector>
@@ -67,13 +68,13 @@ class SensorEventListener : public telux::sensor::ISensorEventListener {
     }
     void printSensorEvent(telux::sensor::SensorEvent &s) {
         if (isUncalibratedSensor(info_.type)) {
-            PRINT_NOTIFICATION << ": name " << info_.name << ": " << s.timestamp << ", "
+            PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
                                << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y << ", "
                                << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x << ", "
                                << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z
                                << std::endl;
         } else {
-            PRINT_NOTIFICATION << ": name " << info_.name << ": " << s.timestamp << ", "
+            PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
                                << s.calibrated.x << ", " << s.calibrated.y << ", " << s.calibrated.z
                                << std::endl;
         }
@@ -113,16 +114,6 @@ void printSensorInfo(telux::sensor::SensorInfo info) {
               << std::endl;
 }
 
-std::string getSensorName(
-    std::vector<telux::sensor::SensorInfo> &sensorInfo, telux::sensor::SensorType type) {
-    for (auto &info : sensorInfo) {
-        if (info.type == type) {
-            return info.name;
-        }
-    }
-    return "";
-}
-
 float getMinimumSamplingRate(telux::sensor::SensorInfo info) {
     printSensorInfo(info);
     float min = std::numeric_limits<float>::infinity();
@@ -134,8 +125,56 @@ float getMinimumSamplingRate(telux::sensor::SensorInfo info) {
     return min;
 }
 
+void printHelp(std::string programName, std::vector<telux::sensor::SensorInfo> &sensorInfo) {
+    std::cout << "Usage: " << programName << " [-sh]" << std::endl
+              << std::endl
+              << "-s <name>    Create sensor with provided name for data acquisition" << std::endl
+              << "-h           This help" << std::endl;
+
+    std::cout << "Available sensors: ";
+    for (telux::sensor::SensorInfo info : sensorInfo) {
+        std::cout << info.name << ", ";
+    }
+    std::cout << "\b\b  " << std::endl;
+}
+
+void parseArgs(
+    int argc, char **argv, std::string &name, std::vector<telux::sensor::SensorInfo> &sensorInfo) {
+    int c = -1;
+    static const struct option long_options[]
+        = {{"sensor name", required_argument, 0, 's'}, {"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
+    int option_index = 0;
+    c = getopt_long(argc, argv, "s:h", long_options, &option_index);
+    if (c == -1) {
+        if (sensorInfo.size() > 0) {
+            name = sensorInfo[0].name;
+            std::cout << "Creating sensor: " << name << std::endl;
+        } else {
+            std::cout << "No sensors found for data acquisition" << std::endl;
+            name = "";
+        }
+        return;
+    }
+    do {
+        switch (c) {
+            case 's': {
+                name = optarg;
+                break;
+            }
+            case 'h': {
+                printHelp(argv[0], sensorInfo);
+                exit(0);
+            }
+        }
+        c = getopt_long(argc, argv, "s:h", long_options, &option_index);
+    } while (c != -1);
+}
+
 int main(int argc, char **argv) {
     std::cout << "********* sensor sample app *********" << std::endl;
+
+    std::string name;
+
     // [1] Get sensor factory instance
     auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
 
@@ -173,60 +212,62 @@ int main(int argc, char **argv) {
                   << std::endl;
         exit(1);
     }
+    parseArgs(argc, argv, name, sensorInfo);
+    if (name == "") {
+        exit(0);
+    }
     std::cout << "Received sensor information" << std::endl;
     for (auto info : sensorInfo) {
         printSensorInfo(info);
     }
 
     // [6] Get the desired sensor
-    std::string gyroName
-        = getSensorName(sensorInfo, telux::sensor::SensorType::GYROSCOPE_UNCALIBRATED);
-    std::shared_ptr<telux::sensor::ISensor> gyroScope;
-    std::cout << "Getting sensor with name " << gyroName << std::endl;
-    status = sensorManager->getSensor(gyroScope, gyroName);
+    std::shared_ptr<telux::sensor::ISensor> sensor;
+    std::cout << "Getting sensor: " << name << std::endl;
+    status = sensorManager->getSensor(sensor, name);
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Failed to get gyroscope sensor" << std::endl;
+        std::cout << "Failed to get sensor: " << name << std::endl;
         exit(1);
     }
 
     // [7] Create a dedicated listener per sensor and register the listener to get notifications
     // about sensor configuration updates, sensor events
     std::shared_ptr<SensorEventListener> sensorEventListener
-        = std::make_shared<SensorEventListener>(gyroScope->getSensorInfo());
-    gyroScope->registerListener(sensorEventListener);
+        = std::make_shared<SensorEventListener>(sensor->getSensorInfo());
+    sensor->registerListener(sensorEventListener);
 
     // [8] Configure the sensor with the desired configuration, with the required validityMask set
     telux::sensor::SensorConfiguration config;
-    config.samplingRate = getMinimumSamplingRate(gyroScope->getSensorInfo());
-    config.batchCount = gyroScope->getSensorInfo().maxBatchCountSupported;
-    std::cout << "Configuring gyroscope with samplingRate, batchCount [" << config.samplingRate
-              << ", " << config.batchCount << "]" << std::endl;
+    config.samplingRate = getMinimumSamplingRate(sensor->getSensorInfo());
+    config.batchCount = sensor->getSensorInfo().maxBatchCountSupported;
+    std::cout << "Configuring sensor with samplingRate, batchCount [" << config.samplingRate << ", "
+              << config.batchCount << "]" << std::endl;
     config.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
     config.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
-    status = gyroScope->configure(config);
+    status = sensor->configure(config);
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Failed to configure gyroscope" << std::endl;
+        std::cout << "Failed to configure sensor: " << name << std::endl;
         exit(1);
     }
 
     // [10] Activate the sensor
-    status = gyroScope->activate();
+    status = sensor->activate();
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Failed to activate gyroscope" << std::endl;
+        std::cout << "Failed to activate sensor: " << name << std::endl;
         exit(1);
     }
     std::cout << "\n\nWait to receive further notifications OR press ENTER to exit \n\n";
     std::cin.ignore();
 
     // [12] Deactivate the sensor
-    status = gyroScope->deactivate();
+    status = sensor->deactivate();
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "Failed to deactivate gyroscope" << std::endl;
+        std::cout << "Failed to deactivate sensor: " << name << std::endl;
         exit(1);
     }
 
     // [13] Delete the sensor object
-    gyroScope = nullptr;
+    sensor = nullptr;
 
     // [14] When sensor manager is no longer required, delete the sensor manager object
     sensorManager = nullptr;

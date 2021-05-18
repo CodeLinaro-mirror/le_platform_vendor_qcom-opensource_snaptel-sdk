@@ -78,7 +78,17 @@ SensorClient::~SensorClient() {
 
 void SensorClient::printInfo() {
     std::cout << "Client ID: " << id_ << ": ";
-    SensorUtils::printSensorInfo(sensor_->getSensorInfo());
+    SensorUtils::printSensorInfo(sensor_->getSensorInfo(), true);
+    SensorConfiguration configuration = sensor_->getConfiguration();
+    std::cout << ", Configuration: ["
+              << (configuration.validityMask.test(SensorConfigParams::SAMPLING_RATE)
+                         ? std::to_string(configuration.samplingRate)
+                         : "NA")
+              << ", "
+              << (configuration.validityMask.test(SensorConfigParams::BATCH_COUNT)
+                         ? std::to_string(configuration.batchCount)
+                         : "NA")
+              << "]" << std::endl;
 }
 
 void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {

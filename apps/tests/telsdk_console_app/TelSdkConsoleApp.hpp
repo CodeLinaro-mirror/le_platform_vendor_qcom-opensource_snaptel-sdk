@@ -71,7 +71,7 @@ private:
    void cellbroadcastMenu(std::vector<std::string> userInput);
    void rspMenu(std::vector<std::string> userInput);
    void imsSettingsMenu(std::vector<std::string> userInput);
-
+   void imsServingSystemMenu(std::vector<std::string> userInput);
 };
 
 #endif  // TELSDKCONSOLEAPP_HPP

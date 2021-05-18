@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -86,6 +86,8 @@ when       who     what, where, why
 @tr @td Feb 2021 @tdend @tdlast Addition of configure NMEA types in location SDK @tdlastend @trend
 @tr @td Jan 2021 @tdend @tdlast Updated Data Subsystem Readiness flow for new methodology @tdlastend @trend
 @tr @td Feb 2021 @tdend @tdlast Addition of new sub system Readiness APIs for Audio. @tdlastend @trend
+@tr @td Mar 2021 @tdend @tdlast Addition of calibration init status API for audio. @tdlastend @trend
+@tr @td Apr 2021 @tdend @tdlast Addition of Serving System Manager APIs for data. @tdlastend @trend
 @tr @td Apr 2021 @tdend @tdlast Addition of documentation for sensor subsystem. @tdlastend @trend
 @tableend
 

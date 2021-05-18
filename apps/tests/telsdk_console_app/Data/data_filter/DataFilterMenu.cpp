@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -48,6 +48,7 @@ using namespace telux::data::net;
 
 DataFilterMenu::DataFilterMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
+    subSystemStatusUpdated_ = false;
 }
 
 DataFilterMenu::~DataFilterMenu() {
@@ -72,66 +73,75 @@ DataFilterMenu::~DataFilterMenu() {
 }
 
 bool DataFilterMenu::initializeSDK() {
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    subSystemStatusUpdated_ = false;
+    SlotId slotId = DEFAULT_SLOT_ID;
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
+    std::promise<telux::common::ServiceStatus> prom{};
+
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();
 
-    dataConnectionManager_ = telux::data::DataFactory::getInstance().getDataConnectionManager();
+    dataConnectionManager_ = dataFactory.getDataConnectionManager(slotId,
+        [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
 
-    // Check if data subsystem is ready
-    bool subSystemStatus = dataConnectionManager_->isSubsystemReady();
-
-    // If data subsystem is not ready, wait for it to be ready
-    if (!subSystemStatus) {
-        std::cout << "\n\nData subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = dataConnectionManager_->onSubsystemReady();
-        // Wait unconditionally for data subsystem to be ready
-        subSystemStatus = f.get();
+    if (!dataConnectionManager_) {
+        std::cout << "Failed to get DataManager object" << std::endl;
+        return false;
     }
 
-    if (subSystemStatus) {
-        dataListener_ = std::make_shared<DataListener>();
-        dataConnectionManager_->registerListener(dataListener_);
-    }
-
-    // Get data filter manager object
-    dataFilterMgr_ = dataFactory.getDataFilterManager();
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "WARNING: Data Filter feature is not supported." << std::endl;
-    }
-
-    if (dataFilterMgr_ != NULL) {
-        // Check data filter manager service status
-        bool isReady = dataFilterMgr_->isReady();
-        if (!isReady) {
-            std::cout << " Data filter services are not ready, waiting for it to be ready "
-                      << std::endl;
-            std::future<bool> f = dataFilterMgr_->onReady();
-            isReady = f.get();
+    if (dataConnectionManager_) {
+        subSystemStatus = dataConnectionManager_->getServiceStatus();
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
+                DEFAULT_SLOT_ID << ", Please wait ..." << endl;
+            subSystemStatus = prom.get_future().get();
         }
 
-        if (isReady) {
-            std::cout << " Data Filter services are ready !" << std::endl;
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nData Connection Manager on slot "<< slotId << " is ready"
+                << std::endl;
+            dataListener_ = std::make_shared<DataListener>(slotId);
+            dataConnectionManager_->registerListener(dataListener_);
         } else {
-            std::cout << " *** ERROR - Unable to initialize data filter services" << std::endl;
-            return -1;
+            std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready"
+                << std::endl;
+            return false;
+        }
+    }
+    subSystemStatusUpdated_ = false;
+    prom = std::promise<telux::common::ServiceStatus>();
+    // Get data filter manager object
+    dataFilterMgr_ = dataFactory.getDataFilterManager(DEFAULT_SLOT_ID,
+        [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
+    if (dataFilterMgr_ == nullptr) {
+        std::cout << "WARNING: Data Filter feature is not supported." << std::endl;
+        return false;
+    }
+
+    if (dataFilterMgr_) {
+        subSystemStatus = dataFilterMgr_->getServiceStatus();
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\n\nInitializing Data filter manager subsystem on slot " <<
+                DEFAULT_SLOT_ID << ", Please wait ..." << endl;
+            subSystemStatus = prom.get_future().get();
         }
 
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nData Filter Manager on slot "<< slotId << " is ready" << std::endl;
+            dataFilterListener_ = std::make_shared<MyDataFilterListener>();
+            telux::common::Status status = dataFilterMgr_->registerListener(dataFilterListener_);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "Unable to register data filter manager listener" << std::endl;
+            }
+        } else {
+            std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready"
+                << std::endl;
+            return false;
+        }
         responseCb = std::bind(&DataFilterMenu::commandCallback, this, std::placeholders::_1);
     }
-
-    if (dataFilterMgr_ != NULL) {
-        dataFilterListener_ = std::make_shared<MyDataFilterListener>();
-    }
-
-    if (dataFilterMgr_ != NULL) {
-        telux::common::Status status = dataFilterMgr_->registerListener(dataFilterListener_);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Unable to register data filter manager listener" << std::endl;
-        }
-    }
-
     return true;
 }
 

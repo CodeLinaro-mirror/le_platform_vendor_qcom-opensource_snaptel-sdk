@@ -66,7 +66,7 @@ static void cv2xRetrieveConfigurationCallback(ErrorCode error) {
 
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Retrieve Configuration app" << endl;
-    std::vector<std::string> groups{"radio"};
+    std::vector<std::string> groups{"system", "diag", "radio"};
     int rc = Utils::setSupplementaryGroups(groups);
     if (rc == -1) {
         cout << "Adding supplementary group failed!" << std::endl;

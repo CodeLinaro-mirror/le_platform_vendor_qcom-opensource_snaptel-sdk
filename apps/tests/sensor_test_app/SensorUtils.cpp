@@ -34,7 +34,9 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <ctime>
+#include <sstream>
 
 #include "SensorUtils.hpp"
 #include "../../common/utils/Utils.hpp"
@@ -67,24 +69,31 @@ bool SensorUtils::isUncalibratedSensor(SensorType type) {
             || (type == SensorType::ACCELEROMETER_UNCALIBRATED));
 }
 
-void SensorUtils::printSensorInfo(SensorInfo info) {
-    std::cout << "ID: " << info.id << ", type: " << getSensorType(info.type)
-              << ", name: " << info.name << ", vendor: " << info.vendor << ", Sampling rates: [ ";
+void SensorUtils::printSensorInfo(SensorInfo info, bool more, std::ostream &os) {
+    os << "\tSensor ID: " << info.id << "\n\tSensor type: " << getSensorType(info.type)
+       << "\n\tSensor name: " << info.name << "\n\tVendor: " << info.vendor
+       << "\n\tSampling rates: [ ";
     for (auto rate : info.samplingRates) {
-        std::cout << rate << ", ";
+        os << std::fixed << std::setprecision(2) << rate << ", ";
     }
-    std::cout << "\b\b ], Max sampling rate: " << info.maxSamplingRate
-              << ", Max count: " << info.maxBatchCountSupported
-              << ", Min count: " << info.minBatchCountSupported << ", Range: " << info.range
-              << std::endl;
+    os << "\b\b ]\n\tMax sampling rate: " << std::fixed << std::setprecision(2)
+       << info.maxSamplingRate << "\n\tMax batch count: " << info.maxBatchCountSupported
+       << "\n\tMin batch count: " << info.minBatchCountSupported << "\n\tRange: " << info.range;
+    if (!more) {
+        os << std::endl << std::endl;
+    }
 }
 
 std::string SensorUtils::getSupportedRates(SensorInfo info) {
     std::string supportedRates = "[ ";
     for (float f : info.samplingRates) {
-        supportedRates.append(std::to_string(f)).append(", ");
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << f;
+        supportedRates.append(ss.str()).append(", ");
     }
-    supportedRates.append("\b\b ], <= ").append(std::to_string(info.maxSamplingRate));
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << info.maxSamplingRate;
+    supportedRates.append("\b\b ], <= ").append(ss.str());
     return supportedRates;
 }
 
@@ -103,7 +112,7 @@ SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s
         || ((type == SensorType::GYROSCOPE_UNCALIBRATED)
             || (type == SensorType::ACCELEROMETER_UNCALIBRATED))) {
         float samplingRate;
-        float batchCount;
+        uint32_t batchCount;
         std::string supportedRates = getSupportedRates(sensor->getSensorInfo());
         std::string batchCountLimits = getBatchCountLimits(sensor->getSensorInfo());
         SensorUtils::getInput("Enter sampling rate " + supportedRates + ": ", samplingRate);
@@ -136,15 +145,17 @@ std::shared_ptr<SensorClient> SensorUtils::getSensor(
     return sensor;
 }
 
-void SensorUtils::printSensorEvent(SensorType type, SensorEvent &s, std::string &tag) {
+void SensorUtils::printSensorEvent(
+    SensorType type, SensorEvent &s, float samplingRate, std::string &tag) {
     if (isUncalibratedSensor(type)) {
-        print_notification << tag << s.timestamp << ", " << s.uncalibrated.data.x << ", "
-                           << s.uncalibrated.data.y << ", " << s.uncalibrated.data.z << ", "
-                           << s.uncalibrated.bias.x << ", " << s.uncalibrated.bias.y << ", "
-                           << s.uncalibrated.bias.z << std::endl;
+        print_notification << tag << samplingRate << " Hz, @ " << s.timestamp << ", "
+                           << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y << ", "
+                           << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x << ", "
+                           << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z << std::endl;
     } else {
-        print_notification << tag << s.timestamp << ", " << s.calibrated.x << ", " << s.calibrated.y
-                           << ", " << s.calibrated.z << std::endl;
+        print_notification << tag << samplingRate << " Hz, @ " << s.timestamp << ", "
+                           << s.calibrated.x << ", " << s.calibrated.y << ", " << s.calibrated.z
+                           << ", " << std::endl;
     }
 }
 

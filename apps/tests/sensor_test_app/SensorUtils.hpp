@@ -32,6 +32,8 @@
 
 #include <memory>
 #include <limits>
+#include <string>
+#include <sstream>
 #include <telux/sensor/SensorDefines.hpp>
 #include <telux/sensor/Sensor.hpp>
 
@@ -42,7 +44,7 @@ using namespace telux::sensor;
 class SensorUtils {
  public:
     static std::string getSensorType(SensorType type);
-    static void printSensorInfo(SensorInfo info);
+    static void printSensorInfo(SensorInfo info, bool more = false, std::ostream &os = std::cout);
     static std::string getSupportedRates(SensorInfo info);
     static std::string getBatchCountLimits(SensorInfo info);
     static SensorConfiguration getSensorConfig(std::shared_ptr<SensorClient> s);
@@ -51,25 +53,31 @@ class SensorUtils {
     template <typename T>
     static void getInput(std::string prompt, T &input) {
         std::cout << prompt;
-        std::cin >> input;
+        std::string line;
+        std::getline(std::cin, line);
+        std::stringstream ss(line);
+        ss >> input;
         bool valid = false;
         do {
-            if (std::cin.good()) {
+            if (!ss.bad() && ss.eof() && !ss.fail()) {
                 valid = true;
             } else {
                 // If an error occurs then an error flag is set and future attempts to get
                 // input will fail. Clear the error flag on cin.
                 std::cin.clear();
-                // Extracts characters from the previous input sequence and discards them,
-                // until entire stream have been extracted, or one compares equal to newline.
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                // Clear the string stream's states and buffer
+                ss.clear();
+                ss.str("");
                 std::cout << "Invalid input, please re-enter" << std::endl;
                 std::cout << prompt;
-                std::cin >> input;
+                std::getline(std::cin, line);
+                ss << line;
+                ss >> input;
             }
         } while (!valid);
     }
-    static void printSensorEvent(SensorType type, SensorEvent &s, std::string &tag);
+    static void printSensorEvent(
+        SensorType type, SensorEvent &s, float samplingRate, std::string &tag);
     static bool isUncalibratedSensor(SensorType type);
     static void printSensorFeatureInfo(SensorFeature feature);
     static void printSensorFeatureEvent(SensorFeatureEvent event);

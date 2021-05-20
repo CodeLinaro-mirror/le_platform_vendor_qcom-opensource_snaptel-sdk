@@ -126,12 +126,8 @@ void SensorFeatureControlMenu::initConsole() {
             std::bind(
                 &SensorFeatureControlMenu::disableSensorFeature, this, std::placeholders::_1)));
 
-    std::shared_ptr<ConsoleAppCommand> cleanupReinitCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Cleanup_Reinit", {},
-            std::bind(&SensorFeatureControlMenu::cleanupReinit, this, std::placeholders::_1)));
-
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listSensorFeaturesCommand,
-        enableSensorFeatureCommand, disableSensorFeatureCommand, cleanupReinitCommand};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {listSensorFeaturesCommand, enableSensorFeatureCommand, disableSensorFeatureCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -160,31 +156,31 @@ void SensorFeatureControlMenu::enableSensorFeature(std::vector<std::string> user
         Utils::printStatus(status);
         return;
     }
-    std::cout << "Enable sensor feature request successful" << std::endl;
+    enabledFeatures_.emplace(name);
+    std::cout << "Enable sensor feature request successful for " << name << std::endl;
 }
 
 void SensorFeatureControlMenu::disableSensorFeature(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
+    disableFeature(name);
+}
+
+void SensorFeatureControlMenu::disableFeature(std::string name) {
     telux::common::Status status = sensorFeatureManager_->disableFeature(name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "disableFeature failed: " << std::endl;
         Utils::printStatus(status);
         return;
     }
-    std::cout << "Disable sensor feature request successful" << std::endl;
-}
-
-void SensorFeatureControlMenu::cleanupReinit(std::vector<std::string> userInput) {
-    cleanup();
-    if (init(false) == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Sensor sub-system reinitialization successful";
-    } else {
-        std::cout << "Sensor sub-system reinitialization failed";
-    }
+    enabledFeatures_.erase(name);
+    std::cout << "Disable sensor feature request successful for " << name << std::endl;
 }
 
 void SensorFeatureControlMenu::cleanup() {
     sensorFeatureEventListener_ = nullptr;
+    for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ++it) {
+        disableFeature(*it);
+    }
     sensorFeatureManager_ = nullptr;
 }

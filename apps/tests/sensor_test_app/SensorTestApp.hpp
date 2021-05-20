@@ -33,6 +33,8 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "SensorControlMenu.hpp"
+#include "SensorFeatureControlMenu.hpp"
 
 #include "ConsoleApp.hpp"
 
@@ -53,6 +55,8 @@ class SensorTestApp : public ConsoleApp {
     void sensorControlMenu(std::vector<std::string> userInput);
     void sensorFeatureControlMenu(std::vector<std::string> userInput);
 
+    std::shared_ptr<SensorControlMenu> sensorControlMenu_;
+    std::shared_ptr<SensorFeatureControlMenu> sensorFeatureControlMenu_;
     // Instance of all menu created are stored to maintain parallel running streams
     bool verboseNotification_;
 };

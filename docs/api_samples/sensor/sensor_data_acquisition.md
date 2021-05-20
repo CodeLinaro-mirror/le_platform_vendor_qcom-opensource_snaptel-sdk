@@ -60,27 +60,14 @@ Please follow below steps as a guide to configure and acquire sensor data
    }
    ~~~~~~
 
-### 6. Identify the required sensor and request the ISensorManager for the desired sensor ###
+### 6. Request the ISensorManager for the desired sensor ###
 
    ~~~~~~{.cpp}
-   std::string getSensorName(
-      std::vector<telux::sensor::SensorInfo> &sensorInfo, telux::sensor::SensorType type) {
-      for (auto &info : sensorInfo) {
-         if (info.type == type) {
-               return info.name;
-         }
-      }
-      return "";
-   }
-   ~~~~~~
-
-   ~~~~~~{.cpp}
-   std::string gyroName = getGyroscopeName(sensorInfo);
-   std::shared_ptr<telux::sensor::ISensor> gyroScope;
-   std::cout << "Getting gyroscope with name " << gyroName << std::endl;
-   status = sensorManager->getSensor(gyroScope, gyroName);
+   std::shared_ptr<telux::sensor::ISensor> sensor;
+   std::cout << "Getting sensor: " << name << std::endl;
+   status = sensorManager->getSensor(sensor, name);
    if (status != telux::common::Status::SUCCESS) {
-      std::cout << "Failed to get gyroscope sensor" << std::endl;
+      std::cout << "Failed to get sensor: " << name << std::endl;
       exit(1);
    }
    ~~~~~~
@@ -117,13 +104,13 @@ Please follow below steps as a guide to configure and acquire sensor data
       }
       void printSensorEvent(telux::sensor::SensorEvent &s) {
          if (isUncalibratedSensor(info_.type)) {
-               PRINT_NOTIFICATION << ": name " << info_.name << ": " << s.timestamp << ", "
+               PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
                                  << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y << ", "
                                  << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x << ", "
                                  << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z
                                  << std::endl;
          } else {
-               PRINT_NOTIFICATION << ": name " << info_.name << ": " << s.timestamp << ", "
+               PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
                                  << s.calibrated.x << ", " << s.calibrated.y << ", " << s.calibrated.z
                                  << std::endl;
          }
@@ -135,25 +122,24 @@ Please follow below steps as a guide to configure and acquire sensor data
 ###### Create a event listener and register it with the sensor.
 
    ~~~~~~{.cpp}
-    std::shared_ptr<SensorEventListener> sensorEventListener
-        = std::make_shared<SensorEventListener>(gyroScope->getSensorInfo());
-    gyroScope->registerListener(sensorEventListener);
+   std::shared_ptr<SensorEventListener> sensorEventListener
+      = std::make_shared<SensorEventListener>(sensor->getSensorInfo());
+   sensor->registerListener(sensorEventListener);
    ~~~~~~
 
 ### 8. Configure the sensor with required configuration setting the necessary validityMask ###
 
    ~~~~~~{.cpp}
    telux::sensor::SensorConfiguration config;
-   config.samplingRate = getMinimumSamplingRate(gyroScope->getSensorInfo());
-   config.batchCount = gyroScope->getSensorInfo().maxBatchCountSupported;
-   std::cout << "Configuring gyroscope with samplingRate, batchCount [" << config.samplingRate
-             << ", " << config.batchCount << "]" << std::endl;
-   config.validityMask.set(
-       static_cast<uint32_t>(telux::sensor::SensorConfigParams::SAMPLING_RATE));
-   config.validityMask.set(static_cast<uint32_t>(telux::sensor::SensorConfigParams::BATCH_COUNT));
-   status = gyroScope->configure(config);
+   config.samplingRate = getMinimumSamplingRate(sensor->getSensorInfo());
+   config.batchCount = sensor->getSensorInfo().maxBatchCountSupported;
+   std::cout << "Configuring sensor with samplingRate, batchCount [" << config.samplingRate << ", "
+           << config.batchCount << "]" << std::endl;
+   config.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
+   config.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
+   status = sensor->configure(config);
    if (status != telux::common::Status::SUCCESS) {
-      std::cout << "Failed to configure gyroscope" << std::endl;
+      std::cout << "Failed to configure sensor: " << name << std::endl;
       exit(1);
    }
    ~~~~~~
@@ -162,7 +148,7 @@ Please follow below steps as a guide to configure and acquire sensor data
 
    ~~~~~~{.cpp}
    virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
-      PRINT_NOTIFICATION << ": Received configuration update from sensor with ID " << id_ << ": ["
+      PRINT_NOTIFICATION << ": Received configuration update from sensor: " << info_.name << ": ["
                          << configuration.samplingRate << ", " << configuration.batchCount << " ]"
                          << std::endl;
    }
@@ -171,9 +157,9 @@ Please follow below steps as a guide to configure and acquire sensor data
 ### 10. Activate the sensor to receive sensor data ###
 
    ~~~~~~{.cpp}
-   status = gyroScope->activate();
+   status = sensor->activate();
    if (status != telux::common::Status::SUCCESS) {
-      std::cout << "Failed to activate gyroscope" << std::endl;
+      std::cout << "Failed to activate sensor: " << name << std::endl;
       exit(1);
    }
    ~~~~~~
@@ -193,9 +179,9 @@ Please follow below steps as a guide to configure and acquire sensor data
 ### 12. When data acquisition is no longer necessary, deactivate the sensor ###
 
    ~~~~~~{.cpp}
-   status = gyroScope->deactivate();
+   status = sensor->deactivate();
    if (status != telux::common::Status::SUCCESS) {
-      std::cout << "Failed to deactivate gyroscope" << std::endl;
+      std::cout << "Failed to deactivate sensor: " << name << std::endl;
       exit(1);
    }
    ~~~~~~
@@ -203,7 +189,7 @@ Please follow below steps as a guide to configure and acquire sensor data
 ### 13. Release the instance of ISensor if no longer required ###
 
    ~~~~~~{.cpp}
-   gyroScope = nullptr;
+   sensor = nullptr;
    ~~~~~~
 
 ### 14. Release the instance of ISensorManager to cleanup resources ###

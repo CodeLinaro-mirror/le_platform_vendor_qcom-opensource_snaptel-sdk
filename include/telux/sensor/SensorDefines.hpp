@@ -107,7 +107,7 @@ struct SensorInfo {
      * For gyroscopes, this is the number of degrees per second (dps) in either direction (+/-)
      * along each axis
      */
-    float range;
+    int range;
 };
 
 /**
@@ -198,8 +198,10 @@ struct SensorConfiguration {
      *
      * Further, this bitset should be set by the user to indicate the valid fields while configuring
      * the sensor using @ref telux::sensor::ISensor::configure.
-     * For continuous stream of data from a sensor, SAMPLING_RATE and BATCH_COUNT from
-     * @ref SensorConfigParams should be set
+     * For continuous stream of data from a sensor, the validity of SAMPLING_RATE and BATCH_COUNT
+     * from @ref SensorConfigParams should be considered. If the sensor had been already configured
+     * with both sampling rate and batch count, it is possible to reconfigure the sensor partially
+     * with just one of these attributes and setting the required validity flag.
      */
     SensorConfigMask validityMask;
 

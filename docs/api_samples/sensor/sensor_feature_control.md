@@ -71,11 +71,10 @@ Please follow below steps as a guide to control sensor features
 ### 7. Enable the required features ###
 
    ~~~~~~{.cpp}
-   for (auto feature : sensorFeatures) {
-      status = sensorFeatureManager->enableFeature(feature.name);
-      if (status != telux::common::Status::SUCCESS) {
-         std::cout << "Failed to enable feature: " << feature.name << std::endl;
-      }
+   status = sensorFeatureManager->enableFeature(name);
+   if (status != telux::common::Status::SUCCESS) {
+      std::cout << "Failed to enable feature: " << name << std::endl;
+      exit(1);
    }
    ~~~~~~
 
@@ -90,11 +89,10 @@ Please follow below steps as a guide to control sensor features
 ### 9. When the sensor feature(s) are no longer necessary, disable them ###
 
    ~~~~~~{.cpp}
-   for (auto feature : sensorFeatures) {
-      status = sensorFeatureManager->disableFeature(feature.name);
-      if (status != telux::common::Status::SUCCESS) {
-         std::cout << "Failed to disable feature: " << feature.name << std::endl;
-      }
+   status = sensorFeatureManager->disableFeature(name);
+   if (status != telux::common::Status::SUCCESS) {
+      std::cout << "Failed to disable feature: " << name << std::endl;
+      exit(1);
    }
    ~~~~~~
 

@@ -109,19 +109,19 @@ void SensorControlMenu::initConsole() {
             std::bind(&SensorControlMenu::createSensorClient, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> listCreatedSensorsCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "List_Created_Sensors", {},
-            std::bind(&SensorControlMenu::listCreatedSensors, this, std::placeholders::_1)));
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "List_Created_Sensor_Clients",
+            {}, std::bind(&SensorControlMenu::listCreatedSensors, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> configureSensorCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Configure_Sensor", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Configure_Sensor_Client", {},
             std::bind(&SensorControlMenu::configureSensor, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> activateSensorCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Activate_Sensor", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Activate_Sensor_Client", {},
             std::bind(&SensorControlMenu::activateSensor, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> deactivateSensorCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Deactivate_Sensor", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Deactivate_Sensor_Client", {},
             std::bind(&SensorControlMenu::deactivateSensor, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> enableLowPowerModeCommand
@@ -136,14 +136,10 @@ void SensorControlMenu::initConsole() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Delete_Sensor_Client", {},
             std::bind(&SensorControlMenu::deleteSensorClient, this, std::placeholders::_1)));
 
-    std::shared_ptr<ConsoleAppCommand> cleanupReinitCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Cleanup_Reinit", {},
-            std::bind(&SensorControlMenu::cleanupReinit, this, std::placeholders::_1)));
-
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listAvailableSensorsCommand,
-        createSensorClientCommand, listCreatedSensorsCommand, configureSensorCommand,
-        activateSensorCommand, deactivateSensorCommand, enableLowPowerModeCommand,
-        disableLowPowerModeCommand, deleteSensorClientCommand, cleanupReinitCommand};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {listAvailableSensorsCommand, createSensorClientCommand, listCreatedSensorsCommand,
+            configureSensorCommand, activateSensorCommand, deactivateSensorCommand,
+            enableLowPowerModeCommand, disableLowPowerModeCommand, deleteSensorClientCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -176,7 +172,7 @@ int SensorControlMenu::getAvailableID() {
 
 void SensorControlMenu::createSensorClient(std::vector<std::string> userInput) {
     std::string name;
-    SensorUtils::getInput("Enter name: ", name);
+    SensorUtils::getInput("Enter sensor name: ", name);
     std::shared_ptr<ISensor> sensor;
     telux::common::Status status = sensorManager_->getSensor(sensor, name);
     if (status != telux::common::Status::SUCCESS) {
@@ -271,15 +267,6 @@ void SensorControlMenu::deleteSensorClient(std::vector<std::string> userInput) {
     std::cout << "Removed sensor with client ID " << cid << std::endl << std::endl;
     clientIdMask_.reset(cid);
     listCreatedSensors(userInput);
-}
-
-void SensorControlMenu::cleanupReinit(std::vector<std::string> userInput) {
-    cleanup();
-    if (init(false) == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Sensor sub-system reinitialization successful";
-    } else {
-        std::cout << "Sensor sub-system reinitialization failed";
-    }
 }
 
 void SensorControlMenu::cleanup() {

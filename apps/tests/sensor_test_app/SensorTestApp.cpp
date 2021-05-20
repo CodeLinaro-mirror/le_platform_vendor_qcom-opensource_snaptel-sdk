@@ -46,8 +46,6 @@ extern "C" {
 
 #include <telux/sensor/SensorFactory.hpp>
 #include "SensorTestApp.hpp"
-#include "SensorControlMenu.hpp"
-#include "SensorFeatureControlMenu.hpp"
 #include <telux/common/Version.hpp>
 #include "../../common/utils/Utils.hpp"
 
@@ -83,24 +81,34 @@ void SensorTestApp::initConsole() {
 }
 
 void SensorTestApp::sensorControlMenu(std::vector<std::string> userInput) {
-    SensorControlMenu sensorControlMenu(
-        "Sensor control menu", "sensor_control> ", verboseNotification_);
-    if (sensorControlMenu.init(true) != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Failed to initialize sensor control menu" << std::endl;
-        return;
+    if (sensorControlMenu_ == nullptr) {
+        sensorControlMenu_ = std::make_shared<SensorControlMenu>(
+            "Sensor control menu", "sensor_control> ", verboseNotification_);
+        if (sensorControlMenu_->init(true) != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Failed to initialize sensor control menu" << std::endl;
+            return;
+        }
+    } else {
+        sensorControlMenu_->displayMenu();
     }
-    sensorControlMenu.mainLoop();
+    sensorControlMenu_->mainLoop();
     displayMenu();
 }
 
 void SensorTestApp::sensorFeatureControlMenu(std::vector<std::string> userInput) {
-    SensorFeatureControlMenu sensorFeatureControl(
-        "Sensor feature control menu", "sensor_feature_control> ", verboseNotification_);
-    if (sensorFeatureControl.init(true) != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Failed to initialize sensor feature control menu" << std::endl;
-        return;
+
+    if (sensorFeatureControlMenu_ == nullptr) {
+        sensorFeatureControlMenu_ = std::make_shared<SensorFeatureControlMenu>(
+            "Sensor feature control menu", "sensor_feature_control> ", verboseNotification_);
+        if (sensorFeatureControlMenu_->init(true)
+            != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Failed to initialize sensor control menu" << std::endl;
+            return;
+        }
+    } else {
+        sensorFeatureControlMenu_->displayMenu();
     }
-    sensorFeatureControl.mainLoop();
+    sensorFeatureControlMenu_->mainLoop();
     displayMenu();
 }
 
@@ -155,5 +163,6 @@ int main(int argc, char **argv) {
         return -1;
     }
     sensorTestApp->mainLoop();  // Main loop to continuously read and execute commands
+    sensorTestApp = nullptr;
     return 0;
 }

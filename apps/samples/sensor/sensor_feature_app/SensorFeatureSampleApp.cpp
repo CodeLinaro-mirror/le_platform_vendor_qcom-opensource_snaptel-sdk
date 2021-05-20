@@ -28,6 +28,7 @@
  */
 
 #include <future>
+#include <getopt.h>
 #include <iostream>
 #include <vector>
 #include <condition_variable>
@@ -58,8 +59,56 @@ void printSensorFeatureInfo(telux::sensor::SensorFeature feature) {
     std::cout << "Name: " << feature.name << std::endl;
 }
 
+void printHelp(std::string programName, std::vector<telux::sensor::SensorFeature> &sensorFeatures) {
+    std::cout << "Usage: " << programName << " [-fh]" << std::endl
+              << std::endl
+              << "-f <name>    Name of the feature to be enabled" << std::endl
+              << "-h           This help" << std::endl;
+
+    std::cout << "Available features: ";
+    for (telux::sensor::SensorFeature feature : sensorFeatures) {
+        std::cout << feature.name << ", ";
+    }
+    std::cout << "\b\b  " << std::endl;
+}
+
+void parseArgs(int argc, char **argv, std::string &name,
+    std::vector<telux::sensor::SensorFeature> &sensorFeatures) {
+    int c = -1;
+    static const struct option long_options[] = {{"sensor feature name", required_argument, 0, 'f'},
+        {"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
+    int option_index = 0;
+    c = getopt_long(argc, argv, "f:h", long_options, &option_index);
+    if (c == -1) {
+        if (sensorFeatures.size() > 0) {
+            name = sensorFeatures[0].name;
+            std::cout << "Enabling feature: " << name << std::endl;
+        } else {
+            std::cout << "No sensors features found" << std::endl;
+            name = "";
+        }
+        return;
+    }
+    do {
+        switch (c) {
+            case 'f': {
+                name = optarg;
+                break;
+            }
+            case 'h': {
+                printHelp(argv[0], sensorFeatures);
+                exit(0);
+            }
+        }
+        c = getopt_long(argc, argv, "f:h", long_options, &option_index);
+    } while (c != -1);
+}
+
 int main(int argc, char **argv) {
     std::cout << "********* sensor sample app *********" << std::endl;
+
+    std::string name;
+
     // [1] Get sensor factory instance
     auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
 
@@ -97,6 +146,10 @@ int main(int argc, char **argv) {
                   << std::endl;
         exit(1);
     }
+    parseArgs(argc, argv, name, sensorFeatures);
+    if (name == "") {
+        exit(0);
+    }
     std::cout << "Received sensor features" << std::endl;
     for (auto feature : sensorFeatures) {
         printSensorFeatureInfo(feature);
@@ -108,22 +161,20 @@ int main(int argc, char **argv) {
     sensorFeatureManager->registerListener(sensorFeatureEventListener);
 
     // [7] Enable the desired features
-    for (auto feature : sensorFeatures) {
-        status = sensorFeatureManager->enableFeature(feature.name);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Failed to enable feature: " << feature.name << std::endl;
-        }
+    status = sensorFeatureManager->enableFeature(name);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to enable feature: " << name << std::endl;
+        exit(1);
     }
 
     std::cout << "\n\nWait to receive further notifications OR press ENTER to exit \n\n";
     std::cin.ignore();
 
     // [9] Disable the sensor features
-    for (auto feature : sensorFeatures) {
-        status = sensorFeatureManager->disableFeature(feature.name);
-        if (status != telux::common::Status::SUCCESS) {
-            std::cout << "Failed to disable feature: " << feature.name << std::endl;
-        }
+    status = sensorFeatureManager->disableFeature(name);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to disable feature: " << name << std::endl;
+        exit(1);
     }
 
     // [10] When sensor feature manager is no longer required, delete the sensor feature manager

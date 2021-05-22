@@ -45,21 +45,20 @@ int decode_as_wsa(msg_contents *mc) {
     int retVal;
     asn_dec_rval_t rval;
     SrvAdvMsg_t *wsa = NULL;
-
     if (!mc || !mc->abuf.data) {
         fprintf(stderr, "%s: invalid input\n", __func__);
         return -1;
     }
 
     // memory will be allocated by uper_decode_compelete.
-    rval = uper_decode_complete(codec_ctx, &asn_DEF_SrvAdvMsg, (void **)&wsa,
+    rval = uper_decode_complete(codec_ctx, &asn_DEF_SrvAdvMsg, (void **)&mc->wsa,
             mc->abuf.data, mc->abuf.tail - mc->abuf.data);
     if (rval.code != RC_OK) {
         fprintf(stderr, "failed to decode WSA\n");
         return -1;
     }
-    mc->wsa = wsa;
     /* Only handles WRA */
+    wsa = (SrvAdvMsg_t *)mc->wsa;
     if (wsa->body.routingAdvertisement) {
         mc->wra = wsa->body.routingAdvertisement;
     }
@@ -100,3 +99,4 @@ int encode_as_wsa(msg_contents *mc) {
 void print_wsa(void *wsa) {
     asn_fprint(stdout, &asn_DEF_SrvAdvMsg, wsa);
 }
+

@@ -460,6 +460,10 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("primaryDns") != configs.end()) {
         configuration.primaryDns = configs["primaryDns"];
     }
+    if(configs.find("wildcardRx") != configs.end()){
+       istringstream is8(configs["wildcardRx"]);
+       is8 >> boolalpha >> configuration.wildcardRx;
+    }
 
 }
 
@@ -500,15 +504,35 @@ void ApplicationBase::setup() {
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
     spsInfo.periodicityMs = this->configuration.transmitRate;
+    for (auto port : this->configuration.spsPorts)
+    {
+        this->spsTransmits.push_back(RadioTransmit(spsInfo,
+                TrafficCategory::SAFETY_TYPE,
+                TrafficIpType::TRAFFIC_NON_IP, port,
+                this->configuration.spsServiceIDs[i], false, 0));
+        this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
+                this->configuration.spsDestAddrs[i].c_str(),
+                this->configuration.spsDestNames[i].c_str());
+        std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
+        this->spsContents.push_back(mc);
+        i += 1;
+    }
     for (auto port : this->configuration.receivePorts)
     {
-        this->radioReceives.push_back(RadioReceive(TrafficCategory::SAFETY_TYPE,
+        if (this->configuration.wildcardRx == true) {
+            this->radioReceives.push_back(RadioReceive(TrafficCategory::SAFETY_TYPE,
                     TrafficIpType::TRAFFIC_NON_IP, port));
+        } else {
+            this->radioReceives.push_back(RadioReceive(TrafficCategory::SAFETY_TYPE,
+                    TrafficIpType::TRAFFIC_NON_IP, port,
+                    std::make_shared<std::vector<uint32_t>>(this->configuration.spsServiceIDs)));
+        }
         std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->receivedContents.push_back(mc);
-
     }
+    i = 0;
     for (auto port : this->configuration.eventPorts)
     {
         this->eventTransmits.push_back(RadioTransmit(eventInfo,
@@ -516,30 +540,14 @@ void ApplicationBase::setup() {
                 TrafficIpType::TRAFFIC_NON_IP, port,
                 this->configuration.eventServiceIDs[i]));
         this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
-                this->configuration.eventDestAddrs[i].data(),
-                this->configuration.eventDestNames[i].data());
+                this->configuration.eventDestAddrs[i].c_str(),
+                this->configuration.eventDestNames[i].c_str());
         std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->eventContents.push_back(mc);
         i += 1;
     }
 
-    i = 0;
-    for (auto port : this->configuration.spsPorts)
-    {
-
-        this->spsTransmits.push_back(RadioTransmit(spsInfo,
-                TrafficCategory::SAFETY_TYPE,
-                TrafficIpType::TRAFFIC_NON_IP, port,
-                this->configuration.spsServiceIDs[i], false, 0));
-        this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
-                this->configuration.spsDestAddrs[i].data(),
-                this->configuration.spsDestNames[i].data());
-        std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
-        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
-        this->spsContents.push_back(mc);
-        i += 1;
-    }
 
     if (this->configuration.ldmSize) {
         this->ldm = new Ldm(this->configuration.ldmSize);

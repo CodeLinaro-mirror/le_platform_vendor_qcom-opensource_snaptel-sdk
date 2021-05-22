@@ -53,7 +53,7 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
     if(Status::SUCCESS == cv2xRadio->createTxSpsFlow(trafficType, serviceId, spsInfo,
                 port, withEventFlow, eventFlowPort, respCallback)){
         if(ErrorCode::SUCCESS == gCallbackPromise.get_future().get()){
-            cout<<"Sps flow created succesfully\n";
+            cout<<"Sps flow created succesfully sid=" << serviceId << endl;
             //return static_cast<uint8_t>(Status::SUCCESS);
         }
         else{

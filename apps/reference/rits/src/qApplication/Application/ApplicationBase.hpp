@@ -87,6 +87,7 @@ struct Config{
     vector<uint16_t> eventDestPorts;
     vector<string> eventDestAddrs;
     vector<string> eventDestNames;
+    bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
     bool enableTxAlways = true;

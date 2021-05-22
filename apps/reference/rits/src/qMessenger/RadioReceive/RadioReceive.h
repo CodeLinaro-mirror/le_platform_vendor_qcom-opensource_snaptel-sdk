@@ -87,6 +87,9 @@ public:
     */
     RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
     const uint16_t port);
+    
+    RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
+    const uint16_t port, std::shared_ptr<std::vector<uint32_t>> idList);
 
     /**
     * Constructor for Simulation of Radio Receives.

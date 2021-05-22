@@ -157,8 +157,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 #ifdef WITH_WSA
             if (msg_cont.wsa == nullptr)
                 msg_cont.wsa = new char[sizeof(SrvAdvMsg_t)];
-            if (msg_cont.wra == nullptr)
-                msg_cont.wra = new char[sizeof(RoutingAdvertisement_t)];
+            //if (msg_cont.wra == nullptr)
+            //    msg_cont.wra = new char[sizeof(RoutingAdvertisement_t)];
 #endif
         }
     }
@@ -740,7 +740,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
         IpPrefix.prefixLen = wra->ipPrefixLength;
         cout << "Setting Global IP address" << endl;
         memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
-        ret = radioReceives[0].onReceiveWra(IpPrefix);
+        ret = radioReceives[0].setGlobalIPInfo(IpPrefix);
         if (!ret) {
             memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
             ret = radioReceives[0].setRoutingInfo(RoutingInfo);

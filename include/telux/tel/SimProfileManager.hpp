@@ -124,7 +124,8 @@ class ISimProfileManager {
      * @param [in] confirmationCode      Optional confirmation code required for downloading the
      *                                   profile.
      * @param [in] userConsentSupported  Optional User consent supported or not.
-     * @param [in] callback              Callback function to get the result of add profile.
+     * @param [in] callback              Optional callback function to get the result of add
+     *                                   profile.
      *
      * @returns Status of add profile i.e. success or suitable error code.
      */
@@ -135,10 +136,30 @@ class ISimProfileManager {
 
     /**
      * Delete profile from eUICC card.
+     * 1. Deletion of enabled profile
+     *    a) This API will disable the profile first and then delete it.
+     *    b) The profile is associated with profile policy rules(PPRs) so before
+     *       disabling the profile, this API checks if the PPRs
+     *       @ref telux::tel::PolicyRuleType allow the operation.
+     *    c) If the policy rules are not set, then first disabling of profile happens
+     *       followed by deletion of profile.
+     *    d) If disable succeeds but deletion fails, then the API attempts
+     *       to roll back the profile back to the original (enabled) state.
+     *    e) If rollback fails due to any reason such as eUICC being in incompatabile
+     *       state then the profile will be in disabled state and the API will return
+     *       telux::common::ErrorCode::ROLLBACK_FAILED
+     * 2. Deletion of disabled profile
+     *     a) This API checks the PPR @ref telux::tel::PolicyRuleType::PROFILE_DELETE_NOT_ALLOWED
+     *        before deletion of profile.
+     *     b) If the PPR is not set, then deletion of profile is performed.
+     *        If the PPR is set, then the API returns
+     *        telux::common::ErrorCode::OPERATION_NOT_ALLOWED.
+
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] profileId         Profile identifier
-     * @param [in] callback          Callback function to get the result of delete profile.
+     * @param [in] callback          Optional callback function to get the result of delete
+     *                               profile.
      *
      * @returns Status of delete profile i.e. success or suitable error code.
      */
@@ -153,7 +174,7 @@ class ISimProfileManager {
      * @param [in] profileId         Profile identifier.
      * @param [in] enable            Indicates whether a profile must be enabled or disabled.
      *                               true - Enable and false - Disable.
-     * @param [in] callback          Callback function to get the result of set profile.
+     * @param [in] callback          Optional callback function to get the result of set profile.
      *
      * @returns Status of set profile i.e. success or suitable error code.
      */
@@ -167,7 +188,7 @@ class ISimProfileManager {
      * @param [in] slotId          Slot identifier corresponding to the card.
      * @param [in] profileId       Profile identifier
      * @param [in] nickName        New nick name for profile.
-     * @param [in] callback        Callback function to get the result of update nickname.
+     * @param [in] callback        Optional callback function to get the result of update nickname.
      *
      * @returns Status of update nick name i.e. success or suitable error code.
      */
@@ -207,7 +228,8 @@ class ISimProfileManager {
                                      True means user consent given to download and install.
      * @param [in] reason            Reason for not providing user consent to download and install.
      *                               @ref telux::tel::UserConsentReasonType
-     * @param [in] callback          Callback function to get the result of user consent request.
+     * @param [in] callback          Optional callback function to get the result of user consent
+     *                               request.
      *
      * @returns  Status of user consent request i.e. success or suitable error code.
      */
@@ -222,7 +244,8 @@ class ISimProfileManager {
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] code              Confirmation code for profile download and install.
-     * @param [in] callback          Callback function to get the result of confirmation request.
+     * @param [in] callback          Optional callback function to get the result of confirmation
+     *                               request.
      *
      * @returns  Status of provide confirmation code i.e. success or suitable error code.
      * @note     Eval: This is a new API and is being evaluated. It is subject to change and could

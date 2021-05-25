@@ -339,6 +339,7 @@ enum class ErrorCode {
    DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE = 4354,            /**< Creation of a new 3GPP2 profile
                                                                failed because the limit has already
                                                                been reached*/
+
    // Transport error codes
    INTERNAL_ERROR = -1,        /**< Internal error */
    SERVICE_ERROR = -2,         /**< Service error */
@@ -355,8 +356,10 @@ enum class ErrorCode {
    INVALID_SIGNAL = -20,       /**< Invalid signal */
    TRANSPORT_BUSY_ERROR = -21, /**< Transport busy error */
 
+   // SDK Error codes
    SUBSYSTEM_UNAVAILABLE = 5000, /**< Underlying service currently unavailable */
-   OPERATION_TIMEOUT = 5001,   /**< Timeout error */
+   OPERATION_TIMEOUT = 5001,     /**< Timeout error */
+   ROLLBACK_FAILED = 5002,       /**< Rollback to initial state failed */
 };
 
 /**

@@ -109,10 +109,10 @@ enum class UserConsentReasonType {
  * corresponding bit for PprMask bitset.
  */
 enum PolicyRuleType {
-    PROFILE_DISABLE_NOT_ALLOWED = (1 << 0), /**< Disabling of the profile is not allowed */
-    PROFILE_DELETE_NOT_ALLOWED = (1 << 1),  /**< Deletion of the profile is not allowed */
-    PROFILE_DELETE_ON_DISABLE = (1 << 2),   /**< Deletion of the profile is required on successful
-                                                      disabling */
+    PROFILE_DISABLE_NOT_ALLOWED, /**< Disabling of the profile is not allowed */
+    PROFILE_DELETE_NOT_ALLOWED,  /**< Deletion of the profile is not allowed */
+    PROFILE_DELETE_ON_DISABLE,   /**< Deletion of the profile is required on successful
+                                    disabling */
 };
 
 /**

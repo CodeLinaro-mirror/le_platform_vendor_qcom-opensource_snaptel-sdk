@@ -89,9 +89,14 @@ bool DataConnectionMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "7", "get_default_profile", {}, std::bind(
             &DataConnectionMenu::getDefaultProfile, this)));
+    std::shared_ptr<ConsoleAppCommand> reqDataCallBitRate
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "request_datacall_bit_rate",
+            {}, std::bind(&DataConnectionMenu::requestDataCallBitRate, this,
+            std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
-        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile, getDefaultProfile};
+        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
+        getDefaultProfile, reqDataCallBitRate};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -157,7 +162,7 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
         //If this is newly created Manager
         if (dataConnectionManagerMap_.find(slotId) == dataConnectionManagerMap_.end()) {
             dataConnectionManagerMap_.emplace(slotId, conMgr);
-            auto dataListener = std::make_shared<DataListener>();
+            auto dataListener = std::make_shared<DataListener>(slotId);
             if (dataListener == nullptr) {
                 std::cout <<
                 "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
@@ -393,6 +398,50 @@ void DataConnectionMenu::setDefaultProfile() {
 
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->setDefaultProfile(
         opType, profileId, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::requestDataCallBitRate(std::vector<std::string> inputCommand) {
+    std::cout << "\nRequest Data Call Bit Rate" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    auto dataCall = dataListeners_[static_cast<SlotId>(slotId)]->getDataCall(
+        static_cast<SlotId>(slotId), profileId);
+    if (dataCall) {
+        // Callback
+        auto respCb = [](
+            telux::data::BitRateInfo& bitRate, telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                      << "RequestDataCallBitRate Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << std::endl;
+                std::cout << "Current Tx Rate (bits/sec): " << bitRate.txRate << std::endl;
+                std::cout << "Current Rx Rate (bits/sec): " << bitRate.rxRate << std::endl;
+                std::cout << "Maximum Tx Rate (bits/sec): " << bitRate.maxTxRate << std::endl;
+                std::cout << "Maximum Rx Rate (bits/sec): " << bitRate.maxRxRate << std::endl;
+            }
+        };
+        retStat = dataCall->requestDataCallBitRate(respCb);
+    } else {
+        std::cout << "Unable to find DataCall, Please start_data_call" << std::endl;
+    }
     Utils::printStatus(retStat);
 }
 

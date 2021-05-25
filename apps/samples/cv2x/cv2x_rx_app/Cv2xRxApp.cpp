@@ -111,7 +111,7 @@ static void sampleRx(void) {
 
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X RX app" << endl;
-    std::vector<std::string> groups{"radio"};
+    std::vector<std::string> groups{"system", "diag", "radio"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << std::endl;
     }

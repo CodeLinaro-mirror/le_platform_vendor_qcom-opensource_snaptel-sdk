@@ -171,7 +171,7 @@ bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
             myModifyProfileCb_.emplace(slotId, std::make_shared<MyModifyProfileCallback>());
             myDataProfileCbForGetProfileById_.emplace(slotId,
                                                       std::make_shared<MyDataProfileCallback>());
-            profileListeners_.emplace(slotId, std::make_shared<MyProfileListener>());
+            profileListeners_.emplace(slotId, std::make_shared<MyProfileListener>(slotId));
 
             telux::common::Status status =
                 dataProfileManagerMap_[slotId]->registerListener(profileListeners_[slotId]);

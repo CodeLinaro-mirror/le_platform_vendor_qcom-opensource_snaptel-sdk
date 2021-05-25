@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -47,6 +47,7 @@ typedef enum {
    DEFAULT_SLOT_ID =  1,
    SLOT_ID_1 = DEFAULT_SLOT_ID,
    SLOT_ID_2 = 2,
+   MAX_SLOT_ID = SLOT_ID_2,
 }SlotId;
 
 namespace telux {
@@ -151,6 +152,9 @@ enum class ErrorCode {
    NO_EFFECT = 101,                      /**< Given request had to no effect */
    DEVICE_NOT_READY = 102,               /**< Device not ready */
    MISSING_ARGUMENTS = 103,              /**< Missing one or more arguments */
+
+   PIN_PERM_BLOCKED = 201,               /**< PIN is permanently blocked. The SIM is unusable. */
+   PIN_BLOCKED = 202,                    /**< PIN is blocked. Unblock operation must be issued. */
    MALFORMED_MSG = 1001,                 /**< Message was not formulated correctly
                                               by the control point or the message was corrupted
                                               during transmission */
@@ -184,8 +188,6 @@ enum class ErrorCode {
    INVALID_REGISTER_ACTION = 1032,       /**< Invalid register action value specified in request */
    INVALID_PS_ATTACH_ACTION = 1033,      /**< Invalid PS attach action value specified in request */
    AUTHENTICATION_FAILED = 1034,         /**< Authentication error. */
-   PIN_BLOCKED = 1035,                   /**< PIN is blocked. Unblock operation must be issued. */
-   PIN_PERM_BLOCKED = 1036,              /**< PIN is permanently blocked. The SIM is unusable. */
    SIM_NOT_INITIALIZED = 1037,           /**< PIN is not yet initialized because the SIM
                                               initialization has not finished. Try the PIN
                                               operation later. */

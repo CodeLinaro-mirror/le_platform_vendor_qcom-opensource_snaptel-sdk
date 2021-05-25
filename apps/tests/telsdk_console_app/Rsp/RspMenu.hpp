@@ -66,7 +66,7 @@ class RemoteSimProfileMenu : public ConsoleApp {
     void provideUserConsent(std::vector<std::string> userInput);
     void setServerAddress(std::vector<std::string> userInput);
     void requestServerAddress(std::vector<std::string> userInput);
-
+    void provideConfirmationCode(std::vector<std::string> userInput);
     void onResponseCallback(telux::common::ErrorCode error);
 
     SlotId getSlotIdInput();

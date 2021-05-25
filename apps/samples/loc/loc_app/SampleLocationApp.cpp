@@ -68,27 +68,27 @@ int main(int, char **) {
       = std::make_shared<MyLocationListener>();
    std::shared_ptr<telux::loc::ILocationManager> locationManager;
    // Get location manager object
-   auto &locationFactory = LocationFactory::getInstance();
-   locationManager = locationFactory.getLocationManager();
-
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
-   bool subSystemsStatus = locationManager->isSubsystemReady();
-   if(!subSystemsStatus) {
-      std::cout << "Location subsystem is not ready, wait for it to be ready " << std::endl;
-      std::future<bool> f = locationManager->onSubsystemReady();
-      subSystemsStatus = f.get();
-   }
-
-   if(subSystemsStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize Location subsystem" << std::endl;
-   }
-
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    auto &locationFactory = LocationFactory::getInstance();
+    locationManager = locationFactory.getLocationManager([&](ServiceStatus status) {
+        prom.set_value(status);
+    });
+    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+    startTime = std::chrono::system_clock::now();
+    ServiceStatus locMgrStatus = locationManager->getServiceStatus();
+    if (locMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+         std::cout << "Location subsystem is not ready, Please wait" << std::endl;
+    }
+    locMgrStatus = prom.get_future().get();
+    if (locMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
+          endTime = std::chrono::system_clock::now();
+          std::chrono::duration<double> elapsedTime = endTime - startTime;
+          std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count()
+              << "s\n" << std::endl;
+    } else {
+          std::cout << "ERROR - Unable to initialize Location subsystem" << std::endl;
+          return -1;
+    }
    // Registering a listener to get location fixes
    locationManager->registerListenerEx(myLocationListener);
    // Starting the reports for fixes

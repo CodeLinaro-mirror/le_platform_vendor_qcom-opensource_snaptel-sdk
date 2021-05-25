@@ -58,3 +58,6 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to acquire sensor data](sensor/sensor_data_acquisition.md)
   * [How to control sensor features](sensor/sensor_feature_control.md)
   * [How to use Logging APIs](common/public_logging.md)
+  * [How to get dedicated radio bearer status](data/get_drb_status_and_indication.md)
+  * [How to get data service status](data/get_service_status_and_indication.md)
+  * [How to get data roaming status](data/get_roaming_status_and_indication.md)

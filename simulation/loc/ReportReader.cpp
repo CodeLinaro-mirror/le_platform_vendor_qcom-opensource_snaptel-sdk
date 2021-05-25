@@ -29,6 +29,8 @@
 
 #include "ReportReader.hpp"
 #include "StubHelper.hpp"
+#include <time.h>
+#include <cerrno>
 #include "Logger/Logger.hpp"
 
 // Number of lines in the Linux foundation license text.
@@ -128,10 +130,17 @@ void ReportReader::readInfoBaseExData() {
 
         getline(mystream,str, ',');
         if(!str.empty()) {
-            double tm = stod(str) * 1000; //converting to msecs from secs in file
+            // fetching the current UTC timestamp
+            double tm = static_cast<double> (time(NULL));
+            if (tm == -1) {
+                /* Invalidating the Timestamp in case of error.*/
+                infoValidity &= ~(LocationValidityType::HAS_TIMESTAMP_BIT);
+                Warn(__func__, "Fetching current timestamp failed with error: ", strerror(errno));
+            } else {
+                infoValidity |= LocationValidityType::HAS_TIMESTAMP_BIT;
+            }
             iBase_->setUtcFixTime(tm);
             iBaseEx_->setUtcFixTime(tm);
-            infoValidity |= LocationValidityType::HAS_TIMESTAMP_BIT;
         }
         getline(mystream,str, ',');
         if(!str.empty()) {

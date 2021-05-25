@@ -37,22 +37,24 @@ Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Inf
 
 ### 4. Get LocationManager instance ###
    ~~~~~~{.cpp}
-    auto locationManager_ = locationFactory.getLocationManager();
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    auto locationManager_ = locationFactory.getLocationManager([&](ServiceStatus status) {
+        prom.set_value(status);
+    });
    ~~~~~~
 
 ### 5. Wait for the location subsystem initialization ###
    ~~~~~~{.cpp}
-    bool subSystemsStatus = locationManager_->isSubsystemReady();
-    if (!subSystemsStatus) {
+    ServiceStatus managerStatus = locationManager_->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Location subsystem is not ready, Please wait!!!... "<< std::endl;
-        std::future<bool> f = locationManager_->onSubsystemReady();
-        subSystemsStatus = f.get();
+        managerStatus = prom.get_future().get();
     }
    ~~~~~~
 
 ### 6. Exit the application, if SDK is unable to initialize location subsystems ###
    ~~~~~~{.cpp}
-    if (subSystemsStatus) {
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout<< "Subsystem is ready" << std::endl;
     } else {
         std::cout << " *** ERROR - Unable to initialize Location subsystem"<< std::endl;

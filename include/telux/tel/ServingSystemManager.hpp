@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -147,6 +147,8 @@ public:
     * Checks the status of serving subsystem and returns the result.
     *
     * @returns True if serving subsystem is ready for service otherwise false.
+    *
+    * @deprecated Use IServingSystemManager::getServiceStatus() API.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -155,8 +157,24 @@ public:
     *
     * @returns  A future that caller can wait on to be notified when serving
     *           subsystem is ready.
+    *
+    * @deprecated Use InitResponseCb in PhoneFactory::getServingSystemManager instead, to
+    *             get notified about subsystem readiness.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
+
+   /**
+    * This status indicates whether the IServingSystemManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    -  If Serving System manager is ready for service.
+    *          SERVICE_UNAVAILABLE  -  If Serving System manager is temporarily unavailable.
+    *          SERVICE_FAILED       -  If Serving System manager encountered an irrecoverable
+    *                                  failure.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
     * Set the preferred radio access technology mode that the device should use

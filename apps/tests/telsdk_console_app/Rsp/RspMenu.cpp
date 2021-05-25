@@ -30,7 +30,7 @@
 /**
  * RemoteSimProfileMenu provides menu options to invoke remote sim profile MultiSim functions
  * such as addProfile, deleteProfile, requestProfileList, updateNickName, getEid,
- * provideUserConsent.
+ * provideUserConsent and provideConfirmationCode.
  */
 
 #include <iostream>
@@ -45,6 +45,7 @@
 #define MAX_SIM_SLOT_COUNT 2
 #define DEFAULT_PROFILE_ID 1
 #define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
+#define INVALID -1
 
 RemoteSimProfileMenu::RemoteSimProfileMenu(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
@@ -126,11 +127,15 @@ void RemoteSimProfileMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Set_Server_Address", {},
         std::bind(&RemoteSimProfileMenu::setServerAddress,
         this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> provideConfirmationCode
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Provide_Confirmation_code",
+        {}, std::bind(&RemoteSimProfileMenu::provideConfirmationCode,
+        this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListRemoteSimProfileMenu
         = { getEIDCommand, addProfileCommand, deleteProfileCommand, requestProfileListCommand,
             setProfileCommand, updateNickNameCommand, setUserConsent, getServerAddress,
-            setServerAddress};
+            setServerAddress, provideConfirmationCode};
 
     addCommands(commandsListRemoteSimProfileMenu);
     ConsoleApp::displayMenu();
@@ -213,6 +218,10 @@ void RemoteSimProfileMenu::addProfile(std::vector<std::string> userInput) {
         if (!userConsentSelection.empty()) {
            try {
               isUserConsentReq = std::stoi(userConsentSelection);
+              if (isUserConsentReq != 0 && isUserConsentReq != 1 ) {
+                  std::cout << "ERROR::Invalid input" <<std::endl;
+                  return;
+              }
            } catch(const std::exception &e) {
               std::cout << "ERROR::Invalid input, please enter a numerical value" <<std::endl;
               return;
@@ -330,6 +339,10 @@ void RemoteSimProfileMenu::setProfile(std::vector<std::string> userInput) {
         }
         try {
             enable = std::stoi(enableDisableSelection);
+            if (enable != 0 && enable != 1 ) {
+                std::cout << "ERROR::Invalid input" <<std::endl;
+                return;
+            }
         } catch(const std::exception &e) {
             std::cout << "ERROR::Invalid input, please enter a numerical value" <<std::endl;
             return;
@@ -407,26 +420,83 @@ void RemoteSimProfileMenu::provideUserConsent(std::vector<std::string> userInput
         }
         char delimiter = '\n';
         std::string userConsentSelection = "";
-        bool isUserConsentReq = false;
+        bool isUserConsent = false;
 
-        std::cout << "User consent for profile download and install( 1 - Yes/0 - No ): ";
+        std::cout << "User consent for profile download and install (1 - Yes/0 - No): ";
         std::getline(std::cin, userConsentSelection, delimiter);
         if (!userConsentSelection.empty()) {
             try {
-                isUserConsentReq = std::stoi(userConsentSelection);
+                isUserConsent = std::stoi(userConsentSelection);
+                if (isUserConsent != 0 && isUserConsent != 1 ) {
+                    std::cout << "ERROR::Invalid input" <<std::endl;
+                    return;
+                }
             } catch(const std::exception &e) {
-                std::cout << "ERROR::INVALID ARGUMENTS" <<std::endl;
+                std::cout << "ERROR::Invalid input, please enter a numerical value" <<std::endl;
                 return;
             }
         }
 
-        Status status = simProfileManager_->provideUserConsent(slotId, isUserConsentReq,
-                                                               MyRspCallback::onResponseCallback);
+        std::string userConsentReason = "";
+        int reason = INVALID;
+        if (!isUserConsent) {
+            std::cout << "Reason for user consent not OK (0 - REJECT/1 - POSTPONE): ";
+            std::getline(std::cin, userConsentReason, delimiter);
+            if (!userConsentReason.empty()) {
+                try {
+                    reason = std::stoi(userConsentReason);
+                    if (reason != 0 && reason != 1 ) {
+                        std::cout << "ERROR::Invalid input" <<std::endl;
+                        return;
+                    }
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR::Invalid input, please enter a numerical value" <<std::endl;
+                    return;
+                }
+            }
+        }
+
+        Status status = simProfileManager_->provideUserConsent(slotId, isUserConsent,
+            static_cast<telux::tel::UserConsentReasonType>(reason),
+            MyRspCallback::onResponseCallback);
         if (status == Status::SUCCESS) {
             std::cout << "Provide user consent request sent successfully"
                       << std::endl;
         } else {
             std::cout << "ERROR - Failed to send provide user consent request,"
+                      << "Status:" << static_cast<int>(status) << std::endl;
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - SimProfileManger is null" << std::endl;
+    }
+}
+
+void RemoteSimProfileMenu::provideConfirmationCode(std::vector<std::string> userInput) {
+    if(simProfileManager_) {
+        SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+        if (telux::common::DeviceConfig::isMultiSimSupported()) {
+           slotId =  getSlotIdInput();
+            if (slotId == SlotId::INVALID_SLOT_ID)
+              return;
+        }
+        char delimiter = '\n';
+        std::string confirmationCode = "";
+
+        std::cout << "Enter confirmation code for profile download and install: ";
+        std::getline(std::cin, confirmationCode, delimiter);
+        if (confirmationCode.empty()) {
+           std::cout << "Confirmation code is empty" << std::endl;
+           return;
+        }
+
+        Status status = simProfileManager_->provideConfirmationCode(slotId, confirmationCode,
+                                                               MyRspCallback::onResponseCallback);
+        if (status == Status::SUCCESS) {
+            std::cout << "Provide confirmation code request sent successfully"
+                      << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to send provide confirmation code request,"
                       << "Status:" << static_cast<int>(status) << std::endl;
             Utils::printStatus(status);
         }

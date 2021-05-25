@@ -236,6 +236,8 @@ public:
     * Checks the status of network subsystem and returns the result.
     *
     * @returns True if network subsystem is ready for service otherwise false.
+    *
+    * @deprecated Use INetworkSelectionManager::getServiceStatus() API.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -244,8 +246,24 @@ public:
     *
     * @returns  A future that caller can wait on to be notified when network
     *           subsystem is ready.
+    *
+    * @deprecated Use InitResponseCb in PhoneFactory::getNetworkSelectionManager instead, to
+    *             get notified about subsystem readiness.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
+
+   /**
+    * This status indicates whether the INetworkSelectionManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    -  If Serving System manager is ready for service.
+    *          SERVICE_UNAVAILABLE  -  If Serving System manager is temporarily unavailable.
+    *          SERVICE_FAILED       -  If Serving System manager encountered an irrecoverable
+    *                                  failure.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
     * Get current network selection mode (i.e Manual or Automatic) asynchronously.

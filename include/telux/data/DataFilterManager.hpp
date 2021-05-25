@@ -82,13 +82,22 @@ using DataRestrictModeCb =
 class IDataFilterManager {
 public:
     /**
+     * Checks the status of data filter manager and returns the result.
+     *
+     * @returns  the status of sensor sub-system status @ref telux::common::ServiceStatus
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+    /**
      * Checks the status of Data Filter Service and if the other APIs are ready for use,
      * and returns the result.
      *
      * @returns  True if the services are ready otherwise false.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * @deprecated Use getServiceStatus API.
      */
     virtual bool isReady() = 0;
 
@@ -98,8 +107,7 @@ public:
      * @returns  A future that caller can wait on to be notified when Data Filter Service
      *           are ready.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * @deprecated Use InitResponseCb callback in factory API getDataFilterManager.
      */
     virtual std::future<bool> onReady() = 0;
 

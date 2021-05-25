@@ -17,3 +17,6 @@ data {#data}
 * @subpage create_snat_entry
 * @subpage enable_and_add_tunnel_l2tp
 * @subpage enable_disable_socks
+* @subpage get_drb_status_and_indication
+* @subpage get_service_status_and_indication
+* @subpage get_roaming_status_and_indication

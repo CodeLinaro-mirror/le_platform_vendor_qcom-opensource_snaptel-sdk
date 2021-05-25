@@ -24,22 +24,24 @@ Please follow below steps to use Configurator APIs
 
 ### 3. Get LocationConfigurator instance ###
    ~~~~~~{.cpp}
-    auto locConfigurator_ = locationFactory.getLocationConfigurator();
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    auto locConfigurator_ = locationFactory.getLocationConfigurator([&](ServiceStatus status) {
+        prom.set_value(status);
+    });
    ~~~~~~
 
 ### 4. Wait for the Location Config. initialization ###
    ~~~~~~{.cpp}
-    bool subSystemStatus = locConfigurator_->isSubsystemReady();
-    if (!subSystemStatus) {
+   ServiceStatus managerStatus = locConfigurator_->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Location Config. is not ready, Please wait!!!... "<< std::endl;
-        std::future<bool> f = locConfigurator_->onSubsystemReady();
-        subSystemStatus = f.get();
+        managerStatus = prom.get_future().get();
     }
    ~~~~~~
 
 ### 5. Exit the application, if SDK is unable to initialize Location Config. ###
    ~~~~~~{.cpp}
-    if (subSystemStatus) {
+   if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout<< "Location Config. is ready" << std::endl;
     } else {
         std::cout << " *** ERROR - Unable to initialize Location Config."<< std::endl;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,6 +30,7 @@
 #include <iostream>
 #include <algorithm>
 #include <iterator>
+#include <thread>
 
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -52,31 +53,41 @@ void HttpTransactionListener::onSendHttpTransactionResp(telux::common::ErrorCode
 void HttpTransactionListener::onNewHttpRequest(const std::string &url, uint32_t tokenId,
     const std::vector<telux::tel::CustomHeader> &headers, const std::vector<uint8_t> &reqPayload) {
 
-    telux::tel::HttpResult httpResult = telux::tel::HttpResult::TRANSACTION_SUCCESSFUL;
-    LOGI(" NOTIFICATION: onNewHttpRequest \n");
+    LOGI(" NOTIFICATION: onNewHttpRequest \n URL: %s \n", url.c_str());
 
-    LOGD(" Http transaction Request \n");
-    LOGD(" URL: %s \n", url.c_str());
     for (auto &h : headers) {
         LOGD(" Header: %s, Value: %s \n", h.name.c_str(), h.value.c_str());
     }
 
-    std::string postResponse = "";
-
     std::string reqPayloadStr(reqPayload.begin(), reqPayload.end());
-    auto curlCode = curlPost(url, reqPayloadStr, postResponse, headers);
+
+    std::thread processRequest([this, tokenId, url, reqPayloadStr, headers]() {
+                this->processHttpRequest(tokenId, url, reqPayloadStr, headers);});
+    processRequest.detach();
+
+}
+
+void HttpTransactionListener::processHttpRequest(uint32_t tokenId, const std::string &url,
+    const std::string &reqPayload, const std::vector<telux::tel::CustomHeader> &headers) {
+
+    std::string postResponse = "";
+    telux::tel::HttpResult httpResult = telux::tel::HttpResult::UNKNOWN_ERROR;
+
+    auto curlCode = curlPost(url, reqPayload, postResponse, headers);
     LOGD(" After Http POST payload Response: %s \n", postResponse.c_str());
 
-    if (curlCode != CURLE_OK) {
+    if (curlCode == CURLE_OK) {
+        LOGD("Curl Post succeeded: %s \n", curl_easy_strerror(curlCode));
+        httpResult = telux::tel::HttpResult::TRANSACTION_SUCCESSFUL;
+    } else {
         LOGE("Curl Post failed: %s \n", curl_easy_strerror(curlCode));
-        httpResult = telux::tel::HttpResult::UNKNOWN_ERROR;
     }
 
-    std::vector<uint8_t> httpResp;
-    std::copy(postResponse.begin(), postResponse.end(), std::back_inserter(httpResp));
+    std::vector<uint8_t> httpResp (postResponse.begin(), postResponse.end());
 
     LOGD(" After Http transaction Request \n");
     auto responseCb = [&](telux::common::ErrorCode errCode) { onSendHttpTransactionResp(errCode); };
+
     auto result = httpTransactionManager_->sendHttpTransactionResult(tokenId,
         httpResult, headers, httpResp, responseCb);
     if (result != telux::common::Status::SUCCESS) {
@@ -89,7 +100,6 @@ CURLcode HttpTransactionListener::curlPost(const std::string &url,
     const std::vector<telux::tel::CustomHeader> &headers) {
     LOGI(" curlPost \n");
 
-    std::lock_guard<std::mutex> lock(mtx_);
     CURL *curl = curl_easy_init();  // CURL handle
 
     if (!curl) {
@@ -99,8 +109,8 @@ CURLcode HttpTransactionListener::curlPost(const std::string &url,
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     setPostParams(url, postParameters, postResponse, headers, curl);
 
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
     // This tells the CURL to fail the request if the HTTP code returned is equal to
     // or larger than 400

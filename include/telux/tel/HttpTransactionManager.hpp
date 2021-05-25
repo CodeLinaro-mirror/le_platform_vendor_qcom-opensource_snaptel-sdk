@@ -93,7 +93,7 @@ class IHttpTransactionManager {
      * @param [in] callback          Callback function to get the result of send HTTP transaction
      *                               request.
      *
-     * @returns  Status of send HTTP transaction request i.e. success or suitable error code.
+     * @returns  Status of send HTTP transaction result i.e. success or suitable error code.
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */

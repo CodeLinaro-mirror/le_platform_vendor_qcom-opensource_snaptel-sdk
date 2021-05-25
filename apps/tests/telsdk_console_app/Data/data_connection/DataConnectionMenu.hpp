@@ -65,6 +65,7 @@ public:
     // Data Connection Management APIs
     void startDataCall(std::vector<std::string> inputCommand);
     void stopDataCall(std::vector<std::string> inputCommand);
+    void requestDataCallBitRate(std::vector<std::string> inputCommand);
     void requestDataCallStatistics(std::vector<std::string> inputCommand);
     void resetDataCallStatistics(std::vector<std::string> inputCommand);
     void requestDataCallList();

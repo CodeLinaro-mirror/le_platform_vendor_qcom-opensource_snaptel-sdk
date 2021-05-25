@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -78,23 +78,30 @@ enum class ProfileClass {
  * Indicates profile download status.
  */
 enum class DownloadStatus {
-    DOWNLOAD_ERROR = 1,   /**< Profile download error */
-    DOWNLOAD_IN_PROGRESS, /**< Profile download in progress with download percentage */
-    DOWNLOAD_COMPLETE_INSTALLATION_IN_PROGRESS, /**< Profile download is complete and installation
-                                                  is in progress */
-    INSTALLATION_COMPLETE,                      /**< Profile installation is complete */
-    USER_CONSENT_REQUIRED,                      /**< User consent is required for proceeding
-                                                  with download/installation of profile */
+    DOWNLOAD_ERROR = 0,                  /**< Profile download error */
+    DOWNLOAD_INSTALLATION_COMPLETE,      /**< Profile download and installation is complete */
 };
 
 /**
  * Indicates profile download error cause.
  */
 enum class DownloadErrorCause {
-    GENERIC = 1, /**< Generic error */
-    SIM,         /**< Error from the SIM card */
-    NETWORK,     /**< Error from the network */
-    MEMORY,      /**< Error due to no memory */
+    GENERIC = 1,                      /**< Generic error */
+    SIM,                              /**< Error from the SIM card */
+    NETWORK,                          /**< Error from the network */
+    MEMORY,                           /**< Error due to no memory */
+    UNSUPPORTED_PROFILE_CLASS,        /**< Unsupported profile class */
+    PPR_NOT_ALLOWED,                  /**< Profile policy rules not allowed */
+    END_USER_REJECTION,               /**< End user rejection */
+    END_USER_POSTPONED,               /**< End user postponed */
+};
+
+/**
+ * Indicates the reason for user consent not provided.
+ */
+enum class UserConsentReasonType {
+    END_USER_REJECTION = 0,            /**< End user rejection */
+    END_USER_POSTPONED,                /**< End user postponed */
 };
 
 /**

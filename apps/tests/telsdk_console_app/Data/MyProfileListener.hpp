@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,6 +35,7 @@
 
 class MyProfileListener : public telux::data::IDataProfileListener {
 public:
+   MyProfileListener(SlotId slotId);
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
    void onProfileUpdate(int profileId, telux::data::TechPreference techPreference,
                         telux::data::ProfileChangeEvent event) override;
@@ -42,6 +43,8 @@ public:
 
    ~MyProfileListener() {
    }
+private:
+   SlotId slotId_;
 };
 
 #endif  // MYPROFILELISTENER_HPP

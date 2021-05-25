@@ -522,8 +522,7 @@ void CardServicesMenu::changeCardPin(std::vector<std::string> userInput) {
    applications = card->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
-         if((cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM)
-            && (cardApp->getAppState() == telux::tel::AppState::APPSTATE_READY)) {
+         if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
             auto ret
                = cardApp->changeCardPassword(cardLockType, oldPin, newPin,
                   &ChangeCardPinResponseCb);

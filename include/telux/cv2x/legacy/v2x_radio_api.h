@@ -103,6 +103,13 @@ typedef int v2x_radio_handle_t;
     Used in @ref v2x_tx_status_report_t */
 #define V2X_MAX_ANTENNAS_SUPPORTED (2)
 
+/** Maximum number of V2X Tx pools that is supported.
+    Used in @ref v2x_radio_status_ex_t */
+#define V2X_MAX_TX_POOL_NUM (2)
+
+/** Maximum number of V2X Rx pools that is supported.
+    Used in @ref v2x_radio_status_ex_t */
+#define V2X_MAX_RX_POOL_NUM (4)
 
 /**
     Describes whether the radio chip modem should attempt or support concurrent
@@ -124,6 +131,8 @@ typedef enum {
     Event indications sent asynchronously from the radio via callbacks that
     indicate the state of the radio. The state can change in response to the
     loss of timing precision or a geofencing change.
+    @deprecated This enum type is deprecated, please consider use
+    %v2x_radio_status_ex_t instead.
  */
 typedef enum {
     V2X_INACTIVE = 0,    /**< V2X communication is disabled. */
@@ -159,6 +168,70 @@ typedef enum  {
     SERVICE_AVAILABLE = 1,
     SERVICE_FAILED = 2,
 } v2x_service_status_t;
+
+/**
+    Defines possible values for CV2X radio RX/TX status.
+ */
+typedef enum {
+    V2X_RADIO_STATUS_INACTIVE = 0,    /**< RX/TX is inactive */
+    V2X_RADIO_STATUS_ACTIVE = 1,      /**< RX/TX is active */
+    V2X_RADIO_STATUS_SUSPENDED = 2,   /**< RX/TX is suspended */
+    V2X_RADIO_STATUS_UNKNOWN = 3,     /**< RX/TX status unknown */
+} v2x_radio_status_type_t;
+
+/**
+    Defines possible values for cause of CV2X radio failure.
+ */
+typedef enum {
+    V2X_RADIO_CAUSE_TIMING,           /**< V2X timing is not valid */
+    V2X_RADIO_CAUSE_CONFIG,           /**< No valid V2X configuration */
+    V2X_RADIO_CAUSE_UE_MODE,          /**< V2X is not supported in current UE mode */
+    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< V2X is not supported in current UE location */
+    V2X_RADIO_CAUSE_THERMAL,          /**< Device's temperature is high and is in thermal
+                                           mitigation mode */
+    V2X_RADIO_CAUSE_THERMAL_ECALL,    /**< Device is in an emergency call and the device's
+                                           temperature has crossed a threshold resulting
+                                           in thermal mitigation */
+    V2X_RADIO_CAUSE_GEOPOLYGON_SWITCH,/**< V2X stack is suspended due to geopolygon switch */
+    V2X_RADIO_CAUSE_SENSING,          /**< V2X stack is suspended due to sensing */
+    V2X_RADIO_CAUSE_LPM,              /**< V2X is not supported under Low Power Mode */
+    V2X_RADIO_CAUSE_UNKNOWN,          /**< Cause is unknown */
+} v2x_radio_cause_type_t;
+
+/**
+    Encapsulates CV2X Tx/Rx status and cause of failure.
+ */
+typedef struct {
+    v2x_radio_status_type_t status;  /**< Tx/Rx status */
+    v2x_radio_cause_type_t cause;    /**< Cause of failure */
+} v2x_status_info_t;
+
+/**
+    Encapsulates status of CV2X radio.
+ */
+typedef struct {
+    v2x_status_info_t tx_status;  /**< TX status */
+    v2x_status_info_t rx_status;  /**< RX status */
+} v2x_radio_status_t;
+
+/**
+    Encapsulates status for single TX/RX pool.
+ */
+typedef struct {
+    uint8_t pool_id;             /**< pool ID*/
+    v2x_status_info_t status;    /**< Tx/Rx pool status */
+} v2x_pool_status_t;
+
+/**
+    V2X overall radio status and per pool status.
+ */
+typedef struct {
+    v2x_radio_status_t status;       /**< CV2X overall TX/RX status */
+    uint8_t tx_pool_size;            /**< Number of Tx pools in array of pool_status. */
+    v2x_pool_status_t tx_pool_status[V2X_MAX_TX_POOL_NUM]; /**< CV2X Tx pool status. */
+    uint8_t rx_pool_size;            /**< Number of Rx pools in array of pool_status. */
+    v2x_pool_status_t rx_pool_status[V2X_MAX_RX_POOL_NUM]; /**< CV2X Rx pool status. */
+} v2x_radio_status_ex_t;
 
 /**
     Contains time confidence, position confidence, and propagation delay for a
@@ -531,6 +604,8 @@ typedef struct {
     /**
     Callback made when the status in the radio changes. For example, in
     response to a fault when there is a loss of GPS timing accuracy.
+    @deprecated This callback is deprecated, please consider use
+    %v2x_ext_radio_status_listener instead.
 
     @datatypes
     #v2x_event_t
@@ -606,6 +681,19 @@ typedef struct {
     void (*v2x_service_status_listener)(v2x_service_status_t status,
                                         void *context);
 
+    /**
+    Callback made when the V2X radio status changes.
+
+    @datatypes
+    #v2x_radio_status_ex_t
+
+    @param[out] v2x_radio_status_ex_t   Delivery of V2X overall radio status
+                                        and per pool status.
+    @param[in] context  Pointer to the context of the caller who originally
+                        registered for this callback.
+    */
+    void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* status,
+                                          void *context);
 } v2x_radio_calls_t;
 
 /**
@@ -2497,6 +2585,17 @@ v2x_status_enum_type v2x_set_global_IPaddr(uint8_t prefix_len, uint8_t* ipv6_add
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
 v2x_status_enum_type v2x_set_ip_routing_info(uint8_t* dest_mac_addr);
+
+/**
+    Get current V2X overall radio status and per pool status.
+
+    @param [out] status        Pointer to structure v2x_radio_status_ex_t, which
+                               contains V2X overall radio status and per pool status
+                               on success.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
 
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 

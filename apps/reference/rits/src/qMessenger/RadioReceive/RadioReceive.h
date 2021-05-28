@@ -98,19 +98,22 @@ public:
 
     /**
     * Blocking mehtod that receives from created flow's socket.
-    * @param buf a char pointer to store the data received.
+    * @param buf - a char pointer to store the data received.
+    * @param len - the length of bytes to receive into buffer
     * @return bytes received, -1 if error.
     */
-    uint32_t receive(const char* buf);
+    uint32_t receive(const char* buf, int len);
 
     /**
     * Blocking mehtod that receives from created flow's socket.
-    * @param buf a char pointer to store the data received.
+    * @param buf - a char pointer to store the data received.
+    * @param len - length of bytes to receive into buffer
     * @param sourceMacAddr source MAC address.
     * @param macAddrLen source MAC address length.
     * @return bytes received, -1 if error.
     */
-    uint32_t receive(const char* buf, uint8_t *sourceMacAddr, int& macAddrLen);
+    uint32_t receive(const char* buf, int len,
+            uint8_t *sourceMacAddr, int& macAddrLen);
 
     int onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr);
     int onWraTimedout(void);

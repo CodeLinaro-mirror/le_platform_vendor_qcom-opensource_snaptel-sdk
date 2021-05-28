@@ -42,7 +42,8 @@ class SaeApplication : public ApplicationBase {
 public:
     SaeApplication(char *fileConfiguration, MessageType msgType);
     SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, MessageType msgType);
+        const string rxIpv4, const uint16_t rxPort, 
+        char* fileConfiguration, MessageType msgType);
     ~SaeApplication();
 
     /**

@@ -115,7 +115,8 @@ public:
     /**
     * Non-blocking method that requests and returns TX/RX radio status.
     * @param type a RadioType.
-    * @return String with possible values "INACTIVE", "ACTIVE", "SUSPENDED", "UNKNOWN".
+    * @return String with possible values 
+    * "INACTIVE", "ACTIVE", "SUSPENDED", "UNKNOWN".
     */
     Cv2xStatusType statusCheck(RadioType type);
     /**
@@ -126,5 +127,13 @@ public:
     * @see TrafficCategory
     */
     bool ready(TrafficCategory category, RadioType type);
+
+    /**
+    * Set the verbosity for the specific RadioInterface implementation.
+    * @param interger value representing level of verbosity
+    * @return none
+    */
+    void set_radio_verbosity(int value);
+    int rVerbosity = 0;
 };
 

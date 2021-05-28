@@ -36,6 +36,12 @@
 
 #include "RadioInterface.h"
 
+void RadioInterface::set_radio_verbosity(int value) {
+    if(value)
+        printf("Radio flow verbosity will be set to: %d\n", value);
+    rVerbosity = value;
+}
+
 map<Cv2xStatusType, string> RadioInterface:: gCv2xStatusToString = {
     {Cv2xStatusType::INACTIVE, "INACTIVE"},
     {Cv2xStatusType::ACTIVE, "ACTIVE"},

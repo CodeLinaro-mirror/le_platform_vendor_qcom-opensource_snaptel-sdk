@@ -58,8 +58,10 @@
 #include "NullSecurity.hpp"
 #endif
 
-#define ABUF_LEN            2048
+#define ABUF_LEN            8448
 #define ABUF_HEADROOM       256
+#define MIN_PACKET_LEN      20
+#define MAX_PACKET_LEN      8192
 
 using namespace std;
 enum class TransmitType {
@@ -76,6 +78,7 @@ enum class MessageType {
 };
 
 struct Config{
+    int codecVerbosity;
     vector<uint16_t> receivePorts;
     vector<uint16_t> eventPorts;
     vector<uint16_t> spsPorts;

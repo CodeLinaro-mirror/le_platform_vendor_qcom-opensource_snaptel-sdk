@@ -155,9 +155,9 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
     {
         int  bytes_sent;
         if(enableUdp){ //udp
-            //cout << "\nTransmitting data via udp...\n";
             bytes_sent = sendto(this->simSock, buf, bufLen,  0,
-                        (const struct sockaddr *) &(this->destAddress), sizeof(this->destAddress));
+                        (const struct sockaddr *) &(this->destAddress),
+                         sizeof(this->destAddress));
         } else{ //tcp - default
             bytes_sent = send(simSock, buf, bufLen, 0);
         }
@@ -207,7 +207,7 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
         printf("\n");
 #endif
     }else{
-        cout << "Error Sending Data.\n";
+        cerr << "Error Sending Data.\n";
 //        resp = static_cast<uint8_t>(Status::FAILED);
         resp = -1;
     }

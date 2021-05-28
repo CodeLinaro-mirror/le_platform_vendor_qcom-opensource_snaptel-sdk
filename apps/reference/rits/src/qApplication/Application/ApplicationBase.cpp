@@ -40,9 +40,6 @@ using std::string;
 using std::map;
 using std::pair;
 
-#define ABUF_LEN            2048
-#define ABUF_HEADROOM       256
-
 ApplicationBase::ApplicationBase(char* fileConfiguration){
     // set parameters according to config file
     this->loadConfiguration(fileConfiguration);
@@ -367,6 +364,8 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
+        this->configuration.codecVerbosity = 
+            (uint8_t)stoi(configs["codecVerbosity"]);
         set_codec_verbosity(stoi(configs["codecVerbosity"]));
     }
 
@@ -473,6 +472,7 @@ void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     radioOpt.ipv4_src = configuration.ipv4_src;
     simTransmit = std::unique_ptr<RadioTransmit>
             (new RadioTransmit(radioOpt, ipv4, port));
+    simTransmit->set_radio_verbosity(this->configuration.codecVerbosity);
     txSimMsg = std::make_shared<msg_contents>();
     abuf_alloc(&txSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
     if (this->configuration.ldmSize && this->ldm == nullptr) {
@@ -489,6 +489,7 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
     radioOpt.ipv4_src = configuration.ipv4_src;
     simReceive = std::unique_ptr<RadioReceive>
             (new RadioReceive(radioOpt, ipv4, port));
+    simReceive->set_radio_verbosity(this->configuration.codecVerbosity);
     rxSimMsg = std::make_shared<msg_contents>();
     abuf_alloc(&rxSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
     if (this->configuration.ldmSize && this->ldm ==nullptr) {
@@ -513,11 +514,17 @@ void ApplicationBase::setup() {
         this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
                 this->configuration.spsDestAddrs[i].c_str(),
                 this->configuration.spsDestNames[i].c_str());
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->spsTransmits[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
         std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->spsContents.push_back(mc);
         i += 1;
     }
+    i = 0;
     for (auto port : this->configuration.receivePorts)
     {
         if (this->configuration.wildcardRx == true) {
@@ -526,11 +533,19 @@ void ApplicationBase::setup() {
         } else {
             this->radioReceives.push_back(RadioReceive(TrafficCategory::SAFETY_TYPE,
                     TrafficIpType::TRAFFIC_NON_IP, port,
-                    std::make_shared<std::vector<uint32_t>>(this->configuration.spsServiceIDs)));
+                    std::make_shared<std::vector<uint32_t>>
+                        (this->configuration.spsServiceIDs)));
         }
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->radioReceives[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+
         std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->receivedContents.push_back(mc);
+        i += 1;
     }
     i = 0;
     for (auto port : this->configuration.eventPorts)
@@ -542,6 +557,12 @@ void ApplicationBase::setup() {
         this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
                 this->configuration.eventDestAddrs[i].c_str(),
                 this->configuration.eventDestNames[i].c_str());
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->eventTransmits[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+
         std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->eventContents.push_back(mc);
@@ -573,8 +594,8 @@ void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
 
 // This function maybe overloaded to perform additonal operation before calling
 // radio tx function.
-int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, int16_t bufLen,
-        TransmitType txType) {
+int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, 
+    int16_t bufLen, TransmitType txType) {
     // If positive, should be the # of bytes sent
     // Else, something went wrong
     int ret;

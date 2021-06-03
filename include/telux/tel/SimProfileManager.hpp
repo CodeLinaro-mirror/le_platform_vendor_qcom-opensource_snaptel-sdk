@@ -281,6 +281,21 @@ class ISimProfileManager {
         common::ResponseCallback callback = nullptr) = 0;
 
     /**
+     * Resets the memory of the eUICC card based on @ref telux::tel::ResetOptionMask.
+     *
+     * @param [in] slotId            Slot identifier corresponding to the card.
+     * @param [in] mask              Memory reset options mask @ref telux::tel::ResetOptionMask
+     * @param [in] callback          Optional Callback function to get the result of memory
+     *                               reset request.
+     * @returns  Status of memory reset request i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change
+     *             and could break backwards compatibility.
+     */
+    virtual telux::common::Status memoryReset(SlotId slotId, ResetOptionMask mask,
+        common::ResponseCallback callback = nullptr) = 0;
+
+    /**
      * Register a listener to listen for status of specific events like download and installation
      * of profile on eUICC.
      *

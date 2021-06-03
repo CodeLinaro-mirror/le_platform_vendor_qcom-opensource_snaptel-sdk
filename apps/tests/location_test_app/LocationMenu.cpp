@@ -320,14 +320,56 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
          opt = 1000;
       }
 
-      if(opt > 0) {
-         myLocCmdResponseCb_
-            = std::make_shared<MyLocationCommandCallback>("Detailed report request");
-         locationManager_->startDetailedReports(
-            (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
-                                     myLocCmdResponseCb_, std::placeholders::_1));
+      std::string configureSet;
+      std::cout << "Press Y to configure the set of reports : " << std::endl;
+      std::getline(std::cin, configureSet, delimiter);
+      if (configureSet == "Y" || configureSet == "y") {
+          std::string reportPreference;
+          GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
+          std::vector<int> options;
+          std::cout << " Enter the type of reports to enable : \n"
+                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement) \n\n";
+          std::cout << " Enter your preference\n"
+                       " (For example: enter 0,1 to choose Location & SV reports) : ";
+          std::getline(std::cin,reportPreference,delimiter);
+          std::stringstream ss(reportPreference);
+          int i;
+          while(ss >> i) {
+              options.push_back(i);
+              if(ss.peek() == ',' || ss.peek() == ' ')
+                  ss.ignore();
+          }
+          for(auto &option : options) {
+              if(option >= 0 && option <= 4) {
+                  try {
+                      reportMask |= 1UL << option;
+                  } catch(const std::exception &e) {
+                      std::cout << "ERROR: invalid input, please enter numerical values " << option
+                                << std::endl;
+                  }
+              } else {
+                  std::cout << "Report preference should not be out of range" << std::endl;
+              }
+          }
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed report request");
+              locationManager_->startDetailedReports(
+                  (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb_, std::placeholders::_1), reportMask);
+          } else {
+              std::cout << " Invalid input \n";
+          }
       } else {
-         std::cout << " Invalid input \n";
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed report request");
+             locationManager_->startDetailedReports(
+                 (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
+                     myLocCmdResponseCb_, std::placeholders::_1));
+          } else {
+              std::cout << " Invalid input \n";
+          }
       }
    }
 }
@@ -376,14 +418,56 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
         }
       }
 
-      if(opt > 0) {
-         myLocCmdResponseCb_
-            = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
-         locationManager_->startDetailedEngineReports(
-            (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
-                                     myLocCmdResponseCb_, std::placeholders::_1));
+      std::string configureSet;
+      std::cout << "Press Y to configure the set of reports : " << std::endl;
+      std::getline(std::cin, configureSet, delimiter);
+      if (configureSet == "Y" || configureSet == "y") {
+          std::string reportPreference;
+          GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
+          std::vector<int> options;
+          std::cout << " Enter the type of reports to enable : \n"
+                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement) \n\n";
+          std::cout << " Enter your preference\n"
+                       " (For example: enter 0,1 to choose Location & SV reports) : ";
+          std::getline(std::cin,reportPreference,delimiter);
+          std::stringstream ss(reportPreference);
+          int i;
+          while(ss >> i) {
+              options.push_back(i);
+              if(ss.peek() == ',' || ss.peek() == ' ')
+                  ss.ignore();
+          }
+          for(auto &option : options) {
+              if(option >= 0 && option <= 4) {
+                  try {
+                      reportMask |= 1UL << option;
+                  } catch(const std::exception &e) {
+                      std::cout << "ERROR: invalid input, please enter numerical values " << option
+                                << std::endl;
+                  }
+              } else {
+                  std::cout << "Report preference should not be out of range" << std::endl;
+              }
+          }
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
+              locationManager_->startDetailedEngineReports(
+                  (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb_, std::placeholders::_1), reportMask);
+          } else {
+              std::cout << " Invalid input \n";
+          }
       } else {
-         std::cout << " Invalid input \n";
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
+              locationManager_->startDetailedEngineReports(
+                  (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb_, std::placeholders::_1));
+          } else {
+              std::cout << " Invalid input \n";
+          }
       }
    }
 }

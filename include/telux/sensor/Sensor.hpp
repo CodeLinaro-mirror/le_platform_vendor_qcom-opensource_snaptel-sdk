@@ -162,7 +162,8 @@ class ISensor {
      * configuration and activated. The default configuration would have the sampling rate set to
      * minimum sampling rate supported @ref telux::sensor::SensorInfo::samplingRates and the batch
      * count set to maximum batch count supported @ref
-     * telux::sensor::SensorInfo::maxBatchCountSupported
+     * telux::sensor::SensorInfo::maxBatchCountSupported. Activating an already activated sensor
+     * would result in the API returning @ref telux::common::Status::SUCCESS.
      *
      * @returns status of activation request - @ref telux::common::Status
      *
@@ -173,7 +174,8 @@ class ISensor {
 
     /**
      * Deactivate the sensor. Once deactivated, no further sensor events will be notified via
-     * @ref telux::sensor::ISensorEventListener::onEvent
+     * @ref telux::sensor::ISensorEventListener::onEvent. Deactivating an already inactive sensor
+     * would result in the API returning @ref telux::common::Status::SUCCESS.
      *
      * @returns status of deactivation request - @ref telux::common::Status
      *

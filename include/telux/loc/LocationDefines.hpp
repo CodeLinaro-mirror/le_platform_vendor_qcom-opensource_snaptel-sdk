@@ -63,6 +63,8 @@ const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consu
 const uint64_t INVALID_ENERGY_CONSUMED = 0xffffffffffffffff; /**< 0xffffffffffffffff indicates an
                                                                   invalid reading for energy
                                                                   consumed info. */
+const uint32_t DEFAULT_GNSS_REPORT = 0xffffffff; /**< 0xffffffff indicates all the reports are
+                                                      enabled. */
 
 /**
  * Defines RTCM injection data format
@@ -1441,6 +1443,24 @@ struct BodyToSensorMountParams {
      *  Range: [-180.0, 180.0].*/
     float offsetUnc;
 };
+
+/**
+ *  Specifies the set of gnss reports. */
+enum GnssReportType {
+    /** Location reports */
+    LOCATION          = (1 << 0),
+    /** Satellite reports */
+    SATELLITE_VEHICLE = (1 << 1),
+    /** Nmea reports */
+    NMEA              = (1 << 2),
+    /** Data reports */
+    DATA              = (1 << 3),
+    /** 1Hz measurement reports */
+    MEASUREMENT       = (1 << 4),
+};
+
+/** Specifies the applicable reports using the bits represented in GnssReportType */
+using GnssReportTypeMask = uint32_t;
 
 /** Specify the dead reckoning engine configuration parameters.
  */

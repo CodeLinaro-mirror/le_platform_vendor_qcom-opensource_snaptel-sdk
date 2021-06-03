@@ -180,8 +180,12 @@ public:
  * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
  * caller send which is not one of these will result in the implementation picking one of these
  * periodicities.
- * This Api enables the onDetailedLocationUpdate, onGnssSVInfo,
- * onGnssSignalInfo, onGnssNmeaInfo and onGnssMeasurementsInfo Apis on the listener.
+ * Calling this Api will result in @ref ILocationListener::onDetailedLocationUpdate,
+ * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
+ * @ref ILocationListener::onGnssNmeaInfo and @ref ILocationListener::onGnssMeasurementsInfo APIs
+ * on the listener being invoked, assuming they have not been disabled using the
+ * GnssReportTypeMask. If a client issues second request to this API then new request for
+ * GnssReportTypeMask will over write the previous call to this API.
  *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
@@ -193,13 +197,16 @@ public:
  * @param [in] callback - Optional callback to get the response of set
  *             minimum interval for reports.
  *
+ * @param [in] reportMask - Optional field to specify which reports a client is interested in.
+ *                          By default all the reports will be enabled.
+ *
  * @returns Status of startDetailedReports i.e. success or suitable status
  * code.
  *
  */
-  virtual telux::common::Status
-      startDetailedReports(uint32_t interval,
-                           telux::common::ResponseCallback callback = nullptr) = 0;
+  virtual telux::common::Status startDetailedReports(uint32_t interval,
+      telux::common::ResponseCallback callback = nullptr,
+          GnssReportTypeMask reportMask = DEFAULT_GNSS_REPORT) = 0;
 
 /**
  * Starts a session which may provide richer default combined position reports
@@ -215,8 +222,12 @@ public:
  * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
  * caller send which is not one of these will result in the implementation picking one of these
  * periodicities.
- * This Api enables the onDetailedLocationUpdate, onGnssSVInfo,
- * onGnssSignalInfo, onGnssNmeaInfo and onGnssMeasurementsInfo Apis on the listener.
+ * Calling this Api will result in @ref ILocationListener::onDetailedEngineLocationUpdate,
+ * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
+ * @ref ILocationListener::onGnssNmeaInfo and @ref ILocationListener::onGnssMeasurementsInfo APIs
+ * on the listener being invoked, assuming they have not been disabled using the
+ * GnssReportTypeMask. If a client issues second request to this API then new request for
+ * GnssReportTypeMask will over write the previous call to this API.
  *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
@@ -232,13 +243,16 @@ public:
  * @param [in] callback - Optional callback to get the response of set
  *             minimum interval for reports.
  *
+ * @param [in] reportMask - Optional field to specify which reports a client is interested in.
+ *                          By default all the reports will be enabled.
+ *
  * @returns Status of startDetailedEngineReports i.e. success or suitable status
  * code.
  *
  */
-  virtual telux::common::Status
-      startDetailedEngineReports(uint32_t interval, LocReqEngine engineType,
-                           telux::common::ResponseCallback callback = nullptr) = 0;
+  virtual telux::common::Status startDetailedEngineReports(uint32_t interval,
+      LocReqEngine engineType, telux::common::ResponseCallback callback = nullptr,
+          GnssReportTypeMask reportMask = DEFAULT_GNSS_REPORT) = 0;
 
 /**
  * Starts the Location report by configuring the time and distance between

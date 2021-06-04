@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are
@@ -57,6 +57,7 @@ class IAudioStream;
 class IAudioVoiceStream;
 class IAudioPlayStream;
 class IAudioCaptureStream;
+
 /**
  * @brief   Stream Buffer manages the buffer to be used for read and write operations on Audio
  *          Streams. For write operations, applications should request a stream buffer, populate
@@ -306,6 +307,9 @@ public:
     *          and could break backwards compatibility.
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
+
+   virtual ~IAudioManager() {};
+
 };
 
 /**
@@ -327,6 +331,8 @@ public:
     * @returns    DeviceDirection
     */
    virtual DeviceDirection getDirection() = 0;
+
+   virtual ~IAudioDevice() {};
 
  };
 
@@ -452,6 +458,8 @@ public:
    virtual telux::common::Status getMute(StreamDirection dir,
                                          GetStreamMuteResponseCb callback = nullptr)
       = 0;
+
+    virtual ~IAudioStream() {};
 };
 
 /**
@@ -523,6 +531,8 @@ public:
     * @returns Status of deRegisterListener, success or suitable status code
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IVoiceListener> listener) = 0;
+
+   virtual ~IAudioVoiceStream() {};
 };
 
 /**
@@ -613,6 +623,8 @@ public:
     *          and could break backwards compatibility.
     */
     virtual telux::common::Status deRegisterListener(std::weak_ptr<IPlayListener> listener) = 0;
+
+    virtual ~IAudioPlayStream() {};
 };
 
 
@@ -659,6 +671,8 @@ public:
     */
    virtual telux::common::Status read(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytesToRead,
                                       ReadResponseCb callback = nullptr) = 0;
+
+    virtual ~IAudioCaptureStream() {};
 };
 
 /**
@@ -686,6 +700,8 @@ public:
     */
    virtual telux::common::Status
             stopLoopback(telux::common::ResponseCallback callback = nullptr) = 0;
+
+    virtual ~ IAudioLoopbackStream() {};
 
 };
 
@@ -722,6 +738,8 @@ public:
     * @returns Status of the request i.e. success or suitable status code.
     */
    virtual telux::common::Status stopTone(telux::common::ResponseCallback callback = nullptr) = 0;
+
+   virtual ~IAudioToneGeneratorStream() {};
 
 };
 

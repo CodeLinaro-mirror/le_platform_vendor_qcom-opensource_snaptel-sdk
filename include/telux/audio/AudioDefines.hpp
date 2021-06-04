@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are
@@ -63,6 +63,8 @@ enum DeviceType {
    DEVICE_TYPE_SPEAKER = 1,
    /* input devices */
    DEVICE_TYPE_MIC = 257,
+   /* output proxy device */
+   DEVICE_TYPE_OUT_VIRTUAL = 513,
 };
 
 /**

@@ -1305,6 +1305,8 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
          << std::endl;
      printMeasurementState(measData.stateMask);
      std::cout << " Received GNSS time of the week in nanoseconds " << measData.receivedSvTimeNs
+         << std::endl;
+     std::cout << " Sub-nanoseconds of GNSS time of the week " << measData.receivedSvTimeSubNs
          << std::endl
                << " Satellite time, in ns " << measData.receivedSvTimeUncertaintyNs << std::endl
                << " Signal strength, carrier to noise ratio " << measData.carrierToNoiseDbHz

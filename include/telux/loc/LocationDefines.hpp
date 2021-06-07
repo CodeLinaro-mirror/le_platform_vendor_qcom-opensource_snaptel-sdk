@@ -978,7 +978,7 @@ enum GnssMeasurementsDataValidityType{
     SV_TYPE_BIT                      = (1<<1),
     /** Validity of stateMask.*/
     STATE_BIT                        = (1<<2),
-    /** Validity of receivedSvTimeNs.*/
+    /** Validity of receivedSvTimeNs and receivedSvTimeSubNs.*/
     RECEIVED_SV_TIME_BIT             = (1<<3),
     /** Validity of receivedSvTimeUncertaintyNs.*/
     RECEIVED_SV_TIME_UNCERTAINTY_BIT = (1<<4),
@@ -1121,8 +1121,13 @@ struct GnssMeasurementsData {
      *  GNSS measurement state.*/
     GnssMeasurementsStateValidity stateMask;
     /** Received GNSS time of the week in nanoseconds when the
-     *  measurement was taken.*/
+     *  measurement was taken.
+     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
     int64_t receivedSvTimeNs;
+    /** Sub nanoseconds portion of the received GNSS time of the
+     *  week when the measurement was taken.
+     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
+    float receivedSvTimeSubNs;
     /** Satellite time.
      *  All SV times in the current measurement block are already
      *  propagated to a common reference time epoch, in unit of

@@ -681,19 +681,6 @@ typedef struct {
     void (*v2x_service_status_listener)(v2x_service_status_t status,
                                         void *context);
 
-    /**
-    Callback made when the V2X radio status changes.
-
-    @datatypes
-    #v2x_radio_status_ex_t
-
-    @param[out] v2x_radio_status_ex_t   Delivery of V2X overall radio status
-                                        and per pool status.
-    @param[in] context  Pointer to the context of the caller who originally
-                        registered for this callback.
-    */
-    void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* status,
-                                          void *context);
 } v2x_radio_calls_t;
 
 /**
@@ -981,6 +968,18 @@ typedef struct {
     @newpage
 */
 typedef void (*v2x_tx_status_report_listener)(const v2x_tx_status_report_t info);
+
+/**
+     Callback made when CV2X Tx/Rx status is changed and a listener has been registered
+     by calling @ref v2x_register_ext_radio_status_listener.
+
+    @datatypes
+    #v2x_radio_status_ex_t
+
+    @param[out] status     Pointer to V2X overall Tx/Rx status and per pool status.
+    @newpage
+*/
+typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* status);
 
 /**
     Method used to query the platform SDK for its version number, build
@@ -2596,6 +2595,27 @@ v2x_status_enum_type v2x_set_ip_routing_info(uint8_t* dest_mac_addr);
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
 v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
+
+/**
+    Registers a listener for CV2X overall Tx/Rx status and per pool status.
+
+    @datatypes
+    v2x_ext_radio_status_listener
+
+    @param[in] callback        Callback function of @ref v2x_ext_radio_status_listener
+                               structure that is called on CV2X Tx/Rx status change. \n
+                               @vertspace{3}
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+
+    @dependencies
+    CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
+ */
+v2x_status_enum_type v2x_register_ext_radio_status_listener(
+    v2x_ext_radio_status_listener callback);
 
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 

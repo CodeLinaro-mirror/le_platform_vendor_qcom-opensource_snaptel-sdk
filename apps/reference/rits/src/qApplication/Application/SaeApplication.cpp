@@ -739,6 +739,7 @@ void SaeApplication::sendTuncBsm(uint8_t index, TransmitType txType) {
 #ifdef WITH_WSA
 int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr,
         int& macAdrLen) {
+    std::lock_guard<std::mutex> lock(wramutex);
     telux::cv2x::IPv6AddrType IpPrefix;
     telux::cv2x::GlobalIPUnicastRoutingInfo RoutingInfo;
     int ret = 0;

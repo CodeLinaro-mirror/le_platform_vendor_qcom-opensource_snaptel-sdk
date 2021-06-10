@@ -364,7 +364,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
-        this->configuration.codecVerbosity = 
+        this->configuration.codecVerbosity =
             (uint8_t)stoi(configs["codecVerbosity"]);
         set_codec_verbosity(stoi(configs["codecVerbosity"]));
     }
@@ -594,7 +594,7 @@ void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
 
 // This function maybe overloaded to perform additonal operation before calling
 // radio tx function.
-int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, 
+int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
     int16_t bufLen, TransmitType txType) {
     // If positive, should be the # of bytes sent
     // Else, something went wrong
@@ -691,25 +691,27 @@ int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen,
 }
 
 void ApplicationBase::closeAllRadio() {
+
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++)
     {
         this->eventTransmits[i].closeFlow();
     }
-
+    eventTransmits.erase(eventTransmits.begin(),eventTransmits.end());
     for (uint8_t i = 0; i < this->spsTransmits.size(); i++)
     {
         this->spsTransmits[i].closeFlow();
     }
+    spsTransmits.erase(spsTransmits.begin(),spsTransmits.end());
 
     for (uint8_t i = 0; i < this->radioReceives.size(); i++)
     {
         this->radioReceives[i].closeFlow();
     }
+    radioReceives.erase(radioReceives.begin(),radioReceives.end());
     if (this->simReceive != nullptr)
     {
         this->simReceive->closeFlow();
     }
-
 }
 
 /**

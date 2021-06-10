@@ -68,6 +68,7 @@ static auto rxfail = 0;
 static bool stopThread = false;
 static bool dump_raw = false;
 static bool print_rv = true;
+bool cv2xActive = false;
 
 static void joinThreads() {
     for (int i = 0; i < threads.size(); i++)
@@ -114,6 +115,21 @@ static void receive(MessageType msgType) {
     int ret;
     while (!stopThread)
     {
+        //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+        sem_wait(&cnt_sem);
+        //Check CV2X RX status when only RX is enabled
+        if (!application->configuration.enableTxAlways) {
+            cv2xActive = application->radioReceives[0].waitForCv2xToActivate();
+            if (application->radioReceives[0].restartFlow) {
+                application->closeAllRadio();
+                application->setup();
+            }
+        }else {// if TX is also enabled check the CV2X status in TX only
+            while (!cv2xActive) {
+                ;
+            }
+        }
+        sem_post(&cnt_sem);
         // call application's receive() function to process the packet across
         // stack layers.
         ret = application->receive(0, ret);
@@ -157,9 +173,9 @@ static void ldmRx(void) {
     }
     while (true)
     {
-        if (application->receivedContents.size() == 0 || 
+        if (application->receivedContents.size() == 0 ||
                 application->radioReceives.size() == 0) {
-            cerr << 
+            cerr <<
        "receivedContents size 0, please check configuration and prameters" << endl;
             sleep(1);
             continue;
@@ -169,8 +185,8 @@ static void ldmRx(void) {
             cerr << "mc or mc->abuf.data nullptr" << endl;
             continue;
         }
-        const auto recCount = 
-                application->radioReceives[0].receive(mc->abuf.data, 
+        const auto recCount =
+                application->radioReceives[0].receive(mc->abuf.data,
                                                         ABUF_LEN-ABUF_HEADROOM);
         abuf_put(&mc->abuf, recCount);
         if (application->ldm != nullptr) {
@@ -244,7 +260,7 @@ static void transmit(MessageType msgType) {
             break;
         case MessageType::WSA:
             printf("Sending WSA messages via radio\n");
-            //sending WSA, transmit only, we are simulating RSU, so set the IPV6
+            //sending WSA, transmit only, we are simulating RSU, so set the IrevV6
             if ((dynamic_cast<SaeApplication *>
                     (application))->setGlobalIPv6Prefix() < 0) {
                 printf("Failed to set global IP info\n");
@@ -262,6 +278,15 @@ static void transmit(MessageType msgType) {
 
     // main transmitting code
     while (!stopThread){
+        //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+        //Check CV2X TX Status when TX is enabled.
+        cv2xActive = application->spsTransmits[0].waitForCv2xToActivate();
+        if (application->spsTransmits[0].restartFlow) {
+            application->closeAllRadio();
+            application->setup();
+            close(tx_timer_fd);
+            tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+        }
         ret = application->send(0, TransmitType::SPS);
         if(ret > 0){
             txsuccess++;
@@ -404,8 +429,8 @@ static void tunnelModeRx(void) {
     {
         SaeApplication *SaeApp = dynamic_cast<SaeApplication *>(application);
         const auto mc = SaeApp->receivedContents[0];
-        const auto recCount = 
-                SaeApp->radioReceives[0].receive(mc->abuf.data, 
+        const auto recCount =
+                SaeApp->radioReceives[0].receive(mc->abuf.data,
                                                     ABUF_LEN-ABUF_HEADROOM);
         abuf_put(&mc->abuf, recCount);
         const auto ldmIndex = application->ldm->getFreeBsm();
@@ -804,7 +829,7 @@ int setup(const bool tx, const bool rx,
         return 0;
     }
 
-    MessageType msgType; 
+    MessageType msgType;
     if (bsm || wsa) {
         msgType = bsm? MessageType::BSM : MessageType::WSA;
         printf("Will be creating application for: ");
@@ -812,6 +837,11 @@ int setup(const bool tx, const bool rx,
             printf("BSMs\n");
         else
             printf("WSAs\n");
+        // wsa not compatible with simulation mode
+        if((txSim || rxSim) && wsa){
+           fprintf(stderr, "WSA requires radio mode.\n");
+           return -1;
+        }
         if (txSim)
             application =
                 new SaeApplication(txSimIp, txSimPort, string(""), 0, configFile,
@@ -859,17 +889,6 @@ int setup(const bool tx, const bool rx,
             threads.push_back(thread(tunnelModeTx));
         } else {
             threads.push_back(thread(transmit, msgType));
-#if 0
-            if (bsm) {
-                threads.push_back(thread(transmit, MessageType::BSM));
-            } else if(cam) {
-                threads.push_back(thread(transmit, MessageType::CAM));
-            } else if (wsa) {
-                threads.push_back(thread(transmit, MessageType::WSA));
-            } else {
-                threads.push_back(thread(transmit, MessageType::DENM));
-            }
-#endif
         }
     }
 
@@ -910,22 +929,7 @@ int setup(const bool tx, const bool rx,
                     threads.push_back(thread(receive, msgType));
                 }
             }
-
-#if 0
-            else {
-                // TODO: Implement for CAM, DENM as well
-                sem_init(&cnt_sem, 0, 1);
-                if (application->configuration.driverVerbosity) {
-                    cout << "Number of Radio RX Threads: " <<
-                            (int)application->configuration.numRxThreads << endl;
-                }
-                for (int i = 0; i < application->configuration.numRxThreads; i++) {
-                    threads.push_back(thread(receive, MessageType::BSM));
-                }
-            }
-#endif
         }
-
     }
 
     if(application->configuration.driverVerbosity > 4)
@@ -952,18 +956,6 @@ int setup(const bool tx, const bool rx,
         }
         else {
             threads.push_back(thread(simTransmit, msgType));
-        #if 0
-            if (cam) {
-                threads.push_back(thread(simTransmit, MessageType::CAM));
-            }
-            else if (denm)
-            {
-                threads.push_back(thread(simTransmit, MessageType::DENM));
-            }
-            else {
-                threads.push_back(thread(simTransmit, MessageType::BSM));
-            }
-        #endif
         }
 
     }

@@ -36,6 +36,77 @@
 
 #include "RadioInterface.h"
 
+class Cv2xStatusListener : public telux::cv2x::ICv2xListener {
+public:
+
+    Cv2xStatusListener(telux::cv2x::Cv2xStatus status, int rVerbosity) {
+        cv2xStatus_ = status;
+        radioVerbosity = rVerbosity;
+    };
+
+    telux::cv2x::Cv2xStatus getCurrentStatus() {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        return cv2xStatus_;
+    }
+
+    bool waitForCv2xStatus(telux::cv2x::Cv2xStatusType status) {
+        bool closeAllFlow = false;
+        // get the inital status
+        telux::cv2x::Cv2xStatus tmpStatus;
+        {
+            std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+            tmpStatus = cv2xStatus_;
+        }
+
+        while (tmpStatus.rxStatus != status or tmpStatus.txStatus != status) {
+            // the initial status or the received status is not as expected,
+            // wait for the next status change
+            statusPromise_ = promise<telux::cv2x::Cv2xStatus>();
+            promiseSet_ = false;
+            tmpStatus = statusPromise_.get_future().get();
+            if(tmpStatus.rxStatus == status or tmpStatus.txStatus == status){
+                std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+                //check if we need close the exisiting flows and setup again
+                closeAllFlow = true;
+            }
+        }
+        return closeAllFlow;
+    }
+
+    void onStatusChanged(telux::cv2x::Cv2xStatus status) override {
+        {
+            std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+
+            if (status.rxStatus != cv2xStatus_.rxStatus or
+                status.txStatus != cv2xStatus_.txStatus) {
+                if (radioVerbosity) {
+                    cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
+                    cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
+                }
+                cv2xStatus_ = status;
+            } else {
+                // no need set promise if status is not changed
+                return;
+            }
+        }
+
+        if (not promiseSet_) {
+            promiseSet_ = true;
+            statusPromise_.set_value(status);
+        }
+    }
+
+private:
+    promise<telux::cv2x::Cv2xStatus> statusPromise_;
+    std::atomic<bool> promiseSet_{false};
+    std::mutex cv2xStatusMutex_;
+    telux::cv2x::Cv2xStatus cv2xStatus_;
+    int radioVerbosity = 0;
+};
+
+//Global variable to store cv2x status listener
+std::shared_ptr<Cv2xStatusListener> cv2xStatusListener_;
+
 void RadioInterface::set_radio_verbosity(int value) {
     if(value)
         printf("Radio flow verbosity will be set to: %d\n", value);
@@ -68,26 +139,49 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
             cv2xStatusCallback(status, error);
     };
 
-    assert(Status::SUCCESS == cv2xRadioManager->requestCv2xStatus(respCb));
-    assert(ErrorCode::SUCCESS == gCallbackPromise.get_future().get());
+    if (Status::SUCCESS != this->cv2xRadioManager->requestCv2xStatus(respCb)) {
+        cerr << "Error : request for C-V2X status failed." << endl;
+        gCv2xStatus.status.rxStatus = Cv2xStatusType::UNKNOWN;
+        gCv2xStatus.status.txStatus = Cv2xStatusType::UNKNOWN;
+    }
+
+    if (ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        cerr << "Error : failed to retrieve C-V2X status." << endl;
+        gCv2xStatus.status.rxStatus = Cv2xStatusType::UNKNOWN;
+        gCv2xStatus.status.txStatus = Cv2xStatusType::UNKNOWN;
+    }
 
     if (RadioType::RX == type) {
-        cout << "C-V2X RX is ";
+        if (rVerbosity) {
+            cout << "C-V2X RX is ";
+        }
         status = gCv2xStatus.status.rxStatus;
     }
     else {
-        cout << "C-V2X TX is ";
+        if (rVerbosity) {
+            cout << "C-V2X TX is ";
+        }
         status = gCv2xStatus.status.txStatus;
+    }
+
+    if (rVerbosity) {
+        cout << gCv2xStatusToString[status] << endl;
     }
 
     if (Cv2xStatusType::ACTIVE != status) {
         cerr << "C-V2X RX or TX status " << gCv2xStatusToString[status] << endl;
     }
 
-    cout << gCv2xStatusToString[status] << endl;
-
     this->resetCallbackPromise();
     return status;
+}
+
+bool RadioInterface::waitForCv2xToActivate() {
+        auto sp = std::dynamic_pointer_cast<Cv2xStatusListener>(cv2xStatusListener_);
+        restartFlow = sp->waitForCv2xStatus(Cv2xStatusType::ACTIVE);
+
+        //returning true as cv2x is active now
+        return true;
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {
@@ -119,6 +213,13 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     }
     // Get C-V2X status and make sure requested radio(Tx or Rx) is enabled
     if (statusCheck(type) != Cv2xStatusType::ACTIVE) {
+        return false;
+    }
+
+    // register listener for cv2x status change
+    cv2xStatusListener_ = std::make_shared<Cv2xStatusListener>(gCv2xStatus.status,rVerbosity);
+    if (Status::SUCCESS != cv2xRadioManager->registerListener(cv2xStatusListener_)) {
+        cerr << "Error : register Cv2x status listener failed!" << endl;
         return false;
     }
 

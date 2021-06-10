@@ -261,6 +261,7 @@ public:
 
     void printRxStats();
     void printTxStats();
+    void setup();
 
     /*********************************************************************************
      * data members.
@@ -359,7 +360,6 @@ protected:
 
 
 private:
-    void setup();
     void simTxSetup(const string ipv4, const uint16_t port);
     void simRxSetup(const string ipv4, const uint16_t port);
     static uint16_t delimiterPos(string line, vector<string> delimiters);

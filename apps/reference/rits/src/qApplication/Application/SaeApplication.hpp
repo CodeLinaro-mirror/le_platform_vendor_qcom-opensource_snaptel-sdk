@@ -172,4 +172,5 @@ private:
     void initRecordedBsm(bsm_value_t* bsm);
 
     int parseIPv6Prefix(char *prefix, int& len);
+    std::mutex wramutex;
 };

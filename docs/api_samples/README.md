@@ -53,3 +53,4 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to use Location Configurator APIs](loc/location_services_configurator.md)
   * [How to use L2TP Configurator APIs](data/enable_and_add_tunnel_l2tp.md)
   * [How to use Logging APIs](common/public_logging.md)
+  * [How to receive EFS restore indications](platform/efs_restore_indications.md)

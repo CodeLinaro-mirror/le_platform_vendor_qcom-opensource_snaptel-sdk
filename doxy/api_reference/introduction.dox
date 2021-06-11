@@ -54,6 +54,7 @@ when       who     what, where, why
 05/22/20   FS      Added L2TP Feature Support in Telematics SDK
 05/28/20   AS      Added Logging supported in Telematics SDK
 08/17/20   SD      Added measurement, nmea, system info, minGpsWeek, minSVElevation, delete data, dREngine and secondaryBand support in Telematics SDK
+06/07/21   BS      Added documentation for platform sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

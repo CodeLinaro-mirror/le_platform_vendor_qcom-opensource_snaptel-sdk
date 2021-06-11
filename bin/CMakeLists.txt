@@ -3,7 +3,7 @@
 #
 
 # NOTE: Please update newly added library in the list
-set(INPUT_LIST "telux_common" "telux_data" "telux_loc" "telux_qmi" "telux_tel" "telux_cv2x" "telux_audio")
+set(INPUT_LIST "telux_common" "telux_data" "telux_loc" "telux_qmi" "telux_tel" "telux_cv2x" "telux_audio" "telux_platform")
 
 # Loop to create stub library from the INPUT_LIST
 foreach(STUB_LIB ${INPUT_LIST})

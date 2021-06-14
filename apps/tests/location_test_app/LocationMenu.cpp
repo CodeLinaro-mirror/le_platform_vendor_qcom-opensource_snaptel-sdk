@@ -1378,6 +1378,7 @@ void LocationMenu::manualInjectLocationData() {
     if (!(posListener_->getLocationInjectionFlag())) {
             std::cout << "The onStartInjection API is not received! " << std::endl;
     }
+    std::cout << "Enter the rate of injection of reports: " << std::endl;
     std::getline(std::cin, option, delimiter);
     uint32_t rateOfInjection = 0;
     if(!option.empty()) {
@@ -1391,7 +1392,7 @@ void LocationMenu::manualInjectLocationData() {
         rateOfInjection = 200;
     }
     std::cout << " Entered value is : " << (uint32_t)rateOfInjection << std::endl;
-    std::cout << "Enter the number of reports to be injected: ";
+    std::cout << "Enter the number of reports to be injected: " << std::endl;
     std::getline(std::cin, option, delimiter);
     uint32_t numOfReports = 0;
     if(!option.empty()) {
@@ -1438,7 +1439,7 @@ void LocationMenu::autoInjectLocationData() {
         info.latitude = DEFAULT_LATITUDE;
         info.longitude = DEFAULT_LONGITUDE;
         info.horizontalAccuracy = DEFUALT_HORIZONTAL_ACCURACY;
-        while (!posListener_->getLocationInjectionFlag()) {
+        while (posListener_->getLocationInjectionFlag()) {
             telux::common::Status status = locationConfigurator_->injectLocationData(info);
             if (status == telux::common::Status::SUCCESS) {
                 std::cout << __FUNCTION__ << "location data sent successfully" << std::endl;

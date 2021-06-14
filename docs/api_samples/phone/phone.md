@@ -16,3 +16,4 @@ tel {#phone}
 * @subpage remote_sim_reference_apps
 * @subpage send_sms
 * @subpage listen_sms
+* @subpage rsp

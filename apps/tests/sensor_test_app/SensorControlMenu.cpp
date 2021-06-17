@@ -266,7 +266,6 @@ void SensorControlMenu::deleteSensorClient(std::vector<std::string> userInput) {
     sensorClients_.erase(it, sensorClients_.end());
     std::cout << "Removed sensor with client ID " << cid << std::endl << std::endl;
     clientIdMask_.reset(cid);
-    listCreatedSensors(userInput);
 }
 
 void SensorControlMenu::cleanup() {

@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <future>
@@ -80,11 +81,13 @@ void SensorClient::printInfo() {
     std::cout << "\tClient ID: " << id_ << std::endl;
     SensorUtils::printSensorInfo(sensor_->getSensorInfo(), true);
     SensorConfiguration configuration = sensor_->getConfiguration();
-    std::cout << "\n\tConfiguration: ["
-              << (configuration.validityMask.test(SensorConfigParams::SAMPLING_RATE)
-                         ? std::to_string(configuration.samplingRate)
-                         : "NA")
-              << ", "
+    std::cout << "\n\tConfiguration: [";
+    if (configuration.validityMask.test(SensorConfigParams::SAMPLING_RATE)) {
+        std::cout << std::fixed << std::setprecision(2) << configuration.samplingRate;
+    } else {
+        std::cout << "NA";
+    }
+    std::cout << ", "
               << (configuration.validityMask.test(SensorConfigParams::BATCH_COUNT)
                          ? std::to_string(configuration.batchCount)
                          : "NA")

@@ -45,9 +45,6 @@
 namespace telux {
 namespace sensor {
 
-// Forward declaration
-class ISensorListener;
-
 /** @addtogroup telematics_sensor_control
  * @{ */
 

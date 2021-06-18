@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -244,7 +244,11 @@ void VoiceMenu::setMute(std::vector<std::string> userInput) {
         AudioHelper::getUserMuteStatusInput(muteStatus);
         auto status = activeSession_->setMute(muteStatus);
         if (status == Status::SUCCESS) {
-            std::cout << "Stream Muted" << std::endl;
+            if (muteStatus.enable) {
+                std::cout << "Stream Muted" << std::endl;
+            } else {
+                std::cout << "Stream Unmuted" << std::endl;
+            }
         } else {
             std::cout << "Mute Operation Failed" << std::endl;
         }

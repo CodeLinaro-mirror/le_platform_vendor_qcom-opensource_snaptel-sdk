@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -288,7 +288,7 @@ void AudioHelper::getUserMuteStatusInput(StreamMute &mute) {
     std::string userInput = "";
     int muteStatus;
     while(1) {
-        std::cout << " Enter 0 to Unmute and 1 to Mute" ;
+        std::cout << "Enter 0 to Unmute and 1 to Mute: " ;
         if(std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if(inputStream >> muteStatus) {

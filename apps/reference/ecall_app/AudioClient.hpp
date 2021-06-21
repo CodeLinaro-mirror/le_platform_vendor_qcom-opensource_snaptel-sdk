@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,7 +37,8 @@ using namespace telux::common;
 using namespace telux::audio;
 
 /** AudioClient class provides methods to start and stop a voice session */
-class AudioClient {
+class AudioClient : public IAudioListener,
+                    public std::enable_shared_from_this<AudioClient> {
 public:
     /**
      * Initialize audio subsystem
@@ -74,6 +75,7 @@ public:
     void deleteStreamCallback(ErrorCode error);
     void startAudioCallback(ErrorCode error);
     void stopAudioCallback(ErrorCode error);
+    void onServiceStatusChange(ServiceStatus status) override;
 
     AudioClient();
     ~AudioClient();

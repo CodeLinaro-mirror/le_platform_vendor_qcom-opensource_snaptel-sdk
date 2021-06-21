@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -208,6 +208,15 @@ void TelClient::onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEve
                    TelClientUtils::eCallHlapTimerEventToString(timerEvents.t10) + "\n");
     }
     std::cout << CLIENT_NAME << infoStr << std::endl;
+}
+
+// Callback to notify Telephony subsystem restart
+void TelClient::onServiceStatusChange(ServiceStatus status) {
+    if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        std::cout << "Telephony subsystem is UNAVAILABLE" << std::endl;
+    } else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Telephony subsystem is AVAILABLE" << std::endl;
+    }
 }
 
 // Callback which provides response to makeECall

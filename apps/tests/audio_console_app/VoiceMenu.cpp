@@ -245,7 +245,11 @@ void VoiceMenu::setMute(std::vector<std::string> userInput) {
         AudioHelper::getUserMuteStatusInput(muteStatus);
         auto status = activeSession_->setMute(muteStatus);
         if (status == Status::SUCCESS) {
-            std::cout << "Stream Muted" << std::endl;
+            if (muteStatus.enable) {
+                std::cout << "Stream Muted" << std::endl;
+            } else {
+                std::cout << "Stream Unmuted" << std::endl;
+            }
         } else {
             std::cout << "Mute Operation Failed" << std::endl;
         }

@@ -55,21 +55,26 @@ Status AudioSession::createStream(StreamConfig config) {
         std::promise<bool> p;
         auto &audioFactory = AudioFactory::getInstance();
         auto audioManager = audioFactory.getAudioManager();
-        // Sending request to create audio stream
-        status = audioManager->createStream(config,
-            [&p, &status, this](std::shared_ptr<IAudioStream> &audioStream,
-                ErrorCode error) {
-                if (error == ErrorCode::SUCCESS) {
-                    stream_ = audioStream;
-                    p.set_value(true);
-                } else {
-                    status = Status::FAILED;
-                    p.set_value(false);
-                }
-            });
+        if (audioManager != nullptr) {
+            // Sending request to create audio stream
+            status = audioManager->createStream(config,
+                [&p, &status, this](std::shared_ptr<IAudioStream> &audioStream,
+                    ErrorCode error) {
+                    if (error == ErrorCode::SUCCESS) {
+                        stream_ = audioStream;
+                        p.set_value(true);
+                    } else {
+                        status = Status::FAILED;
+                        p.set_value(false);
+                    }
+                });
             if(status == Status::SUCCESS) {
                 p.get_future().wait();
             }
+        } else {
+            LOG(ERROR, "Invalid audio Manager");
+            return Status::FAILED;
+        }
     } else {
         LOG(DEBUG, "Stream already exist");
         status = Status::SUCCESS;
@@ -83,17 +88,22 @@ Status AudioSession::deleteStream() {
         std::promise<bool> p;
         auto &audioFactory = AudioFactory::getInstance();
         auto audioManager = audioFactory.getAudioManager();
-        status = audioManager-> deleteStream(stream_, [&p, &status, this](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                stream_ = nullptr;
-                p.set_value(true);
-            } else {
-                status = Status::FAILED;
-                p.set_value(false);
+        if (audioManager != nullptr) {
+            status = audioManager-> deleteStream(stream_, [&p, &status, this](ErrorCode error) {
+                if (error == ErrorCode::SUCCESS) {
+                    stream_ = nullptr;
+                    p.set_value(true);
+                } else {
+                    status = Status::FAILED;
+                    p.set_value(false);
+                }
+            });
+            if(status == Status::SUCCESS) {
+                p.get_future().wait();
             }
-        });
-        if(status == Status::SUCCESS) {
-            p.get_future().wait();
+        } else {
+            LOG(ERROR, "Invalid audio Manager");
+            return Status::FAILED;
         }
     } else {
         status = Status::SUCCESS;

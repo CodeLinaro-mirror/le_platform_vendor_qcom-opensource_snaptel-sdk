@@ -74,7 +74,7 @@ AudioConsoleApp::~AudioConsoleApp() {
 void AudioConsoleApp::init() {
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
-    std::promise<ServiceStatus> prom{};
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
     audioManager_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {

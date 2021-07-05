@@ -107,7 +107,7 @@ struct SensorInfo {
      * For gyroscopes, this is the number of degrees per second (dps) in either direction (+/-)
      * along each axis
      */
-    float range;
+    int range;
 };
 
 /**

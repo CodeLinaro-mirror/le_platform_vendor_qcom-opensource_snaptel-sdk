@@ -126,12 +126,8 @@ void SensorFeatureControlMenu::initConsole() {
             std::bind(
                 &SensorFeatureControlMenu::disableSensorFeature, this, std::placeholders::_1)));
 
-    std::shared_ptr<ConsoleAppCommand> cleanupReinitCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Cleanup_Reinit", {},
-            std::bind(&SensorFeatureControlMenu::cleanupReinit, this, std::placeholders::_1)));
-
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listSensorFeaturesCommand,
-        enableSensorFeatureCommand, disableSensorFeatureCommand, cleanupReinitCommand};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {listSensorFeaturesCommand, enableSensorFeatureCommand, disableSensorFeatureCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -168,15 +164,6 @@ void SensorFeatureControlMenu::disableSensorFeature(std::vector<std::string> use
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
     disableFeature(name);
-}
-
-void SensorFeatureControlMenu::cleanupReinit(std::vector<std::string> userInput) {
-    cleanup();
-    if (init(false) == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "Sensor sub-system reinitialization successful";
-    } else {
-        std::cout << "Sensor sub-system reinitialization failed";
-    }
 }
 
 void SensorFeatureControlMenu::disableFeature(std::string name) {

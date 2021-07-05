@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <future>
@@ -77,35 +78,52 @@ SensorClient::~SensorClient() {
 }
 
 void SensorClient::printInfo() {
-    std::cout << "Client ID: " << id_ << ": ";
+    std::cout << "\tClient ID: " << id_ << std::endl;
     SensorUtils::printSensorInfo(sensor_->getSensorInfo(), true);
     SensorConfiguration configuration = sensor_->getConfiguration();
-    std::cout << ", Configuration: ["
-              << (configuration.validityMask.test(SensorConfigParams::SAMPLING_RATE)
-                         ? std::to_string(configuration.samplingRate)
-                         : "NA")
-              << ", "
+    std::cout << "\n\tConfiguration: [";
+    if (configuration.validityMask.test(SensorConfigParams::SAMPLING_RATE)) {
+        std::cout << std::fixed << std::setprecision(2) << configuration.samplingRate;
+    } else {
+        std::cout << "NA";
+    }
+    std::cout << ", "
               << (configuration.validityMask.test(SensorConfigParams::BATCH_COUNT)
                          ? std::to_string(configuration.batchCount)
                          : "NA")
-              << "]" << std::endl;
+              << "]" << std::endl
+              << std::endl;
 }
 
 void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
     uint64_t receivedTimeStamp = Utils::getNanosecondsSinceBoot();
     float jitter = 0;
 
-    // Calculate jitter in microsecond
+    // Calculate jitter in milliseconds
     if (lastBatchReceivedAt_ > 0) {
-        jitter = 1.0 * (receivedTimeStamp - lastBatchReceivedAt_) / 1000;
+        jitter = 1.0 * (receivedTimeStamp - lastBatchReceivedAt_) / 1000000;
     }
-    print_notification << tag_ << receivedTimeStamp << ": Received " << events->size()
-                       << " events, jitter info: " << std::fixed << jitter << "us" << std::endl;
-    if (verboseNotification_) {
-        for (SensorEvent s : *(events.get())) {
-            SensorUtils::printSensorEvent(sensor_->getSensorInfo().type, s, tag_);
+    uint64_t eventTimeStamp = 0;
+    uint32_t count = 0;
+    float samplingRateAggregate = 0.0;
+    for (SensorEvent s : *(events.get())) {
+        float samplingRate = 0.0;
+        if (eventTimeStamp > 0) {
+            ++count;
+            // Instantaneous sampling rate, calculated between consecutive samples
+            samplingRate = 1.0 / (s.timestamp - eventTimeStamp) * 1000000000;
         }
+        if (verboseNotification_) {
+            SensorUtils::printSensorEvent(sensor_->getSensorInfo().type, s, samplingRate, tag_);
+        }
+        samplingRateAggregate += samplingRate;
+        eventTimeStamp = s.timestamp;
     }
+
+    print_notification << tag_ << receivedTimeStamp << ": Received " << events->size()
+                       << " events, time since previous batch: " << std::fixed << jitter
+                       << "ms, average calculated sampling rate: " << samplingRateAggregate / count
+                       << " Hz" << std::endl;
     lastBatchReceivedAt_ = receivedTimeStamp;
 }
 void SensorClient::onConfigurationUpdate(SensorConfiguration configuration) {

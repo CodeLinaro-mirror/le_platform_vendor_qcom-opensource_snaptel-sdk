@@ -108,7 +108,9 @@ class ISensorFeatureManager {
     /**
      * Enable the requested feature
      *
-     * @param [in] name         The name of the feature to be enabled.
+     * @param [in] name         The name of the feature to be enabled. Enabling an already enabled
+     *                          feature would result in the API returning
+     *                          @ref telux::common::Status::SUCCESS.
      *
      * @returns                 status of the request @ref telux::common::Status
      *
@@ -120,7 +122,9 @@ class ISensorFeatureManager {
     /**
      * Disable the requested feature
      *
-     * @param [in] name         The name of the feature to be disabled.
+     * @param [in] name         The name of the feature to be disabled. Disabling an already
+     *                          disabled feature would result in the API returning
+     *                          @ref telux::common::Status::SUCCESS.
      *
      * @returns                 status of the request @ref telux::common::Status
      *

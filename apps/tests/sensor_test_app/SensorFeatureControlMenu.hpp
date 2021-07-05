@@ -44,7 +44,8 @@ using namespace telux::common;
 
 class SensorFeatureControlMenu : public ConsoleApp {
  public:
-    SensorFeatureControlMenu(std::string appName, std::string cursor, bool verboseNotification);
+    SensorFeatureControlMenu(
+        std::string appName, std::string cursor, SensorTestAppArguments commandLineArgs);
     ~SensorFeatureControlMenu();
     telux::common::ServiceStatus init(bool shouldInitConsole);
     void cleanup();
@@ -56,13 +57,15 @@ class SensorFeatureControlMenu : public ConsoleApp {
     void listSensorFeatures(std::vector<std::string> userInput);
     void enableSensorFeature(std::vector<std::string> userInput);
     void disableSensorFeature(std::vector<std::string> userInput);
+    void listActiveFeatures(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);
     void disableFeature(std::string name);
 
+    // Structure instance to store the command line args passed
+    SensorTestAppArguments commandLineArgs_;
     // Instance of the sensor feature manager and corresponding event listener
     std::shared_ptr<ISensorFeatureManager> sensorFeatureManager_;
     std::shared_ptr<ISensorFeatureEventListener> sensorFeatureEventListener_;
-    bool verboseNotification_;
     std::set<std::string> enabledFeatures_;
 };
 

@@ -44,7 +44,8 @@ using namespace telux::common;
 
 class SensorControlMenu : public ConsoleApp {
  public:
-    SensorControlMenu(std::string appName, std::string cursor, bool verboseNotification);
+    SensorControlMenu(
+        std::string appName, std::string cursor, SensorTestAppArguments commandLineArgs);
     ~SensorControlMenu();
     telux::common::ServiceStatus init(bool shouldInitConsole);
     void cleanup();
@@ -65,13 +66,15 @@ class SensorControlMenu : public ConsoleApp {
     void enableLowPowerMode(std::vector<std::string> userInput);
     void disableLowPowerMode(std::vector<std::string> userInput);
     void deleteSensorClient(std::vector<std::string> userInput);
+    void listActiveClients(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);
 
+    // Structure instance to store the command line args passed
+    SensorTestAppArguments commandLineArgs_;
     // Instance of all menu created are stored to maintain parallel running streams
     std::shared_ptr<ISensorManager> sensorManager_;
     std::vector<std::shared_ptr<SensorClient>> sensorClients_;
     std::bitset<64> clientIdMask_;
-    bool verboseNotification_;
 };
 
 #endif  // SENSORCONTROLMENU_HPP

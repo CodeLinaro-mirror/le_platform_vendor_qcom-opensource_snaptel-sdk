@@ -79,22 +79,48 @@ Please follow below steps as a guide to configure and acquire sensor data
    ~~~~~~{.cpp}
    class SensorEventListener : public telux::sensor::ISensorEventListener {
    public:
-      SensorEventListener(telux::sensor::SensorInfo info)
-         : info_(info) {
+      SensorEventListener(std::shared_ptr<telux::sensor::ISensor> sensor)
+         : sensor_(sensor)
+         , totalBatches_(0) {
       }
 
-      virtual void onEvent(std::shared_ptr<std::vector<telux::sensor::SensorEvent>> events) override {
+      // [11] Receive sensor events. This notification is received every time the configured batch
+      // count is available with the sensor framework
+      virtual void onEvent(
+         std::shared_ptr<std::vector<telux::sensor::SensorEvent>> events) override {
+
          PRINT_NOTIFICATION << ": Received " << events->size()
-                            << " events from sensor: " << info_.name << std::endl;
+                              << " events from sensor: "
+                              << sensor_->getSensorInfo().name << std::endl;
+
+         // I/O intense operations such as below should be avoided since this thread should avoid
+         // any time consuming operations
          for (telux::sensor::SensorEvent s : *(events.get())) {
                printSensorEvent(s);
          }
+         ++totalBatches_;
+         // [11.1] If we have received expected number of batches and want to reconfigure the sensor
+         // we will spawn the request to deactivate, configure and activate on a different thread
+         // since we are not allowed to invoke the sensor APIs from this thread context
+         if (totalBatches_ > TOTAL_BATCHES_REQUIRED) {
+               totalBatches_ = 0;
+               std::thread t([&] {
+                  sensor_->deactivate();
+                  sensor_->configure(sensor_->getConfiguration());
+                  sensor_->activate();
+               });
+               // Be sure to detach the thread
+               t.detach();
+         }
       }
 
-      virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
-         PRINT_NOTIFICATION << ": Received configuration update from sensor: " << info_.name << ": ["
-                              << configuration.samplingRate << ", " << configuration.batchCount << " ]"
-                              << std::endl;
+      // [9] Receive configuration updates
+      virtual void onConfigurationUpdate(
+         telux::sensor::SensorConfiguration configuration) override {
+         PRINT_NOTIFICATION
+               << ": Received configuration update from sensor: " << sensor_->getSensorInfo().name
+               << ": [" << configuration.samplingRate << ", " << configuration.batchCount << " ]"
+               << std::endl;
       }
 
    private:
@@ -103,19 +129,21 @@ Please follow below steps as a guide to configure and acquire sensor data
                   || (type == telux::sensor::SensorType::ACCELEROMETER_UNCALIBRATED));
       }
       void printSensorEvent(telux::sensor::SensorEvent &s) {
-         if (isUncalibratedSensor(info_.type)) {
-               PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
-                                 << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y << ", "
-                                 << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x << ", "
-                                 << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z
+         telux::sensor::SensorInfo info = sensor_->getSensorInfo();
+         if (isUncalibratedSensor(sensor_->getSensorInfo().type)) {
+               PRINT_NOTIFICATION << ": " << sensor_->getSensorInfo().name << ": " << s.timestamp
+                                 << ", " << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y
+                                 << ", " << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x
+                                 << ", " << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z
                                  << std::endl;
          } else {
-               PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
-                                 << s.calibrated.x << ", " << s.calibrated.y << ", " << s.calibrated.z
-                                 << std::endl;
+               PRINT_NOTIFICATION << ": " << sensor_->getSensorInfo().name << ": " << s.timestamp
+                                 << ", " << s.calibrated.x << ", " << s.calibrated.y << ", "
+                                 << s.calibrated.z << std::endl;
          }
       }
-      telux::sensor::SensorInfo info_;
+      std::shared_ptr<telux::sensor::ISensor> sensor_;
+      uint32_t totalBatches_;
    };
    ~~~~~~
 
@@ -166,12 +194,36 @@ Please follow below steps as a guide to configure and acquire sensor data
 
 ### 11. Receive sensor data with the registered listener ###
 
+Avoid any time consuming operation in this callback. This thread should be released back the SDK
+library to avoid latency.
+
+If any sensor APIs need to be called in this method, they should be done on a different thread. One
+such method is to spawn a detached thread that invokes the required API.
+
    ~~~~~~{.cpp}
    virtual void onEvent(std::shared_ptr<std::vector<telux::sensor::SensorEvent>> events) override {
+
       PRINT_NOTIFICATION << ": Received " << events->size()
-                         << " events from sensor: " << info_.name << std::endl;
+                        << " events from sensor: " << sensor_->getSensorInfo().name << std::endl;
+
+      // I/O intense operations such as below should be avoided since this thread should avoid
+      // any time consuming operations
       for (telux::sensor::SensorEvent s : *(events.get())) {
          printSensorEvent(s);
+      }
+      ++totalBatches_;
+      // [11.1] If we have received expected number of batches and want to reconfigure the sensor
+      // we will spawn the request to deactivate, configure and activate on a different thread
+      // since we are not allowed to invoke the sensor APIs from this thread context
+      if (totalBatches_ > TOTAL_BATCHES_REQUIRED) {
+         totalBatches_ = 0;
+         std::thread t([&] {
+               sensor_->deactivate();
+               sensor_->configure(sensor_->getConfiguration());
+               sensor_->activate();
+         });
+         // Be sure to detach the thread
+         t.detach();
       }
    }
    ~~~~~~

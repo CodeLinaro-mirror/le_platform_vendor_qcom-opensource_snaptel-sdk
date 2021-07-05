@@ -52,8 +52,10 @@ extern "C" {
 std::shared_ptr<SensorTestApp> sensorTestApp;
 
 SensorTestApp::SensorTestApp(std::string appName, std::string cursor)
-   : ConsoleApp(appName, cursor)
-   , verboseNotification_(false) {
+   : ConsoleApp(appName, cursor) {
+    commandlineArgs_.verboseNotification = false;
+    commandlineArgs_.quiet = false;
+    commandlineArgs_.printPeriod = 1;
 }
 
 SensorTestApp::~SensorTestApp() {
@@ -83,7 +85,7 @@ void SensorTestApp::initConsole() {
 void SensorTestApp::sensorControlMenu(std::vector<std::string> userInput) {
     if (sensorControlMenu_ == nullptr) {
         sensorControlMenu_ = std::make_shared<SensorControlMenu>(
-            "Sensor control menu", "sensor_control> ", verboseNotification_);
+            "Sensor control menu", "sensor_control> ", commandlineArgs_);
         if (sensorControlMenu_->init(true) != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Failed to initialize sensor control menu" << std::endl;
             return;
@@ -99,7 +101,7 @@ void SensorTestApp::sensorFeatureControlMenu(std::vector<std::string> userInput)
 
     if (sensorFeatureControlMenu_ == nullptr) {
         sensorFeatureControlMenu_ = std::make_shared<SensorFeatureControlMenu>(
-            "Sensor feature control menu", "sensor_feature_control> ", verboseNotification_);
+            "Sensor feature control menu", "sensor_feature_control> ", commandlineArgs_);
         if (sensorFeatureControlMenu_->init(true)
             != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Failed to initialize sensor control menu" << std::endl;
@@ -113,27 +115,50 @@ void SensorTestApp::sensorFeatureControlMenu(std::vector<std::string> userInput)
 }
 
 void SensorTestApp::printHelp(std::string programName) {
-    std::cout << "Usage: " << programName << " [-nh]" << std::endl
+    std::cout << "Usage: " << programName << " [OPTIONS]" << std::endl
               << std::endl
-              << "-n        Enable detailed notification information" << std::endl
-              << "-h        This help" << std::endl;
+              << "-n           Enable detailed notification information" << std::endl
+              << "-q [period]  Quiet mode with threshold, events count will be printed once every "
+                 "[period] seconds"
+              << std::endl
+              << "-h           This help" << std::endl
+              << "In case -q and -n both are specified, the argument specified in the end would "
+                 "take effect"
+              << std::endl;
 }
 
 void SensorTestApp::parseArgs(int argc, char **argv) {
     int c = -1;
     static const struct option long_options[]
         = {{"notification configuration", no_argument, 0, 'n'}, {"help", no_argument, 0, 'h'},
-            {0, 0, 0, 0}};
+            {"quiet mode", required_argument, 0, 'q'}, {0, 0, 0, 0}};
     int option_index = 0;
-    c = getopt_long(argc, argv, "nh", long_options, &option_index);
+    c = getopt_long(argc, argv, "nq:h", long_options, &option_index);
     if (c == -1) {
         return;
+    }
+    // getopt/getopt_long returns '?' in case it finds an argument that was not in the list or
+    // when it finds that an argument that expected a parameter does not have one
+    if (c == '?') {
+        exit(1);
     }
     do {
         switch (c) {
             case 'n': {
-                std::cout << "Enabling verbose notification" << std::endl;
-                verboseNotification_ = true;
+                commandlineArgs_.verboseNotification = true;
+                commandlineArgs_.quiet = false;
+                break;
+            }
+            case 'q': {
+                commandlineArgs_.quiet = true;
+                try {
+                    commandlineArgs_.printPeriod = std::stoi(optarg);
+                } catch (std::exception &e) {
+                    std::cout << "Invalid value " << optarg << " provided for period (in seconds)"
+                              << std::endl;
+                    exit(1);
+                }
+                commandlineArgs_.verboseNotification = false;
                 break;
             }
             case 'h': {
@@ -141,8 +166,24 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
                 exit(0);
             }
         }
-        c = getopt_long(argc, argv, "nh", long_options, &option_index);
+        c = getopt_long(argc, argv, "nq:h", long_options, &option_index);
     } while (c != -1);
+    if (commandlineArgs_.verboseNotification) {
+        std::cout << "Enabling verbose notification" << std::endl;
+    }
+    if (commandlineArgs_.quiet) {
+        std::cout << "Enabling quiet mode with period = " << commandlineArgs_.printPeriod
+                  << std::endl;
+    }
+}
+
+static void signalHandler(int signal) {
+    sensorTestApp = nullptr;
+    exit(0);
+}
+
+static void setupSignalHandler() {
+    signal(SIGINT, signalHandler);
 }
 
 int main(int argc, char **argv) {
@@ -150,6 +191,7 @@ int main(int argc, char **argv) {
     std::string appName = "Sensor test app - SDK v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."
                           + std::to_string(sdkVersion.patch);
+    setupSignalHandler();
     sensorTestApp = std::make_shared<SensorTestApp>(appName, "sensor> ");
     sensorTestApp->parseArgs(argc, argv);
     // Setting required secondary groups for SDK file/diag logging

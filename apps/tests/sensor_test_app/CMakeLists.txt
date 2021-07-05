@@ -33,7 +33,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_SENSOR_TEST_APP} ${SENSOR_TEST_APP_SOURCES})
-target_link_libraries(${TARGET_SENSOR_TEST_APP} ${TELUXSENSOR_LIBRARIES} ${TELUXCOMMON_LIBRARIES})
+target_link_libraries(${TARGET_SENSOR_TEST_APP} ${TELUXSENSOR_LIBRARIES} ${TELUXCOMMON_LIBRARIES} pthread)
 
 # install to target
 install ( TARGETS ${TARGET_SENSOR_TEST_APP}

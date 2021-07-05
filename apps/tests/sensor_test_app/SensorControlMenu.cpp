@@ -47,9 +47,9 @@
 #include "../../common/utils/Utils.hpp"
 
 SensorControlMenu::SensorControlMenu(
-    std::string appName, std::string cursor, bool verboseNotification)
+    std::string appName, std::string cursor, SensorTestAppArguments commandLineArgs)
    : ConsoleApp(appName, cursor)
-   , verboseNotification_(verboseNotification) {
+   , commandLineArgs_(commandLineArgs) {
     clientIdMask_.reset();
 }
 
@@ -136,10 +136,14 @@ void SensorControlMenu::initConsole() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Delete_Sensor_Client", {},
             std::bind(&SensorControlMenu::deleteSensorClient, this, std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-        = {listAvailableSensorsCommand, createSensorClientCommand, listCreatedSensorsCommand,
-            configureSensorCommand, activateSensorCommand, deactivateSensorCommand,
-            enableLowPowerModeCommand, disableLowPowerModeCommand, deleteSensorClientCommand};
+    std::shared_ptr<ConsoleAppCommand> listActiveClientsCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "List_Active_Clients", {},
+            std::bind(&SensorControlMenu::listActiveClients, this, std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listAvailableSensorsCommand,
+        createSensorClientCommand, listCreatedSensorsCommand, configureSensorCommand,
+        activateSensorCommand, deactivateSensorCommand, enableLowPowerModeCommand,
+        disableLowPowerModeCommand, deleteSensorClientCommand, listActiveClientsCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -188,7 +192,7 @@ void SensorControlMenu::createSensorClient(std::vector<std::string> userInput) {
         return;
     }
     std::shared_ptr<SensorClient> sensorClient
-        = std::make_shared<SensorClient>(cid, sensor, verboseNotification_);
+        = std::make_shared<SensorClient>(cid, sensor, commandLineArgs_);
     sensorClient->init();
     sensorClients_.push_back(sensorClient);
     std::cout << "Sensor client with id " << cid << " created successfully" << std::endl;
@@ -266,6 +270,14 @@ void SensorControlMenu::deleteSensorClient(std::vector<std::string> userInput) {
     sensorClients_.erase(it, sensorClients_.end());
     std::cout << "Removed sensor with client ID " << cid << std::endl << std::endl;
     clientIdMask_.reset(cid);
+}
+
+void SensorControlMenu::listActiveClients(std::vector<std::string> userInput) {
+    for (auto s : sensorClients_) {
+        if (s->isActive()) {
+            s->printInfo();
+        }
+    }
 }
 
 void SensorControlMenu::cleanup() {

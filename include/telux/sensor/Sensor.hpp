@@ -63,7 +63,10 @@ namespace sensor {
 class ISensorEventListener {
  public:
     /**
-     * This function is called to notify about available sensor events
+     * This function is called to notify about available sensor events. Note the following
+     * constraints on this listener API
+     * It shall not perform time consuming (compute or I/O intensive) operations on this thread
+     * It shall not inovke an sensor APIs on this thread due to the underlying concurrency model
      *
      * @param [in] events - List of sensor events
      *

@@ -30,9 +30,12 @@
 #ifndef SENSORCLIENT_HPP
 #define SENSORCLIENT_HPP
 
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
-
+#include <thread>
+#include "SensorUtils.hpp"
 #include <telux/sensor/Sensor.hpp>
 #include <telux/sensor/SensorDefines.hpp>
 
@@ -42,7 +45,7 @@ using namespace telux::common;
 class SensorClient : public ISensorEventListener,
                      public std::enable_shared_from_this<SensorClient> {
  public:
-    SensorClient(int id, std::shared_ptr<ISensor> sensor, bool verboseNotification);
+    SensorClient(int id, std::shared_ptr<ISensor> sensor, SensorTestAppArguments commandLineArgs);
     ~SensorClient();
     void init();
     void cleanup();
@@ -57,14 +60,25 @@ class SensorClient : public ISensorEventListener,
     std::shared_ptr<ISensor> getSensor() const {
         return sensor_;
     }
+    bool isActive() const {
+        return activated_;
+    }
 
     const int id_;
 
  private:
+    std::mutex mtx_;
     std::shared_ptr<ISensor> sensor_;
-    bool verboseNotification_;
     std::string tag_;
     uint64_t lastBatchReceivedAt_;
+    uint32_t totalEvents_;
+    bool stop_;
+    bool activated_;
+    std::mutex qMutex_;
+    std::condition_variable cv_;
+    std::shared_ptr<std::thread> workerThread_;
+    // Structure instance to store the command line args passed
+    SensorTestAppArguments commandLineArgs_;
 };
 
 #endif  // SENSORCLIENT_HPP

@@ -53,9 +53,9 @@ class SensorFeatureEventListener : public telux::sensor::ISensorFeatureEventList
 };
 
 SensorFeatureControlMenu::SensorFeatureControlMenu(
-    std::string appName, std::string cursor, bool verboseNotificatoin)
+    std::string appName, std::string cursor, SensorTestAppArguments commandLineArgs)
    : ConsoleApp(appName, cursor)
-   , verboseNotification_(verboseNotificatoin) {
+   , commandLineArgs_(commandLineArgs) {
 }
 
 SensorFeatureControlMenu::~SensorFeatureControlMenu() {
@@ -126,8 +126,12 @@ void SensorFeatureControlMenu::initConsole() {
             std::bind(
                 &SensorFeatureControlMenu::disableSensorFeature, this, std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
-        = {listSensorFeaturesCommand, enableSensorFeatureCommand, disableSensorFeatureCommand};
+    std::shared_ptr<ConsoleAppCommand> listActiveFeaturesCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "List_Active_Features", {},
+            std::bind(&SensorFeatureControlMenu::listActiveFeatures, this, std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listSensorFeaturesCommand,
+        enableSensorFeatureCommand, disableSensorFeatureCommand, listActiveFeaturesCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -164,6 +168,12 @@ void SensorFeatureControlMenu::disableSensorFeature(std::vector<std::string> use
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
     disableFeature(name);
+}
+
+void SensorFeatureControlMenu::listActiveFeatures(std::vector<std::string> userInput) {
+    for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ++it) {
+        std::cout << "\t" << (*it) << std::endl;
+    }
 }
 
 void SensorFeatureControlMenu::disableFeature(std::string name) {

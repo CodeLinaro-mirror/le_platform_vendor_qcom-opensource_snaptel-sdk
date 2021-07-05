@@ -37,9 +37,9 @@
 #include <telux/sensor/SensorDefines.hpp>
 #include <telux/sensor/Sensor.hpp>
 
-#include "SensorClient.hpp"
-
 using namespace telux::sensor;
+
+class SensorClient;
 
 class SensorUtils {
  public:
@@ -81,6 +81,23 @@ class SensorUtils {
     static bool isUncalibratedSensor(SensorType type);
     static void printSensorFeatureInfo(SensorFeature feature);
     static void printSensorFeatureEvent(SensorFeatureEvent event);
+};
+
+struct SensorTestAppArguments {
+    /**
+     * To enable detailed notifications upon receiving sensor events
+     */
+    bool verboseNotification;
+    /**
+     * To reduce verbosity of the sensor events. If quiet is enabled, sensor client will print
+     * a summmary every printPeriod seconds
+     */
+    bool quiet;
+
+    /**
+     * The duration between two summary ouputs in quiet mode
+     */
+    uint32_t printPeriod;
 };
 
 #endif  // SENSORUTILS_HPP

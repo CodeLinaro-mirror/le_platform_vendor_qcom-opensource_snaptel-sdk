@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -59,10 +59,10 @@ private:
    void logSapState(telux::tel::SapState sapState);
 
    std::shared_ptr<telux::tel::ISapCardManager> sapCardMgr_ = nullptr;
-   std::shared_ptr<MySapCommandResponseCallback> mySapCmdResponseCb_;
-   std::shared_ptr<MyCardReaderCallback> mySapCardReaderCb_;
-   std::shared_ptr<MySapTransmitApduResponseCallback> myTransmitApduResponseCb_;
-   std::shared_ptr<MyAtrResponseCallback> myAtrCb_;
+   std::shared_ptr<MySapCommandResponseCallback> mySapCmdResponseCb_ = nullptr;
+   std::shared_ptr<MyCardReaderCallback> mySapCardReaderCb_ = nullptr;
+   std::shared_ptr<MySapTransmitApduResponseCallback> myTransmitApduResponseCb_ = nullptr;
+   std::shared_ptr<MyAtrResponseCallback> myAtrCb_ = nullptr;
 };
 
 #endif  // SAPCARDSERVICESMENU_HPP

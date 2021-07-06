@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,6 +43,7 @@
 #include "Utils.hpp"
 
 #define UNKNOWN 0
+#define INVALID -1
 
 NetworkMenu::NetworkMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -132,9 +133,9 @@ void NetworkMenu::getNetworkSelectionMode(std::vector<std::string> userInput) {
 
 void NetworkMenu::setNetworkSelectionMode(std::vector<std::string> userInput) {
    if(networkManager_) {
-      bool selectionMode;
-      std::string mcc;
-      std::string mnc;
+      bool selectionMode = false;
+      std::string mcc = "";
+      std::string mnc = "";
       telux::common::Status retStatus = telux::common::Status::FAILED;
       std::cout << "Enter Network Selection Mode(0-AUTOMATIC,1-MANUAL): ";
       std::cin >> selectionMode;
@@ -212,7 +213,7 @@ telux::tel::PreferredNetworkInfo NetworkMenu::getNetworkInfoFromUser() {
    std::cin >> preference;
    Utils::validateNumericString(preference);
    std::stringstream ss(preference);
-   int pref;
+   int pref = INVALID;
    while(ss >> pref) {
       options.push_back(pref);
       if(ss.peek() == ',' || ss.peek() == ' ')
@@ -233,8 +234,8 @@ telux::tel::PreferredNetworkInfo NetworkMenu::getNetworkInfoFromUser() {
 void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
    if(networkManager_) {
       std::vector<telux::tel::PreferredNetworkInfo> preferredNetworksInfo;
-      int numOfNetworks;
-      bool clearPrevPreferredNetworks;
+      int numOfNetworks = UNKNOWN;
+      bool clearPrevPreferredNetworks = false;
       std::cout << "Enter number of preferred networks: ";
       std::cin >> numOfNetworks;
       Utils::validateInput(numOfNetworks);

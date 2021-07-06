@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,7 +37,7 @@
 #include <telux/tel/PhoneFactory.hpp>
 
 #include "CardServicesMenu.hpp"
-
+#define INVALID -1
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void ChangeCardPinResponseCb(int retryCount, telux::common::ErrorCode error) {
@@ -338,9 +338,9 @@ void CardServicesMenu::openLogicalChannel(std::vector<std::string> userInput) {
 
 void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
    if(card_) {
-      int channel;
+      int channel = INVALID;
       int cla, instruction, p1, p2, p3;
-      std::vector<uint8_t> data;
+      std::vector<uint8_t> data = {};
 
       cla = 0;
       instruction = 0;

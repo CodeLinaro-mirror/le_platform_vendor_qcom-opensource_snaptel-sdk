@@ -47,6 +47,7 @@ typedef enum {
    DEFAULT_SLOT_ID =  1,
    SLOT_ID_1 = DEFAULT_SLOT_ID,
    SLOT_ID_2 = 2,
+   MAX_SLOT_ID = SLOT_ID_2,
 }SlotId;
 
 namespace telux {

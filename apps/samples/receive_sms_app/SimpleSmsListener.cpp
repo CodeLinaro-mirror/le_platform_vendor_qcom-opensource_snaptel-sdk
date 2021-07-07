@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -56,39 +56,36 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<SmsMessage> smsMs
  */
 int main(int, char **) {
 
-   // [2] Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
+    //Instantiate initialization status callback
+    std::promise<telux::common::ServiceStatus> initCallbackPromise;
+    auto initCb = [&](telux::common::ServiceStatus status) {
+      initCallbackPromise.set_value(status);
+    };
+    // [1] Get the PhoneFactory and SMS Manager instance for appropriate phoneId.
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto smsManager = phoneFactory.getSmsManager(DEFAULT_SLOT_ID, initCb);
+    if(!smsManager) {
+       std::cout << "Failed to get SMS Manager instance" << std::endl;
+       return 1;
+    }
 
-   // [3] Wait for the telephony subsystem initialization.
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      subSystemsStatus = f.get();
-   }
-
-   // [4] Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+    // [2] Wait for SMS subsystem to be ready
+    std::cout << "Waiting for SMS Manager to be ready" << std::endl;
+    telux::common::ServiceStatus subSystemsStatus = initCallbackPromise.get_future().get();
+    if(subSystemsStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << " *** ERROR - SMS Manager initialization failed" << std::endl;
       return 1;
-   }
+    }
 
-   // [5] Instantiate global ISmsListener
+   // [3] Instantiate global ISmsListener
    auto mySmsListener = std::make_shared<MySmsListener>();
 
-   // [6] Get Default Phone and SMS manager instance
-   std::shared_ptr<ISmsManager> smsMgr = phoneFactory.getSmsManager();
-
-   // [7] Register of for incoming SMS messages
-   if(smsMgr) {
-      smsMgr->registerListener(mySmsListener);
+   // [4] Register of for incoming SMS messages
+   if(smsManager) {
+      smsManager->registerListener(mySmsListener);
    }
 
-   // [8] wait for the onIncomingSms()
+   // [5] wait for the onIncomingSms()
    std::cout << " *** wait for the onIncomingSms() *** " << std::endl;
    std::cout << "Press enter to exit" << std::endl;
    std::string input;

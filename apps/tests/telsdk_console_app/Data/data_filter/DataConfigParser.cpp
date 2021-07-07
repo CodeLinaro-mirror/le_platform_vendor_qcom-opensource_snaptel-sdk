@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -134,6 +134,8 @@ void DataConfigParser::readConfigFile(std::string configFile) {
   while (std::getline(configFileStream, param)) {
 
     param = trim(param);
+    // trim all carriage return \r from the end of string.
+    param.erase(std::remove(param.begin(), param.end(), '\r'), param.end());
 
     // Trim all the spaces between fields for regex to work
     std::string::iterator end_pos = std::remove(param.begin(), param.end(), ' ');

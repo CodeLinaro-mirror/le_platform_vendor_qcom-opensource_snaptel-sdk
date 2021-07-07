@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019,2021 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,38 +27,17 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
-#include <memory>
-#include <bitset>
+#ifndef MYIMSSETTINGSLISTENER_HPP
+#define MYIMSSETTINGSLISTENER_HPP
 
-#include <telux/data/DataDefines.hpp>
-#include "MyDataFilterListener.hpp"
+#include <telux/tel/ImsSettingsManager.hpp>
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+class ImsSettingsListener : public telux::tel::IImsSettingsListener {
+public:
+    void onImsServiceConfigsChange(SlotId slotId, telux::tel::ImsServiceConfig config) override;
+    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    ~ImsSettingsListener() {}
 
-void MyDataFilterListener::onDataRestrictModeChange(DataRestrictMode mode) {
-    if (mode.filterMode == DataRestrictModeType::ENABLE) {
-        print_notification << "Data Filter Mode : Enable" << std::endl;
-    } else if (mode.filterMode == DataRestrictModeType::DISABLE) {
-        print_notification << "Data Filter Mode : Disable" << std::endl;
-    } else {
-        std::cout << " ERROR: Invalid Data Filter mode notified" << std::endl;
-    }
-}
+};
 
-void MyDataFilterListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   std::string stat;
-
-   switch(status) {
-      case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         stat = " SERVICE_AVAILABLE";
-         break;
-      case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         stat =  " SERVICE_UNAVAILABLE";
-         break;
-      default:
-         stat = " Unknown service status";
-         break;
-   }
-   print_notification << " ** Data Filter onServiceStatusChange **\n" << stat << std::endl;
-}
+#endif  // IMSSETTINGSLISTENER_HPP

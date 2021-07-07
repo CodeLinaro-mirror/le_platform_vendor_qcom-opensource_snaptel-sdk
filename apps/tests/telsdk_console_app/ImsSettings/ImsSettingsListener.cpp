@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019,2021 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -28,25 +28,35 @@
  */
 
 #include <iostream>
-#include <memory>
-#include <bitset>
+#include <string>
 
-#include <telux/data/DataDefines.hpp>
-#include "MyDataFilterListener.hpp"
+#include "ImsSettingsListener.hpp"
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
-void MyDataFilterListener::onDataRestrictModeChange(DataRestrictMode mode) {
-    if (mode.filterMode == DataRestrictModeType::ENABLE) {
-        print_notification << "Data Filter Mode : Enable" << std::endl;
-    } else if (mode.filterMode == DataRestrictModeType::DISABLE) {
-        print_notification << "Data Filter Mode : Disable" << std::endl;
-    } else {
-        std::cout << " ERROR: Invalid Data Filter mode notified" << std::endl;
+void ImsSettingsListener::onImsServiceConfigsChange(SlotId slotId,
+    telux::tel::ImsServiceConfig config) {
+    PRINT_NOTIFICATION << "onImsServiceConfigChange, SlotId: " << static_cast<int>(slotId)
+                       << "\n";
+    //For VOIMS configuration
+    if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_VOIMS]) {
+       if (config.voImsEnabled) {
+           PRINT_NOTIFICATION << "VOIMS is enabled \n";
+       } else {
+           PRINT_NOTIFICATION << "VOIMS is disabled \n";
+       }
+    }
+    //For IMS service configuration
+    if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_IMS_SERVICE]) {
+       if (config.imsServiceEnabled) {
+           PRINT_NOTIFICATION << "IMS service is enabled \n";
+       } else {
+           PRINT_NOTIFICATION << "IMS service is disabled \n";
+       }
     }
 }
 
-void MyDataFilterListener::onServiceStatusChange(telux::common::ServiceStatus status) {
+void ImsSettingsListener::onServiceStatusChange(telux::common::ServiceStatus status) {
    std::string stat;
 
    switch(status) {
@@ -60,5 +70,7 @@ void MyDataFilterListener::onServiceStatusChange(telux::common::ServiceStatus st
          stat = " Unknown service status";
          break;
    }
-   print_notification << " ** Data Filter onServiceStatusChange **\n" << stat << std::endl;
+
+   PRINT_NOTIFICATION << " Ims Settings onServiceStatusChange" << stat << "\n";
 }
+

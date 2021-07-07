@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -38,64 +38,51 @@
 #include <vector>
 
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
+
+#define MIN_SIM_SLOT_COUNT 1
+#define MAX_SIM_SLOT_COUNT 2
 
 #include "SmsMenu.hpp"
 
 SmsMenu::SmsMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
-   //  Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   phoneManager_ = phoneFactory.getPhoneManager();
 
-   //  Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager_->isSubsystemReady();
+    int noOfSlots = MIN_SIM_SLOT_COUNT;
+    if(telux::common::DeviceConfig::isMultiSimSupported()) {
+        noOfSlots = MAX_SIM_SLOT_COUNT;
+    }
+    mySmsCmdCb_ = std::make_shared<MySmsCommandCallback>();
+    mySmscAddrCb_ = std::make_shared<MySmscAddressCallback>();
+    mySmsDeliveryCb_ = std::make_shared<MySmsDeliveryCallback>();
+    smsListener_ = std::make_shared<MySmsListener>();
 
-   //  If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
-      std::future<bool> f = phoneManager_->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
-   }
-
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-      exit(0);
-   }
-   if(subSystemStatus) {
-      mySmsCmdCb_ = std::make_shared<MySmsCommandCallback>();
-      mySmscAddrCb_ = std::make_shared<MySmscAddressCallback>();
-      mySmsDeliveryCb_ = std::make_shared<MySmsDeliveryCallback>();
-      smsListener_ = std::make_shared<MySmsListener>();
-
-      std::vector<int> phoneIds;
-      telux::common::Status status = phoneManager_->getPhoneIds(phoneIds);
-      if (status == telux::common::Status::SUCCESS) {
-          for (auto index = 1; index <= phoneIds.size(); index++) {
-              auto smsMgr = phoneFactory.getSmsManager(index);
-              if (smsMgr) {
-                  // add listeners for incoming SMS notification
-                  telux::common::Status status = smsMgr->registerListener(smsListener_);
-                  if(status != telux::common::Status::SUCCESS) {
-                     std::cout << "Unable to register Listener" << std::endl;
-                  }
-                  smsManagers_.emplace_back(smsMgr);
-              } else {
-                  std::cout << " SMS Manager is NULL,"
-                            <<" so cannot register a listener to receive incoming SMS"
-                            << std::endl;
-              }
-          }
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    for (auto index = 1; index <= noOfSlots; index++) {
+      std::promise<telux::common::ServiceStatus> prom;
+      auto smsMgr = phoneFactory.getSmsManager(index, [&](telux::common::ServiceStatus status) {
+          prom.set_value(status);
+      });
+      if (!smsMgr) {
+          std::cout << "ERROR - Failed to get SMS Manager instance \n";
+          exit(1);
       }
-   }
+
+      std::cout << " Waiting for SMS Manager to be ready \n";
+      telux::common::ServiceStatus smsMgrStatus = prom.get_future().get();
+      if (smsMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+          std::cout << "SMS Manager is ready \n";
+          auto status = smsMgr->registerListener(smsListener_);
+          if(status != telux::common::Status::SUCCESS) {
+              std::cout << "ERROR - Failed to register listener \n";
+              exit(1);
+          }
+          smsManagers_.emplace_back(smsMgr);
+      } else {
+          std::cout << "ERROR - Unable to initialize SMS Manager \n";
+          exit(1);
+      }
+    }
 }
 
 SmsMenu::~SmsMenu() {

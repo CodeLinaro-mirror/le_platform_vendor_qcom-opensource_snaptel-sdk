@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019,2020, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -40,8 +40,6 @@
  *             just before the apps processor goes to sleep. The apps proc will now be woken up only
  *             if a packet that we care about is received by the modem.
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  */
 
 #ifndef DATAFILTERMANAGER_HPP
@@ -57,6 +55,9 @@
 namespace telux {
 namespace data {
 
+/** @addtogroup telematics_data
+ * @{ */
+
 /**
  * This function is called in the response to requestDataRestrictMode().
  *
@@ -67,8 +68,6 @@ namespace data {
 using DataRestrictModeCb =
     std::function<void(DataRestrictMode mode, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_data
- * @{ */
 
 /**
  * @brief   IDataFilterManager class provides interface to enable/disable the data restrict filters
@@ -80,19 +79,26 @@ using DataRestrictModeCb =
  *          In contrary to when DataRestrict mode is disabled, modem will forward all the
  *          incoming data packets to AP and might wake up AP unnecessarily.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and could break
- *          backwards compatibility.
  */
 class IDataFilterManager {
 public:
+    /**
+     * Checks the status of data filter manager and returns the result.
+     *
+     * @returns  the status of sensor sub-system status @ref telux::common::ServiceStatus
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
     /**
      * Checks the status of Data Filter Service and if the other APIs are ready for use,
      * and returns the result.
      *
      * @returns  True if the services are ready otherwise false.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * @deprecated Use getServiceStatus API.
      */
     virtual bool isReady() = 0;
 
@@ -102,8 +108,7 @@ public:
      * @returns  A future that caller can wait on to be notified when Data Filter Service
      *           are ready.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
+     * @deprecated Use InitResponseCb callback in factory API getDataFilterManager.
      */
     virtual std::future<bool> onReady() = 0;
 
@@ -114,8 +119,6 @@ public:
      *
      * @returns Status of registerListener i.e success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IDataFilterListener> listener) = 0;
 
@@ -126,8 +129,6 @@ public:
      *
      * @returns Status of deregisterListener, success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status
     deregisterListener(std::weak_ptr<IDataFilterListener> listener) = 0;
@@ -152,8 +153,6 @@ public:
      *
      * @returns Status of setDataRestrictMode i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status
     setDataRestrictMode(DataRestrictMode mode,
@@ -170,8 +169,6 @@ public:
      *
      * @returns Status of requestDataRestrictMode i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status
     requestDataRestrictMode(std::string ifaceName,
@@ -197,8 +194,6 @@ public:
      *
      * @returns Status of addDataRestrictFilter i.e. success or suitable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status
     addDataRestrictFilter(std::shared_ptr<IIpFilter> &filter,
@@ -221,8 +216,6 @@ public:
      *
      * @returns Status of removeAllDataRestrictFilters i.e. success or suitable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status
     removeAllDataRestrictFilters(telux::common::ResponseCallback callback = nullptr,
@@ -234,7 +227,7 @@ public:
      * @returns SlotId
      *
      */
-    virtual int getSlotId() = 0;
+    virtual SlotId getSlotId() = 0;
 
     /**
      * Destructor of IDataFilterManager

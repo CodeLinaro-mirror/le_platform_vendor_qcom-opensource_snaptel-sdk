@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -67,10 +67,9 @@ using namespace telux::data::net;
 
 class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
  public:
-    bool initializeSDK();
 
     // initialize menu and sdk
-    void init();
+    bool init();
 
     // Data Filter APIs
     void sendSetDataRestrictMode(DataRestrictMode mode);
@@ -82,7 +81,6 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
             std::map<std::string, std::string> filter);
     void addIPParameters(std::shared_ptr<telux::data::IIpFilter> &dataFilter,
         DataConfigParser instance, std::map<std::string, std::string> filterMap);
-    ResponseCallback responseCb;
     void commandCallback(ErrorCode errorCode);
 
 
@@ -90,14 +88,16 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
     ~DataFilterMenu();
 
  private:
+    bool initDataFilterManagerAndListener(SlotId slotId);
+
     std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
-    std::shared_ptr<telux::data::IDataConnectionManager> dataConnectionManager_;
+    std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>> dataConnManagerMap_;
     telux::data::ProfileParams params_;
+    std::map<SlotId, std::shared_ptr<DataListener>> dataListener_;
 
-    std::shared_ptr<DataListener> dataListener_;
-
-    std::shared_ptr<telux::data::IDataFilterManager> dataFilterMgr_;
-    std::shared_ptr<MyDataFilterListener> dataFilterListener_;
+    std::map<SlotId, std::shared_ptr<telux::data::IDataFilterManager>> dataFilterManagerMap_;
+    std::map<SlotId, std::shared_ptr<MyDataFilterListener>> dataFilterListener_;
+    std::map<SlotId, ResponseCallback> responseCbMap_;
 
 };
 #endif

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -76,73 +76,64 @@ void SmsDeliveryCallback::commandResponse(telux::common::ErrorCode error) {
  */
 int main(int argc, char *argv[]) {
 
-   // [1] Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
+    //Initialization status callback
+    std::promise<telux::common::ServiceStatus> initCallbackPromise;
+    auto initCb = [&](telux::common::ServiceStatus status) {
+      initCallbackPromise.set_value(status);
+    };
+    // [1] Get the PhoneFactory and SMS Manager instances.
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto smsManager = phoneFactory.getSmsManager(DEFAULT_SLOT_ID, initCb);
+    if(!smsManager) {
+       std::cout << "Failed to get SMS Manager instance" << std::endl;
+       return 1;
+    }
 
-   // [2] Check if telephony subsystem is ready
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-
-   // [2.1] If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemsStatus = f.get();
-   }
-
-   // [3] Exit the application, if SDK is unable to initialize telephony
-   // subsystems
-   if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+    // [2] Wait for SMS subsystem to be ready
+    std::cout << "Waiting for SMS Manager to be ready" << std::endl;
+    telux::common::ServiceStatus subSystemsStatus = initCallbackPromise.get_future().get();
+    if(subSystemsStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << " *** ERROR - SMS Manager initialization failed" << std::endl;
       return 1;
-   }
+    }
 
-   // [4] Instantiate SMS sent and delivery callback
-   auto smsSentCb = std::make_shared<SmsCallback>();
-   auto smsDeliveryCb = std::make_shared<SmsDeliveryCallback>();
+    // [3] Instantiate SMS sent and delivery callback
+    auto smsSentCb = std::make_shared<SmsCallback>();
+    auto smsDeliveryCb = std::make_shared<SmsDeliveryCallback>();
 
-   // [5] Get Default SMS manager instance
-   std::shared_ptr<telux::tel::ISmsManager> smsManager = phoneFactory.getSmsManager();
+    // [4] Send an SMS using ISmsManager by passing the text and receiver number
+    // along with required callback
+    std::string configFile;
+    std::string receiverAddress;
+    std::string message;
+    std::shared_ptr<ConfigParser> configParser;
 
-   // [6] Send an SMS using ISmsManager by passing the text and receiver number
-   // along with required callback
-   if(smsManager) {
-      std::string configFile;
-      std::string receiverAddress;
-      std::string message;
-      std::shared_ptr<ConfigParser> configParser;
+    // [4.1] User can send an SMS by taking receiver's phone number and text message
+    // from the user created config file. If user did not provide any config file then
+    // it will take parameters from default config file(i.e SampleAppConfig.conf)
+    // which is located under(/usr/data) where application is running.
+    if(argc == 2) {
+     configFile = argv[1];
+     configParser = std::make_shared<ConfigParser>(configFile);
+    } else {
+     configParser = std::make_shared<ConfigParser>();
+    }
 
-      // [6.1] User can send an SMS by taking receiver's phone number and text message
-      // from the user created config file. If user did not provide any config file then
-      // it will take parameters from default config file(i.e SampleAppConfig.conf)
-      // which is located under(/usr/data) where application is running.
-      if(argc == 2) {
-         configFile = argv[1];
-         configParser = std::make_shared<ConfigParser>(configFile);
-      } else {
-         configParser = std::make_shared<ConfigParser>();
-      }
+    receiverAddress = configParser->getValue(std::string("RECEIVER_NUMBER"));
+    message = configParser->getValue(std::string("MESSAGE"));
 
-      receiverAddress = configParser->getValue(std::string("RECEIVER_NUMBER"));
-      message = configParser->getValue(std::string("MESSAGE"));
+    // [4.2] If default config file is also not found then will take default
+    // receiver's phone number and text message which is defined in the sample application.
+    if(receiverAddress.empty() || message.empty()) {
+     receiverAddress = DEFAULT_RECEIVER_PHONE_NUMBER;
+     message = DEFAULT_MESSAGE;
+     std::cout << "Using default receiverAddress:" << std::endl;
+    }
+    smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
 
-      // [6.2] If default config file is also not found then will take default
-      // receiver's phone number and text message which is defined in the sample application.
-      if(receiverAddress.empty() || message.empty()) {
-         receiverAddress = DEFAULT_RECEIVER_PHONE_NUMBER;
-         message = DEFAULT_MESSAGE;
-         std::cout << "Using default receiverAddress:" << std::endl;
-      }
-      smsManager->sendSms(message, receiverAddress, smsSentCb, smsDeliveryCb);
-   }
+   // [5] Receive responses for sendSms request
 
-   // [7] Receive responses for sendSms request
-
-   // [8] Exit logic is specific to an application
+   // [6] Exit logic is specific to an application
    std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);

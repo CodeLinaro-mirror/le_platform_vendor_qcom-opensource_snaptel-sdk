@@ -82,6 +82,8 @@ public:
 
     int init();
 
+    void consoleInit();
+
     int deinit();
 
     void startTxAndListenToReportCommand();
@@ -95,10 +97,6 @@ public:
 private:
 
     Cv2xTxStatusReportApp();
-
-    int appInit();
-
-    void consoleInit();
 
     void initOptions();
 

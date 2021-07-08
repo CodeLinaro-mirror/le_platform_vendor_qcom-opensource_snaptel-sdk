@@ -76,6 +76,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/SimProfileManager.hpp>
+#include <telux/tel/CardManager.hpp>
 
 #include "RspListener.hpp"
 
@@ -102,6 +103,8 @@ class RemoteSimProfile {
     std::string smdpAddress_;
     std::shared_ptr<telux::tel::ISimProfileManager> simProfileManager_ = nullptr;
     std::shared_ptr<RspListener> rspListener_ = nullptr;
+    std::shared_ptr<telux::tel::ICardManager> cardManager_= nullptr;
+    std::vector<std::shared_ptr<telux::tel::ICard>> cards_;
 
     RemoteSimProfile();
     ~RemoteSimProfile();

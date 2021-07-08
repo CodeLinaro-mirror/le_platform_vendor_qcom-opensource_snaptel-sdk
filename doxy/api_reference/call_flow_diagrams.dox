@@ -527,32 +527,35 @@ available.
    successfully.
 6. The response of get profile list request can be received by application in the application-supplied
    callback along with all the profile details.
-7. Application can send a get EID request on SimProfileManager.
-8. Application receives synchronous status which indicates if the get EID request was sent
+7. Application can get Card object from CardManager associated with the slot.
+8. CardManager returns shared pointer to Card object to application using which
+   application can retrieve EID.
+9. Application can send a get EID request on Card.
+10. Application receives synchronous status which indicates if the get EID request was sent
    successfully.
-9. The response of get EID request can be received by application in the application-supplied
+11. The response of get EID request can be received by application in the application-supplied
    callback along with EID details.
-10. Application can send update nickname of profile request on SimProfileManager.
-11. Application receives synchronous status which indicates if the update nickname request was sent
+12. Application can send update nickname of profile request on SimProfileManager.
+13. Application receives synchronous status which indicates if the update nickname request was sent
     successfully.
-12. The response of update nickname request can be received by application in the application
+14. The response of update nickname request can be received by application in the application
     supplied callback.
-13. Application can send memory reset request on SimProfileManager to delete test or operational
+15. Application can send memory reset request on SimProfileManager to delete test or operational
     profiles or set SMDP address to default.
-14. Application receives synchronous status which indicates if the memory reset request was sent
+16. Application receives synchronous status which indicates if the memory reset request was sent
     successfully.
-15. The response of memory reset request can be received by application in the application-supplied
+17. The response of memory reset request can be received by application in the application-supplied
     callback. Once deletion of profiles happens notification is sent to SMDP+/SMDS to synchronise
     profile state on the server.
-16. Application can send set address name on SimProfileManager in order to set SMDP+ address.
-17. Application receives synchronous status which indicates if the set address request was sent
+18. Application can send set address name on SimProfileManager in order to set SMDP+ address.
+19. Application receives synchronous status which indicates if the set address request was sent
     successfully.
-18. The response of set address request can be received by application in the application-supplied
+20. The response of set address request can be received by application in the application-supplied
     callback.
-19. Application can send get address name on SimProfileManager in order to get SMDP+/SMDS address.
-20. Application receives synchronous status which indicates if the get address request was sent
+21. Application can send get address name on SimProfileManager in order to get SMDP+/SMDS address.
+22. Application receives synchronous status which indicates if the get address request was sent
     successfully.
-21. The response of get address request can be received by application in the application-supplied
+23. The response of get address request can be received by application in the application-supplied
     callback along with SMDP+/SMDS address.
 
 

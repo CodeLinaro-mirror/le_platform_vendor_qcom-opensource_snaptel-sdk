@@ -109,6 +109,7 @@ void RemoteSimProfile::init() {
     //  1. Get the PhoneFactory and SIM profile manager instance.
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
     simProfileManager_ = phoneFactory.getSimProfileManager();
+    cardManager_ = phoneFactory.getCardManager();
 
     if (simProfileManager_) {
         // 2. Check if SIM profile subsystem is ready
@@ -122,17 +123,50 @@ void RemoteSimProfile::init() {
             subSystemStatus = f.get();
         }
 
-        //  3. Exit the application, if SDK is unable to initialize SIM profile manager subsystem
-        if(subSystemStatus) {
-            // 4. Instantiate and register RspListener
-            rspListener_ = std::make_shared<RspListener>();
-            telux::common::Status status = simProfileManager_->registerListener(rspListener_);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "ERROR - Failed to register listener" << std::endl;
+        if(!subSystemStatus) {
+            std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
+            exit(0);
+        }
+
+        if (cardManager_) {
+            // 3. Check if Card subsystem is ready
+            subSystemStatus = cardManager_->isSubsystemReady();
+
+            // 3.1  If Card subsystem is not ready, wait for it to be ready
+            if(!subSystemStatus) {
+                std::cout << "Card subsystem is not ready, Please wait" << std::endl;
+                std::future<bool> f = cardManager_->onSubsystemReady();
+                // If we want to wait unconditionally for Card subsystem to be ready
+                subSystemStatus = f.get();
+            }
+
+            //  4. Exit the application, if SDK is unable to initialize SIM profile manager
+            //     and Card subsystem
+            if (subSystemStatus) {
+                std::vector<int> slotIds;
+                telux::common::Status status = cardManager_->getSlotIds(slotIds);
+                if (status == telux::common::Status::SUCCESS) {
+                    for (unsigned int index = 1; index <= slotIds.size(); index++) {
+                        auto card = cardManager_->getCard(index, &status);
+                        if (card != nullptr) {
+                            cards_.emplace_back(card);
+                        }
+                    }
+                }
+
+                // 5. Instantiate and register RspListener
+                rspListener_ = std::make_shared<RspListener>();
+                status = simProfileManager_->registerListener(rspListener_);
+                if(status != telux::common::Status::SUCCESS) {
+                    std::cout << "ERROR - Failed to register listener" << std::endl;
+                    exit(0);
+                }
+            } else {
+                std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
                 exit(0);
             }
         } else {
-            std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
+            std::cout << "ERROR - CardManager is null" << std::endl;
             exit(0);
         }
     } else {
@@ -145,14 +179,19 @@ void RemoteSimProfile::requestEid() {
     auto respCb = [&](std::string eid, telux::common::ErrorCode errorCode)
        { onEidResponse(eid, errorCode); };
 
-    if(simProfileManager_) {
-        // 5. Request EID of the eUICC
-        telux::common::Status status = simProfileManager_->requestEid(slotId_, respCb);
-        if (status == telux::common::Status::SUCCESS) {
-            std::cout << "Request EID sent successfully" << std::endl;
-        } else {
-            std::cout << "Request EID failed, status:" << static_cast<int>(status) << std::endl;
-            Utils::printStatus(status);
+    if(cardManager_) {
+        // 6. Request EID of the eUICC
+        auto card = cards_[slotId_ - 1];
+        if (card) {
+            telux::common::Status status = card->requestEid(respCb);
+            if (status == telux::common::Status::SUCCESS) {
+                std::cout << "Request EID sent successfully" << std::endl;
+            } else {
+                std::cout << "Request EID failed, status:" << static_cast<int>(status) << std::endl;
+                Utils::printStatus(status);
+            }
+        }  else {
+            std::cout << "ERROR: Unable to get card instance";
         }
     } else {
         std::cout << "ERROR - SimProfileManger is null" << std::endl;
@@ -164,7 +203,7 @@ void RemoteSimProfile::addProfile(const std::string &actCode, const std::string 
 
     auto respCb = [&](telux::common::ErrorCode errorCode) { onResponseCallback(errorCode); };
     if(simProfileManager_) {
-        // 6. Add profile on the eUICC
+        // 7. Add profile on the eUICC
         Status status = simProfileManager_->addProfile(slotId_, actCode, confCode,
             isUserConsentRequired, respCb);
         if (status == Status::SUCCESS) {
@@ -183,7 +222,7 @@ void RemoteSimProfile::deleteProfile(int profileId) {
     auto respCb = [&](telux::common::ErrorCode errorCode) { onResponseCallback(errorCode); };
 
     if(simProfileManager_) {
-        // 7. Delete profile on the eUICC
+        // 8. Delete profile on the eUICC
         Status status = simProfileManager_->deleteProfile(slotId_, profileId, respCb);
         if (status == Status::SUCCESS) {
             std::cout << "Delete profile request sent successfully" << std::endl;
@@ -202,7 +241,7 @@ void RemoteSimProfile::requestProfileList() {
         telux::common::ErrorCode errorCode) { onProfileListResponse(profiles, errorCode); };
 
     if(simProfileManager_) {
-        // 8. Request profile list on the eUICC
+        // 9. Request profile list on the eUICC
         telux::common::Status status = simProfileManager_->requestProfileList(slotId_, respCb);
         if (status == telux::common::Status::SUCCESS) {
             std::cout << "Request profile list sent successfully" << std::endl;
@@ -218,7 +257,7 @@ void RemoteSimProfile::requestProfileList() {
 void RemoteSimProfile::setProfile(int profileId, bool enableProfile) {
     auto respCb = [&](telux::common::ErrorCode errorCode) { onResponseCallback(errorCode); };
     if(simProfileManager_) {
-        // 9. Enable/disable profile on the eUICC
+        // 10. Enable/disable profile on the eUICC
         Status status = simProfileManager_->setProfile(slotId_, profileId, enableProfile, respCb);
         if (status == Status::SUCCESS) {
             std::cout << "Enable/Disable profile request sent successfully" << std::endl;
@@ -236,7 +275,7 @@ void RemoteSimProfile::updateNickName(int profileId, const std::string &nickname
     auto respCb = [&](telux::common::ErrorCode errorCode) { onResponseCallback(errorCode); };
 
     if(simProfileManager_) {
-        // 10. Update Nickname of the profile
+        // 11. Update Nickname of the profile
         Status status = simProfileManager_->updateNickName(slotId_, profileId, nickname, respCb);
         if (status == Status::SUCCESS) {
             std::cout << "updateNickName request sent successfully" << std::endl;
@@ -253,7 +292,7 @@ void RemoteSimProfile::updateNickName(int profileId, const std::string &nickname
 void RemoteSimProfile::setServerAddress(std::string serverAddress) {
     auto respCb = [&](telux::common::ErrorCode errorCode) { onResponseCallback(errorCode); };
     if(simProfileManager_) {
-        // 11. Set SMDP+ server address on the eUICC
+        // 12. Set SMDP+ server address on the eUICC
         Status status = simProfileManager_->setServerAddress(slotId_, serverAddress,
             respCb);
         if (status == Status::SUCCESS) {
@@ -274,7 +313,7 @@ void RemoteSimProfile::getServerAddress() {
         std::string smdsAddress, telux::common::ErrorCode error) {
             serverAddressResponse(smdpAddress, smdsAddress, error); };
     if(simProfileManager_) {
-        // 12. Get SMDP+ and SMDS server address from the eUICC
+        // 13. Get SMDP+ and SMDS server address from the eUICC
         Status status = simProfileManager_->requestServerAddress(slotId_, respCb);
         if (status == Status::SUCCESS) {
             std::cout << "getServerAddress request sent successfully"
@@ -294,7 +333,7 @@ void RemoteSimProfile::memoryReset(int resetOption) {
     if(simProfileManager_) {
         telux::tel::ResetOptionMask resetmask;
         resetmask.set(resetOption);
-        // 13. Memory reset on the eUICC
+        // 14. Memory reset on the eUICC
         Status status = simProfileManager_->memoryReset(slotId_, resetmask,
             respCb);
         if (status == Status::SUCCESS) {

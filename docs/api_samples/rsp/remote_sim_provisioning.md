@@ -8,12 +8,12 @@ SIM profile management operations on the eUICC such as add profile, enable/disab
 profile, delete profile, query profile list, configure server address and perform
 memory reset.
 
-### 1. Get phone factory and SIM profile manager instance ###
+### 1. Get phone factory, SIM profile manager and Card manager instance ###
 
    ~~~~~~{.cpp}
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto simProfileManager
-      = phoneFactory.getSimProfileManager();
+   auto simProfileManager = phoneFactory.getSimProfileManager();
+   auto cardManager = phoneFactory.getCardManager();
    ~~~~~~
 
 ### 2. Check if SIM profile subsystem is ready###
@@ -33,25 +33,42 @@ memory reset.
    }
    ~~~~~~
 
-### 3. Exit the application, if SDK is unable to initialize SIM profile manager subsystem ###
+### 3. Check if card subsystem is ready###
+
+   ~~~~~~{.cpp}
+   bool subSystemStatus = cardManager->isSubsystemReady();
+   ~~~~~~
+
+### 3.1 If card manager subsystem is not ready, wait for it to be ready ###
+
+   ~~~~~~{.cpp}
+   if(!subSystemsStatus) {
+      std::cout << "Card manager subsystem is not ready" << std::endl;
+      std::cout << "wait unconditionally for it to be ready " << std::endl;
+      std::future<bool> f = cardManager->onSubsystemReady();
+      subSystemsStatus = f.get();
+   }
+   ~~~~~~
+
+### 4. Exit the application, if SDK is unable to initialize SIM profile manager and card manager subsystem ###
 
    ~~~~~~{.cpp}
    if(subSystemsStatus) {
-      std::cout << " *** SIM profile manager subsystem ready *** " << std::endl;
+      std::cout << " *** SIM profile manager subsystem and Card manager ready *** " << std::endl;
    } else {
-      std::cout << " *** ERROR - Unable to initialize SIM profile manager subsystem"
+      std::cout << " *** ERROR - Unable to initialize SIM profile manager/Card manager subsystem"
                 << std::endl;
    }
    ~~~~~~
 
-### 4. Instantiate and register RspListener ###
+### 5. Instantiate and register RspListener ###
 
    ~~~~~~{.cpp}
    std::shared_ptr<ISimProfileListener> listener = std::make_shared<RspListener>();
    simProfileManager.registerListener(listener);
    ~~~~~~
 
-###### 4.1 Implementation of ISimProfileListener interface for receiving Remote SIM provisioning notifications ###
+###### 5.1 Implementation of ISimProfileListener interface for receiving Remote SIM provisioning notifications ###
 
    ~~~~~~{.cpp}
 
@@ -73,7 +90,7 @@ memory reset.
        }
    ~~~~~~
 
-### 5. Request EID of the eUICC ###
+### 6. Request EID of the eUICC ###
 
    ~~~~~~{.cpp}
 
@@ -89,10 +106,11 @@ memory reset.
         std::cout << "requestEid succeeded." << std::endl;
     }
     // Request EID of the eUICC.
-    status = simProfileManager->requestEid(SlotId::DEFAULT_SLOT_ID, respCb);
+    auto card = cardManager->getCard(SlotId::DEFAULT_SLOT_ID, &status);
+    status = card->requestEid(respCb);
    ~~~~~~
 
-### 6. Add profile on the eUICC ###
+### 7. Add profile on the eUICC ###
 
    ~~~~~~{.cpp}
 
@@ -111,7 +129,7 @@ memory reset.
         confirmationCode, isUserConsentSupported, respCb);
    ~~~~~~
 
-###### 6.1 If user consent is required for downloading the profile, the registered listener of client will be notified by invoking onUserDisplayInfo API.
+###### 7.1 If user consent is required for downloading the profile, the registered listener of client will be notified by invoking onUserDisplayInfo API.
 
    Client is expected to invoke ISimProfileManager::provideUserConsent API in order to proceed
    further for downloading the profile.
@@ -123,7 +141,7 @@ memory reset.
         // installation of profile by calling ISimProfileManager::provideUserConsent
     }
    ~~~~~~
-###### 6.2 If confirmation code is required for downloading the profile, the registered listener of client will be notified by invoking onConfirmationCodeRequired API.
+###### 7.2 If confirmation code is required for downloading the profile, the registered listener of client will be notified by invoking onConfirmationCodeRequired API.
 
    Client is expected to invoke ISimProfileManager::provideConfirmationCode API in order to proceed
    further for downloading the profile.
@@ -135,7 +153,7 @@ memory reset.
     }
    ~~~~~~
 
-###### 6.3 When the download of profile completes or fails, the client is notified about download status.
+###### 7.3 When the download of profile completes or fails, the client is notified about download status.
 
    ~~~~~~{.cpp}
     void onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
@@ -145,7 +163,7 @@ memory reset.
     }
    ~~~~~~
 
-### 7. Delete profile on the eUICC ###
+### 8. Delete profile on the eUICC ###
 
    ~~~~~~{.cpp}
 
@@ -164,7 +182,7 @@ memory reset.
         respCb);
    ~~~~~~
 
-### 8. Request profile list on the eUICC ###
+### 9. Request profile list on the eUICC ###
 
    ~~~~~~{.cpp}
 
@@ -184,7 +202,7 @@ memory reset.
     status = simProfileManager->requestProfileList(SlotId::DEFAULT_SLOT_ID, respCb);
    ~~~~~~
 
-### 9. Enable/disable profile on the eUICC ###
+### 10. Enable/disable profile on the eUICC ###
 
    ~~~~~~{.cpp}
 
@@ -203,7 +221,7 @@ memory reset.
         respCb);
    ~~~~~~
 
-### 10. Update Nickname of the profile ###
+### 11. Update Nickname of the profile ###
 
    ~~~~~~{.cpp}
 
@@ -223,7 +241,7 @@ memory reset.
         respCb);
    ~~~~~~
 
-### 11. Set SMDP+ server address on the eUICC ###
+### 12. Set SMDP+ server address on the eUICC ###
 
    ~~~~~~{.cpp}
 
@@ -243,7 +261,7 @@ memory reset.
         respCb);
    ~~~~~~
 
-### 12. Get SMDP+ and SMDS server address from the eUICC ###
+### 13. Get SMDP+ and SMDS server address from the eUICC ###
 
    ~~~~~~{.cpp}
 
@@ -266,7 +284,7 @@ memory reset.
         respCb);
    ~~~~~~
 
-### 13. Memory reset on the eUICC ###
+### 14. Memory reset on the eUICC ###
 
    ~~~~~~{.cpp}
 

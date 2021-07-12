@@ -1,0 +1,15 @@
+file(GLOB LIBQAPPLICATION_SOURCES ./*/*.cpp)
+
+if(NOT DEFINED ENV{SECURITY_LIB_PATH})
+    list(REMOVE_ITEM LIBQAPPLICATION_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/./Application/SecurityImpl.cpp)
+endif()
+
+#add_library(qapplication SHARED ${LIBQAPPLICATION_SOURCES})
+add_library(qapplication ${LIBQAPPLICATION_SOURCES})
+
+target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc v2x_veh v2xcodec)
+
+install(TARGETS qapplication
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

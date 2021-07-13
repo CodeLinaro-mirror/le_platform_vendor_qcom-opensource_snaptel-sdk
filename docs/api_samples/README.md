@@ -61,3 +61,4 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to get dedicated radio bearer status](data/get_drb_status_and_indication.md)
   * [How to get data service status](data/get_service_status_and_indication.md)
   * [How to get data roaming status](data/get_roaming_status_and_indication.md)
+  * [How to receive EFS restore indications](platform/efs_restore_indications.md)

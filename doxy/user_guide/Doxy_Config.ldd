@@ -278,6 +278,7 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/audio/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/thermal/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/sensor/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/platform/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/power/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/remote_sim/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/config/ \

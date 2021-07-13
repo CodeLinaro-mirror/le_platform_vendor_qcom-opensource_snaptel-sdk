@@ -27,6 +27,7 @@ add_subdirectory( tests/thermal_shutdown_test_app )
 add_subdirectory( reference/chrony-sock)
 add_subdirectory( tests/modem_configurator )
 add_subdirectory( tests/data_qos_test_app )
+add_subdirectory( tests/filesystem_test_app )
 
 pkg_check_modules(PWR_MGR_QMI_LIB powermanagerqmi)
 
@@ -68,6 +69,8 @@ if(BUILD_ALL_SAMPLES)
     add_subdirectory( samples/data/data_roaming_status_app )
     add_subdirectory( samples/sensor/sensor_app )
     add_subdirectory( samples/sensor/sensor_feature_app )
+    add_subdirectory( samples/platform/filesystem_app )
+
     if(NOT MACHINE_HAS_CV2X_ONLY)
         add_subdirectory( samples/audio/voice_session_app )
         add_subdirectory( samples/audio/playback_app )

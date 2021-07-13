@@ -163,5 +163,12 @@ Jun 2017   SVM      Created to support V2X API
       @defgroup telematics_sensor_feature_control Sensor feature control
       This section contains APIs related to contrlling the features the sensor sub-system offers.
     @}
+
+    @defgroup telematics_platform platform
+    This section contains APIs related to configure platform functionalities and acquire information from the sub-components.
+    @{
+      @defgroup telematics_platform_filesystem Filesystem
+      This section contains APIs, data structures and components to configure and acquire information from the filesystem manager.
+    @}
   @}
 */

@@ -351,6 +351,15 @@ enum class ErrorCode {
 };
 
 /**
+ * @brief Service status.
+ */
+enum class ServiceStatus {
+    SERVICE_UNAVAILABLE,
+    SERVICE_AVAILABLE,
+    SERVICE_FAILED,
+};
+
+/**
  * Base command callback class is responsible for single shot asynchronous callback.
  * This callback will be invoked only once when the operation succeeds or fails.
  */
@@ -393,12 +402,12 @@ public:
 using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>;
 
 /**
- * @brief Service status.
+ * This API is invoked when the initialization of an object completes.
+ *
+ * @param[in] status - @ref Service status
+ *
  */
-enum class ServiceStatus {
-    SERVICE_UNAVAILABLE,
-    SERVICE_AVAILABLE,
-};
+using InitResponseCb = std::function<void(telux::common::ServiceStatus status)>;
 
 class IServiceStatusListener {
 public:

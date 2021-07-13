@@ -51,4 +51,4 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to play compressed format audio on voice paths](audio/compressed_audio_format_playback_on_voice_paths.md)
   * [How to enable/disable socks proxy](data/enable_disable_socks.md)
   * [How to use Location Configurator APIs](loc/location_services_configurator.md)
-
+  * [How to receive EFS restore indications](platform/efs_restore_indications.md)

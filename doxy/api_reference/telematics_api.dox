@@ -80,5 +80,11 @@ Jun 2017   SVM      Created to support V2X API
     This section contains APIs related to Remote SIM operations.
     @defgroup telematics_config Modem Config
     This section contains APIs related to Modem Config operations.
+    @defgroup telematics_platform platform
+    This section contains APIs related to configure platform functionalities and acquire information from the sub-components.
+    @{
+      @defgroup telematics_platform_filesystem Filesystem
+      This section contains APIs, data structures and components to configure and acquire information from the filesystem manager.
+    @}
   @}
 */

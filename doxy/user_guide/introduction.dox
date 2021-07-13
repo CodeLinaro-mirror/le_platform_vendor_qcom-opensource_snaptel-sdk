@@ -50,6 +50,7 @@ when       who     what, where, why
 01/15/20   FS      Added Socks Proxy Feature Support in Telematics SDK
 02/14/20   SD      Added location configurator support to Telematics SDK
 03/12/20   SD      Added robust location support to location configurator in Telematics SDK
+06/07/21   BS      Added documentation for platform sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

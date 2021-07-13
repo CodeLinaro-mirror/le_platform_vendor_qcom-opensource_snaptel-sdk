@@ -96,6 +96,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
    Data Network Management sub-system consists of APIs to setup VLAN, static NAT, Firewall, Socks, etc.
 
+<b>Platform services</b>
+
+   The platform sub-system provides APIs to configure and control platform functionalities. This sub-system provides notifications about certain system related events, for instance filesystem events such as EFS restore events.
+
 <b>Debug Logger</b>
 
    Logger consists of API that can be utilized to log messages from SDK Applications.
@@ -433,6 +437,10 @@ Modem Config APIs in the Telematics SDK provides modem config related functional
    - Delete a modem config file from modem's storage.
    - Ability to get notified whenever a SW config file is activated.
 
+@subsection platform Platform
+The platform sub-system provides APIs to
+   - Register and listen to filesystem events such as EFS restore notifications
+
 @subsection debug_logger Debug Logger
 Logging APIs in the Telematics SDK provides logging related functionalities such as
    - Runtime configurable logging to console, diag and file.
@@ -462,6 +470,7 @@ Logging APIs in the Telematics SDK provides logging related functionalities such
 @tr @td power @tdend @td telux_allow_power() @tdend @td domain context @tdend @tdlast telux_allow_power(app_t) @tdlastend @trend
 @tr @td config @tdend @td telux_allow_modemconfig() @tdend @td domain context @tdend @tdlast telux_allow_modemconfig(app_t) @tdlastend @trend
 @tr @td cv2x @tdend @td telux_allow_v2x() @tdend @td domain context @tdend @tdlast telux_allow_v2x(app_t) @tdlastend @trend
+@tr @td platform @tdend @td telux_allow_platform() @tdend @td domain context @tdend @tdlast telux_allow_platform(app_t) @tdlastend @trend
 @tableend
 
 The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform all SDK data operations.

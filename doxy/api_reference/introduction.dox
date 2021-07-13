@@ -57,6 +57,7 @@ when       who     what, where, why
 11/18/20   ZH      Added cv2x SE-linux interface details in Telematics SDK
 11/20/20   SD      Added year of hardware and configure engine state support in Telematics SDK
 01/12/21   SD      Added terrestrial positioning support in Telematics SDK
+06/07/21   BS      Added documentation for platform sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

@@ -413,7 +413,8 @@ void MyVoiceServiceStateCallback::voiceServiceStateResponse(
     if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "requestVoiceServiceState successful, Service State: "
                  << MyPhoneHelper::voiceServiceStateToString(serviceInfo->getVoiceServiceState())
-                 << " , Radio Technology: " << MyPhoneHelper::radioTechToString(serviceInfo->getRadioTechnology())
+                 << " , Radio Technology: "
+                 << MyPhoneHelper::radioTechToString(serviceInfo->getRadioTechnology())
                  << std::endl;
     } else {
         PRINT_CB << "requestVoiceServiceState is failed, errorCode: " << static_cast<int>(error)
@@ -654,10 +655,10 @@ void MyPhoneHelper::printCellInfoDetails(
         if (cellinfo->getType() == telux::tel::CellType::GSM) {
             auto gsmCellInfo = std::static_pointer_cast<telux::tel::GsmCellInfo>(cellinfo);
             PRINT_NOTIFICATION << "GSM isRegistered: " << gsmCellInfo->isRegistered() << std::endl;
-            PRINT_NOTIFICATION << "GSM mcc: " << gsmCellInfo->getCellIdentity().getMcc()
-                               << std::endl;
-            PRINT_NOTIFICATION << "GSM mnc: " << gsmCellInfo->getCellIdentity().getMnc()
-                               << std::endl;
+            PRINT_NOTIFICATION << "GSM mcc: "
+                << gsmCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
+            PRINT_NOTIFICATION << "GSM mnc: "
+                << gsmCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
             PRINT_NOTIFICATION << "GSM lac: " << gsmCellInfo->getCellIdentity().getLac()
                                << std::endl;
             PRINT_NOTIFICATION << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity()
@@ -753,10 +754,10 @@ void MyPhoneHelper::printCellInfoDetails(
         } else if (cellinfo->getType() == telux::tel::CellType::LTE) {
             auto lteCellInfo = std::static_pointer_cast<telux::tel::LteCellInfo>(cellinfo);
             PRINT_NOTIFICATION << "LTE isRegistered: " << lteCellInfo->isRegistered() << std::endl;
-            PRINT_NOTIFICATION << "LTE mcc: " << lteCellInfo->getCellIdentity().getMcc()
-                               << std::endl;
-            PRINT_NOTIFICATION << "LTE mnc: " << lteCellInfo->getCellIdentity().getMnc()
-                               << std::endl;
+            PRINT_NOTIFICATION << "LTE mcc: "
+                << lteCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
+            PRINT_NOTIFICATION << "LTE mnc: "
+                << lteCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
             PRINT_NOTIFICATION << "LTE cid: " << lteCellInfo->getCellIdentity().getIdentity()
                                << std::endl;
             PRINT_NOTIFICATION << "LTE pid: " << lteCellInfo->getCellIdentity().getPhysicalCellId()
@@ -833,10 +834,10 @@ void MyPhoneHelper::printCellInfoDetails(
             auto wcdmaCellInfo = std::static_pointer_cast<telux::tel::WcdmaCellInfo>(cellinfo);
             PRINT_NOTIFICATION << "WCDMA isRegistered: " << wcdmaCellInfo->isRegistered()
                                << std::endl;
-            PRINT_NOTIFICATION << "WCDMA mcc: " << wcdmaCellInfo->getCellIdentity().getMcc()
-                               << std::endl;
-            PRINT_NOTIFICATION << "WCDMA mnc: " << wcdmaCellInfo->getCellIdentity().getMnc()
-                               << std::endl;
+            PRINT_NOTIFICATION << "WCDMA mcc: "
+                << wcdmaCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
+            PRINT_NOTIFICATION << "WCDMA mnc: "
+                << wcdmaCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
             PRINT_NOTIFICATION << "WCDMA lac: " << wcdmaCellInfo->getCellIdentity().getLac()
                                << std::endl;
             PRINT_NOTIFICATION << "WCDMA cid: " << wcdmaCellInfo->getCellIdentity().getIdentity()
@@ -878,10 +879,10 @@ void MyPhoneHelper::printCellInfoDetails(
             auto tdsCdmaCellInfo = std::static_pointer_cast<telux::tel::TdscdmaCellInfo>(cellinfo);
             PRINT_NOTIFICATION << "TDSCDMA isRegistered: " << tdsCdmaCellInfo->isRegistered()
                                << std::endl;
-            PRINT_NOTIFICATION << "TDSCDMA MCC: " << tdsCdmaCellInfo->getCellIdentity().getMcc()
-                               << std::endl;
-            PRINT_NOTIFICATION << "TDSCDMA MNC: " << tdsCdmaCellInfo->getCellIdentity().getMnc()
-                               << std::endl;
+            PRINT_NOTIFICATION << "TDSCDMA MCC: "
+                << tdsCdmaCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
+            PRINT_NOTIFICATION << "TDSCDMA MNC: "
+                << tdsCdmaCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
             PRINT_NOTIFICATION << "TDSCDMA LAC : " << tdsCdmaCellInfo->getCellIdentity().getLac()
                                << std::endl;
             PRINT_NOTIFICATION

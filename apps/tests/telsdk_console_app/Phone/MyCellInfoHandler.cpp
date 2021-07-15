@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include "iostream"
 #include "MyCellInfoHandler.hpp"
 #include "Utils.hpp"
@@ -60,8 +96,10 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "GSM Cellinfo " << std::endl;
             auto gsmCellInfo = std::static_pointer_cast<telux::tel::GsmCellInfo>(cellinfo);
             PRINT_CB << "GSM isRegistered: " << gsmCellInfo->isRegistered() << std::endl;
-            PRINT_CB << "GSM mcc: " << gsmCellInfo->getCellIdentity().getMcc() << std::endl;
-            PRINT_CB << "GSM mnc: " << gsmCellInfo->getCellIdentity().getMnc() << std::endl;
+            PRINT_CB << "GSM mcc: " << gsmCellInfo->getCellIdentity().getMobileCountryCode()
+                << std::endl;
+            PRINT_CB << "GSM mnc: " << gsmCellInfo->getCellIdentity().getMobileNetworkCode()
+                << std::endl;
             PRINT_CB << "GSM lac: " << gsmCellInfo->getCellIdentity().getLac() << std::endl;
             PRINT_CB << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity() << std::endl;
             PRINT_CB << "GSM arfcn: " << gsmCellInfo->getCellIdentity().getArfcn() << std::endl;
@@ -150,8 +188,10 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "LTE Cellinfo  " << std::endl;
             auto lteCellInfo = std::static_pointer_cast<telux::tel::LteCellInfo>(cellinfo);
             PRINT_CB << "LTE isRegistered: " << lteCellInfo->isRegistered() << std::endl;
-            PRINT_CB << "LTE mcc: " << lteCellInfo->getCellIdentity().getMcc() << std::endl;
-            PRINT_CB << "LTE mnc: " << lteCellInfo->getCellIdentity().getMnc() << std::endl;
+            PRINT_CB << "LTE mcc: " << lteCellInfo->getCellIdentity().getMobileCountryCode()
+                << std::endl;
+            PRINT_CB << "LTE mnc: " << lteCellInfo->getCellIdentity().getMobileNetworkCode()
+                << std::endl;
             PRINT_CB << "LTE cid: " << lteCellInfo->getCellIdentity().getIdentity() << std::endl;
             PRINT_CB << "LTE pid: " << lteCellInfo->getCellIdentity().getPhysicalCellId()
                      << std::endl;
@@ -226,8 +266,10 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "WCDMA Cellinfo " << std::endl;
             auto wcdmaCellInfo = std::static_pointer_cast<telux::tel::WcdmaCellInfo>(cellinfo);
             PRINT_CB << "WCDMA isRegistered: " << wcdmaCellInfo->isRegistered() << std::endl;
-            PRINT_CB << "WCDMA mcc: " << wcdmaCellInfo->getCellIdentity().getMcc() << std::endl;
-            PRINT_CB << "WCDMA mnc: " << wcdmaCellInfo->getCellIdentity().getMnc() << std::endl;
+            PRINT_CB << "WCDMA mcc: " << wcdmaCellInfo->getCellIdentity().getMobileCountryCode()
+                << std::endl;
+            PRINT_CB << "WCDMA mnc: " << wcdmaCellInfo->getCellIdentity().getMobileNetworkCode()
+                << std::endl;
             PRINT_CB << "WCDMA lac: " << wcdmaCellInfo->getCellIdentity().getLac() << std::endl;
             PRINT_CB << "WCDMA cid: " << wcdmaCellInfo->getCellIdentity().getIdentity()
                      << std::endl;
@@ -266,8 +308,10 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "TDSCDMA Cellinfo " << std::endl;
             auto tdsCdmaCellInfo = std::static_pointer_cast<telux::tel::TdscdmaCellInfo>(cellinfo);
             PRINT_CB << "TDSCDMA isRegistered: " << tdsCdmaCellInfo->isRegistered() << std::endl;
-            PRINT_CB << "TDSCDMA MCC: " << tdsCdmaCellInfo->getCellIdentity().getMcc() << std::endl;
-            PRINT_CB << "TDSCDMA MNC: " << tdsCdmaCellInfo->getCellIdentity().getMnc() << std::endl;
+            PRINT_CB << "TDSCDMA MCC: " << tdsCdmaCellInfo->getCellIdentity().getMobileCountryCode()
+                << std::endl;
+            PRINT_CB << "TDSCDMA MNC: " << tdsCdmaCellInfo->getCellIdentity().getMobileNetworkCode()
+                << std::endl;
             PRINT_CB << "TDSCDMA LAC : " << tdsCdmaCellInfo->getCellIdentity().getLac()
                      << std::endl;
             PRINT_CB << "TDSCDMA CID: " << tdsCdmaCellInfo->getCellIdentity().getIdentity()

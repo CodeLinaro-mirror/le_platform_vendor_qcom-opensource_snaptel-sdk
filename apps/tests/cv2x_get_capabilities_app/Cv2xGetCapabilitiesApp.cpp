@@ -44,7 +44,6 @@
 #include <limits>
 #include <iomanip>
 #include <cstdint>
-#include <atomic>
 #include <map>
 #include <vector>
 
@@ -57,6 +56,7 @@
 using std::cout;
 using std::cin;
 using std::cerr;
+using std::atomic;
 using std::endl;
 using std::promise;
 using std::string;
@@ -200,6 +200,18 @@ static void requestCapabilitiesCallback(const Cv2xRadioCapabilities & capabiliti
 }
 
 int main(int argc, char *argv[]) {
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    sigaddset(&sigset, SIGHUP);
+    SignalHandlerCb cb = [](int sig) {
+        // We can call exit() here if no cleanups needed,
+        // or maybe just set a flag, and let the main thread to decide
+        // when to exit.
+        exit(sig);
+    };
+    SignalHandler::registerSignalHandler(sigset, cb);
 
     cout << "Running C-V2X testing app" << endl;
 

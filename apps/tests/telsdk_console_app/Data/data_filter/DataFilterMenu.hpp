@@ -79,6 +79,7 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
 
     IpProtocol getTypeOfFilter(DataConfigParser instance,
             std::map<std::string, std::string> filter);
+    int getFilterSlotId(DataConfigParser instance, std::map<std::string, std::string> filter);
     void addIPParameters(std::shared_ptr<telux::data::IIpFilter> &dataFilter,
         DataConfigParser instance, std::map<std::string, std::string> filterMap);
     void commandCallback(ErrorCode errorCode);

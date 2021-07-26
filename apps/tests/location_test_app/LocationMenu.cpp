@@ -342,7 +342,8 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
           GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
-                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement) \n\n";
+                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
+                       "5 - NHzMeasurement) \n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -354,7 +355,7 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 4) {
+              if(option >= 0 && option <= 5) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -440,7 +441,8 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
-                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement) \n\n";
+                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
+                       "5 - NHzMeasurement) \n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -452,7 +454,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 4) {
+              if(option >= 0 && option <= 5) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {

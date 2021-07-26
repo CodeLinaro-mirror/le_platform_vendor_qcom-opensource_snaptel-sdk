@@ -53,6 +53,7 @@ namespace loc {
 
 const float UNKNOWN_CARRIER_FREQ = -1;
 const int UNKNOWN_SIGNAL_MASK = 0;
+const double UNKNOWN_BASEBAND_CARRIER_NOISE = 0.0;
 const uint64_t UNKNOWN_TIMESTAMP = 0;
 const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
                                                Units: milli-seconds. */
@@ -1208,6 +1209,8 @@ struct GnssMeasurements {
     GnssMeasurementsClock clock;
     /** GNSS measurements data.*/
     std::vector<GnssMeasurementsData> measurements;
+    /** Indicates the frequency for GNSS measurements generated at NHz or not.*/
+    bool isNHz;
 };
 
 /** Specify leap second change event info.*/
@@ -1460,8 +1463,12 @@ enum GnssReportType {
     NMEA              = (1 << 2),
     /** Data reports */
     DATA              = (1 << 3),
-    /** 1Hz measurement reports */
+    /** Low rate measurement reports. Currently the rate is defined to be 1 Hz. */
     MEASUREMENT       = (1 << 4),
+    /** High rate measurement reports. Currently the rate is defined to be 10 Hz.
+     *  Client cannot specify rates. The data in high rate would be different that from low rate.
+     *  Also there might be difference in accuracy of fields for the both the rates. */
+    HIGH_RATE_MEASUREMENT    = (1 << 5)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */
@@ -2097,10 +2104,10 @@ public:
   virtual float getAzimuth() = 0;
 
 /**
- * Retrieves satellite vehicle signal-to-noise ratio.
+ * Retrieves signal-to-noise ratio of the signal measured at antenna of the satellite vehicle.
  *    - Units: dB-Hz
  *
- * @returns SNR if available else returns NaN.
+ * @returns SNR if available else returns 0.0 value.
  *
  */
   virtual float getSnr() = 0;
@@ -2128,6 +2135,15 @@ public:
   * @returns GLONASS frequency channel number.
   */
    virtual uint16_t getGlonassFcn() = 0;
+
+/**
+ * Carrier-to-noise ratio of the signal measured at baseband.
+ *    - Units: dB-Hz
+ *
+ * @returns carrier-to-noise ratio at baseband else returns UNKNOWN_BASEBAND_CARRIER_NOISE ratio
+ * when not supported.
+ */
+  virtual double getBasebandCnr() = 0;
 };
 
 /**

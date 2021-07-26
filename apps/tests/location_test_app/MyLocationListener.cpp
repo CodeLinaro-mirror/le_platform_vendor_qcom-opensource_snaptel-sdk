@@ -1222,6 +1222,8 @@ void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVI
       std::cout << "Carrier frequency: " << svInfo->getCarrierFrequency() << std::endl;
       printGnssSignalType(svInfo->getSignalType());
       std::cout << "Glonass FCN: " << svInfo->getGlonassFcn() << std::endl;
+      std::cout << "Baseband Carrier To Noise Ratio: " << svInfo->getBasebandCnr()
+                << std::endl;
    }
    std::cout << "*************************************************************" << std::endl;
 }
@@ -1332,6 +1334,8 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
 
      std::cout << "\n********************** " << std::endl;
    }
+   std::cout << "NHz measurements indicator: " << std::boolalpha << measurementInfo.isNHz
+             << std::endl;
    std::cout << "*************************************************************" << std::endl;
 }
 

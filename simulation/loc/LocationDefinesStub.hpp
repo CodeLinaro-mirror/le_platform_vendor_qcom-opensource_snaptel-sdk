@@ -766,6 +766,7 @@ class SVInfo : public ISVInfo {
     float carrierFrequencyHz_ = UNKNOWN_CARRIER_FREQ;
     GnssSignal signalType_ = UNKNOWN_SIGNAL_MASK;
     uint16_t glonassFcn_ = 0;
+    double basebandCnr_ = 0.0;
 
 public:
 /**
@@ -878,12 +879,22 @@ public:
  */
     GnssSignal getSignalType() {return signalType_;}
 
- /**
-  * Retrieves GLONASS frequency channel number in the range [1, 14].
-  *
-  * @returns GLONASS frequency channel number.
-  */
+/**
+ * Retrieves GLONASS frequency channel number in the range [1, 14].
+ *
+ * @returns GLONASS frequency channel number.
+ */
     uint16_t getGlonassFcn() {return glonassFcn_;}
+
+/**
+ * Carrier-to-noise ratio of the signal measured at baseband.
+ *    - Units: dB-Hz
+ *
+ * @returns carrier-to-noise ratio at baseband else returns UNKNOWN_BASEBAND_CARRIER_NOISE ratio
+ * when not supported.
+ */
+
+    double getBasebandCnr() {return basebandCnr_;}
 
 
     void setConstellation(GnssConstellationType val) {constellation_ = val;}
@@ -899,6 +910,7 @@ public:
     void setCarrierFrequency(float val) {carrierFrequencyHz_ = val;}
     void setSignalType(GnssSignalType val) {signalType_ |= val;}
     void setGlonassFcn(uint16_t val) {glonassFcn_ = val;}
+    void setBasebandCnr(double cnr) {basebandCnr_ = cnr;}
 };
 
 class GnssSVInfo : public IGnssSVInfo{

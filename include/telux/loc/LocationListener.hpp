@@ -134,6 +134,10 @@ public:
  * This function is called when device receives signal measurement information
  * such as satellite vehicle pseudo range, satellite vehicle clock time, carrier phase
  * measurement etc.
+ * The frequency at which this API is called is determined by what was requested
+ * @ref GnssReportType::MEASUREMENT or @ref GnssReportType::HIGH_RATE_MEASUREMENT in
+ * @ref ILocationManager::startDetailedReports and
+ * @ref ILocationManager::startDetailedEngineReports.
  *
  * @param [in] measurementInfo - GNSS measurement information
  *

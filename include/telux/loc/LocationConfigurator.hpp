@@ -351,14 +351,13 @@ public:
   virtual telux::common::Status requestRobustLocation(GetRobustLocationCallback cb) = 0;
 
 /**
- * This API configures the minimum GPS week used by the modem GNSS standard position engine (SPE).
- * If this API is called while GNSS standard position engine(SPE) is in middle of a session,
- * ResponseCallback will still be invoked shortly to indicate the setting has been accepted
- * by SPE engine, however the actual setting can not be applied until the current session ends,
- * and this may take up to 255 seconds in poor GPS signal condition.
+ * This API configures the minimum GPS week used by the modem GNSS standard position engine (SPE)
+ * and shall not be called while GNSS SPE is in the middle of a session.
+ * Client needs to assure that there is no active GNSS SPE session prior to issuing this command.
  * Client should wait for the command to finish, e.g.: via ResponseCallback received before
  * issuing a second configureMinGpsWeek command. Behavior is not defined if client issues a second
  * request of configureMinGpsWeek without waiting for the previous configureMinGpsWeek to finish.
+ * Additionally minimum GPS week number shall NEVER be in the future of the current GPS Week.
  *
  * @param [in] minGpsWeek - minimum GPS week to be used by modem GNSS engine.
  *

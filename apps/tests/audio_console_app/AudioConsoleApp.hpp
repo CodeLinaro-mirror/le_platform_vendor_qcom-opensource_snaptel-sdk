@@ -58,6 +58,10 @@ private:
     void toneMenu(std::vector<std::string> userInput);
     void transCodeMenu(std::vector<std::string> userInput);
     void getCalStatus(std::vector<std::string> userInput);
+    void getSupportedDevices(std::vector<std::string> userInput);
+    void getSupportedStreams(std::vector<std::string> userInput);
+
+    std::string getStreamName(StreamType stream);
 
     // Audio Client is Created by the Audio Console app and it is passed to every Menu
     std::shared_ptr<AudioClient> audioClient_;

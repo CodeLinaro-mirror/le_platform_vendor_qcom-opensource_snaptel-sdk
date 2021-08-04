@@ -58,26 +58,26 @@ using std::lock_guard;
 using std::mutex;
 
 // Global variables
-static ApplicationBase* application = nullptr;
-static vector<thread> threads;
-static bool csv = false;
-static string csvFileName;
-static sem_t cnt_sem;
-static auto rxsuccess = 0;
-static auto rxfail = 0;
-static bool stopThread = false;
-static bool dump_raw = false;
-static bool print_rv = true;
+ApplicationBase* application = nullptr;
+vector<thread> threads;
+bool csv = false;
+string csvFileName;
+sem_t cnt_sem;
+auto rxsuccess = 0;
+auto rxfail = 0;
+bool stopThread = false;
+bool dump_raw = false;
+bool print_rv = true;
 bool cv2xActive = false;
 
-static void joinThreads() {
+void joinThreads() {
     for (int i = 0; i < threads.size(); i++)
     {
         threads[i].join();
     }
 }
 
-static void signalHandler(int signum) {
+void signalHandler(int signum) {
     cout << "Interrupt signal (" << signum << ") received.\n";
     cout << "Exiting..." << endl;
     stopThread = true;
@@ -89,7 +89,7 @@ static void signalHandler(int signum) {
  *
  * @param[in] msgType type of the messsage we are processing.
  */
-static void receive(MessageType msgType) {
+void receive(MessageType msgType) {
     std::signal(SIGINT, signalHandler);
     auto count = 0;
     FILE *fp;
@@ -165,7 +165,7 @@ static void receive(MessageType msgType) {
  *
  * @param [in] msgType, so far only BSM is supported.
  */
-static void ldmRx(void) {
+void ldmRx(void) {
     std::signal(SIGINT, signalHandler);
     if (nullptr == application) {
         cerr << "application nullptr" << endl;
@@ -200,7 +200,7 @@ static void ldmRx(void) {
  * @param[in] interval_ns timer interval value in nano seconds
  * @return timer's file descriptor if success or -1 on failure.
  */
-static int start_tx_timer(long long interval_ns) {
+int start_tx_timer(long long interval_ns) {
     int timerfd;
     struct itimerspec its = {0};
 
@@ -228,7 +228,7 @@ static int start_tx_timer(long long interval_ns) {
  * CAM are supported. DENM is not supported
  * @returns none.
  */
-static void transmit(MessageType msgType) {
+void transmit(MessageType msgType) {
     std::signal(SIGINT, signalHandler);
     int tx_timer_fd = -1;
     int timer_misses = 0;
@@ -334,7 +334,7 @@ static void transmit(MessageType msgType) {
  * @msgType type of the message, so far only BSM is supported for this test.
  * @returns none.
  */
-static void txRecorded(string file) {
+void txRecorded(string file) {
     srand(timestamp_now());
     ifstream configFile(file);
     string line;
@@ -383,7 +383,7 @@ static void txRecorded(string file) {
  * @param [in] msgType , so far only BSM is supported in this mode
  * @returns none.
  */
-static void simTxRecorded(string file)
+void simTxRecorded(string file)
 {
     ifstream configFile(file);
     string line;
@@ -411,7 +411,7 @@ static void simTxRecorded(string file)
     }
 }
 
-static void tunnelModeTx(void) {
+void tunnelModeTx(void) {
     std::signal(SIGINT, signalHandler);
     auto timer = timestamp_now();
     while (!stopThread)
@@ -424,7 +424,7 @@ static void tunnelModeTx(void) {
     }
 }
 
-static void tunnelModeRx(void) {
+void tunnelModeRx(void) {
     while (!stopThread)
     {
         SaeApplication *SaeApp = dynamic_cast<SaeApplication *>(application);
@@ -445,7 +445,7 @@ static void tunnelModeRx(void) {
 /**
  * run safety application.
  */
-static void runApps(void) {
+void runApps(void) {
     auto hostMsg = std::make_shared<msg_contents>();
     rv_specs* rvSpecs = new rv_specs;
     std::signal(SIGINT, signalHandler);
@@ -461,7 +461,7 @@ static void runApps(void) {
     }
 }
 
-static void simReceive(MessageType msgType) {
+void simReceive(MessageType msgType) {
     std::signal(SIGINT, signalHandler);
     auto recCount = 0;
     auto empty = 0;
@@ -519,7 +519,7 @@ static void simReceive(MessageType msgType) {
         application->ldm->stopGb();
 }
 
-static void simLdmRx(void) {
+void simLdmRx(void) {
     std::signal(SIGINT, signalHandler);
     auto count = 0;
     auto empty=0;
@@ -568,7 +568,7 @@ static void simLdmRx(void) {
     }
 }
 
-static void simTransmit(MessageType msgType) {
+void simTransmit(MessageType msgType) {
     std::signal(SIGINT, signalHandler);
     int txsuccess = 0;
     int txfail = 0;

@@ -49,22 +49,17 @@ class FileSystemTestApp : public IFsListener, public ConsoleApp {
 
     static FileSystemTestApp &getInstance();
     int init();
+    void cleanup();
 
     void printHelp();
     void signalHandler(int signum);
     Status parseArguments(int argc, char **argv);
-    void handleArguments();
     void consoleinit();
-    bool listnerEnableStatus();
 
  private:
     FileSystemTestApp();
     // Member variable to keep the command manager object alive till application ends.
     std::shared_ptr<FileSystemCommandMgr> myFsCmdMgr_;
-    std::mutex mtx_;
-    std::condition_variable cv_;
-    bool exiting_;
-    std::string command_;
 };
 
 #endif  // FILESYSTEMTESTAPP_HPP

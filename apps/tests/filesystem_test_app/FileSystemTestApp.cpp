@@ -51,28 +51,19 @@ extern "C" {
 void FileSystemTestApp::printHelp() {
 
     std::cout << "Usage: " << APP_NAME << " options" << std::endl;
-    std::cout << "   -l --listen            : listen to EFS restore operation updates" << std::endl;
-    std::cout << "   -c --console-mode      : open interactive console" << std::endl;
     std::cout << "   -h --help              : print the help menu" << std::endl;
 }
 
 Status FileSystemTestApp::parseArguments(int argc, char **argv) {
     int arg;
     while (1) {
-        static struct option long_options[] = {{"listen", no_argument, 0, 'l'},
-            {"console-mode", no_argument, 0, 'c'}, {"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
+        static struct option long_options[] = {{"help", no_argument, 0, 'h'}, {0, 0, 0, 0}};
         int opt_index = 0;
-        arg = getopt_long(argc, argv, "lch", long_options, &opt_index);
+        arg = getopt_long(argc, argv, "h", long_options, &opt_index);
         if (arg == -1) {
             break;
         }
         switch (arg) {
-            case 'l':
-                command_ = "listen";
-                break;
-            case 'c':
-                command_ = "console";
-                break;
             case 'h':
                 printHelp();
                 break;
@@ -84,28 +75,16 @@ Status FileSystemTestApp::parseArguments(int argc, char **argv) {
     return Status::SUCCESS;
 }
 
-void FileSystemTestApp::handleArguments() {
-    if (command_ == "listen") {
-        myFsCmdMgr_->registerForUpdates();
-        std::unique_lock<std::mutex> lock(mtx_);
-        std::cout << APP_NAME << " Press CTRL+C to exit" << std::endl;
-        cv_.wait(lock, [this]() { return exiting_; });
-        myFsCmdMgr_->deregisterForUpdates();
-    }
-    if (command_ == "console") {
-        consoleinit();
-        mainLoop();
-    }
-    return;
-}
-
 FileSystemTestApp::FileSystemTestApp()
    : ConsoleApp("FileSystem Management Menu", "fs-mgmt> ")
-   , myFsCmdMgr_(nullptr)
-   , command_("") {
+   , myFsCmdMgr_(nullptr) {
 }
 
 FileSystemTestApp::~FileSystemTestApp() {
+    if (myFsCmdMgr_) {
+        myFsCmdMgr_->deregisterFromUpdates();
+    }
+    myFsCmdMgr_ = nullptr;
 }
 
 FileSystemTestApp &FileSystemTestApp::getInstance() {
@@ -118,10 +97,9 @@ void signalHandler(int signum) {
 }
 
 void FileSystemTestApp::signalHandler(int signum) {
-    std::unique_lock<std::mutex> lock(mtx_);
     std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;
-    exiting_ = true;
-    cv_.notify_all();
+    cleanup();
+    exit(1);
 }
 
 int FileSystemTestApp::init() {
@@ -133,18 +111,14 @@ int FileSystemTestApp::init() {
     return 0;
 }
 
+void FileSystemTestApp::cleanup() {
+    if (myFsCmdMgr_) {
+        myFsCmdMgr_->deregisterFromUpdates();
+    }
+    myFsCmdMgr_ = nullptr;
+}
+
 void FileSystemTestApp::consoleinit() {
-    std::shared_ptr<ConsoleAppCommand> registerForUpdatesCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Register restore indications",
-            {}, std::bind(&FileSystemCommandMgr::registerForUpdates, myFsCmdMgr_)));
-
-    std::shared_ptr<ConsoleAppCommand> deRegisterForUpdatesCmd
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Disable restore indications",
-            {}, std::bind(&FileSystemCommandMgr::deregisterForUpdates, myFsCmdMgr_)));
-
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListFilesMenu
-        = {registerForUpdatesCmd, deRegisterForUpdatesCmd};
-    ConsoleApp::addCommands(commandsListFilesMenu);
     ConsoleApp::displayMenu();
 }
 
@@ -159,18 +133,20 @@ int main(int argc, char **argv) {
     if (rc == -1) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
-    auto &FileSystemTest = FileSystemTestApp::getInstance();
-    if (0 != FileSystemTest.init()) {
+    auto &fileSystemTestApp = FileSystemTestApp::getInstance();
+    if (0 != fileSystemTestApp.init()) {
         std::cout << APP_NAME << " Failed to initialize the File system management service"
                   << std::endl;
         return -1;
     }
     signal(SIGINT, signalHandler);
-    ret = FileSystemTest.parseArguments(argc, argv);
+    ret = fileSystemTestApp.parseArguments(argc, argv);
     if (ret != Status::SUCCESS) {
         return -1;
     }
-    FileSystemTest.handleArguments();
+    fileSystemTestApp.consoleinit();
+    fileSystemTestApp.mainLoop();
     std::cout << "Exiting application..." << std::endl;
+    fileSystemTestApp.cleanup();
     return 0;
 }

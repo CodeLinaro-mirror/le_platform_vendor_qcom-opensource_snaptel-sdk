@@ -9,6 +9,7 @@ set(FILESYSTEM_TEST_APP
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
+    ../../common/utils/Utils.cpp
 )
 
 add_definitions(-DAPP_NAME=\"\\033[1;32mFilesystem_test_app\\033[0m\")

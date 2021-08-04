@@ -43,7 +43,7 @@ class FileSystemCommandMgr : public std::enable_shared_from_this<FileSystemComma
 
     int init();
     void registerForUpdates();
-    void deregisterForUpdates();
+    void deregisterFromUpdates();
 
  private:
     std::shared_ptr<telux::platform::IFsManager> fsMgr_;

@@ -70,6 +70,7 @@ using telux::common::Status;
 using telux::common::ServiceStatus;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
+using telux::cv2x::Cv2xStatusEx;
 using telux::cv2x::Cv2xStatusType;
 using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::Periodicity;
@@ -90,7 +91,7 @@ static constexpr int      PRIORITY = 3;
 static constexpr char TEST_VERNO_MAGIC = 'Q';
 static constexpr char UEID = 1;
 
-static Cv2xStatus gCv2xStatus;
+static Cv2xStatusEx gCv2xStatus;
 static promise<ErrorCode> gCallbackPromise;
 static shared_ptr<ICv2xTxFlow> gSpsFlow;
 static array<char, G_BUF_LEN> gBuf;
@@ -109,25 +110,25 @@ static map<Cv2xStatusType, string> cv2xStatusToString = {
 
 class Cv2xListener : public ICv2xListener {
 public:
-    Cv2xListener(Cv2xStatus status) : status_(status) { }
+    Cv2xListener(Cv2xStatusEx status) : status_(status) { }
 
     void onServiceStatusChange(ServiceStatus status) override {
         cout << "Service status changed to: " << serviceStatusToString[status] << endl;
     }
 
-    void onStatusChanged(Cv2xStatus status) override {
-        cout << "Cv2x TX status changed to: " <<  cv2xStatusToString[status.txStatus] << endl;
+    void onStatusChanged(Cv2xStatusEx status) override {
+        cout << "Cv2x TX status changed to: " <<  cv2xStatusToString[status.status.txStatus] << endl;
         lock_guard<mutex> lock(mutex_);
         status_ = status;
     }
 
-    Cv2xStatus getStatus() {
+    Cv2xStatusEx getStatus() {
         lock_guard<mutex> lock(mutex_);
         return status_;
     }
 
 protected:
-    Cv2xStatus status_;
+    Cv2xStatusEx status_;
     mutex mutex_;
 };
 
@@ -139,7 +140,7 @@ static inline void resetCallbackPromise(void) {
 // Callback function for ICv2xRadioManager->requestCv2xStatus()
 static void cv2xStatusCallback(Cv2xStatus status, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
-        gCv2xStatus = status;
+        gCv2xStatus.status = status;
     }
     gCallbackPromise.set_value(error);
 }
@@ -285,7 +286,7 @@ int main(int argc, char *argv[]) {
     assert(Status::SUCCESS == cv2xRadioManager->requestCv2xStatus(cv2xStatusCallback));
     assert(ErrorCode::SUCCESS == gCallbackPromise.get_future().get());
 
-    if (Cv2xStatusType::ACTIVE == gCv2xStatus.txStatus) {
+    if (Cv2xStatusType::ACTIVE == gCv2xStatus.status.txStatus) {
         cout << "C-V2X TX status is active" << endl;
     }
     else {
@@ -312,9 +313,9 @@ int main(int argc, char *argv[]) {
     uint16_t i = 0;
     while (i < NUM_TEST_ITERATIONS) {
         gCv2xStatus = listener->getStatus();
-        if (gCv2xStatus.txStatus == Cv2xStatusType::INACTIVE) {
+        if (gCv2xStatus.status.txStatus == Cv2xStatusType::INACTIVE) {
             flowUp = false;
-        } else if (gCv2xStatus.txStatus == Cv2xStatusType::ACTIVE) {
+        } else if (gCv2xStatus.status.txStatus == Cv2xStatusType::ACTIVE) {
             if (not flowUp) {   // Get handle to Cv2xRadio
                 cv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
 

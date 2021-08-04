@@ -61,8 +61,22 @@ class IFsListener : public common::IServiceStatusListener {
      * This function is called when a EFS restore operation is detected.
      *
      * @param [in] event    Event related data.  @ref telux::platform::EfsEventInfo.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
      */
     virtual void OnEfsRestoreEvent(EfsEventInfo event) {
+    }
+
+    /**
+     * This function is called when a EFS backup operation is detected.
+     *
+     * @param [in] event    Event related data.  @ref telux::platform::EfsEventInfo.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void OnEfsBackupEvent(EfsEventInfo event) {
     }
 
     /**

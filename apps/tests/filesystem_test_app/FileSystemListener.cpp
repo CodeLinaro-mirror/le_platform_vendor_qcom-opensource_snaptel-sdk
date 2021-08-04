@@ -45,15 +45,14 @@ FileSystemListener::FileSystemListener() {
 FileSystemListener::~FileSystemListener() {
 }
 
-void FileSystemListener::printEfsRestoreMode(EfsEventInfo eventInfo) {
+void FileSystemListener::printEfsEvent(std::string type, EfsEventInfo eventInfo) {
     EfsEvent event = eventInfo.event;
     telux::common::ErrorCode error = eventInfo.error;
+    PRINT_NOTIFICATION << type;
     if (event == EfsEvent::START) {
-        PRINT_NOTIFICATION << "Efs restore event : START" << std::endl;
+        std::cout << ": START" << std::endl;
     } else if (event == EfsEvent::END) {
-        PRINT_NOTIFICATION
-            << "Efs restore event : END with ErrorCode: " << Utils::getErrorCodeAsString(error)
-            << std::endl;
+        std::cout << ": END with ErrorCode: " << Utils::getErrorCodeAsString(error) << std::endl;
     } else {
         std::cout << APP_NAME << " ERROR: Invalid EFS restore event notified" << std::endl;
     }
@@ -70,5 +69,10 @@ void FileSystemListener::onServiceStatusChange(ServiceStatus status) {
 
 void FileSystemListener::OnEfsRestoreEvent(EfsEventInfo event) {
     std::cout << std::endl;
-    printEfsRestoreMode(event);
+    printEfsEvent("Restore EFS", event);
+}
+
+void FileSystemListener::OnEfsBackupEvent(EfsEventInfo event) {
+    std::cout << std::endl;
+    printEfsEvent("Backup EFS", event);
 }

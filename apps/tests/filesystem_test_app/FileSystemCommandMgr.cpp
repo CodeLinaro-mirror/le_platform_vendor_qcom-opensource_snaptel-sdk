@@ -35,6 +35,7 @@
 #include <iostream>
 #include <future>
 
+#include "Utils.hpp"
 #include "FileSystemCommandMgr.hpp"
 #include "FileSystemListener.hpp"
 
@@ -53,42 +54,43 @@ int FileSystemCommandMgr::init() {
     fsMgr_ = platFormFactory.getFsManager(
         [&](telux::common::ServiceStatus status) { prom.set_value(status); });
     if (fsMgr_ == NULL) {
-        std::cout << APP_NAME << " *** ERROR - Failed to get manager instance" << std::endl;
+        std::cout << APP_NAME << " *** ERROR - Failed to get FileSystem manager" << std::endl;
         return -1;
     }
     // Check file system management service status
-    std::cout << " Waiting for FileSystem Manager to be ready " << std::endl;
+    std::cout << " Waiting for FileSystem manager to be ready " << std::endl;
     telux::common::ServiceStatus serviceStatus = prom.get_future().get();
     if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << APP_NAME << " FileSystem management services are ready !" << std::endl;
+        std::cout << APP_NAME << " FileSystem manager is ready !" << std::endl;
     } else {
-        std::cout << APP_NAME << " *** ERROR - Unable to initialize FileSystem management services"
+        std::cout << APP_NAME << " *** ERROR - Unable to initialize FileSystem manager"
                   << std::endl;
         return -1;
     }
     fsListener_ = std::make_shared<FileSystemListener>();
+    registerForUpdates();
     return 0;
 }
 
 void FileSystemCommandMgr::registerForUpdates() {
-    // Registering a listener for EFS Restore operation updates
+    // Registering a listener for EFS operation updates
     telux::common::Status status = fsMgr_->registerListener(fsListener_);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME << " *** ERROR - Failed to register for EFS Restore operation events"
-                  << std::endl;
+    if ((status == telux::common::Status::SUCCESS) || (status == telux::common::Status::ALREADY)) {
+        std::cout << APP_NAME << " Registered for EFS events" << std::endl;
     } else {
-        std::cout << APP_NAME << " Registered Listener for EFS Restore operation events"
-                  << std::endl;
+        std::cout << APP_NAME << " *** ERROR - Failed to register for EFS events: ";
+        Utils::printStatus(status);
     }
 }
 
-void FileSystemCommandMgr::deregisterForUpdates() {
-    // De-registering a listener for EFS Restore operation updates
+void FileSystemCommandMgr::deregisterFromUpdates() {
+    // De-registering a listener from EFS operation updates
     telux::common::Status status = fsMgr_->deregisterListener(fsListener_);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << APP_NAME << " *** ERROR - Failed to de-register for EFS Restore operation "
-                  << "events" << std::endl;
+    if ((status == telux::common::Status::SUCCESS) || (status == telux::common::Status::NOSUCH)) {
+        std::cout << APP_NAME << " Deregistered listener successfully" << std::endl;
     } else {
-        std::cout << APP_NAME << " De-registered listener" << std::endl;
+        std::cout << APP_NAME
+                  << " *** ERROR - Failed to deregister: " << std::endl;
+        Utils::printStatus(status);
     }
 }

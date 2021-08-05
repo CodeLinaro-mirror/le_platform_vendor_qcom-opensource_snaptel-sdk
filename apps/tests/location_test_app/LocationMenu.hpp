@@ -75,6 +75,7 @@ public:
    void configureLeverArm(std::vector<std::string> userInput);
    void configureDR(std::vector<std::string> userInput);
    void configureEngineState(std::vector<std::string> userInput);
+   void configureEngineIntegrityRisk(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
    void configureConstellationEmpty(std::vector<std::string> userInput);
    void configureConstellationDeviceDefault(std::vector<std::string> userInput);

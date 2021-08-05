@@ -658,7 +658,15 @@ enum LocationInfoExValidityType {
   /** valid altitude type*/
   HAS_ALTITUDE_TYPE = (1ULL << 32),
   /** valid report status*/
-  HAS_REPORT_STATUS = (1ULL << 33)
+  HAS_REPORT_STATUS = (1ULL << 33),
+  /** valid integrity risk*/
+  HAS_INTEGRITY_RISK_USED = (1ULL << 34),
+  /** valid protect level along track*/
+  HAS_PROTECT_LEVEL_ALONG_TRACK = (1ULL << 35),
+  /** valid protect level cross track*/
+  HAS_PROTECT_LEVEL_CROSS_TRACK = (1ULL << 36),
+  /** valid protect level vertical*/
+  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -1370,6 +1378,21 @@ struct DREngineConfiguration {
 };
 
 /**
+ * Specify the position engine types */
+enum class EngineType {
+    /** Unknown engine type. */
+    UNKNOWN = -1,
+    /** Standard GNSS position engine. */
+    SPE = 1,
+    /** Precise position engine. */
+    PPE = 2,
+    /** Dead reckoning position engine. */
+    DRE = 3,
+    /** Vision positioning engine. */
+    VPE = 4
+};
+
+/**
  * Specify the status of the report */
 enum class ReportStatus {
     /** Report status is unknown. */
@@ -1829,6 +1852,34 @@ public:
  * @returns Status of the report. Returns ReportStatus::UNKNOWN if status is unavailable.
  */
   virtual ReportStatus getReportStatus() = 0;
+
+/**
+ * Integrity risk used for protection level parameters. Unit of 2.5e-10.
+ * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
+ * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
+ * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
+ * @ref ILocationInfoEx::getProtecttionLevelVertical will not be available.
+ *
+ */
+  virtual uint32_t getIntegrityRiskUsed() = 0;
+
+/**
+ * Along-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelAlongTrack() = 0;
+
+/**
+ * Cross-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelCrossTrack() = 0;
+
+/**
+ * Vertical component protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelVertical() = 0;
 
 };
 

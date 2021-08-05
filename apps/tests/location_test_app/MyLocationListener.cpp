@@ -173,6 +173,18 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_REPORT_STATUS)) {
       std::cout << "valid report status" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_INTEGRITY_RISK_USED)) {
+      std::cout << "valid integrity risk" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_ALONG_TRACK)) {
+      std::cout << "valid protect along track" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_CROSS_TRACK)) {
+      std::cout << "valid protect cross track" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_VERTICAL)) {
+      std::cout << "valid protect vertical" << std::endl;
+    }
 
 }
 
@@ -1009,6 +1021,13 @@ void MyLocationListener::onDetailedLocationUpdate(
    printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
    printAltitudeType(locationInfo->getAltitudeType());
    printReportStatus(locationInfo->getReportStatus());
+   std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
+   std::cout << "Protection level along track : " <<
+       locationInfo->getProtectionLevelAlongTrack() << std::endl;
+   std::cout << "Protection level cross track : " <<
+       locationInfo->getProtectionLevelCrossTrack() << std::endl;
+   std::cout << "Protection level vertical : " <<
+       locationInfo->getProtectionLevelVertical() << std::endl;
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -1120,6 +1139,13 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
      printAltitudeType(locationInfo->getAltitudeType());
      printReportStatus(locationInfo->getReportStatus());
+     std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
+     std::cout << "Protection level along track : " <<
+         locationInfo->getProtectionLevelAlongTrack() << std::endl;
+     std::cout << "Protection level cross track : " <<
+         locationInfo->getProtectionLevelCrossTrack() << std::endl;
+     std::cout << "Protection level vertical : " <<
+         locationInfo->getProtectionLevelVertical() << std::endl;
      std::cout << "*************************************************************" << std::endl;
     }
 }

@@ -258,6 +258,11 @@ int LocationMenu::init() {
            "Configure All Nmea sentences", {}, std::bind(&LocationMenu::
                configureAllNmeaSentence, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureEngineIntegrityRisk =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("31",
+           "Configure Engine Integrity Risk", {}, std::bind(&LocationMenu::
+               configureEngineIntegrityRisk, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -267,7 +272,7 @@ int LocationMenu::init() {
          configureMinSVElevation, requestMinSVElevation, requestRobustLocation,
          configureConstellationEmpty, configureConstellationDeviceDefault, configureDR,
          configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
-         configureNmeaSentence, configureAllNmeaSentence};
+         configureNmeaSentence, configureAllNmeaSentence, configureEngineIntegrityRisk};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -868,6 +873,55 @@ void LocationMenu::configureDR(std::vector<std::string> userInput) {
                 myLocCmdResponseCb_, std::placeholders::_1));
         if (status == telux::common::Status::FAILED) {
           std::cout << "Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::configureEngineIntegrityRisk(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        char delimiter = '\n';
+        telux::loc::EngineType engineType;
+        std::string type;
+        std::cout << "Enter the type of engine : " << std::endl;
+        std::cout << "Enter 1 for SPE" << std::endl;
+        std::cout << "Enter 2 for PPE" << std::endl;
+        std::cout << "Enter 3 for DRE" << std::endl;
+        std::cout << "Enter 4 for VPE" << std::endl;
+        std::getline(std::cin, type, delimiter);
+        int engineTypeOption = std::stoi(type);
+        if (engineTypeOption == 1) {
+            engineType = telux::loc::EngineType::SPE;
+        } else if (engineTypeOption == 2) {
+            engineType = telux::loc::EngineType::PPE;
+        } else if (engineTypeOption == 3){
+            engineType = telux::loc::EngineType::DRE;
+        } else {
+            engineType = telux::loc::EngineType::VPE;
+        }
+
+        std::string integrityRisk;
+        std::cout << "Enter value for integrityRisk :";
+        std::getline(std::cin, integrityRisk, delimiter);
+
+        uint32_t intRiskLevel = 0;
+        if(!integrityRisk.empty()) {
+            try {
+                intRiskLevel = std::stoi(integrityRisk);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << intRiskLevel
+                          << std::endl;
+            }
+        } else {
+             intRiskLevel = 1;
+        }
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure Engine Integrity Risk");
+        telux::common::Status status = locationConfigurator_->configureEngineIntegrityRisk(
+            engineType, intRiskLevel, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status == telux::common::Status::FAILED) {
+            std::cout << "FAILED" << std::endl;
         }
     }
 }

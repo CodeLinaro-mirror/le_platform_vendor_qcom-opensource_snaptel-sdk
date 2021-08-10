@@ -48,6 +48,8 @@ extern "C" {
 #include "FileSystemTestApp.hpp"
 #include "Utils.hpp"
 
+std::shared_ptr<FileSystemTestApp> fileSystemTestApp_ = nullptr;
+
 void FileSystemTestApp::printHelp() {
 
     std::cout << "Usage: " << APP_NAME << " options" << std::endl;
@@ -64,12 +66,12 @@ Status FileSystemTestApp::parseArguments(int argc, char **argv) {
             break;
         }
         switch (arg) {
-            case 'h':
-                printHelp();
-                break;
-            default:
-                printHelp();
-                return Status::INVALIDPARAM;
+        case 'h':
+            printHelp();
+            break;
+        default:
+            printHelp();
+            return Status::INVALIDPARAM;
         }
     }
     return Status::SUCCESS;
@@ -87,13 +89,8 @@ FileSystemTestApp::~FileSystemTestApp() {
     myFsCmdMgr_ = nullptr;
 }
 
-FileSystemTestApp &FileSystemTestApp::getInstance() {
-    static FileSystemTestApp instance;
-    return instance;
-}
-
 void signalHandler(int signum) {
-    FileSystemTestApp::getInstance().signalHandler(signum);
+    fileSystemTestApp_->signalHandler(signum);
 }
 
 void FileSystemTestApp::signalHandler(int signum) {
@@ -119,6 +116,12 @@ void FileSystemTestApp::cleanup() {
 }
 
 void FileSystemTestApp::consoleinit() {
+    std::shared_ptr<ConsoleAppCommand> startEfsBackupCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Start_Efs_Backup", {},
+            std::bind(&FileSystemCommandMgr::startEfsBackup, myFsCmdMgr_)));
+    std::vector<std::shared_ptr<ConsoleAppCommand>> fileSystemTestAppCommands
+        = {startEfsBackupCommand};
+    ConsoleApp::addCommands(fileSystemTestAppCommands);
     ConsoleApp::displayMenu();
 }
 
@@ -133,20 +136,21 @@ int main(int argc, char **argv) {
     if (rc == -1) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
-    auto &fileSystemTestApp = FileSystemTestApp::getInstance();
-    if (0 != fileSystemTestApp.init()) {
+    fileSystemTestApp_ = std::make_shared<FileSystemTestApp>();
+    if (0 != fileSystemTestApp_->init()) {
         std::cout << APP_NAME << " Failed to initialize the File system management service"
                   << std::endl;
         return -1;
     }
     signal(SIGINT, signalHandler);
-    ret = fileSystemTestApp.parseArguments(argc, argv);
+    ret = fileSystemTestApp_->parseArguments(argc, argv);
     if (ret != Status::SUCCESS) {
         return -1;
     }
-    fileSystemTestApp.consoleinit();
-    fileSystemTestApp.mainLoop();
+    fileSystemTestApp_->consoleinit();
+    fileSystemTestApp_->mainLoop();
     std::cout << "Exiting application..." << std::endl;
-    fileSystemTestApp.cleanup();
+    fileSystemTestApp_->cleanup();
+    fileSystemTestApp_ = nullptr;
     return 0;
 }

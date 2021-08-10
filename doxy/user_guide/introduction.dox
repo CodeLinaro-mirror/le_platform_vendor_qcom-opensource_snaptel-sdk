@@ -95,6 +95,7 @@ when       who     what, where, why
 11/25/21   RR      Added support for Xtra feature for location in Telematics SDK
 12/21/21   BS      Added documentation for sensor self test.
 06/07/21   BS      Added documentation for platform sub-system.
+08/09/21   BS      Added further EFS API related information for platform sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

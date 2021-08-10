@@ -90,6 +90,17 @@ class IFsManager {
     virtual telux::common::Status deregisterListener(std::weak_ptr<IFsListener> listener) = 0;
 
     /**
+     * Request to trigger an EFS backup. If the request is successful, the status of EFS backup
+     * is notified via @ref telux::platform::IFsListener::OnEfsBackupEvent.
+     *
+     * @returns The status of the request - @ref telux::common::Status
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status startEfsBackup() = 0;
+
+    /**
      * Destructor of IFsManager
      */
     virtual ~IFsManager(){};

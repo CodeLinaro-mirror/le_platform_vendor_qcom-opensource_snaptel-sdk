@@ -3178,22 +3178,22 @@ occur. Register this listener with the sensor feature manager.
 
 The platform sub-system provides APIs to configure and control platform functionalities.
 This sub-system provides notifications about certain system related events, for instance filesystem
-events such as EFS restore events.
+events such as EFS restore and backup events.
 
-@subsection platform_efs_restore_notification_call_flow Call flow for EFS restore notification registration and handling
+@subsection platform_efs_backup_restore_call_flow Call flow for EFS restore notification registration and handling
 
-@anchor platform_efs_restore_notification_call_flow
+@anchor platform_efs_backup_restore_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{platform_efs_restore_notification_call_flow.png}
+  \includegraphics[width=\textwidth]{platform_efs_backup_restore_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{EFS restore notification registration and handling call flow}
-  \label{fig_platform_efs_restore_notification_call_flow}
+  \label{fig_platform_efs_backup_restore_call_flow}
 \end{figure}
 @endlatexonly
 
-@html_image{platform_efs_restore_notification_call_flow.png,EFS restore notification registration and handling call flow,80,80,EFS restore notification registration and handling call flow}
+@html_image{platform_efs_backup_restore_call_flow.png,EFS restore notification registration and handling call flow,80,80,EFS restore notification registration and handling call flow}
 
 1. Get the reference to the PlatformFactory, with which we can further acquire other sub-system
 objects.
@@ -3215,10 +3215,16 @@ notifications.
 for service to be re-initialized and once done, SERVICE_AVAILABLE will be notified. If the service
 fails, SERVICE_FAILED is notified and the IFsManager object held is no longer usable. A new object
 of type IFsManager needs to be re-acquired from the PlatformFactory.
-7. When EFS restore are detected, the event listener is notified via the OnEfsRestoreEvent method
-and the application can make use of the information appropriately. The EFS restore notification
-also has information if the restore started or ended and if the restore was successful or a failure.
-8. Once clean-up is necessary, deregister the registered listener, set all shared pointers to
+7. When the application finds it appropriate to trigger a EFS backup, startEfsBackup should be
+invoked, which would return immediately indicating the status of the request
+8. Once EFS backup starts and completes, the notifications are sent out to the application.
+EFS restoration is controlled by the internal components based on several factors like
+identification of critical filesystem errors which result in failure to boot. When such conditions
+are identified, EFS restore events would be received by the application via the OnEfsRestoreEvent
+method and the application can make use of the information appropriately. The EFS restore
+notification also has information if the restore started or ended and if the restore was successful
+or a failure.
+9. Once clean-up is necessary, deregister the registered listener, set all shared pointers to
 nullptr. This will make the underlying sub-system relinquish resources that are no longer
 necessary.
 */

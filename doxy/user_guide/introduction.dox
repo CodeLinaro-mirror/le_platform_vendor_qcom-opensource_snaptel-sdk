@@ -57,6 +57,7 @@ when       who     what, where, why
 04/01/21   FS      Added new serving system manager APIs for Data.
 04/04/21   BS      Added documentation for sensor sub-system.
 06/07/21   BS      Added documentation for platform sub-system.
+08/09/21   BS      Added further EFS API related information for platform sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

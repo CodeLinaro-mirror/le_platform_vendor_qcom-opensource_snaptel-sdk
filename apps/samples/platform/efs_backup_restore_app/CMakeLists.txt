@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_FILESYSTEM_APP filesystem_app)
+set(TARGET_FILESYSTEM_APP efs_backup_restore_app)
 
 pkg_check_modules(TELUXPLATFORM REQUIRED telux-platform)
 
 add_compile_options(${TELUXPLATFORM_CFLAGS})
 
 set(SOURCES
-    EfsRestoreSampleApp.cpp
+    EfsBackupRestoreApp.cpp
     ../../../common/utils/Utils.cpp
 )
 

@@ -45,9 +45,9 @@ class FileSystemCommandMgr;
 
 class FileSystemTestApp : public IFsListener, public ConsoleApp {
  public:
+    FileSystemTestApp();
     ~FileSystemTestApp();
 
-    static FileSystemTestApp &getInstance();
     int init();
     void cleanup();
 
@@ -57,7 +57,6 @@ class FileSystemTestApp : public IFsListener, public ConsoleApp {
     void consoleinit();
 
  private:
-    FileSystemTestApp();
     // Member variable to keep the command manager object alive till application ends.
     std::shared_ptr<FileSystemCommandMgr> myFsCmdMgr_;
 };

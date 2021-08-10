@@ -45,6 +45,8 @@ class FileSystemCommandMgr : public std::enable_shared_from_this<FileSystemComma
     void registerForUpdates();
     void deregisterFromUpdates();
 
+    void startEfsBackup();
+
  private:
     std::shared_ptr<telux::platform::IFsManager> fsMgr_;
     std::shared_ptr<FileSystemListener> fsListener_;

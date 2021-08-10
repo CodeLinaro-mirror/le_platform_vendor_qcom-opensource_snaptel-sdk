@@ -89,8 +89,18 @@ void FileSystemCommandMgr::deregisterFromUpdates() {
     if ((status == telux::common::Status::SUCCESS) || (status == telux::common::Status::NOSUCH)) {
         std::cout << APP_NAME << " Deregistered listener successfully" << std::endl;
     } else {
-        std::cout << APP_NAME
-                  << " *** ERROR - Failed to deregister: " << std::endl;
+        std::cout << APP_NAME << " *** ERROR - Failed to deregister: " << std::endl;
+        Utils::printStatus(status);
+    }
+}
+
+void FileSystemCommandMgr::startEfsBackup() {
+    std::cout << APP_NAME << ": Sending request to start EFS backup" << std::endl;
+    telux::common::Status status = fsMgr_->startEfsBackup();
+    if (status == telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " Backup request successful" << std::endl;
+    } else {
+        std::cout << APP_NAME << " *** ERROR - Backup request failed: ";
         Utils::printStatus(status);
     }
 }

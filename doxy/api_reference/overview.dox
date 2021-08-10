@@ -98,7 +98,8 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
 <b>Platform services</b>
 
-   The platform sub-system provides APIs to configure and control platform functionalities. This sub-system provides notifications about certain system related events, for instance filesystem events such as EFS restore events.
+   The platform sub-system provides APIs to configure and control platform functionalities, like starting an EFS backup.
+   This sub-system also provides notifications about certain system related events, for instance filesystem events such as EFS restore and backup events.
 
 Telematics SDK classes can be broadly divided into the following types:
 
@@ -427,7 +428,8 @@ Modem Config APIs in the Telematics SDK provides modem config related functional
 
 @subsection platform Platform
 The platform sub-system provides APIs to
-   - Register and listen to filesystem events such as EFS restore notifications
+   - Register and listen to filesystem events such as EFS backup and restore notifications
+   - Request EFS backup
 
 @section Security
 @subsection SELinux

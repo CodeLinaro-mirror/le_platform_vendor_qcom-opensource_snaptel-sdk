@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018,2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -298,6 +298,15 @@ void MyCallCommandCallback::commandResponse(telux::common::ErrorCode error) {
                       << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 }
 
+void MyHangupCallback::hangupFgResumeBgResponse(telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << " Hangup foreground resume background request executed successfully \n";
+    } else {
+        PRINT_CB << " Hangup foreground resume background request failed with error: "
+                 << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
 
 void MyEcbmCallback::onRequestEcbmResponseCallback(telux::tel::EcbMode ecbMode,
    telux::common::ErrorCode error) {

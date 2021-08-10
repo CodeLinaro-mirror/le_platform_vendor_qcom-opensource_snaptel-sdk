@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018,2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018,2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -420,6 +420,41 @@ public:
    virtual telux::common::Status
       swap(std::shared_ptr<ICall> callToHold, std::shared_ptr<ICall> callToActivate,
            std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Hangup all the foreground call(s) if any and accept the background call as the active call.
+    * The foreground call here could be active call, incoming call or multiple active calls in case
+    * of conference and background call could be held call or waiting call.
+    *
+    * If a call(s) is active, the active call(s) will be terminated or if a call is waiting, the
+    * waiting call will be accepted and becomes active.  Otherwise, if a held call is present, the
+    * held call becomes active.
+    * In case of hold and waiting calls, the hold call will still be on hold and waiting call will
+    * be accepted.
+    * In case of hold, active and waiting scenario, the hold call will still be on hold, active
+    * call will be ended and waiting call will be accepted.
+    *
+    * @param [in] callback - optional callback pointer to get the response of hangup request
+    * below are possible error codes for callback response
+    *        - @ref SUCCESS
+    *        - @ref RADIO_NOT_AVAILABLE
+    *        - @ref NO_MEMORY
+    *        - @ref MODEM_ERR
+    *        - @ref INTERNAL_ERR
+    *        - @ref INVALID_STATE
+    *        - @ref INVALID_CALL_ID
+    *        - @ref INVALID_ARGUMENTS
+    *        - @ref OPERATION_NOT_ALLOWED
+    *        - @ref GENERIC_FAILURE
+    *
+    * @returns Status of hangupForegroundResumeBackground i.e. success or suitable error code.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
+    */
+   virtual telux::common::Status hangupForegroundResumeBackground(int phoneId,
+      common::ResponseCallback callback = nullptr)
       = 0;
 
    /**

@@ -1,0 +1,34 @@
+[Unit]
+Description=QITS reference ITS stack
+After=cv2x.service systemd-networkd.socket
+Wants=cv2x.service systemd-networkd.socket
+PartOf=cv2x.target
+
+[Service]
+Type=simple
+Environment=AEROLINK_CONFIG_DIR=/data/aerolink/%i/config
+Environment=AEROLINK_STATE_DIR=/data/aerolink/%i/state
+ExecStartPre=+/bin/sh -c 'if [ %i == ieee ]; then \
+	certadm add /data/aerolink/ieee/state/certificates/ieee-demo-aca.cert; \
+	certadm add /data/aerolink/ieee/state/certificates/ieee-demo-ica.cert; \
+	certadm add /data/aerolink/ieee/state/certificates/ieee-demo-root.cert; \
+	elif [ %i == etsi ]; then \
+	certadm add /data/aerolink/etsi/state/certificates/etsi-demo-aa.cert; \
+	certadm add /data/aerolink/etsi/state/certificates/etsi-demo-root.cert; \
+	elif [ %i == ccsa ]; then \
+	certadm add /data/aerolink/ccsa/state/certificates/ccsa-demo-ica.cert; \
+	certadm add /data/aerolink/ccsa/state/certificates/ccsa-demo-pca.cert; \
+	certadm add /data/aerolink/ccsa/state/certificates/ccsa-demo-root.cert; \
+	fi'
+ExecStart=/usr/bin/qits -r /etc/ObeConfig.conf
+TimeoutStartSec=30
+RestartSec=1
+StartLimitBurst=1000
+StartLimitInterval=50000
+Nice=-19
+User=its
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target cv2x.target

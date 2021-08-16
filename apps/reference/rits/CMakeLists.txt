@@ -54,3 +54,9 @@ add_subdirectory(src/qCoder/)
 add_subdirectory(src/qMessenger/)
 add_subdirectory(src/qApplication)
 add_subdirectory(tests/applicationTest)
+
+if(WITH_SYSTEMD)
+    install(FILES scripts/qits@.service
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/../lib/systemd/system)
+endif()
+

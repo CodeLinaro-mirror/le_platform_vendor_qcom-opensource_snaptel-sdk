@@ -92,7 +92,6 @@ void signalHandler(int signum) {
  * @param[in] msgType type of the messsage we are processing.
  */
 void receive(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
     auto count = 0;
     FILE *fp;
     struct timeval currTime;
@@ -168,7 +167,6 @@ void receive(MessageType msgType) {
  * @param [in] msgType, so far only BSM is supported.
  */
 void ldmRx(void) {
-    std::signal(SIGINT, signalHandler);
     if (nullptr == application) {
         cerr << "application nullptr" << endl;
         return;
@@ -231,7 +229,6 @@ int start_tx_timer(long long interval_ns) {
  * @returns none.
  */
 void transmit(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
     int tx_timer_fd = -1;
     int timer_misses = 0;
     uint64_t exp;
@@ -414,7 +411,6 @@ void simTxRecorded(string file)
 }
 
 void tunnelModeTx(void) {
-    std::signal(SIGINT, signalHandler);
     auto timer = timestamp_now();
     while (!stopThread)
     {
@@ -450,7 +446,6 @@ void tunnelModeRx(void) {
 void runApps(void) {
     auto hostMsg = std::make_shared<msg_contents>();
     rv_specs* rvSpecs = new rv_specs;
-    std::signal(SIGINT, signalHandler);
     while (!stopThread) {
         for (auto rvMsg : application->ldm->bsmSnapshot()) {
             application->fillMsg(hostMsg);
@@ -464,7 +459,6 @@ void runApps(void) {
 }
 
 void simReceive(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
     auto recCount = 0;
     auto empty = 0;
     FILE *fp;
@@ -522,7 +516,6 @@ void simReceive(MessageType msgType) {
 }
 
 void simLdmRx(void) {
-    std::signal(SIGINT, signalHandler);
     auto count = 0;
     auto empty=0;
     FILE *fp;
@@ -571,7 +564,6 @@ void simLdmRx(void) {
 }
 
 void simTransmit(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
     int txsuccess = 0;
     int txfail = 0;
     int ret = 0;

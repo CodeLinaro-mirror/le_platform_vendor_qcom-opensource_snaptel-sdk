@@ -66,6 +66,7 @@ const uint64_t INVALID_ENERGY_CONSUMED = 0xffffffffffffffff; /**< 0xffffffffffff
                                                                   consumed info. */
 const uint32_t DEFAULT_GNSS_REPORT = 0xffffffff; /**< 0xffffffff indicates all the reports are
                                                       enabled. */
+const float UNKNOWN_SV_TIME_SUB_NS = -1;
 
 /**
  * Defines RTCM injection data format

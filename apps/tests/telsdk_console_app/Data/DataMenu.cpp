@@ -146,9 +146,13 @@ void DataMenu::dataConnectionMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::openDataFilterMenu(std::vector<std::string> userInput) {
-    DataFilterMenu dataFilterMenu("Data Filter Menu", "data_filter> ");
-    dataFilterMenu.init();
-    dataFilterMenu.mainLoop();
+
+    dataFilterMenu_ =  std::make_shared<DataFilterMenu>("Data Filter Menu", "data_filter> ");
+
+    if (dataFilterMenu_->init()) {
+        dataFilterMenu_->mainLoop();
+    }
+    dataFilterMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
 

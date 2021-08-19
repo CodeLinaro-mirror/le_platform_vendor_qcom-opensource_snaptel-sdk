@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -40,6 +40,8 @@
 
 #include "MyServingSystemHandler.hpp"
 #include "ServingSystemMenu.hpp"
+
+#define INVALID -1
 
 ServingSystemMenu::ServingSystemMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -133,7 +135,7 @@ void ServingSystemMenu::setRatModePreference(std::vector<std::string> userInput)
       std::getline(std::cin, preference, delimiter);
 
       std::stringstream ss(preference);
-      int i;
+      int i = INVALID;
       while(ss >> i) {
          options.push_back(i);
          if(ss.peek() == ',' || ss.peek() == ' ')

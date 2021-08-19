@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -42,6 +42,8 @@
 #include "NetworkMenu.hpp"
 #include "PhoneMenu.hpp"
 #include "ServingSystemMenu.hpp"
+
+#define INVALID -1
 
 PhoneMenu::PhoneMenu(std::string appName, std::string cursor, int phoneId)
    : ConsoleApp(appName, cursor) {
@@ -301,7 +303,7 @@ void PhoneMenu::getSubscription(std::vector<std::string> userInput) {
 
 void PhoneMenu::setRadioPower(std::vector<std::string> userInput) {
    if(phone_) {
-      int radioPowerFlag;
+      int radioPowerFlag = INVALID;
       std::cout << "Enter radio power (1 - On, 0 - Off): ";
       std::cin >> radioPowerFlag;
       Utils::validateInput(radioPowerFlag);
@@ -341,7 +343,7 @@ void PhoneMenu::getOperatingMode(std::vector<std::string> userInput) {
 
 void PhoneMenu::setOperatingMode(std::vector<std::string> userInput) {
    if(phoneManager_) {
-      int operatingMode;
+      int operatingMode = INVALID;
       std::cout << "Enter Operating Mode (0-Online, 1-Airplane, 2-Factory Test,\n"
                 << "3-Offline, 4-Resetting, 5-Shutting Down, 6-Persistent Low "
                    "Power) : ";
@@ -415,7 +417,7 @@ void PhoneMenu::networkMenu(std::vector<std::string> userInput) {
 
 void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
    if(phone_) {
-      int eCallMode;
+      int eCallMode = INVALID;
       std::cout << std::endl;
       std::cout << "Enter eCall Operating Mode(0-NORMAL, 1-ECALL_ONLY): ";
       std::cin >> eCallMode;

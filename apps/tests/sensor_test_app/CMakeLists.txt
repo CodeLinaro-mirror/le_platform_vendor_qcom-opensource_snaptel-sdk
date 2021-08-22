@@ -4,6 +4,7 @@ set(TARGET_SENSOR_TEST_APP sensor_test_app)
 
 pkg_check_modules(TELUXSENSOR REQUIRED telux-sensor)
 pkg_check_modules(TELUXCOMMON REQUIRED telux-common)
+pkg_check_modules(TELUXPOWER REQUIRED telux-power)
 
 
 set(SENSOR_TEST_APP_SOURCES
@@ -33,7 +34,7 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_SENSOR_TEST_APP} ${SENSOR_TEST_APP_SOURCES})
-target_link_libraries(${TARGET_SENSOR_TEST_APP} ${TELUXSENSOR_LIBRARIES} ${TELUXCOMMON_LIBRARIES} pthread)
+target_link_libraries(${TARGET_SENSOR_TEST_APP} ${TELUXSENSOR_LIBRARIES} ${TELUXCOMMON_LIBRARIES} ${TELUXPOWER_LIBRARIES} pthread)
 
 # install to target
 install ( TARGETS ${TARGET_SENSOR_TEST_APP}

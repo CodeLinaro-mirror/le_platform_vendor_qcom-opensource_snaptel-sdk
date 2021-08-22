@@ -161,11 +161,34 @@ void SensorUtils::printSensorEvent(
     }
 }
 
+void SensorUtils::printSensorFeatureBufferedEvent(SensorEvent &s) {
+    print_notification("Buffered Events: ")
+        << s.timestamp << "ns, " << s.uncalibrated.data.x
+        << ", " << s.uncalibrated.data.y << ", " << s.uncalibrated.data.z << ", "
+        << s.uncalibrated.bias.x << ", " << s.uncalibrated.bias.y << ", "
+        << s.uncalibrated.bias.z << std::endl;
+}
+
 void SensorUtils::printSensorFeatureInfo(SensorFeature feature) {
-    std::cout << "Feature name: " << feature.name << std::endl;
+    print_notification("SensorFeatureEvent: ") << "Feature name: " << feature.name << std::endl;
 }
 
 void SensorUtils::printSensorFeatureEvent(SensorFeatureEvent event) {
     print_notification("SensorFeatureEvent: ")
         << event.id << " from feature " << event.name << " @ " << event.timestamp << std::endl;
+}
+
+void SensorUtils::printTcuActivityState(telux::power::TcuActivityState state) {
+
+    if(state == telux::power::TcuActivityState::SUSPEND) {
+        print_notification("TCU-activity State : SUSPEND") << std::endl;
+    } else if(state == telux::power::TcuActivityState::RESUME) {
+        print_notification("TCU-activity State : RESUME") << std::endl;
+    } else if(state == telux::power::TcuActivityState::SHUTDOWN) {
+        print_notification(" TCU-activity State : SHUTDOWN") << std::endl;
+    } else if(state == telux::power::TcuActivityState::UNKNOWN) {
+        print_notification(" TCU-activity State : UNKNOWN") << std::endl;
+    } else {
+        std::cout << " ERROR: Invalid TCU-activity state notified" << std::endl;
+    }
 }

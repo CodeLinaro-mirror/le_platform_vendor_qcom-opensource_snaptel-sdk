@@ -50,7 +50,79 @@ class SensorFeatureEventListener : public telux::sensor::ISensorFeatureEventList
     void onEvent(SensorFeatureEvent event) {
         SensorUtils::printSensorFeatureEvent(event);
     }
+    void onBufferedEvent(std::string sensorName, std::shared_ptr<std::vector<SensorEvent>> events,
+            bool isLast) {
+        for (SensorEvent s : *(events.get())) {
+            SensorUtils::printSensorFeatureBufferedEvent(s);
+        }
+        std::cout << " Received events from "<< sensorName << " count - " << events->size()
+            <<  " isLast - " << isLast << std::endl;
+    }
 };
+
+void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) {
+    std::cout << std::endl;
+    SensorUtils::printTcuActivityState(state);
+    if(state == TcuActivityState::SUSPEND) {
+        // enable MLC feature
+        for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
+            std::cout << "Enabling sensor feature fifo for " << (*it) << std::endl;
+            telux::common::Status status = sensorFeatureManager_->enableFeature(*it);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "enableFeature fifo failed: " << std::endl;
+                Utils::printStatus(status);
+                break;
+            }
+        }
+        Status ackStatus = tcuActivityMgr_->sendActivityStateAck(TcuActivityStateAck::SUSPEND_ACK);
+        if(ackStatus == Status::SUCCESS) {
+            std::cout << " Sent SUSPEND acknowledgement" << std::endl;
+        } else {
+            std::cout << " Failed to send SUSPEND acknowledgement !" << std::endl;
+        }
+    } else if(state == TcuActivityState::RESUME) {
+        // disable MLC feature
+        for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
+            disableFeature(*it);
+        }
+    }
+}
+
+void SensorFeatureControlMenu::initTcuPowerMgr() {
+    std::cout << " Connecting to LOCAL TCU Activity Manager " << std::endl;
+    std::cout << " Initializing the client as a SLAVE " << std::endl;
+
+    // Get power factory instance
+    auto &powerFactory = PowerFactory::getInstance();
+    // Get TCU-activity manager object
+    std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
+    tcuActivityMgr_ = powerFactory.getTcuActivityManager(ClientType::SLAVE,
+        telux::common::ProcType::LOCAL_PROC,
+            [&](telux::common::ServiceStatus status) {
+                    prom.set_value(status);
+            });
+    if(tcuActivityMgr_ == nullptr) {
+        std::cout <<" ERROR - Failed to get manager instance" << std::endl;
+        return;
+    }
+    // Wait for TCU-activity manager to be ready
+    std::cout << " Waiting for TCU Activity Manager to be ready " << std::endl;
+    telux::common::ServiceStatus serviceStatus = prom.get_future().get();
+    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << " TCU-activity manager is ready" << std::endl;
+    } else {
+        std::cout << " Failed to initialize TCU-activity manager" << std::endl;
+    }
+
+    // Registering a listener for TCU-activity state updates
+    // tcuActivityListener_ = std::make_shared<TcuActivityListener>();
+    // if (tcuActivityMgr_->registerListener(tcuActivityListener_)
+    if (tcuActivityMgr_->registerListener(shared_from_this()) != telux::common::Status::SUCCESS) {
+        std::cout << " ERROR - Failed to register for TCU-activity state updates" << std::endl;
+    } else {
+        std::cout << " Registered Listener for TCU-activity state updates" << std::endl;
+    }
+}
 
 SensorFeatureControlMenu::SensorFeatureControlMenu(
     std::string appName, std::string cursor, SensorTestAppArguments commandLineArgs)
@@ -107,6 +179,7 @@ telux::common::ServiceStatus SensorFeatureControlMenu::init(bool shouldInitConso
         if (shouldInitConsole) {
             initConsole();
         }
+        initTcuPowerMgr();
     }
     return serviceStatus;
 }
@@ -130,11 +203,25 @@ void SensorFeatureControlMenu::initConsole() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "List_Active_Features", {},
             std::bind(&SensorFeatureControlMenu::listActiveFeatures, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> enableSensorFeatureFifoCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("5","Enable_Sensor_Feature_On_Suspend", {},
+                std::bind(&SensorFeatureControlMenu::enableSensorFeatureFifo,
+                    this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listSensorFeaturesCommand,
-        enableSensorFeatureCommand, disableSensorFeatureCommand, listActiveFeaturesCommand};
+        enableSensorFeatureCommand, disableSensorFeatureCommand, listActiveFeaturesCommand,
+        enableSensorFeatureFifoCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
+}
+
+void SensorFeatureControlMenu::enableSensorFeatureFifo(std::vector<std::string> userInput) {
+    std::string name;
+    SensorUtils::getInput("Enter feature name: ", name);
+    enabledFeaturesFifo_.emplace(name);
+    std::cout << "Enable sensor feature fifo request queued for " << name << std::endl;
 }
 
 void SensorFeatureControlMenu::listSensorFeatures(std::vector<std::string> userInput) {
@@ -192,5 +279,9 @@ void SensorFeatureControlMenu::cleanup() {
     for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ++it) {
         disableFeature(*it);
     }
+    for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
+        disableFeature(*it);
+    }
     sensorFeatureManager_ = nullptr;
+    tcuActivityMgr_ = nullptr;
 }

@@ -60,12 +60,46 @@ class ISensorFeatureEventListener {
     /**
      * This function is called to notify about sensor feature events
      *
-     * @param [in] id - The sensor feature event that got triggered
+     * @param [in] event - The sensor feature event @ref telux::sensor::SensorFeatureEvent
+     *                     that got triggered
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
     virtual void onEvent(SensorFeatureEvent event) {
+    }
+
+    /**
+     * This function is called to notify about available sensor events that caused
+     * one or more sensor feature events @ref SensorFeatureEvent to occur.
+     *
+     * The sensor events that occurred when the apps processor was in sleep mode
+     * and triggered the sensor feature to occur will be buffered and delivered
+     * using this method instead of @ref telux::sensor::ISensorEventListener::onEvent.
+     *
+     * In case a sensor event occurs when the system is active, this listener is not invoked.
+     * In this case, the required sensor data that triggered the feature can be obtained from the
+     * @ref telux::sensor::ISensorEventListener::onEvent listener interface.
+     *
+     * Note the following
+     * constraints on this listener API
+     * It shall not perform time consuming (compute or I/O intensive) operations on this thread
+     * It shall not inovke an sensor APIs on this thread due to the underlying concurrency model
+     *
+     * @param [in] sensorName - The name of the sensor that generated the buffered events
+     * @param [in] events - List of sensor events
+     * @param [in] isLast - Indicate if this is last notification for the buffered events.
+     *
+     *                      Multiple @ref telux::sensor::SensorFeature can be enabled using
+     *                      @ref telux::sensor::enableFeature, whose notification will be delivered
+     *                      in sequence.
+     *                      isLast will be set to true to signify last event of a SensorFeature.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void onBufferedEvent(std::string sensorName,
+                    std::shared_ptr<std::vector<SensorEvent>> events, bool isLast) {
     }
 
     /**
@@ -106,7 +140,17 @@ class ISensorFeatureManager {
     virtual telux::common::Status getAvailableFeatures(std::vector<SensorFeature> &features) = 0;
 
     /**
-     * Enable the requested feature
+     * Enable the requested feature.
+     *
+     * Enabling a sensor feature when the system is active would additionally require enabling the
+     * corresponding sensor which is used by the sensor feature. For instance, if the sensor feature
+     * uses the accelerometer data, in addition to calling this method, the
+     * @ref telux::sensor::ISensor::activate should also be invoked for the required sensor, in this
+     * case, the accelerometer.
+     *
+     * If the sensor feature only needs to be enabled during suspend mode, just enabling the sensor
+     * feature using this method would be sufficient. The underlying framework would take care
+     * to enable the required sensor when the system is about to enter suspend state.
      *
      * @param [in] name         The name of the feature to be enabled. Enabling an already enabled
      *                          feature would result in the API returning

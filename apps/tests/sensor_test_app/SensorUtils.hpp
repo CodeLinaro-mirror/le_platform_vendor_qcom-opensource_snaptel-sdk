@@ -35,6 +35,7 @@
 #include <string>
 #include <sstream>
 #include <telux/sensor/SensorDefines.hpp>
+#include <telux/power/TcuActivityDefines.hpp>
 #include <telux/sensor/Sensor.hpp>
 
 using namespace telux::sensor;
@@ -78,9 +79,12 @@ class SensorUtils {
     }
     static void printSensorEvent(
         SensorType type, SensorEvent &s, float samplingRate, std::string &tag);
+    static void printSensorFeatureBufferedEvent(SensorEvent &s);
     static bool isUncalibratedSensor(SensorType type);
     static void printSensorFeatureInfo(SensorFeature feature);
     static void printSensorFeatureEvent(SensorFeatureEvent event);
+    static void printTcuActivityState(telux::power::TcuActivityState state);
+
 };
 
 struct SensorTestAppArguments {

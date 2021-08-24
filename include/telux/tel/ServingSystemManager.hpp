@@ -43,6 +43,7 @@
 #include <memory>
 
 #include <telux/common/CommonDefines.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 
 namespace telux {
 namespace tel {
@@ -61,6 +62,27 @@ enum class ServiceDomainPreference {
    CS_ONLY, /**< Circuit-switched only */
    PS_ONLY, /**< Packet-switched only */
    CS_PS,   /**< Circuit-switched and packet-switched */
+};
+
+/**
+ * Defines service domain
+ */
+enum class ServiceDomain {
+   UNKNOWN = -1,  /**< Unknown, when the information is not available */
+   NO_SRV,        /**< No Service */
+   CS_ONLY,       /**< Circuit-switched only */
+   PS_ONLY,       /**< Packet-switched only */
+   CS_PS,         /**< Circuit-switched and packet-switched */
+   CAMPED,        /**< Device camped on the network according to its provisioning, but not
+                       registered */
+};
+
+/**
+ * Defines current serving system information
+ */
+struct ServingSystemInfo {
+   RadioTechnology rat;    /**< Current serving RAT */
+   ServiceDomain   domain; /**< Current service domain registered on system for the serving RAT */
 };
 
 /**
@@ -232,6 +254,19 @@ public:
       = 0;
 
    /**
+    * Get the Serving system information. Supports only 3GPP RATs.
+    *
+    * @param [out] sysInfo  Serving system information
+    *                       @ref ServingSystemInfo
+    *
+    * @returns Status of getServingSystemInfo i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status getSystemInfo(ServingSystemInfo &sysInfo) = 0;
+
+   /**
     * Request for Dual Connectivity status on 5G NR.
     *
     * @returns @ref DcStatus
@@ -291,6 +326,18 @@ public:
     * @param [in] preference      @ref ServiceDomainPreference
     */
    virtual void onServiceDomainPreferenceChanged(ServiceDomainPreference preference) {
+   }
+
+   /**
+    * This function is called whenever the Serving System information is changed.
+    * Supports only 3GPP RATs.
+    *
+    * @param [in] sysInfo    @ref ServingSystemInfo
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual void onSystemInfoChanged(ServingSystemInfo sysInfo) {
    }
 
    /**

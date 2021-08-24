@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include "MyServingSystemHandler.hpp"
+#include "MyPhoneListener.hpp"
 #include "Utils.hpp"
 
 #define PRINT_CB std::cout << "\033[1;35mCALLBACK: \033[0m"
@@ -103,7 +104,7 @@ void MyRatPreferenceResponseCallback::ratPreferenceResponse(telux::tel::RatPrefe
    }
 }
 
-std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomainPreference preference) {
+std::string MyServingSystemHelper::getServiceDomainPref(telux::tel::ServiceDomainPreference preference) {
    std::string prefString = " Unknown";
    switch(preference) {
       case telux::tel::ServiceDomainPreference::CS_ONLY:
@@ -121,12 +122,43 @@ std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomainPre
    return prefString;
 }
 
-void MyServiceDomainResponseCallback::serviceDomainResponse(
+std::string MyServingSystemHelper::getServiceDomain(telux::tel::ServiceDomain domain) {
+   std::string domainString = " Unknown ";
+   switch(domain) {
+      case telux::tel::ServiceDomain::NO_SRV:
+         domainString = " No Service ";
+         break;
+      case telux::tel::ServiceDomain::CS_ONLY:
+         domainString = " Circuit Switched(CS) only ";
+         break;
+      case telux::tel::ServiceDomain::PS_ONLY:
+         domainString = " Packet Switched(PS) only ";
+         break;
+      case telux::tel::ServiceDomain::CS_PS:
+         domainString = " Circuit Switched and Packet Switched ";
+         break;
+      case telux::tel::ServiceDomain::CAMPED:
+         domainString = " Camped ";
+         break;
+      case telux::tel::ServiceDomain::UNKNOWN:
+         domainString = " Unknown ";
+         break;
+      default:
+         break;
+   }
+   return domainString;
+}
+
+std::string MyServingSystemHelper::getRadioTechnology(telux::tel::RadioTechnology radioTech) {
+    return MyPhoneHelper::radioTechToString(radioTech);
+}
+
+void MyServiceDomainPrefResponseCallback::serviceDomainPrefResponse(
    telux::tel::ServiceDomainPreference preference, telux::common::ErrorCode error) {
    std::cout << "\n";
    if(error == telux::common::ErrorCode::SUCCESS) {
       PRINT_CB << "\n requestServiceDomainPreference is successful.\n Service domain is "
-               << MyServingSystemHelper::getServiceDomain(preference) << std::endl;
+               << MyServingSystemHelper::getServiceDomainPref(preference) << std::endl;
    } else {
       PRINT_CB << "\n requestServiceDomainPreference failed, ErrorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
@@ -152,8 +184,17 @@ void MyServingSystemListener::onRatPreferenceChanged(telux::tel::RatPreference p
 void MyServingSystemListener::onServiceDomainPreferenceChanged(
    telux::tel::ServiceDomainPreference preference) {
    std::cout << "\n\n";
-   PRINT_NOTIFICATION << "\nService domain preference is"
-                      << MyServingSystemHelper::getServiceDomain(preference) << std::endl;
+   PRINT_NOTIFICATION << " Service domain preference is"
+                      << MyServingSystemHelper::getServiceDomainPref(preference) << std::endl;
+}
+
+void MyServingSystemListener::onSystemInfoChanged(telux::tel::ServingSystemInfo sysInfo) {
+   std::cout << "\n\n";
+   PRINT_NOTIFICATION << " Serving System information is changed" << std::endl;
+   PRINT_NOTIFICATION << " Serving RAT is "
+      << MyServingSystemHelper::getRadioTechnology(sysInfo.rat) << std::endl;
+   PRINT_NOTIFICATION << " Service domain is "
+      << MyServingSystemHelper::getServiceDomain(sysInfo.domain) << std::endl;
 }
 
 void MyServingSystemListener::onDcStatusChanged(telux::tel::DcStatus dcStatus) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -58,6 +58,7 @@ public:
    void setServiceDomainPreference(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
    void getDualConnectivityStatus(std::vector<std::string> userInput);
+   void getSystemInfo(std::vector<std::string> userInput);
 
 private:
    // Member variable to keep the Listener object alive till application ends.

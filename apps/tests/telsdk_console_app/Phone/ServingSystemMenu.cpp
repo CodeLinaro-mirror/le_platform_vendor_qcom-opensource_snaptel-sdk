@@ -114,19 +114,23 @@ void ServingSystemMenu::init() {
              "4", "Set_service_domain_preference", {},
              std::bind(&ServingSystemMenu::setServiceDomainPreference, this,
                 std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> getSystemInfoCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "5", "Get_Serving_System_Information", {},
+             std::bind(&ServingSystemMenu::getSystemInfo, this, std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> getDcStatusCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "5", "Get_NR_Dual_Connectivity_Status", {},
+             "6", "Get_NR_Dual_Connectivity_Status", {},
              std::bind(&ServingSystemMenu::getDualConnectivityStatus, this,
                 std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "6", "Select_sim_slot", {},
+             "7", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
              getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
-             getDcStatusCommand };
+             getSystemInfoCommand, getDcStatusCommand };
 
        if (servingSystemMgrs_.size() > 1) {
            commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -202,7 +206,7 @@ void ServingSystemMenu::getServiceDomainPreference(std::vector<std::string> user
    auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
    if(servingSystemMgr) {
       auto ret = servingSystemMgr->requestServiceDomainPreference(
-         MyServiceDomainResponseCallback::serviceDomainResponse);
+         MyServiceDomainPrefResponseCallback::serviceDomainPrefResponse);
       if(ret == telux::common::Status::SUCCESS) {
          std::cout << "\nGet service domain preference request sent successfully\n";
       } else {
@@ -235,6 +239,23 @@ void ServingSystemMenu::setServiceDomainPreference(std::vector<std::string> user
          std::cout << "\nSet service domain preference request sent successfully\n";
       } else {
          std::cout << "\nSet service domain preference request failed \n";
+      }
+   }
+}
+
+void ServingSystemMenu::getSystemInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      telux::tel::ServingSystemInfo sysInfo;
+      auto status = servingSystemMgr->getSystemInfo(sysInfo);
+      if(status == telux::common::Status::SUCCESS) {
+         std::cout << "\n getSystemInfo is successful"
+            << "\n Serving RAT is " << MyServingSystemHelper::getRadioTechnology(sysInfo.rat)
+            << "\n Service domain is "
+               << MyServingSystemHelper::getServiceDomain(sysInfo.domain)
+            << std::endl;
+      } else {
+         std::cout << "\n getSystemInfo failed, status: " << static_cast<int>(status);
       }
    }
 }

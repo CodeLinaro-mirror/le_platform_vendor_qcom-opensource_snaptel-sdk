@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,6 +35,8 @@ extern "C" {
 
 #include "RspApp.hpp"
 #include "Utils.hpp"
+#include <telux/rsp/SimProfileFactory.hpp>
+#include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
 
 #define MIN_SIM_SLOT_COUNT 1
@@ -52,6 +54,9 @@ RemoteSimProfile::RemoteSimProfile()
 }
 
 RemoteSimProfile::~RemoteSimProfile() {
+}
+
+void RemoteSimProfile::cleanup() {
     if (simProfileManager_ && rspListener_) {
         simProfileManager_->deregisterListener(rspListener_);
     }
@@ -67,33 +72,67 @@ RemoteSimProfile &RemoteSimProfile::getInstance() {
 
 void RemoteSimProfile::init() {
 
-    //  Get the SimProfileFactory instances.
+    // Get the relevant factory and manager instances.
     auto &simProfileFactory = telux::rsp::SimProfileFactory::getInstance();
     simProfileManager_ = simProfileFactory.getSimProfileManager();
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    cardManager_ = phoneFactory.getCardManager();
 
-    //  Check if subsystem is ready
     if (simProfileManager_) {
-        //  Check if SimProfile subsystem is ready
+        // Check if SIM profile subsystem is ready
         bool subSystemStatus = simProfileManager_->isSubsystemReady();
 
-        //  If subsystem is not ready, wait for it to be ready
+        // If SIM profile manager subsystem is not ready, wait for it to be ready
         if(!subSystemStatus) {
-            std::cout << "\n\nSimProfile subsystem is not ready, Please wait" << std::endl;
+            std::cout << "\nSIM profile manager subsystem is not ready" << std::endl;
+            std::cout << "wait unconditionally for it to be ready " << std::endl;
             std::future<bool> f = simProfileManager_->onSubsystemReady();
-            // If we want to wait unconditionally for SimProfile subsystem to be ready
             subSystemStatus = f.get();
         }
 
         //  Exit the application, if SDK is unable to initialize SimProfile subsystem
-        if(subSystemStatus) {
-            rspListener_ = std::make_shared<RspListener>();
-            telux::common::Status status = simProfileManager_->registerListener(rspListener_);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "ERROR - Failed to register listener" << std::endl;
+        if(!subSystemStatus) {
+            std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
+            exit(0);
+        }
+
+        if (cardManager_) {
+            // Check if Card subsystem is ready
+            subSystemStatus = cardManager_->isSubsystemReady();
+
+            // If Card subsystem is not ready, wait for it to be ready
+            if(!subSystemStatus) {
+                std::cout << "Card subsystem is not ready, Please wait" << std::endl;
+                std::future<bool> f = cardManager_->onSubsystemReady();
+                // If we want to wait unconditionally for Card subsystem to be ready
+                subSystemStatus = f.get();
+            }
+
+            if (subSystemStatus) {
+                std::vector<int> slotIds;
+                telux::common::Status status = cardManager_->getSlotIds(slotIds);
+                if (status == telux::common::Status::SUCCESS) {
+                    for (unsigned int index = 1; index <= slotIds.size(); index++) {
+                        auto card = cardManager_->getCard(index, &status);
+                        if (card != nullptr) {
+                            cards_.emplace_back(card);
+                        }
+                    }
+                }
+
+                // Instantiate and register RspListener
+                rspListener_ = std::make_shared<RspListener>();
+                status = simProfileManager_->registerListener(rspListener_);
+                if(status != telux::common::Status::SUCCESS) {
+                    std::cout << "ERROR - Failed to register listener" << std::endl;
+                    exit(0);
+                }
+            } else {
+                std::cout << "ERROR - Unable to initialize card subsystem" << std::endl;
                 exit(0);
             }
         } else {
-            std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
+            std::cout << "ERROR - CardManager is null" << std::endl;
             exit(0);
         }
     } else {
@@ -326,15 +365,26 @@ void RemoteSimProfile::requestEid() {
     auto respCb = [&](std::string eid, telux::common::ErrorCode errorCode)
        { onEidResponse(eid, errorCode); };
 
-    if(simProfileManager_) {
-        telux::common::Status status = simProfileManager_->requestEid(slotId_, respCb);
-        if (status == telux::common::Status::SUCCESS) {
-            std::cout << "Request EID sent successfully" << std::endl;
-        } else {
-            std::cout << "Request EID failed, status:" << static_cast<int>(status) << std::endl;
+    if(cardManager_) {
+        if (cards_.empty()) {
+            std::cout << "ERROR: No card object found" << std::endl;
+            return;
+        }
+        auto card = cards_[slotId_ - 1];
+        // Request EID of the eUICC
+        if (card) {
+            telux::common::Status status = card->requestEid(respCb);
+            if (status == telux::common::Status::SUCCESS) {
+                std::cout << "Request EID sent successfully" << std::endl;
+            } else {
+                std::cout << "Request EID failed, status:" << static_cast<int>(status) << std::endl;
+                Utils::printStatus(status);
+            }
+        }  else {
+            std::cout << "ERROR: Unable to get card instance";
         }
     } else {
-        std::cout << "ERROR - SimProfileManger is null" << std::endl;
+        std::cout << "ERROR - CardManger is null" << std::endl;
     }
 }
 

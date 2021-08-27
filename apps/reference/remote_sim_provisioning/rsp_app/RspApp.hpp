@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -38,7 +38,8 @@
 #define RSPAPP_HPP
 
 #include <telux/common/CommonDefines.hpp>
-#include <telux/rsp/SimProfileFactory.hpp>
+#include <telux/rsp/SimProfileManager.hpp>
+#include <telux/tel/CardManager.hpp>
 
 #include "RspListener.hpp"
 
@@ -49,6 +50,7 @@ class RemoteSimProfile {
     static RemoteSimProfile &getInstance();
     Status parseArguments(int arg, char *argv[]);
     void init();
+    void cleanup();
 
  private:
     SlotId slotId_;
@@ -61,6 +63,8 @@ class RemoteSimProfile {
     std::string nickname_;
     std::shared_ptr<telux::rsp::ISimProfileManager> simProfileManager_ = nullptr;
     std::shared_ptr<RspListener> rspListener_ = nullptr;
+    std::shared_ptr<telux::tel::ICardManager> cardManager_= nullptr;
+    std::vector<std::shared_ptr<telux::tel::ICard>> cards_;
 
     RemoteSimProfile();
     ~RemoteSimProfile();

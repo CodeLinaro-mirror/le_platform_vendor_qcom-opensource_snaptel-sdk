@@ -67,7 +67,6 @@ AudioConsoleApp::~AudioConsoleApp() {
     loopbackMenu_ = nullptr;
     toneMenu_ = nullptr;
     transCodeMenu_ = nullptr;
-    closeAllStreams();
     audioClient_ = nullptr;
 }
 
@@ -295,35 +294,6 @@ void AudioConsoleApp::getSupportedStreams(std::vector<std::string> userInput) {
         p.get_future().get();
     } else {
         std::cout << "Invalid Audio Manager" << std::endl;
-    }
-}
-
-void AudioConsoleApp::closeAllStreams() {
-    if (audioManager_) {
-
-        auto audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(
-            audioClient_->getStream(StreamType::PLAY));
-        if (audioPlayStream_) {
-            audioClient_->deleteStream(StreamType::PLAY);
-        }
-
-        auto audioCaptureStream_ = std::dynamic_pointer_cast<IAudioCaptureStream>(
-            audioClient_->getStream(StreamType::CAPTURE));
-        if (audioCaptureStream_) {
-            audioClient_->deleteStream(StreamType::CAPTURE);
-        }
-
-        auto audioToneStream_ = std::dynamic_pointer_cast<IAudioToneGeneratorStream>(
-            audioClient_->getStream(StreamType::TONE_GENERATOR));
-        if (audioToneStream_) {
-            audioClient_->deleteStream(StreamType::TONE_GENERATOR);
-        }
-
-        auto audioLoopbackStream_ = std::dynamic_pointer_cast<IAudioLoopbackStream>(
-            audioClient_->getStream(StreamType::LOOPBACK));
-        if (audioLoopbackStream_) {
-            audioClient_->deleteStream(StreamType::LOOPBACK);
-        }
     }
 }
 

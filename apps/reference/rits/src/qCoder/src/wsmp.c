@@ -379,14 +379,14 @@ static int encode_wsm2016(wsmp_data_t *wbp, abuf_t *wsm_payload)
                 printf(" No WSMP Payload nor payload length added \n");
             }
         }
-
+#if 0
         if (gVerbosity > 2) {
             printf("WSMP HEADER: ");
             abuf_dump(wbp->abp);
             printf("WSMP FRAME: ");
             abuf_dump(wsm_payload);
         }
-
+#endif
         result = abuf_byte_len(wbp->abp);
     }
 err:

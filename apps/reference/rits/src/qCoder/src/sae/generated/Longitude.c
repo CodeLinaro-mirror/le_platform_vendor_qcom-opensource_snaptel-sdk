@@ -5,7 +5,7 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#include "Longitude.h"
+#include "LongitudeIeee.h"
 
 int
 Longitude_constraint(asn_TYPE_descriptor_t *td, const void *sptr,
@@ -121,7 +121,7 @@ static asn_per_constraints_t asn_PER_type_Longitude_constr_1 GCC_NOTUSED = {
 static const ber_tlv_tag_t asn_DEF_Longitude_tags_1[] = {
 	(ASN_TAG_CLASS_UNIVERSAL | (2 << 2))
 };
-asn_TYPE_descriptor_t asn_DEF_Longitude = {
+asn_TYPE_descriptor_t asn_DEF_LongitudeIeee = {
 	"Longitude",
 	"Longitude",
 	Longitude_free,

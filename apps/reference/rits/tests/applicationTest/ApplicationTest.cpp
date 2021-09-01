@@ -857,10 +857,16 @@ int setup(const bool tx, const bool rx,
 #ifdef ETSI
         msgType = MessageType::CAM;
         printf("Will be creating application for: ");
-        if(msgType == MessageType::BSM)
+        if (cam) {
+            msgType = MessageType::CAM;
             printf("CAMs\n");
-        else
-            printf("DENMs\n");
+        } else if (denm) {
+            msgType = MessageType::DENM;
+            printf("DENM\n");
+        } else {
+            printf("Unknown\n");
+            return -1;
+        }
         if (txSim)
             application =
                 new EtsiApplication(txSimIp, txSimPort, string(""), 0, configFile);
@@ -911,6 +917,7 @@ int setup(const bool tx, const bool rx,
             }
         }
         else {
+            sem_init(&cnt_sem, 0, 1);
             if (cam) {
                 threads.push_back(thread(receive, MessageType::CAM));
             }
@@ -920,7 +927,6 @@ int setup(const bool tx, const bool rx,
             }
             else {
                 // TODO: Implement for CAM, DENM as well
-                sem_init(&cnt_sem, 0, 1);
                 if (application->configuration.driverVerbosity) {
                     cout << "Number of Radio RX Threads: " <<
                             (int)application->configuration.numRxThreads << endl;

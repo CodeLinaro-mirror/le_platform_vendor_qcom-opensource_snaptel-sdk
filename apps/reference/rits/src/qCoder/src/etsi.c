@@ -34,6 +34,8 @@
 #include "CAM.h"
 #include "DENM.h"
 
+extern int gVerbosity;
+
 static asn_codec_ctx_t *codec_ctx = 0;
 
 /**
@@ -61,6 +63,10 @@ static int decode_as_cam(msg_contents *mc) {
     }
     mc->cam = cam;
     abuf_pull(&mc->abuf, rval.consumed);
+
+    if (gVerbosity > 3) {
+        print_cam(cam);
+    }
     return 0;
 }
 
@@ -88,6 +94,10 @@ static int decode_as_denm(msg_contents *mc) {
     }
     mc->denm = denm;
     abuf_pull(&mc->abuf, rval.consumed);
+
+    if (gVerbosity > 3) {
+        print_denm(denm);
+    }
     return 0;
 }
 

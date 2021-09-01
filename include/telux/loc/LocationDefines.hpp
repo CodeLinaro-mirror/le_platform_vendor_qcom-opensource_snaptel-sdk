@@ -240,7 +240,11 @@ enum GnssPositionTechType {
    *  location info.*/
   GNSS_HYBRID = (1 << 7),
   /** Precise position engine was used to generate location info.*/
-  GNSS_PPE = (1 << 8)
+  GNSS_PPE = (1 << 8),
+  /** Location was calculated using Vehicular data. */
+  GNSS_VEHICLE = (1 << 9),
+  /** Location was calculated using Visual data. */
+  GNSS_VISUAL = (1 << 10)
 };
 
 /*Bit mask containing bits from GnssPositionTechType */

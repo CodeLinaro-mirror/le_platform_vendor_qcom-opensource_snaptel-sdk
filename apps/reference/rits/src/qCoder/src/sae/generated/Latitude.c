@@ -5,7 +5,7 @@
  * 	`asn1c -fcompound-names -gen-PER`
  */
 
-#include "Latitude.h"
+#include "LatitudeIeee.h"
 
 static int
 memb_fill_constraint_1(asn_TYPE_descriptor_t *td, const void *sptr,
@@ -109,7 +109,7 @@ static asn_SEQUENCE_specifics_t asn_SPC_Latitude_specs_1 = {
 	-1,	/* Start extensions */
 	-1	/* Stop extensions */
 };
-asn_TYPE_descriptor_t asn_DEF_Latitude = {
+asn_TYPE_descriptor_t asn_DEF_LatitudeIeee = {
 	"Latitude",
 	"Latitude",
 	SEQUENCE_free,

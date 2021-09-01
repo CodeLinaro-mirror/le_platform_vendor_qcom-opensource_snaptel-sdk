@@ -12,8 +12,8 @@
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "Latitude.h"
-#include "Longitude.h"
+#include "LatitudeIeee.h"
+#include "LongitudeIeee.h"
 #include <constr_SEQUENCE.h>
 
 #ifdef __cplusplus

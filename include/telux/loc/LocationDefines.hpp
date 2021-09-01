@@ -214,7 +214,9 @@ enum GnssPositionTechType {
   GNSS_INJECTED_COARSE_POSITION= (1 << 5),
   GNSS_AFLT = (1 << 6),
   GNSS_HYBRID = (1 << 7),
-  GNSS_PPE = (1 << 8)
+  GNSS_PPE = (1 << 8),
+  GNSS_VEHICLE = (1 << 9),
+  GNSS_VISUAL = (1 << 10)
 };
 
 /*Bit mask containing bits from GnssPositionTechType */

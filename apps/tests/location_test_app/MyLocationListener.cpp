@@ -530,6 +530,12 @@ void MyLocationListener::printLocationPositionTech(
    if((gnssPositionTech & telux::loc::GNSS_PPE)) {
       std::cout << "PPE" << std::endl;
    }
+   if((gnssPositionTech & telux::loc::GNSS_VEHICLE)) {
+      std::cout << "VEHICLE" << std::endl;
+   }
+   if((gnssPositionTech & telux::loc::GNSS_VISUAL)) {
+      std::cout << "VISUAL" << std::endl;
+   }
    if((gnssPositionTech == telux::loc::GNSS_DEFAULT)) {
       std::cout << "DEFAULT" << std::endl;
    }

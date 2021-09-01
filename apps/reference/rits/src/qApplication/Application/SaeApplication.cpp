@@ -41,7 +41,7 @@ thread_local int verifStatIdx = 0;
 thread_local int verif_fails = 0;
 thread_local std::vector<VerifStats> verifStats;
 thread_local msg_contents* mc;
-thread_local msg_contents msg_cont;
+thread_local msg_contents msg_cont = {0};
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
 thread_local int decFail = 0;
@@ -147,7 +147,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
     int macAddrLen = CV2X_MAC_ADDR_LEN;
 
-    if(&msg_cont.abuf == NULL || msg_cont.abuf.size == 0){
+    if(msg_cont.abuf.head == NULL || msg_cont.abuf.size == 0){
         abuf_alloc(&msg_cont.abuf, ABUF_LEN, ABUF_HEADROOM);
         // for SAE only
         msg_cont.stackId = STACK_ID_SAE;

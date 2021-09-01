@@ -22,7 +22,7 @@ extern "C" {
 typedef long	 Longitude_t;
 
 /* Implementation */
-extern asn_TYPE_descriptor_t asn_DEF_Longitude;
+extern asn_TYPE_descriptor_t asn_DEF_LongitudeIeee;
 asn_struct_free_f Longitude_free;
 asn_struct_print_f Longitude_print;
 asn_constr_check_f Longitude_constraint;

@@ -13,6 +13,7 @@ elseif(DEFINED ENV{AEROLINK_PATH})
     message("Building with security")
 endif()
 
+# add "-DEMIT_ASN_DEBUG -DASN_THREAD_SAFE" to debug asn1 decoder
 if(ASN1C_PATH)
     add_definitions(-DETSI -DWITH_WSA -D_DEFAULT_SOURCE)
     set(ASN1C_SKELETONS ${ASN1C_PATH}/skeletons)

@@ -49,7 +49,6 @@ private:
    void dial(std::vector<std::string> userInput);
    void acceptCall(std::vector<std::string> userInput);
    void rejectCall(std::vector<std::string> userInput);
-   void rejectWithSms(std::vector<std::string> userInput);
    void hangupDialingOrAlerting(std::vector<std::string> userInput);
    void hangupWithCallIndex(std::vector<std::string> userInput);
    void hangupForegroundResumeBackground(std::vector<std::string> userInput);

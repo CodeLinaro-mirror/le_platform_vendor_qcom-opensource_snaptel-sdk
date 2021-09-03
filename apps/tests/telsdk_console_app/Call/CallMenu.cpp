@@ -128,53 +128,49 @@ void CallMenu::init() {
    std::shared_ptr<ConsoleAppCommand> rejectCallCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "3", "Reject_call", {}, std::bind(&CallMenu::rejectCall, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> rejectWithSmsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("4", "Reject_call_with_sms", {},
-                        std::bind(&CallMenu::rejectWithSms, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> hangupWithCallIndexCommand
       = std::make_shared<ConsoleAppCommand>(
-         ConsoleAppCommand("5", "Hangup", {"index"},
+         ConsoleAppCommand("4", "Hangup", {"index"},
                            std::bind(&CallMenu::hangupWithCallIndex, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> hangupDialingOrAlertingCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "6", "Hangup", {},
+         "5", "Hangup", {},
          std::bind(&CallMenu::hangupDialingOrAlerting, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> holdCallCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "7", "Hold_call", {}, std::bind(&CallMenu::holdCall, this, std::placeholders::_1)));
+         "6", "Hold_call", {}, std::bind(&CallMenu::holdCall, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> resumeCallCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "8", "Resume_call", {}, std::bind(&CallMenu::resumeCall, this, std::placeholders::_1)));
+         "7", "Resume_call", {}, std::bind(&CallMenu::resumeCall, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> conferenceCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "9", "Conference", {}, std::bind(&CallMenu::conference, this, std::placeholders::_1)));
+         "8", "Conference", {}, std::bind(&CallMenu::conference, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> swapCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Swap", {}, std::bind(&CallMenu::swap, this, std::placeholders::_1)));
+      ConsoleAppCommand("9", "Swap", {}, std::bind(&CallMenu::swap, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getCallsCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("11", "Get_InProgress_Calls", {},
+      ConsoleAppCommand("10", "Get_InProgress_Calls", {},
                         std::bind(&CallMenu::getCalls, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> playDtmfTonesCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("12", "Play_DTMF_tone", {"number * #"},
+      ConsoleAppCommand("11", "Play_DTMF_tone", {"number * #"},
                         std::bind(&CallMenu::playDtmfTone, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> startDtmfToneCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("13", "Start_DTMF_tone", {},
+      ConsoleAppCommand("12", "Start_DTMF_tone", {},
                         std::bind(&CallMenu::startDtmfTone, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> stopDtmfToneCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("14", "Stop_DTMF_tone", {},
+      ConsoleAppCommand("13", "Stop_DTMF_tone", {},
                         std::bind(&CallMenu::stopDtmfTone, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> enableAudioCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Enable_Audio", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Enable_Audio", {},
             std::bind(&CallMenu::enableAudio, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> hangupForegroundResumeBackgroundCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "16", "Hangup_foreground_call(s)_resume_background", {},
+         "15", "Hangup_foreground_call(s)_resume_background", {},
          std::bind(&CallMenu::hangupForegroundResumeBackground, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCallSubMenu
       = {dialCommand,
          acceptCallCommand,
          rejectCallCommand,
-         rejectWithSmsCommand,
          hangupWithCallIndexCommand,
          hangupDialingOrAlertingCommand,
          holdCallCommand,
@@ -390,80 +386,6 @@ void CallMenu::rejectCall(std::vector<std::string> userInput) {
    }
    if(spCall) {
       spCall->reject(myRejectCb_);
-   } else {
-      std::cout << "No incoming/waiting call" << std::endl;
-   }
-}
-
-void CallMenu::rejectWithSms(std::vector<std::string> userInput) {
-   std::shared_ptr<telux::tel::ICall> spCall = nullptr;
-   // Fetch the list of in progress calls from CallManager and reject the incoming/waiting call with
-   // sms.
-   std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
-      = callManager_->getInProgressCalls();
-
-   if(telux::common::DeviceConfig::isMultiSimSupported()) {
-      if (phoneIds_.size() > MIN_SIM_SLOT_COUNT) {
-         // Fetch the list of in progress calls from CallManager and count the
-         // number of incoming/waiting calls.
-         int incomingCalls = 0;
-         for(auto callIterator = std::begin(inProgressCalls);
-             callIterator != std::end(inProgressCalls); ++callIterator) {
-            if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING
-               || (*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING)
-               ++incomingCalls;
-         }
-         //Incase of two simultaneous incoming calls, user to select the slotId on
-         // which to reject the call with sms
-         if(incomingCalls >= NO_OF_SIMULTANEOUS_INCOMING_CALL) {
-            std::string slotSelection;
-            char delimiter = '\n';
-            int phoneId = DEFAULT_PHONE_ID;
-
-            std::cout << "Enter the desired Phone ID / SIM slot: ";
-            std::getline(std::cin, slotSelection, delimiter);
-
-            if (!slotSelection.empty()) {
-               try {
-                  phoneId = std::stoi(slotSelection);
-                  if (phoneId < MIN_SIM_SLOT_COUNT || phoneId > MAX_SIM_SLOT_COUNT ) {
-                     std::cout << "ERROR: Invalid slot entered" << std::endl;
-                     return;
-                  }
-               } catch (const std::exception &e) {
-                  std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
-                     << slotSelection << std::endl;
-                  return;
-               }
-            } else {
-               std::cout << "Empty input, enter the correct slot" << std::endl;
-               return;
-            }
-            for(auto callIterator = std::begin(inProgressCalls);
-                callIterator != std::end(inProgressCalls); ++callIterator) {
-               if((*callIterator)->getPhoneId() == phoneId
-                  && ((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING
-                     || (*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING)) {
-                     spCall = *callIterator;
-                     break;
-               }
-            }
-         }
-      }
-   }
-   if(nullptr == spCall) {
-      // Fetch the list of in progress calls from CallManager and accept the incoming/waiting call.
-      for(auto callIterator = std::begin(inProgressCalls);
-          callIterator != std::end(inProgressCalls); ++callIterator) {
-         if((*callIterator)->getCallState() == telux::tel::CallState::CALL_INCOMING
-            ||(*callIterator)->getCallState() == telux::tel::CallState::CALL_WAITING) {
-            spCall = *callIterator;
-            break;
-         }
-      }
-   }
-   if(spCall) {
-      spCall->reject("Testing reject with reason", myRejectCb_);
    } else {
       std::cout << "No incoming/waiting call" << std::endl;
    }

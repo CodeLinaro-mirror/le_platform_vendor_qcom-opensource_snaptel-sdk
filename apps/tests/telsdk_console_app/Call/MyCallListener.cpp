@@ -50,7 +50,6 @@ void MyCallListener::onIncomingCall(std::shared_ptr<telux::tel::ICall> call) {
              << " on slot Id: " << call->getPhoneId() << std::endl;
    std::cout << "Enter 2 to answer call" << std::endl;
    std::cout << "Enter 3 to reject call" << std::endl;
-   std::cout << "Enter 4 to reject call with an SMS message" << std::endl;
 }
 
 void MyCallListener::onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) {

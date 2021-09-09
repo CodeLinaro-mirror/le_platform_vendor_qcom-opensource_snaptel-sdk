@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -268,15 +268,15 @@ class ICard {
     virtual int getSlotId() = 0;
 
     /**
-    * Request eUICC identifier of eUICC card.
-    *
-    * @param [in] callback          Callback function to get the result of request eid.
-    *
-    * @returns  Status of request eid i.e. success or suitable error code.
-    *
-    * @dependencies card should be eUICC capable
-    */
-    virtual telux::common::Status requestEid(EidResponseCallback = nullptr)
+     * Request eUICC identifier (EID) of eUICC card.
+     *
+     * @param [in] callback          Callback function to get the result of request EID.
+     *
+     * @returns  Status of request EID i.e. success or suitable error code.
+     *
+     * @dependencies Card should be eUICC capable
+     */
+    virtual telux::common::Status requestEid(EidResponseCallback callback)
         = 0;
 };
 

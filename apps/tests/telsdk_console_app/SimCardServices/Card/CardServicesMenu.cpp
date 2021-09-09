@@ -220,14 +220,18 @@ void CardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> setCardLockCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("12", "Set_card_lock", {},
                         std::bind(&CardServicesMenu::setCardLock, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestEidCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("13", "Request_Eid", {},
+                        std::bind(&CardServicesMenu::requestEid, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("13", "Select_card_slot", {},
+      ConsoleAppCommand("14", "Select_card_slot", {},
                         std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
       = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
          closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
          changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
-         queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand};
+         queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand,
+         requestEidCommand};
 
    if (cards_.size() > 1) {
        commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
@@ -809,4 +813,34 @@ void CardServicesMenu::selectCardSlot(std::vector<std::string> userInput)
    } else {
       std::cout << "Empty input, enter the correct slot" << std::endl;
    }
+}
+
+void CardServicesMenu::requestEid(std::vector<std::string> userInput) {
+   auto respCb = [&](std::string eid, telux::common::ErrorCode errorCode)
+       { onEidResponse(eid, errorCode); };
+   auto card = cards_[slot_ - 1];
+   if (cards_.empty()) {
+      std::cout << "ERROR: No card object found" << std::endl;
+      return;
+   }
+   if(card) {
+      telux::common::Status status = card->requestEid(respCb);
+      if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Request EID sent successfully" << std::endl;
+      } else {
+            std::cout << "Request EID failed, status:" << static_cast<int>(status) << std::endl;
+      }
+   }  else {
+      std::cout << "ERROR: Unable to get card instance";
+   }
+}
+
+void CardServicesMenu::onEidResponse(
+    std::string eid, telux::common::ErrorCode errorCode) {
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "EID : " << eid <<std::endl;;
+    } else {
+        PRINT_CB << "Request EID failed, ErrorCode: " <<static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -59,6 +59,8 @@ private:
    std::string appTypeToString(telux::tel::AppType appType);
    std::string appStateToString(telux::tel::AppState appState);
    std::string cardStateToString(telux::tel::CardState state);
+   void requestEid(std::vector<std::string> userInput);
+   void onEidResponse(std::string eid, telux::common::ErrorCode errorCode);
 
    std::shared_ptr<telux::tel::ICardListener> cardListener_;
    std::shared_ptr<MyOpenLogicalChannelCallback> myOpenLogicalChannelCb_;

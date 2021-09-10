@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -284,26 +284,31 @@ uint8_t RadioTransmit::closeFlow() {
             return ans;
         }
     }
-    auto resp = -1;
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
-    auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> flow,
-                            ErrorCode eventError){
-                                closeCallback(flow, eventError);
-                            };
-    if(Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)){
-        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
-            resp = static_cast<uint8_t>(Status::SUCCESS);
+
+    if (this->flow) {
+        auto resp = -1;
+        auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+        auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> flow,
+                                ErrorCode eventError){
+                                    closeCallback(flow, eventError);
+                                };
+        if(Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)){
+            if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
+                resp = static_cast<uint8_t>(Status::SUCCESS);
+            }
+            else{
+                resp = static_cast<uint8_t>(Status::FAILED);
+            }
+        }else{
+                resp = static_cast<uint8_t>(Status::FAILED);
         }
-        else{
-            resp = static_cast<uint8_t>(Status::FAILED);
-        }
-    }else{
-            resp = static_cast<uint8_t>(Status::FAILED);
+        this->resetCallbackPromise();
+        this->flow = nullptr;
+        cout << "Tx flow closed.\n";
+        return resp;
     }
-    this->resetCallbackPromise();
-    this->flow = nullptr;
-    cout << "Flow closed.\n";
-    return resp;
+
+    return 0;
 }
 
 

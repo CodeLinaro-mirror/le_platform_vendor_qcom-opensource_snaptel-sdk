@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,7 +57,6 @@ using telux::cv2x::EventFlowInfo;
 
 class RadioReceive : public RadioInterface {
 private:
-    shared_ptr<ICv2xRxSubscription> gRxSub;
     TrafficCategory category;
     void rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error);
     void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
@@ -75,6 +74,8 @@ private:
 protected:
 
 public:
+    shared_ptr<ICv2xRxSubscription> gRxSub = nullptr;
+
     /**
     * Constant value of largest possible buffer length.
     */
@@ -117,7 +118,7 @@ public:
 
     int onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr);
     int onWraTimedout(void);
-    int setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr);
+    int setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr, const uint32_t serviceId);
     int clearGlobalIPInfo(void);
     int setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
     /**

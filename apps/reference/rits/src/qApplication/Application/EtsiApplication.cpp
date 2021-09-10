@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,6 +35,9 @@
 #include "EtsiApplication.hpp"
 
 EtsiApplication::EtsiApplication(char *fileConfiguration): ApplicationBase(fileConfiguration) {
+    if (not configuration.isValid) {
+        return;
+    }
 
     GnConfig_t GnCfg;
     GeoNetRouterImpl::InitDefaultConfig(GnCfg);
@@ -61,13 +64,14 @@ EtsiApplication::EtsiApplication(char *fileConfiguration): ApplicationBase(fileC
     for (auto mc : receivedContents) {
         mc->stackId = STACK_ID_ETSI;
     }
-    sem_init(&this->rx_sem, 0, 1);
-    sem_init(&this->log_sem, 0, 1);
 }
 
 EtsiApplication::EtsiApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort, char* fileConfiguration) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
+    if (not configuration.isValid) {
+        return;
+    }
 
     GnConfig_t GnCfg;
     GeoNetRouterImpl::InitDefaultConfig(GnCfg);
@@ -91,8 +95,6 @@ EtsiApplication::EtsiApplication(const string txIpv4, const uint16_t txPort,
     for (auto mc : receivedContents) {
         mc->stackId = STACK_ID_ETSI;
     }
-    sem_init(&this->rx_sem, 0, 1);
-    sem_init(&this->log_sem, 0, 1);
 }
 void EtsiApplication::initMsg(std::shared_ptr<msg_contents> mc) {
     mc->stackId = STACK_ID_ETSI;

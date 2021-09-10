@@ -49,6 +49,7 @@
 #endif
 #include "safetyapp_util.h"
 #include "bsm_utils.h"
+#include "../../../../common/utils/Utils.hpp"
 
 using std::thread;
 using std::string;
@@ -171,7 +172,7 @@ void ldmRx(void) {
         cerr << "application nullptr" << endl;
         return;
     }
-    while (true)
+    while (!stopThread)
     {
         if (application->receivedContents.size() == 0 ||
                 application->radioReceives.size() == 0) {
@@ -343,7 +344,7 @@ void txRecorded(string file) {
     if (configFile.is_open())
     {
         auto timer = timestamp_now();
-        while (go) {
+        while (go and !stopThread) {
             if(timer + application->configuration.transmitRate < timestamp_now()){
                 if (getline(configFile, line))
                 {
@@ -822,7 +823,9 @@ int setup(const bool tx, const bool rx,
     const string  rxSimIp, const  uint16_t txSimPort,
     const uint16_t rxSimPort, char* configFile)
 {
+    std::signal(SIGHUP, signalHandler);
     std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
     if (help)
     {
         printUse();
@@ -877,6 +880,13 @@ int setup(const bool tx, const bool rx,
             application = new EtsiApplication(configFile);
 #endif
     }
+
+    if (not application
+        or not application->configuration.isValid) {
+        cout << "Invalid configuration" << endl;
+        return -1;
+    }
+
     // check if we want to have tx on at same time as rx (either ethernet or radio)
     if(application->configuration.enableTxAlways &&
         (rx || rxSim) && application->configuration.driverVerbosity){
@@ -887,6 +897,11 @@ int setup(const bool tx, const bool rx,
 
     if ((tx || application->configuration.enableTxAlways) && !txSim && !rxSim)
     {
+        if (application->spsTransmits.empty()) {
+            cerr << "Tx flow not created, please check configuration" << endl;
+            return -1;
+        }
+
         if (tunnelTx) {
             if (cam || denm) {
                 cout << "Tunnel Mode only supports BSM" << endl;
@@ -903,6 +918,11 @@ int setup(const bool tx, const bool rx,
 
     if (rx && !rxSim)
     {
+        if (application->radioReceives.empty()) {
+            cerr << "Rx flow not created, please check configuration" << endl;
+            return -1;
+        }
+
         if (ldm)
         {
             if (cam || denm) {
@@ -1023,6 +1043,11 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
+    std::vector<std::string> groups{"system", "diag", "radio"};
+    if (-1 == Utils::setSupplementaryGroups(groups)){
+        cerr << "Adding supplementary group failed!" << std::endl;
+        return -1;
+    }
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
     bool tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded, txSim, rxSim;

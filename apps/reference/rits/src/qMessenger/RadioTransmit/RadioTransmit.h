@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,7 +57,6 @@ using std::string;
 class RadioTransmit: public RadioInterface{
 
 private:
-    shared_ptr<ICv2xTxFlow> flow;
     TrafficCategory category;
 
 
@@ -108,7 +107,7 @@ private:
     void closeCallback(shared_ptr<ICv2xTxFlow> flow, ErrorCode error);
 
 public:
-
+    shared_ptr<ICv2xTxFlow> flow = nullptr;
     /**
     * Constructor for an Event Flow.
     * @param ipv4 an string representation of an IP version 4 address.

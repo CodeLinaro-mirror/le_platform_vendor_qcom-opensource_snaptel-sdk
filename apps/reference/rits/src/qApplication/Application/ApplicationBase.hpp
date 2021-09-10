@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -78,6 +78,7 @@ enum class MessageType {
 };
 
 struct Config{
+    bool isValid = false;
     int codecVerbosity;
     vector<uint16_t> receivePorts;
     vector<uint16_t> eventPorts;
@@ -162,6 +163,7 @@ struct Config{
     int ipPrefixLength;
     string defaultGateway;
     string primaryDns;
+    uint32_t wraServiceId = 4;
 };
 
 class ApplicationBase
@@ -363,7 +365,7 @@ private:
     void simTxSetup(const string ipv4, const uint16_t port);
     void simRxSetup(const string ipv4, const uint16_t port);
     static uint16_t delimiterPos(string line, vector<string> delimiters);
-    void loadConfiguration(char* file);
+    int loadConfiguration(char* file);
     void saveConfiguration(map<string, string> configs);
 
 };

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -56,6 +56,10 @@ thread_local int signSuccess = 0;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     ApplicationBase(fileConfiguration) {
+    if (not configuration.isValid) {
+        return;
+    }
+
     MsgType = msgType;
 
     wraInterval = std::chrono::milliseconds::zero();
@@ -72,15 +76,15 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     for (auto mc : receivedContents) {
         mc->stackId = STACK_ID_SAE;
     }
-    sem_init(&this->rx_sem, 0, 1);
-    sem_init(&this->log_sem, 0, 1);
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort, 
         char* fileConfiguration, MessageType msgType) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
-
+    if (not configuration.isValid) {
+        return;
+    }
     wraInterval = std::chrono::milliseconds::zero();
     MsgType = msgType;
     //init messages for sending.
@@ -96,8 +100,6 @@ SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
     for (auto mc : receivedContents) {
         mc->stackId = STACK_ID_SAE;
     }
-    sem_init(&this->rx_sem, 0, 1);
-    sem_init(&this->log_sem, 0, 1);
 }
 
 SaeApplication::~SaeApplication() {
@@ -780,7 +782,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
         if(appVerbosity > 3)
             cout << "Setting Global IP address" << endl;
         memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
-        ret = radioReceives[0].setGlobalIPInfo(IpPrefix);
+        ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
         if (!ret) {
             memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
             ret = radioReceives[0].setRoutingInfo(RoutingInfo);
@@ -848,7 +850,7 @@ int SaeApplication::setGlobalIPv6Prefix(void)
         if (!parseIPv6Prefix(ipPrefix, prefixLen)) {
             IpPrefix.prefixLen = configuration.ipPrefixLength;
             memcpy(IpPrefix.ipv6Addr, ipPrefix, prefixLen);
-            ret = radioReceives[0].setGlobalIPInfo(IpPrefix);
+            ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
         }
         GlobalIpSessionActive = true;
     }

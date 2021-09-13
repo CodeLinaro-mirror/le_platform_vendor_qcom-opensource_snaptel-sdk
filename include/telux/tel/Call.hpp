@@ -168,7 +168,10 @@ public:
     *        - @ref OPERATION_NOT_ALLOWED
     *        - @ref GENERIC_FAILURE
     *
+    *  @deprecated This API not being supported
+    *
     *  @returns Status of success for call reject() or suitable error code.
+    *
     */
    virtual telux::common::Status
       reject(const std::string &rejectSMS,

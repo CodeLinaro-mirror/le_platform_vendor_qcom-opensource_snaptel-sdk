@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,20 +46,98 @@
 namespace telux {
 namespace data {
 
-// Forward declaration
-class IServingSystemListener;
-
-/** @addtogroup telematics_data_serving_system
+/** @addtogroup telematics_data
  * @{ */
+
+//Forward Declaration
+class IServingSystemListener;
 
 /**
  * @brief Dedicated Radio Bearer (DRB) status.
  */
 enum class DrbStatus {
-    ACTIVE  ,   //At least one of the Physlinks across all PDNs is UP
-    DORMANT ,   //All the Physlinks across all PDNs are DOWN
-    UNKNOWN ,   //No PDN is active
+    ACTIVE  ,   /**< At least one of the physical links across all PDNs is UP */
+    DORMANT ,   /**< All the Physlinks across all PDNs are DOWN */
+    UNKNOWN ,   /**< No PDN is active */
 };
+
+/**
+ * @brief Roaming Type.
+ */
+enum class RoamingType {
+    UNKNOWN       ,      /**< Device roaming mode is unknown */
+    DOMESTIC      ,      /**< Device is in Domestic roaming network            */
+    INTERNATIONAL ,      /**< Device is in International roaming network       */
+};
+
+/**
+ * @brief Roaming Status
+ */
+struct RoamingStatus {
+   bool isRoaming;          /**< True: Roaming on, False: Roaming off                 */
+   RoamingType type;        /**< International/Domestic. Valid only if roaming is on  */
+};
+
+/**
+ * @brief Data Service State. Indicates whether data service is ready to setup a data call or not.
+ */
+enum class DataServiceState {
+    UNKNOWN        ,        /**< Service State not available */
+    IN_SERVICE     ,        /**< Service Available           */
+    OUT_OF_SERVICE ,        /**< Service Not Available       */
+};
+
+/**
+ * @brief Data Network RATs.
+ */
+enum class NetworkRat {
+    UNKNOWN    ,    /**< UNKNOWN   */
+    CDMA_1X    ,    /**< CDMA_1X   */
+    CDMA_EVDO  ,    /**< CDMA_EVDO */
+    GSM        ,    /**< GSM       */
+    WCDMA      ,    /**< WCDMA     */
+    LTE        ,    /**< LTE       */
+    TDSCDMA    ,    /**< TDSCDMA   */
+    NR5G       ,    /**< NR5G      */
+};
+
+/**
+ * @brief Data Service Status Info.
+ */
+struct ServiceStatus {
+    DataServiceState serviceState;
+    NetworkRat networkRat;
+};
+
+/**
+ * This function is called in response to requestServiceStatus API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] serviceStatus       Current service status @ref telux::data::ServiceStatus
+ * @param [in] error               Return code for whether the operation succeeded or failed.
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change
+ *          and could break backwards compatibility.
+ */
+using RequestServiceStatusResponseCb
+    = std::function<void(ServiceStatus serviceStatus, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to requestRoamingStatus API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] roamingStatus       Current roaming status @ref telux::data::RoamingStatus
+ * @param [in] error               Return code for whether the operation succeeded or failed.
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change
+ *          and could break backwards compatibility.
+*/
+using RequestRoamingStatusResponseCb
+    = std::function<void(RoamingStatus roamingStatus, telux::common::ErrorCode error)>;
 
 /**
  * @brief Serving System Manager class provides APIs related to the serving system for data
@@ -82,7 +160,7 @@ public:
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * get the dedicated radio bearer (DRB) status
+     * Get the dedicated radio bearer (DRB) status
      *
      * @returns current DrbStatus @ref DrbStatus.
      *
@@ -90,6 +168,30 @@ public:
      *          and could break backwards compatibility.
      */
     virtual DrbStatus getDrbStatus() = 0;
+
+    /**
+     * Queries the current serving network status
+     *
+     * @param [in] callback          callback to get response for requestServiceStatus
+     *
+     * @returns Status of requestServiceStatus i.e. success or suitable status code.
+     *          if requestServiceStatus returns failure, callback will not be invoked.
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestServiceStatus(RequestServiceStatusResponseCb callback) = 0;
+
+    /**
+     * Queries the current roaming status
+     *
+     * @param [in] callback          callback to get response for requestRoamingStatus
+     *
+     * @returns Status of requestRoamingStatus i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestRoamingStatus(RequestRoamingStatusResponseCb callback) = 0;
 
    /**
     * Register a listener for specific updates from serving system.
@@ -150,12 +252,26 @@ public:
    virtual void onDrbStatusChanged(DrbStatus status) {};
 
    /**
+    * This function is called whenever service state is changed.
+    *
+    * @param [in] status      @ref ServiceStatus
+    */
+   virtual void onServiceStateChanged(ServiceStatus status) {};
+
+   /**
+    * This function is called whenever roaming status is changed.
+    *
+    * @param [in] status      @ref RoamingStatus
+    */
+   virtual void onRoamingStatusChanged(RoamingStatus status) {};
+
+   /**
     * Destructor of IServingSystemListener
     */
    virtual ~IServingSystemListener() {};
 };
 
-/** @} */ /* end_addtogroup telematics_data_serving_system */
+/** @} */ /* end_addtogroup telematics_data */
 }
 }
 

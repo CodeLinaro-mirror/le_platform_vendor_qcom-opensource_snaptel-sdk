@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -39,13 +39,14 @@
 #include <memory>
 #include <mutex>
 #include <map>
+#include <vector>
 
 #include <telux/power/TcuActivityManager.hpp>
 
 namespace telux {
 namespace power {
 
-/** @addtogroup telematics_power
+/** @addtogroup telematics_power_manager
  * @{ */
 
 /**
@@ -61,21 +62,32 @@ public:
     /**
      * API to get the TCU-activity Manager instance
      *
-     * @param [in] type Type of the client that is going to access ITcuActivityManager APIs
-     *                  @ref ClientType
-     *
+     * @param [in] type      Type of the client that is going to access ITcuActivityManager APIs
+     *                       @ref ClientType
      * @param [in] procType  Required processor type on which the operations will be performed
      *                       @ref telux::common::ProcType
+     * @param [in] callback  Optional callback pointer to get the response of the manager
+     *                       initialization.
      *
      * @returns Pointer of ITcuActivityManager object.
      */
     std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
         ClientType clientType = ClientType::SLAVE,
-        common::ProcType procType = common::ProcType::LOCAL_PROC);
+        common::ProcType procType = common::ProcType::LOCAL_PROC,
+        telux::common::InitResponseCb callback = nullptr);
 
 private:
-    std::map<common::ProcType, std::shared_ptr<ITcuActivityManager>> tcuActivityManagerMap_;
+    std::map<std::pair<common::ProcType, ClientType>,
+        std::shared_ptr<ITcuActivityManager>> tcuActivityManagerMap_;
     std::mutex tcuActivityFactoryMutex_;
+
+    void onTcuActivityMgrInitResponse(common::ProcType procType, ClientType clientType,
+        telux::common::ServiceStatus status);
+    std::map<std::pair<common::ProcType, ClientType>,
+        telux::common::ServiceStatus> tcuActivityMgrInitStatus_;
+    std::map<std::pair<common::ProcType, ClientType>,
+        std::vector<telux::common::InitResponseCb>> tcuActivityMgrCallbacks_;
+
     PowerFactory();
     PowerFactory(const PowerFactory &) = delete;
     PowerFactory &operator=(const PowerFactory &) = delete;
@@ -83,7 +95,7 @@ private:
 
 };
 
-/** @} */ /* end_addtogroup telematics_power */
+/** @} */ /* end_addtogroup telematics_power_manager */
 
 }  // end of namespace power
 }  // end of namespace telux

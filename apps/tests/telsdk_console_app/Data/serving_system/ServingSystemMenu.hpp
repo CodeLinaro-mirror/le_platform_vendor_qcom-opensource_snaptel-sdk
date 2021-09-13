@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,7 +44,7 @@
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
 #include "console_app_framework/ConsoleApp.hpp"
-
+#include "ServingSystemListener.hpp"
 
 using namespace telux::data;
 using namespace telux::common;
@@ -64,6 +64,8 @@ public:
 
     //API
     void getDrbStatus(std::vector<std::string> inputCommand);
+    void requestServiceStatus(std::vector<std::string> inputCommand);
+    void requestRoamingStatus(std::vector<std::string> inputCommand);
 
     ~DataServingSystemMenu();
 private:
@@ -74,16 +76,6 @@ private:
     std::map<SlotId, std::shared_ptr<IServingSystemManager>> dataServingSystemManagers_;
     std::map<SlotId, std::shared_ptr<IServingSystemListener>> dataServingSystemListeners_;
     bool initServingSystemManagerAndListener(SlotId slotId);
-};
-
-class ServingSystemListenerOnDefaultSlotId : public telux::data::IServingSystemListener {
-    void onServiceStatusChange(telux::common::ServiceStatus status) override;
-    void onDrbStatusChanged(telux::data::DrbStatus status) override;
-};
-
-class ServingSystemListenerOnSlotId2 : public telux::data::IServingSystemListener {
-    void onServiceStatusChange(telux::common::ServiceStatus status) override;
-    void onDrbStatusChanged(telux::data::DrbStatus status) override;
 };
 
 #endif

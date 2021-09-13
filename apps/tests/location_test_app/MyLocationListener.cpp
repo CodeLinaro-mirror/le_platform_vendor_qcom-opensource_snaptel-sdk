@@ -712,6 +712,9 @@ void MyLocationListener::printLocOutputEngineType(
   if(locEngineType == telux::loc::LOC_OUTPUT_ENGINE_PPE) {
     std::cout << " This is PPE engine reports" << std::endl;
   }
+  if(locEngineType == telux::loc::LOC_OUTPUT_ENGINE_VPE) {
+    std::cout << " This is VPE engine reports" << std::endl;
+  }
 }
 
 void MyLocationListener::printLocOutputEngineMask(
@@ -725,6 +728,9 @@ void MyLocationListener::printLocOutputEngineMask(
   }
   if(posEngineBits & telux::loc::PRECISE_POSITIONING_ENGINE) {
     std::cout << " PPE used in the reports" << std::endl;
+  }
+  if(posEngineBits & telux::loc::VP_POSITIONING_ENGINE) {
+    std::cout << " VPE used in the reports" << std::endl;
   }
 }
 
@@ -1215,6 +1221,9 @@ void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVI
       std::cout << std::setprecision(15) << std::showpoint;
       std::cout << "Carrier frequency: " << svInfo->getCarrierFrequency() << std::endl;
       printGnssSignalType(svInfo->getSignalType());
+      std::cout << "Glonass FCN: " << svInfo->getGlonassFcn() << std::endl;
+      std::cout << "Baseband Carrier To Noise Ratio: " << svInfo->getBasebandCnr()
+                << std::endl;
    }
    std::cout << "*************************************************************" << std::endl;
 }
@@ -1298,6 +1307,8 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
          << std::endl;
      printMeasurementState(measData.stateMask);
      std::cout << " Received GNSS time of the week in nanoseconds " << measData.receivedSvTimeNs
+         << std::endl;
+     std::cout << " Sub-nanoseconds of GNSS time of the week " << measData.receivedSvTimeSubNs
          << std::endl
                << " Satellite time, in ns " << measData.receivedSvTimeUncertaintyNs << std::endl
                << " Signal strength, carrier to noise ratio " << measData.carrierToNoiseDbHz
@@ -1323,6 +1334,8 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
 
      std::cout << "\n********************** " << std::endl;
    }
+   std::cout << "NHz measurements indicator: " << std::boolalpha << measurementInfo.isNHz
+             << std::endl;
    std::cout << "*************************************************************" << std::endl;
 }
 

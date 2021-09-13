@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.9)
 set(TARGET_CV2X_TCP_TEST cv2x_tcp_test)
 
 set(CV2X_TCP_SOURCES
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     Cv2xTcpTest.cpp
 )
 

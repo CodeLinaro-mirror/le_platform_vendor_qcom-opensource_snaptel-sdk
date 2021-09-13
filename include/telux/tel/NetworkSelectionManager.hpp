@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -157,6 +157,25 @@ struct OperatorStatus {
       = PreferredStatus::UNKNOWN; /**< Preferred status of network operator */
 };
 
+/**
+ * Defines Network scan type
+ */
+enum class NetworkScanType {
+    CURRENT_RAT_PREFERENCE = 1,      /**< Network scan based on current RAT preference */
+    USER_SPECIFIED_RAT,              /**< Network scan based on user specified RAT(s) */
+    ALL_RATS                         /**< Network scan on GSM/WCDMA/LTE/NR5G */
+};
+
+/**
+ * Defines Network scan information
+ */
+struct NetworkScanInfo {
+    NetworkScanType scanType;  /**< Network scan type */
+    RatMask ratMask;           /**< Bit mask denotes which of the radio access technologies are
+                                    set. ratMask is valid/set only when scanType is provided as
+                                    NetworkScanType::USER_SPECIFIED_RAT */
+};
+
 /** @} */ /* end_addtogroup telematics_network_selection */
 
 /**
@@ -217,6 +236,8 @@ public:
     * Checks the status of network subsystem and returns the result.
     *
     * @returns True if network subsystem is ready for service otherwise false.
+    *
+    * @deprecated Use INetworkSelectionManager::getServiceStatus() API.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -225,8 +246,24 @@ public:
     *
     * @returns  A future that caller can wait on to be notified when network
     *           subsystem is ready.
+    *
+    * @deprecated Use InitResponseCb in PhoneFactory::getNetworkSelectionManager instead, to
+    *             get notified about subsystem readiness.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
+
+   /**
+    * This status indicates whether the INetworkSelectionManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    -  If Serving System manager is ready for service.
+    *          SERVICE_UNAVAILABLE  -  If Serving System manager is temporarily unavailable.
+    *          SERVICE_FAILED       -  If Serving System manager encountered an irrecoverable
+    *                                  failure.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
     * Get current network selection mode (i.e Manual or Automatic) asynchronously.
@@ -314,6 +351,8 @@ public:
     * indication API (INetworkSelectionListener::onNetworkScanResults).
     * The scan status in indication will indicate if its a partial result or complete result.
     *
+    * @param [in] info        Provides network scan type and if the network scan type is user
+    *                         prefered RAT, includes RAT(s) information. @ref NetworkScanInfo
     * @param [in] callback    Callback function to get the response of network scan request
     *
     * @returns Status of performNetworkScan i.e. success or suitable error code.
@@ -322,7 +361,7 @@ public:
     *             could break backwards compatibilty.
     *
     */
-   virtual telux::common::Status performNetworkScan(
+   virtual telux::common::Status performNetworkScan(NetworkScanInfo info,
       common::ResponseCallback callback = nullptr) = 0;
 
    /**

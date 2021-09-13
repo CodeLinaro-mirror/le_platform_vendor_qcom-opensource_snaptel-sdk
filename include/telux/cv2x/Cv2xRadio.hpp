@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -43,6 +43,7 @@
 #include <telux/cv2x/Cv2xRxSubscription.hpp>
 #include <telux/cv2x/Cv2xTxFlow.hpp>
 #include <telux/cv2x/Cv2xTxRxSocket.hpp>
+#include <telux/cv2x/Cv2xTxStatusReportListener.hpp>
 
 #include <future>
 #include <memory>
@@ -312,6 +313,30 @@ public:
         std::shared_ptr<std::vector<uint32_t>> idList = nullptr) = 0;
 
     /**
+     * Enable or disable (depends on the parameter "bool enable") the received
+     * packets' meta data report for the service IDs provided.
+     *
+     * The meta data consist of RF RSSI (received signal strength indicator) status, 32-bit SCI
+     * Format 1 (3GPP TS 36.213, section 14.1), packet delay estimation, L2 destination ID,
+     * and the resource blocks used for the packet's transmission: subframe, subchannel index.
+     *
+     * @param [in] ipType  - IP traffic type (IP or NON-IP)
+     * @param [in] enable  - enable the rx meta data if set to true, otherwise disable
+     * @param [in] idList  - Service ID list of which the received packets' report are desired
+     * @param [in] cb      - Callback that is invoked when meta data is enabled or disabled.
+     *
+     * @returns SUCCESS if no error occurred
+     *
+     * @par Meta data report for IP packets is not supported yet, it will return NOSUPPORTED.
+     *
+     */
+    virtual telux::common::Status enableRxMetaDataReport(
+        TrafficIpType ipType,
+        bool enable,
+        std::shared_ptr<std::vector<std::uint32_t>> idList,
+        telux::common::ResponseCallback cb) = 0;
+
+    /**
      * Creates a Tx SPS flow with the specified IP type, serviceId, and other
      * parameters specified in reservation. Additionally, an option event flow
      * will be created with the same IP type and serviceId. A Tx socket will
@@ -539,8 +564,6 @@ public:
      *
      * @returns Interface name as a string
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to
-     *          change and could break backwards compatibility.
      */
     virtual std::string getIfaceNameFromIpType(TrafficIpType ipType) = 0;
 
@@ -588,6 +611,82 @@ public:
      */
     virtual telux::common::Status closeCv2xTcpSocket(std::shared_ptr<ICv2xTxRxSocket> sock,
                                                      CloseTcpSocketCallback cb) = 0;
+
+    /**
+     * Registers a listener for Tx status report.
+     *
+     * @param [in] port     - Set this value to the port number of registered Tx Flow
+     *                        if user wants to receive Tx status report associated with
+     *                        its own Tx flow. If user wants to receive Tx status report
+     *                        associated with all Tx flows in system, set this value to 0.
+     * @param [in] listener - Listener that implements ICv2xTxStatusReportListener
+     *                        interface.
+     * @param [in] cb       - Callback that is invoked when the registration of CV2X Tx
+     *                        status report is complete.
+     */
+    virtual telux::common::Status registerTxStatusReportListener(
+        uint16_t port,
+        std::shared_ptr<ICv2xTxStatusReportListener> listener,
+        telux::common::ResponseCallback cb) = 0;
+
+    /**
+     * Deregisters a listener for Tx status report.
+     *
+     * @param [in] port     - Port number of previously registered ICv2xTxStatusReportListener
+     *                        that is to be deregistered. If the listener is registered with
+     *                        port number 0, set this value to 0 to deregister the listener.
+     * @param [in] cb       - Callback that is invoked when the deregistration of CV2X Tx
+     *                        status report is complete.
+     */
+    virtual telux::common::Status deregisterTxStatusReportListener(
+        uint16_t port,
+        telux::common::ResponseCallback cb) = 0;
+
+    /**
+     * Set CV2X global IP address for the IP interface.
+     *
+     * Use case and Precondition:
+     * OBU:
+     * Registers a TX/RX *NON IP* flow for receiving the signed WSA/WRA for IP session initiation;
+     * Once receives the IP prefix in the WDS/WRA from RSU, call this method.
+     *
+     * RSU:
+     * Specifies its own global prefix via this method, and creates/composes WSA/WRA
+     * advertising the IP configs.
+     *
+     * @param [in] ipv6Addr   - CV2X global IP address.
+     * @param [in] cb     - Callback that is invoked when set the global IP address complete.
+     *                      This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status setGlobalIPInfo(const IPv6AddrType &ipv6Addr,
+        common::ResponseCallback cb) = 0;
+
+    /**
+     * Set CV2X IP interface global IP unicast routing information.
+     *
+     * Use case and Precondition:
+     * OBU:
+     * Registers a TX/RX *NON IP* flow for receiving the signed WSA/WRA for IP session initiation;
+     * Once receives the IP prefix in the WSA/WRA from RSU, call the @ref setGlobalIPInfo method
+     * to update the ip interface with global IP;
+     * Now call this method to set the routing information with dest L2 addr negotiated in WSA/WRA.
+     *
+     * RSU:
+     * Specifies its own global prefix via @ref setGlobalIPInfo, and creates/composes WSA/WRA
+     * advertising the IP configs;
+     * Now set routing information of its own via this method.
+     *
+     * @param [in] destL2Addr   - CV2X destination L2 address for unicast routing purpose.
+     * @param [in] cb     - Callback that is invoked when set global IP unicast routing
+     * information complete. This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status setGlobalIPUnicastRoutingInfo(
+        const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb) = 0;
+
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

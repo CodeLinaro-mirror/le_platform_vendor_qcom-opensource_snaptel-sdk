@@ -1,3 +1,6 @@
+Make Call {#make_call}
+======================
+
 # Making a Voice Call
 
 Please follow below steps to make a voice call

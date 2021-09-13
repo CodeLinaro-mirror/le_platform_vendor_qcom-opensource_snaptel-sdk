@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -32,6 +32,7 @@
 
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataConnectionManager.hpp>
+#include <telux/data/ServingSystemManager.hpp>
 
 class DataUtils {
 public:
@@ -44,6 +45,8 @@ public:
    static std::string operationTypeToString(telux::data::OperationType oprType);
    static std::string protocolToString(telux::data::IpProtocol proto);
    static telux::data::IpProtocol getProtcol(std::string protoStr);
+   static std::string drbStatusToString(telux::data::DrbStatus stat);
+   static std::string serviceRatToString(telux::data::NetworkRat rat);
 };
 
 #endif  // DATAUTILS_HPP

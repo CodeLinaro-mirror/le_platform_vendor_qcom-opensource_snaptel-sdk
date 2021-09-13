@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -51,6 +51,11 @@ when       who     what, where, why
 02/14/20   SD      Added location configurator support to Telematics SDK
 03/12/20   SD      Added robust location support to location configurator in Telematics SDK
 05/27/20   FS      Added L2TP Feature Support in Telematics SDK
+12/01/20   AK      Added Location SDK simulation libraries
+01/29/21   FS      Updated data subsystem readiness flow for new methodology
+02/12/21   RV      Added new sub system Readiness APIs for Audio.
+04/01/21   FS      Added new serving system manager APIs for Data.
+04/04/21   BS      Added documentation for sensor sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

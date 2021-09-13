@@ -33,15 +33,18 @@
   * @brief: class for ITS stack - SAE
   */
 #include "ApplicationBase.hpp"
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 
 class SaeApplication : public ApplicationBase {
 public:
-    SaeApplication(char *fileConfiguration);
+    SaeApplication(char *fileConfiguration, MessageType msgType);
     SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration);
+        const string rxIpv4, const uint16_t rxPort, 
+        char* fileConfiguration, MessageType msgType);
     ~SaeApplication();
-
-    void fillMsg(std::shared_ptr<msg_contents> msg);
 
     /**
     * Method that decodes bsm from raw buffer to bsm contents data structure in ldm.
@@ -63,15 +66,111 @@ public:
     */
     void sendTuncBsm(uint8_t index, TransmitType txType);
 
+    /**
+    * Overall method to fill msg_contents struct based on SAE packet contents.
+    * @param msg - A shared pointer to the msg_contents struct
+    */
+    void fillMsg(std::shared_ptr<msg_contents> msg);
+
+    /**
+    * Method to print reception related statistics.
+    */
+    void printRxStats();
+
+    /**
+    * Method to print transmission related statistics.
+    */
+    void printTxStats();
+
+    int setGlobalIPv6Prefix(void);
+    int clearGlobalIPv6Prefix(void);
+
 private:
-    void transmit(uint8_t index, std::shared_ptr<msg_contents>mc, int16_t bufLen,
+    uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
+    bool GlobalIpSessionActive = false;
+    std::chrono::milliseconds wraInterval;
+    std::thread wraThread;
+    std::mutex wraMutex;
+    std::condition_variable wraCv;
+    std::chrono::time_point<std::chrono::high_resolution_clock> now;
+    void wraThreadFunc(int routerLifetime);
+    /**
+    * Method to setup and perform transmission for SAE packets.
+    * @param index - An uint8_t that is used for which buffer to access
+    * @param bufLen - Length of given buffer or message
+    * @param txType - Specifies the type of message for decoding
+    */
+    int transmit(uint8_t index, std::shared_ptr<msg_contents>mc, int16_t bufLen,
             TransmitType txType);
+    /**
+    * Method to setup and perform reception for SAE packets.
+    * @param index - An uint8_t that is used for which buffer to access
+    * @param bufLen - Length of given buffer or message
+    */
+    int receive(const uint8_t index, const uint16_t bufLen);
+
+    /**
+    * Method to setup and perform reception with LDM for SAE packets.
+    * @param index - An uint8_t that is used for which buffer to access
+    * @param bufLen - Length of given buffer or message
+    * @param ldmIndex - Index of the LDM BSM content to store decoded value
+    */
+    int receive(const uint8_t index, const uint16_t bufLen,
+                     const uint32_t ldmIndex);
+
+#ifdef WITH_WSA
+    int onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr, int& MacAdrLen);
+    /**
+     * Method to setup and fill WSA related information.
+     * @param wsa - A pointer to the SrvAdvMsg_t struct
+     * @param wra - A pointer to RoutingAdvertisement_t struct
+     */
+    void fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra);
+#endif
+
+    /**
+    * Method to initialize SAE packets in msg_contents struct.
+    * @param mc - A shared pointer to the msg_contents struct
+    */
     void initMsg(std::shared_ptr<msg_contents> mc);
+
+    /**
+    * Method to delete and free SAE packet memory in msg_contents struct.
+    * @param mc - A shared pointer to the msg_contents struct
+    */
     void freeMsg(std::shared_ptr<msg_contents> mc);
+
+    /**
+    * Method to setup and fill BSM related information.
+    * @param bsm - A pointer to the BSM struct
+    */
     void fillBsm(bsm_value_t *bsm);
+
+    /**
+    * Method to setup and fill BSM CAN related information.
+    * @param bsm - A pointer to the BSM struct
+    */
     void fillBsmCan(bsm_value_t *bsm);
+
+    /**
+    * Method to setup and fill BSM Location related information.
+    * @param bsm - A pointer to the BSM struct
+    */
     void fillBsmLocation(bsm_value_t *bsm);
+
+    /**
+    * Method to setup and fill WSMP related information.
+    * @param bsm - A pointer to the WSMP struct
+    */
     void fillWsmp(wsmp_data_t *wsmp);
+
     //Pre-recorded file methods
+    /**
+    * Method to setup and initialize a pre-recorded BSM.
+    * @param bsm - A pointer to the BSM struct
+    */
     void initRecordedBsm(bsm_value_t* bsm);
+
+    int parseIPv6Prefix(char *prefix, int& len);
+    std::mutex wramutex;
 };

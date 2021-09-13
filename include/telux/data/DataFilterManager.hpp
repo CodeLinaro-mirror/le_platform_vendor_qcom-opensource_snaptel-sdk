@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019,2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -67,7 +67,6 @@ namespace data {
  */
 using DataRestrictModeCb =
     std::function<void(DataRestrictMode mode, telux::common::ErrorCode error)>;
-
 
 /**
  * @brief   IDataFilterManager class provides interface to enable/disable the data restrict filters
@@ -240,3 +239,4 @@ public:
 } // end of namespace telux
 
 #endif // DATAFILTERMANAGER_HPP
+

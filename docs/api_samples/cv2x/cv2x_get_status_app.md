@@ -1,3 +1,6 @@
+C-V2X Get Status Sample App {#cv2x_get_status_app}
+==================================================
+
 # C-V2X Get Status Sample App
 
 This Document walks through the cv2x_get_status_app. It demonstrates how to use the C-V2X Radio Manager API to get the C-V2X status.

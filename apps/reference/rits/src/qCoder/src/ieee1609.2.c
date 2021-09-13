@@ -70,13 +70,20 @@ int ieee1609_2_decode_unsecured(msg_contents *mc)
 
     ieee1609_2_data *ie = mc->ieee1609_2data;
 
-    ie->protocolVersion = *((uint8_t *)abuf_pull(&mc->abuf, sizeof(uint8_t)));
+    ie->protocolVersion = *((uint8_t*)mc->abuf.data);
+    abuf_pull(&mc->abuf, sizeof(uint8_t));
+    //mc->abuf.tail = mc->abuf.data+1;
     ie->tagclass = get_next_n_bits((uint8_t **)&mc->abuf.data, 2, &bits_left);
     ie->content = get_next_n_bits((uint8_t **)&mc->abuf.data, 6, &bits_left);
+    // anthony: to check if fixes any decode problems related to unsecured?
+    bits_left = 8;
     mc->payload_len = parse_asn_CER_len_enc((uint8_t **)&mc->abuf.data, &bits_left);
-    if (gVerbosity > 1) {
-        printf("\nIEEE 1609.2 Security Header Version: %d\ttagclass:%d\tcontent:%d\tlength:%"PRIu64"\t\n", 
+
+    if (gVerbosity > 4) {
+        printf("\nIEEE 1609.2 Security Header Version: %d\ttagclass:%d\tcontent:%d\tlength:%"PRIu64"\t\n",
             ie->protocolVersion,ie->tagclass,ie->content, mc->payload_len);
+        printf("In Hex: %02x:%02x:%02x\n", ie->protocolVersion,
+                ie->tagclass, ie->content);
     }
     return 0;
 }

@@ -53,6 +53,9 @@
 namespace telux {
 namespace tel {
 
+/** @addtogroup telematics_cellbroadcast
+ * @{ */
+
 class ICellBroadcastListener;
 
 /**
@@ -270,8 +273,6 @@ public:
     *
     * @returns @ref GeographicalScope.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    GeographicalScope getGeographicalScope() const;
 
@@ -281,8 +282,6 @@ public:
     *
     * @returns Message identifier.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getMessageId() const;
 
@@ -292,8 +291,6 @@ public:
     *
     * @returns int containing cellbroadcast serial number.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getSerialNumber() const;
 
@@ -303,8 +300,6 @@ public:
     *
     * @return Language code
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    std::string getLanguageCode() const;
 
@@ -315,8 +310,6 @@ public:
     *
     * @return body or empty string
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    std::string getMessageBody() const;
 
@@ -325,8 +318,6 @@ public:
     *
     * @return @ref MessagePriority.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    MessagePriority getPriority() const;
 
@@ -335,8 +326,6 @@ public:
     *
     * @returns int containing cellbroadcast message code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getMessageCode() const;
 
@@ -345,8 +334,6 @@ public:
     *
     * @returns int containing cellbroadcast message's update number.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getUpdateNumber() const;
 
@@ -355,8 +342,6 @@ public:
     *
     * @returns @ref EtwsWarningType.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    EtwsWarningType getEtwsWarningType();
 
@@ -365,8 +350,6 @@ public:
     *
     * @return true to notify terminal to activate emergency user alert or false otherwise
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    bool isEmergencyUserAlert();
 
@@ -375,8 +358,6 @@ public:
     *
     * @return true to notify terminal to activate display popup or false otherwise
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    bool isPopupAlert();
 
@@ -386,8 +367,6 @@ public:
      *
      * @return true if the message is primary message, otherwise secondary message
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
    bool isPrimary();
 
@@ -397,8 +376,6 @@ public:
      *
      * @return byte buffer
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
    std::vector<uint8_t> getWarningSecurityInformation();
 
@@ -449,8 +426,6 @@ public:
     *
     * @returns @ref GeographicalScope.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    GeographicalScope getGeographicalScope() const;
 
@@ -460,8 +435,6 @@ public:
     *
     * @returns Message identifier.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getMessageId() const;
 
@@ -471,8 +444,6 @@ public:
     *
     * @returns int containing cellbroadcast serial number.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getSerialNumber() const;
 
@@ -482,8 +453,6 @@ public:
     *
     * @return Language code
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    std::string getLanguageCode() const;
 
@@ -494,8 +463,6 @@ public:
     *
     * @return body or empty string
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    std::string getMessageBody() const;
 
@@ -504,8 +471,6 @@ public:
     *
     * @return @ref MessagePriority.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    MessagePriority getPriority() const;
 
@@ -514,8 +479,6 @@ public:
     *
     * @returns int containing cellbroadcast message code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getMessageCode() const;
 
@@ -524,8 +487,6 @@ public:
     *
     * @returns int containing cellbroadcast message's update number.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    int getUpdateNumber() const;
 
@@ -534,8 +495,6 @@ public:
     *
     * @returns @ref CmasMessageClass.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    CmasMessageClass getMessageClass();
 
@@ -544,8 +503,6 @@ public:
     *
     * @returns @ref CmasSeverity.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    CmasSeverity getSeverity();
 
@@ -554,8 +511,6 @@ public:
     *
     * @returns @ref CmasUrgency.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    CmasUrgency getUrgency();
 
@@ -564,8 +519,6 @@ public:
     *
     * @returns @ref CmasCertainty.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    CmasCertainty getCertainty();
 
@@ -620,8 +573,6 @@ public:
     *
     * @returns @ref MessageType.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    MessageType getMessageType() const;
 
@@ -632,8 +583,6 @@ public:
     *
     * @return  pointer to EtwsInfo or null if this is not an ETWS warning notification
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    std::shared_ptr<EtwsInfo> getEtwsInfo() const;
 
@@ -644,8 +593,6 @@ public:
     *
     * @return pointer to CmasInfo or null if this is not a CMAS warning notification
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    std::shared_ptr<CmasInfo> getCmasInfo() const;
 
@@ -666,8 +613,6 @@ public:
     *
     * @returns True if network subsystem is ready for service otherwise false.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -677,8 +622,6 @@ public:
     * @returns  A future that caller can wait on to be notified when network
     *           subsystem is ready.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -687,8 +630,6 @@ public:
     *
     * @returns SlotId
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual SlotId getSlotId() = 0;
 
@@ -701,8 +642,6 @@ public:
     *
     * @returns Status of updateMessageIdFilters i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status updateMessageFilters(std::vector<CellBroadcastFilter> filters,
       telux::common::ResponseCallback callback = nullptr)
@@ -716,8 +655,6 @@ public:
     *
     * @returns Status of requestMessageIdFilters i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status requestMessageFilters(
       RequestFiltersResponseCallback callback) = 0;
@@ -730,8 +667,6 @@ public:
     *
     * @returns Status of setActivationStatus i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status setActivationStatus(bool activate,
       telux::common::ResponseCallback callback = nullptr) = 0;
@@ -743,8 +678,6 @@ public:
     *
     * @returns Status of requestActivationStatus i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status requestActivationStatus(
       RequestActivationStatusResponseCallback callback) = 0;
@@ -757,8 +690,6 @@ public:
     *
     * @returns Status of registerListener i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<ICellBroadcastListener> listener)
       = 0;
@@ -770,8 +701,6 @@ public:
     *
     * @returns Status of deregisterListener i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status deregisterListener(std::weak_ptr<ICellBroadcastListener> listener)
       = 0;
@@ -793,8 +722,6 @@ public:
     * @param [in] slotId    - Slot Id on which broadcast message is received.
     * @param [in] cbMessage - Broadcast message with information related to ETWS/CMAS notification.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual void onIncomingMessage(SlotId slotId,
       const std::shared_ptr<CellBroadcastMessage> cbMessage) {
@@ -816,7 +743,7 @@ public:
    virtual ~ICellBroadcastListener() {
    }
 };
-
+/** @} */ /* end_addtogroup telematics_cellbroadcast */
 }  // End of namespace tel
 }  // End of namespace telux
 #endif // CELLBROADCASTMANAGER_HPP

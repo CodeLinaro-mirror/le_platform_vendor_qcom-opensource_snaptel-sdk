@@ -1,3 +1,6 @@
+Public Logging API {#public_logging}
+====================================
+
 # Public Logging API
 
 This Section demonstrates how to use the Public Logging API for SDK Applications.

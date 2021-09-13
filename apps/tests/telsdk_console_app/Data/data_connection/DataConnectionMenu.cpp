@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -89,9 +89,14 @@ bool DataConnectionMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "7", "get_default_profile", {}, std::bind(
             &DataConnectionMenu::getDefaultProfile, this)));
+    std::shared_ptr<ConsoleAppCommand> reqDataCallBitRate
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "request_datacall_bit_rate",
+            {}, std::bind(&DataConnectionMenu::requestDataCallBitRate, this,
+            std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
-        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile, getDefaultProfile};
+        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
+        getDefaultProfile, reqDataCallBitRate};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -138,6 +143,19 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
     auto conMgr = telux::data::DataFactory::getInstance().getDataConnectionManager(slotId, initCb);
 
     if (conMgr) {
+        //If this is newly created Manager
+        // Register before sub-system comes up to get all the notifications
+        if (dataConnectionManagerMap_.find(slotId) == dataConnectionManagerMap_.end()) {
+            dataConnectionManagerMap_.emplace(slotId, conMgr);
+            auto dataListener = std::make_shared<DataListener>(slotId);
+            if (dataListener == nullptr) {
+                std::cout <<
+                "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
+                exit(1);
+            }
+            dataListeners_.emplace(slotId, dataListener);
+            dataConnectionManagerMap_[slotId]->registerListener(dataListeners_[slotId]);
+        }
         // Initialize data connection manager
         std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
             slotId << ", Please wait ..." << endl;
@@ -154,26 +172,13 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
             return false;
         }
 
-        //If this is newly created Manager
-        if (dataConnectionManagerMap_.find(slotId) == dataConnectionManagerMap_.end()) {
-            dataConnectionManagerMap_.emplace(slotId, conMgr);
-            auto dataListener = std::make_shared<DataListener>();
-            if (dataListener == nullptr) {
-                std::cout <<
-                "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
-                exit(1);
-            }
-            dataListeners_.emplace(slotId, dataListener);
-            dataConnectionManagerMap_[slotId]->registerListener(dataListeners_[slotId]);
-
-            //Update dataListener_'s data call list
-            requestDataCallList(OperationType::DATA_LOCAL, slotId,
-                std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
-                std::placeholders::_1, std::placeholders::_2));
-            requestDataCallList(OperationType::DATA_REMOTE, slotId,
-                std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
-                std::placeholders::_1, std::placeholders::_2));
-        }
+        //Update dataListener_'s data call list
+        requestDataCallList(OperationType::DATA_LOCAL, slotId,
+            std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
+            std::placeholders::_1, std::placeholders::_2));
+        requestDataCallList(OperationType::DATA_REMOTE, slotId,
+            std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
+            std::placeholders::_1, std::placeholders::_2));
     }
     else {
         std::cout << "Data Connection Manager failed to initialize" << std::endl;
@@ -373,6 +378,13 @@ void DataConnectionMenu::setDefaultProfile() {
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
     Utils::validateInput(profileId);
+    bool profileFound = validateProfile(slotId,profileId);
+    // if profile does not exist , dont allow it to be set as default profile
+    if (!profileFound) {
+        std::cout << "\nCannot set "<< profileId
+            << " as default profile, Profile does not exist" << std::endl;
+        return;
+    }
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {
@@ -386,6 +398,50 @@ void DataConnectionMenu::setDefaultProfile() {
 
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->setDefaultProfile(
         opType, profileId, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::requestDataCallBitRate(std::vector<std::string> inputCommand) {
+    std::cout << "\nRequest Data Call Bit Rate" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    auto dataCall = dataListeners_[static_cast<SlotId>(slotId)]->getDataCall(
+        static_cast<SlotId>(slotId), profileId);
+    if (dataCall) {
+        // Callback
+        auto respCb = [](
+            telux::data::BitRateInfo& bitRate, telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                      << "RequestDataCallBitRate Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << std::endl;
+                std::cout << "Current Tx Rate (bits/sec): " << bitRate.txRate << std::endl;
+                std::cout << "Current Rx Rate (bits/sec): " << bitRate.rxRate << std::endl;
+                std::cout << "Maximum Tx Rate (bits/sec): " << bitRate.maxTxRate << std::endl;
+                std::cout << "Maximum Rx Rate (bits/sec): " << bitRate.maxRxRate << std::endl;
+            }
+        };
+        retStat = dataCall->requestDataCallBitRate(respCb);
+    } else {
+        std::cout << "Unable to find DataCall, Please start_data_call" << std::endl;
+    }
     Utils::printStatus(retStat);
 }
 
@@ -421,4 +477,72 @@ void DataConnectionMenu::getDefaultProfile() {
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->getDefaultProfile(
         opType, respCb);
     Utils::printStatus(retStat);
+}
+
+bool DataConnectionMenu::validateProfile(int slotId, int profileId) {
+
+    if (!initalizeDPM(static_cast<SlotId>(slotId))) {
+        return false;
+    }
+
+    std::promise<telux::common::ErrorCode> prom{};
+    std::vector<std::shared_ptr<telux::data::DataProfile>> profileList{};
+    std::shared_ptr<MyDefaultProfilesCallback> profileListCb  =
+        std::make_shared<MyDefaultProfilesCallback>();
+
+    if (profileListCb == nullptr) {
+        std::cout << "ERROR - Unable to allocate profile list callback" << std::endl;
+        return false;
+    }
+
+    telux::common::Status status =
+        dataProfileManagerMap_[static_cast<SlotId>(slotId)]->requestProfileList(
+            std::shared_ptr<telux::data::IDataProfileListCallback>(profileListCb));
+
+    telux::common::ErrorCode errCode = profileListCb->prom_.get_future().get();
+    if (errCode != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\nError retriving profile list ErrorCode: " << static_cast<int>(errCode)
+            << std::endl;
+        return false;
+    }
+    for(auto it : profileListCb->profileList_) {
+        if (profileId == it->getId()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DataConnectionMenu::initalizeDPM(SlotId slotId) {
+
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    bool retValue = false;
+    std::promise<telux::common::ServiceStatus> prom{};
+
+    // Get the DataFactory instances.
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    auto profMgr = dataFactory.getDataProfileManager(slotId,
+        [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
+
+    if (profMgr) {
+        //  Initialize data profile manager
+        std::cout << "\n\nInitializing Data profile manager subsystem on slot " <<
+            slotId << ", Please wait ..." << endl;
+        subSystemStatus = prom.get_future().get();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nData Profile Manager on slot "<< slotId << " is ready" << std::endl;
+            retValue = true;
+        } else {
+            std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
+            return false;
+        }
+
+        //If this is newly created Manager
+        if (dataProfileManagerMap_.find(slotId) == dataProfileManagerMap_.end()) {
+            dataProfileManagerMap_.emplace(slotId, profMgr);
+        }
+    } else {
+        std::cout << "Data Profile Manager failed to initialize" << std::endl;
+    }
+    return retValue;
 }

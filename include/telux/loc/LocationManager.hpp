@@ -74,8 +74,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetEnergyConsumedCallback = std::function<void(telux::loc::GnssEnergyConsumedInfo
@@ -112,6 +110,8 @@ public:
  *
  * @returns True if location subsystem is ready for service otherwise false.
  *
+ * @deprecated use getServiceStatus()
+ *
  */
   virtual bool isSubsystemReady() = 0;
 
@@ -122,8 +122,6 @@ public:
  *          SERVICE_UNAVAILABLE  -  If location manager is temporarily unavailable.
  *          SERVICE_FAILED       -  If location manager encountered an irrecoverable failure.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -132,6 +130,10 @@ public:
  *
  * @returns  A future that caller can wait on to be notified when location
  *           subsystem is ready.
+ *
+ * @deprecated The callback mechanism introduced in the
+ * @ref LocationFactory::getLocationManager() API will provide the similar notification
+ * mechanism as onSubsystemReady(). This API will soon be removed from further releases.
  *
  */
   virtual std::future<bool> onSubsystemReady() = 0;
@@ -178,8 +180,12 @@ public:
  * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
  * caller send which is not one of these will result in the implementation picking one of these
  * periodicities.
- * This Api enables the onDetailedLocationUpdate, onGnssSVInfo,
- * onGnssSignalInfo, onGnssNmeaInfo and onGnssMeasurementsInfo Apis on the listener.
+ * Calling this Api will result in @ref ILocationListener::onDetailedLocationUpdate,
+ * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
+ * @ref ILocationListener::onGnssNmeaInfo and @ref ILocationListener::onGnssMeasurementsInfo APIs
+ * on the listener being invoked, assuming they have not been disabled using the
+ * GnssReportTypeMask. If a client issues second request to this API then new request for
+ * GnssReportTypeMask will over write the previous call to this API.
  *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
@@ -191,13 +197,16 @@ public:
  * @param [in] callback - Optional callback to get the response of set
  *             minimum interval for reports.
  *
+ * @param [in] reportMask - Optional field to specify which reports a client is interested in.
+ *                          By default all the reports will be enabled.
+ *
  * @returns Status of startDetailedReports i.e. success or suitable status
  * code.
  *
  */
-  virtual telux::common::Status
-      startDetailedReports(uint32_t interval,
-                           telux::common::ResponseCallback callback = nullptr) = 0;
+  virtual telux::common::Status startDetailedReports(uint32_t interval,
+      telux::common::ResponseCallback callback = nullptr,
+          GnssReportTypeMask reportMask = DEFAULT_GNSS_REPORT) = 0;
 
 /**
  * Starts a session which may provide richer default combined position reports
@@ -213,8 +222,12 @@ public:
  * The supported periodicities are 100ms, 200ms, 500ms, 1sec, 2sec, nsec and a periodicity that a
  * caller send which is not one of these will result in the implementation picking one of these
  * periodicities.
- * This Api enables the onDetailedLocationUpdate, onGnssSVInfo,
- * onGnssSignalInfo, onGnssNmeaInfo and onGnssMeasurementsInfo Apis on the listener.
+ * Calling this Api will result in @ref ILocationListener::onDetailedEngineLocationUpdate,
+ * @ref ILocationListener::onGnssSVInfo, @ref ILocationListener::onGnssSignalInfo,
+ * @ref ILocationListener::onGnssNmeaInfo and @ref ILocationListener::onGnssMeasurementsInfo APIs
+ * on the listener being invoked, assuming they have not been disabled using the
+ * GnssReportTypeMask. If a client issues second request to this API then new request for
+ * GnssReportTypeMask will over write the previous call to this API.
  *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
@@ -230,13 +243,16 @@ public:
  * @param [in] callback - Optional callback to get the response of set
  *             minimum interval for reports.
  *
+ * @param [in] reportMask - Optional field to specify which reports a client is interested in.
+ *                          By default all the reports will be enabled.
+ *
  * @returns Status of startDetailedEngineReports i.e. success or suitable status
  * code.
  *
  */
-  virtual telux::common::Status
-      startDetailedEngineReports(uint32_t interval, LocReqEngine engineType,
-                           telux::common::ResponseCallback callback = nullptr) = 0;
+  virtual telux::common::Status startDetailedEngineReports(uint32_t interval,
+      LocReqEngine engineType, telux::common::ResponseCallback callback = nullptr,
+          GnssReportTypeMask reportMask = DEFAULT_GNSS_REPORT) = 0;
 
 /**
  * Starts the Location report by configuring the time and distance between
@@ -292,8 +308,6 @@ public:
  *
  * @returns Status of getLocationSystemInfo i.e success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  *
  */
   virtual telux::common::Status
@@ -312,8 +326,6 @@ public:
  *
  * @returns Status of deRegisterForSystemInfoUpdates success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  *
  */
   virtual telux::common::Status
@@ -330,8 +342,6 @@ public:
  *
  * @returns Status of requestEnergyConsumedInfo i.e success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *       break backwards compatibility.
  */
   virtual telux::common::Status requestEnergyConsumedInfo(GetEnergyConsumedCallback cb) = 0;
 
@@ -369,13 +379,13 @@ public:
  * request will fail and @ref ResponseCallback will get invoked with @ref
  * ErrorCode::OP_IN_PROGRESS.
  * To cancel a pending request, use @ref ILocationManager::cancelTerrestrialPositionRequest.
- * Before using this API, user consent needs to be set true via @ref ILocationConfigurator::
- * provideConsentForTerrestrialPositioning.
+ * Before using this API, user consent needs to be set true via
+ * @ref ILocationConfigurator::provideConsentForTerrestrialPositioning.
  *
  * @param[in] timeoutMsec - the time in milliseconds within which the client is expecting a
  *                          response. If the system is unable to provide a report within this
- *                          time, the @ref ResponseCallback will be invoked with @ref ErrorCode::
- *                          OPERATION_TIMEOUT.
+ *                          time, the @ref ResponseCallback will be invoked with
+ *                          @ref ErrorCode::OPERATION_TIMEOUT.
  *
  * @param[in] techMask - the set of terrestrial technologies that are allowed to be used for
  *                       producing the position.

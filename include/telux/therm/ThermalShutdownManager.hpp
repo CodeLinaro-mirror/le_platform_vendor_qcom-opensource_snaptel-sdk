@@ -52,7 +52,7 @@
 namespace telux {
 namespace therm {
 
-/** @addtogroup telematics_therm
+/** @addtogroup telematics_therm_shutdown_management
  * @{ */
 
 /**
@@ -138,7 +138,7 @@ public:
      */
     virtual ~IThermalShutdownManager(){};
 };
-/** @} */ /* end_addtogroup telematics_therm */
+/** @} */ /* end_addtogroup telematics_therm_shutdown_management */
 
 }  // end of namespace therm
 }  // end of namespace telux

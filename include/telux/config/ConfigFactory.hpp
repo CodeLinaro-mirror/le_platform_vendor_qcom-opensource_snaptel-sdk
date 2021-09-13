@@ -44,7 +44,7 @@
 namespace telux {
 
 namespace config {
-/** @addtogroup telematics_config
+/** @addtogroup telematics_config_manager
  * @{ */
 
 /**
@@ -73,7 +73,7 @@ private:
     ~ConfigFactory();
 };
 
-/** @} */ /* end_addtogroup telematics_config */
+/** @} */ /* end_addtogroup telematics_config_manager */
 } // end of namespace config
 
 } // end of namespace telux

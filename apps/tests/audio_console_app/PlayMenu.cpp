@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,14 +44,7 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
 }
 
 PlayMenu::~PlayMenu() {
-    audioClient_ = nullptr;
-    playStatus_ = false;
-
-    for(std::thread &th : runningThreads_) {
-        if(th.joinable()){
-            th.join();
-        }
-    }
+   cleanup();
 }
 
 void PlayMenu::init() {
@@ -229,28 +222,31 @@ void PlayMenu::startPlay(std::vector<std::string> userInput) {
 
 void PlayMenu::stopPlay(std::vector<std::string> userInput) {
     playStatus_ = false;
-
-    if ((playFormat_ == AudioFormat::AMRWB_PLUS) ||
-        (playFormat_ == AudioFormat::AMRWB) ||
-        (playFormat_ == AudioFormat::AMRNB)){
-        std::promise<bool> p;
-        auto status = audioPlayStream_->stopAudio(
-            StopType::FORCE_STOP, [&p](telux::common::ErrorCode error) {
-            if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
+    if (audioPlayStream_) {
+        if ((playFormat_ == AudioFormat::AMRWB_PLUS) ||
+            (playFormat_ == AudioFormat::AMRWB) ||
+            (playFormat_ == AudioFormat::AMRNB)){
+            std::promise<bool> p;
+            auto status = audioPlayStream_->stopAudio(
+                StopType::FORCE_STOP, [&p](telux::common::ErrorCode error) {
+                if (error == telux::common::ErrorCode::SUCCESS) {
+                    p.set_value(true);
+                } else {
+                    p.set_value(false);
+                    std::cout << "Failed to force stop" << std::endl;
+                }
+                });
+            if(status == telux::common::Status::SUCCESS){
+                std::cout << "Request to force stop Sent" << std::endl;
             } else {
-                p.set_value(false);
-                std::cout << "Failed to force stop" << std::endl;
+                std::cout << "Request to force stop failed" << std::endl;
             }
-            });
-        if(status == telux::common::Status::SUCCESS){
-            std::cout << "Request to force stop Sent" << std::endl;
-        } else {
-            std::cout << "Request to force stop failed" << std::endl;
+            if (p.get_future().get()) {
+                    std::cout << "Force Stop successful" << std::endl;
+            }
         }
-        if (p.get_future().get()) {
-                std::cout << "Force Stop successful" << std::endl;
-        }
+    } else {
+        std::cout << "No running Play session please create one" << std::endl;
     }
 }
 

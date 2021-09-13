@@ -52,7 +52,7 @@ namespace net {
 // Forward declarations
 class ISocksListener;
 
-/** @addtogroup telematics_net
+/** @addtogroup telematics_data_net
  * @{ */
 /**
  *@brief    SocksManager is a primary interface for configuring legacy Socks proxy server.
@@ -68,8 +68,6 @@ class ISocksManager {
      *          SERVICE_UNAVAILABLE    If Socks manager object is temporarily unavailable.
      *          SERVICE_FAILED       - If Socks manager object encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -101,8 +99,6 @@ class ISocksManager {
      *
      * @returns Status of proxy enablement i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
 
     virtual  telux::common::Status enableSocks(bool enable,
@@ -135,8 +131,6 @@ class ISocksManager {
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::data::OperationType getOperationType() = 0;
 
@@ -169,7 +163,7 @@ class ISocksListener {
     virtual ~ISocksListener(){};
 };
 
-/** @} */ /* end_addtogroup telematics_net */
+/** @} */ /* end_addtogroup telematics_data_net */
 }
 }
 }

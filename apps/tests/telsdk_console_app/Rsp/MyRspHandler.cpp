@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -36,10 +36,22 @@
 void MyRspCallback::onProfileListResponse(
         const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
         telux::common::ErrorCode errorCode) {
-   if (errorCode == telux::common::ErrorCode::SUCCESS) {
-        PRINT_CB << "Profile List: \n";
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
+        if (profiles.size() == 0) {
+            PRINT_CB << "Profile List is empty  \n";
+            return;
+        } else {
+            PRINT_CB << "Profile List: \n";
+        }
+
         for (size_t index = 0; index < profiles.size(); index++) {
             std::cout << profiles[index]->toString() << std::endl;
+            std::vector<uint8_t> icon = profiles[index]->getIcon();
+            if (icon.size() > 0) {
+                std::cout << "Icon data is present \n";
+            } else {
+                std::cout << "Icon data is not present \n";
+            }
         }
     } else {
         PRINT_CB << "\n Request profile list failed, ErrorCode: " <<static_cast<int>(errorCode)
@@ -63,6 +75,17 @@ void MyRspCallback::onResponseCallback(telux::common::ErrorCode error) {
                  << " Description : " << Utils::getErrorCodeAsString(error)<< std::endl;
     } else {
         PRINT_CB << "Request processed successfully \n";
+    }
+}
+
+void MyRspCallback::onServerAddressResponse(std::string smdpAddress,
+        std::string smdsAddress, telux::common::ErrorCode errorCode) {
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "SM-DP+ Address : " << smdpAddress <<std::endl;
+        PRINT_CB << "SMDS Address : " << smdsAddress <<std::endl;;
+    } else {
+        PRINT_CB << "Request Server Address failed, ErrorCode: " <<static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
     }
 }
 

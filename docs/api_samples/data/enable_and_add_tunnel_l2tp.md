@@ -1,30 +1,51 @@
+Enable L2TP and Add Tunnel {#enable_and_add_tunnel_l2tp}
+===============================================================
+
 # Enable L2TP and Add Tunnel
 
 Please follow below steps to enable L2TP and Tunnel
 
-### 1. Get the DataFactory and L2tp Manager instance
+### 1.  Implement initialization callback and get get the DataFactory instance
+Optionally initialization callback can be provided with get manager instance.
+Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
+   auto initCb = [&](telux::common::ServiceStatus status) {
+      std::lock_guard<std::mutex> lock(mtx);
+      status_ = status;
+      initCv.notify_all();
+   };
    auto &dataFactory = telux::data::DataFactory::getInstance();
-   auto dataL2tpMgr  = dataFactory.getL2tpManager();
    ~~~~~~
 
-### 2. Check if data subsystem is ready
+### 2. Get the L2tpManager instances
 
    ~~~~~~{.cpp}
-   bool subSystemStatus = dataL2tpMgr->isSubsystemReady();
+   std::unique_lock<std::mutex> lck(mtx);
+   auto dataL2tpMgr  = dataFactory.getL2tpManager(initCb);
    ~~~~~~
 
-### 2.1 If data subsystem is not ready, wait for it to be ready
+### 3. Wait for L2tpManager initialization to be complete
 
    ~~~~~~{.cpp}
-   if(!subSystemStatus) {
-      std::future<bool> f = dataL2tpMgr->onSubsystemReady();
-      subSystemStatus = f.get();
+   initCv.wait(lck);
+   ~~~~~~
+
+### 3.1 Check L2tpManager initialization state
+
+If L2tpManager initialization failed, new initialization attempt can be accomplished
+by calling step 2. If L2tpManager initialization succeed, proceed to step 4
+
+   ~~~~~~{.cpp}
+   if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      // Go to step 4
+   }
+   else {
+      //Go to step 2 for another initialization attempt
    }
    ~~~~~~
 
-### 3. Instantiate setConfig callback instance - this is optional
+### 4. Instantiate setConfig callback instance - this is optional
 
    ~~~~~~{.cpp}
    auto setConfigCb = [&setConfigPass, &promise](telux::common::ErrorCode error) {
@@ -35,7 +56,7 @@ Please follow below steps to enable L2TP and Tunnel
    };
    ~~~~~~
 
-### 4. Set L2TP Configuration
+### 5. Set L2TP Configuration
    ~~~~~~{.cpp}
    bool enable = true;        //Enable L2TP
    bool enableMss = true;     // Enable MSS Clamping
@@ -44,7 +65,7 @@ Please follow below steps to enable L2TP and Tunnel
    dataL2tpMgr->setConfig(enable, enableMss, enableMtu, setConfigCb, mtuSize);
    ~~~~~~
 
-### 5. Configure L2TP Tunnel and Session
+### 6. Configure L2TP Tunnel and Session
 
    ~~~~~~{.cpp}
    std::cout << "L2TP Set Configuration succeeded ... Adding Tunnel" << std::endl;
@@ -63,7 +84,7 @@ Please follow below steps to enable L2TP and Tunnel
    l2tpTunnelConfig.sessionConfig.emplace_back(l2tpSessionConfig); // Add session to tunnel config
    ~~~~~~
 
-###   6. Instantiate addTunnel callback instance - this is optional
+###   7. Instantiate addTunnel callback instance - this is optional
 
    ~~~~~~{.cpp}
    auto addTunnelCb = [&setConfigPass, &promise](telux::common::ErrorCode error) {
@@ -75,7 +96,7 @@ Please follow below steps to enable L2TP and Tunnel
    };
    ~~~~~~
 
-### 7. addTunnel to L2TP
+### 8. addTunnel to L2TP
 
    ~~~~~~{.cpp}
    dataL2tpMgr->addTunnel(l2tpTunnelConfig, addTunnelCb);

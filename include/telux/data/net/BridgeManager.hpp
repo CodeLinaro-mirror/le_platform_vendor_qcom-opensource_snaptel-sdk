@@ -50,6 +50,9 @@ namespace telux {
 namespace data {
 namespace net {
 
+/** @addtogroup telematics_data_net
+ * @{ */
+
 // Forward declarations
 class IBridgeListener;
 
@@ -79,14 +82,9 @@ struct BridgeInfo {
  * @param [in] error        Return code which indicates whether the operation is succeeded or not
  *                          @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using BridgeInfoResponseCb
     = std::function<void(const std::vector<BridgeInfo> &infos, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_net
- * @{ */
 
 /**
  * @brief      IBridgeManager provides APIs to enable/disable and set/get/delete software bridges
@@ -103,8 +101,6 @@ class IBridgeManager {
      *          SERVICE_UNAVAILABLE   If Bridge manager object is temporarily unavailable.
      *          SERVICE_FAILED        If Bridge manager object encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -135,8 +131,6 @@ class IBridgeManager {
      *
      * @returns Status of enableBridge request i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status enableBridge( bool enable,
                         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -149,8 +143,6 @@ class IBridgeManager {
      *
      * @returns Status of addBridge request i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status addBridge( BridgeInfo config,
                         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -162,8 +154,6 @@ class IBridgeManager {
      *
      * @returns Status of requestBridgeInfo request i.e. success or suitable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status requestBridgeInfo(BridgeInfoResponseCb callback) = 0;
 
@@ -175,8 +165,6 @@ class IBridgeManager {
      *
      * @returns Status of removeBridge request i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status removeBridge( std::string ifaceName,
                         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -232,7 +220,7 @@ class IBridgeListener {
     virtual ~IBridgeListener(){};
 };
 
-/** @} */ /* end_addtogroup telematics_net */
+/** @} */ /* end_addtogroup telematics_data_net */
 }
 }
 }

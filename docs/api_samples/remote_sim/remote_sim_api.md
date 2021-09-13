@@ -1,3 +1,6 @@
+Remote SIM Manager API Sample Reference {#remote_sim_api}
+=========================================================
+
 # Remote SIM Manager API Sample Reference
 
 This section demonstrates how to use the Remote SIM Manager API for remote SIM card operations.

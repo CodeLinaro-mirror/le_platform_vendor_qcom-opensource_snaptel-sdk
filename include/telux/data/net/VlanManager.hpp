@@ -52,6 +52,9 @@ namespace telux {
 namespace data {
 namespace net {
 
+/** @addtogroup telematics_data_net
+ * @{ */
+
 // Forward declarations
 class IVlanListener;
 
@@ -62,8 +65,6 @@ class IVlanListener;
  * @param [in] error                      Return code which indicates whether the operation
  *                                        succeeded or not @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using CreateVlanCb = std::function<void(bool isAccelerated, telux::common::ErrorCode error)>;
 
@@ -74,8 +75,6 @@ using CreateVlanCb = std::function<void(bool isAccelerated, telux::common::Error
  * @param [in] error           Return code which indicates whether the operation
  *                             succeeded or not @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using QueryVlanResponseCb
     = std::function<void(const std::vector<VlanConfig> &configs, telux::common::ErrorCode error)>;
@@ -88,14 +87,9 @@ using QueryVlanResponseCb
  * @param [in] error           Return code which indicates whether the operation
  *                             succeeded or not @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using VlanMappingResponseCb = std::function<void(
     const std::list<std::pair<int, int>> &mapping, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_net
- * @{ */
 
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).
@@ -113,8 +107,6 @@ class IVlanManager {
      *          SERVICE_UNAVAILABLE    If Vlan manager object is temporarily unavailable.
      *          SERVICE_FAILED       - If Vlan manager object encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -149,8 +141,6 @@ class IVlanManager {
      * @returns Immediate status of createVlan() request sent i.e. success or suitable status
      * code.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      *
      */
     virtual telux::common::Status createVlan(
@@ -169,8 +159,6 @@ class IVlanManager {
      * @returns Immediate status of removeVlan() request sent i.e. success or suitable status
      * code.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status removeVlan(
         int16_t vlanId, InterfaceType ifaceType, telux::common::ResponseCallback callback = nullptr)
@@ -184,8 +172,6 @@ class IVlanManager {
      * @returns Immediate status of queryVlanInfo() request sent i.e. success or suitable status
      * code.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
@@ -202,8 +188,6 @@ class IVlanManager {
      * @returns Immediate status of associateWithProfileId() request sent i.e. success or
      * suitable status code.
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status bindWithProfile(int profileId, int vlanId,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -219,8 +203,6 @@ class IVlanManager {
      * @returns Immediate status of disassociateFromProfileId() request sent i.e. success or
      * suitable status code
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status unbindFromProfile(int profileId, int vlanId,
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -235,8 +217,6 @@ class IVlanManager {
      * @returns Immediate status of queryVlanMappingList() request sent i.e. success or
      * suitable status code
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback,
         SlotId slotId = DEFAULT_SLOT_ID) = 0;
@@ -268,8 +248,6 @@ class IVlanManager {
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::data::OperationType getOperationType() = 0;
 
@@ -297,12 +275,20 @@ class IVlanListener {
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
 
     /**
+     * This function is called when there is a change in IPA Connection Manager daemon state.
+     *
+     * @param [in] state   New state of IPA connection Manager daemon Active/Inactive
+     *
+     */
+    virtual void onHwAccelerationChanged(const ServiceState state){};
+
+    /**
      * Destructor for IVlanListener
      */
     virtual ~IVlanListener(){};
 };
 
-/** @} */ /* end_addtogroup telematics_net */
+/** @} */ /* end_addtogroup telematics_data_net */
 }
 }
 }

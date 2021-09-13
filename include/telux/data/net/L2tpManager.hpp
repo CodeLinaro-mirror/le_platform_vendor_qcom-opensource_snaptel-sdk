@@ -51,11 +51,12 @@ namespace telux {
 namespace data {
 namespace net {
 
+/** @addtogroup telematics_data_net
+ * @{ */
+
 // Forward declarations
 class IL2tpListener;
 
-/** @addtogroup telematics_net
- * @{ */
 /**
  * L2TP encapsulation protocols
  */
@@ -98,7 +99,6 @@ struct L2tpSysConfig {
     bool enableTcpMss;   /**< Enable TCP MSS clampping on L2TP interfaces to avoid segmentation */
     uint32_t mtuSize; /**< Current MTU size in bytes */
 };
-/** @} */ /* end_addtogroup telematics_net */
 
 /**
  * This function is called as a response to @ref requestConfig()
@@ -107,14 +107,10 @@ struct L2tpSysConfig {
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not @ref telux::common::ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
- *         break backwards compatibility.
  */
 using L2tpConfigCb
     = std::function<void(const L2tpSysConfig &l2tpSysConfig, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_net
- * @{ */
 /**
  *@brief    L2tpManager is a primary interface for configuring L2TP Service.
  *          It also provides interface to Subsystem Restart events by registering as listener.
@@ -129,8 +125,6 @@ class IL2tpManager {
      *          SERVICE_UNAVAILABLE    If L2tp manager is temporarily unavailable.
      *          SERVICE_FAILED       - If L2tp manager encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -169,8 +163,6 @@ class IL2tpManager {
      *                            default 1422 bytes
      * @returns Status of setConfig i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setConfig(bool enable, bool enableMss, bool enableMtu,
         telux::common::ResponseCallback callback = nullptr, uint32_t mtuSize = 0) = 0;
@@ -183,8 +175,6 @@ class IL2tpManager {
      *
      * @returns Status of addTunnel i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status addTunnel(const L2tpTunnelConfig &l2tpTunnelConfig,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -196,8 +186,6 @@ class IL2tpManager {
      *
      * @returns Status of requestConfig i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestConfig(L2tpConfigCb l2tpConfigCb) = 0;
 
@@ -209,8 +197,6 @@ class IL2tpManager {
      *
      * @returns Status of removeTunnel i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status removeTunnel(
         uint32_t tunnelId, telux::common::ResponseCallback callback = nullptr) = 0;
@@ -266,7 +252,7 @@ class IL2tpListener {
     virtual ~IL2tpListener(){};
 };
 
-/** @} */ /* end_addtogroup telematics_net */
+/** @} */ /* end_addtogroup telematics_data_net */
 }
 }
 }

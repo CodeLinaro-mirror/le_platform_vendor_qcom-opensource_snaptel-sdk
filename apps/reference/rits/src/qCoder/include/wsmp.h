@@ -39,7 +39,7 @@ extern "C"
 /**
  * There are at least three versions of WSMP protocols out in the wild
  * although going forward, the 2016 (Ver #3) is expected to be used as per J2945/1
- * but there are stacks and messages over the air from vehicles and RSE out in 
+ * but there are stacks and messages over the air from vehicles and RSE out in
  * the wild which still send the older formats
  */
 
@@ -100,6 +100,15 @@ typedef enum {
     EXT_FIELD_LOAD,
     EXT_FIELD_MAX
 } ext_field_e;
+
+/* PSID: IEEE1609.12 only small portion that is needed are defined here */
+typedef enum {
+    PSID_SYSTEM = 0,
+    PSID_EFC,
+    /* 0x20 -0x22, 0x80 - 0x85 are defined for SAE J2735 */
+    PSID_BSM = 0x20,
+    PSID_WSA = 0x87,
+} PSID_e;
 
 /**
  * Transport TPID  -- an 8 bit field in IEEE 1609 (2016), but only 6 types

@@ -85,7 +85,7 @@ static __inline int wsmp_decode_psid(uint8_t *wsmp)
     int psid = 0;
 
     if (!wsmp) {
-        fprintf(stderr, "wsmp_decode_psid called with null.\n:");
+        fprintf(stderr, "wsmp_decode_psid called with null wsmp header.\n");
         return 0;
     }
 
@@ -115,7 +115,7 @@ static __inline int wsmp_decode_psid(uint8_t *wsmp)
 }
 
 
-/** 
+/**
  * helper function to return number of bytes  the resulting P-encoded PSID will
  * need as per IEEE 1609.12 p-encoding rules
  *
@@ -125,8 +125,8 @@ static __inline int wsmp_decode_psid(uint8_t *wsmp)
 static __inline int WSM_PSID_PCODED_LEN(int psid_v)
 {
 
-    if (psid_v > MAX_PSID) {
-        fprintf(stderr, "wsmp_devode_psid called with null.\n:");
+    if (psid_v > MAX_PSID && gVerbosity) {
+        fprintf(stderr, "wsmp_psid_pcoded_len called with null.\n");
         return -1;
     }
 
@@ -159,7 +159,8 @@ static __inline uint8_t*  wsmp_add_psid(uint8_t *wsmp, int psid_v, int *added)
     int P; // the P-encoded value of psid_v
 
     if ((!wsmp) || (psid_v > MAX_PSID) || !added) {
-        fprintf(stderr, "wsmp_devode_psid called with null.\n:");
+        fprintf(stderr, "wsmp_add_psid called with null or invalid psid.\n");
+        fprintf(stderr, "Input psid value is: %d\n", psid_v); 
         if (added) {
             *added = 0;
         }
@@ -392,7 +393,7 @@ err:
     return result;
 }
 
-/** 
+/**
  * In the 2016 version, the qty of extension is always included at the beginning
  * of a WIEE. However, in older versions, we'll pass in a param # which might be
  * the Max expected (4) because no count field is included
@@ -545,8 +546,13 @@ static int  wsmp_decode_header(msg_contents *mc)
      * in all versions of IEEE 1609 so far, the 3 LSB of first byte after 88dc
      * ethertype is the WSMP version #
      */
-
-    ver_octet = (*(uint8_t *)abuf_pull(bp, 1));
+    if(gVerbosity > 4)
+        printf("Pulling octet of WSMP version\n");
+    //ver_octet = (*(uint8_t *)abuf_pull(bp, 1));
+    uint8_t* byte = (uint8_t*)abuf_pull(bp, 1);
+    if(byte == NULL)
+        goto wsmp_decode_err;
+    ver_octet = (*byte);
     wsmpp->protoVersion = ver_octet & 0x7;  // 3 least significant bits
 
     if (gVerbosity > 7) {
@@ -605,6 +611,8 @@ static int  wsmp_decode_header(msg_contents *mc)
         // no more than a few WEID's are presently allowed bt standard in a "WAVE Information
         // Element Extension"
         if (qty_WEIDs_expected) {
+            if(gVerbosity > 2)
+                printf("WAVE Extension IDs are present\n");
             if (wsmp_decode_wave_element_extension(bp, wsmpp, 0)) {
                 retcode = -1;
                 goto exit;
@@ -616,13 +624,17 @@ static int  wsmp_decode_header(msg_contents *mc)
         break;
 
     default:
-        fprintf(stderr, "not a supported WSMP version/type,  version byte=0x%02x, ver=%d\n",
-            ver_octet, wsmpp->protoVersion);
+        if(gVerbosity > 2)
+            fprintf(stderr, 
+                "not a supported WSMP version/type,  version byte=0x%02x, ver=%d\n",
+                ver_octet, wsmpp->protoVersion);
         retcode = -1;
         goto exit;
     }
 
     if (qty_WEIDs_expected) {
+        if(gVerbosity > 2)
+                printf("WAVE Extension IDs are present\n");
         if (wsmp_decode_wave_element_extension(bp, wsmpp, qty_WEIDs_expected)) {
             retcode = -1;
             goto exit;
@@ -680,8 +692,11 @@ static int  wsmp_decode_header(msg_contents *mc)
 
     } else {
         // 2016 Version or newer.. next byte is TPID, followed by var-len  PSID, then WSM Length
-        wsmpp->tpid.octet = *(uint8_t *)abuf_pull(bp, sizeof(uint8_t));
-
+        if(gVerbosity > 2)
+                printf("Getting TPID Octet\n");
+        //wsmpp->tpid.octet = *(uint8_t *)abuf_pull(bp, sizeof(uint8_t));
+        uint8_t* ptr = abuf_pull(bp, 1);
+        wsmpp->tpid.octet = *ptr;
         /* now according to IEEE1609 2016, there could be an optional
            WEID Extension field (variable length) , before the WSMp payload length/data
            See enum definition in dsrc_util.h called TPUD_te
@@ -710,9 +725,12 @@ static int  wsmp_decode_header(msg_contents *mc)
 
         // Odd (LSB=1) TPID indicate presence of optional WAVE Inofrmation Element Extension
         ElementExtensionPresent = (wsmpp->tpid.id % 2); //TPID 1,3,5 = Eelments present
-
+        if(gVerbosity > 2)
+                printf("Checking if ports are present or PSID\n");
         // There are either Ports or PSID -- never both
         if (PortsPresent) {
+            if(gVerbosity > 2)
+                printf("Ports are present\n");
             wsmpp->ports.src_port = ntohs(*(uint16_t *)abuf_pull(bp, sizeof(uint16_t)));
             wsmpp->ports.dst_port = ntohs(*(uint16_t *)abuf_pull(bp, sizeof(uint16_t)));
 
@@ -723,6 +741,7 @@ static int  wsmp_decode_header(msg_contents *mc)
         } else {
             p = bp->data;
             if (gVerbosity > 2) {
+                printf("Ports are not present, PSID present\n");
                 printf("PSID LEN=%d ", WSMP_PSID_FIELD_SIZE(*(uint8_t *)p));
             }
 
@@ -738,6 +757,8 @@ static int  wsmp_decode_header(msg_contents *mc)
         }
 
         // Get datalength from ASN UPER
+        if(gVerbosity>2)
+            printf("Getting payload length from wsmp header\n");
         if (savari_workaround) {
             mc->payload_len =  get_next_n_bits((unsigned char **)&bp->data, 8, &bits_left);
         } else {
@@ -754,8 +775,7 @@ static int  wsmp_decode_header(msg_contents *mc)
 
 
         if (next_weid == WAVE_ELEM_SAFETY_FLAG) {
-            // could read-in the obsolete control fields from the WSMP-S ext,
-            // what is this?
+            // could read-in the obsolete control fields from the WSMP-S ext
             abuf_pull(bp, sizeof(uint8_t));
         }
     }
@@ -812,12 +832,11 @@ int wsmp_decode(msg_contents *mc)
        and power info give it pointer to data and size (&payload_len)
        from the dsrc_buf..unencoded content loaded with decode results
        this decode can handle 2010 or 2016 formats*/
-
     if ( wsmp_decode_header(mc) < 0) {
         retcode = -3;
         goto wsmp_pkt_err;
     }
-    mc->l3_payload = mc->abuf.data; 
+    mc->l3_payload = mc->abuf.data;
     mc->l3_payload_len = mc->payload_len;
 
     if (gVerbosity > 2) {
@@ -841,10 +860,12 @@ wsmp_pkt_err:
 int wsmp_encode(msg_contents *mc)
 {
     if (!mc->wsmp) {
-        fprintf(stderr, "%s: invalid input\n", __func__);
+        if(gVerbosity > 2)
+            fprintf(stderr, "%s: invalid input\n", __func__);
         return -1;
     } else if (!mc->abuf.data) {
-        fprintf(stderr, "%s: no input to encode\n", __func__);
+        if(gVerbosity > 2)
+            fprintf(stderr, "%s: no input to encode\n", __func__);
         return -1;
     }
     abuf_t ab;

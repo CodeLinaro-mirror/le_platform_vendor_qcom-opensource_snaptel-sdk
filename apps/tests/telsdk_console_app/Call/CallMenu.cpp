@@ -232,9 +232,14 @@ void CallMenu::dial(std::vector<std::string> userInput) {
     }
     telux::common::Status makeCallStatus
         = callManager_->makeCall(phoneId, phoneNumber, myDialCallCmdCb_);
-    std::cout << (makeCallStatus == telux::common::Status::SUCCESS ? "MakeCall is successful"
-                                                                  : "MakeCall failed")
-             << '\n';
+    if (makeCallStatus == telux::common::Status::NOTALLOWED) {
+        std::cout << "Multiple calls are already in progress." <<
+           " Please hangup any one of the call or conference to initiate another call.\n";
+    } else if (makeCallStatus == telux::common::Status::SUCCESS) {
+        std::cout << "MakeCall is successful.\n";
+    } else {
+        std::cout << "MakeCall failed.\n";
+    }
 }
 
 void CallMenu::acceptCall(std::vector<std::string> userInput) {

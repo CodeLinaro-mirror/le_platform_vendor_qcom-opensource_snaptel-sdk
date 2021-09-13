@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,7 +35,7 @@
   */
 
 #include "RadioReceive.h"
-
+static int gRxCount = 0;
 void RadioReceive::rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         this->gRxSub = rxSub;
@@ -43,12 +43,26 @@ void RadioReceive::rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCod
     this->gCallbackPromise.set_value(error);
 };
 
+void RadioReceive::commonStatusCallback(ErrorCode error) {
+    this->gCallbackPromise.set_value(error);
+}
+
+void RadioReceive::createTcpSocketCallback(std::shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
+    if (ErrorCode::SUCCESS == error) {
+        this->tcpSockInfo = sock;
+    }
+    this->gCallbackPromise.set_value(error);
+}
+
+void RadioReceive::closeTcpSocketCallback(std::shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
+    this->gCallbackPromise.set_value(error);
+}
+
 RadioReceive::RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
-const uint16_t port){
+                            const uint16_t port){
 
     if (!this->ready(category, RadioType::RX)) {
         cout << "Radio Checks on RadioReceive creation fail\n";
-        //return static_cast<uint8_t>(Status::FAILED);
     }
     this->category = category;
     auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(category);
@@ -61,84 +75,49 @@ const uint16_t port){
         if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
         {
             cout<<"Rx Subscription creation succeeds.\n";
-            //return -static_cast<uint8_t>(Status::FAILED);
         }else{
             cout<<"Rx Subscription creation fails.\n";
-            //return static_cast<uint8_t>(Status::FAILED);
         }
     }else{
             cout<<"Rx Subscription creation fails.\n";
-            //return static_cast<uint8_t>(Status::FAILED);
     }
     this->resetCallbackPromise();
 }
+RadioReceive::RadioReceive(const TrafficCategory category, 
+                            const TrafficIpType trafficIpType, const uint16_t port, 
+                            std::shared_ptr<std::vector<uint32_t>> idList){
 
-uint32_t RadioReceive::receive(const char* buf) {
-    int socket = -1;
-    // check if this receive is for simulation and/or for UDP
-    if(isSim) {
-        cout << "Setting up simulation receive socket\n";
-        socket = simListenSock;
-    }else {
-        socket = this->gRxSub->getSock();
+    if (!this->ready(category, RadioType::RX)) {
+        cout << "Radio Checks on RadioReceive creation fail\n";
     }
-
-    uint32_t srcAddressSize = sizeof(this->srcAddress);
-    uint32_t bytesReceived;
-    int returnVal;
-    if(isSim && this->enableUdp){ //udp
-        returnVal  = recvfrom(socket, (char*) buf, RadioReceive::MAX_BUF_LEN, 0,
-            (struct sockaddr *) & (this->srcAddress), & srcAddressSize);
-        if(returnVal != -1 && returnVal != 0)
-            bytesReceived = returnVal;
-        else
-            cout << "Errno is: "<< errno <<"\n";
-    }else{ //tcp
-         bytesReceived = recv(socket, (char*) buf, RadioReceive::MAX_BUF_LEN, 0);
-    }
-    if (returnVal  <= 0 && this->enableUdp) {
-        cout << "Radio Receive error in receive. Return value is: " << returnVal << "\n";
-        return returnVal;
-    }else{
-        cout << "Number of bytes received is: "  << bytesReceived << "\n";
-        return bytesReceived;
-    }
-}
-
-uint8_t RadioReceive::closeFlow(){
-    if (isSim)
-    {
-        const auto ans = close(simListenSock);
-        const auto rxAns = close(simRxSock);
-        if (ans >= 0 and rxAns >= 0)
-        {
-            cout << "Simulation Receives socket closed succesfully.\n";
-        }
-        else {
-            cout << "Problem closing Simulation Sockets in RadioReceive.\n";
-        }
-
-    }
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    this->category = category;
+    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(category);
     auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
                             ErrorCode error){
                                 rxSubCallback(rxSub, error);
                             };
-    if (Status::SUCCESS == cv2xRadio->closeRxSubscription(this->gRxSub, respCb)){
-        if (ErrorCode::SUCCESS == gCallbackPromise.get_future().get())
+    if (Status::SUCCESS == cv2xRadio->createRxSubscription(trafficIpType, port, respCb, idList))
+    {
+        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
         {
-            return static_cast<uint8_t>(Status::SUCCESS);
+            cout<<"Rx Subscription creation succeeds for SID: ";
+            auto idp = idList.get();
+            for(int i=0; i < idp->size(); i++)
+                std::cout << idp->at(i) << ' ';
         }else{
-            return static_cast<uint8_t>(Status::FAILED);
+            cout<<"Rx Subscription creation fails.\n";
         }
     }else{
-        return static_cast<uint8_t>(Status::FAILED);
+            cout<<"Rx Subscription creation fails.\n";
     }
     this->resetCallbackPromise();
 }
 
-
-RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst, const uint16_t port) {
+/*
+ * RadioReceive ctor for only simulation purposes. Communication over Ethernet.
+ */
+RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
+                             const uint16_t port) {
     struct sockaddr_in address;
     isSim = true;
     this->enableUdp = radioOpt.enableUdp;
@@ -167,23 +146,23 @@ RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst, const uint1
         }
         else {
             if (inet_pton(AF_INET, ipv4_dst.data(), &address.sin_addr) <= 0) {
-                cout << "TCP; simulation:: Invalid ip address: " << ipv4_dst << endl;
+                cerr << "TCP; simulation:: Invalid ip address: " << ipv4_dst << endl;
             }
             else {
                 if (bind(simListenSock, (struct sockaddr*) & address,
                     sizeof(address)) < 0)
                 {
-                    cout << "Socket " << simListenSock << " with IP: " << ipv4_dst << " and port: " << endl;
-                    cout << port << " failed binding" << endl;
+                    cerr << "Socket " << simListenSock <<
+                            " with IP: " << ipv4_dst << " and port: " << endl;
+                    cerr << port << " failed binding" << endl;
                 }
                 else {
                     if (listen(simListenSock, 1) < 0) {
-                        cout << "Socket fails to listen\n";
+                        cerr << "Socket fails to listen\n";
                     }
                     else {
                         const auto len = sizeof(address);
-                        // accept is only for tcp, probably need to make this for udp as well
-                            simRxSock = accept(simListenSock, (struct sockaddr*) & address,
+                         simRxSock = accept(simListenSock, (struct sockaddr*) & address,
                                     (socklen_t*)& len);
                         cout << "Connection Received";
                     }
@@ -192,27 +171,306 @@ RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst, const uint1
         }
 
     }else{
+        /* UDP Communication */
+        // setting up network parameters for sender and receiving devices
         this->srcAddress.sin_family = AF_INET;
         this->srcAddress.sin_port = htons(port);
-        if(inet_pton(AF_INET, ipv4_dst.data(), &(this->srcAddress.sin_addr)) <= 0){
-            cout << "Invalid ip address for other device: " << ipv4_dst << endl;
+        if(inet_pton(AF_INET, ipv4_dst.data(),
+                              &(this->srcAddress.sin_addr)) <= 0){
+            cerr << "UDP: Invalid ip address of other device " << ipv4_dst << endl;
+            cerr << "UDP: Will attempt accepting from any ip address now " << endl;
+            this->srcAddress.sin_addr.s_addr = htonl(INADDR_ANY);
         }
-        // Can set to listening to anybody instead
-        //this->srcAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 
         this->serverAddress.sin_family = AF_INET;
         this->serverAddress.sin_port = htons(port);
-
-        if(inet_pton(AF_INET, ipv4_src.data(), &(this->serverAddress.sin_addr)) <= 0){
-            cout << "Invalid ip address for this device: " << ipv4_src << endl;
+        if(inet_pton(AF_INET, ipv4_src.data(),
+                             &(this->serverAddress.sin_addr)) <= 0){
+            cerr << "Invalid ip address for this device: " << ipv4_src << endl;
         }
-
         // bind to socket
-        if (bind(this->simListenSock, (struct sockaddr *) &this->serverAddress,
+        if (bind(this->simListenSock,
+               (struct sockaddr *) &this->serverAddress,
                sizeof(this->serverAddress)) < 0){
-            cout << "ERROR on UDP binding" << endl;
+            cerr << "ERROR on UDP binding" << endl;
+            exit(0);
         }else{
             cout << "UDP bind successful" << endl;
         }
     }
+}
+
+
+uint32_t RadioReceive::receive(const char* buf, int len) {
+    uint8_t sourceMac[CV2X_MAC_ADDR_LEN];
+    int cv2x_mac_addr_len = CV2X_MAC_ADDR_LEN;
+
+    return receive(buf, len, sourceMac, cv2x_mac_addr_len);
+}
+
+uint32_t RadioReceive::receive(const char* buf, int len, 
+            uint8_t *sourceMacAddr, int& macAdrLen) {
+    int socket = -1;
+    if (!buf || !sourceMacAddr ||
+            macAdrLen < CV2X_MAC_ADDR_LEN) {
+        cerr << "Invalid input params" << endl;
+        return -1;
+    }
+    // check if this receive is for simulation and/or for UDP
+    if(isSim) {
+        socket = simListenSock;
+    }else {
+        socket = this->gRxSub->getSock();
+    }
+
+    struct pollfd fd;
+    int ret;
+    fd.fd = socket;
+    fd.events = POLLIN;
+    fd.revents = 0;
+    ret = poll(&fd, 1, 1000); // 1sec timeout
+    // timed out or had error receiving
+    if(ret <= 0)
+    {
+        if(rVerbosity && ret < 0){
+            fprintf(stderr, "%s\n", strerror(errno));
+        }
+        return ret;
+    }
+
+    uint32_t srcAddressSize = sizeof(this->srcAddress);
+    uint32_t bytesReceived;
+    int returnVal;
+    struct sockaddr_in6 from;
+    socklen_t fromLen = sizeof(from);
+    struct msghdr message = {0};
+    char control[CMSG_SPACE(sizeof(int))];
+    struct iovec iov[1] = {0};
+    iov[0].iov_base = (char*)buf;
+    iov[0].iov_len = len;
+    message.msg_name = &from;
+    message.msg_namelen = fromLen;
+    message.msg_iov = iov;
+    message.msg_iovlen = 1;
+    message.msg_control = control;
+    message.msg_controllen = sizeof(control);
+
+    if(this->enableUdp || !isSim){ // udp connection over eth or radio
+        bytesReceived = recvmsg(socket, &message, 0);
+    }
+    else{ //tcp only
+        bytesReceived = recv(socket, (char*) buf, len, 0);
+    }
+
+    if(bytesReceived > 0){
+        sourceMacAddr[0] = 0;
+        sourceMacAddr[1] = 0;
+        sourceMacAddr[2] = 0;
+        sourceMacAddr[3] = from.sin6_addr.s6_addr[13];
+        sourceMacAddr[4] = from.sin6_addr.s6_addr[14];
+        sourceMacAddr[5] = from.sin6_addr.s6_addr[15];
+        gRxCount++;
+        if(rVerbosity){
+            cout << "#" << gRxCount << " Source MAC: ";
+            for (int i = 0; i < CV2X_MAC_ADDR_LEN; i++) {
+                cout << std::hex << static_cast<int>(sourceMacAddr[i]) << " ";
+            }
+            cout << endl;
+        }
+    }else{
+        if(rVerbosity){
+            cerr << "Invalid message" << std::endl;
+        }
+        return -1;
+    }
+
+    return bytesReceived;
+}
+
+uint8_t RadioReceive::closeFlow(){
+    if (isSim)
+    {
+        const auto ans = close(simListenSock);
+        const auto rxAns = close(simRxSock);
+        if (ans >= 0 and rxAns >= 0)
+        {
+            cout << "Simulation Receives socket closed succesfully.\n";
+        }
+        else {
+            cerr << "Problem closing Simulation Sockets in RadioReceive.\n";
+        }
+
+    }
+   
+    if(rVerbosity) printf("Attempting to close wra-related flows\n");
+    auto retWraClose = onWraTimedout();
+    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
+                            ErrorCode error){
+                                rxSubCallback(rxSub, error);
+                            };
+    if (Status::SUCCESS == cv2xRadio->closeRxSubscription(this->gRxSub, respCb)){
+        if (ErrorCode::SUCCESS == gCallbackPromise.get_future().get())
+        {
+            return static_cast<uint8_t>(Status::SUCCESS);
+        }else{
+            return static_cast<uint8_t>(Status::FAILED);
+        }
+    }else{
+        return static_cast<uint8_t>(Status::FAILED);
+    }
+    this->resetCallbackPromise();
+}
+
+/* set the Global IP addres prefix */
+int RadioReceive::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr)
+{
+    int ret = 0;
+
+    SocketInfo tcpInfo;
+    EventFlowInfo eventInfo;
+    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto respCb = [&](ErrorCode error){
+                commonStatusCallback(error);
+        };
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Addr, respCb))
+    {
+        ErrorCode error =  this->gCallbackPromise.get_future().get();
+        if (ErrorCode::SUCCESS == error)
+        {
+            cout<<"setGlobalIPInfo succeeds." << endl;;
+            ret = 0;
+        }else{
+            if(rVerbosity)
+                cerr<<"setGlobalIPInfo fails:" << static_cast<int>(error) << endl;;
+            ret = -1;
+        }
+    } else{
+        if(rVerbosity)
+            cerr<<"setGlobalIPInfo sync fails." << endl;
+        ret = -1;
+    }
+    this->resetCallbackPromise();
+
+    /* Create IP unicast flow on port 0 */
+    tcpInfo.serviceId = 1; //what should be service ID ?
+    tcpInfo.localPort = 0;
+    eventInfo.isUnicast = true;
+    auto sockRespCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error){
+                createTcpSocketCallback(sock, error);
+        };
+    if (Status::SUCCESS == 
+        cv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, sockRespCb))
+    {
+        auto error = this->gCallbackPromise.get_future().get();
+        if (ErrorCode::SUCCESS == error)
+        {
+            if(rVerbosity)
+                cout<<"createCv2xTcpSocket succeeds." << endl;;
+            ret = 0;
+        }else{
+            if(rVerbosity)
+                cerr<<"createCv2xTcpSocket fails: ." << 
+                    static_cast<int>(error) << endl;;
+            ret = -1;
+        }
+    } else {
+        if(rVerbosity)
+            cerr << "createCv2xTcpSocket sync fails" << endl;
+        ret = -1;
+    }
+
+    this->resetCallbackPromise();
+    if(rVerbosity)
+        cout << "Global IP Info Set" << endl;
+
+    return ret;
+}
+
+//For RSU use case, clear Global IP info and unregister catch all flow
+int RadioReceive::clearGlobalIPInfo(void)
+{
+    return onWraTimedout();
+}
+
+int RadioReceive::setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr)
+{
+    int ret = 0;
+    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto respCb = [&](ErrorCode error){
+                commonStatusCallback(error);
+        };
+
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPUnicastRoutingInfo(destL2Addr, respCb))
+    {
+        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
+        {
+            ret = 0;
+            if(rVerbosity)
+                cout<<"setGlobalIPUnicastRoutingInfo succeeds." << endl;;
+        }else{
+            if(rVerbosity)
+                cerr<<"setGlobalIPUnicastRoutingInfo fails." << endl;;
+            ret = -1;
+        }
+    }else{
+        if(rVerbosity)
+            cerr<< "setGlobalIPUnicastRoutingInfo sync fails." << endl;
+        ret = -1;
+    }
+    this->resetCallbackPromise();
+
+    return ret;
+}
+int RadioReceive::onWraTimedout(void)
+{
+    int ret = 0;
+    telux::cv2x::IPv6AddrType ipv6Prefix;
+    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto closeSockCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
+        closeTcpSocketCallback(sock, error);
+    };
+    resetCallbackPromise();
+    if (tcpSockInfo != nullptr) {
+        if(Status::SUCCESS != 
+            cv2xRadio->closeCv2xTcpSocket(tcpSockInfo, closeSockCb) ||
+                ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+            if(rVerbosity)
+                cerr << "close tcp socket err or already closed" << endl;
+            ret = -1;
+        }
+    }
+
+    resetCallbackPromise();
+    if (ret)
+        return ret;
+
+    ipv6Prefix.prefixLen = 64;
+    memset(&ipv6Prefix.ipv6Addr[0], 0, CV2X_IPV6_ADDR_ARRAY_LEN);
+    auto respCb = [&](ErrorCode error) {
+        commonStatusCallback(error);
+    };
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Prefix, respCb))
+    {
+        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
+        {
+            if(rVerbosity)
+                cout<<"setGlobalIPInfo succeeds." << endl;;
+            ret = 0;
+        }else{
+            if(rVerbosity)
+                cerr<<"setGlobalIPInfo fails." << endl;;
+            ret = -1;
+        }
+    } else{
+        if(rVerbosity)
+            cout<<"setGlobalIPInfo sync fails." << endl;
+        ret = -1;
+    }
+
+    resetCallbackPromise();
+    if(rVerbosity)
+        cout << "Global IP session stopped" << endl;
+
+    return ret;
 }

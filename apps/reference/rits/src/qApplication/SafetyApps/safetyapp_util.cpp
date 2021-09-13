@@ -40,8 +40,8 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include "safetyapp_util.h"
-
- /** Maximum number of vehicles including the host that the LDM can support */
+ 
+/** Maximum number of vehicles including the host that the LDM can support */
 double MAX_MAP_SIZE;
 
 /** Maximum number of messages for a sinlg remote vehicle that the LDM can support*/
@@ -318,7 +318,7 @@ lane_types classify_lane(msg_contents *host, msg_contents *remote)
         return OUT_OF_ROAD;
     }
 
-    double heading_diff = abs((host_bsm->Heading_degrees) - (remote_bsm->Heading_degrees)) * 0.0125;
+    double heading_diff = abs((int)(host_bsm->Heading_degrees) - (int)(remote_bsm->Heading_degrees)) * 0.0125;
     if (heading_diff > 180)
         heading_diff = 360 - heading_diff;
     //printf("host_bsm->Heading_degrees: %d\nremote_bsm->Heading_degrees: %d\nheading_diff: %f\n");

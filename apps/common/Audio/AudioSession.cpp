@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,19 +55,26 @@ Status AudioSession::createStream(StreamConfig config) {
         std::promise<bool> p;
         auto &audioFactory = AudioFactory::getInstance();
         auto audioManager = audioFactory.getAudioManager();
-        // Sending request to create audio stream
-        status = audioManager->createStream(config,
-            [&p, &status, this](std::shared_ptr<IAudioStream> &audioStream,
-                ErrorCode error) {
-                if (error == ErrorCode::SUCCESS) {
-                    stream_ = audioStream;
-                    p.set_value(true);
-                } else {
-                    status = Status::FAILED;
-                    p.set_value(false);
-                }
-            });
-        p.get_future().wait();
+        if (audioManager != nullptr) {
+            // Sending request to create audio stream
+            status = audioManager->createStream(config,
+                [&p, &status, this](std::shared_ptr<IAudioStream> &audioStream,
+                    ErrorCode error) {
+                    if (error == ErrorCode::SUCCESS) {
+                        stream_ = audioStream;
+                        p.set_value(true);
+                    } else {
+                        status = Status::FAILED;
+                        p.set_value(false);
+                    }
+                });
+            if(status == Status::SUCCESS) {
+                p.get_future().wait();
+            }
+        } else {
+            LOG(ERROR, "Invalid audio Manager");
+            return Status::FAILED;
+        }
     } else {
         LOG(DEBUG, "Stream already exist");
         status = Status::SUCCESS;
@@ -81,16 +88,23 @@ Status AudioSession::deleteStream() {
         std::promise<bool> p;
         auto &audioFactory = AudioFactory::getInstance();
         auto audioManager = audioFactory.getAudioManager();
-        status = audioManager-> deleteStream(stream_, [&p, &status, this](ErrorCode error) {
-            if (error == ErrorCode::SUCCESS) {
-                stream_ = nullptr;
-                p.set_value(true);
-            } else {
-                status = Status::FAILED;
-                p.set_value(false);
+        if (audioManager != nullptr) {
+            status = audioManager-> deleteStream(stream_, [&p, &status, this](ErrorCode error) {
+                if (error == ErrorCode::SUCCESS) {
+                    stream_ = nullptr;
+                    p.set_value(true);
+                } else {
+                    status = Status::FAILED;
+                    p.set_value(false);
+                }
+            });
+            if(status == Status::SUCCESS) {
+                p.get_future().wait();
             }
-        });
-        p.get_future().wait();
+        } else {
+            LOG(ERROR, "Invalid audio Manager");
+            return Status::FAILED;
+        }
     } else {
         status = Status::SUCCESS;
         LOG(ERROR, "No stream exists");
@@ -112,7 +126,9 @@ Status AudioSession::getStreamDevice(std::vector<DeviceType> &devices) {
                 p.set_value(false);
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         status = Status::FAILED;
         LOG(ERROR, "No stream exists");
@@ -132,7 +148,9 @@ Status AudioSession::setStreamDevice(std::vector<DeviceType> devices) {
                 status = Status::FAILED;
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         status = Status::FAILED;
         LOG(ERROR, "No stream exists");
@@ -152,7 +170,9 @@ Status AudioSession::setVolume(StreamVolume streamVol) {
                 status = Status::FAILED;
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         status = Status::FAILED;
         LOG(ERROR, "No stream exists");
@@ -174,7 +194,9 @@ Status AudioSession::getVolume(StreamVolume &volume) {
                 p.set_value(false);
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         status = Status::FAILED;
         LOG(ERROR, "No stream exists");
@@ -194,7 +216,9 @@ Status AudioSession::setMute(StreamMute mute) {
                 status = Status::FAILED;
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         status = Status::FAILED;
         LOG(ERROR, "No stream exists");
@@ -216,7 +240,9 @@ Status AudioSession::getMute(StreamMute &muteStatus) {
                 p.set_value(false);
             }
         });
-        p.get_future().wait();
+        if(status == Status::SUCCESS) {
+            p.get_future().wait();
+        }
     } else {
         status = Status::FAILED;
         LOG(ERROR, "No stream exists");

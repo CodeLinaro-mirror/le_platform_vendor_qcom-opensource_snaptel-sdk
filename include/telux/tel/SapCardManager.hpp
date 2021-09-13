@@ -97,8 +97,6 @@ struct CardReaderStatus {
    bool isCardPoweredOn; /**< Card in reader is powered*/
 };
 
-/** @} */ /* end_addtogroup telematics_card */
-
 /**
  * This function is called with the response to requestSapState API.
  *
@@ -113,9 +111,6 @@ struct CardReaderStatus {
 
 using SapStateResponseCallback
    = std::function<void(SapState sapState, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_card
- * @{ */
 
 /**
  * @brief ISapCardManager provide APIs for SAP related operations.

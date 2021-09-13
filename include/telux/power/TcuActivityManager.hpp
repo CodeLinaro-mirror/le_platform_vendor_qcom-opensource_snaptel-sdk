@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,7 +46,7 @@
 namespace telux {
 namespace power {
 
-/** @addtogroup telematics_power
+/** @addtogroup telematics_power_manager
  * @{ */
 
 /**
@@ -67,6 +67,9 @@ public:
      * and returns the result.
      *
      * @returns  True if the services are ready otherwise false.
+     *
+     * @deprecated Use ITcuActivityManager::getServiceStatus() API.
+     *             @ref telux::power::ITcuActivityManager::getServiceStatus
      */
     virtual bool isReady() = 0;
 
@@ -75,8 +78,22 @@ public:
      *
      * @returns  A future that caller can wait on to be notified when TCU-activity services
      *           are ready.
+     *
+     * @deprecated Use InitResponseCb in PowerFactory::getTcuActivityManager instead, to get
+     *             get notified about subsystem readiness
+     *             @ref telux::power::PowerFactory::getTcuActivityManager
      */
     virtual std::future<bool> onReady() = 0;
+
+   /**
+    * This status indicates whether the ITcuActivityManager object is in a usable state.
+    *
+    * @returns @ref telux::common::ServiceStatus
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
      * Register a listener for updates on TCU-activity state changes.
@@ -158,7 +175,7 @@ public:
      */
     virtual ~ITcuActivityManager(){};
 };
-/** @} */ /* end_addtogroup telematics_power */
+/** @} */ /* end_addtogroup telematics_power_manager */
 
 }  // end of namespace power
 }  // end of namespace telux

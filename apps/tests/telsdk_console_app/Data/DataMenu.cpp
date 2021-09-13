@@ -178,9 +178,7 @@ void DataMenu::dataProfileMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::bridgeMenu(std::vector<std::string> userInput) {
-    if (bridgeMenu_ == nullptr) {
-        bridgeMenu_ =  std::make_shared<BridgeMenu>("Software Bridge Menu", "bridge> ");
-    }
+    bridgeMenu_ =  std::make_shared<BridgeMenu>("Software Bridge Menu", "bridge> ");
     if (bridgeMenu_->init()) {
         bridgeMenu_->mainLoop();
     }
@@ -189,9 +187,7 @@ void DataMenu::bridgeMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::l2tpMenu(std::vector<std::string> userInput) {
-    if (l2tpMenu_ == nullptr) {
-        l2tpMenu_ = std::make_shared<L2tpMenu>("L2TP Menu", "l2tp> ");
-    }
+    l2tpMenu_ = std::make_shared<L2tpMenu>("L2TP Menu", "l2tp> ");
     if(l2tpMenu_->init()) {
         l2tpMenu_->mainLoop();
     }
@@ -200,9 +196,7 @@ void DataMenu::l2tpMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::snatMenu(std::vector<std::string> userInput) {
-    if (snatMenu_ == nullptr) {
-        snatMenu_ = std::make_shared<SnatMenu>("SNAT Menu", "snat> ");
-    }
+    snatMenu_ = std::make_shared<SnatMenu>("SNAT Menu", "snat> ");
     if(snatMenu_->init()) {
         snatMenu_->mainLoop();
     }
@@ -211,9 +205,7 @@ void DataMenu::snatMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::firewallMenu(std::vector<std::string> userInput) {
-    if (firewallMenu_ == nullptr) {
-        firewallMenu_ = std::make_shared<FirewallMenu>("Firewall Menu", "firewall> ");
-    }
+    firewallMenu_ = std::make_shared<FirewallMenu>("Firewall Menu", "firewall> ");
     if(firewallMenu_->init()) {
         firewallMenu_->mainLoop();
     }
@@ -222,9 +214,7 @@ void DataMenu::firewallMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::vlanMenu(std::vector<std::string> userInput) {
-    if (vlanMenu_ == nullptr) {
-        vlanMenu_ = std::make_shared<VlanMenu>("Vlan Menu", "vlan> ");
-    }
+    vlanMenu_ = std::make_shared<VlanMenu>("Vlan Menu", "vlan> ");
     if(vlanMenu_->init()) {
         vlanMenu_->mainLoop();
     }
@@ -233,9 +223,7 @@ void DataMenu::vlanMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::socksMenu(std::vector<std::string> userInput) {
-    if (socksMenu_ == nullptr) {
-        socksMenu_ = make_shared<SocksMenu>("Socks Menu", "socks> ");
-    }
+    socksMenu_ = make_shared<SocksMenu>("Socks Menu", "socks> ");
     if(socksMenu_->init()) {
         socksMenu_->mainLoop();
     }
@@ -244,12 +232,11 @@ void DataMenu::socksMenu(std::vector<std::string> userInput) {
 }
 
 void DataMenu::servingSystemMenu(std::vector<std::string> userInput) {
-    if (dataServingSystemMenu_ == nullptr) {
-        dataServingSystemMenu_ =
-            make_shared<DataServingSystemMenu>("Serving System Menu", "serving_system> ");
-    }
+    dataServingSystemMenu_ =
+        make_shared<DataServingSystemMenu>("Serving System Menu", "serving_system> ");
     if(dataServingSystemMenu_->init()) {
         dataServingSystemMenu_->mainLoop();
     }
+    dataServingSystemMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }

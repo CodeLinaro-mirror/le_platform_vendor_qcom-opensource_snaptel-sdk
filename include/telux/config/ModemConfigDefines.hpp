@@ -45,7 +45,7 @@
 namespace telux {
 
 namespace config {
-/** @addtogroup telematics_config
+/** @addtogroup telematics_config_manager
  * @{ */
 
 using ConfigId = std::string;
@@ -89,7 +89,7 @@ enum class ConfigUpdateStatus {
 };
 
 
-/** @} */ /* end_addtogroup telematics_config */
+/** @} */ /* end_addtogroup telematics_config_manager */
 }  // end of namespace config
 
 }  // end of namespace telux

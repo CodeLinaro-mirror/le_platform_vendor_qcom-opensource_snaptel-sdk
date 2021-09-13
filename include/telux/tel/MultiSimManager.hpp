@@ -49,6 +49,10 @@
 namespace telux {
 namespace tel {
 
+
+/** @addtogroup telematics_multi_sim
+ * @{ */
+
 // Forward declaration
 class IMultiSimListener;
 
@@ -79,9 +83,6 @@ using SlotStatusCallback
     = std::function<void(std::map<SlotId, SlotStatus> slotStatus,
         telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_multi_sim
- * @{ */
-
 /**
  *@brief       MultiSimManager allows to perform operation pertaining to devices which have
  *             more than one SIM/UICC card. Clients should check if the subsystem
@@ -97,8 +98,6 @@ public:
     *
     * @returns If true MultiSimManager is ready.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -108,8 +107,6 @@ public:
     * @returns A future that caller can wait on to be notified when Multi SIM
     * subsystem is ready.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -121,8 +118,6 @@ public:
     *
     * @returns Status of getSlotCount i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status getSlotCount(int &count) = 0;
 
@@ -138,8 +133,6 @@ public:
     * @returns Status of requestHighCapability i.e. success or suitable
     *          error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status requestHighCapability(HighCapabilityCallback callback) = 0;
 
@@ -158,8 +151,6 @@ public:
     * @returns Status of setHighCapability i.e. success or suitable
     *          error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status setHighCapability(int slotId,
       common::ResponseCallback callback = nullptr) = 0;
@@ -173,8 +164,6 @@ public:
     *
     * @returns Status of switchActiveSlot i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status switchActiveSlot(SlotId slotId,
       common::ResponseCallback callback = nullptr) = 0;
@@ -186,8 +175,6 @@ public:
     *
     * @returns Status of requestSlotStatus i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status requestSlotStatus(SlotStatusCallback callback) = 0;
 
@@ -199,8 +186,6 @@ public:
     *
     * @returns Status of registerListener i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<IMultiSimListener> listener) = 0;
 
@@ -212,8 +197,6 @@ public:
     *
     * @returns Status of deregisterListener i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status deregisterListener(std::weak_ptr<IMultiSimListener> listener) = 0;
 
@@ -233,8 +216,6 @@ public:
     *
     * @param [in] slotId       SIM corresponding to slot identifier has high capability now.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual void onHighCapabilityChanged(int slotId) {
    }
@@ -244,8 +225,6 @@ public:
     *
     * @param [in] slotStatus   list of slots status @ref SlotStatus
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual void onSlotStatusChanged(std::map<SlotId, SlotStatus> slotStatus) {
    }

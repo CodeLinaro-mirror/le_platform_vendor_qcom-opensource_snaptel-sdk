@@ -4,7 +4,7 @@
 This section has instructions to run the sample applications that come with the Telematics SDK.
 Sample applications use the cmake build system. You need to have cmake version 2.8.9 or later on your host machine
 
-@section setup_build_environment Source the environment
+@section section_setup_build_environment Source the environment
 
 - Source the build environment:
       \code{.sh}
@@ -17,7 +17,7 @@ Now your development environment is set for the terminal, start your development
 
 - Goto telux/samples directory and create a build folder
       \code{.sh}
-         $ cd telux/samples
+      $ cd telux/samples
       $ mkdir -p build; cd build
       \endcode
 
@@ -37,7 +37,7 @@ Compile telsdk_console_app:
       $ cmake -DCMAKE_INSTALL_PREFIX=./install ..
       $ make clean && make install
       \endcode
-@section install_the_sample Install apps on the device
+@section section_install_the_sample Install apps on the device
 
 - Push your binary to the /data location on the device
    \code{.sh}
@@ -50,4 +50,19 @@ Compile telsdk_console_app:
    # to install telsdk_console app
    user@machine:telsdk_console_app/build/install/bin$ adb push . /data/
    \endcode
+
+The following sections provide further information
+- @subpage sample_apps_settings
+- @subpage logger_settings
+- @subpage audio
+- @subpage common
+- @subpage cv2x
+- @subpage phone
+- @subpage data
+- @subpage location
+- @subpage modem_config
+- @subpage power
+- @subpage thermal
+- @subpage sensor
+
 */

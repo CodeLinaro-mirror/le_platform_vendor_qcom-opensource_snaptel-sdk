@@ -1,3 +1,6 @@
+Using Request Network Selection Mode API {#network_selection}
+=============================================================
+
 # Using Request Network Selection Mode API
 
 Please follow below steps to request network selection mode

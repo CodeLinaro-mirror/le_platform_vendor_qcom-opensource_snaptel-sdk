@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,6 +44,7 @@ using namespace telux::audio;
 #define TIMEOUT 5
 
 static std::shared_ptr<IAudioPlayStream> audioPlayStream;
+static promise<ServiceStatus> initCallbackPromise;
 static promise<ErrorCode> gCallbackPromise;
 static std::condition_variable cv;
 
@@ -66,7 +67,7 @@ static void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCod
 
 // Callback to provide response to the write request
 static void writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytes,
-                telux::common::ErrorCode error)
+                ErrorCode error)
 {
    if (ErrorCode::SUCCESS == error) {
         std::cout << "write() succeeded" << std::endl;
@@ -88,40 +89,40 @@ static void deleteStreamCallback(ErrorCode error) {
     return;
 }
 
+// Callback which provides response for audio Manager initialization
+static void initAppCallback(ServiceStatus status) {
+    if (status == ServiceStatus::SERVICE_AVAILABLE) {
+        initCallbackPromise.set_value(ServiceStatus::SERVICE_AVAILABLE);
+    } else {
+        initCallbackPromise.set_value(ServiceStatus::SERVICE_FAILED);
+    }
+    return;
+}
+
 int main(int, char **) {
 
     // ### 1. Get the AudioFactory and AudioManager instances.
     auto &audioFactory = AudioFactory::getInstance();
-    static std::shared_ptr<IAudioManager> audioManager = audioFactory.getAudioManager();
+    static std::shared_ptr<IAudioManager> audioManager =
+        audioFactory.getAudioManager(initAppCallback);
 
     // ### 2. Requesting to get audio subsystem state
-    bool subSystemsStatus = false;
+    ServiceStatus subSystemStatus = ServiceStatus::SERVICE_FAILED;
     if (audioManager) {
-        subSystemsStatus = audioManager->isSubsystemReady();
+        subSystemStatus = audioManager->getServiceStatus();
+        if (subSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+            subSystemStatus = initCallbackPromise.get_future().get();
+        }
     } else {
         std::cout << "Invalid Audio Manager" << std::endl;
         return EXIT_FAILURE;
     }
 
-    // #### 2.1  Checking state of audio subsystem if it is ready or not ready
-    if (subSystemsStatus) {
+    if (subSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsystem is ready." << std::endl;
     } else {
-        std::cout << "Audio Subsystem is NOT ready." << std::endl;
-    }
-
-    // Option # 1 if we want to wait for only timeout period for audio subsystem to get ready
-    std::future<bool> f = audioManager->onSubsystemReady();
-    if (f.wait_for(std::chrono::seconds(TIMEOUT)) == std::future_status::timeout) {
-        std::cout << "operation timed out." << std::endl;
-    }
-
-    // Option # 2 if we want to wait unconditionally for audio subsystem to get ready.
-    subSystemsStatus = f.get();
-    if (subSystemsStatus) {
-        std::cout << "onSubsystemReady: Audio Subsystem is ready." << std::endl;
-    } else {
-        std::cout << "Audio Subsystem is NOT ready." << std::endl;
+        std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -169,7 +170,7 @@ int main(int, char **) {
     }
     memset(streamBuffer->getRawBuffer(),0,size);
     status = audioPlayStream->write(streamBuffer,writeCallback);
-    if(status != telux::common::Status::SUCCESS) {
+    if(status != Status::SUCCESS) {
         std::cout << "Request to write to stream failed." << std::endl;
     } else {
         std::cout << "Request to write to stream sent." << std::endl;

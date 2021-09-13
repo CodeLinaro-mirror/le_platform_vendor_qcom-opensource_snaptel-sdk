@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_CV2X_L2_ID_FILTER cv2x_l2_id_filter)
 
-set(CV2X_L2_ID_FILTER_SRC  Cv2xL2IdFilterApp.cpp)
+set(CV2X_L2_ID_FILTER_SRC
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+    Cv2xL2IdFilterApp.cpp)
 
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")

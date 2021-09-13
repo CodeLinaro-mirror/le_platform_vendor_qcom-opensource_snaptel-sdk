@@ -125,7 +125,13 @@ void MyDataCallResponseCallback::startDataCallResponseCallBack(
    const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error) {
    std::cout << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "start DataCallResponseCb is successful " << std::endl;
+      if (telux::data::DataCallStatus::NET_CONNECTED == dataCall->getDataCallStatus()) {
+         PRINT_CB <<
+            "start DataCallResponseCb is successful - NO_EFFECT, data call already connected"
+            << std::endl;
+      } else if (telux::data::DataCallStatus::NET_CONNECTING == dataCall->getDataCallStatus()){
+         PRINT_CB << "start DataCallResponseCb is successful " << std::endl;
+      }
    } else {
       PRINT_CB << "start DataCallResponseCb failed,  errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
@@ -136,7 +142,15 @@ void MyDataCallResponseCallback::stopDataCallResponseCallBack(
    const std::shared_ptr<telux::data::IDataCall> &dataCall, telux::common::ErrorCode error) {
    std::cout << std::endl;
    if(error == telux::common::ErrorCode::SUCCESS) {
-      PRINT_CB << "stop DataCallResponseCb is successful " << std::endl;
+      if (telux::data::DataCallStatus::NET_CONNECTED == dataCall->getDataCallStatus()) {
+         PRINT_CB <<
+            "stop DataCallResponseCb is successful - DataCall remain active, still in use"
+            << std::endl;
+      } else if (telux::data::DataCallStatus::NET_NO_NET == dataCall->getDataCallStatus()){
+         PRINT_CB << "stop DataCallResponseCb is successful - NO_EFFECT" << std::endl;
+      } else if (telux::data::DataCallStatus::NET_DISCONNECTING == dataCall->getDataCallStatus()){
+         PRINT_CB << "stop DataCallResponseCb is successful " << std::endl;
+      }
    } else {
       PRINT_CB << "stop DataCallResponseCb failed,  errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
@@ -222,4 +236,13 @@ void DataFilterModeResponseCb::requestDataRestrictModeResponse(
              << ", description: " << Utils::getErrorCodeAsString(error)
              << std::endl;
   }
+}
+
+void MyDefaultProfilesCallback::onProfileListResponse(
+   const std::vector<std::shared_ptr<telux::data::DataProfile>> &profiles,
+   telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      this->profileList_ = profiles;
+   }
+   this->prom_.set_value(error);
 }

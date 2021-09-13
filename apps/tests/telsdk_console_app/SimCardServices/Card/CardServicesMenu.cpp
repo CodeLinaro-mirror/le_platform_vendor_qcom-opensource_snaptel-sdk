@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,11 +33,13 @@
 
 #include <chrono>
 #include <iostream>
-#include "Utils.hpp"
+#include "utils/Utils.hpp"
 #include <telux/tel/PhoneFactory.hpp>
 
 #include "CardServicesMenu.hpp"
 
+#define SIM_CARD_POWER_UP 1
+#define SIM_CARD_POWER_DOWN 0
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 void ChangeCardPinResponseCb(int retryCount, telux::common::ErrorCode error) {
@@ -220,14 +222,19 @@ void CardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> setCardLockCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("12", "Set_card_lock", {},
                         std::bind(&CardServicesMenu::setCardLock, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> cardPowerCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "13", "Set_card_power", {},
+            std::bind(&CardServicesMenu::cardPower, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("13", "Select_card_slot", {},
+      ConsoleAppCommand("14", "Select_card_slot", {},
                         std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
       = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
          closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
          changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
-         queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand};
+         queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand,
+         cardPowerCommand};
 
    if (cards_.size() > 1) {
        commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
@@ -515,8 +522,7 @@ void CardServicesMenu::changeCardPin(std::vector<std::string> userInput) {
    applications = card->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
-         if((cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM)
-            && (cardApp->getAppState() == telux::tel::AppState::APPSTATE_READY)) {
+         if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
             auto ret
                = cardApp->changeCardPassword(cardLockType, oldPin, newPin,
                   &ChangeCardPinResponseCb);
@@ -782,6 +788,37 @@ void CardServicesMenu::setCardLock(std::vector<std::string> userInput) {
          telux::tel::CardState cardState;
          card->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
+   }
+}
+
+void CardServicesMenu::cardPower(std::vector<std::string> userInput) {
+
+   int cardPowerSelection = -1;
+   if (cardManager_) {
+      std::cout  << "Enter Card Power(1 - On, 0 - Off): ";
+      std::cin >> cardPowerSelection;
+      Utils::validateInput(cardPowerSelection);
+      auto status = telux::common::Status::FAILED;
+      if (cardPowerSelection == SIM_CARD_POWER_UP) {
+         std::cout << "Card power up \n";
+         status = cardManager_->cardPowerUp(static_cast<SlotId>(slot_),
+              MyCardPowerResponseCallback::cardPowerUpResp);
+      } else if (cardPowerSelection == SIM_CARD_POWER_DOWN) {
+         std::cout << "Card power down \n";
+         status = cardManager_->cardPowerDown(static_cast<SlotId>(slot_),
+              MyCardPowerResponseCallback::cardPowerDownResp);
+      } else {
+         std::cout << "Invalid input \n";
+      }
+      if (status == telux::common::Status::SUCCESS) {
+          std::cout << "Request sent successfully \n";
+      } else {
+          std::cout << "ERROR - Failed to send the request, Status:"
+                    << static_cast<int>(status) << "\n";
+      }
+      Utils::printStatus(status);
+   } else {
+      std::cout << "ERROR - CardManager is null \n";
    }
 }
 

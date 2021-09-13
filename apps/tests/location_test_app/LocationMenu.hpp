@@ -87,6 +87,8 @@ public:
    void getYearOfHw(std::vector<std::string> userInput);
    void requestTerrestrialPositioning(std::vector<std::string> userInput);
    void cancelTerrestrialPositioning(std::vector<std::string> userInput);
+   void configureNmeaSentence(std::vector<std::string> userInput);
+   void configureAllNmeaSentence(std::vector<std::string> userInput);
    void configureMinGpsWeek(std::vector<std::string> userInput);
    void configureMinSVElevation(std::vector<std::string> userInput);
    void requestMinGpsWeek(std::vector<std::string> userInput);

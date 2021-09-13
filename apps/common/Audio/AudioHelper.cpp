@@ -288,7 +288,7 @@ void AudioHelper::getUserMuteStatusInput(StreamMute &mute) {
     std::string userInput = "";
     int muteStatus;
     while(1) {
-        std::cout << " Enter 0 to Unmute and 1 to Mute" ;
+        std::cout << "Enter 0 to Unmute and 1 to Mute: " ;
         if(std::getline(std::cin, userInput)) {
             std::stringstream inputStream(userInput);
             if(inputStream >> muteStatus) {
@@ -318,6 +318,7 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
         }
     } else {
         std::cout << "Invalid Input" << std::endl;
+        return Status::FAILED;
     }
 
     uint32_t lowFreq = 0;
@@ -330,6 +331,7 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
         }
     } else {
         std::cout << "Invalid Input" << std::endl;
+        return Status::FAILED;
     }
 
     uint32_t highFreq = 0;
@@ -342,6 +344,7 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
         }
     } else {
         std::cout << "Invalid Input" << std::endl;
+        return Status::FAILED;
     }
 
     std::cout << "Enter the duration (in ms (0-65534) and 65535 for infinite): ";
@@ -353,6 +356,7 @@ Status AudioHelper::getUserDtmfInput(DtmfTone &tone, uint32_t &duration, uint16_
         }
     } else {
         std::cout << "Invalid Input" << std::endl;
+        return Status::FAILED;
     }
 
     Status lowFreqValid = lowFrequencyHelper(lowFreq, tone.lowFreq);

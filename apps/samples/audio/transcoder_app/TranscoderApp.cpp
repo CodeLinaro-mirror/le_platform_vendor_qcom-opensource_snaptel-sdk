@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -64,27 +64,29 @@ TranscoderApp::~TranscoderApp() {
 }
 
 Status TranscoderApp::init() {
-    // Get the AudioFactory and AudioManager instances.
+   // Get the AudioFactory and AudioManager instances.
+    std::promise<ServiceStatus> prom{};
     auto &audioFactory = AudioFactory::getInstance();
-    audioManager_ = audioFactory.getAudioManager();
-
-    // Requesting to get audio subsystem state
-    bool subSystemStatus = false;
-    if (audioManager_) {
-        subSystemStatus = audioManager_->isSubsystemReady();
-    } else {
-        std::cout << "Invalid Audio Manager" << std::endl;
+    audioManager_ = audioFactory.getAudioManager([&prom](ServiceStatus status) {
+        if (status == ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(ServiceStatus::SERVICE_FAILED);
+        }
+    });
+    if (!audioManager_) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
         return Status::FAILED;
     }
-
-    //  Checking state of audio subsystem if it is ready or not, if not ready waiting for it to
-    //  get ready.
-    if (!subSystemStatus) {
-        std::future<bool> f = audioManager_->onSubsystemReady();
-        subSystemStatus = f.get();
+    //  Check if audio subsystem is ready
+    //  If audio subsystem is not ready, wait for it to be ready
+    ServiceStatus managerStatus = audioManager_->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
     }
 
-    if (subSystemStatus) {
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsystem is ready." << std::endl;
     } else {
         std::cout << "Audio Subsystem is NOT ready." << std::endl;
@@ -123,8 +125,8 @@ void TranscoderApp::createTranscoder() {
 
     audioManager_->createTranscoder(inputConfig_, outputConfig_,
     [&p,this](std::shared_ptr<telux::audio::ITranscoder> &transcoder,
-        telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+        ErrorCode error) {
+        if (error == ErrorCode::SUCCESS) {
             transcoder_ = transcoder;
             registerListener();
             p.set_value(true);
@@ -168,8 +170,8 @@ void TranscoderApp::read() {
         readBuffers_.pop();
         auto readCb =  std::bind(&TranscoderApp::readCallback, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        telux::common::Status status = transcoder_->read(audioBuffer, bytesToRead, readCb);
-        if (status != telux::common::Status::SUCCESS) {
+        Status status = transcoder_->read(audioBuffer, bytesToRead, readCb);
+        if (status != Status::SUCCESS) {
             std::cout << "read() failed with error" << static_cast<unsigned int>(status)
             <<std::endl;
         }
@@ -181,12 +183,12 @@ void TranscoderApp::read() {
 }
 
 void TranscoderApp::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
-         uint32_t isLastBuffer, telux::common::ErrorCode error) {
+         uint32_t isLastBuffer, ErrorCode error) {
 
     if (isLastBuffer) {
         // Stop reading from now onwards as this is the last transcoded buffers
     }
-    if (error != telux::common::ErrorCode::SUCCESS) {
+    if (error != ErrorCode::SUCCESS) {
         std::cout << "read() returned with error " << static_cast<unsigned int>(error) << std::endl;
     } else {
         // uint32_t size = buffer->getDataSize();
@@ -199,15 +201,15 @@ void TranscoderApp::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buf
 
 void TranscoderApp::teardown() {
     std::promise<bool> p;
-    auto status = transcoder_->tearDown([&p](telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+    auto status = transcoder_->tearDown([&p](ErrorCode error) {
+        if (error == ErrorCode::SUCCESS) {
             p.set_value(true);
         } else {
             p.set_value(false);
             std::cout << "Failed to tear down" << std::endl;
         }
         });
-    if (status == telux::common::Status::SUCCESS) {
+    if (status == Status::SUCCESS) {
         std::cout << "Request to Teardown transcoder sent" << std::endl;
     } else {
         std::cout << "Request to Teardown transcoder failed" << std::endl;
@@ -273,13 +275,13 @@ void TranscoderApp::write() {
         audioBuffer->setDataSize(numBytes);
         auto writeCb = std::bind(&TranscoderApp::writeCallback, this, std::placeholders::_1,
                     std::placeholders::_2, std::placeholders::_3);
-        telux::common::Status status = telux::common::Status::FAILED;
+        Status status = Status::FAILED;
         if (EOF_REACHED) {
             status = transcoder_->write(audioBuffer, EOF_REACHED,  writeCb);
         } else {
             status = transcoder_->write(audioBuffer, EOF_NOT_REACHED,  writeCb);
         }
-        if (status != telux::common::Status::SUCCESS) {
+        if (status != Status::SUCCESS) {
             std::cout << "write() failed with error" << static_cast<unsigned int>(status)
             <<std::endl;
         } else {
@@ -291,15 +293,15 @@ void TranscoderApp::write() {
 }
 
 void TranscoderApp::registerListener() {
-    telux::common::Status status = transcoder_ ->registerListener(shared_from_this());
-    if (status == telux::common::Status::SUCCESS) {
+    Status status = transcoder_ ->registerListener(shared_from_this());
+    if (status == Status::SUCCESS) {
         std::cout << "Request to register Transcode Listener Sent" << std::endl;
     }
 }
 
 void TranscoderApp::deRegisterListener() {
-    telux::common::Status status = transcoder_ ->deRegisterListener(shared_from_this());
-    if (status == telux::common::Status::SUCCESS) {
+    Status status = transcoder_ ->deRegisterListener(shared_from_this());
+    if (status == Status::SUCCESS) {
         std::cout << "Request to deregister Transcode Listener Sent" << std::endl;
     }
 }

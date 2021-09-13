@@ -148,7 +148,7 @@ void EtsiApplication::fillCamLocation(CAM_t *cam) {
     cam->cam.camParameters.highFrequencyContainer.present =
         HighFrequencyContainer_PR_basicVehicleContainerHighFrequency;
 
-    BasicVehicleContainerHighFrequency_t *bvchf = 
+    BasicVehicleContainerHighFrequency_t *bvchf =
         &cam->cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency;
     bvchf->heading.headingValue = 0;
     bvchf->heading.headingConfidence = HeadingConfidence_equalOrWithinZeroPointOneDegree;
@@ -174,11 +174,10 @@ void EtsiApplication::fillCamLocation(CAM_t *cam) {
 void EtsiApplication::fillCamCan(CAM_t *cam) {
     BasicVehicleContainerHighFrequency_t &bvchf =
         cam->cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency;
-    current_dynamic_vehicle_state_t* dp = this->vehicleReceive->vehicleData;
     // vehicle hight/width/steerin wheel angle, etc.
 }
 
-void EtsiApplication::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, int16_t bufLen,
+int EtsiApplication::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, int16_t bufLen,
         TransmitType txType) {
     GnData_t gd;
 
@@ -194,6 +193,7 @@ void EtsiApplication::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, 
     gd.payload_len = static_cast<int>(bufLen);
     gd.tc = 2;
 
+    int ret;
     // if the packet type is GBC(GeoNetwork Broadcast) or GAC (GeoNetwork Any
     // Cast), we also need to set the destination geographic area. But since we
     // are tesitng SHB here, we don't need to do that.
@@ -205,18 +205,19 @@ void EtsiApplication::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, 
     if (this->isTxSim) {
         auto cb = std::bind(&RadioTransmit::transmit, simTransmit.get(),
                        std::placeholders::_1, std::placeholders::_2);
-        GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
-        return;
+        ret = GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
+        return ret;
     }
     if (txType == TransmitType::SPS) {
         auto cb = std::bind(&RadioTransmit::transmit, &this->spsTransmits[index],
                 std::placeholders::_1, std::placeholders::_2);
-        GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
+        ret = GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
     } else if (txType == TransmitType::EVENT) {
         auto cb = std::bind(&RadioTransmit::transmit, &this->eventTransmits[index],
                 std::placeholders::_1, std::placeholders::_2);
-        GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
+        ret = GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
     }
+    return ret;
 }
 
 int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {

@@ -3172,6 +3172,7 @@ that needs to be enabled. If the feature that needs to be enabled is known, this
 2. Create a sensor feature event listener, which would be notified of the different events that
 occur. Register this listener with the sensor feature manager.
 3. Enable the required feature.
-4. Once the feature is enabled and an event related to the feature occurs, the listener is notified.
+4. If system is not in sleep mode, Once the feature is enabled and an event related to the feature occurs, the listener is notified.
+5. If system is in sleep mode, Once the feature is enabled and an event related to the feature occurs, the listener is notified.
 
 */

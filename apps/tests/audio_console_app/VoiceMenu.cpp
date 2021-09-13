@@ -245,7 +245,11 @@ void VoiceMenu::setMute(std::vector<std::string> userInput) {
         AudioHelper::getUserMuteStatusInput(muteStatus);
         auto status = activeSession_->setMute(muteStatus);
         if (status == Status::SUCCESS) {
-            std::cout << "Stream Muted" << std::endl;
+            if (muteStatus.enable) {
+                std::cout << "Stream Muted" << std::endl;
+            } else {
+                std::cout << "Stream Unmuted" << std::endl;
+            }
         } else {
             std::cout << "Mute Operation Failed" << std::endl;
         }
@@ -289,9 +293,11 @@ void VoiceMenu::startDtmf(std::vector<std::string> userInput) {
         tone.direction = StreamDirection::RX;
         uint32_t duration = 0;
         uint16_t gain = 0;
-        AudioHelper::getUserDtmfInput(tone, duration, gain);
-
-        auto status = activeSession_->startDtmf(tone, duration, gain);
+        auto status = AudioHelper::getUserDtmfInput(tone, duration, gain);
+        if (status != Status::SUCCESS) {
+            return;
+        }
+        status = activeSession_->startDtmf(tone, duration, gain);
         if (status == Status::SUCCESS){
             std::cout << "Dtmf Tone Started on slotId : "<< slotId_ << std::endl;
         } else {

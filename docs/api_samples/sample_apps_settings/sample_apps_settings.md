@@ -1,3 +1,6 @@
+Sample Applications Configuration {#sample_apps_settings}
+=========================================================
+
 # Sample Applications Configuration
 
 Telematics stand-alone applications like make_call_app, send_sms_app etc provides

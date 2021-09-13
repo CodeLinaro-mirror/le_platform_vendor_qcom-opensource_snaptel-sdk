@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -38,14 +38,17 @@
 
 class DataListener : public telux::data::IDataConnectionListener {
 public:
+   DataListener(SlotId slotId);
    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+   void onHwAccelerationChanged(telux::data::ServiceState state) override;
    std::shared_ptr<telux::data::IDataCall> getDataCall(int slotId, int profileId);
    void initDataCallListResponseCb(
        const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
        telux::common::ErrorCode error);
 
 private:
+   SlotId slotId_;
    std::mutex mtx_;
    // Associate profileId, ipfamily type with data call impl
    std::multimap<int, std::shared_ptr<telux::data::IDataCall>> dataCallMap_;

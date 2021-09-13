@@ -94,21 +94,25 @@ public:
      * @returns shared pointer to Cv2x ThrottleManager upon success.
      *          nullptr otherwise.
      */
-    std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager();
+    std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager(
+        telux::common::InitResponseCb cb = nullptr);
 
 private:
 
     void onGetCv2xConfigResponse(telux::common::ServiceStatus status);
     void onGetCv2xRadioManagerResponse(telux::common::ServiceStatus status);
+    void onGetCv2xThrottleManagerResponse(telux::common::ServiceStatus status);
 
     std::mutex mutex_;
     std::shared_ptr<ICv2xRadioManager> radioManager_ = nullptr;
     std::shared_ptr<ICv2xConfig> config_ = nullptr;
+    std::shared_ptr<ICv2xThrottleManager> throttleManager_ = nullptr;
     std::vector<telux::common::InitResponseCb> cv2xManagerInitCallbacks_;
     std::vector<telux::common::InitResponseCb> cv2xConfigInitCallbacks_;
+    std::vector<telux::common::InitResponseCb> cv2xThrottleMgrInitCallbacks_;
     telux::common::ServiceStatus cv2xManagerInitStatus_;
     telux::common::ServiceStatus cv2xConfigInitStatus_;
-    std::shared_ptr<ICv2xThrottleManager> throttleManager_;
+    telux::common::ServiceStatus cv2xThrottleMgrInitStatus_;
 
     Cv2xFactory();
 };

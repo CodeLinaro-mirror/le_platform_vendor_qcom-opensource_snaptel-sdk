@@ -503,7 +503,10 @@ std::string MyCellularCapabilityCallback::ratCapabilitiesMaskToString(
         ratCapStr += "TDS ";
     }
     if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::NR5G)]) {
-        ratCapStr += "NR5G ";
+        ratCapStr += "NR5G(NSA)";
+    }
+    if (ratCapabilitiesMask[static_cast<int>(telux::tel::RATCapability::NR5GSA)]) {
+        ratCapStr += "NR5G(SA)";
     }
     if (ratCapStr.empty()) {
         ratCapStr = "Unknown";
@@ -521,9 +524,15 @@ void MyCellularCapabilityCallback::cellularCapabilityResponse(
                  << std::endl;
 
         for (auto &simRatCap : capabilityInfo.simRatCapabilities) {
+            PRINT_CB << "Sim RAT capabilities for Slot Id: " << simRatCap.slotId << "\n";
             PRINT_CB
                 << "RATCapabilitiesMask: " << ratCapabilitiesMaskToString(simRatCap.capabilities)
                 << std::endl;
+        }
+        for (auto &deviceRatCap : capabilityInfo.deviceRatCapability) {
+            PRINT_CB << "Device static capabilities for Slot Id: " << deviceRatCap.slotId << "\n";
+            PRINT_CB << "Device static capabilities Mask: "
+                     << ratCapabilitiesMaskToString(deviceRatCap.capabilities) << "\n";
         }
 
         PRINT_CB << "SIM Count : " << capabilityInfo.simCount << std::endl;

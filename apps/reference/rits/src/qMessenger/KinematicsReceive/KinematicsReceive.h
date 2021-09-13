@@ -105,7 +105,7 @@ public:
 
     /**
     * Destructor that closes listener to Location SDK. This method closes
-    * the listener for all object singleton owners as well as nulls all 
+    * the listener for all object singleton owners as well as nulls all
     * pointer data. If other owners have an instance of this class, then
     * on getLocation(), singleton will handle itself again to get new fixes.
     */

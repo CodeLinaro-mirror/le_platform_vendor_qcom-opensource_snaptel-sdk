@@ -116,8 +116,6 @@ public:
     * @param [in] timersStatus - Indicates the HLAP timer event
     *                            @Ref ECallHlapTimerEvents
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timersStatus) {
    }

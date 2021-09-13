@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -171,7 +171,7 @@ bool DataProfileMenu::initDataProfileManagerAndListener(SlotId slotId) {
             myModifyProfileCb_.emplace(slotId, std::make_shared<MyModifyProfileCallback>());
             myDataProfileCbForGetProfileById_.emplace(slotId,
                                                       std::make_shared<MyDataProfileCallback>());
-            profileListeners_.emplace(slotId, std::make_shared<MyProfileListener>());
+            profileListeners_.emplace(slotId, std::make_shared<MyProfileListener>(slotId));
 
             telux::common::Status status =
                 dataProfileManagerMap_[slotId]->registerListener(profileListeners_[slotId]);
@@ -293,6 +293,13 @@ void DataProfileMenu::deleteProfile(std::vector<std::string> inputCommand) {
         std::cout << "\nData Profile Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
     }
+
+    if (isDefaultProfile(static_cast<SlotId>(slotId), profileId)) {
+        std::cout << "\nCannot delete default profile "
+            << profileId << " on slotId " << slotId << std::endl;
+        return;
+    }
+
     std::cout << "\nDeleting Profile " << profileId << " on slotId " << slotId << std::endl;
     telux::data::TechPreference tp = telux::data::TechPreference::UNKNOWN;
     if (techPrefId == 0) {
@@ -420,4 +427,89 @@ void DataProfileMenu::requestProfileById(std::vector<std::string> inputCommand) 
         dataProfileManagerMap_[static_cast<SlotId>(slotId)]->requestProfile(
         profileId, tp, myDataProfileCbForGetProfileById_[static_cast<SlotId>(slotId)]);
     Utils::printStatus(status);
+}
+
+
+bool DataProfileMenu::isDefaultProfile(SlotId slotId, int profileId) {
+
+    // in case of error we should be preventing this profile from getting deleted.
+    // return true.
+    if (!initalizeDCM(slotId)) {
+        return true;
+    }
+
+    int localProfileId = getDefaultProfile(slotId, telux::data::OperationType::DATA_LOCAL);
+    int remoteProfileId = getDefaultProfile(slotId, telux::data::OperationType::DATA_REMOTE);
+
+    if (((localProfileId != -1) && (profileId == localProfileId)) ||
+            ((remoteProfileId != -1) && (profileId == remoteProfileId))) {
+        dataConnectionManagerMap_.clear();
+        return true;
+    }
+    dataConnectionManagerMap_.clear();
+    return false;
+}
+
+int DataProfileMenu::getDefaultProfile(SlotId slotId, telux::data::OperationType opr) {
+
+    std::promise<telux::common::ErrorCode> prom{};
+    int profileId = -1;
+
+    auto defaultProfileCb =
+    [&prom, &profileId](int pId, SlotId slotId, telux::common::ErrorCode error) {
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            profileId = pId;
+        }
+        prom.set_value(error);
+    };
+
+    if (dataConnectionManagerMap_.find(slotId) == dataConnectionManagerMap_.end()) {
+        return -1;
+    }
+
+    telux::common::Status status =
+        dataConnectionManagerMap_[slotId]->getDefaultProfile(opr, defaultProfileCb);
+
+    if (status == telux::common::Status::SUCCESS) {
+        telux::common::ErrorCode errCode = prom.get_future().get();
+        if (errCode != telux::common::ErrorCode::SUCCESS) {
+            return -1;
+        }
+    }
+    return profileId;
+}
+
+bool DataProfileMenu::initalizeDCM(SlotId slotId) {
+
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    bool retValue = false;
+    std::promise<telux::common::ServiceStatus> prom{};
+
+    // Get the DataFactory instances.
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    auto conMgr = dataFactory.getDataConnectionManager(slotId,
+        [&prom](telux::common::ServiceStatus status) { prom.set_value(status); });
+
+    if (conMgr) {
+        //  Initialize data connection manager
+        std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
+            slotId << ", Please wait ..." << endl;
+        subSystemStatus = prom.get_future().get();
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nData Connection Manager on slot "<< slotId << " is ready" << std::endl;
+            retValue = true;
+        } else {
+            std::cout << "\nData Connection Manager on slot "<< slotId
+                << " is not ready" << std::endl;
+            return false;
+        }
+
+        //If this is newly created Manager
+        if (dataConnectionManagerMap_.find(slotId) == dataConnectionManagerMap_.end()) {
+            dataConnectionManagerMap_.emplace(slotId, conMgr);
+        }
+    } else {
+        std::cout << "Data Connection Manager failed to initialize" << std::endl;
+    }
+    return retValue;
 }

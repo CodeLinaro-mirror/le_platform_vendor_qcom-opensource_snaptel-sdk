@@ -73,8 +73,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetSecondaryBandCallback = std::function<void(const telux::loc::ConstellationSet set,
@@ -88,8 +86,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetMinGpsWeekCallback = std::function<void(uint16_t minGpsWeek,
@@ -103,9 +99,6 @@ public:
  * @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
- *
  */
  using GetMinSVElevationCallback = std::function<void(uint8_t minSVElevation,
      telux::common::ErrorCode error)>;
@@ -117,8 +110,6 @@ public:
  *  @param[in] error - Return code which indicates whether the operation succeeded
  *                    or not.
  *
- *  @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibilty.
  *
  */
  using GetRobustLocationCallback = std::function<void(const telux::loc::
@@ -128,6 +119,8 @@ public:
  * Checks the status of location configuration subsystems and returns the result.
  *
  * @returns True if location configuration subsystem is ready for service otherwise false.
+ *
+ * @deprecated use getServiceStatus()
  *
  */
   virtual bool isSubsystemReady() = 0;
@@ -139,8 +132,6 @@ public:
  *          SERVICE_UNAVAILABLE  -  If location configurator is temporarily unavailable.
  *          SERVICE_FAILED       -  If location configurator encountered an irrecoverable failure.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -149,6 +140,10 @@ public:
  *
  * @returns  A future that caller can wait on to be notified when location
  *           configuration subsystem is ready.
+ *
+ * @deprecated The callback mechanism introduced in the
+ * @ref LocationFactory::getLocationConfigurator() API will provide the similar notification
+ * mechanism as onSubsystemReady(). This API will soon be removed from further releases.
  *
  */
   virtual std::future<bool> onSubsystemReady() = 0;
@@ -299,8 +294,6 @@ public:
  *
  * @param [in] callback - Optional callback to get the response of configureSecondaryBand.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -315,8 +308,6 @@ public:
  *
  * @returns Status of requestSecondaryBandConfig i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -339,8 +330,6 @@ public:
  *
  * @param [in] callback - Optional callback to get the response of configure robust location.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -356,22 +345,19 @@ public:
  *
  * @returns Status of requestRobustLocation i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
   virtual telux::common::Status requestRobustLocation(GetRobustLocationCallback cb) = 0;
 
 /**
- * This API configures the minimum GPS week used by the modem GNSS standard position engine (SPE).
- * If this API is called while GNSS standard position engine(SPE) is in middle of a session,
- * ResponseCallback will still be invoked shortly to indicate the setting has been accepted
- * by SPE engine, however the actual setting can not be applied until the current session ends,
- * and this may take up to 255 seconds in poor GPS signal condition.
+ * This API configures the minimum GPS week used by the modem GNSS standard position engine (SPE)
+ * and shall not be called while GNSS SPE is in the middle of a session.
+ * Client needs to assure that there is no active GNSS SPE session prior to issuing this command.
  * Client should wait for the command to finish, e.g.: via ResponseCallback received before
  * issuing a second configureMinGpsWeek command. Behavior is not defined if client issues a second
  * request of configureMinGpsWeek without waiting for the previous configureMinGpsWeek to finish.
+ * Additionally minimum GPS week number shall NEVER be in the future of the current GPS Week.
  *
  * @param [in] minGpsWeek - minimum GPS week to be used by modem GNSS engine.
  *
@@ -380,8 +366,6 @@ public:
  *
  * @returns Status of configureMinGpsWeek i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -402,8 +386,6 @@ public:
  *
  * @returns Status of requestMinGpsWeek i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -441,8 +423,6 @@ public:
  *
  * @returns Status of configureMinSVElevation i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -463,8 +443,6 @@ public:
  *
  * @returns Status of requestMinSVElevation i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -484,8 +462,6 @@ public:
  *
  * @returns Status of deleteAidingData i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -505,8 +481,6 @@ public:
  *
  * @returns Status of configureDR i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -542,9 +516,8 @@ public:
           telux::common::ResponseCallback callback = nullptr ) = 0;
 
 /**
- * Clients can request Terrestrial Positioning using @ref ILocationManager::
- * getTerrestrialPosition. Terrestrial Positioning requires sending device data to the cloud to
- * get the position.
+ * Clients can request Terrestrial Positioning using @ref ILocationManager::getTerrestrialPosition.
+ * Terrestrial Positioning requires sending device data to the cloud to get the position.
  * This functionality requires user consent. This API needs to be invoked to provide the user
  * consent.
  *
@@ -566,6 +539,31 @@ public:
  */
 
   virtual telux::common::Status provideConsentForTerrestrialPositioning(bool userConsent,
+      telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API is used to configure the NMEA sentence types that clients will receive via
+ * @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ * Without prior invocation to this API, all NMEA sentences supported in the system will get
+ * generated and delivered to all the clients that register to receive NMEA sentences.
+ * The NMEA sentence type configuration is common across all clients and updating it will affect
+ * all clients.
+ * This API call is not incremental and the new NMEA sentence types will completely overwrite the
+ * previous call to this API.
+ *
+ * @param [in] nmeaType - specify the set of NMEA sentences
+ *
+ * @param [in] callback - Optional callback to get the response of configureNmeaTypes.
+ *
+ * @returns Status of configureNmeaTypes i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureNmeaTypes(const NmeaSentenceConfig nmeaType,
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**

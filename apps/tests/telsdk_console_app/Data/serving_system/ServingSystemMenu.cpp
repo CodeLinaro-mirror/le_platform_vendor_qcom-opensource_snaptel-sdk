@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -45,32 +45,16 @@ using namespace std;
 
 #define PRINT_NOTIFICATION std::cout << "\n\033[1;35mNOTIFICATION: \033[0m"
 
-std::string getDrbStatusString(telux::data::DrbStatus stat) {
-    string statusStr = "UNKNOWN";
-    switch (stat) {
-        case DrbStatus::DORMANT:
-            statusStr = "DORMANT";
-            break;
-        case DrbStatus::ACTIVE:
-            statusStr = "ACTIVE";
-            break;
-        case DrbStatus::UNKNOWN:
-        default:
-            break;
-    }
-    return statusStr;
-}
-
 DataServingSystemMenu::DataServingSystemMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
     dataServingSystemManagers_.clear();
     addMenuCmds_ = false;
     subSystemStatusUpdated_ = false;
     dataServingSystemListeners_[DEFAULT_SLOT_ID] =
-        std::make_shared<ServingSystemListenerOnDefaultSlotId>();
+        std::make_shared<ServingSystemListener>(DEFAULT_SLOT_ID);
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         dataServingSystemListeners_[SLOT_ID_2] =
-            std::make_shared<ServingSystemListenerOnSlotId2>();
+            std::make_shared<ServingSystemListener>(SLOT_ID_2);
     }
 }
 
@@ -85,11 +69,18 @@ bool DataServingSystemMenu::init() {
 
     if (addMenuCmds_ == false) {
         addMenuCmds_ = true;
-        std::shared_ptr<ConsoleAppCommand> getDrbStatus
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "get_drb_status", {},
-                std::bind(&DataServingSystemMenu::getDrbStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getDrbStatus =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "get_drb_status", {},
+            std::bind(&DataServingSystemMenu::getDrbStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestServiceStatus =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "request_service_status", {},
+            std::bind(&DataServingSystemMenu::requestServiceStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestRoamingStatus =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_roaming_status", {},
+            std::bind(&DataServingSystemMenu::requestRoamingStatus, this, std::placeholders::_1)));
 
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {getDrbStatus};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
+            getDrbStatus, requestServiceStatus, requestRoamingStatus};
         addCommands(commandsList);
     }
 
@@ -150,7 +141,6 @@ void DataServingSystemMenu::onInitCompleted(telux::common::ServiceStatus status)
 
 void DataServingSystemMenu::getDrbStatus(std::vector<std::string> inputCommand) {
     std::cout << "Get DRB Status\n";
-    telux::common::Status retStat;
 
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -165,59 +155,100 @@ void DataServingSystemMenu::getDrbStatus(std::vector<std::string> inputCommand) 
 
     telux::data::DrbStatus stat =
         dataServingSystemManagers_[static_cast<SlotId>(slotId)]->getDrbStatus();
-    std::cout << "Current Drb Status is : " << getDrbStatusString(stat) << std::endl;
+    std::cout << "Current Drb Status is : " << DataUtils::drbStatusToString(stat) << std::endl;
 }
 
-void ServingSystemListenerOnDefaultSlotId::onServiceStatusChange(
-    telux::common::ServiceStatus status) {
+void DataServingSystemMenu::requestServiceStatus(std::vector<std::string> inputCommand) {
+    std::cout << "Request Service Status\n";
 
-    std::string stat;
-    switch(status) {
-        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-            stat = " SERVICE_AVAILABLE";
-            break;
-        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
-            break;
-        default:
-            stat = " Unknown service status";
-            break;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
     }
 
-    PRINT_NOTIFICATION <<
-        " ** Data ServingSystem onServiceStatusChange Slot: " << static_cast<int>(DEFAULT_SLOT_ID)
-        <<  " **\n" << stat << std::endl;
-}
-
-void ServingSystemListenerOnDefaultSlotId::onDrbStatusChanged(
-    telux::data::DrbStatus status) {
-    PRINT_NOTIFICATION <<
-        " Serving System Listener - received Drb status: " << getDrbStatusString(status)
-        << " on SlotId: " << static_cast<int>(DEFAULT_SLOT_ID) << std::endl << std::endl;
-}
-
-void ServingSystemListenerOnSlotId2::onServiceStatusChange(
-    telux::common::ServiceStatus status) {
-    std::string stat;
-    switch(status) {
-        case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-            stat = " SERVICE_AVAILABLE";
-            break;
-        case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-            stat =  " SERVICE_UNAVAILABLE";
-            break;
-        default:
-            stat = " Unknown service status";
-            break;
+    if (dataServingSystemManagers_.find(static_cast<SlotId>(slotId)) ==
+        dataServingSystemManagers_.end()) {
+        std::cout << "Serving System Manager on SlotId: " << slotId << " is not ready" << std::endl;
+        return;
     }
 
-    PRINT_NOTIFICATION <<
-        " ** Data ServingSystem onServiceStatusChange Slot: " <<  static_cast<int>(SLOT_ID_2)
-        <<  " **\n" << stat << std::endl;
+    // Callback
+    auto respCb = [slotId](telux::data::ServiceStatus serviceStatus,
+                           telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "requestServiceStatus Response on slotid " << static_cast<int>(slotId);
+        if(error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << " is successful" << std::endl;
+            if(serviceStatus.serviceState == telux::data::DataServiceState::OUT_OF_SERVICE) {
+                std::cout << "Current Status is Out Of Service" << std::endl;
+            } else {
+                std::cout << "Current Status is In Service" << std::endl;
+                std::cout << "Preferred Rat is "
+                            << DataUtils::serviceRatToString(serviceStatus.networkRat) << std::endl;
+            }
+        }
+        else {
+            std::cout << " failed"
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    };
+
+    telux::common::Status retStat =
+        dataServingSystemManagers_[static_cast<SlotId>(slotId)]->requestServiceStatus(respCb);
+    Utils::printStatus(retStat);
 }
 
-void ServingSystemListenerOnSlotId2::onDrbStatusChanged(telux::data::DrbStatus status) {
-    PRINT_NOTIFICATION <<
-        " Serving System Listener - received Drb status: " << getDrbStatusString(status)
-        << " on SlotId: " << static_cast<int>(SLOT_ID_2) << std::endl << std::endl;
+void DataServingSystemMenu::requestRoamingStatus(std::vector<std::string> inputCommand) {
+    std::cout << "Request Roaming Status\n";
+    telux::common::Status retStat;
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    if (dataServingSystemManagers_.find(static_cast<SlotId>(slotId)) ==
+        dataServingSystemManagers_.end()) {
+        std::cout << "Serving System Manager on SlotId: " << slotId << " is not ready" << std::endl;
+        return;
+    }
+
+    // Callback
+    auto respCb = [slotId](
+            telux::data::RoamingStatus roamingStatus, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "requestRoamingStatus Response on slotid " << static_cast<int>(slotId);
+        if(error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << " is successful" << std::endl;
+            bool isRoaming = roamingStatus.isRoaming;
+            if(isRoaming) {
+                std::cout << "System is in Roaming State" << std::endl;
+                std::cout << "Roaming Type: ";
+                switch(roamingStatus.type)  {
+                    case telux::data::RoamingType::INTERNATIONAL:
+                        std::cout << "International" << std::endl;
+                    break;
+                    case telux::data::RoamingType::DOMESTIC:
+                        std::cout << "Domestic" << std::endl;
+                    break;
+                    default:
+                        std::cout << "Unknown" << std::endl;
+                }
+            } else {
+                std::cout << "System is not in Roaming State" << std::endl;
+            }
+        }
+        else {
+            std::cout << " failed"
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    };
+
+    retStat =
+        dataServingSystemManagers_[static_cast<SlotId>(slotId)]->requestRoamingStatus(respCb);
+    Utils::printStatus(retStat);
 }

@@ -80,7 +80,7 @@ class RadioInterface {
 private:
 
     static map<Cv2xStatusType, string> gCv2xStatusToString;
-
+    //static map<int, string> gCv2xReadyToString;
     /**
      * Method that the SDK uses for callbacks.
      * @param status a Cv2xStatus.
@@ -92,7 +92,7 @@ private:
 public:
 
     /*
-    * Promise used for radio status check
+    * shared_ptr to the singleton radio manager of the SDK.
     */
     promise<ErrorCode> gCallbackPromise = promise<ErrorCode>();
 
@@ -115,10 +115,10 @@ public:
     /**
     * Non-blocking method that requests and returns TX/RX radio status.
     * @param type a RadioType.
-    * @return Cv2xStatusType enum indicating the ratio status.
+    * @return String with possible values
+    * "INACTIVE", "ACTIVE", "SUSPENDED", "UNKNOWN".
     */
     Cv2xStatusType statusCheck(RadioType type);
-
     /**
     * Blocking method that checks manager, radio and TX/RX status.
     * @param category a TrafficCategory.
@@ -127,5 +127,21 @@ public:
     * @see TrafficCategory
     */
     bool ready(TrafficCategory category, RadioType type);
+
+    /**
+    * Set the verbosity for the specific RadioInterface implementation.
+    * @param interger value representing level of verbosity
+    * @return none
+    */
+    void set_radio_verbosity(int value);
+    int rVerbosity = 0;
+    /**
+     * @brief Register a listener for cv2x status change and wait if cv2x not active
+     * @param type
+     * @return true
+     * @return false
+     */
+    bool waitForCv2xToActivate();
+    bool restartFlow;
 };
 

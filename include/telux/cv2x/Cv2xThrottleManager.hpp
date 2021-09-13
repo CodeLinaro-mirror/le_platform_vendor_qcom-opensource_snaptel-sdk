@@ -122,14 +122,6 @@ public:
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Wait for Cv2x throttle manager client to be ready.
-     *
-     * @returns A future that caller can wait on to be notified when Cv2x
-     * throttle manager client become ready.
-     */
-    virtual std::future<bool> onSubsystemReady() = 0;
-
-    /**
      * Registers a listener to receive the updated filer rate adjustment data.
      *
      * @param[in] listner - Listener that implement ICv2xThrottleManagerListener interface.

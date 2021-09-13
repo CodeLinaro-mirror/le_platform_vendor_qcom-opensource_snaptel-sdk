@@ -1,0 +1,541 @@
+/*
+ *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * file       LocationConfiguratorStub.hpp
+ * brief      Location configurator provides APIs for enabling/disabling
+ *            the Constraint TimeUncertainty.
+ *
+ */
+
+#ifndef LOCATIONCONFIGURATORSTUB_HPP
+#define LOCATIONCONFIGURATORSTUB_HPP
+
+#include "telux/loc/LocationConfigurator.hpp"
+#include "StubSystemStarter.hpp"
+
+namespace telux {
+
+namespace loc {
+
+/**
+ * brief LocationConfiguratorStub allows for the enablement/disablement of the
+ * APIs such as CTunc, PACE, deleteAllAidingData, configureLeverArm, configureConstellations,
+ * configureRobustLocation, configureMinGpsWeek, requestMinGpsWeek, deleteAidingData.
+ * ILocationConfigurator APIs strictly adheres to the principle of single client per process.
+ */
+class LocationConfiguratorStub : public ILocationConfigurator {
+public:
+
+/**
+ * This function is called with the response to requestSecondaryBandConfig API.
+ *
+ * param[in] set - disabled secondary band constellation configuration used by the GNSS
+ *                  standard position engine (SPE).
+ *
+ * param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ */
+    using GetSecondaryBandCallback = std::function<void(const telux::loc::ConstellationSet set,
+        telux::common::ErrorCode error)>;
+
+
+/**
+ * This function is called with the response to requestMinGpsWeek API.
+ *
+ * param[in] minGpsWeek - minimum gps week.
+ *
+ * param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+    using GetMinGpsWeekCallback = std::function<void(uint16_t minGpsWeek,
+        telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestMinSVElevation API.
+ *
+ * param[in] minSVElevation - minimum SV Elevation angle in units of degree.
+ *
+ * param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+    using GetMinSVElevationCallback = std::function<void(uint8_t minSVElevation,
+        telux::common::ErrorCode error)>;
+
+/** This function is called with the response to requestRobustLocation API.
+ *
+ * param[in] rLConfig - robust location settings information.
+ *
+ * param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ * note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibilty.
+ *
+ */
+    using GetRobustLocationCallback = std::function<void(const telux::loc::
+        RobustLocationConfiguration rLConfig, telux::common::ErrorCode error)>;
+
+/**
+ * Checks the status of location configuration subsystems and returns the result.
+ *
+ * returns True if location configuration subsystem is ready for service otherwise false.
+ *
+ */
+    bool isSubsystemReady() override;
+
+/**
+ * This status indicates whether the object is in a usable state.
+ *
+ * returns SERVICE_AVAILABLE    -  If location manager is ready for service.
+ *          SERVICE_UNAVAILABLE  -  If location manager is temporarily unavailable.
+ *          SERVICE_FAILED       -  If location manager encountered an irrecoverable failure.
+ *
+ */
+    telux::common::ServiceStatus getServiceStatus() override;
+
+/**
+ * Wait for location configuration subsystem to be ready.
+ *
+ * returns  A future that caller can wait on to be notified when location
+ *           configuration subsystem is ready.
+ *
+ */
+    std::future<bool> onSubsystemReady() override;
+
+/**
+ * This API enables or disables the constrained time uncertainty(C-TUNC) feature. When the
+ * vehicle is turned off this API helps to put constraint on the time uncertainty. For multiple
+ * invocations of this API, client should wait for the command to finish, e.g.: via
+ * ResponseCallback recieved before issuing a second configureCTunc command.
+ *
+ * param [in] enable - true for enable C-TUNC feature and false for disable C-TUNC
+ *                      feature.
+ *
+ * param [in] callback - Optional callback to get the response of enablement/disablement of
+ *                        C-TUNC.
+ *
+ * param [in] timeUncertainty - specifies the time uncertainty threshold that gps engine
+ *                              needs to maintain, in unit of milli-seconds.
+ *
+ * param [in] energyBudget - specifies the power budget that the GPS engine is allowed to
+ *                            spend to maintain the time uncertainty, in the unit of
+ *                            100 micro watt second. If the power exceeds the energyBudget then
+ *                            this API is disabled. This is a cumulative energy budget.
+ *
+ * returns Status of configureCTunc i.e. success or suitable status code.
+ *
+ */
+    telux::common::Status configureCTunc(bool enable, telux::common::ResponseCallback callback
+        = nullptr, float timeUncertainty = DEFAULT_TUNC_THRESHOLD, uint32_t energyBudget =
+                DEFAULT_TUNC_ENERGY_THRESHOLD) override;
+
+ /**
+  * This API enables or disables position assisted clock estimator feature. For multiple
+  * invocations of this API, client should wait for the command to finish, e.g.: via
+  * ResponseCallback recieved before issuing a second configurePACE command.
+  *
+  * param [in] enable - to enable/disable position assisted clock estimator feature.
+  *
+  * param [in] callback - Optional callback to get the response of enablement/disablement of
+  *                        PACE.
+  */
+
+    telux::common::Status configurePACE(bool enable, telux::common::ResponseCallback callback
+        = nullptr) override;
+
+/**
+  * This API deletes all form of aiding data from all position engines. This API deletes all
+  * assistance data used by GPS engine and force engine to do a cold start for next session.
+  * Invoking this API will trigger cold start of all position engines on the device.
+  * This will cause significant delay for the position engines to produce next fix and may have
+  * other performance impact.
+  *
+  * param [in] callback - Optional callback to get the response of delete aiding data.
+  *
+  */
+
+    telux::common::Status deleteAllAidingData(telux::common::ResponseCallback callback
+        = nullptr) override;
+
+/**
+  * This API sets the lever arm parameters for the vehicle. For multiple invocations of this API
+  * client should wait for the command to finish, e.g.: via ResponseCallback recieved before
+  * issuing a second configureLeverArm command.
+  *
+  * param [in] info - lever arm configuration info regarding below three
+  *                   types of lever arm info:
+  *                   a: GNSS Antenna w.r.t the origin at the IMU (inertial measurement unit)
+  *                   for DR engine
+  *                   b: GNSS Antenna w.r.t the origin at the IMU (inertial measurement unit)
+  *                   for VEPP engine
+  *                   c: VRP (Vehicle Reference Point) w.r.t the origin (at the GNSS Antenna).
+  *                   Vehicle manufacturers prefer the position output to be tied to a
+  *                   specific point in the vehicle rather than where the antenna is placed
+  *                   (midpoint of the rear axle is typical).
+  *
+  * param [in] callback - Optional callback to get the response of configure lever arm.
+  *
+  */
+
+    telux::common::Status configureLeverArm(const LeverArmConfigInfo& info,
+        telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+  * This API blacklists some constellations or subset of SVs from the constellation from being used
+  * by the GNSS engine on modem. For multiple invocations of this API, client should wait for the
+  * command to finish, e.g.: via ResponseCallback recieved before issuing a second
+  * configureConstellations command. This API call is not incremental and the new settings will
+  * completely overwrite the previous call.
+  * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO and SBAS. For other
+  * constellations NOTSUPPORTED status will be returned.
+  * Nullptr of list will be interpreted as to reset the constellation configuration to
+  * device default.
+  *
+  * param [in] SvIdBlackList - specify the set of constellations and SVs that should not be used
+  *                             by the GNSS engine on modem. Constellations and SVs not specified
+  *                             in blacklistedSvList could get used by the GNSS engine on modem.
+  *
+  * param [in] callback - Optional callback to get the response of configure constellations.
+  *
+  */
+
+
+    telux::common::Status configureConstellations(const SvBlackList& list,
+        telux::common::ResponseCallback callback = nullptr,  bool resetToDefault = false) override;
+
+/**
+ * This API configures the secondary band constellations used by the GNSS standard position
+ * engine. This API call is not incremental and the new settings will completely overwrite the
+ * previous call.
+ * The set specifies the supported constellations whose secondary band information should be
+ * disabled. The absence of a constellation in the set will result in the secondary band being
+ * enabled for that constellation. The modem has its own configuration in NV (persistent memory)
+ * about which constellation's secondary bands are allowed to be enabled. When a constellation is
+ * omitted when this API is invoked the secondary band for that constellation will only be enabled
+ * if the modem configuration allows it. If not allowed then this API would be a no-op for that
+ * constellation.
+ * Passing an empty set to this API will result in all constellations as allowed by the modem
+ * configuration to be enabled.
+ * For multiple invocations of this API, client should wait for the command to finish, e.g.:
+ * via ResponseCallback recieved, before issuing a second configureSecondaryBand command.
+ * Behavior is not defined if client issues a second request of configureSecondaryBand without
+ * waiting for the finish of the previous configureSecondaryBand request.
+ *
+ * param [in] set - specifies the set of constellations whose secondary bands need to be
+ *                   disabled.
+ *
+ * param [in] callback - Optional callback to get the response of configureSecondaryBand.
+ *
+ */
+
+  telux::common::Status configureSecondaryBand(const ConstellationSet& set,
+        telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+ * This API retrieves the secondary band configurations for constellation used by the standard
+ * GNSS engine (SPE).
+ *
+ * param [in] cb - callback to retrieve secondary band information about constellations.
+ *
+ * returns Status of requestSecondaryBandConfig i.e. success or suitable status code.
+ */
+
+  telux::common::Status requestSecondaryBandConfig(GetSecondaryBandCallback cb) override;
+
+/**
+  * This API enables/disables robust location feature and enables/disables robust location while
+  * device is on E911. This API focuses on detection and reporting GNSS spoofing in position, time
+  * and navigation data. When this API is enabled it reports confidence of the GNSS spoofing by the
+  * getConformityIndex() API defined in the ILocationInfoEx class.
+  *
+  * param [in] enable - true to enable robust location and false to disable robust location.
+  *
+  * param [in] enableForE911 - true to enable robust location when the device is on E911 session
+  *                             and false to disable on E911 session. This parameter is only valid
+  *                             if robust location is enabled.
+  *
+  * param [in] callback - Optional callback to get the response of configure robust location.
+  *
+  * note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+    telux::common::Status configureRobustLocation(bool enable,
+      bool enableForE911 = false,
+          telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+  * This API retrieves the robust location settings used by the GNSS engine.
+  *
+  * param [in] cb - callback to retrieve robust location information.
+  *
+  * returns Status of requestRobustLocation i.e. success or suitable status code.
+  *
+  * note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+    telux::common::Status requestRobustLocation(GetRobustLocationCallback cb) override;
+
+/**
+  * This API configures the minimum GPS week used by the modem GNSS engine. Client should
+  * wait for the command to finish, e.g.: via ResponseCallback recieved before issuing
+  * a second configureMinGpsWeek command.
+  *
+  * param [in] minGpsWeek - minimum GPS week to be used by modem GNSS engine.
+  *
+  * param [in] callback - Optional callback to get the response of configure
+  *                        minimum GPS week.
+  *
+  * returns Status of configureMinGpsWeek i.e. success or suitable status code.
+  *
+  * note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+    telux::common::Status configureMinGpsWeek(uint16_t minGpsWeek,
+      telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+  * This API retrieves the minimum GPS week configuration used by the modem GNSS engine.
+  *
+  * param [in] cb - callback to retrieve the minimum gps week.
+  *
+  * returns Status of requestMinGpsWeek i.e. success or suitable status code.
+  *
+  * note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+    telux::common::Status requestMinGpsWeek(GetMinGpsWeekCallback cb) override;
+
+/**
+  * This API configures the minimum SV elevation angle setting used by the GNSS standard position
+  * engine. Configuring minimum SV elevation setting will not cause position engine to stop
+  * tracking low elevation SVs. This elevation mask is used to filter out the SVs that are used in
+  * determining the position. SVs with an elevation below this setting will be excluded from
+  * position determination. So configuring this to a large angle will filter out most of the SVs
+  * and will have adverse affects on the performance of the position engine.
+  *
+  * This setting does not impact the SV information and SV measurement reports retrieved from APIs
+  * such as IGnssSvINfo::getSVInfoList, ILocationListener::onGnssMeasurementsInfo.
+  *
+  * Client should wait for the command to finish, e.g.: via ResponseCallback received, before
+  * issuing a second configureMinElevation command. If this API is called while the GNSS Position
+  * Engine is in the middle of a session, ResponseCallback will still be invoked shortly after to
+  * indicate the setting has been received by the SPE engine. However the enigne can take some time
+  * to apply this setting if it is in middle of a session (as long as 255 seconds in some
+  * implementations). It is advised to use this API with caution and only for very limited usage
+  * scenario, e.g.: for performance test, certification process and for one-time device
+  * configuration.
+  *
+  * param [in] minSVElevation - minimum SV elevation to be used by GNSS standard position
+  *                              engine (SPE). Valid range is [0, 90] in unit of degree.
+  *
+  * param [in] callback - Optional callback to get the response of configure
+  *                        minimum SV Elevation angle.
+  *
+  * returns Status of configureMinSVElevation i.e. success or suitable status code.
+  *
+  * note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+    telux::common::Status configureMinSVElevation(uint8_t minSVElevation,
+      telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+  * This API retrieves the minimum SV Elevation configuration used by the modem GNSS SPE engine.
+  * If this API is invoked right after the configureMinSVElevation, the returned setting may not
+  * match the one specified in configureMinSVElevation, as the setting received via
+  * configureMinSVElevation might not have been applied yet as it takes time to apply the
+  * setting if the GNSS SPE engine has an on-going session.
+  *
+  * param [in] cb - callback to retrieve the minimum SV elevation.
+  *
+  * returns Status of requestMinSVElevation i.e. success or suitable status code.
+  *
+  * note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+    telux::common::Status requestMinSVElevation(GetMinSVElevationCallback cb) override;
+
+/**
+  * This API deletes specified aiding data from all position engines on the device. For
+  * example, removing ephemeris data may trigger GNSS engine to do a warm start.
+  *
+  * param [in] aidingDataMask - specify the set of aiding data to be deleted from all position
+  *                              engines. Currently, only ephemeris deletion is supported.
+  *
+  * param [in] callback - Optional callback to get the response of delete aiding data.
+  *
+  * returns Status of deleteAidingData i.e. success or suitable status code.
+  *
+  * note Eval: This is a new API and is being evaluated. It is subject to change and could
+  *             break backwards compatibility.
+  *
+  */
+
+    telux::common::Status deleteAidingData(AidingData aidingDataMask,
+      telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+ * This API configures various parameters for dead reckoning position engine. Clients should
+ * wait for the command to finish e.g.: via ResponseCallback to be received before issuing a
+ * second configureDR command. Behavior is not defined if client issues a second
+ * request of configureDR without waiting for the completion of the previous
+ * configureDR request.
+ *
+ * param [in] config - specify dead reckoning engine configuration.
+ *
+ * param [in] callback - Optional callback to get the response of configureDR.
+ *
+ * returns Status of configureDR i.e. success or suitable status code.
+ *
+ */
+
+  telux::common::Status configureDR(const
+      DREngineConfiguration& config, telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+ * This API is used to instruct the specified engine to be in the suspended/running state.
+ * When the engine is placed in suspended state, the engine will stop. If there is an on-going
+ * session, engine will no longer produce fixes. In the suspended state, calling API to delete
+ * aiding data from the paused engine may not have effect. Request to delete Aiding data shall
+ * be issued after engine resume.
+ *
+ * Currently, only DR engine will support this request. The request to suspend/running DR engine
+ * can be made with or without an on-going session. With DR engine, on resume, GNSS position &
+ * heading re-acquisition may be needed for DR to engage.
+ *
+ * param [in] engineType - the engine that is instructed to change its run state.
+ *
+ * param [in] engineState - the new engine run state that the engine is instructed to be in.
+ *
+ * param [in] callback - Optional callback to get the response of configureEngineState.
+ *
+ * returns Status of configureEngineState i.e. success or suitable status code.
+ *
+ */
+
+  telux::common::Status configureEngineState(const EngineType engineType,
+      const LocationEngineRunState engineState,
+          telux::common::ResponseCallback callback = nullptr ) override;
+
+/**
+ * Clients can request Terrestrial Positioning using @ref ILocationManager::getTerrestrialPosition.
+ * Terrestrial Positioning requires sending device data to the cloud to get the position.
+ * This functionality requires user consent. This API needs to be invoked to provide the user
+ * consent.
+ *
+ * The consent will remain effective across power cycles, until this API is called with a
+ * different value.
+ *
+ * param [in] userConsent - true indicates user consents to sending device data to cloud,
+ *                           false indicates user does not consent.
+ *
+ * param [in] callback - Optional callback to get the response of
+ *                        provideConsentForTerrestrialPositioning.
+ *
+ * returns Status of provideConsentForTerrestrialPositioning i.e. success or suitable
+ *          status code.
+ *
+ * note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ */
+
+  telux::common::Status provideConsentForTerrestrialPositioning(bool userConsent,
+      telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+ * This API is used to configure the NMEA sentence types that clients will receive via
+ * @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ * Without prior invocation to this API, all NMEA sentences supported in the system will get
+ * generated and delivered to all the clients that register to receive NMEA sentences.
+ * The NMEA sentence type configuration is common across all clients and updating it will affect
+ * all clients.
+ * This API call is not incremental and the new NMEA sentence types will completely overwrite the
+ * previous call to this API.
+ *
+ * param [in] nmeaType - specify the set of NMEA sentences
+ *
+ * param [in] callback - Optional callback to get the response of configureNmeaTypes.
+ *
+ * returns Status of configureNmeaTypes i.e. success or suitable status code.
+ *
+ * note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  telux::common::Status configureNmeaTypes(const NmeaSentenceConfig nmeaType,
+      telux::common::ResponseCallback callback = nullptr) override;
+
+    LocationConfiguratorStub(telux::common::InitResponseCb callback = nullptr);
+/**
+ * Destructor of ILocationConfigurator
+ */
+    ~LocationConfiguratorStub();
+private:
+    uint8_t confgMinSVElevation_;
+    uint16_t confgMinGpsWeek_;
+    std::shared_ptr<StubSystemStarter> systemStarter_ = nullptr;
+    telux::loc::RobustLocationConfiguration confgRobustLocation_;
+    telux::loc::ConstellationSet configSet_;
+    bool confgCTuncEnabled_;
+    float confgCTuncThreshold_;
+    uint32_t confgCTuncEnergyBudget_;
+    bool confgPaceEnabled_;
+    telux::loc::LeverArmConfigInfo confgLeverArmInfo_;
+    telux::loc::SvBlackList confgBlackList_;
+};
+
+} // end of namespace loc
+
+} // end of namespace telux
+
+#endif // LOCATIONCONFIGURATORSTUB_HPP

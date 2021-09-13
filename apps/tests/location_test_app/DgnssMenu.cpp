@@ -162,7 +162,11 @@ int DgnssMenu::processRtcmFromServer(void) {
    return 0;
 
 }
-
+/* process input file
+ * @returns: 0 succesfully read and injected one line.
+ *           1 EOF reached.
+ *           -1 injection failed.
+ */
 int DgnssMenu::processRtcmFromFile(void) {
    int size = 0;
    int ret;
@@ -184,7 +188,7 @@ int DgnssMenu::processRtcmFromFile(void) {
    if (ret < 2) {
       std::cout << "End of file reached" << std::endl;
       close(dgnssSourceFd_);
-      return -1;
+      return 1;
    }
    std::cout << "Injecting data.." << std::endl;
    if (telux::common::Status::SUCCESS == dgnssManager_->injectCorrectionData(buffer, size)) {
@@ -200,19 +204,15 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
    switch(status) {
        case DgnssStatus::DATA_SOURCE_NOT_SUPPORTED:
          std::cout << "RTCM data soure is not supported" << std::endl;
-         dgnssManager_->releaseSource();
          break;
        case DgnssStatus::DATA_FORMAT_NOT_SUPPORTED:
          std::cout << "RTCM data format is not supported" << std::endl;
-         dgnssManager_->releaseSource();
          break;
        case DgnssStatus::OTHER_SOURCE_IN_USE:
          std::cout << "RTCM other source is in use" << std::endl;
-         dgnssManager_->releaseSource();
          break;
        case DgnssStatus::MESSAGE_PARSE_ERROR:
          std::cout << "RTCM message parsing error" << std::endl;
-         dgnssManager_->releaseSource();
          break;
        case DgnssStatus::DATA_SOURCE_NOT_USABLE:
          std::cout << "RTCM data source is not usable" << std::endl;
@@ -259,6 +259,9 @@ void DgnssMenu::injectFromFile(std::vector<std::string> userInput) {
                 ret = processRtcmFromFile();
                 sleep(1);
             }
+            if (ret > 0) {
+                break;
+            }
             // If error returned and subSystemReady() is false, that means current source
             // has been released from listening function and new source may have been
             // created but not ready to accept data, we wait for it to become ready before
@@ -271,6 +274,9 @@ void DgnssMenu::injectFromFile(std::vector<std::string> userInput) {
                 if (false == subSystemStatus) {
                     break;
                 }
+                ret = 0;
+            } else {
+                break;  //injection failure due to other reason, quit.
             }
         }
     }

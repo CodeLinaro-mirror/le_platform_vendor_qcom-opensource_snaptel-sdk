@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019,2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,6 +46,9 @@
 namespace telux {
 namespace data {
 
+/** @addtogroup telematics_data
+ * @{ */
+
 using TypeOfService = uint8_t;
 using TrafficClass = uint8_t;
 using FlowLabel = uint32_t;
@@ -77,7 +80,7 @@ struct IPv6Info {
                                      at the network layer. */
 
     TrafficClass mask = 0;
-    FlowLabel flowLabel; /**< Indicates that this packet belongs to a specific sequence of
+    FlowLabel flowLabel = 0; /**< Indicates that this packet belongs to a specific sequence of
                             packets between a source and destination, requiring special
                              handling by intermediate IPv6 routers.*/
     uint8_t natEnabled = 0;
@@ -126,8 +129,6 @@ class IIpFilter {
      *
      * @returns @ref telux::data::IPv4Info
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual IPv4Info getIPv4Info() = 0;
 
@@ -139,8 +140,6 @@ class IIpFilter {
      * @returns Immediate status of setIPv4Info() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status setIPv4Info(const IPv4Info &ipv4Info) = 0;
 
@@ -149,8 +148,6 @@ class IIpFilter {
      *
      * @returns @ref telux::data::IPv6Info
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual IPv6Info getIPv6Info() = 0;
 
@@ -162,8 +159,6 @@ class IIpFilter {
      * @returns Immediate status of setIPv6Info() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status setIPv6Info(const IPv6Info &ipv6Info) = 0;
 
@@ -172,10 +167,18 @@ class IIpFilter {
      *
      * @returns @ref telux::data::IpProtocol
      *
+     */
+    virtual IpProtocol getIpProtocol() = 0;
+
+    /**
+     * Get the IP family type
+     *
+     * @returns @ref telux::data::IpFamilyType
+     *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
      *          break backwards compatibility.
      */
-    virtual IpProtocol getIpProtocol() = 0;
+    virtual IpFamilyType getIpFamily() = 0;
 
     /**
      * Destructor for IIpFilter
@@ -195,8 +198,6 @@ class IUdpFilter : virtual public IIpFilter {
      *
      * @returns @ref telux::data::UdpInfo
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual UdpInfo getUdpInfo() = 0;
 
@@ -208,8 +209,6 @@ class IUdpFilter : virtual public IIpFilter {
      * @returns Immediate status of setUdpInfo() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status setUdpInfo(const UdpInfo &udpInfo) = 0;
 
@@ -231,8 +230,6 @@ class ITcpFilter : virtual public IIpFilter {
      *
      * @returns @ref telux::data::TcpInfo
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual TcpInfo getTcpInfo() = 0;
 
@@ -244,8 +241,6 @@ class ITcpFilter : virtual public IIpFilter {
      * @returns Immediate status of setTcpInfo() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status setTcpInfo(const TcpInfo &tcpInfo) = 0;
 
@@ -267,8 +262,6 @@ class IIcmpFilter : virtual public IIpFilter {
      *
      * @returns @ref telux::data::IcmpInfo
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual IcmpInfo getIcmpInfo() = 0;
 
@@ -280,8 +273,6 @@ class IIcmpFilter : virtual public IIpFilter {
      * @returns Immediate status of setIcmpInfo() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status setIcmpInfo(const IcmpInfo &icmpInfo) = 0;
 
@@ -303,8 +294,6 @@ class IEspFilter : virtual public IIpFilter {
      *
      * @returns @ref telux::data::EspInfo
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual EspInfo getEspInfo() = 0;
 
@@ -316,8 +305,6 @@ class IEspFilter : virtual public IIpFilter {
      * @returns Immediate status of setEspInfo() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status setEspInfo(const EspInfo &espInfo) = 0;
 
@@ -327,7 +314,7 @@ class IEspFilter : virtual public IIpFilter {
     virtual ~IEspFilter() {
     }
 };
-
+/** @} */ /* end_addtogroup telematics_data */
 }  // namespace data
 }  // namespace telux
 #endif

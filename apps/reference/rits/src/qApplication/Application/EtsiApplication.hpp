@@ -45,18 +45,63 @@ public:
     ~EtsiApplication() {
         GnRouter->Stop();
     }
-    void fillMsg(std::shared_ptr<msg_contents> mc);
-    // overload to support GeoNetwork
-    void transmit(uint8_t index, std::shared_ptr<msg_contents>mc, int16_t bufLen,
+
+    /**
+    * Method to setup and perform transmission for ETSI packets.
+    * @param index - An uint8_t that is used for which buffer to access
+    * @param bufLen - Length of given buffer or message
+    * @param txType - Specifies the type of message for decoding
+    */
+    int transmit(uint8_t index, std::shared_ptr<msg_contents>mc, int16_t bufLen,
             TransmitType txType);
+
+    /**
+    * Method to setup and perform reception for ETSI packets.
+    * @param index - An uint8_t that is used for which buffer to access
+    * @param bufLen - Length of given buffer or message
+    */
     int receive(const uint8_t index, const uint16_t bufLen);
 
+    /**
+    * Overall method to fill msg_contents struct based on ETSI packet contents.
+    * @param mc - A shared pointer to the msg_contents struct
+    */
+    void fillMsg(std::shared_ptr<msg_contents> mc);
+
 private:
+
+    /**
+    * Method to initialize ETSI packets in msg_contents struct.
+    * @param mc - A shared pointer to the msg_contents struct
+    */
     void initMsg(std::shared_ptr<msg_contents> mc);
+
+    /**
+    * Method to delete and free ETSI packet memory in msg_contents struct.
+    * @param mc - A shared pointer to the msg_contents struct
+    */
     void freeMsg(std::shared_ptr<msg_contents> mc);
+
+    /**
+    * Method to setup and fill BTP related information.
+    * @param bsm - A pointer to the BTP struct
+    */
     void fillBtp(btp_data_t *btp);
+
+    /**
+    * Method to setup and fill CAM related information.
+    * @param cam - A pointer to the CAM struct
+    */
     void fillCam(CAM_t *cam);
+
+    /**
+    * Method to setup and fill CAM Location related information.
+    * @param cam - A pointer to the CAM struct
+    */
     void fillCamLocation(CAM_t *cam);
+
+
     void fillCamCan(CAM_t *cam);
+
     std::unique_ptr<GeoNetRouterImpl> GnRouter;
 };

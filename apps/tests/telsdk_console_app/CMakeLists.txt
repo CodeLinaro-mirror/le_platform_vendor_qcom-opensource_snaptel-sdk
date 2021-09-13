@@ -32,6 +32,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/DataUtils.cpp
    Data/data_profile/DataProfileMenu.cpp
    Data/serving_system/ServingSystemMenu.cpp
+   Data/serving_system/ServingSystemListener.cpp
    Data/data_connection/DataConnectionMenu.cpp
    Data/data_filter/MyDataFilterListener.cpp
    Data/data_filter/DataFilterMenu.cpp
@@ -69,6 +70,9 @@ set(TELSDK_CONSOLE_APP_SOURCES
    ImsSettings/MyImsSettingsHandler.cpp
    ImsSettings/ImsSettingsListener.cpp
    ImsSettings/ImsSettingsMenu.cpp
+
+   ImsServingSystem/ImsServingSystemMenu.cpp
+   ImsServingSystem/MyImsServSysListener.cpp
 
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp

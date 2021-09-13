@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,6 +35,7 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <regex>
 
 #include <telux/tel/PhoneFactory.hpp>
 
@@ -60,53 +61,42 @@ void NetworkMenu::init() {
    //  Get the PhoneFactory and NetworkManger instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
+   networkListener_ = std::make_shared<MyNetworkSelectionListener>();
 
    std::vector<int> phoneIds;
    if (phoneManager) {
        telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
        if (status == telux::common::Status::SUCCESS) {
-           for (auto index = 1; index <= phoneIds.size(); index++) {
-               auto networkManager
-                   = telux::tel::PhoneFactory::getInstance().getNetworkSelectionManager(index);
-               if (networkManager != nullptr) {
-                   networkManagers_.emplace_back(networkManager);
-               }
-           }
+          for (auto index = 1; index <= phoneIds.size(); index++) {
+             std::promise<telux::common::ServiceStatus> prom;
+             auto networkManager = phoneFactory.getNetworkSelectionManager(
+                index, [&](telux::common::ServiceStatus status) {
+                   prom.set_value(status);
+             });
+             if (!networkManager) {
+                std::cout << "ERROR - Failed to get Network Selection Manager instance \n";
+                exit(1);
+             }
+             std::cout << "Waiting for Network Selection Manager to be ready on slotId " << index
+                   << "\n";
+             telux::common::ServiceStatus networkSelMgrStatus = prom.get_future().get();
+             if (networkSelMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+                std::cout << "Network Selection Manager is ready on slotId " << index << "\n";
+                networkManagers_.emplace_back(networkManager);
+             } else {
+                std::cout << "ERROR - Unable to initialize,"
+                   << " network selection manager subsystem on slotId "
+                      << index << std::endl;
+                exit(1);
+             }
+          }
        }
-
-       // Same listener used for both the slots
-       networkListener_ = std::make_shared<MyNetworkSelectionListener>();
        for (auto index = 0; index < networkManagers_.size(); index++) {
-           std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-           startTime = std::chrono::system_clock::now();
-
-           //  Check if network subsystem is ready
-           bool subSystemStatus = networkManagers_[index]->isSubsystemReady();
-
-           //  If network subsystem is not ready, wait for it to be ready
-           if(!subSystemStatus) {
-              std::cout << "\n\n Network subsystem is not ready, Please wait." << std::endl;
-              std::future<bool> f = networkManagers_[index]->onSubsystemReady();
-              // If we want to wait unconditionally for network subsystem to be ready
-              subSystemStatus = f.get();
-           }
-
-           //  Exit the application, if SDK is unable to initialize network subsystems
-           if(subSystemStatus) {
-              endTime = std::chrono::system_clock::now();
-              std::chrono::duration<double> elapsedTime = endTime - startTime;
-              std::cout << "Elapsed Time for Subsystems to ready: " << elapsedTime.count() << "s\n"
-                        << std::endl;
-           } else {
-              std::cout << " *** ERROR - Unable to initialize network subsystem" << std::endl;
-              exit(0);
-           }
-
-           auto status = networkManagers_[index]->registerListener(networkListener_);
-
-           if(status != telux::common::Status::SUCCESS) {
-              std::cout << "Failed to registerListener for network Manager" << std::endl;
-           }
+          auto status = networkManagers_[index]->registerListener(networkListener_);
+          if (status != telux::common::Status::SUCCESS) {
+             std::cout << "Failed to registerListener for network Manager" << std::endl;
+             exit(1);
+          }
        }
 
        std::shared_ptr<ConsoleAppCommand> getNetworkSelectionModeCommand
@@ -299,7 +289,57 @@ void NetworkMenu::setPreferredNetworks(std::vector<std::string> userInput) {
 void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
    auto networkManager = networkManagers_[slot_ - 1];
    if (networkManager) {
-      auto ret = networkManager->performNetworkScan(
+      char delimiter = '\n';
+      std::string ratPref = "";
+      std::string networkScanTypeSelection = "";
+      int networkScanType = UNKNOWN;
+      telux::tel::NetworkScanInfo info {} ;
+      telux::tel::RatMask rat(0);
+
+      std::cout << "Enter the network scan type \n"
+                << "(1 - RAT_Preference, 2 - Specify_RAT(s), 3 - All_RATs): ";
+      std::getline(std::cin, networkScanTypeSelection, delimiter);
+      if (networkScanTypeSelection.empty()) {
+            std::cout << "ERROR - Network Scan type is empty \n";
+            return;
+      }
+      try {
+         networkScanType = std::stoi(networkScanTypeSelection);
+         if ( networkScanType <= 0 || networkScanType > 3) {
+             std::cout << "ERROR - Invalid network scan type\n";
+             return;
+         }
+
+         info.scanType = static_cast<telux::tel::NetworkScanType>(networkScanType);
+         if (info.scanType == telux::tel::NetworkScanType::USER_SPECIFIED_RAT) {
+            std::cout << "\nSelect RAT types (1-GSM, 2-LTE, 3-UMTS, 4-NR5G) \n";
+            std::cout << "(For example: enter 1,2 to scan GSM, LTE RATs): ";
+            std::cin >> ratPref;
+            //Regular expression to check if the input is in RAT type range ie.1-4 and
+            //comma or space seperated values.
+            //For example, returns true in case of 1,2,3 and 2
+            //returns false in case of 1:2 and a,b.
+            std::regex rgx("([1-4][, ])*[1-4]$");
+            if (std::regex_match(ratPref.begin(),ratPref.end(), rgx)) {
+                //Regular expresssion to find only the digit for rat type
+                std::regex subMatchRgx ("([1-4])");
+                std::smatch ratOption {};
+                //Searches in input string for a digit in range 1-4 and stores in ratOption variable
+                while (std::regex_search (ratPref, ratOption, subMatchRgx)) {
+                    rat.set(convertToRatType(std::stoi(ratOption[0])));
+                    ratPref = ratOption.suffix().str();
+                }
+                info.ratMask = rat;
+            } else {
+                std::cout << "ERROR::Invalid input \n";
+                return;
+            }
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR::Invalid input, please enter a numerical value \n";
+         return;
+      }
+      auto ret = networkManager->performNetworkScan(info,
          MyPerformNetworkScanCallback::performNetworkScanResponseCb);
       if (ret == telux::common::Status::SUCCESS) {
          std::cout << "\nPerform network scan request sent successfully\n";
@@ -307,7 +347,7 @@ void NetworkMenu::performNetworkScan(std::vector<std::string> userInput) {
          std::cout << "\nPerform network scan request failed \n";
       }
    } else {
-      std::cout << " ERROR - Network manager is NULL" <<std::endl;
+      std::cout << " ERROR - Network manager is NULL\n";
    }
 }
 

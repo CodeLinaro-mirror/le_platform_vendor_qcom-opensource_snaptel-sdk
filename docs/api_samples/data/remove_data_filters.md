@@ -1,3 +1,6 @@
+Remove data filter mode {#remove_data_filter}
+=============================================
+
 # How to remove data filter mode
 
 Please follow below steps to remove all data filter mode

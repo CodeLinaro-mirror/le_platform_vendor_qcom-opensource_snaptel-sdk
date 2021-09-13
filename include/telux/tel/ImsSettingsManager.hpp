@@ -48,7 +48,6 @@ namespace tel {
 // Forward declaration
 class IImsSettingsListener;
 
-
 /** @addtogroup telematics_ims_settings
  * @{ */
 
@@ -61,17 +60,12 @@ enum ImsServiceConfigType {
 
 };
 
-/** @} */ /* end_addtogroup telematics_ims_settings */
-
 /**
  * 32 bit mask that denotes which of the IMS settings configuration parameters
  * defined in ImsServiceConfigType enum are configured currently.
  * For example, if the client selects the VOIMS configuration, 1st bit position is set.
  */
 using ImsServiceConfigValidity = std::bitset<32>;
-
-/** @addtogroup telematics_ims_settings
- * @{ */
 
 /**
  * Defines the selected IMS service configuration parameters and their corresponding value
@@ -83,7 +77,6 @@ struct ImsServiceConfig {
     bool imsServiceEnabled;                        /**< Enable/Disable IMS service */
     bool voImsEnabled;                             /**< Enable/Disable VOIMS service */
 };
-/** @} */ /* end_addtogroup telematics_ims_settings */
 
 /**
  * This function is called in the response to requestServiceConfig API.
@@ -103,9 +96,6 @@ struct ImsServiceConfig {
  */
 using ImsServiceConfigCb
    = std::function<void(SlotId slotId, ImsServiceConfig config, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_ims_settings
- * @{ */
 
 /**
  * @brief      ImsSettingsManager allows IMS settings. For example enabling or disabling

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -65,7 +65,9 @@ class SimProfile {
     int getSlotId();
 
     /**
-     * Get profile identifier.
+     * Get profile identifier. The profile identifier is not persistently unique. It is
+     * unique for given snapshot of SIM profiles state. The profile identifier could
+     * change when any profile is deleted and added.
      *
      * @returns unique identifier for the profile
      */

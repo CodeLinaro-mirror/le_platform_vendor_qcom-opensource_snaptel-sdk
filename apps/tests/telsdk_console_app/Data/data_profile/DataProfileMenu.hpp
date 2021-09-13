@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -76,12 +76,17 @@ public:
     ~DataProfileMenu();
 private:
     bool initDataProfileManagerAndListener(SlotId slotId);
+    bool initalizeDCM(SlotId slotId);
     void getProfileParamsFromUser();
+    bool isDefaultProfile(SlotId slotId, int profileId);
+    int getDefaultProfile(SlotId slotId, telux::data::OperationType opr);
+
 
     bool subSystemStatusUpdated_;
     std::mutex mtx_;
     std::condition_variable cv_;
     std::map<SlotId, std::shared_ptr<telux::data::IDataProfileManager>> dataProfileManagerMap_;
+    std::map<SlotId, std::shared_ptr<telux::data::IDataConnectionManager>>dataConnectionManagerMap_;
     std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCb_;
     std::map<SlotId, std::shared_ptr<MyDataProfilesCallback>> myDataProfileListCbForQuery_;
     std::map<SlotId, std::shared_ptr<MyDataProfileCallback>> myDataProfileCb_;

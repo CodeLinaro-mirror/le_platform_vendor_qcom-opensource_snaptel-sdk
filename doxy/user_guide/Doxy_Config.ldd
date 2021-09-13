@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+#  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -261,6 +261,7 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/revision_history.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/introduction.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/linux_platform_sdk.dox \
+                         $(TELUX_GIT_ROOT)/doxy/user_guide/sdk_simulation.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/steps_to_write_app.dox \
                          $(TELUX_GIT_ROOT)/doxy/user_guide/using_sample_apps.dox \
                          $(TELUX_GIT_ROOT)/docs/api_samples/logger_settings/ \
@@ -276,6 +277,7 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/cv2x/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/audio/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/thermal/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/sensor/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/power/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/remote_sim/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/config/ \

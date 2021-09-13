@@ -69,12 +69,10 @@ shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
             KinematicsReceive(this->interval);
             newListener = false;
         }
-
     }
     lock_guard<mutex> lk(sync);
     auto end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    //cout<<"Time until first location " << elapsed_seconds.count()<<".\n";
     return KinematicsReceive::instance->locationInfo;
 }
 
@@ -84,15 +82,17 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
     }
     shared_ptr<ILocationListener> listener = nullptr;
     auto &locationFactory = LocationFactory::getInstance();
-    auto locationManager = locationFactory.getLocationManager();
+    static auto locationManager = locationFactory.getLocationManager();
     if (locationManager->onSubsystemReady().get()){
-        listener = shared_ptr<ILocationListener>(KinematicsReceive::instance->shared_from_this());
+        listener =
+                shared_ptr<ILocationListener>
+                    (KinematicsReceive::instance->shared_from_this());
         // Registering a listener to get location fixes
         locationManager->registerListenerEx(listener);
         // Starting the reports for fixes
+        printf("Creating callback for gnss fixes\n");
         auto respCallback = [&](ErrorCode error){
-                            startDetailsCallback(error);
-                        };
+                            startDetailsCallback(error); };
         locationManager->startDetailedReports(interval, respCallback);
     }else{
         cout << "Error on Location Create.\n";
@@ -104,7 +104,8 @@ void KinematicsReceive::close(){
    auto &locationFactory = LocationFactory::getInstance();
    auto locationManager = locationFactory.getLocationManager();
    shared_ptr<ILocationListener> listener = nullptr;
-   listener = shared_ptr<ILocationListener>(KinematicsReceive::instance->shared_from_this());
+   listener = shared_ptr<ILocationListener>
+            (KinematicsReceive::instance->shared_from_this());
    locationManager->deRegisterListenerEx(listener);
    KinematicsReceive::instance->locationInfo = nullptr;
    cout << "Location Listener closed.\n";

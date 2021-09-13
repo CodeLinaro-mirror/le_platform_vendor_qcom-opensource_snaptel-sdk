@@ -1,3 +1,6 @@
+Get and Set data filter mode {#get_and_set_data_filter_mode}
+============================================================
+
 # How to get and set data filter mode
 
 Please follow below steps to get and set data filter mode

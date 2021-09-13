@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,6 +57,13 @@ when       who     what, where, why
 11/18/20   ZH      Added cv2x SE-linux interface details in Telematics SDK
 11/20/20   SD      Added year of hardware and configure engine state support in Telematics SDK
 01/12/21   SD      Added terrestrial positioning support in Telematics SDK
+01/13/21   RV      Added SSR(sub system restart) support for Audio.
+02/08/21   SD      Added configuring NMEA types support for Location.
+01/29/21   FS      Updated data subsystem readiness flow for new methodology
+02/12/21   RV      Added new sub system Readiness APIs for Audio.
+03/25/21   RV      Added new calibration init status API for audio.
+04/01/21   FS      Added Data Serving system how to dedicated radio bearer, service status and roaming status.
+04/01/21   BS      Added documentation for sensor sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -212,14 +212,11 @@ enum class RATCapability {
    WCDMA,
    LTE,
    TDS,
-   NR5G,
+   NR5G,   /**< NR5G NSA mode */
+   NR5GSA, /**< NR5G SA mode */
 };
-/** @} */ /* end_addtogroup telematics_phone */
 
 using RATCapabilitiesMask = std::bitset<16>;
-
-/** @addtogroup telematics_phone
- * @{ */
 
 /**
  * Defines all voice support available on device
@@ -229,12 +226,8 @@ enum class VoiceServiceTechnology {
    VOICE_TECH_1x_CSFB,
    VOICE_TECH_VOLTE,
 };
-/** @} */ /* end_addtogroup telematics_phone */
 
 using VoiceServiceTechnologiesMask = std::bitset<16>;
-
-/** @addtogroup telematics_phone
- * @{ */
 
 /**
  * Structure contains slotID and RAT capabilities corresponding to slot.
@@ -243,6 +236,11 @@ struct SimRatCapability {
    int slotId;
    RATCapabilitiesMask capabilities;
 };
+
+/**
+ * For Device max subcription capability
+ */
+using DeviceRatCapability = SimRatCapability;
 
 /**
  * Structure contains information about device capability.
@@ -257,8 +255,13 @@ struct CellularCapabilityInfo {
                                                      numberofSims, it implies that any combination
                                                      of the SIMs can be active and the
                                                      remaining can be in standby. */
-   std::vector<SimRatCapability> simRatCapabilities; /**<An array of struct which contains
-                        mask of RAT capabilities and slotId corresponding to each SIM */
+   std::vector<SimRatCapability> simRatCapabilities; /**< A Sim inserted in a slot allows for
+                        certain rat capabilities. And the UE's HW allows for certain rat
+                        capabilities. This field lists the intersection of capabilities allowed by
+                        the Sim and the HW. The capabilities are indexed based on slotId. */
+   std::vector<DeviceRatCapability> deviceRatCapability; /**< This field lists the Rat capabilities
+                        supported by the HW on a given Sim slot. The capabilities are indexed
+                        based on slotId. */
 };
 
 /**

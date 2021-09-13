@@ -495,7 +495,7 @@ static inline void abuf_reset(abuf_t *abp, int headroom)
     abp->head_headspace_bits = 0;
     abp->end = abp->head + abp->size;
 }
-/* 
+/*
  * advance the data by "bytes", and return previous data pointer, for decoding
  * operation
  */
@@ -505,14 +505,19 @@ static inline char *abuf_pull(abuf_t *bp, int bytes)
     if (bp) {
         curr_data = bp->data;
     }
-    bp->data += bytes;
-    if (bp->data > bp->tail) {
-        curr_data = NULL;
+    if(bp->data){
+        bp->data += bytes;
+        //bp->end
+        if ((bp->data) > bp->tail) {
+            printf("Error: Pulling passed tail of abuf struct\n");
+            curr_data = NULL;
+            return NULL;
+        }
     }
     return (curr_data);
 }
 /*
- * reduce the headroom by "bytes" from the front of the buffer. 
+ * reduce the headroom by "bytes" from the front of the buffer.
  */
 static inline char *abuf_push(abuf_t *bp, int bytes)
 {
@@ -1127,10 +1132,17 @@ static void abuf_dump(abuf_t *bp)
         data_size = abuf_byte_len(bp);
         cp = bp->data;
         assert(cp);
-
+        printf("%lu  %lu %lu ", (unsigned long)bp->head, (unsigned long) bp->data,
+               (unsigned long) bp->tail);
+        printf("abuf: headroom=%d (%d bits,%d @ head) used=%d(%d bits):  ",
+               abuf_headroom(bp),
+               abuf_headroom_bits(bp),
+               bp->head_headspace_bits,
+               data_size,
+               abuf_bits_len(bp)
+               );
         for (n = 0; n < data_size; n++) {
-            //if(n%16 == 0)
-            //  printf("\n");
+
             printf("%02x ", *cp++);
         }
     }

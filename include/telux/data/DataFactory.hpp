@@ -135,8 +135,6 @@ class DataFactory {
      *
      * @returns instance of INatManager
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::INatManager> getNatManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
@@ -150,8 +148,6 @@ class DataFactory {
      *
      * @returns instance of IFirewallManager
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IFirewallManager> getFirewallManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
@@ -165,8 +161,6 @@ class DataFactory {
      *
      * @returns instance of IFirewallEntry
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IFirewallEntry> getNewFirewallEntry(IpProtocol proto,
         Direction direction, IpFamilyType ipFamilyType);
@@ -185,8 +179,6 @@ class DataFactory {
     *
     * @returns instance of IIpFilter based on IpProtocol filter (i.e TCP, UDP)
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
     std::shared_ptr<IIpFilter> getNewIpFilter(IpProtocol proto);
 
@@ -199,8 +191,6 @@ class DataFactory {
      *
      * @returns instance of IVlanManager
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IVlanManager> getVlanManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
@@ -214,8 +204,6 @@ class DataFactory {
      *
      * @returns instance of ISocksManager
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::ISocksManager> getSocksManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
@@ -228,8 +216,6 @@ class DataFactory {
      *
      * @returns instance of IBridgeManager
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IBridgeManager> getBridgeManager(
         telux::common::InitResponseCb clientCallback = nullptr);
@@ -242,8 +228,6 @@ class DataFactory {
      *
      * @returns instance of IL2tpManager
      *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
      */
     std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager(
         telux::common::InitResponseCb clientCallback = nullptr);
@@ -260,20 +244,20 @@ class DataFactory {
 
     // mutex to protect member variables
     std::mutex dataMutex_;
-    std::map<SlotId, std::shared_ptr<IDataConnectionManager>> dataConnectionManagerMap_;
-    std::map<SlotId, std::shared_ptr<IDataProfileManager>> dataProfileManagerMap_;
-    std::map<SlotId, std::shared_ptr<IServingSystemManager>> dataServingSystemManagerMap_;
-    std::map<SlotId, std::shared_ptr<IDataFilterManager>> dataFilterManagerMap_;
-    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::INatManager>>
+    std::map<SlotId, std::weak_ptr<IDataConnectionManager>> dataConnectionManagerMap_;
+    std::map<SlotId, std::weak_ptr<IDataProfileManager>> dataProfileManagerMap_;
+    std::map<SlotId, std::weak_ptr<IServingSystemManager>> dataServingSystemManagerMap_;
+    std::map<SlotId, std::weak_ptr<IDataFilterManager>> dataFilterManagerMap_;
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::INatManager>>
         natManagerMap_;
-    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IFirewallManager>>
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::IFirewallManager>>
         fwManagerMap_;
-    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::IVlanManager>>
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::IVlanManager>>
         vlanManagerMap_;
-    std::map<telux::data::OperationType, std::shared_ptr<telux::data::net::ISocksManager>>
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::net::ISocksManager>>
         socksManagerMap_;
-    std::shared_ptr<telux::data::net::IBridgeManager> bridgeManager_;
-    std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
+    std::weak_ptr<telux::data::net::IBridgeManager> bridgeManager_;
+    std::weak_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
 
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataConnectionCallbacks_;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018,2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -60,6 +60,29 @@ void MyCardCommandResponseCallback::commandResponse(telux::common::ErrorCode err
    } else {
       PRINT_CB << "onCloseLogicalChannel failed\n error: " << static_cast<int>(error)
                          << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+   }
+}
+
+/**
+ *  Implementation of MyCardPowerResponseCallback
+ */
+void MyCardPowerResponseCallback::cardPowerUpResp(telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "Card power up request is successful \n";
+   } else {
+      PRINT_CB << "Card power up request failed error: " << static_cast<int>(error)
+               << ", \ndescription: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+
+void MyCardPowerResponseCallback::cardPowerDownResp(telux::common::ErrorCode error) {
+   std::cout << "\n";
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "Card power down request is successful \n";
+   } else {
+      PRINT_CB << "Card power down request failed error: " << static_cast<int>(error)
+               << ", Description: " << Utils::getErrorCodeAsString(error) << "\n";
    }
 }
 

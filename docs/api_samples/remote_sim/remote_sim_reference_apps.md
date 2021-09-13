@@ -1,3 +1,6 @@
+Using Remote SIM Reference Apps {#remote_sim_reference_apps}
+============================================================
+
 # Using Remote SIM Reference Apps
 
 This section describes how to use the provided Remote SIM reference apps – remote-sim-daemon and

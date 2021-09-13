@@ -45,7 +45,7 @@
 namespace telux {
 
 namespace cv2x {
-/** @addtogroup telematics_cv2x
+/** @addtogroup telematics_cv2x_cpp
  * @{ */
 
 /**
@@ -163,7 +163,7 @@ public:
          std::weak_ptr<ICv2xConfigListener> listener) = 0;
 };
 
-/** @} */ /* end_addtogroup telematics_cv2x */
+/** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x
 

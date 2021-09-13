@@ -37,6 +37,23 @@
 #include <cstdint>
 #include <string>
 
+const uint8_t NO_KEY_GEN=0;
+const uint8_t ASYMMETRIC_KEY_GEN=1;
+const uint8_t SYMMETRIC_KEY_GEN=2;
+const uint8_t IMPORT_SYMMETRIC_KEY=3;
+
+struct VerifStats
+{
+    double timestamp;
+    double verifLatency;
+};
+
+struct SignStats
+{
+    double timestamp;
+    double signLatency;
+};
+
 /**
  * Security options when invoking signing or verification operation.
  */
@@ -49,6 +66,12 @@ typedef struct SecurityOpt {
     int32_t longitude;
     uint16_t elevation;
     bool enableAsync;
+    uint32_t sspMaskValue [32];
+    uint32_t sspMaskLength;
+    bool enableEnc;
+    uint8_t secVerbosity;
+    VerifStats* verifStat;
+    SignStats* signStat;
 } SecurityOpt_t;
 
 class SecurityService {
@@ -59,12 +82,42 @@ public:
         }
     ~SecurityService(){
     }
+
+    /**
+    * Method to setup and sign packets based on the provided parameters and config.
+    * Needs to be implemented.
+    * @param opt - Struct that contains security-related information
+    * @param msgLen - Length of the message that will be signed
+    * @param signedSpdu - Pointer to the signed packet
+    * @param signedSpduLen - Size of the signed packet
+    * @return int - Integer representing success or failure (-1).
+    */
     virtual int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
-                                                    uint8_t *signedSpdu, uint32_t &signedSpduLen) = 0;
-    virtual int VerifyMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen, uint32_t &dot2HdrLen) = 0;
+                                uint8_t *signedSpdu, uint32_t &signedSpduLen) = 0;
+    /**
+    * Method to setup and verify packets based on the provided parameters and config.
+    * Needs to be implemented.
+    * @param opt - Struct that contains security-related information
+    * @param msgLen - Length of the message that will be verified
+    * @param dot2HdrLen - Will contain the total length of 1609.2 and
+    *       other security-related information.
+    * @return int - The length of the actual packet or -1 on failure.
+    */
+    virtual int VerifyMsg(const SecurityOpt opt, const uint8_t *msg,
+                                uint32_t msgLen, uint32_t &dot2HdrLen) = 0;
 
 protected:
+    /**
+    * Virtual method to setup and initialize security instance.
+    * Needs to be implemented.
+    * @return int - Integer value representing success or not.
+    */
     virtual int init(void) = 0;
+
+    /**
+    * Virtual method to deinitialize security instance.
+    * Needs to be implemented.
+    */
     virtual void deinit(void) = 0;
     std::string SecurityCtxName_;
     uint16_t countryCode_;

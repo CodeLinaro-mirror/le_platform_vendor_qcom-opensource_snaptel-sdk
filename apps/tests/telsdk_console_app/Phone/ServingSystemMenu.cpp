@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,50 +57,43 @@ void ServingSystemMenu::init() {
    //  Get the PhoneFactory and ServingSystemManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
+   servingSystemListener_ = std::make_shared<MyServingSystemListener>();
 
    std::vector<int> phoneIds;
    if (phoneManager) {
        telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
        if (status == telux::common::Status::SUCCESS) {
-           for (auto index = 1; index <= phoneIds.size(); index++) {
-               auto servingSystemMgr
-                   = telux::tel::PhoneFactory::getInstance().getServingSystemManager(index);
-               if (servingSystemMgr != nullptr) {
-                   servingSystemMgrs_.emplace_back(servingSystemMgr);
-               }
-           }
+          for (auto index = 1; index <= phoneIds.size(); index++) {
+             std::promise<telux::common::ServiceStatus> prom;
+             // Get the serving system manager instances
+             auto servingSystemMgr = phoneFactory.getServingSystemManager(
+                index, [&](telux::common::ServiceStatus status) {
+                   prom.set_value(status);
+             });
+             if (!servingSystemMgr) {
+                std::cout << "ERROR - Failed to get Serving System manager instance \n";
+                exit(1);
+             }
+
+             std::cout << "Waiting for Serving System Manager to be ready on slotId " << index
+                 << "\n";
+             telux::common::ServiceStatus servSysMgrStatus = prom.get_future().get();
+             if (servSysMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+                 std::cout << "Serving System subsystem is ready on slotId " << index << "\n";
+                 servingSystemMgrs_.emplace_back(servingSystemMgr);
+             } else {
+                 std::cout << "ERROR - Unable to initialize Serving System subsystem on slotId "
+                     << index << std::endl;
+                 exit(1);
+             }
+          }
        }
-
        for (auto index = 0; index < servingSystemMgrs_.size(); index++) {
-           std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-           startTime = std::chrono::system_clock::now();
-           //  Check if serving subsystem is ready
-           bool subSystemStatus = servingSystemMgrs_[index]->isSubsystemReady();
-
-           //  If serving subsystem is not ready, wait for it to be ready
-           if(!subSystemStatus) {
-              std::cout << "\n\nServing subsystem is not ready, Please wait!!!..." << std::endl;
-              std::future<bool> f = servingSystemMgrs_[index]->onSubsystemReady();
-              // If we want to wait unconditionally for serving subsystem to be ready
-              subSystemStatus = f.get();
-           }
-
-           //  Exit the application, if SDK is unable to initialize serving subsystems
-           if(subSystemStatus) {
-              endTime = std::chrono::system_clock::now();
-              std::chrono::duration<double> elapsedTime = endTime - startTime;
-              std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                        << std::endl;
-           } else {
-              std::cout << " *** ERROR - Unable to initialize serving subsystem" << std::endl;
-              exit(0);
-           }
-
-           servingSystemListener_ = std::make_shared<MyServingSystemListener>();
-           auto status = servingSystemMgrs_[index]->registerListener(servingSystemListener_);
-           if(status != telux::common::Status::SUCCESS) {
-              std::cout << "Failed to registerListener for Serving system Manager" << std::endl;
-           }
+          auto status = servingSystemMgrs_[index]->registerListener(servingSystemListener_);
+          if(status != telux::common::Status::SUCCESS) {
+             std::cout << "Failed to registerListener for Serving system Manager" << "\n";
+             exit(1);
+          }
        }
 
        std::shared_ptr<ConsoleAppCommand> getRatModePreferenceCommand

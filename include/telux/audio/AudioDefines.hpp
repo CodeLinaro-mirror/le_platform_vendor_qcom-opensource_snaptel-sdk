@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are
@@ -53,7 +53,7 @@ const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
 /* Duration to play tone for infinite time */
 const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
 
-/** @addtogroup telematics_audio
+/** @addtogroup telematics_audio_stream
  * @{ */
 
 /**
@@ -179,6 +179,16 @@ enum class EcnrMode {
 };
 
 /**
+ * Represents state of Audio calibration initialization in system. API gives status that tells
+ * whether the calibration initialized by audio sub system.
+ */
+enum class CalibrationInitStatus {
+    UNKNOWN = -1,      /**< calibration initialization status is unknown*/
+    INIT_SUCCESS = 0,  /**< calibration initialized successfully*/
+    INIT_FAILED = 1,   /**< calibration initialization failed*/
+};
+
+/**
  *  Frame format common parameters
  */
 struct FormatParams {
@@ -265,7 +275,7 @@ struct DtmfTone {
     StreamDirection direction; /**< Direction associated with DTMF tone */
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
+/** @} */ /* end_addtogroup telematics_audio_stream */
 
 }  // End of namespace audio
 

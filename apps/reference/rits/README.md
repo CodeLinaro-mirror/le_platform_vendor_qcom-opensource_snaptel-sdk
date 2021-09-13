@@ -50,20 +50,24 @@ example in /home/username/asn1c
 
 2.1.4 Build the reference Stack
 
-	1. Create a build directory in the root of the reference stack directory.
-		cd <ITS sack root dir>
-		mkdir build
-	2. Setup cross compiler environment.
-		source /opt/poky-agl/4.0.0/environment-setup-aarch64-agl-linux
-	3. Set environment variables.
-		export SECURITY_LIB_PATH=\path\to\aerolink\headers (This is optional)
-		export ASN1C_PATH=\path\to\asn1c
-	4. In the build directory, run
-		cmake ../
-		make
+    1. Create a build directory in the root of the reference stack directory.
+        cd <ITS sack root dir>
+        mkdir build
+    2. Setup cross compiler environment.
+        e.g., source /opt/poky-agl/4.0.0/environment-setup-aarch64-agl-linux
+    3. Set environment variables.
+        3.1 If you want the security enabled, then do:
+            export AEROLINK_PATH=\path\to\aerolink\ (This is optional)
+            There must be an "include" directory within the libs directory for the headers.
+        3.2 If you want to enable the ETSI stack, you need to provide the asn1c path via env
+        varable:
+            export ASN1C_PATH=\path\to\asn1c (this is optional)
+    4. In the build directory, run
+        cmake ../
+        make
 
-	5. If build was succesful, there will be a binary produced:
-		./tests/applicationTest/qits
+    5. If build was succesful, there will be a binary produced:
+        ./tests/applicationTest/qits
 
 
 2.1.5 Run the stack test program
@@ -76,8 +80,13 @@ in the ObeConifg.conf, then you need to setup Aerolink related options like foll
 
 export following environment variables in the target HW:
 
+Note: Your Aerolink path may be different but must include "config" or "state"
+based on the CONFIG or STATE environment variable.
+
 AEROLINK_CONFIG_DIR=/etc/aerolink/config
 AEROLINK_STATE_DIR=/etc/aerolink/state
+
+Optional:
 AEROLINK_ENTROPY_SOURCE=/dev/urandom
 AEROLINK_UTILS_DIR=/usr/local/bin/aerolink
 AEROLINK_TRACE=all
@@ -85,7 +94,7 @@ AEROLINK_TRACE_LOGNAME=/tmp/aerolink.log
 
 You will also need to add all of the appropriate demo IEEE certificates
 (located in AEROLINK_STATE_DIR/certificates) via the
-	/usr/local/bin/aerolink/certadm command.
+    /usr/local/bin/aerolink/certadm command.
 For each cert, run the executable in the following manner:
 certadm add /AEROLINK_STATE_DIR/certificates/NAME_OF_CERT.cert
 

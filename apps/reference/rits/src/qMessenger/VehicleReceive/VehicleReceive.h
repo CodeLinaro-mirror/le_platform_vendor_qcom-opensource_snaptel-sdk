@@ -38,7 +38,7 @@
 #ifndef __VEHICLE_RECEIVE_H__
 #define __VEHICLE_RECEIVE_H__
 
-#include <v2x_vehicle_api.h>
+#include <telux/cv2x/legacy/v2x_vehicle_api.h>
 #include <iostream>
 
 using std::cout;

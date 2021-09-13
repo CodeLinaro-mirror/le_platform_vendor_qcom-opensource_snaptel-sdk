@@ -5,9 +5,7 @@ This section has instructions to build a yocto platform SDK using code aurora fo
 
  - These instructions are applicable for QTI Processor builds only, <b>For external APs the platform SDK corresponding to specific external AP would have to be used.</b>
 
-</br>
 <b>NOTE:</b> This is not to be confused with the Telematics SDK. The Yocto platform SDK, includes the tool chain, and libraries necessary to be able to develop any program for a given device. It also includes the stub open source libraries for the Telematics SDK, allowing one to develop application using the Telematics SDK's APIs as well.
-</br>
 
 You need to have the following in order to proceed:
  - Linux Ubuntu 14.04
@@ -21,7 +19,6 @@ You need to have the following in order to proceed:
 
 - Sync the CAF build
 
-   </br>
    repo init and sync the sources
    \code{.sh}
    $ repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m <caf_ insert label here. xml>
@@ -39,26 +36,22 @@ You need to have the following in order to proceed:
 
    The tags are listed here - https://source.codeaurora.org/quic/le/le/manifest/refs/tags
 
-</br>
 - Update Telux and Telematics SDK
 
    Add the following lines at the end of poky/build/conf/local.conf:
 
-   </br>
    For all targets except LE.UM.1.3.r5, use
    \code{.sh}
    CORE_IMAGE_EXTRA_INSTALL += "telux"
    CORE_IMAGE_EXTRA_INSTALL += "telux-lib"
    \endcode
 
-   </br>
    <b>NOTE:</b> For LE.UM.1.3.r5 target, use below.
    \code{.sh}
    CORE_IMAGE_EXTRA_INSTALL += "telux"
    CORE_IMAGE_EXTRA_INSTALL += "telephony-lib"
    \endcode
 
-</br>
 - Setup the build environment
 
    Source the bitbake environment
@@ -85,7 +78,6 @@ You need to have the following in order to proceed:
    $ export DISTRO=msm
    \endcode
 
-</br>
 - Build and install the Yocto Platform SDK
 
    Run the following command to create a yocto platform sdk
@@ -94,7 +86,6 @@ You need to have the following in order to proceed:
    \endcode
    <b>NOTE:</b> core-image-minimal provides least number of packages including telematics sdk, sufficient for allowing one to develop application using the telematics sdk API's. Any additional packages necessary for application development might need to be added in yocto platform (bitbake) before the build.
 
-</br>
 - Location of Yocto Platform SDK
 
    After successful compilation, you will have have sdk installer on this location

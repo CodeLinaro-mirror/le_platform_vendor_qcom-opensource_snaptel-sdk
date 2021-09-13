@@ -39,9 +39,6 @@
 #include <string>
 #include <sstream>
 
-/** @addtogroup telematics_common
- * @{ */
-
 /**
  * Double-Macro-Stringy Technique
  * This technique is being used as __FILE__,__LINE__ are predefined Macros
@@ -87,6 +84,9 @@
 
 namespace telux {
 namespace common {
+
+/** @addtogroup telematics_common
+ * @{ */
 
 /**
  * Indicates supported logging levels.

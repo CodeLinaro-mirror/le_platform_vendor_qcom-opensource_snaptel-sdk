@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -108,6 +108,18 @@ void AudioClient::stopAudioCallback(ErrorCode error) {
     }
 }
 
+// Callback to notify audio subsystem restart
+void AudioClient::onServiceStatusChange(ServiceStatus status) {
+    if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        std::cout << "Audio subsystem is UNAVAILABLE" << std::endl;
+        setVoiceState(false);
+        // Existing voice stream object is no longer valid
+        audioVoiceStream_ = nullptr;
+    } else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Audio subsystem is AVAILABLE" << std::endl;
+    }
+}
+
 // Initialize the audio subsystem
 telux::common::Status AudioClient::init() {
     // Get the AudioFactory and AudioManager instances.
@@ -125,6 +137,11 @@ telux::common::Status AudioClient::init() {
         isReady = f.get();
         if (isReady) {
             std::cout << CLIENT_NAME << "Audio Subsystem is ready." << std::endl;
+            auto status = audioMgr_->registerListener(shared_from_this());
+            if(status != telux::common::Status::SUCCESS) {
+                std::cout << CLIENT_NAME << "Failed to register Audio listener" << std::endl;
+                return telux::common::Status::FAILED;
+            }
         } else {
             std::cout << CLIENT_NAME << "Failed to initialize Audio Subsystem" << std::endl;
             audioMgr_ = nullptr;

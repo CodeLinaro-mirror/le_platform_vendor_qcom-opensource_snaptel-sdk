@@ -42,7 +42,6 @@ extern "C"
 #endif
 #include <stdbool.h>
 #include "asnbuf.h"
-#define MAX_MESSAGE_LEN 500
 
 typedef enum {
     STACK_ID_SAE = 0,
@@ -58,6 +57,13 @@ typedef enum {
     V2X_PROTO_MAX
 } v2x_proto_e;
 
+typedef enum {
+   BSM_MSG_ID = 0,
+   WSA_MSG_ID = 1,
+   CAM_MSG_ID = 2,
+   DENM_MSG_ID = 3
+} msg_id_e;
+
 /** \struct msg_contents
  *  This structure holds all information about the message for encoding/decoding
  */
@@ -65,7 +71,7 @@ typedef enum {
 typedef struct {
     bool decoded;       /**< a message is received and succesfully decoded*/
     stack_id_e stackId; /**< are we running SAE or ETSI stack */
-    int msgId;          /**< msgId holds an integer that indicates the message type BSM/TIM etc*/
+    int msgId;          /**< msgId holds an integer that indicates the message type BSM/TIM/WRA etc*/
     abuf_t abuf;        /**< asn buffer for encoding/decoding */
     int payload_len;    /**< The length of the message payload, changing when it pass through layers */
 
@@ -93,6 +99,8 @@ typedef struct {
     int etsi_msg_id;
     void *cam;             /** decoded(or to be encoded) CAM data. */
     void *denm;            /** decoded(or to be encoded) DENM data */
+    void *wsa;             /** decoded(or to be encoded) 1609.3 WSA data */
+    void *wra;             /** decoded(or to be encoded) 1609.3 WRA data that is in WSA */
 
     /* Security */
     void *ieee1609_2data;  /** decoded(or to be encoded) IEEE1609.2 data */

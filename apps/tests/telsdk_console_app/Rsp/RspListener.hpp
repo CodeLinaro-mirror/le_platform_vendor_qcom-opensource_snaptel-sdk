@@ -35,9 +35,11 @@
 
 class RspListener : public telux::tel::ISimProfileListener {
  public:
-    void onAddProfileUpdate(SlotId slotId, bool userConsentRequired, telux::tel::DownloadStatus status,
-        uint8_t percentage, telux::tel::DownloadErrorCause cause,
+    void onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
+        telux::tel::DownloadErrorCause cause) override;
+    void onUserDisplayInfo(SlotId slotId, bool userConsentRequired,
         telux::tel::PolicyRuleMask mask) override;
+    void onConfirmationCodeRequired(SlotId slotId, std::string profileName) override;
 
  private:
     std::string profileDownloadStatusToString(telux::tel::DownloadStatus status);

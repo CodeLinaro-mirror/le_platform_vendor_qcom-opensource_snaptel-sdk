@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,6 +37,7 @@
 #include <string>
 #include <grp.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 #include "Utils.hpp"
 
@@ -399,4 +400,27 @@ void Utils::printStatus(telux::common::Status status) {
       default:
          break;
    }
+}
+
+uint64_t Utils::getCurrentTimestamp(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+}
+
+int Utils::validateV2xSpsInterval(uint16_t interval) {
+    if (0 == interval || 1000 < interval) {
+        return EXIT_FAILURE;
+    }
+
+    if (20 == interval || 50 == interval || 0 == interval % 100) {
+        return EXIT_SUCCESS;
+    }
+    return EXIT_FAILURE;
+}
+
+uint64_t Utils::getNanosecondsSinceBoot() {
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
 }

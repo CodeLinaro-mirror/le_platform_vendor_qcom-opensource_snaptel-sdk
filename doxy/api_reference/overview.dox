@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -62,7 +62,7 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
 <b>Location Services</b>
 
-   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information, Jammer Data signals, nmea and measurements information. The location manager sub-system also consists of APIs to get location system info, request energy consumed, get year of hardware information, get terrestrial position information and cancel terrestrial position information. Also the location configurator sub-system consists of API to enable/disable constraint time uncertainty, enable/disable PACE, delete all aiding data, configure lever arm parameters, configure the blacklisted satellite vehicle, configure robust location, configure min gps week, request min gps week, configure min sv elevation, request min sv elevation, request robust location, delete specified data, configure dR engine, configure secondary band, request secondary band, configure engine state and provide consent for terrestrial positioning.
+   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information, Jammer Data signals, nmea and measurements information. The location manager sub-system also consists of APIs to get location system info, request energy consumed, get year of hardware information, get terrestrial position information and cancel terrestrial position information. Also the location configurator sub-system consists of API to enable/disable constraint time uncertainty, enable/disable PACE, delete all aiding data, configure lever arm parameters, configure the blacklisted satellite vehicle, configure robust location, configure min gps week, request min gps week, configure min sv elevation, request min sv elevation, request robust location, delete specified data, configure dR engine, configure secondary band, request secondary band, configure engine state, provide consent for terrestrial positioning and configure NMEA types.
 
 <b>Connection Management</b>
 
@@ -95,6 +95,10 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 <b>Data Network Management</b>
 
    Data Network Management sub-system consists of APIs to setup VLAN, static NAT, Firewall, Socks, etc.
+
+<b>Sensor services</b>
+
+   The sensor sub-system provides API to configure and acquire data from underlying hardware sensors like accelerometers, gyroscopes among others.
 
 <b>Debug Logger</b>
 
@@ -158,7 +162,7 @@ Following parameters are configurable through the APIs.
    - Minimum time interval between two consecutive location reports.
    - Minimum distance travelled after which the period between two consecutive location reports depends on the interval specified.
 
-Location Configurator APIs of Telematics SDK provide mechanism to enable/disable constraint time uncertainty feature, enable/disable PACE, delete all aiding data, configure lever arm parameters, configure blacklisted satellite vehicles, configure robust location, configure min gps week, request min gps week, configure min sv elevation, request min sv elevation, request robust location, delete specified data, configure dR engine, configure secondary band, request secondary band, configure engine state and provide consent for terrestrial positioning.
+Location Configurator APIs of Telematics SDK provide mechanism to enable/disable constraint time uncertainty feature, enable/disable PACE, delete all aiding data, configure lever arm parameters, configure blacklisted satellite vehicles, configure robust location, configure min gps week, request min gps week, configure min sv elevation, request min sv elevation, request robust location, delete specified data, configure dR engine, configure secondary band, request secondary band, configure engine state, provide consent for terrestrial positioning and configure NMEA types.
 
 @subsection data_services Data Services
 Data Services APIs in the Telematics SDK used for cellular connectivity, modem profile management, filters management, and networking.
@@ -171,6 +175,11 @@ Data Profile Manager APIs provide functionality such as
    - List available profiles in the modem
    - Create / modify / delete / modify modem profiles
    - Query for the selected profile
+
+Data Serving System Manager APIs provide functionality such as
+   - Get dedicated radio bearer status
+   - Request Modem Service Status
+   - Request Modem Roaming Status
 
 Data Filter Manager APIs provide functionality such as
    - get / set data filter mode per data call
@@ -433,6 +442,15 @@ Modem Config APIs in the Telematics SDK provides modem config related functional
    - Delete a modem config file from modem's storage.
    - Ability to get notified whenever a SW config file is activated.
 
+@subsection sensor Sensors
+The sensor sub-system provides APIs to
+   - Configure and acquire continuous stream of data from an underlying sensor
+   - Create multiple clients for a given sensor, each of which can have their own configuration (sampling rate, batch count) for data acquisition.
+   - Query and control sensor features available on the hardware or those offerred by the software framework. Availability of sensor features depend on the sensor hardware being used and the capabilities it offers.
+
+In addition to the sensor sub-system APIs, configuration items relevant to the underlying sensors are also available in /etc/sensors.conf on the device filesystem.
+This includes the range for the sensors, the limits on sampling frequency and batch count among other parameters.
+
 @subsection debug_logger Debug Logger
 Logging APIs in the Telematics SDK provides logging related functionalities such as
    - Runtime configurable logging to console, diag and file.
@@ -462,6 +480,7 @@ Logging APIs in the Telematics SDK provides logging related functionalities such
 @tr @td power @tdend @td telux_allow_power() @tdend @td domain context @tdend @tdlast telux_allow_power(app_t) @tdlastend @trend
 @tr @td config @tdend @td telux_allow_modemconfig() @tdend @td domain context @tdend @tdlast telux_allow_modemconfig(app_t) @tdlastend @trend
 @tr @td cv2x @tdend @td telux_allow_v2x() @tdend @td domain context @tdend @tdlast telux_allow_v2x(app_t) @tdlastend @trend
+@tr @td sensor @tdend @td telux_allow_sensor() @tdend @td domain context @tdend @tdlast telux_allow_sensor(app_t) @tdlastend @trend
 @tableend
 
 The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform all SDK data operations.

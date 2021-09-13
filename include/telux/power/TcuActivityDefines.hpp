@@ -41,7 +41,7 @@
 namespace telux {
 namespace power {
 
-/** @addtogroup telematics_power
+/** @addtogroup telematics_power_manager
  * @{ */
 
 /**
@@ -81,7 +81,7 @@ enum class ClientType {
     MASTER,    /**< Client makes the decision on when the TcuActivityState should change */
 };
 
-/** @} */ /* end_addtogroup telematics_power */
+/** @} */ /* end_addtogroup telematics_power_manager */
 
 }  // end of namespace power
 }  // end of namespace telux

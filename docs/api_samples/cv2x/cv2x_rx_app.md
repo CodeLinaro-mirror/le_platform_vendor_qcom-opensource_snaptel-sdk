@@ -1,3 +1,6 @@
+C-V2X RX Sample App {#cv2x_rx_app}
+==================================
+
 # C-V2X RX Sample App
 
 This Document walks through the cv2x_rx_app sample application.

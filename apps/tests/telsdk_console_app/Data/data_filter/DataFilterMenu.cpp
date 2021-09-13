@@ -65,7 +65,7 @@ DataFilterMenu::~DataFilterMenu() {
     dataFilterManagerMap_.clear();
     dataFilterListener_.clear();
 
-}
+    }
 
 bool DataFilterMenu::init() {
 
@@ -109,10 +109,10 @@ bool DataFilterMenu::init() {
         disableModeCommand, getFilterModeCommand, addFilterCommand, removeAllFilterCommand};
 
     addCommands(commandsList);
-    ConsoleApp::displayMenu();
+        ConsoleApp::displayMenu();
     std::cout << "Data Filter init " << dfmSubSystemStatus << std::endl;
     return dfmSubSystemStatus;
-}
+    }
 
 bool DataFilterMenu::initDataFilterManagerAndListener(SlotId slotId) {
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
@@ -146,7 +146,7 @@ bool DataFilterMenu::initDataFilterManagerAndListener(SlotId slotId) {
 
         if (dataConnManagerMap_.find(slotId) == dataConnManagerMap_.end()) {
             dataConnManagerMap_.emplace(slotId, dataConnManager);
-            dataListener_.emplace(slotId, std::make_shared<DataListener>());
+            dataListener_.emplace(slotId, std::make_shared<DataListener>(slotId));
             telux::common::Status status =
                 dataConnManagerMap_[slotId]->registerListener(dataListener_[slotId]);
             if (status != telux::common::Status::SUCCESS) {

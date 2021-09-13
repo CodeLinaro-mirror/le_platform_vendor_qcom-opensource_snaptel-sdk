@@ -45,7 +45,7 @@ namespace telux {
 
 namespace therm {
 
-/** @addtogroup telematics_therm
+/** @addtogroup telematics_therm_management
  * @{ */
 
 /**
@@ -82,7 +82,7 @@ private:
    ThermalFactory &operator=(const ThermalFactory &) = delete;
 };
 
-/** @} */ /* end_addtogroup telematics_therm */
+/** @} */ /* end_addtogroup telematics_therm_management */
 
 }  // End of namespace therm
 

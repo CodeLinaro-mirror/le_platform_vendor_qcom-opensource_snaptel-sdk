@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.9)
 set(TARGET_CV2X_GET_CAPABILITIES_APP cv2x_get_capabilities)
 
 set(CV2X_GET_CAPABILITIES_SOURCES
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     Cv2xGetCapabilitiesApp.cpp
 )
 

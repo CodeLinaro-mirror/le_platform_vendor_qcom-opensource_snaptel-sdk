@@ -53,6 +53,7 @@ namespace loc {
 
 const float UNKNOWN_CARRIER_FREQ = -1;
 const int UNKNOWN_SIGNAL_MASK = 0;
+const double UNKNOWN_BASEBAND_CARRIER_NOISE = 0.0;
 const uint64_t UNKNOWN_TIMESTAMP = 0;
 const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
                                                Units: milli-seconds. */
@@ -63,6 +64,9 @@ const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consu
 const uint64_t INVALID_ENERGY_CONSUMED = 0xffffffffffffffff; /**< 0xffffffffffffffff indicates an
                                                                   invalid reading for energy
                                                                   consumed info. */
+const uint32_t DEFAULT_GNSS_REPORT = 0xffffffff; /**< 0xffffffff indicates all the reports are
+                                                      enabled. */
+const float UNKNOWN_SV_TIME_SUB_NS = -1;
 
 /**
  * Defines RTCM injection data format
@@ -306,35 +310,43 @@ struct GnssKinematicsData {
   /** Body pitch (Radians) */
   float pitch;
   /** Uncertainty of Forward Acceleration in body
-   *  frame (meters/second^2)*/
+   *  frame (meters/second^2)
+   *  Uncertainty is defined with 68% confidence level. */
   float longAccelUnc;
   /** Uncertainty of Side-ward Acceleration in body
-   *  frame meters/second^2)*/
+   *  frame meters/second^2)
+   *  Uncertainty is defined with 68% confidence level. */
   float latAccelUnc;
   /** Uncertainty of Vertical Acceleration in body
-   *  frame (meters/second^2)*/
+   *  frame (meters/second^2)
+   *  Uncertainty is defined with 68% confidence level. */
   float vertAccelUnc;
-  /** Uncertainty of Heading Rate (Radians/second)*/
+  /** Uncertainty of Heading Rate (Radians/second)
+   *  Uncertainty is defined with 68% confidence level. */
   float yawRateUnc;
-  /** Uncertainty of Body pitch (Radians)*/
+  /** Uncertainty of Body pitch (Radians)
+   *  Uncertainty is defined with 68% confidence level. */
   float pitchUnc;
   /** Body pitch rate, in unit of radians/second.*/
   float pitchRate;
-  /** Uncertainty of pitch rate, in unit of radians/second.*/
+  /** Uncertainty of pitch rate, in unit of radians/second.
+   *  Uncertainty is defined with 68% confidence level. */
   float pitchRateUnc;
   /** Roll of body frame, clockwise is positive, in unit of radian. */
   float roll;
-  /** Uncertainty of roll, 68% confidence level, in unit of radian.*/
+  /** Uncertainty of roll, in unit of radian.
+   *  Uncertainty is defined with 68% confidence level. */
   float rollUnc;
   /** Roll rate of body frame, clockwise is positive, in unit of
-   * radian/second. */
+   *  radian/second.*/
   float rollRate;
-  /** Uncertainty of roll rate, 68% confidence level, in unit of
-   * radian/second. */
+  /** Uncertainty of roll rate, in unit of radian/second.
+   *  Uncertainty is defined with 68% confidence level. */
   float rollRateUnc;
   /** Yaw of body frame, clockwise is positive, in unit of radian. */
   float yaw;
-  /** Uncertainty of yaw, 68% confidence level, in unit of radian.*/
+  /** Uncertainty of yaw, in unit of radian.
+   *  Uncertainty is defined with 68% confidence level. */
   float yawUnc;
 };
 
@@ -579,7 +591,10 @@ struct GnssMeasurementInfo {
   GnssSystem gnssConstellation;
   /** GNSS SV ID.
    *  For GPS:      1 to 32.
-   *  For GLONASS:  65 to 96.
+   *  For GLONASS:  [65, 96] or [97, 110].
+                    [65, 96] if orbital slot number(OSN) is known.
+                    [97, 110] as frequency channel number(FCN) [-7, 6] plus 104.
+                    i.e. encode FCN (-7) as 97, FCN (0) as 104, FCN (6) as 110.
    *  For SBAS:     120 to 158 and 183 to 191.
    *  For QZSS:     193 to 197.
    *  For BDS:      201 to 263.
@@ -855,14 +870,22 @@ enum LocReqEngineType{
     /** Indicate that the fused/default position is needed to be reported back
      *  for the tracking sessions. The default position is the propagated/aggregated
      *  reports from all engines running on the system (e.g.: DR/SPE/PPE) according to
-     *  QTI algorithm.*/
+     *  QTI algorithm.
+     */
     LOC_REQ_ENGINE_FUSED_BIT = (1<<0),
     /** Indicate that the unmodified SPE position is needed to be reported back for the
-     *  tracking sessions.*/
+     *  tracking sessions.
+     */
     LOC_REQ_ENGINE_SPE_BIT   = (1<<1),
     /** Indicate that the unmodified PPE position is needed to be reported back for the
-     *  tracking sessions.*/
+     *  tracking sessions.
+     */
     LOC_REQ_ENGINE_PPE_BIT   = (1<<2),
+     /**Indicate that the unmodified VPE position is needed to be reported back for the
+      * tracking sessions.
+      */
+    LOC_REQ_ENGINE_VPE_BIT  = (1<<3),
+
 };
 
 /** Specifies LocReqEngineType mask*/
@@ -872,11 +895,13 @@ using LocReqEngine = uint16_t;
 enum LocationAggregationType {
   /** This is the propagated/aggregated report from the fixes of all engines
    *  running on the system (e.g.: DR/SPE/PPE).*/
-  LOC_OUTPUT_ENGINE_FUSED = 0,
+    LOC_OUTPUT_ENGINE_FUSED = 0,
   /** This fix is the unmodified fix from modem GNSS engine */
-  LOC_OUTPUT_ENGINE_SPE   = 1,
+    LOC_OUTPUT_ENGINE_SPE   = 1,
   /** This is the unmodified fix from PPP engine */
-  LOC_OUTPUT_ENGINE_PPE   = 2
+    LOC_OUTPUT_ENGINE_PPE   = 2,
+  /** This is the unmodified fix from VPE engine. */
+    LOC_OUTPUT_ENGINE_VPE  = 3,
 };
 
 /** Specifies the type of engine responsible for fixes when the engine type is fused*/
@@ -886,7 +911,9 @@ enum PositioningEngineType{
     /** For dead reckoning position engines.*/
     DEAD_RECKONING_ENGINE       = (1 << 1),
     /** For precise position engines.*/
-    PRECISE_POSITIONING_ENGINE  = (1 << 2)
+    PRECISE_POSITIONING_ENGINE  = (1 << 2),
+    /** For VP position engine.*/
+    VP_POSITIONING_ENGINE       = (1 << 3),
 };
 
 /** Specifies PositioningEngineType mask */
@@ -953,7 +980,7 @@ enum GnssMeasurementsDataValidityType{
     SV_TYPE_BIT                      = (1<<1),
     /** Validity of stateMask.*/
     STATE_BIT                        = (1<<2),
-    /** Validity of receivedSvTimeNs.*/
+    /** Validity of receivedSvTimeNs and receivedSvTimeSubNs.*/
     RECEIVED_SV_TIME_BIT             = (1<<3),
     /** Validity of receivedSvTimeUncertaintyNs.*/
     RECEIVED_SV_TIME_UNCERTAINTY_BIT = (1<<4),
@@ -1096,8 +1123,13 @@ struct GnssMeasurementsData {
      *  GNSS measurement state.*/
     GnssMeasurementsStateValidity stateMask;
     /** Received GNSS time of the week in nanoseconds when the
-     *  measurement was taken.*/
+     *  measurement was taken.
+     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
     int64_t receivedSvTimeNs;
+    /** Sub nanoseconds portion of the received GNSS time of the
+     *  week when the measurement was taken.
+     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
+    float receivedSvTimeSubNs;
     /** Satellite time.
      *  All SV times in the current measurement block are already
      *  propagated to a common reference time epoch, in unit of
@@ -1178,6 +1210,8 @@ struct GnssMeasurements {
     GnssMeasurementsClock clock;
     /** GNSS measurements data.*/
     std::vector<GnssMeasurementsData> measurements;
+    /** Indicates the frequency for GNSS measurements generated at NHz or not.*/
+    bool isNHz;
 };
 
 /** Specify leap second change event info.*/
@@ -1296,6 +1330,40 @@ enum TerrestrialTechnologyType {
 /** Specifies TerrestrialTechnologyType mask */
 using TerrestrialTechnology = uint32_t;
 
+/**
+ *  Specifies the HLOS generated NMEA sentence types. */
+enum NmeaSentenceType {
+    /** GGA NMEA sentence */
+    GGA = (1 << 0),
+    /** RMC NMEA sentence */
+    RMC = (1 << 1),
+    /** GSA NMEA sentence */
+    GSA = (1 << 2),
+    /** VTG NMEA sentence */
+    VTG = (1 << 3),
+    /** GNS NMEA sentence */
+    GNS = (1 << 4),
+    /** DTM NMEA sentence */
+    DTM = (1 << 5),
+    /** GPGSV NMEA sentence for SVs from GPS constellation */
+    GPGSV = (1 << 6),
+    /** GLGSV NMEA sentence for SVs from GLONASS constellation */
+    GLGSV = (1 << 7),
+    /** GAGSV NMEA sentence for SVs from GALILEO constellation */
+    GAGSV = (1 << 8),
+    /** GQGSV NMEA sentence for SVs from QZSS constellation */
+    GQGSV = (1 << 9),
+    /** GBGSV NMEA sentence for SVs from BEIDOU constellation */
+    GBGSV = (1 << 10),
+    /** GIGSV NMEA sentence for SVs from NAVIC constellation */
+    GIGSV = (1 << 11),
+    /** All NMEA sentences */
+    ALL = 0xffffffff,
+};
+
+/** Specifies NmeaSentenceType mask */
+using NmeaSentenceConfig = uint32_t;
+
 /** Specify the valid mask for robust location configuration
  *  used by the GNSS standard position engine (SPE). */
 enum RobustLocationConfigType {
@@ -1384,6 +1452,28 @@ struct BodyToSensorMountParams {
      *  Range: [-180.0, 180.0].*/
     float offsetUnc;
 };
+
+/**
+ *  Specifies the set of gnss reports. */
+enum GnssReportType {
+    /** Location reports */
+    LOCATION          = (1 << 0),
+    /** Satellite reports */
+    SATELLITE_VEHICLE = (1 << 1),
+    /** Nmea reports */
+    NMEA              = (1 << 2),
+    /** Data reports */
+    DATA              = (1 << 3),
+    /** Low rate measurement reports. Currently the rate is defined to be 1 Hz. */
+    MEASUREMENT       = (1 << 4),
+    /** High rate measurement reports. Currently the rate is defined to be 10 Hz.
+     *  Client cannot specify rates. The data in high rate would be different that from low rate.
+     *  Also there might be difference in accuracy of fields for the both the rates. */
+    HIGH_RATE_MEASUREMENT    = (1 << 5)
+};
+
+/** Specifies the applicable reports using the bits represented in GnssReportType */
+using GnssReportTypeMask = uint32_t;
 
 /** Specify the dead reckoning engine configuration parameters.
  */
@@ -1538,6 +1628,8 @@ public:
 
 /**
  * Retrieves the horizontal uncertainty.
+ *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Horizontal uncertainty.
  *
@@ -1546,6 +1638,7 @@ public:
 /**
  * Retrieves the vertical uncertainty.
  *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Vertical uncertainty if available else returns NaN.
  *
@@ -1565,6 +1658,7 @@ public:
 /**
  * Retrieves 3-D speed uncertainty/accuracy.
  *    - Units: Meters per Second
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Speed uncertainty if available else returns NaN.
  *
@@ -1575,6 +1669,7 @@ public:
  * Retrieves heading uncertainty.
  *    - Units: Degrees
  *    - Range: 0 to 359.999
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns Heading uncertainty if available else returns NaN.
  *
@@ -1684,6 +1779,7 @@ public:
 /**
  * Retrieves semi-major axis of horizontal elliptical uncertainty.
  *    - Units: Meters
+ * Uncertainty is defined with 39% confidence level.
  *
  * @returns Semi-major horizontal elliptical uncertainty if available else
  * returns NaN.
@@ -1694,6 +1790,7 @@ public:
 /**
  * Retrieves semi-minor axis of horizontal elliptical uncertainty.
  *    - Units: Meters
+ * Uncertainty is defined with 39% confidence level.
  *
  * @returns Semi-minor horizontal elliptical uncertainty
  * if available else returns NaN.
@@ -1705,6 +1802,7 @@ public:
  * Retrieves elliptical horizontal uncertainty azimuth of orientation.
  *    - Units: Decimal degrees
  *    - Range: 0 to 180
+ * Confidence for uncertainty is not specified.
  *
  * @returns Elliptical horizontal uncertainty azimuth of orientation
  * if available else returns NaN.
@@ -1714,6 +1812,7 @@ public:
 /**
  * Retrieves east standard deviation.
  *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns East Standard Deviation.
  *
@@ -1723,6 +1822,7 @@ public:
 /**
  * Retrieves north standard deviation.
  *    - Units: Meters
+ * Uncertainty is defined with 68% confidence level.
  *
  * @returns North Standard Deviation.
  *
@@ -1790,6 +1890,8 @@ public:
 
 /**
  * Retrieves time uncertainity.
+ * For PVT report from SPE engine, confidence level is at 99%.
+ * For PVT reports from other engines, confidence level is undefined.
  *
  * @return - Time uncertainty in milliseconds.
  *
@@ -1821,6 +1923,7 @@ public:
 
 /**
  * Retrieves east, North, Up velocity uncertainty if available.
+ * Uncertainty is defined with 68% confidence level.
  *
  * @param [out] velocityUncertaintyEastNorthUp - east, North, Up velocity
  * uncertainty
@@ -1925,6 +2028,7 @@ public:
 
 /**
  * GNSS satellite vehicle ID.
+ * SV id range of each supported constellations mentioned in @ref GnssMeasurementInfo.
  *
  * @returns Identifier of the satellite vehicle otherwise 0(as 0 is not an ID
  * for any of the SVs)
@@ -2001,10 +2105,10 @@ public:
   virtual float getAzimuth() = 0;
 
 /**
- * Retrieves satellite vehicle signal-to-noise ratio.
+ * Retrieves signal-to-noise ratio of the signal measured at antenna of the satellite vehicle.
  *    - Units: dB-Hz
  *
- * @returns SNR if available else returns NaN.
+ * @returns SNR if available else returns 0.0 value.
  *
  */
   virtual float getSnr() = 0;
@@ -2024,6 +2128,23 @@ public:
  * @returns signalType mask else return UNKNOWN_SIGNAL_MASK when not supported.
  */
   virtual GnssSignal getSignalType() = 0;
+
+ /**
+  * Retrieves GLONASS frequency channel number in the range [1, 14] which is calculated as
+  * FCN [-7, 6] + 8.
+  *
+  * @returns GLONASS frequency channel number.
+  */
+   virtual uint16_t getGlonassFcn() = 0;
+
+/**
+ * Carrier-to-noise ratio of the signal measured at baseband.
+ *    - Units: dB-Hz
+ *
+ * @returns carrier-to-noise ratio at baseband else returns UNKNOWN_BASEBAND_CARRIER_NOISE ratio
+ * when not supported.
+ */
+  virtual double getBasebandCnr() = 0;
 };
 
 /**

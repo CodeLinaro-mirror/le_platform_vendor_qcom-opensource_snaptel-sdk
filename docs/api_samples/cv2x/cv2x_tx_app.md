@@ -1,3 +1,6 @@
+C-V2X TX Sample App {#cv2x_tx_app}
+==================================
+
 # C-V2X TX Sample App
 
 This Document walks through the cv2x_tx_app sample application.

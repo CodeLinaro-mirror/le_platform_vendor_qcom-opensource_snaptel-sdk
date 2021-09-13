@@ -798,16 +798,14 @@ static int encode_as_bsm(abuf_t *bp, bsm_value_t *BSM_p)
        remaining...so we won't load the next byte into a uint32 like we did previously
        We only have 5 bits more to complete the VehicleLength
     */
-
-
     asn_push_len(bp);
-
-
     tmp = (uint16_t)J2735_MSGID_BASIC_SAFETY; //dec=20 (0x14)
     asn_push_bits(bp, tmp, 16);
-    printf("BSM encoded buffer dump\n");
-    abuf_dump(bp);
-    printf("\n");
+    if(gVerbosity > 4){
+        printf("BSM encoded buffer dump\n");
+        abuf_dump(bp);
+        printf("\n");
+    }
     goto bsm_encode_return;
 
 bsm_encode_err:
@@ -831,21 +829,30 @@ static int decode_as_bsm(msg_contents *mc)
     uint32_t is_extended;  //extension marker from UPER encodings -- used as a boolean
     uint32_t  sequence_len;
     uint32_t opts;
-    bsm_value_t *BSM_p = mc->j2735_msg;
 
-    if (!mc) {
+    if(!mc)
         goto bsm_decode_err;
-    }
 
-    //len_remaining = db->j2735_msg_len;
-    len_remaining = mc->payload_len;
+    bsm_value_t* BSM_p;
+    if(!mc->j2735_msg)
+        mc->j2735_msg  = calloc(sizeof(bsm_value_t), 1);
+    BSM_p = mc->j2735_msg;
+
     p32 = (uint32_t *)mc->abuf.data;
-
+    len_remaining = mc->l3_payload_len;
+    if (gVerbosity > 7) {
+        printf("abuf payload: \n");
+        print_buffer(mc->abuf.data, mc->payload_len);
+        printf("\n\nl3_payload: \n");
+        print_buffer(mc->l3_payload, mc->payload_len);
+        printf("\n\n");
+    }
     // save a ptr to the last byte of mesage, to bounds check before trying to decode
-    uint8_t *last_byte_p = mc->abuf.data + len_remaining - 1;
+    uint8_t* last_byte_p = (uint8_t*) p32 + len_remaining - 1;
+
 
     if (len_remaining < MIN_BSM_CORE_OCTETS)  {
-        printf(" frame too short to even contaain core BSM\n");
+        printf(" frame too short to even contain core BSM\n");
         goto BSM_too_short;
     }
 
@@ -1905,11 +1912,11 @@ static int decode_as_bsm(msg_contents *mc)
     if (gVerbosity > 2) {
         int bytes_left = last_byte_p - p8;
         if (bytes_left > 0) {
-            printf("\n      BSMDecode complete, %ld bytes unparsed, bits_left=%d\n",
+            printf("\nBSMDecode complete, %ld bytes unparsed, bits_left=%d\n",
                 (last_byte_p - p8), bits_left);
             // Possibly print-out the remnant
 
-            printf("        REMNANT:");
+            printf("REMNANT:\n");
             print_buffer(p8, last_byte_p - (uint8_t *)p8 + 1); // full len remain is :last_byte_0-p32
         } else {
             printf("\n      BSMDecode complete, %d bits padding \n",
@@ -1977,14 +1984,26 @@ int  decode_as_j2735(msg_contents *mc)
     uint16_t msg_id = 0;
     int  msg_len; // J2735 message content length, after msg ID & length
 
+    // at some point, tail is not properly synchronized with data
     if (mc->abuf.data && ((mc->abuf.tail - mc->abuf.data) > 4)) {
-
         int bits_left = 8;  // everything starts Octet aligned.
+        uint8_t* msg = (uint8_t*)mc->l3_payload;
+        if (gVerbosity > 4){
+              printf("<<<J2735 uint16_t l3_payload msgid=%02x%02x>>>\n", *(msg),
+                *(msg+1));
+            printf("<<<J2735 uint16_t abuf msgid=%02x%02x>>>\n", (mc->abuf.data[0]),
+                    (mc->abuf.data[1]));
+            printf("Information about the abuf struct\n");
+            abuf_dump(&mc->abuf);
+            printf("\n");
+            printf("BSM encoded buffer dump\n");
+            print_buffer(mc->abuf.data, mc->payload_len);
+            printf("\n");
+        }
 
-        if (gVerbosity > 4)
-            printf("<<<J2735 first byte=%02x>>>\n", *(mc->abuf.data));
-
-        msg_id = ntohs(*(uint16_t *)abuf_pull(&mc->abuf, sizeof(uint16_t)));
+        uint16_t* ptr  = (uint16_t*)abuf_pull(&mc->abuf, sizeof(uint16_t));
+        msg_id = ntohs(*ptr);
+        mc->l3_payload = mc->l3_payload + sizeof(uint16_t);
         mc->j2735_msg_id = msg_id;
         mc->msgId = msg_id;
 
@@ -2049,22 +2068,22 @@ int  decode_as_j2735(msg_contents *mc)
         case J2735_MSGID_TEST_13:
         case J2735_MSGID_TEST_14:
         case J2735_MSGID_TEST_15:
-            printf("no code to parse J2735 Test Message ID #%d\n", msg_id);
+            printf("No code to parse J2735 Test Message ID #%d\n", msg_id);
             break;
         case J2735_MSGID_BASIC_SAFETY:             //0x14 = 20, // -- BSM, heartbeat msg
-
-            msg_len = parse_asn_variable_length_enc((unsigned char **)&mc->abuf.data, &bits_left);
-            // -- after this, the db->payload should've advanced.
+            msg_len =
+                 parse_asn_variable_length_enc(
+                            (unsigned char **)&mc->abuf.data, &bits_left);
+            msg_len =
+                 parse_asn_variable_length_enc(
+                            (unsigned char **)&mc->l3_payload, &bits_left);
             mc->payload_len = msg_len;
-            if (!(mc->j2735_msg = calloc(sizeof(bsm_value_t), 1))) {
-                printf("malloc for BSM failed\n");
-                goto decode_err;
-            }
             decode_as_bsm(mc);
 
             break;
         default:
-            printf("unrecognized J2735 payload msgID=%d\n", msg_id);
+            if(gVerbosity>7)
+                printf("unrecognized J2735 payload msgID=%d\n", msg_id);
             break;
         }
     }

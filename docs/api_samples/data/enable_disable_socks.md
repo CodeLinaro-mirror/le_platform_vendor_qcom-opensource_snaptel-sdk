@@ -1,34 +1,48 @@
+Enable/Disable Socks {#enable_disable_socks}
+============================================
+
 # Enable/Disable Socks
 
 Please follow below steps to Enable/Disable Socks
 
-### 1.Get the DataFactory and Socks Manager instance ###
+### 1.Implement initialization callback and get the DataFactory instance ###
+Optionally initialization callback can be provided with get manager instance.
+Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
+   auto initCb = [&](telux::common::ServiceStatus status) {
+      std::lock_guard<std::mutex> lock(mtx);
+      status_ = status;
+      initCv.notify_all();
+   };
    auto &dataFactory = telux::data::DataFactory::getInstance();
-   auto dataSocksMgr  = dataFactory.getSocksManager(opType);
    ~~~~~~
 
-### 2. Check if data subsystem is ready ###
+### 2. Get the SocksManager instances
+   std::unique_lock<std::mutex> lck(mtx);
+   auto dataSocksMgr  = dataFactory.getSocksManager(opType, initCb);
+
+### 3. Wait for DataConnectionManager initialization to be complete
 
    ~~~~~~{.cpp}
-   bool subSystemsStatus = dataSocksMgr->isSubsystemReady();
+   initCv.wait(lck);
    ~~~~~~
 
-### 2.1 If data subsystem is not ready, wait for it to be ready ###
+### 3.1 Check SocksManager initialization state
 
-Data subsystems is to make sure that device is ready for services.
-if subsystems were not ready, wait for unconditionally.
+If SocksManager initialization failed, new initialization attempt can be accomplished
+by calling step 2. If SocksManager initialization succeed, proceed to step 4
 
    ~~~~~~{.cpp}
-   if(!subSystemStatus) {
-      std::future<bool> f = dataSocksMgr->onSubsystemReady();
-      // If we want to wait unconditionally for data subsystem to be ready
-      subSystemStatus = f.get();
+   if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      // Go to step 4
+   }
+   else {
+      //Go to step 2 for another initialization attempt
    }
    ~~~~~~
 
-### 3. Instantiate enable Socks callback instance - this is optional ###
+### 4. Instantiate enable Socks callback instance - this is optional ###
 
    ~~~~~~{.cpp}
    auto respCb = [](telux::common::ErrorCode error) {
@@ -41,10 +55,10 @@ if subsystems were not ready, wait for unconditionally.
    };
    ~~~~~~
 
-### 4. enable/disable Socks ###
+### 5. enable/disable Socks ###
 
    ~~~~~~{.cpp}
     dataSocksMgr->enableSocks(enable, respCb);
    ~~~~~~
 
-### 5. Response callback will be called for the setFirewall response ###
+### 6. Response callback will be called for the setFirewall response ###

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -46,7 +46,6 @@
 #include <unistd.h>
 
 #include "v2x_common.pb.h"
-#include "v2x_config_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -100,6 +99,18 @@ typedef int v2x_radio_handle_t;
   */
 #define MAX_FILTER_IDS_LIST_LEN (50)
 
+/** Maximum number of antennas that is supported.
+    Used in @ref v2x_tx_status_report_t */
+#define V2X_MAX_ANTENNAS_SUPPORTED (2)
+
+/** Maximum number of V2X Tx pools that is supported.
+    Used in @ref v2x_radio_status_ex_t */
+#define V2X_MAX_TX_POOL_NUM (2)
+
+/** Maximum number of V2X Rx pools that is supported.
+    Used in @ref v2x_radio_status_ex_t */
+#define V2X_MAX_RX_POOL_NUM (4)
+
 /**
     Describes whether the radio chip modem should attempt or support concurrent
     3GPP CV2X operation with a WWAN 4G/5G data call.
@@ -120,6 +131,8 @@ typedef enum {
     Event indications sent asynchronously from the radio via callbacks that
     indicate the state of the radio. The state can change in response to the
     loss of timing precision or a geofencing change.
+    @deprecated This enum type is deprecated, please consider use
+    %v2x_radio_status_ex_t instead.
  */
 typedef enum {
     V2X_INACTIVE = 0,    /**< V2X communication is disabled. */
@@ -155,6 +168,70 @@ typedef enum  {
     SERVICE_AVAILABLE = 1,
     SERVICE_FAILED = 2,
 } v2x_service_status_t;
+
+/**
+    Defines possible values for CV2X radio RX/TX status.
+ */
+typedef enum {
+    V2X_RADIO_STATUS_INACTIVE = 0,    /**< RX/TX is inactive */
+    V2X_RADIO_STATUS_ACTIVE = 1,      /**< RX/TX is active */
+    V2X_RADIO_STATUS_SUSPENDED = 2,   /**< RX/TX is suspended */
+    V2X_RADIO_STATUS_UNKNOWN = 3,     /**< RX/TX status unknown */
+} v2x_radio_status_type_t;
+
+/**
+    Defines possible values for cause of CV2X radio failure.
+ */
+typedef enum {
+    V2X_RADIO_CAUSE_TIMING,           /**< V2X timing is not valid */
+    V2X_RADIO_CAUSE_CONFIG,           /**< No valid V2X configuration */
+    V2X_RADIO_CAUSE_UE_MODE,          /**< V2X is not supported in current UE mode */
+    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< V2X is not supported in current UE location */
+    V2X_RADIO_CAUSE_THERMAL,          /**< Device's temperature is high and is in thermal
+                                           mitigation mode */
+    V2X_RADIO_CAUSE_THERMAL_ECALL,    /**< Device is in an emergency call and the device's
+                                           temperature has crossed a threshold resulting
+                                           in thermal mitigation */
+    V2X_RADIO_CAUSE_GEOPOLYGON_SWITCH,/**< V2X stack is suspended due to geopolygon switch */
+    V2X_RADIO_CAUSE_SENSING,          /**< V2X stack is suspended due to sensing */
+    V2X_RADIO_CAUSE_LPM,              /**< V2X is not supported under Low Power Mode */
+    V2X_RADIO_CAUSE_UNKNOWN,          /**< Cause is unknown */
+} v2x_radio_cause_type_t;
+
+/**
+    Encapsulates CV2X Tx/Rx status and cause of failure.
+ */
+typedef struct {
+    v2x_radio_status_type_t status;  /**< Tx/Rx status */
+    v2x_radio_cause_type_t cause;    /**< Cause of failure */
+} v2x_status_info_t;
+
+/**
+    Encapsulates status of CV2X radio.
+ */
+typedef struct {
+    v2x_status_info_t tx_status;  /**< TX status */
+    v2x_status_info_t rx_status;  /**< RX status */
+} v2x_radio_status_t;
+
+/**
+    Encapsulates status for single TX/RX pool.
+ */
+typedef struct {
+    uint8_t pool_id;             /**< pool ID*/
+    v2x_status_info_t status;    /**< Tx/Rx pool status */
+} v2x_pool_status_t;
+
+/**
+    V2X overall radio status and per pool status.
+ */
+typedef struct {
+    v2x_radio_status_t status;       /**< CV2X overall TX/RX status */
+    uint8_t tx_pool_size;            /**< Number of Tx pools in array of pool_status. */
+    v2x_pool_status_t tx_pool_status[V2X_MAX_TX_POOL_NUM]; /**< CV2X Tx pool status. */
+    uint8_t rx_pool_size;            /**< Number of Rx pools in array of pool_status. */
+    v2x_pool_status_t rx_pool_status[V2X_MAX_RX_POOL_NUM]; /**< CV2X Rx pool status. */
+} v2x_radio_status_ex_t;
 
 /**
     Contains time confidence, position confidence, and propagation delay for a
@@ -527,6 +604,8 @@ typedef struct {
     /**
     Callback made when the status in the radio changes. For example, in
     response to a fault when there is a loss of GPS timing accuracy.
+    @deprecated This callback is deprecated, please consider use
+    %v2x_ext_radio_status_listener instead.
 
     @datatypes
     #v2x_event_t
@@ -806,6 +885,101 @@ typedef struct src_l2_filter_info_t {
          will be dropped. Range 0-7, 0 mean all of the pkts will be dropped*/
     uint8_t pppp;
 } src_l2_filter_info;
+
+/**
+    Fault detection of Tx chain that including PA and front end.
+ */
+typedef enum {
+    INACTIVE,      /**< The Tx chain is not working. */
+    OPERATIONAL,   /**< The Tx chain is operational. */
+    FAULT,         /**< Fault detected on the Tx chain. */
+} rf_status_t;
+
+/**
+    Information of one or two Tx chains retrieved from RF per transport block.
+ */
+typedef struct {
+    rf_status_t status;
+    /**< The type of Tx chain status. */
+    int32_t power;
+    /**< Tx power of transmitted TB in dBm*10 format, invalid value is -700. */
+} v2x_rf_tx_info_t;
+
+/**
+    Defines possible values for the segment type of a transport block.
+ */
+typedef enum {
+    FIRST,      /**< V2X packet is segmented, it's the first transport block. */
+    LAST,       /**< V2X packet is segmented, it's the last transport block. */
+    MIDDLE,     /**< V2X packet is segmented, it's a transport block between first and last. */
+    ONLY_ONE,   /**< V2X packet is not segmented, it's the only one transport block. */
+} v2x_segment_type_t;
+
+
+/**
+    Defines new Tx or re-Tx type relevant to a transport block.
+ */
+typedef enum {
+    V2X_NEW_TX,        /**< New Tx of the V2X transport block. */
+    V2X_RE_TX,         /**< Re-Tx of the V2X transport block. */
+} v2x_tx_type_t;
+
+/**
+    Information on Tx status of a V2X transport block that is reported
+    from low layer. A V2X Tx packet might trigger multiple reports
+    because of the segmentaion and re-Tx in low layer. If a transport
+    block is dropped in low layer, no report will be triggered for that
+    transport block.
+
+    Used in @ref v2x_tx_status_report_listener
+ */
+typedef struct {
+    v2x_rf_tx_info_t rf_info[V2X_MAX_ANTENNAS_SUPPORTED];
+    /**< RF information of one or two Tx chains. */
+    uint8_t num_rb;
+    /**< Number of resource blocks used for the transport block. */
+    uint8_t start_rb;
+    /**< Start resource block index used for the transport block. */
+    uint8_t mcs;
+    /**< Modulation and coding scheme used for the transport block
+         that is defined in 3GPP TS 36.213. */
+    uint8_t seg_num;
+    /**< Total number of segments of a V2X packet. */
+    v2x_segment_type_t seg_type;
+    /**< Segment type of the transport block. */
+    v2x_tx_type_t tx_type;
+    /**< Indication of new Tx or re-Tx of the transport block. */
+    uint16_t ota_timing;
+    /**< OTA timing in format of system frame number*10 + subframe number. */
+    uint16_t port;
+    /**< Port number that can be used to link the report to a specific Tx
+         flow which has the same source port number. */
+} v2x_tx_status_report_t;
+
+/**
+    Callback made when a CV2X transport block is transmitted in low layer if
+    CV2X Tx staus report has been enabled by calling @ref v2x_set_tx_status_report
+    and a listener has been registered by calling @ref v2x_register_for_tx_status_report.
+
+    @datatypes
+    #v2x_tx_status_report_t
+
+    @param[in] info     V2X Tx status report information.
+    @newpage
+*/
+typedef void (*v2x_tx_status_report_listener)(const v2x_tx_status_report_t info);
+
+/**
+     Callback made when CV2X Tx/Rx status is changed and a listener has been registered
+     by calling @ref v2x_register_ext_radio_status_listener.
+
+    @datatypes
+    #v2x_radio_status_ex_t
+
+    @param[out] status     Pointer to V2X overall Tx/Rx status and per pool status.
+    @newpage
+*/
+typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* status);
 
 /**
     Method used to query the platform SDK for its version number, build
@@ -1144,6 +1318,39 @@ extern int v2x_radio_rx_sock_create_and_bind_v3(v2x_radio_handle_t handle,
     int *sock,
     struct sockaddr_in6 *rx_sockaddr);
 
+/**
+     Enable or disable the meta data report for the packets corresponding to the service IDs.
+
+     If enabled, the meta data report would be generated in addition to the actual OTA payload
+     packet, and it comes from the same data interface as the OTA packet itself, it consist of
+     RF RSSI (received signal strength indicator) status, 32-bit SCI Format 1 (3GPP TS 36.213,
+     section 14.1), packet delay estimation, L2 destination ID, and the resource blocks used for
+     the packet's transmission: subframe, subchannel index.
+
+     @datatypes
+     #v2x_radio_handle_t
+
+     @param[in]  handle           Identifies the initialized Radio interface.
+     @param[in]  enable           enable or disable the meta data
+     @param[in]  id_list_len      number of the service IDs provided in the id_list
+     @param[in]  id_list          Pointer to the Rx service ID list
+
+     @detdesc
+     This function extracts the received packet's meta data from the payload, currently
+     only NON-IP packets can have the meta data reported, it is not supported yet for
+     IP packets.
+     @par
+     If the meta data report is enabled for certain services, call #v2x_parse_rx_meta_data to
+     extract the meta data by providing a pointer to a object of type #rx_packet_meta_data_t, and
+     the real payload.
+
+     @return
+     0 -- On success.
+ */
+extern int v2x_radio_enable_rx_meta_data(v2x_radio_handle_t handle,
+                                         bool enable,
+                                         int id_list_len,
+                                         uint32_t *id_list);
 /**
     Creates Tx SPS socket, Tx Event socket and Rx socket with specified parameters.
     The socket is also bound as an AF_INET6 UDP type socket.
@@ -2298,6 +2505,117 @@ v2x_status_enum_type v2x_set_l2_filters(uint32_t list_len, src_l2_filter_info* l
     @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
  */
 v2x_status_enum_type v2x_remove_l2_filters(uint32_t list_len, uint32_t* l2_id_list);
+
+/**
+    Registers a listener for CV2X Tx status report.
+
+    @datatypes
+    v2x_tx_status_report_listener
+
+    @param[in] port            Set this value to the port number of registered Tx Flow
+                               if user wants to receive Tx status report associated with
+                               its own Tx flow. If user wants to receive Tx status report
+                               associated with all Tx flows in system, set this value to 0.
+                               @vertspace{3}
+
+    @param[in] callback        Callback function of @ref v2x_tx_status_report_listener
+                               structure that is called on Tx status reports. \n
+                               @vertspace{3}
+
+    @detdesc
+    This function should be called before the enable of Tx status report by calling
+    @ref v2x_set_tx_status_report if the caller has interest in the notification
+    of CV2X Tx status reports.
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+
+    @dependencies
+    CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
+ */
+v2x_status_enum_type v2x_register_tx_status_report_listener(
+    uint16_t port,
+    v2x_tx_status_report_listener callback);
+
+/**
+    Deregisters a listener for CV2X Tx status report.
+
+    @datatypes
+    v2x_tx_status_report_listener
+
+    @param[in] port            Port number of previously registered
+                               @ref v2x_tx_status_report_listener that is to be deregistered.
+                               If the listener is registered with port number 0,
+                               set this value to 0 to deregister the listener.\n@vertspace{3}
+
+    @detdesc
+    User will not receive Tx status reports after the deregistration.
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+
+    @dependencies
+    CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
+    @newpage
+ */
+v2x_status_enum_type v2x_deregister_tx_status_report_listener(uint16_t port);
+
+/**
+    Set CV2X global IP address for the IP interface.
+
+    @param [in] prefix_len CV2X global IP address prefix length in bits, range [64, 128]
+    @param [in] ipv6_addr  CV2X global IP address.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_global_IPaddr(uint8_t prefix_len, uint8_t* ipv6_addr);
+
+/**
+    Set CV2X IP interface global IP unicast routing information.
+
+    @param [in] dest_mac_addr CV2X destination L2 address for unicast routing purpose.
+                              expecting a 6 bytes array address, in which the L2 addr stored in
+                              the last 3 entries in big endian order.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_ip_routing_info(uint8_t* dest_mac_addr);
+
+/**
+    Get current V2X overall radio status and per pool status.
+
+    @param [out] status        Pointer to structure v2x_radio_status_ex_t, which
+                               contains V2X overall radio status and per pool status
+                               on success.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
+
+/**
+    Registers a listener for CV2X overall Tx/Rx status and per pool status.
+
+    @datatypes
+    v2x_ext_radio_status_listener
+
+    @param[in] callback        Callback function of @ref v2x_ext_radio_status_listener
+                               structure that is called on CV2X Tx/Rx status change. \n
+                               @vertspace{3}
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+
+    @dependencies
+    CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
+ */
+v2x_status_enum_type v2x_register_ext_radio_status_listener(
+    v2x_ext_radio_status_listener callback);
 
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 

@@ -54,19 +54,54 @@ namespace tel {
  */
 class ISimProfileListener : public telux::common::IServiceStatusListener {
  public:
+
     /**
      * This function is called when indication about status of profile download and installation
      * comes.
      *
      * @param [in] slotId                   Slot on which profile get downloaded and installed.
-     * @param [in] userConsentRequired      User consent required or not.
-     * @param [in] status                   @Ref ProfileDownloadStatus.
-     * @param [in] percentage               Download and installation percentage.
-     * @param [in] cause                    @Ref ProfileDownloadErrorCause.
-     * @param [in] mask                     @Ref PprMask (Profile policy rules Mask)
+     * @param [in] status                   @ref telux::tel::DownloadStatus.
+     * @param [in] cause                    @ref telux::tel::DownloadErrorCause.
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
      */
-    virtual void onAddProfileUpdate(SlotId slotId, bool userConsentRequired, DownloadStatus status,
-        uint8_t percentage, DownloadErrorCause cause, PolicyRuleMask mask) {
+    virtual void onDownloadStatus(SlotId slotId, DownloadStatus status,
+        DownloadErrorCause cause) {
+    }
+
+    /**
+     * This function is invoked when information about user consent and profile policy rules is
+     * received. The client application is expected to provide user consent for download and
+     * install profile by calling @ref telux::tel::ISimProfileManager::provideUserConsent if
+     * user consent is expected.
+     *
+     * @param [in] slotId                   Slot on which profile get downloaded and installed.
+     * @param [in] userConsentRequired      User consent required or not. If true it means user is
+     *                                      expected to provide consent for download and install.
+     * @param [in] mask                     @ref telux::tel::PprMask (Profile policy rules Mask)
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual void onUserDisplayInfo(SlotId slotId, bool userConsentRequired,
+        PolicyRuleMask mask) {
+    }
+
+    /**
+     * This function is invoked when confirmation code is required. The client application
+     * is expected to provide confirmation code for download and install profile by calling
+     * @ref telux::tel::ISimProfileManager::provideConfirmationCode
+     *
+     * @param [in] slotId                   Slot on which profile get downloaded and installed.
+     * @param [in] profileName              Profile name corresponding to which confirmation code
+     *                                      is required.
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     *
+     */
+    virtual void onConfirmationCodeRequired(SlotId slotId, std::string profileName) {
     }
 
     /**

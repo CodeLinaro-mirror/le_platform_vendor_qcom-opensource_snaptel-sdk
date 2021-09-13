@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018,2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,6 +55,12 @@ public:
 class MyCardListener : public telux::tel::ICardListener {
 public:
    void onCardInfoChanged(int slotId) override;
+};
+
+class MyCardPowerResponseCallback {
+public:
+   static void cardPowerUpResp(telux::common::ErrorCode error);
+   static void cardPowerDownResp(telux::common::ErrorCode error);
 };
 
 #endif  // MYCARDLISTENER_HPP

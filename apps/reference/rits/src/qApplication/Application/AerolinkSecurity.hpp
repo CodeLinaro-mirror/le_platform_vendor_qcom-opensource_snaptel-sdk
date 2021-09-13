@@ -1,0 +1,152 @@
+/*
+ *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are
+ *  met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *    * Neither the name of The Linux Foundation nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/**
+ * @file: AerolinkSecurity.hpp
+ *
+ * @brief: Security Service wrapper for aerolink
+ */
+
+#ifndef AEROLINK_SECURITY_HPP_
+#define AEROLINK_SECURITY_HPP_
+
+#include <stdexcept>
+#include <string.h>
+#include <unistd.h>
+#include <vector>
+#include <map>
+#include <set>
+#include "viicsec.h"
+#include "SecurityService.hpp"
+#include "v2x_msg.h"
+#include "v2x_codec.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <inttypes.h>
+#include <semaphore.h>
+#include <atomic>
+#include <thread>
+#include <iterator>
+#include <chrono>
+
+static size_t chunksize = 10000;
+
+class AerolinkSecurity : public SecurityService {
+    public:
+        // ctor for aerolink w/o encryption
+        AerolinkSecurity(const std::string ctxName, uint16_t countryCode):
+            SecurityService(ctxName, countryCode) {
+            if (init() < 0) {
+                throw std::runtime_error("AerolinkSecurity Init Failed\n");
+            }
+        }
+        // overloaded ctor for aerolink w/ encryption enabled
+        AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
+                            uint8_t keyGenMethod):
+            SecurityService(ctxName, countryCode), keyGenMethod_(keyGenMethod){
+            if(init() < 0) {
+                throw std::runtime_error("AerolinkSecurity Init Failed\n");
+            }
+            // should  perform sanitary check on the value
+        }
+        static AerolinkSecurity *pInstance;
+        static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode);
+        static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
+                                             uint8_t keyGenMethod);
+        int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
+                    uint8_t *signedSpdu, uint32_t &signedSpduLen);
+        int VerifyMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
+                    uint32_t &dot2HdrLen);
+        ~AerolinkSecurity() {
+            deinit();
+        }
+
+    private:
+       static void signCallback(AEROLINK_RESULT returnCode, void *userCallbackData,
+                            uint8_t* cbSignedSpduData, uint32_t cbSignedSpduDataLen);
+       static void verifyCallback(AEROLINK_RESULT returnCode,
+                            void *userCallbackData);
+       int decryptMsg();
+       int encryptMsg(uint8_t const * const plainText, uint32_t plainTextLength,
+                    uint8_t isPayloadSpdu, uint8_t * const encryptedData,
+                    uint32_t * const encryptedDataLength);
+       int syncVerify(
+            SecurityContextC ctx,
+            const uint8_t * message,
+            uint32_t msgLen,
+            uint8_t const *payload,
+            uint32_t       payloadLen,
+            uint32_t       &dot2HdrLen,
+            int32_t latitude,
+            int32_t longitude,
+            uint16_t elevation,
+            VerifStats *verifStat);
+
+        int asyncVerify(
+            SecurityContextC ctx,
+            const uint8_t * message,
+            uint32_t msgLen,
+            uint8_t const *payload,
+            uint32_t       payloadLen,
+            uint32_t       &dot2HdrLen,
+            int32_t latitude,
+            int32_t longitude,
+            uint16_t elevation,
+            sem_t   *queue_sem);
+
+        SecuredMessageGeneratorC smg_;
+        SecuredMessageParserC smp_;
+        int init(void);
+        void deinit(void);
+        SecurityContextC secContext_;
+        AerolinkEncryptionKey  encryptionKey;
+        // Multi-Threading Aerolink Variables
+        std::map<std::thread::id, SecuredMessageParserC> threadSmps;
+        std::map<std::thread::id, SecuredMessageGeneratorC> threadSmgs;
+        std::map<std::thread::id, sem_t> verifSmpSems;
+        std::map<std::thread::id, sem_t> signSmgSems;
+        void setStartTime(double start);
+        void setSecVerbosity(uint8_t verbosity);
+        bool addNewThrSmp(std::thread::id thrId);
+        bool addNewThrSmg(std::thread::id thrId);
+        SecuredMessageParserC* getThrSmp(std::thread::id thrId);
+        SecuredMessageGeneratorC* getThrSmg(std::thread::id thrId);
+        sem_t* getThrSmpSem(std::thread::id thrId);
+        sem_t* getThrSmgSem(std::thread::id thrId);
+        int createNewSmp(SecuredMessageParserC* smpPtr);
+        int createNewSmg(SecuredMessageGeneratorC* smgPtr);
+        // should be unique public encryption keys
+        //    AerolinkEncryptionKey const * const recipients[] = {};
+        //    std::set<AerolinkEncryptionKey const *> recipients;
+        std::vector<AerolinkEncryptionKey const *> recipients;
+        uint32_t numRecipients;
+        uint8_t keyGenMethod_;
+};
+#endif

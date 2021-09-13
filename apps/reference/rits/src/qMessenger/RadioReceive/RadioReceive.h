@@ -45,16 +45,24 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <string>
+#include <poll.h>
+#include <telux/cv2x/Cv2xRadioTypes.hpp>
 
 using std::array;
 using std::make_shared;
 using telux::cv2x::ICv2xRxSubscription;
+using telux::cv2x::ICv2xTxRxSocket;
+using telux::cv2x::SocketInfo;
+using telux::cv2x::EventFlowInfo;
 
 class RadioReceive : public RadioInterface {
 private:
     shared_ptr<ICv2xRxSubscription> gRxSub;
     TrafficCategory category;
     void rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error);
+    void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
+    void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
+    void commonStatusCallback(ErrorCode error);
     bool isSim = false;
     int simListenSock, simRxSock;
     struct sockaddr_in srcAddress;
@@ -62,6 +70,7 @@ private:
     uint16_t srcPort;
     bool enableUdp = false;
     string ipv4_src;
+    std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
 
 protected:
 
@@ -78,21 +87,39 @@ public:
     */
     RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
     const uint16_t port);
+    
+    RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
+    const uint16_t port, std::shared_ptr<std::vector<uint32_t>> idList);
 
     /**
     * Constructor for Simulation of Radio Receives.
     */
-    //RadioReceive(const string ipv4, const uint16_t port);
     RadioReceive(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port);
 
     /**
     * Blocking mehtod that receives from created flow's socket.
-    * @param buf a char pointer to store the data received.
+    * @param buf - a char pointer to store the data received.
+    * @param len - the length of bytes to receive into buffer
     * @return bytes received, -1 if error.
     */
-    uint32_t receive(const char* buf);
+    uint32_t receive(const char* buf, int len);
 
+    /**
+    * Blocking mehtod that receives from created flow's socket.
+    * @param buf - a char pointer to store the data received.
+    * @param len - length of bytes to receive into buffer
+    * @param sourceMacAddr source MAC address.
+    * @param macAddrLen source MAC address length.
+    * @return bytes received, -1 if error.
+    */
+    uint32_t receive(const char* buf, int len,
+            uint8_t *sourceMacAddr, int& macAddrLen);
 
+    int onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr);
+    int onWraTimedout(void);
+    int setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr);
+    int clearGlobalIPInfo(void);
+    int setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
     /**
     * Method that closes Receive Subscription and returns fail or success
     * @param buf a char pointer to store the data received.

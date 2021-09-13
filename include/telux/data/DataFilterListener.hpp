@@ -36,8 +36,6 @@
  *             The methods in listener can be invoked from multiple threads. So the client needs to
  *             make sure that the implementation is thread-safe.
  *
- * @note       Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  */
 
 #ifndef DATAFILTERLISTENER_HPP
@@ -59,8 +57,6 @@ namespace data {
  *        The methods in listener can be invoked from multiple threads. So the client needs to
  *        make sure that the implementation is thread-safe.
  *
- * @note  Eval: This is a new API and is being evaluated. It is subject to change
- *        and could break backwards compatibility.
  */
 class IDataFilterListener : public common::IServiceStatusListener {
 public:
@@ -70,8 +66,6 @@ public:
      *
      * @param [in] state the current data filter mode
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual void onDataRestrictModeChange(DataRestrictMode mode) {}
 

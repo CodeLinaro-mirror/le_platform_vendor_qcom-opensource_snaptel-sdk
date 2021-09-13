@@ -38,7 +38,6 @@
 #include <mutex>
 #include "GeoNetRouter.hpp"
 #include "gn_internal.h"
-#include "AsyncTaskQueue.hpp"
 
 #define MAX_DPL_LEN     20
 namespace gn {
@@ -144,11 +143,12 @@ namespace gn {
         void RefreshTask(void);
         std::mutex TableMutex_;
         std::condition_variable Cv_;
-        std::promise<int> RefreshTaskResult_;
+        //std::promise<int> RefreshTaskResult_;
+        std::thread RefreshThread;
         std::map<uint8_t *, std::shared_ptr<LocTableEntry>, AddrCompare> TableEntries_;
         int LifeTime_;  //in seconds
         gn_addr_t LocalAddr_;
-        AsyncTaskQueue<void> taskQ_;
+        //AsyncTaskQueue<void> taskQ_;
     };
 }
 

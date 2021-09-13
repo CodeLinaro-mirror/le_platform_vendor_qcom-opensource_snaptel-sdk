@@ -45,7 +45,7 @@ namespace telux {
 
 namespace config {
 
-/** @addtogroup telematics_config
+/** @addtogroup telematics_config_manager
  * @{ */
 
 /**
@@ -71,7 +71,7 @@ public:
     virtual ~IModemConfigListener() {}
 };
 
-/** @} */ /* end_addtogroup telematics_config */
+/** @} */ /* end_addtogroup telematics_config_manager */
 
 } // end of namespace config
 

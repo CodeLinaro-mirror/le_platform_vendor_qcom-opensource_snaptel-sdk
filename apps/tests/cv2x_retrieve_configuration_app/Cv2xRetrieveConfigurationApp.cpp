@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -38,7 +38,7 @@
 #include <string>
 #include <mutex>
 #include <memory>
-
+#include "../../common/utils/Utils.hpp"
 #include <telux/cv2x/Cv2xConfig.hpp>
 #include <telux/cv2x/Cv2xFactory.hpp>
 
@@ -66,7 +66,11 @@ static void cv2xRetrieveConfigurationCallback(ErrorCode error) {
 
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Retrieve Configuration app" << endl;
-
+    std::vector<std::string> groups{"system", "diag", "radio"};
+    int rc = Utils::setSupplementaryGroups(groups);
+    if (rc == -1) {
+        cout << "Adding supplementary group failed!" << std::endl;
+    }
     string configFilePath = "";
     gCallbackPromise = std::promise<ErrorCode>();
 

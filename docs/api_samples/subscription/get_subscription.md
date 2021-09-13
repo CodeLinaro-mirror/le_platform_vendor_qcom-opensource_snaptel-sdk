@@ -1,3 +1,6 @@
+Using Subscription Manager APIs {#get_subscription}
+===================================================
+
 # Using Subscription Manager APIs
 
 Please follow below steps to use Subscription Manager APIs to get Subscription Information.

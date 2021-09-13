@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -55,6 +55,7 @@ private:
    void queryPin1LockState(std::vector<std::string> userInput);
    void queryFdnLockState(std::vector<std::string> userInput);
    void setCardLock(std::vector<std::string> userInput);
+   void cardPower(std::vector<std::string> userInput);
    void selectCardSlot(std::vector<std::string> userInput);
    std::string appTypeToString(telux::tel::AppType appType);
    std::string appStateToString(telux::tel::AppState appState);

@@ -34,8 +34,10 @@
 #include <string.h>
 #include "v2x_codec.h"
 
-int gVerbosity = 8;
+int gVerbosity = 0;
 void set_codec_verbosity(int value) {
+    if(value)
+        printf("Codec verbosity will be set to: %d\n", value);
     gVerbosity = value;
 }
 /**
@@ -52,40 +54,73 @@ void set_codec_verbosity(int value) {
 int decode_msg(msg_contents *mc)
 {
     int ret = 0;
+    wsmp_data_t *wsmpp;
     if (!mc || !mc->abuf.data) {
-        fprintf(stderr, "%s: invalid input\n", __func__);
+        if(gVerbosity)
+            fprintf(stderr, "%s: invalid input\n", __func__);
         return -1;
     }
     if (mc->stackId == STACK_ID_SAE) {
         // skip one byte C-V2X family ID
-        //abuf_pull(&mc->abuf, 1);
+        abuf_pull(&mc->abuf, 1);
+
         if ((ret = wsmp_decode(mc)) < 0) {
-            fprintf(stderr, "WSMP decode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "WSMP decode failure\n");
             return ret;
         }
+        wsmpp = (wsmp_data_t *)mc->wsmp;
         if ((ret = ieee1609_2_decode_unsecured(mc)) < 0) {
-            fprintf(stderr, "IEEE1609.2 decode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "IEEE1609.2 decode failure\n");
             return ret;
         } else {
             ieee1609_2_data *ie = mc->ieee1609_2data;
             if (ie->content != unsecuredData)
                 return 1;
         }
-        if ((ret = decode_as_j2735(mc)) < 0) {
-            fprintf(stderr, "J2735 decode failure\n");
+        if(gVerbosity)
+            printf("PSID of received message is: %02x\n", wsmpp->psid); 
+        if (wsmpp->psid == PSID_WSA && mc->msgId == ((int)WSA_MSG_ID)) {
+#ifdef WITH_WSA
+            if ((ret = decode_as_wsa(mc)) < 0) {
+                if(gVerbosity)
+                    fprintf(stderr, "WSA decode failure\n");
+                return -1;
+            } else {
+                if(gVerbosity > 3)
+                    print_wsa(mc->wsa);
+                ret = 0;
+            }
+#else
+            if(gVerbosity)
+                fprintf(stderr, "WSA not supprted\n");
+#endif
         } else {
-            // decode_as_j2735 returned msg_id after successful decoding.
-            ret = 0;
+            if(mc->msgId != ((int)WSA_MSG_ID)){
+                if ((ret = decode_as_j2735(mc)) < 0) {
+                    if(gVerbosity)
+                        fprintf(stderr, "J2735 decode failure\n");
+                    return -1;
+                } else {
+                    // decode_as_j2735 returned msg_id after successful decoding.
+                    ret = 0;
+                }
+            }
         }
     } else {
+#ifdef ETSI
         // family ID is removed by GeoNetwork router.
         if ((ret = btp_decode(mc)) < 0) {
-            fprintf(stderr, "BTP decode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "BTP decode failure\n");
             return ret;
         }
         if ((ret = decode_as_etsi(mc)) < 0) {
-            fprintf(stderr, "ETSI decode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "ETSI decode failure\n");
         }
+#endif
     }
 
     return ret;
@@ -101,7 +136,8 @@ int decode_msg_continue(msg_contents *mc) {
 
     if (mc->stackId == STACK_ID_SAE) {
         if ((ret = decode_as_j2735(mc)) < 0 ) {
-            fprintf(stderr, "J2735 decode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "J2735 decode failure\n");
         } else {
             ret = 0;
         }
@@ -126,35 +162,58 @@ int decode_msg_continue(msg_contents *mc) {
 int encode_msg(msg_contents *mc)
 {
     int ret = 0;
+    wsmp_data_t *wsmpp;
     if (!mc || !mc->abuf.data) {
-        fprintf(stderr, "%s invalid input\n", __func__);
+        if(gVerbosity)
+            fprintf(stderr, "%s invalid input\n", __func__);
         return -1;
     }
     if (mc->stackId == STACK_ID_SAE) {
-        mc->j2735_msg_id = J2735_MSGID_BASIC_SAFETY;
-        if ((ret = encode_as_j2735(mc)) < 0) {
-            fprintf(stderr, "J2735 encode failure\n");
-            return ret;
+        wsmpp = (wsmp_data_t *)mc->wsmp;
+        if (wsmpp->psid == PSID_WSA) {
+#ifdef WITH_WSA
+            mc->msgId = (int)WSA_MSG_ID;
+            if ((ret = encode_as_wsa(mc)) < 0) {
+                if(gVerbosity)
+                    fprintf(stderr, "WSA encode failure\n");
+                return ret;
+            }
+#else
+            fprintf(stderr, "WSA not supported\n");
+#endif
+        } else {
+            mc->j2735_msg_id = J2735_MSGID_BASIC_SAFETY;
+            if ((ret = encode_as_j2735(mc)) < 0) {
+                if(gVerbosity)
+                    fprintf(stderr, "J2735 encode failure\n");
+                return ret;
+            }
         }
         if ((ret = ieee1609_2_encode_unsecured(mc)) < 0) {
-            fprintf(stderr, "IEEE1609.2 encode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "IEEE1609.2 encode failure\n");
             return ret;
         } else if (ret == 1) {
             return ret;
         }
         if ((ret = wsmp_encode(mc)) < 0) {
-            fprintf(stderr, "WSMP encode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "WSMP encode failure\n");
             return ret;
         }
     } else {
+#ifdef ETSI
         if ((ret = encode_as_etsi(mc)) < 0) {
-            fprintf(stderr, "ETSI encode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "ETSI encode failure\n");
             return ret;
         }
         if ((ret = btp_encode(mc)) < 0) {
-            fprintf(stderr, "BTP encode failure\n");
+            if(gVerbosity)
+                fprintf(stderr, "BTP encode failure\n");
             return ret;
         }
+#endif
     }
     if (mc->abuf.tail_bits_left != 8)
         ret = mc->abuf.tail - mc->abuf.data + 1;
@@ -167,12 +226,14 @@ int encode_msg_continue(msg_contents *mc)
 {
     int ret = 0;
     if (!mc || !mc->abuf.data) {
-        fprintf(stderr, "%s invalid input\n", __func__);
+        if(gVerbosity)
+            fprintf(stderr, "%s invalid input\n", __func__);
         return -1;
     }
     if (mc->stackId == STACK_ID_SAE) {
         if ((ret = wsmp_encode(mc)) < 0) {
-            fprintf(stderr,"WSMP encode failure\n");
+            if(gVerbosity)
+                fprintf(stderr,"WSMP encode failure\n");
             return ret;
         }
     } else {

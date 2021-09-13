@@ -55,6 +55,9 @@ namespace telux {
 
 namespace tel {
 
+/** @addtogroup telematics_call
+ * @{ */
+
 class IMakeCallCallback;
 
 /**
@@ -102,9 +105,6 @@ using ECallHlapTimerStatusCallback = std::function<void(telux::common::ErrorCode
  */
 using EcbmStatusCallback
     = std::function<void(telux::tel::EcbMode ecbMode, telux::common::ErrorCode error)>;
-
-/** @addtogroup telematics_call
- * @{ */
 
 /**
  * @brief Call Manager is the primary interface for call related operations
@@ -205,8 +205,6 @@ public:
     *
     * @returns Status of makeECall i.e. success or suitable status code.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
                                            const ECallMsdData &eCallMsdData, int category,
@@ -269,8 +267,6 @@ public:
     *
     * @returns Status of makeECall i.e. success or suitable status code.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
                                            const std::vector<uint8_t> &msdPdu, int category,
@@ -379,8 +375,6 @@ public:
     *
     * @returns Status of requestECallHlapTimerStatus i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status requestECallHlapTimerStatus(int phoneId,
                                                          ECallHlapTimerStatusCallback callback) = 0;

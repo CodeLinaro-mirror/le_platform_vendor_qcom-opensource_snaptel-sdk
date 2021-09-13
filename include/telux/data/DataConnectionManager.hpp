@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -47,11 +47,15 @@
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataProfile.hpp>
+#include <telux/data/IpFilter.hpp>
 
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace data {
+
+/** @addtogroup telematics_data
+ * @{ */
 
 // Forward declarations
 class IDataConnectionListener;
@@ -66,14 +70,83 @@ struct IpFamilyInfo {
 };
 
 /**
+ * Encapsulate the Qos Filter rule
+ */
+struct QosFilterRule{
+    std::vector<std::shared_ptr<IIpFilter>> filter; /**< @ref IIpFilter */
+    uint16_t filterId;                              /**< Unique identifier for each filter. */
+    uint16_t filterPrecedence;                      /**< Specifies the order in which filters are
+                                                         applied. A lower numerical value has a
+                                                         higher precedence. */
+};
+
+/**
+ * QOS TFT Flow info
+ */
+struct TrafficFlowTemplate {
+    /** Mandatory */
+    QosFlowId qosId;                            /**< defines current flow id */
+    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
+
+    QosFlowMask mask;                           /**< bitmask to denote which of the optional fields
+                                                     in TrafficFlowTemplate are valid */
+    /** Optional */
+    QosIPFlowInfo txGrantedFlow;                /* Tx Granted Flow IP info */
+    QosIPFlowInfo rxGrantedFlow;                /* Rx Granted Flow IP info */
+
+    uint32_t txFiltersLength;                   /* Tx Filters length */
+    QosFilterRule txFilters[MAX_QOS_FILTERS];   /* Tx QoS Filters that apply to a
+                                                   granted Tx QoS flow. */
+
+    uint32_t rxFiltersLength;                   /* Rx Filters length*/
+    QosFilterRule rxFilters[MAX_QOS_FILTERS];   /* Rx QoS Filters that apply to a
+                                                   granted Rx QoS flow. */
+};
+
+/**
+ * QOS TFT flow change info
+ */
+struct TftChangeInfo {
+    std::shared_ptr<TrafficFlowTemplate> tft;   /**< TFT flow info @ref TrafficFlowTemplate */
+    QosFlowStateChangeEvent stateChange;        /**< Flow state change event */
+};
+
+/**
+ * Data call bit rate info
+ */
+struct BitRateInfo {
+    uint64_t txRate;      /**< Instantaneous channel transmit rate in bits/sec                  */
+    uint64_t rxRate;      /**< Instantaneous channel receive rate in bits/sec                   */
+    uint64_t maxTxRate;   /**< Maximum transmit rate that can be assigned to device in bits/sec */
+    uint64_t maxRxRate;   /**< Maximum receive rate that can be assigned to device in bits/sec  */
+};
+
+/**
  * This function is called with the response to startDataCall / stopDataCall API.
  *
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
+ * When callback is used with startDataCall, expected behavior is as following:
+ *  - If this is first client to start datacall in the system and no error is detected, state of
+ *    data call will be NET_CONNECTING and onDataCallInfoChanged will be called once data call
+ *    is brought up successfully or failed.
+ *  - If client tries to start data call that is already up and no error is detected, state of data
+ *    call will NET_CONNECTED and onDataCallInfoChanged will not get called.
+ *  - If any client that start data call and error is detected, error argument will contain error
+ *    code and onDataCallInfoChanged will not get called.
+
+ * When callback is used with stopDataCall, expected behavior is as following:
+ *  - First/Last client that attempts to stop data call and no error is detected, state of data call
+ *    will be NET_DISCONNECTING and onDataCallInfoChanged will be called once data call is down.
+ *  - If a client starts a data call and then tries to stop it while there are other clients in
+ *    the system who also started the same data call, and no error is detected, data call status
+ *    will be NET_CONNECTED and onDataCallInfoChanged will not get called.
+ *  - If any client attemp to stop data call and error detected, error argument will contain error
+ *    code and onDataCallInfoChanged will not get called.
+ *
  * @param [in] dataCall        Pointer to IDataCall
- * @param [in] error           Return code for whether the operation
- *                             succeeded or failed
+ * @param [in] error           Return code for whether the operation succeeded or failed
  *
  */
 using DataCallResponseCb = std::function<void(
@@ -120,8 +193,29 @@ using DataCallListResponseCb = std::function<void(
 using DefaultProfileIdResponseCb
     = std::function<void(int profileId, SlotId slotId, telux::common::ErrorCode error)>;
 
-/** @addtogroup telematics_data
- * @{ */
+/**
+ * This function is called in the response to requestTrafficFlowTemplate().
+ *
+ * @param [in] tft        Vector of TFT flow info. @ref TrafficFlowTemplate
+ * @param [in] error      Code which indicates whether the operation succeeded or not.
+ *                        @ref ErrorCode.
+ */
+using TrafficFlowTemplateCb =
+    std::function<void(const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tft,
+        telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to requestDataCallBitRate.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] bitRate         Bit Rate Info for requested data call
+ * @param [in] error           Return code for whether the operation succeeded or failed
+ *
+ */
+using requestDataCallBitRateResponseCb
+    = std::function<void(BitRateInfo& bitRate, telux::common::ErrorCode error)>;
 
 /**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
@@ -139,8 +233,6 @@ class IDataConnectionManager {
      *          SERVICE_UNAVAILABLE  If data connection manager is temporarily unavailable.
      *          SERVICE_FAILED       If data connection manager encountered an irrecoverable failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -176,8 +268,6 @@ class IDataConnectionManager {
     *
     * @returns Immediate status of setDefaultProfile i.e. success or suitable status.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status setDefaultProfile(OperationType oprType, uint8_t profileId,
        telux::common::ResponseCallback callback = nullptr)  = 0;
@@ -191,8 +281,6 @@ class IDataConnectionManager {
     *
     * @returns Immediate status of getDefaultProfile i.e. success or suitable status.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status getDefaultProfile(
        OperationType oprType, DefaultProfileIdResponseCb callback)  = 0;
@@ -218,8 +306,6 @@ class IDataConnectionManager {
      * @returns Immediate status of startDataCall() request sent
      *                   i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      *
      */
     virtual telux::common::Status startDataCall(int profileId,
@@ -232,8 +318,9 @@ class IDataConnectionManager {
      *
      * This will tear down specific data call connection based on profile identifier.
      *
-     * @note       if application starts data call on IPV4V6 then it's expected to stop the
+     * @note       If application starts data call on IPV4V6 then it's expected to stop the
      *             data call on same ip family type (i.e IPV4V6).
+     *             Client can only stop data call it started.
      *
      * @param [in] profileId     Profile identifier corresponding to which data call tear down
      *                           will be done. Use data profile manager to get the list of
@@ -247,8 +334,6 @@ class IDataConnectionManager {
      *          suitable status code. The client receives asynchronous notifications
      *          indicating the data call tear-down.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      *
      */
     virtual telux::common::Status stopDataCall(int profileId,
@@ -294,8 +379,6 @@ class IDataConnectionManager {
      * @param [out] OperationType    @ref telux::data::OperationType
      * @param [out] callback         Callback with list of supported data calls
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
-     *          break backwards compatibility.
      */
     virtual telux::common::Status requestDataCallList(OperationType type,
         DataCallListResponseCb callback) = 0;
@@ -409,6 +492,21 @@ class IDataCall {
     virtual OperationType getOperationType() = 0;
 
     /**
+     * Get the current installed QOS Traffic flow template information.
+     *
+     * @param [in]  ipFamilyType    - IP Family type @ref IpFamilyType. TFT's are installed per IP
+     *                                Family.
+     * @param [in]  callback        - callback function to get the result of API.
+     *
+     * @returns Status of requestTrafficFlowTemplate i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestTrafficFlowTemplate(IpFamilyType ipFamilyType,
+        TrafficFlowTemplateCb callback) = 0;
+
+    /**
      * Request the data transfer statistics for data call corresponding
      * to specified profile identifier.
      *
@@ -432,6 +530,20 @@ class IDataCall {
         = 0;
 
     /**
+     * Request data call bit rate in (bits/sec).
+     *
+     * @param [out] callback     callback to be called with bit rate results
+     *                           @ref requestDataCallBitRateResponseCb
+     *
+     * @returns Status of requestDataCallBitRate success or suitable status code
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestDataCallBitRate(
+        requestDataCallBitRateResponseCb callback) = 0;
+
+    /**
      * Destructor for IDataCall
      */
     virtual ~IDataCall(){};
@@ -445,17 +557,42 @@ class IDataCall {
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
  *
+ * The notification delivery mechanism uses the same thread to deliver all the queued notifications
+ * to ensure they are delivered in order.
+ * Considering this, the thread on which the notifications are delivered should not be blocked for
+ * longer operations since this would result in delay in delivery of further notifications that are
+ * in the queue waiting to be dispatched.
+ *
  */
 class IDataConnectionListener : public telux::common::IServiceStatusListener {
  public:
     /**
      * This function is called when there is a change in the data call.
      *
-     * @param [in] status     Data Call Status
      * @param [in] dataCall   Pointer to IDataCall
      *
      */
     virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
+
+    /**
+     * This function is called when a change occur in hardware acceleration service.
+     *
+     * @param [in] state   New state of hardware Acceleration service (Active/Inactive)
+     *
+     */
+    virtual void onHwAccelerationChanged(const ServiceState state){};
+
+    /**
+     * This function is called when the TFT's parameters are changed for a packet data session.
+     *
+     * @param [in] dataCall     Pointer to IDataCall
+     * @param [in] tft          vector of TftChangeInfo @ref TftChangeInfo
+     *
+     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual void onTrafficFlowTemplateChange(const std::shared_ptr<IDataCall> &dataCall,
+        const std::vector<std::shared_ptr<TftChangeInfo>> &tft) {};
 
     /**
      * Destructor for IDataConnectionListener

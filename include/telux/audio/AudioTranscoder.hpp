@@ -31,10 +31,9 @@
  * @file    AudioTranscoder.hpp
  *
  * @brief   Audio Transcoder is a primary interface for audio transcoding operations. It provides
- *          APIs to convert one audio format to another.
+ *          APIs to convert one audio format to another. The supported transcoding is real time
+ *          transcoding, which takes the playback time of file for completing the opearation.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 
 #ifndef AUDIOTRANSCODER_HPP
@@ -50,7 +49,7 @@
 namespace telux {
 
 namespace audio {
-/** @addtogroup telematics_audio
+/** @addtogroup telematics_audio_stream
  * @{ */
 
 class IAudioBuffer;
@@ -74,8 +73,6 @@ class IAudioBuffer;
  * @param [in] error  Return code which indicates whether the operation succeeded or not.
  *                    @ref ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
         uint32_t isLastBuffer, telux::common::ErrorCode error)>;
@@ -96,8 +93,6 @@ using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer
  *                          succeeded or not.
  *                          @ref ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using TranscoderWriteResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error)>;
@@ -113,8 +108,6 @@ public:
      *
      * @returns            a buffer or nullptr in case of failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual std::shared_ptr<IAudioBuffer> getWriteBuffer() = 0;
 
@@ -123,8 +116,6 @@ public:
      *
      * @returns            a buffer or nullptr in case of failure.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual std::shared_ptr<IAudioBuffer> getReadBuffer() = 0;
 
@@ -144,8 +135,6 @@ public:
      *
      * @returns Status of the request i.e. success or suitable status code.
      *
-     * @note       Eval: This is a new API and is being evaluated. It is subject to change
-     *             and could break backwards compatibility.
      */
     virtual telux::common::Status write(std::shared_ptr<IAudioBuffer> buffer,
             uint32_t isLastBuffer, TranscoderWriteResponseCb callback = nullptr) = 0;
@@ -158,8 +147,6 @@ public:
      *
      * @returns Status of the request i.e. success or suitable status code.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change
-     *         and could break backwards compatibility.
      */
     virtual telux::common::Status tearDown(telux::common::ResponseCallback callback = nullptr) = 0;
 
@@ -172,8 +159,6 @@ public:
      *
      * @returns Status of the request i.e. success or suitable status code.
      *
-     * @note       Eval: This is a new API and is being evaluated. It is subject to change
-     *             and could break backwards compatibility.
      */
     virtual telux::common::Status read(std::shared_ptr<IAudioBuffer> buffer, uint32_t bytesToRead,
             TranscoderReadResponseCb callback = nullptr) = 0;
@@ -185,8 +170,6 @@ public:
      *
      * @returns Status of registerListener i.e success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<ITranscodeListener> listener) = 0;
 
@@ -197,8 +180,6 @@ public:
      *
      * @returns Status of deRegisterListener, success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status
             deRegisterListener(std::weak_ptr<ITranscodeListener> listener) = 0;
@@ -206,7 +187,7 @@ public:
     virtual ~ITranscoder() {};
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
+/** @} */ /* end_addtogroup telematics_audio_stream */
 }  // End of namespace audio
 
 }  // End of namespace telux

@@ -30,7 +30,7 @@
 /**
   @file v2x_config_api.h
 
-  @addtogroup v2x_api_config
+  @addtogroup telematics_cv2x_c_config
   Abstraction of the CV2X configuration relevant interfaces.
  */
 
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-/** @addtogroup v2x_api_config
+/** @addtogroup telematics_cv2x_c_config
 @{ */
 
 /**
@@ -164,7 +164,7 @@ extern v2x_status_enum_type v2x_update_configuration(const char *config_file_pat
  */
 extern v2x_status_enum_type v2x_retrieve_configuration(const char *config_file_path);
 
-/** @} *//* end_addtogroup v2x_api_config */
+/** @} *//* end_addtogroup telematics_cv2x_c_config */
 
 #ifdef __cplusplus
 }

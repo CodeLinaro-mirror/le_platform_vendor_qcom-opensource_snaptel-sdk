@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,6 +57,7 @@ extern "C" {
 #include "Rsp/RspMenu.hpp"
 #include "ImsSettings/ImsSettingsMenu.hpp"
 #include "../../common/utils/Utils.hpp"
+#include "ImsServingSystem/ImsServingSystemMenu.hpp"
 
 #include "TelSdkConsoleApp.hpp"
 
@@ -102,9 +103,13 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> imssMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "IMS_Settings", {},
             std::bind(&TelSdkConsoleApp::imsSettingsMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> imsaMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "IMS_Serving_System", {},
+            std::bind(&TelSdkConsoleApp::imsServingSystemMenu, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand, imssMenuCommand};
+             dataMenuCommand, multiSimMenuCommand, cbMenuCommand, rspMenuCommand, imssMenuCommand,
+             imsaMenuCommand};
 
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
@@ -184,6 +189,13 @@ void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
     ImsSettingsMenu imsSettingsMenu("IMS Settings Menu", "ims_settings> ");
     imsSettingsMenu.init();
     imsSettingsMenu.mainLoop();
+    TelSdkConsoleApp::displayMenu();
+}
+
+void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) {
+    ImsServingSystemMenu imsaMenu("IMS Serving System Menu", "ims_serving_system> ");
+    imsaMenu.init();
+    imsaMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
 }
 

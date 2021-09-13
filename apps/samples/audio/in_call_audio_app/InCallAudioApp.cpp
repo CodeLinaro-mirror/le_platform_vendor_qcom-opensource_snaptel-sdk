@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -54,26 +54,28 @@ InCallAudioApp::~InCallAudioApp() {
 
 Status InCallAudioApp::init() {
     // Get the AudioFactory and AudioManager instances.
+    std::promise<ServiceStatus> prom{};
     auto &audioFactory = AudioFactory::getInstance();
-    audioManager_ = audioFactory.getAudioManager();
-
-    // Requesting to get audio subsystem state
-    bool subSystemStatus = false;
-    if (audioManager_) {
-        subSystemStatus = audioManager_->isSubsystemReady();
-    } else {
-        std::cout << "Invalid Audio Manager" << std::endl;
+    audioManager_ = audioFactory.getAudioManager([&prom](ServiceStatus status) {
+        if (status == ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(ServiceStatus::SERVICE_FAILED);
+        }
+    });
+    if (!audioManager_) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
         return Status::FAILED;
     }
-
-    //  Checking state of audio subsystem if it is ready or not, if not ready waiting for it to
-    //  get ready.
-    if (!subSystemStatus) {
-        std::future<bool> f = audioManager_->onSubsystemReady();
-        subSystemStatus = f.get();
+    //  Check if audio subsystem is ready
+    //  If audio subsystem is not ready, wait for it to be ready
+    ServiceStatus managerStatus = audioManager_->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
     }
 
-    if (subSystemStatus) {
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsystem is ready." << std::endl;
     } else {
         std::cout << "Audio Subsystem is NOT ready." << std::endl;

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+*  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are
@@ -49,7 +49,7 @@
 namespace telux {
 
 namespace audio {
-/** @addtogroup telematics_audio
+/** @addtogroup telematics_audio_stream
  * @{ */
 
 class IAudioDevice;
@@ -184,8 +184,6 @@ using CreateStreamResponseCb
  * @param [in] error       Return code which indicates whether the operation succeeded or not.
  *                         @ref ErrorCode
  *
- * @note   Eval: This is a new API and is being evaluated. It is subject to
- *         change and could break backwards compatibility.
  */
 using CreateTranscoderResponseCb = std::function<void(
         std::shared_ptr<ITranscoder> &transcoder, telux::common::ErrorCode error)>;
@@ -203,6 +201,20 @@ using CreateTranscoderResponseCb = std::function<void(
 using DeleteStreamResponseCb = std::function<void(telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to getCalibrationInitStatus API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] calInitStatus  State of calibration initialization.
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not.
+ *                            @ref ErrorCode
+ */
+using GetCalInitStatusResponseCb
+   = std::function<void(CalibrationInitStatus calInitStatus, telux::common::ErrorCode error)>;
+
+/**
  * @brief   Audio Manager is a primary interface for audio operations. It provide
  *          APIs to manage Streams ( like voice, play, record etc) and sound cards.
  */
@@ -212,14 +224,28 @@ public:
     * Checks the status of audio subsystems and returns the result.
     *
     * @returns    If true that means AudioManager is ready for performing audio operations.
+    *
+    * @deprecated Use getServiceStatus API
     */
    virtual bool isSubsystemReady() = 0;
+
+   /**
+    * This status indicates whether the object is in a usable state or not.
+    *
+    * @returns SERVICE_AVAILABLE    -  if audio manager is ready to use.
+    *          SERVICE_UNAVAILABLE  -  if audio manager is temporarily unavailable to use.
+    *          SERVICE_FAILED       -  if audio manager encountered an irrecoverable failure and
+    *                                  can not be used.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
     * Wait for Audio subsystem to be ready.
     *
     * @returns    A future that caller can wait on to be notified when audio
     *             subsystem is ready.
+    *
+    * @deprecated Use InitResponseCb callback in factory API getAudioManager.
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
@@ -255,7 +281,9 @@ public:
       = 0;
 
    /**
-    * Creates an instance of transcoder that can be used for transcoding operations.
+    * Creates an instance of transcoder that can be used for transcoding operations. The supported
+    * transcoding is real time transcoding, which takes the playback time of file for completing the
+    * opearation.
     * Each instance returned can be used for single transcoding operation. The instance can not
     * be used for multiple transcoding operation.
     *
@@ -265,8 +293,6 @@ public:
     *
     * @returns Status of request i.e. success or suitable status code.
     *
-    * @note        Eval: This is a new API and is being evaluated. It is subject to change
-    *              and could break backwards compatibility.
     */
     virtual telux::common::Status createTranscoder(FormatInfo input, FormatInfo output,
             CreateTranscoderResponseCb callback) = 0;
@@ -290,8 +316,6 @@ public:
     *
     * @returns Status of registerListener i.e success or suitable status code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
    virtual telux::common::Status registerListener(std::weak_ptr<IAudioListener> listener) = 0;
 
@@ -302,10 +326,23 @@ public:
     *
     * @returns Status of deRegisterListener, success or suitable status code
     *
+    */
+   virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
+
+   /**
+    * Get calibration status. Returns whether audio subsystem was able to successfully initialize
+    * calibration in system. Calibration init status is available after the initialization
+    * of the audio subsystem or after re-intialization of audio subsytem in case of sub system
+    * restart is triggered.
+    *
+    *  @param [in] callback    callback pointer to get the response of getCalibrationInitStatus.
+    *
+    * @returns @ref Status of getCalibrationInitStatus, success or suitable status code.
+    *
     * @note    Eval: This is a new API and is being evaluated.It is subject to change
     *          and could break backwards compatibility.
     */
-   virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
+   virtual telux::common::Status getCalibrationInitStatus(GetCalInitStatusResponseCb callback) = 0;
 
    virtual ~IAudioManager() {};
 };
@@ -410,7 +447,8 @@ public:
    virtual telux::common::Status getDevice(GetStreamDeviceResponseCb callback = nullptr) = 0;
 
    /**
-    * Set Volume of audio stream
+    * Set Volume of audio stream. Application needs to provide direction of the stream. Currently
+    * TX direction of @ref VOICE_CALL is not supported.
     *
     * @param [in] volume     volume setting per channel for direction.
     * @param [in] callback   callback to get the response of setVolume.
@@ -422,7 +460,8 @@ public:
       = 0;
 
    /**
-    * Get Volume of audio stream
+    * Get Volume of audio stream. Application needs to provide direction of the stream. Currently
+    * TX direction of @ref VOICE_CALL is not supported.
     *
     * @param [in] dir         Stream Direction to query volume details.
     * @param [in] callback    callback to get the response of getVolume.
@@ -574,6 +613,8 @@ public:
     * same number of bytes written as requested and no error occured, user can send next buffer.
     * If the number of bytes returned are not equal to the requested write size, then need to resend
     * the buffer again from the leftover offset after waiting for the @onReadyForWrite() event.
+    * Once the last buffer is sent and the playback operation is complete, delete the playback
+    * stream to avoid receiving silent packets on RX path.
     *
     * @param [in] buffer       stream buffer for write.
     * @param [in] callback     callback to get the response of write.
@@ -592,8 +633,6 @@ public:
      *
      * @returns Status of the request i.e. success or suitable status code.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to change
-     *         and could break backwards compatibility.
      */
     virtual telux::common::Status stopAudio(StopType stopType,
                     telux::common::ResponseCallback callback = nullptr) = 0;
@@ -606,8 +645,6 @@ public:
     *
     * @returns Status of registerListener i.e success or suitable status code.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status registerListener(std::weak_ptr<IPlayListener> listener) = 0;
 
@@ -618,8 +655,6 @@ public:
     *
     * @returns Status of deRegisterListener, success or suitable status code
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual telux::common::Status deRegisterListener(std::weak_ptr<IPlayListener> listener) = 0;
 
@@ -740,7 +775,7 @@ public:
    virtual ~IAudioToneGeneratorStream() {};
 };
 
-/** @} */ /* end_addtogroup telematics_audio */
+/** @} */ /* end_addtogroup telematics_audio_stream */
 }  // End of namespace audio
 
 }  // End of namespace telux

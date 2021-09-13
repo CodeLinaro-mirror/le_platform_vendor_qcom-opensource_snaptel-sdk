@@ -1,3 +1,6 @@
+How to Get and Set Auto Config Selection Mode {#get_and_set_auto_selection_mode}
+================================================================================
+
 # How to Get and Set Auto Config Selection Mode.
 
 Please follow below steps to Get and Set Auto Config Selection Mode.

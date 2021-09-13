@@ -45,18 +45,23 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <semaphore.h>
 #include "v2x_msg.h"
 #include "v2x_codec.h"
 #include "KinematicsReceive.h"
 #include "RadioReceive.h"
 #include "RadioTransmit.h"
 #include "Ldm.h"
-#include "VehicleReceive.h"
-#ifdef SECURITY
-#include "SecurityImpl.hpp"
+#ifdef AEROLINK
+#include "AerolinkSecurity.hpp"
 #else
 #include "NullSecurity.hpp"
 #endif
+
+#define ABUF_LEN            8448
+#define ABUF_HEADROOM       256
+#define MIN_PACKET_LEN      20
+#define MAX_PACKET_LEN      8192
 
 using namespace std;
 enum class TransmitType {
@@ -68,10 +73,12 @@ enum class MessageType {
     BSM,
     CAM,
     DENM,
-    SPAT
+    SPAT,
+    WSA
 };
 
 struct Config{
+    int codecVerbosity;
     vector<uint16_t> receivePorts;
     vector<uint16_t> eventPorts;
     vector<uint16_t> spsPorts;
@@ -83,8 +90,10 @@ struct Config{
     vector<uint16_t> eventDestPorts;
     vector<string> eventDestAddrs;
     vector<string> eventDestNames;
+    bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
+    bool enableTxAlways = true;
     uint16_t ldmGbTime = 3;
     uint8_t ldmGbTimeThreshold= 5;
     uint16_t ldmSize = 1;
@@ -112,24 +121,68 @@ struct Config{
     /** Simulation config */
     bool enableUdp = false;
     string ipv4_src;
+    string ipv4_dest;
+    uint16_t tx_port = 0;
     /** GeoNetwork config data */
     uint8_t MacAddr[6];
     int StationType = 0;
     uint16_t CAMDestinationPort = 0;
-    /** Security config data */
+    /** Security Config Data */
     bool enableSecurity = false;
     string securityContextName;
     uint16_t securityCountryCode;
     uint32_t psid;
     uint8_t ssp[32];
-    int sspLength;
+    uint32_t sspLength = 0;
+    uint8_t sspMask[32];
+    uint32_t sspMaskLength = 0;
     bool enableAsync = false;
+    bool enableEncrypt = false;
     uint8_t externalDataHash[32];
+    uint32_t hashLength = 0;
+    /** Sec Driver Options **/
+    uint8_t driverVerbosity = 0;
+    uint8_t secVerbosity = 0;
+    uint8_t appVerbosity = 0;
+    /** Sec Driver Multi Threading Options **/
+    uint8_t numRxThreads = 0;
+    uint8_t numTxThreads = 0; // TODO
+    /** Verification Stats Parameters */
+    bool enableVerifStatLog = true;
+    uint32_t verifStatsSize = 10000;
+    string verifStatLogFile = "/tmp/verif_stats.log";
+    /** Signing Stats Parameters */
+    bool enableSignStatLog = true;
+    uint32_t signStatsSize = 10000;
+    string signStatLogFile = "/tmp/sign_stats.log";
+
+    /* config data for Ieee1609.3 Wsa */
+    long routerLifetime;
+    string ipPrefix;
+    int ipPrefixLength;
+    string defaultGateway;
+    string primaryDns;
 };
 
 class ApplicationBase
 {
 public:
+    sem_t rx_sem;
+    sem_t log_sem;
+    int appVerbosity = 0;
+    int totalTxSuccess = 0;
+    int totalRxSuccess = 0;
+
+    /** For multi-threaded msg verification */
+    std::map<std::thread::id, int> verifStatIdx;
+    std::map<std::thread::id, int> signStatIdx;
+    std::map<std::thread::id, std::vector<VerifStats>> thrVerifLatencies;
+    std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
+
+    /* Function to permit different levels of verbosity */
+    void setAppVerbosity(int value) {
+        appVerbosity = value;
+    }
 
     /**
     * Constructor of  Application instance with all the
@@ -173,7 +226,8 @@ public:
      * @param bufLen received buffer length.
      * @param ldmIndex the LDM index
      */
-    virtual int receive(const uint8_t index, const uint16_t bufLen, const uint32_t ldmIndex);
+    virtual int receive(const uint8_t index, const uint16_t bufLen,
+                        const uint32_t ldmIndex);
 
     /**
      * Overloaded function to fill the message with stack specific data.(BSM/CAM/DENM) for transmition
@@ -184,6 +238,30 @@ public:
     * Closes all tx and rx flows from Snaptel SDK.
     */
     void closeAllRadio();
+
+    /**
+    *   Sets up the verification statistics vector based on the exisitng threads
+    */
+    void initVerifLogging();
+
+    /**
+     * Write verification statistics to file
+     */
+    void writeVerifLogging();
+
+    /**
+    *   Sets up the signing statistics vector based on the exisitng threads
+    */
+    void initSignLogging();
+
+    /**
+     * Write signing statistics to file
+     */
+    void writeSignLogging();
+
+    void printRxStats();
+    void printTxStats();
+    void setup();
 
     /*********************************************************************************
      * data members.
@@ -246,7 +324,8 @@ public:
     Ldm* ldm = nullptr;
 
 protected:
-    //const uint16_t bufLength = 3000;
+    bool isTx = false;
+    bool isRx = false;
     bool isTxSim = false;
     bool isRxSim = false;
     MessageType MsgType;
@@ -265,21 +344,14 @@ protected:
      * Call radio transmit function, maybe overloaded by child class to perform
      * additional operation before calling radio tx.
      */
-    virtual void transmit(uint8_t index, std::shared_ptr<msg_contents>mc, int16_t bufLen,
-            TransmitType txType);
+    virtual int transmit(uint8_t index, std::shared_ptr<msg_contents>mc,
+                            int16_t bufLen, TransmitType txType);
 
     /**
-    * Object that holds all data and meta data of the LocationSDK
-    * and allows incoming fixes from such service.
-    */
+     * Object that holds all data and meta data of the LocationSDK
+     * and allows incoming fixes from such service.
+     */
     shared_ptr<KinematicsReceive> kinematicsReceive;
-
-    /**
-    * Object that listens on changes to vehicular CAN data
-    * and holds most up to date data in vehicleData member
-    * to serve the Application.
-    */
-    unique_ptr<VehicleReceive> vehicleReceive;
 
     /**
      * Security service object.
@@ -288,11 +360,6 @@ protected:
 
 
 private:
-    /**
-    * Configuration Data structure to save all parsed information of configuration file.
-    */
-
-    void setup();
     void simTxSetup(const string ipv4, const uint16_t port);
     void simRxSetup(const string ipv4, const uint16_t port);
     static uint16_t delimiterPos(string line, vector<string> delimiters);

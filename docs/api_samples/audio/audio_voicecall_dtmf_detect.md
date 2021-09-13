@@ -1,36 +1,48 @@
-# Using Audio Manager APIs to detect DTMF tones in a voice call.
+Using Audio Manager APIs to detect DTMF tones in a voice call. {#audio_voicecall_dtmf_detect}
+=============================================================================================
+
+# Using Audio Manager APIs to detect DTMF tones in a voice call
 
 Please follow the below steps to detect DTMF tones in an active voice call. Note that only Rx direction is supported now.
 
-### 1. Implement IVoiceListener interface ###
+### 1. Get the AudioFactory instance
+
    ~~~~~~{.cpp}
-    class MyVoiceListener : public IVoiceListener {
-    public:
-        void onDtmfToneDetection(DtmfTone dtmfTone) override;
-    };
+    auto &audioFactory = audioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the Audio Factory and Audio Manager instances ###
-   ~~~~~~{.cpp}
-    auto &audioFactory = AudioFactory::getInstance();
-    auto audioManager = audioFactory.getAudioManager();
-   ~~~~~~
+### 2. Get the AudioManager object and check for audio subsystem Readiness
 
-### 3. Wait for the Audio subsystem to be initialized and ready ###
    ~~~~~~{.cpp}
-    if (audioManager) {
-        bool isReady = audioManager->isSubsystemReady();
-        if (!isReady) {
-            std::cout << "Audio subsystem is not ready, waiting for it to be ready " << std::endl;
-            std::future<bool> f = audioManager->onSubsystemReady();
-            isReady = f.get();
-        }
+    std::promise<ServiceStatus> prom{};
+    //  Get AudioManager instance.
+    audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
+        prom.set_value(serviceStatus);
+    });
+    if (!audioManager) {
+        std::cout << "Failed to get AudioManager object" << std::endl;
+        return;
+    }
+
+    //  Check if audio subsystem is ready
+    //  If audio subsystem is not ready, wait for it to be ready
+    ServiceStatus managerStatus = audioManager->getServiceStatus();
+    if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
+    }
+
+    //  Check the service status again.
+    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
-        std::cout << "Invalid Audio manager" << std::endl;
+        std::cout << "ERROR - Unable to initialize audio subsystem" << std::endl;
+        return;
     }
    ~~~~~~
 
-### 4. Exit the application, if SDK is unable to initialize Audio subsystem ###
+### 3. Exit the application, if SDK is unable to initialize Audio subsystem
+
    ~~~~~~{.cpp}
     if(isReady) {
         std::cout << " *** Audio subsystem is Ready *** " << std::endl;
@@ -40,7 +52,8 @@ Please follow the below steps to detect DTMF tones in an active voice call. Note
     }
    ~~~~~~
 
-### 5. Create an audio Stream (to be associated with Voice call session)  ###
+### 4. Create an audio Stream (to be associated with Voice call session)
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error) {
@@ -55,7 +68,8 @@ Please follow the below steps to detect DTMF tones in an active voice call. Note
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 6. Start the Voice call session ###
+### 5. Start the Voice call session
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void startAudioCallback(ErrorCode error)
@@ -70,7 +84,8 @@ Please follow the below steps to detect DTMF tones in an active voice call. Note
     status = audioVoiceStream->startAudio(startAudioCallback);
    ~~~~~~
 
-### 7. Register a listener to get notifications on DTMF tone detection ###
+### 6. Register a listener to get notifications on DTMF tone detection
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void registerListenerCallback(ErrorCode error)
@@ -88,12 +103,14 @@ Please follow the below steps to detect DTMF tones in an active voice call. Note
     status = audioVoiceStream->registerListener(myDtmfToneListener, registerListenerCallback);
    ~~~~~~
 
-### 8. De-register the listener to stop getting the notifications ###
+### 7. De-register the listener to stop getting the notifications
+
    ~~~~~~{.cpp}
     status = audioVoiceStream->deRegisterListener(myDtmfToneListener);
    ~~~~~~
 
-### 9. Stop the Voice call session ###
+### 8. Stop the Voice call session
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void stopAudioCallback(ErrorCode error)
@@ -108,7 +125,8 @@ Please follow the below steps to detect DTMF tones in an active voice call. Note
     status = audioVoiceStream->stopAudio(stopAudioCallback);
    ~~~~~~
 
-### 10. Delete the audio stream associated with the Voice call session ###
+### 9. Delete the audio stream associated with the Voice call session
+
    ~~~~~~{.cpp}
     // Implement a response function to get the request status
     void deleteStreamCallback(ErrorCode error) {

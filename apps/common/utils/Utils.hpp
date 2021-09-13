@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,6 +44,9 @@
 #include <vector>
 #include <telux/common/CommonDefines.hpp>
 
+#define SEC_TO_NANOS 1000000000
+#define SEC_TO_MICROS 1000000
+
 class Utils {
 public:
    // Validate the input and in case of invalid input request
@@ -85,6 +88,15 @@ public:
    // Print status message that corresponds to the return value of managers api(s) of type
    // telux::common::Status.
    static void printStatus(telux::common::Status status);
+
+   // return current UTC time in microseconds
+   static uint64_t getCurrentTimestamp(void);
+
+   // Validate input V2X SPS interval which should comply with supported values in 3GPP
+   static int validateV2xSpsInterval(uint16_t interval);
+
+   // Get the number of nanoseconds elapsed since boot
+   static uint64_t getNanosecondsSinceBoot();
 };
 
 #endif

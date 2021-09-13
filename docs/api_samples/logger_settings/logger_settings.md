@@ -1,3 +1,6 @@
+Configuring Logs from the SDK {#logger_settings}
+================================================
+
 # Configuring Logs from the SDK
 
 Please follow below steps to configure Logger settings.

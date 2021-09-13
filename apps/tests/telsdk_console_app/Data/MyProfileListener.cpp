@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -37,6 +37,10 @@
 
 #define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
+MyProfileListener::MyProfileListener(SlotId slotId)
+   : slotId_(slotId) {
+}
+
 void MyProfileListener::onServiceStatusChange(telux::common::ServiceStatus status) {
    std::string stat;
 
@@ -52,13 +56,13 @@ void MyProfileListener::onServiceStatusChange(telux::common::ServiceStatus statu
          break;
    }
 
-   print_notification <<
-       " ** Data Profile onServiceStatusChange **\n" << stat << std::endl;
+   print_notification << " ** Data Profile onServiceStatusChange on Slot-" << slotId_
+                      << " ** " << stat << std::endl;
 }
 
 void MyProfileListener::onProfileUpdate(int profileId, telux::data::TechPreference techPreference,
                                         telux::data::ProfileChangeEvent event) {
-   print_notification << "Profile updated: " << std::endl;
+   print_notification << "Slot-" << slotId_ << " Profile updated: " << std::endl;
    print_notification << "Profile Id: " << profileId
                       << " TechPreference: " << static_cast<int>(techPreference)
                       << " ProfileChangeEvent: " << getProfileEventString(event) << std::endl;

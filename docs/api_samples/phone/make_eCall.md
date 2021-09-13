@@ -1,3 +1,6 @@
+Make eCall {#make_eCall}
+========================
+
 # Making eCall (Emergency E112)
 
 Please follow below steps to make an emergency call(eCall).

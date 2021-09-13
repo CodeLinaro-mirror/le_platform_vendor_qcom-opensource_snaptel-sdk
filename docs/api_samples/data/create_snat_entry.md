@@ -1,33 +1,51 @@
+Create Static NAT Entry {#create_snat_entry}
+============================================
+
 # Create Static NAT Entry
 
 Please follow below steps to create static NAT entry
 
-### 1. Get the DataFactory and NatManager instances
+### 1. Implement initialization callback and get the DataFactory instance
+Optionally initialization callback can be provided with get manager instance.
+Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
+   auto initCb = [&](telux::common::ServiceStatus status) {
+      std::lock_guard<std::mutex> lock(mtx);
+      status_ = status;
+      initCv.notify_all();
+   };
     auto &dataFactory = telux::data::DataFactory::getInstance();
+   ~~~~~~
+
+### 2. Get the NatManager instances
+
+   ~~~~~~{.cpp}
+    std::unique_lock<std::mutex> lck(mtx);
     auto dataSnatMgr  = dataFactory.getNatManager(opType);
    ~~~~~~
 
-### 2. Check if data subsystem is ready
+### 3. Wait for NatManager initialization to be complete
 
    ~~~~~~{.cpp}
-   bool subSystemsStatus = dataSnatMgr->isSubsystemReady();
+   initCv.wait(lck);
    ~~~~~~
 
-### 2.1 If data subsystem is not ready, wait for it to be ready
+### 3.1 Check NatManager initialization state
 
-Data subsystems is to make sure that device is ready for services like create and remove nat entries.
-if subsystems were not ready, wait for unconditionally.
+If NatManager initialization failed, new initialization attempt can be accomplished
+by calling step 2. If NatManager initialization succeed, proceed to step 4
 
    ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::future<bool> f = dataSnatMgr->onSubsystemReady();
-      subSystemsStatus = f.get();
+   if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      // Go to step 4
+   }
+   else {
+      //Go to step 2 for another initialization attempt
    }
    ~~~~~~
 
-### 3. Implement callback for create Snat entry ###
+### 4. Implement callback for create Snat entry ###
 
    ~~~~~~{.cpp}
    auto respCb = [](telux::common::ErrorCode error) {
@@ -38,7 +56,7 @@ if subsystems were not ready, wait for unconditionally.
    };
    ~~~~~~
 
-### 4. Create Snat entry based on profile id, local ip, local port, global port, and protocol ###
+### 5. Create Snat entry based on profile id, local ip, local port, global port, and protocol ###
 
    ~~~~~~{.cpp}
    natConfig.addr = ipAddr;
@@ -48,4 +66,4 @@ if subsystems were not ready, wait for unconditionally.
    dataSnatMgr->addStaticNatEntry(profileId, natConfig, respCb);
    ~~~~~~
 
-### 5. Response callback will be called for the addStaticNatEntry response ###
+### 6. Response callback will be called for the addStaticNatEntry response ###

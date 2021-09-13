@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019, 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -34,6 +34,10 @@
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
+DataListener::DataListener(SlotId slotId)
+   : slotId_(slotId) {
+}
+
 void DataListener::initDataCallListResponseCb(
     const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,
     telux::common::ErrorCode error) {
@@ -51,19 +55,37 @@ void DataListener::onDataCallInfoChanged(const std::shared_ptr<telux::data::IDat
 }
 
 void DataListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   PRINT_NOTIFICATION << " ** Data onServiceStatusChange **\n";
+   PRINT_NOTIFICATION << " ** Data onServiceStatusChange on Slot-" << slotId_ << " ** ";
    switch(status) {
       case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         std::cout << " SERVICE_AVAILABLE\n";
+         std::cout << " SERVICE_AVAILABLE";
          break;
       case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         std::cout << " SERVICE_UNAVAILABLE\n";
+         std::cout << " SERVICE_UNAVAILABLE";
          break;
       default:
-         std::cout << " Unknown service status \n";
+         std::cout << " Unknown service status";
          break;
    }
+   std::cout << std::endl;
 }
+
+void DataListener::onHwAccelerationChanged(telux::data::ServiceState state) {
+   PRINT_NOTIFICATION << " ** Data onHwAccelerationChanged on Slot-" << slotId_ << " ** ";
+   switch(state) {
+      case telux::data::ServiceState::ACTIVE:
+         std::cout << " HW_ACCELERATION_ACTIVE";
+         break;
+      case telux::data::ServiceState::INACTIVE:
+         std::cout << " HW_ACCELERATION_INACTIVE";
+         break;
+      default:
+         std::cout << " Unknown IPACM State";
+         break;
+   }
+   std::cout << std::endl;
+}
+
 std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int slotId, int profileId) {
    std::lock_guard<std::mutex> lk(mtx_);
    std::shared_ptr<telux::data::IDataCall> dataCall = nullptr;

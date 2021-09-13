@@ -1,3 +1,6 @@
+Sending SMS {#send_sms}
+=======================
+
 # Sending SMS
 
 Please follow below steps to send an SMS to any mobile number.

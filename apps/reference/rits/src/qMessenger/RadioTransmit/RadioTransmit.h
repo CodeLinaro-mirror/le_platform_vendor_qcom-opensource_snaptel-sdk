@@ -169,7 +169,7 @@ public:
     * @param bufLen a uint16_t value representing the length of the data buffer.
     * @return result value 0 on success and 1 on fail.
     */
-    uint8_t updteSpsFlow(const SpsFlowInfo spsInfo);
+    uint8_t updateSpsFlow(const SpsFlowInfo spsInfo);
 
 
     /**

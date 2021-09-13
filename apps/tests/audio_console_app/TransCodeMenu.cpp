@@ -49,15 +49,7 @@ TransCodeMenu::TransCodeMenu(std::string appName, std::string cursor)
 }
 
 TransCodeMenu::~TransCodeMenu() {
-    writeStatus_ = false;
-    readStatus_ = false;
-    for(std::thread &th : runningThreads_) {
-        if(th.joinable()){
-            th.join();
-        }
-    }
-    transcoder_ = nullptr;
-    pipeLineEmpty_ = true;
+   cleanup();
 }
 
 void TransCodeMenu::init() {

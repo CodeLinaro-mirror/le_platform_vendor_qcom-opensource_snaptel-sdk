@@ -791,6 +791,18 @@ void MyLocationListener::printMeasurementsDataValidity(
   if(flags & telux::loc::AUTOMATIC_GAIN_CONTROL_BIT) {
     std::cout << " valid agcLevelDb" << std::endl;
   }
+  if(flags & telux::loc::GNSS_SIGNAL_TYPE) {
+    std::cout << " valid signal type" << std::endl;
+  }
+  if(flags & telux::loc::BASEBAND_CARRIER_TO_NOISE) {
+    std::cout << " valid basebandCarrierToNoise" << std::endl;
+  }
+  if(flags & telux::loc::FULL_ISB) {
+    std::cout << " valid fullInterSignalBias" << std::endl;
+  }
+  if(flags & telux::loc::FULL_ISB_UNCERTAINTY) {
+    std::cout << " valid fullInterSignalBiasUncertainty" << std::endl;
+  }
 }
 
 void MyLocationListener::printMeasurementState(telux::loc::GnssMeasurementsStateValidity mask) {
@@ -1308,6 +1320,13 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
      printMeasurementsMultipathIndicator(measData.multipathIndicator);
      std::cout << " Signal to noise ratio " << measData.signalToNoiseRatioDb << std::endl
                << " Automatic gain control level " << measData.agcLevelDb << std::endl;
+     printGnssSignalType(measData.gnssSignalType);
+     std::cout << " Carrier-to-noise ratio of the signal measured at baseband : "
+               << measData.basebandCarrierToNoise << std::endl;
+     std::cout << " Full inter-signal bias : " << measData.fullInterSignalBias
+               << std::endl;
+     std::cout << " Uncertainty associated with the full inter-signal bias : "
+               << measData.fullInterSignalBiasUncertainty << std::endl;
 
      std::cout << "\n********************** " << std::endl;
    }

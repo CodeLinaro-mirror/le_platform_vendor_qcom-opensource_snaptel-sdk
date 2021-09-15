@@ -897,7 +897,15 @@ enum GnssMeasurementsDataValidityType{
     /** Validity of signalToNoiseRatioDb.*/
     SIGNAL_TO_NOISE_RATIO_BIT        = (1<<16),
     /** Validity of agcLevelDb.*/
-    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17)
+    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17),
+    /** Validity of signal type.*/
+    GNSS_SIGNAL_TYPE                 = (1<<18),
+    /** Validity of basebandCarrierToNoise.*/
+    BASEBAND_CARRIER_TO_NOISE        = (1<<19),
+    /** Validity of fullInterSignalBias.*/
+    FULL_ISB                         = (1<<20),
+    /** Validity of fullInterSignalBiasUncertainty.*/
+    FULL_ISB_UNCERTAINTY             = (1<<21)
 };
 
 /** Specifies GnssMeasurementsDataValidityType.*/
@@ -1049,6 +1057,19 @@ struct GnssMeasurementsData {
     double signalToNoiseRatioDb;
     /** Automatic gain control level, in unit of dB.*/
     double agcLevelDb;
+    /** GnssSignalType mask */
+    GnssSignal gnssSignalType;
+    /** Carrier-to-noise ratio of the signal measured at baseband,
+     *  in unit of dB-Hz. */
+    double basebandCarrierToNoise;
+    /** The full inter-signal bias (ISB) in nanoseconds.
+     *  This value is the sum of the estimated receiver-side and the
+     *  space-segment-side inter-system bias, inter-frequency bias
+     *  and inter-code bias. */
+    double fullInterSignalBias;
+    /** Uncertainty associated with the full inter-signal bias in
+     *  nanoseconds. */
+    double fullInterSignalBiasUncertainty;
 };
 
 /** Specify GNSS measurements clock.

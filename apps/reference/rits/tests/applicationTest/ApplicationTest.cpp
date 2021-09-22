@@ -50,6 +50,7 @@
 #include "safetyapp_util.h"
 #include "bsm_utils.h"
 #include "../../../../common/utils/Utils.hpp"
+#include <telux/common/Version.hpp>
 
 using std::thread;
 using std::string;
@@ -801,8 +802,8 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
         break;
     case 'o':
         csv = true;
-        argc+=1;
-        csvFileName = string(argv[argc]);
+        idx++;
+        csvFileName = string(argv[idx]);
         break;
     case 'D':
         dump_raw = true;
@@ -831,6 +832,11 @@ int setup(const bool tx, const bool rx,
         printUse();
         return 0;
     }
+
+    auto sdkVersion = telux::common::Version::getSdkVersion();
+    std::cout << "Telematics SDK v" << std::to_string(sdkVersion.major) << "."
+                          << std::to_string(sdkVersion.minor) << "."
+                          << std::to_string(sdkVersion.patch) << std::endl;
 
     MessageType msgType;
     if (bsm || wsa) {
@@ -921,6 +927,19 @@ int setup(const bool tx, const bool rx,
         if (application->radioReceives.empty()) {
             cerr << "Rx flow not created, please check configuration" << endl;
             return -1;
+        }
+
+        if (csv) {
+            application->writeToCsv = true;
+            //Remove the existing csv log file if already exists
+            remove(csvFileName.c_str());
+            application->csvfp = fopen(csvFileName.c_str(), "w+");
+            if (!application->csvfp) {
+                cerr << "Failed to open file " << csvFileName << " for writing" << endl;
+                application->writeToCsv = false;
+            } else {
+                std::cout << "Writing BSM to csv: " << csvFileName << std::endl;
+            }
         }
 
         if (ldm)

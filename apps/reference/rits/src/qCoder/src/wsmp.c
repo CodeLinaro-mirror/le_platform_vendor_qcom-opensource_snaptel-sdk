@@ -160,7 +160,7 @@ static __inline uint8_t*  wsmp_add_psid(uint8_t *wsmp, int psid_v, int *added)
 
     if ((!wsmp) || (psid_v > MAX_PSID) || !added) {
         fprintf(stderr, "wsmp_add_psid called with null or invalid psid.\n");
-        fprintf(stderr, "Input psid value is: %d\n", psid_v); 
+        fprintf(stderr, "Input psid value is: %d\n", psid_v);
         if (added) {
             *added = 0;
         }
@@ -501,7 +501,7 @@ static int wsmp_decode_wave_element_extension(abuf_t *bp, wsmp_data_t *wsmpp, in
                 unk_weid_len = parse_asn_variable_length_enc((unsigned char **)&bp->data,
                     &bits_left);
                 //print_buffer(bp->data, unk_weid_len);
-                abuf_pull(bp, wsmpp->chan_load_len);
+                abuf_pull(bp, unk_weid_len);
 
             }
             break;
@@ -625,7 +625,7 @@ static int  wsmp_decode_header(msg_contents *mc)
 
     default:
         if(gVerbosity > 2)
-            fprintf(stderr, 
+            fprintf(stderr,
                 "not a supported WSMP version/type,  version byte=0x%02x, ver=%d\n",
                 ver_octet, wsmpp->protoVersion);
         retcode = -1;

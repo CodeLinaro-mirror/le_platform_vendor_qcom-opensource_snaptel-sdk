@@ -79,7 +79,7 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, 
+        const string rxIpv4, const uint16_t rxPort,
         char* fileConfiguration, MessageType msgType) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
     if (not configuration.isValid) {
@@ -199,7 +199,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             }else if(ret > 0 && ret < MIN_PACKET_LEN){
                 printf(
                 "Dropping packet with %d bytes. Needs to be at least %d bytes.\n",
-                        ret, MIN_PACKET_LEN); 
+                        ret, MIN_PACKET_LEN);
             }else if(ret > 0 && ret >= MAX_PACKET_LEN){
                 printf(
                 "Dropping packet with %d bytes. Needs to be less than %d bytes.\n",
@@ -302,7 +302,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 #ifdef WITH_WSA
                     if (mc->wra) {
                         ret = onReceiveWra(
-                                static_cast<RoutingAdvertisement_t*>(mc->wra), 
+                                static_cast<RoutingAdvertisement_t*>(mc->wra),
                                 sourceMacAddr, macAddrLen);
                     }
 #endif
@@ -324,6 +324,11 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         rxSuccess++;
     else
         decFail++;
+    if(writeToCsv && (ret != -1)){
+        csvMutex.lock();
+        write_to_csv(mc,csvfp);
+        csvMutex.unlock();
+    }
     return ret;
 }
 
@@ -751,8 +756,8 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
 
     if (GlobalIpSessionActive == true) {
         if (wraInterval == std::chrono::milliseconds::zero()) {
-            //received the second WRA message, need to determine the period of the WRA, 
-            //so that if within expected internal we didn't receive next WRA, we deem the 
+            //received the second WRA message, need to determine the period of the WRA,
+            //so that if within expected internal we didn't receive next WRA, we deem the
             //OBU went out of range of the associated RSU.
             auto diff = std::chrono::high_resolution_clock::now() - now;
             wraInterval = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
@@ -771,7 +776,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
     }
     if (wra->ipPrefix.size > CV2X_IPV6_ADDR_ARRAY_LEN) {
         if(appVerbosity > 3)
-            std::cerr << "Invalid ip prefix length received: " << 
+            std::cerr << "Invalid ip prefix length received: " <<
                     wra->ipPrefix.size << endl;
         ret = -1;
     } else {

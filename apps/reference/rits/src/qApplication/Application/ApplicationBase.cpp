@@ -498,6 +498,9 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("CAMDestinationPort") != configs.end()) {
         this->configuration.CAMDestinationPort = (uint16_t)stoi(configs["CAMDestinationPort"]);
     }
+    if (configs.find("psidValue") != configs.end()) {
+            configuration.psid = stoi(configs["psidValue"],0,16);
+    }
     /* Security service */
     if (configs.find("EnableSecurity") != configs.end()) {
         if (configs["EnableSecurity"].find("true") != std::string::npos)
@@ -511,9 +514,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         }
         if (configs.find("SecurityCountryCode") != configs.end()) {
             configuration.securityCountryCode = stoi(configs["SecurityCountryCode"], 0, 16);
-        }
-        if (configs.find("psidValue") != configs.end()) {
-            configuration.psid = stoi(configs["psidValue"],0,16);
         }
         if (configs.find("sspValue") != configs.end()) {
         } else {
@@ -903,9 +903,9 @@ void ApplicationBase::closeAllRadio() {
         this->radioReceives[i].closeFlow();
     }
     radioReceives.erase(radioReceives.begin(),radioReceives.end());
-    if (this->simReceive != nullptr)
+    if (this->kinematicsReceive != nullptr)
     {
-        this->simReceive->closeFlow();
+        this->kinematicsReceive->close();
     }
 }
 

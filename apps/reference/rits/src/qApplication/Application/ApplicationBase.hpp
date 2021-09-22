@@ -325,6 +325,10 @@ public:
     */
     Ldm* ldm = nullptr;
 
+    FILE *csvfp;
+
+    bool writeToCsv = false;
+
 protected:
     bool isTx = false;
     bool isRx = false;

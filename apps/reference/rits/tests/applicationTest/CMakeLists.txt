@@ -16,7 +16,7 @@ set(QITS_SOURCES
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -pthread")
 
 add_executable (${TARGET_QITS} ${QITS_SOURCES})
-target_link_libraries(${TARGET_QITS} telux_cv2x qapplication qmessenger v2xcodec)
+target_link_libraries(${TARGET_QITS} telux_cv2x qapplication qmessenger v2xcodec telux_common)
 if(DEFINED ENV{AEROLINK_PATH} OR DEFINED WITH_AEROLINK)
     target_link_libraries(${TARGET_QITS} viicsec -Wl,--allow-shlib-undefined)
 endif()

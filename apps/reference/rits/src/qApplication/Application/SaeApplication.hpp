@@ -173,4 +173,5 @@ private:
 
     int parseIPv6Prefix(char *prefix, int& len);
     std::mutex wramutex;
+    std::mutex csvMutex;
 };

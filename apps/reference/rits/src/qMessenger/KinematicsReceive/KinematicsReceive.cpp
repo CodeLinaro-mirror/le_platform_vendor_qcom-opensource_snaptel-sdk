@@ -43,9 +43,8 @@ mutex KinematicsReceive::sync;
 
 void KinematicsReceive::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) {
     lock_guard<mutex> lk(sync);
-      this->locationInfo = locationInfo;
-      lk.~lock_guard();
-   }
+    this->locationInfo = locationInfo;
+}
 
 void KinematicsReceive::startDetailsCallback(ErrorCode error){
     if (ErrorCode::SUCCESS != error) {

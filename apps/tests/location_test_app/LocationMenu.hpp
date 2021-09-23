@@ -86,6 +86,7 @@ public:
    void requestRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);
    void getYearOfHw(std::vector<std::string> userInput);
+   void getCapabilities(std::vector<std::string> userInput);
    void requestTerrestrialPositioning(std::vector<std::string> userInput);
    void cancelTerrestrialPositioning(std::vector<std::string> userInput);
    void configureNmeaSentence(std::vector<std::string> userInput);

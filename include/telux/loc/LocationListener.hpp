@@ -144,6 +144,14 @@ public:
  */
   virtual void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) {}
 
+/**
+ * This function is called when the capabilities of the location stack gets updated.
+ *
+ * @param [in] capabilityInfo - @ref telux::loc::LocCapability, capability information
+ *
+ */
+  virtual void onCapabilitiesInfo(const telux::loc::LocCapability capabilityInfo) {}
+
 
 /**
  * Destructor of ILocationListener

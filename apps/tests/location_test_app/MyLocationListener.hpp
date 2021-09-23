@@ -54,6 +54,8 @@ public:
 
    void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
+   void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setDetailedEngineLocReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);

@@ -585,6 +585,52 @@ enum GnssSignalType {
 /*Bit mask containing bits from GnssSignalType */
 using GnssSignal = uint32_t;
 
+/** Specify Location Capabilities Type.*/
+enum LocCapabilityType {
+  /** Support time based tracking session via @ref ILocationManager::startDetailedReports,
+   *  @ref ILocationManager::startDetailedEngineReports and
+   *  @ref ILocationManager::startBasicReports with distanceInMeters set to 0.
+   */
+  TIME_BASED_TRACKING = (1<<0),
+  /** Support distance based tracking session via @ref ILocationManager::startBasicReports with
+   *  distanceInMeters specified.
+   */
+  DISTANCE_BASED_TRACKING = (1<<1),
+  /** Support Gnss Measurement data via @ref ILocationListener::onGnssMeasurementsInfo when a
+   *  tracking session is enabled.
+   */
+  GNSS_MEASUREMENTS = (1<<2),
+  /** Support configure constellations via @ref ILocationConfigurator::configureConstellations. */
+  CONSTELLATION_ENABLEMENT = (1<<3),
+  /** Support carrier phase for Precise Positioning Measurement Engine (PPME). */
+  CARRIER_PHASE = (1<<4),
+  /** Support GNSS Single Frequency feature. */
+  QWES_GNSS_SINGLE_FREQUENCY = (1<<5),
+  /** Supports GNSS Multi Frequency feature. */
+  QWES_GNSS_MULTI_FREQUENCY = (1<<6),
+  /** Support VEPP license bundle is enabled. VEPP bundle include Carrier Phase features. */
+  QWES_VPE = (1<<7),
+  /** Support for CV2X Location basic features. This includes features for
+   *  GTS Time & Freq, @ref ILocationConfigurator::configureCTunc.
+   */
+  QWES_CV2X_LOCATION_BASIC = (1<<8),
+  /** Support for CV2X Location premium features. This includes features for
+   *  CV2X Location Basic features, QDR3 feature and @ref ILocationConfigurator::configurePACE.
+   */
+  QWES_CV2X_LOCATION_PREMIUM = (1<<9),
+  /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
+   *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
+   */
+  QWES_PPE = (1<<10),
+  /** Support QDR2_C license bundle is enabled. */
+  QWES_QDR2 = (1<<11),
+  /** Support QDR3_C license bundle is enabled. */
+  QWES_QDR3 = (1<<12)
+};
+
+/*Bit mask containing bits from LocCapabilityType */
+using LocCapability = uint32_t;
+
 /** Specify the satellite vehicle measurements that are used
  *  to calculate location in @ref ILocationInfoEx.*/
 struct GnssMeasurementInfo {

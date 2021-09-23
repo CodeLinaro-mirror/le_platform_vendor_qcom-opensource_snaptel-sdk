@@ -33,7 +33,7 @@
 #include <iomanip>
 
 #include <telux/loc/LocationDefines.hpp>
-
+#include "LocationUtils.hpp"
 #include "MyLocationListener.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
@@ -971,6 +971,10 @@ void MyLocationListener::printReportStatus(telux::loc::ReportStatus status) {
   if (status == telux::loc::ReportStatus::FAILURE) {
     std::cout << "FAILURE" << std::endl;
   }
+}
+
+void MyLocationListener::onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) {
+  LocationUtils::displayCapabilities(capabilityMask);
 }
 
 void MyLocationListener::onBasicLocationUpdate(

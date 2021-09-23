@@ -39,6 +39,7 @@
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
 #include "DgnssMenu.hpp"
+#include "LocationUtils.hpp"
 
 const int DEFAULT_UNKNOWN = 0;
 using namespace telux::common;
@@ -293,6 +294,11 @@ int LocationMenu::init() {
            "Configure Engine Integrity Risk", {}, std::bind(&LocationMenu::
                configureEngineIntegrityRisk, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> getCapabilities =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("36",
+           "Request capabilities information", {}, std::bind(&LocationMenu::
+               getCapabilities, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -304,7 +310,7 @@ int LocationMenu::init() {
          configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
          configureEngineState, provideConsentForTerrestrialPositioning,
          requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
-         configureAllNmeaSentence, configureEngineIntegrityRisk};
+         configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -1354,6 +1360,11 @@ void LocationMenu::getYearOfHw(std::vector<std::string> userInput) {
       &MyLocationCommandCallback::onGetYearOfHwInfo, myLocCmdResponseCb_,
           std::placeholders::_1, std::placeholders::_2);
   locationManager_->getYearOfHw(getYearOfHwCb);
+}
+
+void LocationMenu::getCapabilities(std::vector<std::string> userInput) {
+  telux::loc::LocCapability capabilities = locationManager_->getCapabilities();
+  LocationUtils::displayCapabilities(capabilities);
 }
 
 void LocationMenu::requestTerrestrialPositioning(std::vector<std::string> userInput) {

@@ -423,6 +423,19 @@ public:
   virtual telux::common::Status cancelTerrestrialPositionRequest(telux::common::
       ResponseCallback callback = nullptr) = 0;
 
+/**
+ * This API retrieves capability information.
+ *
+ * @param[in] cb - callback to get information related to capability.
+ *
+ * @returns Status of getCapabilities i.e success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+  virtual telux::loc::LocCapability getCapabilities() = 0;
+
 
 /**
  * Destructor of ILocationManager

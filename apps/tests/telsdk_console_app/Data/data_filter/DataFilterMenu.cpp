@@ -311,6 +311,17 @@ void DataFilterMenu::addIPParameters(std::shared_ptr<telux::data::IIpFilter> &da
     }
 }
 
+int DataFilterMenu::getPortInfo(DataConfigParser cfgParser,
+    std::map<std::string, std::string> pairMap, std::string key, std::string errorStr) {
+    int value = std::stoi(cfgParser.getValue(pairMap, key));
+
+    if (value > std::numeric_limits<unsigned short>::max() ||
+            value < std::numeric_limits<unsigned short>::min()) {
+        throw invalid_argument(errorStr);
+    }
+    return value;
+}
+
 void DataFilterMenu::addFilter() {
 
     int slotId = DEFAULT_SLOT_ID;
@@ -351,21 +362,26 @@ void DataFilterMenu::addFilter() {
             destPort.range = 0;
             telux::data::TcpInfo tcpInfo_ = {};
 
-            if (cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT_RANGE") != "") {
-                srcPort.port = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT"));
-                srcPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT_RANGE"));
-                tcpInfo_.src = srcPort;
-            }
+            try {
+                if (cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT") != ""
+                    && cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT_RANGE") != "") {
+                    tcpInfo_.src.port = getPortInfo(cfgParser, vectorFilter[i], "TCP_SOURCE_PORT",
+                        "TCP port value");
+                    tcpInfo_.src.range= getPortInfo(cfgParser, vectorFilter[i],
+                        "TCP_SOURCE_PORT_RANGE", "TCP Port range value");
+                }
 
-            if (cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT_RANGE") != "") {
-                destPort.port
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT"));
-                destPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT_RANGE"));
-                tcpInfo_.dest = destPort;
+                if (cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT") != ""
+                    && cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT_RANGE") != "") {
+                    tcpInfo_.dest.port = getPortInfo(cfgParser, vectorFilter[i],
+                        "TCP_DESTINATION_PORT", "TCP port value");
+                    tcpInfo_.dest.range= getPortInfo(cfgParser, vectorFilter[i],
+                        "TCP_DESTINATION_PORT_RANGE", "TCP port range vlaue");
+                }
+            } catch (const std::exception &e) {
+                std::cout << " *** ERROR - Invalid " << e.what()
+                    << ", expected in range (0-65535)" << std::endl;
+                return;
             }
             if (tcpRestrictFilter) {
                 tcpRestrictFilter->setTcpInfo(tcpInfo_);
@@ -390,22 +406,26 @@ void DataFilterMenu::addFilter() {
             destPort.port = 0;
             destPort.range = 0;
             telux::data::UdpInfo udpInfo_ = {};
+            try {
+                if (cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT") != ""
+                    && cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT_RANGE") != "") {
+                    udpInfo_.src.port = getPortInfo(cfgParser, vectorFilter[i], "UDP_SOURCE_PORT",
+                        "UDP port value");
+                    udpInfo_.src.range= getPortInfo(cfgParser, vectorFilter[i],
+                        "UDP_SOURCE_PORT_RANGE", "UDP Port range value");
+                }
 
-            if (cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT_RANGE") != "") {
-                srcPort.port = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT"));
-                srcPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT_RANGE"));
-                udpInfo_.src = srcPort;
-            }
-
-            if (cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT") != ""
-                || cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT_RANGE") != "") {
-                destPort.port
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT"));
-                destPort.range
-                    = std::stoi(cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT_RANGE"));
-                udpInfo_.dest = destPort;
+                if (cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT") != ""
+                    && cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT_RANGE") != "") {
+                    udpInfo_.dest.port = getPortInfo(cfgParser, vectorFilter[i],
+                        "UDP_DESTINATION_PORT", "UDP port value");
+                    udpInfo_.dest.range= getPortInfo(cfgParser, vectorFilter[i],
+                        "UDP_DESTINATION_PORT_RANGE", "UDP port range vlaue");
+                }
+            } catch (const std::exception &e) {
+                std::cout << " *** ERROR - Invalid " << e.what()
+                    << ", expected in range (0-65535)" << std::endl;
+                return;
             }
             if (udpRestrictFilter) {
                 udpRestrictFilter->setUdpInfo(udpInfo_);

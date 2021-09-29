@@ -124,26 +124,18 @@ void SensorControlMenu::initConsole() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Deactivate_Sensor_Client", {},
             std::bind(&SensorControlMenu::deactivateSensor, this, std::placeholders::_1)));
 
-    std::shared_ptr<ConsoleAppCommand> enableLowPowerModeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Enable_Low_Power_Mode", {},
-            std::bind(&SensorControlMenu::enableLowPowerMode, this, std::placeholders::_1)));
-
-    std::shared_ptr<ConsoleAppCommand> disableLowPowerModeCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "Disable_Low_Power_Mode", {},
-            std::bind(&SensorControlMenu::disableLowPowerMode, this, std::placeholders::_1)));
-
     std::shared_ptr<ConsoleAppCommand> deleteSensorClientCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Delete_Sensor_Client", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Delete_Sensor_Client", {},
             std::bind(&SensorControlMenu::deleteSensorClient, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> listActiveClientsCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "List_Active_Clients", {},
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "List_Active_Clients", {},
             std::bind(&SensorControlMenu::listActiveClients, this, std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listAvailableSensorsCommand,
-        createSensorClientCommand, listCreatedSensorsCommand, configureSensorCommand,
-        activateSensorCommand, deactivateSensorCommand, enableLowPowerModeCommand,
-        disableLowPowerModeCommand, deleteSensorClientCommand, listActiveClientsCommand};
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {listAvailableSensorsCommand, createSensorClientCommand, listCreatedSensorsCommand,
+            configureSensorCommand, activateSensorCommand, deactivateSensorCommand,
+            deleteSensorClientCommand, listActiveClientsCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();

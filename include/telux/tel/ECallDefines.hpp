@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file      ECallDefines.hpp
  * @brief     ECallDefines contains enumerations and variables used for
@@ -36,6 +72,7 @@
 #define ECALLDEFINES_HPP
 
 #include <string>
+#include <bitset>
 
 namespace telux {
 
@@ -318,6 +355,65 @@ struct ECallHlapTimerEvents {
    HlapTimerEvent t6;   /**< T6 Timer event */
    HlapTimerEvent t7;   /**< T7 Timer event */
    HlapTimerEvent t9;   /**< T9 Timer event */
+};
+
+/**
+ * Configuration that represents the type of the number to be dialed when an automotive emergency
+ * call is initiated.
+ */
+enum class ECallNumType {
+   DEFAULT,         /* Default configured number is dialed */
+   OVERRIDDEN,      /* User configured/overridden number is dialed */
+};
+
+/**
+ * Defines the supported ECall configuration parameters
+ */
+enum EcallConfigType {
+    ECALL_CONFIG_MUTE_RX_AUDIO,        /**< Mute the local audio device during MSD transmission */
+    ECALL_CONFIG_NUM_TYPE,             /**< Decides which number needs to be dialed when an eCall
+                                            is initiated */
+    ECALL_CONFIG_OVERRIDDEN_NUM,       /**< User configured/overridden number that will be dialed
+                                            for eCall */
+    ECALL_CONFIG_USE_CANNED_MSD,       /**< Use the pre-defined MSD in modem for eCall */
+    ECALL_CONFIG_GNSS_UPDATE_INTERVAL, /**< Time interval in milliseconds, at which modem updates
+                                            the GNSS information in its internally generated MSD */
+    ECALL_CONFIG_T2_TIMER,             /**< T2 timer value */
+    ECALL_CONFIG_T7_TIMER,             /**< T7 timer value */
+    ECALL_CONFIG_T9_TIMER,             /**< T9 timer value */
+    ECALL_CONFIG_MSD_VERSION,          /**< MSD version to be used by modem when it internally
+                                            generates MSD i.e when MSD is not sent by application
+                                            and also canned MSD is not used */
+    ECALL_CONFIG_COUNT,
+};
+
+/**
+ * Bit mask that denotes which of the ECall configuration parameters defined in EcallConfigType
+ * enum are valid(and to be considered) in the provided EcallConfig structure.
+ * For example, if the configuration related to Canned MSD is provided, then
+ * EcallConfigValidity valid = (1 << ECALL_CONFIG_USE_CANNED_MSD).
+ */
+using EcallConfigValidity = std::bitset<ECALL_CONFIG_COUNT>;
+
+/**
+ * Represents various configuration parameters related to automotive emergency call
+ */
+struct EcallConfig {
+   EcallConfigValidity configValidityMask;   /**< Indicates the valid configuration parameters in
+                                                  the structure. A bit set to 1 denotes that the
+                                                  corresponding configuration parameter is valid */
+   bool muteRxAudio;    /* Mute the local audio device(ex: speaker) during MSD transmission */
+   ECallNumType numType;    /* Represents the type of number to be dialed when eCall is initiated */
+   std::string overriddenNum; /* User configured/overridden number that will be dialed when
+                                 ECallNumType configuration parameter is set to OVERRIDE */
+   bool useCannedMsd;   /* Use the pre-defined MSD in modem for eCall */
+   uint32_t gnssUpdateInterval; /* Time interval in milliseconds at which the modem updates the
+                                   GNSS information, in its internally generated MSD */
+   uint32_t t2Timer;    /* T2 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint32_t t7Timer;    /* T7 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint32_t t9Timer;    /* T9 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint8_t msdVersion;  /* MSD version to be used by modem when it internally generates MSD for
+                           transmission */
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

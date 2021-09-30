@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file    TelClient.cpp
  *
@@ -49,6 +85,7 @@ TelClient::TelClient()
     , hangupCommandCallback_(nullptr)
     , updateMsdCommandCallback_(nullptr)
     , callMgr_(nullptr)
+    , ecallMgr_(nullptr)
     , eCall_(nullptr)
     , eCallInprogress_(false) {
 }
@@ -103,7 +140,35 @@ telux::common::Status TelClient::init() {
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << " Failed to register a Call listener" << std::endl;
     }
-
+    // Get Ecall Manager from PhoneFactory
+    std::promise<ServiceStatus> prom;
+    ecallMgr_ = phoneFactory.getEcallManager([&](ServiceStatus status) {
+        if (status == ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(ServiceStatus::SERVICE_FAILED);
+        }
+    });
+    if(!ecallMgr_) {
+        std::cout << CLIENT_NAME << "Failed to get ECall Manager" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    ServiceStatus ecallMgrStatus = ecallMgr_->getServiceStatus();
+    if (ecallMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Ecall Manager is not ready , Please wait " << std::endl;
+        ecallMgrStatus = prom.get_future().get();
+    }
+    if (ecallMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Ecall Manager is ready " << std::endl;
+        Status status = ecallMgr_->registerListener(shared_from_this());
+        if(status != Status::SUCCESS) {
+            std::cout << " Failed to register ECall listener" << std::endl;
+            return status;
+        }
+    } else {
+        std::cout << "ERROR - Unable to initialize Ecall Manager" << std::endl;
+        return telux::common::Status::FAILED;
+    }
     return telux::common::Status::SUCCESS;
 }
 
@@ -448,6 +513,37 @@ telux::common::Status TelClient::requestECallHlapTimerStatus(int phoneId) {
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request for HLAP timers status" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status TelClient::getECallConfig() {
+    if(!ecallMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to get Ecall configuration"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    telux::tel::EcallConfig config = {};
+    auto status = ecallMgr_->getConfig(config);
+    if(status == telux::common::Status::SUCCESS) {
+        TelClientUtils::printEcallConfig(config);
+    } else {
+        std::cout << CLIENT_NAME << "Failed to get eCall configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status TelClient::setECallConfig(EcallConfig config) {
+    if(!ecallMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to set Ecall configuration"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = ecallMgr_->setConfig(config);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;

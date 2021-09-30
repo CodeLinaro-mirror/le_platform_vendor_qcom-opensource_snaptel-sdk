@@ -187,6 +187,24 @@ public:
      */
     telux::common::Status getHlapTimer(int phoneId, HlapTimerType type);
 
+    /**
+     * Get various configuration parameters related to eCall
+     *
+     * @returns Status of getECallConfig i.e success or suitable status code.
+     *
+     */
+    telux::common::Status getECallConfig();
+
+    /**
+     * Set various configuration parameters related to eCall
+     *
+     * @param [in] config configuration to be written
+     *
+     * @returns Status of setECallConfig i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setECallConfig(EcallConfig config);
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;

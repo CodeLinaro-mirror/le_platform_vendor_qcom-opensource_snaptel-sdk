@@ -609,6 +609,33 @@ public:
        ECallHlapTimerCallback callback) = 0;
 
    /**
+    * Set the configuration related to emergency call.
+    * The configuration is persistent and takes effect when the next emergency call is dialed.
+    *
+    * @param [in] config   eCall configuration to be set
+    *                      @ref EcallConfig
+    *
+    * @returns Status of setConfig i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status setConfig(EcallConfig config) = 0;
+
+   /**
+    * Get the configuration related to emergency call.
+    *
+    * @param [out] config   Parameter to hold the fetched eCall configuration
+    *                       @ref EcallConfig
+    *
+    * @returns Status of getConfig i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status getConfig(EcallConfig &config) = 0;
+
+   /**
     * Add a listener to listen for incoming call, call info change and eCall MSD
     * transmission status change.
     *

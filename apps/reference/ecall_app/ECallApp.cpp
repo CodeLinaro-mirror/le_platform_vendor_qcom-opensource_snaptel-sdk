@@ -71,6 +71,7 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <csignal>
 
@@ -140,9 +141,18 @@ void ECallApp::init() {
         ConsoleAppCommand("9", "Get_ECall_HLAP_Timer", {},
                           std::bind(&ECallApp::getHlapTimer, this)));
 
+    std::shared_ptr<ConsoleAppCommand> getEcallConfigCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("10", "Get_ECall_Config", {}, std::bind(&ECallApp::getECallConfig,
+        this)));
+
+    std::shared_ptr<ConsoleAppCommand> setEcallConfigCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("11", "Set_ECall_Config", {}, std::bind(&ECallApp::setECallConfig,
+        this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
-        hlapTimerStatusCommand, stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand};
+        hlapTimerStatusCommand, stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand,
+        getEcallConfigCommand, setEcallConfigCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -461,6 +471,145 @@ void ECallApp::getHlapTimer() {
 }
 
 /**
+ * Get various configuration parameters related to eCall
+ */
+void ECallApp::getECallConfig() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->getECallConfig();
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to get eCall configuration" << std::endl;
+    }
+}
+
+/**
+ * Set various configuration parameters related to eCall
+ */
+void ECallApp::setECallConfig() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    telux::tel::EcallConfig config = {};
+    uint32_t temp = 0;
+    std::string tempStr = "";
+    char delimiter = '\n';
+
+    std::cout << "Available configurations for eCall: \n    \
+        \r\t0 - Mute/Unmute audio during MSD transmission \n    \
+        \r\t1 - Use default or overridden dial number for eCall\n   \
+        \r\t2 - Overridden number to be dialed\n    \
+        \r\t3 - Use canned MSD\n    \
+        \r\t4 - GNSS update interval(ms)\n  \
+        \r\t5 - T2 Timer value\n    \
+        \r\t6 - T7 Timer value\n    \
+        \r\t7 - T9 Timer value\n    \
+        \r\t8 - MSD Version \n\n";
+    std::cout << " Choose the parameters to be configured\n \
+        \r(For example, enter 5,8 to configure T2 Timer and Msd version): ";
+    std::getline(std::cin, tempStr, delimiter);
+    std::stringstream ss(tempStr);
+    int i = -1;
+    std::vector<int> options;
+    while(ss >> i) {
+        options.push_back(i);
+        if(ss.peek() == ',' || ss.peek() == ' ')
+        ss.ignore();
+    }
+    std::string promptStr = "";
+    for(auto iter : options) {
+        switch(iter) {
+            case ECALL_CONFIG_MUTE_RX_AUDIO:
+                promptStr = " Mute audio during MSD transmission? (1-True/0-False): ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{0,1})) {
+                    config.configValidityMask.set(ECALL_CONFIG_MUTE_RX_AUDIO);
+                    config.muteRxAudio = temp;
+                }
+                break;
+            case ECALL_CONFIG_NUM_TYPE:
+                promptStr = " Use default or overridden dial number for eCall? "
+                            "(0-Default/1-Overridden): ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{0,1})) {
+                    config.configValidityMask.set(ECALL_CONFIG_NUM_TYPE);
+                    if(temp == 0) {
+                        config.numType = ECallNumType::DEFAULT;
+                    } else {
+                        config.numType = ECallNumType::OVERRIDDEN;
+                    }
+                }
+                break;
+            case ECALL_CONFIG_OVERRIDDEN_NUM:
+                std::cout << " Enter the dial number to be overridden: ";
+                std::getline(std::cin, tempStr, delimiter);
+                config.configValidityMask.set(ECALL_CONFIG_OVERRIDDEN_NUM);
+                config.overriddenNum = tempStr;
+                break;
+            case ECALL_CONFIG_USE_CANNED_MSD:
+                promptStr = " Use canned MSD? (1-True/0-False): ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{0,1})) {
+                    config.configValidityMask.set(ECALL_CONFIG_USE_CANNED_MSD);
+                    config.useCannedMsd = temp;
+                }
+                break;
+            case ECALL_CONFIG_GNSS_UPDATE_INTERVAL:
+                promptStr = " Enter GNSS update interval(ms): ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{})) {
+                    config.configValidityMask.set(ECALL_CONFIG_GNSS_UPDATE_INTERVAL);
+                    config.gnssUpdateInterval = temp;
+                }
+                break;
+            case ECALL_CONFIG_T2_TIMER:
+                promptStr = " Set T2 Timer value(ms): ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{})) {
+                    config.configValidityMask.set(ECALL_CONFIG_T2_TIMER);
+                    config.t2Timer = temp;
+                }
+                break;
+            case ECALL_CONFIG_T7_TIMER:
+                promptStr = " Set T7 Timer value(ms): ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{})) {
+                    config.configValidityMask.set(ECALL_CONFIG_T7_TIMER);
+                    config.t7Timer = temp;
+                }
+                break;
+            case ECALL_CONFIG_T9_TIMER:
+                promptStr = " Set T9 Timer value(ms): ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{})) {
+                    config.configValidityMask.set(ECALL_CONFIG_T9_TIMER);
+                    config.t9Timer = temp;
+                }
+                break;
+            case ECALL_CONFIG_MSD_VERSION:
+                promptStr = " Set MSD version: ";
+                if(telux::common::Status::SUCCESS == getIntegerInput(temp, promptStr,
+                    std::vector<uint32_t>{})) {
+                    config.configValidityMask.set(ECALL_CONFIG_MSD_VERSION);
+                    config.msdVersion = temp;
+                }
+                break;
+            default:
+                std::cout << " Ignoring invalid input "<< iter << std::endl;
+                break;
+        }
+    }
+
+    auto ret = eCallMgr_->setECallConfig(config);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to set eCall configuration" << std::endl;
+        return;
+    }
+}
+
+/**
  * Executes any cleanup procedure if necessary
  */
 void ECallApp::cleanup() {
@@ -551,6 +700,43 @@ telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd) {
         std::cout << "Invalid MSD transmission configuration" << std::endl;
         return telux::common::Status::FAILED;
     }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Utility function to get user input for an unsigned integer value
+ */
+telux::common::Status ECallApp::getIntegerInput(uint32_t &value, std::string prompt,
+    std::vector<uint32_t> validValues) {
+    char delimiter = '\n';
+    std::string temp;
+    uint32_t opt = 0;
+    do {
+        std::cout << prompt ;
+        std::getline(std::cin, temp, delimiter);
+        if(!temp.empty()) {
+            try {
+                opt = std::stoul(temp);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                    << std::endl;
+            }
+        } else {
+            std::cout << " Invalid input, try again" << std::endl;
+            continue;
+        }
+        if(validValues.size() > 0) {
+            if(std::find(validValues.begin(), validValues.end(), opt) != validValues.end()) {
+                value = opt;
+                break;
+            } else {
+                std::cout << " Invalid input, try again" << std::endl;
+            }
+        } else {
+            value = opt;
+            break;
+        }
+    } while(1);
     return telux::common::Status::SUCCESS;
 }
 

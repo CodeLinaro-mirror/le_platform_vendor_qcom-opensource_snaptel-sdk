@@ -271,6 +271,32 @@ telux::common::Status ECallManager::requestHlapTimerStatus(int phoneId) {
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status ECallManager::getECallConfig() {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->getECallConfig();
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get eCall configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->setECallConfig(config);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 /**
  * Request to stop T10 eCall High Level Application Protocol(HLAP) timer
  */

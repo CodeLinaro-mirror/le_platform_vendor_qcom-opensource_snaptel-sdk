@@ -147,6 +147,16 @@ private:
     void getHlapTimer();
 
     /**
+     * Get various configuration parameters related to eCall
+     */
+    void getECallConfig();
+
+    /**
+     * Set various configuration parameters related to eCall
+     */
+    void setECallConfig();
+
+    /**
      * Function to get phoneId from the user-interface
      */
     int getPhoneId();
@@ -160,6 +170,9 @@ private:
      * Function to configure MSD transmission at call connect
      */
     telux::common::Status getMsdTransmissionConfig(bool &transmitMsd);
+
+    telux::common::Status getIntegerInput(uint32_t &value, std::string prompt,
+        std::vector<uint32_t> validValues);
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;

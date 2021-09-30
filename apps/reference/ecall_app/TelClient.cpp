@@ -656,6 +656,23 @@ telux::common::Status TelClient::setHlapTimer(int phoneId, HlapTimerType type, i
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status TelClient::getECallConfig() {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to get Ecall configuration"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    telux::tel::EcallConfig config = {};
+    auto status = callMgr_->getConfig(config);
+    if(status == telux::common::Status::SUCCESS) {
+        TelClientUtils::printEcallConfig(config);
+    } else {
+        std::cout << CLIENT_NAME << "Failed to get eCall configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 // Get the value of eCall High Level Application Protocol(HLAP) timer
 telux::common::Status TelClient::getHlapTimer(int phoneId, HlapTimerType type) {
     if(!callMgr_) {
@@ -668,6 +685,20 @@ telux::common::Status TelClient::getHlapTimer(int phoneId, HlapTimerType type) {
                             std::placeholders::_1, std::placeholders::_2));
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request to get HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status TelClient::setECallConfig(EcallConfig config) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Ecall Manager, Failed to set Ecall configuration"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->setConfig(config);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;

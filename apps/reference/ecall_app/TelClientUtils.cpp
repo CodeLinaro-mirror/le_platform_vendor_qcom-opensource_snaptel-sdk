@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file    TelClientUtils.cpp
  *
@@ -280,5 +316,45 @@ std::string TelClientUtils::eCallHlapTimerEventToString(telux::tel::HlapTimerEve
             std::stringstream ss;
             ss << "Unknown HlapTimerEvent  = " << (int)event;
             return ss.str();
+    }
+}
+
+void TelClientUtils::printEcallConfig(EcallConfig config) {
+    auto validityMask = config.configValidityMask;
+    if(validityMask.test(ECALL_CONFIG_MUTE_RX_AUDIO)) {
+        std::cout << CLIENT_NAME << " Config to mute audio during MSD Transmission: " <<
+        (config.muteRxAudio?"Mute":"Unmute") << std::endl;
+    }
+    if(validityMask.test(ECALL_CONFIG_NUM_TYPE)) {
+        if(config.numType == ECallNumType::DEFAULT) {
+            std::cout << CLIENT_NAME << " Dial number type configured: Default" << std::endl;
+        } else {
+            std::cout << CLIENT_NAME << " Dial number type configured: Overridden" << std::endl;
+        }
+    }
+    if(validityMask.test(ECALL_CONFIG_OVERRIDDEN_NUM)) {
+        std::cout << CLIENT_NAME << " Configured overridden number: " << config.overriddenNum
+            << std::endl;
+    }
+    if(validityMask.test(ECALL_CONFIG_USE_CANNED_MSD)) {
+        std::cout << CLIENT_NAME << " Configured to use canned MSD: " <<
+            (config.useCannedMsd?"Yes":"No") << std::endl;
+    }
+    if(validityMask.test(ECALL_CONFIG_GNSS_UPDATE_INTERVAL)) {
+        std::cout << CLIENT_NAME << " GNSS update interval: " << config.gnssUpdateInterval
+            << std::endl;
+    }
+    if(validityMask.test(ECALL_CONFIG_T2_TIMER)) {
+        std::cout << CLIENT_NAME << " T2 Timer value: " << config.t2Timer << std::endl;
+    }
+    if(validityMask.test(ECALL_CONFIG_T7_TIMER)) {
+        std::cout << CLIENT_NAME << " T7 Timer value: " << config.t7Timer << std::endl;
+    }
+    if(validityMask.test(ECALL_CONFIG_T9_TIMER)) {
+        std::cout << CLIENT_NAME << " T9 Timer value: " << config.t9Timer << std::endl;
+    }
+    if(validityMask.test(ECALL_CONFIG_MSD_VERSION)) {
+        std::cout << CLIENT_NAME << " MSD Version: " << static_cast<int>(config.msdVersion)
+            << std::endl;
     }
 }

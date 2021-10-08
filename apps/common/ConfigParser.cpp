@@ -111,6 +111,8 @@ void ConfigParser::readConfigFile(std::string configFile) {
   // Iterate through each parameter in the file and read the key value pairs
   std::string param;
   while (std::getline(configFileStream >> std::ws, param)) {
+    // trim all carriage return \r from the end of string.
+    param.erase(std::remove(param.begin(), param.end(), '\r'), param.end());
     std::string key;
     std::istringstream paramStream(param);
     if (std::getline(paramStream, key, '=')) {

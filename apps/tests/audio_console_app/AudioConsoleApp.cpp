@@ -58,6 +58,7 @@ extern "C" {
 
 AudioConsoleApp::AudioConsoleApp(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
+    ready_ = false;
 }
 
 AudioConsoleApp::~AudioConsoleApp() {
@@ -102,6 +103,7 @@ void AudioConsoleApp::init() {
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;
+        ready_ = true;
     } else {
         std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
         return;
@@ -206,6 +208,11 @@ void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
 }
 
 void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (audioManager_) {
         std::promise<bool> p;
         auto status = audioManager_->getCalibrationInitStatus(
@@ -236,6 +243,11 @@ void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
 }
 
 void AudioConsoleApp::getSupportedDevices(std::vector<std::string> userInput) {
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (audioManager_) {
         std::promise<bool> p;
         auto status = audioManager_->getDevices([&p, this](
@@ -271,6 +283,11 @@ void AudioConsoleApp::getSupportedDevices(std::vector<std::string> userInput) {
 }
 
 void AudioConsoleApp::getSupportedStreams(std::vector<std::string> userInput) {
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (audioManager_) {
         std::promise<bool> p;
         auto status = audioManager_->getStreamTypes(
@@ -298,6 +315,7 @@ void AudioConsoleApp::getSupportedStreams(std::vector<std::string> userInput) {
 }
 
 void AudioConsoleApp::cleanup() {
+    ready_ = false;
     audioClient_->cleanup();
     voiceMenu_->cleanup();
     playMenu_->cleanup();
@@ -308,6 +326,7 @@ void AudioConsoleApp::cleanup() {
 }
 
 void AudioConsoleApp::setSystemReady() {
+    ready_ = true;
     if (voiceMenu_) {
         voiceMenu_->setSystemReady();
     }

@@ -72,6 +72,7 @@ private:
     std::shared_ptr<ToneMenu> toneMenu_;
     std::shared_ptr<TransCodeMenu> transCodeMenu_;
     std::shared_ptr<IAudioManager> audioManager_;
+    std::atomic<bool> ready_;
 };
 
 #endif  // AUDIOCONSOLEAPP_HPP

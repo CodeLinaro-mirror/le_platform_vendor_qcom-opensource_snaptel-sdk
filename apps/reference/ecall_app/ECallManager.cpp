@@ -363,8 +363,9 @@ void ECallManager::parseAppConfig() {
     }
     // Get the configured output audio device
     param = appSettings->getValue("AUDIO_OUTPUT_DEVICE_TYPE");
-    if(param.compare("SPEAKER") == 0) {
-        audioDevice_ = DeviceType::DEVICE_TYPE_SPEAKER;
+    if(!param.empty()) {
+        auto deviceValue = atoi(param.c_str());
+        audioDevice_ = static_cast<DeviceType>(deviceValue);
     } else {
         std::cout << CLIENT_NAME << "Using default audio output device" << std::endl;
     }

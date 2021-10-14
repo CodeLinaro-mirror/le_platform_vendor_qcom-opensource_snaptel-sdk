@@ -71,6 +71,7 @@ bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
 bool cv2xActive = false;
+bool simMode = false;
 
 void joinThreads() {
     for (int i = 0; i < threads.size(); i++)
@@ -98,13 +99,6 @@ void receive(MessageType msgType) {
     gettimeofday(&currTime, NULL);
     time_t startTime = currTime.tv_sec;
 
-    if (csv == true) {
-        fp = fopen(csvFileName.c_str(), "w+");
-        if (!fp) {
-            cerr << "Failed to open file " << csvFileName << " for writing" << endl;
-            return;
-        }
-    }
     if (application->configuration.driverVerbosity > 4) {
         cout << "Thread id: " << std::this_thread::get_id()
                 << " Wating for message..." << endl;
@@ -116,21 +110,26 @@ void receive(MessageType msgType) {
     int ret;
     while (!stopThread)
     {
-        //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
-        sem_wait(&cnt_sem);
-        //Check CV2X RX status when only RX is enabled
-        if (!application->configuration.enableTxAlways) {
-            cv2xActive = application->radioReceives[0].waitForCv2xToActivate();
-            if (application->radioReceives[0].restartFlow) {
-                application->closeAllRadio();
-                application->setup();
+        if(!simMode){
+            //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+            sem_wait(&cnt_sem);
+            //Check CV2X RX status when only RX is enabled
+            if((application->radioReceives[0].statusCheck(RadioType::RX)) != Cv2xStatusType::ACTIVE){
+                if (!application->configuration.enableTxAlways) {
+                    application->radioReceives[0].waitForCv2xToActivate();
+                    if (application->radioReceives[0].restartFlow) {
+                        application->closeAllRadio();
+                        application->setup();
+                    }
+                }
+                else {// if TX is also enabled check the CV2X status in TX only
+                    while (!cv2xActive) {
+                        usleep(1000);
+                    }
+                }
             }
-        }else {// if TX is also enabled check the CV2X status in TX only
-            while (!cv2xActive) {
-                ;
-            }
+            sem_post(&cnt_sem);
         }
-        sem_post(&cnt_sem);
         // call application's receive() function to process the packet across
         // stack layers.
         ret = application->receive(0, ret);
@@ -277,14 +276,19 @@ void transmit(MessageType msgType) {
 
     // main transmitting code
     while (!stopThread){
-        //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
-        //Check CV2X TX Status when TX is enabled.
-        cv2xActive = application->spsTransmits[0].waitForCv2xToActivate();
-        if (application->spsTransmits[0].restartFlow) {
-            application->closeAllRadio();
-            application->setup();
-            close(tx_timer_fd);
-            tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+        if(!simMode){
+            //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+            //Check CV2X TX Status when TX is enabled.
+            if((application->spsTransmits[0].statusCheck(RadioType::TX)) != Cv2xStatusType::ACTIVE){
+                application->spsTransmits[0].waitForCv2xToActivate();
+                if (application->spsTransmits[0].restartFlow) {
+                    application->closeAllRadio();
+                    application->setup();
+                    cv2xActive = true;
+                    close(tx_timer_fd);
+                    tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+                }
+            }
         }
         ret = application->send(0, TransmitType::SPS);
         if(ret > 0){
@@ -458,63 +462,6 @@ void runApps(void) {
     }
 }
 
-void simReceive(MessageType msgType) {
-    auto recCount = 0;
-    auto empty = 0;
-    FILE *fp;
-    if (csv == true) {
-        fp = fopen(csvFileName.c_str(), "w+");
-        if (!fp) {
-            cerr << "Failed to open file " << csvFileName << " for writing" << endl;
-            return;
-        }
-    }
-    struct timeval currTime;
-    gettimeofday(&currTime, NULL);
-    time_t startTime = currTime.tv_sec;
-    if (application->configuration.driverVerbosity > 4) {
-        cout << "Thread (" << std::this_thread::get_id()
-                    << ")  is wating for a message..." << endl;
-    }
-    if (application->configuration.enableVerifStatLog) {
-        application->initVerifLogging();
-    }
-    int ret = 0;
-    while(!stopThread){
-        ret = application->receive(0, recCount);
-
-        sem_wait(&cnt_sem);
-        if(ret == 0){
-            rxsuccess++;
-            if (msgType == MessageType::BSM || msgType == MessageType::WSA) {
-                if (application->configuration.driverVerbosity) {
-                    if (rxsuccess % 50 == 0 && rxsuccess > 0){
-                        gettimeofday(&currTime, NULL);
-                        cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                            " Decode/Rx Success #: " << rxsuccess <<
-                            " Decode/Rx Fail #: " << rxfail << std::endl;
-                    }
-                }
-            }
-        } else {
-            rxfail++;
-        }
-        sem_post(&cnt_sem);
-    }
-
-    // Print out performance information upon closure
-    if(application->configuration.enableVerifStatLog){
-        application->writeVerifLogging();
-    }
-    if(msgType == MessageType::BSM || msgType == MessageType::WSA)
-        ((SaeApplication*)application)->printRxStats();
-
-    printf("Total of RX packets is: %d\n", application->totalRxSuccess);
-
-    if(application->ldm != nullptr)
-        application->ldm->stopGb();
-}
-
 void simLdmRx(void) {
     auto count = 0;
     auto empty=0;
@@ -556,82 +503,11 @@ void simLdmRx(void) {
             application->receive(0, recCount, ldmIndex);
             auto msg = &application->ldm->bsmContents[ldmIndex];
             if (csv) {
-                write_to_csv(msg, fp);
+                writeToCsv(msg, fp);
             }
             count += 1;
         }
     }
-}
-
-void simTransmit(MessageType msgType) {
-    int txsuccess = 0;
-    int txfail = 0;
-    int ret = 0;
-
-    int tx_timer_fd = -1;
-    int timer_misses = 0;
-    uint64_t exp;
-    ssize_t s;
-    tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
-    if (tx_timer_fd == -1) {
-        cerr << "Failed to start Tx timer" << endl;
-        return;
-    }
-
-    // check if sign stat logging on
-    // check off for now
-    if(application->configuration.enableSignStatLog)
-        application->initSignLogging();
-    auto timer = timestamp_now();
-    struct timeval currTime;
-    gettimeofday(&currTime, NULL);
-    time_t startTime = currTime.tv_sec;
-    switch (msgType)
-    {
-    case MessageType::DENM:
-        cerr << "DENM transmit is not supported" << endl;
-        break;
-    case MessageType::CAM:
-    case MessageType::BSM:
-        while (!stopThread)
-        {
-            ret = application->send(0, TransmitType::SPS);
-            timer = timestamp_now();
-            if(ret > 0){
-                txsuccess++;
-                if (msgType == MessageType::BSM) {
-                    if (application->configuration.driverVerbosity) {
-                        if (txsuccess % 50 == 0 && txsuccess > 0){
-                            gettimeofday(&currTime, NULL);
-                            cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                                " Encode/Tx Success #: " << txsuccess <<
-                                " Encode/Tx Fail #: " << txfail << std::endl;
-                        }
-                    }
-                }
-            } else {
-                txfail++;
-            }
-            s = read(tx_timer_fd, &exp, sizeof(uint64_t));
-            if (s == sizeof(uint64_t) && exp > 1) {
-                timer_misses += (exp-1);
-                cout << "TX timer overruns: Total missed: " << timer_misses << endl;
-            }
-        }
-        break;
-    default:
-        break;
-    }
-    // dump out any logging information related to signing
-    if(application->configuration.enableSignStatLog){
-        application->writeSignLogging();
-    }
-    if(msgType == MessageType::BSM || msgType == MessageType::WSA)
-        ((SaeApplication*)application)->printTxStats();
-    printf("Total of TX packets is: %d\n", application->totalTxSuccess);
-
-    if(application->ldm != nullptr)
-        application->ldm->stopGb();
 }
 
 void printUse() {
@@ -746,6 +622,7 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
 #endif
     case 'i':
         txSim = true;
+        simMode = true;
         if(idx+2 > argc-1){
            printUse();
            fprintf(stderr, "\nInvalid usage of -i option\n");
@@ -770,6 +647,7 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
         break;
     case 'j':
         rxSim = true;
+        simMode = true;
         if(idx+2 > argc-1){
            printUse();
            fprintf(stderr, "\nInvalid usage of -j option\n");
@@ -922,13 +800,11 @@ int setup(const bool tx, const bool rx,
         }
 
         if (csv) {
-            application->writeToCsv = true;
-            //Remove the existing csv log file if already exists
-            remove(csvFileName.c_str());
+            application->writeToCsvFile = true;
             application->csvfp = fopen(csvFileName.c_str(), "w+");
             if (!application->csvfp) {
                 cerr << "Failed to open file " << csvFileName << " for writing" << endl;
-                application->writeToCsv = false;
+                application->writeToCsvFile = false;
             } else {
                 std::cout << "Writing BSM to csv: " << csvFileName << std::endl;
             }
@@ -960,9 +836,9 @@ int setup(const bool tx, const bool rx,
                 // TODO: Implement for CAM, DENM as well
                 if (application->configuration.driverVerbosity) {
                     cout << "Number of Radio RX Threads: " <<
-                            (int)application->configuration.numRxThreads << endl;
+                            (int)application->configuration.numRxThreadsRadio << endl;
                 }
-                for (int i = 0; i < application->configuration.numRxThreads; i++) {
+                for (int i = 0; i < application->configuration.numRxThreadsRadio; i++) {
                     threads.push_back(thread(receive, msgType));
                 }
             }
@@ -992,7 +868,7 @@ int setup(const bool tx, const bool rx,
             threads.push_back(thread(simTxRecorded, string(preRecordedFile)));
         }
         else {
-            threads.push_back(thread(simTransmit, msgType));
+            threads.push_back(thread(transmit, msgType));
         }
 
     }
@@ -1011,20 +887,21 @@ int setup(const bool tx, const bool rx,
         else {
 
             if (cam) {
-                threads.push_back(thread(simReceive, MessageType::CAM));
+                threads.push_back(thread(receive, MessageType::CAM));
             }
             else if (denm)
             {
-                threads.push_back(thread(simReceive, MessageType::DENM));
+                threads.push_back(thread(receive, MessageType::DENM));
             }
             else {
                 sem_init(&cnt_sem, 0, 1);
+                // Multi-Threading Capability for RxSim
                 if (application->configuration.driverVerbosity) {
-                    cout << "Number of Radio RX Threads: " <<
-                            (int)application->configuration.numRxThreads << endl;
+                    cout << "Number of Ethernet RX Threads: " <<
+                            (int)application->configuration.numRxThreadsEth << endl;
                 }
-                for (int i = 0; i < application->configuration.numRxThreads; i++) {
-                    threads.push_back(thread(simReceive, msgType));
+                for(int i = 0; i < application->configuration.numRxThreadsEth; i++){
+                    threads.push_back(thread(receive, msgType));
                 }
             }
         }

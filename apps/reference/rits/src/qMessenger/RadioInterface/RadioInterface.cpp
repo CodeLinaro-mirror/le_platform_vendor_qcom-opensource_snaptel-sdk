@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -124,6 +124,33 @@ void RadioInterface::resetCallbackPromise() {
     this->gCallbackPromise = promise<ErrorCode>();
 };
 
+void RadioInterface::updateSrcL2InfoCallback(ErrorCode error){
+    if(ErrorCode::SUCCESS == error) {
+        //successful l2 src address update
+    }else{
+        printf("Error in l2 src address update\n");
+    }
+    this->gCallbackPromise.set_value(error);
+};
+
+bool RadioInterface::updateSrcL2(){
+    bool success = false;
+    auto respCb = [&](ErrorCode error) {
+            updateSrcL2InfoCallback(error);
+    };
+
+    if(Status::SUCCESS == cv2xRadio->updateSrcL2Info(respCb)){
+        if(ErrorCode::SUCCESS == gCallbackPromise.get_future().get()){
+            success = true;
+        }
+    }
+
+    // successful l2 address change if reach here
+    this->resetCallbackPromise();
+    return success;
+};
+
+
 void RadioInterface::cv2xStatusCallback(Cv2xStatusEx status, ErrorCode error) {
     if (ErrorCode::SUCCESS == error) {
         this->gCv2xStatus = status;
@@ -224,7 +251,7 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     }
 
     // Wait for radio to complete initialization
-    auto cv2xRadio = cv2xRadioManager->getCv2xRadio(category);
+    cv2xRadio = cv2xRadioManager->getCv2xRadio(category);
     if (not cv2xRadio->isReady()) {
         if (Status::SUCCESS == cv2xRadio->onReady().get()) {
             cout << "C-V2X Radio is ready" << endl;

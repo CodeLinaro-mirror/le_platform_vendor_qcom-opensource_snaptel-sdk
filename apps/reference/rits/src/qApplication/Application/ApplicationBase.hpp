@@ -100,6 +100,7 @@ struct Config{
     uint16_t ldmSize = 1;
     uint16_t transmitRate = 100;
     uint16_t locationInterval = 100;
+    unsigned int msgId = 0;
     uint16_t bsmJitter = 0;
     bool enableVehicleExt = false;
     uint8_t pathHistoryPoints = 15;
@@ -146,14 +147,15 @@ struct Config{
     uint8_t secVerbosity = 0;
     uint8_t appVerbosity = 0;
     /** Sec Driver Multi Threading Options **/
-    uint8_t numRxThreads = 0;
+    uint8_t numRxThreadsEth = 1;
+    uint8_t numRxThreadsRadio = 1;
     uint8_t numTxThreads = 0; // TODO
     /** Verification Stats Parameters */
-    bool enableVerifStatLog = true;
+    bool enableVerifStatLog = false;
     uint32_t verifStatsSize = 10000;
     string verifStatLogFile = "/tmp/verif_stats.log";
     /** Signing Stats Parameters */
-    bool enableSignStatLog = true;
+    bool enableSignStatLog = false;
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
 
@@ -164,6 +166,9 @@ struct Config{
     string defaultGateway;
     string primaryDns;
     uint32_t wraServiceId = 4;
+    /** Pseudonym/ID Change */
+    string lcmName = "";
+    unsigned int idChangeInterval = 0;
 };
 
 class ApplicationBase
@@ -175,11 +180,17 @@ public:
     int totalTxSuccess = 0;
     int totalRxSuccess = 0;
 
-    /** For multi-threaded msg verification */
+    /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
     std::map<std::thread::id, int> signStatIdx;
     std::map<std::thread::id, std::vector<VerifStats>> thrVerifLatencies;
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
+
+    /* Identity Change Related Functions and Variables */
+    void changeIdTimer(unsigned int interval);
+    void changeIdentity();
+    void (ApplicationBase::*thrFn)()=&ApplicationBase::changeIdentity;
+    IDChangeData idChangeData;
 
     /* Function to permit different levels of verbosity */
     void setAppVerbosity(int value) {
@@ -327,7 +338,7 @@ public:
 
     FILE *csvfp;
 
-    bool writeToCsv = false;
+    bool writeToCsvFile = false;
 
 protected:
     bool isTx = false;
@@ -335,6 +346,7 @@ protected:
     bool isTxSim = false;
     bool isRxSim = false;
     MessageType MsgType;
+    uint8_t msgCount;
 
     void fillSecurity(ieee1609_2_data* secData);
     /**

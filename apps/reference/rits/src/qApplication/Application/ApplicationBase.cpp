@@ -40,6 +40,45 @@ using std::string;
 using std::map;
 using std::pair;
 
+#define ABUF_LEN            2048
+#define ABUF_HEADROOM       256
+
+// thread function to periodically change ID and cert
+void ApplicationBase::changeIdTimer(unsigned int interval)
+{
+    printf("Time interval for pseudonym and id change is: %d\n", interval);
+    std::thread([this, interval]() {
+        while (true)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+            (this->*thrFn)();
+        }
+    }).detach();
+}
+
+// first need to call setup function to initialize the lcm id change
+// then periodically call "idChange" and check return value and updates in user data (idchangedata)
+void ApplicationBase::changeIdentity(){
+    //  pseudonym cert change
+    sem_wait(&idChangeData.idSem);
+    int ret = SecService->idChange();
+    if( ret < 0 ){
+        if(appVerbosity > 1)
+            fprintf(stderr,"Id Change Failure\n");
+    }
+    else{
+        if(appVerbosity > 1)
+            printf("Id Change Success\n");
+        // if not simulation, perform l2 src randomization
+        if (!this->isTxSim) { // radio
+            for(int index = 0 ; index < spsTransmits.size(); index++){
+                this->spsTransmits[index].updateSrcL2();
+            }
+        }
+    }
+    sem_post(&idChangeData.idSem);
+}
+
 ApplicationBase::ApplicationBase(char* fileConfiguration){
     // set parameters according to config file
     if (this->loadConfiguration(fileConfiguration)) {
@@ -59,10 +98,36 @@ ApplicationBase::ApplicationBase(char* fileConfiguration){
     // one-time initialization for security ; if any
     if (this->configuration.enableSecurity == true) {
     #ifdef AEROLINK
-        SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
+        try{
+          // LCM Constructor for Aerolink
+          if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
+              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                      configuration.securityContextName,
+                      configuration.securityCountryCode,
+                      configuration.lcmName.c_str(),
+                      std::ref(idChangeData)
+                      ));
+
+              // lcm id change timer thread
+              sem_init(&idChangeData.idSem, 0, 1);
+              fprintf(stdout, "Performing ID Changes at time interval of: %f seconds\n",
+                  this->configuration.idChangeInterval/1000.0);
+              changeIdTimer(this->configuration.idChangeInterval);
+
+          }else{
+              // Non-LCM Constructor for Aerolink
+              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                      configuration.securityContextName,
+                      configuration.securityCountryCode));
+          }
+        }catch(const std::runtime_error& error){
+            fprintf(stderr, "Aerolink initialization failed. Please check security settings\n");
+            fprintf(stderr, "Attempting to close all radio flows\n");
+            closeAllRadio();
+            exit(0);
+        }
     #else
+        // If no Aerolink security library is specified
         SecService = unique_ptr<SecurityService>(NullSecurity::Instance(
                     configuration.securityContextName,
                     configuration.securityCountryCode));
@@ -508,6 +573,9 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         else
             this->configuration.enableSecurity = false;
     }
+    if (configs.find("psidValue") != configs.end()) {
+        configuration.psid = stoi(configs["psidValue"],0,16);
+    }
     if (configuration.enableSecurity == true) {
         if (configs.find("SecurityContextName") != configs.end()) {
             configuration.securityContextName = configs["SecurityContextName"];
@@ -533,6 +601,67 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             istringstream is4(configs["enableEncrypt"]);
             is4 >> boolalpha >> configuration.enableEncrypt;
         }
+
+        /* Signing-related statistics */
+        if(configs.find("enableSignStatLog") != configs.end()){
+           istringstream is7(configs["enableSignStatLog"]);
+           is7 >> boolalpha >> configuration.enableSignStatLog;
+        }
+
+        if(configs.find("signStatLogListSize") != configs.end()){
+            this->configuration.signStatsSize =
+            (uint32_t)stoi(configs["signStatLogListSize"]);
+        }
+
+        if(configs.find("signStatLogFile") != configs.end()){
+            this->configuration.signStatLogFile = configs["signStatLogFile"];
+        }
+
+        if(configuration.enableSignStatLog){
+            std::cout << "Signing statistic logging is ON" << std::endl;
+            std::cout << "Statistics for last " << configuration.signStatsSize <<
+                " signs will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                configuration.signStatLogFile << std::endl;
+        } else{
+            std::cout << "Signing statistic logging is off" << std::endl;
+        }
+
+
+        /* Verification-related statistics */
+        if(configs.find("enableVerifStatLog") != configs.end()){
+           istringstream is8(configs["enableVerifStatLog"]);
+           is8 >> boolalpha >> configuration.enableVerifStatLog;
+        }
+
+        if(configs.find("verifStatLogListSize") != configs.end()){
+            this->configuration.verifStatsSize =
+                (uint32_t)stoi(configs["verifStatLogListSize"]);
+        }
+
+        if(configs.find("verifStatLogFile") != configs.end()){
+            this->configuration.verifStatLogFile = configs["verifStatLogFile"];
+        }
+
+        if(configuration.enableVerifStatLog){
+            std::cout << "Verification statistic logging is ON" << std::endl;
+            std::cout << "Statistics for last " << configuration.verifStatsSize <<
+                " verifications will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                configuration.verifStatLogFile << std::endl;
+        } else{
+            std::cout << "Verification statistic logging is off" << std::endl;
+        }
+
+        /** Pseudonym/ID Change */
+        if(configs.find("lcmName") != configs.end()){
+            this->configuration.lcmName = configs["lcmName"];
+        }
+
+        if(configs.find("idChangeInterval") != configs.end()) {
+            this->configuration.idChangeInterval = (unsigned int)stoi(configs["idChangeInterval"]);
+        }
+
     }
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
@@ -557,60 +686,14 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             (uint8_t)stoi(configs["secVerbosity"]);
     }
 
-    /* Signing-related statistics */
-    if(configs.find("enableSignStatLog") != configs.end()){
-       istringstream is7(configs["enableSignStatLog"]);
-       is7 >> boolalpha >> configuration.enableSignStatLog;
-    }
-
-    if(configs.find("signStatLogListSize") != configs.end()){
-        this->configuration.signStatsSize =
-        (uint32_t)stoi(configs["signStatLogListSize"]);
-    }
-
-    if(configs.find("signStatLogFile") != configs.end()){
-        this->configuration.signStatLogFile = configs["signStatLogFile"];
-    }
-
-    if(configuration.enableSignStatLog){
-        std::cout << "Signing statistic logging is ON" << std::endl;
-        std::cout << "Statistics for last " << configuration.signStatsSize <<
-            " signs will be reported by each thread" << std::endl;
-        std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-            configuration.signStatLogFile << std::endl;
-    } else{
-        std::cout << "Signing statistic logging is off" << std::endl;
-    }
-
-    /* Verification-related statistics */
-    if(configs.find("enableVerifStatLog") != configs.end()){
-       istringstream is8(configs["enableVerifStatLog"]);
-       is8 >> boolalpha >> configuration.enableVerifStatLog;
-    }
-
-    if(configs.find("verifStatLogListSize") != configs.end()){
-        this->configuration.verifStatsSize =
-            (uint32_t)stoi(configs["verifStatLogListSize"]);
-    }
-
-    if(configs.find("verifStatLogFile") != configs.end()){
-        this->configuration.verifStatLogFile = configs["verifStatLogFile"];
-    }
-
-    if(configuration.enableVerifStatLog){
-        std::cout << "Verification statistic logging is ON" << std::endl;
-        std::cout << "Statistics for last " << configuration.verifStatsSize <<
-            " verifications will be reported by each thread" << std::endl;
-        std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-            configuration.verifStatLogFile << std::endl;
-    } else{
-        std::cout << "Verification statistic logging is off" << std::endl;
-    }
-
     /* Multi-parallelism */
-    if(configs.find("numRxThreads") != configs.end()) {
-        this->configuration.numRxThreads = (uint8_t)stoi(configs["numRxThreads"]);
+    if(configs.find("numRxThreadsEth") != configs.end()) {
+        this->configuration.numRxThreadsEth = (uint8_t)stoi(configs["numRxThreadsEth"]);
     }
+    if(configs.find("numRxThreadsRadio") != configs.end()) {
+        this->configuration.numRxThreadsRadio = (uint8_t)stoi(configs["numRxThreadsRadio"]);
+    }
+
     /* WSA */
     configuration.routerLifetime = 0;
     configuration.ipPrefixLength = 0;
@@ -634,6 +717,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
        is8 >> boolalpha >> configuration.wildcardRx;
     }
     this->configuration.isValid = true;
+
 }
 
 void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {

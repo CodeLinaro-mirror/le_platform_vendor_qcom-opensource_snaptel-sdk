@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -30,7 +30,7 @@
 #include "AerolinkSecurity.hpp"
 
 /* STATIC VARIABLES */
-
+/* Asynchronous Function Variables */
 static      AEROLINK_RESULT signCallbackStatus;
 static      void* signCallbackUserData;
 static      uint8_t* signCallbackData;
@@ -39,6 +39,8 @@ static      volatile uint32_t signCallbackCalled;
 static      AEROLINK_RESULT verifyCallbackStatus;
 static      void* verifyCallbackUserData;
 static      volatile uint32_t verifyCallbackCalled;
+
+/* Logging Related Variables */
 static      struct timeval currTime;
 static      double prevTimeStamp, prevBatchTimeStamp;
 static      double startTime, avgRate, minBatchTime, avgBatchTime, maxBatchTime;
@@ -49,11 +51,17 @@ static      int verifSuccess, prevVerifSuccess, verifFail;
 static      int signSuccess, prevSignSuccess, signFail;
 static      int queuedVerifs = 0;
 static      int secVerbosity = 0;
+
+/* Semaphores */
 static      sem_t smpListSem;
 static      sem_t smgListSem;
 static      sem_t verifQueueSem;
 static      sem_t signLogSem;
 static      sem_t verifLogSem;
+static      sem_t idChangeSem;
+
+static AEROLINK_RESULT completeChangeId_status;
+static bool retChangeId_status; // tells thread if callback has completed
 
 /* LOGGING FUNCTIONS */
 // Function to set the verbosity of these security related functions
@@ -146,6 +154,87 @@ void printVerifStats(std::thread::id thrId){
                     (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
 }
 
+/* CERT CHANGE FUNCTIONS */
+/* The following type defines a callback function prototype for initiation of the ID-change
+    protocol. A local certificate manager (LCM) manages sets of end-entity certificates for one or
+    more applications (PSID/SSPs) that share those certificates (are authorized by those
+    certificates to sign messages).
+    numCerts provides the number of simultaneously valid certificates for the registered
+    LCM(), e.g. 20, and on its return, this function can specify the next certificate to be used
+    by setting cert_index to a value from 1 – 20. A value of 0 is used to indicate no
+    preference, and Aerolink will choose the next certificate. An invalid value (greater than
+    the number of certificates) will be treated as a value of 0.
+    typedef void (*IdChangeInitCallback)(
+    void *userData, // IN
+    uint8_t numCerts, // IN
+    uint8_t *certIndex); // OUT
+*/
+
+static void initIdChangeCbFn(void *userData, unsigned char numCerts, unsigned char *certIndxCb){
+    // on call back, this function provides the new cert index for the complete id change cb fn
+}
+
+/* The following type defines a callback function prototype for completion of the ID-change
+ *   protocol. returnCode indicates whether the ID change was aborted, or whether the
+ *   data-signing certificates for all LCMs were changed and all other identifiers should now
+ *   be changed. If the ID change was not aborted, certId will contain the last eight bytes of
+ *   the whole-certificate hash of the new data-signing certificate for the registered LCM.
+ *   The certId pointer is no longer valid after this function returns.
+ *   typedef void (*IdChangeDoneCallback)(
+ *   AEROLINK_RESULT returnCode, // IN
+ *   void *userData, // IN
+ *   uint8_t const *certId); // IN
+ */
+static void completeIdChangeCbFn(AEROLINK_RESULT returnCode, void *userData, const unsigned char *certIdCb){
+    // tells the user whether the id change was completed successfully or not.
+    completeChangeId_status = returnCode;
+    if(returnCode == WS_SUCCESS){
+        // cast userdata to the user data type struct
+        IDChangeData* tempPtr = (IDChangeData*)userData;
+        memcpy(tempPtr->certId, certIdCb, sizeof(tempPtr->certId));
+        memcpy(tempPtr->tempId, certIdCb, sizeof(tempPtr->tempId)); // start at offset of 2 to get last 6 bytes
+        tempPtr->idChanged = true;
+        if(secVerbosity > 1){
+            std::cout << "New cert hash ID is: " ;
+            for(int i = 0 ; i < sizeof(tempPtr->certId); i++){
+                printf("%02x:", tempPtr->certId[i]);
+            }
+            std::cout << "\n\n";
+        }
+    }
+    else{
+        if(secVerbosity > 1)
+            fprintf(stderr,"Failed to Perform ID Change\n");
+    }
+    retChangeId_status = true;
+    sem_post(&idChangeSem);
+}
+
+// LOCK-BASED FUNCTIONS will need to be used for safety-critical events to happen properly.
+/*
+ *   This function applies a lock to block ID-change-protocol initiations.
+ *   AEROLINK_RESULT securityServices_idChangeLock();
+ *
+ *   This function removes a lock to allow ID-change-protocol initiations.
+ *   AEROLINK_RESULT securityServices_idChangeUnlock();
+ */
+
+// Function to call the Aerolink id change call and provide the callback function
+int AerolinkSecurity::idChange (){
+
+    AEROLINK_RESULT result;
+    result = securityServices_idChangeInit();
+    if(result != WS_SUCCESS)
+        return -1;
+
+    // wait until callback function is called
+    sem_wait(&idChangeSem);
+    retChangeId_status = false;
+    // on successful return, modify other id-related information in upper layer
+    return result;
+}
+
+
 /* INITIALIZATION/DEINITIALIZATION FUNCTIONS */
 
 AerolinkSecurity *AerolinkSecurity::pInstance = nullptr;
@@ -170,12 +259,24 @@ AerolinkSecurity * AerolinkSecurity::Instance(std::string ctxName,
     return AerolinkSecurity::pInstance;
 }
 
+// Create new aerolinksecurity instance with optional crypto key method
+AerolinkSecurity * AerolinkSecurity::Instance(std::string ctxName,
+                            uint16_t countryCode,  char const* lcmName,
+                            IDChangeData& idChangeData) {
+    if(pInstance == nullptr){
+        AerolinkSecurity::pInstance =
+            new AerolinkSecurity(ctxName, countryCode, lcmName, idChangeData);
+    }
+    return AerolinkSecurity::pInstance;
+}
+
 // Primary initialization function for Aerolink services
 int AerolinkSecurity::init(void) {
     sem_init(&verifLogSem, 0, 1);
     sem_init(&signLogSem, 0, 1);
     sem_init(&smpListSem, 0, 1);
     sem_init(&smgListSem, 0, 1);
+    sem_init(&idChangeSem, 0, 1);
     gettimeofday(&currTime, NULL);
     startTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
     prevBatchTimeStamp = startTime;
@@ -213,6 +314,31 @@ int AerolinkSecurity::init(void) {
         std::cerr << "Failed to create signed message generator: " << result << std::endl;
         return -1;
     }
+
+    /*
+     * Register LCM for ID change.
+     */
+    if(lcmName_) {
+        if(lcmName_[0] != '\0'){
+            fprintf(stdout, "Aerolink:: Lcm name is: %s\n", lcmName_);
+            result = securityServices_idChangeRegister(
+                    secContext_,
+                    lcmName_,
+                    idChangeData_,  // void* cb data struct - user data
+                    initIdChangeCbFn,
+                    completeIdChangeCbFn
+                    );
+
+            if(result != WS_SUCCESS) {
+                std::cerr << "Failed to register the ID change callback: " 
+                            << ws_errid(result) << std::endl;
+                return -1;
+            }else{
+                fprintf(stdout, "Successful ID change callback registration\n");
+            }
+        }
+    }
+
 
     uint8_t const *import_key = (uint8_t*)"";
     SymmetricKeyType symmetricKeyType;
@@ -286,6 +412,8 @@ void AerolinkSecurity::deinit(void) {
     if(!threadSmgs.empty()){
         threadSmgs.clear();
     }
+    if(lcmName_)
+        securityServices_idChangeUnregister(secContext_,lcmName_);
     (void)sc_close(secContext_);
     (void)securityServices_shutdown();
     if(pInstance != nullptr)
@@ -1001,13 +1129,13 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
 
 /* ENCRYPTION FUNCTIONS */
 
-//AerolinkEncryptionKey const * const recipients[], uint32_t numRecipients,
+//AerolinkEncryptionKey const * const recipients_[], uint32_t numRecipients_,
 int AerolinkSecurity::encryptMsg(
                 uint8_t const * const plainText, uint32_t plainTextLength,
                 uint8_t isPayloadSpdu, uint8_t * const encryptedData,
                 uint32_t * const encryptedDataLength){
     // Check if there are actually any recipients
-    if(numRecipients==0 || recipients.empty()){
+    if(numRecipients_==0 || recipients_.empty()){
         if(secVerbosity > 0)
             fprintf(stderr,
                "Number of recipients if zero or they are invalid\n");
@@ -1017,9 +1145,9 @@ int AerolinkSecurity::encryptMsg(
     // Generate encrypted data with given key; depending on the generated key type
     // the security services will use the appropriate key enc mechanism.
     int result;
-    AerolinkEncryptionKey const * recipientsArr[recipients.size()];
-    std::copy(recipients.begin(), recipients.end(), recipientsArr);
-    result = smg_encrypt(smg_, recipientsArr, numRecipients,
+    AerolinkEncryptionKey const * recipientsArr[recipients_.size()];
+    std::copy(recipients_.begin(), recipients_.end(), recipientsArr);
+    result = smg_encrypt(smg_, recipientsArr, numRecipients_,
                   plainText, plainTextLength, 1, encryptedData, encryptedDataLength);
     if (result != WS_SUCCESS)
     {
@@ -1027,14 +1155,14 @@ int AerolinkSecurity::encryptMsg(
             fprintf(stderr,
                 "Unable to encrypt message (%s)\n",
                 ws_errid(result));
-        recipients.clear();
+        recipients_.clear();
         return -1;
     }
     if(secVerbosity > 7)
         fprintf(stdout,"Encrypted data generated correctly\n");
 
     // delete keys after sent?
-    recipients.clear();
+    recipients_.clear();
     return result;
 }
 

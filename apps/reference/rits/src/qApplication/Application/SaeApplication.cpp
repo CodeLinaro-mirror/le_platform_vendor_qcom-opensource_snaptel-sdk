@@ -324,9 +324,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         rxSuccess++;
     else
         decFail++;
-    if(writeToCsv && (ret != -1)){
+    if(writeToCsvFile && (ret != -1)){
         csvMutex.lock();
-        write_to_csv(mc,csvfp);
+        writeToCsv(mc,csvfp);
         csvMutex.unlock();
     }
     return ret;
@@ -469,11 +469,6 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     fillBsmCan(bsm);
     fillBsmLocation(bsm);
     bsm->timestamp_ms = timestamp_now();
-
-    if (bsm->id == 0) {
-        bsm->id = rand();
-    }
-
     bsm->VehicleLength_cm = configuration.vehicleLength;
     bsm->VehicleWidth_cm = configuration.vehicleWidth;
     if(configuration.enableVehicleExt==true){
@@ -483,17 +478,43 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
         bsm->has_safety_extension = v2x_bool_t::V2X_False;
         bsm->has_supplemental_extension = v2x_bool_t::V2X_False;
     }
-
-    if (bsm->MsgCount == 0)
-    {
-        bsm->MsgCount = (rand() % 127) + 1;
-    }
-    else
-    {
-        bsm->MsgCount = (bsm->MsgCount + 1) % 127;
-    }
-
     bsm->secMark_ms = bsm->timestamp_ms % 60000;
+    // needs to be randomized along with l2 address and msg id and pseudonym cert
+
+    // check if msg count has been randomized and we haven't updated this yet
+    // if so, keep adding and modding 127
+    if(!this->configuration.lcmName.empty() &&
+        this->configuration.idChangeInterval)
+        sem_wait(&idChangeData.idSem);
+        // for synchronization between Application and Aerolink sides
+    if(!initialized){
+        //printf("Initializing bsm count and temp id\n");
+        bsm->MsgCount = (rand() % 127);
+        bsm->id = rand();
+        initialized = true;
+    }
+    else if(idChangeData.idChanged){
+        // randomize msg count
+        bsm->MsgCount = (rand() % 127);
+        // update the temp id
+        bsm->id = (uint32_t)idChangeData.tempId[0] << 24 |
+        (uint32_t)idChangeData.tempId[1] << 16 |
+        (uint32_t)idChangeData.tempId[2] << 8  |
+        (uint32_t)idChangeData.tempId[3];
+        idChangeData.idChanged = false;
+        if(appVerbosity > 1)
+            printf("SaeApp:: Id changed, new msgcount is: %d, and new temp id is: %u\n",
+                                    bsm->MsgCount, bsm->id);
+    }
+    else{
+        bsm->MsgCount = (msgCount + 1) % 127;
+    }
+    if(!this->configuration.lcmName.empty() &&
+        this->configuration.idChangeInterval)
+        sem_post(&idChangeData.idSem);
+
+    msgCount = bsm->MsgCount;
+    tempId = bsm->id;
 }
 
 

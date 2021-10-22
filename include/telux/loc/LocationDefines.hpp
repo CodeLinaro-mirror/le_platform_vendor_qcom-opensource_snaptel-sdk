@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *
+ *    * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *
+ *   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       LocationDefines.hpp
  *
@@ -497,6 +533,52 @@ enum GnssSignalType {
 
 /*Bit mask containing bits from GnssSignalType */
 using GnssSignal = uint32_t;
+
+/** Specify Location Capabilities Type.*/
+enum LocCapabilityType {
+  /** Support time based tracking session via @ref ILocationManager::startDetailedReports,
+   *  @ref ILocationManager::startDetailedEngineReports and
+   *  @ref ILocationManager::startBasicReports with distanceInMeters set to 0.
+   */
+  TIME_BASED_TRACKING = (1<<0),
+  /** Support distance based tracking session via @ref ILocationManager::startBasicReports with
+   *  distanceInMeters specified.
+   */
+  DISTANCE_BASED_TRACKING = (1<<1),
+  /** Support Gnss Measurement data via @ref ILocationListener::onGnssMeasurementsInfo when a
+   *  tracking session is enabled.
+   */
+  GNSS_MEASUREMENTS = (1<<2),
+  /** Support configure constellations via @ref ILocationConfigurator::configureConstellations. */
+  CONSTELLATION_ENABLEMENT = (1<<3),
+  /** Support carrier phase for Precise Positioning Measurement Engine (PPME). */
+  CARRIER_PHASE = (1<<4),
+  /** Support GNSS Single Frequency feature. */
+  QWES_GNSS_SINGLE_FREQUENCY = (1<<5),
+  /** Supports GNSS Multi Frequency feature. */
+  QWES_GNSS_MULTI_FREQUENCY = (1<<6),
+  /** Support VEPP license bundle is enabled. VEPP bundle include Carrier Phase features. */
+  QWES_VPE = (1<<7),
+  /** Support for CV2X Location basic features. This includes features for
+   *  GTS Time & Freq, @ref ILocationConfigurator::configureCTunc.
+   */
+  QWES_CV2X_LOCATION_BASIC = (1<<8),
+  /** Support for CV2X Location premium features. This includes features for
+   *  CV2X Location Basic features, QDR3 feature and @ref ILocationConfigurator::configurePACE.
+   */
+  QWES_CV2X_LOCATION_PREMIUM = (1<<9),
+  /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
+   *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
+   */
+  QWES_PPE = (1<<10),
+  /** Support QDR2_C license bundle is enabled. */
+  QWES_QDR2 = (1<<11),
+  /** Support QDR3_C license bundle is enabled. */
+  QWES_QDR3 = (1<<12)
+};
+
+/*Bit mask containing bits from LocCapabilityType */
+using LocCapability = uint32_t;
 
 struct GnssMeasurementInfo {
   /** GnssSignalType mask */

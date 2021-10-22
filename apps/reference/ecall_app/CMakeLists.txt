@@ -10,6 +10,7 @@ set(ECALL_APP_SOURCES
     LocationClient.cpp
     TelClient.cpp
     TelClientUtils.cpp
+    EcallScanFailHandler.cpp
     MsdProvider.cpp
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
@@ -28,7 +29,8 @@ include_directories(BEFORE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
 add_executable (${TARGET_ECALL_APP} ${ECALL_APP_SOURCES})
-target_link_libraries(${TARGET_ECALL_APP} telux_tel telux_loc telux_therm telux_audio pthread)
+target_link_libraries(${TARGET_ECALL_APP} telux_tel telux_loc telux_therm telux_audio telux_common
+                      pthread)
 
 # install to target
 install ( TARGETS ${TARGET_ECALL_APP}

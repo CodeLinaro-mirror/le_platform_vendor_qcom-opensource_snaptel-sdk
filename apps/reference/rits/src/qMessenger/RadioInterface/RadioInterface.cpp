@@ -49,7 +49,7 @@ public:
         return cv2xStatus_;
     }
 
-    bool waitForCv2xStatus(telux::cv2x::Cv2xStatusType status) {
+    bool waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool &haltRx) {
         bool closeAllFlow = false;
         // get the inital status
         telux::cv2x::Cv2xStatus tmpStatus;
@@ -63,6 +63,12 @@ public:
             // wait for the next status change
             statusPromise_ = promise<telux::cv2x::Cv2xStatus>();
             promiseSet_ = false;
+            //In the case where both tx and rx are enabled, flag to cease rx when cv2x status
+            //becomes inactive/suspended.
+            {
+                std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+                haltRx = true;
+            }
             tmpStatus = statusPromise_.get_future().get();
             if(tmpStatus.rxStatus == status or tmpStatus.txStatus == status){
                 std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
@@ -203,12 +209,9 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
     return status;
 }
 
-bool RadioInterface::waitForCv2xToActivate() {
+void RadioInterface::waitForCv2xToActivate(bool &haltRx) {
         auto sp = std::dynamic_pointer_cast<Cv2xStatusListener>(cv2xStatusListener_);
-        restartFlow = sp->waitForCv2xStatus(Cv2xStatusType::ACTIVE);
-
-        //returning true as cv2x is active now
-        return true;
+        restartFlow = sp->waitForCv2xStatus(Cv2xStatusType::ACTIVE, haltRx);
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {

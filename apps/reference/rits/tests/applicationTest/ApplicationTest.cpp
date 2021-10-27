@@ -70,7 +70,9 @@ auto rxfail = 0;
 bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
-bool cv2xActive = false;
+std::condition_variable cv;
+bool haltRx = false;
+std::mutex cv2xStatusMtx;
 bool simMode = false;
 
 void joinThreads() {
@@ -114,19 +116,16 @@ void receive(MessageType msgType) {
             //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
             sem_wait(&cnt_sem);
             //Check CV2X RX status when only RX is enabled
-            if((application->radioReceives[0].statusCheck(RadioType::RX)) != Cv2xStatusType::ACTIVE){
-                if (!application->configuration.enableTxAlways) {
-                    application->radioReceives[0].waitForCv2xToActivate();
-                    if (application->radioReceives[0].restartFlow) {
-                        application->closeAllRadio();
-                        application->setup();
-                    }
+            if (!application->configuration.enableTxAlways) {
+                application->radioReceives[0].waitForCv2xToActivate(haltRx);
+                if (application->radioReceives[0].restartFlow) {
+                    application->closeAllRadio();
+                    application->setup();
                 }
-                else {// if TX is also enabled check the CV2X status in TX only
-                    while (!cv2xActive) {
-                        usleep(1000);
-                    }
-                }
+            }
+            else {// if TX is also enabled check the CV2X status in TX only
+                std::unique_lock<std::mutex> lk(cv2xStatusMtx);
+                cv.wait(lk, []{return (!haltRx);});
             }
             sem_post(&cnt_sem);
         }
@@ -279,15 +278,17 @@ void transmit(MessageType msgType) {
         if(!simMode){
             //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
             //Check CV2X TX Status when TX is enabled.
-            if((application->spsTransmits[0].statusCheck(RadioType::TX)) != Cv2xStatusType::ACTIVE){
-                application->spsTransmits[0].waitForCv2xToActivate();
-                if (application->spsTransmits[0].restartFlow) {
-                    application->closeAllRadio();
-                    application->setup();
-                    cv2xActive = true;
-                    close(tx_timer_fd);
-                    tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+            application->spsTransmits[0].waitForCv2xToActivate(haltRx);
+            if (application->spsTransmits[0].restartFlow) {
+                application->closeAllRadio();
+                application->setup();
+                close(tx_timer_fd);
+                tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+                {
+                    std::lock_guard<std::mutex> lk(cv2xStatusMtx);
+                    haltRx = false;
                 }
+                cv.notify_all();
             }
         }
         ret = application->send(0, TransmitType::SPS);

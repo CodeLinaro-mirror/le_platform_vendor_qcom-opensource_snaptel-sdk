@@ -148,7 +148,7 @@ public:
      * @return true
      * @return false
      */
-    bool waitForCv2xToActivate();
+    void waitForCv2xToActivate(bool &haltRx);
     bool restartFlow;
 
     /**

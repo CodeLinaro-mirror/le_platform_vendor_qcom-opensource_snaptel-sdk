@@ -653,7 +653,11 @@ enum LocationValidityType {
     /** Location has valid heading accuracy.*/
     HAS_HEADING_ACCURACY_BIT  = (1<<7),
     /** Location has valid timestamp.*/
-    HAS_TIMESTAMP_BIT         = (1<<8)
+    HAS_TIMESTAMP_BIT         = (1<<8),
+    /** Location has valid elapsed real time.*/
+    HAS_ELAPSED_REAL_TIME_BIT = (1<<9),
+    /** Location has valid elapsed real time uncertainty.*/
+    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10)
 };
 
 /*Bit mask containing bits from LocationValidityType */
@@ -1585,6 +1589,24 @@ public:
  *
  */
   virtual float getHeadingUncertainty() = 0;
+
+/**
+ * Boot timestamp corresponding to the UTC timestamp for Location fix.
+ *    - Units: Nano-second
+ *
+ * @returns elapsed real time.
+ *
+ */
+  virtual uint64_t getElapsedRealTime() = 0;
+
+/**
+ * Retrieves elapsed real time uncertainty.
+ *    - Units: Nano-second
+ *
+ * @returns elapsed real time uncertainty.
+ *
+ */
+  virtual uint64_t getElapsedRealTimeUncertainty() = 0;
 
 };
 

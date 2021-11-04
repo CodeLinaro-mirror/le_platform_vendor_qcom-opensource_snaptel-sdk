@@ -119,18 +119,21 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) 
 }
 
 void SensorFeatureControlMenu::initTcuPowerMgr() {
+#ifdef TELUX_FOR_EXTERNAL_AP
+    std::cout << " Connecting to REMOTE TCU Activity Manager " << std::endl;
+    telux::common::ProcType procType = telux::common::ProcType::REMOTE_PROC;
+#else
     std::cout << " Connecting to LOCAL TCU Activity Manager " << std::endl;
+    telux::common::ProcType procType = telux::common::ProcType::LOCAL_PROC;
+#endif
     std::cout << " Initializing the client as a SLAVE " << std::endl;
 
     // Get power factory instance
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
     std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
-    tcuActivityMgr_ = powerFactory.getTcuActivityManager(ClientType::SLAVE,
-        telux::common::ProcType::LOCAL_PROC,
-            [&](telux::common::ServiceStatus status) {
-                    prom.set_value(status);
-            });
+    tcuActivityMgr_ = powerFactory.getTcuActivityManager(ClientType::SLAVE, procType,
+        [&](telux::common::ServiceStatus status) { prom.set_value(status); });
     if(tcuActivityMgr_ == nullptr) {
         std::cout <<" ERROR - Failed to get manager instance" << std::endl;
         return;

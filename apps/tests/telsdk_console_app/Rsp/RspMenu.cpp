@@ -131,11 +131,15 @@ void RemoteSimProfileMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Provide_Confirmation_code",
         {}, std::bind(&RemoteSimProfileMenu::provideConfirmationCode,
         this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> euiccMemoryReset
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "EUICC_Memory_Reset",
+        {}, std::bind(&RemoteSimProfileMenu::memoryReset,
+        this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListRemoteSimProfileMenu
         = { getEIDCommand, addProfileCommand, deleteProfileCommand, requestProfileListCommand,
             setProfileCommand, updateNickNameCommand, setUserConsent, getServerAddress,
-            setServerAddress, provideConfirmationCode};
+            setServerAddress, provideConfirmationCode, euiccMemoryReset};
 
     addCommands(commandsListRemoteSimProfileMenu);
     ConsoleApp::displayMenu();
@@ -170,6 +174,8 @@ SlotId RemoteSimProfileMenu::getSlotIdInput() {
 }
 
 void RemoteSimProfileMenu::requestEid(std::vector<std::string> userInput) {
+    std::cout << "\nRequest EID" << std::endl;
+
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -191,6 +197,7 @@ void RemoteSimProfileMenu::requestEid(std::vector<std::string> userInput) {
 }
 
 void RemoteSimProfileMenu::addProfile(std::vector<std::string> userInput) {
+    std::cout << "\nAdd Profile" << std::endl;
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -243,6 +250,7 @@ void RemoteSimProfileMenu::addProfile(std::vector<std::string> userInput) {
 }
 
 void RemoteSimProfileMenu::deleteProfile(std::vector<std::string> userInput) {
+    std::cout << "\nDelete Profile" << std::endl;
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -282,6 +290,8 @@ void RemoteSimProfileMenu::deleteProfile(std::vector<std::string> userInput) {
 }
 
 void RemoteSimProfileMenu::requestProfileList(std::vector<std::string> userInput) {
+    std::cout << "\nRequest Profile list" << std::endl;
+
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -304,6 +314,7 @@ void RemoteSimProfileMenu::requestProfileList(std::vector<std::string> userInput
 }
 
 void RemoteSimProfileMenu::setProfile(std::vector<std::string> userInput) {
+    std::cout << "\nSet Profile" << std::endl;
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -363,6 +374,7 @@ void RemoteSimProfileMenu::setProfile(std::vector<std::string> userInput) {
 }
 
 void RemoteSimProfileMenu::updateNickName(std::vector<std::string> userInput) {
+    std::cout << "\nUpdate Nickname" << std::endl;
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -411,6 +423,8 @@ void RemoteSimProfileMenu::updateNickName(std::vector<std::string> userInput) {
 }
 
 void RemoteSimProfileMenu::provideUserConsent(std::vector<std::string> userInput) {
+    std::cout << "\nProvide User Consent" << std::endl;
+
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -473,6 +487,8 @@ void RemoteSimProfileMenu::provideUserConsent(std::vector<std::string> userInput
 }
 
 void RemoteSimProfileMenu::provideConfirmationCode(std::vector<std::string> userInput) {
+    std::cout << "\nProvide Confirmation Code" << std::endl;
+
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -506,6 +522,8 @@ void RemoteSimProfileMenu::provideConfirmationCode(std::vector<std::string> user
 }
 
 void RemoteSimProfileMenu::setServerAddress(std::vector<std::string> userInput) {
+    std::cout << "\nSet Server Address" << std::endl;
+
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -536,6 +554,8 @@ void RemoteSimProfileMenu::setServerAddress(std::vector<std::string> userInput) 
 }
 
 void RemoteSimProfileMenu::requestServerAddress(std::vector<std::string> userInput) {
+    std::cout << "\nRequest Server Address" << std::endl;
+
     if(simProfileManager_) {
         SlotId slotId = SlotId::DEFAULT_SLOT_ID;
         if (telux::common::DeviceConfig::isMultiSimSupported()) {
@@ -552,6 +572,65 @@ void RemoteSimProfileMenu::requestServerAddress(std::vector<std::string> userInp
         } else {
             std::cout << "Request Server Address failed, status:" << static_cast<int>(status)
                 << std::endl;
+        }
+    } else {
+        std::cout << "ERROR - SimProfileManger is null" << std::endl;
+    }
+}
+
+void RemoteSimProfileMenu::memoryReset(std::vector<std::string> userInput) {
+    std::cout << "\neUICC Memory Reset" << std::endl;
+    if(simProfileManager_) {
+        SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+        if (telux::common::DeviceConfig::isMultiSimSupported()) {
+           slotId =  getSlotIdInput();
+           if (slotId == SlotId::INVALID_SLOT_ID)
+              return;
+        }
+        char delimiter = '\n';
+
+        std::string resetOptions;
+        telux::tel::ResetOptionMask resetmask;
+        std::vector<int> options;
+        std::cout
+            << "Available Reset Options: \n"
+                " 0 - Delete all Test Profiles\n 1 - Delete all Operational Profiles\n" <<
+                " 2 - Reset to default SM-DP+ address \n\n";
+        std::cout
+            << "Enter Reset Options\n "<<
+            "(For example: enter 0,1 to delete test and operational profiles): ";
+        std::getline(std::cin, resetOptions, delimiter);
+
+        std::stringstream ss(resetOptions);
+        int i;
+        while(ss >> i) {
+            options.push_back(i);
+            if(ss.peek() == ',' || ss.peek() == ' ')
+                ss.ignore();
+        }
+
+        for(auto &opt : options) {
+            if(opt >= 0 && opt <= 2) {
+                try {
+                    resetmask.set(opt);
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                            << std::endl;
+                    return;
+                }
+            } else {
+                std::cout << "Reset options should not be out of range" << std::endl;
+                return;
+            }
+        }
+        Status status = simProfileManager_->memoryReset(slotId, resetmask,
+            MyRspCallback::onResponseCallback);
+        if (status == Status::SUCCESS) {
+            std::cout << "Memory Reset request sent successfully" << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to send memory reset request, Status:"
+                      << static_cast<int>(status) << std::endl;
+            Utils::printStatus(status);
         }
     } else {
         std::cout << "ERROR - SimProfileManger is null" << std::endl;

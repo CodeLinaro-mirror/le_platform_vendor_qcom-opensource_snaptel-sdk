@@ -41,20 +41,25 @@
 #include <iostream>
 #include <memory>
 #include <future>
+#include <unistd.h>
 
+#include "SensorTestApp.hpp"
 #include "SensorClient.hpp"
 
-#include "SensorUtils.hpp"
 #include "../../common/utils/Utils.hpp"
 #include <telux/common/Version.hpp>
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define print_notification(tag) std::cout << "\033[1;35m" << tag << "\033[0m"
 
-SensorClient::SensorClient(int id, std::shared_ptr<ISensor> sensor, bool verboseNotification)
+SensorClient::SensorClient(
+    int id, std::shared_ptr<ISensor> sensor, SensorTestAppArguments commandLineArgs)
    : id_(id)
    , sensor_(sensor)
-   , verboseNotification_(verboseNotification)
-   , lastBatchReceivedAt_(0) {
+   , lastBatchReceivedAt_(0)
+   , totalEvents_(0)
+   , stop_(false)
+   , activated_(false)
+   , commandLineArgs_(commandLineArgs) {
     tag_ = std::string("[")
                .append(SensorUtils::getSensorType(sensor_->getSensorInfo().type))
                .append(", Sensor ID: ")
@@ -62,6 +67,24 @@ SensorClient::SensorClient(int id, std::shared_ptr<ISensor> sensor, bool verbose
                .append(", Client ID: ")
                .append(std::to_string(id_))
                .append("] ");
+    if (commandLineArgs_.quiet) {
+        workerThread_ = std::make_shared<std::thread>([&]() {
+            while (!stop_) {
+                {
+                    std::unique_lock<std::mutex> lock(qMutex_);
+                    cv_.wait(lock, [=]() { return stop_ || activated_; });
+                }
+                if (activated_) {
+                    sleep(commandLineArgs_.printPeriod);
+                    std::lock_guard<std::mutex> lock(mtx_);
+                    print_notification("Summary")
+                        << tag_ << "Events since " << commandLineArgs_.printPeriod
+                        << "s: " << totalEvents_ << std::endl;
+                    totalEvents_ = 0;
+                }
+            }
+        });
+    }
 }
 
 void SensorClient::init() {
@@ -73,17 +96,25 @@ void SensorClient::cleanup() {
 }
 
 SensorClient::~SensorClient() {
-    sensor_->deactivate();
+    {
+        std::lock_guard<std::mutex> lck(qMutex_);
+        stop_ = true;
+        cv_.notify_one();
+    }
+    deactivate();
     sensor_ = nullptr;
+    if (workerThread_) {
+        workerThread_->join();
+        workerThread_ = nullptr;
+    }
 }
 
 void SensorClient::printInfo() {
-    std::cout << "\tClient ID: " << id_ << std::endl;
-    SensorUtils::printSensorInfo(sensor_->getSensorInfo(), true);
     SensorConfiguration configuration = sensor_->getConfiguration();
-    std::cout << "\n\tConfiguration: [";
+    std::cout << "\tClient ID: " << id_ << ", Sensor name: " << sensor_->getSensorInfo().name
+              << ", Configuration: [";
     if (configuration.validityMask.test(SensorConfigParams::SAMPLING_RATE)) {
-        std::cout << std::fixed << std::setprecision(2) << configuration.samplingRate;
+        std::cout << std::fixed << std::setprecision(2) << configuration.samplingRate << "Hz";
     } else {
         std::cout << "NA";
     }
@@ -91,44 +122,55 @@ void SensorClient::printInfo() {
               << (configuration.validityMask.test(SensorConfigParams::BATCH_COUNT)
                          ? std::to_string(configuration.batchCount)
                          : "NA")
-              << "]" << std::endl
-              << std::endl;
+              << "]"
+              << ", Activated: " << (activated_ ? "Yes" : "No") << std::endl;
 }
 
 void SensorClient::onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
     uint64_t receivedTimeStamp = Utils::getNanosecondsSinceBoot();
-    float jitter = 0;
+    if (!commandLineArgs_.quiet) {
+        float timeSinceLastBatch = 0;
 
-    // Calculate jitter in milliseconds
-    if (lastBatchReceivedAt_ > 0) {
-        jitter = 1.0 * (receivedTimeStamp - lastBatchReceivedAt_) / 1000000;
-    }
-    uint64_t eventTimeStamp = 0;
-    uint32_t count = 0;
-    float samplingRateAggregate = 0.0;
-    for (SensorEvent s : *(events.get())) {
-        float samplingRate = 0.0;
-        if (eventTimeStamp > 0) {
-            ++count;
-            // Instantaneous sampling rate, calculated between consecutive samples
-            samplingRate = 1.0 / (s.timestamp - eventTimeStamp) * 1000000000;
+        // Calculate time difference between two batches in milliseconds
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            if (lastBatchReceivedAt_ > 0) {
+                timeSinceLastBatch = 1.0 * (receivedTimeStamp - lastBatchReceivedAt_) / 1000000;
+            }
+            lastBatchReceivedAt_ = receivedTimeStamp;
         }
-        if (verboseNotification_) {
-            SensorUtils::printSensorEvent(sensor_->getSensorInfo().type, s, samplingRate, tag_);
-        }
-        samplingRateAggregate += samplingRate;
-        eventTimeStamp = s.timestamp;
-    }
 
-    print_notification << tag_ << receivedTimeStamp << ": Received " << events->size()
-                       << " events, time since previous batch: " << std::fixed << jitter
-                       << "ms, average calculated sampling rate: " << samplingRateAggregate / count
-                       << " Hz" << std::endl;
-    lastBatchReceivedAt_ = receivedTimeStamp;
+        uint64_t eventTimeStamp = 0;
+        uint32_t count = 0;
+        float samplingRateAggregate = 0.0;
+        for (SensorEvent s : *(events.get())) {
+            float samplingRate = 0.0;
+            if (eventTimeStamp > 0) {
+                ++count;
+                // Instantaneous sampling rate, calculated between consecutive samples
+                samplingRate = 1.0 / (s.timestamp - eventTimeStamp) * 1000000000;
+            }
+            if (commandLineArgs_.verboseNotification) {
+                SensorUtils::printSensorEvent(sensor_->getSensorInfo().type, s, samplingRate, tag_);
+            }
+            samplingRateAggregate += samplingRate;
+            eventTimeStamp = s.timestamp;
+        }
+        print_notification("Batch")
+            << tag_ << samplingRateAggregate / count << "Hz, " << receivedTimeStamp << "ns, "
+            << events->size() << ", " << std::fixed << timeSinceLastBatch << "ms" << std::endl;
+    } else {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            totalEvents_ += events->size();
+        }
+    }
 }
+
 void SensorClient::onConfigurationUpdate(SensorConfiguration configuration) {
-    print_notification << tag_ << "Received configuration update: [" << configuration.samplingRate
-                       << ", " << configuration.batchCount << "]" << std::endl;
+    print_notification("ConfigUpdate")
+        << tag_ << "Received configuration update: [" << configuration.samplingRate << ", "
+        << configuration.batchCount << "]" << std::endl;
 }
 
 void SensorClient::configure(SensorConfiguration config) {
@@ -148,6 +190,12 @@ void SensorClient::activate() {
         Utils::printStatus(status);
         return;
     }
+
+    {
+        std::lock_guard<std::mutex> lck(qMutex_);
+        activated_ = true;
+        cv_.notify_one();
+    }
     std::cout << tag_ << "Sensor activation successful" << std::endl;
 }
 
@@ -158,6 +206,7 @@ void SensorClient::deactivate() {
         Utils::printStatus(status);
         return;
     }
+    activated_ = false;
     std::cout << tag_ << "Sensor deactivation successful" << std::endl;
 }
 

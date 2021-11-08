@@ -53,6 +53,7 @@ namespace loc {
 
 const float UNKNOWN_CARRIER_FREQ = -1;
 const int UNKNOWN_SIGNAL_MASK = 0;
+const double UNKNOWN_BASEBAND_CARRIER_NOISE = 0.0;
 const uint64_t UNKNOWN_TIMESTAMP = 0;
 const float DEFAULT_TUNC_THRESHOLD = 0.0; /**< Default value for threshold of time uncertainty.
                                                Units: milli-seconds. */
@@ -63,6 +64,8 @@ const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consu
 const uint64_t INVALID_ENERGY_CONSUMED = 0xffffffffffffffff; /**< 0xffffffffffffffff indicates an
                                                                   invalid reading for energy
                                                                   consumed info. */
+const uint32_t DEFAULT_GNSS_REPORT = 0xffffffff; /**< 0xffffffff indicates all the reports are
+                                                      enabled. */
 
 /**
  * Defines RTCM injection data format
@@ -237,7 +240,11 @@ enum GnssPositionTechType {
    *  location info.*/
   GNSS_HYBRID = (1 << 7),
   /** Precise position engine was used to generate location info.*/
-  GNSS_PPE = (1 << 8)
+  GNSS_PPE = (1 << 8),
+  /** Location was calculated using Vehicular data. */
+  GNSS_VEHICLE = (1 << 9),
+  /** Location was calculated using Visual data. */
+  GNSS_VISUAL = (1 << 10)
 };
 
 /*Bit mask containing bits from GnssPositionTechType */
@@ -578,6 +585,52 @@ enum GnssSignalType {
 /*Bit mask containing bits from GnssSignalType */
 using GnssSignal = uint32_t;
 
+/** Specify Location Capabilities Type.*/
+enum LocCapabilityType {
+  /** Support time based tracking session via @ref ILocationManager::startDetailedReports,
+   *  @ref ILocationManager::startDetailedEngineReports and
+   *  @ref ILocationManager::startBasicReports with distanceInMeters set to 0.
+   */
+  TIME_BASED_TRACKING = (1<<0),
+  /** Support distance based tracking session via @ref ILocationManager::startBasicReports with
+   *  distanceInMeters specified.
+   */
+  DISTANCE_BASED_TRACKING = (1<<1),
+  /** Support Gnss Measurement data via @ref ILocationListener::onGnssMeasurementsInfo when a
+   *  tracking session is enabled.
+   */
+  GNSS_MEASUREMENTS = (1<<2),
+  /** Support configure constellations via @ref ILocationConfigurator::configureConstellations. */
+  CONSTELLATION_ENABLEMENT = (1<<3),
+  /** Support carrier phase for Precise Positioning Measurement Engine (PPME). */
+  CARRIER_PHASE = (1<<4),
+  /** Support GNSS Single Frequency feature. */
+  QWES_GNSS_SINGLE_FREQUENCY = (1<<5),
+  /** Supports GNSS Multi Frequency feature. */
+  QWES_GNSS_MULTI_FREQUENCY = (1<<6),
+  /** Support VEPP license bundle is enabled. VEPP bundle include Carrier Phase features. */
+  QWES_VPE = (1<<7),
+  /** Support for CV2X Location basic features. This includes features for
+   *  GTS Time & Freq, @ref ILocationConfigurator::configureCTunc.
+   */
+  QWES_CV2X_LOCATION_BASIC = (1<<8),
+  /** Support for CV2X Location premium features. This includes features for
+   *  CV2X Location Basic features, QDR3 feature and @ref ILocationConfigurator::configurePACE.
+   */
+  QWES_CV2X_LOCATION_PREMIUM = (1<<9),
+  /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
+   *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
+   */
+  QWES_PPE = (1<<10),
+  /** Support QDR2_C license bundle is enabled. */
+  QWES_QDR2 = (1<<11),
+  /** Support QDR3_C license bundle is enabled. */
+  QWES_QDR3 = (1<<12)
+};
+
+/*Bit mask containing bits from LocCapabilityType */
+using LocCapability = uint32_t;
+
 /** Specify the satellite vehicle measurements that are used
  *  to calculate location in @ref ILocationInfoEx.*/
 struct GnssMeasurementInfo {
@@ -759,7 +812,15 @@ enum LocationInfoExValidityType {
   /** valid altitude type*/
   HAS_ALTITUDE_TYPE = (1ULL << 32),
   /** valid report status*/
-  HAS_REPORT_STATUS = (1ULL << 33)
+  HAS_REPORT_STATUS = (1ULL << 33),
+  /** valid integrity risk*/
+  HAS_INTEGRITY_RISK_USED = (1ULL << 34),
+  /** valid protect level along track*/
+  HAS_PROTECT_LEVEL_ALONG_TRACK = (1ULL << 35),
+  /** valid protect level cross track*/
+  HAS_PROTECT_LEVEL_CROSS_TRACK = (1ULL << 36),
+  /** valid protect level vertical*/
+  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -976,7 +1037,7 @@ enum GnssMeasurementsDataValidityType{
     SV_TYPE_BIT                      = (1<<1),
     /** Validity of stateMask.*/
     STATE_BIT                        = (1<<2),
-    /** Validity of receivedSvTimeNs.*/
+    /** Validity of receivedSvTimeNs and receivedSvTimeSubNs.*/
     RECEIVED_SV_TIME_BIT             = (1<<3),
     /** Validity of receivedSvTimeUncertaintyNs.*/
     RECEIVED_SV_TIME_UNCERTAINTY_BIT = (1<<4),
@@ -1005,7 +1066,15 @@ enum GnssMeasurementsDataValidityType{
     /** Validity of signalToNoiseRatioDb.*/
     SIGNAL_TO_NOISE_RATIO_BIT        = (1<<16),
     /** Validity of agcLevelDb.*/
-    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17)
+    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17),
+    /** Validity of signal type.*/
+    GNSS_SIGNAL_TYPE                 = (1<<18),
+    /** Validity of basebandCarrierToNoise.*/
+    BASEBAND_CARRIER_TO_NOISE        = (1<<19),
+    /** Validity of fullInterSignalBias.*/
+    FULL_ISB                         = (1<<20),
+    /** Validity of fullInterSignalBiasUncertainty.*/
+    FULL_ISB_UNCERTAINTY             = (1<<21)
 };
 
 /** Specifies GnssMeasurementsDataValidityType.*/
@@ -1119,8 +1188,13 @@ struct GnssMeasurementsData {
      *  GNSS measurement state.*/
     GnssMeasurementsStateValidity stateMask;
     /** Received GNSS time of the week in nanoseconds when the
-     *  measurement was taken.*/
+     *  measurement was taken.
+     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
     int64_t receivedSvTimeNs;
+    /** Sub nanoseconds portion of the received GNSS time of the
+     *  week when the measurement was taken.
+     *  Total time is: receivedSvTimeNs+receivedSvTimeSubNs.*/
+    float receivedSvTimeSubNs;
     /** Satellite time.
      *  All SV times in the current measurement block are already
      *  propagated to a common reference time epoch, in unit of
@@ -1155,6 +1229,19 @@ struct GnssMeasurementsData {
     double signalToNoiseRatioDb;
     /** Automatic gain control level, in unit of dB.*/
     double agcLevelDb;
+    /** GnssSignalType mask */
+    GnssSignal gnssSignalType;
+    /** Carrier-to-noise ratio of the signal measured at baseband,
+     *  in unit of dB-Hz. */
+    double basebandCarrierToNoise;
+    /** The full inter-signal bias (ISB) in nanoseconds.
+     *  This value is the sum of the estimated receiver-side and the
+     *  space-segment-side inter-system bias, inter-frequency bias
+     *  and inter-code bias. */
+    double fullInterSignalBias;
+    /** Uncertainty associated with the full inter-signal bias in
+     *  nanoseconds. */
+    double fullInterSignalBiasUncertainty;
 };
 
 /** Specify GNSS measurements clock.
@@ -1201,6 +1288,8 @@ struct GnssMeasurements {
     GnssMeasurementsClock clock;
     /** GNSS measurements data.*/
     std::vector<GnssMeasurementsData> measurements;
+    /** Indicates the frequency for GNSS measurements generated at NHz or not.*/
+    bool isNHz;
 };
 
 /** Specify leap second change event info.*/
@@ -1441,6 +1530,28 @@ struct BodyToSensorMountParams {
      *  Range: [-180.0, 180.0].*/
     float offsetUnc;
 };
+
+/**
+ *  Specifies the set of gnss reports. */
+enum GnssReportType {
+    /** Location reports */
+    LOCATION          = (1 << 0),
+    /** Satellite reports */
+    SATELLITE_VEHICLE = (1 << 1),
+    /** Nmea reports */
+    NMEA              = (1 << 2),
+    /** Data reports */
+    DATA              = (1 << 3),
+    /** Low rate measurement reports. Currently the rate is defined to be 1 Hz. */
+    MEASUREMENT       = (1 << 4),
+    /** High rate measurement reports. Currently the rate is defined to be 10 Hz.
+     *  Client cannot specify rates. The data in high rate would be different that from low rate.
+     *  Also there might be difference in accuracy of fields for the both the rates. */
+    HIGH_RATE_MEASUREMENT    = (1 << 5)
+};
+
+/** Specifies the applicable reports using the bits represented in GnssReportType */
+using GnssReportTypeMask = uint32_t;
 
 /** Specify the dead reckoning engine configuration parameters.
  */
@@ -1977,6 +2088,34 @@ public:
  */
   virtual ReportStatus getReportStatus() = 0;
 
+/**
+ * Integrity risk used for protection level parameters. Unit of 2.5e-10.
+ * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
+ * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
+ * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
+ * @ref ILocationInfoEx::getProtecttionLevelVertical will not be available.
+ *
+ */
+  virtual uint32_t getIntegrityRiskUsed() = 0;
+
+/**
+ * Along-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelAlongTrack() = 0;
+
+/**
+ * Cross-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelCrossTrack() = 0;
+
+/**
+ * Vertical component protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelVertical() = 0;
+
 };
 
 /**
@@ -2072,10 +2211,10 @@ public:
   virtual float getAzimuth() = 0;
 
 /**
- * Retrieves satellite vehicle signal-to-noise ratio.
+ * Retrieves signal-to-noise ratio of the signal measured at antenna of the satellite vehicle.
  *    - Units: dB-Hz
  *
- * @returns SNR if available else returns NaN.
+ * @returns SNR if available else returns 0.0 value.
  *
  */
   virtual float getSnr() = 0;
@@ -2103,6 +2242,15 @@ public:
   * @returns GLONASS frequency channel number.
   */
    virtual uint16_t getGlonassFcn() = 0;
+
+/**
+ * Carrier-to-noise ratio of the signal measured at baseband.
+ *    - Units: dB-Hz
+ *
+ * @returns carrier-to-noise ratio at baseband else returns UNKNOWN_BASEBAND_CARRIER_NOISE ratio
+ * when not supported.
+ */
+  virtual double getBasebandCnr() = 0;
 };
 
 /**

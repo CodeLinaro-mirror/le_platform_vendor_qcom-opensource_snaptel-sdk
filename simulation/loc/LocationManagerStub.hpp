@@ -171,12 +171,15 @@ public:
  * param [in] callback - Optional callback to get the response of set
  *             minimum interval for reports.
  *
+ * param [in] reportMask - Optional field to specify which reports a client is interested in.
+ *
  * returns Status of startDetailedReports i.e. success or suitable status
  * code.
  *
  */
     telux::common::Status startDetailedReports(uint32_t interval,
-        telux::common::ResponseCallback callback = nullptr) override;
+        telux::common::ResponseCallback callback = nullptr,
+            GnssReportTypeMask reportMask = DEFAULT_GNSS_REPORT) override;
 
 /**
  * Starts a session which may provide richer default combined position reports
@@ -205,12 +208,15 @@ public:
  * param [in] callback - Optional callback to get the response of set
  *             minimum interval for reports.
  *
+ * param [in] reportMask - Optional field to specify which reports a client is interested in.
+ *
  * returns Status of startDetailedEngineReports i.e. success or suitable status
  * code.
  *
  */
     telux::common::Status startDetailedEngineReports(uint32_t interval, LocReqEngine engineType,
-        telux::common::ResponseCallback callback = nullptr) override;
+        telux::common::ResponseCallback callback = nullptr,
+            GnssReportTypeMask reportMask = DEFAULT_GNSS_REPORT) override;
 
 /**
  * Starts the Location report by configuring the time and distance between
@@ -423,6 +429,7 @@ private:
     GetYearOfHwCallback cbYearOfHw_ = nullptr;
     GetEnergyConsumedCallback cbStore_ = nullptr;
     GetTerrestrialInfoCallback cbTerrestrialPosition_ = nullptr;
+    GnssReportTypeMask reportTypeMask_ = 0;
     bool cbLock_ = false;
     // used to sync between cancelling and getting the terrestrial position
     bool isGetTerrestrialRequestActive_ = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 int encode_singleline_fromCSV(char *line, char *buf, int len);
-void write_to_csv(msg_contents *mc, FILE *fp);
+void writeToCsv(msg_contents *mc, FILE *fp);
 void print_summary_RV(msg_contents *mc);
 #ifdef __cplusplus
 }

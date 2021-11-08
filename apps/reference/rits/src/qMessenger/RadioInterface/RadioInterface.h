@@ -1,5 +1,5 @@
 ﻿/*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -57,6 +57,7 @@ using telux::common::ErrorCode;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::ICv2xRadioManager;
+using telux::cv2x::ICv2xRadio;
 using telux::cv2x::Cv2xStatusEx;
 using telux::cv2x::Cv2xStatusType;
 using telux::cv2x::TrafficCategory;
@@ -88,7 +89,7 @@ private:
      * @see Cv2xStatus
      */
     void cv2xStatusCallback(Cv2xStatusEx status, ErrorCode error);
-
+    void updateSrcL2InfoCallback(ErrorCode error);
 public:
 
     /*
@@ -100,6 +101,12 @@ public:
      * shared_ptr to the singleton radio manager of the SDK.
      */
     shared_ptr<ICv2xRadioManager> cv2xRadioManager = nullptr;
+
+
+    /*
+     * shared_ptr to the singleton radio of the SDK.
+     */
+    shared_ptr<ICv2xRadio> cv2xRadio = nullptr;
 
     /*
     * A Cv2xStatus that holds the radio status information.
@@ -115,7 +122,8 @@ public:
     /**
     * Non-blocking method that requests and returns TX/RX radio status.
     * @param type a RadioType.
-    * @return String with possible values "INACTIVE", "ACTIVE", "SUSPENDED", "UNKNOWN".
+    * @return String with possible values
+    * "INACTIVE", "ACTIVE", "SUSPENDED", "UNKNOWN".
     */
     Cv2xStatusType statusCheck(RadioType type);
     /**
@@ -126,5 +134,27 @@ public:
     * @see TrafficCategory
     */
     bool ready(TrafficCategory category, RadioType type);
+
+    /**
+    * Set the verbosity for the specific RadioInterface implementation.
+    * @param interger value representing level of verbosity
+    * @return none
+    */
+    void set_radio_verbosity(int value);
+    int rVerbosity = 0;
+    /**
+     * @brief Register a listener for cv2x status change and wait if cv2x not active
+     * @param type
+     * @return true
+     * @return false
+     */
+    void waitForCv2xToActivate(bool &haltRx);
+    bool restartFlow;
+
+    /**
+    * Method that requests src L2 address update.
+    * @return bool
+    */
+    bool updateSrcL2();
 };
 

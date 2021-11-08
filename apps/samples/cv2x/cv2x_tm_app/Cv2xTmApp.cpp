@@ -50,6 +50,15 @@ class Cv2xTmListener : public ICv2xThrottleManagerListener {
     void onFilterRateAdjustment(int rate) {
         std::cout << "Updated rate: " << rate << std::endl;
     }
+    void onServiceStatusChange(telux::common::ServiceStatus status) {
+        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "SERVICE IS AVAILABLE" << std::endl;
+        } else if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            std::cout << "SERVICE IS UNAVAILABLE" << std::endl;
+        } else {
+            std::cout << "unknown SERVICE STATUS" << std::endl;
+        }
+    }
 };
 
 // Callback function for Cv2xThrottleManager->setVerificationLoad()
@@ -103,7 +112,6 @@ int main(int argc, char *argv[]) {
         cv2xThrottleManager->setVerificationLoad(load, cv2xsetVerificationLoadCallback);
         if (telux::common::ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
             std::cout << "Error : failed to set verification load" << std::endl;
-            return EXIT_FAILURE;
         } else {
             std::cout << "set verification load success" << std::endl;
         }

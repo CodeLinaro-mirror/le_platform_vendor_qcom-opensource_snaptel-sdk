@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -35,6 +35,9 @@
 #include "EtsiApplication.hpp"
 
 EtsiApplication::EtsiApplication(char *fileConfiguration): ApplicationBase(fileConfiguration) {
+    if (not configuration.isValid) {
+        return;
+    }
 
     GnConfig_t GnCfg;
     GeoNetRouterImpl::InitDefaultConfig(GnCfg);
@@ -66,6 +69,9 @@ EtsiApplication::EtsiApplication(char *fileConfiguration): ApplicationBase(fileC
 EtsiApplication::EtsiApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort, char* fileConfiguration) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
+    if (not configuration.isValid) {
+        return;
+    }
 
     GnConfig_t GnCfg;
     GeoNetRouterImpl::InitDefaultConfig(GnCfg);
@@ -230,16 +236,49 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
         mc = receivedContents[index];
     }
 
+    if(mc->abuf.head == NULL || mc->abuf.size == 0){
+        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
+    } else {
+        abuf_reset(&mc->abuf, ABUF_HEADROOM);
+    }
+
     mc->decoded = false;
     if (mc->gn == nullptr) {
         mc->gn = new char[sizeof(GnData_t)];
     }
     GnData_t &gd = *(static_cast<GnData_t *>(mc->gn));
 
+    ret = radioReceives[0].receive(mc->abuf.data, ABUF_LEN-ABUF_HEADROOM);
+    // Make sure packet is successfully received
+    if(ret < MIN_PACKET_LEN || ret > MAX_PACKET_LEN || mc == nullptr){
+        if(appVerbosity > 4){
+            if(ret < 0){
+                printf("Receive returned with error.\n");
+            }else if(ret > 0 && ret < MIN_PACKET_LEN){
+                printf("Dropping packet with %d bytes. Needs to be at least %d bytes.\n",
+                        ret, MIN_PACKET_LEN);
+            }else if(ret > 0 && ret >= MAX_PACKET_LEN){
+                printf("Dropping packet with %d bytes. Needs to be less than %d bytes.\n",
+                        ret, MAX_PACKET_LEN);
+            }
+            // if ret is 0, then polling timed out
+        }
+        //if(ret != 0) rxFail++;
+        return -1;
+    }
+
+    // needs to be done for data pointer to not override tail pointer
+    mc->abuf.tail = mc->abuf.data + ret;
+
+    if(appVerbosity > 7){
+       printf("\n 2) Full rx packet with length %d\n", ret);
+       print_buffer((uint8_t*)mc->abuf.data, ret);
+       printf("\n");
+    }
+
     // skip one byte cv2x family ID
     abuf_pull(&mc->abuf, 1);
-    auto len = bufLen;
-    len -= 1;
+    auto len = ret - 1;
     // process received packet in GeoNetRouter, packet may be dropped by router.
     ret = GnRouter->Receive(reinterpret_cast<uint8_t *>(mc->abuf.data), len, gd);
     if (ret == 0) {

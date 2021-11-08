@@ -77,6 +77,10 @@ using telux::cv2x::EventFlowInfo;
 #define DEFAULT_SERVICE_ID (1)
 #define DEFAULT_LOG_FILE ("/var/log/tx_report.csv")
 
+// Set this value to true if user inputs "cv2x_tx_test_report_app -c".
+// No interactive commands are required in this mode, this APP will
+// enable Tx status reports and save reports to default csv file
+static bool gIsCmdLine = false;
 
 Cv2xStatusListener::Cv2xStatusListener(Cv2xStatus status) {
     cv2xStatus_ = status;
@@ -128,16 +132,6 @@ Cv2xTxStatusReportApp::Cv2xTxStatusReportApp()
 }
 
 int Cv2xTxStatusReportApp::init() {
-    if (appInit()) {
-        return EXIT_FAILURE;
-    }
-
-    consoleInit();
-
-    return EXIT_SUCCESS;
-}
-
-int Cv2xTxStatusReportApp::appInit() {
     bool cv2xRadioManagerStatusUpdated = false;
     telux::common::ServiceStatus cv2xRadioManagerStatus =
         telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
@@ -675,8 +669,10 @@ void Cv2xTxStatusReportApp::startListenToReportCommand() {
     }
 
     string file;
-    cout << "Enter report csv file path with file name(default is " << DEFAULT_LOG_FILE << "):";
-    getline(cin, file);
+    if (not gIsCmdLine) {
+        cout << "Enter report csv file path with file name(default is " << DEFAULT_LOG_FILE << "):";
+        getline(cin, file);
+    }
     if (file.empty()) {
         file = DEFAULT_LOG_FILE;
     }
@@ -719,8 +715,19 @@ int main(int argc, char *argv[]) {
 
     signal(SIGINT, signalHandler);
 
-    // continuously read and execute commands
-    app.mainLoop();
+    if (argc > 1 and std::string(argv[1]) == "-c") {
+        // add option for cmd line testing, only support enabling
+        // Tx status report and saving reports to csv file
+        gIsCmdLine = true;
+        cout << "Save Tx status reports to " << DEFAULT_LOG_FILE;
+        cout << ", use CTRL+C to exit" << endl;
+        app.startListenToReportCommand();
+        pause();
+    } else {
+        // continuously read and execute commands
+        app.consoleInit();
+        app.mainLoop();
+    }
 
     // release radio resources when exit from mainloop
     app.deinit();

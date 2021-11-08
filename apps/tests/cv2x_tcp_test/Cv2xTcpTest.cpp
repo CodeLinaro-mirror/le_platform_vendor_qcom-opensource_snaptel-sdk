@@ -528,6 +528,8 @@ static int createTcpSocket() {
     //get created TCP socket
     gTcpSocket = gTcpSockInfo->getSocket();
 
+    cout << "create TCP socket successfully, port: "
+        << static_cast<int>(ntohs(gTcpSockInfo->getSocketAddr().sin6_port)) << endl;
     // add 500ms Tx/Rx timeout to remove the possibility for indefinite wait
     struct timeval tv;
     tv.tv_sec = 0;

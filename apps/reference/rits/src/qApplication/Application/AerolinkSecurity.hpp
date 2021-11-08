@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -76,14 +76,33 @@ class AerolinkSecurity : public SecurityService {
             }
             // should  perform sanitary check on the value
         }
+        // overloaded ctor for aerolink w/ idchange enabled
+        AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
+                             char const* lcmName, IDChangeData& idChangeData):
+            SecurityService(ctxName, countryCode), idChangeData_(&idChangeData){
+            //lcmName_ = (char*)malloc(sizeof(lcmName) + 1);
+            //memcpy(lcmName_, lcmName, sizeof(lcmName));
+            if(strlen(lcmName) > 50){
+                throw std::runtime_error
+                    ("Lcm Name Too Long (> 50 chars). AerolinkSecurity Init Failed\n");
+            }
+            memcpy(lcmName_, lcmName, sizeof(lcmName));
+            if(init() < 0) {
+                throw std::runtime_error("AerolinkSecurity Init Failed\n");
+            }
+            // should  perform sanitary check on the value
+        }
         static AerolinkSecurity *pInstance;
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode);
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
                                              uint8_t keyGenMethod);
+        static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
+                                             char const* lcmName, IDChangeData& idChangeData);
         int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
                     uint8_t *signedSpdu, uint32_t &signedSpduLen);
         int VerifyMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
                     uint32_t &dot2HdrLen);
+        int idChange();
         ~AerolinkSecurity() {
             deinit();
         }
@@ -143,10 +162,12 @@ class AerolinkSecurity : public SecurityService {
         int createNewSmp(SecuredMessageParserC* smpPtr);
         int createNewSmg(SecuredMessageGeneratorC* smgPtr);
         // should be unique public encryption keys
-        //    AerolinkEncryptionKey const * const recipients[] = {};
-        //    std::set<AerolinkEncryptionKey const *> recipients;
-        std::vector<AerolinkEncryptionKey const *> recipients;
-        uint32_t numRecipients;
+        //    AerolinkEncryptionKey const * const recipients_[] = {};
+        //    std::set<AerolinkEncryptionKey const *> recipients_;
+        std::vector<AerolinkEncryptionKey const *> recipients_;
+        uint32_t numRecipients_;
         uint8_t keyGenMethod_;
+        char lcmName_[50];
+        IDChangeData* idChangeData_;
 };
 #endif

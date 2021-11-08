@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -58,8 +58,10 @@
 #include "NullSecurity.hpp"
 #endif
 
-#define ABUF_LEN            2048
+#define ABUF_LEN            8448
 #define ABUF_HEADROOM       256
+#define MIN_PACKET_LEN      20
+#define MAX_PACKET_LEN      8192
 
 using namespace std;
 enum class TransmitType {
@@ -76,6 +78,8 @@ enum class MessageType {
 };
 
 struct Config{
+    bool isValid = false;
+    int codecVerbosity;
     vector<uint16_t> receivePorts;
     vector<uint16_t> eventPorts;
     vector<uint16_t> spsPorts;
@@ -87,6 +91,7 @@ struct Config{
     vector<uint16_t> eventDestPorts;
     vector<string> eventDestAddrs;
     vector<string> eventDestNames;
+    bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
     bool enableTxAlways = true;
@@ -95,6 +100,7 @@ struct Config{
     uint16_t ldmSize = 1;
     uint16_t transmitRate = 100;
     uint16_t locationInterval = 100;
+    unsigned int msgId = 0;
     uint16_t bsmJitter = 0;
     bool enableVehicleExt = false;
     uint8_t pathHistoryPoints = 15;
@@ -141,14 +147,15 @@ struct Config{
     uint8_t secVerbosity = 0;
     uint8_t appVerbosity = 0;
     /** Sec Driver Multi Threading Options **/
-    uint8_t numRxThreads = 0;
+    uint8_t numRxThreadsEth = 1;
+    uint8_t numRxThreadsRadio = 1;
     uint8_t numTxThreads = 0; // TODO
     /** Verification Stats Parameters */
-    bool enableVerifStatLog = true;
+    bool enableVerifStatLog = false;
     uint32_t verifStatsSize = 10000;
     string verifStatLogFile = "/tmp/verif_stats.log";
     /** Signing Stats Parameters */
-    bool enableSignStatLog = true;
+    bool enableSignStatLog = false;
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
 
@@ -158,6 +165,10 @@ struct Config{
     int ipPrefixLength;
     string defaultGateway;
     string primaryDns;
+    uint32_t wraServiceId = 4;
+    /** Pseudonym/ID Change */
+    string lcmName = "";
+    unsigned int idChangeInterval = 0;
 };
 
 class ApplicationBase
@@ -169,11 +180,17 @@ public:
     int totalTxSuccess = 0;
     int totalRxSuccess = 0;
 
-    /** For multi-threaded msg verification */
+    /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
     std::map<std::thread::id, int> signStatIdx;
     std::map<std::thread::id, std::vector<VerifStats>> thrVerifLatencies;
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
+
+    /* Identity Change Related Functions and Variables */
+    void changeIdTimer(unsigned int interval);
+    void changeIdentity();
+    void (ApplicationBase::*thrFn)()=&ApplicationBase::changeIdentity;
+    IDChangeData idChangeData;
 
     /* Function to permit different levels of verbosity */
     void setAppVerbosity(int value) {
@@ -257,6 +274,7 @@ public:
 
     void printRxStats();
     void printTxStats();
+    void setup();
 
     /*********************************************************************************
      * data members.
@@ -318,12 +336,17 @@ public:
     */
     Ldm* ldm = nullptr;
 
+    FILE *csvfp;
+
+    bool writeToCsvFile = false;
+
 protected:
     bool isTx = false;
     bool isRx = false;
     bool isTxSim = false;
     bool isRxSim = false;
     MessageType MsgType;
+    uint8_t msgCount;
 
     void fillSecurity(ieee1609_2_data* secData);
     /**
@@ -355,11 +378,10 @@ protected:
 
 
 private:
-    void setup();
     void simTxSetup(const string ipv4, const uint16_t port);
     void simRxSetup(const string ipv4, const uint16_t port);
     static uint16_t delimiterPos(string line, vector<string> delimiters);
-    void loadConfiguration(char* file);
+    int loadConfiguration(char* file);
     void saveConfiguration(map<string, string> configs);
 
 };

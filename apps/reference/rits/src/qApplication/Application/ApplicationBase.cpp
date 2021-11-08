@@ -43,9 +43,48 @@ using std::pair;
 #define ABUF_LEN            2048
 #define ABUF_HEADROOM       256
 
+// thread function to periodically change ID and cert
+void ApplicationBase::changeIdTimer(unsigned int interval)
+{
+    printf("Time interval for pseudonym and id change is: %d\n", interval);
+    std::thread([this, interval]() {
+        while (true)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+            (this->*thrFn)();
+        }
+    }).detach();
+}
+
+// first need to call setup function to initialize the lcm id change
+// then periodically call "idChange" and check return value and updates in user data (idchangedata)
+void ApplicationBase::changeIdentity(){
+    //  pseudonym cert change
+    sem_wait(&idChangeData.idSem);
+    int ret = SecService->idChange();
+    if( ret < 0 ){
+        if(appVerbosity > 1)
+            fprintf(stderr,"Id Change Failure\n");
+    }
+    else{
+        if(appVerbosity > 1)
+            printf("Id Change Success\n");
+        // if not simulation, perform l2 src randomization
+        if (!this->isTxSim) { // radio
+            for(int index = 0 ; index < spsTransmits.size(); index++){
+                this->spsTransmits[index].updateSrcL2();
+            }
+        }
+    }
+    sem_post(&idChangeData.idSem);
+}
+
 ApplicationBase::ApplicationBase(char* fileConfiguration){
     // set parameters according to config file
-    this->loadConfiguration(fileConfiguration);
+    if (this->loadConfiguration(fileConfiguration)) {
+        return;
+    }
+
     // set up kinematics listener
     kinematicsReceive = std::make_shared<KinematicsReceive>
                  (this->configuration.locationInterval);
@@ -59,21 +98,52 @@ ApplicationBase::ApplicationBase(char* fileConfiguration){
     // one-time initialization for security ; if any
     if (this->configuration.enableSecurity == true) {
     #ifdef AEROLINK
-        SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
-                    configuration.securityContextName,
-                    configuration.securityCountryCode));
+        try{
+          // LCM Constructor for Aerolink
+          if(!this->configuration.lcmName.empty() && this->configuration.idChangeInterval){
+              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                      configuration.securityContextName,
+                      configuration.securityCountryCode,
+                      configuration.lcmName.c_str(),
+                      std::ref(idChangeData)
+                      ));
+
+              // lcm id change timer thread
+              sem_init(&idChangeData.idSem, 0, 1);
+              fprintf(stdout, "Performing ID Changes at time interval of: %f seconds\n",
+                  this->configuration.idChangeInterval/1000.0);
+              changeIdTimer(this->configuration.idChangeInterval);
+
+          }else{
+              // Non-LCM Constructor for Aerolink
+              SecService = unique_ptr<SecurityService>(AerolinkSecurity::Instance(
+                      configuration.securityContextName,
+                      configuration.securityCountryCode));
+          }
+        }catch(const std::runtime_error& error){
+            fprintf(stderr, "Aerolink initialization failed. Please check security settings\n");
+            fprintf(stderr, "Attempting to close all radio flows\n");
+            closeAllRadio();
+            exit(0);
+        }
     #else
+        // If no Aerolink security library is specified
         SecService = unique_ptr<SecurityService>(NullSecurity::Instance(
                     configuration.securityContextName,
                     configuration.securityCountryCode));
     #endif
     }
+    sem_init(&this->rx_sem, 0, 1);
+    sem_init(&this->log_sem, 0, 1);
  }
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             const string rxIpv4, const uint16_t rxPort,
             char* fileConfiguration) {
-    this->loadConfiguration(fileConfiguration);
+    if (this->loadConfiguration(fileConfiguration)) {
+        return;
+    }
+
     kinematicsReceive = std::make_shared<KinematicsReceive>
                         (this->configuration.locationInterval);
     // set to no encryption key generation by default
@@ -115,6 +185,8 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
                     configuration.securityCountryCode));
 #endif
     }
+    sem_init(&this->rx_sem, 0, 1);
+    sem_init(&this->log_sem, 0, 1);
 }
 
 uint16_t ApplicationBase::delimiterPos(string line, vector<string> delimiters){
@@ -129,7 +201,7 @@ uint16_t ApplicationBase::delimiterPos(string line, vector<string> delimiters){
     return pos;
 }
 
-void ApplicationBase::loadConfiguration(char* file) {
+int ApplicationBase::loadConfiguration(char* file) {
     map <string, string> configs;
     string line;
     vector<string> delimiters = { " ", "\t", "#", "="};
@@ -153,159 +225,321 @@ void ApplicationBase::loadConfiguration(char* file) {
             }
         }
         this->saveConfiguration(configs);
+        return 0;
     }
-    else {
-        cout<<"Error opening config file.\n";
-    }
+
+    cout<<"Error opening config file.\n";
+    return -1;
 }
 
 
 void ApplicationBase::saveConfiguration(map<string, string> configs) {
-    istringstream is(configs["EnablePreRecorded"]);
-    is >> boolalpha >> this->configuration.enablePreRecorded;
-    this->configuration.preRecordedFile = configs["PreRecordedFile"];
-    this->configuration.transmitRate = stoi(configs["SpsTransmitRate"], nullptr, 10);
-    stringstream stream(configs["SpsPorts"]);
-    for (uint8_t i = 0; i < stoi(configs["SpsFlows"], nullptr, 10); i++)
-    {
-        string port;
-        getline(stream, port, ',');
-        this->configuration.spsPorts.push_back(stoi(port, nullptr, 10));
-    }
-    stream.str("");
-    stream.clear();
-    stream.str(configs["SpsDestAddrs"]);
-    for (uint8_t i = 0; i < stoi(configs["SpsFlows"], nullptr, 10); i++)
-    {
-        string spsDestAddrs;
-        getline(stream, spsDestAddrs, ',');
-        this->configuration.spsDestAddrs.push_back(spsDestAddrs);
+    if (configs.end() != configs.find("EnablePreRecorded")) {
+        istringstream is(configs["EnablePreRecorded"]);
+        is >> boolalpha >> this->configuration.enablePreRecorded;
     }
 
-    stream.str("");
-    stream.clear();
-    stream.str(configs["SpsDestNames"]);
-    for (uint8_t i = 0; i < stoi(configs["SpsFlows"], nullptr, 10); i++)
-    {
-        string spsDestNames;
-        getline(stream, spsDestNames, ',');
-        this->configuration.spsDestNames.push_back(spsDestNames);
+    if (configs.end() != configs.find("PreRecordedFile")) {
+        this->configuration.preRecordedFile = configs["PreRecordedFile"];
     }
 
-    stream.str("");
-    stream.clear();
-    stream.str(configs["SpsDestPorts"]);
-    for (uint8_t i = 0; i < stoi(configs["SpsFlows"], nullptr, 10); i++)
-    {
-        string port;
-        getline(stream, port, ',');
-        this->configuration.spsDestPorts.push_back(stoi(port, nullptr, 10));
-    }
-    stream.str("");
-    stream.clear();
-    stream.str(configs["SpsServiceIDs"]);
-    for (uint8_t i = 0; i < stoi(configs["SpsFlows"], nullptr, 10); i++)
-    {
-        string port;
-        getline(stream, port, ',');
-        this->configuration.spsServiceIDs.push_back(stoi(port, nullptr, 10));
-    }
-    stream.str("");
-    stream.clear();
-    stream.str(configs["EventPorts"]);
-    for (uint8_t i = 0; i < stoi(configs["EventFlows"], nullptr, 10); i++)
-    {
-        string port;
-        getline(stream, port, ',');
-        this->configuration.eventPorts.push_back(stoi(port, nullptr, 10));
+    if (configs.end() != configs.find("SpsTransmitRate")) {
+        this->configuration.transmitRate = stoi(configs["SpsTransmitRate"], nullptr, 10);
     }
 
-    stream.str("");
-    stream.clear();
-    stream.str(configs["EventDestAddrs"]);
-    for (uint8_t i = 0; i < stoi(configs["EventFlows"], nullptr, 10); i++)
-    {
-        string EventDestAddrs;
-        getline(stream, EventDestAddrs, ',');
-        this->configuration.eventDestAddrs.push_back(EventDestAddrs);
+    stringstream stream;
+    if (configs.end() != configs.find("SpsFlows")) {
+        auto num = stoi(configs["SpsFlows"], nullptr, 10);
+        if (configs.end() != configs.find("SpsPorts")) {
+            stream.str(configs["SpsPorts"]);
+            for (uint32_t i = 0; i < num; i++) {
+                string port;
+                getline(stream, port, ',');
+                if (port.empty()) {
+                    break;
+                }
+                this->configuration.spsPorts.push_back(stoi(port, nullptr, 10));
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("SpsDestAddrs")) {
+            stream.str(configs["SpsDestAddrs"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string spsDestAddrs;
+                getline(stream, spsDestAddrs, ',');
+                if (spsDestAddrs.empty()) {
+                    break;
+                }
+                this->configuration.spsDestAddrs.push_back(spsDestAddrs);
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("SpsDestNames")) {
+            stream.str(configs["SpsDestNames"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string spsDestNames;
+                getline(stream, spsDestNames, ',');
+                if (spsDestNames.empty()) {
+                    break;
+                }
+                this->configuration.spsDestNames.push_back(spsDestNames);
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("SpsDestPorts")) {
+            stream.str(configs["SpsDestPorts"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string port;
+                getline(stream, port, ',');
+                if (port.empty()) {
+                    break;
+                }
+                this->configuration.spsDestPorts.push_back(stoi(port, nullptr, 10));
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("SpsServiceIDs")) {
+            stream.str(configs["SpsServiceIDs"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string spsServiceIDs;
+                getline(stream, spsServiceIDs, ',');
+                if (spsServiceIDs.empty()) {
+                    break;
+                }
+                this->configuration.spsServiceIDs.push_back(stoi(spsServiceIDs, nullptr, 10));
+            }
+            stream.str("");
+            stream.clear();
+        }
     }
 
-    stream.str("");
-    stream.clear();
-    stream.str(configs["EventDestNames"]);
-    for (uint8_t i = 0; i < stoi(configs["EventFlows"], nullptr, 10); i++)
-    {
-        string EventDestNames;
-        getline(stream, EventDestNames, ',');
-        this->configuration.eventDestNames.push_back(EventDestNames);
+    if (configs.end() != configs.find("EventFlows")) {
+        auto num = stoi(configs["EventFlows"], nullptr, 10);
+        if (configs.end() != configs.find("EventPorts")) {
+            stream.str(configs["EventPorts"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string port;
+                getline(stream, port, ',');
+                if (port.empty()) {
+                    break;
+                }
+                this->configuration.eventPorts.push_back(stoi(port, nullptr, 10));
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("EventDestAddrs")) {
+            stream.str(configs["EventDestAddrs"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string EventDestAddrs;
+                getline(stream, EventDestAddrs, ',');
+                if (EventDestAddrs.empty()) {
+                    break;
+                }
+                this->configuration.eventDestAddrs.push_back(EventDestAddrs);
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("EventDestNames")) {
+            stream.str(configs["EventDestNames"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string EventDestNames;
+                getline(stream, EventDestNames, ',');
+                if (EventDestNames.empty()) {
+                    break;
+                }
+                this->configuration.eventDestNames.push_back(EventDestNames);
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("EventDestPorts")) {
+            stream.str(configs["EventDestPorts"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string port;
+                getline(stream, port, ',');
+                if (port.empty()) {
+                    break;
+                }
+                this->configuration.eventDestPorts.push_back(stoi(port, nullptr, 10));
+            }
+            stream.str("");
+            stream.clear();
+        }
+
+        if (configs.end() != configs.find("EventServiceIDs")) {
+            stream.str(configs["EventServiceIDs"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string eventServiceIDs;
+                getline(stream, eventServiceIDs, ',');
+                if (eventServiceIDs.empty()) {
+                    break;
+                }
+                this->configuration.eventServiceIDs.push_back(stoi(eventServiceIDs, nullptr, 10));
+            }
+            stream.str("");
+            stream.clear();
+        }
     }
 
-    stream.str("");
-    stream.clear();
-    stream.str(configs["EventDestPorts"]);
-    for (uint8_t i = 0; i < stoi(configs["EventFlows"], nullptr, 10); i++)
-    {
-        string port;
-        getline(stream, port, ',');
-        this->configuration.eventDestPorts.push_back(stoi(port, nullptr, 10));
-    }
-    stream.str("");
-    stream.clear();
-    stream.str(configs["EventServiceIDs"]);
-    for (uint8_t i = 0; i < stoi(configs["EventFlows"], nullptr, 10); i++)
-    {
-        string port;
-        getline(stream, port, ',');
-        this->configuration.eventServiceIDs.push_back(stoi(port, nullptr, 10));
+    if (configs.end() != configs.find("ReceiveFlows")
+        and configs.end() != configs.find("ReceivePorts")) {
+        stream.str(configs["ReceivePorts"]);
+        for (uint32_t i = 0; i < stoi(configs["ReceiveFlows"], nullptr, 10); i++)
+        {
+            string port;
+            getline(stream, port, ',');
+            if (port.empty()) {
+                break;
+            }
+            this->configuration.receivePorts.push_back(stoi(port, nullptr, 10));
+        }
+        stream.str("");
+        stream.clear();
     }
 
-    stream.str("");
-    stream.clear();
-    stream.str(configs["ReceivePorts"]);
-    for (uint8_t i = 0; i < stoi(configs["ReceiveFlows"], nullptr, 10); i++)
-    {
-        string port;
-        getline(stream, port, ',');
-        this->configuration.receivePorts.push_back(stoi(port, nullptr, 10));
+    if (configs.end() != configs.find("LocationInterval")) {
+        this->configuration.locationInterval = stoi(configs["LocationInterval"], nullptr, 10);
     }
 
+    if (configs.end() != configs.find("WraServiceID")) {
+        this->configuration.wraServiceId = stoi(configs["WraServiceID"], nullptr, 10);
+    }
 
-    this->configuration.locationInterval = stoi(configs["LocationInterval"], nullptr, 10);
-    this->configuration.bsmJitter = stoi(configs["BsmJitter"], nullptr, 10);
-    istringstream is2(configs["EnableVehicleExt"]);
-    is2 >> boolalpha >> this->configuration.enableVehicleExt;
-    this->configuration.pathHistoryPoints = stoi(configs["PathHistoryPoints"], nullptr, 10);
-    this->configuration.vehicleWidth = stoi(configs["VehicleWidth"], nullptr, 10);
-    this->configuration.vehicleLength = stoi(configs["VehicleLength"], nullptr, 10);
-    this->configuration.vehicleHeight = stoi(configs["VehicleHeight"], nullptr, 10);
-    this->configuration.frontBumperHeight = stoi(configs["FrontBumperHeight"], nullptr, 10);
-    this->configuration.rearBumperHeight = stoi(configs["RearBumperHeight"], nullptr, 10);
-    this->configuration.vehicleMass = stoi(configs["VehicleMass"], nullptr, 10);
-    this->configuration.vehicleClass = stoi(configs["BasicVehicleClass"], nullptr, 10);
-    this->configuration.sirenUse = stoi(configs["SirenInUse"], nullptr, 10);
-    this->configuration.lightBarUse = stoi(configs["LightBarInUse"], nullptr, 10);
-    this->configuration.specialVehicleTypeEvent = stoi(configs["SpecialVehicleTypeEvent"],
-            nullptr, 10);
-    this->configuration.vehicleType = stoi(configs["VehicleType"], nullptr, 10);
-    this->configuration.ldmSize = stoi(configs["LdmSize"], nullptr, 10);
-    this->configuration.ldmGbTime = stoi(configs["LdmGbTime"], nullptr, 10);
-    this->configuration.ldmGbTimeThreshold = stoi(configs["LdmGbTimeThreshold"], nullptr, 10);
-    this->configuration.tunc = stoi(configs["TTunc"], nullptr, 10);
-    this->configuration.age = stoi(configs["TAge"], nullptr, 10);
-    this->configuration.packetError = stoi(configs["TPacketError"], nullptr, 10);
-    this->configuration.uncertainty3D = stoi(configs["TUncertainty3D"], nullptr, 10);
-    this->configuration.distance3D = stoi(configs["TDistance"], nullptr, 10);
-    this->configuration.ipv4_src = configs["SourceIpv4Address"];
-    istringstream is3(configs["EnableUDP"]);
-    is3 >> boolalpha >> this->configuration.enableUdp;
+    if (configs.end() != configs.find("BsmJitter")) {
+        this->configuration.bsmJitter = stoi(configs["BsmJitter"], nullptr, 10);
+    }
 
-    // for tx and rx at same time
-    istringstream is4(configs["enableTxAlways"]);
-    is4 >> boolalpha >> this->configuration.enableTxAlways;
+    if (configs.end() != configs.find("EnableVehicleExt")) {
+        istringstream is2(configs["EnableVehicleExt"]);
+        is2 >> boolalpha >> this->configuration.enableVehicleExt;
+    }
 
-    // only used when enableTxAlways and for Ethernet
-    this->configuration.ipv4_dest = configs["DestIpv4Address"];
-    this->configuration.tx_port = stoi(configs["TxPort"], nullptr, 10);
+    if (configs.end() != configs.find("PathHistoryPoints")) {
+        this->configuration.pathHistoryPoints = stoi(configs["PathHistoryPoints"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("VehicleWidth")) {
+        this->configuration.vehicleWidth = stoi(configs["VehicleWidth"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("VehicleLength")) {
+        this->configuration.vehicleLength = stoi(configs["VehicleLength"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("VehicleHeight")) {
+        this->configuration.vehicleHeight = stoi(configs["VehicleHeight"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("FrontBumperHeight")) {
+        this->configuration.frontBumperHeight = stoi(configs["FrontBumperHeight"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("RearBumperHeight")) {
+        this->configuration.rearBumperHeight = stoi(configs["RearBumperHeight"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("VehicleMass")) {
+        this->configuration.vehicleMass = stoi(configs["VehicleMass"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("BasicVehicleClass")) {
+        this->configuration.vehicleClass = stoi(configs["BasicVehicleClass"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("SirenInUse")) {
+        this->configuration.sirenUse = stoi(configs["SirenInUse"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("LightBarInUse")) {
+        this->configuration.lightBarUse = stoi(configs["LightBarInUse"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("SpecialVehicleTypeEvent")) {
+        this->configuration.specialVehicleTypeEvent = stoi(configs["SpecialVehicleTypeEvent"],
+                nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("VehicleType")) {
+        this->configuration.vehicleType = stoi(configs["VehicleType"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("LdmSize")) {
+        this->configuration.ldmSize = stoi(configs["LdmSize"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("LdmGbTime")) {
+        this->configuration.ldmGbTime = stoi(configs["LdmGbTime"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("LdmGbTimeThreshold")) {
+        this->configuration.ldmGbTimeThreshold = stoi(configs["LdmGbTimeThreshold"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("TTunc")) {
+        this->configuration.tunc = stoi(configs["TTunc"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("TAge")) {
+        this->configuration.age = stoi(configs["TAge"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("TPacketError")) {
+        this->configuration.packetError = stoi(configs["TPacketError"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("TUncertainty3D")) {
+        this->configuration.uncertainty3D = stoi(configs["TUncertainty3D"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("TDistance")) {
+        this->configuration.distance3D = stoi(configs["TDistance"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("SourceIpv4Address")) {
+        this->configuration.ipv4_src = configs["SourceIpv4Address"];
+    }
+
+    if (configs.end() != configs.find("EnableUDP")) {
+        istringstream is3(configs["EnableUDP"]);
+        is3 >> boolalpha >> this->configuration.enableUdp;
+    }
+
+    if (configs.end() != configs.find("enableTxAlways")) {
+        // for tx and rx at same time
+        istringstream is4(configs["enableTxAlways"]);
+        is4 >> boolalpha >> this->configuration.enableTxAlways;
+    }
+
+    if (configs.end() != configs.find("DestIpv4Address")) {
+        // only used when enableTxAlways and for Ethernet
+        this->configuration.ipv4_dest = configs["DestIpv4Address"];
+    }
+
+    if (configs.end() != configs.find("TxPort")) {
+        this->configuration.tx_port = stoi(configs["TxPort"], nullptr, 10);
+    }
 
     /* ETSI config items */
     if (configs.find("MacAddr") != configs.end()) {
@@ -329,6 +563,9 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("CAMDestinationPort") != configs.end()) {
         this->configuration.CAMDestinationPort = (uint16_t)stoi(configs["CAMDestinationPort"]);
     }
+    if (configs.find("psidValue") != configs.end()) {
+            configuration.psid = stoi(configs["psidValue"],0,16);
+    }
     /* Security service */
     if (configs.find("EnableSecurity") != configs.end()) {
         if (configs["EnableSecurity"].find("true") != std::string::npos)
@@ -336,15 +573,15 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         else
             this->configuration.enableSecurity = false;
     }
+    if (configs.find("psidValue") != configs.end()) {
+        configuration.psid = stoi(configs["psidValue"],0,16);
+    }
     if (configuration.enableSecurity == true) {
         if (configs.find("SecurityContextName") != configs.end()) {
             configuration.securityContextName = configs["SecurityContextName"];
         }
         if (configs.find("SecurityCountryCode") != configs.end()) {
             configuration.securityCountryCode = stoi(configs["SecurityCountryCode"], 0, 16);
-        }
-        if (configs.find("psidValue") != configs.end()) {
-            configuration.psid = stoi(configs["psidValue"],0,16);
         }
         if (configs.find("sspValue") != configs.end()) {
         } else {
@@ -364,9 +601,72 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             istringstream is4(configs["enableEncrypt"]);
             is4 >> boolalpha >> configuration.enableEncrypt;
         }
+
+        /* Signing-related statistics */
+        if(configs.find("enableSignStatLog") != configs.end()){
+           istringstream is7(configs["enableSignStatLog"]);
+           is7 >> boolalpha >> configuration.enableSignStatLog;
+        }
+
+        if(configs.find("signStatLogListSize") != configs.end()){
+            this->configuration.signStatsSize =
+            (uint32_t)stoi(configs["signStatLogListSize"]);
+        }
+
+        if(configs.find("signStatLogFile") != configs.end()){
+            this->configuration.signStatLogFile = configs["signStatLogFile"];
+        }
+
+        if(configuration.enableSignStatLog){
+            std::cout << "Signing statistic logging is ON" << std::endl;
+            std::cout << "Statistics for last " << configuration.signStatsSize <<
+                " signs will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                configuration.signStatLogFile << std::endl;
+        } else{
+            std::cout << "Signing statistic logging is off" << std::endl;
+        }
+
+
+        /* Verification-related statistics */
+        if(configs.find("enableVerifStatLog") != configs.end()){
+           istringstream is8(configs["enableVerifStatLog"]);
+           is8 >> boolalpha >> configuration.enableVerifStatLog;
+        }
+
+        if(configs.find("verifStatLogListSize") != configs.end()){
+            this->configuration.verifStatsSize =
+                (uint32_t)stoi(configs["verifStatLogListSize"]);
+        }
+
+        if(configs.find("verifStatLogFile") != configs.end()){
+            this->configuration.verifStatLogFile = configs["verifStatLogFile"];
+        }
+
+        if(configuration.enableVerifStatLog){
+            std::cout << "Verification statistic logging is ON" << std::endl;
+            std::cout << "Statistics for last " << configuration.verifStatsSize <<
+                " verifications will be reported by each thread" << std::endl;
+            std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                configuration.verifStatLogFile << std::endl;
+        } else{
+            std::cout << "Verification statistic logging is off" << std::endl;
+        }
+
+        /** Pseudonym/ID Change */
+        if(configs.find("lcmName") != configs.end()){
+            this->configuration.lcmName = configs["lcmName"];
+        }
+
+        if(configs.find("idChangeInterval") != configs.end()) {
+            this->configuration.idChangeInterval = (unsigned int)stoi(configs["idChangeInterval"]);
+        }
+
     }
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
+        this->configuration.codecVerbosity =
+            (uint8_t)stoi(configs["codecVerbosity"]);
         set_codec_verbosity(stoi(configs["codecVerbosity"]));
     }
 
@@ -386,62 +686,14 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             (uint8_t)stoi(configs["secVerbosity"]);
     }
 
-    /* Signing-related statistics */
-    if(configs.find("enableSignStatLog") != configs.end()){
-       istringstream is7(configs["enableSignStatLog"]);
-       is7 >> boolalpha >> configuration.enableSignStatLog;
-    }
-
-    if(configs.find("signStatLogListSize") != configs.end()){
-        this->configuration.signStatsSize =
-        (uint32_t)stoi(configs["signStatLogListSize"]);
-    }
-
-    if(configs.find("signStatLogFile") != configs.end()){
-        this->configuration.signStatLogFile = configs["signStatLogFile"];
-    }
-
-    if(configuration.enableSignStatLog){
-        std::cout << "Signing statistic logging is ON" << std::endl;
-        std::cout << "Statistics for last " << configuration.signStatsSize <<
-            " signs will be reported by each thread" << std::endl;
-        std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-            configuration.signStatLogFile << std::endl;
-    } else{
-        std::cout << "Signing statistic logging is off" << std::endl;
-    }
-
-
-    /* Verification-related statistics */
-    if(configs.find("enableVerifStatLog") != configs.end()){
-       istringstream is8(configs["enableVerifStatLog"]);
-       is8 >> boolalpha >> configuration.enableVerifStatLog;
-    }
-
-    if(configs.find("verifStatLogListSize") != configs.end()){
-        this->configuration.verifStatsSize =
-            (uint32_t)stoi(configs["verifStatLogListSize"]);
-    }
-
-    if(configs.find("verifStatLogFile") != configs.end()){
-        this->configuration.verifStatLogFile = configs["verifStatLogFile"];
-    }
-
-    if(configuration.enableVerifStatLog){
-        std::cout << "Verification statistic logging is ON" << std::endl;
-        std::cout << "Statistics for last " << configuration.verifStatsSize <<
-            " verifications will be reported by each thread" << std::endl;
-        std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-            configuration.verifStatLogFile << std::endl;
-    } else{
-        std::cout << "Verification statistic logging is off" << std::endl;
-    }
-
-
     /* Multi-parallelism */
-    if(configs.find("numRxThreads") != configs.end()) {
-        this->configuration.numRxThreads = (uint8_t)stoi(configs["numRxThreads"]);
+    if(configs.find("numRxThreadsEth") != configs.end()) {
+        this->configuration.numRxThreadsEth = (uint8_t)stoi(configs["numRxThreadsEth"]);
     }
+    if(configs.find("numRxThreadsRadio") != configs.end()) {
+        this->configuration.numRxThreadsRadio = (uint8_t)stoi(configs["numRxThreadsRadio"]);
+    }
+
     /* WSA */
     configuration.routerLifetime = 0;
     configuration.ipPrefixLength = 0;
@@ -460,6 +712,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("primaryDns") != configs.end()) {
         configuration.primaryDns = configs["primaryDns"];
     }
+    if(configs.find("wildcardRx") != configs.end()){
+       istringstream is8(configs["wildcardRx"]);
+       is8 >> boolalpha >> configuration.wildcardRx;
+    }
+    this->configuration.isValid = true;
 
 }
 
@@ -469,6 +726,7 @@ void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     radioOpt.ipv4_src = configuration.ipv4_src;
     simTransmit = std::unique_ptr<RadioTransmit>
             (new RadioTransmit(radioOpt, ipv4, port));
+    simTransmit->set_radio_verbosity(this->configuration.codecVerbosity);
     txSimMsg = std::make_shared<msg_contents>();
     abuf_alloc(&txSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
     if (this->configuration.ldmSize && this->ldm == nullptr) {
@@ -485,6 +743,7 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
     radioOpt.ipv4_src = configuration.ipv4_src;
     simReceive = std::unique_ptr<RadioReceive>
             (new RadioReceive(radioOpt, ipv4, port));
+    simReceive->set_radio_verbosity(this->configuration.codecVerbosity);
     rxSimMsg = std::make_shared<msg_contents>();
     abuf_alloc(&rxSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
     if (this->configuration.ldmSize && this->ldm ==nullptr) {
@@ -500,46 +759,95 @@ void ApplicationBase::setup() {
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
     spsInfo.periodicityMs = this->configuration.transmitRate;
+    for (auto port : this->configuration.spsPorts)
+    {
+        RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
+                         port, this->configuration.spsServiceIDs[i], false, 0);
+        // save Tx instance only if create Tx flow succeeded
+        if (tx.flow) {
+            this->spsTransmits.push_back(std::move(tx));
+        } else {
+            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" << endl;
+            return;
+        }
+
+        this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
+                this->configuration.spsDestAddrs[i].c_str(),
+                this->configuration.spsDestNames[i].c_str());
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->spsTransmits[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+        std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
+        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
+        this->spsContents.push_back(mc);
+        i += 1;
+    }
+    i = 0;
     for (auto port : this->configuration.receivePorts)
     {
-        this->radioReceives.push_back(RadioReceive(TrafficCategory::SAFETY_TYPE,
-                    TrafficIpType::TRAFFIC_NON_IP, port));
+        if (this->configuration.wildcardRx == true) {
+            RadioReceive rx(TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port);
+            // save Rx instance only if create Rx flow succeeded
+            if (rx.gRxSub) {
+                this->radioReceives.push_back(std::move(rx));
+            } else {
+                cerr << "ApplicationBase::setup error in creating wildcard Rx!" << endl;
+                return;
+            }
+        } else {
+            RadioReceive rx(TrafficCategory::SAFETY_TYPE,
+                            TrafficIpType::TRAFFIC_NON_IP, port,
+                            std::make_shared<std::vector<uint32_t>>
+                             (this->configuration.spsServiceIDs));
+            // save Rx instance only if create Rx flow succeeded
+            if (rx.gRxSub) {
+                this->radioReceives.push_back(std::move(rx));
+            } else {
+                cerr << "ApplicationBase::setup error in creating non-wildcard Rx!" << endl;
+                return;
+            }
+        }
+
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->radioReceives[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+
         std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->receivedContents.push_back(mc);
-
+        i += 1;
     }
+    i = 0;
     for (auto port : this->configuration.eventPorts)
     {
-        this->eventTransmits.push_back(RadioTransmit(eventInfo,
-                TrafficCategory::SAFETY_TYPE,
-                TrafficIpType::TRAFFIC_NON_IP, port,
-                this->configuration.eventServiceIDs[i]));
+        RadioTransmit tx(eventInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
+                         port, this->configuration.eventServiceIDs[i]);
+        // save Tx instance only if create Tx flow succeeded
+        if (tx.flow) {
+            this->eventTransmits.push_back(std::move(tx));
+        } else {
+            cerr << "ApplicationBase::setup error in creating Tx event flow!" << endl;
+            return;
+        }
         this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
-                this->configuration.eventDestAddrs[i].data(),
-                this->configuration.eventDestNames[i].data());
+                this->configuration.eventDestAddrs[i].c_str(),
+                this->configuration.eventDestNames[i].c_str());
+        /* radio debug */
+        if (this->configuration.codecVerbosity) {
+            this->eventTransmits[i].
+                set_radio_verbosity(this->configuration.codecVerbosity);
+        }
+
         std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->eventContents.push_back(mc);
         i += 1;
     }
 
-    i = 0;
-    for (auto port : this->configuration.spsPorts)
-    {
-
-        this->spsTransmits.push_back(RadioTransmit(spsInfo,
-                TrafficCategory::SAFETY_TYPE,
-                TrafficIpType::TRAFFIC_NON_IP, port,
-                this->configuration.spsServiceIDs[i], false, 0));
-        this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
-                this->configuration.spsDestAddrs[i].data(),
-                this->configuration.spsDestNames[i].data());
-        std::shared_ptr<msg_contents> mc = std::make_shared<msg_contents>();
-        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
-        this->spsContents.push_back(mc);
-        i += 1;
-    }
 
     if (this->configuration.ldmSize) {
         this->ldm = new Ldm(this->configuration.ldmSize);
@@ -565,8 +873,8 @@ void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
 
 // This function maybe overloaded to perform additonal operation before calling
 // radio tx function.
-int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, int16_t bufLen,
-        TransmitType txType) {
+int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
+    int16_t bufLen, TransmitType txType) {
     // If positive, should be the # of bytes sent
     // Else, something went wrong
     int ret;
@@ -662,25 +970,27 @@ int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen,
 }
 
 void ApplicationBase::closeAllRadio() {
+
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++)
     {
         this->eventTransmits[i].closeFlow();
     }
-
+    eventTransmits.erase(eventTransmits.begin(),eventTransmits.end());
     for (uint8_t i = 0; i < this->spsTransmits.size(); i++)
     {
         this->spsTransmits[i].closeFlow();
     }
+    spsTransmits.erase(spsTransmits.begin(),spsTransmits.end());
 
     for (uint8_t i = 0; i < this->radioReceives.size(); i++)
     {
         this->radioReceives[i].closeFlow();
     }
-    if (this->simReceive != nullptr)
+    radioReceives.erase(radioReceives.begin(),radioReceives.end());
+    if (this->kinematicsReceive != nullptr)
     {
-        this->simReceive->closeFlow();
+        this->kinematicsReceive->close();
     }
-
 }
 
 /**

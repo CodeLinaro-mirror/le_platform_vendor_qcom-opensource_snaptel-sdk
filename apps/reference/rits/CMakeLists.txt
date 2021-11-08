@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.9)
 project(qits)
 include(GNUInstallDirs)
 include(FindPkgConfig)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 
 if (WITH_AEROLINK)
     add_definitions( -DAEROLINK)
@@ -13,6 +13,7 @@ elseif(DEFINED ENV{AEROLINK_PATH})
     message("Building with security")
 endif()
 
+# add "-DEMIT_ASN_DEBUG -DASN_THREAD_SAFE" to debug asn1 decoder
 if(ASN1C_PATH)
     add_definitions(-DETSI -DWITH_WSA -D_DEFAULT_SOURCE)
     set(ASN1C_SKELETONS ${ASN1C_PATH}/skeletons)
@@ -53,3 +54,9 @@ add_subdirectory(src/qCoder/)
 add_subdirectory(src/qMessenger/)
 add_subdirectory(src/qApplication)
 add_subdirectory(tests/applicationTest)
+
+if(WITH_SYSTEMD)
+    install(FILES scripts/qits@.service
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/../lib/systemd/system)
+endif()
+

@@ -33,53 +33,82 @@
 #include <limits>
 #include <vector>
 #include <condition_variable>
+#include <thread>
 
 #include <telux/sensor/SensorFactory.hpp>
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m"
 
+#define TOTAL_BATCHES_REQUIRED 10
+
 class SensorEventListener : public telux::sensor::ISensorEventListener {
  public:
-    SensorEventListener(telux::sensor::SensorInfo info)
-       : info_(info) {
+
+    SensorEventListener(std::shared_ptr<telux::sensor::ISensor> sensor)
+       : sensor_(sensor)
+       , totalBatches_(0) {
     }
 
     // [11] Receive sensor events. This notification is received every time the configured batch
     // count is available with the sensor framework
     virtual void onEvent(std::shared_ptr<std::vector<telux::sensor::SensorEvent>> events) override {
+
         PRINT_NOTIFICATION << ": Received " << events->size()
-                           << " events from sensor: " << info_.name << std::endl;
+                           << " events from sensor: " << sensor_->getSensorInfo().name << std::endl;
+
+        // I/O intense operations such as below should be avoided since this thread should avoid
+        // any time consuming operations
         for (telux::sensor::SensorEvent s : *(events.get())) {
             printSensorEvent(s);
+        }
+        ++totalBatches_;
+        // [11.1] If we have received expected number of batches and want to reconfigure the sensor
+        // we will spawn the request to deactivate, configure and activate on a different thread
+        // since we are not allowed to invoke the sensor APIs from this thread context
+        if (totalBatches_ > TOTAL_BATCHES_REQUIRED) {
+            totalBatches_ = 0;
+            std::thread t([&] {
+                sensor_->deactivate();
+                sensor_->configure(sensor_->getConfiguration());
+                sensor_->activate();
+            });
+            // Be sure to detach the thread
+            t.detach();
         }
     }
 
     // [9] Receive configuration updates
     virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
-        PRINT_NOTIFICATION << ": Received configuration update from sensor: " << info_.name << ": ["
-                           << configuration.samplingRate << ", " << configuration.batchCount << " ]"
-                           << std::endl;
+        PRINT_NOTIFICATION
+            << ": Received configuration update from sensor: " << sensor_->getSensorInfo().name
+            << ": [" << configuration.samplingRate << ", " << configuration.batchCount << " ]"
+            << std::endl;
     }
 
  private:
+
     bool isUncalibratedSensor(telux::sensor::SensorType type) {
         return ((type == telux::sensor::SensorType::GYROSCOPE_UNCALIBRATED)
                 || (type == telux::sensor::SensorType::ACCELEROMETER_UNCALIBRATED));
     }
+
     void printSensorEvent(telux::sensor::SensorEvent &s) {
-        if (isUncalibratedSensor(info_.type)) {
-            PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
-                               << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y << ", "
-                               << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x << ", "
-                               << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z
+        telux::sensor::SensorInfo info = sensor_->getSensorInfo();
+        if (isUncalibratedSensor(sensor_->getSensorInfo().type)) {
+            PRINT_NOTIFICATION << ": " << sensor_->getSensorInfo().name << ": " << s.timestamp
+                               << ", " << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y
+                               << ", " << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x
+                               << ", " << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z
                                << std::endl;
         } else {
-            PRINT_NOTIFICATION << ": " << info_.name << ": " << s.timestamp << ", "
-                               << s.calibrated.x << ", " << s.calibrated.y << ", " << s.calibrated.z
-                               << std::endl;
+            PRINT_NOTIFICATION << ": " << sensor_->getSensorInfo().name << ": " << s.timestamp
+                               << ", " << s.calibrated.x << ", " << s.calibrated.y << ", "
+                               << s.calibrated.z << std::endl;
         }
     }
-    telux::sensor::SensorInfo info_;
+
+    std::shared_ptr<telux::sensor::ISensor> sensor_;
+    uint32_t totalBatches_;
 };
 
 std::string getSensorType(telux::sensor::SensorType type) {
@@ -233,7 +262,7 @@ int main(int argc, char **argv) {
     // [7] Create a dedicated listener per sensor and register the listener to get notifications
     // about sensor configuration updates, sensor events
     std::shared_ptr<SensorEventListener> sensorEventListener
-        = std::make_shared<SensorEventListener>(sensor->getSensorInfo());
+        = std::make_shared<SensorEventListener>(sensor);
     sensor->registerListener(sensorEventListener);
 
     // [8] Configure the sensor with the desired configuration, with the required validityMask set

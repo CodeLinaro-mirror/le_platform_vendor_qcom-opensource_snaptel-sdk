@@ -32,6 +32,7 @@
 #include <time.h>
 #include <cerrno>
 #include "Logger/Logger.hpp"
+#include <cstring>
 
 // Number of lines in the Linux foundation license text.
 #define LICENSE_TEXT_NUM_LINES 28

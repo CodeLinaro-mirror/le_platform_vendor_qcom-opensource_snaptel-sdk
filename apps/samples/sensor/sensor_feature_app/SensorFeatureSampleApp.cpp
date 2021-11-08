@@ -161,6 +161,12 @@ int main(int argc, char **argv) {
     sensorFeatureManager->registerListener(sensorFeatureEventListener);
 
     // [7] Enable the desired features
+    // Note: Enabling a sensor feature when the system is active would additionally require
+    // enabling the corresponding sensor which is used by the sensor feature.
+    // If the sensor feature only needs to be enabled during suspend mode, just enabling the sensor
+    // feature using this method would be sufficient. The underlying framework would take care
+    // to enable the required sensor when the system is about to enter suspend state.
+
     status = sensorFeatureManager->enableFeature(name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Failed to enable feature: " << name << std::endl;

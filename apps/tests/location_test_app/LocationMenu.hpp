@@ -75,6 +75,7 @@ public:
    void configureLeverArm(std::vector<std::string> userInput);
    void configureDR(std::vector<std::string> userInput);
    void configureEngineState(std::vector<std::string> userInput);
+   void configureEngineIntegrityRisk(std::vector<std::string> userInput);
    void configureConstellation(std::vector<std::string> userInput);
    void configureConstellationEmpty(std::vector<std::string> userInput);
    void configureConstellationDeviceDefault(std::vector<std::string> userInput);
@@ -85,6 +86,7 @@ public:
    void requestRobustLocation(std::vector<std::string> userInput);
    void requestEnergyConsumedInfo(std::vector<std::string> userInput);
    void getYearOfHw(std::vector<std::string> userInput);
+   void getCapabilities(std::vector<std::string> userInput);
    void requestTerrestrialPositioning(std::vector<std::string> userInput);
    void cancelTerrestrialPositioning(std::vector<std::string> userInput);
    void configureNmeaSentence(std::vector<std::string> userInput);

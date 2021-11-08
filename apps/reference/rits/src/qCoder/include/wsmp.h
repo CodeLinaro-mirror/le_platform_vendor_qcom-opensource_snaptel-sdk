@@ -106,6 +106,7 @@ typedef enum {
     PSID_SYSTEM = 0,
     PSID_EFC,
     /* 0x20 -0x22, 0x80 - 0x85 are defined for SAE J2735 */
+    PSID_BSM = 0x20,
     PSID_WSA = 0x87,
 } PSID_e;
 

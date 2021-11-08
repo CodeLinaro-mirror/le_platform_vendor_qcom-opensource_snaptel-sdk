@@ -39,6 +39,7 @@
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
 #include "DgnssMenu.hpp"
+#include "LocationUtils.hpp"
 
 const int DEFAULT_UNKNOWN = 0;
 using namespace telux::common;
@@ -288,6 +289,16 @@ int LocationMenu::init() {
            "Configure All Nmea sentences", {}, std::bind(&LocationMenu::
                configureAllNmeaSentence, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> configureEngineIntegrityRisk =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("35",
+           "Configure Engine Integrity Risk", {}, std::bind(&LocationMenu::
+               configureEngineIntegrityRisk, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> getCapabilities =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("36",
+           "Request capabilities information", {}, std::bind(&LocationMenu::
+               getCapabilities, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -299,7 +310,7 @@ int LocationMenu::init() {
          configureSecondaryBand, enableDefaultSecondaryBand, requestSecondaryBand, getYearOfHw,
          configureEngineState, provideConsentForTerrestrialPositioning,
          requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
-         configureAllNmeaSentence};
+         configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -334,14 +345,57 @@ void LocationMenu::startDetailedReports(std::vector<std::string> userInput) {
          opt = 1000;
       }
 
-      if(opt > 0) {
-         myLocCmdResponseCb_
-            = std::make_shared<MyLocationCommandCallback>("Detailed report request");
-         locationManager_->startDetailedReports(
-            (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
-                                     myLocCmdResponseCb_, std::placeholders::_1));
+      std::string configureSet;
+      std::cout << "Press Y to configure the set of reports : " << std::endl;
+      std::getline(std::cin, configureSet, delimiter);
+      if (configureSet == "Y" || configureSet == "y") {
+          std::string reportPreference;
+          GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
+          std::vector<int> options;
+          std::cout << " Enter the type of reports to enable : \n"
+                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
+                       "5 - NHzMeasurement) \n\n";
+          std::cout << " Enter your preference\n"
+                       " (For example: enter 0,1 to choose Location & SV reports) : ";
+          std::getline(std::cin,reportPreference,delimiter);
+          std::stringstream ss(reportPreference);
+          int i;
+          while(ss >> i) {
+              options.push_back(i);
+              if(ss.peek() == ',' || ss.peek() == ' ')
+                  ss.ignore();
+          }
+          for(auto &option : options) {
+              if(option >= 0 && option <= 5) {
+                  try {
+                      reportMask |= 1UL << option;
+                  } catch(const std::exception &e) {
+                      std::cout << "ERROR: invalid input, please enter numerical values " << option
+                                << std::endl;
+                  }
+              } else {
+                  std::cout << "Report preference should not be out of range" << std::endl;
+              }
+          }
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed report request");
+              locationManager_->startDetailedReports(
+                  (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb_, std::placeholders::_1), reportMask);
+          } else {
+              std::cout << " Invalid input \n";
+          }
       } else {
-         std::cout << " Invalid input \n";
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed report request");
+             locationManager_->startDetailedReports(
+                 (uint32_t)opt, std::bind(&MyLocationCommandCallback::commandResponse,
+                     myLocCmdResponseCb_, std::placeholders::_1));
+          } else {
+              std::cout << " Invalid input \n";
+          }
       }
    }
 }
@@ -390,14 +444,57 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
         }
       }
 
-      if(opt > 0) {
-         myLocCmdResponseCb_
-            = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
-         locationManager_->startDetailedEngineReports(
-            (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
-                                     myLocCmdResponseCb_, std::placeholders::_1));
+      std::string configureSet;
+      std::cout << "Press Y to configure the set of reports : " << std::endl;
+      std::getline(std::cin, configureSet, delimiter);
+      if (configureSet == "Y" || configureSet == "y") {
+          std::string reportPreference;
+          GnssReportTypeMask reportMask = DEFAULT_UNKNOWN;
+          std::vector<int> options;
+          std::cout << " Enter the type of reports to enable : \n"
+                       " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
+                       "5 - NHzMeasurement) \n\n";
+          std::cout << " Enter your preference\n"
+                       " (For example: enter 0,1 to choose Location & SV reports) : ";
+          std::getline(std::cin,reportPreference,delimiter);
+          std::stringstream ss(reportPreference);
+          int i;
+          while(ss >> i) {
+              options.push_back(i);
+              if(ss.peek() == ',' || ss.peek() == ' ')
+                  ss.ignore();
+          }
+          for(auto &option : options) {
+              if(option >= 0 && option <= 5) {
+                  try {
+                      reportMask |= 1UL << option;
+                  } catch(const std::exception &e) {
+                      std::cout << "ERROR: invalid input, please enter numerical values " << option
+                                << std::endl;
+                  }
+              } else {
+                  std::cout << "Report preference should not be out of range" << std::endl;
+              }
+          }
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
+              locationManager_->startDetailedEngineReports(
+                  (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb_, std::placeholders::_1), reportMask);
+          } else {
+              std::cout << " Invalid input \n";
+          }
       } else {
-         std::cout << " Invalid input \n";
+          if(opt > 0) {
+              myLocCmdResponseCb_
+                  = std::make_shared<MyLocationCommandCallback>("Detailed engine report request");
+              locationManager_->startDetailedEngineReports(
+                  (uint32_t)opt, engineType, std::bind(&MyLocationCommandCallback::commandResponse,
+                      myLocCmdResponseCb_, std::placeholders::_1));
+          } else {
+              std::cout << " Invalid input \n";
+          }
       }
    }
 }
@@ -896,6 +993,55 @@ void LocationMenu::configureEngineState(std::vector<std::string> userInput) {
     }
 }
 
+void LocationMenu::configureEngineIntegrityRisk(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        char delimiter = '\n';
+        telux::loc::EngineType engineType;
+        std::string type;
+        std::cout << "Enter the type of engine : " << std::endl;
+        std::cout << "Enter 1 for SPE" << std::endl;
+        std::cout << "Enter 2 for PPE" << std::endl;
+        std::cout << "Enter 3 for DRE" << std::endl;
+        std::cout << "Enter 4 for VPE" << std::endl;
+        std::getline(std::cin, type, delimiter);
+        int engineTypeOption = std::stoi(type);
+        if (engineTypeOption == 1) {
+            engineType = telux::loc::EngineType::SPE;
+        } else if (engineTypeOption == 2) {
+            engineType = telux::loc::EngineType::PPE;
+        } else if (engineTypeOption == 3){
+            engineType = telux::loc::EngineType::DRE;
+        } else {
+            engineType = telux::loc::EngineType::VPE;
+        }
+
+        std::string integrityRisk;
+        std::cout << "Enter value for integrityRisk :";
+        std::getline(std::cin, integrityRisk, delimiter);
+
+        uint32_t intRiskLevel = 0;
+        if(!integrityRisk.empty()) {
+            try {
+                intRiskLevel = std::stoi(integrityRisk);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << intRiskLevel
+                          << std::endl;
+            }
+        } else {
+             intRiskLevel = 1;
+        }
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+            ("Configure Engine Integrity Risk");
+        telux::common::Status status = locationConfigurator_->configureEngineIntegrityRisk(
+            engineType, intRiskLevel, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status == telux::common::Status::FAILED) {
+            std::cout << "FAILED" << std::endl;
+        }
+    }
+}
+
 void LocationMenu::configureNmeaSentence(std::vector<std::string> userInput) {
    if(locationConfigurator_) {
       char delimiter = '\n';
@@ -1214,6 +1360,11 @@ void LocationMenu::getYearOfHw(std::vector<std::string> userInput) {
       &MyLocationCommandCallback::onGetYearOfHwInfo, myLocCmdResponseCb_,
           std::placeholders::_1, std::placeholders::_2);
   locationManager_->getYearOfHw(getYearOfHwCb);
+}
+
+void LocationMenu::getCapabilities(std::vector<std::string> userInput) {
+  telux::loc::LocCapability capabilities = locationManager_->getCapabilities();
+  LocationUtils::displayCapabilities(capabilities);
 }
 
 void LocationMenu::requestTerrestrialPositioning(std::vector<std::string> userInput) {

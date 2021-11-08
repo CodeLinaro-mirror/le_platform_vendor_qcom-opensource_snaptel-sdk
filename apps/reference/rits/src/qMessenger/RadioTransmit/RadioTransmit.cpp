@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -53,7 +53,7 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
     if(Status::SUCCESS == cv2xRadio->createTxSpsFlow(trafficType, serviceId, spsInfo,
                 port, withEventFlow, eventFlowPort, respCallback)){
         if(ErrorCode::SUCCESS == gCallbackPromise.get_future().get()){
-            cout<<"Sps flow created succesfully\n";
+            cout<<"Sps flow created succesfully sid=" << serviceId << endl;
             //return static_cast<uint8_t>(Status::SUCCESS);
         }
         else{
@@ -155,9 +155,9 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
     {
         int  bytes_sent;
         if(enableUdp){ //udp
-            //cout << "\nTransmitting data via udp...\n";
             bytes_sent = sendto(this->simSock, buf, bufLen,  0,
-                        (const struct sockaddr *) &(this->destAddress), sizeof(this->destAddress));
+                        (const struct sockaddr *) &(this->destAddress),
+                         sizeof(this->destAddress));
         } else{ //tcp - default
             bytes_sent = send(simSock, buf, bufLen, 0);
         }
@@ -207,7 +207,7 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
         printf("\n");
 #endif
     }else{
-        cout << "Error Sending Data.\n";
+        cerr << "Error Sending Data.\n";
 //        resp = static_cast<uint8_t>(Status::FAILED);
         resp = -1;
     }
@@ -284,26 +284,31 @@ uint8_t RadioTransmit::closeFlow() {
             return ans;
         }
     }
-    auto resp = -1;
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
-    auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> flow,
-                            ErrorCode eventError){
-                                closeCallback(flow, eventError);
-                            };
-    if(Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)){
-        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
-            resp = static_cast<uint8_t>(Status::SUCCESS);
+
+    if (this->flow) {
+        auto resp = -1;
+        auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+        auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> flow,
+                                ErrorCode eventError){
+                                    closeCallback(flow, eventError);
+                                };
+        if(Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)){
+            if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
+                resp = static_cast<uint8_t>(Status::SUCCESS);
+            }
+            else{
+                resp = static_cast<uint8_t>(Status::FAILED);
+            }
+        }else{
+                resp = static_cast<uint8_t>(Status::FAILED);
         }
-        else{
-            resp = static_cast<uint8_t>(Status::FAILED);
-        }
-    }else{
-            resp = static_cast<uint8_t>(Status::FAILED);
+        this->resetCallbackPromise();
+        this->flow = nullptr;
+        cout << "Tx flow closed.\n";
+        return resp;
     }
-    this->resetCallbackPromise();
-    this->flow = nullptr;
-    cout << "Flow closed.\n";
-    return resp;
+
+    return 0;
 }
 
 

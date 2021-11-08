@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -85,7 +85,7 @@ static __inline int wsmp_decode_psid(uint8_t *wsmp)
     int psid = 0;
 
     if (!wsmp) {
-        fprintf(stderr, "wsmp_decode_psid called with null.\n:");
+        fprintf(stderr, "wsmp_decode_psid called with null wsmp header.\n");
         return 0;
     }
 
@@ -125,8 +125,8 @@ static __inline int wsmp_decode_psid(uint8_t *wsmp)
 static __inline int WSM_PSID_PCODED_LEN(int psid_v)
 {
 
-    if (psid_v > MAX_PSID) {
-        fprintf(stderr, "wsmp_devode_psid called with null.\n:");
+    if (psid_v > MAX_PSID && gVerbosity) {
+        fprintf(stderr, "wsmp_psid_pcoded_len called with null.\n");
         return -1;
     }
 
@@ -159,7 +159,8 @@ static __inline uint8_t*  wsmp_add_psid(uint8_t *wsmp, int psid_v, int *added)
     int P; // the P-encoded value of psid_v
 
     if ((!wsmp) || (psid_v > MAX_PSID) || !added) {
-        fprintf(stderr, "wsmp_devode_psid called with null.\n:");
+        fprintf(stderr, "wsmp_add_psid called with null or invalid psid.\n");
+        fprintf(stderr, "Input psid value is: %d\n", psid_v);
         if (added) {
             *added = 0;
         }
@@ -378,14 +379,14 @@ static int encode_wsm2016(wsmp_data_t *wbp, abuf_t *wsm_payload)
                 printf(" No WSMP Payload nor payload length added \n");
             }
         }
-
+#if 0
         if (gVerbosity > 2) {
             printf("WSMP HEADER: ");
             abuf_dump(wbp->abp);
             printf("WSMP FRAME: ");
             abuf_dump(wsm_payload);
         }
-
+#endif
         result = abuf_byte_len(wbp->abp);
     }
 err:
@@ -500,7 +501,7 @@ static int wsmp_decode_wave_element_extension(abuf_t *bp, wsmp_data_t *wsmpp, in
                 unk_weid_len = parse_asn_variable_length_enc((unsigned char **)&bp->data,
                     &bits_left);
                 //print_buffer(bp->data, unk_weid_len);
-                abuf_pull(bp, wsmpp->chan_load_len);
+                abuf_pull(bp, unk_weid_len);
 
             }
             break;
@@ -547,7 +548,11 @@ static int  wsmp_decode_header(msg_contents *mc)
      */
     if(gVerbosity > 4)
         printf("Pulling octet of WSMP version\n");
-    ver_octet = (*(uint8_t *)abuf_pull(bp, 1));
+    //ver_octet = (*(uint8_t *)abuf_pull(bp, 1));
+    uint8_t* byte = (uint8_t*)abuf_pull(bp, 1);
+    if(byte == NULL)
+        goto wsmp_decode_err;
+    ver_octet = (*byte);
     wsmpp->protoVersion = ver_octet & 0x7;  // 3 least significant bits
 
     if (gVerbosity > 7) {
@@ -619,8 +624,10 @@ static int  wsmp_decode_header(msg_contents *mc)
         break;
 
     default:
-        fprintf(stderr, "not a supported WSMP version/type,  version byte=0x%02x, ver=%d\n",
-            ver_octet, wsmpp->protoVersion);
+        if(gVerbosity > 2)
+            fprintf(stderr,
+                "not a supported WSMP version/type,  version byte=0x%02x, ver=%d\n",
+                ver_octet, wsmpp->protoVersion);
         retcode = -1;
         goto exit;
     }
@@ -853,16 +860,19 @@ wsmp_pkt_err:
 int wsmp_encode(msg_contents *mc)
 {
     if (!mc->wsmp) {
-        fprintf(stderr, "%s: invalid input\n", __func__);
+        if(gVerbosity > 2)
+            fprintf(stderr, "%s: invalid input\n", __func__);
         return -1;
     } else if (!mc->abuf.data) {
-        fprintf(stderr, "%s: no input to encode\n", __func__);
+        if(gVerbosity > 2)
+            fprintf(stderr, "%s: no input to encode\n", __func__);
         return -1;
     }
     abuf_t ab;
     abuf_alloc(&ab, 2000, 20);
     wsmp_data_t *wsmp = mc->wsmp;
     wsmp->abp = &ab;
-
-    return encode_wsm2016(wsmp, &(mc->abuf));
+    int ret = encode_wsm2016(wsmp, &(mc->abuf));
+    abuf_free(&ab);
+    return ret;
 }

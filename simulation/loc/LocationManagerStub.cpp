@@ -92,13 +92,26 @@ void LocationManagerStub::invokeDetailedReport(ReportHandler & rClass_) {
         for (auto iter=listeners_.begin(); iter != listeners_.end(); ) {
             auto spt = (*iter).lock();
             if (spt != nullptr) {
-                spt->onDetailedLocationUpdate(infoEx);
-                spt->onGnssSVInfo(rClass_.getGnssSVInfo());
-                spt->onGnssSignalInfo(rClass_.getGnssSignalInfo());
-                std::vector<NMEAVals>& nmeaVals_ = rClass_.getNmeaVal();
-                for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++ )
-                    spt->onGnssNmeaInfo(iterNMEA->nmeaTimestamp, iterNMEA->nmeaString);
-                spt->onGnssMeasurementsInfo(rClass_.getGnssMeasurements());
+                if (reportTypeMask_ & GnssReportType::LOCATION) {
+                    spt->onDetailedLocationUpdate(infoEx);
+                }
+                if (reportTypeMask_ & GnssReportType::SATELLITE_VEHICLE) {
+                    spt->onGnssSVInfo(rClass_.getGnssSVInfo());
+                }
+                if (reportTypeMask_ & GnssReportType::DATA) {
+                    spt->onGnssSignalInfo(rClass_.getGnssSignalInfo());
+                }
+                if (reportTypeMask_ & GnssReportType::NMEA) {
+                    std::vector<NMEAVals>& nmeaVals_ = rClass_.getNmeaVal();
+                    for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++ )
+                        spt->onGnssNmeaInfo(iterNMEA->nmeaTimestamp, iterNMEA->nmeaString);
+                }
+                if (reportTypeMask_ & GnssReportType::MEASUREMENT) {
+                    spt->onGnssMeasurementsInfo(rClass_.getGnssMeasurements());
+                }
+                if (reportTypeMask_ & GnssReportType::HIGH_RATE_MEASUREMENT) {
+                    spt->onGnssMeasurementsInfo(rClass_.getGnssMeasurements());
+                }
                 ++iter;
             } else {
                 iter = listeners_.erase(iter);
@@ -117,13 +130,26 @@ void LocationManagerStub::invokeDetailedEngineReport(ReportHandler & rClass_) {
         for (auto iter=listeners_.begin();iter != listeners_.end();) {
             auto spt = (*iter).lock();
             if (spt != nullptr) {
-                spt->onDetailedEngineLocationUpdate(infoEngineReports);
-                spt->onGnssSVInfo(rClass_.getGnssSVInfo());
-                spt->onGnssSignalInfo(rClass_.getGnssSignalInfo());
-                std::vector<NMEAVals>& nmeaVals_ = rClass_.getNmeaVal();
-                for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++ )
-                    spt->onGnssNmeaInfo(iterNMEA->nmeaTimestamp, iterNMEA->nmeaString);
-                spt->onGnssMeasurementsInfo(rClass_.getGnssMeasurements());
+                if (reportTypeMask_ & GnssReportType::LOCATION) {
+                    spt->onDetailedEngineLocationUpdate(infoEngineReports);
+                }
+                if (reportTypeMask_ & GnssReportType::SATELLITE_VEHICLE) {
+                    spt->onGnssSVInfo(rClass_.getGnssSVInfo());
+                }
+                if (reportTypeMask_ & GnssReportType::DATA) {
+                    spt->onGnssSignalInfo(rClass_.getGnssSignalInfo());
+                }
+                if (reportTypeMask_ & GnssReportType::NMEA) {
+                    std::vector<NMEAVals>& nmeaVals_ = rClass_.getNmeaVal();
+                    for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++ )
+                        spt->onGnssNmeaInfo(iterNMEA->nmeaTimestamp, iterNMEA->nmeaString);
+                }
+                if (reportTypeMask_ & GnssReportType::MEASUREMENT) {
+                    spt->onGnssMeasurementsInfo(rClass_.getGnssMeasurements());
+                }
+                if (reportTypeMask_ & GnssReportType::HIGH_RATE_MEASUREMENT) {
+                    spt->onGnssMeasurementsInfo(rClass_.getGnssMeasurements());
+                }
                 ++iter;
             } else {
                 iter = listeners_.erase(iter);
@@ -249,7 +275,7 @@ void locationResponseCallback(telux::common::ResponseCallback callback, telux::c
 }
 
 telux::common::Status LocationManagerStub::startDetailedReports(uint32_t intervalInMs,
-        telux::common::ResponseCallback callback) {
+        telux::common::ResponseCallback callback, GnssReportTypeMask reportMask) {
     Debug(__FILE__,__func__);
     int delay;
     auto &s_stubbed =  StubHelper::getInstance();
@@ -262,13 +288,15 @@ telux::common::Status LocationManagerStub::startDetailedReports(uint32_t interva
     drSeqNo_.store(0);
     //Type should be updated last after other variables are set
     Type_.store(2);
+    reportTypeMask_ = reportMask;
     std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
     t.detach();
     return(telux::common::Status::SUCCESS);
 }
 
 telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t intervalInMs,
-        LocReqEngine engineType, telux::common::ResponseCallback callback) {
+        LocReqEngine engineType, telux::common::ResponseCallback callback,
+            GnssReportTypeMask reportMask) {
     Debug(__FILE__,__func__);
     int delay;
     auto &s_stubbed =  StubHelper::getInstance();
@@ -281,6 +309,7 @@ telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t i
     derSeqNo_.store(0);
     //Type should be updated last after other variables are set
     Type_.store(3);
+    reportTypeMask_ = reportMask;
     std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
     t.detach();
     return(telux::common::Status::SUCCESS);

@@ -58,6 +58,7 @@ extern "C" {
 
 AudioConsoleApp::AudioConsoleApp(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
+    ready_ = false;
 }
 
 AudioConsoleApp::~AudioConsoleApp() {
@@ -67,14 +68,13 @@ AudioConsoleApp::~AudioConsoleApp() {
     loopbackMenu_ = nullptr;
     toneMenu_ = nullptr;
     transCodeMenu_ = nullptr;
-    closeAllStreams();
     audioClient_ = nullptr;
 }
 
 void AudioConsoleApp::init() {
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
-    std::promise<ServiceStatus> prom{};
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = telux::audio::AudioFactory::getInstance();
     audioManager_ = audioFactory.getAudioManager([&prom](telux::common::ServiceStatus status) {
@@ -103,6 +103,7 @@ void AudioConsoleApp::init() {
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;
+        ready_ = true;
     } else {
         std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
         return;
@@ -145,9 +146,19 @@ void AudioConsoleApp::initConsole() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "Get Calibration Status", {},
         std::bind(&AudioConsoleApp::getCalStatus, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> getSupportedStreamsCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "Get Supported Streams", {},
+        std::bind(&AudioConsoleApp::getSupportedStreams, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> getSupportedDevicesCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Get Supported Devices", {},
+        std::bind(&AudioConsoleApp::getSupportedDevices, this, std::placeholders::_1)));
+
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
     = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
-        toneMenuCommand, transCodeMenuCommand, getCalStatusCommand};
+        toneMenuCommand, transCodeMenuCommand, getCalStatusCommand, getSupportedStreamsCommand,
+        getSupportedDevicesCommand };
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ");
     voiceMenu_->init();
@@ -197,6 +208,11 @@ void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
 }
 
 void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (audioManager_) {
         std::promise<bool> p;
         auto status = audioManager_->getCalibrationInitStatus(
@@ -226,36 +242,80 @@ void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
     }
 }
 
-void AudioConsoleApp::closeAllStreams() {
+void AudioConsoleApp::getSupportedDevices(std::vector<std::string> userInput) {
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
+
     if (audioManager_) {
-
-        auto audioPlayStream_ = std::dynamic_pointer_cast<IAudioPlayStream>(
-            audioClient_->getStream(StreamType::PLAY));
-        if (audioPlayStream_) {
-            audioClient_->deleteStream(StreamType::PLAY);
+        std::promise<bool> p;
+        auto status = audioManager_->getDevices([&p, this](
+            std::vector<std::shared_ptr<IAudioDevice>> devices, telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                for (auto &it : devices) {
+                    if (it != nullptr) {
+                        std::cout << "DeviceType: " << static_cast<int>(it->getType()) << std::endl;
+                        if (it->getDirection() == DeviceDirection::TX) {
+                            std::cout << "Direction : TX " << std::endl;
+                        } else if (it->getDirection() == DeviceDirection::RX) {
+                            std::cout << "Direction : RX " << std::endl;
+                        } else {
+                            std::cout << "Direction : NONE" << std::endl;
+                        }
+                    }
+                }
+                p.set_value(true);
+            } else {
+                p.set_value(false);
+                std::cout << "failed to get supported devices" << std::endl;
+            }
+        });
+        if (status == telux::common::Status::SUCCESS){
+            std::cout << "Request to get supported devices sent" << std::endl;
+        } else {
+            std::cout << "Request to get supported devices failed" << std::endl;
         }
+        p.get_future().get();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
+    }
+}
 
-        auto audioCaptureStream_ = std::dynamic_pointer_cast<IAudioCaptureStream>(
-            audioClient_->getStream(StreamType::CAPTURE));
-        if (audioCaptureStream_) {
-            audioClient_->deleteStream(StreamType::CAPTURE);
-        }
+void AudioConsoleApp::getSupportedStreams(std::vector<std::string> userInput) {
+    if (!ready_) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        return;
+    }
 
-        auto audioToneStream_ = std::dynamic_pointer_cast<IAudioToneGeneratorStream>(
-            audioClient_->getStream(StreamType::TONE_GENERATOR));
-        if (audioToneStream_) {
-            audioClient_->deleteStream(StreamType::TONE_GENERATOR);
+    if (audioManager_) {
+        std::promise<bool> p;
+        auto status = audioManager_->getStreamTypes(
+            [&p, this](std::vector<StreamType> streamTypes, telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                for (auto it : streamTypes) {
+                    auto streamName = getStreamName(it);
+                    std::cout << "Stream Type : " << streamName << std::endl;
+                }
+                p.set_value(true);
+            } else {
+                p.set_value(false);
+                std::cout << "failed to get supported stream types" << std::endl;
+            }
+        });
+        if (status == telux::common::Status::SUCCESS){
+            std::cout << "Request to get supported stream sent" << std::endl;
+        } else {
+            std::cout << "Request to get supported stream failed" << std::endl;
         }
-
-        auto audioLoopbackStream_ = std::dynamic_pointer_cast<IAudioLoopbackStream>(
-            audioClient_->getStream(StreamType::LOOPBACK));
-        if (audioLoopbackStream_) {
-            audioClient_->deleteStream(StreamType::LOOPBACK);
-        }
+        p.get_future().get();
+    } else {
+        std::cout << "Invalid Audio Manager" << std::endl;
     }
 }
 
 void AudioConsoleApp::cleanup() {
+    ready_ = false;
     audioClient_->cleanup();
     voiceMenu_->cleanup();
     playMenu_->cleanup();
@@ -266,6 +326,7 @@ void AudioConsoleApp::cleanup() {
 }
 
 void AudioConsoleApp::setSystemReady() {
+    ready_ = true;
     if (voiceMenu_) {
         voiceMenu_->setSystemReady();
     }
@@ -316,5 +377,22 @@ void AudioConsoleApp::onServiceStatusChange(telux::common::ServiceStatus status)
     if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Service AVAILABLE" << std::endl;
         setSystemReady();
+    }
+}
+
+std::string AudioConsoleApp::getStreamName(StreamType type) {
+    switch (type){
+        case StreamType::VOICE_CALL:
+        return "VOICE_CALL";
+        case StreamType::PLAY:
+        return "PLAY";
+        case StreamType::CAPTURE:
+        return "CAPTURE";
+        case StreamType::LOOPBACK:
+        return "LOOPBACK";
+        case StreamType::TONE_GENERATOR:
+        return "TONE_GENERATOR";
+        default:
+        return "NONE";
     }
 }

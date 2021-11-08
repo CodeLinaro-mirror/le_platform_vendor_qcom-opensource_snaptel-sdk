@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -44,14 +44,7 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
 }
 
 PlayMenu::~PlayMenu() {
-    audioClient_ = nullptr;
-    playStatus_ = false;
-
-    for(std::thread &th : runningThreads_) {
-        if(th.joinable()){
-            th.join();
-        }
-    }
+   cleanup();
 }
 
 void PlayMenu::init() {

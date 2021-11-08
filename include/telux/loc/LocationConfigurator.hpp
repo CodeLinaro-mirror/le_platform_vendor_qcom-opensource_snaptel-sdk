@@ -56,10 +56,9 @@ namespace loc {
  * APIs such as CTunc, PACE, deleteAllAidingData, configureLeverArm, configureConstellations,
  * configureRobustLocation, configureMinGpsWeek, requestMinGpsWeek, deleteAidingData,
  * configureMinSVElevation, requestMinSVElevation, requestRobustLocation, configureSecondaryBand,
- * requestSecondaryBandConfig, configureDR.
+ * requestSecondaryBandConfig, configureDR, configureEngineState,
+ * provideConsentForTerrestrialPositioning, configureNmeaTypes, configureEngineIntegrityRisk.
  * ILocationConfigurator APIs strictly adheres to the principle of single client per process.
- * ILocationConfigurator APIs follow the non persistence scheme, meaning when the processor
- * crashes/reboots the settings need to be set again via the respective APIs.
  */
 class ILocationConfigurator {
 public:
@@ -351,14 +350,13 @@ public:
   virtual telux::common::Status requestRobustLocation(GetRobustLocationCallback cb) = 0;
 
 /**
- * This API configures the minimum GPS week used by the modem GNSS standard position engine (SPE).
- * If this API is called while GNSS standard position engine(SPE) is in middle of a session,
- * ResponseCallback will still be invoked shortly to indicate the setting has been accepted
- * by SPE engine, however the actual setting can not be applied until the current session ends,
- * and this may take up to 255 seconds in poor GPS signal condition.
+ * This API configures the minimum GPS week used by the modem GNSS standard position engine (SPE)
+ * and shall not be called while GNSS SPE is in the middle of a session.
+ * Client needs to assure that there is no active GNSS SPE session prior to issuing this command.
  * Client should wait for the command to finish, e.g.: via ResponseCallback received before
  * issuing a second configureMinGpsWeek command. Behavior is not defined if client issues a second
  * request of configureMinGpsWeek without waiting for the previous configureMinGpsWeek to finish.
+ * Additionally minimum GPS week number shall NEVER be in the future of the current GPS Week.
  *
  * @param [in] minGpsWeek - minimum GPS week to be used by modem GNSS engine.
  *
@@ -566,6 +564,37 @@ public:
 
   virtual telux::common::Status configureNmeaTypes(const NmeaSentenceConfig nmeaType,
       telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API is used to instruct the specified engine to use the provided integrity risk level for
+ * protection level calculation in position report.
+ * This API can be called when a position session is in progress.
+ * Prior to calling this API for a particular engine, the engine shall not calculate the
+ * protection levels and shall not include the protection levels in its position report.
+ * The implementation might not support protection levels across all engines. For engines that
+ * don't support it, @ref ResponseCallback will get invoked with @ref ErrorCode::NOT_SUPPORTED.
+ *
+ * @param [in] engineType - the engine that is instructed to use the specified integrity risk
+ *                          level for protection level calculation.
+ *
+ * @param [in] integrityRisk - the integrity risk level used for calculating protection level.
+ *                             The integrity risk is defined as a probability per epoch, in unit
+ *                             of 2.5e-10. The valid range for actual integrity is
+ *                             [2.5e-10, 1-2.5e-10]), this corresponds to range of [1,4e9-1] of
+ *                             this parameter.
+ *
+ * @param [in] callback - Optional callback to get the response of configureEngineIntegrityRisk.
+ *
+ * @returns Status of configureEngineIntegrityRisk i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureEngineIntegrityRisk(const EngineType engineType,
+      uint32_t integrityRisk, telux::common::ResponseCallback callback = nullptr ) = 0;
+
 
 /**
  * Destructor of ILocationConfigurator

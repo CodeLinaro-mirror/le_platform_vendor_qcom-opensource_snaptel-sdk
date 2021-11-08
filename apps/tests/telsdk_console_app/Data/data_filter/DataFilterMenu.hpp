@@ -84,7 +84,8 @@ class DataFilterMenu : public IDataFilterListener, public ConsoleApp {
         DataConfigParser instance, std::map<std::string, std::string> filterMap);
     ResponseCallback responseCb;
     void commandCallback(ErrorCode errorCode);
-
+    int getPortInfo(DataConfigParser cfgParser, std::map<std::string, std::string> pairMap,
+        std::string key, std::string errorStr);
 
     DataFilterMenu(std::string appName, std::string cursor);
     ~DataFilterMenu();

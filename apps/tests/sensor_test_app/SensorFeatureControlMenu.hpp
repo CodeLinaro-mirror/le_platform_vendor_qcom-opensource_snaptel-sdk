@@ -36,17 +36,25 @@
 #include <string>
 
 #include <telux/sensor/SensorFactory.hpp>
+#include <telux/power/PowerFactory.hpp>
+#include <telux/power/TcuActivityManager.hpp>
+#include <telux/power/TcuActivityListener.hpp>
 #include "ConsoleApp.hpp"
 #include "SensorClient.hpp"
 
 using namespace telux::sensor;
 using namespace telux::common;
+using namespace telux::power;
 
-class SensorFeatureControlMenu : public ConsoleApp {
+class SensorFeatureControlMenu : public ITcuActivityListener,
+                                 public ConsoleApp,
+                                 public std::enable_shared_from_this<SensorFeatureControlMenu> {
  public:
-    SensorFeatureControlMenu(std::string appName, std::string cursor, bool verboseNotification);
+    SensorFeatureControlMenu(
+        std::string appName, std::string cursor, SensorTestAppArguments commandLineArgs);
     ~SensorFeatureControlMenu();
     telux::common::ServiceStatus init(bool shouldInitConsole);
+    void onTcuActivityStateUpdate(TcuActivityState state) override;
     void cleanup();
     void parseArgs(int argc, char **argv);
 
@@ -56,14 +64,22 @@ class SensorFeatureControlMenu : public ConsoleApp {
     void listSensorFeatures(std::vector<std::string> userInput);
     void enableSensorFeature(std::vector<std::string> userInput);
     void disableSensorFeature(std::vector<std::string> userInput);
+    void listActiveFeatures(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);
     void disableFeature(std::string name);
+    void initTcuPowerMgr();
+    void enableSensorFeatureFifo(std::vector<std::string> userInput);
 
+    // Structure instance to store the command line args passed
+    SensorTestAppArguments commandLineArgs_;
     // Instance of the sensor feature manager and corresponding event listener
     std::shared_ptr<ISensorFeatureManager> sensorFeatureManager_;
     std::shared_ptr<ISensorFeatureEventListener> sensorFeatureEventListener_;
-    bool verboseNotification_;
     std::set<std::string> enabledFeatures_;
+    std::set<std::string> enabledFeaturesFifo_;
+    // Member variable to keep the manager object alive till application ends.
+    std::shared_ptr<ITcuActivityManager> tcuActivityMgr_;
+
 };
 
 #endif  // SENSORFEATURECONTROLMENU_HPP

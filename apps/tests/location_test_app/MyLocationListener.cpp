@@ -33,7 +33,7 @@
 #include <iomanip>
 
 #include <telux/loc/LocationDefines.hpp>
-
+#include "LocationUtils.hpp"
 #include "MyLocationListener.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
@@ -179,6 +179,18 @@ void MyLocationListener::printLocationExValidity(
     }
     if((validityMask & telux::loc::HAS_REPORT_STATUS)) {
       std::cout << "valid report status" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_INTEGRITY_RISK_USED)) {
+      std::cout << "valid integrity risk" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_ALONG_TRACK)) {
+      std::cout << "valid protect along track" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_CROSS_TRACK)) {
+      std::cout << "valid protect cross track" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_VERTICAL)) {
+      std::cout << "valid protect vertical" << std::endl;
     }
 
 }
@@ -566,6 +578,12 @@ void MyLocationListener::printLocationPositionTech(
    if((gnssPositionTech & telux::loc::GNSS_PPE)) {
       std::cout << "PPE" << std::endl;
    }
+   if((gnssPositionTech & telux::loc::GNSS_VEHICLE)) {
+      std::cout << "VEHICLE" << std::endl;
+   }
+   if((gnssPositionTech & telux::loc::GNSS_VISUAL)) {
+      std::cout << "VISUAL" << std::endl;
+   }
    if((gnssPositionTech == telux::loc::GNSS_DEFAULT)) {
       std::cout << "DEFAULT" << std::endl;
    }
@@ -821,6 +839,18 @@ void MyLocationListener::printMeasurementsDataValidity(
   if(flags & telux::loc::AUTOMATIC_GAIN_CONTROL_BIT) {
     std::cout << " valid agcLevelDb" << std::endl;
   }
+  if(flags & telux::loc::GNSS_SIGNAL_TYPE) {
+    std::cout << " valid signal type" << std::endl;
+  }
+  if(flags & telux::loc::BASEBAND_CARRIER_TO_NOISE) {
+    std::cout << " valid basebandCarrierToNoise" << std::endl;
+  }
+  if(flags & telux::loc::FULL_ISB) {
+    std::cout << " valid fullInterSignalBias" << std::endl;
+  }
+  if(flags & telux::loc::FULL_ISB_UNCERTAINTY) {
+    std::cout << " valid fullInterSignalBiasUncertainty" << std::endl;
+  }
 }
 
 void MyLocationListener::printMeasurementState(telux::loc::GnssMeasurementsStateValidity mask) {
@@ -941,6 +971,10 @@ void MyLocationListener::printReportStatus(telux::loc::ReportStatus status) {
   if (status == telux::loc::ReportStatus::FAILURE) {
     std::cout << "FAILURE" << std::endl;
   }
+}
+
+void MyLocationListener::onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) {
+  LocationUtils::displayCapabilities(capabilityMask);
 }
 
 void MyLocationListener::onBasicLocationUpdate(
@@ -1086,6 +1120,13 @@ void MyLocationListener::onDetailedLocationUpdate(
    printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
    printAltitudeType(locationInfo->getAltitudeType());
    printReportStatus(locationInfo->getReportStatus());
+   std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
+   std::cout << "Protection level along track : " <<
+       locationInfo->getProtectionLevelAlongTrack() << std::endl;
+   std::cout << "Protection level cross track : " <<
+       locationInfo->getProtectionLevelCrossTrack() << std::endl;
+   std::cout << "Protection level vertical : " <<
+       locationInfo->getProtectionLevelVertical() << std::endl;
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -1199,6 +1240,13 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
      printAltitudeType(locationInfo->getAltitudeType());
      printReportStatus(locationInfo->getReportStatus());
+     std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
+     std::cout << "Protection level along track : " <<
+         locationInfo->getProtectionLevelAlongTrack() << std::endl;
+     std::cout << "Protection level cross track : " <<
+         locationInfo->getProtectionLevelCrossTrack() << std::endl;
+     std::cout << "Protection level vertical : " <<
+         locationInfo->getProtectionLevelVertical() << std::endl;
      std::cout << "*************************************************************" << std::endl;
     }
 }
@@ -1222,6 +1270,8 @@ void MyLocationListener::onGnssSVInfo(const std::shared_ptr<telux::loc::IGnssSVI
       std::cout << "Carrier frequency: " << svInfo->getCarrierFrequency() << std::endl;
       printGnssSignalType(svInfo->getSignalType());
       std::cout << "Glonass FCN: " << svInfo->getGlonassFcn() << std::endl;
+      std::cout << "Baseband Carrier To Noise Ratio: " << svInfo->getBasebandCnr()
+                << std::endl;
    }
    std::cout << "*************************************************************" << std::endl;
 }
@@ -1305,6 +1355,8 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
          << std::endl;
      printMeasurementState(measData.stateMask);
      std::cout << " Received GNSS time of the week in nanoseconds " << measData.receivedSvTimeNs
+         << std::endl;
+     std::cout << " Sub-nanoseconds of GNSS time of the week " << measData.receivedSvTimeSubNs
          << std::endl
                << " Satellite time, in ns " << measData.receivedSvTimeUncertaintyNs << std::endl
                << " Signal strength, carrier to noise ratio " << measData.carrierToNoiseDbHz
@@ -1327,9 +1379,18 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
      printMeasurementsMultipathIndicator(measData.multipathIndicator);
      std::cout << " Signal to noise ratio " << measData.signalToNoiseRatioDb << std::endl
                << " Automatic gain control level " << measData.agcLevelDb << std::endl;
+     printGnssSignalType(measData.gnssSignalType);
+     std::cout << " Carrier-to-noise ratio of the signal measured at baseband : "
+               << measData.basebandCarrierToNoise << std::endl;
+     std::cout << " Full inter-signal bias : " << measData.fullInterSignalBias
+               << std::endl;
+     std::cout << " Uncertainty associated with the full inter-signal bias : "
+               << measData.fullInterSignalBiasUncertainty << std::endl;
 
      std::cout << "\n********************** " << std::endl;
    }
+   std::cout << "NHz measurements indicator: " << std::boolalpha << measurementInfo.isNHz
+             << std::endl;
    std::cout << "*************************************************************" << std::endl;
 }
 

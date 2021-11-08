@@ -77,8 +77,13 @@ Please follow below steps as a guide to control sensor features
       exit(1);
    }
    ~~~~~~
+   Note: Enabling a sensor feature when the system is active would additionally require enabling the
+   corresponding sensor which is used by the sensor feature.
+   If the sensor feature only needs to be enabled during suspend mode, just enabling the sensor
+   feature using this method would be sufficient. The underlying framework would take care
+   to enable the required sensor when the system is about to enter suspend state.
 
-### 8. Receive sensor feature events with the registered listener ###
+### 8. Receive sensor feature events with the registered listener when device is not suspended ###
 
    ~~~~~~{.cpp}
    virtual void onEvent(telux::sensor::SensorFeatureEvent event) override {
@@ -86,7 +91,16 @@ Please follow below steps as a guide to control sensor features
    }
    ~~~~~~
 
-### 9. When the sensor feature(s) are no longer necessary, disable them ###
+### 9. Receive sensor feature events with the registered listener when device in suspended state ###
+
+   ~~~~~~{.cpp}
+   virtual void onBufferedEvent(std::string sensorName,
+                    std::shared_ptr<std::vector<SensorEvent>> events, bool isLast) override {
+      printSensorFeatureEvent(event);
+   }
+   ~~~~~~
+
+### 10. When the sensor feature(s) are no longer necessary, disable them ###
 
    ~~~~~~{.cpp}
    status = sensorFeatureManager->disableFeature(name);

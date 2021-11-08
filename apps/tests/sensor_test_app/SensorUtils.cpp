@@ -38,11 +38,12 @@
 #include <ctime>
 #include <sstream>
 
+#include "SensorClient.hpp"
 #include "SensorUtils.hpp"
 #include "../../common/utils/Utils.hpp"
 #include <telux/sensor/SensorDefines.hpp>
 
-#define print_notification std::cout << "\033[1;35mNOTIFICATION: \033[0m"
+#define print_notification(tag) std::cout << "\033[1;35m" << tag << "\033[0m"
 
 std::string SensorUtils::getSensorType(SensorType type) {
     switch (type) {
@@ -148,22 +149,46 @@ std::shared_ptr<SensorClient> SensorUtils::getSensor(
 void SensorUtils::printSensorEvent(
     SensorType type, SensorEvent &s, float samplingRate, std::string &tag) {
     if (isUncalibratedSensor(type)) {
-        print_notification << tag << samplingRate << " Hz, @ " << s.timestamp << ", "
-                           << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y << ", "
-                           << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x << ", "
-                           << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z << std::endl;
+        print_notification("Events")
+            << tag << samplingRate << "Hz, " << s.timestamp << "ns, " << s.uncalibrated.data.x
+            << ", " << s.uncalibrated.data.y << ", " << s.uncalibrated.data.z << ", "
+            << s.uncalibrated.bias.x << ", " << s.uncalibrated.bias.y << ", "
+            << s.uncalibrated.bias.z << std::endl;
     } else {
-        print_notification << tag << samplingRate << " Hz, @ " << s.timestamp << ", "
-                           << s.calibrated.x << ", " << s.calibrated.y << ", " << s.calibrated.z
-                           << ", " << std::endl;
+        print_notification("Events")
+            << tag << samplingRate << " Hz, " << s.timestamp << ", " << s.calibrated.x << ", "
+            << s.calibrated.y << ", " << s.calibrated.z << std::endl;
     }
 }
 
+void SensorUtils::printSensorFeatureBufferedEvent(SensorEvent &s) {
+    print_notification("Buffered Events: ")
+        << s.timestamp << "ns, " << s.uncalibrated.data.x
+        << ", " << s.uncalibrated.data.y << ", " << s.uncalibrated.data.z << ", "
+        << s.uncalibrated.bias.x << ", " << s.uncalibrated.bias.y << ", "
+        << s.uncalibrated.bias.z << std::endl;
+}
+
 void SensorUtils::printSensorFeatureInfo(SensorFeature feature) {
-    std::cout << "Feature name: " << feature.name << std::endl;
+    print_notification("SensorFeatureEvent: ") << "Feature name: " << feature.name << std::endl;
 }
 
 void SensorUtils::printSensorFeatureEvent(SensorFeatureEvent event) {
-    print_notification << "Sensor feature event " << event.id << " from feature " << event.name
-                       << " @ " << event.timestamp << std::endl;
+    print_notification("SensorFeatureEvent: ")
+        << event.id << " from feature " << event.name << " @ " << event.timestamp << std::endl;
+}
+
+void SensorUtils::printTcuActivityState(telux::power::TcuActivityState state) {
+
+    if(state == telux::power::TcuActivityState::SUSPEND) {
+        print_notification("TCU-activity State : SUSPEND") << std::endl;
+    } else if(state == telux::power::TcuActivityState::RESUME) {
+        print_notification("TCU-activity State : RESUME") << std::endl;
+    } else if(state == telux::power::TcuActivityState::SHUTDOWN) {
+        print_notification(" TCU-activity State : SHUTDOWN") << std::endl;
+    } else if(state == telux::power::TcuActivityState::UNKNOWN) {
+        print_notification(" TCU-activity State : UNKNOWN") << std::endl;
+    } else {
+        std::cout << " ERROR: Invalid TCU-activity state notified" << std::endl;
+    }
 }

@@ -49,6 +49,8 @@
 #endif
 #include "safetyapp_util.h"
 #include "bsm_utils.h"
+#include "../../../../common/utils/Utils.hpp"
+#include <telux/common/Version.hpp>
 
 using std::thread;
 using std::string;
@@ -58,25 +60,29 @@ using std::lock_guard;
 using std::mutex;
 
 // Global variables
-static ApplicationBase* application = nullptr;
-static vector<thread> threads;
-static bool csv = false;
-static string csvFileName;
-static sem_t cnt_sem;
-static auto rxsuccess = 0;
-static auto rxfail = 0;
-static bool stopThread = false;
-static bool dump_raw = false;
-static bool print_rv = true;
+ApplicationBase* application = nullptr;
+vector<thread> threads;
+bool csv = false;
+string csvFileName;
+sem_t cnt_sem;
+auto rxsuccess = 0;
+auto rxfail = 0;
+bool stopThread = false;
+bool dump_raw = false;
+bool print_rv = true;
+std::condition_variable cv;
+bool haltRx = false;
+std::mutex cv2xStatusMtx;
+bool simMode = false;
 
-static void joinThreads() {
+void joinThreads() {
     for (int i = 0; i < threads.size(); i++)
     {
         threads[i].join();
     }
 }
 
-static void signalHandler(int signum) {
+void signalHandler(int signum) {
     cout << "Interrupt signal (" << signum << ") received.\n";
     cout << "Exiting..." << endl;
     stopThread = true;
@@ -88,21 +94,13 @@ static void signalHandler(int signum) {
  *
  * @param[in] msgType type of the messsage we are processing.
  */
-static void receive(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
+void receive(MessageType msgType) {
     auto count = 0;
     FILE *fp;
     struct timeval currTime;
     gettimeofday(&currTime, NULL);
     time_t startTime = currTime.tv_sec;
 
-    if (csv == true) {
-        fp = fopen(csvFileName.c_str(), "w+");
-        if (!fp) {
-            cerr << "Failed to open file " << csvFileName << " for writing" << endl;
-            return;
-        }
-    }
     if (application->configuration.driverVerbosity > 4) {
         cout << "Thread id: " << std::this_thread::get_id()
                 << " Wating for message..." << endl;
@@ -114,6 +112,23 @@ static void receive(MessageType msgType) {
     int ret;
     while (!stopThread)
     {
+        if(!simMode){
+            //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+            sem_wait(&cnt_sem);
+            //Check CV2X RX status when only RX is enabled
+            if (!application->configuration.enableTxAlways) {
+                application->radioReceives[0].waitForCv2xToActivate(haltRx);
+                if (application->radioReceives[0].restartFlow) {
+                    application->closeAllRadio();
+                    application->setup();
+                }
+            }
+            else {// if TX is also enabled check the CV2X status in TX only
+                std::unique_lock<std::mutex> lk(cv2xStatusMtx);
+                cv.wait(lk, []{return (!haltRx);});
+            }
+            sem_post(&cnt_sem);
+        }
         // call application's receive() function to process the packet across
         // stack layers.
         ret = application->receive(0, ret);
@@ -137,7 +152,7 @@ static void receive(MessageType msgType) {
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
-    if(msgType == MessageType::BSM)
+    if(msgType == MessageType::BSM || msgType == MessageType::WSA)
         ((SaeApplication*)application)->printRxStats();
     printf("Total of RX packets is: %d\n", application->totalRxSuccess);
 
@@ -149,16 +164,17 @@ static void receive(MessageType msgType) {
  *
  * @param [in] msgType, so far only BSM is supported.
  */
-static void ldmRx(void) {
-    std::signal(SIGINT, signalHandler);
+void ldmRx(void) {
     if (nullptr == application) {
         cerr << "application nullptr" << endl;
         return;
     }
-    while (true)
+    while (!stopThread)
     {
-        if (application->receivedContents.size() == 0 || application->radioReceives.size() == 0) {
-            cerr << "receivedContents size 0, please check configuration and prameters" << endl;
+        if (application->receivedContents.size() == 0 ||
+                application->radioReceives.size() == 0) {
+            cerr <<
+       "receivedContents size 0, please check configuration and prameters" << endl;
             sleep(1);
             continue;
         }
@@ -167,7 +183,9 @@ static void ldmRx(void) {
             cerr << "mc or mc->abuf.data nullptr" << endl;
             continue;
         }
-        const auto recCount = application->radioReceives[0].receive(mc->abuf.data);
+        const auto recCount =
+                application->radioReceives[0].receive(mc->abuf.data,
+                                                        ABUF_LEN-ABUF_HEADROOM);
         abuf_put(&mc->abuf, recCount);
         if (application->ldm != nullptr) {
             const auto ldmIndex = application->ldm->getFreeBsm();
@@ -180,7 +198,7 @@ static void ldmRx(void) {
  * @param[in] interval_ns timer interval value in nano seconds
  * @return timer's file descriptor if success or -1 on failure.
  */
-static int start_tx_timer(long long interval_ns) {
+int start_tx_timer(long long interval_ns) {
     int timerfd;
     struct itimerspec its = {0};
 
@@ -208,8 +226,7 @@ static int start_tx_timer(long long interval_ns) {
  * CAM are supported. DENM is not supported
  * @returns none.
  */
-static void transmit(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
+void transmit(MessageType msgType) {
     int tx_timer_fd = -1;
     int timer_misses = 0;
     uint64_t exp;
@@ -233,49 +250,77 @@ static void transmit(MessageType msgType) {
     gettimeofday(&currTime, NULL);
     time_t startTime = currTime.tv_sec;
 
-
-    switch (msgType)
-    {
-    case MessageType::CAM:
-    case MessageType::BSM:
-    case MessageType::WSA:
-        printf("Sending BSM messages via radio\n");
-        while (!stopThread)
-        {
-            ret = application->send(0, TransmitType::SPS);
-            if(ret > 0){
-                txsuccess++;
-                if (application->configuration.driverVerbosity) {
-                    if (txsuccess % 50 == 0 && txsuccess > 0){
-                        gettimeofday(&currTime, NULL);
-                        cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                            " Encode/Tx Success #: " << txsuccess <<
-                            " Encode/Tx Fail #: " << txfail << std::endl;
-                    }
-                }
-            } else {
-                txfail++;
+    //Perform message protocol specific setup here
+    switch (msgType){
+        case MessageType::BSM:
+            printf("Sending BSM messages via radio\n");
+            break;
+        case MessageType::WSA:
+            printf("Sending WSA messages via radio\n");
+            //sending WSA, transmit only, we are simulating RSU, so set the IrevV6
+            if ((dynamic_cast<SaeApplication *>
+                    (application))->setGlobalIPv6Prefix() < 0) {
+                printf("Failed to set global IP info\n");
+                return;
             }
+            break;
+        case MessageType::CAM:
+            break;
+        case MessageType::DENM:
+            cerr << "DENM transmit is not supported" << endl;
+            break;
+        default:
+            break;
+    }
 
-            s = read(tx_timer_fd, &exp, sizeof(uint64_t));
-            if (s == sizeof(uint64_t) && exp > 1) {
-                timer_misses += (exp-1);
-                cout << "TX timer overruns: Total missed: " << timer_misses << endl;
+    // main transmitting code
+    while (!stopThread){
+        if(!simMode){
+            //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+            //Check CV2X TX Status when TX is enabled.
+            application->spsTransmits[0].waitForCv2xToActivate(haltRx);
+            if (application->spsTransmits[0].restartFlow) {
+                application->closeAllRadio();
+                application->setup();
+                close(tx_timer_fd);
+                tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+                {
+                    std::lock_guard<std::mutex> lk(cv2xStatusMtx);
+                    haltRx = false;
+                }
+                cv.notify_all();
             }
         }
-        printf("Sending thread stopped\n");
-        break;
-    case MessageType::DENM:
-        cerr << "DENM transmit is not supported" << endl;
-    default:
-        break;
+        ret = application->send(0, TransmitType::SPS);
+        if(ret > 0){
+            txsuccess++;
+            if (application->configuration.driverVerbosity) {
+                if (txsuccess % 50 == 0 && txsuccess > 0){
+                    gettimeofday(&currTime, NULL);
+                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
+                        " Encode/Tx Success #: " << txsuccess <<
+                        " Encode/Tx Fail #: " << txfail << std::endl;
+                }
+            }
+        } else {
+            txfail++;
+        }
+
+        s = read(tx_timer_fd, &exp, sizeof(uint64_t));
+        if (s == sizeof(uint64_t) && exp > 1) {
+            timer_misses += (exp-1);
+            cout << "TX timer overruns: Total missed: " << timer_misses << endl;
+        }
     }
+    printf("Sending thread stopped\n");
+    if(msgType == MessageType::WSA)
+        (dynamic_cast<SaeApplication *>(application))->clearGlobalIPv6Prefix();
 
     // dump out any logging information related to signing
     if(application->configuration.enableSignStatLog){
         application->writeSignLogging();
     }
-    if(msgType == MessageType::BSM)
+    if(msgType == MessageType::BSM || msgType == MessageType::WSA)
         ((SaeApplication*)application)->printTxStats();
     printf("Total of TX packets is: %d\n", application->totalTxSuccess);
 
@@ -293,7 +338,7 @@ static void transmit(MessageType msgType) {
  * @msgType type of the message, so far only BSM is supported for this test.
  * @returns none.
  */
-static void txRecorded(string file) {
+void txRecorded(string file) {
     srand(timestamp_now());
     ifstream configFile(file);
     string line;
@@ -302,7 +347,7 @@ static void txRecorded(string file) {
     if (configFile.is_open())
     {
         auto timer = timestamp_now();
-        while (go) {
+        while (go and !stopThread) {
             if(timer + application->configuration.transmitRate < timestamp_now()){
                 if (getline(configFile, line))
                 {
@@ -342,7 +387,7 @@ static void txRecorded(string file) {
  * @param [in] msgType , so far only BSM is supported in this mode
  * @returns none.
  */
-static void simTxRecorded(string file)
+void simTxRecorded(string file)
 {
     ifstream configFile(file);
     string line;
@@ -370,8 +415,7 @@ static void simTxRecorded(string file)
     }
 }
 
-static void tunnelModeTx(void) {
-    std::signal(SIGINT, signalHandler);
+void tunnelModeTx(void) {
     auto timer = timestamp_now();
     while (!stopThread)
     {
@@ -383,12 +427,14 @@ static void tunnelModeTx(void) {
     }
 }
 
-static void tunnelModeRx(void) {
+void tunnelModeRx(void) {
     while (!stopThread)
     {
         SaeApplication *SaeApp = dynamic_cast<SaeApplication *>(application);
         const auto mc = SaeApp->receivedContents[0];
-        const auto recCount = SaeApp->radioReceives[0].receive(mc->abuf.data);
+        const auto recCount =
+                SaeApp->radioReceives[0].receive(mc->abuf.data,
+                                                    ABUF_LEN-ABUF_HEADROOM);
         abuf_put(&mc->abuf, recCount);
         const auto ldmIndex = application->ldm->getFreeBsm();
         SaeApp->receiveTuncBsm(0, recCount, ldmIndex);
@@ -402,10 +448,9 @@ static void tunnelModeRx(void) {
 /**
  * run safety application.
  */
-static void runApps(void) {
+void runApps(void) {
     auto hostMsg = std::make_shared<msg_contents>();
     rv_specs* rvSpecs = new rv_specs;
-    std::signal(SIGINT, signalHandler);
     while (!stopThread) {
         for (auto rvMsg : application->ldm->bsmSnapshot()) {
             application->fillMsg(hostMsg);
@@ -418,66 +463,7 @@ static void runApps(void) {
     }
 }
 
-static void simReceive(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
-    auto recCount = 0;
-    auto empty = 0;
-    FILE *fp;
-    if (csv == true) {
-        fp = fopen(csvFileName.c_str(), "w+");
-        if (!fp) {
-            cerr << "Failed to open file " << csvFileName << " for writing" << endl;
-            return;
-        }
-    }
-    struct timeval currTime;
-    gettimeofday(&currTime, NULL);
-    time_t startTime = currTime.tv_sec;
-    if (application->configuration.driverVerbosity > 4) {
-        cout << "Thread (" << std::this_thread::get_id()
-                    << ")  is wating for a message..." << endl;
-    }
-    if (application->configuration.enableVerifStatLog) {
-        application->initVerifLogging();
-    }
-    int ret = 0;
-    while(!stopThread){
-        ret = application->receive(0, recCount);
-
-        sem_wait(&cnt_sem);
-        if(ret == 0){
-            rxsuccess++;
-            if (msgType == MessageType::BSM) {
-                if (application->configuration.driverVerbosity) {
-                    if (rxsuccess % 50 == 0 && rxsuccess > 0){
-                        gettimeofday(&currTime, NULL);
-                        cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                            " Decode/Rx Success #: " << rxsuccess <<
-                            " Decode/Rx Fail #: " << rxfail << std::endl;
-                    }
-                }
-            }
-        } else {
-            rxfail++;
-        }
-        sem_post(&cnt_sem);
-    }
-
-    // Print out performance information upon closure
-    if(application->configuration.enableVerifStatLog){
-        application->writeVerifLogging();
-    }
-    if(msgType == MessageType::BSM)
-        ((SaeApplication*)application)->printRxStats();
-
-    printf("Total of RX packets is: %d\n", application->totalRxSuccess);
-
-    if(application->ldm != nullptr)
-        application->ldm->stopGb();
-}
-
-static void simLdmRx(void) {
-    std::signal(SIGINT, signalHandler);
+void simLdmRx(void) {
     auto count = 0;
     auto empty=0;
     FILE *fp;
@@ -490,7 +476,8 @@ static void simLdmRx(void) {
     }
     while (!stopThread)
     {
-        auto recCount = application->simReceive->receive(application->rxSimMsg->abuf.data);
+        auto recCount = application->simReceive->receive(
+                     application->rxSimMsg->abuf.data, ABUF_LEN-ABUF_HEADROOM);
         abuf_put(&application->rxSimMsg->abuf, recCount);
         if (recCount == 0) {
             cout << "Received empty packet # " << empty << ".\n";
@@ -517,83 +504,11 @@ static void simLdmRx(void) {
             application->receive(0, recCount, ldmIndex);
             auto msg = &application->ldm->bsmContents[ldmIndex];
             if (csv) {
-                write_to_csv(msg, fp);
+                writeToCsv(msg, fp);
             }
             count += 1;
         }
     }
-}
-
-static void simTransmit(MessageType msgType) {
-    std::signal(SIGINT, signalHandler);
-    int txsuccess = 0;
-    int txfail = 0;
-    int ret = 0;
-
-    int tx_timer_fd = -1;
-    int timer_misses = 0;
-    uint64_t exp;
-    ssize_t s;
-    tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
-    if (tx_timer_fd == -1) {
-        cerr << "Failed to start Tx timer" << endl;
-        return;
-    }
-
-    // check if sign stat logging on
-    // check off for now
-    if(application->configuration.enableSignStatLog)
-        application->initSignLogging();
-    auto timer = timestamp_now();
-    struct timeval currTime;
-    gettimeofday(&currTime, NULL);
-    time_t startTime = currTime.tv_sec;
-    switch (msgType)
-    {
-    case MessageType::DENM:
-        cerr << "DENM transmit is not supported" << endl;
-        break;
-    case MessageType::CAM:
-    case MessageType::BSM:
-        while (!stopThread)
-        {
-            ret = application->send(0, TransmitType::SPS);
-            timer = timestamp_now();
-            if(ret > 0){
-                txsuccess++;
-                if (msgType == MessageType::BSM) {
-                    if (application->configuration.driverVerbosity) {
-                        if (txsuccess % 50 == 0 && txsuccess > 0){
-                            gettimeofday(&currTime, NULL);
-                            cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                                " Encode/Tx Success #: " << txsuccess <<
-                                " Encode/Tx Fail #: " << txfail << std::endl;
-                        }
-                    }
-                }
-            } else {
-                txfail++;
-            }
-            s = read(tx_timer_fd, &exp, sizeof(uint64_t));
-            if (s == sizeof(uint64_t) && exp > 1) {
-                timer_misses += (exp-1);
-                cout << "TX timer overruns: Total missed: " << timer_misses << endl;
-            }
-        }
-        break;
-    default:
-        break;
-    }
-    // dump out any logging information related to signing
-    if(application->configuration.enableSignStatLog){
-        application->writeSignLogging();
-    }
-    if(msgType == MessageType::BSM)
-        ((SaeApplication*)application)->printTxStats();
-    printf("Total of TX packets is: %d\n", application->totalTxSuccess);
-
-    if(application->ldm != nullptr)
-        application->ldm->stopGb();
 }
 
 void printUse() {
@@ -690,9 +605,11 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
         break;
     case 'b':
         bsm = true;
+        wsa = false;
         break;
     case 'w':
         wsa = true;
+        bsm = false;
         break;
 #ifdef ETSI
     case 'c':
@@ -706,6 +623,7 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
 #endif
     case 'i':
         txSim = true;
+        simMode = true;
         if(idx+2 > argc-1){
            printUse();
            fprintf(stderr, "\nInvalid usage of -i option\n");
@@ -730,6 +648,7 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
         break;
     case 'j':
         rxSim = true;
+        simMode = true;
         if(idx+2 > argc-1){
            printUse();
            fprintf(stderr, "\nInvalid usage of -j option\n");
@@ -754,8 +673,8 @@ void getModes(char mode, int& idx, int& argc, char** argv, bool& tx, bool& rx,
         break;
     case 'o':
         csv = true;
-        argc+=1;
-        csvFileName = string(argv[argc]);
+        idx++;
+        csvFileName = string(argv[idx]);
         break;
     case 'D':
         dump_raw = true;
@@ -776,27 +695,58 @@ int setup(const bool tx, const bool rx,
     const string  rxSimIp, const  uint16_t txSimPort,
     const uint16_t rxSimPort, char* configFile)
 {
+    std::signal(SIGHUP, signalHandler);
     std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
     if (help)
     {
         printUse();
         return 0;
     }
 
+    auto sdkVersion = telux::common::Version::getSdkVersion();
+    std::cout << "Telematics SDK v" << std::to_string(sdkVersion.major) << "."
+                          << std::to_string(sdkVersion.minor) << "."
+                          << std::to_string(sdkVersion.patch) << std::endl;
+
+    MessageType msgType;
     if (bsm || wsa) {
+        msgType = bsm? MessageType::BSM : MessageType::WSA;
+        printf("Will be creating application for: ");
+        if(msgType == MessageType::BSM)
+            printf("BSMs\n");
+        else
+            printf("WSAs\n");
+        // wsa not compatible with simulation mode
+        if((txSim || rxSim) && wsa){
+           fprintf(stderr, "WSA requires radio mode.\n");
+           return -1;
+        }
         if (txSim)
             application =
                 new SaeApplication(txSimIp, txSimPort, string(""), 0, configFile,
-                        bsm? MessageType::BSM : MessageType::WSA);
+                        msgType);
         else if (rxSim)
             application =
                 new SaeApplication(string(""), 0, rxSimIp, rxSimPort, configFile,
-                        bsm? MessageType::BSM : MessageType::WSA);
+                        msgType);
         else
-            application = new SaeApplication(configFile, bsm? MessageType::BSM : MessageType::WSA);
+            application = new SaeApplication(configFile, msgType);
 
     } else {
 #ifdef ETSI
+        msgType = MessageType::CAM;
+        printf("Will be creating application for: ");
+        if (cam) {
+            msgType = MessageType::CAM;
+            printf("CAMs\n");
+        } else if (denm) {
+            msgType = MessageType::DENM;
+            printf("DENM\n");
+        } else {
+            printf("Unknown\n");
+            return -1;
+        }
         if (txSim)
             application =
                 new EtsiApplication(txSimIp, txSimPort, string(""), 0, configFile);
@@ -807,6 +757,13 @@ int setup(const bool tx, const bool rx,
             application = new EtsiApplication(configFile);
 #endif
     }
+
+    if (not application
+        or not application->configuration.isValid) {
+        cout << "Invalid configuration" << endl;
+        return -1;
+    }
+
     // check if we want to have tx on at same time as rx (either ethernet or radio)
     if(application->configuration.enableTxAlways &&
         (rx || rxSim) && application->configuration.driverVerbosity){
@@ -817,8 +774,11 @@ int setup(const bool tx, const bool rx,
 
     if ((tx || application->configuration.enableTxAlways) && !txSim && !rxSim)
     {
-        if (application->configuration.driverVerbosity)
-            printf("Creating BSM transmit thread\n");
+        if (application->spsTransmits.empty()) {
+            cerr << "Tx flow not created, please check configuration" << endl;
+            return -1;
+        }
+
         if (tunnelTx) {
             if (cam || denm) {
                 cout << "Tunnel Mode only supports BSM" << endl;
@@ -826,27 +786,31 @@ int setup(const bool tx, const bool rx,
             }
             threads.push_back(thread(tunnelModeTx));
         } else {
-            if (bsm) {
-                threads.push_back(thread(transmit, MessageType::BSM));
-            } else if(cam) {
-                threads.push_back(thread(transmit, MessageType::CAM));
-            } else if (wsa) {
-                if (!rx) {
-                    //sending WSA, transmit only, we are simulating RSU, so set the IPV6
-                    (dynamic_cast<SaeApplication *>(application))->setGlobalIPv6Prefix();
-                }
-                threads.push_back(thread(transmit, MessageType::WSA));
-            } else {
-                threads.push_back(thread(transmit, MessageType::DENM));
-            }
+            threads.push_back(thread(transmit, msgType));
         }
     }
 
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after tx is: %d\n", threads.size());
+        printf("Number of threads after tx is: %d\n", (int)threads.size());
 
     if (rx && !rxSim)
     {
+        if (application->radioReceives.empty()) {
+            cerr << "Rx flow not created, please check configuration" << endl;
+            return -1;
+        }
+
+        if (csv) {
+            application->writeToCsvFile = true;
+            application->csvfp = fopen(csvFileName.c_str(), "w+");
+            if (!application->csvfp) {
+                cerr << "Failed to open file " << csvFileName << " for writing" << endl;
+                application->writeToCsvFile = false;
+            } else {
+                std::cout << "Writing BSM to csv: " << csvFileName << std::endl;
+            }
+        }
+
         if (ldm)
         {
             if (cam || denm) {
@@ -861,6 +825,7 @@ int setup(const bool tx, const bool rx,
             }
         }
         else {
+            sem_init(&cnt_sem, 0, 1);
             if (cam) {
                 threads.push_back(thread(receive, MessageType::CAM));
             }
@@ -870,21 +835,19 @@ int setup(const bool tx, const bool rx,
             }
             else {
                 // TODO: Implement for CAM, DENM as well
-                sem_init(&cnt_sem, 0, 1);
                 if (application->configuration.driverVerbosity) {
                     cout << "Number of Radio RX Threads: " <<
-                            (int)application->configuration.numRxThreads << endl;
+                            (int)application->configuration.numRxThreadsRadio << endl;
                 }
-                for (int i = 0; i < application->configuration.numRxThreads; i++) {
-                    threads.push_back(thread(receive, MessageType::BSM));
+                for (int i = 0; i < application->configuration.numRxThreadsRadio; i++) {
+                    threads.push_back(thread(receive, msgType));
                 }
             }
         }
-
     }
 
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after rx is: %d\n", threads.size());
+        printf("Number of threads after rx is: %d\n", (int)threads.size());
 
     if (txSim && rxSim) {
         cout <<
@@ -906,21 +869,12 @@ int setup(const bool tx, const bool rx,
             threads.push_back(thread(simTxRecorded, string(preRecordedFile)));
         }
         else {
-            if (cam) {
-                threads.push_back(thread(simTransmit, MessageType::CAM));
-            }
-            else if (denm)
-            {
-                threads.push_back(thread(simTransmit, MessageType::DENM));
-            }
-            else {
-                threads.push_back(thread(simTransmit, MessageType::BSM));
-            }
+            threads.push_back(thread(transmit, msgType));
         }
 
     }
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after simtransmit is: %d\n", threads.size());
+        printf("Number of threads after simtransmit is: %d\n", (int)threads.size());
 
     if (rxSim)
     {
@@ -934,30 +888,28 @@ int setup(const bool tx, const bool rx,
         else {
 
             if (cam) {
-                threads.push_back(thread(simReceive, MessageType::CAM));
+                threads.push_back(thread(receive, MessageType::CAM));
             }
             else if (denm)
             {
-                threads.push_back(thread(simReceive, MessageType::DENM));
+                threads.push_back(thread(receive, MessageType::DENM));
             }
             else {
                 sem_init(&cnt_sem, 0, 1);
-                // Multi-Threading Capability for RxSim Only So Far
-                int rxnumthreads = application->configuration.numRxThreads;
-
+                // Multi-Threading Capability for RxSim
                 if (application->configuration.driverVerbosity) {
-                    cout << "Number of Simulation RX Threads is: " <<
-                             rxnumthreads << endl;
+                    cout << "Number of Ethernet RX Threads: " <<
+                            (int)application->configuration.numRxThreadsEth << endl;
                 }
-                for(int i = 0; i < rxnumthreads; i++){
-                    threads.push_back(thread(simReceive, MessageType::BSM));
+                for(int i = 0; i < application->configuration.numRxThreadsEth; i++){
+                    threads.push_back(thread(receive, msgType));
                 }
-           }
+            }
         }
     }
 
     if(application->configuration.driverVerbosity > 4)
-        printf("Number of threads after simreceive is %d\n", threads.size());
+        printf("Number of threads after simreceive is %d\n", (int)threads.size());
 
     if (preRecorded && !txSim)
     {
@@ -980,6 +932,11 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
+    std::vector<std::string> groups{"system", "diag", "radio"};
+    if (-1 == Utils::setSupplementaryGroups(groups)){
+        cerr << "Adding supplementary group failed!" << std::endl;
+        return -1;
+    }
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
     bool tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded, txSim, rxSim;

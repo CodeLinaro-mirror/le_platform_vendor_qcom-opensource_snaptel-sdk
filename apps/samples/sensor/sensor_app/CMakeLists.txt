@@ -12,7 +12,7 @@ set(SOURCES
 
 add_executable (${TARGET_SENSOR_APP} ${SOURCES})
 target_compile_options(${TARGET_SENSOR_APP} PRIVATE -std=c++11 -Wall -Werror)
-target_link_libraries(${TARGET_SENSOR_APP} ${TELUXSENSOR_LIBRARIES})
+target_link_libraries(${TARGET_SENSOR_APP} ${TELUXSENSOR_LIBRARIES} pthread)
 
 # install to target
 install ( TARGETS ${TARGET_SENSOR_APP}

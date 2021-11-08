@@ -8,13 +8,15 @@ include(FindPkgConfig)
 
 set(TARGET_QITS qits)
 
-set(QITS_SOURCES ApplicationTest.cpp)
+set(QITS_SOURCES
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+    ApplicationTest.cpp)
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -pthread")
 
 add_executable (${TARGET_QITS} ${QITS_SOURCES})
-target_link_libraries(${TARGET_QITS} telux_cv2x qapplication qmessenger v2xcodec)
+target_link_libraries(${TARGET_QITS} telux_cv2x qapplication qmessenger v2xcodec telux_common)
 if(DEFINED ENV{AEROLINK_PATH} OR DEFINED WITH_AEROLINK)
     target_link_libraries(${TARGET_QITS} viicsec -Wl,--allow-shlib-undefined)
 endif()

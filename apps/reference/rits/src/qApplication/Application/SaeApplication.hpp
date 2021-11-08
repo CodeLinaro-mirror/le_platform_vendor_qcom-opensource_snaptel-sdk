@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -42,7 +42,8 @@ class SaeApplication : public ApplicationBase {
 public:
     SaeApplication(char *fileConfiguration, MessageType msgType);
     SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, MessageType msgType);
+        const string rxIpv4, const uint16_t rxPort,
+        char* fileConfiguration, MessageType msgType);
     ~SaeApplication();
 
     /**
@@ -82,8 +83,10 @@ public:
     void printTxStats();
 
     int setGlobalIPv6Prefix(void);
+    int clearGlobalIPv6Prefix(void);
 
 private:
+    uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
     bool GlobalIpSessionActive = false;
     std::chrono::milliseconds wraInterval;
     std::thread wraThread;
@@ -91,6 +94,9 @@ private:
     std::condition_variable wraCv;
     std::chrono::time_point<std::chrono::high_resolution_clock> now;
     void wraThreadFunc(int routerLifetime);
+    bool initialized = false;   // used to initialize temp id
+    unsigned int msgCount;      // Ranges from 1 - 127 in cyclic fashion.
+    unsigned int tempId;        // 32 bit identifier
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access
@@ -169,4 +175,6 @@ private:
     void initRecordedBsm(bsm_value_t* bsm);
 
     int parseIPv6Prefix(char *prefix, int& len);
+    std::mutex wramutex;
+    std::mutex csvMutex;
 };

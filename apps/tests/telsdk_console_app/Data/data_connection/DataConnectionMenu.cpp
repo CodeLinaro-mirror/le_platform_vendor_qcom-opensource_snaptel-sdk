@@ -143,6 +143,19 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
     auto conMgr = telux::data::DataFactory::getInstance().getDataConnectionManager(slotId, initCb);
 
     if (conMgr) {
+        //If this is newly created Manager
+        // Register before sub-system comes up to get all the notifications
+        if (dataConnectionManagerMap_.find(slotId) == dataConnectionManagerMap_.end()) {
+            dataConnectionManagerMap_.emplace(slotId, conMgr);
+            auto dataListener = std::make_shared<DataListener>(slotId);
+            if (dataListener == nullptr) {
+                std::cout <<
+                "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
+                exit(1);
+            }
+            dataListeners_.emplace(slotId, dataListener);
+            dataConnectionManagerMap_[slotId]->registerListener(dataListeners_[slotId]);
+        }
         // Initialize data connection manager
         std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
             slotId << ", Please wait ..." << endl;
@@ -159,26 +172,13 @@ bool DataConnectionMenu::initConnectionManagerAndListener(SlotId slotId){
             return false;
         }
 
-        //If this is newly created Manager
-        if (dataConnectionManagerMap_.find(slotId) == dataConnectionManagerMap_.end()) {
-            dataConnectionManagerMap_.emplace(slotId, conMgr);
-            auto dataListener = std::make_shared<DataListener>(slotId);
-            if (dataListener == nullptr) {
-                std::cout <<
-                "ERROR - Unable to allocate listeners .. terminate application" << std::endl;
-                exit(1);
-            }
-            dataListeners_.emplace(slotId, dataListener);
-            dataConnectionManagerMap_[slotId]->registerListener(dataListeners_[slotId]);
-
-            //Update dataListener_'s data call list
-            requestDataCallList(OperationType::DATA_LOCAL, slotId,
-                std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
-                std::placeholders::_1, std::placeholders::_2));
-            requestDataCallList(OperationType::DATA_REMOTE, slotId,
-                std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
-                std::placeholders::_1, std::placeholders::_2));
-        }
+        //Update dataListener_'s data call list
+        requestDataCallList(OperationType::DATA_LOCAL, slotId,
+            std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
+            std::placeholders::_1, std::placeholders::_2));
+        requestDataCallList(OperationType::DATA_REMOTE, slotId,
+            std::bind(&DataListener::initDataCallListResponseCb, dataListeners_[slotId],
+            std::placeholders::_1, std::placeholders::_2));
     }
     else {
         std::cout << "Data Connection Manager failed to initialize" << std::endl;

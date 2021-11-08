@@ -208,7 +208,9 @@ int Cv2xConfigApp::cv2xInit() {
         cv.wait(lck, [&] { return cv2xConfigStatusUpdated; });
     }
     if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xConfigStatus) {
+        cv2xConfigStatus ||
+        telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+        cv2xConfig_->getServiceStatus()) {
         cout << "Failed to initialize Cv2xConfig" << endl;
         return EXIT_FAILURE;
     }

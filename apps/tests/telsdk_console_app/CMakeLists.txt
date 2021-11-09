@@ -43,6 +43,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/firewall/FirewallMenu.cpp
    Data/vlan/VlanMenu.cpp
    Data/socks/SocksMenu.cpp
+   Data/data_settings/DataSettingsMenu.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp

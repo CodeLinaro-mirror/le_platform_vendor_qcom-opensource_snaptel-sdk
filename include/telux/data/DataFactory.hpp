@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       DataFactory.hpp
  *
@@ -56,6 +92,7 @@
 #include <telux/data/net/SocksManager.hpp>
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
+#include <telux/data/DataSettingsManager.hpp>
 
 namespace telux {
 namespace data {
@@ -232,6 +269,19 @@ class DataFactory {
     std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager(
         telux::common::InitResponseCb clientCallback = nullptr);
 
+    /**
+     * Get Data Settings Manager
+     *
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              Data Settings manager @ref telux::common::InitResponseCb
+     *
+     * @returns instance of IDataSettingsManager
+     *
+     */
+    std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
+        telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr);
+
  private:
     /**
      * Call client callbacks after manager initialisation
@@ -241,6 +291,10 @@ class DataFactory {
     void initCompleteNotifierWithSlotId(
         std::map<SlotId, std::vector<telux::common::InitResponseCb>>& initCbs,
         telux::common::ServiceStatus status, SlotId slotId);
+
+    void initCompleteNotifierWithOprType(
+        std::map<OperationType, std::vector<telux::common::InitResponseCb>> &initCbs,
+        telux::common::ServiceStatus status, OperationType oprType);
 
     // mutex to protect member variables
     std::mutex dataMutex_;
@@ -258,6 +312,8 @@ class DataFactory {
         socksManagerMap_;
     std::weak_ptr<telux::data::net::IBridgeManager> bridgeManager_;
     std::weak_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
+    std::map<telux::data::OperationType, std::weak_ptr<telux::data::IDataSettingsManager>>
+        dataSettingsManagerMap_;
 
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataProfileCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataConnectionCallbacks_;
@@ -267,6 +323,7 @@ class DataFactory {
     std::vector<telux::common::InitResponseCb> vlanCallbacks_;
     std::vector<telux::common::InitResponseCb> bridgeCallbacks_;
     std::vector<telux::common::InitResponseCb> l2tpCallbacks_;
+    std::map<OperationType, std::vector<telux::common::InitResponseCb>> dataSettingsCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> servingSystemCallbacks_;
     std::map<SlotId, std::vector<telux::common::InitResponseCb>> dataFilterCallbacks_;
     DataFactory();

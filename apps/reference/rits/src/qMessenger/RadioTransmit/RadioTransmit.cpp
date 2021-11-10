@@ -102,42 +102,49 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
 RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port) {
     cout << "Now simulating transmission of messages..."<< endl;
     isSim = true;
-    struct sockaddr_in addr;
     this->enableUdp = radioOpt.enableUdp;
     this->ipv4_src = radioOpt.ipv4_src;
+    this->clientAddress = {0};
+    this->destAddress = {0};
+
     if(!this->enableUdp) { // not udp
         this->simSock = socket(AF_INET, SOCK_STREAM, 0);
     } else { // udp
         this->simSock = socket(AF_INET, SOCK_DGRAM, 0);
     }
-    if (simSock < 0)
-    {
+    if (simSock < 0) {
         cout << "Error Creating Socket";
+        return;
     }
-    else {
-        if(!this->enableUdp){ // tcp
-            addr.sin_family = AF_INET;
-            addr.sin_port = htons(port);
-            if (inet_pton(AF_INET, ipv4_dst.data(), &addr.sin_addr) <= 0) {
-                cout << "Invalid ip address: " << ipv4_dst << endl;
-            }
-            const auto creation = connect(simSock, (struct sockaddr*) & addr, sizeof(addr));
+    if(!this->enableUdp){ // tcp
+        this->destAddress.sin_family = AF_INET;
+        this->destAddress.sin_port = htons(port);
+        if (inet_pton(AF_INET, ipv4_dst.data(), &this->destAddress.sin_addr) <= 0) {
+            cout << "Invalid ip address: " << ipv4_dst << endl;
+        } else {
+            const auto creation = connect(simSock, (struct sockaddr*)(&this->destAddress),
+                                          sizeof(this->destAddress));
             if (creation < 0)
             {
                 cout << "Connection failed with port: " << port << " ip: " << ipv4_dst << endl;
             }
-        }else{ //udp
-            this->destAddress.sin_family = AF_INET;
-            this->destAddress.sin_port = htons(port);
-            if (inet_pton(AF_INET, ipv4_dst.data(), &(this->destAddress.sin_addr)) <= 0) {
-                cout << "Invalid ip address: " << ipv4_dst << endl;
-            }
+        }
+        this->clientAddress.sin_family = AF_INET;
+        this->clientAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
+            cout << "Invalid ip address for client: " << ipv4_src << endl;
+        }
+    }else{ //udp
+        this->destAddress.sin_family = AF_INET;
+        this->destAddress.sin_port = htons(port);
+        if (inet_pton(AF_INET, ipv4_dst.data(), &(this->destAddress.sin_addr)) <= 0) {
+            cout << "Invalid ip address: " << ipv4_dst << endl;
+        }
 
-            this->clientAddress.sin_family = AF_INET;
-            this->clientAddress.sin_port = htons(port);
-            if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
-                cout << "Invalid ip address for client: " << ipv4_src << endl;
-            }
+        this->clientAddress.sin_family = AF_INET;
+        this->clientAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
+            cout << "Invalid ip address for client: " << ipv4_src << endl;
         }
     }
 }

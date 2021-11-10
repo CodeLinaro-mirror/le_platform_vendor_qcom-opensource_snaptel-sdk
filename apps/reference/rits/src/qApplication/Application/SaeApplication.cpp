@@ -464,6 +464,7 @@ void SaeApplication::fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra) {
 }
 #endif
 void SaeApplication::fillBsm(bsm_value_t *bsm) {
+    bool idChangeEnabled = false;
     memset(bsm, 0, sizeof(bsm_value_t));
     srand(timestamp_now());
     fillBsmCan(bsm);
@@ -484,8 +485,13 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     // check if msg count has been randomized and we haven't updated this yet
     // if so, keep adding and modding 127
     if(!this->configuration.lcmName.empty() &&
-        this->configuration.idChangeInterval)
+        this->configuration.idChangeInterval) {
+        idChangeEnabled = true;
+    }
+
+    if (idChangeEnabled) {
         sem_wait(&idChangeData.idSem);
+    }
         // for synchronization between Application and Aerolink sides
     if(!initialized){
         //printf("Initializing bsm count and temp id\n");
@@ -509,9 +515,9 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     else{
         bsm->MsgCount = (msgCount + 1) % 127;
     }
-    if(!this->configuration.lcmName.empty() &&
-        this->configuration.idChangeInterval)
+    if (idChangeEnabled) {
         sem_post(&idChangeData.idSem);
+    }
 
     msgCount = bsm->MsgCount;
     tempId = bsm->id;
@@ -693,8 +699,10 @@ int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
     if (encLength){
         // insert family ID of 0x01
         char *p = abuf_push(&mc_->abuf, 1);
-        *p = 0x01;
-        ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
+        if (p != NULL) {
+            *p = 0x01;
+            ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
+        }
     }
     if(ret > 0)
         txSuccess++;

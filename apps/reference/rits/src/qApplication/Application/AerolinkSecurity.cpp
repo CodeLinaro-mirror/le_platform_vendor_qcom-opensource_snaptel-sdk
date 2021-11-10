@@ -341,7 +341,7 @@ int AerolinkSecurity::init(void) {
 
 
     uint8_t const *import_key = (uint8_t*)"";
-    SymmetricKeyType symmetricKeyType;
+    SymmetricKeyType symmetricKeyType = SKT_DEK;
     /* Encryption key setup */
     // need to check if encryption is on as well
     // provide option to do either generate symmetric,

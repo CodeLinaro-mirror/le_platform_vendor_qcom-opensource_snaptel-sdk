@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -83,7 +83,14 @@ namespace gn {
             //Remove oldest one from the front.
             DPL_.pop_front();
         }
-        std::shared_ptr<dpl_element_t> ep = std::make_shared<dpl_element_t>();
+        std::shared_ptr<dpl_element_t> ep = NULL;
+        try {
+            ep = std::make_shared<dpl_element_t>();
+        } catch (std::bad_alloc & e) {
+            cout << "LocTableEntry bad alloc" << endl;
+            return false;
+        }
+
         ep->sn = sn;
         ep->counter = 0;
         DPL_.push_back(ep);
@@ -163,7 +170,7 @@ namespace gn {
      * @param [in] de_pv destination position vector.
      */
     const std::shared_ptr<LocTableEntry> LocationTable::Update(gn_spv_t &de_pv) {
-        auto entry = Find(de_pv.gn_addr);
+        std::shared_ptr<LocTableEntry> entry = Find(de_pv.gn_addr);
         std::lock_guard<std::mutex> lock(TableMutex_);
 
         if (entry == nullptr) {

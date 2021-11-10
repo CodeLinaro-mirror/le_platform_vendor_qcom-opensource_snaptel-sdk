@@ -95,8 +95,8 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> now;
     void wraThreadFunc(int routerLifetime);
     bool initialized = false;   // used to initialize temp id
-    unsigned int msgCount;      // Ranges from 1 - 127 in cyclic fashion.
-    unsigned int tempId;        // 32 bit identifier
+    unsigned int msgCount = 0;      // Ranges from 1 - 127 in cyclic fashion.
+    unsigned int tempId = 0;        // 32 bit identifier
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access

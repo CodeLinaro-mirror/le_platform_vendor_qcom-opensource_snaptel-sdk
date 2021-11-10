@@ -210,8 +210,7 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
 }
 
 void RadioInterface::waitForCv2xToActivate(bool &haltRx) {
-        auto sp = std::dynamic_pointer_cast<Cv2xStatusListener>(cv2xStatusListener_);
-        restartFlow = sp->waitForCv2xStatus(Cv2xStatusType::ACTIVE, haltRx);
+        restartFlow = cv2xStatusListener_->waitForCv2xStatus(Cv2xStatusType::ACTIVE, haltRx);
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {

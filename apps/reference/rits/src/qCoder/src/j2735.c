@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -833,10 +833,13 @@ static int decode_as_bsm(msg_contents *mc)
     if(!mc)
         goto bsm_decode_err;
 
-    bsm_value_t* BSM_p;
-    if(!mc->j2735_msg)
+    if(!mc->j2735_msg) {
         mc->j2735_msg  = calloc(sizeof(bsm_value_t), 1);
-    BSM_p = mc->j2735_msg;
+        if(!mc->j2735_msg)
+            goto bsm_decode_err;
+    }
+
+    bsm_value_t* BSM_p = mc->j2735_msg;
 
     p32 = (uint32_t *)mc->abuf.data;
     len_remaining = mc->l3_payload_len;

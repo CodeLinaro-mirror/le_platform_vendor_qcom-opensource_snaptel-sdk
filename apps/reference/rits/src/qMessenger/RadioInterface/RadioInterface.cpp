@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -177,11 +177,8 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
 }
 
 bool RadioInterface::waitForCv2xToActivate() {
-        auto sp = std::dynamic_pointer_cast<Cv2xStatusListener>(cv2xStatusListener_);
-        restartFlow = sp->waitForCv2xStatus(Cv2xStatusType::ACTIVE);
-
-        //returning true as cv2x is active now
-        return true;
+    restartFlow = cv2xStatusListener_->waitForCv2xStatus(Cv2xStatusType::ACTIVE);
+    return true;
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {

@@ -28,6 +28,8 @@
  */
 
 #include <iostream>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "DataListener.hpp"
 #include "DataUtils.hpp"
@@ -133,10 +135,22 @@ void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCa
    }
    std::list<telux::data::IpAddrInfo> ipAddrList = dataCall->getIpAddressInfo();
    for(auto &it : ipAddrList) {
+      struct in_addr ifMaskAddr, gwMaskAddr;
+
       std::cout << "\n ifAddress: " << it.ifAddress << "\n gwAddress: " << it.gwAddress
                 << "\n primaryDnsAddress: " << it.primaryDnsAddress
-                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress << '\n';
+                << "\n secondaryDnsAddress: " << it.secondaryDnsAddress ;
+      if (it.ifMask) {
+        ifMaskAddr.s_addr= it.ifMask;
+        std::cout << "\n ifMask: " << inet_ntoa(ifMaskAddr);
    }
+      if (it.gwMask) {
+        gwMaskAddr.s_addr= it.gwMask;
+        std::cout << "\n gwMask: " << inet_ntoa(gwMaskAddr);
+      }
+      std::cout << '\n';
+   }
+
    std::cout << " IpFamilyType: " << DataUtils::ipFamilyTypeToString(dataCall->getIpFamilyType()) << '\n';
    std::cout << " TechPreference: " << DataUtils::techPreferenceToString(dataCall->getTechPreference())
              << '\n';

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -646,7 +646,11 @@ static int  wsmp_decode_header(msg_contents *mc)
 
     // after the extension fields comes the payload.   For WSMP, it'll be a
     // element ID, length, followed by payload
-
+    if (!bp || !bp->data) {
+        fprintf(stderr, "WEID NULL\n");
+        retcode = -1;
+        goto exit;
+    }
     next_weid = *(uint8_t *)bp->data;
 
     // If earlier/obsolete version, optional WEID's come now.
@@ -696,6 +700,11 @@ static int  wsmp_decode_header(msg_contents *mc)
                 printf("Getting TPID Octet\n");
         //wsmpp->tpid.octet = *(uint8_t *)abuf_pull(bp, sizeof(uint8_t));
         uint8_t* ptr = abuf_pull(bp, 1);
+        if (ptr == NULL) {
+            fprintf(stderr, "** WSMP TPID Parse error\n");
+            retcode = -1;
+            goto exit;
+        }
         wsmpp->tpid.octet = *ptr;
         /* now according to IEEE1609 2016, there could be an optional
            WEID Extension field (variable length) , before the WSMp payload length/data
@@ -731,8 +740,16 @@ static int  wsmp_decode_header(msg_contents *mc)
         if (PortsPresent) {
             if(gVerbosity > 2)
                 printf("Ports are present\n");
-            wsmpp->ports.src_port = ntohs(*(uint16_t *)abuf_pull(bp, sizeof(uint16_t)));
-            wsmpp->ports.dst_port = ntohs(*(uint16_t *)abuf_pull(bp, sizeof(uint16_t)));
+
+            uint16_t* srcPort = (uint16_t *)abuf_pull(bp, sizeof(uint16_t));
+            uint16_t* dstPort = (uint16_t *)abuf_pull(bp, sizeof(uint16_t));
+            if (!srcPort || !dstPort) {
+                fprintf(stderr, "** Src/Dst Port Parse error\n");
+                retcode = -1;
+                goto exit;
+            }
+            wsmpp->ports.src_port = ntohs(*srcPort);
+            wsmpp->ports.dst_port = ntohs(*dstPort);
 
             if (gVerbosity > 2) {
                 printf("TPID source port=%d, dest port=%d\n", wsmpp->ports.src_port,

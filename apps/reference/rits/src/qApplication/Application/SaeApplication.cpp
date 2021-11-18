@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -665,8 +665,10 @@ int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
     if (encLength){
         // insert family ID of 0x01
         char *p = abuf_push(&mc_->abuf, 1);
-        *p = 0x01;
-        ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
+        if (p != NULL) {
+            *p = 0x01;
+            ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
+        }
     }
     if(ret > 0)
         txSuccess++;

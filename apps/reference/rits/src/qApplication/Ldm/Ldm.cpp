@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -56,7 +56,7 @@ Ldm::Ldm(const uint16_t size) {
 
     for (uint16_t i = 0; i < size; i++)
     {
-        msg_contents msg;
+        msg_contents msg = {0};
         this->bsmContents.push_back(msg);
         this->bsmFreeContents.push_back(i);
     }
@@ -98,7 +98,7 @@ uint32_t Ldm::getFreeBsm() {
         return index;
     }
     else {
-        msg_contents msg;
+        msg_contents msg = {0};
         this->bsmContents.push_back(msg);
         return this->bsmContents.size() - 1;
     }

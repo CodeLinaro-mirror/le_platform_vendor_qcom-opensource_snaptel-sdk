@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -70,6 +70,10 @@ int btp_decode(msg_contents *mc ) {
     }
     if (!mc->btp) {
         mc->btp = calloc(sizeof(btp_data_t), 1);
+        if (!mc->btp) {
+            fprintf(stderr, "%s: calloc error\n", __func__);
+            return -1;
+        }
     }
     btp = (btp_data_t *)mc->btp;
     //mc->btp->pkt_type should've been filled by lower layer stack,e.g

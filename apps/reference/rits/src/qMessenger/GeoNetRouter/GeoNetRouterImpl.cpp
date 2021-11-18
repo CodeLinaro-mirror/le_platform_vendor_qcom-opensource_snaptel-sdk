@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -164,7 +164,7 @@ namespace gn {
     }
 
     uint8_t GeoNetRouterImpl::EncodeLifeTime(uint32_t lt_in_ms) {
-        uint8_t lt;
+        uint8_t lt = 0;
 
         if (lt_in_ms < 1000) {
             lt = ((lt_in_ms / 50) & 0xFF) << 2;
@@ -264,7 +264,7 @@ namespace gn {
             txcb_t txcb, const uint8_t *addr) {
 
         // Duplicate the buffer
-        uint8_t *Buf = new uint8_t(BufLen);
+        uint8_t *Buf = new uint8_t[BufLen];
         if (!Buf) {
             std::cerr << "Enqueue: No mem!" << std::endl;
             return;
@@ -828,6 +828,7 @@ namespace gn {
                 }
             }
         }
+        return 1;
     }
 
     int GeoNetRouterImpl::ReceiveGBCGAC(uint8_t *Buffer, size_t BufLen, GnData_t &data) {
@@ -1197,6 +1198,7 @@ namespace gn {
         h->reserved = 0;
         InitSourceLPV(&h->so_pv);
         std::memcpy(&h->req_addr, Addr, sizeof(gn_addr_t));
+        return 1;
     }
 
     /****************************************************************************

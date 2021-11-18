@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -66,6 +66,10 @@ int ieee1609_2_decode_unsecured(msg_contents *mc)
     int bits_left = 8;
     if (!mc->ieee1609_2data) {
         mc->ieee1609_2data = calloc(sizeof(ieee1609_2_data), 1);
+        if (!mc->ieee1609_2data) {
+            printf("ieee1609_2_decode_unsecured calloc error!\n");
+            return -1;
+        }
     }
 
     ieee1609_2_data *ie = mc->ieee1609_2data;

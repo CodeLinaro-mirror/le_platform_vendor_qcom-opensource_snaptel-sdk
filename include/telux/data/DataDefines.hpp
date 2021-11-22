@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       DataDefines.hpp
  * @brief      DataDefines contains enumerations and variables used for data services
@@ -126,6 +162,30 @@ struct PortInfo {
 };
 
 /**
+ * Specifies APN types that can be set while creating or modifying a profile
+ */
+enum ApnMaskType {
+    APN_MASK_TYPE_DEFAULT     = (1 << 0),   /**< APN type for default/internet traffic  */
+    APN_MASK_TYPE_IMS         = (1 << 1),   /**< APN type for the IP multimedia subsystem  */
+    APN_MASK_TYPE_MMS         = (1 << 2),   /**< APN type for the multimedia messaging service  */
+    APN_MASK_TYPE_DUN         = (1 << 3),   /**< APN type for the dial up network  */
+    APN_MASK_TYPE_SUPL        = (1 << 4),   /**< APN type for secure user plane location  */
+    APN_MASK_TYPE_HIPRI       = (1 << 5),   /**< APN type for high priority mobile data  */
+    APN_MASK_TYPE_FOTA        = (1 << 6),   /**< APN type for over the air administration  */
+    APN_MASK_TYPE_CBS         = (1 << 7),   /**< APN type for carrier branded services  */
+    APN_MASK_TYPE_IA          = (1 << 8),   /**< APN type for initial attach  */
+    APN_MASK_TYPE_EMERGENCY   = (1 << 9),   /**< APN type for emergency  */
+    APN_MASK_TYPE_UT          = (1 << 10),  /**< APN type for UT  */
+    APN_MASK_TYPE_MCX         = (1 << 11),  /**< APN type for mission critical service  */
+};
+
+/**
+ * 16 bit mask to set apn types paramater.
+ * ApnMaskType enum are used to set apn types.
+ */
+using ApnTypes = std::bitset<16>;
+
+/**
  * Profile Parameters used for profile creation, query and modify
  */
 struct ProfileParams {
@@ -140,6 +200,7 @@ struct ProfileParams {
     IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN;       /**< Preferred IP family for the call,
                                                                   default is
                                                                   IpFamilyType::UNKNOWN */
+    ApnTypes apnTypes;                                       /**< APN Types ref @ApnMaskType */
 };
 
 /**

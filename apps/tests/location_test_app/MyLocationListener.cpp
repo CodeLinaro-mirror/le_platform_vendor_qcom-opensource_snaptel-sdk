@@ -1516,3 +1516,10 @@ void MyLocationListener::setMeasurementsInfoFlag(bool enable) {
 void MyLocationListener::setLocSystemInfoFlag(bool enable) {
    isLocSysInfoFlagEnabled_ = enable;
 }
+
+void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus xtraStatus) {
+    PRINT_NOTIFICATION << "\n********** Xtra Status Info **********" << std::endl;
+    std::cout << "Xtra Feature Enabled: " << xtraStatus.featureEnabled << "\n";
+    std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
+    LocationUtils::displayXtraStatus(xtraStatus);
+}

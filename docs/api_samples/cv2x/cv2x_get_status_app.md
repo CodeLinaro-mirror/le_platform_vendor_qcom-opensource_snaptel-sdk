@@ -6,6 +6,7 @@ C-V2X Get Status Sample App {#cv2x_get_status_app}
 This Document walks through the cv2x_get_status_app. It demonstrates how to use the C-V2X Radio Manager API to get the C-V2X status.
 
 ### 1. Create a RequestCv2xStatusCallback function ###
+
    ~~~~~~{.cpp}
    // Globals
    static Cv2xStatus gCv2xStatus;
@@ -28,6 +29,7 @@ This Document walks through the cv2x_get_status_app. It demonstrates how to use 
 Note: as an alternative, we can use a Lambda function which would eliminate the need for this global scope function.
 
 ### 2. Get a handle to the ICv2xRadioManager object ###
+
    ~~~~~~{.cpp}
    int main {
        // Get handle to Cv2xRadioManager
@@ -36,6 +38,7 @@ Note: as an alternative, we can use a Lambda function which would eliminate the 
    ~~~~~~
 
 ### 3. Request the C-V2X status ###
+
    ~~~~~~{.cpp}
        if (Status::SUCCESS != cv2xRadioManager->requestCv2xStatus(cv2xStatusCallback)) {
            cout << "Error : request for C-V2X status failed." << endl;

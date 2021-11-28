@@ -6,6 +6,7 @@ Enable/Disable Firewall {#enable_disable_firewall}
 Please follow below steps to Enable/Disable Firewall
 
 ### 1. Implement initialization callback and get the DataFactory instances ###
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 

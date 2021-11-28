@@ -1,34 +1,47 @@
-How to Get and Set Auto Config Selection Mode {#get_and_set_auto_selection_mode}
+Get/Set Auto Selection Mode {#get_and_set_auto_selection_mode}
 ================================================================================
 
-# How to Get and Set Auto Config Selection Mode.
+## How to Get and Set Auto Config Selection Mode.
 
 Please follow below steps to Get and Set Auto Config Selection Mode.
 
-### 1. Get the ConfigFactory and ModemConfigManager instances
+### 1. Get the ConfigFactory instance
 
    ~~~~~~{.cpp}
     auto &configFactory = telux::config::ConfigFactory::getInstance();
-    auto modemConfigManager = configFactory.getModemConfigManager();
    ~~~~~~
 
-### 2. Wait for the Modem Config sub system initialization
+### 2. Get ModemConfigManager instance and Wait for sub system initialization.
+
    ~~~~~~{.cpp}
-    bool subSystemStatus = modemConfigManager->isSubsystemReady();
-    if (!subSystemStatus) {
-        std::cout << "Modem Config subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = modemConfigManager_->onSubsystemReady();
-        // Wait unconditionally for modem config subsystem to be ready
-        subSystemStatus = f.get();
+    std::promise<telux::common::ServiceStatus> prom{};
+    modemConfigManager_ = configFactory.getModemConfigManager(
+        [&prom](telux::common::ServiceStatus status) {
+            prom.set_value(status);
+    });
+
+    if (!modemConfigManager_) {
+        std::cout << "Failed to get modem config Manager" << std::endl;
+        return;
     }
+
+    //  Check if modem config subsystem is ready
+    //  If  modem config subsystem is not ready, wait for it to be ready
+    telux::common::ServiceStatus managerStatus = modemConfigManager_->getServiceStatus();
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nModem config subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
+    }
+
     // Exit the application, if SDK is unable to initialize modem config subsystems
-    if (!subSystemStatus) {
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-        return EXIT_FAILURE;
+        return;
     }
    ~~~~~~
 
 ### 3. Set Auto Config Selection Mode
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     telux::config::AutoSelectionMode mode = telux::config::AutoSelectionMod::ENABLED;
@@ -53,6 +66,7 @@ Please follow below steps to Get and Set Auto Config Selection Mode.
    ~~~~~~
 
 ### 4. Get Auto Config Selection Mode
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     telux::config::AutoSelectionMode selMode;

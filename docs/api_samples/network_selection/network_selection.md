@@ -14,11 +14,13 @@ Please follow below steps to request network selection mode
    ~~~~~~
 
 ### 2. Wait for the network selection subsystem initialization ###
+
    ~~~~~~{.cpp}
    bool subSystemStatus = networkMgr->isSubsystemReady();
    ~~~~~~
 
 ### 2.1 If network selection subsystem is not ready, wait for it to be ready ###
+
    ~~~~~~{.cpp}
    if(!subSystemStatus) {
       std::cout << "network selection subsystem is not ready" << std::endl;
@@ -30,6 +32,7 @@ Please follow below steps to request network selection mode
    ~~~~~~
 
 ### 3. Exit the application, if SDK is unable to initialize network selection subsystem ###
+
    ~~~~~~{.cpp}
    if(subSystemsStatus) {
       std::cout << " *** Network selection subsystem ready *** " << std::endl;

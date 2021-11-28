@@ -6,6 +6,7 @@ Get data profile {#request_profile_list}
 Please follow below steps to request list of available modem profiles
 
 ### 1. Implement initialization callback and get the DataFactory instance
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
@@ -19,11 +20,17 @@ Data factory will call callback when manager initialization is complete.
    ~~~~~~
 
 ### 2. Get DataProfileManager instances ###
+
+   ~~~~~~{.cpp}
    std::unique_lock<std::mutex> lck(mtx);
    auto dataProfileMgr = dataFactory.getDataProfileManager(slotId, initCb);
+   ~~~~~~
 
 ### 3. Wait for DataProfileManager initialization to be complete
+
+   ~~~~~~{.cpp}
    initCv.wait(lck);
+   ~~~~~~
 
 ### 3.1 Check DataProfileManager initialization state
 

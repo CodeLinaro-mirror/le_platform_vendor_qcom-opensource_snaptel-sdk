@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
  /**
   * @file: RadioReceive.cpp
@@ -118,65 +154,62 @@ RadioReceive::RadioReceive(const TrafficCategory category,
  */
 RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
                              const uint16_t port) {
-    struct sockaddr_in address;
     isSim = true;
     this->enableUdp = radioOpt.enableUdp;
     this->ipv4_src = radioOpt.ipv4_src;
+    this->srcAddress = {0};
+    this->serverAddress = {0};
+    this->simRxSock = -1;
     // Creating socket file descriptor
 
     if (!this->enableUdp) {
         this->simListenSock = socket(AF_INET, SOCK_STREAM, 0);
     } else {
         this->simListenSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        address = this->srcAddress;
     }
 
-    if (this->simListenSock <= 0)
+    if (this->simListenSock < 0)
     {
         cout << "Error Creating Socket";
+        return;
     }
 
     if(!this->enableUdp){
-        address.sin_family = AF_INET;
-        // convert values between host and network byte order
-        address.sin_port = htons(port);
-        if (ipv4_src.compare("*") == 0)
-        {
-            address.sin_addr.s_addr = INADDR_ANY;
-        }
-        else {
-            if (inet_pton(AF_INET, ipv4_dst.data(), &address.sin_addr) <= 0) {
-                cerr << "TCP; simulation:: Invalid ip address: " << ipv4_dst << endl;
-            }
-            else {
-                if (bind(simListenSock, (struct sockaddr*) & address,
-                    sizeof(address)) < 0)
-                {
-                    cerr << "Socket " << simListenSock <<
-                            " with IP: " << ipv4_dst << " and port: " << endl;
-                    cerr << port << " failed binding" << endl;
-                }
-                else {
-                    if (listen(simListenSock, 1) < 0) {
-                        cerr << "Socket fails to listen\n";
-                    }
-                    else {
-                        const auto len = sizeof(address);
-                         simRxSock = accept(simListenSock, (struct sockaddr*) & address,
-                                    (socklen_t*)& len);
-                        cout << "Connection Received";
-                    }
-                }
-            }
+        this->srcAddress.sin_family = AF_INET;
+        this->srcAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, ipv4_dst.data(), &(this->srcAddress.sin_addr)) <= 0) {
+            cerr << "TCP: Invalid ip address of other device " << ipv4_dst << endl;
+            cerr << "TCP: Will attempt accepting from any ip address now " << endl;
+            this->srcAddress.sin_addr.s_addr = htonl(INADDR_ANY);
         }
 
+        this->serverAddress.sin_family = AF_INET;
+        this->serverAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, ipv4_src.data(), &(this->serverAddress.sin_addr)) <= 0) {
+            cerr << "Invalid ip address for this device: " << ipv4_src << endl;
+        } else {
+            if (bind(simListenSock, (struct sockaddr*) &(this->serverAddress),
+                     sizeof(this->serverAddress)) < 0) {
+                cerr << "Socket " << simListenSock <<
+                        " with IP: " << ipv4_dst << " and port: " << endl;
+                cerr << port << " failed binding" << endl;
+            } else {
+                if (listen(simListenSock, 1) < 0) {
+                    cerr << "Socket fails to listen\n";
+                } else {
+                    const auto len = sizeof(this->srcAddress);
+                    simRxSock = accept(simListenSock, (struct sockaddr*)&(this->srcAddress),
+                                    (socklen_t*)&len);
+                    cout << "Connection Received";
+                }
+            }
+        }
     }else{
         /* UDP Communication */
         // setting up network parameters for sender and receiving devices
         this->srcAddress.sin_family = AF_INET;
         this->srcAddress.sin_port = htons(port);
-        if(inet_pton(AF_INET, ipv4_dst.data(),
-                              &(this->srcAddress.sin_addr)) <= 0){
+        if(inet_pton(AF_INET, ipv4_dst.data(), &(this->srcAddress.sin_addr)) <= 0){
             cerr << "UDP: Invalid ip address of other device " << ipv4_dst << endl;
             cerr << "UDP: Will attempt accepting from any ip address now " << endl;
             this->srcAddress.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -184,18 +217,17 @@ RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
 
         this->serverAddress.sin_family = AF_INET;
         this->serverAddress.sin_port = htons(port);
-        if(inet_pton(AF_INET, ipv4_src.data(),
-                             &(this->serverAddress.sin_addr)) <= 0){
+        if(inet_pton(AF_INET, ipv4_src.data(), &(this->serverAddress.sin_addr)) <= 0){
             cerr << "Invalid ip address for this device: " << ipv4_src << endl;
-        }
-        // bind to socket
-        if (bind(this->simListenSock,
-               (struct sockaddr *) &this->serverAddress,
-               sizeof(this->serverAddress)) < 0){
-            cerr << "ERROR on UDP binding" << endl;
-            exit(0);
-        }else{
-            cout << "UDP bind successful" << endl;
+        } else {
+            // bind to socket
+            if (bind(this->simListenSock, (struct sockaddr *) &this->serverAddress,
+                     sizeof(this->serverAddress)) < 0){
+                cerr << "ERROR on UDP binding" << endl;
+                exit(0);
+            } else {
+                cout << "UDP bind successful" << endl;
+            }
         }
     }
 }

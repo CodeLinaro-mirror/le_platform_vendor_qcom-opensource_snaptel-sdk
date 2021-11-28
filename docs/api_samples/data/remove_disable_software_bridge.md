@@ -6,6 +6,7 @@ Remove a software bridge and Disable software bridge management {#remove_disable
 Please follow below steps to remove a software bridge and and disable software bridge management
 
 ### 1. Implement initialization callback Get the DataFactory instances ###
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
@@ -19,11 +20,17 @@ Data factory will call callback when manager initialization is complete.
    ~~~~~~
 
 ### 2. Get the BridgeManager instances
+
+    ~~~~~~{.cpp}
     std::unique_lock<std::mutex> lck(mtx);
     auto dataBridgeMgr  = dataFactory.getBridgeManager(initCb);
+    ~~~~~~
 
 ### 3. Wait for BridgeManager initialization to be complete
+
+   ~~~~~~{.cpp}
    initCv.wait(lck);
+   ~~~~~~
 
 ### 3.1 Check BridgeManager initialization state ###
 

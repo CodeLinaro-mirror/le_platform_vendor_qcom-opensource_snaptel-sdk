@@ -1,14 +1,14 @@
-Audio tone generation {#audio_manager_tonegenerator}
+Tone generation {#audio_manager_tonegenerator}
 ====================================================
 
-# Audio Manager API Sample Reference for audio tone generation
+## Audio Manager API Sample Reference for audio tone generation
 
-Please follow the below steps to play a tone in an active tone generator stream.
+This section demonstrates how to use audio APIs to play tone using a tone generator stream.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

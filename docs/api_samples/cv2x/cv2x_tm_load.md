@@ -4,6 +4,7 @@ Setting verification load using C-V2X Throttle Manager API {#cv2x_tm_load}
 Please follow bellow steps to set the verificaton load
 
 ### 1. Create verification load callback function ###
+
    ~~~~~~{.cpp}
    static std::promise<telux::common::ErrorCode> gCallbackPromise;
 
@@ -14,6 +15,7 @@ Please follow bellow steps to set the verificaton load
    }
    ~~~~~~
 ### 2. Create a initialization status callback function
+
    ~~~~~~{.cpp}
     bool cv2xTmStatusUpdated = false;
     telux::common::ServiceStatus cv2xTmStatus =
@@ -30,6 +32,7 @@ Please follow bellow steps to set the verificaton load
     ~~~~~~
 
 ### 3. Get a handle to the ICv2xThrottleManager object ###
+
    ~~~~~~{.cpp}
        // Get handle to Cv2xThrottleManager
        auto & cv2xFactory = Cv2xFactory::getInstance();
@@ -37,6 +40,7 @@ Please follow bellow steps to set the verificaton load
    ~~~~~~
 
 ### 4. Wait for throttle manager to complete initialization ###
+
    ~~~~~~{.cpp}
     std::unique_lock<std::mutex> lck(mtx);
     cv.wait(lck, [&] { return cv2xTmStatusUpdated; });
@@ -48,6 +52,7 @@ Please follow bellow steps to set the verificaton load
    ~~~~~~
 
 ### 5. Set the verification load ###
+
    ~~~~~~{.cpp}
         cv2xThrottleManager->setVerificationLoad(load, cv2xsetVerificationLoadCallback);
         if (telux::common::ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {

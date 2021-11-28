@@ -1,53 +1,51 @@
-Using Thermal Shutdown Manager APIs to set Autoshutdown modes {#send_thermal_shutdown_mode_commands}
+Using Thermal Shutdown Manager APIs to get and set Autoshutdown modes {#send_thermal_shutdown_mode_commands}
 ====================================================================================================
 
-# Using Thermal Shutdown Manager APIs to set Autoshutdown modes
+# Using Thermal Shutdown Manager APIs to get and set Autoshutdown modes
 
-Please follow below steps to set thermal autoshutdown modes
+Please follow below steps to get and set thermal autoshutdown modes
 
-### 1. Get thermal factory and thermal shutdown manager instances
+### 1. Get thermal factory instance
 
    ~~~~~~{.cpp}
    auto &thermalFactory = telux::therm::ThermalFactory::getInstance();
-   auto thermShutdownMgr_ = thermalFactory.getThermalShutdownManager();
    ~~~~~~
 
-### 2. Check if thermal shutdown management service is ready.
+### 2. Prepare initialization callback
 
    ~~~~~~{.cpp}
-   bool subSystemsStatus = thermShutdownMgr_->isReady();
-    if(subSystemsStatus) {
-        std::cout << APP_NAME << " Thermal-Shutdown management service is ready."<< std::endl;
-    } else {
-        std::cout << APP_NAME << " Thermal-Shutdown management service is NOT ready."<< std::endl;
+    std::promise<telux::common::ServiceStatus> p;
+    auto initCb = [&p](telux::common::ServiceStatus status) {
+        std::cout << "Received service status: " << static_cast<int>(status) << std::endl;
+        p.set_value(status);
+    };
+   ~~~~~~
+
+### 3. Get thermal shutdown manager object
+
+   ~~~~~~{.cpp}
+    thermShutdownMgr_ = thermalFactory.getThermalShutdownManager(initCb);
+    if(thermShutdownMgr_ == NULL)
+    {
+        std::cout << APP_NAME << " *** ERROR - Failed to get manager instance" << std::endl;
+        return -1;
     }
    ~~~~~~
 
-### 3 If Thermal shutdown management service is not ready, wait for it to be ready
+### 4. Wait for the initialization callback and check the service status
 
    ~~~~~~{.cpp}
-    std::future<bool> f = thermShutdownMgr_->onSubsystemReady();
-    #if  //Timeout based wait
-        if (f.wait_for(std::chrono::seconds(timeoutSec)) == std::future_status::timeout) {
-            std::cout << "operation timed out." << std::endl;
-        } else {
-            subSystemsStatus = f.get();
-            if (subSystemsStatus) {
-                std::cout << " Thermal-Shutdown management service is ready." << std::endl;
-            }
-        }
-    #else //Unconditional wait
-        subSystemsStatus = f.get();
-        if (subSystemsStatus) {
-            std::cout << " Thermal-Shutdown management service is ready." << std::endl;
-        } else {
-            std::cout << " Thermal-Shutdown management service is NOT ready" << std::endl;
-            return -1;
-        }
-    #endif
+    telux::common::ServiceStatus serviceStatus = p.get_future().get();
+    if(serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << APP_NAME << " Thermal-Shutdown management services are ready !" << std::endl;
+    } else {
+        std::cout << APP_NAME << " *** ERROR - Unable to initialize Thermal-Shutdown management "
+                                 "services" << std::endl;
+        return -1;
+    }
    ~~~~~~
 
-### 3. Query the current thermal auto shutdown mode
+### 5. Query the current thermal auto shutdown mode
 
    ~~~~~~{.cpp}
     // Callback which provides response to query operation
@@ -70,7 +68,7 @@ Please follow below steps to set thermal autoshutdown modes
     }
    ~~~~~~
 
-### 4. Set thermal auto shutdown mode
+### 6. Set thermal auto shutdown mode
 
    ~~~~~~{.cpp}
     // Callback which provides response to set thermal auto shutdown mode command

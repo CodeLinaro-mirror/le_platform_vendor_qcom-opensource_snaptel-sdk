@@ -6,12 +6,14 @@ Make Request Voice Service State of the device {#request_voice_service_state}
 Please follow below steps to get voice service state notifications.
 
 ### 1. Get the PhoneFactory and PhoneManager instances ###
+
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
    ~~~~~~
 
 ### 2. Check if telephony subsystem is ready ###
+
    ~~~~~~{.cpp}
    bool subSystemsStatus = phoneManager->isSubsystemReady();
    ~~~~~~

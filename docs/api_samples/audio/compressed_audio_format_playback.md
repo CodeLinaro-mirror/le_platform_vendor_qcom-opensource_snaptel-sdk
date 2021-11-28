@@ -1,14 +1,14 @@
-Compressed audio format playback {#compressed_audio_format_playback}
+Compressed format playback {#compressed_audio_format_playback}
 ====================================================================
 
-# Audio Manager APIs Sample Reference for compressed audio format playback
+## Audio Manager APIs Sample Reference for compressed audio format playback
 
-This Section demonstrates how to use the Audio Manager API for compressed audio format playback.
+This section demonstrates how to use the audio APIs for compressed audio format playback.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

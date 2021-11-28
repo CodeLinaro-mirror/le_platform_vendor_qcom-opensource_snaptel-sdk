@@ -1,14 +1,15 @@
-Using Audio Manager APIs to play DTMF tone in a voice call. {#audio_voicecall_dtmf_play}
+Play DTMF tone {#audio_voicecall_dtmf_play}
 ========================================================================================
 
-# Using Audio Manager APIs to play DTMF tone in a voice call
+## Using Audio Manager APIs to play DTMF tone in a voice call
 
-Please follow the below steps to play a DTMF tone in an active voice call. Note that only Rx direction is supported now.
+This section demostrates how to use audio APIs to play DTMF tones during an active voice call.
+Note that only Rx direction is supported currently.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

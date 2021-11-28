@@ -6,6 +6,7 @@ Using Location Service APIs {#location_services}
 Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Info reports
 
 ### 1. Implement a command response function ###
+
    ~~~~~~{.cpp}
     void CmdResponse(ErrorCode error) {
         if (error == ErrorCode::SUCCESS) {
@@ -18,6 +19,7 @@ Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Inf
    ~~~~~~
 
 ### 2. Implement ILocationListener interface ###
+
    ~~~~~~{.cpp}
     class MyLocationListener : public ILocationListener {
         public:
@@ -31,11 +33,13 @@ Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Inf
    ~~~~~~
 
 ### 3. Get the LocationFactory instance ###
+
    ~~~~~~{.cpp}
     auto &locationFactory = LocationFactory::getInstance();
    ~~~~~~
 
 ### 4. Get LocationManager instance ###
+
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
     auto locationManager_ = locationFactory.getLocationManager([&](ServiceStatus status) {
@@ -44,6 +48,7 @@ Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Inf
    ~~~~~~
 
 ### 5. Wait for the location subsystem initialization ###
+
    ~~~~~~{.cpp}
     ServiceStatus managerStatus = locationManager_->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
@@ -53,6 +58,7 @@ Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Inf
    ~~~~~~
 
 ### 6. Exit the application, if SDK is unable to initialize location subsystems ###
+
    ~~~~~~{.cpp}
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout<< "Subsystem is ready" << std::endl;
@@ -63,16 +69,19 @@ Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Inf
    ~~~~~~
 
 ### 7. Instantiate MyLocationListener ###
+
    ~~~~~~{.cpp}
     auto myLocationListener = std::make_shared<MyLocationListener>();
    ~~~~~~
 
 ### 8. Register for Location, SV and Jammer info updates ###
+
    ~~~~~~{.cpp}
     locationManager_->registerListenerEx(myLocationListener);
    ~~~~~~
 
 ### 9. Start Location reports with Detailed information ###
+
    ~~~~~~{.cpp}
     uint32_t minIntervalInput = 2000; // Default is 1000 milli seconds.
     locationManager_->startDetailedReports(minIntervalInput, CmdResponse);
@@ -81,6 +90,7 @@ Please follow below steps to get Location, Satellite Vehicle (SV) and Jammer Inf
 ### 10. Command response callback is invoked with error code indicating SUCCESS or FAILURE of the operation. ###
 
 ### 11. Wait for Location fix, SV and Jammer info ###
+
    ~~~~~~{.cpp}
     void MyLocationListener::onDetailedLocationUpdate(
       const std::shared_ptr<telux::loc::ILocationInfoEx> &locationInfo) {

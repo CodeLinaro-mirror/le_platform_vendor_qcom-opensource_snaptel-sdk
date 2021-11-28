@@ -1,14 +1,15 @@
-Using Audio Manager APIs to detect DTMF tones in a voice call. {#audio_voicecall_dtmf_detect}
+Detect DTMF tones {#audio_voicecall_dtmf_detect}
 =============================================================================================
 
-# Using Audio Manager APIs to detect DTMF tones in a voice call
+## Using Audio Manager APIs to detect DTMF tones in a voice call
 
-Please follow the below steps to detect DTMF tones in an active voice call. Note that only Rx direction is supported now.
+This section demostrates how to use audio APIs to detect DTMF tones during an active voice call.
+Note that only Rx direction is supported currently.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

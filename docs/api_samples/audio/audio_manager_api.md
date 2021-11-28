@@ -1,15 +1,16 @@
-Audio Manager API {#audio_manager_api}
+Manager API {#audio_manager_api}
 ======================================
 
-# Audio Manager API Sample Reference
+## Audio Manager API Sample Reference
 
-This Section demonstrates how to use the Audio Manager API for audio subsystem/stream operations.
+This section demonstrates how to use various AudioManager APIs for audio subsystem readiness, fetching
+supported streams and devices, creating and deleting a stream.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-   #include "AudioFactory.hpp"
-   #include "AudioManager.hpp"
+   #include <telux/audio/AudioFactory.hpp>
+   #include <telux/audio/AudioManager.hpp>
 
    using namespace telux::common;
    using namespace telux::audio;
@@ -19,7 +20,7 @@ This Section demonstrates how to use the Audio Manager API for audio subsystem/s
    static std::shared_ptr<IAudioVoiceStream> audioVoiceStream;
    Status status;
 
-   auto &audioFactory = audioFactory::getInstance();
+   auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

@@ -1,14 +1,14 @@
-Audio loopback session {#audio_manager_loopback}
+Loopback session {#audio_manager_loopback}
 =======================================================================================
 
-# Audio Manager API Sample Reference for audio loopback session
+## Audio Manager API Sample Reference for audio loopback session
 
-Please follow the below steps to start/stop loopback on a loopback session.
+This section demonstrates how to use the audio APIs to start/stop a loopback session.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

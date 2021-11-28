@@ -6,6 +6,7 @@ Enable/Disable Socks {#enable_disable_socks}
 Please follow below steps to Enable/Disable Socks
 
 ### 1.Implement initialization callback and get the DataFactory instance ###
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
@@ -19,8 +20,11 @@ Data factory will call callback when manager initialization is complete.
    ~~~~~~
 
 ### 2. Get the SocksManager instances
+
+   ~~~~~~{.cpp}
    std::unique_lock<std::mutex> lck(mtx);
    auto dataSocksMgr  = dataFactory.getSocksManager(opType, initCb);
+   ~~~~~~
 
 ### 3. Wait for DataConnectionManager initialization to be complete
 

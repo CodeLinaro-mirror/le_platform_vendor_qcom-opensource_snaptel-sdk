@@ -1,34 +1,47 @@
-How to load and activate modem config file {#load_and_activate_modem_config_file}
+Load/activate modem config file {#load_and_activate_modem_config_file}
 =================================================================================
 
-# How to load and activate modem config file
+## How to load and activate modem config file
 
 Please follow below steps to load and activate a modem config file
 
-### 1. Get the ConfigFactory and ModemConfigManager instances
+### 1. Get the ConfigFactory instance
 
    ~~~~~~{.cpp}
     auto &configFactory = telux::config::ConfigFactory::getInstance();
-    auto modemConfigManager = configFactory.getModemConfigManager();
    ~~~~~~
 
-### 2. Wait for the Modem Config sub system initialization
+### 2. Get ModemConfigManager instance and Wait for sub system initialization.
+
    ~~~~~~{.cpp}
-    bool subSystemStatus = modemConfigManager->isSubsystemReady();
-    if (!subSystemStatus) {
-        std::cout << "Modem Config subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = modemConfigManager_->onSubsystemReady();
-        // Wait unconditionally for modem config subsystem to be ready
-        subSystemStatus = f.get();
+    std::promise<telux::common::ServiceStatus> prom{};
+    modemConfigManager_ = configFactory.getModemConfigManager(
+        [&prom](telux::common::ServiceStatus status) {
+            prom.set_value(status);
+    });
+
+    if (!modemConfigManager_) {
+        std::cout << "Failed to get modem config Manager" << std::endl;
+        return;
     }
+
+    //  Check if modem config subsystem is ready
+    //  If  modem config subsystem is not ready, wait for it to be ready
+    telux::common::ServiceStatus managerStatus = modemConfigManager_->getServiceStatus();
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nModem config subsystem is not ready, Please wait ..." << std::endl;
+        managerStatus = prom.get_future().get();
+    }
+
     // Exit the application, if SDK is unable to initialize modem config subsystems
-    if (!subSystemStatus) {
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-        return EXIT_FAILURE;
+        return;
     }
    ~~~~~~
 
 ### 3. Load a modem config file from file path
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     auto status = modemConfigManager_->loadConfigFile(filePath, configType_,
@@ -52,6 +65,7 @@ Please follow below steps to load and activate a modem config file
    ~~~~~~
 
 ### 4. Request Config List from modem's storage.
+
    ~~~~~~{.cpp}
     // configList_ is member variable to store config list.
     std::promise<bool> p;
@@ -78,6 +92,7 @@ Please follow below steps to load and activate a modem config file
    ~~~~~~
 
 ### 5. Activate modem config File.
+
    ~~~~~~{.cpp}
     // configNo denotes index of the modem config file in in config List.
     ConfigId configId;

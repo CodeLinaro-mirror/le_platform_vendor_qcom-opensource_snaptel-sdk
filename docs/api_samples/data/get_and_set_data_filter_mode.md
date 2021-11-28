@@ -6,6 +6,7 @@ Get and Set data filter mode {#get_and_set_data_filter_mode}
 Please follow below steps to get and set data filter mode
 
 ### 1. Get the DataFactory, DataConnectionManager and DataFilterManager instances
+
    ~~~~~~{.cpp}
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto dataConnMgr_ = dataFactory.getDataConnectionManager();
@@ -13,6 +14,7 @@ Please follow below steps to get and set data filter mode
    ~~~~~~
 
 ### 2. Wait for the Data Connection Manager and Data Filter Manager sub system initialization
+
    ~~~~~~{.cpp}
     bool dataConnectionSubSystemStatus = dataConnMgr_->isSubsystemReady();
     if (!dataConnectionSubSystemStatus) {
@@ -41,6 +43,7 @@ Please follow below steps to get and set data filter mode
    ~~~~~~
 
 ### 3. Set data filter mode to enable
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     int profileId = 2;
@@ -71,6 +74,7 @@ Please follow below steps to get and set data filter mode
    ~~~~~~
 
 ### 4. Get data filter mode
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     std::string interfaceName = "rmnet_data0";

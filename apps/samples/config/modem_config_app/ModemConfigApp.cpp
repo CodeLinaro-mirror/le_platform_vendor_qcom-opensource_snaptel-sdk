@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 #include <iostream>
 #include <future>
@@ -47,7 +83,6 @@ static void configListCb(std::vector<telux::config::ConfigInfo> configList,
         int count = 0;
         for (auto &config : configList) {
             std::cout << "Config No  : " << count << std::endl;
-            std::cout << "Id         : " << config.id << std::endl;
             std::string type;
             if (config.type == telux::config::ConfigType::HARDWARE) {
                 type = "HARDWARE";
@@ -68,7 +103,6 @@ static void getActiveConfigCb(telux::config::ConfigInfo configInfo,
                                                     telux::common::ErrorCode errCode) {
     if (errCode == telux::common::ErrorCode::SUCCESS) {
         std::cout << "Active Config Details" << std::endl;
-        std::cout << "Id         : " << configInfo.id << std::endl;
         std::string type;
         if (configInfo.type == telux::config::ConfigType::HARDWARE) {
             type = "HARDWARE";
@@ -99,22 +133,29 @@ int main(int argc, char **argv) {
 
     // ### 1. Get the ConfigFactory and ModemConfigManager instances.
     auto &configFactory = telux::config::ConfigFactory::getInstance();
-    auto modemConfigManager_ = configFactory.getModemConfigManager();
-
+    std::promise<telux::common::ServiceStatus> prom{};
+    auto modemConfigManager_ = configFactory.getModemConfigManager(
+        [&prom](telux::common::ServiceStatus status) {
+            prom.set_value(status);
+    });
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     // ### 2. Requesting to get modem config subsystem state
-    bool subSystemStatus = modemConfigManager_->isSubsystemReady();
+    subSystemStatus = modemConfigManager_->getServiceStatus();
 
     // #### 2.1  If modem config subsystem is not ready, wait for it to be ready
-    if (!subSystemStatus) {
+    if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Modem Config subsystem is not ready, Please wait" << std::endl;
-        std::future<bool> f = modemConfigManager_->onSubsystemReady();
         // Wait unconditionally for modem config subsystem to be ready
-        subSystemStatus = f.get();
+        subSystemStatus = prom.get_future().get();
+    } else {
+        std::cout << "Invalid modem config Manager" << std::endl;
+        return EXIT_FAILURE;
     }
 
-    // Exit the application, if SDK is unable to initialize modem config subsystems
-    if (!subSystemStatus) {
-        std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+    if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Modem Config Subsystem is ready." << std::endl;
+    } else {
+        std::cout << " *** ERROR - Unable to initialize modem config subsystem" << std::endl;
         return EXIT_FAILURE;
     }
 

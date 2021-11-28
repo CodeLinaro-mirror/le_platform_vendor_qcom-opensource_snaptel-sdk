@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /**
  * @file       DataConnectionManager.hpp
@@ -128,22 +164,33 @@ struct BitRateInfo {
  * The implementation should be thread safe.
  *
  * When callback is used with startDataCall, expected behavior is as following:
- *  - If this is first client to start datacall in the system and no error is detected, state of
- *    data call will be NET_CONNECTING and onDataCallInfoChanged will be called once data call
- *    is brought up successfully or failed.
- *  - If client tries to start data call that is already up and no error is detected, state of data
- *    call will NET_CONNECTED and onDataCallInfoChanged will not get called.
- *  - If any client that start data call and error is detected, error argument will contain error
+ *  - If this is first client to start datacall in the system and no error is detected,
+ *    getDataCallStatus() of @ref telux::data::IDataCall object will return NET_CONNECTING and
+ *    onDataCallInfoChanged will be called once data call is brought up successfully or failed.
+ *  - If client tries to start data call that is already up and no error is detected,
+ *    getDataCallStatus() of @ref telux::data::IDataCall object will return NET_CONNECTED and
+ *    onDataCallInfoChanged will not get called.
+ *  - If any client start data call and error is detected, error argument will contain error
  *    code and onDataCallInfoChanged will not get called.
 
  * When callback is used with stopDataCall, expected behavior is as following:
- *  - First/Last client that attempts to stop data call and no error is detected, state of data call
- *    will be NET_DISCONNECTING and onDataCallInfoChanged will be called once data call is down.
- *  - If a client starts a data call and then tries to stop it while there are other clients in
- *    the system who also started the same data call, and no error is detected, data call status
- *    will be NET_CONNECTED and onDataCallInfoChanged will not get called.
+ *  - First/Last client that attempts to stop data call and no error is detected,
+ *    getDataCallStatus() of @ref telux::data::IDataCall object will return NET_DISCONNECTING and
+ *    onDataCallInfoChanged will be called once data call is down.
+ *  - If a client attempt to stop data call it started earlier while same data call is started by
+ *    other clients in the system, and no error is detected, getDataCallStatus() of
+ *    @ref telux::data::IDataCall object will return NET_CONNECTED and onDataCallInfoChanged will
+ *    not get called.
  *  - If any client attemp to stop data call and error detected, error argument will contain error
  *    code and onDataCallInfoChanged will not get called.
+ *
+ *  Note: Telsdk broadcasts changes in any data call status to all available clients through the
+ *        listener interface telux::data::IDataConnectionListener::onDataCallInfoChanged.
+ *        Therefore, clients could get notification about data calls and their status changes that
+ *        might not be relevent to the client. Client could also get successful connection
+ *        notifications of data call client previously failed to connect.
+ *        The notification could be a consequence of another client activity or system is set to
+ *        automatically reconnect failed data calls.
  *
  * @param [in] dataCall        Pointer to IDataCall
  * @param [in] error           Return code for whether the operation succeeded or failed
@@ -154,26 +201,30 @@ using DataCallResponseCb = std::function<void(
 
 /**
  * This function is called with the response to requestDataCallStatistics API.
+ * Returned dataStats will contain data call statistics @ref telux::data::DataCallStats if reported
+ * error is telux::common::ErrorCode::SUCCESS. If error is reported, content of dataStats is
+ * don't care
  *
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
  * @param [in] dataStats       Data Call statistics
- * @param [in] error           Return code for whether the operation
- *                             succeeded or failed
+ * @param [in] error           Return code for whether the operation succeeded or failed
  */
 using StatisticsResponseCb
     = std::function<void(const DataCallStats dataStats, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to requestDataCallList API.
+ * Returned dataCallList will contain current active and connected DataCall objects if reported
+ * error is telux::common::ErrorCode::SUCCESS. If error detected, contents of dataCallList is
+ * don't care
  *
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
  * @param [in] dataCall        vector of of IDataCall list
- * @param [in] error           Return code for whether the operation
- *                             succeeded or failed
+ * @param [in] error           Return code for whether the operation succeeded or failed
  *
  */
 using DataCallListResponseCb = std::function<void(
@@ -181,6 +232,9 @@ using DataCallListResponseCb = std::function<void(
 
 /**
  * This function is called with the response to getDefaultProfile API.
+ * Returned profileId is current default profile contained in slotId if reported error is
+ * telux::common::ErrorCode::SUCCESS. If error detected, content of profileId and slotId is
+ * don't care.
  *
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
@@ -206,7 +260,10 @@ using TrafficFlowTemplateCb =
 
 /**
  * This function is called in response to requestDataCallBitRate.
- *
+ * Returned bitRate will contain data call bit rates @ref telux::data::BitRateInfo if reported
+ * error is telux::common::ErrorCode::SUCCESS. If error is reported, content of bitRate is
+ * don't care
+*
  * The callback can be invoked from multiple different threads.
  * The implementation should be thread safe.
  *
@@ -218,6 +275,20 @@ using requestDataCallBitRateResponseCb
     = std::function<void(BitRateInfo& bitRate, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called in response to requestRoamingMode.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] isRoamingEnabled    True - roaming mode enabled, False - roaming mode disabled.
+ * @param [in] profileId           Profile Id on which roaming mode is enabled.
+ * @param [in] error               Return code for whether the operation succeeded or failed.
+ *
+ */
+using requestRoamingModeResponseCb =
+    std::function<void(bool isRoamingEnabled, int profileId, telux::common::ErrorCode error)>;
+
+/**
  *@brief IDataConnectionManager is a primary interface for cellular connectivity
  *       This interface provides APIs for start and stop data call connections,
  *       get data call information and listener for monitoring data calls.
@@ -227,7 +298,7 @@ using requestDataCallBitRateResponseCb
 class IDataConnectionManager {
  public:
     /**
-     * Checks the status of data connection manager and returns the result.
+     * Returns current initialization status of data connection manager.
      *
      * @returns SERVICE_AVAILABLE    If data connection manager is ready for service.
      *          SERVICE_UNAVAILABLE  If data connection manager is temporarily unavailable.
@@ -257,13 +328,14 @@ class IDataConnectionManager {
     virtual std::future<bool> onSubsystemReady() = 0;
 
    /**
-    * Set a profile as default which results in the following:.
-    *  - Default routes in the system will route traffic over the network interface associated
-    *    with this profile.
-    *  - Bridge 0 will be associated with traffic from this profile.
+    * Set a profile as default which results in following:
+    * Traffic from devices tethered to MDM via default network interfaces such as eth0, ecm0, and
+    * mhi0 will be directed to rmnet_data that was brought up with default profile.
+    * Traffic initiated within MDM or EAP that is destined for WAN network and is not bound to a
+    * WAN interface will be routed by default to WAN network corresponding to the default profile ID
     *
     * @param [in] operationType     @ref telux::data::OperationType
-    * @param [in] profileId         Profile identifier to be associated with default handler
+    * @param [in] profileId         Profile identifier to be set as default
     * @param [in] callback          optional callback to get the response setDefaultProfile
     *
     * @returns Immediate status of setDefaultProfile i.e. success or suitable status.
@@ -273,8 +345,7 @@ class IDataConnectionManager {
        telux::common::ResponseCallback callback = nullptr)  = 0;
 
    /**
-    * Get current default profile to which associated network traffic is routed through bridge 0
-    * and default system routes.
+    * Get current default profile
     *
     * @param [in] operationType     @ref telux::data::OperationType
     * @param [in] callback          callback to get the response getDefaultProfile
@@ -286,11 +357,51 @@ class IDataConnectionManager {
        OperationType oprType, DefaultProfileIdResponseCb callback)  = 0;
 
     /**
+     * Enable roaming mode for profile id. If disabled, any client attempt to bring up data call on
+     * such profile id will be prevented by system when device is in roaming area. System will
+     * report NO_NETWORK_FOUND error in such scenario.
+     * if enabled, clients can bring up data call made on such profile id and slot id successfully
+     * even if device is in roaming area.
+     * Configuration changes will be persistant across multiple boots.
+     *
+     * @param [in] enable         enable/disable roaming mode (True: enable, False:disable).
+     * @param [in] profileId      profile id on which roaming mode to be enabled/disabled.
+     * @param [in] operationType  @ref telux::data::OperationType
+     * @param [in] callback       optional. Callback to get response for enableRoamingMode.
+     *
+     * @returns Status of enableRoamingMode i.e. success or suitable status code.
+     *           NO_NETWORK_FOUND error is returned if roaming is not enabled on profile id.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setRoamingMode(bool enable, uint8_t profileId,
+        OperationType operationType, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Request current roaming mode for profile id.
+     *
+     * @param [in] profileId      profile id on which roaming mode is requested.
+     * @param [in] operationType  @ref telux::data::OperationType
+     * @param [in] callback       callback to get response for requestRoamingMode.
+     *
+     * @returns Status of requestRoamingMode i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestRoamingMode(uint8_t profileId, OperationType operationType,
+        requestRoamingModeResponseCb callback) = 0;
+
+    /**
      * Starts a data call corresponding to default or specified profile identifier.
      *
-     * This will bring up data call connection based on specified profile identifier. This is an
-     * asynchronous API, client receives notification indicating the data call establishment
-     * or failure in callback.
+     * This will bring up data call connection based on specified profile identifier, IP family
+     * type, and operation type (local/remote). This is an asynchronous API.
+     * If telux::common::Status::SUCCESS is returned, client provided callback will be invoked at
+     * later time with error code and DataCall object associated with requested call.
+     * Clients might receive additional notification for the final data call status. For details
+     * see @ref telux::data::DataCallResponseCb.
      *
      * @note       if application starts data call on IPV4V6 then it's expected to stop the
      *             data call on same ip family type (i.e IPV4V6).
@@ -301,20 +412,24 @@ class IDataConnectionManager {
      * @param [in] ipFamilyType  Identifies IP family type
      * @param [out] callback     Optional callback to get the response of start data call.
      * @param [in] operationType Optional @ref telux::data::OperationType
-     * @param [in] apn           Deprecated and currently unsued
+     * @param [in] apn           Deprecated and currently unused
      *
-     * @returns Immediate status of startDataCall() request sent
-     *                   i.e. success or suitable status code.
+     * @returns Immediate status of startDataCall() request sent i.e. success or suitable
+     *          status code.
      *
      *
      */
     virtual telux::common::Status startDataCall(int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::IPV4V6, DataCallResponseCb callback = nullptr,
-        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "")
-        = 0;
+        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "") = 0;
 
     /**
-     * Stops a data call corresponding to default or specified profile identifier.
+     * Tear down data call connection based on specified profile identifier, IP family
+     * type, and operation type (local/remote). This is an asynchronous API.
+     * If telux::common::Status::SUCCESS is returned, client provided callback will be invoked at
+     * later time with error code and DataCall object associated with requested call.
+     * Clients might receive additional notification for the final data call status. For details
+     * see @ref telux::data::DataCallResponseCb.
      *
      * This will tear down specific data call connection based on profile identifier.
      *
@@ -338,8 +453,7 @@ class IDataConnectionManager {
      */
     virtual telux::common::Status stopDataCall(int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::IPV4V6, DataCallResponseCb callback = nullptr,
-        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "")
-        = 0;
+        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "") = 0;
 
     /**
      * Register a listener for specific events in the Connection Manager like establishment of new
@@ -396,7 +510,7 @@ class IDataConnectionManager {
 class IDataCall {
  public:
     /**
-     * Get interface name for the data call associated.
+     * Get interface name associated with the data call.
      *
      * @returns Interface Name.
      *

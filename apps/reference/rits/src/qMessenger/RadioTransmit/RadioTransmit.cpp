@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
  /**
   * @file: RadioTransmit.cpp
@@ -102,42 +138,49 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
 RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port) {
     cout << "Now simulating transmission of messages..."<< endl;
     isSim = true;
-    struct sockaddr_in addr;
     this->enableUdp = radioOpt.enableUdp;
     this->ipv4_src = radioOpt.ipv4_src;
+    this->clientAddress = {0};
+    this->destAddress = {0};
+
     if(!this->enableUdp) { // not udp
         this->simSock = socket(AF_INET, SOCK_STREAM, 0);
     } else { // udp
         this->simSock = socket(AF_INET, SOCK_DGRAM, 0);
     }
-    if (simSock < 0)
-    {
+    if (simSock < 0) {
         cout << "Error Creating Socket";
+        return;
     }
-    else {
-        if(!this->enableUdp){ // tcp
-            addr.sin_family = AF_INET;
-            addr.sin_port = htons(port);
-            if (inet_pton(AF_INET, ipv4_dst.data(), &addr.sin_addr) <= 0) {
-                cout << "Invalid ip address: " << ipv4_dst << endl;
-            }
-            const auto creation = connect(simSock, (struct sockaddr*) & addr, sizeof(addr));
+    if(!this->enableUdp){ // tcp
+        this->destAddress.sin_family = AF_INET;
+        this->destAddress.sin_port = htons(port);
+        if (inet_pton(AF_INET, ipv4_dst.data(), &this->destAddress.sin_addr) <= 0) {
+            cout << "Invalid ip address: " << ipv4_dst << endl;
+        } else {
+            const auto creation = connect(simSock, (struct sockaddr*)(&this->destAddress),
+                                          sizeof(this->destAddress));
             if (creation < 0)
             {
                 cout << "Connection failed with port: " << port << " ip: " << ipv4_dst << endl;
             }
-        }else{ //udp
-            this->destAddress.sin_family = AF_INET;
-            this->destAddress.sin_port = htons(port);
-            if (inet_pton(AF_INET, ipv4_dst.data(), &(this->destAddress.sin_addr)) <= 0) {
-                cout << "Invalid ip address: " << ipv4_dst << endl;
-            }
+        }
+        this->clientAddress.sin_family = AF_INET;
+        this->clientAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
+            cout << "Invalid ip address for client: " << ipv4_src << endl;
+        }
+    }else{ //udp
+        this->destAddress.sin_family = AF_INET;
+        this->destAddress.sin_port = htons(port);
+        if (inet_pton(AF_INET, ipv4_dst.data(), &(this->destAddress.sin_addr)) <= 0) {
+            cout << "Invalid ip address: " << ipv4_dst << endl;
+        }
 
-            this->clientAddress.sin_family = AF_INET;
-            this->clientAddress.sin_port = htons(port);
-            if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
-                cout << "Invalid ip address for client: " << ipv4_src << endl;
-            }
+        this->clientAddress.sin_family = AF_INET;
+        this->clientAddress.sin_port = htons(port);
+        if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
+            cout << "Invalid ip address for client: " << ipv4_src << endl;
         }
     }
 }

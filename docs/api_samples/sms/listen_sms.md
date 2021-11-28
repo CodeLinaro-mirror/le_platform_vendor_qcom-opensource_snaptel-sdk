@@ -6,6 +6,7 @@ Listening to Incoming SMS {#listen_sms}
 Please follow below steps to listen for incoming SMS
 
 ### 1. Implement ISmsListener interface to receive incoming SMS ###
+
    ~~~~~~{.cpp}
    class MySmsListener : public ISmsListener {
    public:

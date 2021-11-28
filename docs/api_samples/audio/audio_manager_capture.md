@@ -1,14 +1,14 @@
-Audio capture session {#audio_manager_capture}
+Capture session {#audio_manager_capture}
 =====================================================================================
 
-# Audio Manager API Sample Reference for audio capture session
+## Audio Manager API Sample Reference for audio capture session
 
-This Section demonstrates how to use the Audio Manager API for audio capture session.
+This section demonstrates how to use audio APIs for capture session.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

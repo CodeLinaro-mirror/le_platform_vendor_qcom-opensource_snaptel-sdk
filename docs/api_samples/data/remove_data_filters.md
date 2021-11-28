@@ -6,6 +6,7 @@ Remove data filter mode {#remove_data_filter}
 Please follow below steps to remove all data filter mode
 
 ### 1. Get the DataFactory, DataConnectionManager and DataFilterManager instances
+
    ~~~~~~{.cpp}
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto dataConnMgr_ = dataFactory.getDataConnectionManager();
@@ -13,6 +14,7 @@ Please follow below steps to remove all data filter mode
    ~~~~~~
 
 ### 2. Wait for the Data Connection Manager and Data Filter Manager sub system initialization
+
    ~~~~~~{.cpp}
     bool dataConnectionSubSystemStatus = dataConnMgr_->isSubsystemReady();
     if (!dataConnectionSubSystemStatus) {
@@ -41,6 +43,7 @@ Please follow below steps to remove all data filter mode
    ~~~~~~
 
 ### 3. Remove all data filter
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     int profileId = 2;

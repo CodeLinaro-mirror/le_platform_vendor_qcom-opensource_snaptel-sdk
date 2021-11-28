@@ -64,5 +64,6 @@ The following sections provide further information
 - @subpage power
 - @subpage thermal
 - @subpage sensor
+- @subpage platform
 
 */

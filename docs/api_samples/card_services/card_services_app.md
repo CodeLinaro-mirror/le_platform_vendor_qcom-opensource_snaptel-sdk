@@ -6,12 +6,14 @@ Using Card Service APIs {#card_services_app}
 Please follow below steps to use Card Service APIs to transmit APDU
 
 ### 1. Get the PhoneFactory and CardManager instances. ###
+
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    std::shared_ptr<ICardManager> cardManager = phoneFactory.getCardManager();
    ~~~~~~
 
 ### 2. Wait for the telephony subsystem initialization. ###
+
    ~~~~~~{.cpp}
    bool subSystemsStatus = cardManager->isSubsystemReady();
    if(!subSystemsStatus) {
@@ -26,6 +28,7 @@ Please follow below steps to use Card Service APIs to transmit APDU
 
 
 ### 3. Get SlotCount, SlotIds and Card instance ###
+
    ~~~~~~{.cpp}
    int slotCount;
    cardManager->getSlotCount(slotCount);
@@ -41,6 +44,7 @@ Please follow below steps to use Card Service APIs to transmit APDU
    ~~~~~~
 
 ### 4. Get supported applications from the card ###
+
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<ICardApp>> applications;
    if(cardImpl) {

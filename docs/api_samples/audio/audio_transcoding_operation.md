@@ -1,14 +1,14 @@
-Audio transcoding operation {#audio_transcoding_operation}
+Transcoding {#audio_transcoding_operation}
 ==========================================================
 
-# Audio Manager APIs Sample Reference for audio transcoding operation
+## Audio Manager APIs Sample Reference for audio transcoding operation
 
-This Section demonstrates how to use the Audio Manager and Audio Transcoder APIs for transcoding operation.
+This section demonstrates how to use the audio APIs for transcoding operation.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

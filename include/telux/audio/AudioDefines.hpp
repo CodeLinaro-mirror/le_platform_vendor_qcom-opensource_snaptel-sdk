@@ -26,6 +26,42 @@
 *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /**
  * @file    AudioDefines.hpp
@@ -53,7 +89,7 @@ const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
 /* Duration to play tone for infinite time */
 const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
 
-/** @addtogroup telematics_audio_stream
+/** @addtogroup telematics_audio_manager
  * @{ */
 
 /**
@@ -77,14 +113,6 @@ enum class DeviceDirection {
 };
 
 /**
- * Represent Voice Direction RX (Sink), Tx (Source)
- */
-enum class Direction {
-    RX = 1,
-    TX = 2,
-};
-
-/**
  * Represent Stream Type
  */
 enum class StreamType {
@@ -103,6 +131,20 @@ enum class StreamDirection {
     NONE = -1,
     RX = 1, /**< Represents Session Directed towards Sink Device */
     TX = 2, /**< Represents Session Directed from Source Device*/
+};
+
+
+/** @} */ /* end_addtogroup telematics_audio_manager */
+
+/** @addtogroup telematics_audio_stream
+ * @{ */
+
+/**
+ * Represent Voice Direction RX (Sink), Tx (Source)
+ */
+enum class Direction {
+    RX = 1,
+    TX = 2,
 };
 
 /**
@@ -150,6 +192,20 @@ enum class DtmfHighFreq {
 };
 
 /**
+ * Represents type of stop for compressed audio format playback. Audio playback can be stopped in
+ * two ways force stop and after playing all buffers in the pipeline.
+ */
+enum class StopType {
+    FORCE_STOP,    /**< Stop Playing Immediately and clear buffer pipeline */
+    STOP_AFTER_PLAY,    /**< Stop Play once after all buffers in pipeline are played */
+};
+
+/** @} */ /* end_addtogroup telematics_audio_stream */
+
+/** @addtogroup telematics_audio_manager
+ * @{ */
+
+/**
  * Representative of type of frame structure.
  * Typical transport interface or file storage.
  */
@@ -157,15 +213,6 @@ enum class AmrwbpFrameFormat {
     UNKNOWN = -1,        /**< Unknown format */
     TRANSPORT_INTERFACE_FORMAT,
     FILE_STORAGE_FORMAT,
-};
-
-/**
- * Represents type of stop for compressed audio format playback. Audio playback can be stopped in
- * two ways force stop and after playing all buffers in the pipeline.
- */
-enum class StopType {
-    FORCE_STOP,    /**< Stop Playing Immediately and clear buffer pipeline */
-    STOP_AFTER_PLAY,    /**< Stop Play once after all buffers in pipeline are played */
 };
 
 /**
@@ -231,6 +278,11 @@ struct FormatInfo {
     AudioFormat format;  /**< Represents audio format */
     FormatParams *params; /**< Represents codec specific parameters, like Frame Format */
 };
+
+/** @} */ /* end_addtogroup telematics_audio_manager */
+
+/** @addtogroup telematics_audio_stream
+ * @{ */
 
 /**
  *  Stream Channel Volume parameters

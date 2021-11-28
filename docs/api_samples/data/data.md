@@ -20,3 +20,4 @@ data {#data}
 * @subpage get_drb_status_and_indication
 * @subpage get_service_status_and_indication
 * @subpage get_roaming_status_and_indication
+* @subpage on_demand_pdn_connectivity

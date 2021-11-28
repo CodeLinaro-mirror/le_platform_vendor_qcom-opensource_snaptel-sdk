@@ -14,11 +14,13 @@ Please follow below steps to request service domain preference
    ~~~~~~
 
 ### 2. Wait for the serving subsystem initialization ###
+
    ~~~~~~{.cpp}
    bool subSystemStatus = servingSystemMgr->isSubsystemReady();
    ~~~~~~
 
 ### 2.1 If serving subsystem is not ready, wait for it to be ready ###
+
    ~~~~~~{.cpp}
    if(!subSystemsStatus) {
       std::cout << "Serving subsystem is not ready" << std::endl;
@@ -29,6 +31,7 @@ Please follow below steps to request service domain preference
    ~~~~~~
 
 ### 3. Exit the application, if SDK is unable to initialize serving subsystem ###
+
    ~~~~~~{.cpp}
    if(subSystemsStatus) {
       std::cout << " *** Serving subsystem ready *** " << std::endl;

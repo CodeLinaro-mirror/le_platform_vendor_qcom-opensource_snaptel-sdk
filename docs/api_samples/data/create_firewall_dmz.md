@@ -6,6 +6,7 @@ Create Firewall DMZ {#create_firewall_dmz}
 Please follow below steps to create firewall DMZ
 
 ### 1. Implement initialization callback and get the DataFactory instances ###
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 

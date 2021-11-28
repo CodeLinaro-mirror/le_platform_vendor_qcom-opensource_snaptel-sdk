@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 #ifndef LOCATIONDEFINESSTUB_HPP
 #define LOCATIONDEFINESSTUB_HPP
@@ -49,6 +85,8 @@ class LocationInfoBase : public ILocationInfoBase {
     uint64_t timeStamp_ = UNKNOWN_TIMESTAMP;
     float speedUncertainty_ = NAN;
     float headingUncertainty_ = NAN;
+    uint64_t elapsedRealTime_ = 100;
+    uint64_t elapsedRealTimeUncertainty_ = 3;
 
 public:
 /**
@@ -161,6 +199,24 @@ public:
  */
     float getHeadingUncertainty() override{return headingUncertainty_;}
 
+/**
+ * Boot timestamp corresponding to the UTC timestamp for Location fix.
+ *    - Units: Nano-second
+ *
+ * returns elapsed real time.
+ *
+ */
+    uint64_t getElapsedRealTime() override{return elapsedRealTime_;}
+
+/**
+ * Retrieves elapsed real time uncertainty.
+ *    - Units: Nano-second
+ *
+ * returns elapsed real time uncertainty.
+ *
+ */
+    uint64_t getElapsedRealTimeUncertainty() override{return elapsedRealTimeUncertainty_;}
+
 
 
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
@@ -175,6 +231,10 @@ public:
     void setUtcFixTime(uint64_t value) {timeStamp_ = value;}
     void setSpeedUncertainty(float val) { speedUncertainty_ = val;}
     void setHeadingUncertainty(float val) { headingUncertainty_ = val;}
+    void setElapsedRealTime(uint64_t elapsedRealTime) {elapsedRealTime_ = elapsedRealTime;}
+    void setElapsedRealTimeUncertainty(uint64_t elapsedRealTimeUncertainty) {
+        elapsedRealTimeUncertainty_ = elapsedRealTimeUncertainty;
+    }
 
 };
 
@@ -191,6 +251,8 @@ class LocationInfoEx : public ILocationInfoEx {
     uint64_t timeStamp_ = UNKNOWN_TIMESTAMP;
     float speedUncertainty_ = NAN;
     float headingUncertainty_ = NAN;
+    uint64_t elapsedRealTime_ = 50;
+    uint64_t elapsedRealTimeUncertainty_ = 5;
 
     uint32_t locationInfoExValidity_ = 0;
     float altitudeMeanSeaLevel_ = NAN;
@@ -226,6 +288,10 @@ class LocationInfoEx : public ILocationInfoEx {
     float conformityIndex_ = 0;
     AltitudeType altitudeType_ = AltitudeType::UNKNOWN;
     ReportStatus reportStatus_ = ReportStatus::UNKNOWN;
+    uint32_t integrityRisk_ = 0;
+    float protectionLevelAlongTrack_ = 0.0;
+    float protectionLevelCrossTrack_ = 0.0;
+    float protectionLevelVertical_ = 0.0;
 
 public:
 /**
@@ -337,6 +403,24 @@ public:
  *
  */
     float getHeadingUncertainty() override{return headingUncertainty_;}
+
+/**
+ * Boot timestamp corresponding to the UTC timestamp for Location fix.
+ *    - Units: Nano-second
+ *
+ * returns elapsed real time.
+ *
+ */
+    uint64_t getElapsedRealTime() override{return elapsedRealTime_;}
+
+/**
+ * Retrieves elapsed real time uncertainty.
+ *    - Units: Nano-second
+ *
+ * returns elapsed real time uncertainty.
+ *
+ */
+    uint64_t getElapsedRealTimeUncertainty() override{return elapsedRealTimeUncertainty_;}
 
 
 /**
@@ -688,6 +772,34 @@ public:
  */
   virtual ReportStatus getReportStatus() { return reportStatus_; }
 
+/**
+ * Integrity risk used for protection level parameters. Unit of 2.5e-10.
+ * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
+ * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
+ * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
+ * @ref ILocationInfoEx::getProtecttionLevelVertical will not be available.
+ *
+ */
+  virtual uint32_t getIntegrityRiskUsed() { return integrityRisk_; };
+
+/**
+ * Along-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelAlongTrack() { return protectionLevelAlongTrack_; };
+
+/**
+ * Cross-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelCrossTrack() { return protectionLevelCrossTrack_; };
+
+/**
+ * Vertical component protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelVertical() { return protectionLevelVertical_; };
+
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
     void setSpeed(float val) { speed_ = val;}
@@ -700,6 +812,10 @@ public:
     void setUtcFixTime(uint64_t value) {timeStamp_ = value;}
     void setSpeedUncertainty(float val) { speedUncertainty_ = val;}
     void setHeadingUncertainty(float val) { headingUncertainty_ = val;}
+    void setElapsedRealTime(uint64_t elapsedRealTime) {elapsedRealTime_ = elapsedRealTime;}
+    void setElapsedRealTimeUncertainty(uint64_t elapsedRealTimeUncertainty) {
+        elapsedRealTimeUncertainty_ = elapsedRealTimeUncertainty;
+    }
 
     void setLocationInfoExValidity(uint32_t val) { locationInfoExValidity_ = val;}
     void setAltitudeMeanSeaLevel(float val) { altitudeMeanSeaLevel_ = val;}

@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /**
 @page sequence_diagrams Call Flow Diagrams
@@ -397,6 +433,172 @@ of setServiceDomainPreference API.
 18. Registered listener will get notified for the service domain preference change.
 19. Application can deregister a listener there by it would not get notifications.
 20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
+
+@subsection rsp_callflow Remote SIM Provisioning Call Flow
+
+Remote SIM provisioning provides API to add profile, delete profile, activate/deactivate profile
+on the embedded SIMs (eUICC) , get list of profiles, get server address like SMDP+ and SMDS and
+update SMDP+ address, update nick name of profile and retrieve Embedded Identity Document(EID)
+of the SIM.
+
+@subsubsection rsp_add_delete_profile_call_flow Download and deletion of profile call flow
+
+@anchor fig_rsp_add_delete_profile_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{rsp_add_delete_profile_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Download and deletion of profile call flow}
+  \label{fig_rsp_add_delete_profile_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{rsp_add_delete_profile_call_flow.png,Download and deletion of profile call flow,80,80,Download and deletion of profile call flow}
+
+1. Application requests Phonefactory for SimProfileManager object.
+2. Phonefactory returns shared pointer to SimProfileManager object to application using which
+   application performs profile related operations. Wait for subsystem to get ready.
+3. If subsystem is ready, create a listener of type ISimProfileListener which would receive
+   notifications about profile download status, user display info and confirmation code
+   is required. Register the created listener with the ISimProfileManager object.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application can send a request to add profile with activation code. The confirmation code can
+   be optional and user consent supported can be specified in order to receive user consent info.
+6. Application receives synchronous status which indicates if the add profile request was sent
+   successfully.
+7. The response of addProfile request can be received by application in the application-supplied
+   callback. The modem sends indication about the HTTP request in order to download profile to AP
+   and the AP performs HTTP transaction on behalf of modem and sends HTTP request to SMDP+/SMDS
+   server and response of HTTP request from SMDP+/SMDS is sent back to AP and then to modem. The
+   HTTP response contains information related to profile.
+8. Optionally, the application receives notification about user consent required and profile policy
+   rules. The application needs to provide the user consent and also reason (if in case consent not
+   provided) in order to proceed with downloading of profile. The application receives the
+   synchronous status which indicates provide user consent sent successfully and response of provide
+   user consent can be received by application in the application-supplied callback. Optionally, the
+   application receives notification about confirmation code required. The application needs to
+   provide the code in order to proceed with downloading of profile. The application receives the
+   synchronous status which indicates confirmation code required sent successfully and response of
+   provide user consent can be received by application in the application-supplied callback.
+9. The application receives notification about the download and installation status of profile on
+   the eUICC. When download and installation of profile is completed, notification is also sent to
+   SMDP+/SMDS server.
+10. Application can send a delete request associated with profile identifier on SimProfileManager
+    object.
+11. Application receives synchronous status which indicates if the delete profile request was sent
+    successfully.
+12. The response of delete request can be received by application in the application-supplied
+    callback. Once deletion of profile is completed notification is sent to SMDP+/SMDS server
+    in order to synchronise the profile state on the server.
+13. De-register the listener with the ISimProfileManager object.
+14. Application receives the status i.e. either SUCCESS or FAILED based on the execution of
+    de-register listener.
+
+@subsubsection rsp_other_operations_call_flow SIM profile management operations call flow
+
+@anchor fig_rsp_other_operations_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{rsp_other_operations_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{SIM profile management operations call flow}
+  \label{fig_rsp_other_operations_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{rsp_other_operations_call_flow.png,SIM profile management operations call flow,80,80,SIM profile management operations call flow}
+
+The SIM profile sub-system should have been initialized successfully with SERVICE_AVAILABLE as a
+pre-requisite for remote SIM provisioning operations and a valid SimProfileManager object is
+available.
+1. Application can send a set profile request associated with profile identifier on SimProfileManager
+   object. This allows to enable or disable the profile on the eUICC.
+2. Application receives synchronous status which indicates if the set profile request was sent
+   successfully.
+3. The response of set profile request can be received by application in the application-supplied
+   callback. Once enable or disable of profile is completed notification is sent to SMDP+/SMDS
+   server in order to synchronise the profile state on the server.
+4. Application can send a get profile list request on SimProfileManager object to retrieve the all
+   available profiles on the eUICC with all profile related details like service provider name(SPN),
+   ICCID etc.
+5. Application receives synchronous status which indicates if the get profile list request was sent
+   successfully.
+6. The response of get profile list request can be received by application in the application-supplied
+   callback along with all the profile details.
+7. Application can get Card object from CardManager associated with the slot.
+8. CardManager returns shared pointer to Card object to application using which
+   application can retrieve EID.
+9. Application can send a get EID request on Card.
+10. Application receives synchronous status which indicates if the get EID request was sent
+   successfully.
+11. The response of get EID request can be received by application in the application-supplied
+   callback along with EID details.
+12. Application can send update nickname of profile request on SimProfileManager.
+13. Application receives synchronous status which indicates if the update nickname request was sent
+    successfully.
+14. The response of update nickname request can be received by application in the application
+    supplied callback.
+15. Application can send memory reset request on SimProfileManager to delete test or operational
+    profiles or set SMDP address to default.
+16. Application receives synchronous status which indicates if the memory reset request was sent
+    successfully.
+17. The response of memory reset request can be received by application in the application-supplied
+    callback. Once deletion of profiles happens notification is sent to SMDP+/SMDS to synchronise
+    profile state on the server.
+18. Application can send set address name on SimProfileManager in order to set SMDP+ address.
+19. Application receives synchronous status which indicates if the set address request was sent
+    successfully.
+20. The response of set address request can be received by application in the application-supplied
+    callback.
+21. Application can send get address name on SimProfileManager in order to get SMDP+/SMDS address.
+22. Application receives synchronous status which indicates if the get address request was sent
+    successfully.
+23. The response of get address request can be received by application in the application-supplied
+    callback along with SMDP+/SMDS address.
+
+
+@subsubsection rsp_http_transaction_subsystem_startup_call_flow HttpTransaction subsystem readiness and handling of indication from modem call flow
+
+@anchor fig_rsp_http_transaction_subsystem_startup_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{rsp_http_transaction_subsystem_startup_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{HttpTransaction subsystem readiness and handling of indication from modem call flow}
+  \label{fig_rsp_http_transaction_subsystem_startup_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{rsp_http_transaction_subsystem_startup_call_flow.png,HttpTransaction subsystem readiness and handling of indication from modem call flow,80,80,HttpTransaction subsystem readiness and handling of indication from modem call flow}
+
+1. Get the reference to the PhoneFactory, with which we can further acquire other remote SIM
+   provisioning sub-system objects.
+2. The reference daemon gets the Phonefactory object.
+3. Reference daemon requests Phonefactory for HttpTransactionManager object along with init
+   callback which gets called once initialization is completed.
+4. Phonefactory returns shared pointer to HttpTransactionManager object to reference daemon using
+   which reference daemon sends HTTP response to modem and register the listener to listen for HTTP
+   transaction indication. If HttpTransactionManager does not exists then create new object.
+5. Wait for subsystem to be ready and get the Service status.
+6. The reference daemon check the service status whether service is UNAVAILABLE, AVAILABLE or FAILED.
+   If the service status is not AVAILABLE, then wait for init callaback to be called. The subsystem
+   either gets AVAILABLE or FAILED and Service status is recieved in init callback. If the service
+   status is notified as SERVICE_FAILED, retry intitialization starting with step (3).
+7. If subsystem is AVAILABLE , then create a listener of type IHttpListener which would receive
+   notifications about HTTP transaction indication. Register the created listener with the
+   IHttpTransactionManager object.
+8. Status of register listener i.e. either SUCCESS or FAILED will be returned to the reference daemon.
+9. Modem sends the HTTP transaction indication with HTTP request payload and other details to
+   HTTPTransactionManager.
+10. The reference daemon on AP receives notification about HTTP transaction which process HTTP request.
+11. The reference daemon sends HTTP request result (SUCCESS or FAILURE) with HTTP response back to
+    HTTPTransactionManager.
+12. Steps (9-11) keep repeating for multiple HTTP Transaction indication for add, delete, set profile
+    and memory reset operations.
+
 
 @section card_services Card Services
 
@@ -2200,7 +2402,7 @@ Note: Application must perform C-V2X radio initialization before calling any met
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{audio_voicecall_start_stop_call_flow.png}
+  \includegraphics[scale=0.40]{audio_voicecall_start_stop_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Audio Voice Call Start/Stop call flow}
   \label{fig_audio_voicecall_start_stop_callflow}
@@ -2230,7 +2432,7 @@ Note: Application must perform C-V2X radio initialization before calling any met
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{audio_voicecall_device_switch_call_flow.png}
+  \includegraphics[scale=0.40]{audio_voicecall_device_switch_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Audio Voice Call Device Switch call flow}
   \label{fig_audio_voicecall_device_switch_callflow}
@@ -2266,7 +2468,7 @@ Note: Application must perform C-V2X radio initialization before calling any met
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{audio_voicecall_volume_mute_control_call_flow.png}
+  \includegraphics[scale=0.35]{audio_voicecall_volume_mute_control_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Audio Voice Call Volume/Mute control call flow}
   \label{fig_audio_voicecall_volume_mute_control_callflow}
@@ -2308,7 +2510,7 @@ Note: Application must perform C-V2X radio initialization before calling any met
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{audio_voicecall_dtmf_play_call_flow.png}
+  \includegraphics[scale=0.40]{audio_voicecall_dtmf_play_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Call flow to play DTMF tone}
   \label{fig_audio_voicecall_dtmf_play_callflow}
@@ -2380,7 +2582,7 @@ Note: Application must perform C-V2X radio initialization before calling any met
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{audio_playback_call_flow.png}
+  \includegraphics[scale=0.35]{audio_playback_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Audio Playback call flow}
   \label{fig_audio_playback_call_flow}
@@ -2416,7 +2618,7 @@ Note: Application must perform C-V2X radio initialization before calling any met
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{audio_capture_call_flow.png}
+  \includegraphics[scale=0.30]{audio_capture_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Audio Capture call flow}
   \label{fig_audio_capture_call_flow}
@@ -2451,7 +2653,7 @@ Note: Application must perform C-V2X radio initialization before calling any met
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.45]{audio_tone_generation_callflow.png}
+  \includegraphics[scale=0.40]{audio_tone_generation_callflow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Call flow to play/stop tone on a sink device}
   \label{fig_audio_tone_generator_play_stop_callflow}
@@ -2666,16 +2868,21 @@ to get a particular thermal zone and a particular cooling device details with th
 
 @html_image{thermal_manager_call_flow.png,Thermal manager call flow,80,80,Thermal manager call flow}
 
-1. Application requests Thermal factory for Thermal Manager.
-2. Thermal factory returns IThermalManager object to application.
-3. Application sends request to get all thermal zones using IThermalManager object.
-4. Thermal manager returns the list of thermal zones to the application.
-5. Application requests for a particular thermal zone details by mentioning the thermal zone Id.
-6. Application receives thermal zone details with the given Id from thermal manager.
-7. Application sends request to get all cooling devices using IThermalManager object.
-8. Thermal manager returns the list of cooling devices to the application.
-9. Application requests for a particular cooling device details by passing the cooling device Id.
-10. Thermal Manager sends cooling device details with the given Id to the application.
+1. Application requests for an instance of thermal factory.
+2. Thermal factory instance is received by the application.
+3. Application prepares the callback which would be called on initialization of thermal manager.
+4. Application request for thermal manager from thermal factory.
+5. Thermal factory returns an instance of the thermal manager object.
+6. Application waits for initalization callback to be called.
+7. Thermal factory invokes the callback once initialization completes.
+8. Application sends request to get all thermal zones using IThermalManager object.
+9. Thermal manager returns the list of thermal zones to the application.
+10. Application requests for a particular thermal zone details by mentioning the thermal zone Id.
+11. Application receives thermal zone details with the given Id from thermal manager.
+12. Application sends request to get all cooling devices using IThermalManager object.
+13. Thermal manager returns the list of cooling devices to the application.
+14. Application requests for a particular cooling device details by passing the cooling device Id.
+15. Thermal Manager sends cooling device details with the given Id to the application.
 
 @section thermal_shutdown_manager_call_flow Thermal shutdown management
 
@@ -2704,15 +2911,20 @@ As a reference, auto-shutdown management in an eCall application is described in
 
 @html_image{thermal_shutdown_manager_listener_callflow.png,Call flow to register/remove listener for Thermal shutdown manager,80,80,Register/Remove listener for Thermal shutdown manager call flow}
 
-1. Application requests thermal factory for Thermal Shutdown Manager.
-2. Thermal factory returns IThermalShutdownManager object using which application will register or remove a listener.
-3. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
-4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-5. Application recieves a notification that thermal auto-shutdown mode is disabled.
-6. Application recieves a notification that thermal auto-shutdown mode is going to enabled soon. The exact duration is also recieved as part of notification.
-7. Application recieves a notification that thermal auto-shutdown mode is enabled.
-8. Application can remove listener.
-9. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+1. Application requests for an instance of thermal factory.
+2. Thermal factory instance is received by the application.
+3. Application prepares the callback which would be called on initialization of thermal shutdown manager.
+4. Application request for thermal shutdown manager from thermal factory.
+5. Thermal factory returns an instance of the thermal shutdown manager object.
+6. Application waits for initalization callback to be called.
+7. Thermal factory invokes the callback once initialization completes.
+8. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
+9. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+10. Application recieves a notification that thermal auto-shutdown mode is disabled.
+11. Application recieves a notification that thermal auto-shutdown mode is going to enabled soon. The exact duration is also recieved as part of notification.
+12. Application recieves a notification that thermal auto-shutdown mode is enabled.
+13. Application can remove listener.
+14. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 @subsection thermal_shutdown_manager_commands_callflow Call flow to set/get the Thermal auto-shutdown mode
 
@@ -2729,14 +2941,19 @@ As a reference, auto-shutdown management in an eCall application is described in
 
 @html_image{thermal_shutdown_mode_command_callflow.png, Call flow to set/get the Thermal auto-shutdown mode,80,80,Call flow to set/get the Thermal auto-shutdown mode}
 
-1. Application requests thermal factory for Thermal Shutdown Manager object using which application will set/get the thermal auto-shutdown mode.
-2. Thermal factory returns IThermalShutdownManager object.
-3. Application can query the thermal auto-shutdown mode.
-4. Application receives synchronous status which indicates if the request was sent successfully.
-5. Application receives the auto-shutdown mode asynchronously.
-6. Application can set the thermal auto-shutdown mode to ENABLE or DISABLE.
-7. Application receives synchronous status which indicates if the request was sent successfully.
-8. Optionally, the response to setAutoShutdownMode request can be received by the application.
+1. Application requests for an instance of thermal factory.
+2. Thermal factory instance is received by the application.
+3. Application prepares the callback which would be called on initialization of thermal shutdown manager.
+4. Application request for thermal shutdown manager from thermal factory.
+5. Thermal factory returns an instance of the thermal shutdown manager object.
+6. Application waits for initalization callback to be called.
+7. Thermal factory invokes the callback once initialization completes.
+8. Application can query the thermal auto-shutdown mode.
+9. Application receives synchronous status which indicates if the request was sent successfully.
+10. Application receives the auto-shutdown mode asynchronously.
+11. Application can set the thermal auto-shutdown mode to ENABLE or DISABLE.
+12. Application receives synchronous status which indicates if the request was sent successfully.
+13. Optionally, the response to setAutoShutdownMode request can be received by the application.
 
 @subsection thermal_shutdown_manager_eCall_app_call_flow Call flow to manage thermal auto-shutdown from an eCall application.
 
@@ -2753,27 +2970,32 @@ As a reference, auto-shutdown management in an eCall application is described in
 
 @html_image{thermal_shutdown_mode_eCall_app_callflow.png,Call flow to manage thermal auto-shutdown from an eCall application,80,80,Manage thermal auto-shutdown from an eCall application}
 
-1. When eCall is triggered, application requests thermal factory for Thermal Shutdown Manager.
-2. Thermal factory returns IThermalShutdownManager object.
-3. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
-4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-5. Application disables auto-shutdown using setAutoShutdownMode API, to prevent a possible thermal auto-shutdown during eCall.
-6. Application receives synchronous status which indicates if the request was sent successfully.
-7. Optionally, the response to setAutoShutdownMode request can be received by the application.
-8. Application recieves a notification that thermal auto-shutdown mode is disabled.
-9. Application receives an imminent auto-shutdown enable notification and system will attempt to enable auto-shutdown after a certain period.
-   This notification is received if application does not enable auto-shutdown due to an active eCall.
-10. If the eCall is still active, the application disables auto-shutdown before it gets enabled automatically.
+1. Application requests for an instance of thermal factory.
+2. Thermal factory instance is received by the application.
+3. Application prepares the callback which would be called on initialization of thermal shutdown manager.
+4. Application request for thermal shutdown manager from thermal factory.
+5. Thermal factory returns an instance of the thermal shutdown manager object.
+6. Application waits for initalization callback to be called.
+7. Thermal factory invokes the callback once initialization completes.
+8. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
+9. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+10. Application disables auto-shutdown using setAutoShutdownMode API, to prevent a possible thermal auto-shutdown during eCall.
 11. Application receives synchronous status which indicates if the request was sent successfully.
 12. Optionally, the response to setAutoShutdownMode request can be received by the application.
 13. Application recieves a notification that thermal auto-shutdown mode is disabled.
-    Steps 9 to 13 are repeated as long as the eCall is active.
-14. When the eCall is completed, the application immediately enables auto-shutdown using setAutoShutdownMode API.
-15. Application receives synchronous status which indicates if the request was sent successfully.
-16. Optionally, the response to setAutoShutdownMode request can be received by the application.
-17. Application recieves a notification that thermal auto-shutdown mode is enabled.
-18. Application can remove listener.
-19. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+14. Application receives an imminent auto-shutdown enable notification and system will attempt to enable auto-shutdown after a certain period.
+   This notification is received if application does not enable auto-shutdown due to an active eCall.
+15. If the eCall is still active, the application disables auto-shutdown before it gets enabled automatically.
+16. Application receives synchronous status which indicates if the request was sent successfully.
+17. Optionally, the response to setAutoShutdownMode request can be received by the application.
+18. Application recieves a notification that thermal auto-shutdown mode is disabled.
+    Steps 14 to 18 are repeated as long as the eCall is active.
+19. When the eCall is completed, the application immediately enables auto-shutdown using setAutoShutdownMode API.
+20. Application receives synchronous status which indicates if the request was sent successfully.
+21. Optionally, the response to setAutoShutdownMode request can be received by the application.
+22. Application recieves a notification that thermal auto-shutdown mode is enabled.
+23. Application can remove listener.
+24. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 
 @section tcuactivity_management_call_flow TCU Activity Management
@@ -2929,17 +3151,20 @@ The application can register a listener for updates reagrding modem config activ
 
 @html_image{modem_config_load_and_activate_call_flow.png,Modem Config load and activate call flow,80,80,Modem Config load and activate call flow}
 
-1. Application requests modem config manager object from config factory.
-2. Config factory returns IModemConfigManager object.
-3. Application sends a request to load config file in modem's storage.
-4. Application receives synchronous Status which indicates if the request to load config file was sent successfully.
-5. Application is notified of the Status of the loadConfigFile request (either SUCCESS or FAILED) via the application-supplied callback.
-6. Application sends a request to get list of all modem configs from modem's storage.
-7. Application receives synchronous Status which indicates if the request to get config list was sent successfully.
-8. Application is notified of the Status of the requestConfigList request (either SUCCESS or FAILED) via the application-supplied callback along with list of modem configs.
-9. Application sends a request to activate config file.
-10. Application receives synchronous Status which indicates if the request to activate config file was sent successfully.
-11. Application is notified of the Status of the activateConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+1. Application requests Config factory for ModemConfig Manager and passes callback pointer.
+2. Config factory return IModemConfigManager object to application.
+3. Application can use IModemConfigManager::getServiceStatus to determine the state of sub system.
+4. The application receives the ServiceStatus of sub system which indicates the state of service.
+5. IModemConfigManager notifies the application when the subsystem is ready through the callback mechanism.
+6. Application sends a request to load config file in modem's storage.
+7. Application receives synchronous Status which indicates if the request to load config file was sent successfully.
+8. Application is notified of the Status of the loadConfigFile request (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application sends a request to get list of all modem configs from modem's storage.
+10. Application receives synchronous Status which indicates if the request to get config list was sent successfully.
+11. Application is notified of the Status of the requestConfigList request (either SUCCESS or FAILED) via the application-supplied callback along with list of modem configs.
+12. Application sends a request to activate config file.
+13. Application receives synchronous Status which indicates if the request to activate config file was sent successfully.
+14. Application is notified of the Status of the activateConfig request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsection deactivate_and_delete_modem_config_call_flow Call flow to deactivate and delete a modem config file.
 
@@ -2956,17 +3181,20 @@ The application can register a listener for updates reagrding modem config activ
 
 @html_image{deactivate_and_delete_modem_config_call_flow.png,Modem Config deactivate and delete Call Flow,80,80,Modem Config deactivate and delete Call Flow}
 
-1. Application requests modem config manager object from config factory.
-2. Config factory returns IModemConfigManager object.
-3. Application sends a request to deactivate config file.
-4. Application receives synchronous Status which indicates if the request to deactivate config file was sent successfully.
-5. Application is notified of the Status of the deactivateConfig request (either SUCCESS or FAILED) via the application-supplied callback.
-6. Application sends a request to get list of all modem configs from modem's storage.
-7. Application receives synchronous Status which indicates if the request to get config list was sent successfully.
-8. Application is notified of the Status of the requestConfigList request (either SUCCESS or FAILED) via the application-supplied callback along with list of modem configs.
-9. Application sends a request to delete config file.
-10. Application receives synchronous Status which indicates if the request to delete config file was sent successfully.
-11. Application is notified of the Status of the deleteConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+1. Application requests Config factory for ModemConfig Manager and passes callback pointer.
+2. Config factory return IModemConfigManager object to application.
+3. Application can use IModemConfigManager::getServiceStatus to determine the state of sub system.
+4. The application receives the ServiceStatus of sub system which indicates the state of service.
+5. IModemConfigManager notifies the application when the subsystem is ready through the callback mechanism.
+6. Application sends a request to deactivate config file.
+7. Application receives synchronous Status which indicates if the request to deactivate config file was sent successfully.
+8. Application is notified of the Status of the deactivateConfig request (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application sends a request to get list of all modem configs from modem's storage.
+10. Application receives synchronous Status which indicates if the request to get config list was sent successfully.
+11. Application is notified of the Status of the requestConfigList request (either SUCCESS or FAILED) via the application-supplied callback along with list of modem configs.
+12. Application sends a request to delete config file.
+13. Application receives synchronous Status which indicates if the request to delete config file was sent successfully.
+14. Application is notified of the Status of the deleteConfig request (either SUCCESS or FAILED) via the application-supplied callback.
 
 @subsection modem_config_set_and_get_auto_selection_mode_call_flow Call flow to set and get config auto selection mode
 
@@ -2983,14 +3211,17 @@ The application can register a listener for updates reagrding modem config activ
 
 @html_image{modem_config_set_and_get_auto_selection_mode_call_flow.png,Modem Config get and set Auto Selection Mode Call Flow,80,80,Modem Config get and set Auto Selection Mode Call Flow}
 
-1. Application requests modem config manager object from config factory.
-2. Config factory returns IModemConfigManager object.
-3. Application sends a request to set config auto selection mode.
-4. Application receives synchronous Status which indicates if the request to set config auto selection mode was sent successfully.
-5. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback.
-6. Application sends a request to get config auto selection mode.
-7. Application receives synchronous Status which indicates if the request to get config auto selection mode was sent successfully.
-8. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback, along with mode and slot id.
+1. Application requests Config factory for ModemConfig Manager and passes callback pointer.
+2. Config factory return IModemConfigManager object to application.
+3. Application can use IModemConfigManager::getServiceStatus to determine the state of sub system.
+4. The application receives the ServiceStatus of sub system which indicates the state of service.
+5. IModemConfigManager notifies the application when the subsystem is ready through the callback mechanism.
+6. Application sends a request to set config auto selection mode.
+7. Application receives synchronous Status which indicates if the request to set config auto selection mode was sent successfully.
+8. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback.
+9. Application sends a request to get config auto selection mode.
+10. Application receives synchronous Status which indicates if the request to get config auto selection mode was sent successfully.
+11. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback, along with mode and slot id.
 
 @section sensor_callflow Sensor
 
@@ -3174,5 +3405,59 @@ occur. Register this listener with the sensor feature manager.
 3. Enable the required feature.
 4. If system is not in sleep mode, Once the feature is enabled and an event related to the feature occurs, the listener is notified.
 5. If system is in sleep mode, Once the feature is enabled and an event related to the feature occurs, the listener is notified.
+
+@section platform_callflow Platform
+
+The platform sub-system provides APIs to configure and control platform functionalities.
+This sub-system provides notifications about certain system related events, for instance filesystem
+events such as EFS restore and backup events.
+
+@subsection platform_efs_backup_restore_call_flow Call flow for EFS restore notification registration and handling
+
+@anchor platform_efs_backup_restore_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{platform_efs_backup_restore_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{EFS restore notification registration and handling call flow}
+  \label{fig_platform_efs_backup_restore_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{platform_efs_backup_restore_call_flow.png,EFS restore notification registration and handling call flow,80,80,EFS restore notification registration and handling call flow}
+
+1. Get the reference to the PlatformFactory, with which we can further acquire other sub-system
+objects.
+2. Prepare an initialization callback method or lambda which will be called by the platform
+sub-system once the initialization is complete.
+3. Request for the IFsManager (filesystem manager) object from PlatformFactory and provide the
+initalization callback. Retain the IFsManager shared_ptr as long as necessary. PlatformFactory does
+not hold on to the returned instance. If the received shared_ptr is released, FsManager would be
+destroyed and requesting PlatformFactory for FsManager again would result in the creation of a new
+instance.
+4. Wait for the initialization callback to be invoked. The platform sub-system invokes the callback
+once the underlying sub-system is available for usage. If the service status is notified as
+SERVICE_FAILED, retry intitialization starting with step (3). If the service status is notified as
+SERVICE_AVAILABLE, the filesystem manager is ready for usage.
+5. Create an listener object of type IFsListener and register with IFsManager for notifications.
+Once registered, the listener receives service status notifications and EFS restore event
+notifications.
+6. If a service status notification with status SERVICE_UNAVAILABLE, the application should wait
+for service to be re-initialized and once done, SERVICE_AVAILABLE will be notified. If the service
+fails, SERVICE_FAILED is notified and the IFsManager object held is no longer usable. A new object
+of type IFsManager needs to be re-acquired from the PlatformFactory.
+7. When the application finds it appropriate to trigger a EFS backup, startEfsBackup should be
+invoked, which would return immediately indicating the status of the request
+8. Once EFS backup starts and completes, the notifications are sent out to the application.
+EFS restoration is controlled by the internal components based on several factors like
+identification of critical filesystem errors which result in failure to boot. When such conditions
+are identified, EFS restore events would be received by the application via the OnEfsRestoreEvent
+method and the application can make use of the information appropriately. The EFS restore
+notification also has information if the restore started or ended and if the restore was successful
+or a failure.
+9. Once clean-up is necessary, deregister the registered listener, set all shared pointers to
+nullptr. This will make the underlying sub-system relinquish resources that are no longer
+necessary.
 
 */

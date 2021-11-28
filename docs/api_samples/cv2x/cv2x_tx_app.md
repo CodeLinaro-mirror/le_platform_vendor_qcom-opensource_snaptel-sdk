@@ -6,6 +6,7 @@ C-V2X TX Sample App {#cv2x_tx_app}
 This Document walks through the cv2x_tx_app sample application.
 
 ### 1. Create Callback functions for ICv2xRadio and ICv2xRadioManager methods ###
+
    ~~~~~~{.cpp}
    // Globals
    static Cv2xStatus gCv2xStatus;
@@ -45,6 +46,7 @@ This Document walks through the cv2x_tx_app sample application.
 Note: We can also use Lambda functions instead of defining global scope callback functions.
 
 ### 2. Get a handle to the ICv2xRadioManager object ###
+
    ~~~~~~{.cpp}
    int main {
        // Get handle to Cv2xRadioManager
@@ -53,6 +55,7 @@ Note: We can also use Lambda functions instead of defining global scope callback
    ~~~~~~
 
 ### 3. Request the C-V2X status ###
+
 We want to verify that the C-V2X TX status is ACTIVE before we try to send data.
    ~~~~~~{.cpp}
        // Get C-V2X status and make sure Rx is enabled
@@ -69,11 +72,13 @@ We want to verify that the C-V2X TX status is ACTIVE before we try to send data.
    ~~~~~~
 
 ### 4. Get handle to C-V2X Radio ###
+
    ~~~~~~{.cpp}
        auto cv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
    ~~~~~~
 
 ### 5. Wait for C-V2X Radio to be ready ###
+
    ~~~~~~{.cpp}
        if (not cv2xRadio->isReady()) {
            if (Status::SUCCESS == cv2xRadio->onReady().get()) {
@@ -87,6 +92,7 @@ We want to verify that the C-V2X TX status is ACTIVE before we try to send data.
    ~~~~~~
 
 ### 6. Create TX SPS flow and send data using TX socket ###
+
    ~~~~~~{.cpp}
        // Set SPS parameters
        SpsFlowInfo spsInfo;
@@ -117,6 +123,7 @@ We want to verify that the C-V2X TX status is ACTIVE before we try to send data.
    ~~~~~~
 
 ### 7. Close TX SPS flow ###
+
    ~~~~~~{.cpp}
        // Deregister SPS flow
        resetCallbackPromise();

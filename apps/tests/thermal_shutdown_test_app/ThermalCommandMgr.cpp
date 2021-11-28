@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 #include <iostream>
 #include <sstream>
@@ -45,20 +81,19 @@ int ThermalCommandMgr::init() {
     // Get thermal factory instance
     auto &thermalFactory = ThermalFactory::getInstance();
     // Get thermal shutdown manager object
-    thermShutdownMgr_ = thermalFactory.getThermalShutdownManager();
+    std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
+    thermShutdownMgr_ = thermalFactory.getThermalShutdownManager(
+                            [&](telux::common::ServiceStatus status) {
+                                 prom.set_value(status);
+                            });
     if (thermShutdownMgr_ == NULL) {
         std::cout << APP_NAME << " *** ERROR - Failed to get manager instance" << std::endl;
         return -1;
     }
-    // Check thermal shutdown manager service status
-    bool isReady = thermShutdownMgr_->isReady();
-    if (!isReady) {
-        std::cout << APP_NAME << " Thermal-Shutdown management services are not ready, "
-                                 "waiting for it to be ready " << std::endl;
-        std::future<bool> f = thermShutdownMgr_->onReady();
-        isReady = f.get();
-    }
-    if (isReady) {
+    // wait for thermal shutdown manager to be ready
+    std::cout << " Waiting for Thermal Shutdown Manager to be ready " << std::endl;
+    telux::common::ServiceStatus serviceStatus = prom.get_future().get();
+    if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << APP_NAME << " Thermal-Shutdown management services are ready !" << std::endl;
     } else {
         std::cout << APP_NAME << " *** ERROR - Unable to initialize Thermal-Shutdown management "

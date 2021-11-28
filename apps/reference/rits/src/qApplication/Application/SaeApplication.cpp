@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 
  /**
@@ -79,7 +115,7 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort,
+        const string rxIpv4, const uint16_t rxPort, 
         char* fileConfiguration, MessageType msgType) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
     if (not configuration.isValid) {
@@ -199,7 +235,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             }else if(ret > 0 && ret < MIN_PACKET_LEN){
                 printf(
                 "Dropping packet with %d bytes. Needs to be at least %d bytes.\n",
-                        ret, MIN_PACKET_LEN);
+                        ret, MIN_PACKET_LEN); 
             }else if(ret > 0 && ret >= MAX_PACKET_LEN){
                 printf(
                 "Dropping packet with %d bytes. Needs to be less than %d bytes.\n",
@@ -302,7 +338,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 #ifdef WITH_WSA
                     if (mc->wra) {
                         ret = onReceiveWra(
-                                static_cast<RoutingAdvertisement_t*>(mc->wra),
+                                static_cast<RoutingAdvertisement_t*>(mc->wra), 
                                 sourceMacAddr, macAddrLen);
                     }
 #endif
@@ -464,6 +500,7 @@ void SaeApplication::fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra) {
 }
 #endif
 void SaeApplication::fillBsm(bsm_value_t *bsm) {
+    bool idChangeEnabled = false;
     memset(bsm, 0, sizeof(bsm_value_t));
     srand(timestamp_now());
     fillBsmCan(bsm);
@@ -484,8 +521,13 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     // check if msg count has been randomized and we haven't updated this yet
     // if so, keep adding and modding 127
     if(!this->configuration.lcmName.empty() &&
-        this->configuration.idChangeInterval)
+        this->configuration.idChangeInterval) {
+        idChangeEnabled = true;
+    }
+
+    if (idChangeEnabled) {
         sem_wait(&idChangeData.idSem);
+    }
         // for synchronization between Application and Aerolink sides
     if(!initialized){
         //printf("Initializing bsm count and temp id\n");
@@ -509,9 +551,9 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     else{
         bsm->MsgCount = (msgCount + 1) % 127;
     }
-    if(!this->configuration.lcmName.empty() &&
-        this->configuration.idChangeInterval)
+    if (idChangeEnabled) {
         sem_post(&idChangeData.idSem);
+    }
 
     msgCount = bsm->MsgCount;
     tempId = bsm->id;
@@ -693,8 +735,10 @@ int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
     if (encLength){
         // insert family ID of 0x01
         char *p = abuf_push(&mc_->abuf, 1);
-        *p = 0x01;
-        ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
+        if (p != NULL) {
+            *p = 0x01;
+            ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
+        }
     }
     if(ret > 0)
         txSuccess++;
@@ -777,8 +821,8 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
 
     if (GlobalIpSessionActive == true) {
         if (wraInterval == std::chrono::milliseconds::zero()) {
-            //received the second WRA message, need to determine the period of the WRA,
-            //so that if within expected internal we didn't receive next WRA, we deem the
+            //received the second WRA message, need to determine the period of the WRA, 
+            //so that if within expected internal we didn't receive next WRA, we deem the 
             //OBU went out of range of the associated RSU.
             auto diff = std::chrono::high_resolution_clock::now() - now;
             wraInterval = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
@@ -797,7 +841,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
     }
     if (wra->ipPrefix.size > CV2X_IPV6_ADDR_ARRAY_LEN) {
         if(appVerbosity > 3)
-            std::cerr << "Invalid ip prefix length received: " <<
+            std::cerr << "Invalid ip prefix length received: " << 
                     wra->ipPrefix.size << endl;
         ret = -1;
     } else {

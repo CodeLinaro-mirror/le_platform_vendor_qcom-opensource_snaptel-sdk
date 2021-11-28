@@ -6,6 +6,7 @@ Enable L2TP and Add Tunnel {#enable_and_add_tunnel_l2tp}
 Please follow below steps to enable L2TP and Tunnel
 
 ### 1.  Implement initialization callback and get get the DataFactory instance
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
@@ -57,6 +58,7 @@ by calling step 2. If L2tpManager initialization succeed, proceed to step 4
    ~~~~~~
 
 ### 5. Set L2TP Configuration
+
    ~~~~~~{.cpp}
    bool enable = true;        //Enable L2TP
    bool enableMss = true;     // Enable MSS Clamping

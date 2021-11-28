@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 extern "C" {
 #include "unistd.h"
@@ -93,10 +129,16 @@ bool DataConnectionMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "request_datacall_bit_rate",
             {}, std::bind(&DataConnectionMenu::requestDataCallBitRate, this,
             std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setRoamingMode
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "set_roaming_mode",
+            {}, std::bind(&DataConnectionMenu::setRoamingMode, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> requestRoamingMode
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "request_roaming_mode",
+            {}, std::bind(&DataConnectionMenu::requestRoamingMode, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
         reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
-        getDefaultProfile, reqDataCallBitRate};
+        getDefaultProfile, reqDataCallBitRate, setRoamingMode, requestRoamingMode};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -476,6 +518,90 @@ void DataConnectionMenu::getDefaultProfile() {
 
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->getDefaultProfile(
         opType, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::setRoamingMode(std::vector<std::string> inputCommand) {
+    std::cout << "\nSet Roaming Mode" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId = DEFAULT_SLOT_ID;
+    bool roamEnable = false;
+
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+
+    int enableRoamFlag;
+    std::cout << "Set Roaming Mode (1 - On, 0 - Off): ";
+    std::cin >> enableRoamFlag;
+    Utils::validateInput(enableRoamFlag);
+    if (enableRoamFlag) {
+        roamEnable = true;
+    }
+
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    Utils::validateInput(operationType);
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "setRoamingMode Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->setRoamingMode(
+        roamEnable, profileId, opType, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::requestRoamingMode(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "request Roaming Mode\n";
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    Utils::validateInput(operationType);
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    auto respCb = [](bool enable, int profileId, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestRoamingMode Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        std::cout << "Roaming mode on profile: " << profileId << " is "
+                  << (enable ? "enabled" : "disabled") << "\n";
+    };
+
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->requestRoamingMode(
+        profileId, opType, respCb);
     Utils::printStatus(retStat);
 }
 

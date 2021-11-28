@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /**
  * @file: Cv2xConfigApp.cpp
@@ -73,6 +109,7 @@ using telux::cv2x::ConfigEvent;
 using telux::cv2x::Cv2xStatus;
 using telux::cv2x::Cv2xStatusType;
 
+static const string CONFIG_FILE_PATH("/var/tmp/");
 static const string CONFIG_FILE("/var/tmp/v2x.xml");
 static const string EXPIRY_FILE("/var/tmp/expiry.xml");
 
@@ -397,11 +434,16 @@ int Cv2xConfigApp::retrieveConfigFile(string path) {
 
 void Cv2xConfigApp::retrieveConfigCommand() {
     string configFilePath;
-    cout << "Enter absolute config file path with file name: ";
-    getline(cin, configFilePath);
+    string configFileName;
+    cout << "CV2X config file will be stored in " << CONFIG_FILE_PATH << endl;
+    cout << "Enter the XML file name(e.g., v2x.xml): ";
+    getline(cin, configFileName);
+    configFilePath = CONFIG_FILE_PATH + configFileName;
 
     if (EXIT_SUCCESS == retrieveConfigFile(configFilePath)) {
-        cout << "Retrieve config file successfully." <<  endl;
+        cout << "Config file saved to " << configFilePath << " with success." << endl;
+    } else {
+        cout << "Fail to retrieve config file" << endl;
     }
 
     displayMenu();
@@ -432,8 +474,11 @@ int Cv2xConfigApp::updateConfigFile(string path) {
 
 void Cv2xConfigApp::updateConfigCommand() {
     string configFilePath;
-    cout << "Enter absolute config file path and file name: ";
-    getline(cin, configFilePath);
+    string configFileName;
+    cout << "Put the v2x configuration XML file under " << CONFIG_FILE_PATH << endl;
+    cout << "Then enter the file name(e.g., v2x.xml): ";
+    getline(cin, configFileName);
+    configFilePath = CONFIG_FILE_PATH + configFileName;
 
     if (EXIT_SUCCESS == updateConfigFile(configFilePath)) {
         cout << "Update config file successfully." <<  endl;

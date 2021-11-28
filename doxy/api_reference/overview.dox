@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /*=============================================================================
                              Edit History
@@ -99,6 +135,15 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 <b>Sensor services</b>
 
    The sensor sub-system provides API to configure and acquire data from underlying hardware sensors like accelerometers, gyroscopes among others.
+
+<b>Platform services</b>
+
+   The platform sub-system provides APIs to configure and control platform functionalities, like starting an EFS backup.
+   This sub-system also provides notifications about certain system related events, for instance filesystem events such as EFS restore and backup events.
+
+<b>Remote SIM Provisioning</b>
+
+   Remote SIM provisioning provides API to add profile, delete profile, activate/deactivate profile on the embedded SIMs (eUICC) , get list of profiles, get server address like SMDP+ and SMDS and update SMDP+ address, update nick name of profile and retrieve Embedded Identity Document(EID) of the SIM.
 
 <b>Debug Logger</b>
 
@@ -220,6 +265,11 @@ Its APIs provide functionality such as
    - Query the software bridges configured in the system
    - Enable / Disable the software bridge management
 
+Data Serving System Manager provides the interface to access network and modem low level services. The API includes method for:
+   - Request Modem Service Status
+   - Request Modem Roaming Status
+   - Register to get notifications when Service Status and Roaming status Change
+
 @subsection nw_srv_sys_services Network Selection and Serving System Management
 Network Selection and Service System Management APIs in the Telematics SDK used for configuring the networks and preferences
 
@@ -256,7 +306,7 @@ Cv2xRadio abstracts a C-V2X radio channel. The API includes methods for
 
 The Audio subSystem contains of APIs that support Audio operation.
 
-Audio APIs in the Telematics SDK include AudioManager, AudioStream, AudioVoiceStream, AudioPlayStream, AudioCaptureStream interfaces.
+Audio APIs in the Telematics SDK include AudioManager, AudioStream, AudioVoiceStream, AudioPlayStream, AudioCaptureStream, AudioLoopbackStream, AudioToneGenerator, Transcoder interfaces.
 
 AudioManager provides an interface for creation/deletion of audio stream. The API includes methods for
    - Query readiness of subSystem
@@ -281,13 +331,13 @@ AudioVoiceStream along with inheriting AudioStream, provides additional APIs to 
    - Detect DTMF tone
 
 AudioPlayStream along with inheriting AudioStream, provides additional APIs to manage audio play session as stated below.
-   - write audio samples
+   - Write audio samples
    - Write audio samples for compressed audio format
    - Stop Audio for compressed audio format
    - Play compressed format audio on voice paths
 
 AudioCaptureStream along with inheriting AudioStream, provides additional APIs to manage audio capture session as stated below.
-   - read audio samples
+   - Read audio samples
 
 AudioLoopbackStream along with inheriting AudioStream, provides additional APIs to manage audio loopback session as stated below.
    - Start loopback
@@ -300,14 +350,14 @@ AudioToneGeneratorStream along with inheriting AudioStream, provides additional 
 Transcoder provides APIs to manage audio transcoder which is able to perform below operations.
    - Convert one audio format to another
 
-Audio SDK provides details of Supported "Device Types" and "Stream Types" in the Audio subSystem of Reference Telematics platform.
+Audio SDK provides details of supported "Device Types" and "Stream Types" in the audio subsystem of Reference Telematics platform.
 
 “Device Type” encapsulates the type of device supported in Reference Telematics platform.
 The representation of these devices would be made available via public header file <usr/include/telux/audio/AudioDefines.hpp>.
 
 Example: DEVICE_TYPE_XXXX
 
-Internally SDK Device Type mapped to Audio HAL devices as per <usr/include/system/audio.h>.
+Internally SDK DeviceTypes are mapped to Audio HAL devices as per <usr/include/system/audio.h>.
 
 In current release it is mapped per below table.
 
@@ -324,7 +374,7 @@ In current release it is mapped per below table.
 @tr @td DEVICE_TYPE_MIC @tdend @tdlast AUDIO_DEVICE_IN_BACK_MIC @tdlastend @trend
 @tableend
 
-However Device Mapping configurable as stated below. This configurability provides flexibility to map different Audio HAL devices
+However Device Mapping is configurable as stated below. This configurability provides flexibility to map different Audio HAL devices
 to SDK representation.
 
 Update tel.conf file with below details before boot of system.
@@ -360,7 +410,7 @@ For custom platforms this mapping need to be updated.
 “Stream Type” encapsulates the type of stream supported in Reference Telematics Platform.
 The representation of these stream types made available via public header file <usr/include/telux/audio/AudioDefines.hpp>.
 
-Example:  VOICE_CALL, PLAY, CAPTURE etc
+Example:  VOICE_CALL, PLAY, CAPTURE, LOOPBACK, TONE_GENERATOR etc
 
 <b> Volume Support Table: </b>
 
@@ -451,10 +501,74 @@ The sensor sub-system provides APIs to
 In addition to the sensor sub-system APIs, configuration items relevant to the underlying sensors are also available in /etc/sensors.conf on the device filesystem.
 This includes the range for the sensors, the limits on sampling frequency and batch count among other parameters.
 
+@subsection platform Platform
+The platform sub-system provides APIs to
+   - Register and listen to filesystem events such as EFS backup and restore notifications
+   - Request EFS backup
+
+@subsection rsp Remote SIM Provisioning
+
+@anchor fig_rsp_block_diagram
+@latexonly
+\begin{figure}[H]
+   \centering
+   \includegraphics[scale=0.70]{rsp_block_diagram.png}
+   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+   \caption{Remote SIM Provisioning}
+   \label{fig_rsp_block_diagram}
+\end{figure}
+@endlatexonly
+@html_image{rsp_block_diagram.png,Remote SIM Provisioning,70,70,Remote SIM Provisioning}
+
+The Telematics Application can leverage Remote SIM Provisioning (RSP) APIs to perform eUICC profile management operations.
+
+Remote SIM Provisioning APIs in Telematics SDK provides operations such as
+   - Download a profile on the eUICC. Allow downloading of profile based on activation code and confirmation code.
+     Also provide user consent for downloading of profile.
+   - Enable or disable a profile to activate/deactivate subscription corresponding to profile.
+   - Delete a profile from an eUICC.
+   - Query list of profile on the eUICC.
+   - Get and update the server address( SMDP+ and SMDS)
+   - Get EID of the eUICC.
+   - Update nickname of the profile.
+   - Perform memory reset which allows to delete test and operational profiles or reset to default SMDP+ address.
+
+When modem LPA/eUICC needs to reach SMDP+/SMDS server on the cloud for HTTP transaction, the HTTP
+request is sent to RSP service i.e RSP HTTP daemon. The RSP HTTP Daemon performs these HTTP
+transactions on behalf of modem with SMDP+/SMDS server running on the cloud. The HTTP response from
+cloud is sent back to modem LPA/eUICC to take appropriate action.
+
 @subsection debug_logger Debug Logger
 Logging APIs in the Telematics SDK provides logging related functionalities such as
    - Runtime configurable logging to console, diag and file.
    - Possible LOG_LEVEL values are NONE, PERF, ERROR, WARNING, INFO, DEBUG.
+
+@section subsystem_restart_handeling Subsystem Restart
+Subsystem restart events occur when device operating system or services crashes due to any reason and then reboots
+to operational state. This section explains notifications that are sent to application when such an event
+occurs, the impact on application, notifications that are sent to application when device recovers to
+operating state, and suggested action application should take after recovery. <br>
+Examples of Subsystem Restart events:
+- External application processor crash
+- Modem application processor crash
+- Modem processor crash
+
+If application is running on either application processors when it crashes, application is expected to
+be restarted to initial state. For other scenarios, details are explained below for each subsystem. <br>
+@subsection data_subsystem Data Services
+Data services behavior when Subsystem Restart event occur is shown in table below:
+
+@anchor fig_data_ssr_diagram
+@latexonly
+\begin{figure}[H]
+   \centering
+   \includegraphics[scale=0.65]{data_ssr.png}
+   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+   \caption{Data SSR and Recovery}
+   \label{fig_data_ssr_diagram}
+\end{figure}
+@endlatexonly
+@html_image{data_ssr.png,Data SSR and Recovery,70,70,Data SSR and Recovery}
 
 @section Security
 @subsection SELinux
@@ -481,6 +595,7 @@ Logging APIs in the Telematics SDK provides logging related functionalities such
 @tr @td config @tdend @td telux_allow_modemconfig() @tdend @td domain context @tdend @tdlast telux_allow_modemconfig(app_t) @tdlastend @trend
 @tr @td cv2x @tdend @td telux_allow_v2x() @tdend @td domain context @tdend @tdlast telux_allow_v2x(app_t) @tdlastend @trend
 @tr @td sensor @tdend @td telux_allow_sensor() @tdend @td domain context @tdend @tdlast telux_allow_sensor(app_t) @tdlastend @trend
+@tr @td platform @tdend @td telux_allow_platform() @tdend @td domain context @tdend @tdlast telux_allow_platform(app_t) @tdlastend @trend
 @tableend
 
 The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform all SDK data operations.
@@ -493,6 +608,5 @@ The following example illustrates how an application can incorporate the SELinux
 
     telux_allow_data(app_t);
 \endcode
-
 
 */

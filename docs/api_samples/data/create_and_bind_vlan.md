@@ -6,6 +6,7 @@ Create Vlan And Bind It To PDN {#create_and_bind_vlan}
 Please follow below steps to create Vlan and bind it to PDN
 
 ### 1. Implement initialization callback and get the DataFactory instance
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 

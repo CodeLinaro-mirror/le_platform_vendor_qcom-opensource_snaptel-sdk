@@ -1,14 +1,14 @@
-Audio voice session volume/mute control {#audio_manager_voicecall_volume_mute}
+Volume and mute controls {#audio_manager_voicecall_volume_mute}
 ==============================================================================
 
-# Audio Manager API Sample Reference for voice session volume/mute control
+## Audio Manager API Sample Reference for voice session volume/mute control
 
-This Section demonstrates how to use the Audio Manager API for voice session volume/mute control.
+This section demonstrates how to use the audio APIs for volume/mute control during voice session.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

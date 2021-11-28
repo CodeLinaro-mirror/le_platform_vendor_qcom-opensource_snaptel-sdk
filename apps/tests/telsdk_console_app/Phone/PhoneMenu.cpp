@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /**
  * PhoneMenu provides menu options to invoke Phone functions such as
@@ -42,6 +78,8 @@
 #include "NetworkMenu.hpp"
 #include "PhoneMenu.hpp"
 #include "ServingSystemMenu.hpp"
+
+#define INVALID -1
 
 PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -190,8 +228,12 @@ void PhoneMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Exit_ECBM", {},
          std::bind(&PhoneMenu::exitEcbm, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> requestOperatorNameCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Get_operator_name", {},
+         std::bind(&PhoneMenu::requestOperatorName, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("15", "Select_sim_slot", {},
+      ConsoleAppCommand("16", "Select_sim_slot", {},
                         std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
@@ -208,7 +250,8 @@ void PhoneMenu::init() {
          setECallOperatingModeCommand,
          requestECallOperatingModeCommand,
          requestEcbmCommand,
-         exitEcbmCommand};
+         exitEcbmCommand,
+         requestOperatorNameCommand};
 
    if (phones_.size() > 1) {
        commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
@@ -305,7 +348,7 @@ void PhoneMenu::getOperatingMode(std::vector<std::string> userInput) {
 
 void PhoneMenu::setOperatingMode(std::vector<std::string> userInput) {
    if(phoneManager_) {
-      int operatingMode;
+      int operatingMode = INVALID;
       std::cout << "Enter Operating Mode (0-Online, 1-Airplane, 2-Factory Test,\n"
                 << "3-Offline, 4-Resetting, 5-Shutting Down, 6-Persistent Low "
                    "Power) : ";
@@ -382,7 +425,7 @@ void PhoneMenu::networkMenu(std::vector<std::string> userInput) {
 void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
    auto phone = phones_[slot_ - 1];
    if(phone) {
-      int eCallMode;
+      int eCallMode = INVALID;
       std::cout << std::endl;
       std::cout << "Enter eCall Operating Mode(0-NORMAL, 1-ECALL_ONLY): ";
       std::cin >> eCallMode;
@@ -475,4 +518,20 @@ void PhoneMenu::exitEcbm(std::vector<std::string> userInput) {
     } else {
         std::cout << "ERROR - CallManager is null \n";
     }
+}
+
+void PhoneMenu::requestOperatorName(std::vector<std::string> userInput) {
+   auto phone = phones_[slot_ - 1];
+   if(phone) {
+        auto status = phone->requestOperatorName(MyOperatorNameCallback::requestOperatorNameCb);
+        if (status == Status::SUCCESS) {
+            std::cout << "Request Operator name sent successfully\n";
+        } else {
+            std::cout << "ERROR - Failed to request operator name,"
+                      << "Status:" << static_cast<int>(status) << "\n";
+            Utils::printStatus(status);
+        }
+   } else {
+        std::cout << "No phone found\n";
+   }
 }

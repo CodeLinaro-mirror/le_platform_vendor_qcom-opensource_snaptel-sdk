@@ -26,6 +26,42 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /**
  * @file       PhoneFactory.hpp
@@ -36,7 +72,6 @@
 #ifndef PHONEFACTORY_HPP
 #define PHONEFACTORY_HPP
 
-#include <map>
 #include <memory>
 
 #include <telux/tel/CallManager.hpp>
@@ -60,7 +95,7 @@ namespace telux {
 
 namespace tel {
 
-/** @addtogroup telematics_phone_factory
+/** @addtogroup telematics_phone
  * @{ */
 
 /**
@@ -68,7 +103,7 @@ namespace tel {
  *        and services
  */
 class PhoneFactory {
-public:
+ public:
    /**
     * Get Phone Factory instance.
     */
@@ -80,7 +115,7 @@ public:
     *
     * @returns Pointer of IPhoneManager object.
     */
-   std::shared_ptr<IPhoneManager> getPhoneManager();
+   virtual std::shared_ptr<IPhoneManager> getPhoneManager() = 0;
 
    /**
     * Get SMS Manager instance for Phone ID. SMSManager used to send and receive
@@ -94,8 +129,8 @@ public:
     *
     * @returns Pointer of ISmsManager object or nullptr in case of failure.
     */
-   std::shared_ptr<ISmsManager> getSmsManager(int phoneId = DEFAULT_PHONE_ID,
-      telux::common::InitResponseCb callback = nullptr);
+   virtual std::shared_ptr<ISmsManager> getSmsManager(int phoneId = DEFAULT_PHONE_ID,
+      telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get Call Manager instance to determine state of active calls and perform
@@ -103,7 +138,7 @@ public:
     *
     * @returns Pointer of ICallManager object.
     */
-   std::shared_ptr<ICallManager> getCallManager();
+   virtual std::shared_ptr<ICallManager> getCallManager() = 0;
 
    /**
     * Get Card Manager instance to handle services such as transmitting APDU,
@@ -111,7 +146,7 @@ public:
     *
     * @returns Pointer of ICardManager object.
     */
-   std::shared_ptr<ICardManager> getCardManager();
+   virtual std::shared_ptr<ICardManager> getCardManager() = 0;
 
    /**
     * Get Sap Card Manager instance associated with the provided slot id. This
@@ -122,14 +157,14 @@ public:
     *
     * @returns Pointer of ISapCardManager object.
     */
-   std::shared_ptr<ISapCardManager> getSapCardManager(int slotId = DEFAULT_SLOT_ID);
+   virtual std::shared_ptr<ISapCardManager> getSapCardManager(int slotId = DEFAULT_SLOT_ID) = 0;
 
    /**
     * Get Subscription Manager instance to get device subscription details
     *
     * @returns Pointer of ISubscriptionManager object.
     */
-   std::shared_ptr<ISubscriptionManager> getSubscriptionManager();
+   virtual std::shared_ptr<ISubscriptionManager> getSubscriptionManager() = 0;
 
    /**
     * Get Serving System Manager instance to get and set preferred network type.
@@ -140,8 +175,8 @@ public:
     *
     * @returns Pointer of IServingSystemManager object.
     */
-   std::shared_ptr<IServingSystemManager> getServingSystemManager(int slotId = DEFAULT_SLOT_ID,
-      telux::common::InitResponseCb callback = nullptr);
+   virtual std::shared_ptr<IServingSystemManager> getServingSystemManager(
+      int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get Network Selection Manager instance to get and set selection mode, get
@@ -153,8 +188,8 @@ public:
     *
     * @returns Pointer of INetworkSelectionManager object.
     */
-   std::shared_ptr<INetworkSelectionManager> getNetworkSelectionManager(
-      int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr);
+   virtual std::shared_ptr<INetworkSelectionManager> getNetworkSelectionManager(
+      int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr) = 0;
 
    /**
     * Get Remote SIM Manager instance to handle services like exchanging APDU,
@@ -164,7 +199,7 @@ public:
     *
     * @returns Pointer of IRemoteSimManager object.
     */
-   std::shared_ptr<IRemoteSimManager> getRemoteSimManager(int slotId = DEFAULT_SLOT_ID);
+   virtual std::shared_ptr<IRemoteSimManager> getRemoteSimManager(int slotId = DEFAULT_SLOT_ID) = 0;
 
    /**
     * Get Multi SIM Manager instance to handle operations like high capabilty
@@ -172,7 +207,7 @@ public:
     *
     * @returns Pointer of IMultiSimManager object.
     */
-   std::shared_ptr<IMultiSimManager> getMultiSimManager();
+   virtual std::shared_ptr<IMultiSimManager> getMultiSimManager() = 0;
 
    /**
     * Get CellBroadcast Manager instance for Slot ID. CellBroadcast manager used to receive
@@ -182,7 +217,8 @@ public:
     *
     * @returns Pointer of ICellBroadcastManager object or nullptr in case of failure.
     */
-   std::shared_ptr<ICellBroadcastManager> getCellBroadcastManager(SlotId slotId = DEFAULT_SLOT_ID);
+   virtual std::shared_ptr<ICellBroadcastManager> getCellBroadcastManager(
+      SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
    /**
     * Get SimProfileManager. SimProfileManager is a primary interface for remote
@@ -191,7 +227,7 @@ public:
     * @returns Pointer of ISimProfileManager object or nullptr in case of failure.
     *
     */
-   std::shared_ptr<ISimProfileManager> getSimProfileManager();
+   virtual std::shared_ptr<ISimProfileManager> getSimProfileManager() = 0;
 
    /**
     * Get Ims Settings Manager instance to handle IMS service enable configuation parameters like
@@ -205,8 +241,8 @@ public:
     * @note Eval: This is a new API and is being evaluated. It is subject to change and
     *             could break backwards compatibility.
     */
-   std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
-       telux::common::InitResponseCb  callback = nullptr);
+   virtual std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
+       telux::common::InitResponseCb  callback = nullptr) = 0;
 
    /**
     * Get HttpTransactionManager instance to handle HTTP related requests
@@ -220,8 +256,8 @@ public:
     *             could break backwards compatibility.
     *
     */
-   std::shared_ptr<IHttpTransactionManager> getHttpTransactionManager(
-      telux::common::InitResponseCb  callback = nullptr);
+   virtual std::shared_ptr<IHttpTransactionManager> getHttpTransactionManager(
+      telux::common::InitResponseCb  callback = nullptr) = 0;
 
    /**
     * Get IMS Serving System Manager instance to query IMS registration status
@@ -231,53 +267,19 @@ public:
     * @note    Eval: This is a new API and is being evaluated.It is subject to change and
     *          could break backwards compatibility.
     */
-   std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(SlotId slotId,
-      telux::common::InitResponseCb callback = nullptr);
+   virtual std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(SlotId slotId,
+      telux::common::InitResponseCb callback = nullptr) = 0;
 
-private:
-   std::shared_ptr<IPhoneManager> phoneManager_;
-   std::shared_ptr<ICallManager> callManager_;
-   std::shared_ptr<ICardManager> cardManager_;
-   std::shared_ptr<ISubscriptionManager> subscriptionManager_;
-   std::shared_ptr<IMultiSimManager> multiSimManager_;
-   std::shared_ptr<ISimProfileManager> simProfileManager_;
-   std::shared_ptr<IImsSettingsManager> imsSettingsManager_;
-   std::shared_ptr<IHttpTransactionManager> httpTransactionManager_;
-   std::map<SlotId, std::shared_ptr<IImsServingSystemManager>> imsServSysManagerMap_;
-   std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
-   std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
-   std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
-   std::map<int, std::shared_ptr<INetworkSelectionManager>> networkSelectionManagerMap_;
-   std::map<int, std::shared_ptr<ISapCardManager>> sapCardManagerMap_;
-   std::map<int, std::shared_ptr<IRemoteSimManager>> remoteSimManagerMap_;
-   std::vector<telux::common::InitResponseCb> imssCallbacks_;
-   telux::common::ServiceStatus imssInitStatus_;
-   std::vector<telux::common::InitResponseCb> httpTransactionCallbacks_;
-   std::map<int, std::vector<telux::common::InitResponseCb>> servingSysMgrCallbacks_;
-   std::map<int, std::vector<telux::common::InitResponseCb>> networkSelMgrCallbacks_;
-   telux::common::ServiceStatus httpTransactionInitStatus_;
-   std::map<int, telux::common::ServiceStatus> servingSysMgrInitStatus_;
-   std::map<int, telux::common::ServiceStatus> networkSelMgrInitStatus_;
-   std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
-   std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
-
-   void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
-   void onHttpTransactionManagerResponse(telux::common::ServiceStatus status);
-   void onServingSystemInitResponse(int slotId, telux::common::ServiceStatus status);
-   void onNetworkSelectionInitResponse(int slotId, telux::common::ServiceStatus status);
-   std::map<SlotId, std::vector<telux::common::InitResponseCb>> imsServSysCallbacks_;
-   telux::common::ServiceStatus imsServSysInitStatus_;
-   void initImsServSysManagerNotifier(telux::common::ServiceStatus status, SlotId slotId);
-   void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
-
+ protected:
    PhoneFactory();
-   ~PhoneFactory();
+   virtual ~PhoneFactory();
+
+ private:
    PhoneFactory(const PhoneFactory &) = delete;
    PhoneFactory &operator=(const PhoneFactory &) = delete;
-   std::recursive_mutex mutex_;
 };
 
-/** @} */ /* end_addtogroup telematics_phone_factory */
+/** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel
 

@@ -6,6 +6,7 @@ Start/Stop data call {#start_or_stop_data_call}
 Please follow below steps to start or stop cellular data call
 
 ### 1. Implement initialization callback and get the DataFactory instance
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 

@@ -6,6 +6,7 @@ Add data filter {#add_data_filter}
 Please follow below steps to add data filter
 
 ### 1. Get the DataFactory, DataConnectionManager and DataFilterManager instances
+
    ~~~~~~{.cpp}
     auto &dataFactory = telux::data::DataFactory::getInstance();
     auto dataConnMgr_ = dataFactory.getDataConnectionManager();
@@ -13,6 +14,7 @@ Please follow below steps to add data filter
    ~~~~~~
 
 ### 2. Wait for the Data Connection Manager and Data Filter Manager sub system initialization
+
    ~~~~~~{.cpp}
     bool dataConnectionSubSystemStatus = dataConnMgr_->isSubsystemReady();
     if (!dataConnectionSubSystemStatus) {
@@ -41,6 +43,7 @@ Please follow below steps to add data filter
    ~~~~~~
 
 ### 3. Set data filter mode to enable
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     int profileId = 2;
@@ -71,6 +74,7 @@ Please follow below steps to add data filter
    ~~~~~~
 
 ### 4. Add data filter
+
    ~~~~~~{.cpp}
     std::promise<bool> p;
     std::string ipAddr = std::string("168.128.91.1");

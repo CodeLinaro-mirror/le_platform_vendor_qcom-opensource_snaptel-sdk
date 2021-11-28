@@ -4,6 +4,7 @@ Obtaining filter rate adjustment notification from C-V2X Throttle Manager API {#
 Please follow bellow steps to obtain filter rate adjustment notification
 
 ### 1. Implement ICv2xThrottleManagerListener interface ###
+
    ~~~~~~{.cpp}
    class Cv2xTmListener : public ICv2xThrottleManagerListener {
        public:
@@ -11,6 +12,7 @@ Please follow bellow steps to obtain filter rate adjustment notification
     };
    ~~~~~~
 ### 2. Create a initialization status callback function
+
    ~~~~~~{.cpp}
     bool cv2xTmStatusUpdated = false;
     telux::common::ServiceStatus cv2xTmStatus =
@@ -29,6 +31,7 @@ Please follow bellow steps to obtain filter rate adjustment notification
     ~~~~~~
 
 ### 3. Get a handle to the ICv2xThrottleManager object ###
+
    ~~~~~~{.cpp}
    int main {
        // Get handle to Cv2xThrottleManager
@@ -37,6 +40,7 @@ Please follow bellow steps to obtain filter rate adjustment notification
    ~~~~~~
 
 ### 4. Wait for throttle manager to complete initialization ###
+
    ~~~~~~{.cpp}
     std::unique_lock<std::mutex> lck(mtx);
     cv.wait(lck, [&] { return cv2xTmStatusUpdated; });
@@ -48,11 +52,13 @@ Please follow bellow steps to obtain filter rate adjustment notification
    ~~~~~~
 
 ### 5. Instantiate Cv2xTmListener ###
+
    ~~~~~~{.cpp}
    auto listener = std::make_shared<Cv2xTmListener>();
    ~~~~~~
 
-### 6. Register listener 
+### 6. Register listener
+
    ~~~~~~{.cpp}
     if (cv2xThrottleManager->registerListener(listener) !=
         telux::common::Status::SUCCESS) {
@@ -62,6 +68,7 @@ Please follow bellow steps to obtain filter rate adjustment notification
    ~~~~~~
 
 ### 7. Wait for filter rate adjustment notification
+
    ~~~~~~{.cpp}
     void Cv2xTmListener::onFilterRateAdjustment(int rate) {
         std::cout << "Updated rate: " << rate << std::endl;

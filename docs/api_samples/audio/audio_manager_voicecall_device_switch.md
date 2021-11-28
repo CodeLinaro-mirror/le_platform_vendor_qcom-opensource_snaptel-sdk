@@ -1,14 +1,14 @@
-Audio voice session device switch {#audio_audio_manager_voicecall_device_switch}
+Switching device {#audio_audio_manager_voicecall_device_switch}
 =================================================================================================================
 
-# Audio Manager API Sample Reference for voice session device switch
+## Audio Manager API Sample Reference for voice session device switch
 
-This Section demonstrates how to use the Audio Manager API for voice session device switch.
+This section demonstrates how to use the audio APIs for switching device during voice session.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

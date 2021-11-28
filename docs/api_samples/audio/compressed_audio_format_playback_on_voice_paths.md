@@ -1,14 +1,14 @@
-Compressed audio format playback on voice paths {#compressed_audio_format_playback_on_voice_paths}
+Playback on voice paths {#compressed_audio_format_playback_on_voice_paths}
 ==================================================================================================
 
-# Audio Manager APIs Sample Reference for compressed audio format playback on voice paths
+## Audio Manager APIs Sample Reference for compressed audio format playback on voice paths
 
-This Section demonstrates how to use the Audio Manager API for compressed audio format playback on voice paths.
+This section demonstrates how to use the audio APIs for compressed audio format playback on voice paths.
 
 ### 1. Get the AudioFactory instance
 
    ~~~~~~{.cpp}
-    auto &audioFactory = audioFactory::getInstance();
+    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the AudioManager object and check for audio subsystem Readiness

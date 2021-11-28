@@ -6,6 +6,7 @@ Create Static NAT Entry {#create_snat_entry}
 Please follow below steps to create static NAT entry
 
 ### 1. Implement initialization callback and get the DataFactory instance
+
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 

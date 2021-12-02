@@ -70,6 +70,8 @@ if(BUILD_ALL_SAMPLES)
     add_subdirectory( samples/sensor/sensor_app )
     add_subdirectory( samples/sensor/sensor_feature_app )
     add_subdirectory( samples/platform/efs_backup_restore_app )
+    add_subdirectory( samples/platform/ota_operations_app )
+    add_subdirectory( samples/platform/ecall_operations_app )
 
     if(NOT MACHINE_HAS_CV2X_ONLY)
         add_subdirectory( samples/audio/voice_session_app )

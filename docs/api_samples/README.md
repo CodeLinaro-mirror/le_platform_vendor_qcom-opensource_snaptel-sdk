@@ -52,3 +52,5 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to enable/disable socks proxy](data/enable_disable_socks.md)
   * [How to use Location Configurator APIs](loc/location_services_configurator.md)
   * [How to receive EFS restore indications](platform/efs_restore_indications.md)
+  * [How to perform an ECALL operation](platform/ecall_operation.md)
+  * [How to perform an OTA operation](platform/ota_operation.md)

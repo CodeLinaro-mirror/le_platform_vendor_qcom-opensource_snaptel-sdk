@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *
+ *    * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *
+ *   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       LocationDefines.hpp
  *
@@ -66,7 +102,6 @@ const uint64_t INVALID_ENERGY_CONSUMED = 0xffffffffffffffff; /**< 0xffffffffffff
                                                                   consumed info. */
 const uint32_t DEFAULT_GNSS_REPORT = 0xffffffff; /**< 0xffffffff indicates all the reports are
                                                       enabled. */
-const float UNKNOWN_SV_TIME_SUB_NS = -1;
 
 /**
  * Defines RTCM injection data format
@@ -241,7 +276,11 @@ enum GnssPositionTechType {
    *  location info.*/
   GNSS_HYBRID = (1 << 7),
   /** Precise position engine was used to generate location info.*/
-  GNSS_PPE = (1 << 8)
+  GNSS_PPE = (1 << 8),
+  /** Location was calculated using Vehicular data. */
+  GNSS_VEHICLE = (1 << 9),
+  /** Location was calculated using Visual data. */
+  GNSS_VISUAL = (1 << 10)
 };
 
 /*Bit mask containing bits from GnssPositionTechType */
@@ -582,6 +621,52 @@ enum GnssSignalType {
 /*Bit mask containing bits from GnssSignalType */
 using GnssSignal = uint32_t;
 
+/** Specify Location Capabilities Type.*/
+enum LocCapabilityType {
+  /** Support time based tracking session via @ref ILocationManager::startDetailedReports,
+   *  @ref ILocationManager::startDetailedEngineReports and
+   *  @ref ILocationManager::startBasicReports with distanceInMeters set to 0.
+   */
+  TIME_BASED_TRACKING = (1<<0),
+  /** Support distance based tracking session via @ref ILocationManager::startBasicReports with
+   *  distanceInMeters specified.
+   */
+  DISTANCE_BASED_TRACKING = (1<<1),
+  /** Support Gnss Measurement data via @ref ILocationListener::onGnssMeasurementsInfo when a
+   *  tracking session is enabled.
+   */
+  GNSS_MEASUREMENTS = (1<<2),
+  /** Support configure constellations via @ref ILocationConfigurator::configureConstellations. */
+  CONSTELLATION_ENABLEMENT = (1<<3),
+  /** Support carrier phase for Precise Positioning Measurement Engine (PPME). */
+  CARRIER_PHASE = (1<<4),
+  /** Support GNSS Single Frequency feature. */
+  QWES_GNSS_SINGLE_FREQUENCY = (1<<5),
+  /** Supports GNSS Multi Frequency feature. */
+  QWES_GNSS_MULTI_FREQUENCY = (1<<6),
+  /** Support VEPP license bundle is enabled. VEPP bundle include Carrier Phase features. */
+  QWES_VPE = (1<<7),
+  /** Support for CV2X Location basic features. This includes features for
+   *  GTS Time & Freq, @ref ILocationConfigurator::configureCTunc.
+   */
+  QWES_CV2X_LOCATION_BASIC = (1<<8),
+  /** Support for CV2X Location premium features. This includes features for
+   *  CV2X Location Basic features, QDR3 feature and @ref ILocationConfigurator::configurePACE.
+   */
+  QWES_CV2X_LOCATION_PREMIUM = (1<<9),
+  /** Support PPE (Precise Positioning Engine) library is enabled or Precise Positioning Framework
+   *  (PPF) is available. This includes features for Carrier Phase and SV Ephermeris.
+   */
+  QWES_PPE = (1<<10),
+  /** Support QDR2_C license bundle is enabled. */
+  QWES_QDR2 = (1<<11),
+  /** Support QDR3_C license bundle is enabled. */
+  QWES_QDR3 = (1<<12)
+};
+
+/*Bit mask containing bits from LocCapabilityType */
+using LocCapability = uint32_t;
+
 /** Specify the satellite vehicle measurements that are used
  *  to calculate location in @ref ILocationInfoEx.*/
 struct GnssMeasurementInfo {
@@ -685,7 +770,11 @@ enum LocationValidityType {
     /** Location has valid heading accuracy.*/
     HAS_HEADING_ACCURACY_BIT  = (1<<7),
     /** Location has valid timestamp.*/
-    HAS_TIMESTAMP_BIT         = (1<<8)
+    HAS_TIMESTAMP_BIT         = (1<<8),
+    /** Location has valid elapsed real time.*/
+    HAS_ELAPSED_REAL_TIME_BIT = (1<<9),
+    /** Location has valid elapsed real time uncertainty.*/
+    HAS_ELAPSED_REAL_TIME_UNC_BIT = (1<<10)
 };
 
 /*Bit mask containing bits from LocationValidityType */
@@ -763,7 +852,15 @@ enum LocationInfoExValidityType {
   /** valid altitude type*/
   HAS_ALTITUDE_TYPE = (1ULL << 32),
   /** valid report status*/
-  HAS_REPORT_STATUS = (1ULL << 33)
+  HAS_REPORT_STATUS = (1ULL << 33),
+  /** valid integrity risk*/
+  HAS_INTEGRITY_RISK_USED = (1ULL << 34),
+  /** valid protect level along track*/
+  HAS_PROTECT_LEVEL_ALONG_TRACK = (1ULL << 35),
+  /** valid protect level cross track*/
+  HAS_PROTECT_LEVEL_CROSS_TRACK = (1ULL << 36),
+  /** valid protect level vertical*/
+  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -1009,7 +1106,15 @@ enum GnssMeasurementsDataValidityType{
     /** Validity of signalToNoiseRatioDb.*/
     SIGNAL_TO_NOISE_RATIO_BIT        = (1<<16),
     /** Validity of agcLevelDb.*/
-    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17)
+    AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17),
+    /** Validity of signal type.*/
+    GNSS_SIGNAL_TYPE                 = (1<<18),
+    /** Validity of basebandCarrierToNoise.*/
+    BASEBAND_CARRIER_TO_NOISE        = (1<<19),
+    /** Validity of fullInterSignalBias.*/
+    FULL_ISB                         = (1<<20),
+    /** Validity of fullInterSignalBiasUncertainty.*/
+    FULL_ISB_UNCERTAINTY             = (1<<21)
 };
 
 /** Specifies GnssMeasurementsDataValidityType.*/
@@ -1164,6 +1269,19 @@ struct GnssMeasurementsData {
     double signalToNoiseRatioDb;
     /** Automatic gain control level, in unit of dB.*/
     double agcLevelDb;
+    /** GnssSignalType mask */
+    GnssSignal gnssSignalType;
+    /** Carrier-to-noise ratio of the signal measured at baseband,
+     *  in unit of dB-Hz. */
+    double basebandCarrierToNoise;
+    /** The full inter-signal bias (ISB) in nanoseconds.
+     *  This value is the sum of the estimated receiver-side and the
+     *  space-segment-side inter-system bias, inter-frequency bias
+     *  and inter-code bias. */
+    double fullInterSignalBias;
+    /** Uncertainty associated with the full inter-signal bias in
+     *  nanoseconds. */
+    double fullInterSignalBiasUncertainty;
 };
 
 /** Specify GNSS measurements clock.
@@ -1676,6 +1794,24 @@ public:
  */
   virtual float getHeadingUncertainty() = 0;
 
+/**
+ * Boot timestamp corresponding to the UTC timestamp for Location fix.
+ *    - Units: Nano-second
+ *
+ * @returns elapsed real time.
+ *
+ */
+  virtual uint64_t getElapsedRealTime() = 0;
+
+/**
+ * Retrieves elapsed real time uncertainty.
+ *    - Units: Nano-second
+ *
+ * @returns elapsed real time uncertainty.
+ *
+ */
+  virtual uint64_t getElapsedRealTimeUncertainty() = 0;
+
 };
 
 /**
@@ -2009,6 +2145,34 @@ public:
  * @returns Status of the report. Returns ReportStatus::UNKNOWN if status is unavailable.
  */
   virtual ReportStatus getReportStatus() = 0;
+
+/**
+ * Integrity risk used for protection level parameters. Unit of 2.5e-10.
+ * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
+ * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
+ * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
+ * @ref ILocationInfoEx::getProtecttionLevelVertical will not be available.
+ *
+ */
+  virtual uint32_t getIntegrityRiskUsed() = 0;
+
+/**
+ * Along-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelAlongTrack() = 0;
+
+/**
+ * Cross-track protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelCrossTrack() = 0;
+
+/**
+ * Vertical component protection level at specified integrity risk, in unit of meter.
+ *
+ */
+  virtual float getProtectionLevelVertical() = 0;
 
 };
 

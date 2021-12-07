@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
  /**
   * @file: EtsiApplication.cpp
   *
@@ -61,8 +97,11 @@ EtsiApplication::EtsiApplication(char *fileConfiguration): ApplicationBase(fileC
     for (auto mc : spsContents) {
         initMsg(mc);
     }
+    if (isRxSim) {
+        initMsg(rxSimMsg, true);
+    }
     for (auto mc : receivedContents) {
-        mc->stackId = STACK_ID_ETSI;
+        initMsg(mc, true);
     }
 }
 
@@ -92,28 +131,94 @@ EtsiApplication::EtsiApplication(const string txIpv4, const uint16_t txPort,
     for (auto mc : spsContents) {
         initMsg(mc);
     }
+    if (isRxSim) {
+        initMsg(rxSimMsg, true);
+    }
     for (auto mc : receivedContents) {
-        mc->stackId = STACK_ID_ETSI;
+        initMsg(mc, true);
     }
 }
-void EtsiApplication::initMsg(std::shared_ptr<msg_contents> mc) {
+
+EtsiApplication::~EtsiApplication() {
+    GnRouter->Stop();
+
+    if (isTxSim) {
+        freeMsg(txSimMsg);
+    }
+    for (auto mc : eventContents) {
+        freeMsg(mc);
+    }
+    for (auto mc : spsContents) {
+        freeMsg(mc);
+    }
+    if (isRxSim) {
+        freeMsg(rxSimMsg);
+    }
+    for (auto mc : receivedContents) {
+        freeMsg(mc);
+    }
+}
+
+void EtsiApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
     mc->stackId = STACK_ID_ETSI;
-    mc->gn = new char[sizeof(GnData_t)];
-    mc->btp = new char[sizeof(btp_data_t)];
-    mc->cam = new char[sizeof(CAM_t)];
-    mc->denm = new char[sizeof(DENM_t)];
+
+    if (isRx) {
+        // not allocate memory for Rx msg
+        mc->gn = nullptr;
+        mc->btp = nullptr;
+        mc->cam = nullptr;
+        mc->denm = nullptr;
+    } else {
+        mc->gn = malloc(sizeof(GnData_t));
+        if (!mc->gn) {
+            std::cerr << "alloc gn failed" << endl;
+            return;
+        }
+        memset(mc->gn, 0, sizeof(GnData_t));
+
+        mc->btp = malloc(sizeof(btp_data_t));
+        if (!mc->btp) {
+            std::cerr << "alloc btp failed" << endl;
+            return;
+        }
+        memset(mc->btp, 0, sizeof(btp_data_t));
+
+        mc->cam = malloc(sizeof(CAM_t));
+        if (!mc->cam) {
+            std::cerr << "alloc cam failed" << endl;
+            return;
+        }
+        memset(mc->cam, 0, sizeof(CAM_t));
+
+
+        mc->denm = malloc(sizeof(DENM_t));
+        if (!mc->denm) {
+            std::cerr << "alloc denm failed" << endl;
+            return;
+        }
+        memset(mc->denm, 0, sizeof(DENM_t));
+    }
 }
 
 void EtsiApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
-    if (mc->gn)
-        delete (char *)mc->gn;
-    if (mc->btp)
-        delete (char *)mc->btp;
-    if (mc->cam)
-        delete (char *)mc->cam;
-    if (mc->denm)
-        delete (char *)mc->denm;
+    if (mc->gn) {
+        free(mc->gn);
+        mc->gn = nullptr;
+    }
+    if (mc->btp) {
+        free(mc->btp);
+        mc->btp = nullptr;
+    }
+    if (mc->cam) {
+        free_cam(mc->cam);
+        mc->cam = nullptr;
+    }
+    if (mc->denm) {
+        free_denm(mc->denm);
+        mc->denm = nullptr;
+    }
 }
+
 void EtsiApplication::fillMsg(std::shared_ptr<msg_contents> mc) {
     fillBtp(static_cast<btp_data_t *>(mc->btp));
     fillCam(static_cast<CAM_t *>(mc->cam));

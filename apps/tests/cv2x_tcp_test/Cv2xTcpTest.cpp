@@ -165,6 +165,9 @@ static atomic<bool> gTcpConnected{false};
 static atomic<int> gTerminate{0};
 static int gTerminatePipe[2];
 static mutex gOperationMutex;
+static bool gSetGlobalIp = false;
+static string gGlobalIpPrefix("2600:8802:1507:c700");
+static bool gClearGlobalIp = false;
 
 static bool gEnableProxy = false;
 static string gProxyAddr;
@@ -248,6 +251,11 @@ static void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock,
     if (ErrorCode::SUCCESS == error) {
         gTcpSockInfo = sock;
     }
+    gCallbackPromise.set_value(error);
+}
+
+// Callback function for ICv2xRadio->setGlobalIPInfo()
+static void setGlobalIPInfoCallback(ErrorCode error) {
     gCallbackPromise.set_value(error);
 }
 
@@ -646,7 +654,79 @@ static int createTcpSocket() {
     return EXIT_SUCCESS;
 }
 
+static int parseIPv6Prefix(char *ipPrefix) {
+    int i = 0;
+    auto pos = 0, prev = 0;
+    string prefixStr = gGlobalIpPrefix + ":";
+    do {
+        if (i >= CV2X_IPV6_ADDR_ARRAY_LEN) {
+            cout << "ipPrefix " << i << " too long" << std::endl;
+            return EXIT_FAILURE;
+        }
+        pos = prefixStr.find(":", prev);
+        if (pos != std::string::npos) {
+            uint16_t val = stoi(prefixStr.substr(prev, pos), 0, 16);
+            ipPrefix[i] = (val >> 8);
+            ipPrefix[i + 1] = (val & 0xFF);
+        }
+        prev = pos + 1;
+        i += 2;
+    } while(pos != std::string::npos);
+
+    return EXIT_SUCCESS;
+}
+
+static int setGlobalIpPrefix() {
+    cout << "setting global ip prefix" << endl;
+
+    // parse global IP prefix
+    char ipPrefix[CV2X_IPV6_ADDR_ARRAY_LEN] = {0};
+    if (EXIT_FAILURE == parseIPv6Prefix(ipPrefix)) {
+        cerr << "parse global IP prefix err!"<< endl;
+        return EXIT_FAILURE;
+    }
+
+    // set global IP prefix to modem
+    telux::cv2x::IPv6AddrType prefix;
+    prefix.prefixLen = 64;
+    memcpy(prefix.ipv6Addr, ipPrefix, CV2X_IPV6_ADDR_ARRAY_LEN);
+    resetCallbackPromise();
+    if (Status::SUCCESS != gCv2xRadio->setGlobalIPInfo(prefix, setGlobalIPInfoCallback)
+        or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        cerr << "set global IP prefix fails!" << endl;
+        return EXIT_FAILURE;
+    }
+
+    // set global IP prefix succeeded, need to clear global IP prefix when exit
+    gClearGlobalIp = true;
+    return EXIT_SUCCESS;
+}
+
+static int clearGlobalIpPrefix() {
+    cout << "clearing global ip prefix" << endl;
+
+    // set global IP prefix 0 to modem
+    telux::cv2x::IPv6AddrType prefix;
+    prefix.prefixLen = 64;
+    memset(prefix.ipv6Addr, 0, CV2X_IPV6_ADDR_ARRAY_LEN);
+    resetCallbackPromise();
+    if (Status::SUCCESS != gCv2xRadio->setGlobalIPInfo(prefix, setGlobalIPInfoCallback)
+        or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        cerr << "clear global IP prefix fails!" << endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 static int setupTcpConnection() {
+    // set global IP prefix to IP data call before creating TCP socket
+    if (gSetGlobalIp) {
+        if (EXIT_FAILURE == setGlobalIpPrefix()) {
+            return EXIT_FAILURE;
+        }
+    }
+
     // create TCP socket
     if (createTcpSocket()) {
         return EXIT_FAILURE;
@@ -707,6 +787,11 @@ static void releaseTcpConnection() {
 
     // close TCP socket and deregister flows
     closeTcpSocket();
+
+    // reset global IP prefix
+    if (gClearGlobalIp) {
+        clearGlobalIpPrefix();
+    }
 }
 
 void releaseProxyConnection() {
@@ -997,6 +1082,9 @@ int main(int argc, char *argv[]) {
                     goto bail;
                 }
             }
+        } else {
+            cout << "entering TCP test mode, use CTRL+C to exit" << endl;
+            goto waitExit;
         }
     }
 

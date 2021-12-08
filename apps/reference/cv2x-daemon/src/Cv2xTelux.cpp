@@ -27,11 +27,49 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 #include <iostream>
 #include <cstring>
 #include <map>
 #include <cstdlib>
+#include <chrono>
+#include <thread>
 
 #include "Cv2xTelux.hpp"
 #include "Cv2xLog.hpp"
@@ -44,7 +82,10 @@
 
 using telux::common::Status;
 using telux::common::ErrorCode;
+using telux::common::ServiceStatus;
 using telux::data::OperationType;
+
+#define CALL_RETRY_INTERVAL_MS (2000)
 
 static std::map<ServiceStatus, std::string> convertServiceStatusToString = {
     {ServiceStatus::SERVICE_AVAILABLE, "Available"},
@@ -52,8 +93,6 @@ static std::map<ServiceStatus, std::string> convertServiceStatusToString = {
 };
 
 Cv2xTelux::Cv2xTelux() {
-    isPostSSRV2XDone_ = false;
-
     callInfo_[CV2X_DATA_CALL_IP].profileIndex = -1;
     callInfo_[CV2X_DATA_CALL_IP].callStatus = DataCallStatus::INVALID;
     callInfo_[CV2X_DATA_CALL_IP].apnName = APN_NAME_V2X_IP;
@@ -66,38 +105,35 @@ Cv2xTelux::Cv2xTelux() {
 void Cv2xTelux::onStatusChanged(Cv2xStatus status) {
 
     logStatusChanged(status);
-
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (isPostSSRV2XDone_ == false) {
-            isPostSSRV2XDone_ = true;
-            cv_.notify_one();
-        }
-    }
-
     bool startDataCalls = false;
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        // Handle State Transition InActive to Active/Suspended
+        if (((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
+             (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) &&
+             ((status.txStatus !=  Cv2xStatusType::INACTIVE) &&
+             (status.rxStatus !=  Cv2xStatusType::INACTIVE))) {
+            LOGD("State Transition From Inactive to Active/Suspended\n");
+            startDataCalls = true;
+        }
 
-    // Handle State Transition InActive to Active/Suspended
-    if (((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
-         (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) &&
-         ((status.txStatus !=  Cv2xStatusType::INACTIVE) &&
-         (status.rxStatus !=  Cv2xStatusType::INACTIVE))) {
-        LOGD("State Transition From Inactive to Active/Suspended\n");
-        startDataCalls = true;
+        cv2xStatus_ = status;
     }
-
-    cv2xStatus_ = status;
-
     if (startDataCalls) {
-        auto f = std::async(std::launch::async , [this]() {
-            findProfilesAndStartDataCalls();
-        });
+    /*Per https://en.cppreference.com/w/cpp/thread/async,
+      If the std::future obtained from std::async is not moved from or bound to a reference,
+      the destructor of the std::future will block at the end of the full expression until the
+      asynchronous operation completes. that is NOT what we expect here, so switch to thread way.
+     */
+        std::thread t([this]() {findProfilesAndStartDataCalls();});
+        t.detach();
     }
 }
 
 void Cv2xTelux::logStatusChanged(Cv2xStatus &status) {
     static uint8_t previousCbr = 255;
 
+    std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
     if ((status.txStatus != Cv2xStatusType::UNKNOWN or
          status.rxStatus != Cv2xStatusType::UNKNOWN) and
         (cv2xStatus_.txStatus != status.txStatus or
@@ -141,7 +177,9 @@ void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCa
     auto reason = Cv2xUtils::DataCallEndReasonToInt(dataCall->getDataCallEndReason());
     auto ip_type = Cv2xUtils::IpFamilyTypeToStr(dataCall->getIpFamilyType());
     auto profile_id = dataCall->getProfileId();
-    DataCallStatus callStatus = dataCall->getDataCallStatus();
+    DataCallStatus previousCallStatus = DataCallStatus::INVALID;
+    static DataCallStatus ipCallStatus = DataCallStatus::INVALID;
+    static DataCallStatus nonIpCallStatus = DataCallStatus::INVALID;
 
     if (iface == "") {
         iface = "unknown";
@@ -157,46 +195,56 @@ void DataConnectionListener::onDataCallInfoChanged(const std::shared_ptr<IDataCa
     auto sp = cv2xTelux_.lock();
     if (sp) {
         if (sp->isIpDataCall(profile_id)) {
-            if (callStatus == DataCallStatus::NET_CONNECTED) {
+            previousCallStatus = ipCallStatus;
+            ipCallStatus = dataCall->getDataCallStatus();
+            if (ipCallStatus == DataCallStatus::NET_CONNECTED) {
                 bootkpilog("cv2x-daemon: V2X IP call is online");
             }
-            sp->setIpCallStatus(callStatus);
+            sp->setIpCallStatus(ipCallStatus);
         } else if (sp->isNonIpDataCall(profile_id)) {
-            if (callStatus == DataCallStatus::NET_CONNECTED) {
+            previousCallStatus = nonIpCallStatus;
+            nonIpCallStatus = dataCall->getDataCallStatus();
+            if (nonIpCallStatus == DataCallStatus::NET_CONNECTED) {
                 bootkpilog("cv2x-daemon: V2X Non-IP call is online");
             }
-            sp->setNonipCallStatus(callStatus);
+            sp->setNonipCallStatus(nonIpCallStatus);
         } else {
             LOGE("unknown profile ID %d.\n", profile_id);
             return;
+        }
+
+        if (ipCallStatus == DataCallStatus::NET_NO_NET ||
+            nonIpCallStatus == DataCallStatus::NET_NO_NET) {
+            if (previousCallStatus == DataCallStatus::NET_CONNECTED) {
+                sp->onNoNet();
+            } else if (!isPermanentFailure(dataCall->getDataCallEndReason())) {
+                std::thread t([sp]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(CALL_RETRY_INTERVAL_MS));
+                    sp->findProfilesAndStartDataCalls();
+                });
+                t.detach();
+            }
         }
     }
 }
 
 void DataConnectionListener::onServiceStatusChange(ServiceStatus status) {
-    Status res = Status::FAILED;
-
     LOGI("DataConnectionListener Service Status changed to %s\n",
             convertServiceStatusToString[status].c_str() );
-    if (status == ServiceStatus::SERVICE_AVAILABLE){
-
-        auto sp = cv2xTelux_.lock();
-        if(sp) {
-            LOGD("Waiting for CV2xRadio to come back ONLINE\n");
-
-            std::unique_lock<std::mutex> cvLock(sp->mutex_);
-            while(sp->isPostSSRV2XDone_ == false) {
-                sp->cv_.wait(cvLock);
-            }
-            LOGD("CV2xRadio back ONLINE\n");
-
-            res = sp->findProfilesAndStartDataCalls();
-            if (res != Status::SUCCESS) {
-                LOGE("Failed to start data call\n");
-                return;
-            }
+    auto sp = cv2xTelux_.lock();
+    if (sp) {
+        if (status == ServiceStatus::SERVICE_AVAILABLE) {
+            std::thread t([sp]() {sp->findProfilesAndStartDataCalls();});
+            t.detach();
         }
     }
+}
+
+bool DataConnectionListener::isPermanentFailure(DataCallEndReason failure) const {
+    /*TODO: check exact failure cause to determine whether it permanent failure,
+     * data calls will be retried if it is NOT permanent failure.
+     */
+    return false;
 }
 
 bool Cv2xTelux::isIpDataCall(uint8_t profileID) {
@@ -213,14 +261,16 @@ void Cv2xTelux::onServiceStatusChange(ServiceStatus status) {
     LOGI("Cv2xTelux Service Status changed to %s\n",
          convertServiceStatusToString[status].c_str());
 
-    if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
-        isPostSSRV2XDone_ = false;
-    } else if (status == ServiceStatus::SERVICE_AVAILABLE){
+    if (status == ServiceStatus::SERVICE_AVAILABLE){
         res = startV2xRadio();
         if (res!= Status::SUCCESS) {
             LOGE("Failed to start v2x mode\n");
             return;
         }
+    } else if (status == ServiceStatus::SERVICE_UNAVAILABLE) {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        cv2xStatus_.txStatus =  Cv2xStatusType::INACTIVE;
+        cv2xStatus_.rxStatus =  Cv2xStatusType::INACTIVE;
     }
 }
 
@@ -370,10 +420,11 @@ Status Cv2xTelux::stopV2xRadio() {
 
 Status Cv2xTelux::registerListeners() {
     Status ret = Status::FAILED;
-
-    cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
-    cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
-
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
+        cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
+    }
     ret = cv2xRadioMgr_->registerListener(shared_from_this());
     if (ret != Status::SUCCESS) {
         LOGE("Failed to register cv2xRadioMgr listener\n");
@@ -542,16 +593,19 @@ Status Cv2xTelux::findProfilesAndStartDataCalls() {
         return res;
     }
 
-    if ((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
-        (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) {
-        // will re-start data calls on v2x status change
-        LOGI("not start data calls if V2X status is inactive\n");
-    } else {
-        res = startDataCalls();
-        if(res != Status::SUCCESS) {
-            LOGE("Error starting data calls\n");
-            return res;
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        if ((cv2xStatus_.txStatus ==  Cv2xStatusType::INACTIVE) &&
+            (cv2xStatus_.rxStatus ==  Cv2xStatusType::INACTIVE)) {
+            // will re-start data calls on v2x status change
+            LOGI("not start data calls if V2X status is inactive\n");
+            return Status::SUCCESS;
         }
+    }
+    res = startDataCalls();
+    if(res != Status::SUCCESS) {
+        LOGE("Error starting data calls\n");
+        return res;
     }
 
     return Status::SUCCESS;
@@ -565,6 +619,28 @@ void Cv2xTelux::setIpCallStatus(DataCallStatus newStatus) {
 void Cv2xTelux::setNonipCallStatus(DataCallStatus newStatus) {
     std::lock_guard<std::mutex> lock(dcMutex_);
     callInfo_[CV2X_DATA_CALL_NON_IP].callStatus = newStatus;;
+}
+
+void Cv2xTelux::onNoNet() {
+    std::thread t([this]() {
+    {
+        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        if ((cv2xStatus_.rxStatus == Cv2xStatusType::INACTIVE &&
+            cv2xStatus_.txStatus == Cv2xStatusType::INACTIVE)) {
+            LOGE("calls end due to cv2x radio INACTIVE.\n");
+            /*calls end due to cv2x radio status change to INACTIVE,
+              calls will be triggered again upon cv2x radio status become ACTIVE*/
+            return;
+        }
+    }
+    /*Now the situation is, cv2x radio Active/Suspend while both the data calls down, this could
+     happen if some of Data Services daemons crash/restart, restart cv2x radio to recover,
+     data calls will be triggered upon cv2x radio status become ACTIVE again.
+    */
+    stopV2xRadio();
+    startV2xRadio();
+    });
+    t.detach();
 }
 
 int Cv2xTelux::stopDataCall(DataCallType callType, IpFamilyType ipFamilyType) {

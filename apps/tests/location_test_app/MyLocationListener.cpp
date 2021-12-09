@@ -27,49 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *    * Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *
- *    * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *
- *   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include <bitset>
 #include <iostream>
 #include <memory>
 #include <iomanip>
 
 #include <telux/loc/LocationDefines.hpp>
-#include "LocationUtils.hpp"
+
 #include "MyLocationListener.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
@@ -216,18 +180,6 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_REPORT_STATUS)) {
       std::cout << "valid report status" << std::endl;
     }
-    if((validityMask & telux::loc::HAS_INTEGRITY_RISK_USED)) {
-      std::cout << "valid integrity risk" << std::endl;
-    }
-    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_ALONG_TRACK)) {
-      std::cout << "valid protect along track" << std::endl;
-    }
-    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_CROSS_TRACK)) {
-      std::cout << "valid protect cross track" << std::endl;
-    }
-    if((validityMask & telux::loc::HAS_PROTECT_LEVEL_VERTICAL)) {
-      std::cout << "valid protect vertical" << std::endl;
-    }
 
 }
 
@@ -259,12 +211,6 @@ void MyLocationListener::printLocationValidity(telux::loc::LocationInfoValidity 
    }
    if((validityMask & telux::loc::HAS_TIMESTAMP_BIT)) {
       std::cout << "valid timestamp" << std::endl;
-   }
-   if((validityMask & telux::loc::HAS_ELAPSED_REAL_TIME_BIT)) {
-      std::cout << "valid elapsed real time" << std::endl;
-   }
-   if((validityMask & telux::loc::HAS_ELAPSED_REAL_TIME_UNC_BIT)) {
-      std::cout << "valid elapsed real time uncertainty" << std::endl;
    }
 }
 
@@ -620,12 +566,6 @@ void MyLocationListener::printLocationPositionTech(
    if((gnssPositionTech & telux::loc::GNSS_PPE)) {
       std::cout << "PPE" << std::endl;
    }
-   if((gnssPositionTech & telux::loc::GNSS_VEHICLE)) {
-      std::cout << "VEHICLE" << std::endl;
-   }
-   if((gnssPositionTech & telux::loc::GNSS_VISUAL)) {
-      std::cout << "VISUAL" << std::endl;
-   }
    if((gnssPositionTech == telux::loc::GNSS_DEFAULT)) {
       std::cout << "DEFAULT" << std::endl;
    }
@@ -881,18 +821,6 @@ void MyLocationListener::printMeasurementsDataValidity(
   if(flags & telux::loc::AUTOMATIC_GAIN_CONTROL_BIT) {
     std::cout << " valid agcLevelDb" << std::endl;
   }
-  if(flags & telux::loc::GNSS_SIGNAL_TYPE) {
-    std::cout << " valid signal type" << std::endl;
-  }
-  if(flags & telux::loc::BASEBAND_CARRIER_TO_NOISE) {
-    std::cout << " valid basebandCarrierToNoise" << std::endl;
-  }
-  if(flags & telux::loc::FULL_ISB) {
-    std::cout << " valid fullInterSignalBias" << std::endl;
-  }
-  if(flags & telux::loc::FULL_ISB_UNCERTAINTY) {
-    std::cout << " valid fullInterSignalBiasUncertainty" << std::endl;
-  }
 }
 
 void MyLocationListener::printMeasurementState(telux::loc::GnssMeasurementsStateValidity mask) {
@@ -1015,10 +943,6 @@ void MyLocationListener::printReportStatus(telux::loc::ReportStatus status) {
   }
 }
 
-void MyLocationListener::onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) {
-  LocationUtils::displayCapabilities(capabilityMask);
-}
-
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -1046,10 +970,7 @@ void MyLocationListener::onBasicLocationUpdate(
              << "Horizontal uncertainty: " << locationInfo->getHorizontalUncertainty() << std::endl
              << "Vertical uncertainty: " << locationInfo->getVerticalUncertainty() << std::endl
              << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
-             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
-             << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
-             << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
-             << std::endl;
+             << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl;
 
    std::cout << "*************************************************************" << std::endl;
 }
@@ -1093,9 +1014,6 @@ void MyLocationListener::onDetailedLocationUpdate(
       << "Magnetic deviation: " << locationInfo->getMagneticDeviation() << std::endl
       << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
       << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
-      << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
-      << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
-      << std::endl
       << "HorizontalUncertainty\nSemiMajor: " << locationInfo->getHorizontalUncertaintySemiMajor()
       << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
       << ", Azimuth: " << locationInfo->getHorizontalUncertaintyAzimuth() << std::endl
@@ -1168,13 +1086,6 @@ void MyLocationListener::onDetailedLocationUpdate(
    printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
    printAltitudeType(locationInfo->getAltitudeType());
    printReportStatus(locationInfo->getReportStatus());
-   std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
-   std::cout << "Protection level along track : " <<
-       locationInfo->getProtectionLevelAlongTrack() << std::endl;
-   std::cout << "Protection level cross track : " <<
-       locationInfo->getProtectionLevelCrossTrack() << std::endl;
-   std::cout << "Protection level vertical : " <<
-       locationInfo->getProtectionLevelVertical() << std::endl;
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -1221,9 +1132,6 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
         << "Magnetic deviation: " << locationInfo->getMagneticDeviation() << std::endl
         << "Speed uncertainty: " << locationInfo->getSpeedUncertainty() << std::endl
         << "Heading uncertainty: " << locationInfo->getHeadingUncertainty() << std::endl
-        << "Elapsed real time: " << locationInfo->getElapsedRealTime() << std::endl
-        << "Elapsed real time uncertainty: " << locationInfo->getElapsedRealTimeUncertainty()
-        << std::endl
         << "HorizontalUncertainty\nSemiMajor: " <<
             locationInfo->getHorizontalUncertaintySemiMajor()
         << ", SemiMinor: " << locationInfo->getHorizontalUncertaintySemiMinor()
@@ -1291,13 +1199,6 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      printENUVelocityVRPBased(locationInfo->getVRPBasedENUVelocity());
      printAltitudeType(locationInfo->getAltitudeType());
      printReportStatus(locationInfo->getReportStatus());
-     std::cout << "Integrity risk used : " << locationInfo->getIntegrityRiskUsed() << std::endl;
-     std::cout << "Protection level along track : " <<
-         locationInfo->getProtectionLevelAlongTrack() << std::endl;
-     std::cout << "Protection level cross track : " <<
-         locationInfo->getProtectionLevelCrossTrack() << std::endl;
-     std::cout << "Protection level vertical : " <<
-         locationInfo->getProtectionLevelVertical() << std::endl;
      std::cout << "*************************************************************" << std::endl;
     }
 }
@@ -1430,13 +1331,6 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
      printMeasurementsMultipathIndicator(measData.multipathIndicator);
      std::cout << " Signal to noise ratio " << measData.signalToNoiseRatioDb << std::endl
                << " Automatic gain control level " << measData.agcLevelDb << std::endl;
-     printGnssSignalType(measData.gnssSignalType);
-     std::cout << " Carrier-to-noise ratio of the signal measured at baseband : "
-               << measData.basebandCarrierToNoise << std::endl;
-     std::cout << " Full inter-signal bias : " << measData.fullInterSignalBias
-               << std::endl;
-     std::cout << " Uncertainty associated with the full inter-signal bias : "
-               << measData.fullInterSignalBiasUncertainty << std::endl;
 
      std::cout << "\n********************** " << std::endl;
    }

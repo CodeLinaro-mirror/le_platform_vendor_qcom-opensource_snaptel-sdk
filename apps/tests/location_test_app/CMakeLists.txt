@@ -7,7 +7,6 @@ set(LOCATION_TEST_APP_SOURCES
     LocationMenu.cpp
     MyLocationListener.cpp
     MyLocationCommandCallback.cpp
-    LocationUtils.cpp
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp

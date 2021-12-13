@@ -55,6 +55,13 @@ struct SignStats
     double signLatency;
 };
 
+struct Kinematics
+{
+    int32_t latitude;
+    int32_t longitude;
+    uint16_t elevation;
+};
+
 /**
  * Security options when invoking signing or verification operation.
  */
@@ -63,9 +70,8 @@ typedef struct SecurityOpt {
     uint8_t sspValue [32];
     uint32_t sspLength;
     uint8_t externalDataHash[32];
-    int32_t latitude;
-    int32_t longitude;
-    uint16_t elevation;
+    Kinematics hvKine;
+    Kinematics rvKine;
     bool enableAsync;
     uint32_t sspMaskValue [32];
     uint32_t sspMaskLength;
@@ -94,6 +100,13 @@ public:
     ~SecurityService(){
     }
 
+    virtual int ExtractMsg(const SecurityOpt opt,
+                            const uint8_t * msg,
+                            uint32_t msgLen,
+                            uint8_t const *payload,
+                            uint32_t       payloadLen,
+                            uint32_t       &dot2HdrLen) = 0;
+
     /**
     * Method to setup and sign packets based on the provided parameters and config.
     * Needs to be implemented.
@@ -101,7 +114,7 @@ public:
     * @param msgLen - Length of the message that will be signed
     * @param signedSpdu - Pointer to the signed packet
     * @param signedSpduLen - Size of the signed packet
-    * @return int - Integer representing success or failure (-1).
+    * @return int - A non-negative integer value upon success or -1 on failure
     */
     virtual int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
                                 uint8_t *signedSpdu, uint32_t &signedSpduLen) = 0;
@@ -109,13 +122,9 @@ public:
     * Method to setup and verify packets based on the provided parameters and config.
     * Needs to be implemented.
     * @param opt - Struct that contains security-related information
-    * @param msgLen - Length of the message that will be verified
-    * @param dot2HdrLen - Will contain the total length of 1609.2 and
-    *       other security-related information.
-    * @return int - The length of the actual packet or -1 on failure.
+    * @return int - A non-negative integer value upon success or -1 on failure
     */
-    virtual int VerifyMsg(const SecurityOpt opt, const uint8_t *msg,
-                                uint32_t msgLen, uint32_t &dot2HdrLen) = 0;
+    virtual int VerifyMsg(const SecurityOpt opt) = 0;
     /**
     * Method to alert Aerolink to initiate and complete a cert/id change.
     * The application should update the rest of the related parameters such

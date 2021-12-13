@@ -85,7 +85,7 @@ thread_local int verifFail = 0;
 thread_local int verifSuccess = 0;
 thread_local int signFail = 0;
 thread_local int signSuccess = 0;
-
+thread_local std::shared_ptr<msg_contents> mc = nullptr;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     ApplicationBase(fileConfiguration) {
@@ -202,7 +202,6 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     wsmp_data_t *wsmpp;
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
     int macAddrLen = CV2X_MAC_ADDR_LEN;
-    std::shared_ptr<msg_contents> mc = nullptr;
 
     if (isRxSim) {
         mc = rxSimMsg;
@@ -267,47 +266,17 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     if(this->configuration.enableSecurity){
         // check if the message is signed/encrypted IEEE1609.2 content.
         if (ret == 1) { // message is secured
-            // Prepare for verification
-            SecurityOpt sopt;
-            sopt.psidValue = this->configuration.psid;
-            if (this->configuration.sspLength)
-                memcpy(sopt.sspValue, this->configuration.ssp,
-                    this->configuration.sspLength);
-            sopt.sspLength = this->configuration.sspLength;
-            sopt.enableAsync = this->configuration.enableAsync;
-            sopt.enableEnc  = this->configuration.enableEncrypt;
-            sopt.secVerbosity = this->configuration.secVerbosity;
-            std::thread::id tid = std::this_thread::get_id();
-            if (thrVerifLatencies[tid].size() > verifStatIdx[tid]) {
-                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            ret = decodeAndVerify(mc.get());
+        }else if(ret >= 0){
+            // here we need to check option for processing both unsigned/signed packets
+            if(!configuration.acceptAll){
+                if(appVerbosity > 3)
+                    printf("Error in decoding unsigned packet - security enabled.\n");
+                ret = -1;
             }else{
-                verifStatIdx[tid] = 0;
-                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
-            }
-
-            uint32_t dot2HdrLen;
-            // Verify packet signature
-            ret = SecService->VerifyMsg(sopt,
-            (uint8_t*)mc->l3_payload,(uint32_t)mc->l3_payload_len,dot2HdrLen);
-
-            if(ret == -1){
-                verifFail++;
-            }
-            else{
-                verifSuccess++;
-                // successful verification, increment the verif stat idx
-                std::thread::id tid = std::this_thread::get_id();
-                verifStatIdx[tid]++;
-                verifStatIdx[tid]%=thrVerifLatencies[tid].size();
-                mc->l3_payload=mc->l3_payload+dot2HdrLen;
-                // ieee header is 3 bytes long typically
-                abuf_pull(&mc->abuf, dot2HdrLen - IEEE_1609_2_HDR_LEN);
-                mc->payload_len=ret;
-                if(appVerbosity > 4){
-                    printf("Total security header length is: %d bytes\n",
-                            dot2HdrLen);
-                    printf("payload length is %d bytes\n", ret);
-                }
+                if(appVerbosity > 3)
+                    printf("Decoded unsigned packet successfully.\n");
+                // process WSA and other WSMP packets
                 wsmpp = (wsmp_data_t *)mc->wsmp;
                 if (MsgType == MessageType::WSA && wsmpp->psid == PSID_WSA) {
 #ifdef WITH_WSA
@@ -321,11 +290,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 } else {
                     ret = decode_as_j2735(mc.get());
                 }
+                ret = 1;
             }
-        }else if(ret >= 0){
-            if(appVerbosity > 3)
-                printf("Error in decoding unsigned packet - security enabled.\n");
-            ret = -1;
         }else{
             if(appVerbosity > 3)
                 printf("Error in decoding packet\n");
@@ -388,6 +354,114 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
     }
     return ret;
 }
+
+int SaeApplication::decodeAndVerify(msg_contents* mc){
+    int ret = -1;
+    wsmp_data_t *wsmpp;
+    uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
+    int macAddrLen = CV2X_MAC_ADDR_LEN;
+    // Prepare for verification
+    SecurityOpt sopt;
+    sopt.psidValue = this->configuration.psid;
+    // sopt.psidValue = wsmpp->psid;
+    if (this->configuration.sspLength)
+        memcpy(sopt.sspValue, this->configuration.ssp,
+            this->configuration.sspLength);
+    sopt.sspLength = this->configuration.sspLength;
+    sopt.enableAsync = this->configuration.enableAsync;
+    sopt.enableEnc  = this->configuration.enableEncrypt;
+    sopt.secVerbosity = this->configuration.secVerbosity;
+    uint32_t dot2HdrLen;
+    uint8_t const *payload = NULL;
+    uint32_t       payloadLen = 0;
+    // extract the PDU from the secured packet
+    ret = SecService->ExtractMsg(sopt,
+        (uint8_t*)mc->l3_payload,mc->l3_payload_len,
+        payload, payloadLen,
+        dot2HdrLen);
+    if(ret == -1){
+        printf("Error in extracting security header from signed packet.\n");
+        verifFail++;
+        return -1;
+    }
+
+    // ieee header is 3 bytes long typically
+    abuf_pull(&mc->abuf, dot2HdrLen - IEEE_1609_2_HDR_LEN);
+    mc->l3_payload=mc->l3_payload+dot2HdrLen;
+    mc->payload_len=payloadLen;
+    if(appVerbosity > 4){
+        printf("Total security header length is: %d bytes\n",
+                dot2HdrLen);
+        printf("payload length is %d bytes\n", ret);
+    }
+    wsmpp = (wsmp_data_t *)mc->wsmp;
+    if(MsgType == MessageType::BSM && wsmpp->psid == PSID_BSM) {
+        ret = decode_as_j2735(mc);
+        // here the secure header was extracted properly, but packet decoded incorrectly
+        if(ret == -1){
+            if(appVerbosity > 3)
+                printf("Error in decoding unsigned packet - security enabled.\n");
+            decFail++;
+            return -1;
+        }
+    }
+
+    // if a bsm is decoded properly, need to extract the lat/lon from the packet (if bsm)
+    if(mc->j2735_msg != nullptr){
+        bsm_value_t* bsm = (bsm_value_t*)mc->j2735_msg;
+        sopt.rvKine.latitude = bsm->Latitude;
+        sopt.rvKine.longitude = bsm->Longitude;
+        sopt.rvKine.elevation = bsm->Elevation;
+    }
+
+    // set the hv kinematics
+    shared_ptr<ILocationInfoEx> locationInfo =
+                                kinematicsReceive->getLocation();
+    sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+    sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+    sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+
+    // prepare verification statistics logging
+    if(configuration.enableVerifStatLog){
+        std::thread::id tid = std::this_thread::get_id();
+        if (thrVerifLatencies[tid].size() > verifStatIdx[tid]) {
+            sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+        }else{
+            verifStatIdx[tid] = 0;
+            sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+        }
+        verifStatIdx[tid]++;
+        verifStatIdx[tid]%=thrVerifLatencies[tid].size();
+    }else{
+        sopt.verifStat = nullptr;
+    }
+
+    // Verify packet signature ; providing lat/lon from the rx message
+    ret = SecService->VerifyMsg(sopt);
+    if(ret == -1){
+        verifFail++;
+        if(appVerbosity > 3)
+            printf("Error in verifying secured packet.\n");
+        ret = -1;
+    }
+    else{
+        verifSuccess++;
+        // process WSA and other WSMP packets after verification
+        wsmpp = (wsmp_data_t *)mc->wsmp;
+        if (MsgType == MessageType::WSA && wsmpp->psid == PSID_WSA) {
+#ifdef WITH_WSA
+            ret = decode_as_wsa(mc);
+            if (!ret && mc->wra) {
+                ret = onReceiveWra(
+                        static_cast<RoutingAdvertisement_t*>(mc->wra),
+                        sourceMacAddr, macAddrLen);
+            }
+#endif
+        }
+    }
+    return ret;
+}
+
 
 void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
     mc->stackId = STACK_ID_SAE;

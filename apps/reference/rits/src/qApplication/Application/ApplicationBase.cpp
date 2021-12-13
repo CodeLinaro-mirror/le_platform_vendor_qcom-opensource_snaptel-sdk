@@ -564,7 +564,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.CAMDestinationPort = (uint16_t)stoi(configs["CAMDestinationPort"]);
     }
     if (configs.find("psidValue") != configs.end()) {
-            configuration.psid = stoi(configs["psidValue"],0,16);
+        configuration.psid = stoi(configs["psidValue"],0,16);
     }
     /* Security service */
     if (configs.find("EnableSecurity") != configs.end()) {
@@ -662,6 +662,16 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             this->configuration.idChangeInterval = (unsigned int)stoi(configs["idChangeInterval"]);
         }
 
+        /** Process both signed and unsigned packets */
+        if(configs.find("acceptAll") != configs.end()){
+            istringstream is9(configs["acceptAll"]);
+            is9 >> boolalpha >> configuration.acceptAll;
+            if(configuration.acceptAll){
+                printf("Accepting both signed and unsigned messages\n");
+            }else{
+                printf("Only accepting signed messages\n");
+            }
+        }
     }
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
@@ -910,6 +920,13 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     encLength = encode_msg(mc.get());
 
     if (encLength == 1) {
+        encLength = encodeAndSignMsg(mc);
+    }
+    int ret = this->transmit(index, mc, encLength, txType);
+    return encLength;
+}
+
+int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
         // The message need to be signed/encrypted after layer 3
         SecurityOpt sopt;
         uint8_t signedSpdu[512];
@@ -925,9 +942,9 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         if(kinematicsReceive){
             shared_ptr<ILocationInfoEx> locationInfo =
                                         kinematicsReceive->getLocation();
-            sopt.latitude = (locationInfo->getLatitude() * 10000000);
-            sopt.longitude = (locationInfo->getLongitude() * 10000000);
-            sopt.elevation = (locationInfo->getAltitude() * 10);
+            sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+            sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+            sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
         }
         std::thread::id tid = std::this_thread::get_id();
         if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
@@ -936,6 +953,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
             signStatIdx[tid] = 0;
             sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
         }
+        auto encLength = 0;
         if (mc->abuf.tail_bits_left != 8)
             encLength = mc->abuf.tail - mc->abuf.data + 1;
         else
@@ -954,10 +972,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
         asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
         // transmit packet
-        encLength = encode_msg_continue(mc.get());
-    }
-    int ret = this->transmit(index, mc, encLength, txType);
-    return encLength;
+        return encode_msg_continue(mc.get());
 }
 
 int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen) {

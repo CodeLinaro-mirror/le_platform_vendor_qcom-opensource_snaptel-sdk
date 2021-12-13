@@ -178,6 +178,7 @@ struct Config{
     bool enableEncrypt = false;
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;
+    bool acceptAll = false;
     /** Sec Driver Options **/
     uint8_t driverVerbosity = 0;
     uint8_t secVerbosity = 0;
@@ -262,6 +263,12 @@ public:
     */
 
     int send(uint8_t index, TransmitType txType);
+
+    /**
+     * Function which encodes and signs message when security is enabled.
+     */
+    int encodeAndSignMsg(std::shared_ptr<msg_contents> mc);
+
     /**
      * receive process received contents.
      * @param index message content index.
@@ -279,7 +286,7 @@ public:
                         const uint32_t ldmIndex);
 
     /**
-     * Overloaded function to fill the message with stack specific data.(BSM/CAM/DENM) for transmition
+     * Overloaded function to fill the message with stack specific data.(BSM/CAM/DENM) for transmission
      */
     virtual void fillMsg(std::shared_ptr<msg_contents> mc) = 0;
 

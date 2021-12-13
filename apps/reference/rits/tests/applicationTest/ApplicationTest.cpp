@@ -512,36 +512,47 @@ void simLdmRx(void) {
 }
 
 void printUse() {
-    cout << "Usage: qits [options] <Config File Relative Path>\n\n\n";
-    cout << "Example: qits -t -l -s \\home\\root\\ObeConfig.conf\n";
-    cout << "Example above will run: transmit mode, ldm receive mode and the safety apps.\n\n";
-    cout << "Example: qits -r -b \\home\\root\\ObeConfig.conf\n";
-    cout << "Example above will run: receive mode with basic safety messages.\n\n";
-    cout << "At least one option is needed and Config File is always required.\n";
+    cout << "Usage: qits [options] <Config File Path>\n";
+    cout << "  At least one option is needed and Config File Path is always required.\n";
     cout << "Options:\n";
-    cout << "-h Prints help options.\n";
-    cout << "-t Transmits Cv2x data. Runs by default with -b. See -b.\n";
-    cout << "-r Receives Cv2x data. Runs by defaullt with -b. See -b.\n";
-    cout << "-s Safety Apps Mode; Adds -l if not specified. Runs by default with -b.\n";
-    cout << "-p <Pre-Recorded File Path>  Transmists from pre-recorded file.\n";
-    cout << "-T Tunnel Transmit.\n";
-    cout << "-x Tunnel Receive. It automatically calls -l. See: -l.\n";
-    cout << "-l LDM mode; Adds -r if nothing specified. Use it with -r or -j.\n";
-    cout << "-b Transmits and Receives BSMS.\n";
-    cout << "-w Transmits and Receives WRA(in WSA).\n";
-#ifdef ETSI
-    cout << "-c Transmits and Receives CAMs.\n";
-    cout << "-d Transmits and Receives DENMs.\n";
-#endif
-    cout << "-D Dump raw received packet.\n";
-    cout << "-v Don't print received remote vehicle summary(for performance measurement).\n";
-    cout << "-i <other_device_ip_address> <port>  Simulating CV2x with kinematics";
-    cout << " and can interfaces. Transmit only.\n";
-    cout << "           note: You may enable UDP if desired via the config file\n";
-    cout << "-j <other_device_ip_address> <port>  Simulates CV2x and sends packets via TCP ";
+    cout << "  General options: \n";
+    cout << "  -h Prints help options.\n";
+    cout << "  -D Dump raw received packet.\n";
+    cout << "  -v Don't print received remote vehicle summary(for performance measurement).\n";
+    cout << "  -o <CSV file path> write received BSM into CSV file.\n\n";
+    cout << "  Modes:\n";
+    cout << "  -t Transmits Cv2x data. Runs by default with -b. See -b.\n";
+    cout << "  -r Receives Cv2x data. Runs by defaullt with -b. See -b.\n";
+    cout << "  -i <other_device_ip_address> <port> Simulates CV2X and sends packets via TCP ";
     cout << "instead of OTA.\n";
     cout << "           note: You may enable UDP if desired via the config file\n";
-    cout << "-o <CSV file path> write received BSM into CSV file.\n";
+    cout << "  -j <other_device_ip_address> <port> Simulates CV2X and receives packets via TCP ";
+    cout << "instead of OTA.\n";
+    cout << "           note: You may enable UDP if desired via the config file\n";
+    cout << "  -b SAE WSMP BSMS.\n";
+    cout << "  -w SAE WSMP WRA(in WSA).\n";
+#ifdef ETSI
+    cout << "  -c ETSI CAMs.\n";
+    cout << "  -d ETSI DENMs.\n";
+#endif
+    cout << "  Incomplete Modes\n";
+    cout << "  -l LDM mode; Adds -r if nothing specified. Use it with -r or -j.\n";
+    cout << "  -s Safety Apps Mode; Adds -l if not specified. Runs by default with -b.\n";
+    cout << "  -p <Pre-Recorded File Path> Transmits from pre-recorded file.\n";
+    cout << "  -T Tunnel Transmit.\n";
+    cout << "  -x Tunnel Receive. It automatically calls -l. See: -l.\n";
+    cout << "Examples (assuming path to ObeConfig.conf is /etc/ObeConfig.conf):\n";
+    cout << "  Example: qits -t /etc/ObeConfig.conf\n";
+    cout << "  Example above will transmit BSMs (the default packet type)\n\n";
+    cout << "  Example: qits -r -b /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: receive mode with basic safety messages.\n\n";
+    cout << "  Example: qits -t -r -b /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: transmit and receive mode with basic safety messages.\n\n";
+    cout << "  Example: qits -t -l -s /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: transmit mode, ldm receive mode and the safety apps.\n\n";
+    cout << "  Example: qits -i 127.0.0.1 9000 /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: simulation transmit mode (TCP/UDP),\n";
+    cout << "    sending BSMs over port 9000 to ip address 127.0.0.1\n\n";
 }
 
 void configFileCheck(string& configFile)

@@ -136,6 +136,7 @@ private:
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access
+    * @param mc - A shared pointer to a v2x message contents struct
     * @param bufLen - Length of given buffer or message
     * @param txType - Specifies the type of message for decoding
     */
@@ -156,6 +157,12 @@ private:
     */
     int receive(const uint8_t index, const uint16_t bufLen,
                      const uint32_t ldmIndex);
+
+    /**
+    * Method to setup and perform reception with LDM for SAE packets.
+    * @param mc - A shared pointer to a v2x message contents struct
+    */
+    int decodeAndVerify(msg_contents* mc);
 
 #ifdef WITH_WSA
     int onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr, int& MacAdrLen);

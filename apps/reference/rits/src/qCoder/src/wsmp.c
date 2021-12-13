@@ -380,7 +380,7 @@ static int encode_wsm2016(wsmp_data_t *wbp, abuf_t *wsm_payload)
             }
         }
 #if 0
-        if (gVerbosity > 2) {
+        if (gVerbosity > 7) {
             printf("WSMP HEADER: ");
             abuf_dump(wbp->abp);
             printf("WSMP FRAME: ");

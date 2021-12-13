@@ -98,10 +98,15 @@ class AerolinkSecurity : public SecurityService {
                                              uint8_t keyGenMethod);
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
                                              char const* lcmName, IDChangeData& idChangeData);
+        int ExtractMsg(const SecurityOpt opt,
+                        const uint8_t * msg,
+                        uint32_t msgLen,
+                        uint8_t const *payload,
+                        uint32_t       payloadLen,
+                        uint32_t       &dot2HdrLen);
         int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
                     uint8_t *signedSpdu, uint32_t &signedSpduLen);
-        int VerifyMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
-                    uint32_t &dot2HdrLen);
+        int VerifyMsg(const SecurityOpt opt);
         int idChange();
         ~AerolinkSecurity() {
             deinit();
@@ -117,27 +122,11 @@ class AerolinkSecurity : public SecurityService {
                     uint8_t isPayloadSpdu, uint8_t * const encryptedData,
                     uint32_t * const encryptedDataLength);
        int syncVerify(
-            SecurityContextC ctx,
-            const uint8_t * message,
-            uint32_t msgLen,
-            uint8_t const *payload,
-            uint32_t       payloadLen,
-            uint32_t       &dot2HdrLen,
-            int32_t latitude,
-            int32_t longitude,
-            uint16_t elevation,
+            Kinematics hvKine, Kinematics rvKine,
             VerifStats *verifStat);
 
         int asyncVerify(
-            SecurityContextC ctx,
-            const uint8_t * message,
-            uint32_t msgLen,
-            uint8_t const *payload,
-            uint32_t       payloadLen,
-            uint32_t       &dot2HdrLen,
-            int32_t latitude,
-            int32_t longitude,
-            uint16_t elevation,
+            Kinematics hvKine, Kinematics rvKine,
             sem_t   *queue_sem);
 
         SecuredMessageGeneratorC smg_;

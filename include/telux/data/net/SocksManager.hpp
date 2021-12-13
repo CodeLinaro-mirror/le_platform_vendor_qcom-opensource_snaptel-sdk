@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       SocksManager.hpp
  *
@@ -49,11 +85,15 @@ namespace telux {
 namespace data {
 namespace net {
 
+// Forward declarations
+class ISocksListener;
+
 /** @addtogroup telematics_net
  * @{ */
 /**
- *@brief    SocksManager is a primary interface for configuring legacy
- *          Socks proxy server
+ *@brief    SocksManager is a primary interface for configuring legacy Socks proxy server.
+ *          It also provides interface to Subsystem Restart events by registering as listener.
+ *          Notifications will be received when modem is ready/not ready.
  */
 class ISocksManager {
  public:
@@ -95,6 +135,28 @@ class ISocksManager {
         bool enable, telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
+     * Register Socks Manager as listener for Data Service heath events like data service available
+     * or data service not available.
+     *
+     * @param [in] listener    pointer of ISocksListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<ISocksListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of ISocksListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<ISocksListener> listener) = 0;
+
+    /**
      * Get the associated operation type for this instance.
      *
      * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
@@ -109,6 +171,29 @@ class ISocksManager {
      */
     virtual ~ISocksManager(){};
 };  // end of ISocksManager
+
+/**
+ * Interface for Socks listener object. Client needs to implement this interface to get
+ * access to Socks services notifications like onServiceStatusChange.
+ *
+ * The methods in listener can be invoked from multiple different threads. The implementation
+ * should be thread safe.
+ *
+ */
+class ISocksListener {
+ public:
+    /**
+     * This function is called when service status changes.
+     *
+     * @param [in] status - @ref ServiceStatus
+     */
+    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * Destructor for ISocksListener
+     */
+    virtual ~ISocksListener(){};
+};
 
 /** @} */ /* end_addtogroup telematics_net */
 }

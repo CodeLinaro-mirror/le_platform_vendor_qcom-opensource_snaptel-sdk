@@ -64,6 +64,7 @@ when       who     what, where, why
 03/25/21   RV      Added new calibration init status API for audio.
 04/01/21   FS      Added Data Serving system how to dedicated radio bearer, service status and roaming status.
 04/01/21   BS      Added documentation for sensor sub-system.
+11/25/21   RR      Added support for Xtra feature for location in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

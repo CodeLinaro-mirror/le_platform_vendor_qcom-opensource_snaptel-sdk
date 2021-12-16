@@ -1203,6 +1203,32 @@ When reports are no longer required, the app needs to stop the report and de-reg
 4. Status of configureNmeaTypes i.e. either SUCCESS or FAILED will be returned to the application.
 5. The response for configureNmeaTypes is received by the application.
 
+@subsection location_configurator_xtra_callflow Call flow to represent Xtra Feature
+
+@anchor fig_location_configurator_xtra_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.35]{location_configurator_xtra_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to represent Xtra Feature}
+  \label{fig_location_configurator_xtra_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{location_configurator_xtra_callflow.png,Call flow to represent Xtra Feature,40,40,Call flow to to represent Xtra Feature}
+
+1. Application requests location factory for location configurator object.
+2. Location factory returns ILocationConfigurator object.
+3. Application registers config listener for Xtra Status indications.
+4. Listener API onXtraStatusUpdate is invoked while registering for Xtra indications.
+5. Application configures Xtra Params using configureXtraParams.
+6. Location Configurator invokes response callback with errorcode.
+7. Listener API onXtraStatusUpdate is invoked when Xtra feature is enabled/disabled.
+8. Application requests Xtra Status using requestXtraStatus.
+9. Location Configurator invokes GetXtraStatus callback with XtraStatus and errorcode.
+10. Application deregisters config listener from Xtra Status indications.
+
 @section data_call_flow Data Services
 
 Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services.

@@ -18,6 +18,42 @@
  * limitations under the License.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       SensorDefines.hpp
  * @brief      SensorDefines contains enumerations and variables used for sensor services
@@ -101,13 +137,33 @@ struct SensorInfo {
      * The range offered by the sensor. This configuration can be set in /etc/sensors.conf for each
      * sensor.
      *
-     * For accelerometers, this is the number of Gs (force per unit mass due to gravity)in either
+     * For accelerometers, this is the number of Gs (force per unit mass due to gravity) in either
      * direction (+/-) on each axis
      *
      * For gyroscopes, this is the number of degrees per second (dps) in either direction (+/-)
      * along each axis
      */
     int range;
+
+    /**
+     * The version of the sensor considering the hardware part and the driver
+     */
+
+    int version;
+
+    /**
+     * This is the smallest difference between two values reported by this sensor, in meter per
+     * second per second for accelerometer, radians per second for gyroscope
+     */
+    float resolution;
+
+    /**
+     * The maximum range this sensor offers, in meter per second per second for accelerometer,
+     * radians per second for gyroscope. This attribute depends on the @ref SensorInfo::range of
+     * the sensor set in the configuration file. For example, a range of 1G results in a maximum
+     * range of approximately 9.8 m/s/s and a range of 2G gives a maximum range of about 19.6 m/s/s.
+     */
+    float maxRange;
 };
 
 /**
@@ -284,6 +340,17 @@ struct SensorFeatureEvent {
     std::string name;
     /** The ID of the generated event */
     int id;
+};
+
+/**
+ * @brief Types of self test the sensor can perform
+ *
+ */
+enum class SelfTestType {
+    /** To initiate self test with positive values */
+    POSITIVE,
+    /** To initiate self test with negative values */
+    NEGATIVE,
 };
 
 /** @} */ /* end_addtogroup telematics_sensor_service */

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
 @page sequence_diagrams Call Flow Diagrams
 
@@ -3201,4 +3237,37 @@ occur. Register this listener with the sensor feature manager.
 4. If system is not in sleep mode, Once the feature is enabled and an event related to the feature occurs, the listener is notified.
 5. If system is in sleep mode, Once the feature is enabled and an event related to the feature occurs, the listener is notified.
 
+@subsection sensor_self_test_call_flow Call flow for sensor self test
+
+@anchor fig_sensor_self_test_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{sensor_self_test_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Sensor self test call flow}
+  \label{sensor_self_test_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sensor_self_test_call_flow.png,Sensor self test call flow,80,80,Sensor self test call flow}
+
+Certain sensors offer self test feature which can be invoked whenever needed by the application
+using the selfTest API. The sensor sub-system should have been initialized successfully with
+SERVICE_AVAILABLE as a pre-requisite for sensor data acquisition and a valid SensorManager object
+is available.
+1. Get the information about available sensors from ISensorManager. The information will be provided
+in the sensorInfo parameter that would be passed by reference.
+2. Given the information about different sensors, identify the required sensor (name of the sensor)
+using the provided attributes - type, name, vendor or required sampling frequency. Having identified the required sensor,
+request for the sensor object from ISensorManager with the required name of the sensor. If the request
+was successful, the provided reference to shared_ptr<ISensor> would be set by the ISensorManager
+which can be used to further configure and acquire data from the sensor. The ownership of the
+sensor object is with the application. SensorManager does not hold a reference to the returned
+instance. So, requesting ISensorManager for a sensor with the same name would result in a new
+sensor object being returned.
+3. Trigger the self test with the require self test type and provide a callback that would be
+invoked by the sensor framework once the self test is completed.
+4. Once the self test is completed, the callback gets invoked indicating the result of the self
+test.
 */

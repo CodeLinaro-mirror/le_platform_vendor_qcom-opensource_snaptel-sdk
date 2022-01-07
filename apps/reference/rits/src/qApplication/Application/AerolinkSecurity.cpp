@@ -709,7 +709,7 @@ int AerolinkSecurity::ExtractMsg(const SecurityOpt opt,
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::syncVerify(
     Kinematics hvKine, Kinematics rvKine,
-    VerifStats  *verifStat
+    VerifStats  *verifStat, MisbehaviorStats* misbehaviorStat
     )
 {
     // Add new smp (if none exists) for this thread
@@ -795,6 +795,10 @@ int AerolinkSecurity::syncVerify(
             verifStat->timestamp = endLatencyTime-startTime;
             verifStat->verifLatency = endLatencyTime-startLatencyTime;
         }
+        //Misbehavior detection if enabled
+        if(this->enableMisbehavior){
+            mbdCheck(&rvKine, misbehaviorStat);
+        }
 
         // track overall security performance
         // includes ITS
@@ -816,10 +820,8 @@ int AerolinkSecurity::syncVerify(
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
     Kinematics hvKine, Kinematics rvKine,
-    sem_t    *queue_sem
-    )
+    sem_t    *queue_sem, MisbehaviorStats* misbehaviorStat) {
 
-{
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
     std::thread::id thrId = std::this_thread::get_id();
@@ -881,24 +883,81 @@ int AerolinkSecurity::asyncVerify(
                      ws_errid(result));
         return -1;
     }
+    //Misbehavior detection if enabled
+    if(this->enableMisbehavior){
+        mbdCheck(&rvKine, misbehaviorStat);
+    }
     sem_wait(thrVerifSemPtr);
     return 1;
+}
+
+void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat) {
+    AEROLINK_RESULT result;
+    std::thread::id thrId = std::this_thread::get_id();
+    SecuredMessageParserC* smp;
+    smp = getThrSmp(thrId);
+    if (misbehaviorAppDataPtr == nullptr){
+        misbehaviorAppDataPtr = std::make_shared<BsmData_t>();
+    }
+    if (misbehaviorResultPtr == nullptr){
+        misbehaviorResultPtr = std::make_shared<MisbehaviorDetectedType_t>();
+    }
+    if(smp != nullptr){
+        fillBsmDataForMbd(rvBsmInfo);
+        gettimeofday(&currTime, NULL);
+        double startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+        result = smp_checkMisbehavior(*smp, static_cast<void*>(misbehaviorAppDataPtr.get()),
+                            static_cast<MisbehaviorDetectedType_t*>(misbehaviorResultPtr.get()));
+        gettimeofday(&currTime, NULL);
+        double endLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+
+        if (result != WS_SUCCESS && result != WS_ERR_MISBEHAVIOR_DETECTED){
+            if(secVerbosity > 4)
+                fprintf(stderr, "Error in checking misbehavior\n");
+        }else{
+            if(secVerbosity > 4){
+                fprintf(stdout, "Detected Misbehavior Class is 0x%08x\n",
+                misbehaviorResultPtr->detectedMisbehaviorClass);
+            }
+        }
+        if(misbehaviorStat != nullptr){
+            misbehaviorStat->timestamp = endLatencyTime-startTime;
+            misbehaviorStat->misbehaviorLatency = endLatencyTime-startLatencyTime;
+        }
+    }
+}
+
+void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {
+    misbehaviorAppDataPtr->version = 1;
+    misbehaviorAppDataPtr->dataType = rvBsmData->dataType;
+    misbehaviorAppDataPtr->id =  rvBsmData->id;
+    misbehaviorAppDataPtr->msgCount = rvBsmData->msgCount;
+    misbehaviorAppDataPtr->latitude = rvBsmData->latitude;
+    misbehaviorAppDataPtr->longitude = rvBsmData->longitude;
+    misbehaviorAppDataPtr->elevation =  rvBsmData->elevation;
+    misbehaviorAppDataPtr->speed =  rvBsmData->speed;
+    misbehaviorAppDataPtr->longitudeAcceleration =  rvBsmData->longitudeAcceleration;
+    misbehaviorAppDataPtr->heading =  rvBsmData->heading;
+    misbehaviorAppDataPtr->latitudeAcceleration =  rvBsmData->latitudeAcceleration;
+    misbehaviorAppDataPtr->yawAcceleration =  rvBsmData->yawAcceleration;
+    misbehaviorAppDataPtr->brakes = rvBsmData->brakes;
 }
 
 // Verifies a signed message and returns payload length of actual packet
 int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
     setSecVerbosity(opt.secVerbosity);
+    this->enableMisbehavior = opt.enableMbd;
     int ret = 0;
     if(opt.enableAsync){
         // Asynchronous Verification
         ret = asyncVerify(
                 opt.hvKine, opt.rvKine,
-                &verifQueueSem);
+                &verifQueueSem, opt.misbehaviorStat);
     }else{
         //Synchronous Verification
         ret = syncVerify(
                 opt.hvKine, opt.rvKine,
-                opt.verifStat
+                opt.verifStat, opt.misbehaviorStat
               );
     }
     return ret;

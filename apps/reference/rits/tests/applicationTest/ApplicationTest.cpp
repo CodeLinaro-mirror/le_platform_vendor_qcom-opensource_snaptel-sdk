@@ -107,6 +107,8 @@ void receive(MessageType msgType) {
     }
     if(application->configuration.enableVerifStatLog)
         application->initVerifLogging();
+    if(application->configuration.enableMbdStatLog)
+        application->initMisbehaviorLogging();
 
     // will need to make this compatible for multiple rx ports
     int ret;
@@ -151,6 +153,9 @@ void receive(MessageType msgType) {
     }
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
+    }
+    if(application->configuration.enableMbdStatLog){
+        application->writeMisbehaviorLogging();
     }
     if(msgType == MessageType::BSM || msgType == MessageType::WSA)
         ((SaeApplication*)application)->printRxStats();

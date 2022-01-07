@@ -73,7 +73,9 @@
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verifStatIdx = 0;
+thread_local int misbehaviorStatIdx = 0;
 thread_local int verif_fails = 0;
+thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
@@ -412,6 +414,18 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
         sopt.rvKine.latitude = bsm->Latitude;
         sopt.rvKine.longitude = bsm->Longitude;
         sopt.rvKine.elevation = bsm->Elevation;
+        if(configuration.enableMbd){
+            sopt.enableMbd = configuration.enableMbd;
+            sopt.rvKine.id = bsm->id;
+            sopt.rvKine.dataType = this->configuration.psid;
+            sopt.rvKine.msgCount = bsm->MsgCount;
+            sopt.rvKine.speed = bsm->Speed;
+            sopt.rvKine.heading = bsm->Heading_degrees;
+            sopt.rvKine.longitudeAcceleration = bsm->AccelLon_cm_per_sec_squared;
+            sopt.rvKine.latitudeAcceleration = bsm-> AccelLat_cm_per_sec_squared;
+            sopt.rvKine.yawAcceleration = bsm->AccelYaw_centi_degrees_per_sec;
+            sopt.rvKine.brakes = (uint16_t)bsm->brakes.word;
+        }
     }
 
     // set the hv kinematics
@@ -434,6 +448,20 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
         verifStatIdx[tid]%=thrVerifLatencies[tid].size();
     }else{
         sopt.verifStat = nullptr;
+    }
+
+    if(configuration.enableMbdStatLog){
+        std::thread::id tid = std::this_thread::get_id();
+        if (thrMisbehaviorLatencies[tid].size() > misbehaviorStatIdx[tid]) {
+            sopt.misbehaviorStat = &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+        }else{
+            misbehaviorStatIdx[tid] = 0;
+            sopt.misbehaviorStat = &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+        }
+        misbehaviorStatIdx[tid]++;
+        misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
+    }else{
+        sopt.misbehaviorStat = nullptr;
     }
 
     // Verify packet signature ; providing lat/lon from the rx message
@@ -1073,4 +1101,3 @@ int SaeApplication::clearGlobalIPv6Prefix(void)
     GlobalIpSessionActive = false;
     return radioReceives[0].clearGlobalIPInfo();
 }
-

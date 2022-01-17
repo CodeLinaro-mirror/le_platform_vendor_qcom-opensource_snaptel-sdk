@@ -8,7 +8,7 @@ set(INPUT_LIST "telux_common" "telux_data" "telux_loc" "telux_tel"
                "telux_audio" "telux_power" "telux_therm" "telux_config")
 
 #Update SDK Version for release
-set(SDK_VERSION "1.38.39")
+set(SDK_VERSION "1.38.40")
 
 # Loop to create stub library from the INPUT_LIST
 foreach(STUB_LIB ${INPUT_LIST})

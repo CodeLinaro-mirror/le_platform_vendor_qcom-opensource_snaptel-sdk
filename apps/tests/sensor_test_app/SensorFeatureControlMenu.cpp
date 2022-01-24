@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -102,13 +102,7 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) 
     if(state == TcuActivityState::SUSPEND) {
         // enable MLC feature
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
-            std::cout << "Enabling sensor feature fifo for " << (*it) << std::endl;
-            telux::common::Status status = sensorFeatureManager_->enableFeature(*it);
-            if (status != telux::common::Status::SUCCESS) {
-                std::cout << "enableFeature fifo failed: " << std::endl;
-                Utils::printStatus(status);
-                break;
-            }
+            enableFeature(*it);
         }
         Status ackStatus = tcuActivityMgr_->sendActivityStateAck(TcuActivityStateAck::SUSPEND_ACK);
         if(ackStatus == Status::SUCCESS) {
@@ -245,9 +239,22 @@ void SensorFeatureControlMenu::initConsole() {
                 std::bind(&SensorFeatureControlMenu::enableSensorFeatureFifo,
                     this, std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listSensorFeaturesCommand,
-        enableSensorFeatureCommand, disableSensorFeatureCommand, listActiveFeaturesCommand,
-        enableSensorFeatureFifoCommand};
+    std::shared_ptr<ConsoleAppCommand> skipSensorFeatureOnSuspendCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("6", "Skip_Sensor_Feature_On_Suspend", {},
+                std::bind(&SensorFeatureControlMenu::skipSensorFeatureOnSuspend, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> listSensorFeaturesQueuedOnSuspendCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("7", "List_Sensor_Features_Queued_On_Suspend", {},
+                std::bind(&SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend, this,
+                    std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {listSensorFeaturesCommand, enableSensorFeatureCommand, disableSensorFeatureCommand,
+            listActiveFeaturesCommand, enableSensorFeatureFifoCommand,
+            skipSensorFeatureOnSuspendCommand, listSensorFeaturesQueuedOnSuspendCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -258,6 +265,28 @@ void SensorFeatureControlMenu::enableSensorFeatureFifo(std::vector<std::string> 
     SensorUtils::getInput("Enter feature name: ", name);
     enabledFeaturesFifo_.emplace(name);
     std::cout << "Enable sensor feature fifo request queued for " << name << std::endl;
+}
+
+void SensorFeatureControlMenu::skipSensorFeatureOnSuspend(std::vector<std::string> userInput) {
+    std::string name;
+    SensorUtils::getInput("Enter feature name: ", name);
+    if (enabledFeaturesFifo_.erase(name) == 0) {  // No element was erased
+        std::cout << "Sensor feature " << name << " not found in fifo queue" << std::endl;
+    } else {
+        std::cout << "Sensor feature fifo request removed for " << name << std::endl;
+    }
+}
+
+void SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend(
+    std::vector<std::string> userInput) {
+    if (enabledFeaturesFifo_.empty()) {
+        std::cout << "No features have been queued to be enabled on suspend" << std::endl;
+        return;
+    }
+    std::cout << "Features queued to be enabled on suspend" << std::endl;
+    for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
+        std::cout << "\t" << (*it) << std::endl;
+    }
 }
 
 void SensorFeatureControlMenu::listSensorFeatures(std::vector<std::string> userInput) {
@@ -277,14 +306,7 @@ void SensorFeatureControlMenu::listSensorFeatures(std::vector<std::string> userI
 void SensorFeatureControlMenu::enableSensorFeature(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
-    telux::common::Status status = sensorFeatureManager_->enableFeature(name);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "enableFeature failed: " << std::endl;
-        Utils::printStatus(status);
-        return;
-    }
-    enabledFeatures_.emplace(name);
-    std::cout << "Enable sensor feature request successful for " << name << std::endl;
+    enableFeature(name);
 }
 
 void SensorFeatureControlMenu::disableSensorFeature(std::vector<std::string> userInput) {
@@ -297,6 +319,17 @@ void SensorFeatureControlMenu::listActiveFeatures(std::vector<std::string> userI
     for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ++it) {
         std::cout << "\t" << (*it) << std::endl;
     }
+}
+
+void SensorFeatureControlMenu::enableFeature(std::string name) {
+    telux::common::Status status = sensorFeatureManager_->enableFeature(name);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "enableFeature failed: " << std::endl;
+        Utils::printStatus(status);
+        return;
+    }
+    enabledFeatures_.emplace(name);
+    std::cout << "Enable sensor feature request successful for " << name << std::endl;
 }
 
 void SensorFeatureControlMenu::disableFeature(std::string name) {

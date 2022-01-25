@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -82,6 +82,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <memory>
+#include <array>
 #include <telux/cv2x/Cv2xRadio.hpp>
 
 #include "../../common/utils/Utils.hpp"
@@ -115,16 +116,27 @@ using telux::cv2x::ICv2xRadioListener;
 using telux::cv2x::ICv2xListener;
 using telux::cv2x::ICv2xRadioManager;
 
-static constexpr uint32_t SERVIC_ID = 1u;
+// In TCP_CLIENT mode, this tool connects to TCP server via V2X-IP iface,
+// sends and recvs pkts from TCP server.
 static constexpr uint8_t TCP_CLIENT = 0u;
+// In TCP_SERVER mode, this tool listens on V2X-IP iface, accepts connection request
+// from client, recvs pkt and echoes back.
+// If proxy is enabled, it forwards pkts received from client to SCMS server and
+// forwards echo pkt received from SCMS server to client.
 static constexpr uint8_t TCP_SERVER = 1u;
-// in the test mode, this tool only setup flows, not send/recv pkts
-// user can use other public tools like iperf to test TCP throughput
+// In TCP_TEST mode, this tool only setups flows on V2X-IP iface, not sends/recvs pkts,
+// user can use other public tools like iperf or socat to do TCP testing.
 static constexpr uint8_t TCP_TEST = 2u;
+// In SCMS_SERVER mode, no telsdk API is invoked, it listens on the specified iface
+// and port, accepts connection request from TCP server and echoes back each received pkt.
+static constexpr uint8_t SCMS_SERVER = 3u;
+
+static constexpr uint32_t SERVIC_ID = 1u;
 static constexpr uint16_t DEFAULT_PORT = 5000u;
 static constexpr int      PRIORITY = 5;
 static constexpr uint32_t PACKET_LEN = 128u;
 static constexpr uint32_t MAX_DUMMY_PACKET_LEN = 10000;
+static constexpr uint16_t DEFAULT_PROXY_PORT = 9000u;
 
 static constexpr char TEST_VERNO_MAGIC = 'Q';
 static constexpr char CLIENT_UEID = 1;
@@ -155,9 +167,19 @@ static atomic<bool> gTcpConnected{false};
 static atomic<int> gTerminate{0};
 static int gTerminatePipe[2];
 static mutex gOperationMutex;
+
 static bool gSetGlobalIp = false;
 static string gGlobalIpPrefix("2600:8802:1507:c700");
 static bool gClearGlobalIp = false;
+
+static bool gEnableProxy = false;
+static string gProxyAddr;
+static uint16_t gProxyPort = DEFAULT_PROXY_PORT;
+static string gRemoteAddr;
+static uint16_t gRemotePort = DEFAULT_PROXY_PORT;
+static int32_t gProxySock = -1;
+static int32_t gProxyAcceptedSock = -1;
+static int32_t gProxyFamily = AF_INET6;
 
 class RadioListener : public ICv2xRadioListener {
 public:
@@ -361,10 +383,12 @@ static void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> chan, ErrorCode e
 
 static void printUsage(const char *Opt) {
     cout << "Usage: " << Opt << endl;
-    cout << "client example: " << Opt << " -m 0 -d <server addr> -g" << endl;
-    cout << "server example: " << Opt << " -m 1 -g" << endl;
-    cout << "test mode example: " << Opt << " -m 2 -s 0 -g" << endl;
-    cout << "-m <tcpMode>       0--Client, 1--Server, 2--TestMode" << endl;
+    cout << "client example: " << Opt << " -m 0 -d <server addr>" << endl;
+    cout << "server example: " << Opt << " -m 1" << endl;
+    cout << "test mode example: " << Opt << " -m 2 -s 0" << endl;
+    cout << "server proxy example: " << Opt << " -m 1 -x <proxy addr> -y <remote addr>" << endl;
+    cout << "scms server example: " << Opt << " -m 3 -x <proxy addr>" << endl;
+    cout << "-m <tcpMode>       0-TCP_CLIENT, 1-TCP_SERVER, 2-TEST_MODE, 3-SCMS_SERVER" << endl;
     cout << "-d <dstAddr>       Destination IPV6 address used for connecting" << endl;
     cout << "-s <srcPort>       Source port used for binding, default is 5000" << endl;
     cout << "-t <dstPort>       Destination port used for connecting, default is 5000" << endl;
@@ -373,13 +397,18 @@ static void printUsage(const char *Opt) {
     cout << "-l <packet length> Tx Packet length, default is " << gPacketLen <<endl;
     cout << "-n <packet number> Tx Packet number" <<endl;
     cout << "-g<global IP prefix> Set global IP prefix, default is " << gGlobalIpPrefix << endl;
+    cout << "-x <proxy_addr> Proxy addr for TCP_SERVER or local addr for SCMS_SERVER" << endl;
+    cout << "-X <proxy_port> Proxy port, default is " << gProxyPort << endl;
+    cout << "-y <remote_addr> Proxy remote addr for TCP_SERVER" << endl;
+    cout << "-Y <remote_port> Proxy remote port, default is " << gRemotePort << endl;
+    cout << "-F Use IPV4 addr for proxy, default is IPV6" << endl;
 }
 
 // Parse options
 static int parseOpts(int argc, char *argv[]) {
     int rc = 0;
     int c;
-    while ((c = getopt(argc, argv, "?d:m:s:t:p:l:n:g::")) != -1) {
+    while ((c = getopt(argc, argv, "?d:m:s:t:p:l:n:g::x:X:y:Y:F")) != -1) {
         switch (c) {
         case 'd':
             if (optarg) {
@@ -430,6 +459,35 @@ static int parseOpts(int argc, char *argv[]) {
             }
             cout << "global IP prefix: " << gGlobalIpPrefix << endl;
             break;
+        case 'x':
+            if (optarg) {
+                gEnableProxy = true;
+                gProxyAddr = optarg;
+                cout << "Set proxy addr:" << gProxyAddr << endl;
+            }
+            break;
+        case 'X':
+            if (optarg) {
+                gProxyPort = atoi(optarg);
+                cout << "Set proxy port:" << gProxyPort << endl;
+            }
+            break;
+        case 'y':
+            if (optarg) {
+                gRemoteAddr = optarg;
+                cout << "Set proxy remote addr:" << gRemoteAddr << endl;
+            }
+            break;
+        case 'Y':
+            if (optarg) {
+                gRemotePort = atoi(optarg);
+                cout << "Set proxy remote port:" << gRemotePort << endl;
+            }
+            break;
+        case 'F':
+            gProxyFamily = AF_INET;
+            cout << "Use IPV4 addr for proxy" << endl;
+            break;
         case '?':
         default:
             rc = -1;
@@ -443,10 +501,16 @@ static int parseOpts(int argc, char *argv[]) {
         rc = -1;
     }
 
+    if (gEnableProxy and
+        (gProxyAddr.empty() or (gTcpMode == TCP_SERVER and gRemoteAddr.empty()))) {
+       cerr << "Error proxy parameters!" << endl;
+       rc = -1;
+    }
+
     return rc;
 }
 
-static int init() {
+static int cv2xInit() {
     lock_guard<mutex> lock(gOperationMutex);
 
     // Get handle to Cv2xRadioManager
@@ -463,7 +527,7 @@ static int init() {
     };
 
     auto & cv2xFactory = Cv2xFactory::getInstance();
-    auto gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
+    gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
     if (!gCv2xRadioMgr) {
         cout << "Error: failed to get Cv2xRadioManager." << endl;
         return EXIT_FAILURE;
@@ -488,6 +552,7 @@ static int init() {
     }
 
     // Get C-V2X status and make sure Tx/Rx is active
+    resetCallbackPromise();
     if (Status::SUCCESS != gCv2xRadioMgr->requestCv2xStatus(cv2xStatusCallback)
         or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
         cerr << "Failed to get cv2x radio status"<< endl;
@@ -508,8 +573,7 @@ static int init() {
     if (not gCv2xRadio->isReady()) {
         if (Status::SUCCESS == gCv2xRadio->onReady().get()) {
             cout << "C-V2X Radio is ready" << endl;
-        }
-        else {
+        } else {
             cerr << "C-V2X Radio initialization failed." << endl;
             return EXIT_FAILURE;
         }
@@ -532,27 +596,43 @@ static int init() {
     return EXIT_SUCCESS;
 }
 
-static int connectTcpSocketClient(int sock) {
-    // For TCP client, establish connection with the created sock
-    struct sockaddr_in6 dstSockAddr = {0}; //must reset the sockaddr
-    dstSockAddr.sin6_port = htons((uint16_t)gDstPort);
-    inet_pton(AF_INET6, gDstAddr.c_str(), (void *)&dstSockAddr.sin6_addr);
-    dstSockAddr.sin6_family = AF_INET6;
 
-    cout << "connecting sock:" << sock << endl;
-    if (connect(sock, (struct sockaddr *)&dstSockAddr, sizeof(struct sockaddr_in6))) {
-        cout << "connect err:" << strerror(errno) << endl;
-        return EXIT_FAILURE;
+static int connectTcpSocketClient(int sock, string dstAddr, uint16_t dstPort, int32_t family) {
+    // For TCP client, establish connection with the created sock
+    if (family == AF_INET6) {
+        // dest addr is IPV6 type
+        struct sockaddr_in6 dstSockAddr = {0}; //must reset the sockaddr
+        dstSockAddr.sin6_port = htons(dstPort);
+        inet_pton(AF_INET6, dstAddr.c_str(), (void *)&dstSockAddr.sin6_addr);
+        dstSockAddr.sin6_family = AF_INET6;
+
+        cout << "connecting sock:" << sock << endl;
+        if (connect(sock, (struct sockaddr *)&dstSockAddr, sizeof(struct sockaddr_in6))) {
+            cout << "connect err:" << strerror(errno) << endl;
+            return EXIT_FAILURE;
+        }
+    } else {
+        // dest addr is IPV4 type
+        struct sockaddr_in dstSockAddr = {0}; //must reset the sockaddr
+        dstSockAddr.sin_port = htons(dstPort);
+        inet_pton(AF_INET, dstAddr.c_str(), (void *)&dstSockAddr.sin_addr);
+        dstSockAddr.sin_family = AF_INET;
+
+        cout << "connecting sock:" << sock << endl;
+        if (connect(sock, (struct sockaddr *)&dstSockAddr, sizeof(struct sockaddr_in))) {
+            cout << "connect err:" << strerror(errno) << endl;
+            return EXIT_FAILURE;
+        }
     }
 
     return EXIT_SUCCESS;
 }
 
-static int acceptTcpSocketServer(int sock) {
+static int acceptTcpSocketServer(int listenSock, int32_t& acceptSock) {
     // mark the created socket as listening sock
-    cout << "listening sock" << sock << endl;
-    if (listen(sock, 5) < 0) {
-        cout << "connect err:" << strerror(errno) << endl;
+    cout << "listening sock" << listenSock << endl;
+    if (listen(listenSock, 5) < 0) {
+        cout << "listen err:" << strerror(errno) << endl;
         return EXIT_FAILURE;
     }
 
@@ -560,13 +640,13 @@ static int acceptTcpSocketServer(int sock) {
     cout << "accepting connection..." << endl;
     struct sockaddr_in6 tmpAddr = {0};
     socklen_t socklen = sizeof(tmpAddr);
-    gAcceptedSock = accept(sock, (struct sockaddr *)&tmpAddr, &socklen);
-    if (gAcceptedSock < 0) {
+    acceptSock = accept(listenSock, (struct sockaddr *)&tmpAddr, &socklen);
+    if (acceptSock < 0) {
         cout << "accept err:" << strerror(errno) << endl;
         return EXIT_FAILURE;
     }
 
-    cout << "accepted client sock:" << gAcceptedSock << endl;
+    cout << "accepted sock:" << acceptSock << endl;
     return EXIT_SUCCESS;
 }
 
@@ -596,10 +676,10 @@ static int createTcpSocket() {
 
     cout << "create TCP socket successfully, port: "
         << static_cast<int>(ntohs(gTcpSockInfo->getSocketAddr().sin6_port)) << endl;
-    // add 500ms Tx/Rx timeout to remove the possibility for indefinite wait
+    // add 1s Tx/Rx timeout to remove the possibility for indefinite wait
     struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 500000;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
     if (setsockopt(gTcpSocket, SOL_SOCKET, SO_RCVTIMEO|SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
         cout << "set sock timeout err:" << strerror(errno) << endl;
         return EXIT_FAILURE;
@@ -688,13 +768,13 @@ static int setupTcpConnection() {
 
     if (gTcpMode == TCP_CLIENT) {
         // For TCP client, connect to the configured dst addr
-        if (connectTcpSocketClient(gTcpSocket)) {
+        if (connectTcpSocketClient(gTcpSocket, gDstAddr, gDstPort, AF_INET6)) {
             return EXIT_FAILURE;
         }
         gTcpConnected = true;
     } else if (gTcpMode == TCP_SERVER) {
         // For TCP server, accept incoming connection request
-        if (acceptTcpSocketServer(gTcpSocket)) {
+        if (acceptTcpSocketServer(gTcpSocket, gAcceptedSock)) {
             return EXIT_FAILURE;
         }
         gTcpConnected = true;
@@ -748,10 +828,27 @@ static void releaseTcpConnection() {
     }
 }
 
+void releaseProxyConnection() {
+    if (gProxyAcceptedSock > -1) {
+        cout << "closing accepted proxy sock:" << gProxyAcceptedSock << endl;
+        close(gProxyAcceptedSock);
+        gProxyAcceptedSock = -1;
+    }
+
+    if (gProxySock > -1) {
+        cout << "closing proxy sock:" << gProxySock << endl;
+        close(gProxySock);
+        gProxySock = -1;
+    }
+}
+
 static void terminationCleanup() {
     lock_guard<mutex> lock(gOperationMutex);
 
     cout << "Terminating" << endl;
+
+    // release proxy connection
+    releaseProxyConnection();
 
     // Release resources of TCP connection
     releaseTcpConnection();
@@ -788,24 +885,26 @@ static void installSignalHandler() {
     sigaction(SIGTERM, &sig_action, NULL);
 }
 
-static int startTcpClientMode() {
+static int startTcpClientMode(int32_t sock) {
     // send out pkt reaches configured number
     if (gPacketNum > 0 and gTxCount >= gPacketNum) {
+        cout << "Tx pkt count reached!" << endl;
         return EXIT_FAILURE;
     }
 
-    if (gTcpSocket < 0) {
+    if (sock < 0) {
+        cerr << "Error sock for TCP client!" << endl;
         return EXIT_FAILURE;
     }
 
-    // used the created socket to send pkt
+    // send pkt to client
     fillBuffer();
-    if (sampleTx(gTcpSocket) <= 0) {
+    if (sampleTx(sock) <= 0) {
         return EXIT_FAILURE;
     }
 
-    // wait for echo
-    if (sampleRx(gTcpSocket) <= 0) {
+    // wait for echo from client
+    if (sampleRx(sock) <= 0) {
         // EAGAIN and EWOULDBLOCK are possible error when
         // socket read timeout, not bail out in this case
         if (errno != EAGAIN and errno != EWOULDBLOCK) {
@@ -816,23 +915,149 @@ static int startTcpClientMode() {
     return EXIT_SUCCESS;
 }
 
-static int startTcpServerMode() {
-    if (gAcceptedSock < 0) {
+static int createProxySock() {
+    if ((gProxySock = socket(gProxyFamily, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+        cerr << "Create proxy sock failed, errno:" << strerror(errno) << endl;
         return EXIT_FAILURE;
     }
 
-    // use the accepted socket to recv pkt
-    if ((gPacketLen = sampleRx(gAcceptedSock)) <= 0) {
-        // EAGAIN and EWOULDBLOCK are possible error when
-        // socket read timeout, not bail out in this case
-        if (errno != EAGAIN and errno != EWOULDBLOCK) {
+    // allow multiple clients to bind to the same IP address with different port,
+    // and allow binding a socket in TIME_WAIT state
+    int option = 1;
+    if (setsockopt(gProxySock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<void *>(&option),
+                   sizeof(option)) < 0) {
+        cerr << "Set SO_REUSEADDR to proxy sock failed, errno:" << strerror(errno) << endl;
+        return EXIT_FAILURE;
+    }
+
+    // bind to proxy iface and port
+    if (gProxyFamily == AF_INET6) {
+        // proxy addr is IPV6 type
+        struct sockaddr_in6 proxySockAddr = {0}; //must reset the sockaddr
+        proxySockAddr.sin6_port = htons(gProxyPort);
+        inet_pton(AF_INET6, gProxyAddr.c_str(), (void *)&proxySockAddr.sin6_addr);
+        proxySockAddr.sin6_family = AF_INET6;
+        if (bind(gProxySock, reinterpret_cast<struct sockaddr *>(&proxySockAddr),
+                 sizeof(struct sockaddr_in6)) < 0) {
+            cerr << "Bind proxy sock failed, errno:" << strerror(errno) << endl;
             return EXIT_FAILURE;
         }
     } else {
-        // send echo
-        if (sampleTx(gAcceptedSock) <= 0) {
+        // proxy addr is IPV4 type
+        struct sockaddr_in proxySockAddr = {0}; //must reset the sockaddr
+        proxySockAddr.sin_port = htons(gProxyPort);
+        inet_pton(AF_INET, gProxyAddr.c_str(), (void *)&proxySockAddr.sin_addr);
+        proxySockAddr.sin_family = AF_INET;
+        if (bind(gProxySock, reinterpret_cast<struct sockaddr *>(&proxySockAddr),
+                 sizeof(struct sockaddr_in)) < 0) {
+            cerr << "Bind proxy sock failed, errno:" << strerror(errno) << endl;
             return EXIT_FAILURE;
         }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+static int setupProxy() {
+    // create TCP socket that binds to the proxy iface
+    if (createProxySock()) {
+        cout << "Create proxy socket failed!" << endl;
+        return EXIT_FAILURE;
+    }
+
+    if (gTcpMode == TCP_SERVER) {
+        // connect to remote SCMS addr and port
+        if (connectTcpSocketClient(gProxySock, gRemoteAddr, gRemotePort, gProxyFamily)) {
+            cout << "Connect to SCMS server err:" << strerror(errno) << endl;
+            return EXIT_FAILURE;
+        }
+    } else if (gTcpMode == SCMS_SERVER) {
+        // listen on specified port
+        if (acceptTcpSocketServer(gProxySock, gProxyAcceptedSock)) {
+            cout << "Accept RSU connection err:" << strerror(errno) << endl;
+            return EXIT_FAILURE;
+        }
+    } else {
+        cerr << "Error mode for proxy:" << +gTcpMode << endl;
+        return EXIT_FAILURE;
+    }
+
+    cout << "Setup proxy mode succesfully!" << endl;
+    return EXIT_SUCCESS;
+}
+
+static int startTcpServerMode(int32_t sock, int32_t proxySock) {
+    if (sock < 0) {
+        cerr << "Error socket for TCP server!" << endl;
+        return EXIT_FAILURE;
+    }
+
+    // recv pkt from client
+    if ((gPacketLen = sampleRx(sock)) <= 0) {
+        // EAGAIN and EWOULDBLOCK are possible error when
+        // socket read timeout, not bail out in this case
+        if (errno != EAGAIN and errno != EWOULDBLOCK) {
+            cerr << "Recv from client sock:" << sock << " failed, errno:";
+            cerr << strerror(errno) << endl;
+            return EXIT_FAILURE;
+        }
+    } else {
+        // If proxy is enabled for TCP server, forward pkts btw TCP client and SCMS server
+        if (proxySock > -1) {
+            // forward pkt received from client to remote network
+            if (sampleTx(proxySock) <= 0) {
+                cerr << "Send pkt to proxy sock:" << sock << " failed, errno:";
+                cerr << strerror(errno) << endl;
+                return EXIT_FAILURE;
+            }
+
+            // recv echo pkt from remote network
+            if ((gPacketLen = sampleRx(proxySock)) <= 0) {
+                // EAGAIN and EWOULDBLOCK are possible error when
+                // socket read timeout, not bail out in this case
+                if (errno != EAGAIN and errno != EWOULDBLOCK) {
+                    cerr << "Recv from proxy sock:" << sock << " failed, errno:";
+                    cerr << strerror(errno) << endl;
+                    return EXIT_FAILURE;
+                }
+            }
+        }
+
+        // send echo to client
+        if (sampleTx(sock) <= 0) {
+            cerr << "Send pkt to sock:" << sock << " failed, errno:";
+            cerr << strerror(errno) << endl;
+            return EXIT_FAILURE;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+static int init() {
+    // setup proxy btw device and remote network
+    if (gEnableProxy) {
+        if (setupProxy()) {
+            cerr << "Failed to setup proxy mode!" << endl;
+            return EXIT_FAILURE;
+        }
+
+        // no telsdk API invoked for SCMS_SERVER
+        if (gTcpMode == SCMS_SERVER) {
+            return EXIT_SUCCESS;
+        }
+    }
+
+    // do cv2x telsdk related initialization
+    if (cv2xInit()) {
+        cerr << "Cv2x init failed!" << endl;
+        return EXIT_FAILURE;
+    }
+
+    // setup TCP connection via PC5
+    if (setupTcpConnection()) {
+        cerr << "Setup PC5 TCP connection error!" << endl;
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
@@ -862,36 +1087,41 @@ int main(int argc, char *argv[]) {
     });
 
     // Parse parameters, get cv2x handles, create TCP flow and establish the connection
-    if (parseOpts(argc, argv) or
-        init() or
-        setupTcpConnection()) {
+    if (parseOpts(argc, argv) or init()) {
         goto bail;
     }
 
     // main operation loop
     while (!gTerminate) {
-        // wait for V2X active status before Tx/Rx
-        waitV2xStatusActive();
-        if (!isV2xReady()) {
-            continue;
-        }
-
-        if (gTcpMode == TCP_CLIENT) {
-            // send msg to server and wait for echo
-            if (startTcpClientMode()) {
-                goto bail;
-            } else {
-                // wait 100ms to send the next pkt
-                usleep(100000u);
-            }
-        } else if (gTcpMode == TCP_SERVER) {
-            // echo each msg received from client
-            if (startTcpServerMode()) {
+        if (gTcpMode == SCMS_SERVER) {
+            // echo each msg received from remote network
+            if (startTcpServerMode(gProxyAcceptedSock, -1)) {
                 goto bail;
             }
-        } else {
-            cout << "entering TCP test mode, use CTRL+C to exit" << endl;
+        } else if (gTcpMode == TCP_TEST) {
+            cout << "Entering TCP_TEST mode, use CTRL+C to exit" << endl;
             goto waitExit;
+        } else {
+            // wait for V2X active status before Tx/Rx via PC5
+            waitV2xStatusActive();
+            if (!isV2xReady()) {
+                continue;
+            }
+
+            if (gTcpMode == TCP_CLIENT) {
+                // send msg to server via PC5 and wait for echo
+                if (startTcpClientMode(gTcpSocket)) {
+                    goto bail;
+                } else {
+                    // wait 100ms to send the next pkt
+                    usleep(100000u);
+                }
+            } else if (gTcpMode == TCP_SERVER) {
+                // echo each msg received from client via PC5
+                if (startTcpServerMode(gAcceptedSock, gProxySock)) {
+                    goto bail;
+                }
+            }
         }
     }
 

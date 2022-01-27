@@ -27,9 +27,46 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <future>
 #include <getopt.h>
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <vector>
 #include <condition_variable>
@@ -43,7 +80,6 @@
 
 class SensorEventListener : public telux::sensor::ISensorEventListener {
  public:
-
     SensorEventListener(std::shared_ptr<telux::sensor::ISensor> sensor)
        : sensor_(sensor)
        , totalBatches_(0) {
@@ -86,7 +122,6 @@ class SensorEventListener : public telux::sensor::ISensorEventListener {
     }
 
  private:
-
     bool isUncalibratedSensor(telux::sensor::SensorType type) {
         return ((type == telux::sensor::SensorType::GYROSCOPE_UNCALIBRATED)
                 || (type == telux::sensor::SensorType::ACCELEROMETER_UNCALIBRATED));
@@ -132,15 +167,18 @@ std::string getSensorType(telux::sensor::SensorType type) {
 }
 
 void printSensorInfo(telux::sensor::SensorInfo info) {
-    std::cout << "ID: " << info.id << ", type: " << getSensorType(info.type)
-              << ", name: " << info.name << ", vendor: " << info.vendor << ", Sampling rates: [ ";
+    std::cout << "\tSensor ID: " << info.id << "\n\tSensor type: " << getSensorType(info.type)
+              << "\n\tSensor name: " << info.name << "\n\tVendor: " << info.vendor
+              << "\n\tSampling rates: [ ";
     for (auto rate : info.samplingRates) {
-        std::cout << rate << ", ";
+        std::cout << std::fixed << std::setprecision(2) << rate << ", ";
     }
-    std::cout << "\b\b ], Max sampling rate: " << info.maxSamplingRate
-              << ", Max count: " << info.maxBatchCountSupported
-              << ", Min count: " << info.minBatchCountSupported << ", Range: " << info.range
-              << std::endl;
+    std::cout << "\b\b ]\n\tMax sampling rate: " << std::fixed << std::setprecision(2)
+              << info.maxSamplingRate << "\n\tMax batch count: " << info.maxBatchCountSupported
+              << "\n\tMin batch count: " << info.minBatchCountSupported
+              << "\n\tRange: " << info.range << "\n\tVersion: " << info.version
+              << std::setprecision(6) << "\n\tResolution: " << info.resolution
+              << "\n\tMax range: " << info.maxRange << std::endl;
 }
 
 float getMinimumSamplingRate(telux::sensor::SensorInfo info) {

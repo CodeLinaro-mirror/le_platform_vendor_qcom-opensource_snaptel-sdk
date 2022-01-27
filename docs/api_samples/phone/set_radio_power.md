@@ -1,24 +1,22 @@
-Set radio power of the device {#set_radio_power}
-================================================
+Turn radio on or off {#set_radio_power}
+=======================================
 
-# Set radio power of the device
+This sample application demonstrates how to turn modem radio on or off.
 
-Please follow below steps to Radio Power state notifications.
-
-### 1. Get the PhoneFactory and PhoneManager instances ###
+### 1. Get the PhoneFactory and PhoneManager instances
 
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
    ~~~~~~
 
-### 2. Check if telephony subsystem is ready ###
+### 2. Check if telephony subsystem is ready
 
    ~~~~~~{.cpp}
    bool subSystemsStatus = phoneManager->isSubsystemReady();
    ~~~~~~
 
-### 2.1 If telephony subsystem is not ready, wait for it to be ready ###
+### 2.1 If telephony subsystem is not ready, wait for it to be ready
 
    If subsystem is not ready, wait unconditionally.
 
@@ -29,13 +27,13 @@ Please follow below steps to Radio Power state notifications.
    }
    ~~~~~~
 
-### 3. Instantiate Phone ###
+### 3. Instantiate Phone
 
    ~~~~~~{.cpp}
    auto phone = phoneManager->getPhone();
    ~~~~~~
 
-### 4. Implement IPhoneListener interface to receive service state change notifications ###
+### 4. Implement IPhoneListener interface to receive service state change notifications
 
    ~~~~~~{.cpp}
    class MyPhoneListener : public telux::tel::IPhoneListener {
@@ -47,19 +45,19 @@ Please follow below steps to Radio Power state notifications.
    }
    ~~~~~~
 
-### 4.1 Instantiate MyPhoneListener ###
+### 4.1 Instantiate MyPhoneListener
 
    ~~~~~~{.cpp}
    auto myPhoneListener = std::make_shared<MyPhoneListener>();
    ~~~~~~
 
-### 5. Register for phone info updates ###
+### 5. Register for phone info updates
 
    ~~~~~~{.cpp}
    phoneManager->registerListener(myPhoneListener);
    ~~~~~~
 
-### 6. Implement ICommandResponseCallback to receive the status of setRadioPower API call ###
+### 6. Implement ICommandResponseCallback to receive the status of setRadioPower API call
 
    ~~~~~~{.cpp}
    class MyPhoneCommandResponseCallback : public ICommandResponseCallback {
@@ -70,19 +68,19 @@ Please follow below steps to Radio Power state notifications.
    };
    ~~~~~~
 
-### 7. Instantiate MyPhoneCommandResponseCallback ###
+### 7. Instantiate MyPhoneCommandResponseCallback
 
    ~~~~~~{.cpp}
    auto myPhoneCommandCb = std::make_shared<MyPhoneCommandResponseCallback>();
    ~~~~~~
 
-### 8. Set the Radio power ON/OFF. ###
+### 8. Set the radio power ON/OFF
 
    ~~~~~~{.cpp}
    phone->setRadioPower(true, myPhoneCommandCb);
    ~~~~~~
 
-### 9. Command response callback is invoked with error code indicating SUCCESS or FAILURE of the operation. ###
+### 9. Command response callback is invoked with error code indicating SUCCESS or FAILURE of the operation
 
    ~~~~~~{.cpp}
    MyPhoneCommandResponseCallback::commandResponse(ErrorCode error) {

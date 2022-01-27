@@ -1,9 +1,7 @@
-Make Call {#make_call}
-======================
+Make a voice call {#make_call}
+=============================
 
-# Making a Voice Call
-
-Please follow below steps to make a voice call
+This sample application demonstrates how to make a voice call.
 
 ### 1. Get the PhoneFactory and PhoneManager instances
 
@@ -43,7 +41,7 @@ and others. if subsystems were not ready, wait for unconditionally.
    int phoneId = DEFAULT_PHONE_ID;
    ~~~~~~
 
-### 5. Instantiate dial call instance - this is optional
+### 5. Optionally, instantiate dial call instance
 
    ~~~~~~{.cpp}
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();

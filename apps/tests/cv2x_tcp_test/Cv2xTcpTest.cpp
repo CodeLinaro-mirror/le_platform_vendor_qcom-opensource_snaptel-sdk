@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file: Cv2xTcpTest.cpp
  *
@@ -82,6 +118,9 @@ using telux::cv2x::ICv2xRadioManager;
 static constexpr uint32_t SERVIC_ID = 1u;
 static constexpr uint8_t TCP_CLIENT = 0u;
 static constexpr uint8_t TCP_SERVER = 1u;
+// in the test mode, this tool only setup flows, not send/recv pkts
+// user can use other public tools like iperf to test TCP throughput
+static constexpr uint8_t TCP_TEST = 2u;
 static constexpr uint16_t DEFAULT_PORT = 5000u;
 static constexpr int      PRIORITY = 5;
 static constexpr uint32_t PACKET_LEN = 128u;
@@ -116,6 +155,9 @@ static atomic<bool> gTcpConnected{false};
 static atomic<int> gTerminate{0};
 static int gTerminatePipe[2];
 static mutex gOperationMutex;
+static bool gSetGlobalIp = false;
+static string gGlobalIpPrefix("2600:8802:1507:c700");
+static bool gClearGlobalIp = false;
 
 class RadioListener : public ICv2xRadioListener {
 public:
@@ -124,7 +166,7 @@ public:
         // local-link address has changed after TCP connection establishment,
         // the TCP connection cannot be used now, need to exit
         if (newL2Address > 0 and gTcpConnected) {
-            cerr << "local-link address has changed, need exit and re-start test!" << endl;
+            cerr << "v2x ip address has changed, need exit and re-start test!" << endl;
             gTerminate = 1;
             write(gTerminatePipe[1], &gTerminate, sizeof(int));
             gStatusCv.notify_all();
@@ -190,6 +232,11 @@ static void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock,
     if (ErrorCode::SUCCESS == error) {
         gTcpSockInfo = sock;
     }
+    gCallbackPromise.set_value(error);
+}
+
+// Callback function for ICv2xRadio->setGlobalIPInfo()
+static void setGlobalIPInfoCallback(ErrorCode error) {
     gCallbackPromise.set_value(error);
 }
 
@@ -314,21 +361,25 @@ static void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> chan, ErrorCode e
 
 static void printUsage(const char *Opt) {
     cout << "Usage: " << Opt << endl;
+    cout << "client example: " << Opt << " -m 0 -d <server addr> -g" << endl;
+    cout << "server example: " << Opt << " -m 1 -g" << endl;
+    cout << "test mode example: " << Opt << " -m 2 -s 0 -g" << endl;
+    cout << "-m <tcpMode>       0--Client, 1--Server, 2--TestMode" << endl;
     cout << "-d <dstAddr>       Destination IPV6 address used for connecting" << endl;
-    cout << "-m <tcpMode>       0--Client, 1--Server" << endl;
     cout << "-s <srcPort>       Source port used for binding, default is 5000" << endl;
     cout << "-t <dstPort>       Destination port used for connecting, default is 5000" << endl;
     cout << "-p <service ID>    Service ID used for Tx and Rx flows, default is ";
     cout << gServiceId << endl;
     cout << "-l <packet length> Tx Packet length, default is " << gPacketLen <<endl;
     cout << "-n <packet number> Tx Packet number" <<endl;
+    cout << "-g<global IP prefix> Set global IP prefix, default is " << gGlobalIpPrefix << endl;
 }
 
 // Parse options
 static int parseOpts(int argc, char *argv[]) {
     int rc = 0;
     int c;
-    while ((c = getopt(argc, argv, "?d:m:s:t:p:l:n:")) != -1) {
+    while ((c = getopt(argc, argv, "?d:m:s:t:p:l:n:g::")) != -1) {
         switch (c) {
         case 'd':
             if (optarg) {
@@ -339,7 +390,7 @@ static int parseOpts(int argc, char *argv[]) {
         case 'm':
             if (optarg) {
                 gTcpMode = atoi(optarg);
-                cout << "tcpMode: " << gTcpMode << endl;
+                cout << "tcpMode: " << +gTcpMode << endl;
             }
             break;
         case 's':
@@ -371,6 +422,13 @@ static int parseOpts(int argc, char *argv[]) {
                 gPacketNum = atoi(optarg);
                 cout << "packet number: " << gPacketNum << endl;
             }
+            break;
+        case 'g':
+            gSetGlobalIp = true;
+            if (optarg) {
+                gGlobalIpPrefix = optarg;
+            }
+            cout << "global IP prefix: " << gGlobalIpPrefix << endl;
             break;
         case '?':
         default:
@@ -430,8 +488,11 @@ static int init() {
     }
 
     // Get C-V2X status and make sure Tx/Rx is active
-    assert(Status::SUCCESS == gCv2xRadioMgr->requestCv2xStatus(cv2xStatusCallback));
-    assert(ErrorCode::SUCCESS == gCallbackPromise.get_future().get());
+    if (Status::SUCCESS != gCv2xRadioMgr->requestCv2xStatus(cv2xStatusCallback)
+        or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        cerr << "Failed to get cv2x radio status"<< endl;
+        return EXIT_FAILURE;
+    }
 
     if (Cv2xStatusType::ACTIVE == gCv2xStatus.txStatus) {
         cout << "C-V2X TX/RX status is active" << endl;
@@ -517,6 +578,11 @@ static int createTcpSocket() {
     tcpInfo.serviceId = gServiceId;
     tcpInfo.localPort = gSrcPort;
     EventFlowInfo eventInfo;
+    // set unicast flag if testing with global IP prefix
+    if (gSetGlobalIp) {
+        eventInfo.isUnicast = true;
+    }
+
     resetCallbackPromise();
     if (Status::SUCCESS != gCv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo,
                                                            createTcpSocketCallback) ||
@@ -542,7 +608,79 @@ static int createTcpSocket() {
     return EXIT_SUCCESS;
 }
 
+static int parseIPv6Prefix(char *ipPrefix) {
+    int i = 0;
+    auto pos = 0, prev = 0;
+    string prefixStr = gGlobalIpPrefix + ":";
+    do {
+        if (i >= CV2X_IPV6_ADDR_ARRAY_LEN) {
+            cout << "ipPrefix " << i << " too long" << std::endl;
+            return EXIT_FAILURE;
+        }
+        pos = prefixStr.find(":", prev);
+        if (pos != std::string::npos) {
+            uint16_t val = stoi(prefixStr.substr(prev, pos), 0, 16);
+            ipPrefix[i] = (val >> 8);
+            ipPrefix[i + 1] = (val & 0xFF);
+        }
+        prev = pos + 1;
+        i += 2;
+    } while(pos != std::string::npos);
+
+    return EXIT_SUCCESS;
+}
+
+static int setGlobalIpPrefix() {
+    cout << "setting global ip prefix" << endl;
+
+    // parse global IP prefix
+    char ipPrefix[CV2X_IPV6_ADDR_ARRAY_LEN] = {0};
+    if (EXIT_FAILURE == parseIPv6Prefix(ipPrefix)) {
+        cerr << "parse global IP prefix err!"<< endl;
+        return EXIT_FAILURE;
+    }
+
+    // set global IP prefix to modem
+    telux::cv2x::IPv6AddrType prefix;
+    prefix.prefixLen = 64;
+    memcpy(prefix.ipv6Addr, ipPrefix, CV2X_IPV6_ADDR_ARRAY_LEN);
+    resetCallbackPromise();
+    if (Status::SUCCESS != gCv2xRadio->setGlobalIPInfo(prefix, setGlobalIPInfoCallback)
+        or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        cerr << "set global IP prefix fails!" << endl;
+        return EXIT_FAILURE;
+    }
+
+    // set global IP prefix succeeded, need to clear global IP prefix when exit
+    gClearGlobalIp = true;
+    return EXIT_SUCCESS;
+}
+
+static int clearGlobalIpPrefix() {
+    cout << "clearing global ip prefix" << endl;
+
+    // set global IP prefix 0 to modem
+    telux::cv2x::IPv6AddrType prefix;
+    prefix.prefixLen = 64;
+    memset(prefix.ipv6Addr, 0, CV2X_IPV6_ADDR_ARRAY_LEN);
+    resetCallbackPromise();
+    if (Status::SUCCESS != gCv2xRadio->setGlobalIPInfo(prefix, setGlobalIPInfoCallback)
+        or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        cerr << "clear global IP prefix fails!" << endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 static int setupTcpConnection() {
+    // set global IP prefix to IP data call before creating TCP socket
+    if (gSetGlobalIp) {
+        if (EXIT_FAILURE == setGlobalIpPrefix()) {
+            return EXIT_FAILURE;
+        }
+    }
+
     // create TCP socket
     if (createTcpSocket()) {
         return EXIT_FAILURE;
@@ -553,14 +691,16 @@ static int setupTcpConnection() {
         if (connectTcpSocketClient(gTcpSocket)) {
             return EXIT_FAILURE;
         }
-    } else {
+        gTcpConnected = true;
+    } else if (gTcpMode == TCP_SERVER) {
         // For TCP server, accept incoming connection request
         if (acceptTcpSocketServer(gTcpSocket)) {
             return EXIT_FAILURE;
         }
+        gTcpConnected = true;
+    } else {
+        // do nothing in test mode
     }
-
-    gTcpConnected = true;
 
     return EXIT_SUCCESS;
 }
@@ -601,6 +741,11 @@ static void releaseTcpConnection() {
 
     // close TCP socket and deregister flows
     closeTcpSocket();
+
+    // reset global IP prefix
+    if (gClearGlobalIp) {
+        clearGlobalIpPrefix();
+    }
 }
 
 static void terminationCleanup() {
@@ -621,8 +766,6 @@ static void terminationCleanup() {
 
     cout << "TCP Tx count:" << gTxCount << endl;
     cout << "TCP Rx count:" << gRxCount << endl;
-
-    exit(0);
 }
 
 static void terminationHandler(int signum) {
@@ -741,11 +884,14 @@ int main(int argc, char *argv[]) {
                 // wait 100ms to send the next pkt
                 usleep(100000u);
             }
-        } else {
+        } else if (gTcpMode == TCP_SERVER) {
             // echo each msg received from client
             if (startTcpServerMode()) {
                 goto bail;
             }
+        } else {
+            cout << "entering TCP test mode, use CTRL+C to exit" << endl;
+            goto waitExit;
         }
     }
 
@@ -753,6 +899,7 @@ bail:
     // teminate
     gTerminate = 1;
     write(gTerminatePipe[1], &gTerminate, sizeof(int));
+waitExit:
     f.get();
     cout << "Done." << endl;
 

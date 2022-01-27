@@ -107,6 +107,93 @@ class IFsManager {
     virtual telux::common::Status startEfsBackup() = 0;
 
     /**
+     * The Filesystem Manager performs periodic operations which might be resource intensive.
+     * Such operations are not desired during other crucial events like an eCall. To avoid
+     * performing such operations during such events, the client is recommended to invoke
+     * this API before it initiates an eCall. This allows the filesystem manager to prepare
+     * the system to restrict any resource intensive operations like filesystem scrubbing
+     * during the eCall.
+     *
+     * @note - The client would need to periodically invoke this API to ensure that the timer
+     *         gets reset so that operations do not get re-enabled.
+     *
+     * @returns - @ref telux::common::Status
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status prepareForEcall() = 0;
+
+    /**
+     * Once ecall complete, the client should invoke this API to re-enable filesystem
+     * operations like filesystem scrubbing.If the API invocation results in
+     * @ref telux::common::Status::NOTREADY,indicating that the sub-system is not ready,
+     * the client should retry.
+     *
+     * @returns - @ref telux::common::Status
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status eCallCompleted() = 0;
+
+    /**
+     * This API should be invoked to allow the filesystem manager to perform operations
+     * like prepare the filesystem for an OTA. In addition to this preparation, any
+     * on-going operations like scrubbing is stopped.
+     *
+     * @param [in] otaOperation  - @ref telux::platform::OtaOperation.
+     *
+     * @param [out] responseCb   - @ref telux::common::ResponseCallback
+     * The callback method to be invoked upon completion of OTA preparation and the response
+     * is indicated asynchronously.
+     *
+     * @returns - @ref telux::common::Status
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status prepareForOta(
+        OtaOperation otaOperation, telux::common::ResponseCallback responseCb)
+        = 0;
+
+    /**
+     * This API should be invoked upon completion of OTA, this will allow the filesystem
+     * manager to perform post OTA verifications and re-enable operations that were
+     * disabled for performing the OTA, like scrubbing.
+     *
+     * @param [in] operationStatus  - @ref telux::platform::OperationStatus
+     * The status of the OTA operation that the client attempted.
+     *
+     * @param [out] responseCb   - @ref telux::common::ResponseCallback
+     * The callback method to be invoked upon completion of OTA related filesystem
+     * verifications and the response is indicated asynchronously.
+     *
+     * @returns - @ref telux::common::Status
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status otaCompleted(
+        OperationStatus operationStatus, telux::common::ResponseCallback responseCb)
+        = 0;
+
+    /**
+     * This API should be invoked when the client decides to mirror the active partition
+     * to the inactive partition.
+     *
+     * @param [out] responseCb   - @ref telux::common::ResponseCallback
+     * The callback method to be invoked when the mirroring operation is completed and
+     * the response is indicated asynchronously.
+     *
+     * @returns - @ref telux::common::Status
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status startAbSync(telux::common::ResponseCallback responseCb) = 0;
+
+    /**
      * Destructor of IFsManager
      */
     virtual ~IFsManager(){};

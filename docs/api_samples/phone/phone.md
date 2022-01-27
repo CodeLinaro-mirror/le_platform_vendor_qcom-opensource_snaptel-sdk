@@ -1,7 +1,5 @@
-tel {#phone}
-================
-
-# The List of sample apps related to telephony:
+Telephony {#phone}
+==================
 
 * @subpage make_call
 * @subpage make_eCall
@@ -16,4 +14,5 @@ tel {#phone}
 * @subpage remote_sim_reference_apps
 * @subpage send_sms
 * @subpage listen_sms
-* @subpage rsp
+* @subpage remote_sim_provisioning
+* @subpage rsp_reference_apps

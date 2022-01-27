@@ -63,6 +63,42 @@
  */
 
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       LocationDefines.hpp
  *
@@ -1674,6 +1710,144 @@ enum class ReportStatus {
 };
 
 /**
+ * Specify the logcat debug level during XTRA's param configuration. Currently, only XTRA
+ * daemon will support the runtime configuration of the debug log level.
+ */
+enum class DebugLogLevel {
+    /** No message is logged. */
+    DEBUG_LOG_LEVEL_NONE = 0,
+    /** Only error level debug messages will get logged. */
+    DEBUG_LOG_LEVEL_ERROR = 1,
+    /** Only warning and error level debug messages will get logged. */
+    DEBUG_LOG_LEVEL_WARNING = 2,
+    /** Only info, warning and error level debug messages will get logged. */
+    DEBUG_LOG_LEVEL_INFO = 3,
+    /** Only debug, info, warning and error level debug messages will get logged. */
+    DEBUG_LOG_LEVEL_DEBUG = 4,
+    /** Verbose, debug, info, warning and error level debug messages will get logged. */
+    DEBUG_LOG_LEVEL_VERBOSE = 5,
+};
+
+/** Xtra feature configuration parameters */
+struct XtraConfig {
+    /**
+     * Number of minutes between periodic, consecutive successful
+     * XTRA assistance data downloads.
+     *
+     * If 0 is specified, modem default download for XTRA
+     * assistance data will be performed.
+     */
+    uint32_t downloadIntervalMinute;
+    /**
+     * Connection timeout when connecting backend for both xtra
+     * assistance data download and NTP time download.
+     *
+     * If 0 is specified, the download timeout value will use
+     * device default values.
+     */
+    uint32_t downloadTimeoutSec;
+    /**
+     * Interval to wait before retrying for xtra assistance data's
+     * download in case of failure.
+     *
+     * If 0 is specified, XTRA download retry will follow device
+     * default behavior and downloadRetryAttempts will also use device
+     * default value.
+     */
+    uint32_t downloadRetryIntervalMinute;
+    /**
+     * Total number of allowed retry attempts for assistance data's
+     * download in case of failure.
+     *
+     * If 0 is specified, XTRA download retry will follow device
+     * default behavior and downloadRetryIntervalMinute will also use
+     * device default value.
+     */
+    uint32_t downloadRetryAttempts;
+     /**
+     * Path to the certificate authority (CA) repository that needs
+     * to be used for XTRA assistance data download.
+     * If empty string is specified, device default CA repositaory
+     * will be used.
+     */
+    std::string caPath;
+    /**
+     * URLs from which XTRA assistance data will be fetched.
+     * At least one and up to three URLs need to be configured when
+     * this API is used.
+     *
+     * The URLs, if provided, shall include the port number to be
+     * used for download.
+     *
+     * Valid xtra server URLs should start with "https://".
+     *
+     * Example of a valid URL : https://path.exampleserver.net:443
+     *
+     */
+    std::vector<std::string> serverURLs;
+    /**
+     * URLs for NTP server to fetch current time.
+     *
+     * If no NTP server URL is provided, then device will use the
+     * default NTP server.
+     *
+     * The URLs, if provided, shall include the port number to be
+     * used for download.
+     *
+     * Example of a valid ntp server URL is:
+     * ntp.exampleserver.com:123.
+     */
+    std::vector<std::string> ntpServerURLs;
+    /** Level of debug log messages that will be logged. */
+    DebugLogLevel daemonDebugLogLevel;
+};
+
+/** Provides the status of the previously downloaded Xtra data. */
+enum class XtraDataStatus {
+    /**
+     * If XTRA feature is disabled or if XTRA feature is enabled,
+     * but XTRA daemon has not yet retrieved the assistance data
+     * status from modem on early stage of device bootup, xtra data
+     * status will be unknown.
+     */
+    STATUS_UNKNOWN = 0,
+    /** If XTRA feature is enabled, but XTRA data is not present on the device. */
+    STATUS_NOT_AVAIL = 1,
+    /** If XTRA feature is enabled, XTRA data has been downloaded ever but no longer valid. */
+    STATUS_NOT_VALID = 2,
+    /** If XTRA feature is enabled, XTRA data has been downloaded and is currently valid. */
+    STATUS_VALID = 3,
+};
+
+/** Specify Xtra assistant data's current status, validity and whether it is enabled. */
+struct XtraStatus {
+    /** XTRA assistance data and NTP time download is enabled or disabled. */
+    bool featureEnabled;
+    /**
+     * XTRA assistance data status. If XTRA assistance data
+     * download is not enabled, this field will be set to
+     * XTRA_DATA_STATUS_UNKNOWN.
+     */
+    XtraDataStatus xtraDataStatus;
+    /**
+     * Number of hours that xtra assistance data will remain valid.
+     *
+     * This field will be valid when xtraDataStatus is set to
+     * XTRA_DATA_STATUS_VALID.
+     * For all other XtraDataStatus, this field will be set to 0.
+     */
+    uint32_t xtraValidForHours;
+};
+
+/** Enum of all the possible indications invoked by a Location Configurator listener.  */
+enum LocConfigIndicationsType {
+    LOC_CONF_IND_XTRA_STATUS = 0
+};
+
+/** This bitset represents the list of the Location Config Indications selected by the Client. */
+using LocConfigIndications = std::bitset<32>;
+
+/**
  * @brief ILocationInfoBase provides interface to get basic position related
  * information like latitude, longitude, altitude, timestamp.
  *
@@ -2208,6 +2382,7 @@ public:
  * @returns  HealthStatus of Satellite Vehicle if available else returns
  * UNKNOWN.
  *          - @ref SVHealthStatus
+ * @deprecated This API is not supported.
  *
  */
   virtual SVHealthStatus getSVHealthStatus() = 0;
@@ -2218,6 +2393,7 @@ public:
  * @note    This API is work-in-progress and is subject to change.
  * @returns Satellite Vehicle Status if available else returns UNKNOWN.
  *          - @ref SVStatus
+ * @deprecated This API is not supported.
  *
  */
   virtual SVStatus getStatus() = 0;
@@ -2323,6 +2499,7 @@ public:
  * Indicates whether altitude is assumed or calculated.
  *
  * @returns @ref AltitudeType if available else returns UNKNOWN.
+ * @deprecated This API is not supported.
  *
  */
   virtual AltitudeType getAltitudeType() = 0;

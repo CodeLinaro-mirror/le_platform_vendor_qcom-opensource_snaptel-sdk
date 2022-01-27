@@ -1,9 +1,7 @@
-Using Request Service Domain Preference API {#serving_system}
-=============================================================
+Request service domain preference {#serving_system}
+===================================================
 
-# Using Request Service Domain Preference API
-
-Please follow below steps to request service domain preference
+This sample application demonstrates how to request current service domain preference.
 
 ### 1. Get phone factory and serving system manager instances
 
@@ -13,13 +11,13 @@ Please follow below steps to request service domain preference
       = phoneFactory.getServingSystemManager(DEFAULT_SLOT_ID);
    ~~~~~~
 
-### 2. Wait for the serving subsystem initialization ###
+### 2. Wait for the serving subsystem initialization
 
    ~~~~~~{.cpp}
    bool subSystemStatus = servingSystemMgr->isSubsystemReady();
    ~~~~~~
 
-### 2.1 If serving subsystem is not ready, wait for it to be ready ###
+### 2.1 If serving subsystem is not ready, wait for it to be ready
 
    ~~~~~~{.cpp}
    if(!subSystemsStatus) {
@@ -30,7 +28,7 @@ Please follow below steps to request service domain preference
    }
    ~~~~~~
 
-### 3. Exit the application, if SDK is unable to initialize serving subsystem ###
+### 3. Exit the application, if serving subsystem can not be initialized
 
    ~~~~~~{.cpp}
    if(subSystemsStatus) {
@@ -42,7 +40,7 @@ Please follow below steps to request service domain preference
    }
    ~~~~~~
 
-### 6. Implement response callback to receive response for request service domain preference ###
+### 6. Implement response callback to receive response for request service domain preference
 
    ~~~~~~{.cpp}
    class ServiceDomainResponseCallback {
@@ -62,7 +60,7 @@ Please follow below steps to request service domain preference
    };
    ~~~~~~
 
-### 7. Send request service domain preference request along with required function object ###
+### 7. Send request service domain preference request along with required function object
 
    ~~~~~~{.cpp}
    if(servingSystemMgr) {
@@ -71,6 +69,5 @@ Please follow below steps to request service domain preference
       std::cout << static_cast<int>(status) <<std::endl;
    }
    ~~~~~~
-
-### 8. Receive callback for request service domain preference request in serviceDomainResponse function ###
-
+   
+Now serviceDomainResponse() method will be invoked with current service domain preference.

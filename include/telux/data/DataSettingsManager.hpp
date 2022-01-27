@@ -123,6 +123,19 @@ using RequestBandInterferenceConfigResponseCb = std::function<void(bool isEnable
     std::shared_ptr<BandInterferenceConfig> config, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to requestWwanConnectivityConfig API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] slotId           Slot id for which wwan connectivity is reported.
+ * @param [in] isAllowed        True: connectivity allowed, False: connectivity disallowed.
+ * @param [in] error            Return code for whether the operation succeeded or failed.
+ */
+using requestWwanConnectivityConfigResponseCb = std::function<void(SlotId slotId,
+    bool isAllowed, telux::common::ErrorCode error)>;
+
+/**
  * @brief Data Settings Manager class provides APIs related to the data subsystem settings.
  *        For example, ability to reset current network settings to factory settings, setting
  *        backhaul priority, and enabling roaming per PDN.
@@ -150,7 +163,7 @@ public:
      * @param [in] operationType    @ref telux::data::OperationType
      * @param [in] callback         callback to get the response to restoreFactorySettings
      *
-     * @returns @returns Immediate status of restoreFactorySettings i.e. success or suitable status.
+     * @returns Immediate status of restoreFactorySettings i.e. success or suitable status.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change.
      */
@@ -238,6 +251,48 @@ public:
         RequestBandInterferenceConfigResponseCb callback) = 0;
 
     /**
+     * Allow/Disallow WWAN connectivity.
+     * Controls whether system should allow/disallow WWAN connectivity to cellular network.
+     * Default setting is allow WWAN connectivity to cellular network.
+     * - If client selects to disallow WWAN connectivity, any further attempts to start data
+     *   calls using @ref telux::data::IDataConnectionManager::startDataCall will fail with
+     *   @ref telux::common::ErrorCode::NOT_SUPPORTED.
+     *   Data calls can be connected again only if client selects to allow WWAN connectivity.
+     * - If client selects to disallow WWAN connectivity while data calls are already connected,
+     *   all WWAN data calls will also be disconnected.
+     *   Client will also receive @ref telux::data::IDataConnectionListener::onDataCallInfoChanged
+     *   notification with @ref telux::data::IDataCall object status
+     *   @ref telux::data::DataCallStatus::NET_NO_NET for all impacted data calls.
+     * Configuration changes will be persistent across reboots.
+     *
+     * @param [in] slotId           Slot id on which WWAN connectivity to be allowed/disallowed
+     * @param [in] allow            True: allow connectivity, False: disallow connectivity
+     * @param [in] callback         optional callback to get response for setWwanConnectivityConfig.
+     *
+     * @returns Status of setWwanConnectivityConfig i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setWwanConnectivityConfig(SlotId slotId, bool allow,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Request current WWAN connectivity Configuration.
+     *
+     * @param [in] slotId           Slot id for which WWAN connectivity to be reported.
+     * @param [in] callback         callback to get response for requestWwanConnectivityConfig.
+     *
+     * @returns Status of requestWwanConnectivityConfig i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status requestWwanConnectivityConfig(SlotId slotId,
+        requestWwanConnectivityConfigResponseCb callback) = 0;
+
+    /**
      * Register Data Settings Manager as listener for Data Service heath events like data service
      * available or data service not available.
      *
@@ -278,6 +333,15 @@ class IDataSettingsListener {
      * @param [in] status - @ref ServiceStatus
      */
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
+
+    /**
+     * This function is called when WWAN backhaul connectivity config changes.
+     *
+     * @param [in] slotId                - Slot Id for which connectivity has changed.
+     * @param [in] isConnectivityAllowed - Connectivity status allowed/disallowed.
+     *
+     */
+    virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {}
 
     /**
      * Destructor for IDataSettingsListener

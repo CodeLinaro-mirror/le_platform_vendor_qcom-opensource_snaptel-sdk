@@ -1,7 +1,5 @@
-cv2x {#cv2x}
+CV2X {#cv2x}
 ============
-
-# The List of sample apps related to cv2x:
 
 * @subpage cv2x_get_status_app
 * @subpage cv2x_rx_app

@@ -1,9 +1,7 @@
 Capture session {#audio_manager_capture}
 =====================================================================================
 
-## Audio Manager API Sample Reference for audio capture session
-
-This section demonstrates how to use audio APIs for capture session.
+This sample application demonstrates how to use audio APIs for recording audio.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,7 +9,7 @@ This section demonstrates how to use audio APIs for capture session.
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
@@ -20,19 +18,19 @@ This section demonstrates how to use audio APIs for capture session.
         prom.set_value(serviceStatus);
     });
     if (!audioManager) {
-        std::cout << "Failed to get AudioManager object" << std::endl;
+        std::cout << "Failed to get AudioManager instance" << std::endl;
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    // Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,10 +39,10 @@ This section demonstrates how to use audio APIs for capture session.
     }
    ~~~~~~
 
-### 3. Create an Audio Stream (Audio Capture Session)
+### 3. Create a capture audio session
 
    ~~~~~~{.cpp}
-    //Callback which provides response to createStream, with pointer to base interface IAudioStream.
+    // Callback which provides response to createStream, with pointer to base interface IAudioStream
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -56,20 +54,22 @@ This section demonstrates how to use audio APIs for capture session.
         audioCaptureStream = std::dynamic_pointer_cast<IAudioCaptureStream>(stream);
     }
 
-    //Create an Audio Stream (Audio Capture Session)
+    // Create an audio stream
     StreamConfig config;
+
     config.type = StreamType::CAPTURE;
     config.sampleRate = 48000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 4. Allocate Stream Buffers for Capture Operation
+### 4. Allocate stream buffers for audio capture operation
 
    ~~~~~~{.cpp}
-    // Get an audio buffer (can get more than one)
+    // Get an audio buffer (we can get more than one)
     auto streamBuffer = audioCaptureStream->getStreamBuffer();
     if(streamBuffer != nullptr) {
         // Setting the bytesToRead (bytes to be read from stream) as minimum size
@@ -85,10 +85,10 @@ This section demonstrates how to use audio APIs for capture session.
     }
    ~~~~~~
 
-### 5. Start read operation for the capture to Start
+### 5. Start read operation for the capture to start
 
    ~~~~~~{.cpp}
-    //Callback which provides response to read operation
+    // Callback which provides response to read operation
     void readCallback(std::shared_ptr<IStreamBuffer> buffer, ErrorCode error)
     {
         uint32_t bytesWrittenToFile = 0;
@@ -101,8 +101,8 @@ This section demonstrates how to use audio APIs for capture session.
         buffer->reset();
         return;
     }
-    //Read from Capture
-    //First read starts Capture Session.
+    // Read from Capture
+    // Very first read starts capture session
     auto status = audioCaptureStream->read(streamBuffer, bytesToRead, readCallback);
     if(status != telux::common::Status::SUCCESS) {
         std::cout << "read() failed with error" << static_cast<int>(status) << std::endl;
@@ -111,10 +111,10 @@ This section demonstrates how to use audio APIs for capture session.
     }
    ~~~~~~
 
-### 6. Delete an Audio Stream (Audio Capture Session), once required bytes captured
+### 6. Dispose audio stream once required number of samples are captured
 
    ~~~~~~{.cpp}
-    //Callback which provides response to deleteStream
+    // Callback which provides response to deleteStream
     void deleteStreamCallback(ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "deleteStream() returned with error " << static_cast<int>(error)
@@ -124,7 +124,8 @@ This section demonstrates how to use audio APIs for capture session.
         std::cout << "deleteStream() succeeded." << std::endl;
         audioCaptureStream.reset();
     }
-    //Delete an Audio Stream (Audio Capture Session), once reached end of operation.
+    
+    // Delete the audio stream
     Status  status = audioManager->deleteStream(
                std::dynamic_pointer_cast<IAudioStream>(audioCaptureStream), deleteStreamCallback);
     if (status != Status::SUCCESS) {

@@ -63,6 +63,42 @@
  */
 
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * Call Menu class provides dialer functionality of the SDK
  * it has menu options for dial, answer, hangup, reject, conference and swap calls
@@ -74,12 +110,8 @@
 #include <telux/tel/PhoneFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
 
+#include "conference/ConferenceMenu.hpp"
 #include "CallMenu.hpp"
-
-#define MIN_SIM_SLOT_COUNT 1
-#define MAX_SIM_SLOT_COUNT 2
-#define MUTE 1
-#define UNMUTE 0
 
 //Minimum number of calls required to perform conference or swap
 #define MIN_PROGRESS_CALLS 2
@@ -178,9 +210,9 @@ void CallMenu::init() {
    std::shared_ptr<ConsoleAppCommand> resumeCallCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "7", "Resume_call", {}, std::bind(&CallMenu::resumeCall, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> conferenceCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "8", "Conference", {}, std::bind(&CallMenu::conference, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> conferenceCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("8", "Conference_Call_Menu", {},
+                        std::bind(&CallMenu::conferenceSubMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> swapCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("9", "Swap", {}, std::bind(&CallMenu::swap, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getCallsCommand = std::make_shared<ConsoleAppCommand>(
@@ -637,6 +669,16 @@ void CallMenu::holdCall(std::vector<std::string> userInput) {
    } else {
       std::cout << "No active call found" << std::endl;
    }
+}
+
+void CallMenu::conferenceSubMenu(std::vector<std::string> userInput) {
+    std::cout << "Enter conferenceSubMenu ";
+    auto conferenceMenu = std::make_shared<ConferenceMenu>("Conference Call Menu", "conference> ");
+    if(conferenceMenu->init()) {
+        conferenceMenu->mainLoop();
+    }
+    conferenceMenu = nullptr;
+    ConsoleApp::displayMenu();
 }
 
 void CallMenu::conference(std::vector<std::string> userInput) {

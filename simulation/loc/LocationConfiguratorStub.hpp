@@ -75,6 +75,8 @@
 
 #include "telux/loc/LocationConfigurator.hpp"
 #include "StubSystemStarter.hpp"
+#include <set>
+#include <map>
 
 namespace telux {
 
@@ -146,6 +148,17 @@ public:
  */
     using GetRobustLocationCallback = std::function<void(const telux::loc::
         RobustLocationConfiguration rLConfig, telux::common::ErrorCode error)>;
+
+/** This function is called with the response to requestXtraStatus API.
+ *
+ * @param[in] xtraStatus - Information pertaining to Xtra assistance data.
+ *
+ * @param[in] error - Return code which indicates whether the operation succeeded
+ *                    or not.
+ *
+ */
+    using GetXtraStatusCallback = std::function<void(const telux::loc::XtraStatus xtraStatus,
+        telux::common::ErrorCode error)>;
 
 /**
  * Checks the status of location configuration subsystems and returns the result.
@@ -581,7 +594,76 @@ public:
   telux::common::Status configureEngineIntegrityRisk(const EngineType engineType,
       uint32_t integrityRisk, telux::common::ResponseCallback callback = nullptr ) override;
 
+/**
+ * This API is used to enable/disable the XTRA (Predicted GNSS Satellite Orbit Data) feature
+ * on device. If XTRA feature is to be enabled, this API is also used to configure the various
+ * XTRA settings in device.
+ *
+ * Clients need to note the below-
+ *
+ * 1. Wait for the ongoing request to finish prior to the next invocation else the behavior is
+ *    undefined.
+ * 2. The API is non-incremental i.e, the second call will overwrite the first call. Also the
+ *    configured XTRA params will be persistent.
+ *
+ * @param [in] enable - Enable XTRA Feature on the device. False would disable both the XTRA
+ *                      Assistance Data and NTP Time Download.
+ *
+ * @param [in] configParams - Configuration Parameters for XTRA on the device.
+ *
+ * @param [in] callback - Optional callback stating the response errorcode.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
 
+  telux::common::Status configureXtraParams(bool enable, const XtraConfig configParams,
+    telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+ * This API is used to query xtra feature setting and xtra assistance data status used by the GNSS
+ * standard position engine (SPE). If XTRA_DATA_STATUS_UNKNOWN is returned but XTRA feature is
+ * enabled, the client shall wait a few seconds before calling this API again.
+ *
+ * @param [in] callback - Callback to get the Xtra data status information.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  telux::common::Status requestXtraStatus(GetXtraStatusCallback callback) override;
+
+/**
+ * This API is used to register a configuration listener for getting specific indications/updates.
+ *
+ * @param [in] indicationList - List of indications client wants to register under
+ *                              telux::loc::LocConfigIndicationsType.
+ *
+ * @param [in] listener - Pointer of ILocationConfigListener object.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ */
+
+  telux::common::Status registerListener(LocConfigIndications indicationList,
+    std::weak_ptr<ILocationConfigListener> listener) override;
+
+/**
+ * This API is used to deregister a configuration listener from specific indications/updates.
+ *
+ * @param [in] indicationList - List of indications client wants to deregister from under
+ *                              telux::loc::LocConfigIndicationsType.
+ *
+ * @param [in] listener - Pointer of ILocationConfigListener object.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ */
+
+  telux::common::Status deRegisterListener(LocConfigIndications indicationList,
+    std::weak_ptr<ILocationConfigListener> listener) override;
 
     LocationConfiguratorStub(telux::common::InitResponseCb callback = nullptr);
 /**
@@ -600,6 +682,34 @@ private:
     bool confgPaceEnabled_;
     telux::loc::LeverArmConfigInfo confgLeverArmInfo_;
     telux::loc::SvBlackList confgBlackList_;
+    telux::loc::XtraStatus xtraStatus_;
+    bool xtraEnabled_;
+    uint32_t registrationMask_ = 0;
+    void invokeXtraStatusUpdate();
+    void getAvailableListeners(uint32_t indication,
+      std::vector<std::weak_ptr<ILocationConfigListener>> &vec);
+    /** std::weak_ptr doesn't support relational operators. Need to use a binary predicate. */
+    struct SetPredicate {
+        bool operator() (const std::weak_ptr<ILocationConfigListener> &lhs,
+          const std::weak_ptr<ILocationConfigListener> &rhs)const {
+            auto lptr = lhs.lock();
+            auto rptr = rhs.lock();
+            if(!rptr) {
+                //RHS is a nullptr. Eg: Any address (address < 0) is false.
+                return false;
+            }
+            if(!lptr) {
+                //LHS is a nullptr. Any address (0 < address) is true.
+                return true;
+            }
+            //Both Lhs and Rhs are legal addresses. So we compare and return.
+            return lptr < rptr;
+        }
+    };
+
+    /** We maintain a mapping between an indication and all the corresponding listeners registered. */
+    std::map<uint32_t,
+      std::set<std::weak_ptr<ILocationConfigListener>, SetPredicate> > registrationMap_;
 };
 
 } // end of namespace loc

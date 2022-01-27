@@ -698,6 +698,16 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             this->configuration.idChangeInterval = (unsigned int)stoi(configs["idChangeInterval"]);
         }
 
+        /** Process both signed and unsigned packets */
+        if(configs.find("acceptAll") != configs.end()){
+            istringstream is9(configs["acceptAll"]);
+            is9 >> boolalpha >> configuration.acceptAll;
+            if(configuration.acceptAll){
+                printf("Accepting both signed and unsigned messages\n");
+            }else{
+                printf("Only accepting signed messages\n");
+            }
+        }
     }
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
@@ -728,6 +738,34 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
     if(configs.find("numRxThreadsRadio") != configs.end()) {
         this->configuration.numRxThreadsRadio = (uint8_t)stoi(configs["numRxThreadsRadio"]);
+    }
+
+    /* Misbehavior-related statistics */
+    if(configs.find("enableMbd") != configs.end()){
+        istringstream is1(configs["enableMbd"]);
+        is1 >> boolalpha >> configuration.enableMbd;
+        if(configuration.enableMbd) {
+            if(configs.find("enableMbdStatLog") != configs.end()){
+                istringstream is8(configs["enableMbdStatLog"]);
+                is8 >> boolalpha >> configuration.enableMbdStatLog;
+                if(configuration.enableMbdStatLog){
+                    if(configs.find("mbdStatLogListSize") != configs.end()){
+                        this->configuration.mbdStatLogListSize =
+                            (uint32_t)stoi(configs["mbdStatLogListSize"]);
+                    }
+                    if(configs.find("mbdStatLogFile") != configs.end()){
+                        this->configuration.mbdStatLogFile = configs["mbdStatLogFile"];
+                    }
+                    std::cout << "Misbehavior statistic logging is ON" << std::endl;
+                    std::cout << "Statistics for last " << configuration.mbdStatLogListSize <<
+                        " misbehavior will be reported by each thread" << std::endl;
+                    std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                        configuration.mbdStatLogFile << std::endl;
+                } else{
+                    std::cout << "Misbehavior statistic logging is off" << std::endl;
+                }
+            }
+        }
     }
 
     /* WSA */
@@ -946,6 +984,13 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     encLength = encode_msg(mc.get());
 
     if (encLength == 1) {
+        encLength = encodeAndSignMsg(mc);
+    }
+    int ret = this->transmit(index, mc, encLength, txType);
+    return encLength;
+}
+
+int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
         // The message need to be signed/encrypted after layer 3
         SecurityOpt sopt;
         uint8_t signedSpdu[512];
@@ -961,9 +1006,9 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         if(kinematicsReceive){
             shared_ptr<ILocationInfoEx> locationInfo =
                                         kinematicsReceive->getLocation();
-            sopt.latitude = (locationInfo->getLatitude() * 10000000);
-            sopt.longitude = (locationInfo->getLongitude() * 10000000);
-            sopt.elevation = (locationInfo->getAltitude() * 10);
+            sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+            sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+            sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
         }
         std::thread::id tid = std::this_thread::get_id();
         if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
@@ -972,6 +1017,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
             signStatIdx[tid] = 0;
             sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
         }
+        auto encLength = 0;
         if (mc->abuf.tail_bits_left != 8)
             encLength = mc->abuf.tail - mc->abuf.data + 1;
         else
@@ -990,10 +1036,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
         asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
         // transmit packet
-        encLength = encode_msg_continue(mc.get());
-    }
-    int ret = this->transmit(index, mc, encLength, txType);
-    return encLength;
+        return encode_msg_continue(mc.get());
 }
 
 int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen) {
@@ -1041,7 +1084,7 @@ void ApplicationBase::initVerifLogging() {
     thrVerifLatencies[std::this_thread::get_id()] = stats;
     if(remove(configuration.verifStatLogFile.c_str()) != 0){
         if(appVerbosity > 4)
-            cout << "Error deleting log file" << endl;
+            cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
 }
@@ -1081,7 +1124,7 @@ void ApplicationBase::initSignLogging() {
     thrSignLatencies[std::this_thread::get_id()] = stats;
     if(remove(configuration.signStatLogFile.c_str()) != 0){
         if(appVerbosity > 4)
-            cout << "Error deleting log file" << endl;
+            cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
 }
@@ -1103,6 +1146,46 @@ void ApplicationBase::writeSignLogging() {
         if (it->timestamp != 0.0 && it->signLatency != 0.0) {
             file << it->timestamp << ", " <<
                         it->signLatency << std::endl;
+        }
+    }
+    file.close();
+    sem_post(&this->log_sem);
+}
+
+/**
+ * Instantiate and initialize any variables associated with
+ *  Misbehavior statistics logging
+ */
+void ApplicationBase::initMisbehaviorLogging() {
+    std::vector<MisbehaviorStats> stats;
+    sem_wait(&this->log_sem);
+    for(int i = 0 ; i < configuration.mbdStatLogListSize; i++)
+        stats.push_back(MisbehaviorStats());
+    thrMisbehaviorLatencies[std::this_thread::get_id()] = stats;
+    if(remove(configuration.mbdStatLogFile.c_str()) != 0){
+        if(appVerbosity > 4)
+            cerr << "Error deleting log file" << endl;
+    }
+    sem_post(&this->log_sem);
+}
+
+/**
+ * Function to print out - if any - Misbehavior related statistics
+ * gathered from security side.
+ */
+void ApplicationBase::writeMisbehaviorLogging() {
+    ofstream file;
+    sem_wait(&this->log_sem);
+    std::thread::id thrId = std::this_thread::get_id();
+    printf("Thread (%08x) is now dumping misbehavior stats to %s\n",
+            thrId,configuration.mbdStatLogFile.c_str());
+    file.open(configuration.mbdStatLogFile.c_str(),
+                std::ofstream::out | std::ofstream::app);
+    std::vector<MisbehaviorStats> stats = thrMisbehaviorLatencies[std::this_thread::get_id()];
+    for (auto it = stats.begin(); it != stats.end(); ++it) {
+        if (it->timestamp != 0.0 && it->misbehaviorLatency != 0.0) {
+            file << it->timestamp << ", " <<
+                        it->misbehaviorLatency << std::endl;
         }
     }
     file.close();

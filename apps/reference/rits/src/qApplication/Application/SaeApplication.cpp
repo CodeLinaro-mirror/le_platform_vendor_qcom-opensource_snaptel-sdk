@@ -63,6 +63,41 @@
  */
 
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
  /**
   * @file: SaeApplication.cpp
@@ -74,10 +109,10 @@
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verifStatIdx = 0;
+thread_local int misbehaviorStatIdx = 0;
 thread_local int verif_fails = 0;
+thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
-thread_local msg_contents* mc;
-thread_local msg_contents msg_cont = {0};
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
 thread_local int decFail = 0;
@@ -88,7 +123,7 @@ thread_local int verifFail = 0;
 thread_local int verifSuccess = 0;
 thread_local int signFail = 0;
 thread_local int signSuccess = 0;
-
+thread_local std::shared_ptr<msg_contents> mc = nullptr;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     ApplicationBase(fileConfiguration) {
@@ -109,13 +144,16 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     for (auto mc : spsContents) {
         initMsg(mc);
     }
+    if (isRxSim) {
+        initMsg(rxSimMsg, true);
+    }
     for (auto mc : receivedContents) {
-        mc->stackId = STACK_ID_SAE;
+        initMsg(mc, true);
     }
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, 
+        const string rxIpv4, const uint16_t rxPort,
         char* fileConfiguration, MessageType msgType) :
         ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
     if (not configuration.isValid) {
@@ -133,8 +171,11 @@ SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
     for (auto mc : spsContents) {
         initMsg(mc);
     }
+    if (isRxSim) {
+        initMsg(rxSimMsg, true);
+    }
     for (auto mc : receivedContents) {
-        mc->stackId = STACK_ID_SAE;
+        initMsg(mc, true);
     }
 }
 
@@ -144,6 +185,21 @@ SaeApplication::~SaeApplication() {
 
     if (wraThread.joinable() == true) {
         wraThread.join();
+    }
+    if (isTxSim) {
+        freeMsg(txSimMsg);
+    }
+    for (auto mc : eventContents) {
+        freeMsg(mc);
+    }
+    for (auto mc : spsContents) {
+        freeMsg(mc);
+    }
+    if (isRxSim) {
+        freeMsg(rxSimMsg);
+    }
+    for (auto mc : receivedContents) {
+        freeMsg(mc);
     }
 }
 
@@ -185,38 +241,24 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
     int macAddrLen = CV2X_MAC_ADDR_LEN;
 
-    if(msg_cont.abuf.head == NULL || msg_cont.abuf.size == 0){
-        abuf_alloc(&msg_cont.abuf, ABUF_LEN, ABUF_HEADROOM);
-        // for SAE only
-        msg_cont.stackId = STACK_ID_SAE;
-        if(msg_cont.wsmp == nullptr)
-            msg_cont.wsmp = new char[sizeof(wsmp_data_t)];
-        if(msg_cont.ieee1609_2data == nullptr)
-            msg_cont.ieee1609_2data = new char[sizeof(ieee1609_2_data)];
-        if (MsgType == MessageType::BSM) {
-            if(msg_cont.j2735_msg == nullptr)
-                msg_cont.j2735_msg = new char[sizeof(bsm_value_t)];
-            msg_cont.msgId = J2735_MSGID_BASIC_SAFETY;
-        } else {
-#ifdef WITH_WSA
-            if (msg_cont.wsa == nullptr)
-                msg_cont.wsa = new char[sizeof(SrvAdvMsg_t)];
-            //if (msg_cont.wra == nullptr)
-            //    msg_cont.wra = new char[sizeof(RoutingAdvertisement_t)];
-            msg_cont.msgId = (int)WSA_MSG_ID;
-#endif
-        }
+    if (isRxSim) {
+        mc = rxSimMsg;
+    } else {
+        mc = receivedContents[index];
     }
-    else{
-        abuf_reset(&msg_cont.abuf, ABUF_HEADROOM);
+
+    if(mc->abuf.head == NULL || mc->abuf.size == 0){
+        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
+        initMsg(mc, true);
+    } else {
+        abuf_reset(&mc->abuf, ABUF_HEADROOM);
     }
-    mc = &msg_cont;
 
     // receive packet
     if (isRxSim)
     {
         sem_wait(&rx_sem);
-        ret = simReceive->receive(msg_cont.abuf.data, ABUF_LEN-ABUF_HEADROOM);
+        ret = simReceive->receive(mc->abuf.data, ABUF_LEN-ABUF_HEADROOM);
         sem_post(&rx_sem);
         packet_len = ret;
     }
@@ -235,7 +277,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             }else if(ret > 0 && ret < MIN_PACKET_LEN){
                 printf(
                 "Dropping packet with %d bytes. Needs to be at least %d bytes.\n",
-                        ret, MIN_PACKET_LEN); 
+                        ret, MIN_PACKET_LEN);
             }else if(ret > 0 && ret >= MAX_PACKET_LEN){
                 printf(
                 "Dropping packet with %d bytes. Needs to be less than %d bytes.\n",
@@ -257,56 +299,26 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
 
     // Decode packet as WSMP Packet and IEEE 1609.2 Header
-    ret = decode_msg(mc);
+    ret = decode_msg(mc.get());
     // Determine if we are expecting signed packet or not
     if(this->configuration.enableSecurity){
         // check if the message is signed/encrypted IEEE1609.2 content.
         if (ret == 1) { // message is secured
-            // Prepare for verification
-            SecurityOpt sopt;
-            sopt.psidValue = this->configuration.psid;
-            if (this->configuration.sspLength)
-                memcpy(sopt.sspValue, this->configuration.ssp,
-                    this->configuration.sspLength);
-            sopt.sspLength = this->configuration.sspLength;
-            sopt.enableAsync = this->configuration.enableAsync;
-            sopt.enableEnc  = this->configuration.enableEncrypt;
-            sopt.secVerbosity = this->configuration.secVerbosity;
-            std::thread::id tid = std::this_thread::get_id();
-            if (thrVerifLatencies[tid].size() > verifStatIdx[tid]) {
-                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+            ret = decodeAndVerify(mc.get());
+        }else if(ret >= 0){
+            // here we need to check option for processing both unsigned/signed packets
+            if(!configuration.acceptAll){
+                if(appVerbosity > 3)
+                    printf("Error in decoding unsigned packet - security enabled.\n");
+                ret = -1;
             }else{
-                verifStatIdx[tid] = 0;
-                sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
-            }
-
-            uint32_t dot2HdrLen;
-            // Verify packet signature
-            ret = SecService->VerifyMsg(sopt,
-            (uint8_t*)mc->l3_payload,(uint32_t)mc->l3_payload_len,dot2HdrLen);
-
-            if(ret == -1){
-                verifFail++;
-            }
-            else{
-                verifSuccess++;
-                // successful verification, increment the verif stat idx
-                std::thread::id tid = std::this_thread::get_id();
-                verifStatIdx[tid]++;
-                verifStatIdx[tid]%=thrVerifLatencies[tid].size();
-                mc->l3_payload=mc->l3_payload+dot2HdrLen;
-                // ieee header is 3 bytes long typically
-                abuf_pull(&mc->abuf, dot2HdrLen - IEEE_1609_2_HDR_LEN);
-                mc->payload_len=ret;
-                if(appVerbosity > 4){
-                    printf("Total security header length is: %d bytes\n",
-                            dot2HdrLen);
-                    printf("payload length is %d bytes\n", ret);
-                }
+                if(appVerbosity > 3)
+                    printf("Decoded unsigned packet successfully.\n");
+                // process WSA and other WSMP packets
                 wsmpp = (wsmp_data_t *)mc->wsmp;
                 if (MsgType == MessageType::WSA && wsmpp->psid == PSID_WSA) {
 #ifdef WITH_WSA
-                    ret = decode_as_wsa(mc);
+                    ret = decode_as_wsa(mc.get());
                     if (!ret && mc->wra) {
                         ret = onReceiveWra(
                                 static_cast<RoutingAdvertisement_t*>(mc->wra),
@@ -314,13 +326,10 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                     }
 #endif
                 } else {
-                    ret = decode_as_j2735(mc);
+                    ret = decode_as_j2735(mc.get());
                 }
+                ret = 1;
             }
-        }else if(ret >= 0){
-            if(appVerbosity > 3)
-                printf("Error in decoding unsigned packet - security enabled.\n");
-            ret = -1;
         }else{
             if(appVerbosity > 3)
                 printf("Error in decoding packet\n");
@@ -338,7 +347,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 #ifdef WITH_WSA
                     if (mc->wra) {
                         ret = onReceiveWra(
-                                static_cast<RoutingAdvertisement_t*>(mc->wra), 
+                                static_cast<RoutingAdvertisement_t*>(mc->wra),
                                 sourceMacAddr, macAddrLen);
                     }
 #endif
@@ -362,7 +371,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         decFail++;
     if(writeToCsvFile && (ret != -1)){
         csvMutex.lock();
-        writeToCsv(mc,csvfp);
+        writeToCsv(mc.get(),csvfp);
         csvMutex.unlock();
     }
     return ret;
@@ -372,43 +381,238 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
                      const uint32_t ldmIndex) {
     int ret = receive(index, bufLen);
     if (ret > 0) {
+        std::shared_ptr<msg_contents> mc = nullptr;
+        if (isRxSim) {
+            mc = rxSimMsg;
+        } else {
+            mc = receivedContents[index];
+        }
         auto bsm = reinterpret_cast<bsm_value_t *>(mc->j2735_msg);
         this->ldm->setIndex(bsm->id, ldmIndex);
     }
     return ret;
 }
 
-void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc) {
-    mc->stackId = STACK_ID_SAE;
-    mc->wsmp = new char[sizeof(wsmp_data_t)];
-    mc->ieee1609_2data = new char[sizeof(ieee1609_2_data)];
-
-    if (MsgType == MessageType::BSM) {
-        mc->j2735_msg = new char[sizeof(bsm_value_t)];
-        mc->wsa = 0;
-        mc->msgId = J2735_MSGID_BASIC_SAFETY;
-    } else {
-#ifdef WITH_WSA
-        mc->wsa = new char[sizeof(SrvAdvMsg_t)];
-        mc->wra = new char [sizeof(RoutingAdvertisement_t)];
-        mc->j2735_msg = 0;
-        mc->msgId = (int)WSA_MSG_ID;
-#endif
+int SaeApplication::decodeAndVerify(msg_contents* mc){
+    int ret = -1;
+    wsmp_data_t *wsmpp;
+    uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
+    int macAddrLen = CV2X_MAC_ADDR_LEN;
+    // Prepare for verification
+    SecurityOpt sopt;
+    sopt.psidValue = this->configuration.psid;
+    // sopt.psidValue = wsmpp->psid;
+    if (this->configuration.sspLength)
+        memcpy(sopt.sspValue, this->configuration.ssp,
+            this->configuration.sspLength);
+    sopt.sspLength = this->configuration.sspLength;
+    sopt.enableAsync = this->configuration.enableAsync;
+    sopt.enableEnc  = this->configuration.enableEncrypt;
+    sopt.secVerbosity = this->configuration.secVerbosity;
+    uint32_t dot2HdrLen;
+    uint8_t const *payload = NULL;
+    uint32_t       payloadLen = 0;
+    // extract the PDU from the secured packet
+    ret = SecService->ExtractMsg(sopt,
+        (uint8_t*)mc->l3_payload,mc->l3_payload_len,
+        payload, payloadLen,
+        dot2HdrLen);
+    if(ret == -1){
+        printf("Error in extracting security header from signed packet.\n");
+        verifFail++;
+        return -1;
     }
 
+    // ieee header is 3 bytes long typically
+    abuf_pull(&mc->abuf, dot2HdrLen - IEEE_1609_2_HDR_LEN);
+    mc->l3_payload=mc->l3_payload+dot2HdrLen;
+    mc->payload_len=payloadLen;
+    if(appVerbosity > 4){
+        printf("Total security header length is: %d bytes\n",
+                dot2HdrLen);
+        printf("payload length is %d bytes\n", ret);
+    }
+    wsmpp = (wsmp_data_t *)mc->wsmp;
+    if(MsgType == MessageType::BSM && wsmpp->psid == PSID_BSM) {
+        ret = decode_as_j2735(mc);
+        // here the secure header was extracted properly, but packet decoded incorrectly
+        if(ret == -1){
+            if(appVerbosity > 3)
+                printf("Error in decoding unsigned packet - security enabled.\n");
+            decFail++;
+            return -1;
+        }
+    }
+
+    // if a bsm is decoded properly, need to extract the lat/lon from the packet (if bsm)
+    if(mc->j2735_msg != nullptr){
+        bsm_value_t* bsm = (bsm_value_t*)mc->j2735_msg;
+        sopt.rvKine.latitude = bsm->Latitude;
+        sopt.rvKine.longitude = bsm->Longitude;
+        sopt.rvKine.elevation = bsm->Elevation;
+        if(configuration.enableMbd){
+            sopt.enableMbd = configuration.enableMbd;
+            sopt.rvKine.id = bsm->id;
+            sopt.rvKine.dataType = this->configuration.psid;
+            sopt.rvKine.msgCount = bsm->MsgCount;
+            sopt.rvKine.speed = bsm->Speed;
+            sopt.rvKine.heading = bsm->Heading_degrees;
+            sopt.rvKine.longitudeAcceleration = bsm->AccelLon_cm_per_sec_squared;
+            sopt.rvKine.latitudeAcceleration = bsm-> AccelLat_cm_per_sec_squared;
+            sopt.rvKine.yawAcceleration = bsm->AccelYaw_centi_degrees_per_sec;
+            sopt.rvKine.brakes = (uint16_t)bsm->brakes.word;
+        }
+    }
+
+    // set the hv kinematics
+    shared_ptr<ILocationInfoEx> locationInfo =
+                                kinematicsReceive->getLocation();
+    sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+    sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+    sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+
+    // prepare verification statistics logging
+    if(configuration.enableVerifStatLog){
+        std::thread::id tid = std::this_thread::get_id();
+        if (thrVerifLatencies[tid].size() > verifStatIdx[tid]) {
+            sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+        }else{
+            verifStatIdx[tid] = 0;
+            sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
+        }
+        verifStatIdx[tid]++;
+        verifStatIdx[tid]%=thrVerifLatencies[tid].size();
+    }else{
+        sopt.verifStat = nullptr;
+    }
+
+    if(configuration.enableMbdStatLog){
+        std::thread::id tid = std::this_thread::get_id();
+        if (thrMisbehaviorLatencies[tid].size() > misbehaviorStatIdx[tid]) {
+            sopt.misbehaviorStat = &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+        }else{
+            misbehaviorStatIdx[tid] = 0;
+            sopt.misbehaviorStat = &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+        }
+        misbehaviorStatIdx[tid]++;
+        misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
+    }else{
+        sopt.misbehaviorStat = nullptr;
+    }
+
+    // Verify packet signature ; providing lat/lon from the rx message
+    ret = SecService->VerifyMsg(sopt);
+    if(ret == -1){
+        verifFail++;
+        if(appVerbosity > 3)
+            printf("Error in verifying secured packet.\n");
+        ret = -1;
+    }
+    else{
+        verifSuccess++;
+        // process WSA and other WSMP packets after verification
+        wsmpp = (wsmp_data_t *)mc->wsmp;
+        if (MsgType == MessageType::WSA && wsmpp->psid == PSID_WSA) {
+#ifdef WITH_WSA
+            ret = decode_as_wsa(mc);
+            if (!ret && mc->wra) {
+                ret = onReceiveWra(
+                        static_cast<RoutingAdvertisement_t*>(mc->wra),
+                        sourceMacAddr, macAddrLen);
+            }
+#endif
+        }
+    }
+    return ret;
+}
+
+
+void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
+    mc->stackId = STACK_ID_SAE;
+
+    if (isRx) {
+        // not allocate memory for Rx
+        mc->wsmp = nullptr;
+        mc->ieee1609_2data = nullptr;
+        mc->j2735_msg = nullptr;
+        mc->wsa = nullptr;
+        if (MsgType == MessageType::BSM) {
+            mc->msgId = J2735_MSGID_BASIC_SAFETY;
+        } else {
+            mc->msgId = (int)WSA_MSG_ID;
+        }
+    } else {
+        mc->wsmp = malloc(sizeof(wsmp_data_t));
+        if (!mc->wsmp) {
+            std::cerr << "alloc wsmp failed" << endl;
+            return;
+        }
+        memset(mc->wsmp, 0, sizeof(wsmp_data_t));
+
+        mc->ieee1609_2data = malloc(sizeof(ieee1609_2_data));
+        if (!mc->ieee1609_2data) {
+            std::cerr << "alloc ieee1609_2data failed" << endl;
+            return;
+        }
+        memset(mc->ieee1609_2data, 0, sizeof(ieee1609_2_data));
+
+        if (MsgType == MessageType::BSM) {
+            mc->j2735_msg = malloc(sizeof(bsm_value_t));
+            if (!mc->j2735_msg) {
+                std::cerr << "alloc j2735_msg failed" << endl;
+                return;
+            }
+            memset(mc->j2735_msg, 0, sizeof(bsm_value_t));
+            mc->wsa = 0;
+            mc->msgId = J2735_MSGID_BASIC_SAFETY;
+        } else {
+#ifdef WITH_WSA
+            mc->wsa = malloc(sizeof(SrvAdvMsg_t));
+            if (!mc->wsa) {
+                std::cerr << "alloc wsa failed" << endl;
+                return;
+            }
+            memset(mc->wsa, 0, sizeof(SrvAdvMsg_t));
+
+            mc->wra = malloc(sizeof(RoutingAdvertisement_t));
+            if (!mc->wra) {
+                std::cerr << "alloc wra failed" << endl;
+                return;
+            }
+            memset(mc->wra, 0, sizeof(RoutingAdvertisement_t));
+
+            // set wra into wsa struct, wra be freed along with wsa
+            SrvAdvMsg_t* wsa = (SrvAdvMsg_t*)(mc->wsa);
+            wsa->body.routingAdvertisement = (RoutingAdvertisement_t*)(mc->wra);
+            mc->j2735_msg = 0;
+            mc->msgId = (int)WSA_MSG_ID;
+#endif
+        }
+    }
 }
 
 void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
-    if (mc->wsmp)
-        delete static_cast<char *>(mc->wsmp);
-    if (mc->j2735_msg)
-        delete static_cast<char *>(mc->j2735_msg);
-    if (mc->ieee1609_2data)
-        delete static_cast<char *>(mc->ieee1609_2data);
-    if (mc->wsa)
-        delete static_cast<char *>(mc->wsa);
-    if (mc->wra)
-        delete static_cast<char *>(mc->wra);
+    if (mc->wsmp) {
+        free(mc->wsmp);
+        mc->wsmp = nullptr;
+    }
+
+    if (mc->j2735_msg) {
+        free(mc->j2735_msg);
+        mc->j2735_msg = nullptr;
+    }
+
+    if (mc->ieee1609_2data) {
+        free(mc->ieee1609_2data);
+        mc->ieee1609_2data = nullptr;
+    }
+#ifdef WITH_WSA
+    // free the wsa struct, wra will be freed if it exists
+    if (mc->wsa) {
+        free_wsa(mc->wsa);
+        mc->wsa = nullptr;
+    }
+#endif
 }
 
 void SaeApplication::fillMsg(std::shared_ptr<msg_contents> mc) {
@@ -821,8 +1025,8 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
 
     if (GlobalIpSessionActive == true) {
         if (wraInterval == std::chrono::milliseconds::zero()) {
-            //received the second WRA message, need to determine the period of the WRA, 
-            //so that if within expected internal we didn't receive next WRA, we deem the 
+            //received the second WRA message, need to determine the period of the WRA,
+            //so that if within expected internal we didn't receive next WRA, we deem the
             //OBU went out of range of the associated RSU.
             auto diff = std::chrono::high_resolution_clock::now() - now;
             wraInterval = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
@@ -841,7 +1045,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
     }
     if (wra->ipPrefix.size > CV2X_IPV6_ADDR_ARRAY_LEN) {
         if(appVerbosity > 3)
-            std::cerr << "Invalid ip prefix length received: " << 
+            std::cerr << "Invalid ip prefix length received: " <<
                     wra->ipPrefix.size << endl;
         ret = -1;
     } else {
@@ -933,4 +1137,3 @@ int SaeApplication::clearGlobalIPv6Prefix(void)
     GlobalIpSessionActive = false;
     return radioReceives[0].clearGlobalIPInfo();
 }
-

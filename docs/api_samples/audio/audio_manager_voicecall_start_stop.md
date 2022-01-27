@@ -1,9 +1,7 @@
-Start and Stop Voice session {#audio_manager_voicecall_start_stop}
+Voice call session {#audio_manager_voicecall_start_stop}
 ========================================================================
 
-## Audio Manager API Sample Reference for voice session start and stop
-
-This section demonstrates how to use the audio APIs for starting and stopping audio during voice call.
+This sample application demonstrates how to use audio APIs for a voice call session.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,28 +9,28 @@ This section demonstrates how to use the audio APIs for starting and stopping au
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
-    //  Get AudioManager instance.
+    // Get AudioManager instance.
     audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
         prom.set_value(serviceStatus);
     });
     if (!audioManager) {
-        std::cout << "Failed to get AudioManager object" << std::endl;
+        std::cout << "Failed to get AudioManager instance" << std::endl;
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    // Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,10 +39,10 @@ This section demonstrates how to use the audio APIs for starting and stopping au
     }
    ~~~~~~
 
-### 3. Create an Audio Stream (Voice Call Session)
+### 3. Create a voice call session
 
    ~~~~~~{.cpp}
-    //Callback which provides response to createStream, with pointer to base interface IAudioStream.
+    // Callback which provides response to createStream, with pointer to base interface IAudioStream
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -57,21 +55,23 @@ This section demonstrates how to use the audio APIs for starting and stopping au
         audioVoiceStream = std::dynamic_pointer_cast<IAudioVoiceStream>(stream);
     }
 
-    //Create an Audio Stream (Voice Call Session)
+    // Create an audio stream representing a voice call session
     StreamConfig config;
+
     config.type = StreamType::VOICE_CALL;
     config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 4. Start Created Audio Stream (Voice Call Session)
+### 4. Start voice call session
 
    ~~~~~~{.cpp}
-    //Callback which provides response to startAudio.
+    // Callback which provides response to startAudio
     void startAudioCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -83,15 +83,14 @@ This section demonstrates how to use the audio APIs for starting and stopping au
         std::cout << "startAudio() succeeded." << std::endl;
     }
 
-    //Start an Audio Stream (Voice Call Session)
     status = audioVoiceStream->startAudio(startAudioCallback);
    ~~~~~~
 
-### 5. Stop Created Audio Stream (Voice Call Session)
+### 5. Stop voice call session
 
    ~~~~~~{.cpp}
 
-    //Callback which provides response to stopAudio.
+    // Callback which provides response to stopAudio
     void stopAudioCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -103,14 +102,13 @@ This section demonstrates how to use the audio APIs for starting and stopping au
         std::cout << "stopAudio() succeeded." << std::endl;
     }
 
-    //Stop an Audio Stream (Voice Call Session), which was started earlier
     status = audioVoiceStream->stopAudio(stopAudioCallback);
    ~~~~~~
 
-### 6. Delete an Audio Stream (Voice Call Session), which was created earlier
+### 6. Dispose the audio stream
 
    ~~~~~~{.cpp}
-    //Callback which provides response to deleteStream
+    // Callback which provides response to deleteStream
     void deleteStreamCallback(ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "deleteStream() returned with error " << static_cast<unsigned int>(error)
@@ -121,7 +119,8 @@ This section demonstrates how to use the audio APIs for starting and stopping au
         std::cout << "deleteStream() succeeded." << std::endl;
         audioVoiceStream.reset();
     }
-    //Delete an Audio Stream (Voice Call Session), which was created earlier
+
+    // Delete the audio stream (which was created earlier)
     status = audioManager->deleteStream(std::dynamic_pointer_cast<IAudioStream>(audioVoiceStream),
                                         deleteStreamCallback);
    ~~~~~~

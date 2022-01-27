@@ -1,7 +1,7 @@
-audio {#audio}
+Audio {#audio}
 ==============
 
-# The List of sample apps related to audio
+The TelSDK audio APIs provides support for device and stream management, transcoding, recording/playing audio, voice call and DTMF tone generation/detection etc.
 
 * @subpage audio_manager_api
 * @subpage audio_manager_playback

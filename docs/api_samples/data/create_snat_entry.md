@@ -1,13 +1,11 @@
-Create Static NAT Entry {#create_snat_entry}
+Create static NAT entry {#create_snat_entry}
 ============================================
 
-# Create Static NAT Entry
-
-Please follow below steps to create static NAT entry
+This sample application demonstrates how to create static NAT entry.
 
 ### 1. Implement initialization callback and get the DataFactory instance
 
-Optionally initialization callback can be provided with get manager instance.
+Optionally, initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
@@ -16,14 +14,15 @@ Data factory will call callback when manager initialization is complete.
       status_ = status;
       initCv.notify_all();
    };
-    auto &dataFactory = telux::data::DataFactory::getInstance();
+   
+   auto &dataFactory = telux::data::DataFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the NatManager instances
 
    ~~~~~~{.cpp}
-    std::unique_lock<std::mutex> lck(mtx);
-    auto dataSnatMgr  = dataFactory.getNatManager(opType);
+   std::unique_lock<std::mutex> lck(mtx);
+   auto dataSnatMgr  = dataFactory.getNatManager(opType);
    ~~~~~~
 
 ### 3. Wait for NatManager initialization to be complete
@@ -35,7 +34,7 @@ Data factory will call callback when manager initialization is complete.
 ### 3.1 Check NatManager initialization state
 
 If NatManager initialization failed, new initialization attempt can be accomplished
-by calling step 2. If NatManager initialization succeed, proceed to step 4
+by calling step 2. If NatManager initialization succeed, proceed to step 4.
 
    ~~~~~~{.cpp}
    if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -46,7 +45,7 @@ by calling step 2. If NatManager initialization succeed, proceed to step 4
    }
    ~~~~~~
 
-### 4. Implement callback for create Snat entry ###
+### 4. Implement callback for create SNAT entry
 
    ~~~~~~{.cpp}
    auto respCb = [](telux::common::ErrorCode error) {
@@ -57,7 +56,7 @@ by calling step 2. If NatManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 5. Create Snat entry based on profile id, local ip, local port, global port, and protocol ###
+### 5. Create Snat entry based on profile id, local ip, local port, global port, and protocol
 
    ~~~~~~{.cpp}
    natConfig.addr = ipAddr;
@@ -67,4 +66,4 @@ by calling step 2. If NatManager initialization succeed, proceed to step 4
    dataSnatMgr->addStaticNatEntry(profileId, natConfig, respCb);
    ~~~~~~
 
-### 6. Response callback will be called for the addStaticNatEntry response ###
+Now, response callback will be called for the addStaticNatEntry response.

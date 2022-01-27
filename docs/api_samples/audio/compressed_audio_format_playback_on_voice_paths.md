@@ -1,9 +1,7 @@
 Playback on voice paths {#compressed_audio_format_playback_on_voice_paths}
 ==================================================================================================
 
-## Audio Manager APIs Sample Reference for compressed audio format playback on voice paths
-
-This section demonstrates how to use the audio APIs for compressed audio format playback on voice paths.
+This sample app demonstrates how to use the audio APIs for compressed audio format playback on voice paths.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,7 +9,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
@@ -20,7 +18,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         prom.set_value(serviceStatus);
     });
     if (!audioManager) {
-        std::cout << "Failed to get AudioManager object" << std::endl;
+        std::cout << "Failed to get AudioManager instance" << std::endl;
         return;
     }
 
@@ -32,7 +30,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    //  Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,19 +39,23 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     }
    ~~~~~~
 
-### 3. Create an Audio Stream (Audio Playback Session) with Voice Paths direction
+### 3. Create an audio playback session with voice path direction
 
    ~~~~~~{.cpp}
     StreamConfig config;
+
     config.type = StreamType::PLAY;
     config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = SAMPLE_RATE;
     config.format = AudioFormat::AMRWB_PLUS;
+
     // here both channel selected, this can be selected according to requirement
     config.channelTypeMask = (ChannelType::LEFT | ChannelType::RIGHT);
-    // Since the voice path is selected we dont need to provide any device
+
+    // Since the voice path is selected, we don't need to provide any device
     // Voice path direction TX is for Voice uplink while direction RX is for Voice downlink
     config.voicePaths.emplace_back(Direction::TX);
+
     // Passing Decoder Specific Configuration, refer header file for more details.
     AmrwbpParams amrParams{};
     if (config.format == AudioFormat::AMRWB_PLUS) {
@@ -86,10 +88,10 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     }
    ~~~~~~
 
-### 4. Allocate Stream buffers for Playback operation
+### 4. Allocate stream buffers for playback operation
 
    ~~~~~~{.cpp}
-    // Get an audio buffer (can get more than one)
+    // Get an audio buffer (we can get more than one)
     auto streamBuffer = audioPlayStream->getStreamBuffer();
     if (streamBuffer != nullptr) {
         // Setting the size that is to be written to stream as the minimum size
@@ -122,8 +124,9 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         return;
     }
 
-    // Indication Received only when callback returns with error that bytes written are not equal to
-    // bytes requested to write. It notifies that pipeline is ready to accept new buffer to write.
+    // Indication Received only when callback returns with error that bytes written
+    // are not equal to bytes requested to write. It notifies that pipeline is ready
+    // to accept new buffer to write
     void onReadyForWrite() {
         pipeLineEmpty_ = true;
     }
@@ -131,6 +134,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     // Write desired data into the buffer, the bytes sent as 0x1 for example purpose only.
     // First write starts Playback Session.
     memset(streamBuffer->getRawBuffer(),0x1,size);
+
     auto status = audioPlayStream->write(streamBuffer, writeCallback);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "write() failed with error" << static_cast<int>(status) << std::endl;
@@ -184,7 +188,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         }
    ~~~~~~
 
-### 7. Delete an Audio Stream (Audio Playback Session), once reached end of operation
+### 7. Dispose the audio stream, once end of operation is reached
 
    ~~~~~~{.cpp}
     std::promise<bool> p;

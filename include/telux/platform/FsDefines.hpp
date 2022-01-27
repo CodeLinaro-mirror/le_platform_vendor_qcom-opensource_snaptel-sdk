@@ -63,6 +63,20 @@ struct EfsEventInfo {
     telux::common::ErrorCode error; /**< @ref telux::common::ErrorCode associated with the event */
 };
 
+/* Enum to denote status of operations */
+enum class OperationStatus {
+    UNKNOWN,
+    SUCCESS, /*< Indicates a successful operation*/
+    FAILURE, /*< Indicates a failed operation*/
+};
+
+/* Enum to denote ota operation */
+enum class OtaOperation {
+    INVALID,
+    START,  /*< Used whenever the client is starting an OTA operation*/
+    RESUME, /*< Used whenever the client is resuming a previously started OTA operation*/
+};
+
 /** @} */ /* end_addtogroup telematics_platform_filesystem */
 }  // end of namespace platform
 

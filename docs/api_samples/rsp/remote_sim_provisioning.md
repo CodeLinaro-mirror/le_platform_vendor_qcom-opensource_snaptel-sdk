@@ -1,14 +1,12 @@
-Using Remote SIM Provisioning API {#remote_sim_provisioning}
-=============================================================
+Provisioning remote SIM {#remote_sim_provisioning}
+==================================================
 
-# Using Remote SIM Provisioning API
-
-This section demonstrates how to use the Remote SIM Provisioning API for performing
+This sample app demonstrates how to use the Remote SIM Provisioning API for performing
 SIM profile management operations on the eUICC such as add profile, enable/disable
 profile, delete profile, query profile list, configure server address and perform
 memory reset.
 
-### 1. Get phone factory, SIM profile manager and Card manager instance ###
+### 1. Get phone factory, SIM profile manager and Card manager instance
 
    ~~~~~~{.cpp}
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
@@ -16,13 +14,13 @@ memory reset.
    auto cardManager = phoneFactory.getCardManager();
    ~~~~~~
 
-### 2. Check if SIM profile subsystem is ready###
+### 2. Check if SIM profile subsystem is ready
 
    ~~~~~~{.cpp}
    bool subSystemStatus = simProfileManager->isSubsystemReady();
    ~~~~~~
 
-### 2.1 If SIM profile manager subsystem is not ready, wait for it to be ready ###
+### 2.1 If SIM profile manager subsystem is not ready, wait for it to be ready
 
    ~~~~~~{.cpp}
    if(!subSystemsStatus) {
@@ -33,13 +31,13 @@ memory reset.
    }
    ~~~~~~
 
-### 3. Check if card subsystem is ready###
+### 3. Check if card subsystem is ready
 
    ~~~~~~{.cpp}
    bool subSystemStatus = cardManager->isSubsystemReady();
    ~~~~~~
 
-### 3.1 If card manager subsystem is not ready, wait for it to be ready ###
+### 3.1 If card manager subsystem is not ready, wait for it to be ready
 
    ~~~~~~{.cpp}
    if(!subSystemsStatus) {
@@ -50,7 +48,7 @@ memory reset.
    }
    ~~~~~~
 
-### 4. Exit the application, if SDK is unable to initialize SIM profile manager and card manager subsystem ###
+### 4. Exit the application, if SIM profile and card manager subsystem can not be initialized
 
    ~~~~~~{.cpp}
    if(subSystemsStatus) {
@@ -61,17 +59,16 @@ memory reset.
    }
    ~~~~~~
 
-### 5. Instantiate and register RspListener ###
+### 5. Instantiate and register RspListener
 
    ~~~~~~{.cpp}
    std::shared_ptr<ISimProfileListener> listener = std::make_shared<RspListener>();
    simProfileManager.registerListener(listener);
    ~~~~~~
 
-###### 5.1 Implementation of ISimProfileListener interface for receiving Remote SIM provisioning notifications ###
+###### 5.1 Implementation of ISimProfileListener interface for receiving Remote SIM provisioning notifications
 
    ~~~~~~{.cpp}
-
    class RspListener : public telux::tel::ISimProfileListener {
    public:
        void onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
@@ -90,33 +87,31 @@ memory reset.
        }
    ~~~~~~
 
-### 6. Request EID of the eUICC ###
+### 6. Request EID of the eUICC
 
    ~~~~~~{.cpp}
-
-    auto respCb = [&](std::string eid, telux::common::ErrorCode errorCode)
+   auto respCb = [&](std::string eid, telux::common::ErrorCode errorCode)
        { eidCallback(eid, errorCode); };
 
-    // Implement a callback function to get response for the EID request
-    void eidCallback(std::string eid, telux::common::ErrorCode error) {
+   // Implement a callback method to get response for the EID request
+   void eidCallback(std::string eid, telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "requestEid failed with error" << static_cast<int>(error) << std::endl;
             return;
         }
         std::cout << "requestEid succeeded." << std::endl;
-    }
-    // Request EID of the eUICC.
-    auto card = cardManager->getCard(SlotId::DEFAULT_SLOT_ID, &status);
-    status = card->requestEid(respCb);
+   }
+   // Request EID of the eUICC.
+   auto card = cardManager->getCard(SlotId::DEFAULT_SLOT_ID, &status);
+   status = card->requestEid(respCb);
    ~~~~~~
 
-### 7. Add profile on the eUICC ###
+### 7. Add profile on the eUICC
 
    ~~~~~~{.cpp}
-
     auto respCb = [&](telux::common::ErrorCode errorCode) { addProfileCallback(errorCode); };
 
-    // Implement a callback function to get response for the add profile request
+    // Implement a callback method to get response for the add profile request
     void addProfileCallback(telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "addProfile failed with error" << static_cast<int>(error) << std::endl;
@@ -129,7 +124,7 @@ memory reset.
         confirmationCode, isUserConsentSupported, respCb);
    ~~~~~~
 
-###### 7.1 If user consent is required for downloading the profile, the registered listener of client will be notified by invoking onUserDisplayInfo API.
+###### 7.1 If user consent is required for downloading the profile, the registered listener of client will be notified by invoking onUserDisplayInfo API
 
    Client is expected to invoke ISimProfileManager::provideUserConsent API in order to proceed
    further for downloading the profile.
@@ -141,7 +136,7 @@ memory reset.
         // installation of profile by calling ISimProfileManager::provideUserConsent
     }
    ~~~~~~
-###### 7.2 If confirmation code is required for downloading the profile, the registered listener of client will be notified by invoking onConfirmationCodeRequired API.
+###### 7.2 If confirmation code is required for downloading the profile, the registered listener of client will be notified by invoking onConfirmationCodeRequired API
 
    Client is expected to invoke ISimProfileManager::provideConfirmationCode API in order to proceed
    further for downloading the profile.
@@ -153,7 +148,7 @@ memory reset.
     }
    ~~~~~~
 
-###### 7.3 When the download of profile completes or fails, the client is notified about download status.
+###### 7.3 When the download of profile completes or fails, the client is notified about download status
 
    ~~~~~~{.cpp}
     void onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
@@ -163,114 +158,109 @@ memory reset.
     }
    ~~~~~~
 
-### 8. Delete profile on the eUICC ###
+### 8. Delete profile on the eUICC
 
    ~~~~~~{.cpp}
+   auto respCb = [&](telux::common::ErrorCode errorCode) { deleteProfileCallback(errorCode); };
 
-    auto respCb = [&](telux::common::ErrorCode errorCode) { deleteProfileCallback(errorCode); };
-
-    // Implement a callback function to get response for the delete profile request
-    void deleteProfileCallback(telux::common::ErrorCode error) {
+   // Implement a callback method to get response for the delete profile request
+   void deleteProfileCallback(telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "deleteProfile failed with error" << static_cast<int>(error) << std::endl;
             return;
         }
         std::cout << "deleteProfile succeeded." << std::endl;
-    }
-    // Delete profile on the eUICC.
-    status = simProfileManager->deleteProfile(SlotId::DEFAULT_SLOT_ID, profileId,
-        respCb);
+   }
+
+   // Delete profile on the eUICC.
+   status = simProfileManager->deleteProfile(SlotId::DEFAULT_SLOT_ID, profileId, respCb);
    ~~~~~~
 
-### 9. Request profile list on the eUICC ###
+### 9. Request profile list on the eUICC
 
    ~~~~~~{.cpp}
-
-    auto respCb = [&](const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
+   auto respCb = [&](const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
         telux::common::ErrorCode errorCode) { profileListCallback(profiles, errorCode); };
 
-    // Implement a callback function to get response for the request profile list
-    void profileListCallback(const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
+   // Implement a callback method to get response for the request profile list
+   void profileListCallback(const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
         telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "profileList failed with error" << static_cast<int>(error) << std::endl;
             return;
         }
         std::cout << "profileList succeeded." << std::endl;
-    }
-    // Get profile list on the eUICC.
-    status = simProfileManager->requestProfileList(SlotId::DEFAULT_SLOT_ID, respCb);
+   }
+
+   // Get profile list on the eUICC.
+   status = simProfileManager->requestProfileList(SlotId::DEFAULT_SLOT_ID, respCb);
    ~~~~~~
 
-### 10. Enable/disable profile on the eUICC ###
+### 10. Enable/disable profile on the eUICC
 
    ~~~~~~{.cpp}
+   auto respCb = [&](telux::common::ErrorCode errorCode) { setProfileCallback(errorCode); };
 
-    auto respCb = [&](telux::common::ErrorCode errorCode) { setProfileCallback(errorCode); };
-
-    // Implement a callback function to get response for the set profile request
-    void setProfileCallback(telux::common::ErrorCode error) {
+   // Implement a callback method to get response for the set profile request
+   void setProfileCallback(telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "setProfile failed with error" << static_cast<int>(error) << std::endl;
             return;
         }
         std::cout << "setProfile succeeded." << std::endl;
-    }
-    // Enable/disable profile on the eUICC.
-    status = simProfileManager->setProfile(SlotId::DEFAULT_SLOT_ID, profileId, enable,
-        respCb);
+   }
+
+   // Enable/disable profile on the eUICC.
+   status = simProfileManager->setProfile(SlotId::DEFAULT_SLOT_ID, profileId, enable, respCb);
    ~~~~~~
 
-### 11. Update Nickname of the profile ###
+### 11. Update Nickname of the profile
 
    ~~~~~~{.cpp}
+   auto respCb = [&](telux::common::ErrorCode errorCode) { updateNicknameCallback(errorCode); };
 
-    auto respCb = [&](telux::common::ErrorCode errorCode) { updateNicknameCallback(errorCode); };
-
-    // Implement a callback function to get response for update nickname request
-    void updateNicknameCallback(telux::common::ErrorCode error) {
+   // Implement a callback method to get response for update nickname request
+   void updateNicknameCallback(telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "updateNickname failed with error" << static_cast<int>(error) <<
                 std::endl;
             return;
         }
         std::cout << "updateNickname succeeded." << std::endl;
-    }
-    // Update Nickname of the profile
-    status = simProfileManager->updateNickName(SlotId::DEFAULT_SLOT_ID, profileId, nickname,
-        respCb);
+   }
+
+   // Update Nickname of the profile
+   status = simProfileManager->updateNickName(SlotId::DEFAULT_SLOT_ID, profileId, nickname, respCb);
    ~~~~~~
 
-### 12. Set SMDP+ server address on the eUICC ###
+### 12. Set SMDP+ server address on the eUICC
 
    ~~~~~~{.cpp}
+   auto respCb = [&](telux::common::ErrorCode errorCode) { setServerAddressCallback(errorCode); };
 
-    auto respCb = [&](telux::common::ErrorCode errorCode) { setServerAddressCallback(errorCode); };
-
-    // Implement a callback function to get response for set server addresss request
-    void setServerAddressCallback(telux::common::ErrorCode error) {
+   // Implement a callback method to get response for set server addresss request
+   void setServerAddressCallback(telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "setServerAddress failed with error" << static_cast<int>(error) <<
                 std::endl;
             return;
         }
         std::cout << "setServerAddress succeeded." << std::endl;
-    }
-    // Set SMDP server address on the eUICC
-    status = simProfileManager->setServerAddress(SlotId::DEFAULT_SLOT_ID, smdpAddress,
-        respCb);
+   }
+
+   // Set SMDP server address on the eUICC
+   status = simProfileManager->setServerAddress(SlotId::DEFAULT_SLOT_ID, smdpAddress, respCb);
    ~~~~~~
 
-### 13. Get SMDP+ and SMDS server address from the eUICC ###
+### 13. Get SMDP+ and SMDS server address from the eUICC
 
    ~~~~~~{.cpp}
-
-    auto respCb = [&](std::string smdpAddress,
+   auto respCb = [&](std::string smdpAddress,
         std::string smdsAddress, telux::common::ErrorCode errorCode) {
             requestServerAddressCallback(smdpAddress, smdsAddress, errorCode); };
 
-    // Implement a callback function to get response for the get server addresss request
-    void requestServerAddressCallback(std::string smdpAddress,
+   // Implement a callback method to get response for the get server addresss request
+   void requestServerAddressCallback(std::string smdpAddress,
         std::string smdsAddress, telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "requestServerAddress failed with error" << static_cast<int>(error) <<
@@ -278,27 +268,26 @@ memory reset.
             return;
         }
         std::cout << "requestServerAddress succeeded." << std::endl;
-    }
-    // Get SMDP+ and SMDS server address on the eUICC
-    status = simProfileManager->requestServerAddress(SlotId::DEFAULT_SLOT_ID,
-        respCb);
+   }
+
+   // Get SMDP+ and SMDS server address on the eUICC
+   status = simProfileManager->requestServerAddress(SlotId::DEFAULT_SLOT_ID, respCb);
    ~~~~~~
 
-### 14. Memory reset on the eUICC ###
+### 14. Memory reset on the eUICC
 
    ~~~~~~{.cpp}
+   auto respCb = [&](telux::common::ErrorCode errorCode) { memoryResetCallback(errorCode); };
 
-    auto respCb = [&](telux::common::ErrorCode errorCode) { memoryResetCallback(errorCode); };
-
-    // Implement a callback function to get response for the memory reset request
-    void memoryResetCallback(telux::common::ErrorCode error) {
+   // Implement a callback method to get response for the memory reset request
+   void memoryResetCallback(telux::common::ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "memoryReset failed with error" << static_cast<int>(error) << std::endl;
             return;
         }
         std::cout << "memoryReset succeeded." << std::endl;
-    }
-    // Memory reset on the eUICC
-    status = simProfileManager->memoryReset(SlotId::DEFAULT_SLOT_ID, resetmask,
-        respCb);
+   }
+
+   // Memory reset on the eUICC
+   status = simProfileManager->memoryReset(SlotId::DEFAULT_SLOT_ID, resetmask, respCb);
    ~~~~~~

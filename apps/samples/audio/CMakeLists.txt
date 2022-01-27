@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 2.8.9)
+
+if((NOT MACHINE_HAS_CV2X_ONLY) AND (NOT BUILD_FOR_SIMULATION))
+    add_subdirectory( voice_session_app )
+    add_subdirectory( playback_app )
+    add_subdirectory( capture_app )
+    add_subdirectory( compressed_fmt_playback_app )
+    add_subdirectory( transcoder_app )
+    add_subdirectory( in_call_audio_app )
+endif((NOT MACHINE_HAS_CV2X_ONLY) AND (NOT BUILD_FOR_SIMULATION))

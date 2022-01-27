@@ -1,7 +1,5 @@
-data {#data}
-================
-
-# The List of sample apps related to data:
+Data {#data}
+============
 
 * @subpage start_or_stop_data_call
 * @subpage request_profile_list

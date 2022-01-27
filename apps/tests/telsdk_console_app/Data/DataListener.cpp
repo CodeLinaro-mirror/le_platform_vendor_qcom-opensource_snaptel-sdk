@@ -55,7 +55,8 @@ void DataListener::onDataCallInfoChanged(const std::shared_ptr<telux::data::IDat
 }
 
 void DataListener::onServiceStatusChange(telux::common::ServiceStatus status) {
-   PRINT_NOTIFICATION << " ** Data onServiceStatusChange on Slot-" << slotId_ << " ** ";
+   std::cout << "\n\n";
+   PRINT_NOTIFICATION << " ** Data onServiceStatusChange on Slot-" << slotId_ << " ** \n";
    switch(status) {
       case telux::common::ServiceStatus::SERVICE_AVAILABLE:
          std::cout << " SERVICE_AVAILABLE";
@@ -71,7 +72,8 @@ void DataListener::onServiceStatusChange(telux::common::ServiceStatus status) {
 }
 
 void DataListener::onHwAccelerationChanged(telux::data::ServiceState state) {
-   PRINT_NOTIFICATION << " ** Data onHwAccelerationChanged on Slot-" << slotId_ << " ** ";
+   std::cout << "\n\n";
+   PRINT_NOTIFICATION << " ** Data onHwAccelerationChanged on Slot-" << slotId_ << " ** \n";
    switch(state) {
       case telux::data::ServiceState::ACTIVE:
          std::cout << " HW_ACCELERATION_ACTIVE";
@@ -84,6 +86,18 @@ void DataListener::onHwAccelerationChanged(telux::data::ServiceState state) {
          break;
    }
    std::cout << std::endl;
+}
+
+void DataListener::onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " ** WWAN Connectivity Config has changed ** \n";
+    std::cout << "WWAN Connectivity Config on SlotId: " << static_cast<int>(slotId) << " is: ";
+    if(isConnectivityAllowed) {
+        std::cout << "Allowed";
+    } else {
+        std::cout << "Disallowed";
+    }
+    std::cout << std::endl << std::endl;
 }
 
 std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int slotId, int profileId) {

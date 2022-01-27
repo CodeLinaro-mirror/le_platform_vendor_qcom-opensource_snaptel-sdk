@@ -26,13 +26,48 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 extern "C" {
 #include "unistd.h"
 }
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 #include <telux/data/DataFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
@@ -208,6 +243,8 @@ void DataProfileMenu::getProfileParamsFromUser() {
     std::cout << "Enter APN : ";
     std::getline(std::cin, apnName, delimiter);
 
+    ApnTypes mask = getApnMask();
+
     std::string username;
     std::cout << "Enter userName : ";
     std::getline(std::cin, username, delimiter);
@@ -232,8 +269,42 @@ void DataProfileMenu::getProfileParamsFromUser() {
     params_.authType = static_cast<telux::data::AuthProtocolType>(authType);
     params_.ipFamilyType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     params_.apn = apnName;
+    params_.apnTypes = mask;
     params_.userName = username;
     params_.password = password;
+}
+
+ApnTypes DataProfileMenu::getApnMask() {
+    char delimiter = '\n';
+    std::string apnMask;
+    ApnTypes mask;
+    std::vector<int> options;
+    std::cout << "Enter the apn type mask to be enabled : \n"
+                "0 - DEFAULT, 1 - IMS, 2 - MMS, 3 - DUN, \n"
+                "4 - SUPL, 5 - HIPRI , 6 - FOTA, 7 - CBS \n"
+                "8 - IA, 9 - EMERGENCY, 10 - UT, 11 - MCX \n"
+                "(Example: enter 0,1,3 to enable DEFAULT, IMS and DUN):\n";
+    std::getline(std::cin,apnMask,delimiter);
+    std::stringstream ss(apnMask);
+    int i = -1;
+    while(ss >> i) {
+    options.push_back(i);
+    if(ss.peek() == ',' || ss.peek() == ' ')
+        ss.ignore();
+    }
+    for(auto &opt : options) {
+        if(opt >=0 || opt<= 11) {
+            try {
+                mask.set(opt);
+            } catch(const std::exception &e) {
+                std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                    << std::endl;
+            }
+        } else {
+            std::cout << "Apn type mask should not be out of range" << std::endl;
+        }
+    }
+    return mask;
 }
 
 void DataProfileMenu::requestProfileList(std::vector<std::string> inputCommand) {

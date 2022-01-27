@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       AudioClient.cpp
  *
@@ -118,6 +154,8 @@ void AudioClient::startVoiceSession(SlotId slotId) {
     queryInputType();
     config_.slotId = slotId;
     config_.type = StreamType::VOICE_CALL;
+    config_.format = AudioFormat::PCM_16BIT_SIGNED;
+
     auto status = activeSession_->createStream(config_);
     if (status == Status::SUCCESS) {
         status = activeSession_->startAudio();
@@ -167,31 +205,49 @@ void AudioClient::setActiveSession(SlotId slotId) {
 
 void AudioClient::loadConfFileData() {
     std::string input = "";
+    int command = -1;
     ConfigParser parser(FILE_NAME, FILE_PATH);
     std::cout << "----- Default Parameters -----" << std::endl;
+    config_.format = static_cast<AudioFormat>(DEFAULT_AUDIO_FORMAT);
     try {
         input = parser.getValue("SAMPLE_RATE");
         config_.sampleRate = static_cast<uint32_t>(std::stoi(input));
-        input = parser.getValue("AUDIO_FORMAT");
-        config_.format= static_cast<AudioFormat>(std::stoi(input));
         input = parser.getValue("DEVICE_TYPE");
         DeviceType device = static_cast<DeviceType>(std::stoi(input));
         config_.deviceTypes.emplace_back(device);
         input = parser.getValue("CHANNEL_MASK");
-        config_.channelTypeMask = static_cast<ChannelTypeMask>(std::stoi(input));
+        command = std::stoi(input);
+        if (command == 1 || command == 2 || command == 3){
+            if (command == 1) {
+                config_.channelTypeMask = ChannelType::LEFT;
+            } else if (command == 2) {
+                config_.channelTypeMask = ChannelType::RIGHT;
+            } else {
+                config_.channelTypeMask = (ChannelType::LEFT | ChannelType::RIGHT);
+            }
+        } else {
+            std::cout << "Invalid channel mask using default value" << std::endl;
+            config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
+        }
         input = parser.getValue("ECNR_MODE");
-        config_.ecnrMode = static_cast<EcnrMode>(std::stoi(input));
+        command = std::stoi(input);
+        if (command == 0) {
+            config_.ecnrMode = EcnrMode::DISABLE;
+        } else if (command == 1) {
+            config_.ecnrMode = EcnrMode::ENABLE;
+        } else {
+            std::cout << "Invalid ecnr mode using default value" << std::endl;
+            config_.ecnrMode = EcnrMode::DISABLE;
+        }
     } catch (const std::exception &e) {
         std::cout << "ERROR: "<< "Unable to read from file" << std::endl;
         std::cout << "Using default parameters" << std::endl;
         config_.sampleRate = DEFAULT_SAMPLE_RATE;
-        config_.format = static_cast<AudioFormat>(DEFAULT_AUDIO_FORMAT);
         config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE));
         config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
         config_.ecnrMode = static_cast<EcnrMode>(DEFAULT_ECNR_MODE);
     }
     std::cout << "The sample rate is " << config_.sampleRate << std::endl;
-    std::cout << "The audio format is " << static_cast<int>(config_.format) << std::endl;
     std::cout << "The device is " << static_cast<int>(config_.deviceTypes[0]) << std::endl;
     std::cout << "Channel mask is " << static_cast<int>(config_.channelTypeMask) << std::endl;
     std::cout << "ECNR Mode is " << static_cast<int>(config_.ecnrMode) << std::endl;
@@ -252,7 +308,6 @@ void AudioClient::queryInputType() {
     if (!consoleFlag) {
         AudioHelper::getUserSampleRateInput(config_.sampleRate);
         AudioHelper::getUserChannelInput(config_.channelTypeMask);
-        AudioHelper::getAudioFormatInput(config_.format);
         AudioHelper::getUserDeviceInput(config_.deviceTypes);
         AudioHelper::getUserEcnrModeInput(config_.ecnrMode);
     }

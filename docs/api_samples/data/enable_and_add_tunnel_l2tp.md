@@ -1,13 +1,11 @@
-Enable L2TP and Add Tunnel {#enable_and_add_tunnel_l2tp}
-===============================================================
+Enable L2TP and add a tunnel {#enable_and_add_tunnel_l2tp}
+========================================================
 
-# Enable L2TP and Add Tunnel
-
-Please follow below steps to enable L2TP and Tunnel
+This sample application demonstrates how to enable L2TP and add a tunnel.
 
 ### 1.  Implement initialization callback and get get the DataFactory instance
 
-Optionally initialization callback can be provided with get manager instance.
+Optionally, initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
@@ -16,6 +14,7 @@ Data factory will call callback when manager initialization is complete.
       status_ = status;
       initCv.notify_all();
    };
+   
    auto &dataFactory = telux::data::DataFactory::getInstance();
    ~~~~~~
 
@@ -46,7 +45,7 @@ by calling step 2. If L2tpManager initialization succeed, proceed to step 4
    }
    ~~~~~~
 
-### 4. Instantiate setConfig callback instance - this is optional
+### 4. Optionally, instantiate setConfig callback instance
 
    ~~~~~~{.cpp}
    auto setConfigCb = [&setConfigPass, &promise](telux::common::ErrorCode error) {
@@ -57,7 +56,7 @@ by calling step 2. If L2tpManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 5. Set L2TP Configuration
+### 5. Set L2TP configuration
 
    ~~~~~~{.cpp}
    bool enable = true;        //Enable L2TP
@@ -67,11 +66,12 @@ by calling step 2. If L2tpManager initialization succeed, proceed to step 4
    dataL2tpMgr->setConfig(enable, enableMss, enableMtu, setConfigCb, mtuSize);
    ~~~~~~
 
-### 6. Configure L2TP Tunnel and Session
+### 6. Configure L2TP tunnel and session
 
    ~~~~~~{.cpp}
    std::cout << "L2TP Set Configuration succeeded ... Adding Tunnel" << std::endl;
    telux::data::net::L2tpTunnelConfig l2tpTunnelConfig;
+   
    l2tpTunnelConfig.locIface = "eth0.1"; //Set interface name to eth0.x where x is vlan id
    l2tpTunnelConfig.prot = static_cast<telux::data::net::L2tpProtocol>(2); //Set protocol to UDP
    l2tpTunnelConfig.locId = 1;  //Set local tunnel id
@@ -86,7 +86,7 @@ by calling step 2. If L2tpManager initialization succeed, proceed to step 4
    l2tpTunnelConfig.sessionConfig.emplace_back(l2tpSessionConfig); // Add session to tunnel config
    ~~~~~~
 
-###   7. Instantiate addTunnel callback instance - this is optional
+### 7. Optionally, instantiate addTunnel callback instance
 
    ~~~~~~{.cpp}
    auto addTunnelCb = [&setConfigPass, &promise](telux::common::ErrorCode error) {
@@ -98,7 +98,7 @@ by calling step 2. If L2tpManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 8. addTunnel to L2TP
+### 8. Add the tunnel to L2TP
 
    ~~~~~~{.cpp}
    dataL2tpMgr->addTunnel(l2tpTunnelConfig, addTunnelCb);

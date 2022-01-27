@@ -1,11 +1,9 @@
-Enable/Disable Firewall {#enable_disable_firewall}
+Enable/Disable firewall {#enable_disable_firewall}
 ==================================================
 
-# Enable/Disable Firewall
+This sample application demonstrates how to enable/disable firewall.
 
-Please follow below steps to Enable/Disable Firewall
-
-### 1. Implement initialization callback and get the DataFactory instances ###
+### 1. Implement initialization callback and get the DataFactory instances
 
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
@@ -35,7 +33,7 @@ Data factory will call callback when manager initialization is complete.
 ### 3.1 Check FirewallManager initialization state
 
 If FirewallManager initialization failed, new initialization attempt can be accomplished
-by calling step 2. If FirewallManager initialization succeed, proceed to step 4
+by calling step 2. If FirewallManager initialization succeed, proceed to step 4.
 
    ~~~~~~{.cpp}
    if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -46,7 +44,7 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4
    }
    ~~~~~~
 
-### 4. Implement callback for setting firewall ###
+### 4. Implement callback for setting firewall
 
    ~~~~~~{.cpp}
    auto respCb = [](telux::common::ErrorCode error) {
@@ -57,10 +55,10 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 5. set firewall mode based on profileId, enable/disable and allow/drop packets ###
+### 5. set firewall mode based on profileId, enable/disable and allow/drop packets
 
    ~~~~~~{.cpp}
    dataFwMgr->setFirewall(profileId,fwEnable, allowPackets, respCb);
    ~~~~~~
 
-### 6. Response callback will be called for the setFirewall response ###
+Now, response callback will be called for the setFirewall response.

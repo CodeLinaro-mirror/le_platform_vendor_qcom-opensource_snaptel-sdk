@@ -93,6 +93,10 @@ LocationConfiguratorStub::LocationConfiguratorStub(telux::common::InitResponseCb
     confgCTuncThreshold_ = 0.0f;
     confgCTuncEnergyBudget_ = 0;
     confgPaceEnabled_  = false;
+    xtraStatus_.featureEnabled = false;
+    xtraStatus_.xtraDataStatus = XtraDataStatus::STATUS_UNKNOWN;
+    xtraStatus_.xtraValidForHours = 0;
+    xtraEnabled_ = false;
 }
 
 std::future<bool> LocationConfiguratorStub::onSubsystemReady() {
@@ -401,6 +405,132 @@ telux::common::Status LocationConfiguratorStub::configureEngineIntegrityRisk(
     std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
     t.detach();
     return (telux::common::Status::SUCCESS);
+}
+
+telux::common::Status LocationConfiguratorStub::configureXtraParams(bool enable,
+    const XtraConfig configParams, telux::common::ResponseCallback callback) {
+    Debug(__FILE__,__func__);
+    int delay;
+    auto &s_stubbed =  StubHelper::getInstance();
+    delay = s_stubbed.getCallbackDelay();
+    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
+    t.detach();
+    if(!enable) {
+        xtraStatus_.featureEnabled = false;
+        xtraStatus_.xtraDataStatus = XtraDataStatus::STATUS_UNKNOWN;
+        xtraStatus_.xtraValidForHours = 0;
+    } else {
+        xtraStatus_.featureEnabled = true;
+        xtraStatus_.xtraDataStatus = XtraDataStatus::STATUS_VALID;
+        xtraStatus_.xtraValidForHours = (configParams.downloadIntervalMinute) / 60;
+    }
+    if(xtraEnabled_ != enable) {
+        uint32_t indication =
+            static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
+        if( (registrationMask_ & (1 << indication)) ) {
+            invokeXtraStatusUpdate();
+        }
+        xtraEnabled_ = enable;
+    }
+    return (telux::common::Status::SUCCESS);
+}
+
+void requestXtraStatusCb(LocationConfiguratorStub::GetXtraStatusCallback cb,
+    telux::loc::XtraStatus xtraStatus, telux::common::ErrorCode retValue, int delay) {
+    Debug(__FILE__,__func__);
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    cb(xtraStatus, retValue);
+}
+
+telux::common::Status LocationConfiguratorStub::requestXtraStatus(GetXtraStatusCallback cb) {
+    Debug(__FILE__,__func__);
+    int delay;
+    auto &s_stubbed =  StubHelper::getInstance();
+    delay = s_stubbed.getCallbackDelay();
+    std::thread t(requestXtraStatusCb, cb, xtraStatus_, telux::common::ErrorCode::SUCCESS, delay);
+    t.detach();
+    return (telux::common::Status::SUCCESS);
+}
+
+telux::common::Status LocationConfiguratorStub::registerListener(
+    LocConfigIndications indicationList, std::weak_ptr<ILocationConfigListener> listener) {
+    auto sp = listener.lock();
+    if(sp == nullptr) {
+        return telux::common::Status::INVALIDPARAM;
+    }
+    for(size_t itr = 0; itr < indicationList.size(); itr++) {
+        if(indicationList.test(itr)) {
+            registrationMap_[itr].insert(sp);
+        }
+    }
+    if(indicationList.test(
+        static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS))) {
+        uint32_t indication =
+            static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
+        if( !(registrationMask_ & (1 << indication)) ) {
+            invokeXtraStatusUpdate();
+            //Updating the mask after the first registration.
+            registrationMask_ |= (1 << indication);
+        }
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status LocationConfiguratorStub::deRegisterListener(
+    LocConfigIndications indicationList, std::weak_ptr<ILocationConfigListener> listener) {
+    auto sp = listener.lock();
+    if(sp == nullptr) {
+        return telux::common::Status::INVALIDPARAM;
+    }
+    bool listenerExisted = false;
+    for(size_t itr = 0; itr < indicationList.size(); itr++) {
+        if(indicationList.test(itr)) {
+            if(registrationMap_.find(itr) != registrationMap_.end()) {
+                if(registrationMap_[itr].erase(sp)) {
+                    listenerExisted = true;
+                }
+            }
+        }
+    }
+    if(listenerExisted) {
+        if(indicationList.test(
+            static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS))) {
+            uint32_t indication =
+                static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
+            std::vector<std::weak_ptr<ILocationConfigListener>> retList {};
+            getAvailableListeners(indication, retList);
+            if(retList.empty()) {
+                //Resetting the indication to get the update for the next first registration.
+                registrationMask_ ^= (1 << indication);
+            }
+        }
+        return telux::common::Status::SUCCESS;
+    } else {
+        return telux::common::Status::NOSUCH;
+    }
+}
+
+void LocationConfiguratorStub::getAvailableListeners(uint32_t indication,
+    std::vector<std::weak_ptr<ILocationConfigListener>> &vec) {
+    if(registrationMap_.find(indication) != registrationMap_.end()) {
+        vec.assign(registrationMap_[indication].begin(), registrationMap_[indication].end());
+    }
+}
+
+void LocationConfiguratorStub::invokeXtraStatusUpdate() {
+    uint32_t indication =
+            static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
+    std::vector<std::weak_ptr<ILocationConfigListener>> retList {};
+    getAvailableListeners(indication, retList);
+    if(!retList.empty()) {
+        for (auto listener : retList) {
+            auto l = listener.lock();
+            // Prevent accessing a dangling listener reference.
+            if(l != nullptr) {
+                l->onXtraStatusUpdate(xtraStatus_);
+            }
+        }
+    }
 }
 
 LocationConfiguratorStub::~LocationConfiguratorStub() {}

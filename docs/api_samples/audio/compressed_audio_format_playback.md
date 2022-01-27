@@ -1,9 +1,7 @@
 Compressed format playback {#compressed_audio_format_playback}
 ====================================================================
 
-## Audio Manager APIs Sample Reference for compressed audio format playback
-
-This section demonstrates how to use the audio APIs for compressed audio format playback.
+This sample app demonstrates how to use the audio APIs for compressed audio format playback.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,28 +9,28 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
-    //  Get AudioManager instance.
+    // Get AudioManager instance
     audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
         prom.set_value(serviceStatus);
     });
     if (!audioManager) {
-        std::cout << "Failed to get AudioManager object" << std::endl;
+        std::cout << "Failed to get AudioManager instance" << std::endl;
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    //  Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,10 +39,10 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     }
    ~~~~~~
 
-### 3. Create an Audio Stream (Audio Playback Session)
+### 3. Create an audio playback session
 
    ~~~~~~{.cpp}
-    // Callback which provides response to createStream with pointer to base interface IAudioStream.
+    // Callback which provides response to createStream with pointer to base interface IAudioStream
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -55,8 +53,9 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         std::cout << "createStream() succeeded." << std::endl;
         audioPlayStream = std::dynamic_pointer_cast<IAudioPlayStream>(stream);
     }
-    // Create an Audio Stream (Audio Playback Session)
+
     StreamConfig config;
+
     config.type = StreamType::PLAY;
     config.sampleRate = 48000;
     config.format = AudioFormat::AMRWB_PLUS;
@@ -66,13 +65,14 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     params.bitWidth = 16;
     params.frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
     config.formatParams = &params;
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 4. Allocate Stream buffers for Playback operation
+### 4. Allocate stream buffers for playback operation
 
    ~~~~~~{.cpp}
-    // Get an audio buffer (can get more than one)
+    // Get an audio buffer (we can get more than one)
     auto streamBuffer = audioPlayStream->getStreamBuffer();
     if (streamBuffer != nullptr) {
         // Setting the size that is to be written to stream as the minimum size
@@ -91,7 +91,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
 ### 5. Start write operation for playback to start
 
    ~~~~~~{.cpp}
-    // Callback which provides response to write operation.
+    // Callback which provides response to write operation
     void writeCallback(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytes, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -104,8 +104,9 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         return;
     }
 
-    // Indiction Received only when callback returns with error that bytes written are not equal to
-    // bytes requested to write. It notifies that pipeline is ready to accept new buffer to write.
+    // Indiction Received only when callback returns with error that
+    // bytes written are not equal to bytes requested to write. It
+    // notifies that pipeline is ready to accept new buffer to write.
     void onReadyForWrite() {
         pipeLineEmpty_ = true;
     }
@@ -113,6 +114,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     // Write desired data into the buffer, the bytes sent as 0x1 for example purpose only.
     // First write starts Playback Session.
     memset(streamBuffer->getRawBuffer(),0x1,size);
+
     auto status = audioPlayStream->write(streamBuffer, writeCallback);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "write() failed with error" << static_cast<int>(status) << std::endl;
@@ -125,6 +127,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
 
    ~~~~~~{.cpp}
     std::promise<bool> p;
+
     auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY, [&p](ErrorCode error) {
         if (error == ErrorCode::SUCCESS) {
             p.set_value(true);
@@ -138,6 +141,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
     } else {
         std::cout << "Request to stop playback after pending buffers failed" << std::endl;
     }
+
     if (p.get_future().get()) {
         std::cout << "Pending buffers played successful !!" << std::endl;
     }
@@ -166,7 +170,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         }
    ~~~~~~
 
-### 7. Delete an Audio Stream (Audio Playback Session), once reached end of operation
+### 7. Dispose the audio stream, once end of operation is reached
 
    ~~~~~~{.cpp}
     // Callback which provides response to deleteStream
@@ -179,7 +183,7 @@ This section demonstrates how to use the audio APIs for compressed audio format 
         std::cout << "deleteStream() succeeded." << std::endl;
         audioPlayStream = nullptr;
     }
-    // Delete an Audio Stream (Audio Playback Session), once reached end of operation.
+
     Status  status = audioManager->deleteStream(audioPlayStream, deleteStreamCallback);
     if (status != Status::SUCCESS) {
         std::cout << "deleteStream failed with error" << static_cast<int>(status) << std::endl;

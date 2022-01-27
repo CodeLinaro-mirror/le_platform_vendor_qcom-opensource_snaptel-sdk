@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file  CallManager.hpp
  * @brief Call Manager is the primary interface for performing call related
@@ -448,6 +484,38 @@ public:
     *           break backwards compatibility.
     */
    virtual telux::common::Status hangupForegroundResumeBackground(int phoneId,
+      common::ResponseCallback callback = nullptr)
+      = 0;
+
+   /**
+    * Hangup all the waiting or background call(s).
+    * The background call here could be waiting call, hold call or multiple hold calls in case
+    * of conference.
+    *
+    * If a call(s) is hold, the hold call(s) will be terminated or if a call is waiting, the
+    * waiting call will be be terminated as well.
+    * In case of hold, active and waiting scenario, the active call will still be on active, hold
+    * and waiting call will be ended.
+    *
+    * @param [in] callback - optional callback pointer to get the response of hangup request
+    * below are possible error codes for callback response
+    *        - @ref SUCCESS
+    *        - @ref RADIO_NOT_AVAILABLE
+    *        - @ref NO_MEMORY
+    *        - @ref MODEM_ERR
+    *        - @ref INTERNAL_ERR
+    *        - @ref INVALID_STATE
+    *        - @ref INVALID_CALL_ID
+    *        - @ref INVALID_ARGUMENTS
+    *        - @ref OPERATION_NOT_ALLOWED
+    *        - @ref GENERIC_FAILURE
+    *
+    * @returns Status of hangupWaitingOrBackground i.e. success or suitable error code.
+    *
+    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+    *           break backwards compatibility.
+    */
+   virtual telux::common::Status hangupWaitingOrBackground(int phoneId,
       common::ResponseCallback callback = nullptr)
       = 0;
 

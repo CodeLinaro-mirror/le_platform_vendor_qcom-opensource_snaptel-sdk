@@ -1,9 +1,7 @@
 Loopback session {#audio_manager_loopback}
 =======================================================================================
 
-## Audio Manager API Sample Reference for audio loopback session
-
-This section demonstrates how to use the audio APIs to start/stop a loopback session.
+This sample application demonstrates how to create a loopback audio stream, start and stop the loopback session.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,11 +9,11 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
-    //  Get AudioManager instance.
+    // Get the AudioManager instance
     audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
         prom.set_value(serviceStatus);
     });
@@ -24,15 +22,15 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    //  Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -44,7 +42,7 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
 ### 3. Create an audio Stream (to be associated with loopback)
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "createStream() failed with error" << static_cast<int>(error) << std::endl;
@@ -53,20 +51,24 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
         std::cout << "createStream() succeeded." << std::endl;
         audioLoopbackStream = std::dynamic_pointer_cast<IAudioLoopbackStream>(stream);
     }
+
     // Create a loopback stream with required configuration
+    StreamConfig config;
+
     config.type = telux::audio::StreamType::LOOPBACK;
     config.sampleRate = 48000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_MIC);
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
 ### 4. Start loopback between the specified source and sink devices
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void startLoopbackCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -75,6 +77,7 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
         }
         std::cout << "startLoopback() succeeded." << std::endl;
     }
+
     // start loopback
     status = audioLoopbackStream->startLoopback(startLoopbackCallback);
    ~~~~~~
@@ -82,7 +85,7 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
 ### 5. Stop loopback between the specified source and sink devices
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void stopLoopbackCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -91,14 +94,15 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
         }
         std::cout << "stopLoopback() succeeded." << std::endl;
     }
-    // Stop the loopback, which was started earlier
+
+    // Stop the loopback session (which was started earlier)
     status = audioLoopbackStream->stopLoopback(stopLoopbackCallback);
    ~~~~~~
 
-### 6. Delete the audio stream associated with the Loopback session
+### 6. Dispose the audio stream associated with the loopback session
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void deleteStreamCallback(ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "deleteStream() failed with error" << static_cast<int>(error) << std::endl;
@@ -107,7 +111,8 @@ This section demonstrates how to use the audio APIs to start/stop a loopback ses
         std::cout << "deleteStream() succeeded." << std::endl;
         audioLoopbackStream.reset();
     }
-    // Delete the Audio Stream
+
+    // Delete the audio stream
     status = audioManager->deleteStream(std::dynamic_pointer_cast<IAudioStream>(audioLoopbackStream),
                                     deleteStreamCallback);
    ~~~~~~

@@ -1,13 +1,11 @@
-Enable/Disable Socks {#enable_disable_socks}
+Enable/Disable socks {#enable_disable_socks}
 ============================================
 
-# Enable/Disable Socks
+This sample application demonstrates how to enable/disable socks.
 
-Please follow below steps to Enable/Disable Socks
+### 1.Implement initialization callback and get the DataFactory instance
 
-### 1.Implement initialization callback and get the DataFactory instance ###
-
-Optionally initialization callback can be provided with get manager instance.
+Optionally, initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
@@ -16,6 +14,7 @@ Data factory will call callback when manager initialization is complete.
       status_ = status;
       initCv.notify_all();
    };
+   
    auto &dataFactory = telux::data::DataFactory::getInstance();
    ~~~~~~
 
@@ -35,7 +34,7 @@ Data factory will call callback when manager initialization is complete.
 ### 3.1 Check SocksManager initialization state
 
 If SocksManager initialization failed, new initialization attempt can be accomplished
-by calling step 2. If SocksManager initialization succeed, proceed to step 4
+by calling step 2. If SocksManager initialization succeed, proceed to step 4.
 
    ~~~~~~{.cpp}
    if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -46,7 +45,7 @@ by calling step 2. If SocksManager initialization succeed, proceed to step 4
    }
    ~~~~~~
 
-### 4. Instantiate enable Socks callback instance - this is optional ###
+### 4. Optionally, instantiate enable Socks callback instance
 
    ~~~~~~{.cpp}
    auto respCb = [](telux::common::ErrorCode error) {
@@ -59,10 +58,10 @@ by calling step 2. If SocksManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 5. enable/disable Socks ###
+### 5. Enable/Disable socks using enableSocks()
 
    ~~~~~~{.cpp}
     dataSocksMgr->enableSocks(enable, respCb);
    ~~~~~~
 
-### 6. Response callback will be called for the setFirewall response ###
+Now, response callback will be called for the setFirewall response.

@@ -98,10 +98,15 @@ class AerolinkSecurity : public SecurityService {
                                              uint8_t keyGenMethod);
         static AerolinkSecurity *Instance(std::string ctxName, uint16_t countryCode,
                                              char const* lcmName, IDChangeData& idChangeData);
+        int ExtractMsg(const SecurityOpt opt,
+                        const uint8_t * msg,
+                        uint32_t msgLen,
+                        uint8_t const *payload,
+                        uint32_t       payloadLen,
+                        uint32_t       &dot2HdrLen);
         int SignMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
                     uint8_t *signedSpdu, uint32_t &signedSpduLen);
-        int VerifyMsg(const SecurityOpt opt, const uint8_t *msg, uint32_t msgLen,
-                    uint32_t &dot2HdrLen);
+        int VerifyMsg(const SecurityOpt opt);
         int idChange();
         ~AerolinkSecurity() {
             deinit();
@@ -117,28 +122,12 @@ class AerolinkSecurity : public SecurityService {
                     uint8_t isPayloadSpdu, uint8_t * const encryptedData,
                     uint32_t * const encryptedDataLength);
        int syncVerify(
-            SecurityContextC ctx,
-            const uint8_t * message,
-            uint32_t msgLen,
-            uint8_t const *payload,
-            uint32_t       payloadLen,
-            uint32_t       &dot2HdrLen,
-            int32_t latitude,
-            int32_t longitude,
-            uint16_t elevation,
-            VerifStats *verifStat);
+            Kinematics hvKine, Kinematics rvKine,
+            VerifStats *verifStat, MisbehaviorStats* misbehaviorStat);
 
         int asyncVerify(
-            SecurityContextC ctx,
-            const uint8_t * message,
-            uint32_t msgLen,
-            uint8_t const *payload,
-            uint32_t       payloadLen,
-            uint32_t       &dot2HdrLen,
-            int32_t latitude,
-            int32_t longitude,
-            uint16_t elevation,
-            sem_t   *queue_sem);
+            Kinematics hvKine, Kinematics rvKine,
+            sem_t   *queue_sem, MisbehaviorStats* misbehaviorStat);
 
         SecuredMessageGeneratorC smg_;
         SecuredMessageParserC smp_;
@@ -161,6 +150,8 @@ class AerolinkSecurity : public SecurityService {
         sem_t* getThrSmgSem(std::thread::id thrId);
         int createNewSmp(SecuredMessageParserC* smpPtr);
         int createNewSmg(SecuredMessageGeneratorC* smgPtr);
+        void mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat);
+        void fillBsmDataForMbd(Kinematics* rvBsmData);
         // should be unique public encryption keys
         //    AerolinkEncryptionKey const * const recipients_[] = {};
         //    std::set<AerolinkEncryptionKey const *> recipients_;
@@ -169,5 +160,8 @@ class AerolinkSecurity : public SecurityService {
         uint8_t keyGenMethod_;
         char lcmName_[50];
         IDChangeData* idChangeData_;
+        bool enableMisbehavior;
+        std::shared_ptr<BsmData_t> misbehaviorAppDataPtr = nullptr;
+        std::shared_ptr<MisbehaviorDetectedType_t> misbehaviorResultPtr = nullptr;
 };
 #endif

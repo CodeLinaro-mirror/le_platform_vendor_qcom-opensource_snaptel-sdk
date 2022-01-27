@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -234,9 +234,11 @@ int main(int argc, char **argv) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
     auto sdkVersion = telux::common::Version::getSdkVersion();
+    std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::string appName = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."
-                          + std::to_string(sdkVersion.patch);
+                          + std::to_string(sdkVersion.patch) +"\n" +
+                          "Release name: " + sdkReleaseName;
     ThermalTestApp thermalTestApp(appName, "Therm> ");
     // initialize commands and display
     if(!thermalTestApp.init()) {

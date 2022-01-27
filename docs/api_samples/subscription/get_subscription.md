@@ -1,9 +1,7 @@
-Using Subscription Manager APIs {#get_subscription}
-===================================================
+Get network subscription information {#get_subscription}
+========================================================
 
-# Using Subscription Manager APIs
-
-Please follow below steps to use Subscription Manager APIs to get Subscription Information.
+This sample application demonstrates how to get modem network subscription information.
 
 ##### 1. Get the PhoneFactory and SubscriptionManager instances
 

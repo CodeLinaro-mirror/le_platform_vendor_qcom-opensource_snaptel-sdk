@@ -1,9 +1,7 @@
-Transcoding {#audio_transcoding_operation}
+Transcoding samples {#audio_transcoding_operation}
 ==========================================================
 
-## Audio Manager APIs Sample Reference for audio transcoding operation
-
-This section demonstrates how to use the audio APIs for transcoding operation.
+This sample app demonstrates how to use the audio APIs for transcoding audio samples.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,11 +9,11 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
-    //  Get AudioManager instance.
+    // Get AudioManager instance
     audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
         prom.set_value(serviceStatus);
     });
@@ -24,15 +22,15 @@ This section demonstrates how to use the audio APIs for transcoding operation.
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    // Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,13 +39,13 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     }
    ~~~~~~
 
-### 3. Create an Audio Transcoder
+### 3. Create an audio transcoder
 
    ~~~~~~{.cpp}
     FormatInfo inputConfig_;
     FormatInfo outputConfig_;
-    // input and output parameters are configured for AMRWB_PLUS to PCM_16BIT_SIGNED transcoding
-    // operation as an example.
+    // input and output parameters are configured for AMRWB_PLUS
+    // to PCM_16BIT_SIGNED transcoding operation as an example.
     AmrwbpParams inputParams{};
     inputConfig_.sampleRate = SAMPLE_RATE;
     inputConfig_.mask = CHANNEL_MASK;
@@ -78,10 +76,10 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     }
    ~~~~~~
 
-### 4.1 Allocate Audio buffers for write operation
+### 4.1 Allocate audio buffers for write operation
 
    ~~~~~~{.cpp}
-    // Get an audio buffer for write operation (can get more than one)
+    // Get an audio buffer for write operation (we can get more than one)
     auto audioBuffer = transcoder_->getWriteBuffer();
     if (audioBuffer != nullptr) {
         // Setting the size of buffer that need to be supplied for write operation as the minimum
@@ -97,10 +95,10 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     }
    ~~~~~~
 
-### 4.2 Allocate Audio buffers for read operation
+### 4.2 Allocate audio buffers for read operation
 
    ~~~~~~{.cpp}
-    // Get an audio buffer for read operation (can get more than one)
+    // Get an audio buffer for read operation (we can get more than one)
     auto audioBuffer = transcoder_->getReadBuffer();
     if (audioBuffer != nullptr) {
         // Setting the size of buffer that need to be supplied for read operation as the minimum
@@ -119,7 +117,7 @@ This section demonstrates how to use the audio APIs for transcoding operation.
 ### 5. Start write operation in one thread for transcoding
 
    ~~~~~~{.cpp}
-    // Callback which provides response to write operation.
+    // Callback which provides response to write operation
     void writeCallback(std::shared_ptr<IAudioBuffer> buffer,
         uint32_t bytes, ErrorCode error) {
         std::cout << "Bytes Written : " << bytes << std::endl;
@@ -133,6 +131,7 @@ This section demonstrates how to use the audio APIs for transcoding operation.
         cv_.notify_all();
         return;
     }
+
     // Indiction Received only when callback returns with error that bytes written are not equal to
     // bytes requested to write. It notifies that pipeline is ready to accept new buffer to write.
 
@@ -143,7 +142,9 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     // Write request for transcoding
     auto writeCb = std::bind(&TranscoderApp::writeCallback, this, std::placeholders::_1,
                     std::placeholders::_2, std::placeholders::_3);
+
     telux::common::Status status = telux::common::Status::FAILED;
+
     // EOF_REACHED denotes flag which indicated EOF is reached
     // EOF_NOT_REACHED denotes flag which indicated EOF is not reached
     if (EOF_REACHED) {
@@ -151,6 +152,7 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     } else {
         status = transcoder_->write(audioBuffer, EOF_NOT_REACHED,  writeCb);
     }
+
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "write() failed with error" << static_cast<unsigned int>(status) << std::endl;
     } else {
@@ -161,7 +163,7 @@ This section demonstrates how to use the audio APIs for transcoding operation.
 ### 6. Start read operation in another thread for transcoding
 
    ~~~~~~{.cpp}
-    // Callback which provides response to read operation.
+    // Callback which provides response to read operation
     void readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
         uint32_t isLastBuffer, telux::common::ErrorCode error) {
         if (isLastBuffer) {
@@ -182,6 +184,7 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     // Read request for transcoding
     auto readCb =  std::bind(&TranscoderApp::readCallback, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
     telux::common::Status status = transcoder_->read(audioBuffer, bytesToRead, readCb);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "read() failed with error" << static_cast<unsigned int>(status) << std::endl;
@@ -191,9 +194,10 @@ This section demonstrates how to use the audio APIs for transcoding operation.
 ### 7. Tear down the audio transcoder instance
 
    ~~~~~~{.cpp}
-    // Tear down is supposed to be called after the last buffer is received for write operation
-    // It is supposed to be called after every transcoding operation as transcoder instance can not
-    // be used for  multiple transcoding operations.
+    // Tear down is supposed to be called after the last buffer is received
+    // for write operation. It is supposed to be called after every transcoding
+    // operation as transcoder instance can not be used for multiple transcoding
+    // operations.
 
     std::promise<bool> p;
     auto status = transcoder_->tearDown([&p](telux::common::ErrorCode error) {
@@ -209,6 +213,7 @@ This section demonstrates how to use the audio APIs for transcoding operation.
     } else {
         std::cout << "Request to Teardown transcoder failed" << std::endl;
     }
+
     if (p.get_future().get()) {
         transcoder_ = nullptr;
         std::cout << "Tear Down successful !!" << std::endl;

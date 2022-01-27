@@ -1,9 +1,7 @@
-Switching device {#audio_audio_manager_voicecall_device_switch}
+Switching audio device {#audio_audio_manager_voicecall_device_switch}
 =================================================================================================================
 
-## Audio Manager API Sample Reference for voice session device switch
-
-This section demonstrates how to use the audio APIs for switching device during voice session.
+This sample application demonstrates how to use audio APIs for switching audio devices during active voice session.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,28 +9,28 @@ This section demonstrates how to use the audio APIs for switching device during 
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
-    //  Get AudioManager instance.
+    // Get AudioManager instance
     audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
         prom.set_value(serviceStatus);
     });
     if (!audioManager) {
-        std::cout << "Failed to get AudioManager object" << std::endl;
+        std::cout << "Failed to get AudioManager instance" << std::endl;
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    // Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,10 +39,10 @@ This section demonstrates how to use the audio APIs for switching device during 
     }
    ~~~~~~
 
-### 3. Create an Audio Stream (Voice Call Session)
+### 3. Create a voice call session
 
    ~~~~~~{.cpp}
-    //Callback which provides response to createStream, with pointer to base interface IAudioStream.
+    // Callback which provides response to createStream, with pointer to base interface IAudioStream
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -57,21 +55,23 @@ This section demonstrates how to use the audio APIs for switching device during 
         audioVoiceStream = std::dynamic_pointer_cast<IAudioVoiceStream>(stream);
     }
 
-    //Create an Audio Stream (Voice Call Session)
+    // Create an audio stream representing a voice call session
     StreamConfig config;
+
     config.type = StreamType::VOICE_CALL;
     config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 4. Start Created Audio Stream (Voice Call Session)
+### 4. Start voice call session
 
    ~~~~~~{.cpp}
-    //Callback which provides response to startAudio.
+    // Callback which provides response to startAudio
     void startAudioCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -83,14 +83,13 @@ This section demonstrates how to use the audio APIs for switching device during 
         std::cout << "startAudio() succeeded." << std::endl;
     }
 
-    //Start an Audio Stream (Voice Call Session)
     status = audioVoiceStream->startAudio(startAudioCallback);
    ~~~~~~
 
 ### 5. Device switch on Started Audio Stream (Voice Call Session)
 
    ~~~~~~{.cpp}
-    //Callback which provides response to setDevice.
+    // Callback which provides response to setDevice
     void setStreamDeviceCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -102,16 +101,16 @@ This section demonstrates how to use the audio APIs for switching device during 
         std::cout << "setDevice() succeeded." << std::endl;
     }
 
-    //Set New Device for an Audio Stream (Voice Call Session)
+    // Switch to new device for the given audio stream
     std::vector<DeviceType> devices;
-    devices.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER); //Set new device type
+    devices.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
     status = audioVoiceStream->setDevice(devices, setStreamDeviceCallback);
    ~~~~~~
 
-### 6. Query Device details on Started Audio Stream (Voice Call Session)
+### 6. Query device used for a given audio stream
 
    ~~~~~~{.cpp}
-    //Callback which provides response to getDevice.
+    // Callback which provides response to getDevice
     void getStreamDeviceCallback(std::vector<DeviceType> devices, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -128,15 +127,14 @@ This section demonstrates how to use the audio APIs for switching device during 
         }
     }
 
-    //get Device details of an Audio Stream (Voice Call Session)
     status = audioVoiceStream->getDevice(getStreamDeviceCallback);
    ~~~~~~
 
-### 7. Stop Created Audio Stream (Voice Call Session)
+### 7. Stop voice call session
 
    ~~~~~~{.cpp}
 
-    //Callback which provides response to stopAudio.
+    // Callback which provides response to stopAudio
     void stopAudioCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -148,11 +146,10 @@ This section demonstrates how to use the audio APIs for switching device during 
         std::cout << "stopAudio() succeeded." << std::endl;
     }
 
-    //Stop an Audio Stream (Voice Call Session), which was started earlier
     status = audioVoiceStream->stopAudio(stopAudioCallback);
    ~~~~~~
 
-### 8. Delete an Audio Stream (Voice Call Session), which was created earlier
+### 8. Dispose audio stream
 
    ~~~~~~{.cpp}
     //Callback which provides response to deleteStream
@@ -166,7 +163,7 @@ This section demonstrates how to use the audio APIs for switching device during 
         std::cout << "deleteStream() succeeded." << std::endl;
         audioVoiceStream.reset();
     }
-    //Delete an Audio Stream (Voice Call Session), which was created earlier
+
     status = audioManager->deleteStream(std::dynamic_pointer_cast<IAudioStream>(audioVoiceStream),
                                         deleteStreamCallback);
    ~~~~~~

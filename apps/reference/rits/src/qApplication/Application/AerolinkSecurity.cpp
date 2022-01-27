@@ -317,6 +317,11 @@ int AerolinkSecurity::init(void) {
     startTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
     prevBatchTimeStamp = startTime;
 
+    const char *aerolinkLibVersion = securityServices_getVersion();
+    if(aerolinkLibVersion != nullptr) {
+        std::cout << "Aerolink Library Version: " << aerolinkLibVersion << std::endl;
+    }
+
     AEROLINK_RESULT result;
     if ((result = securityServices_initialize()) != WS_SUCCESS) {
         if(secVerbosity > 0)
@@ -366,7 +371,7 @@ int AerolinkSecurity::init(void) {
                     );
 
             if(result != WS_SUCCESS) {
-                std::cerr << "Failed to register the ID change callback: " 
+                std::cerr << "Failed to register the ID change callback: "
                             << ws_errid(result) << std::endl;
                 return -1;
             }else{
@@ -683,25 +688,13 @@ void print_exception(std::exception& e){
     fprintf(stderr, "Exception caught : %s\n", e.what());
 }
 
-// A function to verify a signed packet that can handle multi-threading:
-//   smp_extract
-//   smp_checkRelevance
-//   smp_checkConsistency
-//   smp_verifySignaturesAsync
-int AerolinkSecurity::syncVerify(
-    SecurityContextC ctx,
-    const uint8_t * message,
-    uint32_t msgLen,
-    uint8_t const *payload,
-    uint32_t       payloadLen,
-    uint32_t       &dot2HdrLen,
-    int32_t latitude,
-    int32_t longitude,
-    uint16_t elevation,
-    VerifStats  *verifStat
-    )
+int AerolinkSecurity::ExtractMsg(const SecurityOpt opt,
+                const uint8_t * msg,
+                uint32_t msgLen,
+                uint8_t const *payload,
+                uint32_t       payloadLen,
+                uint32_t       &dot2HdrLen){
 
-{
     // Add new smp (if none exists) for this thread
     std::thread::id thrId = std::this_thread::get_id();
     try{
@@ -731,7 +724,7 @@ int AerolinkSecurity::syncVerify(
     uint8_t const *externData;
     ExternalDataHashAlg edhAlg;
     result = smp_extract(
-        *smp, message, msgLen,
+        *smp, msg, msgLen,
         &spduType, &payload, &payloadLen, &payloadType,
         &externData, &edhAlg);
     if (result != WS_SUCCESS)
@@ -740,18 +733,61 @@ int AerolinkSecurity::syncVerify(
             fprintf(stderr,"Unable to extract message (%s)\n", ws_errid(result));
         return -1;
     }
-    dot2HdrLen = (uint32_t)(payload - message);
-    if(secVerbosity > 8){
-        fprintf(stderr,"dot2HdrLen is %d\n", dot2HdrLen);
-        fprintf(stdout, "Latitude, Longitude, Elevation: 0x%08x, 0x%08x, 0x%04x\n",
-            latitude, longitude, elevation);
+    dot2HdrLen = (uint32_t)(payload - msg);
+    return 0;
+}
+
+
+// A function to verify a signed packet that can handle multi-threading:
+//   smp_extract
+//   smp_checkRelevance
+//   smp_checkConsistency
+//   smp_verifySignaturesAsync
+int AerolinkSecurity::syncVerify(
+    Kinematics hvKine, Kinematics rvKine,
+    VerifStats  *verifStat, MisbehaviorStats* misbehaviorStat
+    )
+{
+    // Add new smp (if none exists) for this thread
+    std::thread::id thrId = std::this_thread::get_id();
+    try{
+        addNewThrSmp(thrId);
+    }
+    catch (std::exception& e)
+    {
+        if(secVerbosity > 4){
+            print_exception(e);
+        }
+        return -1;
+    }
+    AEROLINK_RESULT result;
+
+    // Get corresponding smp for this thread
+    SecuredMessageParserC* smp;
+    smp = getThrSmp(thrId);
+    if(smp == nullptr){
+        if(secVerbosity > 4)
+            fprintf(stderr,"Unable to retreive smp for this thread %d\n",
+              std::this_thread::get_id());
+        return -1;
     }
 
-    // smp_checkConsistency
-    result = smp_checkConsistency(*smp);
-    if(result != WS_SUCCESS){
+    // set the generation location
+    if(secVerbosity > 7){
+        fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
+            hvKine.latitude, hvKine.longitude, hvKine.elevation);
+
+        fprintf(stdout, "RV Latitude, RV Longitude, RV Elevation: %i, %i, %hu\n",
+            rvKine.latitude, rvKine.longitude, rvKine.elevation);
+    }
+
+    // set the generation position based on provided kinematics (if any)
+    result = smp_setGenerationLocation(*smp, rvKine.latitude, rvKine.longitude,
+            rvKine.elevation);
+    if (result != WS_SUCCESS)
+    {
         if(secVerbosity > 4)
-            fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
+            fprintf(stderr,"Unable to set generation location (%s)\n", ws_errid(result));
         return -1;
     }
 
@@ -761,6 +797,14 @@ int AerolinkSecurity::syncVerify(
     {
         if(secVerbosity > 4)
             fprintf(stderr,"Unable to check relevance (%s)\n", ws_errid(result));
+        return -1;
+    }
+
+    // smp_checkConsistency
+    result = smp_checkConsistency(*smp);
+    if(result != WS_SUCCESS){
+        if(secVerbosity > 4)
+            fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
         return -1;
     }
 
@@ -787,6 +831,10 @@ int AerolinkSecurity::syncVerify(
             verifStat->timestamp = endLatencyTime-startTime;
             verifStat->verifLatency = endLatencyTime-startLatencyTime;
         }
+        //Misbehavior detection if enabled
+        if(this->enableMisbehavior){
+            mbdCheck(&rvKine, misbehaviorStat);
+        }
 
         // track overall security performance
         // includes ITS
@@ -798,7 +846,7 @@ int AerolinkSecurity::syncVerify(
             sem_post(&verifLogSem);
         }
    }
-    return payloadLen;
+    return 1;
 }
 
 // A function to verify a signed packet that can handle multi-threading:
@@ -807,19 +855,9 @@ int AerolinkSecurity::syncVerify(
 //   smp_checkConsistency
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
-    SecurityContextC ctx,
-    const uint8_t * message,
-    uint32_t msgLen,
-    uint8_t const *payload,
-    uint32_t       payloadLen,
-    uint32_t       &dot2HdrLen,
-    int32_t latitude,
-    int32_t longitude,
-    uint16_t elevation,
-    sem_t    *queue_sem
-    )
+    Kinematics hvKine, Kinematics rvKine,
+    sem_t    *queue_sem, MisbehaviorStats* misbehaviorStat) {
 
-{
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
     std::thread::id thrId = std::this_thread::get_id();
@@ -836,26 +874,22 @@ int AerolinkSecurity::asyncVerify(
         return -1;
     }
 
-    // smp_extract
-    PayloadType    spduType, payloadType;
-    uint8_t const *externData;
-    ExternalDataHashAlg edhAlg;
-    result = smp_extract(
-        *smp, message, msgLen,
-        &spduType, &payload, &payloadLen, &payloadType,
-        &externData, &edhAlg);
+    // set the generation location
+    if(secVerbosity > 7){
+        fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
+            hvKine.latitude, hvKine.longitude, hvKine.elevation);
+
+        fprintf(stdout, "RV Latitude, RV Longitude, RV Elevation: %i, %i, %hu\n",
+            rvKine.latitude, rvKine.longitude, rvKine.elevation);
+    }
+
+    result = smp_setGenerationLocation(*smp, rvKine.latitude, rvKine.longitude,
+            rvKine.elevation);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
-            fprintf(stderr,"Unable to extract message (%s)\n", ws_errid(result));
+            fprintf(stderr,"Unable to set the generation location (%s)\n", ws_errid(result));
         return -1;
-    }
-
-    dot2HdrLen = (uint32_t)(payload - message);
-    if(secVerbosity > 8){
-        fprintf(stdout,"dot2HdrLen is %d\n", dot2HdrLen);
-        fprintf(stdout, "Latitude, Longitude, Elevation: 0x%08x, 0x%08x, 0x%04x\n",
-            latitude, longitude, elevation);
     }
 
     // smp_checkConsistency
@@ -885,36 +919,81 @@ int AerolinkSecurity::asyncVerify(
                      ws_errid(result));
         return -1;
     }
+    //Misbehavior detection if enabled
+    if(this->enableMisbehavior){
+        mbdCheck(&rvKine, misbehaviorStat);
+    }
     sem_wait(thrVerifSemPtr);
-    return payloadLen;
+    return 1;
+}
+
+void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat) {
+    AEROLINK_RESULT result;
+    std::thread::id thrId = std::this_thread::get_id();
+    SecuredMessageParserC* smp;
+    smp = getThrSmp(thrId);
+    if (misbehaviorAppDataPtr == nullptr){
+        misbehaviorAppDataPtr = std::make_shared<BsmData_t>();
+    }
+    if (misbehaviorResultPtr == nullptr){
+        misbehaviorResultPtr = std::make_shared<MisbehaviorDetectedType_t>();
+    }
+    if(smp != nullptr){
+        fillBsmDataForMbd(rvBsmInfo);
+        gettimeofday(&currTime, NULL);
+        double startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+        result = smp_checkMisbehavior(*smp, static_cast<void*>(misbehaviorAppDataPtr.get()),
+                            static_cast<MisbehaviorDetectedType_t*>(misbehaviorResultPtr.get()));
+        gettimeofday(&currTime, NULL);
+        double endLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
+
+        if (result != WS_SUCCESS && result != WS_ERR_MISBEHAVIOR_DETECTED){
+            if(secVerbosity > 4)
+                fprintf(stderr, "Error in checking misbehavior\n");
+        }else{
+            if(secVerbosity > 4){
+                fprintf(stdout, "Detected Misbehavior Class is 0x%08x\n",
+                misbehaviorResultPtr->detectedMisbehaviorClass);
+            }
+        }
+        if(misbehaviorStat != nullptr){
+            misbehaviorStat->timestamp = endLatencyTime-startTime;
+            misbehaviorStat->misbehaviorLatency = endLatencyTime-startLatencyTime;
+        }
+    }
+}
+
+void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {
+    misbehaviorAppDataPtr->version = 1;
+    misbehaviorAppDataPtr->dataType = rvBsmData->dataType;
+    misbehaviorAppDataPtr->id =  rvBsmData->id;
+    misbehaviorAppDataPtr->msgCount = rvBsmData->msgCount;
+    misbehaviorAppDataPtr->latitude = rvBsmData->latitude;
+    misbehaviorAppDataPtr->longitude = rvBsmData->longitude;
+    misbehaviorAppDataPtr->elevation =  rvBsmData->elevation;
+    misbehaviorAppDataPtr->speed =  rvBsmData->speed;
+    misbehaviorAppDataPtr->longitudeAcceleration =  rvBsmData->longitudeAcceleration;
+    misbehaviorAppDataPtr->heading =  rvBsmData->heading;
+    misbehaviorAppDataPtr->latitudeAcceleration =  rvBsmData->latitudeAcceleration;
+    misbehaviorAppDataPtr->yawAcceleration =  rvBsmData->yawAcceleration;
+    misbehaviorAppDataPtr->brakes = rvBsmData->brakes;
 }
 
 // Verifies a signed message and returns payload length of actual packet
-int AerolinkSecurity::VerifyMsg(const SecurityOpt opt, const uint8_t *msg,
-                                uint32_t msgLen, uint32_t &dot2HdrLen) {
+int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
     setSecVerbosity(opt.secVerbosity);
-    uint8_t const *payload = NULL;
-    uint32_t       payloadLen = 0;
+    this->enableMisbehavior = opt.enableMbd;
     int ret = 0;
     if(opt.enableAsync){
         // Asynchronous Verification
         ret = asyncVerify(
-                secContext_,
-                msg, msgLen,
-                payload, payloadLen,
-                dot2HdrLen,
-                opt.latitude, opt.longitude,
-                opt.elevation,   &verifQueueSem);
+                opt.hvKine, opt.rvKine,
+                &verifQueueSem, opt.misbehaviorStat);
     }else{
         //Synchronous Verification
         ret = syncVerify(
-                secContext_,
-                msg, msgLen,
-                payload, payloadLen,
-                dot2HdrLen,
-                opt.latitude, opt.longitude,
-                opt.elevation,
-                opt.verifStat
+                opt.hvKine, opt.rvKine,
+                opt.verifStat, opt.misbehaviorStat
               );
     }
     return ret;
@@ -971,10 +1050,15 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
 
     uint32_t Slen = signedSpduLen;
 
-    if(opt.latitude != 0 && opt.longitude != 0 &&
-                opt.elevation != 0 && countryCode_ != 0){
-        result = securityServices_setCurrentLocation(opt.latitude, opt.longitude,
-                 opt.elevation, countryCode_);
+    if(opt.hvKine.latitude != 0 && opt.hvKine.longitude != 0 &&
+                opt.hvKine.elevation != 0 && countryCode_ != 0){
+        if(secVerbosity > 7){
+            fprintf(stdout, "HV Latitude, HV Longitude, HV Elevation: %i, %i, %hu\n",
+                opt.hvKine.latitude, opt.hvKine.longitude, opt.hvKine.elevation);
+        }
+        result = securityServices_setCurrentLocation(
+                 opt.hvKine.latitude, opt.hvKine.longitude,
+                 opt.hvKine.elevation, countryCode_);
         if (result != WS_SUCCESS) {
             fprintf(stderr, "Failed to set current location (%s)\n",
                     ws_errid(result));
@@ -1083,7 +1167,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         // optionally, can keep this in SecurityService class
         gettimeofday(&currTime, NULL);
         startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
-        result = smg_signAsync(smg,
+        result = smg_signAsync(*smg,
             permissions,
             STO_AUTO,
             0,
@@ -1143,9 +1227,6 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         printSignStats(thrId);
         sem_post(&signLogSem);
     }
-
-    if(secVerbosity > 7)
-        fprintf(stdout,"Signing successful\n");
 
     if(!opt.enableAsync){
         signedSpduLen = Slen;

@@ -2,38 +2,40 @@
 #    Shared Library that encapsulates basic console app framework.
 
 cmake_minimum_required(VERSION 2.8.9)
-
 # provides install directory variables CMAKE_INSTALL_<dir>
 include(GNUInstallDirs)
 
-set(TARGET_CONSOLE_APP_FRAMEWORK telux_app_framework)
+if(NOT BUILD_FOR_SIMULATION)
 
-set(CONSOLE_APP_FRAMEWORK_SOURCES
-    ConsoleAppCommand.cpp
-    ConsoleApp.cpp
-)
-macro(SYSR_INCLUDE_DIR subdir)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
-endmacro()
+    set(TARGET_CONSOLE_APP_FRAMEWORK telux_app_framework)
 
-# set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+    set(CONSOLE_APP_FRAMEWORK_SOURCES
+        ConsoleAppCommand.cpp
+        ConsoleApp.cpp
+    )
+    macro(SYSR_INCLUDE_DIR subdir)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
+    endmacro()
 
-# headers
-set(CONSOLEAPP_FRAMEWORK_HEADERS
-    ConsoleApp.hpp
-    ConsoleAppCommand.hpp
-)
+    # set global variables
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_library(${TARGET_CONSOLE_APP_FRAMEWORK} STATIC
-    ${CONSOLE_APP_FRAMEWORK_SOURCES})
+    # headers
+    set(CONSOLEAPP_FRAMEWORK_HEADERS
+        ConsoleApp.hpp
+        ConsoleAppCommand.hpp
+    )
 
-set_target_properties(${TARGET_CONSOLE_APP_FRAMEWORK} PROPERTIES
-    PRIVATE_HEADER "${CONSOLEAPP_FRAMEWORK_HEADERS}")
+    add_library(${TARGET_CONSOLE_APP_FRAMEWORK} STATIC
+        ${CONSOLE_APP_FRAMEWORK_SOURCES})
 
-# install to target
-install ( TARGETS ${TARGET_CONSOLE_APP_FRAMEWORK}
-          PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/telux/common
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+    set_target_properties(${TARGET_CONSOLE_APP_FRAMEWORK} PROPERTIES
+        PRIVATE_HEADER "${CONSOLEAPP_FRAMEWORK_HEADERS}")
+
+    # install to target
+    install ( TARGETS ${TARGET_CONSOLE_APP_FRAMEWORK}
+            PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/telux/common
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+endif(NOT BUILD_FOR_SIMULATION)

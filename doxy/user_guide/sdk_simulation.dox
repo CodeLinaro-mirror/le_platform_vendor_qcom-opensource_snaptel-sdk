@@ -1,89 +1,62 @@
 /**
-@page sdk_simulation Using SDK APIs in simulation mode
+@page sdk_simulation Simulation with TelSDK
 
-Certain APIs in the SDK can be used in simulation mode, on any Linux based platform. This enables developers to develop and test their SDK applications on desktop environments, thus providing a simpler and faster development experience.
-This is achieved using the run time simulation libraries of the SDK.
+Sometimes, you may want to start developing an application early in the absence of target hardware. To support this, TelSDK features simulating certain functionality for example, generating location report.
 
-This section has instructions to build the simulations of SDK APIs using CAF repository.
+@section simulate_location Simulating location report generation
 
-You need to have the following in order to proceed:
- - Linux Ubuntu 14.04, Linux Ubuntu 20.04
- - GCC (version > 9.3)
-     \endcode
+A pre-defined location data is fed to the TelSDK location library which is then passed to the application in the same way as it would have been in the case of a real hardware. The steps to simulate location functionality are as follows:
 
-@section get_started Get Started
+1. Fetch the source code as described in chapter 2 - Building applications based on TelSDK.
+\htmlonly
+<BR><BR>
+\endhtmlonly
+2. Install CMake tool to build code on host machine.
+\code{.sh}
+$ sudo apt-get install cmake
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+3. Install required TelSDK headers.
+\code{.sh}
+$ cd telux/public/include
+$ cmake .
+$ cmake --build .
+$ sudo make install
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+4. Build and install required TelSDK libraries.
+\code{.sh}
+$ cd telux/public/simulation
+$ cmake .
+$ cmake --build .
+$ sudo make install
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+5. Enable building only location_test_app. In the telux/public/apps/CMakeLists.txt file comment out all "add_subdirectory" statements except for  location_test_app.
+\code{.sh}
+$ cd telux/public/apps
+$ cmake .
+$ cmake --build .
+$ sudo make install
+\endcode
+\htmlonly
+<BR>
+\endhtmlonly
+6. Run the test application.
+\code{.sh}
+$ location_test_app
+\endcode
 
-- Sync the CAF build
+@subsection loc_simulate_conf_opt Configuring location simulation parameters
 
-   repo init and sync the sources
-   \code{.sh}
-   $ repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release
-     -m <caf_ insert label here. xml>
-   $ repo sync -j 32
-   \endcode
-   For example: Using AU label
-   <br>
-   repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m caf_AU_LINUX_EMBEDDED_LE.UM.4.1.1_RB1_TARGET_ALL.01.147.055.xml
-   <br>
-   or using CRM build-id label
-   <br>
-   repo init -q -u git://codeaurora.org/quic/le/le/manifest.git -b release -m LE.UM.4.1.1-05510-sa515m.xml
+It is possible to configure various location parameters to increase simulation coverage. Overall, data availability, source of the location data, various delays and frequency of the reports can be configured.
 
-   <b>NOTE:</b> AU_LINUX_EMBEDDED_LE.UM.4.1.1_RB1_TARGET_ALL.01.147.055 should be replaced to the AU tag corresponding to the desired device build. "caf_" needs to be prefixed to the AU label.
+These parameters are defined in the simulation/loc/StubConfig, simulation/loc/StubDefines.hpp and simulation/loc/commonDef.hpp files. If any parameter is not overridden through these files, default hard-coded value is used for it.
 
-   The tags are listed here - https://source.codeaurora.org/quic/le/le/manifest/refs/tags
-
-- The following sections describe the way to compile these simulations for the respective libraries/APIs.
-All the simulation related source is located under "telux/public/simulation/" directory. Simulation is not available for all the SDK APIs and it is work in progress.
-
-@section location_simulation Location Simulation
-
-The "telux/public/simulation/loc" folder contains the simulation implementation of Location Telematics SDK APIs.
-
-<b> The following simulations have been compiled and tested with GCC and G++ version 9.3.0 and Ubuntu versions 14.04, 20.04 </b>
-
--  Navigate into the simulation folder of telux git project.
-   \code{.sh}
-   $ cd telux/public/simulation/
-   \endcode
-
-- The following instructions build and install the location simulation libraries.
-
-    Run below instructions in telux/public/include folder
-    \code{.sh}
-   $ cmake .
-   $ cmake --build .
-   $ sudo make install
-   \endcode
-
-   Run below instructions in telux/public/simulation
-    \code{.sh}
-   $ cmake .
-   $ cmake --build .
-   $ sudo make install
-   \endcode
-
-- Check where the libraries are installed and ensure that it is included in the library path of the system environment.
-<br>
-<b> Note: </b> Modify CMakeLists.txt in snaptel-sdk/apps folder to include only tests/location_test/app subdirectory
-    Run below instructions in telux/public/apps
-    \code{.sh}
-   $ cmake .
-   $ cmake --build .
-   $ sudo make install
-   \endcode
-
-- After successful compilation, the location_test_app is installed into the system's default directory and is ready to be launched.
-
-@subsection config_options Configuration options
-
-The location simulation is designed to be configurable as per the needs of the developer to allow various testing scenarios. The simulation reports can be generated using one of the two methods:
-Fixed canned data - which are pre-defined as default values in some headers, pre-recorded location data taken from a file such as PRE-RECORDED_LOCATION_DATA.csv.
-Simulation libraries also allow the developers to configure the subsystem readiness and callback delays from a config file.
-The motivation for allowing such flexibility is to allow developers to run various test case scenarios even without the hardware access.
-The following are the three important files that have configuration and default values of the location simulation libraries.
-<br>
-- 1) StubConfig : Allows users to configure delays and other aspects of simulation libraries.
-- 2) CommonDef.hpp : Defines default values for the some of the fields in location reports.
-- 3) StubDefines.hpp: Defines default values for the subsytem readiness and callback delays.
 */

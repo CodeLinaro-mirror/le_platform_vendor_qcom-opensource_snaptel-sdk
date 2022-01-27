@@ -1,119 +1,94 @@
-Configuring Logs from the SDK {#logger_settings}
-================================================
+TelSDK logging {#logger_settings}
+=================================
 
-# Configuring Logs from the SDK
+TelSDK provides a configurable logging facility that can be used by application to log messages. This also make it easier for application to include it's messages along with messages from TelSDK itself.
 
-Please follow below steps to configure Logger settings.
+### 1. Logging API
 
-Telematics SDK provides a configurable logger module that can be used to log messages from Telematics SDK library and applications at desired threshold levels into device console, diag and optionally into a log file.
+   Use the LOG() API to log any message.
 
-By default, *tel.conf* will be placed under /etc location
-
-The configuration file called "appName.conf" or "tel.conf" is used to configure logger settings such as logging threshold, enable/disable file logging and to change the log file name. These file have to be updated to override default behavior. These configuration file should be copied either in /etc or the folder where the application is running.
-
-To modify tel.conf file under /etc, you need to mount partition on MDM A7 processor
-
-   ~~~~~~{.sh}
-   adb shell mount -o rw,remount /
+   ~~~~~~{.cpp}
+   #include <telux/common/Log.hpp>
+   
+   LOG(DEBUG, "startCallResponse: errorCode: ", static_cast<int>(errorCode));
    ~~~~~~
 
-**NOTE:** The file path where the log file will be written to, need to be in a writable partition, accessible to the application that is running.
+### 2. Logging configuration
 
-In the case of MDMs A7 processor the /data partition is writable.
+TelSDK has a default configuration for logging which defines behaviour of logging. To override this configuration, a configuration file should be provided to the TelSDK. This file is searched by TelSDK logging mechanism in the following order.
+-  app_name.conf in /etc directory (for example, /etc/telsdk_console_app.conf)
+-  app_name.conf in the directory that contains the application
+-  tel.conf in /etc
+-  tel.conf in the directory that contains the application
 
-Here is how the platform searches for the configuration file. If configuration file is found use the same to configure logger settings else keep continue to search in below order.
--  Search for appName.conf in /etc folder. (i.e. telsdk_console_app.conf)
--  Search for appName.conf in the folder that contains the application.
--  Search for tel.conf in etc folder.
--  Search for tel.conf in the folder that contains the application.
+Advantage of using different configuration files by applications is, it allows flexibility to either share the same log file or log in separate files. In QC provided builds, /etc/tel.conf has been used as an example configuration by default for all applications.
 
-This allows flexibility for app's to either share the same log file or keep each apps log file separate.
+###### Log file name
 
-### 1. Console and file level logging
+LOG_FILE_NAME specifies name of the log file.
 
-CONSOLE_LOG_LEVEL, FILE_LOG_LEVEL specifies the threshold for console log messages. Possible LOG_LEVEL values are NONE, PERF, ERROR, WARNING, INFO, DEBUG
-
-   ~~~~~~{.sh}
-   # NONE - No logging.
-   # PERF - Prints messages with nanoseconds precision timestamp.
-   # ERROR - Very minimal logging.Prints perf and error messages only.
-   # WARNING - Prints perf, error and warning messages.
-   # INFO - Prints perf, errors, warning and information messages.
-   # DEBUG - Full logging including debug messages.It is intended for debugging purposes only.
-
-   CONSOLE_LOG_LEVEL=INFO
-   FILE_LOG_LEVEL=DEBUG
-   DIAG_LOG_LEVEL=DEBUG
+   ~~~~~~{.cpp}
+   LOG_FILE_NAME=tel.log
    ~~~~~~
-**NOTE:** For an applicaiton to be able to log to the tel.log file, it should have "system" linux group permissions.
+   
+###### Log file path
 
-### 2. Diag level logging
+LOG_FILE_PATH specifies an absolute writable directory where log file will be created. Additionally, the application must be part of Linux "system" group to access /data/vendor/telsdk directory.
 
-DIAG_LOG_LEVEL specifies the threshold for logs messages displayed in QXDM. Possible LOG_LEVEL values are NONE, PERF, ERROR, WARNING, INFO, DEBUG.
-The mapping of SDK log levels to QXDM log levels in shown below:
-   ~~~~~~{.sh}
-   # SDK Log Levels --> QXDM LOG Levels
-   # PERF --> FATAL (MSG_LEGACY_FATAL)
-   # ERROR --> ERROR (MSG_LEGACY_ERROR)
-   # WARNING --> HIGH (MSG_LEGACY_HIGH)
-   # INFO --> MED (MSG_LEGACY_MED)
-   # DEBUG --> LOW (MSG_LEGACY_LOW)
+   ~~~~~~{.cpp}
+   LOG_FILE_PATH=/data/vendor/telsdk
    ~~~~~~
-**NOTE:** For an applicaiton to be able to log to the Diag, it should have "diag" linux group permissions.
 
-### 3. Log filtering
+###### Log destination
 
-TELUX_LOG_COMPONENT_FILTER allows one or more whitelist which SDK technology domain should be logged
-   ~~~~~~{.sh}
-   # 0 - All logs are printed.
-   # 1 - Audio logs are printed.
-   # 2 - CV2X logs are printed.
-   # 3 - Data logs are printed.
-   # 4 - Location logs are printed.
-   # 5 - Power logs are printed.
-   # 6 - Telephony logs are printed.
-   # 7 - Thermal logs are printed.
+The log messages can be routed to device's console, DIAG and file. This is specified when defining logging level.
+
+   ~~~~~~{.cpp}
+   # NONE means do not print on console
+   
+   CONSOLE_LOG_LEVEL=NONE
+   ~~~~~~
+
+###### Log levels
+
+
+
+###### Log file size
+
+MAX_LOG_FILE_SIZE specifies the maximum allowed size(in bytes) of the log file. When the maximum limit is reached, it is saved as tel.log.backup.
+
+   ~~~~~~{.cpp}
+   MAX_LOG_FILE_SIZE=5242880
+   ~~~~~~
+
+###### Adding date and time
+
+LOG_PREFIX_DATE_TIME specifies whether date and time should be prefixed to log message or not.
+
+   ~~~~~~{.cpp}
+   # FALSE - logs with filename and line number, this is default option
+   # TRUE - logs with date, time, filename and line number
+   
+   LOG_PREFIX_DATE_TIME=TRUE
+   ~~~~~~
+   
+###### Log filtering
+
+Logs can be emitted selectively based on technology domain by specifying TELUX_LOG_COMPONENT_FILTER.
+
+   ~~~~~~{.cpp}
+   # 0 - All logs are printed
+   # 1 - Audio logs are printed
+   # 2 - CV2X logs are printed
+   # 3 - Data logs are printed
+   # 4 - Location logs are printed
+   # 5 - Power logs are printed
+   # 6 - Telephony logs are printed
+   # 7 - Thermal logs are printed
 
    # For logging all component
    # use TELUX_LOG_COMPONENT_FILTER= 0
 
    # For logging more than one component like cv2x and audio (comma separated)
    # use TELUX_LOG_COMPONENT_FILTER= 2,1
-   ~~~~~~
-### 4. Set Max file size
-
-MAX_LOG_FILE_SIZE specifies the maximum allowed size(in bytes) of the log file
-When the log file reaches its maximum size, it is saved as tel.log.backup.
--  If the log file again reaches the max, it will be saved again overwriting the previous tel.log.backup file.
--  So at a given time only one tel.log and tel.backup will exist in system.
--  Default MAX_LOG_FILE_SIZE is 5 Mega Bytes.
-
-   ~~~~~~{.sh}
-   MAX_LOG_FILE_SIZE=5242880
-   ~~~~~~
-
-### 5. Prefix date and time for the log message
-
-Used to prefix date and time on every log Message
-
-   ~~~~~~{.sh}
-   # FALSE - logs with filename and line number, this is default option
-   # TRUE - logs with date, time, filename and line number
-
-   LOG_PREFIX_DATE_TIME=TRUE
-   ~~~~~~
-
-### 6. Set log file path
-
-Specifies the path of the log file. In an external application processor, the path needs to be in a writable partition. If this default path does not exist in the system or it is not writable, this path needs to be updated accordingly.
-   ~~~~~~{.sh}
-   LOG_FILE_PATH=/data/vendor/telsdk
-   ~~~~~~
-
-### 7. Set log file name
-
-Specifies the name of the log file to be used
-
-   ~~~~~~{.cpp}
-   LOG_FILE_NAME=tel.log
    ~~~~~~

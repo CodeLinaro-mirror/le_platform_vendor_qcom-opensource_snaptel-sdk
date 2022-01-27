@@ -1,18 +1,16 @@
-Using Card Service APIs {#card_services_app}
-============================================
+Card service APIs to transmit APDU {#card_services_app}
+=======================================================
 
-# Using Card Service APIs
+This sample application demonstrates how to use card service APIs to transmit APDU.
 
-Please follow below steps to use Card Service APIs to transmit APDU
-
-### 1. Get the PhoneFactory and CardManager instances. ###
+### 1. Get the PhoneFactory and CardManager instances
 
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    std::shared_ptr<ICardManager> cardManager = phoneFactory.getCardManager();
    ~~~~~~
 
-### 2. Wait for the telephony subsystem initialization. ###
+### 2. Wait for the telephony subsystem initialization
 
    ~~~~~~{.cpp}
    bool subSystemsStatus = cardManager->isSubsystemReady();
@@ -26,13 +24,13 @@ Please follow below steps to use Card Service APIs to transmit APDU
    }
    ~~~~~~
 
-
-### 3. Get SlotCount, SlotIds and Card instance ###
+### 3. Get number of slots, their IDs and card instance
 
    ~~~~~~{.cpp}
    int slotCount;
    cardManager->getSlotCount(slotCount);
    std::cout << "Slots Count is :" << slotCount << std::endl;
+
    std::vector<int> slotIds;
    cardManager->getSlotIds(slotIds);
    std::cout << "Slot Ids are : { ";
@@ -40,10 +38,11 @@ Please follow below steps to use Card Service APIs to transmit APDU
       std::cout << id << " ";
    }
    std::cout << "}" << std::endl;
+
    std::shared_ptr<ICard> cardImpl = cardManager->getCard(slotIds.front());
    ~~~~~~
 
-### 4. Get supported applications from the card ###
+### 4. Get supported applications from the card
 
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<ICardApp>> applications;
@@ -57,7 +56,7 @@ Please follow below steps to use Card Service APIs to transmit APDU
    ~~~~~~
 
 
-### 5. Instantiate optional IOpenLogicalChannelCallback, ICommandResponseCallback and ITransmitApduResponseCallback ###
+### 5. Instantiate optional IOpenLogicalChannelCallback, ICommandResponseCallback and ITransmitApduResponseCallback
 
    ~~~~~~{.cpp}
    auto myOpenLogicalCb = std::make_shared<MyOpenLogicalChannelCallback>();
@@ -65,7 +64,7 @@ Please follow below steps to use Card Service APIs to transmit APDU
    auto myTransmitApduResponseCb = std::make_shared<MyTransmitApduResponseCallback>();
    ~~~~~~
 
-###### 5.1 Implementation of ICardChannelCallback interface for receiving notifications on card event like open logical channel ######
+###### 5.1 Implementation of ICardChannelCallback interface for receiving notifications on card event like open logical channel
 
    ~~~~~~{.cpp}
    class MyOpenLogicalChannelCallback : public ICardChannelCallback {
@@ -87,7 +86,7 @@ Please follow below steps to use Card Service APIs to transmit APDU
    }
    ~~~~~~
 
-###### 5.2. Implementation of ICommandResponseCallback interface for receiving notifications on card event like close logical channel ######
+###### 5.2. Implementation of ICommandResponseCallback interface for receiving notifications on card event like close logical channel
 
    ~~~~~~{.cpp}
    class MyCloseLogicalChannelCallback : public ICommandResponseCallback {
@@ -106,7 +105,7 @@ Please follow below steps to use Card Service APIs to transmit APDU
    }
    ~~~~~~
 
-###### 5.3. Implementation of ICardCommandCallback interface for receiving notifications on card event like transmit apdu logical channel and transmit apdu basic channel ######
+###### 5.3. Implementation of ICardCommandCallback interface for receiving notifications on card event like transmit APDU logical channel and transmit APDU basic channel
 
    ~~~~~~{.cpp}
    class MyTransmitApduResponseCallback : public ICardCommandCallback {
@@ -126,7 +125,7 @@ Please follow below steps to use Card Service APIs to transmit APDU
    }
    ~~~~~~
 
-### 6. Open Logical Channel and wait for request to complete ###
+### 6. Open logical channel and wait for request to complete
 
    ~~~~~~{.cpp}
    std::string aid;
@@ -136,11 +135,12 @@ Please follow below steps to use Card Service APIs to transmit APDU
          break;
       }
    }
+
    cardImpl->openLogicalChannel(aid, myOpenLogicalCb);
    std::cout << "Opening Logical Channel to Transmit the APDU..." << std::endl;
    ~~~~~~
 
-### 7. Transmit Apdu on Logical Channel, wait for request to complete ###
+### 7. Transmit APDU on logical channel, wait for request to complete
 
    ~~~~~~{.cpp}
    cardImpl->transmitApduLogicalChannel(openChannel, CLA, INSTRUCTION, P1, P2, P3, DATA,
@@ -148,14 +148,14 @@ Please follow below steps to use Card Service APIs to transmit APDU
    std::cout << "Transmit APDU request made..." << std::endl;
    ~~~~~~
 
-### 8. Close the opened logical channel and wait for the completion ###
+### 8. Close the opened logical channel and wait for the completion
 
    ~~~~~~{.cpp}
    cardImpl->closeLogicalChannel(openChannel, myCloseLogicalCb);
    std::cout << "Close the Logical Channel..." << std::endl;
    ~~~~~~
 
-### 9. Transmit Apdu on Basic Channel and wait for completion ###
+### 9. Transmit APDU on basic channel and wait for completion
 
    ~~~~~~{.cpp}
    cardImpl->transmitApduBasicChannel(CLA, INSTRUCTION, P1, P2, P3, DATA, myTransmitApduResponseCb);

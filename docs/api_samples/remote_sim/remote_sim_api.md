@@ -1,9 +1,7 @@
-Remote SIM Manager API Sample Reference {#remote_sim_api}
-=========================================================
+Using remote SIM manager APIs {#remote_sim_api}
+===============================================
 
-# Remote SIM Manager API Sample Reference
-
-This section demonstrates how to use the Remote SIM Manager API for remote SIM card operations.
+This sample application demonstrates how to use remote SIM manager APIs for remote SIM card operations.
 
 ### 1. Get the PhoneFactory and RemoteSimManager instances
 

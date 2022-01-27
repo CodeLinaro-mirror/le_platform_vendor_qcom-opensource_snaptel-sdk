@@ -1,9 +1,7 @@
-Using Thermal Manager APIs {#thermal_manager}
-=============================================
+Get thermal zones and cooling devices {#thermal_manager}
+=======================================================
 
-# Using Thermal Manager APIs
-
-Please follow below steps to get thermal zones and cooling devices
+This sample app demonstrates how to get thermal zones and cooling devices.
 
 ### 1. Get thermal factory instance
 
@@ -21,7 +19,7 @@ Please follow below steps to get thermal zones and cooling devices
    };
    ~~~~~~
 
-### 3. Get thermal shutdown manager object
+### 3. Get thermal shutdown manager instance
 
    ~~~~~~{.cpp}
    std::shared_ptr<telux::therm::IThermalManager> thermalMgr
@@ -59,7 +57,7 @@ Please follow below steps to get thermal zones and cooling devices
    }
    ~~~~~~
 
-### 6. Send get cooling devices request using thermal manager object
+### 6. Send get cooling devices request using thermal manager instance
 
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<telux::therm::ICoolingDevice>> coolingDevice

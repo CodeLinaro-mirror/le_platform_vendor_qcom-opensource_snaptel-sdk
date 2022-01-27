@@ -64,4 +64,7 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to receive EFS restore indications](platform/efs_restore_indications.md)
   * [How to use remote SIM provisioning APIs](rsp/remote_sim_provisioning.md)
   * [How to use remote SIM provisioning reference service](rsp/rsp_reference_apps.md)
+  * [How to perform an ECALL operation](platform/ecall_operation.md)
+  * [How to perform an OTA operation](platform/ota_operation.md)
+  * [How to trigger sensor self test](sensor/sensor_self_test.md)
 

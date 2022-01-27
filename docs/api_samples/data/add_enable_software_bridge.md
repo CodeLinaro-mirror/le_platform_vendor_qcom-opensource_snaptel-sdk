@@ -1,11 +1,9 @@
-Add a software bridge and Enable software bridge management {#add_enable_software_bridge}
-=========================================================================================
+Adding a software bridge and enable its management {#add_enable_software_bridge}
+=================================================================================
 
-# Add a software bridge and Enable software bridge management
+This sample application demonstrates how to add a software bridge and enable its management.
 
-Please follow below steps to add a software bridge and enable software bridge management
-
-### 1. Implement initialization callback Get the DataFactory instances ###
+### 1. Implement initialization callback Get the DataFactory instances
 
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
@@ -16,7 +14,8 @@ Data factory will call callback when manager initialization is complete.
       status_ = status;
       initCv.notify_all();
    };
-    auto &dataFactory = telux::data::DataFactory::getInstance();
+
+   auto &dataFactory = telux::data::DataFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the BridgeManager instances
@@ -32,11 +31,11 @@ Data factory will call callback when manager initialization is complete.
    initCv.wait(lck);
    ~~~~~~
 
-### 3.1 Check BridgeManager initialization state ###
+### 3.1 Check BridgeManager initialization state
 
 BridgeManager needs to be ready to remove a software bridge and disable the software bridge
 management in the system. If BridgeManager initialization failed, new initialization attempt can
-be accomplished by calling step 2. If BridgeManager initialization succeed, proceed to step 4
+be accomplished by calling step 2. If BridgeManager initialization succeed, proceed to step 4.
 
    ~~~~~~{.cpp}
    if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -47,7 +46,7 @@ be accomplished by calling step 2. If BridgeManager initialization succeed, proc
    }
    ~~~~~~
 
-### 4. Implement callbacks for adding a software bridge and enabling the software bridge management ###
+### 4. Implement callbacks for adding a software bridge enabling its management
 
    ~~~~~~{.cpp}
    auto respCbAdd = [](telux::common::ErrorCode error) {
@@ -57,6 +56,7 @@ be accomplished by calling step 2. If BridgeManager initialization succeed, proc
                  << ". ErrorCode: " << static_cast<int>(error)
                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    };
+   
    auto respCbEnable = [](telux::common::ErrorCode error) {
        std::cout << "CALLBACK: "
                  << "Enable software bridge management request is"
@@ -66,7 +66,7 @@ be accomplished by calling step 2. If BridgeManager initialization succeed, proc
    };
    ~~~~~~
 
-### 5. Add software bridge based on the interface name, interface type and bandwidth required ###
+### 5. Add software bridge based on the interface name, interface type and bandwidth required
 
    ~~~~~~{.cpp}
    telux::data::net::BridgeInfo config;
@@ -76,13 +76,13 @@ be accomplished by calling step 2. If BridgeManager initialization succeed, proc
    dataBridgeMgr->addBridge(config, respCbAdd);
    ~~~~~~
 
-### 6. Response callback will be invoked with the addBridge response ###
+Now, response callback will be invoked with the addBridge response.
 
-### 7. Enable the software bridge management if not enabled already ###
+### 6. Enable the software bridge management if not enabled already
 
    ~~~~~~{.cpp}
    bool enable = true;
    dataBridgeMgr->enableBridge(enable, respCbEnable);
    ~~~~~~
 
-### 8. Response callback will be invoked with the enableBridge response ###
+Now, response callback will be invoked with the enableBridge response.

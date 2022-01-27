@@ -11,6 +11,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
 
    Call/CallMenu.cpp
    Call/MyCallListener.cpp
+   Call/conference/ConferenceMenu.cpp
 
    SimCardServices/SimCardServicesMenu.cpp
    SimCardServices/Card/CardServicesMenu.cpp

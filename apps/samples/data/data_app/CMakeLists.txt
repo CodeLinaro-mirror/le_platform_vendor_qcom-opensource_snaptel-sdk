@@ -10,7 +10,7 @@ set(SOURCES
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_executable (${TARGET_DATA_APP} ${SOURCES})
-target_link_libraries(${TARGET_DATA_APP} telux_data)
+target_link_libraries(${TARGET_DATA_APP} telux_data telux_common)
 
 # install to target
 install ( TARGETS ${TARGET_DATA_APP}

@@ -1,11 +1,9 @@
-Listening to Incoming SMS {#listen_sms}
+Listening for incoming SMS {#listen_sms}
 =======================================
 
-# Listening to Incoming SMS
+This sample application demonstrates how to listen for an incoming SMS.
 
-Please follow below steps to listen for incoming SMS
-
-### 1. Implement ISmsListener interface to receive incoming SMS ###
+### 1. Implement ISmsListener interface to receive incoming SMS
 
    ~~~~~~{.cpp}
    class MySmsListener : public ISmsListener {
@@ -19,20 +17,20 @@ Please follow below steps to listen for incoming SMS
    }
    ~~~~~~
 
-### 2. Get the PhoneFactory and PhoneManager instances ###
+### 2. Get the PhoneFactory and PhoneManager instances
 
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
    ~~~~~~
 
-### 3. Check if telephony subsystem is ready ###
+### 3. Check if telephony subsystem is ready
 
    ~~~~~~{.cpp}
    bool subSystemStatus = phoneManager->isSubsystemReady();
    ~~~~~~
 
-### 4. Exit the application, if SDK is unable to initialize telephony subsystems ###
+### 4. Exit the application, if telephony subsystems can not be initialized
 
    ~~~~~~{.cpp}
    if(subSystemStatus) {
@@ -43,27 +41,28 @@ Please follow below steps to listen for incoming SMS
    }
    ~~~~~~
 
-### 5. Instantiate global ISmsListener ###
+### 5. Instantiate global ISmsListener
 
    ~~~~~~{.cpp}
    auto myPhoneListener = std::make_shared<MyPhoneListener>();
    ~~~~~~
 
-### 6. Get default SMS Manager instance ###
+### 6. Get default SMS Manager instance
 
    ~~~~~~{.cpp}
    std::shared_ptr<ISmsManager> smsMgr = phoneFactory.getSmsManager();
    ~~~~~~
 
-### 7. Register for incoming SMS ###
+### 7. Register for incoming SMS
 
    ~~~~~~{.cpp}
+   auto mySmsListener = std::make_shared<MySmsListener>();
    if(smsMgr) {
       smsMgr->registerListener(mySmsListener);
    }
    ~~~~~~
 
-### 8. Wait for incoming SMS ###
+### 8. Wait for incoming SMS
 
    ~~~~~~{.cpp}
    std::cout << " *** wait for MyPhoneListener::onIncomingSms() to be triggered*** " << std::endl;

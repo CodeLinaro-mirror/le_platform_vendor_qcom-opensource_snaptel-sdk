@@ -1,8 +1,8 @@
 Simulation Folder contains the Simulation of Telematics SDK APIs. Currently Location APIs are simulated. The Simulation supports multiple LocationManager Objects and multiple listeners. Only one object of LocationConfigurator and DgnssManager are created and provided in the getInstance. Though multiple objects and listeners for location manager are supported, the code has been tested only with location_test_app which uses single object.
 
-Location Simulation uses a configuration file called StubConfig. This can be located at current working directory or /etc/ or /usr/local/bin/ as per order of search for the file.
+Location Simulation uses a configuration file called locsimulation.conf. This can be located at current working directory or /etc/ or /usr/local/bin/ as per order of search for the file.
 
-Simulation of Reports is mainly of two types and can be configured using StubConfig:
+Simulation of Reports is mainly of two types and can be configured using locsimulation.conf:
 
 1. REPORT_SIMULATION_TYPE = 0 (Default) : In this case Canned values for various reports are used. The values do not change with time. Duration parameter requested in the location_test_app while Starting reports do have change the values.
 

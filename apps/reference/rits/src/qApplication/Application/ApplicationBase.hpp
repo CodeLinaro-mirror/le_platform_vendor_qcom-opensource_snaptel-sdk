@@ -63,6 +63,42 @@
  */
 
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
  /**
   * @file: ApplicationBase.hpp
   *
@@ -178,6 +214,7 @@ struct Config{
     bool enableEncrypt = false;
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;
+    bool acceptAll = false;
     /** Sec Driver Options **/
     uint8_t driverVerbosity = 0;
     uint8_t secVerbosity = 0;
@@ -205,6 +242,11 @@ struct Config{
     /** Pseudonym/ID Change */
     string lcmName = "";
     unsigned int idChangeInterval = 0;
+    /** Misbehavior Stats Parameters */
+    bool enableMbd = false;
+    bool enableMbdStatLog = false;
+    uint32_t mbdStatLogListSize = 10000;
+    string mbdStatLogFile = "/tmp/misbehavior_stats.log";
 };
 
 class ApplicationBase
@@ -219,8 +261,10 @@ public:
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
     std::map<std::thread::id, int> signStatIdx;
+    std::map<std::thread::id, int> misbehaviorStatIdx;
     std::map<std::thread::id, std::vector<VerifStats>> thrVerifLatencies;
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
+    std::map<std::thread::id, std::vector<MisbehaviorStats>> thrMisbehaviorLatencies;
 
     /* Identity Change Related Functions and Variables */
     void changeIdTimer(unsigned int interval);
@@ -262,6 +306,12 @@ public:
     */
 
     int send(uint8_t index, TransmitType txType);
+
+    /**
+     * Function which encodes and signs message when security is enabled.
+     */
+    int encodeAndSignMsg(std::shared_ptr<msg_contents> mc);
+
     /**
      * receive process received contents.
      * @param index message content index.
@@ -279,7 +329,7 @@ public:
                         const uint32_t ldmIndex);
 
     /**
-     * Overloaded function to fill the message with stack specific data.(BSM/CAM/DENM) for transmition
+     * Overloaded function to fill the message with stack specific data.(BSM/CAM/DENM) for transmission
      */
     virtual void fillMsg(std::shared_ptr<msg_contents> mc) = 0;
 
@@ -307,6 +357,16 @@ public:
      * Write signing statistics to file
      */
     void writeSignLogging();
+
+    /**
+    *   Sets up the misbehavior statistics vector based on the exisitng threads
+    */
+    void initMisbehaviorLogging();
+
+    /**
+     * Write misbehavior statistics to file
+     */
+    void writeMisbehaviorLogging();
 
     void printRxStats();
     void printTxStats();
@@ -388,7 +448,7 @@ protected:
     /**
      * Overloaded function to initialize the message content for transmition.
      */
-    virtual void initMsg(std::shared_ptr<msg_contents> mc) = 0;
+    virtual void initMsg(std::shared_ptr<msg_contents> mc, bool isRx = false) = 0;
     /**
      * Overloaded function to free the message content, counter-part of initMsg.
      */

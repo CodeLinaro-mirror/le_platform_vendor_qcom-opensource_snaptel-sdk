@@ -1,11 +1,9 @@
-Create Firewall DMZ {#create_firewall_dmz}
+Create firewall DMZ {#create_firewall_dmz}
 ==========================================
 
-# Create Firewall DMZ
+This sample application demonstrates how to create firewall DMZ.
 
-Please follow below steps to create firewall DMZ
-
-### 1. Implement initialization callback and get the DataFactory instances ###
+### 1. Implement initialization callback and get the DataFactory instances
 
 Optionally initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
@@ -35,7 +33,7 @@ Data factory will call callback when manager initialization is complete.
 ### 3.1 Check FirewallManager initialization state
 
 If FirewallManager initialization failed, new initialization attempt can be accomplished
-by calling step 2. If FirewallManager initialization succeed, proceed to step 4
+by calling step 2. If FirewallManager initialization succeed, proceed to step 4.
 
    ~~~~~~{.cpp}
    if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -46,7 +44,7 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4
    }
    ~~~~~~
 
-### 4. Implement callback for create DMZ ###
+### 4. Implement a callback for create DMZ
 
    ~~~~~~{.cpp}
    auto respCb = [](telux::common::ErrorCode error) {
@@ -57,10 +55,10 @@ by calling step 2. If FirewallManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 5. Create DMZ based on profile id and local ip address ###
+### 5. Create DMZ based on profile id and local ip address
 
    ~~~~~~{.cpp}
    dataFwMgr->enableDmz(profileId,ipAddr, respCb);
    ~~~~~~
 
-### 6. Response callback will be called for the addDmz response ###
+Now, response callback will be called for the addDmz response.

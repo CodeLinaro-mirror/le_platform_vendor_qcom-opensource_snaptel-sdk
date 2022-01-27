@@ -1,17 +1,15 @@
-Get Dedicated Radio Bearer Status and Indication {#get_drb_status_and_indication}
+Get dedicated radio bearer status and indication {#get_drb_status_and_indication}
 =================================================================================
 
-# How to get dedicated radio bearer status and indications
-
-Please follow below steps to get dedicated radio bearer status and indication
+This sample application demonstrates how to get dedicated radio bearer status and indication.
 
 ### 1. Implement IServingSystemListener listener class
 
    ~~~~~~{.cpp}
-    class ServingSystemListener : public telux::data::IServingSystemListener {
+   class ServingSystemListener : public telux::data::IServingSystemListener {
     public:
-    ServingSystemListener(SlotId slotId) : slotId_(slotId) {}
-    void onDrbStatusChanged(telux::data::DrbStatus status) override {
+      ServingSystemListener(SlotId slotId) : slotId_(slotId) {}
+      void onDrbStatusChanged(telux::data::DrbStatus status) override {
         std::cout << "\n onDrbStatusChanged on SlotId: "
                     << static_cast<int>(slotId_) << std::endl;
         switch(status) {
@@ -28,62 +26,61 @@ Please follow below steps to get dedicated radio bearer status and indication
                 std::cout << "Error: Unexpected Drb Status is reported" << std::endl;
                 break;
         }
-    }
+      }
 
     private:
-    SlotId slotId_;
-    };
+      SlotId slotId_;
+   };
    ~~~~~~
 
-### 2. Instantiate initialization callback - this is optional
+### 2. Optioanlly, instantiate initialization callback
 
    ~~~~~~{.cpp}
-    auto initCb = [&](telux::common::ServiceStatus status) {
+   auto initCb = [&](telux::common::ServiceStatus status) {
         subSystemStatus = status;
         subSystemStatusUpdated = true;
         cv_.notify_all();
-    };
+   };
    ~~~~~~
 
-### 3. Get the DataFactory and data Serving System Manager instance
+### 3. Get the DataFactory and data serving system manager instance and check if the data serving system manager is ready or not
 
    ~~~~~~{.cpp}
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    do {
-        subSystemStatusUpdated = false;
-        std::unique_lock<std::mutex> lck(mtx_);
-        dataServingSystemMgr = dataFactory.getServingSystemManager(slotId, initCb);
-   ~~~~~~
-### 4. Check if data Serving System manager is ready
+   auto &dataFactory = telux::data::DataFactory::getInstance();
+   do {
+       subSystemStatusUpdated = false;
+       std::unique_lock<std::mutex> lck(mtx_);
+       dataServingSystemMgr = dataFactory.getServingSystemManager(slotId, initCb);
 
-   ~~~~~~{.cpp}
-        if (dataServingSystemMgr) {
-        std::cout << "\n\nInitializing Data Serving System manager subsystem on slot " <<
+       if (dataServingSystemMgr) {
+           std::cout << "\n\nInitializing Data Serving System manager subsystem on slot " <<
                 slotId << ", Please wait ..." << std::endl;
-        cv_.wait(lck, [&]{return subSystemStatusUpdated;});
-        subSystemStatus = dataServingSystemMgr->getServiceStatus();
-        }
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << " *** DATA Serving System is Ready *** " << std::endl;
-        break;
-        }
-        else {
-        std::cout << " *** Unable to initialize data Serving System *** " << std::endl;
-        }
-    } while (1);
+           cv_.wait(lck, [&]{return subSystemStatusUpdated;});
+           subSystemStatus = dataServingSystemMgr->getServiceStatus();
+       }
+		
+       if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+           std::cout << " *** DATA Serving System is Ready *** " << std::endl;
+           break;
+       }
+       else {
+           std::cout << " *** Unable to initialize data Serving System *** " << std::endl;
+       }
+   } while (1);
    ~~~~~~
 
-### 5. Register for Serving System listener
+### 4. Register for serving system listener
 
    ~~~~~~{.cpp}
-      dataServingSystemMgr->registerListener(dataListener);
+   dataServingSystemMgr->registerListener(dataListener);
    ~~~~~~
 
-### 6. Get dedicated radio bearer Status
+### 5. Get dedicated radio bearer Status
 
    ~~~~~~{.cpp}
-    telux::data::DrbStatus drbStatus = dataServingSystemMgr->getDrbStatus();
-    switch(drbStatus) {
+   telux::data::DrbStatus drbStatus = dataServingSystemMgr->getDrbStatus();
+   
+   switch(drbStatus) {
         case telux::data::DrbStatus::ACTIVE:
         std::cout << "Current Drb Status is Active" << std::endl;
         break;
@@ -96,7 +93,7 @@ Please follow below steps to get dedicated radio bearer status and indication
         default:
         std::cout << "Error: Unexpected Drb Status is reported" << std::endl;
         break;
-    }
+   }
    ~~~~~~
 
-### 7. Wait for dedicated radio bearer notifications
+Now, wait for dedicated radio bearer notifications.

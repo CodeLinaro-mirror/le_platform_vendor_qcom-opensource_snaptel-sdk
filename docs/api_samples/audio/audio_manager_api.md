@@ -1,12 +1,9 @@
-Manager API {#audio_manager_api}
+Audio manager and stream {#audio_manager_api}
 ======================================
 
-## Audio Manager API Sample Reference
+Audio Manager provides APIs to create audio streams and transcoder. It also helps in knowing supported audio devices and audio calibration status.
 
-This section demonstrates how to use various AudioManager APIs for audio subsystem readiness, fetching
-supported streams and devices, creating and deleting a stream.
-
-### 1. Get the AudioFactory instance
+### 1. Get an AudioFactory instance
 
    ~~~~~~{.cpp}
    #include <telux/audio/AudioFactory.hpp>
@@ -15,7 +12,6 @@ supported streams and devices, creating and deleting a stream.
    using namespace telux::common;
    using namespace telux::audio;
 
-   // Globals
    static std::shared_ptr<IAudioManager> audioManager;
    static std::shared_ptr<IAudioVoiceStream> audioVoiceStream;
    Status status;
@@ -23,7 +19,7 @@ supported streams and devices, creating and deleting a stream.
    auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get an AudioManager instance
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
@@ -32,19 +28,23 @@ supported streams and devices, creating and deleting a stream.
         prom.set_value(serviceStatus);
     });
     if (!audioManager) {
-        std::cout << "Failed to get AudioManager object" << std::endl;
+        std::cout << "Failed to get AudioManager instance" << std::endl;
         return;
     }
+   ~~~~~~
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+### 3. Let audio subsystem be ready
+
+   ~~~~~~{.cpp}
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    // Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -53,14 +53,10 @@ supported streams and devices, creating and deleting a stream.
     }
    ~~~~~~
 
-### 3. Query Supported Devices and Stream Types of Audio subsystem
-
-Below methods provides details on supported Device Types and Stream Types
-
-### 3.1 Query Supported Devices Types of Audio subsystem
+### 4. Query supported audio devices
 
    ~~~~~~{.cpp}
-    //Callback to get supported device type details.
+    // Callback to get supported device type details
     void getDevicesCallback(std::vector<std::shared_ptr<IAudioDevice>> devices, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -78,14 +74,14 @@ Below methods provides details on supported Device Types and Stream Types
         }
     }
 
-    //Query Supported Device type details.
+    // Query Supported Device type details
     status = audioManager->getDevices(getDevicesCallback);
    ~~~~~~
 
-### 3.2 Query Supported Stream Types of Audio subsystem
+### 5. Query supported audio stream types
 
    ~~~~~~{.cpp}
-    //Callback to get supported stream type details.
+    // Callback to get supported stream type details
     void getStreamTypesCallback(std::vector<StreamType> streams, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -102,14 +98,14 @@ Below methods provides details on supported Device Types and Stream Types
         }
     }
 
-    //Query Supported stream type details.
+    // Query Supported stream type details
     status = audioManager->getStreamTypes(getStreamTypesCallback);
    ~~~~~~
 
-### 4. Create an Audio Stream (Voice Call Session)
+### 6. Create an audio stream (voice call session)
 
    ~~~~~~{.cpp}
-    //Callback which provides response to createStream, with pointer to base interface IAudioStream.
+    // Callback which provides response to createStream, with pointer to base interface IAudioStream
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -122,21 +118,23 @@ Below methods provides details on supported Device Types and Stream Types
         audioVoiceStream = std::dynamic_pointer_cast<IAudioVoiceStream>(stream);
     }
 
-    //Create an Audio Stream (Voice Call Session)
+    // Create an Audio Stream (Voice Call Session)
     StreamConfig config;
+
     config.type = StreamType::VOICE_CALL;
     config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 5. Delete an Audio Stream (Voice Call Session), which was created earlier
+### 7. Delete an audio stream
 
    ~~~~~~{.cpp}
-    //Callback which provides response to deleteStream
+    // Callback which provides response to deleteStream
     void deleteStreamCallback(ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "deleteStream() returned with error " << static_cast<unsigned int>(error)
@@ -147,7 +145,8 @@ Below methods provides details on supported Device Types and Stream Types
         std::cout << "deleteStream() succeeded." << std::endl;
         audioVoiceStream.reset();
     }
-    //Delete an Audio Stream (Voice Call Session), which was created earlier
+
+    // Delete the stream (voice call session), which was created earlier
     status = audioManager->deleteStream(std::dynamic_pointer_cast<IAudioStream>(audioVoiceStream),
                                         deleteStreamCallback);
    ~~~~~~

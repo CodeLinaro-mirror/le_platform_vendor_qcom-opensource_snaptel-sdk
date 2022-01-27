@@ -16,10 +16,10 @@ include_directories(BEFORE
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_library (telux_common SHARED version.cpp DeviceConfig.cpp)
+add_library (telux_common SHARED version.cpp DeviceConfig.cpp Logger.cpp ConfigParser.cpp)
 
-    install ( TARGETS telux_common
-          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+install ( TARGETS telux_common
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
 
 
 

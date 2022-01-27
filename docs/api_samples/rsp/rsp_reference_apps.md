@@ -1,7 +1,7 @@
-Using Remote SIM Provisioning Reference Service {#rsp_reference_apps}
-============================================================
+Remote SIM provisioning app {#rsp_reference_apps}
+=================================================
 
-# Using Remote SIM Provisioning Reference Service
+TelSDK provides reference app rsp_httpd which helps in exploring various features of remote provisioning APIs.
 
 SIM profile management operations such as add profile, delete profile, enable/disable profile
 requires HTTP interaction with the cloud to synchronize the profile/s on the eUICC with the
@@ -12,13 +12,10 @@ with SMDP+/SMDS server running on the cloud. The HTTP response from cloud is sen
 LPA/eUICC to take appropriate action. Make sure there is internet connectivity available for
 performing HTTP transaction either using WLAN, WWAN or ethernet.
 
-This section describes how to use the provided Remote SIM provisioning reference service – rsp_httpd
+### 1. Run the remote SIM HTTP daemon on the device
 
-### 1. Run the Remote SIM HTTP Daemon on the device
-
-~~~~~~
-rsp_httpd
+~~~~~~{.sh}
+# rsp_httpd
 ~~~~~~
 
 Use -h option to check for all the options supported and usage instructions.
-

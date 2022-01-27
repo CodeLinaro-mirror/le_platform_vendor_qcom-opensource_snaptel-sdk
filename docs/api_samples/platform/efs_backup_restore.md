@@ -1,17 +1,15 @@
 EFS backup and restore {#efs_backup_restore}
-=============================================================
+============================================
 
-# Using Platform APIs to request EFS backup and listen to EFS restore and backup indications
+This sample app demonstrates how to use APIs to request EFS backup and listen to EFS restore and backup indications.
 
-Please follow below steps as a guide to register EFS restore and backup indications
-
-### 1. Get platform factory ###
+### 1. Get platform factory instance
 
    ~~~~~~{.cpp}
    auto &platformFactory = telux::platform::PlatformFactory::getInstance();
    ~~~~~~
 
-### 2. Prepare a callback that is invoked when the filesystem sub-system initialization is complete ###
+### 2. Prepare a callback that is invoked when the filesystem sub-system initialization is complete
 
    ~~~~~~{.cpp}
    std::promise<telux::common::ServiceStatus> p;
@@ -21,7 +19,7 @@ Please follow below steps as a guide to register EFS restore and backup indicati
    };
    ~~~~~~
 
-### 3. Get the filesystem manager ###
+### 3. Get the filesystem manager
 
    ~~~~~~{.cpp}
    std::shared_ptr<telux::platform::IFsManager> fsManager = platformFactory.getFsManager(initCb);
@@ -32,7 +30,7 @@ Please follow below steps as a guide to register EFS restore and backup indicati
    std::cout << "Obtained filesystem manager" << std::endl;
    ~~~~~~
 
-### 4. Wait until initialization is complete ###
+### 4. Wait until initialization is complete
 
    ~~~~~~{.cpp}
    p.get_future().get();
@@ -43,14 +41,14 @@ Please follow below steps as a guide to register EFS restore and backup indicati
    std::cout << "Filesystem service is now available" << std::endl;
    ~~~~~~
 
-### 5. Create the listener object and register as a listener ###
+### 5. Create the listener object and register as a listener
 
    ~~~~~~{.cpp}
    std::shared_ptr<EfsEventListener> efsEventListener = std::make_shared<EfsEventListener>();
    fsManager->registerListener(efsEventListener);
    ~~~~~~
 
-### 6. Receive service status notifications ###
+### 6. Receive service status notifications
 
    ~~~~~~{.cpp}
    virtual void onServiceStatusChange(telux::common::ServiceStatus serviceStatus) override {
@@ -78,7 +76,7 @@ Please follow below steps as a guide to register EFS restore and backup indicati
    }
    ~~~~~~
 
-### 7. Start EFS backup whenever necessary ###
+### 7. Start EFS backup whenever necessary
 
    ~~~~~~{.cpp}
    telux::common::Status status = fsManager->startEfsBackup();
@@ -88,7 +86,7 @@ Please follow below steps as a guide to register EFS restore and backup indicati
    }
    ~~~~~~
 
-### 8. Receive EFS restore and backup notifications ###
+### 8. Receive EFS restore and backup notifications
 
    ~~~~~~{.cpp}
    virtual void OnEfsRestoreEvent(telux::platform::EfsEventInfo event) override {
@@ -110,7 +108,7 @@ Please follow below steps as a guide to register EFS restore and backup indicati
    }
    ~~~~~~
 
-### 9. Clean-up ###
+### 9. Clean-up when we do not need to listen anything
 
    ~~~~~~{.cpp}
    fsManager->deregisterListener(efsEventListener);

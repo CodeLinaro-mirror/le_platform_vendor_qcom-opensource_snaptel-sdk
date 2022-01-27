@@ -709,6 +709,15 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
         const std::vector<std::shared_ptr<TftChangeInfo>> &tft) {};
 
     /**
+     * This function is called when WWAN backhaul connectivity config changes.
+     *
+     * @param [in] slotId                - Slot Id for which connectivity has changed.
+     * @param [in] isConnectivityAllowed - Connectivity status allowed/disallowed.
+     *
+     */
+    virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {}
+
+    /**
      * Destructor for IDataConnectionListener
      */
     virtual ~IDataConnectionListener(){};

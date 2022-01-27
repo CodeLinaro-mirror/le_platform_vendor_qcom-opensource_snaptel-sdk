@@ -1,7 +1,5 @@
-thermal {#thermal}
-============
-
-# The List of sample apps related to thermal:
+Thermal {#thermal}
+==================
 
 * @subpage thermal_manager
 * @subpage get_thermal_autoshutdown_mode_updates

@@ -1,13 +1,11 @@
-Create Vlan And Bind It To PDN {#create_and_bind_vlan}
-======================================================
+Create VLAN And bind it to a PDN {#create_and_bind_vlan}
+========================================================
 
-# Create Vlan And Bind It To PDN
-
-Please follow below steps to create Vlan and bind it to PDN
+This sample application demonstrates how to create VLAN and bind it to a PDN.
 
 ### 1. Implement initialization callback and get the DataFactory instance
 
-Optionally initialization callback can be provided with get manager instance.
+Optionally, initialization callback can be provided with get manager instance.
 Data factory will call callback when manager initialization is complete.
 
    ~~~~~~{.cpp}
@@ -16,14 +14,15 @@ Data factory will call callback when manager initialization is complete.
       status_ = status;
       initCv.notify_all();
    };
-    auto &dataFactory = telux::data::DataFactory::getInstance();
+   
+   auto &dataFactory = telux::data::DataFactory::getInstance();
    ~~~~~~
 
 ### 2. Get the VlanManager instances
 
    ~~~~~~{.cpp}
-    std::unique_lock<std::mutex> lck(mtx);
-    auto dataVlanMgr  = dataFactory.getVlanManager(opType, initCb);
+   std::unique_lock<std::mutex> lck(mtx);
+   auto dataVlanMgr  = dataFactory.getVlanManager(opType, initCb);
    ~~~~~~
 
 ### 3. Wait for VlanManager initialization to be complete
@@ -35,7 +34,7 @@ Data factory will call callback when manager initialization is complete.
 ### 3.1 Check VlanManager initialization state
 
 If VlanManager initialization failed, new initialization attempt can be accomplished
-by calling step 2. If VlanManager initialization succeed, proceed to step 4
+by calling step 2. If VlanManager initialization succeed, proceed to step 4.
 
    ~~~~~~{.cpp}
    if (status_ == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
@@ -46,7 +45,7 @@ by calling step 2. If VlanManager initialization succeed, proceed to step 4
    }
    ~~~~~~
 
-### 4. Implement callback for create Vlan ###
+### 4. Implement callback for create VLAN
 
    ~~~~~~{.cpp}
    auto respCbCreate = [](bool isAccelerated, telux::common::ErrorCode error) {
@@ -59,7 +58,7 @@ by calling step 2. If VlanManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 5. Create Vlan based on interface type, acceleration, and assigned id ###
+### 5. Create Vlan based on interface type, acceleration, and assigned id
 
    ~~~~~~{.cpp}
    telux::data::VlanConfig config;
@@ -69,9 +68,9 @@ by calling step 2. If VlanManager initialization succeed, proceed to step 4
    dataVlanMgr->createVlan(config, respCbCreate);
    ~~~~~~
 
-### 6. Response callback will be called for the createVlan response ###
+Now, response callback will be called for the createVlan response.
 
-### 7. Implement callback for bindWithprofile reponse ###
+### 6. Implement callback for bindWithprofile reponse
 
    ~~~~~~{.cpp}
    auto respCbBind = [](telux::common::ErrorCode error) {
@@ -83,10 +82,10 @@ by calling step 2. If VlanManager initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 8. Bind created Vlan with user provided profile id ###
+### 7. Bind created Vlan with user provided profile id
 
    ~~~~~~{.cpp}
    dataVlanMgr->bindWithProfile(profileId, vlanId, respCbBind);
    ~~~~~~
 
-### 9. Response callback will be called for the bindWithProfile response ###
+Now, response callback will be called for the bindWithProfile response.

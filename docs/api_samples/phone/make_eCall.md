@@ -1,9 +1,7 @@
 Make eCall {#make_eCall}
 ========================
 
-# Making eCall (Emergency E112)
-
-Please follow below steps to make an emergency call(eCall).
+This sample application demonstrates how to make an emergency (E112) voice call.
 
 ### 1. Get the PhoneFactory and PhoneManager instances.
 
@@ -44,14 +42,14 @@ and others. if subsystems were not ready, wait for unconditionally.
    int phoneId = DEFAULT_PHONE_ID;
    ~~~~~~
 
-### 6. Instantiate dial callback instance - this is optional
+### 6. Optionally, instantiate dial call instance
 
    ~~~~~~{.cpp}
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();
    ~~~~~~
 
 
-##### 6.1. implement IMakeCallCallback interface to receive response for the dial request - optional
+##### 6.1. Optionally, implement IMakeCallCallback interface to receive response for the dial request
 
    ~~~~~~{.cpp}
    class DialCallback : public IMakeCallCallback {
@@ -70,6 +68,7 @@ and others. if subsystems were not ready, wait for unconditionally.
    ~~~~~~{.cpp}
    ECallCategory emergencyCategory = ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
    ECallVariant eCallVariant = ECallVariant::ECALL_TEST;
+
    // Instantiate ECallMsdData structure and populate it with valid information
    // such as Latitude, Longitude etc.
    // Parameter values mentioned here are for illustrative purposes only.

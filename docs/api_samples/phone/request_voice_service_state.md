@@ -1,26 +1,22 @@
-Make Request Voice Service State of the device {#request_voice_service_state}
-=====================================================================================
+Request voice service state updates {#request_voice_service_state}
+==========================================================
 
-# Request Voice Service State of the device
+This sample application demonstrates how to request voice service state of the device.
 
-Please follow below steps to get voice service state notifications.
-
-### 1. Get the PhoneFactory and PhoneManager instances ###
+### 1. Get the PhoneFactory and PhoneManager instances
 
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
    ~~~~~~
 
-### 2. Check if telephony subsystem is ready ###
+### 2. Check if telephony subsystem is ready
 
    ~~~~~~{.cpp}
    bool subSystemsStatus = phoneManager->isSubsystemReady();
    ~~~~~~
 
-### 2.1 If telephony subsystem is not ready, wait for it to be ready ###
-
-   If subsystem is not ready, wait unconditionally.
+### 2.1 If telephony subsystem is not ready, wait for it to be ready
 
    ~~~~~~{.cpp}
    if (!subSystemsStatus) {
@@ -29,15 +25,15 @@ Please follow below steps to get voice service state notifications.
    }
    ~~~~~~
 
-### 3. Instantiate Phone ###
+### 3. Instantiate Phone
 
    ~~~~~~{.cpp}
    auto phone = phoneManager->getPhone();
    ~~~~~~
 
-### 4. Check for radio state ###
+### 4. Check for radio state
 
-If radio is in OFF state turn it to ON in order to perform any operations on the phone. Either wait for radio to be turned on or else pass the callback to receive the response for setRadioPower
+If radio is in OFF state turn it to ON in order to perform any operations on the phone. Either wait for radio to be turned on or else pass the callback to receive the response for setRadioPower.
 
    ~~~~~~{.cpp}
    RadioState radioState = phone->getRadioState();
@@ -46,7 +42,7 @@ If radio is in OFF state turn it to ON in order to perform any operations on the
    }
    ~~~~~~
 
-### 5. Implement IVoiceServiceStateCallback interface ###
+### 5. Implement IVoiceServiceStateCallback interface
 
    ~~~~~~{.cpp}
    class MyVoiceServiceStateCallback : public telux::tel::IVoiceServiceStateCallback {
@@ -55,16 +51,16 @@ If radio is in OFF state turn it to ON in order to perform any operations on the
    };
    ~~~~~~
 
-### 6. Instantiate MyVoiceServiceStateCallback ###
+### 6. Instantiate MyVoiceServiceStateCallback
 
    ~~~~~~{.cpp}
    auto myVoiceServiceStateCallback = std::make_shared<MyVoiceServiceStateCallback>();
    ~~~~~~
 
-### 7. Send voice service state request. ###
+### 7. Send voice service state request
 
    ~~~~~~{.cpp}
    phone->requestVoiceServiceState(myVoiceServiceStateCallback);
    ~~~~~~
 
-### 8. After receiving voiceServiceStateResponse in MyVoiceServiceStateCallback, the status of voice registration can be accessed by using the VoiceServiceInfo. ###
+After receiving voiceServiceStateResponse in MyVoiceServiceStateCallback, the status of voice registration can be accessed by using the VoiceServiceInfo.

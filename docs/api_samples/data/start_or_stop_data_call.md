@@ -1,9 +1,7 @@
-Start/Stop data call {#start_or_stop_data_call}
-===============================================
+Start/Stop cellular data call {#start_or_stop_data_call}
+========================================================
 
-# Cellular Data Call - Start/Stop
-
-Please follow below steps to start or stop cellular data call
+This sample application demonstrates how to start or stop a cellular data call.
 
 ### 1. Implement initialization callback and get the DataFactory instance
 
@@ -46,7 +44,7 @@ by calling step 2. If DataConnectionManager initialization succeed, proceed to s
    }
    ~~~~~~
 
-### 4. Implement DataCallResponseCb callback for startDatacall  ###
+### 4. Implement DataCallResponseCb callback for startDatacall
 
    ~~~~~~{.cpp}
    void startDataCallResponseCallBack(const std::shared_ptr<telux::data::IDataCall> &dataCall,
@@ -60,16 +58,16 @@ by calling step 2. If DataConnectionManager initialization succeed, proceed to s
    }
    ~~~~~~
 
-### 5. Send a start data call request with profile ID, IpFamily type along with required callback function ###
+### 5. Send a start data call request with profile ID, IpFamily type along with required callback method
 
    ~~~~~~{.cpp}
    dataConnectionManager->startDataCall(profileId, telux::data::IpFamilyType::IPV4V6,
                                         startDataCallResponseCallBack);
    ~~~~~~
 
-### 6. Response callback will be called for the startDataCall response ###
+### 6. Response callback will be called for the startDataCall response
 
-### 7. Implement DataCallResponseCb callback for stopDatacall###
+### 7. Implement DataCallResponseCb callback for stopDatacall
 
    ~~~~~~{.cpp}
    void stopDataCallResponseCallBack(const std::shared_ptr<telux::data::IDataCall> &dataCall,
@@ -82,11 +80,11 @@ by calling step 2. If DataConnectionManager initialization succeed, proceed to s
    }
    ~~~~~~
 
-### 8. Send a stop data call request with profile ID, IpFamily type along with required callback function ###
+### 8. Send a stop data call request with profile ID, IpFamily type along with required callback method
 
    ~~~~~~{.cpp}
    dataConnectionManager->stopDataCall(profileId, telux::data::IpFamilyType::IPV4V6,
                                        stopDataCallResponseCallBack);
    ~~~~~~
 
-### 9. Response callback will be called for the stopDataCall response ###
+Now, response callback will be called for the stopDataCall response.

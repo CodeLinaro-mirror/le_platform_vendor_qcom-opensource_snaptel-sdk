@@ -1,9 +1,7 @@
-Get data profile {#request_profile_list}
-========================================
+Get available modem profiles {#request_profile_list}
+====================================================
 
-# How to get data profile list
-
-Please follow below steps to request list of available modem profiles
+This sample application demonstrates how to request list of available modem profiles.
 
 ### 1. Implement initialization callback and get the DataFactory instance
 
@@ -19,7 +17,7 @@ Data factory will call callback when manager initialization is complete.
    auto &dataFactory = DataFactory::getInstance();
    ~~~~~~
 
-### 2. Get DataProfileManager instances ###
+### 2. Get DataProfileManager instances
 
    ~~~~~~{.cpp}
    std::unique_lock<std::mutex> lck(mtx);
@@ -46,13 +44,13 @@ calling step 2. If initialization succeed, proceed to step 4
    }
    ~~~~~~
 
-### 4. Instantiate requestProfileList callback ###
+### 4. Instantiate requestProfileList callback
 
    ~~~~~~{.cpp}
    auto dataProfileListCb_ = std::make_shared<DataProfileListCallback>();
    ~~~~~~
 
-### 4.1 Implement IDataProfileListCallback interface to know status of requestProfileList ###
+### 4.1 Implement IDataProfileListCallback interface to know status of requestProfileList
 
    ~~~~~~{.cpp}
    class DataProfileListCallback : public telux::common::IDataProfileListCallback {
@@ -65,10 +63,10 @@ calling step 2. If initialization succeed, proceed to step 4
    };
    ~~~~~~
 
-### 5. Send a requestProfileList along with required callback function ###
+### 5. Send a requestProfileList along with required callback method
 
    ~~~~~~{.cpp}
    telux::common::Status status = dataProfileMgr->requestProfileList(dataProfileListCb_);
    ~~~~~~
 
-### 6. Receive DataProfileListCallback responses for requestProfileList request ###
+Now, receive DataProfileListCallback responses for requestProfileList request.

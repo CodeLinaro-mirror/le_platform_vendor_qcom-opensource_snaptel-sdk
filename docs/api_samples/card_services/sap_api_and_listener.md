@@ -1,19 +1,16 @@
 Using SAP APIs {#sap_api_and_listener}
 ======================================
 
-# Using SAP APIs
+This sample application demonstrates how to use SAP APIs to transmit APDU and listen to SAP events.
 
-Please follow below steps to use SAP APIs to send APDU and listen to SAP events
-
-
-### 1. Get the PhoneFactory and PhoneManager instances. ###
+### 1. Get the PhoneFactory and PhoneManager instances
 
    ~~~~~~{.cpp}
    auto &phoneFactory = PhoneFactory::getInstance();
    auto phoneManager = phoneFactory.getPhoneManager();
    ~~~~~~
 
-### 2. Wait for the telephony subsystem initialization. ###
+### 2. Wait for the telephony subsystem initialization
 
    ~~~~~~{.cpp}
    bool subSystemsStatus = cardManager->isSubsystemReady();
@@ -27,15 +24,13 @@ Please follow below steps to use SAP APIs to send APDU and listen to SAP events
    }
    ~~~~~~
 
-
-### 3. Get default Sap Card Manager instance ###
+### 3. Get default SAP Card Manager instance
 
    ~~~~~~{.cpp}
    std::shared_ptr<ISapCardManager> sapCardMgr = phoneFactory.getSapCardManager();
    ~~~~~~
 
-
-### 4. Instantiate ICommandResponseCallback, IAtrResponseCallback and ISapCardCommandCallback ###
+### 4. Instantiate ICommandResponseCallback, IAtrResponseCallback and ISapCardCommandCallback
 
    ~~~~~~{.cpp}
    auto mySapCmdResponseCb = std::make_shared<MySapCommandResponseCallback>();
@@ -44,7 +39,7 @@ Please follow below steps to use SAP APIs to send APDU and listen to SAP events
    ~~~~~~
 
 
-######  4.1 Implementation of ICommandResponseCallback interface for receiving notifications on sap events like open connection and close connection ######
+######  4.1 Implementation of ICommandResponseCallback interface for receiving notifications on SAP events like open connection and close connection
 
    ~~~~~~{.cpp}
    class MySapCommandResponseCallback : public ICommandResponseCallback {
@@ -57,8 +52,7 @@ Please follow below steps to use SAP APIs to send APDU and listen to SAP events
    }
    ~~~~~~
 
-
-###### 4.2 Implementation of IAtrResponseCallback interface for receiving notification on sap event like request answer to reset(ATR) ######
+###### 4.2 Implementation of IAtrResponseCallback interface for receiving notification on SAP event like request answer to reset(ATR)
 
    ~~~~~~{.cpp}
    class MyAtrResponseCallback : public IAtrResponseCallback {
@@ -71,8 +65,7 @@ Please follow below steps to use SAP APIs to send APDU and listen to SAP events
    }
    ~~~~~~
 
-
-###### 4.3 Implementation of ISapCardCommandCallback interface for receiving notification on sap event like transmit apdu. ######
+###### 4.3 Implementation of ISapCardCommandCallback interface for receiving notification on SAP event like transmit apdu
 
    ~~~~~~{.cpp}
    class MySapTransmitApduResponseCallback : public ISapCardCommandCallback {
@@ -85,20 +78,20 @@ Please follow below steps to use SAP APIs to send APDU and listen to SAP events
    }
    ~~~~~~
 
-### 5. Open Sap connection and wait for request to complete ###
+### 5. Open SAP connection and wait for request to complete
 
    ~~~~~~{.cpp}
    sapCardMgr->openConnection(SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA, mySapCmdResponseCb);
    std::cout << "Opening SAP connection to Transmit the APDU..." << std::endl;
    ~~~~~~
 
-### 6. request sap ATR and wait for complete ###
+### 6. Request SAP ATR and wait for complete
 
    ~~~~~~{.cpp}
    sapCardMgr->requestAtr(myAtrCb);
    ~~~~~~
 
-### 7. send sap apdu and wait for the request to complete ###
+### 7. Send SAP APDU and wait for the request to complete
 
    ~~~~~~{.cpp}
    std::cout << "Transmit Sap APDU request made..." << std::endl;
@@ -106,7 +99,7 @@ Please follow below steps to use SAP APIs to send APDU and listen to SAP events
                                          myTransmitApduResponseCb);
    ~~~~~~
 
-### 8. close sap connection and wait for the request to complete ###
+### 8. Close SAP connection and wait for the request to complete
 
    ~~~~~~{.cpp}
    sapCardMgr->closeConnection(mySapCmdResponseCb);

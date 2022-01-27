@@ -1,9 +1,7 @@
 Tone generation {#audio_manager_tonegenerator}
 ====================================================
 
-## Audio Manager API Sample Reference for audio tone generation
-
-This section demonstrates how to use audio APIs to play tone using a tone generator stream.
+This sample application demonstrates how to use audio APIs to play a tone using tone generator stream.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,11 +9,11 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
-    //  Get AudioManager instance.
+    // Get AudioManager instance
     audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
         prom.set_value(serviceStatus);
     });
@@ -24,15 +22,15 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    // Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,10 +39,10 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
     }
    ~~~~~~
 
-### 3. Create an audio Stream (to be associated with tone generator)
+### 3. Create an audio stream (to be associated with tone generator)
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "createStream() failed with error" << static_cast<int>(error) << std::endl;
@@ -54,18 +52,21 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
         audioToneGeneratorStream = std::dynamic_pointer_cast<IAudioToneGeneratorStream>(stream);
     }
     // Create a tone generator stream with required configuration
+    StreamConfig config;
+
     config.type = telux::audio::StreamType::TONE_GENERATOR;
     config.sampleRate = 48000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 4. Play tone on a sink device
+### 4. Play the audio tone on a sink device
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void playToneCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -74,6 +75,7 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
         }
         std::cout << "playTone() succeeded." << std::endl;
     }
+
     // Play the tone with required configuration
     status = audioToneGeneratorStream->playTone(freq, duration, gain, playToneCallback);
    ~~~~~~
@@ -81,7 +83,7 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
 ### 5. Optionally, you can stop the tone being played before the specified duration elapses
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void stopToneCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -90,14 +92,15 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
         }
         std::cout << "stopTone() succeeded." << std::endl;
     }
-    // Stop the tone play, which was started earlier
+
+    // Stop playing the tone (which was started earlier)
     status = audioToneGeneratorStream->stopTone(stopToneCallback);
    ~~~~~~
 
-### 6. Delete the audio stream associated with the Tone Generator session
+### 6. Dispose the audio stream associated with the tone generator session
 
    ~~~~~~{.cpp}
-    // Implement a response function to get the request status
+    // Implement a response callback method to get the request status
     void deleteStreamCallback(ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "deleteStream() failed with error" << static_cast<int>(error) << std::endl;
@@ -106,7 +109,8 @@ This section demonstrates how to use audio APIs to play tone using a tone genera
         std::cout << "deleteStream() succeeded." << std::endl;
         audioToneGeneratorStream.reset();
     }
-    //Delete the Audio Stream
+
+    // Delete the Audio Stream
     status = audioManager->deleteStream(
         std::dynamic_pointer_cast<IAudioStream>(audioToneGeneratorStream), deleteStreamCallback);
    ~~~~~~

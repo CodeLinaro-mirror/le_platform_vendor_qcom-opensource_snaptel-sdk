@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.8.9)
+
+if(NOT BUILD_FOR_SIMULATION)
+    add_subdirectory( sensor_app )
+    add_subdirectory( sensor_feature_app )
+    add_subdirectory( sensor_self_test_app )
+endif(NOT BUILD_FOR_SIMULATION)

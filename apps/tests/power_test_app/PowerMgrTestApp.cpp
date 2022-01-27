@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * This is a sample program to register and receive TCU-activity state updates, send commands to
  * change the TCU-activity state
@@ -168,6 +204,37 @@ TcuActivityState PowerMgmtTestApp::getTcuActivityState() {
     return state;
 }
 
+void PowerMgmtTestApp::setModemActivityState() {
+    TcuActivityState state = TcuActivityState::UNKNOWN;
+    char delimiter = '\n';
+    std::string input;
+    std::cout << "Select modem activity state(1-Suspend/2-Resume): ";
+    std::getline(std::cin, input, delimiter);
+    int opt = -1;
+    if(!input.empty()) {
+        try {
+            opt = std::stoi(input);
+        } catch(const std::exception &e) {
+            std::cout << " ERROR: Invalid input, Enter numerical value " << opt << std::endl;
+        }
+    } else {
+        std::cout << " No input, try again " << std::endl;
+        return;
+    }
+    if(opt == 1) {
+        state = TcuActivityState::SUSPEND;
+    } else if(opt == 2) {
+        state = TcuActivityState::RESUME;
+    }
+    telux::common::Status status = tcuActivityMgr_->setModemActivityState(state);
+    if(status == telux::common::Status::SUCCESS) {
+        std::cout << APP_NAME << " Modem activity state is set successfully" << std::endl;
+    } else {
+        std::cout << APP_NAME << " Failed to set Modem activity state" << std::endl;
+    }
+    return;
+}
+
 int PowerMgmtTestApp::start(ClientType clientType, ProcType procType) {
     if(procType == ProcType::LOCAL_PROC) {
         std::cout << APP_NAME << " Connecting to LOCAL TCU Activity Manager " << std::endl;
@@ -244,23 +311,26 @@ void PowerMgmtTestApp::consoleinit() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Suspend_System", {},
          std::bind(&PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::SUSPEND)));
-
    std::shared_ptr<ConsoleAppCommand> resumeSytemCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "2", "Resume_System", {},
          std::bind(&PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::RESUME)));
-
    std::shared_ptr<ConsoleAppCommand> shutdownSytemCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "3", "Shutdown_System", {},
          std::bind(&PowerMgmtTestApp::sendActivityStateCommand, this, TcuActivityState::SHUTDOWN)));
-
    std::shared_ptr<ConsoleAppCommand> getTcuStateCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "4", "Get_System_State", {},
          std::bind(&PowerMgmtTestApp::getTcuActivityState, this)));
+   std::shared_ptr<ConsoleAppCommand> setModemActivityStateCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "5", "Set_Modem_Activity_State", {},
+         std::bind(&PowerMgmtTestApp::setModemActivityState, this)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPowerMenu
-      = {suspendSytemCommand, resumeSytemCommand, shutdownSytemCommand, getTcuStateCommand};
+      = {suspendSytemCommand, resumeSytemCommand, shutdownSytemCommand, getTcuStateCommand,
+         setModemActivityStateCommand};
    ConsoleApp::addCommands(commandsListPowerMenu);
    ConsoleApp::displayMenu();
 }

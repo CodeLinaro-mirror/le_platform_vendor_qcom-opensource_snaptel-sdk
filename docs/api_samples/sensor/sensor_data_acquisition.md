@@ -1,17 +1,15 @@
-Using Sensor APIs to configure and acquire sensor data {#sensor_data_acquisition}
+Configure and acquire sensor data {#sensor_data_acquisition}
 =============================================================
 
-# Using Sensor APIs to configure and acquire sensor data
+This sample application demonstrates how to configure and acquire sensor data.
 
-Please follow below steps as a guide to configure and acquire sensor data
-
-### 1. Get sensor factory ###
+### 1. Get sensor factory instance
 
    ~~~~~~{.cpp}
    auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
    ~~~~~~
 
-### 2. Prepare a callback that is invoked when the sensor sub-system initialization is complete ###
+### 2. Prepare a callback that is invoked when the sensor sub-system initialization is complete
 
    ~~~~~~{.cpp}
    std::promise<telux::common::ServiceStatus> p;
@@ -21,7 +19,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    };
    ~~~~~~
 
-### 3. Get the sensor manager. If initialization fails, perform necessary error handling ###
+### 3. Get the sensor manager. If initialization fails, perform necessary error handling
 
    ~~~~~~{.cpp}
    std::shared_ptr<telux::sensor::ISensorManager> sensorManager
@@ -33,7 +31,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    std::cout << "obtained sensor manager" << std::endl;
    ~~~~~~
 
-### 4. Wait until initialization is complete ###
+### 4. Wait until initialization is complete
 
    ~~~~~~{.cpp}
    p.get_future().get();
@@ -43,7 +41,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    }
    ~~~~~~
 
-### 5. Get information regarding available sensors in the system ###
+### 5. Get information regarding available sensors in the system
 
    ~~~~~~{.cpp}
    std::cout << "Sensor service is now available" << std::endl;
@@ -60,7 +58,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    }
    ~~~~~~
 
-### 6. Request the ISensorManager for the desired sensor ###
+### 6. Request the ISensorManager for the desired sensor
 
    ~~~~~~{.cpp}
    std::shared_ptr<telux::sensor::ISensor> sensor;
@@ -72,7 +70,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    }
    ~~~~~~
 
-### 7. Create and register a sensor event listener for configuration updates and sensor events ###
+### 7. Create and register a sensor event listener for configuration updates and sensor events
 
 ###### The event listener extends the ISensorEventListener to receive notification about configuration and sensor events.
 
@@ -155,7 +153,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    sensor->registerListener(sensorEventListener);
    ~~~~~~
 
-### 8. Configure the sensor with required configuration setting the necessary validityMask ###
+### 8. Configure the sensor with required configuration setting the necessary validityMask
 
    ~~~~~~{.cpp}
    telux::sensor::SensorConfiguration config;
@@ -172,7 +170,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    }
    ~~~~~~
 
-### 9. Receive updates on sensor configuration ###
+### 9. Receive updates on sensor configuration
 
    ~~~~~~{.cpp}
    virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
@@ -182,7 +180,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    }
    ~~~~~~
 
-### 10. Activate the sensor to receive sensor data ###
+### 10. Activate the sensor to receive sensor data
 
    ~~~~~~{.cpp}
    status = sensor->activate();
@@ -192,7 +190,7 @@ Please follow below steps as a guide to configure and acquire sensor data
    }
    ~~~~~~
 
-### 11. Receive sensor data with the registered listener ###
+### 11. Receive sensor data with the registered listener
 
 Avoid any time consuming operation in this callback. This thread should be released back the SDK
 library to avoid latency.
@@ -228,7 +226,7 @@ such method is to spawn a detached thread that invokes the required API.
    }
    ~~~~~~
 
-### 12. When data acquisition is no longer necessary, deactivate the sensor ###
+### 12. When data acquisition is no longer necessary, deactivate the sensor
 
    ~~~~~~{.cpp}
    status = sensor->deactivate();
@@ -238,13 +236,13 @@ such method is to spawn a detached thread that invokes the required API.
    }
    ~~~~~~
 
-### 13. Release the instance of ISensor if no longer required ###
+### 13. Release the instance of ISensor if no longer required
 
    ~~~~~~{.cpp}
    sensor = nullptr;
    ~~~~~~
 
-### 14. Release the instance of ISensorManager to cleanup resources ###
+### 14. Release the instance of ISensorManager to cleanup resources
 
    ~~~~~~{.cpp}
    sensorManager = nullptr;

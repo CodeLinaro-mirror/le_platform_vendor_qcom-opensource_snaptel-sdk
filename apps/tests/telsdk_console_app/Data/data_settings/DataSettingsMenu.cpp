@@ -43,10 +43,12 @@ extern "C" {
 #include <telux/data/DataFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
 #include "../../../../common/utils/Utils.hpp"
+#include "../DataUtils.hpp"
 
 #include "DataSettingsMenu.hpp"
 
 using namespace std;
+#define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
 
 DataSettingsMenu::DataSettingsMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -78,6 +80,10 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::setBandInterferenceConfig, this, std::placeholders::_1)) ,
             std::make_pair("Request_Band_Interference_Configuration",
             std::bind(&DataSettingsMenu::requestBandInterferenceConfig, this, std::placeholders::_1)),
+            std::make_pair("Configure_Backhaul_Connectivity",
+            std::bind(&DataSettingsMenu::setWwanConnectivityConfig, this, std::placeholders::_1)) ,
+            std::make_pair("Request_Backhaul_Connectivity",
+            std::bind(&DataSettingsMenu::requestWwanConnectivityConfig, this, std::placeholders::_1)),
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -149,13 +155,14 @@ void DataSettingsMenu::setBackhaulPref(std::vector<std::string> inputCommand) {
     bool inputIsValid = true;
     for(int i=0; i<static_cast<int>(BackhaulType::MAX_SUPPORTED); ++i) {
         do {
+            inputIsValid = true;
             std::cout << "Enter Backhaul " << i+1
             << " (0-ETH, 1-USB, 2-WLAN, 3-WWAN, 4-BLE): ";
             std::cin >> backhaul;
             std::cout << endl;
             Utils::validateInput(backhaul);
-            if((backhaul < 0) || (backhaul > static_cast<int>(BackhaulType::MAX_SUPPORTED))) {
-                std::cout << "Invalid input... Please try again" << std::endl;
+            if((backhaul < 0) || (backhaul >= static_cast<int>(BackhaulType::MAX_SUPPORTED))) {
+                std::cout << "Invalid backhaul... Please try again" << std::endl;
                 inputIsValid = false;
             }
             backhaulPref.push_back(static_cast<BackhaulType>(backhaul));
@@ -352,4 +359,102 @@ void DataSettingsMenu::requestBandInterferenceConfig(std::vector<std::string> in
     };
     retStat = dataSettingsManagerMap_[opType]->requestBandInterferenceConfig(respCb);
     Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::setWwanConnectivityConfig(std::vector<std::string> inputCommand) {
+    int connectivity;
+    bool inputIsValid = true;
+    bool allowConnectivity = true;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+
+    std::cout << "Configure WWAN Connectivity \n";
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    DataUtils::validateInput(slotId, {1, 2});
+
+    std::cout << "Allow WWAN Connectivity? (0-No, 1-Yes): ";
+    std::cin >> connectivity;
+    DataUtils::validateInput(connectivity, {0, 1});
+    allowConnectivity = static_cast<bool>(connectivity);
+    std::cout << endl;
+
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "setWwanConnectivityConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+    retStat = dataSettingsManagerMap_[opType]->setWwanConnectivityConfig(
+        static_cast<SlotId>(slotId), allowConnectivity, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestWwanConnectivityConfig(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+
+    std::cout << "Request WWAN Connectivity \n";
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    DataUtils::validateInput(slotId, {1, 2});
+
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+    std::cout << endl;
+
+    auto respCb = [](SlotId slotId, bool isAllowed, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestWwanConnectivityConfig Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << std::endl;
+                std::cout << "WWAN Connectivity is " << ((isAllowed)? "allowed ":"not allowed ")
+                          << "for SlotId : " << slotId << std::endl;
+            }
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->requestWwanConnectivityConfig(
+        static_cast<SlotId>(slotId), respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " ** WWAN Connectivity Config has changed ** \n";
+    std::cout << "WWAN Connectivity Config on SlotId: " << static_cast<int>(slotId) << " is: ";
+    if(isConnectivityAllowed) {
+        std::cout << "Allowed";
+    } else {
+        std::cout << "Disallowed";
+    }
+    std::cout << std::endl << std::endl;
 }

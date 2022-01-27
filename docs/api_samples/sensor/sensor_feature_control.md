@@ -1,17 +1,15 @@
-Using Sensor APIs to control sensor features {#sensor_feature_control}
-=============================================================
+Control sensor features {#sensor_feature_control}
+=================================================
 
-# Using Sensor APIs to control sensor features
+This sample application demonstrates how to control sensor features.
 
-Please follow below steps as a guide to control sensor features
-
-### 1. Get sensor factory ###
+### 1. Get sensor factory instance
 
    ~~~~~~{.cpp}
    auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
    ~~~~~~
 
-### 2. Prepare a callback that is invoked when the sensor sub-system initialization is complete ###
+### 2. Prepare a callback that is invoked when the sensor sub-system initialization is complete
 
    ~~~~~~{.cpp}
    std::promise<telux::common::ServiceStatus> p;
@@ -21,7 +19,7 @@ Please follow below steps as a guide to control sensor features
    };
    ~~~~~~
 
-### 3. Get the sensor feature manager. If initialization fails, perform necessary error handling ###
+### 3. Get the sensor feature manager. If initialization fails, perform necessary error handling
 
    ~~~~~~{.cpp}
    std::shared_ptr<telux::sensor::ISensorFeatureManager> sensorFeatureManager
@@ -33,7 +31,7 @@ Please follow below steps as a guide to control sensor features
    std::cout << "obtained sensor feature manager" << std::endl;
    ~~~~~~
 
-### 4. Wait until initialization is complete ###
+### 4. Wait until initialization is complete
 
    ~~~~~~{.cpp}
    p.get_future().get();
@@ -43,7 +41,7 @@ Please follow below steps as a guide to control sensor features
    }
    ~~~~~~
 
-### 5. Get information regarding available sensor features ###
+### 5. Get information regarding available sensor features
 
    ~~~~~~{.cpp}
    std::cout << "Sensor feature service is now available" << std::endl;
@@ -60,7 +58,7 @@ Please follow below steps as a guide to control sensor features
    }
    ~~~~~~
 
-### 6. Create and register a sensor feature event listener ###
+### 6. Create and register a sensor feature event listener
 
    ~~~~~~{.cpp}
    std::shared_ptr<SensorFeatureEventListener> sensorFeatureEventListener
@@ -68,7 +66,7 @@ Please follow below steps as a guide to control sensor features
    sensorFeatureManager->registerListener(sensorFeatureEventListener);
    ~~~~~~
 
-### 7. Enable the required features ###
+### 7. Enable the required features
 
    ~~~~~~{.cpp}
    status = sensorFeatureManager->enableFeature(name);
@@ -83,7 +81,7 @@ Please follow below steps as a guide to control sensor features
    feature using this method would be sufficient. The underlying framework would take care
    to enable the required sensor when the system is about to enter suspend state.
 
-### 8. Receive sensor feature events with the registered listener when device is not suspended ###
+### 8. Receive sensor feature events with the registered listener when device is not suspended
 
    ~~~~~~{.cpp}
    virtual void onEvent(telux::sensor::SensorFeatureEvent event) override {
@@ -91,7 +89,7 @@ Please follow below steps as a guide to control sensor features
    }
    ~~~~~~
 
-### 9. Receive sensor feature events with the registered listener when device in suspended state ###
+### 9. Receive sensor feature events with the registered listener when device in suspended state
 
    ~~~~~~{.cpp}
    virtual void onBufferedEvent(std::string sensorName,
@@ -100,7 +98,7 @@ Please follow below steps as a guide to control sensor features
    }
    ~~~~~~
 
-### 10. When the sensor feature(s) are no longer necessary, disable them ###
+### 10. When the sensor feature(s) are no longer necessary, disable them
 
    ~~~~~~{.cpp}
    status = sensorFeatureManager->disableFeature(name);
@@ -110,7 +108,7 @@ Please follow below steps as a guide to control sensor features
    }
    ~~~~~~
 
-### 10. Release the instance of ISensorFeatureManager to cleanup resources ###
+### 10. Release the instance of ISensorFeatureManager to cleanup resources
 
    ~~~~~~{.cpp}
    sensorFeatureManager = nullptr;

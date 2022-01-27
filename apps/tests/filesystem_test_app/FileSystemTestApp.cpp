@@ -72,12 +72,12 @@ Status FileSystemTestApp::parseArguments(int argc, char **argv) {
             break;
         }
         switch (arg) {
-        case 'h':
-            printHelp();
-            break;
-        default:
-            printHelp();
-            return Status::INVALIDPARAM;
+            case 'h':
+                printHelp();
+                break;
+            default:
+                printHelp();
+                return Status::INVALIDPARAM;
         }
     }
     return Status::SUCCESS;
@@ -125,8 +125,36 @@ void FileSystemTestApp::consoleinit() {
     std::shared_ptr<ConsoleAppCommand> startEfsBackupCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Start_Efs_Backup", {},
             std::bind(&FileSystemCommandMgr::startEfsBackup, myFsCmdMgr_)));
+
+    std::shared_ptr<ConsoleAppCommand> prepareForEcallCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Prepare_For_Ecall", {},
+            std::bind(&FileSystemCommandMgr::prepareForEcall, myFsCmdMgr_)));
+
+    std::shared_ptr<ConsoleAppCommand> eCallCompletedCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "ECall_Completed", {},
+            std::bind(&FileSystemCommandMgr::eCallCompleted, myFsCmdMgr_)));
+
+    std::shared_ptr<ConsoleAppCommand> prepareForOtaStartCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Prepare_For_Ota_Start", {},
+            std::bind(&FileSystemCommandMgr::prepareForOtaStart, myFsCmdMgr_)));
+
+    std::shared_ptr<ConsoleAppCommand> otaCompletedCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "5", "Ota_Completed", {}, std::bind(&FileSystemCommandMgr::otaCompleted, myFsCmdMgr_)));
+
+    std::shared_ptr<ConsoleAppCommand> prepareForOtaResumeCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "Prepare_For_Ota_Resume", {},
+            std::bind(&FileSystemCommandMgr::prepareForOtaResume, myFsCmdMgr_)));
+
+    std::shared_ptr<ConsoleAppCommand> startAbSyncCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "7", "Start_AbSync", {}, std::bind(&FileSystemCommandMgr::startAbSync, myFsCmdMgr_)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> fileSystemTestAppCommands
-        = {startEfsBackupCommand};
+        = {startEfsBackupCommand, prepareForEcallCommand, eCallCompletedCommand,
+            prepareForOtaStartCommand, otaCompletedCommand, prepareForOtaResumeCommand,
+            startAbSyncCommand};
+
     ConsoleApp::addCommands(fileSystemTestAppCommands);
     ConsoleApp::displayMenu();
 }

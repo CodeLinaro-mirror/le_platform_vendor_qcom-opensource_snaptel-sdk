@@ -1,39 +1,37 @@
-Using Location Configurator APIs {#location_services_configurator}
+Using location configurator APIs {#location_services_configurator}
 ==================================================================
 
-# Using Location Configurator APIs
+This sample app gives basic idea about using location configurator APIs.
 
-Please follow below steps to use Configurator APIs
-
-### 1. Implement a command response function ###
+### 1. Implement a command response method
 
    ~~~~~~{.cpp}
-    void CmdResponse(ErrorCode error) {
-        if (error == ErrorCode::SUCCESS) {
-            std::cout << " Command executed successfully" << std::endl;
-        }
-        else {
-            std::cout << " Command failed\n errorCode: " << static_cast<int>(error) << std::endl;
-        }
-    }
+   void CmdResponse(ErrorCode error) {
+       if (error == ErrorCode::SUCCESS) {
+           std::cout << " Command executed successfully" << std::endl;
+       }
+       else {
+           std::cout << " Command failed\n errorCode: " << static_cast<int>(error) << std::endl;
+       }
+   }
    ~~~~~~
 
-### 2. Get the LocationFactory instance ###
+### 2. Get the LocationFactory instance
 
    ~~~~~~{.cpp}
-    auto &locationFactory = LocationFactory::getInstance();
+   auto &locationFactory = LocationFactory::getInstance();
    ~~~~~~
 
-### 3. Get LocationConfigurator instance ###
+### 3. Get LocationConfigurator instance
 
    ~~~~~~{.cpp}
-    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
-    auto locConfigurator_ = locationFactory.getLocationConfigurator([&](ServiceStatus status) {
+   std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+   auto locConfigurator_ = locationFactory.getLocationConfigurator([&](ServiceStatus status) {
         prom.set_value(status);
-    });
+   });
    ~~~~~~
 
-### 4. Wait for the Location Config. initialization ###
+### 4. Wait for the Location Config. initialization
 
    ~~~~~~{.cpp}
    ServiceStatus managerStatus = locConfigurator_->getServiceStatus();
@@ -43,21 +41,21 @@ Please follow below steps to use Configurator APIs
     }
    ~~~~~~
 
-### 5. Exit the application, if SDK is unable to initialize Location Config. ###
+### 5. Exit the application, if SDK is unable to initialize location config
 
    ~~~~~~{.cpp}
    if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout<< "Location Config. is ready" << std::endl;
-    } else {
-        std::cout << " *** ERROR - Unable to initialize Location Config."<< std::endl;
-        return -1;
-    }
+       std::cout<< "Location Config. is ready" << std::endl;
+   } else {
+       std::cout << " *** ERROR - Unable to initialize Location Config."<< std::endl;
+       return -1;
+   }
    ~~~~~~
 
-### 6. Enable/Disable Constraint Tunc API ###
+### 6. Enable/Disable Constraint Tunc API
 
    ~~~~~~{.cpp}
-    locConfigurator_->configureCTunc(enable, CmdResponse, optThreshold, optPower);
+   // CmdResponse callback is invoked with error code indicating
+   // SUCCESS/FAILURE of the operation
+   locConfigurator_->configureCTunc(enable, CmdResponse, optThreshold, optPower);
    ~~~~~~
-
-### 7. Command response callback is invoked with error code indicating SUCCESS or FAILURE of the operation. ###

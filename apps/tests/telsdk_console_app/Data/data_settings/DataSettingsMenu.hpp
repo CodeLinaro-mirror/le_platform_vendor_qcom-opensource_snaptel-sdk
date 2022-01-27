@@ -69,6 +69,9 @@ class DataSettingsMenu : public ConsoleApp ,
     void setBandInterferenceConfig(std::vector<std::string> inputCommand);
     void requestBandInterferenceConfig(std::vector<std::string> inputCommand);
 
+    void setWwanConnectivityConfig(std::vector<std::string> inputCommand);
+    void requestWwanConnectivityConfig(std::vector<std::string> inputCommand);
+    void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 

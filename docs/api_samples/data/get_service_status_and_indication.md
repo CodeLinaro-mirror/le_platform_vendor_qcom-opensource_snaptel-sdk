@@ -1,83 +1,78 @@
-Get Service Status and Indication {#get_service_status_and_indication}
+Get service status and indication {#get_service_status_and_indication}
 ======================================================================
 
-# How to get service status and indications
-
-Please follow below steps to request service status and indication
+This sample application demonstrates how to get service status and indications.
 
 ### 1. Implement IServingSystemListener listener class
 
    ~~~~~~{.cpp}
-    class ServingSystemListener : public telux::data::IServingSystemListener {
+   class ServingSystemListener : public telux::data::IServingSystemListener {
     public:
-    ServingSystemListener(SlotId slotId) : slotId_(slotId) {}
-    void onServiceStateChanged(telux::data::ServiceStatus status) {
+      ServingSystemListener(SlotId slotId) : slotId_(slotId) {}
+      void onServiceStateChanged(telux::data::ServiceStatus status) {
         std::cout << "\n onServiceStateChanged on SlotId: " << static_cast<int>(slotId_);
         if(status.serviceState == telux::data::DataServiceState::OUT_OF_SERVICE) {
             std::cout << "Current Status is Out Of Service" << std::endl;
         } else {
             std::cout << "Current Status is In Service" << std::endl;
         }
-    }
+      }
     private:
-    SlotId slotId_;
-    };
+      SlotId slotId_;
+   };
    ~~~~~~
 
-### 2. Instantiate initialization callback - this is optional
+### 2. Optionally, instantiate an initialization callback
 
    ~~~~~~{.cpp}
-    auto initCb = [&](telux::common::ServiceStatus status) {
+   auto initCb = [&](telux::common::ServiceStatus status) {
         subSystemStatus = status;
         subSystemStatusUpdated = true;
         cv_.notify_all();
-    };
+   };
    ~~~~~~
 
-### 3. Get the DataFactory and data Serving System Manager instance
+### 3. Get the data factory and data serving system manager instance and if data serving system manager is ready
 
    ~~~~~~{.cpp}
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    do {
-        subSystemStatusUpdated = false;
-        std::unique_lock<std::mutex> lck(mtx_);
-        dataServingSystemMgr = dataFactory.getServingSystemManager(slotId, initCb);
-   ~~~~~~
+   auto &dataFactory = telux::data::DataFactory::getInstance();
+   do {
+       subSystemStatusUpdated = false;
+       std::unique_lock<std::mutex> lck(mtx_);
+       dataServingSystemMgr = dataFactory.getServingSystemManager(slotId, initCb);
 
-### 4. Check if data serving system manager is ready
-
-   ~~~~~~{.cpp}
-        if (dataServingSystemMgr) {
+       if (dataServingSystemMgr) {
             std::cout << "\n\nInitializing Data Serving System manager subsystem on slot " <<
                 slotId << ", Please wait ..." << std::endl;
             cv_.wait(lck, [&]{return subSystemStatusUpdated;});
             subSystemStatus = dataServingSystemMgr->getServiceStatus();
-        }
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       }
+	   
+       if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << " *** DATA Serving System is Ready *** " << std::endl;
             break;
-        }
-        else {
+       }
+       else {
             std::cout << " *** Unable to initialize data Serving System *** " << std::endl;
-        }
-    } while (1);
+       }
+   } while (1);
    ~~~~~~
 
-### 5. Register for Serving System listener
+### 4. Register for serving system listener
 
    ~~~~~~{.cpp}
-    dataServingSystemMgr->registerListener(dataListener);
+   dataServingSystemMgr->registerListener(dataListener);
    ~~~~~~
 
-### 6. Get current Service Status
+### 5. Get current service status
 
    ~~~~~~{.cpp}
-    // Callback
-    auto respCb = [&slotId](
-                telux::data::ServiceStatus serviceStatus, telux::common::ErrorCode error) {
+   // Callback
+   auto respCb = [&slotId](
+        telux::data::ServiceStatus serviceStatus, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
-                    << "requestServiceStatus Response on slotid " << static_cast<int>(slotId);
+                  << "requestServiceStatus Response on slotid " << static_cast<int>(slotId);
         if(error == telux::common::ErrorCode::SUCCESS) {
             std::cout << " is successful" << std::endl;
             logServiceStatusDetails(serviceStatus);
@@ -86,8 +81,9 @@ Please follow below steps to request service status and indication
             std::cout << " failed"
                       << ". ErrorCode: " << static_cast<int>(error) << std::endl;
         }
-    };
-    dataServingSystemMgr->requestServiceStatus(respCb);
+   };
+   
+   dataServingSystemMgr->requestServiceStatus(respCb);
    ~~~~~~
 
-### 7. Wait for request response and notifications
+Now, wait for request response and notifications.

@@ -1,9 +1,7 @@
 Volume and mute controls {#audio_manager_voicecall_volume_mute}
 ==============================================================================
 
-## Audio Manager API Sample Reference for voice session volume/mute control
-
-This section demonstrates how to use the audio APIs for volume/mute control during voice session.
+This sample application demonstrates how to set audio volume level, mute and unmute audio during an active voice session.
 
 ### 1. Get the AudioFactory instance
 
@@ -11,28 +9,28 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
     auto &audioFactory = AudioFactory::getInstance();
    ~~~~~~
 
-### 2. Get the AudioManager object and check for audio subsystem Readiness
+### 2. Get the AudioManager instance and check for audio subsystem readiness
 
    ~~~~~~{.cpp}
     std::promise<ServiceStatus> prom{};
-    //  Get AudioManager instance.
+    // Get the AudioManager instance
     audioManager = audioFactory.getAudioManager([&prom](ServiceStatus serviceStatus) {
         prom.set_value(serviceStatus);
     });
     if (!audioManager) {
-        std::cout << "Failed to get AudioManager object" << std::endl;
+        std::cout << "Failed to get AudioManager instance" << std::endl;
         return;
     }
 
-    //  Check if audio subsystem is ready
-    //  If audio subsystem is not ready, wait for it to be ready
+    // Check if audio subsystem is ready
+    // If audio subsystem is not ready, wait for it to be ready
     ServiceStatus managerStatus = audioManager->getServiceStatus();
     if (managerStatus != ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
         managerStatus = prom.get_future().get();
     }
 
-    //  Check the service status again.
+    // Check the service status again
     if (managerStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio Subsytem is Ready << std::endl;
     } else {
@@ -41,10 +39,10 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
     }
    ~~~~~~
 
-### 3. Create an Audio Stream (Voice Call Session)
+### 3. Create a voice call session
 
    ~~~~~~{.cpp}
-    //Callback which provides response to createStream, with pointer to base interface IAudioStream.
+    // Callback which provides response to createStream, with pointer to base interface IAudioStream
     void createStreamCallback(std::shared_ptr<IAudioStream> &stream, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -57,21 +55,23 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
         audioVoiceStream = std::dynamic_pointer_cast<IAudioVoiceStream>(stream);
     }
 
-    //Create an Audio Stream (Voice Call Session)
+    // Create an audio stream (voice call session)
     StreamConfig config;
+
     config.type = StreamType::VOICE_CALL;
     config.slotId = DEFAULT_SLOT_ID;
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
 
-### 4. Start Created Audio Stream (Voice Call Session)
+### 4. Start the voice call session
 
    ~~~~~~{.cpp}
-    //Callback which provides response to startAudio.
+    // Callback which provides response to startAudio
     void startAudioCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -83,14 +83,13 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
         std::cout << "startAudio() succeeded." << std::endl;
     }
 
-    //Start an Audio Stream (Voice Call Session)
     status = audioVoiceStream->startAudio(startAudioCallback);
    ~~~~~~
 
-### 5. Set volume on Started Audio Stream (Voice Call Session) for specified direction
+### 5. Set volume level for specified direction
 
    ~~~~~~{.cpp}
-    //Callback which provides response to setVolume.
+    // Callback which provides response to setVolume
     void setStreamVolumeCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -102,20 +101,21 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
         std::cout << "setVolume() succeeded." << std::endl;
     }
 
-    //Set volume on an Audio Stream (Voice Call Session) for RX direction
+    // Set volume on an audio stream for RX direction
     StreamVolume streamVol;
     ChannelVolume channelVol;
     streamVol.dir = StreamDirection::RX;
     channelVol.channelType = ChannelType::LEFT;
     channelVol.vol = 0.5;
     streamVol.volume.emplace_back(channelVol);
+
     status = audioVoiceStream->setVolume(streamVol, setStreamVolumeCallback);
    ~~~~~~
 
-### 6. Get volume on Started Audio Stream (Voice Call Session)
+### 6. Get current volume level of the audio stream
 
    ~~~~~~{.cpp}
-    //Callback which provides response to getVolume.
+    // Callback which provides response to getVolume
     void getStreamVolumeCallback(StreamVolume volume, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -134,14 +134,13 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
         }
     }
 
-    //Get volume on an Audio Stream (Voice Call Session) for RX direction
     status = audioVoiceStream->getVolume(StreamDirection::RX, getStreamVolumeCallback);
    ~~~~~~
 
-### 7. Set Mute on Started Audio Stream (Voice Call Session) for specified direction
+### 7. Mute the audio for the specified direction
 
    ~~~~~~{.cpp}
-    //Callback which provides response to setMute.
+    // Callback which provides response to setMute
     void setStreamMuteCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -153,17 +152,18 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
         std::cout << "setMute() succeeded." << std::endl;
     }
 
-    //Set Mute on an Audio Stream (Voice Call Session) for TX direction
+    // Mute audio stream for TX direction
     StreamMute mute;
     mute.dir = StreamDirection::TX;
     mute.enable = true; //true: enable, false: disable
+
     status = audioVoiceStream->setMute(mute, setStreamMuteCallback);
    ~~~~~~
 
-### 8 Get Mute on Started Audio Stream (Voice Call Session) for specified direction
+### 8 Get mute state of stream for specified direction
 
    ~~~~~~{.cpp}
-    //Callback which provides response to getMute.
+    // Callback which provides response to getMute
     void getStreamMuteCallback(StreamMute mute, ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -177,15 +177,15 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
 
     }
 
-    //Get Mute on an Audio Stream (Voice Call Session) for TX direction
+    // Get mute state of stream for TX direction
     status = audioVoiceStream->getMute(StreamDirection::TX, getStreamMuteCallback);
    ~~~~~~
 
-### 9. Stop Created Audio Stream (Voice Call Session)
+### 9. Stop voice session
 
    ~~~~~~{.cpp}
 
-    //Callback which provides response to stopAudio.
+    // Callback which provides response to stopAudio
     void stopAudioCallback(ErrorCode error)
     {
         if (error != ErrorCode::SUCCESS) {
@@ -197,14 +197,14 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
         std::cout << "stopAudio() succeeded." << std::endl;
     }
 
-    //Stop an Audio Stream (Voice Call Session), which was started earlier
+    // Stop voice session (which was started earlier)
     status = audioVoiceStream->stopAudio(stopAudioCallback);
    ~~~~~~
 
-### 10. Delete an Audio Stream (Voice Call Session), which was created earlier
+### 10. Dispose the audio stream
 
    ~~~~~~{.cpp}
-    //Callback which provides response to deleteStream
+    // Callback which provides response to deleteStream
     void deleteStreamCallback(ErrorCode error) {
         if (error != ErrorCode::SUCCESS) {
             std::cout << "deleteStream() returned with error " << static_cast<unsigned int>(error)
@@ -215,7 +215,8 @@ This section demonstrates how to use the audio APIs for volume/mute control duri
         std::cout << "deleteStream() succeeded." << std::endl;
         audioVoiceStream.reset();
     }
-    //Delete an Audio Stream (Voice Call Session), which was created earlier
+
+    // Delete audio stream
     status = audioManager->deleteStream(std::dynamic_pointer_cast<IAudioStream>(audioVoiceStream),
                                         deleteStreamCallback);
    ~~~~~~

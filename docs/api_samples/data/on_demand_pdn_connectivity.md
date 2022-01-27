@@ -1,12 +1,10 @@
-On-demand PDN connectivity {#on_demand_pdn_connectivity}
-===============================================
+Establish on-demand PDN connectivity {#on_demand_pdn_connectivity}
+==================================================================
 
-# On-demand PDN connectivity
-
-For on-demand PDNs
-- the DNS servers are not updated in resolv.conf and routines like gethostbyname would fail
-- the default routes are not setup and socket connection without binding to an interface would fail
-The purpose of the document is to provide information about
+For on-demand PDNs connectivity:
+- The DNS servers are not updated in resolv.conf and routines like gethostbyname would fail
+- The default routes are not setup and socket connection without binding to an interface would fail
+The purpose of the section is to provide information about:
 - DNS resolution using dig
 - Binding to an interface to enable connectivity
 
@@ -15,8 +13,8 @@ The purpose of the document is to provide information about
 Get the data factory, data connection manager and wait until the service is available.
 
    ~~~~~~{.cpp}
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-    {
+   auto &dataFactory = telux::data::DataFactory::getInstance();
+   {
         std::promise<telux::common::ServiceStatus> p;
         dataConnMgr = dataFactory.getDataConnectionManager(
             slotId, [&](telux::common::ServiceStatus status) { p.set_value(status); });
@@ -31,24 +29,24 @@ Get the data factory, data connection manager and wait until the service is avai
             std::cerr << "Unable to initialize data subsystem. Exiting..." << std::endl;
             exit(1);
         }
-    }
+   }
    ~~~~~~
 
 ### 2. Register listener
 
-Register the listener with the data connection manager for listening to data call status
+Register the listener with the data connection manager for listening to data call status.
 
    ~~~~~~{.cpp}
-    dataConnMgr->registerListener(dataListener);
+   dataConnMgr->registerListener(dataListener);
    ~~~~~~
 
 ### 3. Start data call on the mentioned slot Id and profile id and operation type
 
    ~~~~~~{.cpp}
     {
-        std::promise<telux::common::ErrorCode> p;
-        telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IPV4;
-        dataConnMgr->startDataCall(
+     std::promise<telux::common::ErrorCode> p;
+     telux::data::IpFamilyType ipFamilyType = telux::data::IpFamilyType::IPV4;
+     dataConnMgr->startDataCall(
             profileId, ipFamilyType,
             [&](const std::shared_ptr<telux::data::IDataCall> &dataCall,
                 telux::common::ErrorCode errorCode) {
@@ -57,11 +55,12 @@ Register the listener with the data connection manager for listening to data cal
                 p.set_value(errorCode);
             },
             opType);
-        telux::common::ErrorCode errorCode = p.get_future().get();
-        if (errorCode != telux::common::ErrorCode::SUCCESS) {
-            std::cerr << "Failed to start data call. Exiting..." << std::endl;
-            exit(1);
-        }
+
+     telux::common::ErrorCode errorCode = p.get_future().get();
+     if (errorCode != telux::common::ErrorCode::SUCCESS) {
+         std::cerr << "Failed to start data call. Exiting..." << std::endl;
+         exit(1);
+     }
     }
    ~~~~~~
 
@@ -71,21 +70,21 @@ When the data call is connected, obtain a reference to the data call that was br
 information would be sent to the listener.
 
    ~~~~~~{.cpp}
-    // In the listener
-    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
+   // In the listener
+   void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override {
         std::cout << "\n onDataCallInfoChanged";
         logDataCallDetails(dataCall);
         if (dataCall->getDataCallStatus() == telux::data::DataCallStatus::NET_CONNECTED) {
             p_.set_value(dataCall);
         }
-    }
+   }
 
-    // In the main method
-    std::shared_ptr<telux::data::IDataCall> dataCall = dataCallFuture.get();
-    if (dataCall == nullptr) {
+   // In the main method
+   std::shared_ptr<telux::data::IDataCall> dataCall = dataCallFuture.get();
+   if (dataCall == nullptr) {
         std::cerr << "Could not get data call object. Exiting..." << std::endl;
         exit(1);
-    }
+   }
    ~~~~~~
 
 ### 5. Resolve the remote host using the DNS address provided by the data call
@@ -97,8 +96,8 @@ answers are not output by dig, but only the IP addresses are provided. We parse 
 provided by dig to see if it is a valid IP address.
 
    ~~~~~~{.cpp}
-    // The resolve method
-    std::string resolve(std::string domain, std::string dnsAddress) {
+   // The resolve method
+   std::string resolve(std::string domain, std::string dnsAddress) {
         std::cout << "Resolving " << domain << " using DNS server at " << dnsAddress << std::endl;
         FILE *cmd;
         std::string ipAddress;
@@ -126,15 +125,15 @@ provided by dig to see if it is a valid IP address.
         }
         std::cout << "\n\n";  // Declutters output from dig
         return ipAddress;
-    }
+   }
 
-    // In the main method
-    std::string remoteIp = resolve(domain, dataCall->getIpv4Info().addr.primaryDnsAddress);
-    if (remoteIp == "") {
-        std::cerr << "Could not resolve " << domain << ". Exiting..." << std::endl;
-        exit(1);
-    }
-    std::cout << "Resolved " << domain << " to " << remoteIp << std::endl;
+   // In the main method
+   std::string remoteIp = resolve(domain, dataCall->getIpv4Info().addr.primaryDnsAddress);
+   if (remoteIp == "") {
+       std::cerr << "Could not resolve " << domain << ". Exiting..." << std::endl;
+       exit(1);
+   }
+   std::cout << "Resolved " << domain << " to " << remoteIp << std::endl;
    ~~~~~~
 
 ### 6. Connect to the remote host

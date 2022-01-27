@@ -1,61 +1,19 @@
 /**
-@page using_sample_apps  Sample Apps
+@page using_sample_apps Sample Applications
 
-This section has instructions to run the sample applications that come with the Telematics SDK.
-Sample applications use the cmake build system. You need to have cmake version 2.8.9 or later on your host machine
+Sample applications provided by TelSDK quickly demonstrates how TelSDK APIs can be used to achieve end functionality. Full source code for all sample applications is in /telux/public/apps/samples directory.
 
-@section section_setup_build_environment Source the environment
+<b>Note</b>: Some of the applications contain default values for parameters that might differ from product to product. These values can be overridden by using configuration files used by these applications. The configuration is specified in the form of key-value pair. For example, the number to dial used by make_call_app can be specified by DIAL_NUMBER item and then application can be run passing this file as command-line argument to application.
 
-- Source the build environment:
-      \code{.sh}
-      $ cd my_sdk_install; source environment-setup-cortexa8hf-vfp-neon-oe-linux-gnueabi
-      \endcode
+\code{.cpp}
+# Contents of /data/make_call_app.conf
+DIAL_NUMBER = +1234512345
 
-Now your development environment is set for the terminal, start your development.
+# Run the application
+$ make_call_app /data/make_call_app.conf
+\endcode
 
-@section complile_samples Compile sample apps
-
-- Goto telux/samples directory and create a build folder
-      \code{.sh}
-      $ cd telux/samples
-      $ mkdir -p build; cd build
-      \endcode
-
-- Compile all the samples:
-      \code{.cpp}
-      $ cmake -DBUILD_ALL_SAMPLES:BOOL=ON -DCMAKE_INSTALL_PREFIX=./install ..
-      $ make clean && make install
-      \endcode
-
-
-Compile telsdk_console_app:
-
-- Goto respective sample program for compiling individual programs
-      \code{.sh}
-      $ cd samples/telsdk_console_app
-      $ mkdir -p build; cd build
-      $ cmake -DCMAKE_INSTALL_PREFIX=./install ..
-      $ make clean && make install
-      \endcode
-@section section_install_the_sample Install apps on the device
-
-- Push your binary to the /data location on the device
-   \code{.sh}
-   # this install all the sample apps
-   user@machine:/build/install/bin$ adb push . /data/
-   user@machine:/build/install/bin$ adb shell
-   # cd data
-   # ./telsdk_console_app
-
-   # to install telsdk_console app
-   user@machine:telsdk_console_app/build/install/bin$ adb push . /data/
-   \endcode
-
-The following sections provide further information
-- @subpage sample_apps_settings
-- @subpage logger_settings
 - @subpage audio
-- @subpage common
 - @subpage cv2x
 - @subpage phone
 - @subpage data

@@ -1,9 +1,7 @@
-Using Request Network Selection Mode API {#network_selection}
-=============================================================
+Request network selection mode {#network_selection}
+===================================================
 
-# Using Request Network Selection Mode API
-
-Please follow below steps to request network selection mode
+This sample application demonstrates how to request current network selection mode.
 
 ### 1. Get phone factory and network selection manager instances
 
@@ -13,13 +11,13 @@ Please follow below steps to request network selection mode
       = phoneFactory.getNetworkSelectionManager(DEFAULT_SLOT_ID);
    ~~~~~~
 
-### 2. Wait for the network selection subsystem initialization ###
+### 2. Wait for the network selection subsystem initialization
 
    ~~~~~~{.cpp}
    bool subSystemStatus = networkMgr->isSubsystemReady();
    ~~~~~~
 
-### 2.1 If network selection subsystem is not ready, wait for it to be ready ###
+### 2.1 If network selection subsystem is not ready, wait for it to be ready
 
    ~~~~~~{.cpp}
    if(!subSystemStatus) {
@@ -31,7 +29,7 @@ Please follow below steps to request network selection mode
    }
    ~~~~~~
 
-### 3. Exit the application, if SDK is unable to initialize network selection subsystem ###
+### 3. Exit the application, if network selection subsystem can not be initialzed
 
    ~~~~~~{.cpp}
    if(subSystemsStatus) {
@@ -42,7 +40,7 @@ Please follow below steps to request network selection mode
    }
    ~~~~~~
 
-### 4. Implement response callback to receive response for request network selection mode ###
+### 4. Implement response callback to receive response for request network selection mode
 
    ~~~~~~{.cpp}
    class SelectionModeResponseCallback {
@@ -63,7 +61,7 @@ Please follow below steps to request network selection mode
    };
    ~~~~~~
 
-### 5. Send requestNetworkSelectionMode along with required function object ###
+### 5. Send requestNetworkSelectionMode along with response callback
 
    ~~~~~~{.cpp}
    if(networkMgr) {
@@ -74,5 +72,4 @@ Please follow below steps to request network selection mode
    }
    ~~~~~~
 
-### 6. Receive callback for get network selection mode request in selectionModeResponse function ###
-
+Now, selectionModeResponse() callback gets invoked with current network selection mode information.

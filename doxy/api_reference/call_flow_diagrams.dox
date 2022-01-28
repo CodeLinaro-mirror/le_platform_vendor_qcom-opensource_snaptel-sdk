@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -1968,7 +1968,7 @@ If DMZ is needed:
 
 Applications need to have "radio" Linux group permissions to be able to operate successfully with underlying services.
 
-@subsection cv2x_retrieve_update_config_callflow Retrieve/Update C-V2X configuration
+@subsection cv2x_retrieve_update_config_callflow Retrieve/Update C-V2X Configuration
 
 @anchor fig_cv2x_config_callflow
 @latexonly
@@ -1976,77 +1976,60 @@ Applications need to have "radio" Linux group permissions to be able to operate 
   \centering
   \includegraphics[scale=0.5]{cv2x_config_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Retrieve/Update C-V2X configuration call flow}
+  \caption{Retrieve/Update C-V2X Configuration Call Flow - C++ version}
   \label{fig_cv2x_config_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{cv2x_config_call_flow.png,Retrieve/Update C-V2X configuration,80,80,Retrieve/Update C-V2X configuration call flow}
+@html_image{cv2x_config_call_flow.png,Retrieve/Update C-V2X Configuration,60,60,Retrieve/Update C-V2X Configuration Call Flow - C++ Version}
 
-1. Application requests C-V2X factory for a C-V2X Config instance.
-2. C-V2X factory creates ICv2xConfig object and calls init() method of ICv2xConfig.
-3. C-V2X config starts initialization asynchronously.
-4. C-V2X factory return ICv2xConfig object to application.
-5. C-V2X factory is asynchronously notified of the readiness status of the C-V2X config via the initialization callback.
-6. C-V2X factory calls application-supplied callback to notify the readiness status of C-V2X config (either SERVICE_AVAILABLE or SERVICE_FAILED). If the status is SERVICE_AVAILABLE, application can then request to retrieve or update C-V2X configuration.
-7. Application requests to retrieve C-V2X configuration by calling retrieveConfiguration and supplying it with a path for the storing of config XML file.
-8. C-V2X config sends request to modem and waits for response asynchronously.
-9. Application receives synchronous status.
-10. Application is asynchronously notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback.
-11. Application requests to update C-V2X configuration by calling updateConfiguration and supplying it with a path to the new config XML file.
-12. C-V2X config sends request to modem and waits for response asynchronously.
-13. Application receives synchronous status.
-14. Application is asynchronously notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback.
+This call flow diagram describes the sequence of steps for retrieving or updating C-V2X configuration file using C++ version APIs.
 
-@subsection cv2x_radio_manager_initialization_callflow C-V2X radio manager initialization
+1. Application requests for a ICv2xFactory instance.
+2. Reference to singleton ICv2xFactory is returned to application.
+3. Application requests C-V2X factory for a ICv2xConfig instance.
+4. C-V2X factory creates ICv2xConfig object and calls init() method of ICv2xConfig.
+5. C-V2X config starts initialization asynchronously.
+6. C-V2X factory return ICv2xConfig object to application.
+7. C-V2X factory is asynchronously notified of the readiness status of the C-V2X config via the initialization callback.
+8. C-V2X factory calls application-supplied callback to notify the readiness status of C-V2X config (either SERVICE_AVAILABLE or SERVICE_FAILED). If the status is SERVICE_AVAILABLE, application can then request to retrieve or update C-V2X configuration.
+9. Application requests to retrieve C-V2X configuration by calling retrieveConfiguration and supplying it with a path for the storing of config XML file.
+10. C-V2X config sends request to modem and waits for response asynchronously.
+11. Application receives synchronous status.
+12. Application is asynchronously notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback.
+13. Application requests to update C-V2X configuration by calling updateConfiguration and supplying it with a path to the new config XML file.
+14. C-V2X config sends request to modem and waits for response asynchronously.
+15. Application receives synchronous status.
+16. Application is asynchronously notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback.
+17. Application registers ICv2xConfigListener to get notification of C-V2X configuration events if needed.
+18. Application receives synchronous status.
+19. Application gets notification of C-V2X configuration events if the C-V2X configuration being used in the system has been changed or expired.
+20. Application deregisters ICv2xConfigListener to stop listening to C-V2X configuration events.
+21. Application receives synchronous status.
 
-@anchor fig_cv2x_radio_manager_initialization_callflow
+
+@anchor fig_cv2x_config_callflow_c
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{cv2x_radio_manager_init_call_flow.png}
+  \includegraphics[scale=0.5]{cv2x_config_call_flow_c.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{C-V2X radio manager initialization call flow}
-  \label{fig_cv2x_radio_manager_initialization_callflow}
+  \caption{Retrieve/Update C-V2X Configuration Call Flow - C Version}
+  \label{fig_cv2x_config_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{cv2x_radio_manager_init_call_flow.png,C-V2X radio manager initialization,80,80,C-V2X radio manager initialization call flow}
+@html_image{cv2x_config_call_flow_c.png,Retrieve/Update C-V2X Configuration,50,50,Retrieve/Update C-V2X Configuration Call Flow - C Version}
 
-This call flow diagram describes the sequence of steps for initialing the ICv2xRadioManager object. Applications must perform this sequence before calling any other methods on the object.
+This call flow diagram describes the sequence of steps for retrieving or updating C-V2X configuration file using C version APIs.
 
-1. Application requests C-V2X factory for a C-V2X radio manager instance.
-2. C-V2X factory creates ICv2xRadioManager object and calls init() method of ICv2xRadioManager.
-3. C-V2X radio manager starts initialization asynchronously.
-4. C-V2X factory returns ICv2xRadioManager object to application.
-5. C-V2X factory is asynchronously notified of the readiness status of the C-V2X radio manager via the initialization callback.
-6. C-V2X factory calls application-supplied callback to notify the readiness status of C-V2X radio manager (either SERVICE_AVAILABLE or SERVICE_FAILED).
-
-@subsection cv2x_get_status_callflow Get C-V2X status
-
-@anchor fig_cv2x_get_status_callflow
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{cv2x_get_status_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Get C-V2X status call flow}
-  \label{fig_cv2x_get_status_callflow}
-\end{figure}
-@endlatexonly
-
-@html_image{cv2x_get_status_call_flow.png,Get C-V2X status,60,60,Get C-V2X status call flow}
-
-Note: Application must perform C-V2X radio manager initialization before calling any methods of ICv2xRadioManager.
-
-1. Application requests current C-V2X status using requestCv2xStatus method.
-2. Application receives synchronous status (either SUCCESS or FAILED) which indicates if the request was sent successfully.
-3. Application is asynchronously notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback. If SUCCESS, the requested C-V2X status is returned in the callback.
-4. Application register a listener for getting notifications of C-V2X status update.
-5. Status of register listener (either SUCCESS or FAILED) will be returned to the application.
-6. Application will get C-V2X status updates.
-7. Application deregister the listener.
-8. Status of deregistering listener (either SUCCESS or FAILED) will be returned to the application.
+1. Application requests to retrieve C-V2X configuration by calling v2x_retrieve_configuration and supplying it with a path for the storing of config XML file.
+2. Application receives synchronous status.
+3. Application requests to update C-V2X configuration by calling v2x_update_configuration and supplying it with a path to the new config file.
+4. Application receives synchronous status.
+5. Application registers cv2x_config_event_listener to get notification of C-V2X configuration events if needed.
+6. Application receives synchronous status.
+7. Application gets notification of C-V2X configuration events if the C-V2X configuration being used in the system has been changed or expired.
 
 @subsection cv2x_start_stop_callflow Start/Stop C-V2X Mode
 
@@ -2056,14 +2039,15 @@ Note: Application must perform C-V2X radio manager initialization before calling
   \centering
   \includegraphics[scale=0.5]{cv2x_start_stop_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Start/Stop C-V2X mode call flow}
+  \caption{Start/Stop C-V2X Mode Call Flow - C++ Version}
   \label{fig_cv2x_start_stop_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{cv2x_start_stop_call_flow.png,Start/Stop C-V2X mode,40,40,Start/Stop C-V2X mode}
+@html_image{cv2x_start_stop_call_flow.png,Start/Stop C-V2X Mode,40,40,Start/Stop C-V2X Mode - C++ Version}
 
-Note: Application must perform C-V2X radio manager initialization before calling any methods of ICv2xRadioManager. In normal operation, applications do not need to start or stop C-V2X mode. The system is configured by default to start C-V2X mode at boot. We include the call flow below for the sake of completeness.
+This call flow diagram describes the sequence of steps for starting or stopping C-V2X mode using C++ version APIs.
+Application must perform C-V2X radio manager initialization before calling any methods of ICv2xRadioManager. In normal operation, applications do not need to start or stop C-V2X mode. The system is configured by default to start C-V2X mode at boot. We include the call flow below for the sake of completeness.
 
 1. Application requests to put modem into C-V2X mode using startCv2x method.
 2. Application receives synchronous status which indicates if the start request was sent successfully.
@@ -2072,34 +2056,238 @@ Note: Application must perform C-V2X radio manager initialization before calling
 5. Application receives synchronous status which indicates if the stop request was sent successfully.
 6. Application is asynchronously notified of the status of the stop request (either SUCCESS or FAILED) via the application-supplied callback.
 
-@subsection cv2x_radio_initialization_callflow C-V2X radio Initialization
+@anchor fig_cv2x_start_stop_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_start_stop_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Start/Stop C-V2X Mode Call Flow - C Version}
+  \label{fig_cv2x_start_stop_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_start_stop_call_flow_c.png,Start/Stop C-V2X Mode - C Version,20,20,Start/Stop C-V2X Mode - C Version}
+
+This call flow diagram describes the sequence of steps for starting or stopping C-V2X mode using C version APIs.
+
+1. Application requests to put modem into C-V2X mode using start_v2x_mode method.
+2. Application receives synchronous status which indicates if the operation was successful.
+3. Application requests to disable C-V2X mode using stop_v2x_mode method.
+4. Application receives synchronous status which indicates if the operation was successful.
+
+
+@subsection cv2x_radio_ctrl C-V2X Radio Control Flow
+@anchor fig_cv2x_radio_ctrl
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_radio_ctrl_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Radio Control Flow - C++ Version}
+  \label{fig_cv2x_radio_ctrl }
+\end{figure}
+@endlatexonly
+@html_image{cv2x_radio_ctrl_flow.png, C-V2X Radio Control Flow,60,60,C-V2X Radio Control Flow - C++ Version}
+
+This call flow diagram describes the sequence of steps for overall C-V2X radio control flow using C++ version APIs.
+
+1. Application performs C-V2X radio manager initialization and waits for the readiness. See steps 1~8 in @ref fig_cv2x_radio_initialization_callflow.
+2. Application registers ICv2xListener to get C-V2X status update notification and requests for the initiate C-V2X status. See steps 1~6 in @ref fig_cv2x_get_status_callflow.
+3. Application waits for C-V2X status to go to SUSPEND/ACTIVE.
+4. Application performs C-V2X radio initialization and waits for the readiness. See steps 9~17 in @ref fig_cv2x_radio_initialization_callflow.
+5. Application registers C-V2X radio listener to get C-V2X radio related notifications (L2 address update, SPS offset update, SPS scheduling update, C-V2X radio capabilities update) and requests for the initial C-V2X radio capabilities if needed. See steps 1~6 in @ref fig_cv2x_get_capabilities_callflow.
+6. Application registers all Tx/Rx flows. See @ref fig_cv2x_radio_rx_sub_callflow/@ref fig_cv2x_radio_event_flow_callflow/@ref fig_cv2x_radio_sps_flow_callflow.
+7. Application monitors C-V2X status change during operation.
+ - 7.1 If C-V2X Tx/Rx status is active, application performs transmitting/receiving.
+ - 7.2 If C-V2X Tx/Rx status goes to SUSPEND, application should suspend transmitting/receiving, log the event and resume operation when C-V2X Tx/Rx status goes to ACTIVE again.
+ - 7.3 If C-V2X Tx/Rx status goes to INACTIVE, application should stop transmitting/receiving, log the event and go back to step 3 for recovery.
+8. Application should handle all trappable signals like SIGINT/SIGHUP/SIGTERM, all Tx/Rx flows must be deregistered before exiting.
+
+@anchor fig_cv2x_radio_ctrl_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_radio_ctrl_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Radio Control Flow - C Version}
+  \label{fig_cv2x_radio_ctrl }
+\end{figure}
+@endlatexonly
+@html_image{cv2x_radio_ctrl_flow_c.png, C-V2X Radio Control Flow,40,40,C-V2X Radio Control Flow - C Version}
+
+This call flow diagram describes the sequence of steps for overall C-V2X radio control flow using C version APIs.
+
+1. Application performs C-V2X radio initialization and waits for the readiness in application provided callback. See @ref fig_cv2x_radio_initialization_callflow_c. Application should check the C-V2X radio initialization status, retry or exit if failing.
+2. Application registers v2x_ext_radio_status_listener to get C-V2X status update notification and requests for the initiate C-V2X status. See steps 1~5 in @ref fig_cv2x_get_status_callflow_c.
+3. Application waits for C-V2X status to go to SUSPEND/ACTIVE.
+4. Application requests for the initial C-V2X radio capabilities if needed. See @ref fig_cv2x_get_capabilities_callflow_c.
+5. Application registers all Tx/Rx flows. See @ref fig_cv2x_radio_rx_sub_callflow_c/@ref fig_cv2x_radio_event_flow_callflow_c/@ref fig_cv2x_radio_sps_flow_callflow_c.
+6. Application monitors C-V2X status change during operation.
+ - 6.1 If C-V2X Tx/Rx status is active, application performs transmitting/receiving.
+ - 6.2 If C-V2X Tx/Rx status goes to SUSPEND, application should suspend transmitting/receiving, log the event and resume operation when C-V2X Tx/Rx status goes to ACTIVE again.
+ - 6.3 If C-V2X Tx/Rx status goes to INACTIVE, application should stop transmitting/receiving, log the event, wait for C-V2X Tx/Rx status to go to SUSPEND or ACTIVE and then go back to step 1 for recovery.
+7. Application should handle all trappable signals like SIGINT/SIGHUP/SIGTERM, all Tx/Rx flows must be deregistered before exiting.
+
+
+@subsection cv2x_radio_initialization_callflow C-V2X Radio Initialization
 
 @anchor fig_cv2x_radio_initialization_callflow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{cv2x_radio_initialization_call_flow.png}
+  \includegraphics[scale=0.5]{cv2x_radio_init_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{C-V2X radio initialization call flow}
+  \caption{C-V2X Radio Initialization Call Flow - C++ Version}
   \label{fig_cv2x_radio_initialization_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{cv2x_radio_initialization_call_flow.png,C-V2X radio initialization call flow,60,60,C-V2X radio initialization call flow}
+@html_image{cv2x_radio_init_call_flow.png,C-V2X Radio Initialization,60,60,C-V2X Radio Initialization Call Flow - C++ Version}
 
-This call flow diagram describes the sequence of steps for initialing the ICv2xRadio object. Applications must perform this sequence before calling any other methods on the object. Note: for simplicity's sake, we omit this sequence in the remaining C-V2X Radio call flow diagrams but it's inclusion is implied.
+This call flow diagram describes the sequence of steps for initializing the ICv2xRadioManager and the ICv2xRadio object using C++ version APIs. Applications must initialize ICv2xRadioManager/ICv2xRadio object and wait for the readiness before calling any other methods on the objects.
 
-1. Application requests C-V2X Radio from ICv2xRadioManager.
-2. C-V2X radio manager creates ICv2xRadio object and calls method init().
-3. C-V2X radio starts initialization asynchronously.
-4. C-V2X radio manager returns ICv2xRadio object to application.
-5. Application queries C-V2X radio's readiness state using isReady() method.
-6. C-V2X radio returns a bool indicating whether it is ready to be used.
-7. If C-V2X radio is not ready, the application calls onReady() method.
-8. C-V2X radio returns a future object.
-9. Application calls future's get() method and blocks until C-V2X radio has completed its initialization steps. The return value of get() indicates the status of the initialization (either SUCCESS or FAILED).
+1. Application requests for a ICv2xFactory instance.
+2. Reference to singleton ICv2xFactory is returned to application.
+3. Application requests C-V2X factory for an ICv2xRadioManager instance.
+4. C-V2X factory creates ICv2xRadioManager object and calls init() method of ICv2xRadioManager.
+5. C-V2X radio manager starts initialization asynchronously.
+6. C-V2X factory returns ICv2xRadioManager object to application.
+7. C-V2X factory is asynchronously notified of the readiness status of the C-V2X radio manager via the initialization callback.
+8. C-V2X factory calls application-supplied callback to notify the readiness status of C-V2X radio manager (either SERVICE_AVAILABLE or SERVICE_FAILED).
+9. Application requests C-V2X Radio from ICv2xRadioManager.
+10. C-V2X radio manager creates ICv2xRadio object and calls method init().
+11. C-V2X radio starts initialization asynchronously.
+12. C-V2X radio manager returns ICv2xRadio object to application.
+13. Application queries C-V2X radio's readiness state using isReady() method.
+14. C-V2X radio returns a bool indicating whether it is ready to be used.
+15. If C-V2X radio is not ready, the application calls onReady() method.
+16. C-V2X radio returns a future object.
+17. Application calls future's get() method and blocks until C-V2X radio has completed its initialization steps. The return value of get() indicates the status of the initialization (either SUCCESS or FAILED).
 
-@subsection cv2x_radio_rx_sub_callflow C-V2X radio RX subscription
+@anchor fig_cv2x_radio_initialization_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_radio_init_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Radio Initialization Call Flow - C Version}
+  \label{fig_cv2x_radio_initialization_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_radio_init_call_flow_c.png,C-V2X Radio Initialization,50,50,C-V2X Radio Initialization Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for initialing C-V2X radio using C version APIs.
+Applications must initialize C-V2X radio and wait for the readiness before calling any other methods of C-V2X radio.
+
+1. Application calls v2x_radio_init_v3 to initialize C-V2X radio manager and radio, provides callback functions as needed. Callback function v2x_radio_init_complete is mandatory for getting the C-V2X radio initialization status.
+2. Application gets return value (0 on success or negative value on error). If the return value is success, the handles of C-V2X IP and non-IP radio interface are provided via the application-supplied pointers ip_handle_p and non_ip_handle_p. The interface handles can be used to specify IP or non-IP traffic type when registering C-V2X radio Tx/Rx flows.
+3. Application gets the notification of C-V2X radio initialization status (V2X_STATUS_SUCCESS or V2X_STATUS_FAIL) via the application-supplied v2x_radio_init_complete callback function if the return value of v2x_radio_init_v3 is successful.
+
+@subsection cv2x_get_status_callflow Get C-V2X Status
+
+@anchor fig_cv2x_get_status_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_get_status_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Get C-V2X Status Call Flow - C++ Version}
+  \label{fig_cv2x_get_status_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_get_status_call_flow.png,Get C-V2X Status,40,40,Get C-V2X Status Call Flow - C++ Version}
+
+This call flow diagram describes the sequence of steps for getting C-V2X radio status using C++ version APIs.
+Application must perform C-V2X radio manager initialization before calling any methods of ICv2xRadioManager.
+
+1. Application registers a listener for getting notifications of C-V2X status update.
+2. Status of register listener (either SUCCESS or FAILED) will be returned to the application.
+3. Application requests the initial C-V2X status using requestCv2xStatus method.
+4. Application receives synchronous status (either SUCCESS or FAILED) which indicates if the request was sent successfully.
+5. Application is asynchronously notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback. If success, current C-V2X status is supplied via callback.
+6. Application gets notification of C-V2X status update via method onStatusChanged of ICv2xRadioListener.
+7. Application deregister the listener.
+8. Status of deregistering listener (either SUCCESS or FAILED) will be returned to the application.
+
+@anchor fig_cv2x_get_status_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_get_status_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Get C-V2X Status Call Flow - C Version}
+  \label{fig_cv2x_get_status_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_get_status_call_flow_c.png,Get C-V2X Status,40,40,Get C-V2X Status Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for getting C-V2X radio status using C version APIs.
+Application must perform C-V2X radio initialization before calling any methods of C-V2X radio.
+
+1. Application registers a listener for getting notifications of C-V2X status update.
+2. Application gets the return value (V2X_STATUS_SUCCESS
+or V2X_STATUS_FAIL) which indicates if the operation was successfully performed. If it succeeded, the C-V2X overall status and per pool status are provided via the application-supplied pointer.
+3. Application requests the initial C-V2X status using v2x_get_ext_radio_status method.
+4. Application gets the return value (V2X_STATUS_SUCCESS
+or V2X_STATUS_FAIL) which indicates if the operation was successfully performed.
+5. Application gets notification of C-V2X status update.
+6. Application deregister the listener via setting a NULL listener.
+7. Application gets the return value (V2X_STATUS_SUCCESS
+or V2X_STATUS_FAIL) which indicates if the operation was successfully performed.
+
+@subsection cv2x_get_capabilities_callflow Get C-V2X Capabilities
+
+@anchor fig_cv2x_get_capabilities_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_get_capabilities_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Get C-V2X Capabilities Call Flow - C++ Version}
+  \label{fig_cv2x_get_capabilities_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_get_capabilities_call_flow.png,Get C-V2X Capabilities,40,40,Get C-V2X Capabilities Call Flow - C++ Version}
+
+This call flow diagram describes the sequence of steps for getting C-V2X radio capabilities using C++ version APIs.
+Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
+
+1. Application registers a listener for getting notifications of C-V2X capabilities update.
+2. Status of register listener (either SUCCESS or FAILED) will be returned to the application.
+3. Application requests the initial C-V2X capabilities using requestCapabilities method.
+4. Application receives synchronous status (either SUCCESS or FAILED) which indicates if the request was sent successfully.
+5. Application is asynchronously notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback. If success, current C-V2X capabilities is supplied via callback.
+6. Application gets notification of C-V2X capabilities update via method onCapabilitiesChanged of ICv2xRadioListener.
+7. Application deregister the listener.
+8. Status of deregistering listener (either SUCCESS or FAILED) will be returned to the application.
+
+@anchor fig_cv2x_get_capabilities_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_get_capabilities_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Get C-V2X Capabilities Call Flow - C Version}
+  \label{fig_cv2x_get_capabilities_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_get_capabilities_call_flow_c.png,Get C-V2X Capabilities,60,60,Get C-V2X Capabilities Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for getting C-V2X radio capabilities using C version APIs. Application must perform C-V2X radio initialization and provide C-V2X capabilities callback to get C-V2X radio capabilities update notification.
+
+1. Application requests the initial C-V2X capabilities using v2x_radio_query_parameters method.
+2. Application gets the return value (V2X_STATUS_SUCCESS
+or V2X_STATUS_FAIL) which indicates if the operation was successfully performed. If it succeeded, C-V2X capabilities are provided via the application-supplied pointer.
+3. Application gets notification of C-V2X capabilities update via application-supplied callback v2x_radio_capabilities_listener.
+
+
+@subsection cv2x_radio_rx_sub_callflow C-V2X Radio RX Subscription
 
 @anchor fig_cv2x_radio_rx_sub_callflow
 @latexonly
@@ -2107,23 +2295,73 @@ This call flow diagram describes the sequence of steps for initialing the ICv2xR
   \centering
   \includegraphics[scale=0.5]{cv2x_radio_rx_sub_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{C-V2X radio RX subscription call flow}
+  \caption{C-V2X Radio RX Subscription Call Flow - C++ Version}
   \label{fig_cv2x_radio_rx_sub_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{cv2x_radio_rx_sub_call_flow.png,C-V2X radio RX subscription call flow,60,60,C-V2X radio RX subscription call flow}
+@html_image{cv2x_radio_rx_sub_call_flow.png,C-V2X Radio RX Subscription Call Flow,60,60,C-V2X Radio RX Subscription Call Flow - C++ Version}
 
-Note: Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
+This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Rx flows using C++ version APIs.
+Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
 
-1. Application requests a new RX subscription from the C-V2X radio using createRxSubscription method.
-2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
-3. C-V2X radio sends asynchronous notification via the callback function on the status of the request. If SUCCESS, the RX subscription is returned in the callback.
-4. Application requests to close the RX subscription.
-5. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
-6. C-V2X radio sends asynchronous notification via the callback (if a callback was specified) indicating the status of the request.
+There are three Rx modes supported for non-IP traffic,
+- Wildcard Rx: Receive all service IDs on a single port. This mode could break catchall Rx and specific service ID Rx.
+- Catchall Rx: Receive the specified service IDs on a single port. This mode can be used for Rx-only devices for which no Tx flow need to be created.
+- Specific service ID Rx: Receive a specified service ID on a single port. Application can receive different service IDs on different ports by registering a pair of Tx and Rx flows for each service ID.
 
-@subsection cv2x_radio_event_flow_callflow C-V2X radio TX event flow
+<b>NOTE:</b> For catchall or specific service ID Rx mode, filtering for received broadcast packets is implemented in low layer based on the service ID and its mapped destination L2 address, assuming that each service ID is mapped to a unique destination L2 address for all Tx and Rx devices. If this assumption is not valid, for example, in ETSI standards all broadcast service IDs are using same destination L2 address 0xFFFFFFFF, then application should choose wildcard Rx method and do filtering in application layer.
+
+1. Application requests to enable wildcard Rx mode by specifying no service ID when creating Rx flow.
+2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request for creating Rx flow was sent successfully.
+3. C-V2X radio sends asynchronous notification via the callback function on the status of the request for creating Rx flow. If SUCCESS, the RX flow is returned in the callback.
+4. Application requests to enable catchall Rx mode by specifying a valid service ID list when creating Rx flow.
+5. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request for creating Rx flow was sent successfully.
+6. C-V2X radio sends asynchronous notification via the callback function on the status of the request for creating Rx flow. If SUCCESS, the RX flow is returned in the callback.
+7. Application requests to create a Tx event flow before creating Rx flow to enable specific service ID Rx mode. The service ID and the port number of Tx and Rx flow should be the same.
+8. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request for creating Tx flow was sent successfully.
+9. C-V2X radio sends asynchronous notification via the callback function on the status of creating Tx flow. If SUCCESS, the TX event flow is returned in the callback.
+10. Application requests to enable specific service ID Rx mode if the corresponding Tx flow has been registered successfully.
+11. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request for creating Rx flow was sent successfully.
+12. C-V2X radio sends asynchronous notification via the callback function on the status of the request for creating Rx flow. If SUCCESS, the RX flow is returned in the callback.
+13. Application requests to closes the Tx event flow registered for specific service ID Rx mode.
+14. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request for closing Tx flow was sent successfully.
+15. C-V2X radio sends asynchronous notification via the callback function on the status of closing Tx flow.
+16. Application requests to close the RX flow.
+17. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request for closing Rx flow was sent successfully.
+18. C-V2X radio sends asynchronous notification via the callback (if a callback was specified) indicating the status of closing Rx flow.
+
+
+@anchor fig_cv2x_radio_rx_sub_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_radio_rx_sub_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Radio RX Subscription Call Flow - C Version}
+  \label{fig_cv2x_radio_rx_sub_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_radio_rx_sub_call_flow_c.png,C-V2X Radio RX Subscription Call Flow,60,60,C-V2X Radio RX Subscription Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Rx flows using C version APIs.
+Application must perform C-V2X radio initialization before calling any methods of C-V2X radio.
+
+1. Application requests to enable wildcard Rx mode by specifying no service ID when creating Rx flow.
+2. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the Rx flow creation was successful.
+3. Application requests to enable catchall Rx mode by specifying a valid service ID list when creating Rx flow.
+4. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the Rx flow creation was successful.
+5. Application registers a Tx event flow before creating Rx flow to enable specific service ID Rx mode. The service ID and the port number of Tx and Rx flow should be the same.
+6. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the Tx event flow registration was successful.
+7. Application requests to enable specific service ID Rx mode if the corresponding Tx flow has been registered successfully.
+8. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the Rx flow creation was successful.
+9. Application requests to closes the Tx event flow registered for specific service ID Rx mode.
+10. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the Tx flow has been closed successfully.
+11. Application requests to close the Rx flow.
+12. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the Rx flow has been closed successfully.
+
+@subsection cv2x_radio_event_flow_callflow C-V2X Radio TX Event Flow
 
 @anchor fig_cv2x_radio_event_flow_callflow
 @latexonly
@@ -2131,14 +2369,15 @@ Note: Application must perform C-V2X radio initialization before calling any met
   \centering
   \includegraphics[scale=0.5]{cv2x_radio_event_flow_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{C-V2X radio TX event flow call flow}
+  \caption{C-V2X Radio TX Event Flow Call Flow - C++ Version}
   \label{fig_cv2x_radio_event_flow_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{cv2x_radio_event_flow_call_flow.png,C-V2X radio TX event flow call flow,60,60,C-V2X radio TX event flow call flow}
+@html_image{cv2x_radio_event_flow_call_flow.png,C-V2X Radio TX Event Flow Call Flow,60,60,C-V2X Radio TX Event Flow Call Flow - C++ Version}
 
-Note: Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
+This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Tx event flows using C++ version APIs.
+Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
 
 1. Application requests a new TX event flow from the C-V2X radio using createTxEventFlow method.
 2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
@@ -2147,7 +2386,28 @@ Note: Application must perform C-V2X radio initialization before calling any met
 5. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
 6. C-V2X radio sends asynchronous notification via the callback (if a callback was specified) indicating the status of the request.
 
-@subsection cv2x_radio_sps_flow_callflow C-V2X radio TX SPS flow
+@anchor fig_cv2x_radio_event_flow_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{cv2x_radio_event_flow_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Radio TX Event Flow Call Flow - C++ Version}
+  \label{fig_cv2x_radio_event_flow_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_radio_event_flow_call_flow_c.png,C-V2X Radio TX Event Flow Call Flow,60,60,C-V2X Radio TX Event Flow Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Tx event flows using C version APIs.
+Application must perform C-V2X radio initialization before calling any methods of C-V2X radio.
+
+1. Application requests a new TX event flow from the C-V2X radio using v2x_radio_tx_event_sock_create_and_bind_v3 method and specifies the IP or non-IP traffic type, C-V2X service ID, port number, event flow information and pointers that that point to the created socket and socket address on success.
+2. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the operation was successfully performed. If the return value is 0, application gets the socket value from the application-supplied pointer and then starts sending C-V2X data packets using the socket.
+3. Application requests to close the RX subscription by calling method v2x_radio_sock_close and supplying with a pointer that points to the TX socket created.
+4. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the operation was successfully performed
+
+@subsection cv2x_radio_sps_flow_callflow C-V2X Radio TX SPS flow
 
 @anchor fig_cv2x_radio_sps_flow_callflow
 @latexonly
@@ -2155,14 +2415,15 @@ Note: Application must perform C-V2X radio initialization before calling any met
   \centering
   \includegraphics[scale=0.41]{cv2x_radio_sps_flow_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{C-V2X radio SPS flow call flow}
+  \caption{C-V2X Radio SPS Flow Call Flow - C++ Version}
   \label{fig_cv2x_radio_sps_flow_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{cv2x_radio_sps_flow_call_flow.png,C-V2X radio TX SPS flow call flow,80,80,C-V2X radio TX SPS flow call flow}
+@html_image{cv2x_radio_sps_flow_call_flow.png,C-V2X Radio TX SPS Flow Call Flow,60,60,C-V2X Radio TX SPS Flow Call Flow - C++ Version}
 
-Note: Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
+This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Tx SPS flows using C++ version APIs.
+Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio. Only 2 Tx SPS flows are allowed in maximum in the system.
 
 1. Application requests a new TX SPS flow from the C-V2X radio using createTxSPSFlow method. The application can also specify an optional Tx event flow.
 2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
@@ -2177,6 +2438,32 @@ Note: Application must perform C-V2X radio initialization before calling any met
 11. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
 12. C-V2X radio sends asynchronous notification via the callback (if a callback was specified) indicating the status of the request.
 
+@anchor fig_cv2x_radio_sps_flow_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.41]{cv2x_radio_sps_flow_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X Radio SPS Flow Call Flow - C Version}
+  \label{fig_cv2x_radio_sps_flow_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_radio_sps_flow_call_flow_c.png,C-V2X Radio TX SPS Flow Call Flow,80,80,C-V2X Radio TX SPS Flow Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for registering or deregistering C-V2X Tx SPS flows using C version APIs.
+Application must perform C-V2X radio initialization before calling any methods of C-V2X radio. Only 2 Tx SPS flows are allowed in maximum in the system.
+
+1. Application requests a new TX SPS flow from the C-V2X radio using v2x_radio_tx_sps_sock_create_and_bind_v2 method. The application can also specify an optional Tx event flow.
+2. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the sps flow was created successfully.
+3. Application requests to change the SPS parameters using the v2x_radio_tx_reservation_change_v2 method.
+4. Application received synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the sps flow was updated successfully.
+5. Application requests to close the SPS flow.
+6. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the sps flow was closed successfully.
+7. Application requests to close optional Tx event flow (if one was created).
+8. Application receives synchronous status (either 0 on SUCCESS or negative values if FAILED) indicating whether the event flow was closed successfully.
+
+
 @subsection cv2x_tm_filter_rate_adjustment_callflow C-V2X Throttle Manager Filer rate adjustment notification flow
 
 @anchor fig_cv2x_tm_filter_rate_adjustment_callflow
@@ -2185,12 +2472,12 @@ Note: Application must perform C-V2X radio initialization before calling any met
   \centering
   \includegraphics[scale=0.41]{tm_filter_rate_adjustment_notification.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{C-V2X Throttle Manager filter rate adjustment notification call flow}
+  \caption{C-V2X Throttle Manager Filter Rate Adjustment Notification call flow}
   \label{fig_cv2x_tm_filter_rate_adjustment_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{tm_filter_rate_adjustment_notification.png,C-V2X Throttle Manager filter rate adjustment notification call flow,60,60,C-V2X Throttle Manager filter rate adjustment notification call flow}
+@html_image{tm_filter_rate_adjustment_notification.png,C-V2X Throttle Manager Filter Rate Adjustment Notification Call Flow,60,60,C-V2X Throttle Manager Filter Rate Adjustment Notification Call Flow}
 
 1. Application requests C-V2X factory for a C-V2X Throttle Manager.
 2. C-V2X factory return ICv2xThrottleManager object to application.
@@ -2209,17 +2496,130 @@ Note: Application must perform C-V2X radio initialization before calling any met
   \includegraphics[scale=0.41]{tm_set_verification_load.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{C-V2X Throttle Manager set verification call flow}
-  \label{fig_cv2x_tm_set_verificaton_load__callflow}
+  \label{fig_cv2x_tm_set_verificaton_load_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{tm_set_verification_load.png,C-V2X Throttle Manager set verification load call flow,60,60,C-V2X Throttle Manager set verification load call flow}
+@html_image{tm_set_verification_load.png,C-V2X Throttle Manager Set Verification Load Call Flow,60,60,C-V2X Throttle Manager Set Verification Load Call Flow}
 
 1. Application requests C-V2X factory for a C-V2X Throttle Manager.
 2. C-V2X factory return ICv2xThrottleManager object to application.
 3. Application set verification load using setVerificationLoad method.
 4. Application receives synchronous status which indicates if the request was sent successfully.
 5. Application is notified of the status of the request (either SUCCESS or FAILED) via the application-supplied callback.
+
+@subsection cv2x_tx_status_report_callflow C-V2X TX Status Report
+
+@anchor fig_cv2x_tx_status_report_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.41]{cv2x_tx_report_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X TX Status Report Call Flow - C++ Version}
+  \label{fig_cv2x_tx_status_report_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_tx_report_call_flow.png,C-V2X TX Status Report Call Flow,60,60,C-V2X TX Status Report Call Flow - C++ Version}
+
+This call flow diagram describes the sequence of steps for getting C-V2X Tx Status report per transport block using C++ version APIs.
+Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
+
+1. Application requests to register a listener for Tx status report, providing the interested port number(portA) of Tx status reports, the listener for receiving the reports and the callback function that used for notification of the result. C-V2X radio enables Tx status report in low layer if its the first request for registering Tx status report.
+2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
+3. C-V2X radio sends asynchronous notification via the callback function indication the status of the request.
+4. Tx status report is generated for each transport block transmitted, the portB included in Tx status report indicates which source port the specific transport block is sent from, it can be used to associate the Tx status report with a Tx SPS/Event flow. C-V2X radio filters received Tx status reports based on the port of the listener (portA) and the port included in Tx status report (portB):
+ - If portA is 0, no filtering to the Tx status reports, application gets Tx status reports for all transport blocks.
+ - If portA is not 0 and it equals to portB, application only gets Tx status reports for transport blocks being sent from the specified port.
+ - In other cases, Tx status reports are not sent to application.
+5. Application deregister listener for Tx status report. If it is the last listener for Tx status report in the system, C-V2X radio disables Tx status report in low layer.
+6. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
+7. C-V2X radio sends asynchronous notification via the callback (if callback was specified) indicating the status of the request.
+
+@anchor fig_cv2x_tx_status_report_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.41]{cv2x_tx_report_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X TX Status Report Call Flow - C Version}
+  \label{fig_cv2x_tx_status_report_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_tx_report_call_flow_c.png,C-V2X TX Status Report Call Flow,60,60,C-V2X TX Status Report Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for getting C-V2X Tx Status report per transport block using C version APIs.
+Application must perform C-V2X radio initialization before calling any methods of C-V2X radio.
+
+1. Application requests to register a listener for Tx status report, providing the interested port number(portA) of Tx status reports and the listener for receiving the reports. C-V2X radio enables Tx status report in low layer if it is the first request for registering Tx status report.
+2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was performed successfully.
+3. Tx status report is generated for each transport block transmitted, the portB included in Tx status report indicates which source port the specific transport block is sent from, it can be used to associate the Tx status report with a Tx SPS/Event flow. C-V2X radio filters received Tx status reports based on the port of the listener (portA) and the port included in Tx status report (portB):
+ - If portA is 0, no filtering to the Tx status reports, application gets Tx status reports for all transport blocks.
+ - If portA is not 0 and it equals to portB, application only gets Tx status reports for transport blocks being sent from the specified port.
+ - In other cases, Tx status reports are not sent to application.
+4. Application deregister listener for Tx status report. If it is the last listener for Tx status report in the system, C-V2X radio disables Tx status report in low layer.
+5. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was performed successfully.
+
+@subsection cv2x_rx_meta_data_callflow C-V2X RX Meta Data
+
+@anchor fig_cv2x_rx_meta_data_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.41]{cv2x_rx_meta_data_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X RX Meta Data Call Flow - C++ Version}
+  \label{fig_cv2x_rx_meta_data_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_rx_meta_data_call_flow.png,C-V2X RX Meta Data Call Flow,60,60,C-V2X RX Meta Data Call Flow - C++ Version}
+
+This call flow diagram describes the sequence of steps for enabling C-V2X Rx meta data per packet for non-IP traffic using C++ version APIs.
+Application must perform C-V2X radio initialization before calling any methods of ICv2xRadio.
+
+1. Application requests to enable Rx meta data, providing the traffic type (only Non-IP is supported for Rx meta data), the interested service IDs and the callback function that used for notification of the result.
+2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
+3. C-V2X radio sends asynchronous notification via the callback function indication the status of the request.
+4. After the enable of Rx meta data, application receives data packet which includes raw data along with SFN and subchannel index information via the Rx socket returned from Rx flow registration.
+5. Application calls method getRxMetaDataInfo to get the raw data, SFN and subchannel index information from received data packet.
+6. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the data packet was parsed successfully.
+7. Application receives Rx meta data packet via the Rx socket returned from Rx flow registration, one Rx meta data packet may include Rx meta data for multiple received data packets.
+8. Application calls method getRxMetaDataInfo to get Rx meta data information from received Rx meta data packet. The information of SFN and subchannel index included in Rx meta data can be used to associate the Rx meta data with the received data packet.
+9. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the Rx meta data packet was parsed successfully.
+10. Application requests to disable Rx meta data, providing the traffic type (only Non-IP is supported for Rx meta data), the registered service IDs and the callback function that used for notification of the result.
+11. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was sent successfully.
+12. C-V2X radio sends asynchronous notification via the callback function indication the status of the request.
+
+@anchor fig_cv2x_rx_meta_data_callflow_c
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.41]{cv2x_rx_meta_data_call_flow_c.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{C-V2X RX Meta Data Call Flow - C Version}
+  \label{fig_cv2x_rx_meta_data_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{cv2x_rx_meta_data_call_flow_c.png,C-V2X RX Meta Data Call Flow,60,60,C-V2X RX Meta Data Call Flow - C Version}
+
+This call flow diagram describes the sequence of steps for enabling C-V2X Rx meta data per packet for non-IP traffic using C version APIs.
+Application must perform C-V2X radio initialization before calling any methods of C-V2X radio.
+
+1. Application requests to enable Rx meta data, providing the traffic type (only Non-IP is supported for Rx meta data) and the interested service IDs.
+2. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was performed successfully.
+3. After the enable of Rx meta data, application receives data packet which includes raw data along with SFN and subchannel index information via the Rx socket returned from Rx flow registration.
+4. Application calls method v2x_parse_rx_meta_data to get the raw data, SFN and subchannel index information from received data packet.
+5. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the data packet was parsed successfully.
+6. Application receives Rx meta data packet via the Rx socket returned from Rx flow registration, one Rx meta data packet may include Rx meta data for multiple received data packets.
+7. Application calls method v2x_parse_rx_meta_data to get Rx meta data information from received Rx meta data packet. The information of SFN and subchannel index included in Rx meta data can be used to associate the Rx meta data with the received data packet.
+8. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the Rx meta data packet was parsed successfully.
+9. Application requests to disable Rx meta data, providing the traffic type (only Non-IP is supported for Rx meta data), the registered service IDs and the callback function that used for notification of the result.
+10. Application receives synchronous status (either SUCCESS or FAILED) indicating whether the request was performed successfully.
+
 
 @section audio_call_flows Audio
 

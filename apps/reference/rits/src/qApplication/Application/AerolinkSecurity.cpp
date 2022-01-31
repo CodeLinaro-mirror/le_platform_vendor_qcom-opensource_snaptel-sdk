@@ -897,17 +897,17 @@ void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbeh
     SecuredMessageParserC* smp;
     smp = getThrSmp(thrId);
     if (misbehaviorAppDataPtr == nullptr){
-        misbehaviorAppDataPtr = std::make_shared<BsmData_t>();
+        misbehaviorAppDataPtr = std::make_shared<BsmData>();
     }
     if (misbehaviorResultPtr == nullptr){
-        misbehaviorResultPtr = std::make_shared<MisbehaviorDetectedType_t>();
+        misbehaviorResultPtr = std::make_shared<MisbehaviorDetectedType>();
     }
     if(smp != nullptr){
         fillBsmDataForMbd(rvBsmInfo);
         gettimeofday(&currTime, NULL);
         double startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
         result = smp_checkMisbehavior(*smp, static_cast<void*>(misbehaviorAppDataPtr.get()),
-                            static_cast<MisbehaviorDetectedType_t*>(misbehaviorResultPtr.get()));
+                            static_cast<MisbehaviorDetectedType*>(misbehaviorResultPtr.get()));
         gettimeofday(&currTime, NULL);
         double endLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
 
@@ -917,7 +917,7 @@ void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbeh
         }else{
             if(secVerbosity > 4){
                 fprintf(stdout, "Detected Misbehavior Class is 0x%08x\n",
-                misbehaviorResultPtr->detectedMisbehaviorClass);
+                misbehaviorResultPtr->detectedMisbehavior);
             }
         }
         if(misbehaviorStat != nullptr){

@@ -161,7 +161,7 @@ class AerolinkSecurity : public SecurityService {
         char lcmName_[50];
         IDChangeData* idChangeData_;
         bool enableMisbehavior;
-        std::shared_ptr<BsmData_t> misbehaviorAppDataPtr = nullptr;
-        std::shared_ptr<MisbehaviorDetectedType_t> misbehaviorResultPtr = nullptr;
+        std::shared_ptr<BsmData> misbehaviorAppDataPtr = nullptr;
+        std::shared_ptr<MisbehaviorDetectedType> misbehaviorResultPtr = nullptr;
 };
 #endif

@@ -85,7 +85,7 @@ void printSignStats(std::thread::id thrId){
     info = localtime(&t);
     if(signSuccess % 10 == 0 && signSuccess > 0){
         fprintf(stdout, "ThreadID: 0x%08x; ", thrId);
-        printf(" %s : SignSuccess: %d; SignFail: %d\n",
+        fprintf(stdout, " %s : SignSuccess: %d; SignFail: %d\n",
                     asctime (info), signSuccess, signFail);
     }
 }
@@ -98,7 +98,8 @@ void printVerifStats(std::thread::id thrId){
 
     if(verifFail % 2500 == 0 && verifFail > 0){
         if(secVerbosity > 4)
-            printf("VerifSuccess: %d; VerifFail: %d\n", verifSuccess, verifFail);
+            fprintf(stdout, "VerifSuccess: %d; VerifFail: %d\n",
+                     verifSuccess, verifFail);
     }
 
     // batch stats reporting (per 2500 successful verifications)

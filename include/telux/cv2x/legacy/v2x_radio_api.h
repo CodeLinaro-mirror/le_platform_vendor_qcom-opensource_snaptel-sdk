@@ -2334,6 +2334,11 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
     Otherwise:
      - EINVAL -- Invalid input parmaters.
      - EPERM -- Radio initialization failed.
+
+    @dependencies
+    This API might fail if the underlying Cv2x status is currently in an inactive state.
+    Use @ref v2x_register_ext_radio_status_listener to register a listener for CV2X overall
+    Tx/Rx status, then use @ref v2x_get_ext_radio_status to get current V2X overall radio status.
  */
 int v2x_radio_init_v3(v2x_concurrency_sel_t mode,
                       v2x_radio_calls_t *callbacks_p,
@@ -2610,9 +2615,6 @@ v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
     #V2X_STATUS_SUCCESS.
     @par
     #V2X_STATUS_FAIL -- If there is an error.
-
-    @dependencies
-    CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
  */
 v2x_status_enum_type v2x_register_ext_radio_status_listener(
     v2x_ext_radio_status_listener callback);

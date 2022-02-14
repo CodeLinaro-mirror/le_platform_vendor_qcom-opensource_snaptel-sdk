@@ -21,7 +21,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -95,41 +95,48 @@ enum class SensorType {
 struct SensorInfo {
     /** Unique identifier for the sensor. */
     int id;
+
     /** The type of sensor, @ref telux::sensor::SensorType */
     SensorType type;
+
     /** The name of the sensor This name is used to get a reference to a sensor with @ref
      * telux::sensor::ISensorManager::getSensor
      */
     std::string name;
+
     /** The name of the vendor */
     std::string vendor;
+
     /**
      * List of supported sampling rates by the sensor hardware, number of samples per second (Hz)
      */
     std::vector<float> samplingRates;
+
     /**
      * The maximum sampling rate the sensor can be configured for. This can be set in
      * /etc/sensors.conf for each sensor and should be less than the maximum sampling rate supported
      * by the sensor hardware, number of samples per second (Hz)
      *
      * This attribute should be considered while using the API @ref
-     * telux::sensor::ISensor::configure
+     * telux::sensor::ISensorClient::configure
      */
     float maxSamplingRate;
+
     /**
      * Maximum batch count supported by the sensor, i.e. the maximum number of sensor events that
      * the underlying framework can buffer.
      *
      * This attribute should be considered while using the API @ref
-     * telux::sensor::ISensor::configure
+     * telux::sensor::ISensorClient::configure
      */
     uint32_t maxBatchCountSupported;
+
     /**
      * Minimum batch count supported by the sensor. This is set in /etc/sensors.conf for each
      * sensor.
      *
      * This attribute should be considered while using the API @ref
-     * telux::sensor::ISensor::configure
+     * telux::sensor::ISensorClient::configure
      */
     uint32_t minBatchCountSupported;
 
@@ -148,7 +155,6 @@ struct SensorInfo {
     /**
      * The version of the sensor considering the hardware part and the driver
      */
-
     int version;
 
     /**
@@ -186,7 +192,7 @@ struct SensorConfiguration {
     /**
      * The sampling rate for the sensor, number of samples per second (Hz)
      *
-     * In case of @ref telux::sensor::ISensor::configure, the requested sampling rate should
+     * In case of @ref telux::sensor::ISensorClient::configure, the requested sampling rate should
      * be one of the sampling rates provided in the @ref telux::sensor::SensorInfo::samplingRates
      * and should be less than the @ref telux::sensor::SensorInfo::maxSamplingRate.
      *
@@ -221,7 +227,7 @@ struct SensorConfiguration {
      * It is important to consider latency while deciding the batch count for a sensor. Higher the
      * batch count, more is the latency for the samples.
      *
-     * In case of @ref telux::sensor::ISensor::configure, the requested batch count should be
+     * In case of @ref telux::sensor::ISensorClient::configure, the requested batch count should be
      * lesser than the maximum supported batch count
      * @ref telux::sensor::SensorInfo::maxBatchCountSupported. Also, the batch count considered is
      * impacted by the @ref telux::sensor::SensorInfo::minBatchCountSupported.
@@ -248,12 +254,12 @@ struct SensorConfiguration {
 
     /**
      * Bitset indicating the validity of the received sensor configuration via @ref
-     * telux::sensor::ISensor::getConfiguration and @ref
+     * telux::sensor::ISensorClient::getConfiguration and @ref
      * telux::sensor::ISensorEventListener::onConfigurationUpdate. The configuration items that were
      * never set would have return false when tested for using @ref std::bitset::test
      *
      * Further, this bitset should be set by the user to indicate the valid fields while configuring
-     * the sensor using @ref telux::sensor::ISensor::configure.
+     * the sensor using @ref telux::sensor::ISensorClient::configure.
      * For continuous stream of data from a sensor, the validity of SAMPLING_RATE and BATCH_COUNT
      * from @ref SensorConfigParams should be considered. If the sensor had been already configured
      * with both sampling rate and batch count, it is possible to reconfigure the sensor partially

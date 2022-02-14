@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -209,7 +209,7 @@ int SensorControlMenu::getAvailableID() {
 void SensorControlMenu::createSensorClient(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter sensor name: ", name);
-    std::shared_ptr<ISensor> sensor;
+    std::shared_ptr<ISensorClient> sensor;
     telux::common::Status status = sensorManager_->getSensor(sensor, name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "getSensor failed: ";

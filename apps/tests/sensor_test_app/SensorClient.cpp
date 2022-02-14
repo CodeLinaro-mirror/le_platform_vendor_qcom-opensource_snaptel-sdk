@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -89,7 +89,7 @@
 #define PRINT_CB std::cout << "\033[1;35mCallback: \033[0m"
 
 SensorClient::SensorClient(
-    int id, std::shared_ptr<ISensor> sensor, SensorTestAppArguments commandLineArgs)
+    int id, std::shared_ptr<ISensorClient> sensor, SensorTestAppArguments commandLineArgs)
    : id_(id)
    , sensor_(sensor)
    , lastBatchReceivedAt_(0)
@@ -280,7 +280,7 @@ void SensorClient::selfTest(SelfTestType selfTestType) {
                  << (responseTimeStamp - requestTimeStamp) * 1.0 / 1000000 << "ms" << std::endl;
     });
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << tag_ << "self test request with ID "<< requestID << " failed: ";
+        std::cout << tag_ << "self test request with ID " << requestID << " failed: ";
         Utils::printStatus(status);
         return;
     }

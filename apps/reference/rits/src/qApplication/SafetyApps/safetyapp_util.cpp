@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,7 +76,7 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include "safetyapp_util.h"
- 
+
 /** Maximum number of vehicles including the host that the LDM can support */
 double MAX_MAP_SIZE;
 
@@ -412,7 +412,7 @@ lane_types classify_lane(msg_contents *host, msg_contents *remote)
 }
 
 /*
- * Differs from basic verison. Also checks if the host would approximately travel in the 
+ * Differs from basic verison. Also checks if the host would approximately travel in the
  * same dir of RV
  */
 double time_to_crash_adv(msg_contents *host, msg_contents *remote)
@@ -494,7 +494,7 @@ static __inline uint64_t ntimestamp_now(void)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000000LL + tv.tv_usec;
+    return (uint64_t)tv.tv_sec * 1000000LL + (uint64_t)tv.tv_usec;
 }
 
 /* From the received secmark, calculate the timestamp*/

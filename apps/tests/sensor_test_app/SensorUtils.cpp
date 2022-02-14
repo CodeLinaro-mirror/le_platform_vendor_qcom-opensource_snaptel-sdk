@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -145,7 +145,7 @@ std::string SensorUtils::getBatchCountLimits(SensorInfo info) {
 
 SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s) {
     // If sensor type == GYRO | ACCELERO, get sampling rate and batch count
-    std::shared_ptr<ISensor> sensor = s->getSensor();
+    std::shared_ptr<ISensorClient> sensor = s->getSensor();
     SensorType type = sensor->getSensorInfo().type;
     if ((type == SensorType::GYROSCOPE) || (type == SensorType::ACCELEROMETER)
         || ((type == SensorType::GYROSCOPE_UNCALIBRATED)
@@ -201,14 +201,13 @@ void SensorUtils::printSensorEvent(
 
 void SensorUtils::printSensorFeatureBufferedEvent(SensorEvent &s) {
     print_notification("Buffered Events: ")
-        << s.timestamp << "ns, " << s.uncalibrated.data.x
-        << ", " << s.uncalibrated.data.y << ", " << s.uncalibrated.data.z << ", "
-        << s.uncalibrated.bias.x << ", " << s.uncalibrated.bias.y << ", "
-        << s.uncalibrated.bias.z << std::endl;
+        << s.timestamp << "ns, " << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y << ", "
+        << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x << ", " << s.uncalibrated.bias.y
+        << ", " << s.uncalibrated.bias.z << std::endl;
 }
 
 void SensorUtils::printSensorFeatureInfo(SensorFeature feature) {
-    print_notification("SensorFeatureEvent: ") << "Feature name: " << feature.name << std::endl;
+    std::cout << "\t" << feature.name << std::endl;
 }
 
 void SensorUtils::printSensorFeatureEvent(SensorFeatureEvent event) {
@@ -218,13 +217,13 @@ void SensorUtils::printSensorFeatureEvent(SensorFeatureEvent event) {
 
 void SensorUtils::printTcuActivityState(telux::power::TcuActivityState state) {
 
-    if(state == telux::power::TcuActivityState::SUSPEND) {
+    if (state == telux::power::TcuActivityState::SUSPEND) {
         print_notification("TCU-activity State : SUSPEND") << std::endl;
-    } else if(state == telux::power::TcuActivityState::RESUME) {
+    } else if (state == telux::power::TcuActivityState::RESUME) {
         print_notification("TCU-activity State : RESUME") << std::endl;
-    } else if(state == telux::power::TcuActivityState::SHUTDOWN) {
+    } else if (state == telux::power::TcuActivityState::SHUTDOWN) {
         print_notification(" TCU-activity State : SHUTDOWN") << std::endl;
-    } else if(state == telux::power::TcuActivityState::UNKNOWN) {
+    } else if (state == telux::power::TcuActivityState::UNKNOWN) {
         print_notification(" TCU-activity State : UNKNOWN") << std::endl;
     } else {
         std::cout << " ERROR: Invalid TCU-activity state notified" << std::endl;

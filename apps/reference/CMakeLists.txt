@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.9)
 
 if(NOT BUILD_FOR_SIMULATION)
-    add_subdirectory( chrony-sock)
     # build only if we are not building in bitbake environment
     if(BUILD_ALL_REFERENCE)
         add_subdirectory( loc_tracker_app )
@@ -9,6 +8,7 @@ if(NOT BUILD_FOR_SIMULATION)
 
     if(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
         add_subdirectory( rits )
+        add_subdirectory( chrony-sock)
     endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 
     if(NOT MACHINE_HAS_CV2X_ONLY)

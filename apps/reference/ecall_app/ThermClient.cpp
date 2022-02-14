@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -126,35 +126,28 @@ static void commandCallback(ErrorCode errorCode) {
     }
 }
 
+// Callback which is invoked when Thermal Shutdown Manager initialization is processed(success or
+// failure)
+static void initCb(telux::common::ServiceStatus status) {
+    if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << CLIENT_NAME << " Thermal Shutdown Manager is initialized successfully "
+            << std::endl;
+    } else if(status == telux::common::ServiceStatus::SERVICE_FAILED) {
+        std::cout << CLIENT_NAME << " Thermal Shutdown Manager initialization failed"
+            << std::endl;
+    }
+}
+
 // Initialize the thermal-shutdown management subsystem
 telux::common::Status ThermClient::init() {
     // Get thermal factory instance
     auto &thermalFactory = ThermalFactory::getInstance();
     // Get thermal shutdown manager object
-    thermShutdownMgr_ = thermalFactory.getThermalShutdownManager();
+    thermShutdownMgr_ = thermalFactory.getThermalShutdownManager(&initCb);
     if(thermShutdownMgr_ == nullptr) {
         std::cout << CLIENT_NAME << "*** ERROR - Failed to get Thermal Shutdown manager instance"
                     << std::endl;
         return telux::common::Status::FAILED;
-    }
-    // Wait for thermal shutdown manager service to be ready
-    bool isReady = thermShutdownMgr_->isReady();
-    if(isReady) {
-        std::cout << CLIENT_NAME << "Thermal-Shutdown management service is ready !" << std::endl;
-    } else {
-        std::cout << CLIENT_NAME << "Thermal-Shutdown management service is not ready, "
-                    << "waiting for it to be ready" << std::endl;
-        std::future<bool> f = thermShutdownMgr_->onReady();
-        isReady = f.get();
-        if(isReady) {
-            std::cout << CLIENT_NAME << "Thermal-Shutdown management service is ready !"
-                        << std::endl;
-        } else {
-            std::cout << CLIENT_NAME << "*** ERROR - Unable to initialize Thermal-Shutdown "
-                        << "management" << std::endl;
-            thermShutdownMgr_ = nullptr;
-            return telux::common::Status::FAILED;
-        }
     }
     return telux::common::Status::SUCCESS;
 }
@@ -164,6 +157,9 @@ telux::common::Status ThermClient::sendAutoShutdownModeCommand(AutoShutdownMode 
     if(!thermShutdownMgr_) {
         std::cout << CLIENT_NAME << "Invalid Thermal shutdown Manager" << std::endl;
         return telux::common::Status::FAILED;
+    } else if(ServiceStatus::SERVICE_AVAILABLE != thermShutdownMgr_->getServiceStatus()) {
+        std::cout << CLIENT_NAME << " Thermal shutdown Manager is not yet ready" << std::endl;
+        return telux::common::Status::NOTREADY;
     }
     if(state == AutoShutdownMode::ENABLE) {
         std::cout << CLIENT_NAME << "Enabling Thermal auto-shutdown mode" << std::endl;

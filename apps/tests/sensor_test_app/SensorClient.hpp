@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -81,7 +81,8 @@ using namespace telux::common;
 class SensorClient : public ISensorEventListener,
                      public std::enable_shared_from_this<SensorClient> {
  public:
-    SensorClient(int id, std::shared_ptr<ISensor> sensor, SensorTestAppArguments commandLineArgs);
+    SensorClient(
+        int id, std::shared_ptr<ISensorClient> sensor, SensorTestAppArguments commandLineArgs);
     ~SensorClient();
     void init();
     void cleanup();
@@ -94,7 +95,7 @@ class SensorClient : public ISensorEventListener,
     void enableLowPowerMode();
     void disableLowPowerMode();
     void selfTest(SelfTestType selfTestType);
-    std::shared_ptr<ISensor> getSensor() const {
+    std::shared_ptr<ISensorClient> getSensor() const {
         return sensor_;
     }
     bool isActive() const {
@@ -105,7 +106,7 @@ class SensorClient : public ISensorEventListener,
 
  private:
     std::mutex mtx_;
-    std::shared_ptr<ISensor> sensor_;
+    std::shared_ptr<ISensorClient> sensor_;
     std::string tag_;
     uint64_t lastBatchReceivedAt_;
     uint32_t totalEvents_;

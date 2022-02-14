@@ -1,7 +1,8 @@
 Configure and acquire sensor data {#sensor_data_acquisition}
 =============================================================
 
-This sample application demonstrates how to configure and acquire sensor data.
+This sample application demonstrates how to configure and acquire sensor data. The sample
+application also shows how to acquire data from the same sensor with different configurations
 
 ### 1. Get sensor factory instance
 
@@ -61,9 +62,9 @@ This sample application demonstrates how to configure and acquire sensor data.
 ### 6. Request the ISensorManager for the desired sensor
 
    ~~~~~~{.cpp}
-   std::shared_ptr<telux::sensor::ISensor> sensor;
+   std::shared_ptr<telux::sensor::ISensorClient> lowRateSensorClient;
    std::cout << "Getting sensor: " << name << std::endl;
-   status = sensorManager->getSensor(sensor, name);
+   status = sensorManager->getSensor(lowRateSensorClient, name);
    if (status != telux::common::Status::SUCCESS) {
       std::cout << "Failed to get sensor: " << name << std::endl;
       exit(1);
@@ -76,20 +77,20 @@ This sample application demonstrates how to configure and acquire sensor data.
 
    ~~~~~~{.cpp}
    class SensorEventListener : public telux::sensor::ISensorEventListener {
-   public:
-      SensorEventListener(std::shared_ptr<telux::sensor::ISensor> sensor)
-         : sensor_(sensor)
+    public:
+      SensorEventListener(std::string name, std::shared_ptr<telux::sensor::ISensorClient> sensor)
+         : name_(name)
+         , sensorClient_(sensor)
          , totalBatches_(0) {
       }
 
       // [11] Receive sensor events. This notification is received every time the configured batch
       // count is available with the sensor framework
-      virtual void onEvent(
-         std::shared_ptr<std::vector<telux::sensor::SensorEvent>> events) override {
+      virtual void onEvent(std::shared_ptr<std::vector<telux::sensor::SensorEvent>> events) override {
 
-         PRINT_NOTIFICATION << ": Received " << events->size()
-                              << " events from sensor: "
-                              << sensor_->getSensorInfo().name << std::endl;
+         PRINT_NOTIFICATION << "(" << name_ << "): Received " << events->size()
+                              << " events from sensor: " << sensorClient_->getSensorInfo().name
+                              << std::endl;
 
          // I/O intense operations such as below should be avoided since this thread should avoid
          // any time consuming operations
@@ -103,9 +104,9 @@ This sample application demonstrates how to configure and acquire sensor data.
          if (totalBatches_ > TOTAL_BATCHES_REQUIRED) {
                totalBatches_ = 0;
                std::thread t([&] {
-                  sensor_->deactivate();
-                  sensor_->configure(sensor_->getConfiguration());
-                  sensor_->activate();
+                  sensorClient_->deactivate();
+                  sensorClient_->configure(sensorClient_->getConfiguration());
+                  sensorClient_->activate();
                });
                // Be sure to detach the thread
                t.detach();
@@ -113,12 +114,11 @@ This sample application demonstrates how to configure and acquire sensor data.
       }
 
       // [9] Receive configuration updates
-      virtual void onConfigurationUpdate(
-         telux::sensor::SensorConfiguration configuration) override {
-         PRINT_NOTIFICATION
-               << ": Received configuration update from sensor: " << sensor_->getSensorInfo().name
-               << ": [" << configuration.samplingRate << ", " << configuration.batchCount << " ]"
-               << std::endl;
+      virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
+         PRINT_NOTIFICATION << "(" << name_ << "): Received configuration update from sensor: "
+                              << sensorClient_->getSensorInfo().name << ": ["
+                              << configuration.samplingRate << ", " << configuration.batchCount << " ]"
+                              << std::endl;
       }
 
    private:
@@ -126,21 +126,24 @@ This sample application demonstrates how to configure and acquire sensor data.
          return ((type == telux::sensor::SensorType::GYROSCOPE_UNCALIBRATED)
                   || (type == telux::sensor::SensorType::ACCELEROMETER_UNCALIBRATED));
       }
+
       void printSensorEvent(telux::sensor::SensorEvent &s) {
-         telux::sensor::SensorInfo info = sensor_->getSensorInfo();
-         if (isUncalibratedSensor(sensor_->getSensorInfo().type)) {
-               PRINT_NOTIFICATION << ": " << sensor_->getSensorInfo().name << ": " << s.timestamp
+         telux::sensor::SensorInfo info = sensorClient_->getSensorInfo();
+         if (isUncalibratedSensor(sensorClient_->getSensorInfo().type)) {
+               PRINT_NOTIFICATION << ": " << sensorClient_->getSensorInfo().name << ": " << s.timestamp
                                  << ", " << s.uncalibrated.data.x << ", " << s.uncalibrated.data.y
                                  << ", " << s.uncalibrated.data.z << ", " << s.uncalibrated.bias.x
                                  << ", " << s.uncalibrated.bias.y << ", " << s.uncalibrated.bias.z
                                  << std::endl;
          } else {
-               PRINT_NOTIFICATION << ": " << sensor_->getSensorInfo().name << ": " << s.timestamp
+               PRINT_NOTIFICATION << ": " << sensorClient_->getSensorInfo().name << ": " << s.timestamp
                                  << ", " << s.calibrated.x << ", " << s.calibrated.y << ", "
                                  << s.calibrated.z << std::endl;
          }
       }
-      std::shared_ptr<telux::sensor::ISensor> sensor_;
+
+      std::string name_;
+      std::shared_ptr<telux::sensor::ISensorClient> sensorClient_;
       uint32_t totalBatches_;
    };
    ~~~~~~
@@ -148,22 +151,22 @@ This sample application demonstrates how to configure and acquire sensor data.
 ###### Create a event listener and register it with the sensor.
 
    ~~~~~~{.cpp}
-   std::shared_ptr<SensorEventListener> sensorEventListener
-      = std::make_shared<SensorEventListener>(sensor->getSensorInfo());
-   sensor->registerListener(sensorEventListener);
+   std::shared_ptr<SensorEventListener> lowRateSensorClientEventListener
+      = std::make_shared<SensorEventListener>("Low-rate", lowRateSensorClient);
+   lowRateSensorClient->registerListener(lowRateSensorClientEventListener);
    ~~~~~~
 
 ### 8. Configure the sensor with required configuration setting the necessary validityMask
 
    ~~~~~~{.cpp}
-   telux::sensor::SensorConfiguration config;
-   config.samplingRate = getMinimumSamplingRate(sensor->getSensorInfo());
-   config.batchCount = sensor->getSensorInfo().maxBatchCountSupported;
-   std::cout << "Configuring sensor with samplingRate, batchCount [" << config.samplingRate << ", "
-           << config.batchCount << "]" << std::endl;
-   config.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
-   config.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
-   status = sensor->configure(config);
+   telux::sensor::SensorConfiguration lowRateConfig;
+   lowRateConfig.samplingRate = getMinimumSamplingRate(lowRateSensorClient->getSensorInfo());
+   lowRateConfig.batchCount = lowRateSensorClient->getSensorInfo().maxBatchCountSupported;
+   std::cout << "Configuring sensor with samplingRate, batchCount [" << lowRateConfig.samplingRate
+            << ", " << lowRateConfig.batchCount << "]" << std::endl;
+   lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
+   lowRateConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
+   status = lowRateSensorClient->configure(lowRateConfig);
    if (status != telux::common::Status::SUCCESS) {
       std::cout << "Failed to configure sensor: " << name << std::endl;
       exit(1);
@@ -174,16 +177,17 @@ This sample application demonstrates how to configure and acquire sensor data.
 
    ~~~~~~{.cpp}
    virtual void onConfigurationUpdate(telux::sensor::SensorConfiguration configuration) override {
-      PRINT_NOTIFICATION << ": Received configuration update from sensor: " << info_.name << ": ["
-                         << configuration.samplingRate << ", " << configuration.batchCount << " ]"
-                         << std::endl;
+      PRINT_NOTIFICATION << "(" << name_ << "): Received configuration update from sensor: "
+                        << sensorClient_->getSensorInfo().name << ": ["
+                        << configuration.samplingRate << ", " << configuration.batchCount << " ]"
+                        << std::endl;
    }
    ~~~~~~
 
 ### 10. Activate the sensor to receive sensor data
 
    ~~~~~~{.cpp}
-   status = sensor->activate();
+   status = lowRateSensorClient->activate();
    if (status != telux::common::Status::SUCCESS) {
       std::cout << "Failed to activate sensor: " << name << std::endl;
       exit(1);
@@ -201,8 +205,9 @@ such method is to spawn a detached thread that invokes the required API.
    ~~~~~~{.cpp}
    virtual void onEvent(std::shared_ptr<std::vector<telux::sensor::SensorEvent>> events) override {
 
-      PRINT_NOTIFICATION << ": Received " << events->size()
-                        << " events from sensor: " << sensor_->getSensorInfo().name << std::endl;
+      PRINT_NOTIFICATION << "(" << name_ << "): Received " << events->size()
+                        << " events from sensor: " << sensorClient_->getSensorInfo().name
+                        << std::endl;
 
       // I/O intense operations such as below should be avoided since this thread should avoid
       // any time consuming operations
@@ -216,9 +221,9 @@ such method is to spawn a detached thread that invokes the required API.
       if (totalBatches_ > TOTAL_BATCHES_REQUIRED) {
          totalBatches_ = 0;
          std::thread t([&] {
-               sensor_->deactivate();
-               sensor_->configure(sensor_->getConfiguration());
-               sensor_->activate();
+               sensorClient_->deactivate();
+               sensorClient_->configure(sensorClient_->getConfiguration());
+               sensorClient_->activate();
          });
          // Be sure to detach the thread
          t.detach();
@@ -226,23 +231,71 @@ such method is to spawn a detached thread that invokes the required API.
    }
    ~~~~~~
 
-### 12. When data acquisition is no longer necessary, deactivate the sensor
+### 12. Create another sensor client for the same sensor and it's corresponding listener
 
    ~~~~~~{.cpp}
-   status = sensor->deactivate();
+   std::shared_ptr<telux::sensor::ISensorClient> highRateSensorClient;
+   std::cout << "Getting sensor: " << name << std::endl;
+   status = sensorManager->getSensor(highRateSensorClient, name);
+   if (status != telux::common::Status::SUCCESS) {
+      std::cout << "Failed to get sensor: " << name << std::endl;
+      exit(1);
+   }
+   std::shared_ptr<SensorEventListener> highRateSensorEventListener
+      = std::make_shared<SensorEventListener>("High-rate", highRateSensorClient);
+   highRateSensorClient->registerListener(highRateSensorEventListener);
+   ~~~~~~
+
+### 13. Configure this sensor client with a different configuration, as necessary
+
+   ~~~~~~{.cpp}
+   telux::sensor::SensorConfiguration highRateConfig;
+   highRateConfig.samplingRate = getMaximumSamplingRate(highRateSensorClient->getSensorInfo());
+   highRateConfig.batchCount = highRateSensorClient->getSensorInfo().maxBatchCountSupported;
+   std::cout << "Configuring sensor with samplingRate, batchCount [" << highRateConfig.samplingRate
+            << ", " << highRateConfig.batchCount << "]" << std::endl;
+   highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
+   highRateConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
+   status = highRateSensorClient->configure(highRateConfig);
+   if (status != telux::common::Status::SUCCESS) {
+      std::cout << "Failed to configure sensor: " << name << std::endl;
+      exit(1);
+   }
+   ~~~~~~
+
+### 14. Activate this sensor as well
+
+   ~~~~~~{.cpp}
+   status = highRateSensorClient->activate();
+   if (status != telux::common::Status::SUCCESS) {
+      std::cout << "Failed to activate sensor: " << name << std::endl;
+      exit(1);
+   }
+   ~~~~~~
+
+### 15. When data acquisition is no longer necessary, deactivate the sensors
+
+   ~~~~~~{.cpp}
+   status = lowRateSensorClient->deactivate();
+   if (status != telux::common::Status::SUCCESS) {
+      std::cout << "Failed to deactivate sensor: " << name << std::endl;
+      exit(1);
+   }
+   status = highRateSensorClient->deactivate();
    if (status != telux::common::Status::SUCCESS) {
       std::cout << "Failed to deactivate sensor: " << name << std::endl;
       exit(1);
    }
    ~~~~~~
 
-### 13. Release the instance of ISensor if no longer required
+### 16. Release the instances of ISensorClient if no longer required
 
    ~~~~~~{.cpp}
-   sensor = nullptr;
+   lowRateSensorClient = nullptr;
+   highRateSensorClient = nullptr;
    ~~~~~~
 
-### 14. Release the instance of ISensorManager to cleanup resources
+### 17. Release the instance of ISensorManager to cleanup resources
 
    ~~~~~~{.cpp}
    sensorManager = nullptr;

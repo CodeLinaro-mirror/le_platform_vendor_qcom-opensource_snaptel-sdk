@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -108,13 +108,21 @@ telux::common::Status ECallManager::init() {
     if(status != telux::common::Status::SUCCESS) {
         return status;
     }
-
     locClient_ = std::make_shared<LocationClient>();
-    locClient_->init();
+    status = locClient_->init();
+    if(status != telux::common::Status::SUCCESS) {
+        return status;
+    }
     audioClient_ = std::make_shared<AudioClient>();
-    audioClient_->init();
+    status = audioClient_->init();
+    if(status != telux::common::Status::SUCCESS) {
+        return status;
+    }
     thermClient_ = std::make_shared<ThermClient>();
-    thermClient_->init();
+    status = thermClient_->init();
+    if(status != telux::common::Status::SUCCESS) {
+        return status;
+    }
 
     // Parse the eCall settings and fetch the static MSD data
     parseAppConfig();

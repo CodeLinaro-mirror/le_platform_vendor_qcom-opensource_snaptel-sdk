@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -116,27 +116,24 @@ void LocationClient::commandCallback(ErrorCode errorCode) {
     }
 }
 
+// Callback which is invoked when LocationManager initialization is processed(success or failure)
+static void initCb(telux::common::ServiceStatus status) {
+    if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << CLIENT_NAME << " Location Manager is initialized successfully " << std::endl;
+    } else if(status == telux::common::ServiceStatus::SERVICE_FAILED) {
+        std::cout << CLIENT_NAME << " Location Manager initialization failed" << std::endl;
+    }
+}
+
 // Initialize the location subsystem
 telux::common::Status LocationClient::init() {
     // Get location manager object
     auto &locationFactory = LocationFactory::getInstance();
-    locMgr_ = locationFactory.getLocationManager();
-
-    // Wait for location subsystem to be ready
-    bool isReady = locMgr_->isSubsystemReady();
-    if(!isReady) {
-        std::cout << CLIENT_NAME << "Location subsystem is not ready, waiting for it to be ready"
-                    << std::endl;
-        std::future<bool> f = locMgr_->onSubsystemReady();
-        isReady = f.get();
-        if(isReady) {
-            std::cout << CLIENT_NAME << "Location subsystem is ready " << std::endl;
-        } else {
-            std::cout << CLIENT_NAME << "*** ERROR - Unable to initialize Location subsystem"
-                        << std::endl;
-            locMgr_ = nullptr;
-            return telux::common::Status::FAILED;
-        }
+    locMgr_ = locationFactory.getLocationManager(&initCb);
+    if(locMgr_ == nullptr) {
+        std::cout << CLIENT_NAME << "*** ERROR - Failed to get Location Manager instance"
+            << std::endl;
+        return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
 }
@@ -147,6 +144,9 @@ telux::common::Status LocationClient::startLocUpdates(uint32_t interval,
     if(!locMgr_) {
         std::cout << CLIENT_NAME << "Invalid Location Manager" << std::endl;
         return telux::common::Status::FAILED;
+    } else if(ServiceStatus::SERVICE_AVAILABLE != locMgr_->getServiceStatus()) {
+        std::cout << CLIENT_NAME << " Location Subsystem is not yet ready" << std::endl;
+        return telux::common::Status::NOTREADY;
     }
     // Registering a listener for location fix updates
     telux::common::Status status = locMgr_->registerListenerEx(shared_from_this());
@@ -181,6 +181,9 @@ telux::common::Status LocationClient::stopLocUpdates() {
     if(!locMgr_) {
         std::cout << CLIENT_NAME << "Invalid Location Manager" << std::endl;
         return telux::common::Status::FAILED;
+    } else if(ServiceStatus::SERVICE_AVAILABLE != locMgr_->getServiceStatus()) {
+        std::cout << CLIENT_NAME << " Location Subsystem is not yet ready" << std::endl;
+        return telux::common::Status::NOTREADY;
     }
     // De-registering a listener for location fix updates
     telux::common::Status status = locMgr_->deRegisterListenerEx(shared_from_this());

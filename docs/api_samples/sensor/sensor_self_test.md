@@ -63,7 +63,7 @@ Please follow below steps as a guide to initiate a self test and acquires the se
 ### 6. Request the ISensorManager for the desired sensor ###
 
    ~~~~~~{.cpp}
-   std::shared_ptr<telux::sensor::ISensor> sensor;
+   std::shared_ptr<telux::sensor::ISensorClient> sensor;
    std::cout << "Getting sensor: " << name << std::endl;
    status = sensorManager->getSensor(sensor, name);
    if (status != telux::common::Status::SUCCESS) {
@@ -85,7 +85,7 @@ Please follow below steps as a guide to initiate a self test and acquires the se
    }
    ~~~~~~
 
-### 8. Release the instance of ISensor if no longer required ###
+### 8. Release the instance of ISensorClient if no longer required ###
 
    ~~~~~~{.cpp}
    sensor = nullptr;

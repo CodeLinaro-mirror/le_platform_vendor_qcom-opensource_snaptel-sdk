@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -161,14 +161,24 @@ void ServingSystemMenu::init() {
              "6", "Get_NR_Dual_Connectivity_Status", {},
              std::bind(&ServingSystemMenu::getDualConnectivityStatus, this,
                 std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> reqNetworkTimeCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "7", "Request_Network_Info_Time", {},
+             std::bind(&ServingSystemMenu::requestNetworkInfo, this,
+                std::placeholders::_1)));
+       std::shared_ptr<ConsoleAppCommand> reqRFBandInfoCommand
+          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+             "8", "Request_RF_Band_Info", {},
+             std::bind(&ServingSystemMenu::requestRFBandInfo, this,
+                std::placeholders::_1)));
        std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
           = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "7", "Select_sim_slot", {},
+             "9", "Select_sim_slot", {},
              std::bind(&ServingSystemMenu::selectSimSlot, this, std::placeholders::_1)));
        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
           = {getRatModePreferenceCommand, setRatModePreferenceCommand,
              getServiceDomainPreferenceCommand, setServiceDomainPreferenceCommand,
-             getSystemInfoCommand, getDcStatusCommand };
+             getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand};
 
        if (servingSystemMgrs_.size() > 1) {
            commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
@@ -333,5 +343,32 @@ void ServingSystemMenu::getDualConnectivityStatus(std::vector<std::string> userI
                << MyServingSystemHelper::getEndcAvailability(dcStatus.endcAvailability);
       std::cout << "\nDCNR Restriction: \n"
                << MyServingSystemHelper::getDcnrRestriction(dcStatus.dcnrRestriction);
+   }
+}
+
+void ServingSystemMenu::requestNetworkInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if(servingSystemMgr) {
+      auto ret = servingSystemMgr->requestNetworkTime(
+         NetworkTimeResponseCallback::networkTimeResponse);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "\nGet network time request sent successfully\n";
+      } else {
+         std::cout << "\nGet network time request failed \n";
+      }
+   }
+}
+
+
+void ServingSystemMenu::requestRFBandInfo(std::vector<std::string> userInput) {
+   auto servingSystemMgr = servingSystemMgrs_[slot_ - 1];
+   if (servingSystemMgr) {
+      auto ret = servingSystemMgr->requestRFBandInfo(
+         RFBandInfoResponseCallback::rfBandInfoResponse);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "\nGet RF band info sent successfully\n";
+      } else {
+         std::cout << "\nGet RF band info failed \n";
+      }
    }
 }

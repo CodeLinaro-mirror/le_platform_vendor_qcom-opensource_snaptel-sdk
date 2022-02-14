@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -189,16 +189,16 @@ int main(int argc, char **argv) {
     }
 
     // [6] Get the desired sensor
-    std::shared_ptr<telux::sensor::ISensor> sensor;
+    std::shared_ptr<telux::sensor::ISensorClient> sensorClient;
     std::cout << "Getting sensor: " << name << std::endl;
-    status = sensorManager->getSensor(sensor, name);
+    status = sensorManager->getSensor(sensorClient, name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get sensor: " << name << std::endl;
         exit(1);
     }
 
     // [7] Invoke the self test with the required self test type and provide the callback
-    status = sensor->selfTest(selfTestType, [](telux::common::ErrorCode result) {
+    status = sensorClient->selfTest(selfTestType, [](telux::common::ErrorCode result) {
         PRINT_CB << "Received self test response: " << static_cast<int>(result) << std::endl;
     });
     if (status != telux::common::Status::SUCCESS) {
@@ -210,8 +210,8 @@ int main(int argc, char **argv) {
     std::cout << "\n\nPress ENTER to exit \n\n";
     std::cin.ignore();
 
-    // [8] Delete the sensor object
-    sensor = nullptr;
+    // [8] Delete the sensor client
+    sensorClient = nullptr;
 
     // [9] When sensor manager is no longer required, delete the sensor manager object
     sensorManager = nullptr;

@@ -114,64 +114,64 @@ when       who     what, where, why
 \setcounter{page}{2}
 @endlatexonly
 
-@table{2,{\centering}p{0.63in},{\raggedright}p{5.38in}}
+@table{3,{\centering}p{0.63in},{\raggedright}p{0.63in},{\raggedright}p{4.70in}}
 @trfirsthdg
-@thmultcol{1,|c|} Date @thmultcolend @thmultcollast{1,c|} Description @thmultcollastend
+@thmultcol{1,|c|} Revision @thmultcolend @thmultcol{1,c|} Date @thmultcolend @thmultcollast{1,c|} Description @thmultcollastend
 @trfirsthdgend
 @tblcapcont{Revision history (cont.)}
 @trhdg
-@thdg{1,c|,Date} @thdglast{1,c|,Description}
+@thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
-@tr @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
-@tr @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trend
-@tr @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trend
-@tr @td Oct 2018 @tdend @tdlast Addition of Network Selection and Serving System Management APIs and call flows @tdlastend @trend
-@tr @td Nov 2018 @tdend @tdlast Addition of C-V2X APIs @tdlastend @trend
-@tr @td Jan 2019 @tdend @tdlast Addition of Audio APIs and call flows @tdlastend @trend
-@tr @td Mar 2019 @tdend @tdlast Addition of Thermal manager APIs and call flows @tdlastend @trend
-@tr @td May 2019 @tdend @tdlast Addition of TCU Activity Management APIs and call flows @tdlastend @trend
-@tr @td Jun 2019 @tdend @tdlast Addition of Audio APIs for play, capture, DTMF and related call flows @tdlastend @trend
-@tr @td Jul 2019 @tdend @tdlast Updated the Location APIs and call flows @tdlastend @trend
-@tr @td Jul 2019 @tdend @tdlast Addition of Thermal shutdown manager APIs and call flows @tdlastend @trend
-@tr @td Sep 2019 @tdend @tdlast Addition of Remote SIM APIs and call flows @tdlastend @trend
-@tr @td Sep 2019 @tdend @tdlast Addition of Audio APIs for Loopback, Tone Generator and related call flows @tdlastend @trend
-@tr @td Sep 2019 @tdend @tdlast Addition of Audio APIs for compressed audio format playback and related call flows @tdlastend @trend
-@tr @td Sep 2019 @tdend @tdlast Addition of modem config APIs and related call flows @tdlastend @trend
-@tr @td Oct 2019 @tdend @tdlast Addition of Data Filter APIs and call flows @tdlastend @trend
-@tr @td Oct 2019 @tdend @tdlast Addition of Location concurrent report APIs and call flows @tdlastend @trend
-@tr @td Oct 2019 @tdend @tdlast Addition of Location constraint time uncertainty APIs and call flows @tdlastend @trend
-@tr @td Nov 2019 @tdend @tdlast Addition of Audio Format Transcoding APIs and call flows @tdlastend @trend
-@tr @td Nov 2019 @tdend @tdlast Addition of Data Networking APIs and call flows @tdlastend @trend
-@tr @td Nov 2019 @tdend @tdlast Addition of Compressed audio format playback on voice paths APIs and call flows @tdlastend @trend
-@tr @td Jan 2020 @tdend @tdlast Addition of Data software bridge management APIs and call flows @tdlastend @trend
-@tr @td Jan 2020 @tdend @tdlast Addition of Socks Proxy to Data Networking APIs and call flows @tdlastend @trend
-@tr @td Feb 2020 @tdend @tdlast Addition of Location Configurator APIs and call flows @tdlastend @trend
-@tr @td Mar 2020 @tdend @tdlast Addition of Robust Location API in Location Configurator and call flows @tdlastend @trend
-@tr @td Apr 2020 @tdend @tdlast Addition of Security section with SE-linux interface documentation @tdlastend @trend
-@tr @td May 2020 @tdend @tdlast Addition of L2TP to Data Networking APIs and call flows @tdlastend @trend
-@tr @td May 2020 @tdend @tdlast Addition of Public Logging API @tdlastend @trend
-@tr @td Aug 2020 @tdend @tdlast Addition of Location Manager APIs, Location Configurator APIs and callflows @tdlastend @trend
-@tr @td Nov 2020 @tdend @tdlast Addition of cv2x SE-linux interface documentation @tdlastend @trend
-@tr @td Nov 2020 @tdend @tdlast Addition of Year of hardware and configure engine state APIs in location and callflows @tdlastend @trend
-@tr @td Jan 2021 @tdend @tdlast Addition of terrestrial positioning APIs and callflows in location SDK @tdlastend @trend
-@tr @td Jan 2021 @tdend @tdlast Addition of Audio Subsystem Restart Support @tdlastend @trend
-@tr @td Feb 2021 @tdend @tdlast Addition of configure NMEA types in location SDK @tdlastend @trend
-@tr @td Jan 2021 @tdend @tdlast Updated Data Subsystem Readiness flow for new methodology @tdlastend @trend
-@tr @td Feb 2021 @tdend @tdlast Addition of new sub system Readiness APIs for Audio. @tdlastend @trend
-@tr @td Mar 2021 @tdend @tdlast Addition of calibration init status API for audio. @tdlastend @trend
-@tr @td Apr 2021 @tdend @tdlast Addition of Serving System Manager APIs for data. @tdlastend @trend
-@tr @td Apr 2021 @tdend @tdlast Addition of documentation for sensor subsystem. @tdlastend @trend
-@tr @td Jun 2021 @tdend @tdlast Addition of documentation for platform subsystem. @tdlastend @trend
-@tr @td Jun 2021 @tdend @tdlast Addition of Remote SIM provisioning APIs and related call flows. @tdlastend @trend
-@tr @td Jul 2021 @tdend @tdlast Updated thermal subsystem readiness flow for new methodology. @tdlastend @trend
-@tr @td Aug 2021 @tdend @tdlast Added further EFS API related information for platform sub-system. @tdlastend @trend
-@tr @td Aug 2021 @tdend @tdlast Addition of Subsystem Restart handling in Telsdk @tdlastend @trend
-@tr @td Sep 2021 @tdend @tdlast Addition of new sub system Readiness APIs for Modem Config. @tdlastend @trend
-@tr @td Nov 2021 @tdend @tdlast Support for Xtra feature in location. @tdlastend @trend
-@tr @td Dec 2021 @tdend @tdlast Addition of documentation for ECALL and OTA operation APIs @tdlastend @trend
-@tr @td Dec 2021 @tdend @tdlast Addition of documentation for sensor self test APIs. @tdlastend @trend
+@tr @tdmulrow{48,AA} @tdmulrowend @td Jan 2022 @tdend @tdlast Updated C-V2X radio call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Dec 2021 @tdend @tdlast Addition of documentation for sensor self test APIs @tdlastend @trendcline
+@tr @tdmulrowempty @td Dec 2021 @tdend @tdlast Addition of documentation for ECALL and OTA operation APIs @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2021 @tdend @tdlast Support for Xtra feature in location @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2021 @tdend @tdlast Addition of new sub system Readiness APIs for Modem Config @tdlastend @trendcline
+@tr @tdmulrowempty @td Aug 2021 @tdend @tdlast Addition of Subsystem Restart handling in Telsdk @tdlastend @trendcline
+@tr @tdmulrowempty @td Aug 2021 @tdend @tdlast Added further EFS API related information for platform sub-system @tdlastend @trendcline
+@tr @tdmulrowempty @td Jul 2021 @tdend @tdlast Updated thermal subsystem readiness flow for new methodology @tdlastend @trendcline
+@tr @tdmulrowempty @td Jun 2021 @tdend @tdlast Addition of Remote SIM provisioning APIs and related call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jun 2021 @tdend @tdlast Addition of documentation for platform subsystem @tdlastend @trendcline
+@tr @tdmulrowempty @td Apr 2021 @tdend @tdlast Addition of documentation for sensor subsystem @tdlastend @trendcline
+@tr @tdmulrowempty @td Apr 2021 @tdend @tdlast Addition of Serving System Manager APIs for data @tdlastend @trendcline
+@tr @tdmulrowempty @td Mar 2021 @tdend @tdlast Addition of calibration init status API for audio @tdlastend @trendcline
+@tr @tdmulrowempty @td Feb 2021 @tdend @tdlast Addition of new sub system Readiness APIs for Audio @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2021 @tdend @tdlast Updated Data Subsystem Readiness flow for new methodology @tdlastend @trendcline
+@tr @tdmulrowempty @td Feb 2021 @tdend @tdlast Addition of configure NMEA types in location SDK @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2021 @tdend @tdlast Addition of Audio Subsystem Restart Support @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2021 @tdend @tdlast Addition of terrestrial positioning APIs and callflows in location SDK @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2020 @tdend @tdlast Addition of Year of hardware and configure engine state APIs in location and callflows @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2020 @tdend @tdlast Addition of cv2x SE-linux interface documentation @tdlastend @trendcline
+@tr @tdmulrowempty @td Aug 2020 @tdend @tdlast Addition of Location Manager APIs, Location Configurator APIs and callflows @tdlastend @trendcline
+@tr @tdmulrowempty @td May 2020 @tdend @tdlast Addition of Public Logging API @tdlastend @trendcline
+@tr @tdmulrowempty @td May 2020 @tdend @tdlast Addition of L2TP to Data Networking APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Apr 2020 @tdend @tdlast Addition of Security section with SE-linux interface documentation @tdlastend @trendcline
+@tr @tdmulrowempty @td Mar 2020 @tdend @tdlast Addition of Robust Location API in Location Configurator and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Feb 2020 @tdend @tdlast Addition of Location Configurator APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2020 @tdend @tdlast Addition of Socks Proxy to Data Networking APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2020 @tdend @tdlast Addition of Data software bridge management APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2019 @tdend @tdlast Addition of Compressed audio format playback on voice paths APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2019 @tdend @tdlast Addition of Data Networking APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2019 @tdend @tdlast Addition of Audio Format Transcoding APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Oct 2019 @tdend @tdlast Addition of Location constraint time uncertainty APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Oct 2019 @tdend @tdlast Addition of Location concurrent report APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Oct 2019 @tdend @tdlast Addition of Data Filter APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2019 @tdend @tdlast Addition of modem config APIs and related call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2019 @tdend @tdlast Addition of Audio APIs for compressed audio format playback and related call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2019 @tdend @tdlast Addition of Audio APIs for Loopback, Tone Generator and related call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2019 @tdend @tdlast Addition of Remote SIM APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jul 2019 @tdend @tdlast Addition of Thermal shutdown manager APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jul 2019 @tdend @tdlast Updated the Location APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jun 2019 @tdend @tdlast Addition of Audio APIs for play, capture, DTMF and related call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td May 2019 @tdend @tdlast Addition of TCU Activity Management APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Mar 2019 @tdend @tdlast Addition of Thermal manager APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jan 2019 @tdend @tdlast Addition of Audio APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Nov 2018 @tdend @tdlast Addition of C-V2X APIs @tdlastend @trendcline
+@tr @tdmulrowempty @td Oct 2018 @tdend @tdlast Addition of Network Selection and Serving System Management APIs and call flows @tdlastend @trendcline
+@tr @tdmulrowempty @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trendcline
+@tr @tdmulrowempty @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trendcline
+@tr @tdmulrowempty @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
 @tableend
-
 @latexonly \rm @endlatexonly
 
 @newpage

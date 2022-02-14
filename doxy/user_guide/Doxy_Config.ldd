@@ -251,6 +251,7 @@ ALIASES +=              "trhdg=@latexonly \hline @endlatexonly" \
 #                       Table row and cell:
 ALIASES +=              "tr=@htmlonly<tr>@endhtmlonly" \
                         "trend=@htmlonly</tr>@endhtmlonly@latexonly\tn\hline@endlatexonly\n" \
+                        "trendcline=@htmlonly</tr>@endhtmlonly@latexonly\tn\cline{2-3}@endlatexonly\n" \
                         "td=@htmlonly<td>@endhtmlonly" \
                         "tdend=@htmlonly</td>@endhtmlonly@latexonly & @endlatexonly" \
                         "tdlast=@htmlonly<td>@endhtmlonly" \
@@ -260,6 +261,11 @@ ALIASES +=              "tdmultcol{2}=@htmlonly<tr><td colspan=\"\1\">@endhtmlon
                         "tdmultcolend=@htmlonly</tr></td>@endhtmlonly@latexonly } & @endlatexonly" \
                         "tdmultcollast{2}=@htmlonly<td colspan=\"\1\">@endhtmlonly@latexonly\multicolumn{\1}{\2}{\sf\small\textbf{@endlatexonly" \
                         "tdmultcollastend=@htmlonly</td>@endhtmlonly@latexonly }} \hline @endlatexonly"
+#                       Table column for spanning rows:
+ALIASES +=              "tdmulrow{2}=@htmlonly<td rowspan=\"\1\">\2@endhtmlonly@latexonly\multirow{\1}{*}{\small\sf\textbf{\2}}@endlatexonly" \
+                        "tdmulrowend=@htmlonly</td>@endhtmlonly@latexonly & @endlatexonly" \
+                        "tdmulrowempty=@latexonly & @endlatexonly"
+
 @INCLUDE=$(ALIAS_INCLUDE_FILE)
 OPTIMIZE_OUTPUT_FOR_C  = YES
 OPTIMIZE_OUTPUT_JAVA   = NO

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -481,9 +481,9 @@ private:
     // used to sync between cancelling and getting the terrestrial position
     bool isGetTerrestrialRequestActive_ = false;
     // used in System Info report
-    int sysInfoHourTime_ = 0;
+    time_t sysInfoHourTime_ = 0;
     // used in System Info report
-    int usedSysInfoHourTime_ = 0;
+    time_t usedSysInfoHourTime_ = 0;
 
     // managerThread waits on Report Handler Condition variable cv
     // Based upon the Type invokes appropriate type of Reports

@@ -62,7 +62,7 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 
 <b>Location Services</b>
 
-   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information, Jammer Data signals, nmea and measurements information. The location manager sub-system also consists of APIs to get terrestrial position information and cancel terrestrial position information. Also the location configurator sub-system consists of API to enable/disable constraint time uncertainty, enable/disable PACE, delete all aiding data, configure lever arm parameters, configure the blacklisted satellite vehicle, configure robust location, configure min gps week, request min gps week, configure min sv elevation, request min sv elevation, request robust location, delete specified data, configure dR engine and provide consent for terrestrial positioning.
+   Location Services sub-system consists of APIs to receive location details such as GNSS Positions, Satellite Vehicle information, Jammer Data signals, nmea and measurements information. The location manager sub-system also consists of APIs to get location system info, request energy consumed, get year of hardware information, get terrestrial position information and cancel terrestrial position information. LocationConfigurator allows general engine configurations (example: TUNC, PACE etc),configuration of specific engines like SPE (example: minSVElevation, minGPSWeek etc) or DRE, deletion of warm and cold aiding data, NMEA configuration and support for XTRA feature.
 
 <b>Connection Management</b>
 
@@ -155,7 +155,7 @@ Following parameters are configurable through the APIs.
    - Minimum time interval between two consecutive location reports.
    - Minimum distance travelled after which the period between two consecutive location reports depends on the interval specified.
 
-Location Configurator APIs of Telematics SDK provide mechanism to enable/disable constraint time uncertainty feature, enable/disable PACE, delete all aiding data, configure lever arm parameters, configure blacklisted satellite vehicles, configure robust location, configure min gps week, request min gps week, configure min sv elevation, request min sv elevation, request robust location, delete specified data, configure dR engine and provide consent for terrestrial positioning.
+LocationConfigurator allows general engine configurations (example: TUNC, PACE etc),configuration of specific engines like SPE (example: minSVElevation, minGPSWeek etc) or DRE, deletion of warm and cold aiding data, NMEA configuration and support for XTRA feature.
 
 @subsection data_services Data Services
 Data Services APIs in the Telematics SDK used for cellular connectivity, modem profile management, filters management, and networking.

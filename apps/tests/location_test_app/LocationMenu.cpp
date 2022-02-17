@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *       * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *       * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *       * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -61,6 +97,10 @@ LocationMenu::~LocationMenu() {
 
    if(locationManager_) {
       locationManager_ = nullptr;
+   }
+
+   if(locConfigListener_) {
+      locConfigListener_ = nullptr;
    }
 }
 
@@ -131,6 +171,7 @@ telux::common::Status LocationMenu::initLocationConfigurator(std::shared_ptr<ILo
                 << std::endl;
             return telux::common::Status::NOTREADY;
         }
+        locConfigListener_ = std::make_shared<MyLocationConfigListener>();
    } else {
        std::cout<< "Location configurator is already initialized" << std::endl;
    }
@@ -279,6 +320,26 @@ int LocationMenu::init() {
            "Configure Engine Integrity Risk", {}, std::bind(&LocationMenu::
                configureEngineIntegrityRisk, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> configureXtraParams =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("34",
+           "Configure Xtra Parameters", {}, std::bind(&LocationMenu::
+               configureXtraParameters, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> requestXtraStatus =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("35",
+           "Request Xtra Status", {}, std::bind(&LocationMenu::
+               requestXtraStatus, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> registerConfigListener =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("36",
+           "Register Configuration Listener", {}, std::bind(&LocationMenu::
+               registerConfigListener, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> deRegisterConfigListener =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("37",
+           "De-Register Configuration Listener", {}, std::bind(&LocationMenu::
+               deRegisterConfigListener, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
          stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -290,7 +351,8 @@ int LocationMenu::init() {
          configureDR, configureNmeaSentence, configureAllNmeaSentence,
          provideConsentForTerrestrialPositioning, requestTerrestrialPositioning,
          cancelTerrestrialPositioning, registerLocationInjector,
-         deregisterLocationInjector, locationInjectCommand, configureEngineIntegrityRisk};
+         deregisterLocationInjector, locationInjectCommand, configureEngineIntegrityRisk,
+         configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -1370,6 +1432,195 @@ void LocationMenu::requestMinSVElevation(std::vector<std::string> userInput) {
           std::cout << __FUNCTION__ << "Not implemented" << std::endl;
         } else if (status != telux::common::Status::SUCCESS) {
           std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::populateXtraConfigParams(telux::loc::XtraConfig &configParams) {
+    char delimiter = '\n';
+    uint32_t downloadIntervalMinute;
+    std::cout << "Enter Xtra Download Interval Min : ";
+    std::cin >> downloadIntervalMinute;
+    Utils::validateInput(downloadIntervalMinute);
+    configParams.downloadIntervalMinute = downloadIntervalMinute;
+
+    uint32_t downloadTimeoutSec;
+    std::cout << "Enter Xtra Download Timeout Sec : ";
+    std::cin >> downloadTimeoutSec;
+    Utils::validateInput(downloadTimeoutSec);
+    configParams.downloadTimeoutSec = downloadTimeoutSec;
+
+    uint32_t downloadRetryIntervalMinute;
+    std::cout << "Enter Xtra Download Retry Interval Min : ";
+    std::cin >> downloadRetryIntervalMinute;
+    Utils::validateInput(downloadRetryIntervalMinute);
+    configParams.downloadRetryIntervalMinute = downloadRetryIntervalMinute;
+
+    uint32_t downloadRetryAttempts;
+    std::cout << "Enter Xtra Download Retry Attempts : ";
+    std::cin >> downloadRetryAttempts;
+    Utils::validateInput(downloadRetryAttempts);
+    configParams.downloadRetryAttempts = downloadRetryAttempts;
+
+    std::cin.get();
+    std::string caPath;
+    std::cout << "Enter Xtra CA Path : ";
+    std::getline(std::cin, caPath, delimiter);
+    configParams.caPath = caPath;
+
+    std::vector<std::string> serverURLs;
+    int xtraServerOption;
+    std::cout << "Enter Xtra Server URLs count [1-3]: ";
+    std::cin >> xtraServerOption;
+    if((xtraServerOption >= 1) && (xtraServerOption <= 3)) {
+        for(int serverItr = 0; serverItr < xtraServerOption; serverItr++) {
+            std::cin.get();
+            std::string xtraServerURL;
+            std::cout << "Enter Xtra Server URL : ";
+            std::getline(std::cin, xtraServerURL, delimiter);
+            serverURLs.push_back(xtraServerURL);
+        }
+    }
+    configParams.serverURLs = serverURLs;
+
+    std::vector<std::string> ntpServerURLs;
+    int ntpServerOption;
+    std::cout << "Enter NTP Server URLs count [1-3]: ";
+    std::cin >> ntpServerOption;
+    if((ntpServerOption >= 1) && (ntpServerOption <= 3)) {
+        for(int serverItr = 0; serverItr < ntpServerOption; serverItr++) {
+            std::cin.get();
+            std::string ntpServerURL;
+            std::cout << "Enter NTP Server URL : ";
+            std::getline(std::cin, ntpServerURL, delimiter);
+            ntpServerURLs.push_back(ntpServerURL);
+        }
+    }
+    configParams.ntpServerURLs = ntpServerURLs;
+
+    std::cin.get();
+    std::string integrityOption;
+    std::cout << "Enable Xtra integrity (y/n): ";
+    std::getline(std::cin, integrityOption, delimiter);
+    if(integrityOption == "Y" || integrityOption == "y") {
+        configParams.isIntegrityDownloadEnabled = true;
+        uint32_t integrityDownloadIntervalMinute;
+        std::cout << "Enter Xtra Integirty Download Interval Min : ";
+        std::cin >> integrityDownloadIntervalMinute;
+        Utils::validateInput(integrityDownloadIntervalMinute);
+        configParams.integrityDownloadIntervalMinute = integrityDownloadIntervalMinute;
+    } else {
+        configParams.isIntegrityDownloadEnabled = false;
+    }
+
+    int daemonDebugLogLevel;
+    std::cout << "Enter Xtra Daemon Debug Loglevel [0-5]: ";
+    std::cin >> daemonDebugLogLevel;
+    Utils::validateInput(daemonDebugLogLevel);
+    if((daemonDebugLogLevel < 0) && (daemonDebugLogLevel > 5)) {
+        daemonDebugLogLevel = 0;
+    }
+    configParams.daemonDebugLogLevel =
+        static_cast<telux::loc::DebugLogLevel>(daemonDebugLogLevel);
+}
+
+void LocationMenu::configureXtraParameters(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        telux::loc::XtraConfig configParams = {};
+        char delimiter = '\n';
+        std::string option;
+        std::cout << "Enable Xtra feature (y/n): ";
+        std::getline(std::cin, option, delimiter);
+        bool enable = false;
+        if(option == "Y" || option == "y") {
+            enable = true;
+            populateXtraConfigParams(configParams);
+        } else if(option == "N" || option == "n") {
+            enable = false;
+        } else {
+            std::cout << " BAD input " << std::endl;
+        }
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "Configure Xtra Parameters");
+        telux::common::Status status = locationConfigurator_->configureXtraParams(
+            enable, configParams, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::requestXtraStatus(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>("Request Xtra Status");
+        auto getXtraStatusCb = std::bind(&MyLocationCommandCallback::onXtraStatusInfo,
+            myLocCmdResponseCb_, std::placeholders::_1, std::placeholders::_2);
+        telux::common::Status status =
+            locationConfigurator_->requestXtraStatus(getXtraStatusCb);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::registerConfigListener(std::vector<std::string> userInput) {
+    if(locationConfigurator_ && locConfigListener_) {
+        std::bitset<32> indicationsList;
+        char delimiter = '\n';
+        while(true) {
+            int listenerIndication;
+            std::cout << "Enter the indication to register for Location Configurator [0-32]: ";
+            std::cin >> listenerIndication;
+            Utils::validateInput(listenerIndication);
+            indicationsList.set(listenerIndication);
+            std::cin.get();
+            std::string option;
+            std::cout << "Do you want to insert more (y/n) : ";
+            std::getline(std::cin, option, delimiter);
+            if(option == "Y" || option == "y") {
+                continue;
+            } else {
+                break;
+            }
+        }
+        telux::common::Status status =
+            locationConfigurator_->registerListener(indicationsList, locConfigListener_);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " Register Listener Failed" << std::endl;
+        } else {
+            std::cout << __FUNCTION__ << " Register Listener Success" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::deRegisterConfigListener(std::vector<std::string> userInput) {
+    if(locationConfigurator_ && locConfigListener_) {
+        std::bitset<32> indicationsList;
+        char delimiter = '\n';
+        while(true) {
+            int listenerIndication;
+            std::cout << "Enter the indication to deregister from Location Configurator : ";
+            std::cin >> listenerIndication;
+            Utils::validateInput(listenerIndication);
+            indicationsList.set(listenerIndication);
+            std::cin.get();
+            std::string option;
+            std::cout << "Do you want to insert more (y/n) : ";
+            std::getline(std::cin, option, delimiter);
+            if(option == "Y" || option == "y") {
+                continue;
+            } else {
+                break;
+            }
+        }
+        telux::common::Status status =
+            locationConfigurator_->deRegisterListener(indicationsList, locConfigListener_);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " De-Register Listener Failed" << std::endl;
+        } else {
+            std::cout << __FUNCTION__ << " De-Register Listener Success" << std::endl;
         }
     }
 }

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -1490,4 +1490,25 @@ bool MyLocationListener::getLocationInjectionFlag() {
 uint32_t MyLocationListener::getLocInjectionRate() {
     std::lock_guard<std::mutex> lock(mutex_);
     return LocationInjectionRate_;
+}
+
+void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus xtraStatus) {
+    PRINT_NOTIFICATION << "\n********** Xtra Status Info **********" << std::endl;
+    std::cout << "Xtra Feature Enabled: " << xtraStatus.featureEnabled << "\n";
+    std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
+    std::cout << "Xtra Data Status: ";
+    switch(xtraStatus.xtraDataStatus) {
+        case telux::loc::XtraDataStatus::STATUS_UNKNOWN :
+            std::cout << "Unknown \n";
+            break;
+        case telux::loc::XtraDataStatus::STATUS_NOT_AVAIL :
+            std::cout << "Not available \n";
+            break;
+        case telux::loc::XtraDataStatus::STATUS_NOT_VALID :
+            std::cout << "Invalid \n";
+            break;
+        case telux::loc::XtraDataStatus::STATUS_VALID :
+            std::cout << "Valid \n";
+            break;
+    }
 }

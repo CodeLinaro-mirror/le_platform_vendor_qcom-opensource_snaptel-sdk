@@ -97,6 +97,16 @@ This sample app demonstrates how to prepare for an eCall operation and indicate 
 
 ### 8. Initiate an eCall
 
+### 9. Receive notification when filesystem operation is about to resumes in seconds - timeLetftToStart
+Note: *On this notification, the client can still suspand the filesystem operation and continue the eCall by invoking prepareForEcall API (Step[7])*
+
+   ~~~~~~{.cpp}
+   virtual void OnFsOperationImminentEvent(uint32_t timeLeftToStart) override {
+        PRINT_NOTIFICATION << "Filesystem operation resumes in seconds: ";
+        std::cout << timeLeftToStart << std::endl;
+   }
+   ~~~~~~
+
 ### 9. Once an eCall is completed, indicate to the filesystem manager
 
    ~~~~~~{.cpp}

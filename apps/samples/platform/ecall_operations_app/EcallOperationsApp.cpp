@@ -76,6 +76,16 @@ class EcallOperationListener : public IFsListener {
         }
         std::cout << status << std::endl;
     }
+
+    // [9] Receive notification when filesystem operation is about to resumes
+    //     in seconds - timeLetftToStart.
+    virtual void OnFsOperationImminentEvent(uint32_t timeLeftToStart) override {
+        PRINT_NOTIFICATION << "Filesystem operation resumes in seconds: ";
+        std::cout << timeLeftToStart << std::endl;
+        /** On this notification, the client can still suspand the filesystem operation
+         *  and continue the eCall by invoking prepareForEcall API (Step[7]).
+        **/
+    }
 };
 
 int main(int argc, char **argv) {

@@ -3741,15 +3741,18 @@ necessary.
 
 The platform sub-system should have been initialized successfully with SERVICE_AVAILABLE as a
 pre-requisite for any filesystem operations and a valid FilesystemManager object is available.
-1. Before initiate an ECALL, the application should prepare the filesystem for ECALL operation,
+1. Before initiate an eCall, the application should prepare the filesystem for eCall operation,
 prepareForEcall should be invoked. If the status of this request fails, the client could re-invoke
-during an ECALL ongoing.
+during an eCall ongoing.
 2. The status of the request would return immediately indicating the preparation of the filesystem
 operation.
-3. The client should start an ECALL immediately even if the prepare for ECALL request failed.
-4. Once an ECALL complete, the client should notify ECALL completion to the filesystem manager.
+3. The client should start an eCall immediately even if the prepare for eCall request failed.
+4. The filesystem manager shall notify the application when filesystem operation is about to resume.
+5. If the client wants to suspend the filesystem operation to continue the eCall, they should invoke
+the prepareForEcall API.
+6. Once an eCall completes, the client should notify eCall completion to the filesystem manager.
 eCallCompleted should be invoked.
-5. The status of the request would return immediately indication the completion of the filesystem
+7. The status of the request would return immediately indication the completion of the filesystem
 operation.
 
 @subsection platform_control_filesystem_for_ota_start_end_call_flow Call flow of control filesystem for OTA operation

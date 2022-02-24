@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       VlanManager.hpp
  *
@@ -82,7 +118,7 @@ using QueryVlanResponseCb
 /**
  * This function is called as a response to @ref queryVlanMappingList()
  *
- * @param [in] mapping         List of profile Id and Vlan id map
+ * @param [in] mapping         List of profile Id and VLAN id map
  *                             Key is Profile Id and value is VLAN id
  * @param [in] error           Return code which indicates whether the operation
  *                             succeeded or not @ref telux::common::ErrorCode
@@ -101,17 +137,17 @@ using VlanMappingResponseCb = std::function<void(
 class IVlanManager {
  public:
     /**
-     * Checks the status of Vlan manager and returns the result.
+     * Checks the status of VLAN manager and returns the result.
      *
-     * @returns SERVICE_AVAILABLE      If Vlan manager object is ready for service.
-     *          SERVICE_UNAVAILABLE    If Vlan manager object is temporarily unavailable.
-     *          SERVICE_FAILED       - If Vlan manager object encountered an irrecoverable failure.
+     * @returns SERVICE_AVAILABLE      If VLAN manager object is ready for service.
+     *          SERVICE_UNAVAILABLE    If VLAN manager object is temporarily unavailable.
+     *          SERVICE_FAILED       - If VLAN manager object encountered an irrecoverable failure.
      *
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
-     * Checks if the Vlan manager subsystem is ready.
+     * Checks if the VLAN manager subsystem is ready.
      *
      * @returns True if VLAN Manager is ready for service, otherwise
      * returns false.
@@ -121,7 +157,7 @@ class IVlanManager {
     virtual bool isSubsystemReady() = 0;
 
     /**
-     * Wait for Vlan manager subsystem to be ready.
+     * Wait for VLAN manager subsystem to be ready.
      *
      * @returns A future that caller can wait on to be notified
      * when VLAN manager is ready.
@@ -135,7 +171,7 @@ class IVlanManager {
      *
      * @note       if interface configured as VLAN for the first time, it may trigger auto reboot.
      *
-     * @param [in] vlanConfig       vlan configuration
+     * @param [in] vlanConfig       VLAN configuration
      * @param [out] callback        optional callback to get the response createVlan
      *
      * @returns Immediate status of createVlan() request sent i.e. success or suitable status
@@ -176,12 +212,26 @@ class IVlanManager {
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
     /**
-     * Bind a Vlan with a particular profile ID and slot ID. When a WWAN network interface is
-     * brought up using IDataConnectionManager::startDataCall on that profile ID and slot ID,
-     * that interface will be accessible from this Vlan
+     * Bind a VLAN with a particular profile id and slot id. When a WWAN network interface is
+     * brought up using IDataConnectionManager::startDataCall on that profile id and slot id,
+     * that interface will be accessible from this VLAN
+     * The behavior of this API is dependent on platform/system configuration.
+     * If the platform is configured to allow multiple VLANs to be bound to the same
+     * profile id - slot id pair then:
+     *   - Binding multiple VLANs to any profile id - slot id pair can be achieved by calling this
+     *     API with each VLAN id. Each VLAN will be associated with it's own bridge.
+     *   - Reboot is not triggered with any bind operation.
+     * If the platform is not configured to allow multiple VLANs to be bound to the same
+     * profile id - slot id pair then:
+     *   - Binding VLAN to default profile id and slot id will associate it with bridge0 and
+     *     trigger automatic reboot.
+     *   - Binding VLAN to any other profile id and slot id will associate it with own bridge.
+     *   - Multiple VLAN binding attempt to any profile id or slot id will result in error
+     *     telux::common::ErrorCode::INVALID_OPERATION
+     * This setting will be persistant across multiple boots.
      *
-     * @param [in] profileId    profile id for vlan association
-     * @param [in] vlanId       sets vlan id
+     * @param [in] profileId    profile id for VLAN association
+     * @param [in] vlanId       sets VLAN id
      * @param [out] callback    callback to get the response of associateWithProfileId API
      * @param [in] slotId       Specify slot id which has the sim that contains profile id.
      *
@@ -194,9 +244,10 @@ class IVlanManager {
 
     /**
      * Unbind VLAN id from given slot id and profile id
+     * This setting will be persistant across multiple boots.
      *
-     * @param [in] profileId    profile id for vlan association
-     * @param [in] vlanId       vlan id
+     * @param [in] profileId    profile id for VLAN association
+     * @param [in] vlanId       VLAN id
      * @param [in] callback     callback to get the response of associateWithProfileId API
      * @param [in] slotId       Specify slot id which has the sim that contains profile id .
      *
@@ -208,11 +259,11 @@ class IVlanManager {
         telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
-     * Query VLAN mapping of profile id and vlan id on specified sim
+     * Query VLAN mapping of profile id and VLAN id on specified sim
      *
      * @param [in] callback    callback to get the response of queryVlanMappingList API
      * @param [in] slotId      Specify slot id which has the sim that contains profile id
-     *                         mapping to vlan id.
+     *                         mapping to VLAN id.
      *
      * @returns Immediate status of queryVlanMappingList() request sent i.e. success or
      * suitable status code
@@ -222,7 +273,7 @@ class IVlanManager {
         SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
-     * Register Vlan Manager as a listener for Data Service health events like data service
+     * Register VLAN Manager as a listener for Data Service health events like data service
      * available or data service not available.
      *
      * @param [in] listener    pointer of IVlanListener object that processes the
@@ -258,7 +309,7 @@ class IVlanManager {
 };  // end of IVlanManager
 
 /**
- * Interface for Vlan listener object. Client needs to implement this interface to get
+ * Interface for VLAN listener object. Client needs to implement this interface to get
  * access to Socks services notifications like onServiceStatusChange.
  *
  * The methods in listener can be invoked from multiple different threads. The implementation

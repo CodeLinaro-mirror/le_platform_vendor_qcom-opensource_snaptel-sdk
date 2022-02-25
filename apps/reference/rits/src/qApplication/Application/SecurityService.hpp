@@ -55,11 +55,25 @@ struct SignStats
     double signLatency;
 };
 
+struct MisbehaviorStats{
+    double timestamp = 0.0;
+    double misbehaviorLatency = 0.0;
+};
+
 struct Kinematics
 {
     int32_t latitude;
     int32_t longitude;
     uint16_t elevation;
+    uint32_t id;
+    uint32_t dataType;
+    uint8_t msgCount;
+    int16_t speed;
+    uint16_t heading;
+    int16_t longitudeAcceleration;
+    int16_t latitudeAcceleration;
+    int32_t yawAcceleration;
+    uint16_t brakes;
 };
 
 /**
@@ -76,9 +90,11 @@ typedef struct SecurityOpt {
     uint32_t sspMaskValue [32];
     uint32_t sspMaskLength;
     bool enableEnc;
+    bool enableMbd = false;
     uint8_t secVerbosity;
     VerifStats* verifStat;
     SignStats* signStat;
+    MisbehaviorStats* misbehaviorStat;
 } SecurityOpt_t;
 
 /*

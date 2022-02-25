@@ -103,7 +103,8 @@ RadioReceive::RadioReceive(const TrafficCategory category,
             cout<<"Rx Subscription creation succeeds for SID: ";
             auto idp = idList.get();
             for(int i=0; i < idp->size(); i++)
-                std::cout << idp->at(i) << ' ';
+                cout << idp->at(i) << ' ';
+            cout << "\n";
         }else{
             cout<<"Rx Subscription creation fails.\n";
         }

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       SensorControlMenu.cpp
  *
@@ -66,13 +102,7 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) 
     if(state == TcuActivityState::SUSPEND) {
         // enable MLC feature
         for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
-            std::cout << "Enabling sensor feature fifo for " << (*it) << std::endl;
-            telux::common::Status status = sensorFeatureManager_->enableFeature(*it);
-            if (status != telux::common::Status::SUCCESS) {
-                std::cout << "enableFeature fifo failed: " << std::endl;
-                Utils::printStatus(status);
-                break;
-            }
+            enableFeature(*it);
         }
         Status ackStatus = tcuActivityMgr_->sendActivityStateAck(TcuActivityStateAck::SUSPEND_ACK);
         if(ackStatus == Status::SUCCESS) {
@@ -89,18 +119,21 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) 
 }
 
 void SensorFeatureControlMenu::initTcuPowerMgr() {
+#ifdef TELUX_FOR_EXTERNAL_AP
+    std::cout << " Connecting to REMOTE TCU Activity Manager " << std::endl;
+    telux::common::ProcType procType = telux::common::ProcType::REMOTE_PROC;
+#else
     std::cout << " Connecting to LOCAL TCU Activity Manager " << std::endl;
+    telux::common::ProcType procType = telux::common::ProcType::LOCAL_PROC;
+#endif
     std::cout << " Initializing the client as a SLAVE " << std::endl;
 
     // Get power factory instance
     auto &powerFactory = PowerFactory::getInstance();
     // Get TCU-activity manager object
     std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
-    tcuActivityMgr_ = powerFactory.getTcuActivityManager(ClientType::SLAVE,
-        telux::common::ProcType::LOCAL_PROC,
-            [&](telux::common::ServiceStatus status) {
-                    prom.set_value(status);
-            });
+    tcuActivityMgr_ = powerFactory.getTcuActivityManager(ClientType::SLAVE, procType,
+        [&](telux::common::ServiceStatus status) { prom.set_value(status); });
     if(tcuActivityMgr_ == nullptr) {
         std::cout <<" ERROR - Failed to get manager instance" << std::endl;
         return;
@@ -137,7 +170,7 @@ SensorFeatureControlMenu::~SensorFeatureControlMenu() {
 telux::common::ServiceStatus SensorFeatureControlMenu::initSensorFeatureManager() {
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
-    std::promise<ServiceStatus> prom{};
+    std::promise<ServiceStatus> prom;
     //  Get the SensorFactory and SensorFeatureManager instances.
     auto &sensorFactory = telux::sensor::SensorFactory::getInstance();
     sensorFeatureManager_ = sensorFactory.getSensorFeatureManager(
@@ -209,9 +242,22 @@ void SensorFeatureControlMenu::initConsole() {
                 std::bind(&SensorFeatureControlMenu::enableSensorFeatureFifo,
                     this, std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands = {listSensorFeaturesCommand,
-        enableSensorFeatureCommand, disableSensorFeatureCommand, listActiveFeaturesCommand,
-        enableSensorFeatureFifoCommand};
+    std::shared_ptr<ConsoleAppCommand> skipSensorFeatureOnSuspendCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("6", "Skip_Sensor_Feature_On_Suspend", {},
+                std::bind(&SensorFeatureControlMenu::skipSensorFeatureOnSuspend, this,
+                    std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> listSensorFeaturesQueuedOnSuspendCommand
+        = std::make_shared<ConsoleAppCommand>(
+            ConsoleAppCommand("7", "List_Sensor_Features_Queued_On_Suspend", {},
+                std::bind(&SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend, this,
+                    std::placeholders::_1)));
+
+    std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
+        = {listSensorFeaturesCommand, enableSensorFeatureCommand, disableSensorFeatureCommand,
+            listActiveFeaturesCommand, enableSensorFeatureFifoCommand,
+            skipSensorFeatureOnSuspendCommand, listSensorFeaturesQueuedOnSuspendCommand};
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -222,6 +268,28 @@ void SensorFeatureControlMenu::enableSensorFeatureFifo(std::vector<std::string> 
     SensorUtils::getInput("Enter feature name: ", name);
     enabledFeaturesFifo_.emplace(name);
     std::cout << "Enable sensor feature fifo request queued for " << name << std::endl;
+}
+
+void SensorFeatureControlMenu::skipSensorFeatureOnSuspend(std::vector<std::string> userInput) {
+    std::string name;
+    SensorUtils::getInput("Enter feature name: ", name);
+    if (enabledFeaturesFifo_.erase(name) == 0) {  // No element was erased
+        std::cout << "Sensor feature " << name << " not found in fifo queue" << std::endl;
+    } else {
+        std::cout << "Sensor feature fifo request removed for " << name << std::endl;
+    }
+}
+
+void SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend(
+    std::vector<std::string> userInput) {
+    if (enabledFeaturesFifo_.empty()) {
+        std::cout << "No features have been queued to be enabled on suspend" << std::endl;
+        return;
+    }
+    std::cout << "Features queued to be enabled on suspend" << std::endl;
+    for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
+        std::cout << "\t" << (*it) << std::endl;
+    }
 }
 
 void SensorFeatureControlMenu::listSensorFeatures(std::vector<std::string> userInput) {
@@ -241,14 +309,7 @@ void SensorFeatureControlMenu::listSensorFeatures(std::vector<std::string> userI
 void SensorFeatureControlMenu::enableSensorFeature(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
-    telux::common::Status status = sensorFeatureManager_->enableFeature(name);
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "enableFeature failed: " << std::endl;
-        Utils::printStatus(status);
-        return;
-    }
-    enabledFeatures_.emplace(name);
-    std::cout << "Enable sensor feature request successful for " << name << std::endl;
+    enableFeature(name);
 }
 
 void SensorFeatureControlMenu::disableSensorFeature(std::vector<std::string> userInput) {
@@ -261,6 +322,17 @@ void SensorFeatureControlMenu::listActiveFeatures(std::vector<std::string> userI
     for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ++it) {
         std::cout << "\t" << (*it) << std::endl;
     }
+}
+
+void SensorFeatureControlMenu::enableFeature(std::string name) {
+    telux::common::Status status = sensorFeatureManager_->enableFeature(name);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "enableFeature failed: " << std::endl;
+        Utils::printStatus(status);
+        return;
+    }
+    enabledFeatures_.emplace(name);
+    std::cout << "Enable sensor feature request successful for " << name << std::endl;
 }
 
 void SensorFeatureControlMenu::disableFeature(std::string name) {

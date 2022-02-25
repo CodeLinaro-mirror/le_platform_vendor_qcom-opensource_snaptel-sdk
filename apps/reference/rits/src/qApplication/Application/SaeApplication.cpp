@@ -73,7 +73,9 @@
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verifStatIdx = 0;
+thread_local int misbehaviorStatIdx = 0;
 thread_local int verif_fails = 0;
+thread_local std::vector<MisbehaviorStats> misbehaviorStats;
 thread_local std::vector<VerifStats> verifStats;
 thread_local int rxFail = 0;
 thread_local int txFail = 0;
@@ -85,7 +87,7 @@ thread_local int verifFail = 0;
 thread_local int verifSuccess = 0;
 thread_local int signFail = 0;
 thread_local int signSuccess = 0;
-thread_local std::shared_ptr<msg_contents> mc = nullptr;
+thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     ApplicationBase(fileConfiguration) {
@@ -112,6 +114,7 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     for (auto mc : receivedContents) {
         initMsg(mc, true);
     }
+
 }
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
@@ -194,8 +197,6 @@ void SaeApplication::printTxStats(){
 }
 
 int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
-
-    // Allocate msg_contents struct and copy actual packet into it
     const auto i = index;
     int ret = 0;
     int packet_len = 0;
@@ -203,36 +204,42 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
     int macAddrLen = CV2X_MAC_ADDR_LEN;
 
-    if (isRxSim) {
-        mc = rxSimMsg;
-    } else {
-        mc = receivedContents[index];
+    // make sure that the threadMc is initialized
+    if (threadMc == nullptr) {
+        if(ldm == nullptr){
+            // allocate a new one since ldm is not active
+            threadMc = std::make_shared<msg_contents>();
+        }else{
+            // use a ldm-provided msg contents struct for rx and decoding
+            uint32_t ldmIndex = this->ldm->getFreeBsmSlotIdx();
+            threadMc = this->ldm->bsmContents[ldmIndex];
+        }
     }
 
-    if(mc->abuf.head == NULL || mc->abuf.size == 0){
-        abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
-        initMsg(mc, true);
+    if(threadMc->abuf.head == NULL || threadMc->abuf.size == 0){
+        abuf_alloc(&threadMc->abuf, bufLen, ABUF_HEADROOM);
+        initMsg(threadMc, true);
     } else {
-        abuf_reset(&mc->abuf, ABUF_HEADROOM);
+        abuf_reset(&threadMc->abuf, ABUF_HEADROOM);
     }
 
     // receive packet
     if (isRxSim)
     {
         sem_wait(&rx_sem);
-        ret = simReceive->receive(mc->abuf.data, ABUF_LEN-ABUF_HEADROOM);
+        ret = simReceive->receive(threadMc->abuf.data, bufLen-ABUF_HEADROOM);
         sem_post(&rx_sem);
         packet_len = ret;
     }
     else {
         sem_wait(&rx_sem);
-        ret = radioReceives[0].receive(mc->abuf.data, ABUF_LEN-ABUF_HEADROOM,
+        ret = radioReceives[index].receive(threadMc->abuf.data, bufLen-ABUF_HEADROOM,
                             sourceMacAddr, macAddrLen);
         sem_post(&rx_sem);
     }
 
     // Make sure packet is successfully received
-    if(ret < MIN_PACKET_LEN || ret > MAX_PACKET_LEN || mc == nullptr){
+    if(ret < MIN_PACKET_LEN || ret > MAX_PACKET_LEN || threadMc == nullptr){
         if(appVerbosity > 4){
             if(ret < 0){
                 printf("Receive returned with error.\n");
@@ -252,21 +259,21 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
 
     // needs to be done for data pointer to not override tail pointer
-    mc->abuf.tail = mc->abuf.data+ret;
+    threadMc->abuf.tail = threadMc->abuf.data+ret;
 
     if(appVerbosity > 7){
        printf("\n 2) Full rx packet with length %d\n", ret);
-       print_buffer((uint8_t*)mc->abuf.data, ret);
+       print_buffer((uint8_t*)threadMc->abuf.data, ret);
        printf("\n");
     }
 
     // Decode packet as WSMP Packet and IEEE 1609.2 Header
-    ret = decode_msg(mc.get());
+    ret = decode_msg(threadMc.get());
     // Determine if we are expecting signed packet or not
     if(this->configuration.enableSecurity){
         // check if the message is signed/encrypted IEEE1609.2 content.
         if (ret == 1) { // message is secured
-            ret = decodeAndVerify(mc.get());
+            ret = decodeAndVerify(threadMc.get());
         }else if(ret >= 0){
             // here we need to check option for processing both unsigned/signed packets
             if(!configuration.acceptAll){
@@ -277,18 +284,18 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 if(appVerbosity > 3)
                     printf("Decoded unsigned packet successfully.\n");
                 // process WSA and other WSMP packets
-                wsmpp = (wsmp_data_t *)mc->wsmp;
+                wsmpp = (wsmp_data_t *)threadMc->wsmp;
                 if (MsgType == MessageType::WSA && wsmpp->psid == PSID_WSA) {
 #ifdef WITH_WSA
-                    ret = decode_as_wsa(mc.get());
-                    if (!ret && mc->wra) {
+                    ret = decode_as_wsa(threadMc.get());
+                    if (!ret && threadMc->wra) {
                         ret = onReceiveWra(
-                                static_cast<RoutingAdvertisement_t*>(mc->wra),
+                                static_cast<RoutingAdvertisement_t*>(threadMc->wra),
                                 sourceMacAddr, macAddrLen);
                     }
 #endif
                 } else {
-                    ret = decode_as_j2735(mc.get());
+                    ret = decode_as_j2735(threadMc.get());
                 }
                 ret = 1;
             }
@@ -304,12 +311,12 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 if(appVerbosity > 3)
                     printf("Successful decode\n");
                 ret = 0;
-                wsmpp = (wsmp_data_t *)mc->wsmp;
+                wsmpp = (wsmp_data_t *)threadMc->wsmp;
                 if (MsgType == MessageType::WSA && wsmpp->psid == PSID_WSA) {
 #ifdef WITH_WSA
-                    if (mc->wra) {
+                    if (threadMc->wra) {
                         ret = onReceiveWra(
-                                static_cast<RoutingAdvertisement_t*>(mc->wra),
+                                static_cast<RoutingAdvertisement_t*>(threadMc->wra),
                                 sourceMacAddr, macAddrLen);
                     }
 #endif
@@ -327,13 +334,19 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 break;
         }
     }
-    if(ret >= 0)
+    if(ret >= 0){
         rxSuccess++;
-    else
+        if(appVerbosity > 2){
+            printf("Decoded BSM Summary: \n");
+            print_summary_RV(threadMc.get());
+        }
+    }
+    else{
         decFail++;
+    }
     if(writeToCsvFile && (ret != -1)){
         csvMutex.lock();
-        writeToCsv(mc.get(),csvfp);
+        writeToCsv(threadMc.get(),csvfp);
         csvMutex.unlock();
     }
     return ret;
@@ -341,16 +354,14 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 
 int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
                      const uint32_t ldmIndex) {
+    // use the ldm-provide message contents struct for rx and decoding
+    threadMc = this->ldm->bsmContents[ldmIndex];
     int ret = receive(index, bufLen);
-    if (ret > 0) {
-        std::shared_ptr<msg_contents> mc = nullptr;
-        if (isRxSim) {
-            mc = rxSimMsg;
-        } else {
-            mc = receivedContents[index];
+    if (ret >= 0) {
+        if(threadMc->j2735_msg != nullptr){
+            auto bsm = reinterpret_cast<bsm_value_t *>(threadMc->j2735_msg);
+            this->ldm->setIndex((uint32_t)bsm->id, ldmIndex, nullptr);
         }
-        auto bsm = reinterpret_cast<bsm_value_t *>(mc->j2735_msg);
-        this->ldm->setIndex(bsm->id, ldmIndex);
     }
     return ret;
 }
@@ -397,7 +408,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
     wsmpp = (wsmp_data_t *)mc->wsmp;
     if(MsgType == MessageType::BSM && wsmpp->psid == PSID_BSM) {
         ret = decode_as_j2735(mc);
-        // here the secure header was extracted properly, but packet decoded incorrectly
+        // here the secure header was extracted properly, packet decoded incorrectly
         if(ret == -1){
             if(appVerbosity > 3)
                 printf("Error in decoding unsigned packet - security enabled.\n");
@@ -412,8 +423,19 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
         sopt.rvKine.latitude = bsm->Latitude;
         sopt.rvKine.longitude = bsm->Longitude;
         sopt.rvKine.elevation = bsm->Elevation;
+        if(configuration.enableMbd){
+            sopt.enableMbd = configuration.enableMbd;
+            sopt.rvKine.id = bsm->id;
+            sopt.rvKine.dataType = this->configuration.psid;
+            sopt.rvKine.msgCount = bsm->MsgCount;
+            sopt.rvKine.speed = bsm->Speed;
+            sopt.rvKine.heading = bsm->Heading_degrees;
+            sopt.rvKine.longitudeAcceleration = bsm->AccelLon_cm_per_sec_squared;
+            sopt.rvKine.latitudeAcceleration = bsm-> AccelLat_cm_per_sec_squared;
+            sopt.rvKine.yawAcceleration = bsm->AccelYaw_centi_degrees_per_sec;
+            sopt.rvKine.brakes = (uint16_t)bsm->brakes.word;
+        }
     }
-
     // set the hv kinematics
     shared_ptr<ILocationInfoEx> locationInfo =
                                 kinematicsReceive->getLocation();
@@ -424,7 +446,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
     // prepare verification statistics logging
     if(configuration.enableVerifStatLog){
         std::thread::id tid = std::this_thread::get_id();
-        if (thrVerifLatencies[tid].size() > verifStatIdx[tid]) {
+        if (thrVerifLatencies[tid].size() >= verifStatIdx[tid]) {
             sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
         }else{
             verifStatIdx[tid] = 0;
@@ -434,6 +456,22 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
         verifStatIdx[tid]%=thrVerifLatencies[tid].size();
     }else{
         sopt.verifStat = nullptr;
+    }
+
+    if(configuration.enableMbdStatLog){
+        std::thread::id tid = std::this_thread::get_id();
+        if (thrMisbehaviorLatencies[tid].size() >= misbehaviorStatIdx[tid]) {
+            sopt.misbehaviorStat =
+                &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+        }else{
+            misbehaviorStatIdx[tid] = 0;
+            sopt.misbehaviorStat =
+                &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
+        }
+        misbehaviorStatIdx[tid]++;
+        misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
+    }else{
+        sopt.misbehaviorStat = nullptr;
     }
 
     // Verify packet signature ; providing lat/lon from the rx message
@@ -670,10 +708,13 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     }
         // for synchronization between Application and Aerolink sides
     if(!initialized){
-        //printf("Initializing bsm count and temp id\n");
         bsm->MsgCount = (rand() % 127);
         bsm->id = rand();
         initialized = true;
+
+        if(appVerbosity > 1){
+            printf("Msg count: %d, id: %u\n", bsm->MsgCount, bsm->id);
+        }
     }
     else if(idChangeData.idChanged){
         // randomize msg count
@@ -685,11 +726,13 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
         (uint32_t)idChangeData.tempId[3];
         idChangeData.idChanged = false;
         if(appVerbosity > 1)
-            printf("SaeApp:: Id changed, new msgcount is: %d, and new temp id is: %u\n",
+            printf("Id changed, new msgcount is: %d, and new temp id is: %u\n",
                                     bsm->MsgCount, bsm->id);
+        this->tempId = bsm->id;
     }
     else{
         bsm->MsgCount = (msgCount + 1) % 127;
+        bsm->id = tempId;
     }
     if (idChangeEnabled) {
         sem_post(&idChangeData.idSem);
@@ -890,17 +933,13 @@ int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
 void SaeApplication::receiveTuncBsm(const uint8_t index, const uint16_t bufLen, const uint32_t ldmIndex) {
     const auto i = index;
     float tunc = -1;
-    // Still using raw pointer of msg in Ldm, will change to smart pointer
-    // later.
-    msg_contents *msg = &this->ldm->bsmContents[ldmIndex];
+    threadMc = this->ldm->bsmContents[ldmIndex];
     if (isRxSim) {
-        decode_msg(rxSimMsg.get());
+        threadMc = rxSimMsg;
     }
-    else {
-        decode_msg(msg);
-    }
+    decode_msg(threadMc.get());
 
-    const bsm_value_t *bsm = reinterpret_cast<bsm_value_t *>(msg->j2735_msg);
+    const bsm_value_t *bsm = reinterpret_cast<bsm_value_t *>(threadMc->j2735_msg);
     if (this->ldm->tuncs.find(bsm->id) == this->ldm->tuncs.end()) {
         this->ldm->tuncs.insert(pair<uint32_t, float>(bsm->id, tunc));
     }
@@ -1073,4 +1112,3 @@ int SaeApplication::clearGlobalIPv6Prefix(void)
     GlobalIpSessionActive = false;
     return radioReceives[0].clearGlobalIPInfo();
 }
-

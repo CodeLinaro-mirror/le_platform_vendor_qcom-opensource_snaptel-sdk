@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 extern "C" {
 #include "unistd.h"
@@ -48,6 +83,7 @@ using namespace std;
 #define PROTO_TCP 6
 #define PROTO_UDP 17
 #define PROTO_ESP 50
+#define PROTO_ICMP6 58
 
 FirewallMenu::FirewallMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -175,8 +211,17 @@ void FirewallMenu::parseProtoInfo(std::shared_ptr<IIpFilter> filter,
         } else {
             std::cout << " UDP filter is NULL so couldn't get UDP info\n ";
         }
-    } else if (protocol == PROTO_ICMP) {
-        protoStr = "ICMP";
+    } else if (protocol == PROTO_ICMP || protocol == PROTO_ICMP6) {
+        auto icmpFilter = std::dynamic_pointer_cast<IIcmpFilter>(filter);
+        if(icmpFilter) {
+            IcmpInfo icmpInfo = icmpFilter->getIcmpInfo();
+            protoStr = protocol == PROTO_ICMP?"ICMP":"ICMP6";
+            std::cout << "Protocol : " << protoStr << std::endl;
+            std::cout << "Icmp Type : " << (int)icmpInfo.type << std::endl;
+            std::cout << "Icmp Code : " << (int)icmpInfo.code << std::endl;
+        } else {
+            std::cout << " ICMP filter is NULL so couldn't get ICMP info\n ";
+        }
     } else if (protocol == PROTO_IGMP) {
         protoStr = "IGMP";
     } else if (protocol == PROTO_ESP) {
@@ -503,23 +548,24 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
             udpFilter->setUdpInfo(udpInfo);
         }
     } break;
-    case 1:  // ICMP
+    case 1:
+    case 58:  // ICMP
     {
         int icmpType = 0;
         int icmpCode = 0;
         int option = 0;
-
-        std::cout << "Do you want to enter ICMP Type [1-YES 0-NO] ";
+        std::string protoStr = (proto == PROTO_ICMP)?"ICMP":"ICMP6";
+        std::cout << "Do you want to enter "<< protoStr <<" Type [1-YES 0-NO] ";
         std::cin >> option;
         if (option ==1) {
-            std::cout << "enter the ICMP Type value: ";
+            std::cout << "enter the "<< protoStr <<" Type value: ";
             std::cin >> icmpType;
         }
         option = 0;
-        std::cout << "Do you want to enter ICMP Code [1-YES 0-NO] ";
+        std::cout << "Do you want to enter "<< protoStr <<" Code [1-YES 0-NO] ";
         std::cin >> option;
         if (option ==1) {
-            std::cout << "enter the ICMP Code value: ";
+            std::cout << "enter the "<< protoStr <<" Code value: ";
             std::cin >> icmpCode;
         }
         IcmpInfo icmpInfo {};
@@ -569,18 +615,23 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::cin >> fwDirection;
     Utils::validateInput(fwDirection);
     telux::data::Direction fwDir = static_cast<telux::data::Direction>(fwDirection);
-
-    char delimiter = '\n';
-    std::string protoStr;
-    std::cin.get();
-    std::cout << "Enter Protocol (TCP, UDP, TCP_UDP, ICMP, ESP): ";
-    std::getline(std::cin, protoStr, delimiter);
-    telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6): ";
     std::cin >> ipFamilyType;
     Utils::validateInput(ipFamilyType);
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+
+    char delimiter = '\n';
+    std::string protoStr;
+    std::cin.get();
+    if (ipFamilyType == 4) {
+        std::cout << "Enter Protocol (TCP, UDP, TCP_UDP, ICMP, ESP): ";
+    } else if (ipFamilyType == 6) {
+        std::cout << "Enter Protocol (TCP, UDP, TCP_UDP, ICMP6, ESP): ";
+    }
+    std::getline(std::cin, protoStr, delimiter);
+    telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
+
     std::shared_ptr<telux::data::net::IFirewallEntry> fwEntry = nullptr;
     // To handle creation of TCP_UDP firewall entry
     std::shared_ptr<telux::data::net::IFirewallEntry> fwEntryTcpUdp = nullptr;
@@ -676,7 +727,6 @@ void FirewallMenu::displayFirewallEntry() {
         int srcPort, destPort, srcPortRange, dstPortRange;
         srcPort = destPort = srcPortRange = dstPortRange = 0;
         std::string protoStr;
-        parseProtoInfo(ipfilter, proto, srcPort, destPort, srcPortRange, dstPortRange, protoStr);
 
         std::cout << "### Start Displaying firewall configuration of handle  = "
             << fwEntries_[i]->getHandle() << " ###" << std::endl;
@@ -732,12 +782,14 @@ void FirewallMenu::displayFirewallEntry() {
             std::cout << "Ipv6 nat enabled fw entry is " <<
                 (uint32_t)ipv6Info.natEnabled << std::endl;
         }
-
-        std::cout << "Protocol : " << protoStr << std::endl;
-        std::cout << "Src port : " << srcPort << std::endl;
-        std::cout << "Src portrange  : " << srcPortRange << std::endl;
-        std::cout << "Dst port  : " << destPort << std::endl;
-        std::cout << "Dst portrange : " << dstPortRange << std::endl;
+        parseProtoInfo(ipfilter, proto, srcPort, destPort, srcPortRange, dstPortRange, protoStr);
+        if (protoStr=="TCP" || protoStr=="UDP") {
+            std::cout << "Protocol : " << protoStr << std::endl;
+            std::cout << "Src port : " << srcPort << std::endl;
+            std::cout << "Src portrange  : " << srcPortRange << std::endl;
+            std::cout << "Dst port  : " << destPort << std::endl;
+            std::cout << "Dst portrange : " << dstPortRange << std::endl;
+        }
         std::cout << "### End of Firewall configuration of handle  = "
             << fwEntries_[i]->getHandle() << " ###" << std::endl << std::endl;
     }

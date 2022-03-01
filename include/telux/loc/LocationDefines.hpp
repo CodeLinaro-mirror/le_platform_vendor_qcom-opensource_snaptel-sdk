@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -1760,6 +1760,21 @@ struct XtraConfig {
      * ntp.exampleserver.com:123.
      */
     std::vector<std::string> ntpServerURLs;
+    /**
+     * Enable or disable XTRA integrity download.
+     *
+     * true: enable XTRA integrity download.
+     * false: disable XTRA integrity download.
+     */
+    bool isIntegrityDownloadEnabled;
+    /**
+     *  Download interval for xtra integrity, only applicable
+     *  if XTRA integrity download is enabled.
+     *
+     *  If 0 is specified, the download timeout value will use
+     *  device default value.
+     */
+    uint32_t integrityDownloadIntervalMinute;
     /** Level of debug log messages that will be logged. */
     DebugLogLevel daemonDebugLogLevel;
 };

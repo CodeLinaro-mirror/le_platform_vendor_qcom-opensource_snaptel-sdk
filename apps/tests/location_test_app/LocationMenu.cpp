@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -1655,6 +1655,21 @@ void LocationMenu::populateXtraConfigParams(telux::loc::XtraConfig &configParams
         }
     }
     configParams.ntpServerURLs = ntpServerURLs;
+
+    std::cin.get();
+    std::string integrityOption;
+    std::cout << "Enable Xtra integrity (y/n): ";
+    std::getline(std::cin, integrityOption, delimiter);
+    if(integrityOption == "Y" || integrityOption == "y") {
+        configParams.isIntegrityDownloadEnabled = true;
+        uint32_t integrityDownloadIntervalMinute;
+        std::cout << "Enter Xtra Integirty Download Interval Min : ";
+        std::cin >> integrityDownloadIntervalMinute;
+        Utils::validateInput(integrityDownloadIntervalMinute);
+        configParams.integrityDownloadIntervalMinute = integrityDownloadIntervalMinute;
+    } else {
+        configParams.isIntegrityDownloadEnabled = false;
+    }
 
     int daemonDebugLogLevel;
     std::cout << "Enter Xtra Daemon Debug Loglevel [0-5]: ";

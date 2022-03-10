@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -770,9 +770,11 @@ enum class ServiceState {
  * Structure for vlan configuration
  */
 struct VlanConfig {
-    InterfaceType iface; /**< PHY interfaces (i.e. ETH, ECM and RNDIS)*/
-    int16_t vlanId;      /**< Vlan identifier (i.e 1-4094)*/
-    bool isAccelerated;  /**< is acceleration allowed */
+    InterfaceType iface;       /**< PHY interfaces (i.e. ETH, ECM and RNDIS)                     */
+    int16_t vlanId;            /**< Vlan identifier (i.e 1-4094)                                 */
+    bool isAccelerated;        /**< is acceleration allowed                                      */
+    uint8_t priority = 0;      /**< Vlan priority - A 3-bit field which refers to the IEEE 802.1p
+                                    class of service to traffic priority level. Don't care = 0   */
 };
 
 /**

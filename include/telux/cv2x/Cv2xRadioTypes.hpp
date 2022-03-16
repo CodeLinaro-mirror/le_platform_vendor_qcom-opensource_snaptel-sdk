@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
 * @file       Cv2xRxTypes.hpp
 *
@@ -70,7 +106,9 @@ enum class TrafficCategory {
 
 /**
  * Defines possible values for CV2X radio RX/TX status.
- *
+ * 1. If Tx is in active state, Rx should also be in active statue.
+ * 2. If Rx is in active statue, Tx should be in active(normal case)
+ *    or suspended state(sensing or tunnel mode).
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xStatusType {
@@ -82,23 +120,36 @@ enum class Cv2xStatusType {
 
 /**
  * Defines possible values for cause of CV2X radio failure.
- *
+ * The cause code is only associated with cv2x suspend/inactive status,
+ * if cv2x is active, the cause code has no meaning.
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xCauseType {
-    TIMING,            /**< V2X timing is not valid */
-    CONFIG,            /**< No valid V2X configuration */
-    UE_MODE,           /**< V2X is not supported in current UE mode */
-    GEOPOLYGON,        /**< V2X is not supported in current UE location */
-    THERMAL,           /**< Device's temperature is high and is in thermal
-                            mitigation mode */
-    THERMAL_ECALL,     /**< Device is in an emergency call and the device's
-                            temperature has crossed a threshold resulting
-                            in thermal mitigation */
-    GEOPOLYGON_SWITCH, /**< V2X stack is suspended due to geopolygon switch */
-    SENSING,           /**< V2X stack is suspended due to sensing */
-    LPM,               /**< V2X is not supported under Low Power Mode */
-    UNKNOWN,           /**< Cause is unknown */
+    TIMING,            /**< CV2X is suspended when GNSS signal is lost. */
+    CONFIG,            /**< This cause is not used currently. */
+    UE_MODE,           /**< CV2X status is either suspended or inactive.
+                            - Suspend case: CV2X is suspended temporarily when processing the stop
+                            of CV2X, after CV2X is stopped, CV2X status will change to inactive.
+                            - Inactive case:
+                             - CV2X is disabled by EFS/NV.
+                             - QWES license is not valid.
+                             - CV2X is stopped by user.
+                             - An invalid v2x.xml is updated to modem when CV2X is aready active.
+                             - UE enters a geopolygon that does not support CV2X when CV2X is
+                               already active. */
+    GEOPOLYGON,        /**< CV2X is inactive due to there's no valid CV2X configuration when
+                            starting CV2X, or the v2x.xml is corrupted. */
+    THERMAL,           /**< CV2X is suspended when the device's temperature is high. */
+    THERMAL_ECALL,     /**< CV2X is suspended when the device's temperature is high
+                            and emergency call is ongoing. */
+    GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon that also
+                            supports CV2X and UE is already in CV2X active status, CV2X status
+                            will change to active after the update is done. */
+    SENSING,           /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode just
+                            starts. UE needs sensing for 1 second before Tx can begin,
+                            Tx status will change to active after sensing is done. */
+    LPM,               /**< CV2X is inactive when UE enters Low Power Mode. */
+    UNKNOWN,           /**< Invalid cause type only used internally. */
 };
 
 /**
@@ -133,7 +184,7 @@ struct Cv2xStatus {
  * Used in @ref Cv2xStatusEx.
  */
 struct Cv2xPoolStatus {
-    uint8_t poolId = 0u; /**< pool ID*/
+    uint8_t poolId = 0u; /**< pool ID */
     Cv2xStatus status;   /**< status */
 };
 
@@ -220,10 +271,13 @@ enum class Periodicity {
 };
 
 /**
- * Contains minimum and maximum frequency for a given TX pool ID. Multiple TX
+ * Contains minimum and maximum EARFCNs for a given Tx pool ID. Multiple Tx
  * Pools allow the same radio and overall frequency range to be shared for
  * multiple types of traffic like V2V and V2X. Each pool ID and frequency range
  * corresponds to a certain type of traffic.
+ * Both edge guard bands are not included in the EARFCN range reported.
+ * The calculation for the full bandwidth includes both edge guard bands is:
+ * bandwidth(MHz) = (maxFreq-minFreq)/9.
  *
  * Used in @ref Cv2xRadioCapabilities
  */
@@ -231,9 +285,9 @@ struct TxPoolIdInfo {
     uint8_t poolId;
     /**< TX pool ID. */
     uint16_t minFreq;
-    /**< Minimum frequency in MHz. */
+    /**< Minimum EARFCN of this pool. */
     uint16_t maxFreq;
-    /**< Maximum frequency in MHz. */
+    /**< Maximum EARFCN of this pool. */
 };
 
 /**
@@ -264,7 +318,7 @@ struct EventFlowInfo {
     /**< Transmission Pool ID. */
     bool isUnicast = false;
     /**< Set to true if isUnicast flow.  If false, Non-Unicast flow will be created.
-         Note: Unicast flows ignore subscribed Service Ids*/
+         Note: Unicast flows ignore subscribed Service Ids */
 };
 
 /**
@@ -311,7 +365,7 @@ struct SpsFlowInfo {
     /**< Set to true if mcsIndex is used. If false, the system will use its
          default setting. */
     uint8_t mcsIndex;
-    /**< Modulation and Coding Scheme Index to use.  */
+    /**< Modulation and Coding Scheme Index to use. */
     bool txPoolIdValid = false;
     /**< Set to true if txPoolId is used.  If false, the system will use its
          default setting. */
@@ -515,16 +569,16 @@ struct L2FilterInfo {
     /**< remote UE L2 MAC addr to filter. */
     uint32_t srcL2Id;
 
-    /**< Duration, in millisec (resolution 100 msec). 0 means delete the filter*/
+    /**< Duration, in millisec (resolution 100 msec). 0 means delete the filter. */
     uint32_t durationMs;
 
     /**</* Proximity service per packet priority (PPPP), packets with priority above this value
-           will be dropped. Range 0-7, 0 mean all priority pkts from that UE would be dropped*/
+           will be dropped. Range 0-7, 0 mean all priority pkts from that UE would be dropped. */
     uint8_t pppp;
 };
 
 /**
- * Fault detection of Tx chain that including PA and front end.
+ * Fault detection for Tx chain that including PA and front end.
  *
  * Used in @ref RFTxInfo
  */
@@ -535,15 +589,17 @@ enum class RFTxStatus {
 };
 
 /**
- * Information of Tx chains retrieved from RF per transport block.
+ * Tx status per Tx chain and Tx power per Tx antenna for a specific transport block.
  *
  * Used in @ref TxStatusReport
  */
 struct RFTxInfo {
     RFTxStatus status;
-    /**< The type of Tx chain status. */
+    /**< Fault detection status for a specific Tx chain. */
     int32_t power;
-    /**< Tx power of transmitted TB in dBm*10 format, invalid value is -700. */
+    /**< The target Tx power after MPR/AMPR reduction for a specific Tx antenna
+         in dBm*10 format. Invalid value is -700, it means the corresponding
+         antenna is not being used for the transmission of this transport block. */
 };
 
 /**
@@ -570,16 +626,27 @@ enum class TxType {
 
 /**
  * Information on Tx status of a V2X transport block that is reported
- * from low layer. A V2X packet might trigger multiple reports
- * because of the segmentaion and re-Tx in low layer. If a transport
- * block is dropped in low layer, no report will be triggered for that
- * transport block.
- *
+ * from low layer.
+ * 1. A V2X packet might trigger multiple reports because of the segmentaion
+ * and re-Tx in low layer.
+ * 2. If a transport block is dropped in low layer, no report will be triggered
+ * for that transport block.
+ * 3. The power in the array of rfInfo is the target Tx power value in dBm*10 after
+ * MPR/AMPR reduction for a specific Tx antenna. The status in the array of rfInfo
+ * is the fault detection status for a specific Tx chain.
+ *  - In CDD mode, two antennas are being used for a specific transport block,
+ * both rfInfo[0].power and rfInfo[1].power are valid (not -700), rfInfo[i].status
+ * is reflecting the status of Tx chain/Tx antenna i.
+ *  - In TXD mode, data transmission swtiches between two antennas/chains and only
+ * one antenna/chain is being used for a specific transport block, the Tx antenna
+ * being used has valid power (not -700) in the array of rfInfo, rfInfo[i].status
+ * is reflecting the status of Tx chain i or the status of the Tx antenna i whose
+ * power is valid (not -700) in the array of rfInfo.
  * Used in @ref onTxStatusReport
  */
 struct TxStatusReport {
     RFTxInfo rfInfo[MAX_ANTENNAS_SUPPORTED];
-    /**< RF information of one or two Tx chains. */
+    /**< Tx status per Tx chain and Tx power per Tx antenna. */
     uint8_t numRb;
     /**< Number of resource blocks used for the transport block. */
     uint8_t startRb;
@@ -619,7 +686,7 @@ struct IPv6AddrType
  */
 struct GlobalIPUnicastRoutingInfo
 {
-    /**< Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order*/
+    /**< Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order. */
     uint8_t destMacAddr[CV2X_MAC_ADDR_LEN];
 };
 

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
   @file v2x_radio_api.h
 
@@ -171,6 +207,10 @@ typedef enum  {
 
 /**
     Defines possible values for CV2X radio RX/TX status.
+    1. If Tx is in active state, Rx should also be in active statue.
+    2. If Rx is in active statue, Tx should be in active(normal case)
+       or suspended state(sensing or tunnel mode).
+    Used in @ref v2x_status_info_t
  */
 typedef enum {
     V2X_RADIO_STATUS_INACTIVE = 0,    /**< RX/TX is inactive */
@@ -181,21 +221,43 @@ typedef enum {
 
 /**
     Defines possible values for cause of CV2X radio failure.
+    The cause code is only associated with cv2x suspend/inactive status,
+    if cv2x is active, the cause code has no meaning.
+    Used in @ref v2x_status_info_t
  */
 typedef enum {
-    V2X_RADIO_CAUSE_TIMING,           /**< V2X timing is not valid */
-    V2X_RADIO_CAUSE_CONFIG,           /**< No valid V2X configuration */
-    V2X_RADIO_CAUSE_UE_MODE,          /**< V2X is not supported in current UE mode */
-    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< V2X is not supported in current UE location */
-    V2X_RADIO_CAUSE_THERMAL,          /**< Device's temperature is high and is in thermal
-                                           mitigation mode */
-    V2X_RADIO_CAUSE_THERMAL_ECALL,    /**< Device is in an emergency call and the device's
-                                           temperature has crossed a threshold resulting
-                                           in thermal mitigation */
-    V2X_RADIO_CAUSE_GEOPOLYGON_SWITCH,/**< V2X stack is suspended due to geopolygon switch */
-    V2X_RADIO_CAUSE_SENSING,          /**< V2X stack is suspended due to sensing */
-    V2X_RADIO_CAUSE_LPM,              /**< V2X is not supported under Low Power Mode */
-    V2X_RADIO_CAUSE_UNKNOWN,          /**< Cause is unknown */
+    V2X_RADIO_CAUSE_TIMING,           /**< CV2X is suspended when GNSS signal is lost. */
+    V2X_RADIO_CAUSE_CONFIG,           /**< This cause is not used currently. */
+    V2X_RADIO_CAUSE_UE_MODE,          /**< CV2X status is either suspended or inactive.
+                                           - Suspend case:
+                                           CV2X is suspended temporarily when processing the stop
+                                           of CV2X, after CV2X is stopped, CV2X status will change
+                                           to inactive.
+                                           - Inactive case:
+                                            - CV2X is disabled by EFS/NV.
+                                            - QWES license is not valid.
+                                            - CV2X is stopped by user.
+                                            - An invalid v2x.xml is updated to modem when CV2X is
+                                              aready active.
+                                            - UE enters a geopolygon that does not support CV2X
+                                              when CV2X is already active. */
+    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< CV2X is inactive due to there's no valid CV2X
+                                           configuration when starting CV2X, or the v2x.xml is
+                                           corrupted. */
+    V2X_RADIO_CAUSE_THERMAL,          /**< CV2X is suspended when the device's temperature
+                                           is high. */
+    V2X_RADIO_CAUSE_THERMAL_ECALL,    /**< CV2X is suspended when the device's temperature
+                                           is high and emergency call is ongoing. */
+    V2X_RADIO_CAUSE_GEOPOLYGON_SWITCH,/**< CV2X is suspended when UE switches to a new geopolygon
+                                           that also supports CV2X and UE is already in CV2X
+                                           active status, CV2X status will change to active after
+                                           the update is done. */
+    V2X_RADIO_CAUSE_SENSING,          /**< CV2X Tx is suspended when GNSS signal recovers or CV2X
+                                           mode just starts. UE needs sensing for 1 second before
+                                           Tx can begin, Tx status will change to active after
+                                           sensing is done. */
+    V2X_RADIO_CAUSE_LPM,              /**< CV2X is inactive when UE enters Low Power Mode. */
+    V2X_RADIO_CAUSE_UNKNOWN,          /**< Invalid cause type only used internally. */
 } v2x_radio_cause_type_t;
 
 /**
@@ -218,7 +280,7 @@ typedef struct {
     Encapsulates status for single TX/RX pool.
  */
 typedef struct {
-    uint8_t pool_id;             /**< pool ID*/
+    uint8_t pool_id;             /**< pool ID */
     v2x_status_info_t status;    /**< Tx/Rx pool status */
 } v2x_pool_status_t;
 
@@ -263,13 +325,19 @@ typedef struct {
 } trusted_ue_info_t;
 
 /**
-    Contains minimum and maximum frequencies for a Tx pool ID.
+    Contains minimum and maximum EARFCNs for a Tx pool ID. Multiple Tx
+    Pools allow the same radio and overall frequency range to be shared for
+    multiple types of traffic like V2V and V2X. Each pool ID and frequency
+    range corresponds to a certain type of traffic.
+    Both edge guard bands are not included in the EARFCN range reported.
+    The calculation for the full bandwidth includes both edge guard bands is:
+    bandwidth(MHz) = (max_freq-min_freq)/9.
     This struct is used in #v2x_iface_capabilities_t.
  */
 typedef struct {
     uint8_t pool_id;      /**< ID of the Tx pool. */
-    uint16_t min_freq;    /**< Minimum frequency in MHz. */
-    uint16_t max_freq;    /**< Maximum frequency in MHz. @newpagetable */
+    uint16_t min_freq;    /**< Minimum EARFCN of this pool. */
+    uint16_t max_freq;    /**< Maximum EARFCN of this pool. @newpagetable */
 } tx_pool_id_info_t;
 
 /**
@@ -846,7 +914,7 @@ typedef struct {
     /**< Transmit reservation information. */
 
     v2x_tx_flow_info_t flow_info;
-    /**< Transmit resource information about the SPS Tx flow.*/
+    /**< Transmit resource information about the SPS Tx flow. */
 
 } v2x_tx_sps_flow_info_t;
 
@@ -878,16 +946,16 @@ typedef struct src_l2_filter_info_t {
     /**< remote UE L2 addr to filter. */
     uint32_t src_l2_id;
 
-    /**< Duration, in millisec (resolution 100 msec).*/
+    /**< Duration, in millisec (resolution 100 msec). */
     uint32_t duration_ms;
 
     /**</* Proximity service per packet priority (PPPP), packets with priority above this value
-         will be dropped. Range 0-7, 0 mean all of the pkts will be dropped*/
+         will be dropped. Range 0-7, 0 mean all of the pkts will be dropped. */
     uint8_t pppp;
 } src_l2_filter_info;
 
 /**
-    Fault detection of Tx chain that including PA and front end.
+    Fault detection for Tx chain that including PA and front end.
  */
 typedef enum {
     INACTIVE,      /**< The Tx chain is not working. */
@@ -896,13 +964,15 @@ typedef enum {
 } rf_status_t;
 
 /**
-    Information of one or two Tx chains retrieved from RF per transport block.
+    Tx status per Tx chain and Tx power per Tx antenna for a specific transport block.
  */
 typedef struct {
     rf_status_t status;
-    /**< The type of Tx chain status. */
+    /**< Fault detection status for a specific Tx chain. */
     int32_t power;
-    /**< Tx power of transmitted TB in dBm*10 format, invalid value is -700. */
+    /**< The target Tx power after MPR/AMPR reduction for a specific Tx antenna
+         in dBm*10 format. Invalid value is -700, it means the corresponding
+         antenna is not being used for the transmission of this transport block. */
 } v2x_rf_tx_info_t;
 
 /**
@@ -926,16 +996,27 @@ typedef enum {
 
 /**
     Information on Tx status of a V2X transport block that is reported
-    from low layer. A V2X Tx packet might trigger multiple reports
-    because of the segmentaion and re-Tx in low layer. If a transport
-    block is dropped in low layer, no report will be triggered for that
-    transport block.
-
+    from low layer.
+    1. A V2X Tx packet might trigger multiple reports because of the segmentaion
+    and re-Tx in low layer.
+    2. If a transport block is dropped in low layer, no report will be triggered
+    for that transport block.
+    3. The power in the array of rfInfo is the target Tx power value in dBm*10 after
+    MPR/AMPR reduction for a specific Tx antenna. The status in the array of rfInfo
+    is the fault detection status for a specific Tx chain.
+     - In CDD mode, two antennas have transmission for a specific transport block,
+    both rfInfo[0].power and rfInfo[1].power are valid (not -700), rfInfo[i].status
+    is reflecting the status of Tx chain/Tx antenna i.
+     - In TXD mode, data transmission swtiches between two antennas/chains and only
+    one antenna/chain has transmission for a specific transport block, the Tx antenna
+    being used has valid power (not -700) in the array of rfInfo, rfInfo[i].status
+    is reflecting the status of Tx chain i or the status of the Tx antenna i whose
+    power is valid (not -700) in the array of rfInfo.
     Used in @ref v2x_tx_status_report_listener
  */
 typedef struct {
     v2x_rf_tx_info_t rf_info[V2X_MAX_ANTENNAS_SUPPORTED];
-    /**< RF information of one or two Tx chains. */
+    /**< Tx status per Tx chain and Tx power per Tx antenna. */
     uint8_t num_rb;
     /**< Number of resource blocks used for the transport block. */
     uint8_t start_rb;

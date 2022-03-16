@@ -115,7 +115,8 @@ enum class MessageType {
 
 struct Config{
     bool isValid = false;
-    int codecVerbosity;
+    int codecVerbosity = 0;
+    int ldmVerbosity = 0;
     vector<uint16_t> receivePorts;
     vector<uint16_t> eventPorts;
     vector<uint16_t> spsPorts;
@@ -206,6 +207,11 @@ struct Config{
     /** Pseudonym/ID Change */
     string lcmName = "";
     unsigned int idChangeInterval = 0;
+    /** Misbehavior Stats Parameters */
+    bool enableMbd = false;
+    bool enableMbdStatLog = false;
+    uint32_t mbdStatLogListSize = 10000;
+    string mbdStatLogFile = "/tmp/misbehavior_stats.log";
 };
 
 class ApplicationBase
@@ -216,12 +222,15 @@ public:
     int appVerbosity = 0;
     int totalTxSuccess = 0;
     int totalRxSuccess = 0;
-
+    int totalThrds = 0;
+    int tempId = 0;
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
     std::map<std::thread::id, int> signStatIdx;
+    std::map<std::thread::id, int> misbehaviorStatIdx;
     std::map<std::thread::id, std::vector<VerifStats>> thrVerifLatencies;
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
+    std::map<std::thread::id, std::vector<MisbehaviorStats>> thrMisbehaviorLatencies;
 
     /* Identity Change Related Functions and Variables */
     void changeIdTimer(unsigned int interval);
@@ -314,6 +323,16 @@ public:
      * Write signing statistics to file
      */
     void writeSignLogging();
+
+    /**
+    *   Sets up the misbehavior statistics vector based on the exisitng threads
+    */
+    void initMisbehaviorLogging();
+
+    /**
+     * Write misbehavior statistics to file
+     */
+    void writeMisbehaviorLogging();
 
     void printRxStats();
     void printTxStats();

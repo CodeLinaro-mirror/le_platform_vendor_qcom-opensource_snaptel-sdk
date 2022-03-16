@@ -94,7 +94,7 @@ void signalHandler(int signum) {
  *
  * @param[in] msgType type of the messsage we are processing.
  */
-void receive(MessageType msgType) {
+void receive(MessageType msgType, int index) {
     auto count = 0;
     FILE *fp;
     struct timeval currTime;
@@ -105,8 +105,11 @@ void receive(MessageType msgType) {
         cout << "Thread id: " << std::this_thread::get_id()
                 << " Wating for message..." << endl;
     }
-    if(application->configuration.enableVerifStatLog)
+    if(application->configuration.enableVerifStatLog){
         application->initVerifLogging();
+    }
+    if(application->configuration.enableMbdStatLog)
+        application->initMisbehaviorLogging();
 
     // will need to make this compatible for multiple rx ports
     int ret;
@@ -117,8 +120,8 @@ void receive(MessageType msgType) {
             sem_wait(&cnt_sem);
             //Check CV2X RX status when only RX is enabled
             if (!application->configuration.enableTxAlways) {
-                application->radioReceives[0].waitForCv2xToActivate(haltRx);
-                if (application->radioReceives[0].restartFlow) {
+                application->radioReceives[index].waitForCv2xToActivate(haltRx);
+                if (application->radioReceives[index].restartFlow) {
                     application->closeAllRadio();
                     application->setup();
                 }
@@ -129,9 +132,10 @@ void receive(MessageType msgType) {
             }
             sem_post(&cnt_sem);
         }
+
         // call application's receive() function to process the packet across
         // stack layers.
-        ret = application->receive(0, ret);
+        ret = application->receive(index, MAX_PACKET_LEN);
 
         sem_wait(&cnt_sem);
         if(ret >= 0){
@@ -152,6 +156,9 @@ void receive(MessageType msgType) {
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
+    if(application->configuration.enableMbdStatLog){
+        application->writeMisbehaviorLogging();
+    }
     if(msgType == MessageType::BSM || msgType == MessageType::WSA)
         ((SaeApplication*)application)->printRxStats();
     printf("Total of RX packets is: %d\n", application->totalRxSuccess);
@@ -165,10 +172,30 @@ void receive(MessageType msgType) {
  * @param [in] msgType, so far only BSM is supported.
  */
 void ldmRx(void) {
+    auto count = 0;
+    FILE *fp;
+    struct timeval currTime;
+    gettimeofday(&currTime, NULL);
+    time_t startTime = currTime.tv_sec;
+
     if (nullptr == application) {
         cerr << "application nullptr" << endl;
         return;
     }
+    if(application->configuration.enableVerifStatLog){
+        application->initVerifLogging();
+    }
+    if(application->configuration.enableMbdStatLog)
+        application->initMisbehaviorLogging();
+
+    if (application->ldm == nullptr) {
+        printf("LDM not initialized properly, exiting\n");
+        return;
+    }
+
+    int ret;
+
+    uint32_t ldmIndex = 0;
     while (!stopThread)
     {
         if (application->receivedContents.size() == 0 ||
@@ -183,15 +210,40 @@ void ldmRx(void) {
             cerr << "mc or mc->abuf.data nullptr" << endl;
             continue;
         }
-        const auto recCount =
-                application->radioReceives[0].receive(mc->abuf.data,
-                                                        ABUF_LEN-ABUF_HEADROOM);
-        abuf_put(&mc->abuf, recCount);
-        if (application->ldm != nullptr) {
-            const auto ldmIndex = application->ldm->getFreeBsm();
-            application->receive(0, recCount, ldmIndex);
+        // if a new ldm slot index is necessary, retrieve one
+        if(ret >= 0){
+            ldmIndex = application->ldm->getFreeBsmSlotIdx();
         }
+        // else keep the old ldm index and reuse slot
+        ret = application->receive(0, MAX_PACKET_LEN, ldmIndex);
+        sem_wait(&cnt_sem);
+        if(ret >= 0){
+            rxsuccess++;
+            if (application->configuration.driverVerbosity) {
+                if (rxsuccess % 50 == 0 && rxsuccess > 0){
+                    gettimeofday(&currTime, NULL);
+                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
+                        " Decode/Rx Success #: " << rxsuccess <<
+                        " Decode/Rx Fail #: " << rxfail << std::endl;
+                }
+            }
+        } else {
+            rxfail++;
+        }
+        sem_post(&cnt_sem);
     }
+    if(application->configuration.enableVerifStatLog){
+        application->writeVerifLogging();
+    }
+    if(application->configuration.enableMbdStatLog){
+        application->writeMisbehaviorLogging();
+    }
+    ((SaeApplication*)application)->printRxStats();
+    printf("Total of RX packets is: %d\n", application->totalRxSuccess);
+
+    if(application->ldm != nullptr)
+        application->ldm->stopGb();
+
 }
 /**
  * Initialize timer for transmit
@@ -253,10 +305,10 @@ void transmit(MessageType msgType) {
     //Perform message protocol specific setup here
     switch (msgType){
         case MessageType::BSM:
-            printf("Sending BSM messages via radio\n");
+            printf("Sending BSM messages\n");
             break;
         case MessageType::WSA:
-            printf("Sending WSA messages via radio\n");
+            printf("Sending WSA messages\n");
             //sending WSA, transmit only, we are simulating RSU, so set the IrevV6
             if ((dynamic_cast<SaeApplication *>
                     (application))->setGlobalIPv6Prefix() < 0) {
@@ -434,13 +486,14 @@ void tunnelModeRx(void) {
         const auto mc = SaeApp->receivedContents[0];
         const auto recCount =
                 SaeApp->radioReceives[0].receive(mc->abuf.data,
-                                                    ABUF_LEN-ABUF_HEADROOM);
+                                                    MAX_PACKET_LEN-ABUF_HEADROOM);
         abuf_put(&mc->abuf, recCount);
-        const auto ldmIndex = application->ldm->getFreeBsm();
+        //const auto ldmIndex = application->ldm->getFreeBsm();
+        const auto ldmIndex = 0;
         SaeApp->receiveTuncBsm(0, recCount, ldmIndex);
         if (!SaeApp->ldm->filterBsm(ldmIndex)) {
             const auto bsm = static_cast<bsm_value_t *>(mc->j2735_msg);
-            SaeApp->ldm->setIndex(bsm->id, ldmIndex);
+            SaeApp->ldm->setIndex(bsm->id, ldmIndex, mc);
         }
     }
 }
@@ -454,62 +507,15 @@ void runApps(void) {
     while (!stopThread) {
         for (auto rvMsg : application->ldm->bsmSnapshot()) {
             application->fillMsg(hostMsg);
-            fill_RV_specs(hostMsg.get(), &rvMsg, rvSpecs);
-            forward_collision_warning(&rvMsg, rvSpecs);
-            EEBL_warning(&rvMsg, rvSpecs);
-            accident_ahead_warning(&rvMsg, rvSpecs);
+            fill_RV_specs(hostMsg.get(), rvMsg.get(), rvSpecs);
+            forward_collision_warning(rvMsg.get(), rvSpecs);
+            EEBL_warning(rvMsg.get(), rvSpecs);
+            accident_ahead_warning(rvMsg.get(), rvSpecs);
             print_rvspecs(rvSpecs);
         }
     }
 }
 
-void simLdmRx(void) {
-    auto count = 0;
-    auto empty=0;
-    FILE *fp;
-    if (csv == true) {
-        fp = fopen(csvFileName.c_str(), "w+");
-        if (!fp) {
-            cerr << "Failed to open file " << csvFileName << " for writting" << endl;
-            return;
-        }
-    }
-    while (!stopThread)
-    {
-        auto recCount = application->simReceive->receive(
-                     application->rxSimMsg->abuf.data, ABUF_LEN-ABUF_HEADROOM);
-        abuf_put(&application->rxSimMsg->abuf, recCount);
-        if (recCount == 0) {
-            cout << "Received empty packet # " << empty << ".\n";
-            if (empty > 10) {
-                cout << "Received more than 10, empty packets... Closing connections.\n";
-                application->closeAllRadio();
-                stopThread = true;
-                continue;
-            }
-            else {
-                empty++;
-            }
-        } else {
-            if (dump_raw) {
-                cout << "Packet # " << count << " with length " << recCount << endl << endl;
-                cout << "Hex: ";
-                for (uint16_t t = 0; t < recCount; t++) {
-                    if (t > 0) printf(":");
-                    printf("%02X", application->rxSimMsg->abuf.data[t]);
-                }
-                cout << endl;
-            }
-            const auto ldmIndex = application->ldm->getFreeBsm();
-            application->receive(0, recCount, ldmIndex);
-            auto msg = &application->ldm->bsmContents[ldmIndex];
-            if (csv) {
-                writeToCsv(msg, fp);
-            }
-            count += 1;
-        }
-    }
-}
 
 void printUse() {
     cout << "Usage: qits [options] <Config File Path>\n";
@@ -553,6 +559,7 @@ void printUse() {
     cout << "  Example: qits -i 127.0.0.1 9000 /etc/ObeConfig.conf\n";
     cout << "  Example above will run: simulation transmit mode (TCP/UDP),\n";
     cout << "    sending BSMs over port 9000 to ip address 127.0.0.1\n\n";
+    cout << "  Note: options -i and -j require SourceIpv4Address to be set\n";
 }
 
 void configFileCheck(string& configFile)
@@ -822,6 +829,7 @@ int setup(const bool tx, const bool rx,
             }
         }
 
+        sem_init(&cnt_sem, 0, 1);
         if (ldm)
         {
             if (cam || denm) {
@@ -832,17 +840,23 @@ int setup(const bool tx, const bool rx,
                 threads.push_back(thread(tunnelModeRx));
             }
             else {
-                threads.push_back(thread(ldmRx));
+                // TODO: Implement for CAM, DENM as well
+                if (application->configuration.driverVerbosity) {
+                    cout << "Number of Radio LDM RX Threads: " <<
+                            (int)application->configuration.numRxThreadsRadio << endl;
+                }
+                for (int i = 0; i < application->configuration.numRxThreadsRadio; i++) {
+                    threads.push_back(thread(ldmRx));
+                }
             }
         }
         else {
-            sem_init(&cnt_sem, 0, 1);
             if (cam) {
-                threads.push_back(thread(receive, MessageType::CAM));
+                threads.push_back(thread(receive, MessageType::CAM, 0));
             }
             else if (denm)
             {
-                threads.push_back(thread(receive, MessageType::DENM));
+                threads.push_back(thread(receive, MessageType::DENM, 0));
             }
             else {
                 // TODO: Implement for CAM, DENM as well
@@ -851,7 +865,7 @@ int setup(const bool tx, const bool rx,
                             (int)application->configuration.numRxThreadsRadio << endl;
                 }
                 for (int i = 0; i < application->configuration.numRxThreadsRadio; i++) {
-                    threads.push_back(thread(receive, msgType));
+                    threads.push_back(thread(receive, msgType, 0));
                 }
             }
         }
@@ -894,16 +908,23 @@ int setup(const bool tx, const bool rx,
                     cout << "LDM Mode only supports BSM" << endl;
                 return -1;
             }
-            threads.push_back(thread(simLdmRx));
+            // TODO: Implement for CAM, DENM as well
+            if (application->configuration.driverVerbosity) {
+                cout << "Number of Ethernet LDM RX Threads: " <<
+                        (int)application->configuration.numRxThreadsEth << endl;
+            }
+            for (int i = 0; i < application->configuration.numRxThreadsEth; i++) {
+                threads.push_back(thread(ldmRx));
+            }
         }
         else {
 
             if (cam) {
-                threads.push_back(thread(receive, MessageType::CAM));
+                threads.push_back(thread(receive, MessageType::CAM, 0));
             }
             else if (denm)
             {
-                threads.push_back(thread(receive, MessageType::DENM));
+                threads.push_back(thread(receive, MessageType::DENM, 0));
             }
             else {
                 sem_init(&cnt_sem, 0, 1);
@@ -913,7 +934,7 @@ int setup(const bool tx, const bool rx,
                             (int)application->configuration.numRxThreadsEth << endl;
                 }
                 for(int i = 0; i < application->configuration.numRxThreadsEth; i++){
-                    threads.push_back(thread(receive, msgType));
+                    threads.push_back(thread(receive, msgType, 0));
                 }
             }
         }

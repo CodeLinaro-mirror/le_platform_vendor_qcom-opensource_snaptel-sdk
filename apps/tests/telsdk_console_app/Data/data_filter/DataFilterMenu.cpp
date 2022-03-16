@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -390,22 +426,25 @@ void DataFilterMenu::addFilter() {
             destPort.port = 0;
             destPort.range = 0;
             telux::data::TcpInfo tcpInfo_ = {};
-
+            tcpInfo_.src.range = 0;
+            tcpInfo_.dest.range = 0;
             try {
-                if (cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT") != ""
-                    && cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT_RANGE") != "") {
+                if (cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT") != "") {
                     tcpInfo_.src.port = getPortInfo(cfgParser, vectorFilter[i], "TCP_SOURCE_PORT",
                         "TCP port value");
-                    tcpInfo_.src.range= getPortInfo(cfgParser, vectorFilter[i],
-                        "TCP_SOURCE_PORT_RANGE", "TCP Port range value");
+                    if (cfgParser.getValue(vectorFilter[i], "TCP_SOURCE_PORT_RANGE") != "") {
+                        tcpInfo_.src.range = getPortInfo(cfgParser, vectorFilter[i],
+                            "TCP_SOURCE_PORT_RANGE", "TCP Port range value");
+                    }
                 }
 
-                if (cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT") != ""
-                    && cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT_RANGE") != "") {
+                if (cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT") != "") {
                     tcpInfo_.dest.port = getPortInfo(cfgParser, vectorFilter[i],
                         "TCP_DESTINATION_PORT", "TCP port value");
-                    tcpInfo_.dest.range= getPortInfo(cfgParser, vectorFilter[i],
+                    if (cfgParser.getValue(vectorFilter[i], "TCP_DESTINATION_PORT_RANGE") != "") {
+                        tcpInfo_.dest.range = getPortInfo(cfgParser, vectorFilter[i],
                         "TCP_DESTINATION_PORT_RANGE", "TCP port range vlaue");
+                    }
                 }
             } catch (const std::exception &e) {
                 std::cout << " *** ERROR - Invalid " << e.what()
@@ -435,21 +474,25 @@ void DataFilterMenu::addFilter() {
             destPort.port = 0;
             destPort.range = 0;
             telux::data::UdpInfo udpInfo_ = {};
+            udpInfo_.src.range = 0;
+            udpInfo_.dest.range = 0;
             try {
-                if (cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT") != ""
-                    && cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT_RANGE") != "") {
+                if (cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT") != "") {
                     udpInfo_.src.port = getPortInfo(cfgParser, vectorFilter[i], "UDP_SOURCE_PORT",
                         "UDP port value");
-                    udpInfo_.src.range= getPortInfo(cfgParser, vectorFilter[i],
-                        "UDP_SOURCE_PORT_RANGE", "UDP Port range value");
+                    if (cfgParser.getValue(vectorFilter[i], "UDP_SOURCE_PORT_RANGE") != "") {
+                        udpInfo_.src.range = getPortInfo(cfgParser, vectorFilter[i],
+                            "UDP_SOURCE_PORT_RANGE", "UDP Port range value");
+                    }
                 }
 
-                if (cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT") != ""
-                    && cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT_RANGE") != "") {
+                if (cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT") != "") {
                     udpInfo_.dest.port = getPortInfo(cfgParser, vectorFilter[i],
                         "UDP_DESTINATION_PORT", "UDP port value");
-                    udpInfo_.dest.range= getPortInfo(cfgParser, vectorFilter[i],
-                        "UDP_DESTINATION_PORT_RANGE", "UDP port range vlaue");
+                    if (cfgParser.getValue(vectorFilter[i], "UDP_DESTINATION_PORT_RANGE") != "") {
+                        udpInfo_.dest.range = getPortInfo(cfgParser, vectorFilter[i],
+                            "UDP_DESTINATION_PORT_RANGE", "UDP port range vlaue");
+                    }
                 }
             } catch (const std::exception &e) {
                 std::cout << " *** ERROR - Invalid " << e.what()

@@ -123,11 +123,11 @@ class AerolinkSecurity : public SecurityService {
                     uint32_t * const encryptedDataLength);
        int syncVerify(
             Kinematics hvKine, Kinematics rvKine,
-            VerifStats *verifStat);
+            VerifStats *verifStat, MisbehaviorStats* misbehaviorStat);
 
         int asyncVerify(
             Kinematics hvKine, Kinematics rvKine,
-            sem_t   *queue_sem);
+            sem_t   *queue_sem, MisbehaviorStats* misbehaviorStat);
 
         SecuredMessageGeneratorC smg_;
         SecuredMessageParserC smp_;
@@ -150,6 +150,8 @@ class AerolinkSecurity : public SecurityService {
         sem_t* getThrSmgSem(std::thread::id thrId);
         int createNewSmp(SecuredMessageParserC* smpPtr);
         int createNewSmg(SecuredMessageGeneratorC* smgPtr);
+        void mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbehaviorStat);
+        void fillBsmDataForMbd(Kinematics* rvBsmData);
         // should be unique public encryption keys
         //    AerolinkEncryptionKey const * const recipients_[] = {};
         //    std::set<AerolinkEncryptionKey const *> recipients_;
@@ -158,5 +160,8 @@ class AerolinkSecurity : public SecurityService {
         uint8_t keyGenMethod_;
         char lcmName_[50];
         IDChangeData* idChangeData_;
+        bool enableMisbehavior;
+        std::shared_ptr<BsmData> misbehaviorAppDataPtr = nullptr;
+        std::shared_ptr<MisbehaviorDetectedType> misbehaviorResultPtr = nullptr;
 };
 #endif

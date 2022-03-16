@@ -110,7 +110,7 @@ ApplicationBase::ApplicationBase(char* fileConfiguration){
 
               // lcm id change timer thread
               sem_init(&idChangeData.idSem, 0, 1);
-              fprintf(stdout, "Performing ID Changes at time interval of: %f seconds\n",
+              fprintf(stdout, "Performing ID Changes at time interval of: %f secs\n",
                   this->configuration.idChangeInterval/1000.0);
               changeIdTimer(this->configuration.idChangeInterval);
 
@@ -121,7 +121,7 @@ ApplicationBase::ApplicationBase(char* fileConfiguration){
                       configuration.securityCountryCode));
           }
         }catch(const std::runtime_error& error){
-            fprintf(stderr, "Aerolink initialization failed. Please check security settings\n");
+            fprintf(stderr, "Aerolink init failed: Please check config params \n");
             fprintf(stderr, "Attempting to close all radio flows\n");
             closeAllRadio();
             exit(0);
@@ -573,9 +573,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         else
             this->configuration.enableSecurity = false;
     }
-    if (configs.find("psidValue") != configs.end()) {
-        configuration.psid = stoi(configs["psidValue"],0,16);
-    }
     if (configuration.enableSecurity == true) {
         if (configs.find("SecurityContextName") != configs.end()) {
             configuration.securityContextName = configs["SecurityContextName"];
@@ -685,6 +682,12 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         setAppVerbosity(stoi(configs["appVerbosity"]));
     }
 
+    /* ldm debug */
+    if (configs.find("ldmVerbosity") != configs.end()) {
+        this->configuration.ldmVerbosity =
+            (uint8_t)stoi(configs["ldmVerbosity"]);
+    }
+
     /* driver debug */
     if (configs.find("driverVerbosity") != configs.end()) {
         this->configuration.driverVerbosity =
@@ -702,6 +705,34 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
     if(configs.find("numRxThreadsRadio") != configs.end()) {
         this->configuration.numRxThreadsRadio = (uint8_t)stoi(configs["numRxThreadsRadio"]);
+    }
+
+    /* Misbehavior-related statistics */
+    if(configs.find("enableMbd") != configs.end()){
+        istringstream is1(configs["enableMbd"]);
+        is1 >> boolalpha >> configuration.enableMbd;
+        if(configuration.enableMbd) {
+            if(configs.find("enableMbdStatLog") != configs.end()){
+                istringstream is8(configs["enableMbdStatLog"]);
+                is8 >> boolalpha >> configuration.enableMbdStatLog;
+                if(configuration.enableMbdStatLog){
+                    if(configs.find("mbdStatLogListSize") != configs.end()){
+                        this->configuration.mbdStatLogListSize =
+                            (uint32_t)stoi(configs["mbdStatLogListSize"]);
+                    }
+                    if(configs.find("mbdStatLogFile") != configs.end()){
+                        this->configuration.mbdStatLogFile = configs["mbdStatLogFile"];
+                    }
+                    std::cout << "Misbehavior statistic logging is ON" << std::endl;
+                    std::cout << "Statistics for last " << configuration.mbdStatLogListSize <<
+                        " misbehavior will be reported by each thread" << std::endl;
+                    std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                        configuration.mbdStatLogFile << std::endl;
+                } else{
+                    std::cout << "Misbehavior statistic logging is off" << std::endl;
+                }
+            }
+        }
     }
 
     /* WSA */
@@ -743,7 +774,7 @@ void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
         this->ldm = new Ldm(this->configuration.ldmSize);
         this->ldm->startGb(this->configuration.ldmGbTime,
             this->configuration.ldmGbTimeThreshold);
-        this->ldm->setVerbosity(this->configuration.appVerbosity);
+        this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
     }
 }
 
@@ -760,7 +791,7 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
         this->ldm = new Ldm(this->configuration.ldmSize);
         this->ldm->startGb(this->configuration.ldmGbTime,
             this->configuration.ldmGbTimeThreshold);
-        this->ldm->setVerbosity(this->configuration.appVerbosity);
+        this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
     }
 }
 
@@ -777,7 +808,9 @@ void ApplicationBase::setup() {
         if (tx.flow) {
             this->spsTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" << endl;
+            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" << 
+                    " with spsServiceId: " << this->configuration.spsServiceIDs[i] 
+                    << endl;
             return;
         }
 
@@ -797,13 +830,15 @@ void ApplicationBase::setup() {
     i = 0;
     for (auto port : this->configuration.receivePorts)
     {
+        printf("Creating new rx subscription with port : %d\n", port);
         if (this->configuration.wildcardRx == true) {
             RadioReceive rx(TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP, port);
             // save Rx instance only if create Rx flow succeeded
             if (rx.gRxSub) {
                 this->radioReceives.push_back(std::move(rx));
             } else {
-                cerr << "ApplicationBase::setup error in creating wildcard Rx!" << endl;
+                cerr << "ApplicationBase::setup error in creating wildcard Rx!"
+                        << endl;
                 return;
             }
         } else {
@@ -815,7 +850,12 @@ void ApplicationBase::setup() {
             if (rx.gRxSub) {
                 this->radioReceives.push_back(std::move(rx));
             } else {
-                cerr << "ApplicationBase::setup error in creating non-wildcard Rx!" << endl;
+                cerr << "ApplicationBase::setup error in creating non-wildcard Rx!" 
+                        << " with spsServiceIds: ";
+                for(int j = 0; j < configuration.spsServiceIDs.size(); j++){
+                    cerr << "" << this->configuration.spsServiceIDs[i]<< ", ";
+                }
+                cerr << "" << endl;
                 return;
             }
         }
@@ -840,7 +880,8 @@ void ApplicationBase::setup() {
         if (tx.flow) {
             this->eventTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx event flow!" << endl;
+            cerr << "ApplicationBase::setup error in creating Tx event flow!" 
+                    << endl;
             return;
         }
         this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
@@ -857,8 +898,7 @@ void ApplicationBase::setup() {
         this->eventContents.push_back(mc);
         i += 1;
     }
-
-
+    // setup ldm
     if (this->configuration.ldmSize) {
         this->ldm = new Ldm(this->configuration.ldmSize);
         this->ldm->startGb(this->configuration.ldmGbTime,
@@ -868,9 +908,8 @@ void ApplicationBase::setup() {
         this->ldm->positionCertaintyThresh = this->configuration.uncertainty3D;
         this->ldm->tuncThresh = this->configuration.tunc;
         this->ldm->ageThresh = this->configuration.age;
-        this->ldm->setVerbosity(this->configuration.appVerbosity);
+        this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
     }
-    cout << "ApplicationBase::setup complete." << endl;
 }
 void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
     secData->protocolVersion = 3;
@@ -916,9 +955,9 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         return -1;
     }
     abuf_reset(&mc->abuf, ABUF_HEADROOM);
+    auto bsm = reinterpret_cast<bsm_value_t *>(mc->j2735_msg);
     fillMsg(mc);
     encLength = encode_msg(mc.get());
-
     if (encLength == 1) {
         encLength = encodeAndSignMsg(mc);
     }
@@ -1020,7 +1059,7 @@ void ApplicationBase::initVerifLogging() {
     thrVerifLatencies[std::this_thread::get_id()] = stats;
     if(remove(configuration.verifStatLogFile.c_str()) != 0){
         if(appVerbosity > 4)
-            cout << "Error deleting log file" << endl;
+            cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
 }
@@ -1060,7 +1099,7 @@ void ApplicationBase::initSignLogging() {
     thrSignLatencies[std::this_thread::get_id()] = stats;
     if(remove(configuration.signStatLogFile.c_str()) != 0){
         if(appVerbosity > 4)
-            cout << "Error deleting log file" << endl;
+            cerr << "Error deleting log file" << endl;
     }
     sem_post(&this->log_sem);
 }
@@ -1082,6 +1121,46 @@ void ApplicationBase::writeSignLogging() {
         if (it->timestamp != 0.0 && it->signLatency != 0.0) {
             file << it->timestamp << ", " <<
                         it->signLatency << std::endl;
+        }
+    }
+    file.close();
+    sem_post(&this->log_sem);
+}
+
+/**
+ * Instantiate and initialize any variables associated with
+ *  Misbehavior statistics logging
+ */
+void ApplicationBase::initMisbehaviorLogging() {
+    std::vector<MisbehaviorStats> stats;
+    sem_wait(&this->log_sem);
+    for(int i = 0 ; i < configuration.mbdStatLogListSize; i++)
+        stats.push_back(MisbehaviorStats());
+    thrMisbehaviorLatencies[std::this_thread::get_id()] = stats;
+    if(remove(configuration.mbdStatLogFile.c_str()) != 0){
+        if(appVerbosity > 4)
+            cerr << "Error deleting log file" << endl;
+    }
+    sem_post(&this->log_sem);
+}
+
+/**
+ * Function to print out - if any - Misbehavior related statistics
+ * gathered from security side.
+ */
+void ApplicationBase::writeMisbehaviorLogging() {
+    ofstream file;
+    sem_wait(&this->log_sem);
+    std::thread::id thrId = std::this_thread::get_id();
+    printf("Thread (%08x) is now dumping misbehavior stats to %s\n",
+            thrId,configuration.mbdStatLogFile.c_str());
+    file.open(configuration.mbdStatLogFile.c_str(),
+                std::ofstream::out | std::ofstream::app);
+    std::vector<MisbehaviorStats> stats = thrMisbehaviorLatencies[std::this_thread::get_id()];
+    for (auto it = stats.begin(); it != stats.end(); ++it) {
+        if (it->timestamp != 0.0 && it->misbehaviorLatency != 0.0) {
+            file << it->timestamp << ", " <<
+                        it->misbehaviorLatency << std::endl;
         }
     }
     file.close();

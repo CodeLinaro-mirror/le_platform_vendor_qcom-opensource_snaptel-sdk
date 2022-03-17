@@ -1029,7 +1029,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
         memcpy(IpPrefix.ipv6Addr, wra->ipPrefix.buf, wra->ipPrefix.size);
         IpPrefix.prefixLen = wra->ipPrefixLength;
         if(appVerbosity > 3)
-            cout << "Setting Global IP address" << endl;
+            std::cout << "Setting Global IP address" << std::endl;
         memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
         ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
         if (!ret) {

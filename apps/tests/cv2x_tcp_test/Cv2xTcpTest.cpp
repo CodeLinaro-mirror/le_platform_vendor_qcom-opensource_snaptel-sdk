@@ -1082,9 +1082,6 @@ int main(int argc, char *argv[]) {
                     goto bail;
                 }
             }
-        } else {
-            cout << "entering TCP test mode, use CTRL+C to exit" << endl;
-            goto waitExit;
         }
     }
 

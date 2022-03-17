@@ -214,31 +214,22 @@ void RadioInterface::waitForCv2xToActivate(bool &haltRx) {
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {
-    bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    std::condition_variable cv;
-    std::mutex mtx;
-    auto statusCb = [&](telux::common::ServiceStatus status) {
-        std::lock_guard<std::mutex> lock(mtx);
-        cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
-        cv.notify_all();
-    };
-
     auto &cv2xFactory = Cv2xFactory::getInstance();
-    cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
+    cv2xRadioManager = cv2xFactory.getCv2xRadioManager();
+
     if (!cv2xRadioManager) {
         std::cout << "Fail to get cv2xRadioMgr" << std::endl;
         return false;
     }
-    std::unique_lock<std::mutex> lck(mtx);
-    cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-    /* Check that V2X radio is initialized */
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xRadioManagerStatus) {
-        std::cout << "V2X cv2xRadioMgr initialization failed" << std::endl;
-        return false;
+    // Wait for radio manager to complete initialization
+    if (not cv2xRadioManager->isReady()) {
+        if (cv2xRadioManager->onReady().get()) {
+            cout << "C-V2X Radio Manager is ready" << endl;
+        }
+        else {
+            cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
+            return EXIT_FAILURE;
+        }
     }
     // Get C-V2X status and make sure requested radio(Tx or Rx) is enabled
     if (statusCheck(type) != Cv2xStatusType::ACTIVE) {
@@ -263,6 +254,7 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
             return false;
         }
     }
+
 
     return true;
 }

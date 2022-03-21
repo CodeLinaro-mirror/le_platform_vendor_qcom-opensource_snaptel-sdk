@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -166,8 +166,6 @@ class ICardManager {
      *
      * @returns Status of cardPowerUp i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status cardPowerUp(SlotId slotId,
         telux::common::ResponseCallback callback = nullptr)
@@ -184,8 +182,6 @@ class ICardManager {
      *
      * @returns Status of cardPowerDown i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status cardPowerDown(SlotId slotId,
         telux::common::ResponseCallback callback = nullptr)

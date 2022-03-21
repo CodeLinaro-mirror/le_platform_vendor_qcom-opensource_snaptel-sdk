@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
     // [6] Get the desired sensor
     std::shared_ptr<telux::sensor::ISensorClient> sensorClient;
     std::cout << "Getting sensor: " << name << std::endl;
-    status = sensorManager->getSensor(sensorClient, name);
+    status = sensorManager->getSensorClient(sensorClient, name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get sensor: " << name << std::endl;
         exit(1);

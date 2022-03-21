@@ -168,7 +168,7 @@ RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, con
         this->clientAddress.sin_family = AF_INET;
         this->clientAddress.sin_port = htons(port);
         if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
-            cout << "Invalid ip address for client: " << ipv4_src << endl;
+            cout << "Invalid ip address for client: " << ipv4_src.data() << endl;
         }
     }else{ //udp
         this->destAddress.sin_family = AF_INET;
@@ -180,7 +180,7 @@ RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, con
         this->clientAddress.sin_family = AF_INET;
         this->clientAddress.sin_port = htons(port);
         if(inet_pton(AF_INET, this->ipv4_src.data(), &(this->clientAddress.sin_addr)) <= 0) {
-            cout << "Invalid ip address for client: " << ipv4_src << endl;
+            cout << "Invalid ip address for client: " << ipv4_src.data() << endl;
         }
     }
 }

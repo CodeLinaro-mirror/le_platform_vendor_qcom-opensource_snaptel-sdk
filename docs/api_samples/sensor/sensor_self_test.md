@@ -65,7 +65,7 @@ Please follow below steps as a guide to initiate a self test and acquires the se
    ~~~~~~{.cpp}
    std::shared_ptr<telux::sensor::ISensorClient> sensor;
    std::cout << "Getting sensor: " << name << std::endl;
-   status = sensorManager->getSensor(sensor, name);
+   status = sensorManager->getSensorClient(sensor, name);
    if (status != telux::common::Status::SUCCESS) {
       std::cout << "Failed to get sensor: " << name << std::endl;
       exit(1);

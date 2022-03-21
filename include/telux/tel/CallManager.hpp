@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -136,8 +136,6 @@ using ECallHlapTimerStatusCallback = std::function<void(telux::common::ErrorCode
  *                            @ref EcbMode
  * @param [out] error         @ref ErrorCode
  *
- * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
- *           break backwards compatibility.
  */
 using EcbmStatusCallback
     = std::function<void(telux::tel::EcbMode ecbMode, telux::common::ErrorCode error)>;
@@ -480,8 +478,6 @@ public:
     *
     * @returns Status of hangupForegroundResumeBackground i.e. success or suitable error code.
     *
-    * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-    *           break backwards compatibility.
     */
    virtual telux::common::Status hangupForegroundResumeBackground(int phoneId,
       common::ResponseCallback callback = nullptr)
@@ -527,8 +523,6 @@ public:
     *
     * @returns Status of requestEcbm i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status requestEcbm(int phoneId, EcbmStatusCallback callback) = 0;
 
@@ -540,8 +534,6 @@ public:
     *
     * @returns Status of exitEcbm i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to
-    *          change and could break backwards compatibility.
     */
    virtual telux::common::Status exitEcbm(int phoneId, common::ResponseCallback callback = nullptr)
       = 0;

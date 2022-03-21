@@ -100,7 +100,7 @@ struct SensorInfo {
     SensorType type;
 
     /** The name of the sensor This name is used to get a reference to a sensor with @ref
-     * telux::sensor::ISensorManager::getSensor
+     * telux::sensor::ISensorManager::getSensorClient
      */
     std::string name;
 

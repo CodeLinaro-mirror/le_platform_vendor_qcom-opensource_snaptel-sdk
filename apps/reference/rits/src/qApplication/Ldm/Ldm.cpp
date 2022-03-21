@@ -74,6 +74,7 @@
 
 #include "Ldm.h"
 #include "RadioInterface.h"
+#include <memory>
 using std::map;
 using std::vector;
 using std::pair;
@@ -82,103 +83,143 @@ using std::lock_guard;
 using std::find;
 using std::cout;
 using std::endl;
+using std::dec;
+using std::shared_ptr;
 using telux::cv2x::TrustedUEInfo;
 using telux::cv2x::TrafficCategory;
 static bool stopThread = false;
 static sem_t gbSem;
 
+// mutexes defined in header
+/*
+     mutex sync
+     mutex freeSlotMutex;
+     mutex idIndexMapMutex;
+     mutex ldmContentsMutex;
+*/
+
 Ldm::Ldm(const uint16_t size) {
     this->bsmContents.reserve(2 * size);
-
     for (uint16_t i = 0; i < size; i++)
     {
         msg_contents msg = {0};
-        this->bsmContents.push_back(msg);
-        this->bsmFreeContents.push_back(i);
+        this->bsmContents.push_back(std::make_shared<msg_contents>(msg));
+        this->bsmFreeSlotIndices.push_back(i);
     }
 }
 
 int Ldm::getIndex(const uint32_t id) {
-    lock_guard<mutex> lk(this->sync);
-    if (this->hasBsm(id)) {
-        return this->bsmIdMap[id];
+    map<uint32_t, uint32_t>::iterator iter = this->bsmIdIndexMap.find(id);
+    if (iter != this->bsmIdIndexMap.end()){
+        return this->bsmIdIndexMap[id];
     }
     else {
         return NO_DATA;
     }
 }
 
-void Ldm::setIndex(const uint32_t id, const uint32_t index) {
-    const auto i = this->getIndex(id);
-    lock_guard<mutex> lk(this->sync);
-    if (i != NO_DATA && i != DIRTY_DATA) {
-        this->bsmFreeContents.push_back(i);
-        this->bsmIdMap[id] = index;
+void Ldm::setIndex(const uint32_t rvId, const uint32_t freeSlotIndex,
+        std::shared_ptr<msg_contents> mc) {
+    const auto usedSlotIndex = this->getIndex(rvId);
+    lock_guard<mutex> lk(this->idIndexMapMutex);
+    if (usedSlotIndex != NO_DATA && usedSlotIndex != DIRTY_DATA) {
+        lock_guard<mutex> lk2(this->freeSlotMutex);
+        this->bsmFreeSlotIndices.push_back(usedSlotIndex);
+        this->bsmIdIndexMap[rvId] = freeSlotIndex;
     }
     else {
-        if (i == DIRTY_DATA)
+        if (usedSlotIndex == DIRTY_DATA)
         {
-            this->bsmIdMap[id] = index;
+            this->bsmIdIndexMap[rvId] = freeSlotIndex;
         }
         else {
-            this->bsmIdMap.insert(pair<uint32_t, int>(id, index));
+            this->bsmIdIndexMap.insert
+                    (pair<uint32_t, uint32_t>(rvId, freeSlotIndex));
+        }
+    }
+    if(ldmVerbosity > 1){
+        printf("Copying decoded bsm of car id %d into ldm at index: %d\n",
+                    rvId, freeSlotIndex);
+        printf("Bsm summary: \n");
+    }
+    // here, for whatever reason, they are providing the specific bsm
+    if(mc != nullptr){
+        if(ldmVerbosity > 1){
+            print_summary_RV(mc.get());
+        }
+        if(mc->j2735_msg != nullptr){
+            lock_guard<mutex> lk3(this->ldmContentsMutex);
+                this->bsmContents[freeSlotIndex]->j2735_msg =
+                    (bsm_value_t *) calloc(1, sizeof(bsm_value_t));
+                memcpy(reinterpret_cast<bsm_value_t *>
+                            (this->bsmContents[freeSlotIndex]->j2735_msg),
+                            mc->j2735_msg, sizeof(bsm_value_t));
+        }
+    }else{
+        // here, they directly decoded the bsm into a returned free slot index
+        if(ldmVerbosity > 1){
+            print_summary_RV(bsmContents[freeSlotIndex].get());
         }
     }
 }
 
-uint32_t Ldm::getFreeBsm() {
-    lock_guard<mutex> lk(this->sync);
-    if (!this->bsmFreeContents.empty()){
-        uint32_t index = this->bsmFreeContents.front();
-        this->bsmFreeContents.pop_front();
-        return index;
+uint32_t Ldm::getFreeBsmSlotIdx() {
+    lock_guard<mutex> lk(this->freeSlotMutex);
+    if (!this->bsmFreeSlotIndices.empty()){
+        uint32_t freeSlotIndex = this->bsmFreeSlotIndices.front();
+        this->bsmFreeSlotIndices.pop_front();
+        return freeSlotIndex;
     }
     else {
         msg_contents msg = {0};
-        this->bsmContents.push_back(msg);
+        lock_guard<mutex> lk2(this->ldmContentsMutex);
+        this->bsmContents.push_back(std::make_shared<msg_contents>(msg));
         return this->bsmContents.size() - 1;
     }
 }
 
 bool Ldm::hasBsm(const uint32_t id){
-    map<uint32_t, int>::iterator iter = this->bsmIdMap.find(id);
-    if (iter != this->bsmIdMap.end())
-    {
-        return true;
-    }
-    else {
-        return false;
-    }
+    map<uint32_t, uint32_t>::iterator iter = this->bsmIdIndexMap.find(id);
+    return (iter != this->bsmIdIndexMap.end());
 }
 
 void Ldm::gbCollector(const uint16_t waitTime, const uint8_t timeThreshold) {
     while (!stopThread) {
-        if (ldmVerbosity) {
-            cout << "Running LDM Garbage Collector... \n";
-            cout << "Current LDM status: \n";
+        if(ldmVerbosity){
             printLdmIdMap();
         }
-        lock_guard<mutex> lk(this->sync);
-        for (pair<uint32_t, int> element : this->bsmIdMap) {
-            if(hasBsm(element.first) && this->bsmIdMap[element.first] != DIRTY_DATA){
+        lock_guard<mutex> lk(this->idIndexMapMutex);
+        // go through id - slot map to remove old ldm contents
+        for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
+            if(element.second != DIRTY_DATA &&
+                    this->bsmContents[element.second]->j2735_msg != nullptr){
                 const auto now = timestamp_now();
                 bsm_value_t *bsmp = reinterpret_cast<bsm_value_t *>
-                                    (this->bsmContents[element.second].j2735_msg);
+                          (this->bsmContents[element.second]->j2735_msg);
                 const auto dif = now - bsmp->timestamp_ms;
                 if (timeThreshold * 10000 < dif) {
-                    cout << "Dif: " << dif << endl;
-                    this->bsmFreeContents.push_back(element.second);
-                    this->bsmIdMap[element.first] = DIRTY_DATA;
+                    if(ldmVerbosity > 1){
+                        cout << "Packet for RV " << dec << element.first <<
+                                " is too old now" << endl;
+                        print_summary_RV(bsmContents[element.second].get());
+                        cout << "Time Dif (ms): " << dec << dif << endl;
+                    }
+                    // requires locking for free slot indices struct?
+                    this->bsmFreeSlotIndices.push_back(element.second);
+                    this->bsmIdIndexMap[element.first] = DIRTY_DATA;
+                    // remove element instead?
+
+                    if(ldmVerbosity > 1){
+                        printf("Back index value of free indices is: %u\n",
+                           this->bsmFreeSlotIndices.back());
+                        printf("Removing old bsm at slot: %d\n", element.second);
+                    }
                 }
             }
         }
         lk.~lock_guard();
-        if(ldmVerbosity)
-            cout << "End of LDM Garbage Collector... \n";
         sleep(waitTime);
     }
-    if(ldmVerbosity)
-        cout << ("LDM GB Collector stopped\n");
 }
 
 void Ldm::startGb(const uint16_t gbTime, const uint8_t timeThreshold) {
@@ -216,7 +257,6 @@ void Ldm::cv2xUpdateTrustedUEListCallback(ErrorCode error) {
 }
 
 void Ldm::trustedScan() {
-    lock_guard<mutex> lk(this->sync);
     auto i = 0;
     RadioInterface inter;
     while (true) {
@@ -247,19 +287,37 @@ void Ldm::startTrusted() {
     }
 }
 
+/*
+* TODO: Print out following contents
+* Basic info for each RV from BSM (maybe CAM can be later)
+* tempID
+* Range in meters
+* Time to collision (TTC)
+* last bytes/digest of signing cert
+* time since last heard
+* PPPP
+* length /width – very important at plugtests for idenifying the OEM
+* Decoded event flags (highlight if critical event)
+*/
 void Ldm::printLdmIdMap() {
-    lock_guard<mutex> lk(this->sync);
-    auto i = 0;
-    for (pair<uint32_t, int> element : this->bsmIdMap) {
-        cout << "Temp Id: " << element.first << " has data in " << element.second <<endl;
-        cout << "Summary:\n";
+    cout << "Status of Ldm Contents: " << endl;
+    cout << "Total Slots in Ldm: " << this->bsmContents.size() << endl;
+    cout << "Free Slots in Ldm: " << this->bsmFreeSlotIndices.size() << endl;
+    cout << "Total Unique RVs Seen: " << this->bsmIdIndexMap.size() << endl;
+    lock_guard<mutex> lk(this->idIndexMapMutex);
+    lock_guard<mutex> lk2(this->ldmContentsMutex);
+    auto activeRvIds = 0;
+    for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
         if (element.second != NO_DATA && element.second != DIRTY_DATA)
         {
-            print_summary_RV(&this->bsmContents[element.second]);
-            i++;
+            cout << "Temp Id: " << dec << element.first <<
+                " has data in slot " << dec << element.second << endl;
+            cout << "BSM Summary:\n";
+            print_summary_RV(this->bsmContents[element.second].get());
+            activeRvIds++;
         }
     }
-    cout << "Total unique clean temp ids " << i << endl;
+    cout << "Total Unique RVs: " << activeRvIds << endl;
 }
 
 bool Ldm::isTrusted(uint32_t id) {
@@ -269,29 +327,33 @@ bool Ldm::isTrusted(uint32_t id) {
     return true;
 }
 
-list<msg_contents> Ldm::bsmSnapshot() {
-    lock_guard<mutex> lk(this->sync);
-    list<msg_contents> snap;
+list<shared_ptr<msg_contents>> Ldm::bsmSnapshot() {
+    lock_guard<mutex> lk(this->idIndexMapMutex);
+    lock_guard<mutex> lk2(this->ldmContentsMutex);
+    list<shared_ptr<msg_contents>> snap;
     auto i = 0;
-    for (pair<uint32_t, int> element : this->bsmIdMap) {
+    for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
         if (element.second != NO_DATA && element.second != DIRTY_DATA)
         {
-            snap.push_back(this->bsmContents[element.second]);
+            snap.push_back(std::make_shared<msg_contents>());
+            //snap[snap.size()-1] = std::move(bsmContents[element.second]);
         }
     }
 
     return snap;
 }
 
-list<msg_contents> Ldm::bsmTrustedSnapshot() {
-    lock_guard<mutex> lk(this->sync);
-    list<msg_contents> snap;
+list<shared_ptr<msg_contents>> Ldm::bsmTrustedSnapshot() {
+    lock_guard<mutex> lk(this->idIndexMapMutex);
+    lock_guard<mutex> lk2(this->ldmContentsMutex);
+    list<shared_ptr<msg_contents>> snap;
     auto i = 0;
-    for (pair<uint32_t, int> element : this->bsmIdMap) {
+    for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
         if (element.second != NO_DATA && element.second != DIRTY_DATA)
         {
             if (isTrusted(element.first)) {
-                snap.push_back(this->bsmContents[element.second]);
+                snap.push_back(std::make_shared<msg_contents>());
+                //snap[snap.size()-1] = std::move(bsmContents[element.second]);
             }
         }
     }
@@ -312,7 +374,7 @@ bool Ldm::filterBsm(const uint32_t index) {
     //If is wrong, give index to freeBsm contents and put MAC address in malicious list.
     //if verified, give id to trusted list.
     //Returns true if message has been filtered, false else.
-    msg_contents* msg = &this->bsmContents[index];
+    msg_contents* msg = this->bsmContents[index].get();
     bsm_value_t *bsm = reinterpret_cast<bsm_value_t *>(msg->j2735_msg);
     //const auto id = msg->j2735.bsm.id; // FIX: Use L2 instead of temp ID.
     const auto id = bsm->id;
@@ -334,11 +396,12 @@ bool Ldm::filterBsm(const uint32_t index) {
 
     if (hasBsm(id))
     {
-        const auto i = this->bsmIdMap[id]; //Careful with parallelism, you can use a lock to access here.
+        const auto i = this->bsmIdIndexMap[id]; //Careful with parallelism, you can use a lock to access here.
         if (i != DIRTY_DATA && i != NO_DATA)
         {
-            msg_contents* prevMsg = &this->bsmContents[i];
-            bsm_value_t *prev_bsm = reinterpret_cast<bsm_value_t *>(this->bsmContents[i].j2735_msg);
+            msg_contents* prevMsg = this->bsmContents[i].get();
+            bsm_value_t *prev_bsm =
+                reinterpret_cast<bsm_value_t *>(this->bsmContents[i]->j2735_msg);
             const auto packetDif = bsm->MsgCount - prev_bsm->MsgCount;
             age = prev_bsm->timestamp_ms;
             if (bsm->timestamp_ms == prev_bsm->timestamp_ms) {
@@ -351,7 +414,7 @@ bool Ldm::filterBsm(const uint32_t index) {
             if (packetDif > 1 && packetDif < 127)
             {
                 if (bsmPacketsLost.find(id) == bsmPacketsLost.end()) {
-                    bsmPacketsLost.insert(pair<uint32_t, int>(id, packetDif));
+                    bsmPacketsLost.insert(pair<uint32_t, uint32_t>(id, packetDif));
                 }
                 else {
                     bsmPacketsLost[id] += packetDif;

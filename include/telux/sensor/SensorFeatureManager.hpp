@@ -99,8 +99,6 @@ class ISensorFeatureEventListener {
      * @param [in] event - The sensor feature event @ref telux::sensor::SensorFeatureEvent
      *                     that got triggered
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onEvent(SensorFeatureEvent event) {
     }
@@ -157,8 +155,6 @@ class ISensorFeatureManager {
      *
      * @returns the status of sensor sub-system status @ref telux::common::ServiceStatus
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -170,8 +166,6 @@ class ISensorFeatureManager {
      *
      * @returns                 status of the request @ref telux::common::Status
      *
-     * @note                    Eval: This is a new API and is being evaluated. It is subject to
-     *                          change and could break backwards compatibility.
      */
     virtual telux::common::Status getAvailableFeatures(std::vector<SensorFeature> &features) = 0;
 
@@ -194,8 +188,6 @@ class ISensorFeatureManager {
      *
      * @returns                 status of the request @ref telux::common::Status
      *
-     * @note                    Eval: This is a new API and is being evaluated. It is subject to
-     *                          change and could break backwards compatibility.
      */
     virtual telux::common::Status enableFeature(std::string name) = 0;
 
@@ -208,8 +200,6 @@ class ISensorFeatureManager {
      *
      * @returns                 status of the request @ref telux::common::Status
      *
-     * @note                    Eval: This is a new API and is being evaluated. It is subject to
-     *                          change and could break backwards compatibility.
      */
     virtual telux::common::Status disableFeature(std::string name) = 0;
 
@@ -218,8 +208,6 @@ class ISensorFeatureManager {
      *
      * @returns status of registration request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(
         std::weak_ptr<ISensorFeatureEventListener> listener) = 0;
@@ -229,8 +217,6 @@ class ISensorFeatureManager {
      *
      * @returns status of deregistration request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<ISensorFeatureEventListener> listener) = 0;

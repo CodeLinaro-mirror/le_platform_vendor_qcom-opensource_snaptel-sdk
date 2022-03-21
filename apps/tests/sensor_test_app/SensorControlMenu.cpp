@@ -210,9 +210,9 @@ void SensorControlMenu::createSensorClient(std::vector<std::string> userInput) {
     std::string name;
     SensorUtils::getInput("Enter sensor name: ", name);
     std::shared_ptr<ISensorClient> sensor;
-    telux::common::Status status = sensorManager_->getSensor(sensor, name);
+    telux::common::Status status = sensorManager_->getSensorClient(sensor, name);
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "getSensor failed: ";
+        std::cout << "getSensorClient failed: ";
         Utils::printStatus(status);
         return;
     }
@@ -241,7 +241,7 @@ void SensorControlMenu::listCreatedSensors(std::vector<std::string> userInput) {
 void SensorControlMenu::configureSensor(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensor(cid, sensorClients_);
+    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
     if (sensor == nullptr) {
         return;
     }
@@ -252,7 +252,7 @@ void SensorControlMenu::configureSensor(std::vector<std::string> userInput) {
 void SensorControlMenu::activateSensor(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensor(cid, sensorClients_);
+    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
     if (sensor == nullptr) {
         return;
     }
@@ -262,7 +262,7 @@ void SensorControlMenu::activateSensor(std::vector<std::string> userInput) {
 void SensorControlMenu::deactivateSensor(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensor(cid, sensorClients_);
+    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
     if (sensor == nullptr) {
         return;
     }
@@ -272,7 +272,7 @@ void SensorControlMenu::deactivateSensor(std::vector<std::string> userInput) {
 void SensorControlMenu::enableLowPowerMode(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensor(cid, sensorClients_);
+    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
     if (sensor == nullptr) {
         return;
     }
@@ -282,7 +282,7 @@ void SensorControlMenu::enableLowPowerMode(std::vector<std::string> userInput) {
 void SensorControlMenu::disableLowPowerMode(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensor(cid, sensorClients_);
+    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
     if (sensor == nullptr) {
         return;
     }
@@ -292,7 +292,7 @@ void SensorControlMenu::disableLowPowerMode(std::vector<std::string> userInput) 
 void SensorControlMenu::deleteSensorClient(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensor(cid, sensorClients_);
+    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
     if (sensor == nullptr) {
         return;
     }
@@ -315,7 +315,7 @@ void SensorControlMenu::listActiveClients(std::vector<std::string> userInput) {
 void SensorControlMenu::startSelfTest(std::vector<std::string> userInput) {
     int cid = -1;
     SensorUtils::getInput("Enter Client ID: ", cid);
-    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensor(cid, sensorClients_);
+    std::shared_ptr<SensorClient> sensor = SensorUtils::getSensorClient(cid, sensorClients_);
     if (sensor == nullptr) {
         return;
     }

@@ -307,7 +307,7 @@ int main(int argc, char **argv) {
     // [6] Get the desired sensor
     std::shared_ptr<telux::sensor::ISensorClient> lowRateSensorClient;
     std::cout << "Getting sensor: " << name << std::endl;
-    status = sensorManager->getSensor(lowRateSensorClient, name);
+    status = sensorManager->getSensorClient(lowRateSensorClient, name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get sensor: " << name << std::endl;
         exit(1);
@@ -343,7 +343,7 @@ int main(int argc, char **argv) {
     // [12] Create another sensor client for the same sensor and it's corresponding listener
     std::shared_ptr<telux::sensor::ISensorClient> highRateSensorClient;
     std::cout << "Getting sensor: " << name << std::endl;
-    status = sensorManager->getSensor(highRateSensorClient, name);
+    status = sensorManager->getSensorClient(highRateSensorClient, name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get sensor: " << name << std::endl;
         exit(1);

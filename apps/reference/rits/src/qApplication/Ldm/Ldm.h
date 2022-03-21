@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
  /**
   * @file: Ldm.h
   *
@@ -46,12 +82,13 @@
 #include <algorithm>
 #include <semaphore.h>
 #include <csignal>
+#include <memory>
 #include "v2x_codec.h"
 #include "bsm_utils.h"
 #include <telux/cv2x/Cv2xRadio.hpp>
 
-#define DIRTY_DATA -2
-#define NO_DATA -1
+#define DIRTY_DATA 15001
+#define NO_DATA 15000
 
 using std::list;
 using std::map;
@@ -59,6 +96,7 @@ using std::vector;
 using std::pair;
 using std::thread;
 using std::mutex;
+using std::shared_ptr;
 using telux::cv2x::TrustedUEInfoList;
 using telux::common::ErrorCode;
 class Ldm
@@ -116,7 +154,7 @@ private:
      * If true, value is alive and shouldn't be written, if false; write value.
      * By collect means setting dirty bit to false.
      */
-    list<uint32_t>bsmFreeContents;
+    list<uint32_t>bsmFreeSlotIndices;
 
     /**
      * Method that returns true if id is trusted or false if not.
@@ -142,7 +180,7 @@ private:
     /**
      * Map of key temporal_id and value number of packets lost.
     */
-    map <uint32_t, int> bsmPacketsLost;
+    map <uint32_t, uint32_t> bsmPacketsLost;
 
  public:
 
@@ -150,6 +188,9 @@ private:
      * Mutex for locking critical data i.e. mapping between ids and content.
      */
      mutex sync;
+     mutex freeSlotMutex;
+     mutex idIndexMapMutex;
+     mutex ldmContentsMutex;
 
     /**
     * Tunc map... FIX: You won't need this once the codec includes this on encoding and decoding.
@@ -160,12 +201,12 @@ private:
     /**
      * Map that holds where is the bsm based on the id.
      * Key is the id, and value is the index in the cache.
-     * Note that you can make this strucutre <uint32_t,atomic<int> and
+     * Note that you can make this structure <uint32_t,atomic<int> and
      * avoid locks when read. Just create a wrapper for
      * atomic<int> as it isn't copyable and therefore not able to insert
      * in STL structures.
      */
-     map <uint32_t, int> bsmIdMap;
+     map <uint32_t,uint32_t> bsmIdIndexMap;
 
     /**
      * Function that starts a scan of remote vehicles that can be trusted.
@@ -176,21 +217,21 @@ private:
     /**
      * Vector that stores decoded bsm Contents
      */
-     vector<msg_contents> bsmContents;
+     vector<shared_ptr<msg_contents>> bsmContents;
 
      /**
       * Takes current information of the LDM and returns a list.
       * @return list<msg_contents> snapshot.
       */
-     list<msg_contents> bsmSnapshot();
+     list<shared_ptr<msg_contents>> bsmSnapshot();
 
      /**
       * Takes current information of the LDM and returns a list.
       * @return list<msg_contents> snapshot.
       */
-     list<msg_contents> bsmTrustedSnapshot();
+     list<shared_ptr<msg_contents>> bsmTrustedSnapshot();
 
-     void bsmTrustedSnapshot(list<msg_contents> trusted);
+     void bsmTrustedSnapshot(list<shared_ptr<msg_contents>> trusted);
 
      /**
       * Once Bsms are decoded, this function should run. This will check that the security
@@ -211,7 +252,8 @@ private:
     * @param id - An uint32_t unique identification of each car.
     * @return index at which that id is stored or -1.
     */
-     void setIndex(const uint32_t id, const uint32_t index);
+     void setIndex(const uint32_t id, const uint32_t index,
+        std::shared_ptr<msg_contents> mc);
 
     /**
     * Constructor.
@@ -225,7 +267,7 @@ private:
     * Get element that is free and ready to decode contents on it.
     * @return index of vector where there is a ready to use space.
     */
-    uint32_t getFreeBsm();
+    uint32_t getFreeBsmSlotIdx();
 
     /**
      * Starts garbage collector thread. This garbage collector has
@@ -249,11 +291,6 @@ private:
      */
     void printLdmIdMap();
 
-    /* Function to permit different levels of verbosity */
-    void setVerbosity(int value) {
-        ldmVerbosity = value;
-    }
-
     /*
     * Thresholds for Tunnel Mode Filtering
     */
@@ -263,11 +300,16 @@ private:
     uint32_t positionCertaintyThresh = 0;
     uint32_t tuncThresh = 0;
 
-protected:
     /*
-     * Verbosity variablee
+     * Verbosity variable
      */
     int ldmVerbosity = 0;
 
+    /* Function to permit different levels of verbosity */
+    void setLdmVerbosity(int value) {
+        ldmVerbosity = value;
+    }
+
+protected:
 };
 #endif

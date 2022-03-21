@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -125,8 +125,6 @@ public:
     *
     * @returns Mcc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileCountryCode();
 
@@ -135,8 +133,6 @@ public:
     *
     * @returns Mnc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileNetworkCode();
 
@@ -257,8 +253,6 @@ public:
     *
     * @returns Mcc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileCountryCode();
 
@@ -267,8 +261,6 @@ public:
     *
     * @returns Mnc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileNetworkCode();
 
@@ -340,8 +332,6 @@ public:
     *
     * @returns Mcc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileCountryCode();
 
@@ -350,8 +340,6 @@ public:
     *
     * @returns Mnc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileNetworkCode();
 
@@ -422,8 +410,6 @@ public:
     *
     * @returns Mcc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileCountryCode();
 
@@ -432,8 +418,6 @@ public:
     *
     * @returns Mnc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileNetworkCode();
 
@@ -480,8 +464,6 @@ public:
     *
     * @returns Mcc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileCountryCode();
 
@@ -490,8 +472,6 @@ public:
     *
     * @returns Mnc value.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const std::string getMobileNetworkCode();
 
@@ -500,8 +480,6 @@ public:
     *
     * @returns Cell identity.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const uint64_t getIdentity();
 
@@ -510,8 +488,6 @@ public:
     *
     * @returns Physical cell identifier.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const uint32_t getPhysicalCellId();
 
@@ -520,8 +496,6 @@ public:
     *
     * @returns Tracking area code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const int32_t getTrackingAreaCode();
 
@@ -530,8 +504,6 @@ public:
     *
     * @returns Absolute RF channel number. '-1' denotes that the value is unknown.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    const int32_t getArfcn();
 
@@ -748,8 +720,6 @@ public:
     *
     * @returns Nr5gCellIdentity.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    Nr5gCellIdentity getCellIdentity();
 
@@ -758,8 +728,6 @@ public:
     *
     * @returns Nr5gSignalStrengthInfo.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibilty.
     */
    Nr5gSignalStrengthInfo getSignalStrengthInfo();
 

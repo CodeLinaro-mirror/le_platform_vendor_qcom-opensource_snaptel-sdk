@@ -85,7 +85,7 @@ class SensorUtils {
     static std::string getSupportedRates(SensorInfo info);
     static std::string getBatchCountLimits(SensorInfo info);
     static SensorConfiguration getSensorConfig(std::shared_ptr<SensorClient> s);
-    static std::shared_ptr<SensorClient> getSensor(
+    static std::shared_ptr<SensorClient> getSensorClient(
         int cid, std::vector<std::shared_ptr<SensorClient>> &sensors);
     template <typename T>
     static void getInput(std::string prompt, T &input) {

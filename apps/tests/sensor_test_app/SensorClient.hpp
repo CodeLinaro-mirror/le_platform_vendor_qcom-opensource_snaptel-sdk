@@ -95,7 +95,7 @@ class SensorClient : public ISensorEventListener,
     void enableLowPowerMode();
     void disableLowPowerMode();
     void selfTest(SelfTestType selfTestType);
-    std::shared_ptr<ISensorClient> getSensor() const {
+    std::shared_ptr<ISensorClient> getSensorClient() const {
         return sensor_;
     }
     bool isActive() const {

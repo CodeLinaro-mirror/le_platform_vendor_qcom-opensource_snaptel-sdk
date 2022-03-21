@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -238,8 +238,6 @@ class PhoneFactory {
     *
     * @returns Pointer of IImsSettingsManager object.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
        telux::common::InitResponseCb  callback = nullptr) = 0;
@@ -252,8 +250,6 @@ class PhoneFactory {
     *                       initialisation.
     *
     * @returns Pointer of IHttpTransactionManager object or nullptr in case of failure.
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     *
     */
    virtual std::shared_ptr<IHttpTransactionManager> getHttpTransactionManager(
@@ -264,8 +260,6 @@ class PhoneFactory {
     *
     * @returns Pointer of IImsServingSystemManager object or nullptr in case of failure.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(SlotId slotId,
       telux::common::InitResponseCb callback = nullptr) = 0;

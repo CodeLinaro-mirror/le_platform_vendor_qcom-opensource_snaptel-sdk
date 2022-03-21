@@ -92,96 +92,96 @@ extern int gVerbosity;
 static void build_VehicleSafetyExt(abuf_t *abp, bsm_value_t *BSM_p)
 {
     uint32_t options;
-    int save_bits_left_align; // only used for run-time validation, could be eliminated.
-    if (gVerbosity > 6)
-        printf("\nbuild_VehicleSafetyExt\n");
+int save_bits_left_align; // only used for run-time validation, could be eliminated.
+if (gVerbosity > 6)
+    printf("\nbuild_VehicleSafetyExt\n");
 
-    // Weed out problems with NULL ptrs.
-    if (!abp || !BSM_p) {
-        goto build_err;
+// Weed out problems with NULL ptrs.
+if (!abp || !BSM_p) {
+    goto build_err;
+}
+
+save_bits_left_align = abp->tail_bits_left;
+
+asn_ncat_bits(abp, 0, 1); //  is_extended = 0
+              //abuf_dump(abp);
+options = BSM_p->vehsafeopts;
+
+asn_ncat_bits(abp, options, PART_II_SAFETY_EXT_OPTION_QTY);
+
+//abuf_dump(abp);
+if (options & PART_II_SAFETY_EXT_OPTION_EVENTS) {
+    asn_ncat_bits(abp, 0, 1); //  is_extended = 0
+    if (asn_ncat_bits(abp, BSM_p->events.data, PART_II_SAFETY_EXT_EVENTS_LEN_BITS) >= 0) {
+        if (gVerbosity > 5) {
+            printf("events 0x%0x added", BSM_p->events.data);
+            abuf_dump(abp);
+        }
+    } else {
+        printf("ERROR adding Part_II Event flags\n");
     }
+}
 
-    save_bits_left_align = abp->tail_bits_left;
+if (options & PART_II_SAFETY_EXT_OPTION_PATH_HISTORY) {
+    int m;
+    int ph_opts = BSM_p->phopts;
 
     asn_ncat_bits(abp, 0, 1); //  is_extended = 0
-                  //abuf_dump(abp);
-    options = BSM_p->vehsafeopts;
 
-    asn_ncat_bits(abp, options, PART_II_SAFETY_EXT_OPTION_QTY);
+    asn_ncat_bits(abp, ph_opts, PATH_HISTORY_OPTIONS_QTY);
 
-    //abuf_dump(abp);
-    if (options & PART_II_SAFETY_EXT_OPTION_EVENTS) {
-        asn_ncat_bits(abp, 0, 1); //  is_extended = 0
-        if (asn_ncat_bits(abp, BSM_p->events.data, PART_II_SAFETY_EXT_EVENTS_LEN_BITS) >= 0) {
-            if (gVerbosity > 5) {
-                printf("events 0x%0x added", BSM_p->events.data);
-                abuf_dump(abp);
-            }
-        } else {
-            printf("ERROR adding Part_II Event flags\n");
-        }
+    if (gVerbosity > 5) {
+        printf("\n ENCODING Part-II PATH HISTORY ph_opts=%0x\n", ph_opts);
     }
 
-    if (options & PART_II_SAFETY_EXT_OPTION_PATH_HISTORY) {
-        int m;
-        int ph_opts = BSM_p->phopts;
+    // OK, so options bits say we have an inital position, then we get a FullPositionVector object
+    if (ph_opts & PATH_HISTORY_OPTION_INITALPOSITION) {
+        uint32_t fpv_options;
+
+        BSM_p->ph.initialPosition.opts.bits.has_utcTime = 0; // KABOB for now
+
+        fpv_options = BSM_p->ph.initialPosition.opts.byte;
 
         asn_ncat_bits(abp, 0, 1); //  is_extended = 0
 
-        asn_ncat_bits(abp, ph_opts, PATH_HISTORY_OPTIONS_QTY);
-
-        if (gVerbosity > 5) {
-            printf("\n ENCODING Part-II PATH HISTORY ph_opts=%0x\n", ph_opts);
+        if (gVerbosity > 7) {
+            printf(" PH has initial position: options=%0x\n", fpv_options);
         }
 
-        // OK, so options bits say we have an inital position, then we get a FullPositionVector object
-        if (ph_opts & PATH_HISTORY_OPTION_INITALPOSITION) {
-            uint32_t fpv_options;
+        asn_ncat_bits(abp, fpv_options, FULLPOSITIONVECTOR_OPTIONS_QTY);
+        if (fpv_options & FULLPOSITIONVECTOR_OPTION_UTCTIME) {
+            //asn_push_bits(db,BSM_p->ph.initialPosition.utcTime ,FULLPOSITIONVECTOR_OPTIONS_QTY);
+            // KABOB
+            printf("Presently unsupported population of PH initial UTC \n");
+        }
 
-            BSM_p->ph.initialPosition.opts.bits.has_utcTime = 0; // KABOB for now
-
-            fpv_options = BSM_p->ph.initialPosition.opts.byte;
-
-            asn_ncat_bits(abp, 0, 1); //  is_extended = 0
-
-            if (gVerbosity > 7) {
-                printf(" PH has initial position: options=%0x\n", fpv_options);
-            }
-
-            asn_ncat_bits(abp, fpv_options, FULLPOSITIONVECTOR_OPTIONS_QTY);
-            if (fpv_options & FULLPOSITIONVECTOR_OPTION_UTCTIME) {
-                //asn_push_bits(db,BSM_p->ph.initialPosition.utcTime ,FULLPOSITIONVECTOR_OPTIONS_QTY);
-                // KABOB
-                printf("Presently unsupported population of PH initial UTC \n");
-            }
-
-            // Lat & Long are mandatory elemnts of the inital position
-            asn_ncat_bits(abp, BSM_p->ph.initialPosition.lon - BSM_ASN_LONGITUDE_ENCODE_OFFSET, LONGITUDE_LEN_BITS);
-            asn_ncat_bits(abp, BSM_p->ph.initialPosition.lat - BSM_ASN_LATITUDE_ENCODE_OFFSET, LATITUDE_LEN_BITS);
+        // Lat & Long are mandatory elemnts of the inital position
+        asn_ncat_bits(abp, BSM_p->ph.initialPosition.lon - BSM_ASN_LONGITUDE_ENCODE_OFFSET, LONGITUDE_LEN_BITS);
+        asn_ncat_bits(abp, BSM_p->ph.initialPosition.lat - BSM_ASN_LATITUDE_ENCODE_OFFSET, LATITUDE_LEN_BITS);
 
 
-            if (fpv_options & FULLPOSITIONVECTOR_OPTION_HEADING) {
-                asn_ncat_bits(abp, BSM_p->ph.initialPosition.heading, HEADING_LEN_BITS);
-            }
+        if (fpv_options & FULLPOSITIONVECTOR_OPTION_HEADING) {
+            asn_ncat_bits(abp, BSM_p->ph.initialPosition.heading, HEADING_LEN_BITS);
+        }
 
-            if (fpv_options & FULLPOSITIONVECTOR_OPTION_ELEVATION) {
-                asn_ncat_bits(abp, BSM_p->ph.initialPosition.elevation - BSM_ASN_ELEVATION_ENCODE_OFFSET,
-                    ELEVATION_LEN_BITS);
-            }
+        if (fpv_options & FULLPOSITIONVECTOR_OPTION_ELEVATION) {
+            asn_ncat_bits(abp, BSM_p->ph.initialPosition.elevation - BSM_ASN_ELEVATION_ENCODE_OFFSET,
+                ELEVATION_LEN_BITS);
+        }
 
-            if (fpv_options & FULLPOSITIONVECTOR_OPTION_HEADING) {
-                asn_ncat_bits(abp, BSM_p->ph.initialPosition.heading, HEADING_LEN_BITS);
-            }
+        if (fpv_options & FULLPOSITIONVECTOR_OPTION_HEADING) {
+            asn_ncat_bits(abp, BSM_p->ph.initialPosition.heading, HEADING_LEN_BITS);
+        }
 
-            if (fpv_options & FULLPOSITIONVECTOR_OPTION_POS_ACCURACY) {
-                asn_ncat_bits(abp, BSM_p->ph.initialPosition.pos_accuracy.semi_major, SEMIMAJOR_ACCURACY_LEN_BITS);
-                asn_ncat_bits(abp, BSM_p->ph.initialPosition.pos_accuracy.semi_minor, SEMIMINOR_ACCURACY_LEN_BITS);
-                asn_ncat_bits(abp, BSM_p->ph.initialPosition.pos_accuracy.orientation, SEMIMAJOR_ORIENTATION_LEN_BITS);
-            }
+        if (fpv_options & FULLPOSITIONVECTOR_OPTION_POS_ACCURACY) {
+            asn_ncat_bits(abp, BSM_p->ph.initialPosition.pos_accuracy.semi_major, SEMIMAJOR_ACCURACY_LEN_BITS);
+            asn_ncat_bits(abp, BSM_p->ph.initialPosition.pos_accuracy.semi_minor, SEMIMINOR_ACCURACY_LEN_BITS);
+            asn_ncat_bits(abp, BSM_p->ph.initialPosition.pos_accuracy.orientation, SEMIMAJOR_ORIENTATION_LEN_BITS);
+        }
 
 
-            if (fpv_options & FULLPOSITIONVECTOR_OPTION_TIME_CONFIDENCE) {
-                asn_ncat_bits(abp, BSM_p->ph.initialPosition.time_confidence, TIME_CONFIDENCE_LEN_BITS);
+        if (fpv_options & FULLPOSITIONVECTOR_OPTION_TIME_CONFIDENCE) {
+            asn_ncat_bits(abp, BSM_p->ph.initialPosition.time_confidence, TIME_CONFIDENCE_LEN_BITS);
             }
 
             if (fpv_options & FULLPOSITIONVECTOR_OPTION_POS_CONFIDENCE) {

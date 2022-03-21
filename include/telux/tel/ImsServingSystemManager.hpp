@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -129,9 +129,6 @@ struct ImsRegistrationInfo {
  * @param [in] error          Return code which indicates whether the operation
  *                            succeeded or not @ref telux::common::ErrorCode.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
- *
  */
 using ImsRegistrationInfoCb
    = std::function<void(ImsRegistrationInfo status, telux::common::ErrorCode error)>;
@@ -150,9 +147,6 @@ public:
     *          SERVICE_UNAVAILABLE  -  If IMS Serving System manager is temporarily unavailable.
     *          SERVICE_FAILED       -  If IMS Serving System manager encountered an irrecoverable
     *                                  failure.
-    *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -165,8 +159,6 @@ public:
     *
     * @returns Status of requestRegistrationInfo i.e. success or suitable status code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change
-    *             and could break backwards compatibility.
     */
     virtual telux::common::Status
         requestRegistrationInfo(ImsRegistrationInfoCb callback) = 0;
@@ -179,8 +171,6 @@ public:
     *
     * @returns Status of registerListener i.e. success or suitable error code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change
-    *             and could break backwards compatibility.
     */
    virtual telux::common::Status
       registerListener(std::weak_ptr<telux::tel::IImsServingSystemListener> listener) = 0;
@@ -192,8 +182,6 @@ public:
     *
     * @returns Status of deregisterListener i.e. success or suitable error code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change
-    *             and could break backwards compatibility.
     */
    virtual telux::common::Status
        deregisterListener(std::weak_ptr<telux::tel::IImsServingSystemListener> listener) = 0;
@@ -216,8 +204,6 @@ public:
      *
      * @param [in] status - @ref telux::common::ServiceStatus
      *
-     * @note    Eval: This is a new API and is being evaluated.It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) {
     }
@@ -228,8 +214,6 @@ public:
     * @param [in] status        Indicates which registration status is the IMS service
     *                           changed to. @ref telux::tel::ImsRegistrationInfo.
     *
-    * @note    Eval: This is a new API and is being evaluated.It is subject to change
-    *          and could break backwards compatibility.
     */
     virtual void onImsRegStatusChange(ImsRegistrationInfo status) {
     }

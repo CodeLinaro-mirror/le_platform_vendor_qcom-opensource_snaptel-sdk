@@ -145,7 +145,7 @@ std::string SensorUtils::getBatchCountLimits(SensorInfo info) {
 
 SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s) {
     // If sensor type == GYRO | ACCELERO, get sampling rate and batch count
-    std::shared_ptr<ISensorClient> sensor = s->getSensor();
+    std::shared_ptr<ISensorClient> sensor = s->getSensorClient();
     SensorType type = sensor->getSensorInfo().type;
     if ((type == SensorType::GYROSCOPE) || (type == SensorType::ACCELEROMETER)
         || ((type == SensorType::GYROSCOPE_UNCALIBRATED)
@@ -168,7 +168,7 @@ SensorConfiguration SensorUtils::getSensorConfig(std::shared_ptr<SensorClient> s
     return SensorConfiguration();
 }
 
-std::shared_ptr<SensorClient> SensorUtils::getSensor(
+std::shared_ptr<SensorClient> SensorUtils::getSensorClient(
     int cid, std::vector<std::shared_ptr<SensorClient>> &sensors) {
 
     std::shared_ptr<SensorClient> sensor = nullptr;

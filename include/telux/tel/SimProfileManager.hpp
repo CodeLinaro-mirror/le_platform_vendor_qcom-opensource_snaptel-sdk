@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -124,9 +124,6 @@ using EidResponseCb = std::function<void(std::string eid, telux::common::ErrorCo
  * @param [in] smdsAddress        Configured SMDS address on the eUICC.
  * @param [in] error              Return code which indicates whether the operation
  *                                succeeded or not.  @ref telux::common::ErrorCode.
- * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
- *           break backwards compatibility.
- *
  */
 using ServerAddressResponseCb = std::function<void(std::string smdpAddress,
     std::string smdsAddress, telux::common::ErrorCode error)>;
@@ -286,8 +283,6 @@ class ISimProfileManager {
      *                               request.
      *
      * @returns  Status of provide confirmation code i.e. success or suitable error code.
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual telux::common::Status provideConfirmationCode(SlotId slotId, std::string code,
         common::ResponseCallback callback = nullptr)
@@ -327,8 +322,6 @@ class ISimProfileManager {
      *                               reset request.
      * @returns  Status of memory reset request i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change
-     *             and could break backwards compatibility.
      */
     virtual telux::common::Status memoryReset(SlotId slotId, ResetOptionMask mask,
         common::ResponseCallback callback = nullptr) = 0;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -66,8 +66,6 @@ class IFsManager {
      * @returns @ref telux::common::ServiceStatus indicating the current status of the file system
      *          service.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -78,8 +76,6 @@ class IFsManager {
      *
      * @returns status of the registration request.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IFsListener> listener) = 0;
 
@@ -90,8 +86,6 @@ class IFsManager {
      *
      * @returns status of the deregistration request.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(std::weak_ptr<IFsListener> listener) = 0;
 
@@ -101,8 +95,6 @@ class IFsManager {
      *
      * @returns The status of the request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status startEfsBackup() = 0;
 

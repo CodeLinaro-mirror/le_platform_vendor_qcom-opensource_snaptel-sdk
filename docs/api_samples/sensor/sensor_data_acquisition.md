@@ -64,7 +64,7 @@ application also shows how to acquire data from the same sensor with different c
    ~~~~~~{.cpp}
    std::shared_ptr<telux::sensor::ISensorClient> lowRateSensorClient;
    std::cout << "Getting sensor: " << name << std::endl;
-   status = sensorManager->getSensor(lowRateSensorClient, name);
+   status = sensorManager->getSensorClient(lowRateSensorClient, name);
    if (status != telux::common::Status::SUCCESS) {
       std::cout << "Failed to get sensor: " << name << std::endl;
       exit(1);
@@ -236,7 +236,7 @@ such method is to spawn a detached thread that invokes the required API.
    ~~~~~~{.cpp}
    std::shared_ptr<telux::sensor::ISensorClient> highRateSensorClient;
    std::cout << "Getting sensor: " << name << std::endl;
-   status = sensorManager->getSensor(highRateSensorClient, name);
+   status = sensorManager->getSensorClient(highRateSensorClient, name);
    if (status != telux::common::Status::SUCCESS) {
       std::cout << "Failed to get sensor: " << name << std::endl;
       exit(1);

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       ThermalFactory.hpp
  * @brief      ThermalFactory allows creation of thermal manager.
@@ -36,7 +72,6 @@
 #define THERMALFACTORY_HPP
 
 #include <memory>
-#include <mutex>
 
 #include <telux/therm/ThermalManager.hpp>
 #include <telux/therm/ThermalShutdownManager.hpp>
@@ -52,34 +87,53 @@ namespace therm {
  * @brief   ThermalFactory allows creation of thermal manager.
  */
 class ThermalFactory {
-public:
-   /**
-    * Get Thermal Factory instance.
-    */
-   static ThermalFactory &getInstance();
+ public:
+    /**
+     * Get Thermal Factory instance.
+     */
+    static ThermalFactory &getInstance();
 
-   /**
-    * Get thermal manager instance to get list of thermal zones (sensors) and
-    * cooling devices supported by the device
-    *
-    * @returns Pointer of IThermalManager object.
-    */
-   std::shared_ptr<IThermalManager> getThermalManager();
+    /**
+     * Get thermal manager instance associated with a @ref telux::common::ProcType to get list of
+     * thermal zones (sensors) and cooling devices supported by the device
+     *
+     * @param [in] callback  Optional callback pointer to get the response of the manager
+     *                       initialization.
+     *
+     * @param [in] oprType   Operation type @ref telux::common::ProcType. Local operation type
+     *                       fetches the thermal zones information where the application is running.
+     *                       Remote operation type fetches the thermal zones information of modem
+     *                       if the application is running on external application processor(EAP)
+     *                       and vice versa.
+     *
+     * @returns Pointer of IThermalManager object.
+     *
+     */
+    virtual std::shared_ptr<IThermalManager> getThermalManager(
+        telux::common::InitResponseCb callback = nullptr,
+        telux::common::ProcType operType = telux::common::ProcType::LOCAL_PROC)
+        = 0;
 
-   /**
-    * Get thermal shutdown manager instance to control automatic thermal shutdown and get relevant
-    * notifications
-    *
-    * @returns Pointer of IThermalShutdownManager object.
-    */
-   std::shared_ptr<IThermalShutdownManager> getThermalShutdownManager();
+    /**
+     * Get thermal shutdown manager instance to control automatic thermal shutdown and get relevant
+     * notifications
+     *
+     * @param [in] callback  Optional callback pointer to get the response of the manager
+     *                       initialization.
+     *
+     * @returns Pointer of IThermalShutdownManager object.
+     */
+    virtual std::shared_ptr<IThermalShutdownManager> getThermalShutdownManager(
+        telux::common::InitResponseCb callback = nullptr)
+        = 0;
 
-private:
-   std::shared_ptr<IThermalShutdownManager> thermalShutdownManager_;
-   ThermalFactory();
-   ~ThermalFactory();
-   ThermalFactory(const ThermalFactory &) = delete;
-   ThermalFactory &operator=(const ThermalFactory &) = delete;
+ protected:
+    ThermalFactory();
+    virtual ~ThermalFactory();
+
+ private:
+    ThermalFactory(const ThermalFactory &) = delete;
+    ThermalFactory &operator=(const ThermalFactory &) = delete;
 };
 
 /** @} */ /* end_addtogroup telematics_therm_management */

@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file       ThermalShutdownManager.hpp
@@ -71,20 +106,35 @@ using GetAutoShutdownModeResponseCb = std::function<void(AutoShutdownMode mode)>
  *          shutdown mode changes.
  */
 class IThermalShutdownManager {
-public:
+ public:
     /**
      * Checks the status of thermal shutdown management service and if the other APIs are ready for
      * use and returns the result.
      *
      * @returns  True if the services are ready otherwise false.
+     *
+     * @deprecated use getServiceStatus()
      */
     virtual bool isReady() = 0;
+
+    /**
+     * This status indicates whether the object is in a usable state.
+     *
+     * @returns  @ref telux::common::ServiceStatus
+     *
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
      * Wait for thermal shutdown management service to be ready.
      *
      * @returns  A future that caller can wait on to be notified when thermal shutdown management
      *           service is ready.
+     *
+     * @deprecated The callback mechanism introduced in the
+     * @ref ThermalFactory::getThermalShutdownManager with initialization callback along with
+     * @ref getServiceStatus API will provide the similar mechanism as @ref onReady and
+     * @ref isReady. This API will soon be removed from further releases.
      */
     virtual std::future<bool> onReady() = 0;
 
@@ -97,7 +147,7 @@ public:
      * @returns Status of registerListener i.e success or suitable status code.
      */
     virtual telux::common::Status registerListener(std::weak_ptr<IThermalShutdownListener> listener)
-                                        = 0;
+        = 0;
 
     /**
      * Remove a previously registered listener.
@@ -107,7 +157,8 @@ public:
      * @returns Status of deregisterListener, success or suitable status code
      */
     virtual telux::common::Status deregisterListener(
-                                        std::weak_ptr<IThermalShutdownListener> listener) = 0;
+        std::weak_ptr<IThermalShutdownListener> listener)
+        = 0;
 
     /**
      * Set automatic thermal shutdown mode.
@@ -121,8 +172,8 @@ public:
      * @returns Status of setAutoShutdownMode i.e. success or suitable status code.
      */
     virtual telux::common::Status setAutoShutdownMode(AutoShutdownMode mode,
-                                        telux::common::ResponseCallback callback = nullptr,
-                                        uint32_t timeout = DEFAULT_TIMEOUT) = 0;
+        telux::common::ResponseCallback callback = nullptr, uint32_t timeout = DEFAULT_TIMEOUT)
+        = 0;
 
     /**
      * Get automatic thermal shutdown mode.

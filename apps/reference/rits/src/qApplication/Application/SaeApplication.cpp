@@ -70,6 +70,8 @@
   */
 #include "SaeApplication.hpp"
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
+#include "asnbuf.h"
+#include "wsmp.h"
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verifStatIdx = 0;
@@ -542,6 +544,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
 
 
 void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
+    auto wsmp = (wsmp_data_t*)mc->wsmp;
     mc->stackId = STACK_ID_SAE;
 
     if (isRx) {
@@ -556,12 +559,28 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
             mc->msgId = (int)WSA_MSG_ID;
         }
     } else {
-        mc->wsmp = malloc(sizeof(wsmp_data_t));
+        mc->wsmp = (wsmp_data_t*) calloc(1, sizeof(wsmp_data_t));
         if (!mc->wsmp) {
-            std::cerr << "alloc wsmp failed" << endl;
+            std::cerr << "calloc wsmp failed" << endl;
             return;
         }
-        memset(mc->wsmp, 0, sizeof(wsmp_data_t));
+
+        wsmp->abp = (abuf_t*) calloc(1, sizeof(abuf_t));
+
+        if (!wsmp->abp)
+        {
+            std::cerr << "calloc wsmp asnbuf structure failed" << endl;
+            return;
+        }
+
+        const auto abuf_ret = abuf_alloc(wsmp->abp, WSMP_ABUF_DEFAULT_SIZE,
+            WSMP_ABUF_DEFAULT_HEADROOM);
+
+        if (abuf_ret != WSMP_ABUF_DEFAULT_SIZE)
+        {
+            std::cerr << "alloc wsmp asn buffer failed" << endl;
+            return;
+        }
 
         mc->ieee1609_2data = malloc(sizeof(ieee1609_2_data));
         if (!mc->ieee1609_2data) {
@@ -606,7 +625,10 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 }
 
 void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
+    auto wsmp = (wsmp_data_t*)mc->wsmp;
+
     if (mc->wsmp) {
+        abuf_free(wsmp->abp);
         free(mc->wsmp);
         mc->wsmp = nullptr;
     }
@@ -627,6 +649,7 @@ void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
         mc->wsa = nullptr;
     }
 #endif
+    abuf_free(&(mc->abuf));
 }
 
 void SaeApplication::fillMsg(std::shared_ptr<msg_contents> mc) {

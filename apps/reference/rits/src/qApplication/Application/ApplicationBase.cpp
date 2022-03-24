@@ -75,8 +75,6 @@ using std::string;
 using std::map;
 using std::pair;
 
-#define ABUF_LEN            2048
-#define ABUF_HEADROOM       256
 
 // thread function to periodically change ID and cert
 void ApplicationBase::changeIdTimer(unsigned int interval)

@@ -26,6 +26,42 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+/*
+ *Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *Redistribution and use in source and binary forms, with or without
+ *modification, are permitted (subject to the limitations in the
+ *disclaimer below) provided that the following conditions are met:
+ *
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
+ *
+ *    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
+ *
+ *NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file wsmp.c
  * @brief library for dissecting/encoding WSMP 2016 frames and dealing with
@@ -58,6 +94,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Global for printing more useful information
 extern int gVerbosity;
 static int savari_workaround = 0;
+
 
 void set_savari_workaround(int value) {
     savari_workaround = value;
@@ -874,8 +911,13 @@ wsmp_pkt_err:
     return retcode;
 }
 
+extern int wsmp_data_decode(wsmp_data_t* wsmp){
+    return 0;
+}
+
 int wsmp_encode(msg_contents *mc)
 {
+    wsmp_data_t *wsmp = (wsmp_data_t*) (mc->wsmp);
     if (!mc->wsmp) {
         if(gVerbosity > 2)
             fprintf(stderr, "%s: invalid input\n", __func__);
@@ -885,11 +927,61 @@ int wsmp_encode(msg_contents *mc)
             fprintf(stderr, "%s: no input to encode\n", __func__);
         return -1;
     }
-    abuf_t ab;
-    abuf_alloc(&ab, 2000, 20);
-    wsmp_data_t *wsmp = mc->wsmp;
-    wsmp->abp = &ab;
+
+    if (wsmp->abp == NULL)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no asnbuf \n",
+             __func__);
+        }
+        return -1;
+    }
+
+    if (wsmp->abp->size <= 0)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no allocated asnbuf\n",
+                 __func__);
+        }
+        return -1;
+    }
+    //Resetting buffer before using it for encodeing.
+    abuf_reset(wsmp->abp, WSMP_ABUF_DEFAULT_HEADROOM);
     int ret = encode_wsm2016(wsmp, &(mc->abuf));
-    abuf_free(&ab);
     return ret;
 }
+
+int wsmp_data_encode(wsmp_data_t* wsmp)
+{
+    if (!wsmp) {
+        if(gVerbosity > 2)
+            fprintf(stderr, "%s: wsmp input is null\n", __func__);
+        return -1;
+    }
+
+    if (wsmp->abp == NULL)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no asnbuf \n",
+             __func__);
+        }
+        return -1;
+    }
+
+    if (wsmp->abp->size <= 0)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no allocated asnbuf \n",
+                __func__);
+        }
+        return -1;
+    }
+
+    int ret = encode_wsm2016(wsmp, wsmp->abp);
+    return ret;
+}
+

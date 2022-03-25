@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
 * @file       Cv2xRxTypes.hpp
@@ -42,6 +77,11 @@
 namespace telux {
 
 namespace cv2x {
+
+#define CV2X_IPV6_ADDR_ARRAY_LEN 16
+#define CV2X_MAC_ADDR_LEN        6
+#define IPV6_MIN_PREFIX_LENGTH   1
+#define IPV6_MAX_PREFIX_LEN      128
 
 /** @addtogroup telematics_cv2x
  * @{ */
@@ -242,6 +282,9 @@ struct EventFlowInfo {
          default setting. */
     uint8_t txPoolId = 0u;
     /**< Transmission Pool ID. */
+    bool isUnicast = false;
+    /**< Set to true if isUnicast flow.  If false, Non-Unicast flow will be created.
+         Note: Unicast flows ignore subscribed Service Ids*/
 };
 
 /**
@@ -345,6 +388,8 @@ struct Cv2xRadioCapabilities {
     /**< Minimum supported transmission power. */
     std::vector<TxPoolIdInfo> txPoolIdsSupported;
     /**< Vector of supported transmission pool IDs. */
+    uint8_t isUnicastSupported;
+    /**< Non zero value if unicast is supported. */
 };
 
 /**
@@ -443,6 +488,29 @@ struct DataSessionSettings {
     /**< Set to true if ipv6 address is valid. */
     IPv6Address ipv6Addr;
     /**< IPv6 address. */
+};
+
+/**
+ * Encapsulates ipv6 prefix length in bits and ipv6 prefix.
+ *
+ * Used in @ref setGlobalIPInfo.
+ */
+struct IPv6AddrType
+{
+    /**< ipv6 address prefix length in bits, range [1, 128] */
+    uint8_t prefixLen;
+    uint8_t ipv6Addr[CV2X_IPV6_ADDR_ARRAY_LEN];
+};
+
+/**
+ * Encapsulates destination L2 address.
+ *
+ * Used in @ref setGlobalIPUnicastRoutingInfo.
+ */
+struct GlobalIPUnicastRoutingInfo
+{
+    /**< Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order*/
+    uint8_t destMacAddr[CV2X_MAC_ADDR_LEN];
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x */

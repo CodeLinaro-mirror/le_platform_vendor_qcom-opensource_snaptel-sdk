@@ -26,7 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /**
 * @file       Cv2xRadio.hpp
 *
@@ -602,6 +636,51 @@ public:
      */
     virtual telux::common::Status closeCv2xTcpSocket(std::shared_ptr<ICv2xTxRxSocket> sock,
                                                      CloseTcpSocketCallback cb) = 0;
+
+    /**
+     * Set CV2X global IP address for the IP interface.
+     *
+     * Use case and Precondition:
+     * OBU:
+     * Registers a TX/RX *NON IP* flow for receiving the signed WSA/WRA for IP session initiation;
+     * Once receives the IP prefix in the WDS/WRA from RSU, call this method.
+     *
+     * RSU:
+     * Specifies its own global prefix via this method, and creates/composes WSA/WRA
+     * advertising the IP configs.
+     *
+     * @param [in] ipv6Addr   - CV2X global IP address prefix.
+     * @param [in] cb     - Callback that is invoked when set the global IP address complete.
+     *                      This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status setGlobalIPInfo(const IPv6AddrType &ipv6Addr,
+        common::ResponseCallback cb) = 0;
+
+    /**
+     * Set CV2X IP interface global IP unicast routing information.
+     *
+     * Use case and Precondition:
+     * OBU:
+     * Registers a TX/RX *NON IP* flow for receiving the signed WSA/WRA for IP session initiation;
+     * Once receives the IP prefix in the WSA/WRA from RSU, call the @ref setGlobalIPInfo method
+     * to update the ip interface with global IP;
+     * Now call this method to set the routing information with dest L2 addr negotiated in WSA/WRA.
+     *
+     * RSU:
+     * Specifies its own global prefix via @ref setGlobalIPInfo, and creates/composes WSA/WRA
+     * advertising the IP configs;
+     * Now set routing information of its own via this method.
+     *
+     * @param [in] destL2Addr   - CV2X destination L2 address for unicast routing purpose.
+     * @param [in] cb     - Callback that is invoked when set global IP unicast routing
+     * information complete. This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status setGlobalIPUnicastRoutingInfo(
+        const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb) = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x */

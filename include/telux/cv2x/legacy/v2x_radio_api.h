@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
   @file v2x_radio_api.h
@@ -714,6 +749,17 @@ typedef struct {
 
     uint8_t tx_pool_id;
     /**< ID of the Tx pool. */
+
+    int8_t is_unicast_valid;
+    /**< Indicates whether is_unicast is specified.
+
+         @values
+         - 0 -- Is unicast is not specified
+         - 1 -- Is unicast is specified and is valid @tablebulletend */
+
+    uint8_t is_unicast;
+    /**< Non zero if requested flow is unicast.
+         Note: Unicast flows ignore subscribed Service Ids */
 
 } v2x_tx_flow_info_t;
 
@@ -1965,6 +2011,28 @@ extern int v2x_radio_tcp_sock_create_and_bind(
     const socket_info_t *sock_info,
     int *sock_fd,
     struct sockaddr_in6 *sockaddr);
+
+/**
+    Set CV2X global IP address for the IP interface.
+
+    @param [in] prefix_len CV2X global IP address prefix length in bits, range [1, 128]
+    @param [in] ipv6_addr  CV2X global IP address.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_global_IPaddr(uint8_t prefix_len, uint8_t* ipv6_addr);
+
+/**
+    Set CV2X IP interface global IP unicast routing information.
+
+    @param [in] dest_mac_addr CV2X destination L2 address for unicast routing purpose.
+                              expecting a 6 bytes array address, in which the L2 addr stored in
+                              the last 3 entries in big endian order.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_set_ip_routing_info(uint8_t* dest_mac_addr);
+
 /** @} *//* end_addtogroup v2x_api_radio */
 
 /*

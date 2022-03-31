@@ -128,7 +128,11 @@ enum class ECallCategory {
 };
 
 /**
- * Represents a vehicle class as per European eCall MSD standard. i.e. EN 15722.
+ * Represents a vehicle class as per European eCall MSD standard. i.e. EN 15722:2020.
+ * Some of these values are only supported in certain MSD versions, so ensure to use supported
+ * values in an MSD.
+ * For example, TRAILERS_CLASS_O is not supported in MSD version-2 (as per A.1 in EN 15722:2015(E)),
+ * but supported in in MSD version-3 (as per A.1 in EN 15722:2020).
  */
 enum ECallVehicleType {
    PASSENGER_VEHICLE_CLASS_M1,
@@ -144,6 +148,16 @@ enum ECallVehicleType {
    MOTOR_CYCLES_CLASS_L5E,
    MOTOR_CYCLES_CLASS_L6E,
    MOTOR_CYCLES_CLASS_L7E,
+   TRAILERS_CLASS_O,
+   AGRI_VEHICLES_CLASS_R,
+   AGRI_VEHICLES_CLASS_S,
+   AGRI_VEHICLES_CLASS_T,
+   OFF_ROAD_VEHICLES_G,
+   SPECIAL_PURPOSE_MOTOR_CARAVAN_CLASS_SA,
+   SPECIAL_PURPOSE_ARMOURED_VEHICLE_CLASS_SB,
+   SPECIAL_PURPOSE_AMBULANCE_CLASS_SC,
+   SPECIAL_PURPOSE_HEARCE_CLASS_SD,
+   OTHER_VEHICLE_CLASS,
 };
 
 /**
@@ -154,7 +168,8 @@ enum class ECallOptionalDataType {
 };
 
 /**
- * Represents MsdOptionals class as per European eCall MSD standard. i.e. EN 15722.
+ * Represents the availability of some optional parameters in MSD as per European eCall MSD standard
+ * EN 15722.
  */
 struct ECallMsdOptionals {
 
@@ -162,9 +177,13 @@ struct ECallMsdOptionals {
    bool optionalDataPresent;               /**< Availability of Optional data:
                                                   true - Present or false - Absent */
    bool recentVehicleLocationN1Present;    /**< Availability of Recent Vehicle Location N1 data:
-                                                  true - Present or false - Absent*/
+                                                true - Present or false - Absent. In MSD version-3
+                                                (as per EN 15722:2020), as recentVehicleLocationN1
+                                                is mandatory, this should be set to true by client*/
    bool recentVehicleLocationN2Present;    /**< Availability of Recent Vehicle Location N2 data:
-                                                  true - Present or false - Absent */
+                                                true - Present or false - Absent. In MSD version-3
+                                                (as per EN 15722:2020), as recentVehicleLocationN2
+                                                is mandatory, this should be set to true by client*/
    bool numberOfPassengersPresent;         /**< Availability of number of seat belts fastened data:
                                                   true - Present or false - Absent*/
 };
@@ -208,8 +227,8 @@ struct ECallVehiclePropulsionStorageType {
  * Represents VehicleLocation structure as per European eCall MSD standard. i.e. EN 15722.
  */
 struct ECallVehicleLocation {
-   int32_t positionLatitude; /**< latitude in value range (-2147483648 to 2147483647) */
-   int32_t positionLongitude;
+   int32_t positionLatitude;  /**< latitude in milliarcsec, range is (-2147483648 to 2147483647) */
+   int32_t positionLongitude; /**< longitude in milliarcsec, range is (-2147483648 to 2147483647) */
 };
 
 /**
@@ -248,11 +267,13 @@ struct ECallOptionalPdu {
 };
 
 /**
- * Data structure to hold all details required to construct an MSD
+ * Data structure to hold all details required to construct an MSD.
+ * Supports MSD version-2(as per EN 15722:2015) and MSD version-3(as per EN 15722:2020)
  */
 struct ECallMsdData {
    ECallMsdOptionals optionals; /**< Indicates presence of optionals in ECall MSD */
-   uint8_t messageIdentifier;   /**< Starts with 1 for each new , increment on retransmission */
+   uint8_t messageIdentifier;   /**< Starts with 1 for each new eCall and to be incremented with
+                                     every retransmission */
    ECallMsdControlBits control; /**< ECallMsdControlBits structure as per European standard i.e. EN
                                    15722 */
    ECallVehicleIdentificationNumber vehicleIdentificationNumber; /**< VIN (vehicle identification
@@ -265,16 +286,19 @@ struct ECallMsdData {
                                             i.e. EN 15722 */
    uint8_t vehicleDirection; /**< Direction of travel in 2 degrees steps from magnetic north */
 
-   // The following fields are optional
    ECallVehicleLocationDelta recentVehicleLocationN1; /**< Change in latitude and longitude compared
-                                                         to the last MSD transmission */
+                                                         to the last MSD transmission. Optional
+                                                         field for MSD version-2 */
    ECallVehicleLocationDelta recentVehicleLocationN2; /**< Change in latitude and longitude compared
-                                                         to the last but one MSD transmission */
-   uint8_t numberOfPassengers;                        /**< Number of occupants in the vehicle */
+                                                         to the last but one MSD transmission.
+                                                         Optional field for MSD version-2 */
+   uint8_t numberOfPassengers;   /**< Number of occupants in the vehicle. Optional field for MSD
+                                      version-2 and version-3 */
    /** Optional information for the emergency rescue service
     * (103 bytes, ASN.1 encoded); may also point to an address, where this information is located
     */
    ECallOptionalPdu optionalPdu; /**< Optional information for the emergency rescue service */
+   uint8_t msdVersion = 2;       /**< MSD format version that is being used */
 };
 
 /**

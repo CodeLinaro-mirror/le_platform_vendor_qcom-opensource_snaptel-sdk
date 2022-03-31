@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -46,6 +53,8 @@ telux::tel::ECallMsdData MsdSettings::readMsdFromFile(std::string filename) {
    telux::tel::ECallMsdData msdData;
 
    MsdSettings::readMsdSettingsFile();
+
+   std::cout << " ECall MSD Version: " << static_cast<int>(msdData.msdVersion) << std::endl;
 
    // RECENT_LOCATION_N1_PRESENT
    auto recentVehicleLocationN1PresentAsString
@@ -194,6 +203,10 @@ std::string MsdSettings::getValue(std::string key) {
 void MsdSettings::readMsdSettingsFile() {
    // Create a file stream from the file name
    std::ifstream configFileStream(filename_);
+   if(!configFileStream.is_open()) {
+       std::cout << " MSD settings file(" << filename_ << ") is not found" << std::endl;
+       return;
+   }
 
    // Iterate through each parameter in the file and read the key value pairs
    std::string param;

@@ -28,7 +28,7 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
  *
  *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
@@ -374,6 +374,7 @@ void ECallManager::setLocationReceived(bool state) {
  * This function will be invoked whenever a new location-fix is received from the location client.
  */
 void ECallManager::onLocationUpdate(ECallLocationInfo locInfo) {
+    msdData_.control.positionCanBeTrusted = true;
     msdData_.vehicleLocation.positionLatitude = locInfo.latitude;
     msdData_.vehicleLocation.positionLongitude = locInfo.longitude;
     msdData_.timestamp = locInfo.timestamp;

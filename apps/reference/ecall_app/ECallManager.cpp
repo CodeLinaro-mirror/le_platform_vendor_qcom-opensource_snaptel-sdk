@@ -444,6 +444,7 @@ void ECallManager::setLocationReceived(bool state) {
  * This function will be invoked whenever a new location-fix is received from the location client.
  */
 void ECallManager::onLocationUpdate(ECallLocationInfo locInfo) {
+    msdData_.control.positionCanBeTrusted = true;
     msdData_.vehicleLocation.positionLatitude = locInfo.latitude;
     msdData_.vehicleLocation.positionLongitude = locInfo.longitude;
     msdData_.timestamp = locInfo.timestamp;

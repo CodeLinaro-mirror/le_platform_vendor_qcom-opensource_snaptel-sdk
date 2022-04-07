@@ -85,6 +85,8 @@
 #include <array>
 #include <telux/cv2x/Cv2xRadio.hpp>
 
+#include "../../common/utils/Utils.hpp"
+
 using std::array;
 using std::string;
 using std::cerr;
@@ -945,6 +947,13 @@ static int init() {
 }
 
 int main(int argc, char *argv[]) {
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "gps", "radio"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1) {
+        cout << "Adding supplementary groups failed." << endl;
+    }
+
     cout << "Running C-V2X TCP Test" << endl;
 
     if (pipe(gTerminatePipe) == -1) {

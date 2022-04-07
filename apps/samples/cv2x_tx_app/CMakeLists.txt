@@ -4,6 +4,7 @@ set(TARGET_CV2X_TX_APP cv2x_tx_app)
 
 set(CV2X_TX_SOURCES
     Cv2xTxApp.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
 )
 
 # set global variables

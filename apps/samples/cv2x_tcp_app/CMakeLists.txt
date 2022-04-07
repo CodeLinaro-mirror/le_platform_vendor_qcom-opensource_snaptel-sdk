@@ -4,6 +4,7 @@ set(TARGET_CV2X_TCP_APP cv2x_tcp_app)
 
 set(CV2X_TCP_SOURCES
     Cv2xTcpApp.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
 )
 
 # set global variables

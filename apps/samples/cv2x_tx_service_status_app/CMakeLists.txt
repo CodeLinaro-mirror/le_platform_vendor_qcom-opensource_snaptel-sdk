@@ -4,6 +4,7 @@ set(TARGET_CV2X_TX_SERVICE_STATUS_APP cv2x_tx_service_status_app)
 
 set(CV2X_TX_SERVICE_STATUS_SOURCES
     Cv2xTxServiceStatusApp.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

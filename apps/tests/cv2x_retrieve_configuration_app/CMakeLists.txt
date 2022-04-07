@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_CV2X_RETRIEVAL_CONFIG_APP cv2x_retrieve_configuration)
 
-set(CV2X_RETRIEVAL_CONFIG_SOURCES Cv2xRetrieveConfigurationApp.cpp)
+set(CV2X_RETRIEVAL_CONFIG_SOURCES
+    Cv2xRetrieveConfigurationApp.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+)
 
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")

@@ -4,6 +4,7 @@ set(TARGET_CV2X_GET_STATUS_APP cv2x_get_status)
 
 set(CV2X_GET_STATUS_SOURCES
     Cv2xGetStatusApp.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
 )
 
 # set global variables

@@ -5,6 +5,7 @@ set(LIBQMESSENGER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/./RadioInterface/RadioInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./RadioReceive/RadioReceive.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./RadioTransmit/RadioTransmit.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/./ThrottleManager/ThrottleManager.cpp
 )
 
 if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)

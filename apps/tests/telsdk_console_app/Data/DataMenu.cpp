@@ -354,35 +354,70 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
 
+    std::string interfaceName = "";
+    int userChoice;
+    std::cout << "Start data call on specific interface name? (1-Yes, 0-No): ";
+    std::cin>> userChoice;
+    Utils::validateInput(userChoice);
+    std::cout << std::endl;
+    if(userChoice) {
+        std::cout << "Enter interface name (without quotes): ";
+        std::cin >> interfaceName;
+        Utils::validateInput(interfaceName);
+        std::cout << std::endl;
+    }
+
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     retStat = dataConnectionManager_->startDataCall(profileId, ipFamType,
-        MyDataCallResponseCallback::startDataCallResponseCallBack, opType);
+        MyDataCallResponseCallback::startDataCallResponseCallBack, opType, interfaceName);
     Utils::printStatus(retStat);
 }
 
 void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStop data call" << std::endl;
     telux::common::Status retStat;
-    int profileId;
-    std::cout << "Enter Profile Id : ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
-
-    int ipFamilyType;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
-    std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
-
+    int userChoice;
+    std::string interfaceName = "";
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
     Utils::validateInput(operationType);
-
-    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-    retStat = dataConnectionManager_->stopDataCall(profileId, ipFamType,
-        MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
+    std::cout << std::endl;
+
+    std::cout << "Stop data call on specific interface name? (1-yes, 0-No): " ;
+    std::cin >> userChoice;
+    Utils::validateInput(userChoice);
+    std::cout << std::endl;
+    if(userChoice) {
+        std::cout << "Enter interface name: ";
+        std::cin >> interfaceName;
+        Utils::validateInput(interfaceName);
+        std::cout << std::endl;
+        auto respCb = [](telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                      << "stopDataCall Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        };
+        retStat = dataConnectionManager_->stopDataCall(interfaceName, respCb, opType);
+    } else {
+        int profileId;
+        std::cout << "Enter Profile Id : ";
+        std::cin >> profileId;
+        Utils::validateInput(profileId);
+
+        int ipFamilyType;
+        std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
+        std::cin >> ipFamilyType;
+        Utils::validateInput(ipFamilyType);
+        telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+        retStat = dataConnectionManager_->stopDataCall(profileId, ipFamType,
+            MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
+    }
     Utils::printStatus(retStat);
 }
 

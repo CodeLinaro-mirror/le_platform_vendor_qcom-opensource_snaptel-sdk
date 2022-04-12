@@ -119,6 +119,9 @@ class IHttpTransactionManager {
     /**
      * Send the result of HTTP Post request transaction to modem.
      *
+     * On platforms with access control enabled, caller needs to have
+     * TELUX_TEL_SIM_PROFILE_HTTP_PROXY permission to invoke this API successfully.
+     *
      * @param [in] token             Token identifier for request and response pair.
      * @param [in] result            HTTP transaction request result.
      * @param [in] headers           Custom Headers in HTTP Response.

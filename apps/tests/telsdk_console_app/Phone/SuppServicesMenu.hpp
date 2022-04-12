@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,27 +32,27 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef SUPP_SERVICES_MENU_HPP
+#define SUPP_SERVICES_MENU_HPP
 
-#ifndef FILESYSTEMLISTENER_HPP
-#define FILESYSTEMLISTENER_HPP
+#include <telux/tel/SuppServicesManager.hpp>
+#include "console_app_framework/ConsoleApp.hpp"
 
-#include <telux/platform/FsListener.hpp>
+class SuppServicesMenu : public ConsoleApp {
+public:
+   SuppServicesMenu(std::string appName, std::string cursor);
+   ~SuppServicesMenu();
+   void init();
 
-using namespace telux::platform;
-using namespace telux::common;
+private:
+   void setCallWaitingPref(std::vector<std::string> userInput);
+   void getCallWaitingPref(std::vector<std::string> userInput);
+   void setCallForwardingPref(std::vector<std::string> userInput);
+   void getCallForwardingPref(std::vector<std::string> userInput);
+   void selectSimSlot(std::vector<std::string> userInput);
 
-class FileSystemListener : public telux::platform::IFsListener {
- public:
-    void OnEfsRestoreEvent(EfsEventInfo event) override;
-    void OnEfsBackupEvent(EfsEventInfo event) override;
-    void OnFsOperationImminentEvent(uint32_t timeLeftToStart) override;
-    void onServiceStatusChange(ServiceStatus status) override;
-
-    FileSystemListener();
-    ~FileSystemListener();
-
- private:
-    void printEfsEvent(std::string type, EfsEventInfo eventInfo);
+   SlotId slot_ = DEFAULT_SLOT_ID;
+   std::vector<std::shared_ptr<telux::tel::ISuppServicesManager>> suppServicesManagers_;
 };
 
-#endif  // FILESYSTEMLISTENER_HPP
+#endif  // SUPP_SERVICES_MENU_HPP

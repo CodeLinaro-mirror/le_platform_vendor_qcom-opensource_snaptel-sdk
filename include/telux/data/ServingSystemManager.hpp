@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -154,8 +154,6 @@ struct ServiceStatus {
  * @param [in] serviceStatus       Current service status @ref telux::data::ServiceStatus
  * @param [in] error               Return code for whether the operation succeeded or failed.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 using RequestServiceStatusResponseCb
     = std::function<void(ServiceStatus serviceStatus, telux::common::ErrorCode error)>;
@@ -169,8 +167,6 @@ using RequestServiceStatusResponseCb
  * @param [in] roamingStatus       Current roaming status @ref telux::data::RoamingStatus
  * @param [in] error               Return code for whether the operation succeeded or failed.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
 */
 using RequestRoamingStatusResponseCb
     = std::function<void(RoamingStatus roamingStatus, telux::common::ErrorCode error)>;
@@ -190,8 +186,6 @@ public:
      *          SERVICE_FAILED       -  If serving manager object encountered an irrecoverable
      *                                  failure.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -200,8 +194,6 @@ public:
      *
      * @returns current DrbStatus @ref DrbStatus.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual DrbStatus getDrbStatus() = 0;
 
@@ -212,8 +204,6 @@ public:
      *
      * @returns Status of requestServiceStatus i.e. success or suitable status code.
      *          if requestServiceStatus returns failure, callback will not be invoked.
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestServiceStatus(RequestServiceStatusResponseCb callback) = 0;
 
@@ -224,8 +214,6 @@ public:
      *
      * @returns Status of requestRoamingStatus i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestRoamingStatus(RequestRoamingStatusResponseCb callback) = 0;
 

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -73,6 +73,7 @@
 #include <telux/tel/PhoneFactory.hpp>
 
 #include "CardServicesMenu.hpp"
+#include "CardFileMenu.hpp"
 
 #define SIM_CARD_POWER_UP 1
 #define SIM_CARD_POWER_DOWN 0
@@ -263,15 +264,19 @@ void CardServicesMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "13", "Set_card_power", {},
             std::bind(&CardServicesMenu::cardPower, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> cardFileHandlerMenuCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "14", "Card_File_Handler", {},
+            std::bind(&CardServicesMenu::cardFileMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectCardSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("14", "Select_card_slot", {},
+      ConsoleAppCommand("15", "Select_card_slot", {},
                         std::bind(&CardServicesMenu::selectCardSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
       = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
          closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
          changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
          queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand,
-         cardPowerCommand};
+         cardPowerCommand, cardFileHandlerMenuCommand};
 
    if (cards_.size() > 1) {
        commandsListCardServicesSubMenu.emplace_back(selectCardSlotCommand);
@@ -405,7 +410,7 @@ void CardServicesMenu::transmitApdu(std::vector<std::string> userInput) {
    if(card) {
       int channel = INVALID;
       int cla, instruction, p1, p2, p3;
-      std::vector<uint8_t> data = {};
+      std::vector<uint8_t> data;
 
       cla = 0;
       instruction = 0;
@@ -884,4 +889,10 @@ void CardServicesMenu::selectCardSlot(std::vector<std::string> userInput)
    } else {
       std::cout << "Empty input, enter the correct slot" << std::endl;
    }
+}
+
+void CardServicesMenu::cardFileMenu(std::vector<std::string> userInput) {
+   CardFileMenu cardFileMenu("Card File Menu", "CardFile> ");
+   cardFileMenu.init();
+   cardFileMenu.mainLoop();
 }

@@ -100,6 +100,9 @@ public:
     * will move to Hold state.If the existing call is on Hold already, then it will remain on Hold.
     * The waiting call state transition from Waiting to Active.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] callback - optional callback pointer to get the response of answer request
     * below are possible error codes for callback response
     *        - @ref SUCCESS
@@ -122,6 +125,9 @@ public:
    /**
     * Puts the ongoing call on hold.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] callback - optional callback pointer to get the response of hold request
     * below are possible error codes for callback response
     *        - @ref SUCCESS
@@ -143,6 +149,9 @@ public:
 
    /**
     * Resumes this call from on-hold state to active state
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] callback - optional callback pointer to get the response of resume request
     * below are possible error codes for callback response
@@ -167,6 +176,9 @@ public:
     * Reject the incoming/waiting call. Only applicable for CallState::INCOMING and
     * CallState::WAITING calls.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] callback - optional callback pointer to get the response of reject request
     * below are possible error codes for callback response
     *        - @ref SUCCESS
@@ -189,6 +201,9 @@ public:
    /**
     * Reject the call and  send an SMS to caller. Only applicable for CallState::INCOMING
     * and CallState::WAITING calls.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] rejectSMS SMS string used to send in response to a call rejection.
     * @param [in] callback - optional callback pointer to get the response of rejectwithSMS request
@@ -217,6 +232,9 @@ public:
    /**
     * Hangup the call if the call state is either active, hold, dialing, waiting or alerting.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
     *        - @ref SUCCESS
@@ -242,6 +260,9 @@ public:
     * This API is used to play DTMF tone on TX path so that it is heard on far end. For DTMF
     * playback on local device on the RX path use @ref telux::audio::IAudioVoiceStream::playDtmfTone
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
     *
     * @param [in] callback - Optional callback pointer to get the result of
@@ -259,6 +280,9 @@ public:
     * far end. For DTMF playback on local device on the RX path use
     * @ref telux::audio::IAudioVoiceStream::playDtmfTone
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] tone - a single character with one of 12 values: 0-9, *, #.
     * @param [in] callback - Optional callback pointer to get the result of
     * startDtmfTone function.
@@ -271,8 +295,12 @@ public:
 
    /**
     * Stop the currently playing continuous DTMF tone.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] callback - Optional callback pointer to get the result of
-    * stopDtmfTone function.
+    *                        stopDtmfTone function.
     *
     * @returns Status of stopDtmfTone i.e. success or suitable error code.
     */
@@ -283,6 +311,9 @@ public:
    /**
     * Get the current state of the call, such as ringing, in progress etc.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to invoke this API successfully.
+    *
     * @returns CallState - enumeration representing call State
     */
    virtual CallState getCallState() = 0;
@@ -290,12 +321,18 @@ public:
    /**
     * Get the unique index of the call assigned by Telephony subsystem
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @returns Call Index
     */
    virtual int getCallIndex() = 0;
 
    /**
     * Get the direction of the call
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @returns CallDirection - enumeration representing call direction
     *                          i.e. INCOMING/ OUTGOING
@@ -305,13 +342,19 @@ public:
    /**
     * Get the dailing number
     *
-    * @returns Phone Number to which the call was dialed out
-    *          Empty string in case of INCOMING call direction
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_PRIVATE_INFO
+    * permission to invoke this API successfully.
+    *
+    * @returns Phone Number to which the call was dialed out.
+    *          Empty string in case of INCOMING call direction.
     */
    virtual std::string getRemotePartyNumber() = 0;
 
    /**
     * Get the cause of the termination of the call.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to invoke this API successfully.
     *
     * @returns Enum representing call end cause.
     */
@@ -321,12 +364,18 @@ public:
     * Get id of the phone object which represents the network/SIM on which
     * the call is in progress.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to invoke this API successfully.
+    *
     * @returns Phone Id.
     */
    virtual int getPhoneId() = 0;
 
    /**
     *  To check if call is in multi party call(conference) or not
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to invoke this API successfully.
     *
     * @returns True if call is in conference otherwise false.
     *

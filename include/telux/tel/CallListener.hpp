@@ -108,6 +108,9 @@ public:
    /**
     * This function is called when device receives an incoming/waiting call.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to receive this notification.
+    *
     * @param [in] call -  Pointer to ICall instance
     */
    virtual void onIncomingCall(std::shared_ptr<ICall> call) {
@@ -116,6 +119,9 @@ public:
    /**
     * This function is called when there is a change in call attributes
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to receive this notification.
+    *
     * @param [in] call -  Pointer to ICall instance
     */
    virtual void onCallInfoChange(std::shared_ptr<ICall> call) {
@@ -123,6 +129,9 @@ public:
 
    /**
     * This function is called when device completes MSD Transmission.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
     * @param [in] status - Indicates MSD Transmission status i.e. success or failure
@@ -136,6 +145,9 @@ public:
    /**
     * This function is called when MSD Transmission status is changed.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to receive this notification.
+    *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
     * @param [in] msdTransmissionStatus - Indicates MSD Transmission status
     * @Ref ECallMsdTransmissionStatus
@@ -147,6 +159,9 @@ public:
    /**
     * This function is called when the eCall High Level Application Protocol(HLAP) timers status
     * is changed.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which HLAP timer status is being reported
     * @param [in] timersStatus - Indicates the HLAP timer event
@@ -166,6 +181,9 @@ public:
     * If the scan completes successfully and the device finds a suitable cell, the ecall will be
     * placed and the call state changes to the active state.
     * If the network scan fails then this function will be invoked after one round of network scan.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which network scan failure reported.
     *

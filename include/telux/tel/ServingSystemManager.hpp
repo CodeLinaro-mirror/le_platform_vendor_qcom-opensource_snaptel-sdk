@@ -493,6 +493,9 @@ public:
     * Set the preferred radio access technology mode that the device should use
     * to acquire service.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+    * permission to invoke this API successfully.
+    *
     * @param [in] ratPref       Radio access technology mode preference.
     * @param [in] callback      Callback function to get the response of set RAT
     *                           mode preference.
@@ -506,6 +509,9 @@ public:
    /**
     * Request for preferred radio access technology mode.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
     * @param [in] callback  Callback function to get the response of request
     *                       preferred RAT mode.
     *
@@ -517,6 +523,9 @@ public:
    /**
     * Initiate service domain preference like CS, PS or CS_PS and receive the
     * response asynchronously.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_CONFIG
+    * permission to invoke this API successfully.
     *
     * @param [in] serviceDomain  @ref ServiceDomainPreference.
     *
@@ -534,6 +543,9 @@ public:
    /**
     * Request for Service Domain Preference asynchronously.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
+    *
     * @param [in] callback    Callback function to get the response of request
     *                         service domain preference.
     *
@@ -546,6 +558,9 @@ public:
 
    /**
     * Get the Serving system information. Supports only 3GPP RATs.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
     *
     * @param [out] sysInfo  Serving system information
     *                       @ref ServingSystemInfo
@@ -560,13 +575,18 @@ public:
    /**
     * Request for Dual Connectivity status on 5G NR.
     *
-    * @returns @ref DcStatus
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
     *
+    * @returns @ref DcStatus
     */
    virtual telux::tel::DcStatus getDcStatus() = 0;
 
    /**
     * Get network time information asynchronously.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
     *
     * @param [in] callback    Callback function to get the response of get
     *                         network time information request.
@@ -580,6 +600,9 @@ public:
 
    /**
     * Get the information about the band that the device is currently using.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to invoke this API successfully.
     *
     * @param [in] callback    Callback function to get the response of get
     *                         RF band information request.
@@ -632,6 +655,9 @@ public:
    /**
     * This function is called whenever RAT mode preference is changed.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
     * @param [in] preference      @ref RatPreference
     */
    virtual void onRatPreferenceChanged(RatPreference preference) {
@@ -639,6 +665,9 @@ public:
 
    /**
     * This function is called whenever service domain preference is changed.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
     *
     * @param [in] preference      @ref ServiceDomainPreference
     */
@@ -648,6 +677,9 @@ public:
    /**
     * This function is called whenever the Serving System information is changed.
     * Supports only 3GPP RATs.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
     *
     * @param [in] sysInfo    @ref ServingSystemInfo
     *
@@ -660,6 +692,9 @@ public:
    /**
     * This function is called whenever the Dual Connnectivity status is changed on 5G NR.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
+    *
     * @param [in] dcStatus       @ref DcStatus
     *
     */
@@ -668,6 +703,9 @@ public:
 
    /**
     * This function is called whenever network time information is changed.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
     *
     * @param [in] info    Network time information @ref NetworkTimeInfo
     *
@@ -679,6 +717,9 @@ public:
 
    /**
     * This function is called whenever the RF band information changes.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SRV_SYSTEM_READ
+    * permission to receive this notification.
     *
     * @param [in] bandInfo       @ref RFBandInfo
     *

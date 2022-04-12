@@ -82,6 +82,23 @@ class IFsListener : public common::IServiceStatusListener {
     }
 
     /**
+     * When the client is about to make an eCall it is expected to invoke prepareForEcall.
+     * This starts a timer within the FsManager which represents the max duration of the eCall.
+     * After which the filesystem operations will resume. This API will be invoked to let the
+     * client know that resumption of Fs operations is imminent. If the eCall has not yet ended,
+     * the client should call prepareForEcall again to reset the timer, which will continue to
+     * suspend the FS operations.
+     *
+     * @param [in] timeLeftToStart    The time in seconds after which filesystem operations
+     *                                shall re-enable.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual void OnFsOperationImminentEvent(uint32_t timeLeftToStart) {
+    }
+
+    /**
      * Destructor of IFsListener
      */
     virtual ~IFsListener() {

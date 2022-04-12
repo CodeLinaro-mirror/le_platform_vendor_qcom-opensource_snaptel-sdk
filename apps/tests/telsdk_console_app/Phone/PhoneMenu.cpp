@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -78,6 +78,7 @@
 #include "NetworkMenu.hpp"
 #include "PhoneMenu.hpp"
 #include "ServingSystemMenu.hpp"
+#include "SuppServicesMenu.hpp"
 
 #define INVALID -1
 
@@ -232,9 +233,14 @@ void PhoneMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Get_operator_name", {},
          std::bind(&PhoneMenu::requestOperatorName, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> suppServicesMenuCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("16", "Supp_Services_Menu", {},
+                        std::bind(&PhoneMenu::suppServicesMenu, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("16", "Select_sim_slot", {},
+      ConsoleAppCommand("17", "Select_sim_slot", {},
                         std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
+
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
@@ -251,7 +257,8 @@ void PhoneMenu::init() {
          requestECallOperatingModeCommand,
          requestEcbmCommand,
          exitEcbmCommand,
-         requestOperatorNameCommand};
+         requestOperatorNameCommand,
+         suppServicesMenuCommand};
 
    if (phones_.size() > 1) {
        commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
@@ -534,4 +541,10 @@ void PhoneMenu::requestOperatorName(std::vector<std::string> userInput) {
    } else {
         std::cout << "No phone found\n";
    }
+}
+
+void PhoneMenu::suppServicesMenu(std::vector<std::string> userInput) {
+   SuppServicesMenu suppServicesMenu("Supp Services Menu", "SuppServices> ");
+   suppServicesMenu.init();
+   suppServicesMenu.mainLoop();
 }

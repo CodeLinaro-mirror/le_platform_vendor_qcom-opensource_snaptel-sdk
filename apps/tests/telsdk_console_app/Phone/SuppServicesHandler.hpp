@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,27 +32,45 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @file      SuppServicesHandler.hpp
+ *
+ * @brief     File contains helper class and response callback classed required to handle
+ *            the supplementary services response callbacks.
+ */
 
-#ifndef FILESYSTEMLISTENER_HPP
-#define FILESYSTEMLISTENER_HPP
+#ifndef TELUX_TEL_SUPP_SERVICES_HANDLER_HPP
+#define TELUX_TEL_SUPP_SERVICES_HANDLER_HPP
 
-#include <telux/platform/FsListener.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
-using namespace telux::platform;
-using namespace telux::common;
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/SuppServicesManager.hpp>
 
-class FileSystemListener : public telux::platform::IFsListener {
- public:
-    void OnEfsRestoreEvent(EfsEventInfo event) override;
-    void OnEfsBackupEvent(EfsEventInfo event) override;
-    void OnFsOperationImminentEvent(uint32_t timeLeftToStart) override;
-    void onServiceStatusChange(ServiceStatus status) override;
-
-    FileSystemListener();
-    ~FileSystemListener();
-
- private:
-    void printEfsEvent(std::string type, EfsEventInfo eventInfo);
+class SuppServicesHelper {
+public:
+    static std::string suppServicesStatustoString(telux::tel::SuppServicesStatus svcStatus);
+    static std::string SuppSvcProvisionStatustoString(
+        telux::tel::SuppSvcProvisionStatus provisionStatus);
 };
 
-#endif  // FILESYSTEMLISTENER_HPP
+class SetSuppSvcResponseCallback {
+public:
+    static void setSuppSvcResp(telux::common::ErrorCode error,
+        telux::tel::FailureCause failureCause);
+};
+
+class GetSuppSvcResponseCallback {
+public:
+    static void getCallWaitingPrefResp(telux::tel::SuppServicesStatus suppSvcStatus,
+        telux::tel::SuppSvcProvisionStatus provisionStatus,
+        telux::tel::FailureCause failureCause, telux::common::ErrorCode error);
+
+    static void getForwardingPrefResp(std::vector<telux::tel::ForwardInfo> forwardInfoList,
+        telux::tel::SuppSvcProvisionStatus provisionStatus, telux::tel::FailureCause failureCause,
+        telux::common::ErrorCode error);
+};
+
+#endif // TELUX_TEL_SUPP_SERVICES_HANDLER_HPP

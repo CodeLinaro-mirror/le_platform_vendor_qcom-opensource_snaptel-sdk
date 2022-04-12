@@ -151,6 +151,9 @@ public:
     * Initiate a voice call. This API can also be used for e911/e112 type of regular emergency call.
     * This is not meant for an automotive eCall.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] phoneId      Represents phone corresponding to which on make
     *                          call operation is performed
     * @param [in] dialNumber   String representing the dialing number
@@ -186,6 +189,9 @@ public:
    /**
     * Initiate an automotive eCall.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
     * @param [in] eCallMsdData The structure containing required fields to
@@ -216,6 +222,9 @@ public:
    /**
     * Initiate an automotive eCall to the specified phone number for TPS eCall. It will be
     * treated like a regular voice call by the UE and the network.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -248,6 +257,9 @@ public:
    /**
     * Initiate an automotive eCall with raw MSD pdu.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] phoneId   Represents phone corresponding to which on make eCall
     *                       operation is performed
     * @param [in] msdPdu    Encoded MSD(Minimum Set of Data) PDU as per spec EN
@@ -278,6 +290,9 @@ public:
    /**
     * Initiate an automotive eCall with raw MSD pdu, to the specified phone number for TPS eCall. It
     * will be treated like a regular voice call by the UE and the network.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] phoneId   Represents phone corresponding to which on make eCall
     *                       operation is performed
@@ -310,6 +325,9 @@ public:
    /**
     * Initiate an automotive eCall without transmitting Minimum Set of Data (MSD) at call connect.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
     * @param [in] category     @ref ECallCategory
@@ -339,6 +357,9 @@ public:
     * Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice call by the
     * UE and the network.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
     * @param [in] dialNumber   String representing the dialing number
@@ -367,6 +388,9 @@ public:
     * Update the eCall MSD in modem to be sent to Public Safety Answering Point
     * (PSAP) when requested.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] phoneId   Represents phone corresponding to which
     *                       updateECallMsd operation is performed
     * @param [in] eCallMsd  The data structure represents the Minimum Set of Data
@@ -384,6 +408,9 @@ public:
    /**
     * Update the eCall MSD in modem to be sent to Public Safety Answering Point
     * (PSAP) when requested.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] phoneId   Represents phone corresponding to which
     *                       updateECallMsd operation is performed
@@ -403,6 +430,9 @@ public:
     * by the UE state machine. This does not retrieve status of timers maintained by the PSAP.
     * The provided timers are as per EN 16062:2015 standard.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] phoneId   Represents phone corresponding on which requestECallHlapTimerStatus
     *                       operation is performed
     * @param [in] callback  Callback function to get the response of requestECallHlapTimerStatus
@@ -416,12 +446,18 @@ public:
    /**
     * Get in-progress calls.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_INFO_READ
+    * permission to invoke this API successfully.
+    *
     * @returns List of active calls.
     */
    virtual std::vector<std::shared_ptr<ICall>> getInProgressCalls() = 0;
 
    /**
     * Merge two calls in a conference.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] call1     Call object to conference.
     * @param [in] call2     Call object to conference.
@@ -437,6 +473,9 @@ public:
 
    /**
     * Swap calls to make one active and put the another on hold.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] callToHold      Active call object to swap to hold state.
     * @param [in] callToActivate  Hold call object to swap to active state.
@@ -462,6 +501,9 @@ public:
     * be accepted.
     * In case of hold, active and waiting scenario, the hold call will still be on hold, active
     * call will be ended and waiting call will be accepted.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
     *
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
@@ -493,6 +535,9 @@ public:
     * In case of hold, active and waiting scenario, the active call will still be on active, hold
     * and waiting call will be ended.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
     *        - @ref SUCCESS
@@ -517,9 +562,10 @@ public:
 
    /**
     * Request for emergency callback mode
+    *
     * @param [in] phoneId      Represents the phone corresponding to which the emergency callback
     *                          mode(ECBM) status is requested.
-    * param [in] callback      Callback pointer to get the result of ECBM status request
+    * @param [in] callback     Callback pointer to get the result of ECBM status request
     *
     * @returns Status of requestEcbm i.e. success or suitable error code.
     *
@@ -528,9 +574,13 @@ public:
 
    /**
     * Exit emergency callback mode.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_EMERGENCY_OPS
+    * permission to invoke this API successfully.
+    *
     * @param [in] phoneId      Represents the phone corresponding to which the emergency callback
     *                          mode(ECBM) exit is requested.
-    * param [in] callback      Optional callback pointer to get the result of exit ECBM request
+    * @param [in] callback      Optional callback pointer to get the result of exit ECBM request
     *
     * @returns Status of exitEcbm i.e. success or suitable error code.
     *

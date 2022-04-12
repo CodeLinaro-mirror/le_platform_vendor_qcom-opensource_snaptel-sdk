@@ -91,12 +91,18 @@ public:
    /**
     * Retrieves the name of the carrier on which this subscription is made.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUB_PRIVATE_INFO
+    * permission to invoke this API successfully.
+    *
     * @returns Name of the carrier.
     */
    virtual std::string getCarrierName() = 0;
 
    /**
     * Retrieves the SIM's ICCID (Integrated Chip ID) - i.e SIM Serial Number.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+    * permission to invoke this API successfully.
     *
     * @returns Integrated Chip Id.
     */
@@ -105,6 +111,9 @@ public:
    /**
     * Retrieves the mobile country code of the carrier to which the phone is
     * connected.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
+    * permission to invoke this API successfully.
     *
     * @returns Mobile Country Code.
     *
@@ -116,6 +125,9 @@ public:
     * Retrieves the mobile network code of the carrier to which phone is
     * connected.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
+    * permission to invoke this API successfully.
+    *
     * @returns Mobile Network Code.
     *
     * @deprecated Use telux::tel::ISubscription::getMobileNetworkCode() API instead
@@ -125,6 +137,9 @@ public:
    /**
     * Retrieves the mobile country code(MCC) of the carrier to which the phone is connected.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
+    * permission to invoke this API successfully.
+    *
     * @returns mcc.
     *
     */
@@ -132,6 +147,9 @@ public:
 
    /**
     * Retrieves the mobile network code(MNC) of the carrier to which the phone is connected.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
+    * permission to invoke this API successfully.
     *
     * @returns mnc.
     *
@@ -141,12 +159,18 @@ public:
    /**
     * Retrieves the phone number for the SIM subscription.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUB_PRIVATE_INFO
+    * permission to invoke this API successfully.
+    *
     * @returns PhoneNumber.
     */
    virtual std::string getPhoneNumber() = 0;
 
    /**
     * Retrieves SIM Slot index for the SIM pertaining to this subscription object.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
+    * permission to invoke this API successfully.
     *
     * @returns SIM slotId.
     */
@@ -155,6 +179,9 @@ public:
    /**
     * Retrieves IMSI (International Mobile Subscriber Identity) for the SIM.
     * This will have home network MCC and MNC values.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUB_PRIVATE_INFO
+    * permission to invoke this API successfully.
     *
     * @returns imsi.
     */
@@ -166,6 +193,9 @@ public:
     * identify a group of SIMs for a particular application.
     * Defined in 3GPP Spec 131.102 section 4.2.10
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
+    * permission to invoke this API successfully.
+    *
     * @returns GID1 content in hex format.
     *
     */
@@ -176,6 +206,9 @@ public:
     * It represents identifier for particular SIM and ME associations. It can be used to
     * identify a group of SIMs for a particular application.
     * Defined in 3GPP Spec 131.102 section 4.2.11
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUBSCRIPTION_READ
+    * permission to invoke this API successfully.
     *
     * @returns GID2 content in hex format.
     *

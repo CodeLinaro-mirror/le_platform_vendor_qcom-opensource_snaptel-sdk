@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -334,6 +334,9 @@ class IDataConnectionManager {
     * Traffic initiated within MDM or EAP that is destined for WAN network and is not bound to a
     * WAN interface will be routed by default to WAN network corresponding to the default profile ID
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
+    * to invoke this API successfully.
+    *
     * @param [in] operationType     @ref telux::data::OperationType
     * @param [in] profileId         Profile identifier to be set as default
     * @param [in] callback          optional callback to get the response setDefaultProfile
@@ -363,6 +366,9 @@ class IDataConnectionManager {
      * if enabled, clients can bring up data call made on such profile id and slot id successfully
      * even if device is in roaming area.
      * Configuration changes will be persistant across multiple boots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
      *
      * @param [in] enable         enable/disable roaming mode (True: enable, False:disable).
      * @param [in] profileId      profile id on which roaming mode to be enabled/disabled.
@@ -403,6 +409,9 @@ class IDataConnectionManager {
      * Clients might receive additional notification for the final data call status. For details
      * see @ref telux::data::DataCallResponseCb.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_CALL_OPS permission
+     * to invoke this API successfully.
+     *
      * @note       if application starts data call on IPV4V6 then it's expected to stop the
      *             data call on same ip family type (i.e IPV4V6).
      *
@@ -432,6 +441,9 @@ class IDataConnectionManager {
      * see @ref telux::data::DataCallResponseCb.
      *
      * This will tear down specific data call connection based on profile identifier.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_CALL_OPS permission
+     * to invoke this API successfully.
      *
      * @note       If application starts data call on IPV4V6 then it's expected to stop the
      *             data call on same ip family type (i.e IPV4V6).
@@ -614,8 +626,6 @@ class IDataCall {
      *
      * @returns Status of requestTrafficFlowTemplate i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestTrafficFlowTemplate(IpFamilyType ipFamilyType,
         TrafficFlowTemplateCb callback) = 0;
@@ -635,6 +645,9 @@ class IDataCall {
     /**
      * Reset data transfer statistics for data call corresponding to specified profile identifier.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_CALL_PROPS
+     * permission to invoke this API successfully.
+     *
      * @param [in] callback   optional callback to get the response of reset Data call statistics
      *
      * @returns Status of resetDataCallStatistics i.e. success or suitable status code.
@@ -651,8 +664,6 @@ class IDataCall {
      *
      * @returns Status of requestDataCallBitRate success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestDataCallBitRate(
         requestDataCallBitRateResponseCb callback) = 0;
@@ -683,6 +694,9 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
     /**
      * This function is called when there is a change in the data call.
      *
+     * On platforms with Access control enabled, the client needs to have TELUX_DATA_CALL_OPS
+     * permission for this listener API to be invoked.
+     *
      * @param [in] dataCall   Pointer to IDataCall
      *
      */
@@ -699,11 +713,12 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
     /**
      * This function is called when the TFT's parameters are changed for a packet data session.
      *
+     * On platforms with Access control enabled, the client needs to have TELUX_DATA_CALL_OPS
+     * permission for this listener API to be invoked.
+     *
      * @param [in] dataCall     Pointer to IDataCall
      * @param [in] tft          vector of TftChangeInfo @ref TftChangeInfo
      *
-     * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
-     *           break backwards compatibility.
      */
     virtual void onTrafficFlowTemplateChange(const std::shared_ptr<IDataCall> &dataCall,
         const std::vector<std::shared_ptr<TftChangeInfo>> &tft) {};

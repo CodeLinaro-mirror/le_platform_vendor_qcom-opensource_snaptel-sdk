@@ -95,6 +95,9 @@ class ISimProfileListener : public telux::common::IServiceStatusListener {
      * This function is called when indication about status of profile download and installation
      * comes.
      *
+     * On platforms with access control enabled, the client needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
+     *
      * @param [in] slotId                   Slot on which profile get downloaded and installed.
      * @param [in] status                   @ref telux::tel::DownloadStatus.
      * @param [in] cause                    @ref telux::tel::DownloadErrorCause.
@@ -110,6 +113,9 @@ class ISimProfileListener : public telux::common::IServiceStatusListener {
      * install profile by calling @ref telux::tel::ISimProfileManager::provideUserConsent if
      * user consent is expected.
      *
+     * On platforms with access control enabled, the client needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
+     *
      * @param [in] slotId                   Slot on which profile get downloaded and installed.
      * @param [in] userConsentRequired      User consent required or not. If true it means user is
      *                                      expected to provide consent for download and install.
@@ -123,7 +129,10 @@ class ISimProfileListener : public telux::common::IServiceStatusListener {
     /**
      * This function is invoked when confirmation code is required. The client application
      * is expected to provide confirmation code for download and install profile by calling
-     * @ref telux::tel::ISimProfileManager::provideConfirmationCode
+     * @ref telux::tel::ISimProfileManager::provideConfirmationCode.
+     *
+     * On platforms with access control enabled, the client needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId                   Slot on which profile get downloaded and installed.
      * @param [in] profileName              Profile name corresponding to which confirmation code

@@ -83,6 +83,9 @@ class ISensorEventListener {
      * It shall not perform time consuming (compute or I/O intensive) operations on this thread
      * It shall not inovke an sensor APIs on this thread due to the underlying concurrency model
      *
+     * On platforms with Access control enabled, the client needs to have TELUX_SENSOR_DATA_READ
+     * permission for this listener API to be invoked.
+     *
      * @param [in] events - List of sensor events
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
@@ -94,6 +97,9 @@ class ISensorEventListener {
     /**
      * This function is called to notify any change in the configuration of the
      * @ref ISensorClient object this listener is associated with.
+     *
+     * On platforms with Access control enabled, the client needs to have TELUX_SENSOR_DATA_READ
+     * permission for this listener API to be invoked.
      *
      * @param [in] configuration -  The new configuration of the sensor client.
      *                              @ref telux::sensor::SensorConfiguration. Fields that have
@@ -151,6 +157,9 @@ class ISensorClient {
      * count set to maximum batch count supported @ref
      * telux::sensor::SensorInfo::maxBatchCountSupported
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_DATA_READ
+     * permission to invoke this API successfully.
+     *
      * @param[in]   configuration - The desired configuration for the client
      *                              @ref telux::sensor::SensorConfiguration. Ensure the required
      *                              validity mask @ref
@@ -166,6 +175,9 @@ class ISensorClient {
 
     /**
      * Get the current configuration of this sensor client
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_DATA_READ
+     * permission to invoke this API successfully.
      *
      * @returns the current configuration of the client. @ref
      * telux::sensor::SensorConfiguration::validityMask should be checked to know which of the
@@ -190,6 +202,9 @@ class ISensorClient {
      *
      * Activating this sensor client would not impact other inactive sensor clients.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_DATA_READ
+     * permission to invoke this API successfully.
+     *
      * @returns status of activation request - @ref telux::common::Status
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
@@ -203,6 +218,9 @@ class ISensorClient {
      * would result in the API returning @ref telux::common::Status::SUCCESS.
      *
      * Deactivating this sensor client would not impact other active sensor clients.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_DATA_READ
+     * permission to invoke this API successfully.
      *
      * @returns status of deactivation request - @ref telux::common::Status
      *
@@ -241,6 +259,9 @@ class ISensorClient {
      * If there are active data acquisition sessions corresponding to this sensor, these
      * will be paused and the self test is initiated. Once the self test is complete the sensor data
      * sessions will be restored.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_PRIVILEGED_OPS
+     * permission to invoke this API successfully.
      *
      * @param[in]   selfTestType - The type of self test to be performed - @ref
      *                             telux::sensor::SelfTestType

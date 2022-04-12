@@ -99,6 +99,9 @@ class ISensorFeatureEventListener {
      * @param [in] event - The sensor feature event @ref telux::sensor::SensorFeatureEvent
      *                     that got triggered
      *
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_SENSOR_FEATURE_CONTROL permission for this listener API to be invoked.
+     *
      */
     virtual void onEvent(SensorFeatureEvent event) {
     }
@@ -119,6 +122,9 @@ class ISensorFeatureEventListener {
      * constraints on this listener API
      * It shall not perform time consuming (compute or I/O intensive) operations on this thread
      * It shall not inovke an sensor APIs on this thread due to the underlying concurrency model
+     *
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_SENSOR_FEATURE_CONTROL permission for this listener API to be invoked.
      *
      * @param [in] sensorName - The name of the sensor that generated the buffered events
      * @param [in] events - List of sensor events
@@ -182,6 +188,9 @@ class ISensorFeatureManager {
      * feature using this method would be sufficient. The underlying framework would take care
      * to enable the required sensor when the system is about to enter suspend state.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_FEATURE_CONTROL
+     * permission to invoke this API successfully.
+     *
      * @param [in] name         The name of the feature to be enabled. Enabling an already enabled
      *                          feature would result in the API returning
      *                          @ref telux::common::Status::SUCCESS.
@@ -197,6 +206,8 @@ class ISensorFeatureManager {
      * @param [in] name         The name of the feature to be disabled. Disabling an already
      *                          disabled feature would result in the API returning
      *                          @ref telux::common::Status::SUCCESS.
+     * On platforms with Access control enabled, Caller needs to have TELUX_SENSOR_FEATURE_CONTROL
+     * permission to invoke this API successfully.
      *
      * @returns                 status of the request @ref telux::common::Status
      *

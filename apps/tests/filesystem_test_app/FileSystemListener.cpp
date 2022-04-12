@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -81,4 +81,8 @@ void FileSystemListener::OnEfsRestoreEvent(EfsEventInfo event) {
 void FileSystemListener::OnEfsBackupEvent(EfsEventInfo event) {
     std::cout << std::endl;
     printEfsEvent("Backup EFS", event);
+}
+
+void FileSystemListener::OnFsOperationImminentEvent(uint32_t timeLeftToStart) {
+    std::cout << "Filesystem operation shall re-enable in seconds " << timeLeftToStart << std::endl;
 }

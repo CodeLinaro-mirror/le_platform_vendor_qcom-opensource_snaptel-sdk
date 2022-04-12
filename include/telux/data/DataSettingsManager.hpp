@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -150,8 +150,6 @@ public:
      *          SERVICE_FAILED       -  If Data Settings manager object encountered an irrecoverable
      *                                  failure.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -176,6 +174,9 @@ public:
      * For instance if backhaul vector contains ETH, USB, and WWAN, bridge0 traffic routing will be
      * attempted on ETH first, then USB and finally WWAN backhaul.
      * Configuration changes will be persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
      *
      * @param [in] backhaulPref     vector of @ref telux::data::BackhaulPref which contains the
      *                              order of backhaul preference to be used when connecting to
@@ -221,6 +222,9 @@ public:
      *    @ref telux::data::BandInterferenceConfig::wlanWaitTimeInSec period and N79 5G is
      *    available, N79 will be enabled.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
+     *
      * @param [in] enable           True: enable interference management.
      *                              False: disable interference management
      * @param [in] config           N79 5G /Wlan 5GHz band interference configuration
@@ -264,6 +268,9 @@ public:
      *   notification with @ref telux::data::IDataCall object status
      *   @ref telux::data::DataCallStatus::NET_NO_NET for all impacted data calls.
      * Configuration changes will be persistent across reboots.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SETTING permission
+     * to invoke this API successfully.
      *
      * @param [in] slotId           Slot id on which WWAN connectivity to be allowed/disallowed
      * @param [in] allow            True: allow connectivity, False: disallow connectivity

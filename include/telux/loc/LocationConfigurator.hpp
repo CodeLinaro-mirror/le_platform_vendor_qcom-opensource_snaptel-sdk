@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -548,9 +548,6 @@ public:
  *
  * @returns Status of configureEngineState i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
- *
  */
 
   virtual telux::common::Status configureEngineState(const EngineType engineType,
@@ -575,9 +572,6 @@ public:
  * @returns Status of provideConsentForTerrestrialPositioning i.e. success or suitable
  *          status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
- *
  */
 
   virtual telux::common::Status provideConsentForTerrestrialPositioning(bool userConsent,
@@ -599,9 +593,6 @@ public:
  * @param [in] callback - Optional callback to get the response of configureNmeaTypes.
  *
  * @returns Status of configureNmeaTypes i.e. success or suitable status code.
- *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 

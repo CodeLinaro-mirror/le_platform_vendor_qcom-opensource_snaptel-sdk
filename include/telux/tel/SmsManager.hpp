@@ -257,7 +257,8 @@ public:
     * Send SMS to the destination address. When registered on IMS the SMS will be attempted over
     * IMS. If sending SMS over IMS fails, an automatic retry would be attempted to send the message
     * over CS. Only support UCS2 format, GSM 7 bit default alphabet and does not support National
-    * language shift tables.
+    * language shift tables. On platforms with access control enabled, caller needs to have
+    * TELUX_TEL_SMS_OPS permission to invoke this API successfully.
     *
     * @param [in] message           Message text to be sent
     * @param [in] receiverAddress   Receiver or destination address
@@ -284,7 +285,8 @@ public:
     * Send single or multipart SMS to the destination address. When registered on IMS the SMS will
     * be attempted over IMS. If sending SMS over IMS fails, an automatic retry would be attempted to
     * send the message over CS. Only support UCS2 format, GSM 7 bit default alphabet and does not
-    * support National language shift tables.
+    * support National language shift tables. On platforms with access control enabled, caller needs
+    * to have TELUX_TEL_SMS_OPS permission to invoke this API successfully.
     *
     * @param [in] message                 Message text to be send.
     * @param [in] receiverAddress         Receiver or destination address
@@ -311,7 +313,8 @@ public:
     * Send an SMS that is provided as a raw encoded PDU(s). When registered on IMS the SMS will
     * be attempted over IMS. If sending SMS over IMS fails, an automatic retry would be attempted to
     * send the message over CS. If the SMS is a multi-part message, the API expects multiple PDU
-    * to be passed to it.
+    * to be passed to it. On platforms with access control enabled, caller needs to have
+    * TELUX_TEL_SMS_OPS permission to invoke this API successfully.
     *
     * @param [in] rawPdus             Each element in the vector represents a part of a multipart
     *                                 message. For single part message the vector will have single
@@ -328,9 +331,11 @@ public:
       SmsResponseCb sentCallback = nullptr) = 0;
 
    /**
-    * Request for Short Messaging Service Center (SMSC) Address.
-    * Purpose of SMSC is to store, forward, convert and
-    * deliver Short Message Service (SMS) messages.
+    * Request for Short Messaging Service Center (SMSC) Address.Purpose of SMSC is to store,
+    * forward, convert and deliver Short Message Service (SMS) messages.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_CONFIG permission
+    * to invoke this API successfully.
     *
     * @param [in] callback        Optional callback pointer to get the response
     *                             of Smsc address request
@@ -343,6 +348,9 @@ public:
 
    /**
     * Sets the Short Message Service Center(SMSC) address on the device.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_SMS_CONFIG permission
+    * to invoke this API successfully.
     *
     * This will change the SMSC address for all the SMS messages sent from any
     * app.
@@ -409,6 +417,9 @@ public:
     * This function will be invoked when a single part message is received or when a part of a
     * multi-part message is received.
     *
+    * On platforms with access control enabled, the client needs to have TELUX_TEL_SMS_LISTEN
+    * permission to invoke this API successfully.
+    *
     * @param [in] phoneId      Unique identifier per SIM slot. Phone on which the message is
     *                          received.
     * @param [in] SmsMessage   Pointer to SmsMessage object
@@ -419,6 +430,9 @@ public:
    /**
     * This function will be invoked when either a single part message is received, or when all the
     * parts of a multipart message have been received.
+    *
+    * On platforms with access control enabled, the client needs to have TELUX_TEL_SMS_LISTEN
+    * permission to invoke this API successfully.
     *
     * @param [in] phoneId           Unique identifier per SIM slot. Phone on which the message is
     *                               received.
@@ -437,6 +451,9 @@ public:
     * to determine delivery of all parts of the multi-part message, the client application shall
     * compare message reference received in the delivery indications with message references
     * received in @ref telux::tel::SmsResponseCb.
+    *
+    * On platforms with access control enabled, the client needs to have TELUX_TEL_SMS_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] phoneId             Unique identifier per SIM slot. Phone on which the message is
     *                                 received.

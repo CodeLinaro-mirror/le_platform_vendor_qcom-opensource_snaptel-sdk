@@ -90,6 +90,7 @@
 #include <telux/tel/ImsSettingsManager.hpp>
 #include <telux/tel/HttpTransactionManager.hpp>
 #include <telux/tel/ImsServingSystemManager.hpp>
+#include <telux/tel/SuppServicesManager.hpp>
 
 namespace telux {
 
@@ -153,6 +154,9 @@ class PhoneFactory {
     * object will handle services in SAP mode such as APDU, SIM Power On/Off
     * and SIM reset.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_SAP permission to
+    * invoke this API successfully.
+    *
     * @param [in] slotId    Unique identifier for the SIM slot
     *
     * @returns Pointer of ISapCardManager object.
@@ -194,6 +198,9 @@ class PhoneFactory {
    /**
     * Get Remote SIM Manager instance to handle services like exchanging APDU,
     * SIM Power On/Off, etc.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_REMOTE_SIM permission
+    * to invoke this API successfully.
     *
     * @param [in] slotId    Unique identifier for the SIM slot
     *
@@ -263,6 +270,22 @@ class PhoneFactory {
     */
    virtual std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(SlotId slotId,
       telux::common::InitResponseCb callback = nullptr) = 0;
+
+   /**
+    * Get Supplementary service manager instance to set/get preference for supplementary services
+    * like call waiting, call forwarding etc.
+    *
+    * @param [in] SlotId     @ref telux::common::SlotId
+    * @param [in] callback   Optional callback pointer to get the response of the manager
+    *                        initialisation.
+    *
+    * @returns Pointer of ISuppServicesManager object.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual std::shared_ptr<ISuppServicesManager> getSuppServicesManager(
+      SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr) = 0;
 
  protected:
    PhoneFactory();

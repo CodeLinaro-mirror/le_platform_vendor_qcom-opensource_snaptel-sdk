@@ -31,35 +31,35 @@
  *
  *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
  *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
  *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
  *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
  *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 
@@ -80,6 +80,7 @@
 #include "telux/tel/CardApp.hpp"
 #include "telux/tel/CardDefines.hpp"
 #include "telux/tel/PhoneDefines.hpp"
+#include "telux/tel/CardFileHandler.hpp"
 #include "telux/common/CommonDefines.hpp"
 
 namespace telux {
@@ -87,6 +88,13 @@ namespace tel {
 
 /** @addtogroup telematics_card
  * @{ */
+
+// Forward declarations
+class ICardChannelCallback;
+class ICardCommandCallback;
+class ICardListener;
+class ICard;
+class ICardFileHandler;
 
 /**
  * This function is called with the response to requestEid API.
@@ -100,12 +108,6 @@ namespace tel {
  */
 using EidResponseCallback
     = std::function<void(const std::string &eid, telux::common::ErrorCode error)>;
-
-// Forward declarations
-class ICardChannelCallback;
-class ICardCommandCallback;
-class ICardListener;
-class ICard;
 
 /**
  * ICardManager provide APIs for slot count, retrieve slot ids, get card state and get card.
@@ -160,6 +162,9 @@ class ICardManager {
     /**
      * Power on the SIM card.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_POWER
+     * permission to invoke this API successfully.
+     *
      * @param [in] slotId      Slot identifier corresponding to the card which needs to be
      *                         powered up.
      * @param [in] callback    Optional callback pointer to get the result of cardPowerUp
@@ -175,6 +180,9 @@ class ICardManager {
      * Power off the SIM card.
      * When the SIM card is powered down, the card state is absent and the SIM IO operations,
      * PIN management API's like unlock card by pin, change card pin will fail.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_POWER
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId      Slot identifier corresponding to the card which needs to be
      *                         powered down.
@@ -236,6 +244,9 @@ class ICard {
     /**
      * Open a logical channel to the SIM.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+     * to invoke this API successfully.
+     *
      * @param [in] applicationId   Application Id.
      * @param [in] callback        Optional callback pointer to get the response of open logical
      *                             channel request.
@@ -249,6 +260,9 @@ class ICard {
     /**
      * Close a previously opened logical channel to the SIM.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+     * to invoke this API successfully.
+     *
      * @param [in] channelId   The channel ID to be closed.
      * @param [in] callback    Optional callback pointer to get the response of close logical
      *                         channel request.
@@ -261,6 +275,9 @@ class ICard {
 
     /**
      * Transmit an APDU to the ICC card over a logical channel.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+     * to invoke this API successfully.
      *
      * @param [in] channel       Channel Id of the channel to use for communication.
      *                           Has to be greater than zero.
@@ -284,6 +301,9 @@ class ICard {
     /**
      * Exchange APDUs with the SIM on a basic channel.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+     * to invoke this API successfully.
+     *
      * @param [in] cla           Class of the APDU command.
      * @param [in] instruction   Instruction of the APDU command.
      * @param [in] p1            Instruction Param1 value of the APDU command.
@@ -303,7 +323,10 @@ class ICard {
 
     /**
      * Performs SIM IO operation, This is similar to the TS 27.007 "restricted SIM" operation
-     * where it assumes all of the EF selection will be done by the callee
+     * where it assumes all of the EF selection will be done by the callee.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_OPS permission
+     * to invoke this API successfully.
      *
      * @param [in] fileId    Elementary File Identifier
      * @param [in] command   APDU Command for SIM IO operation
@@ -333,17 +356,29 @@ class ICard {
      */
     virtual int getSlotId() = 0;
 
-   /**
-    * Request eUICC identifier (EID) of eUICC card.
-    *
-    * @param [in] callback          Callback function to get the result of request EID.
-    *
-    * @returns  Status of request EID i.e. success or suitable error code.
-    *
-    * @dependencies Card should be eUICC capable
-    */
-    virtual telux::common::Status requestEid(EidResponseCallback callback)
-        = 0;
+    /**
+     * Request eUICC identifier (EID) of eUICC card.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+     * permission to invoke this API successfully.
+     *
+     * @param [in] callback          Callback function to get the result of request EID.
+     *
+     * @returns  Status of request EID i.e. success or suitable error code.
+     *
+     * @dependencies Card should be eUICC capable
+     */
+    virtual telux::common::Status requestEid(EidResponseCallback callback) = 0;
+
+    /**
+     * Get file handler for reading or writing to EF on SIM.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+     *          could break backward compatibility.
+     *
+     * @returns ICardFileHandler
+     */
+    virtual std::shared_ptr<ICardFileHandler> getFileHandler() = 0;
 };
 
 /**
@@ -392,7 +427,7 @@ class ICardCommandCallback : public telux::common::ICommandCallback {
  * The methods in listener can be invoked from multiple different threads. The implementation
  * should be thread safe.
  */
-class ICardListener : public common::IServiceStatusListener{
+class ICardListener : public common::IServiceStatusListener {
  public:
     /**
      * This function is called when info of card gets updated.

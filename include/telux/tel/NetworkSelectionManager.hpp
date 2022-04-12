@@ -302,6 +302,9 @@ public:
    /**
     * Get current network selection mode (i.e Manual or Automatic) asynchronously.
     *
+    * On platforms with Access control enabled, Caller needs to have
+    * TELUX_TEL_NETWORK_SELECTION_READ permission to invoke this API successfully.
+    *
     * @param [in] callback    Callback function to get the response of get
     *                         network selection mode request.
     *
@@ -312,6 +315,9 @@ public:
 
    /**
     * Set current network selection mode and receive the response asynchronously.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_NETWORK_SELECTION_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] selectMode    Selection mode for a network i.e. automatic or manual.
     *                           If selection mode is automatic then MCC and MNC are ignored.
@@ -336,6 +342,9 @@ public:
     * that appear in the 3GPP Preferred Networks list get higher priority than the
     * networks in the static 3GPP preferred networks list.
     *
+    * On platforms with Access control enabled, Caller needs to have
+    * TELUX_TEL_NETWORK_SELECTION_READ permission to invoke this API successfully.
+    *
     * @param [in] callback    Callback function to get the response of get preferred
     *                         networks request.
     *
@@ -348,6 +357,9 @@ public:
     * overrides the existing preferred network list. The preferred network list
     * affects network selection selection when automatic registration is performed
     * by the device. Higher priority networks should appear first in the list.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_NETWORK_SELECTION_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] preferredNetworksInfo   List of 3GPP preferred networks.
     * @param [in] clearPrevious           If flag is false then new 3GPP preferred
@@ -369,6 +381,9 @@ public:
    /**
     * Perform the network scan and returns a list of available networks.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_NETWORK_SELECTION_OPS
+    * permission to invoke this API successfully.
+    *
     * @param [in] callback    Callback function to get the response of perform
     *                         network scan request
     *
@@ -384,6 +399,9 @@ public:
     * become available, without waiting for the entire scan to complete through the
     * indication API (INetworkSelectionListener::onNetworkScanResults).
     * The scan status in indication will indicate if its a partial result or complete result.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_NETWORK_SELECTION_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] info        Provides network scan type and if the network scan type is user
     *                         prefered RAT, includes RAT(s) information. @ref NetworkScanInfo
@@ -486,6 +504,9 @@ class INetworkSelectionListener : public common::IServiceStatusListener{
 public:
    /**
     * This function is called whenever network selection mode is changed.
+    *
+    * On platforms with Access control enabled, Caller needs to have
+    * TELUX_TEL_NETWORK_SELECTION_READ permission to receive this notification.
     *
     * @param [in] mode    Network selection mode @ref NetworkSelectionMode
     */

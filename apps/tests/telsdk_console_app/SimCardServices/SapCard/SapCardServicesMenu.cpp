@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * Telematics SDK - Sample Application for sap card services
  */
@@ -171,12 +207,20 @@ void SapCardServicesMenu::logSapState(telux::tel::SapState sapState) {
 
 void SapCardServicesMenu::openSapConnection(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   sapCardMgr->openConnection(telux::tel::SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA,
-                               mySapCmdResponseCb_);
+   if (sapCardMgr) {
+      sapCardMgr->openConnection(telux::tel::SapCondition::SAP_CONDITION_BLOCK_VOICE_OR_DATA,
+         mySapCmdResponseCb_);
+   } else {
+      std::cout << "ERROR: Unable to get SAP Manager instance";
+   }
 }
 void SapCardServicesMenu::getSapAtr(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   sapCardMgr->requestAtr(myAtrCb_);
+   if (sapCardMgr) {
+         sapCardMgr->requestAtr(myAtrCb_);
+   } else {
+      std::cout << "ERROR: Unable to get SAP Manager instance";
+   }
 }
 
 void SapCardServicesMenu::transmitSapApdu(std::vector<std::string> userInput) {
@@ -213,60 +257,93 @@ void SapCardServicesMenu::transmitSapApdu(std::vector<std::string> userInput) {
       Utils::validateInput(tmpInp);
       data.emplace_back((uint8_t)tmpInp);
    }
-   auto ret
-      = sapCardMgr->transmitApdu((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1, (uint8_t)p2,
-                                  (uint8_t)lc, data, 0, myTransmitApduResponseCb_);
-   if(ret == telux::common::Status::SUCCESS) {
-      std::cout << "Sap transmit APDU is successful \n";
+
+   if (sapCardMgr) {
+      auto ret
+         = sapCardMgr->transmitApdu((uint8_t)cla, (uint8_t)instruction, (uint8_t)p1, (uint8_t)p2,
+                                    (uint8_t)lc, data, 0, myTransmitApduResponseCb_);
+      if(ret == telux::common::Status::SUCCESS) {
+         std::cout << "Sap transmit APDU is successful \n";
+      } else {
+         std::cout << "Sap transmit APDU failed \n";
+      }
    } else {
-      std::cout << "Sap transmit APDU failed \n";
+      std::cout << "ERROR: Unable to get SAP Manager instance";
    }
 }
 
 void SapCardServicesMenu::sapSimPowerOff(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   sapCardMgr->requestSimPowerOff(mySapCmdResponseCb_);
+   if (sapCardMgr) {
+      sapCardMgr->requestSimPowerOff(mySapCmdResponseCb_);
+   } else {
+      std::cout << "ERROR: Unable to get SAP Manager instance";
+   }
 }
 
 void SapCardServicesMenu::sapSimPowerOn(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   sapCardMgr->requestSimPowerOn(mySapCmdResponseCb_);
+   if (sapCardMgr) {
+      sapCardMgr->requestSimPowerOn(mySapCmdResponseCb_);
+   } else {
+      std::cout << "ERROR: Unable to get SAP Manager instance";
+   }
 }
 
 void SapCardServicesMenu::sapSimReset(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   sapCardMgr->requestSimReset(mySapCmdResponseCb_);
+   if (sapCardMgr) {
+      sapCardMgr->requestSimReset(mySapCmdResponseCb_);
+   } else {
+      std::cout << "ERROR: Unable to get SAP Manager instance";
+   }
 }
 
 void SapCardServicesMenu::sapCardReaderStatus(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   sapCardMgr->requestCardReaderStatus(mySapCardReaderCb_);
+   if (sapCardMgr) {
+      sapCardMgr->requestCardReaderStatus(mySapCardReaderCb_);
+   } else {
+      std::cout << "ERROR: Unable to get SAP Manager instance";
+   }
 }
 
 void SapCardServicesMenu::closeSapConnection(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   sapCardMgr->closeConnection(mySapCmdResponseCb_);
+   if (sapCardMgr) {
+      sapCardMgr->closeConnection(mySapCmdResponseCb_);
+   } else {
+      std::cout << "ERROR: Unable to get SAP Manager instance";
+   }
 }
 
 void SapCardServicesMenu::requestSapState(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
    telux::tel::SapState sapstate;
-   if(sapCardMgr->requestSapState(MySapStateCallback::sapStateResponse)
-      == telux::common::Status::SUCCESS) {
-      std::cout << "Request sap state success \n";
+   if (sapCardMgr) {
+      if(sapCardMgr->requestSapState(MySapStateCallback::sapStateResponse)
+         == telux::common::Status::SUCCESS) {
+         std::cout << "Request sap state success \n";
+      } else {
+         std::cout << "Request sap state failed \n";
+      }
    } else {
-      std::cout << "Request sap state failed \n";
+      std::cout << "ERROR: Unable to get SAP Manager instance";
    }
 }
 
 void SapCardServicesMenu::getState(std::vector<std::string> userInput) {
    auto sapCardMgr = sapManagers_[slot_ - 1];
-   telux::tel::SapState sapstate;
-   if(sapCardMgr->getState(sapstate) == telux::common::Status::SUCCESS) {
-      logSapState(sapstate);
-      std::cout << "Get sap state success \n";
+   if (sapCardMgr) {
+      telux::tel::SapState sapstate;
+      if(sapCardMgr->getState(sapstate) == telux::common::Status::SUCCESS) {
+         logSapState(sapstate);
+         std::cout << "Get sap state success \n";
+      } else {
+         std::cout << "Get sap state failed \n";
+      }
    } else {
-      std::cout << "Get sap state failed \n";
+      std::cout << "ERROR: Unable to get SAP Manager instance";
    }
 }
 

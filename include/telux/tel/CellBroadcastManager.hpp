@@ -664,6 +664,9 @@ public:
    /**
     * Configures the broadcast messages to be received.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_CELL_BROADCAST_CONFIG
+    * permission to invoke this API successfully.
+    *
     * @param [in] filters        List of filtered broadcast message identifiers.
     * @param [in] callback       Optional callback to get the response
     *                            of set cell broadcast filters.
@@ -678,6 +681,9 @@ public:
    /**
     * Retrieve configured message filters for which broadcast messages will be received.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_CELL_BROADCAST_CONFIG
+    * permission to invoke this API successfully.
+    *
     * @param [in] callback       Callback to get the response of get cell broadcast
     *                            filters.
     *
@@ -690,6 +696,9 @@ public:
    /**
     * Allows activation and deactivation of configured broadcast messages.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_CELL_BROADCAST_CONFIG
+    * permission to invoke this API successfully.
+    *
     * @param [in] activate       Activate/deactivate broadcast messages.
     * @param [in] callback       Optional callback pointer to get the response.
     *
@@ -701,6 +710,9 @@ public:
 
    /**
     * Get activation status for configured broadcast messages.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_TEL_CELL_BROADCAST_CONFIG
+    * permission to invoke this API successfully.
     *
     * @param [in] callback       Callback pointer to get the response.
     *
@@ -747,6 +759,9 @@ public:
    /**
     * This function is called when device receives an incoming cell broadcast message.
     *
+    * On platforms with access control enabled, the client needs to have
+    * TELUX_TEL_CELL_BROADCAST_LISTEN permission to invoke this API successfully.
+    *
     * @param [in] slotId    - Slot Id on which broadcast message is received.
     * @param [in] cbMessage - Broadcast message with information related to ETWS/CMAS notification.
     *
@@ -758,6 +773,9 @@ public:
    /**
     * This function is called when there is change in broadcast configuration like updation
     * of message filters by the client using @ref ICellBroadcastManager::updateMessageFilters.
+    *
+    * On platforms with access control enabled, the client needs to have
+    * TELUX_TEL_CELL_BROADCAST_CONFIG permission to invoke this API successfully.
     *
     * @param [in] slotId  - Slot Id on which change in message filters is received.
     * @param [in] filters - Complete list of configured broadcast message filters.

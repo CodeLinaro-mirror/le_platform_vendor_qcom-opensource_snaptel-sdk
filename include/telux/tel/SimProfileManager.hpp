@@ -152,6 +152,9 @@ class ISimProfileManager {
     /**
      * Add new profile to eUICC card and download and install the profile on eUICC.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
+     *
      * @param [in] slotId                Slot identifier corresponding to the card.
      * @param [in] activationCode        Activation code.
      * @param [in] confirmationCode      Optional confirmation code required for downloading the
@@ -187,7 +190,9 @@ class ISimProfileManager {
      *     b) If the PPR is not set, then deletion of profile is performed.
      *        If the PPR is set, then the API returns
      *        telux::common::ErrorCode::OPERATION_NOT_ALLOWED.
-
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] profileId         Profile identifier
@@ -203,6 +208,9 @@ class ISimProfileManager {
     /**
      * Enable or disable profile which allows to switch to other profile on eUICC card.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
+     *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] profileId         Profile identifier.
      * @param [in] enable            Indicates whether a profile must be enabled or disabled.
@@ -216,7 +224,10 @@ class ISimProfileManager {
         = 0;
 
     /**
-     * Update nick name of the profile
+     * Update nick name of the profile.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId          Slot identifier corresponding to the card.
      * @param [in] profileId       Profile identifier
@@ -232,6 +243,9 @@ class ISimProfileManager {
     /**
      * Request list of profiles supported by the eUICC card.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_READ
+     * permission to invoke this API successfully.
+     *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] callback          Callback function to get the result of request profile list.
      *
@@ -242,6 +256,9 @@ class ISimProfileManager {
 
     /**
      * Request eUICC identifier(EID) for the slot.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_READ
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] callback          Callback function to get the result of request EID.
@@ -258,6 +275,9 @@ class ISimProfileManager {
      * This API should be called in response to
      * @ref telux::tel::ISimProfileListener::onUserDisplayInfo.
      *
+     * On platforms with access control enabled, caller needs to have
+     * TELUX_TEL_SIM_PROFILE_USER_CONSENT permission to invoke this API successfully.
+     *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] userConsent       Consent for proﬁle download and install.
                                      True means user consent given to download and install.
@@ -273,9 +293,11 @@ class ISimProfileManager {
         = 0;
 
     /**
-     * Provide confirmation code required for downloading and installing profile.
-     * This API should be called in response to
-     * @ref telux::tel::ISimProfileListener::onConfirmationCodeRequired.
+     * Provide confirmation code required for downloading and installing profile. This API should be
+     * called in response to @ref telux::tel::ISimProfileListener::onConfirmationCodeRequired.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] code              Confirmation code for profile download and install.
@@ -292,6 +314,9 @@ class ISimProfileManager {
      * Get Subscription Manager Data Preparation (SM-DP+) address and the Subscription Manager
      * Discovery Server (SMDS) address configured on the eUICC.
      *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_READ
+     * permission to invoke this API successfully.
+     *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] callback          Callback function to get the result of server address request.
      *
@@ -302,7 +327,10 @@ class ISimProfileManager {
 
     /**
      * Set Subscription Manager Data Preparation (SM-DP+) address on the eUICC. If SMDP+
-     * address length is zero then the existing SM-DP+ address on the eUICC is removed
+     * address length is zero then the existing SM-DP+ address on the eUICC is removed.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_CONFIG
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] smdpAddress       SM-DP+ address to be configured on the eUICC.
@@ -315,6 +343,9 @@ class ISimProfileManager {
 
     /**
      * Resets the memory of the eUICC card based on @ref telux::tel::ResetOptionMask.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_TEL_SIM_PROFILE_OPS
+     * permission to invoke this API successfully.
      *
      * @param [in] slotId            Slot identifier corresponding to the card.
      * @param [in] mask              Memory reset options mask @ref telux::tel::ResetOptionMask

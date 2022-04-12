@@ -164,6 +164,9 @@ public:
     * To configure the IMS service configurations.
     * Also specifiy whether configuration needs to be enabled or disabled.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_IMS_SETTINGS
+    * permission to invoke this API successfully.
+    *
     * @param [in] slotId         Slot for which the IMS service configuration is intended.
     * @param [in] config         Indicates which configuration are configured currently and whether
     *                            the config is enabled or disabled. @ref ImsServiceConfig.

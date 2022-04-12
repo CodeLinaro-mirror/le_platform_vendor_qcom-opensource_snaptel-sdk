@@ -216,6 +216,9 @@ public:
    /**
     * Set the radio power on or off.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PHONE_MGMT permission
+    * to invoke this API successfully.
+    *
     * @param [in] enable    Flag that determines whether to turn radio on or off
     * @param [in] callback  Optional callback pointer to get the response of set
     *                       radio power request
@@ -231,6 +234,9 @@ public:
    /**
     * Get the cell information about current serving cell and neighboring cells.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+    * permission to invoke this API successfully.
+    *
     * @param [in] callback    Callback to get the response of cell info request
     *                         @telux::tel::CellInfoCallback
     *
@@ -242,6 +248,9 @@ public:
    /**
     * Set the minimum time in milliseconds between when the cell info list should
     * be received.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PHONE_CONFIG
+    * permission to invoke this API successfully.
     *
     * @param [in] timeInterval  Value of 0 means receive cell info list when any
     *                           info changes. Value of INT_MAX means never
@@ -273,6 +282,9 @@ public:
    /**
     * Sets the eCall operating mode
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_CONFIG
+    * permission to invoke this API successfully.
+    *
     * @param [in] eCallMode - @ref ECallMode
     * @param [in] callback - Callback function to get the response for set eCall operating mode
     * request.
@@ -297,6 +309,9 @@ public:
     * Get current registered operator name.
     * This API returns PLMN name if available. If not then it returns the SPN configured in the
     * SIM card.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PRIVATE_INFO_READ
+    * permission to invoke this API successfully.
     *
     * @param [in] callback - Callback function to get the response of operator name request
     *

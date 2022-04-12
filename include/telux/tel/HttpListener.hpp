@@ -107,6 +107,9 @@ class IHttpTransactionListener : public telux::common::IServiceStatusListener {
      * IHttpTransactionManager::sendHttpTransactionReq to provide the result of the HTTP
      * transaction.
      *
+     * On platforms with access control enabled, the client needs to have
+     * TELUX_TEL_SIM_PROFILE_HTTP_PROXY permission to invoke this API successfully.
+     *
      * @param [in] url                   URL to sent HTTP post request.
      * @param [in] tokenId               Token identifier.
      * @param [in] headers               Header information to be sent along with HTTP post request.

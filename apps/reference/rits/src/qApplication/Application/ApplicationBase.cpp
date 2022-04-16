@@ -955,10 +955,9 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         return -1;
     }
     abuf_reset(&mc->abuf, ABUF_HEADROOM);
-    auto bsm = reinterpret_cast<bsm_value_t *>(mc->j2735_msg);
     fillMsg(mc);
     encLength = encode_msg(mc.get());
-    if (encLength == 1) {
+    if (this->configuration.enableSecurity) {
         encLength = encodeAndSignMsg(mc);
     }
     int ret = this->transmit(index, mc, encLength, txType);

@@ -179,6 +179,9 @@ public:
      * This API is meant for clients that have instantiated the ITcuActivityManager instance using
      * ClientType::MASTER
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
+     * permission to invoke this API successfully.
+     *
      * @param [in] state    TCU-activity state that the System is intended to enter
      * @param [in] callback Optional callback to get the response for the TCU-activity state
      *                      transition command
@@ -216,6 +219,9 @@ public:
      *
      * This API is meant for clients that have instantiated the ITcuActivityManager instance using
      * ClientType::MASTER
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
+     * permission to invoke this API successfully.
      *
      * @param [in] state    Activity state that the modem is intended to enter
      *                      @ref TcuActivityState

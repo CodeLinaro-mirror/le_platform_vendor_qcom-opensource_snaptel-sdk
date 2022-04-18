@@ -96,6 +96,9 @@ public:
     /**
      * Get instance of ModemConfig manager
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_CONFIG_MODEM_CONFIG
+     * permission to invoke this API successfully.
+     *
      * @param[in] callback     Optional callback to get the response of Modem Config Manager
      *                         initialization.
      *

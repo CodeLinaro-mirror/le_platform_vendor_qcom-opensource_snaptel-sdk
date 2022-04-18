@@ -313,6 +313,10 @@ public:
    /**
     * Creates the stream for audio operation
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_AUDIO_VOICE or
+    * TELUX_AUDIO_PLAY or TELUX_AUDIO_CAPTURE or TELUX_AUDIO_FACTORY_TEST permission to invoke this
+    * API successfully.
+    *
     * @param [in] streamConfig    stream configuration.
     * @param [in] callback        callback pointer to get the response of createStream.
     *
@@ -329,6 +333,9 @@ public:
     * Each instance returned can be used for single transcoding operation. The instance can not
     * be used for multiple transcoding operation.
     *
+    * On platforms with Access control enabled, Caller needs to have TELUX_AUDIO_TRANSCODE
+    * permission to invoke this API successfully.
+    *
     * @param [in] input      configuration of input buffers that needs to be transcoded.
     * @param [in] output     configuration of transcoded output buffers.
     * @param [in] callback   callback pointer to get the response of createTranscoder.
@@ -341,6 +348,10 @@ public:
 
    /**
     * Deletes the specified stream which was created before
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_AUDIO_VOICE or
+    * TELUX_AUDIO_PLAY or TELUX_AUDIO_CAPTURE or TELUX_AUDIO_FACTORY_TEST permission to invoke this
+    * API successfully.
     *
     * @param [in] stream      reference to stream to be deleted.
     * @param [in] callback    callback pointer to get the response of deleteStream.

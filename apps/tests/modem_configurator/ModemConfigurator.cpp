@@ -81,7 +81,7 @@ ModemConfigurator::ModemConfigurator() {
 ModemConfigurator::~ModemConfigurator() {
 }
 
-void ModemConfigurator::init() {
+telux::common::Status ModemConfigurator::init() {
 
     // Get the ConfigFactory and ModemConfigManager instances.
     auto &configFactory = telux::config::ConfigFactory::getInstance();
@@ -93,7 +93,7 @@ void ModemConfigurator::init() {
 
     if (!modemConfigManager_) {
         std::cout << "Failed to get modem config Manager" << std::endl;
-        return;
+        return telux::common::Status::FAILED;
     }
 
     //  Check if modem config subsystem is ready
@@ -107,12 +107,13 @@ void ModemConfigurator::init() {
     // Exit the application, if SDK is unable to initialize modem config subsystems
     if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-        return;
+        return telux::common::Status::FAILED;
     }
     telux::common::Status status = modemConfigManager_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "Reg Listener Request Failed" << std::endl;
     }
+    return telux::common::Status::SUCCESS;
 }
 
 void ModemConfigurator::cleanup() {
@@ -528,7 +529,6 @@ telux::common::Status ModemConfigurator::parseArguments(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-
     std::shared_ptr<ModemConfigurator> modemConfigurator = std::make_shared<ModemConfigurator>();
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag"};
@@ -536,19 +536,23 @@ int main(int argc, char **argv) {
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
-    modemConfigurator->init();
-
     telux::common::Status status = telux::common::Status::FAILED;
     if (modemConfigurator) {
-        status = modemConfigurator->parseArguments(argc, argv);
+        status = modemConfigurator->init();
     }
 
-    if(status != telux::common::Status::SUCCESS) {
-        std::cout << "Unable to parse" << std::endl;
+    if (status == telux::common::Status::SUCCESS) {
+        status = modemConfigurator->parseArguments(argc, argv);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Unable to parse" << std::endl;
+            return EXIT_FAILURE;
+        }
+    } else {
+        std::cout << "Init Failure. Exiting App" << std::endl;
         return EXIT_FAILURE;
     }
-
-    modemConfigurator->cleanup();
-
+    if (modemConfigurator) {
+        modemConfigurator->cleanup();
+    }
     return EXIT_SUCCESS;
 }

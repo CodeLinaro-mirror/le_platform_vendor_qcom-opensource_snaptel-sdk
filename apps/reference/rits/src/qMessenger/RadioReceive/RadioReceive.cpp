@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
  /**
   * @file: RadioReceive.cpp
@@ -83,8 +118,8 @@ RadioReceive::RadioReceive(const TrafficCategory category, const TrafficIpType t
     }
     this->resetCallbackPromise();
 }
-RadioReceive::RadioReceive(const TrafficCategory category, 
-                            const TrafficIpType trafficIpType, const uint16_t port, 
+RadioReceive::RadioReceive(const TrafficCategory category,
+                            const TrafficIpType trafficIpType, const uint16_t port,
                             std::shared_ptr<std::vector<uint32_t>> idList){
 
     if (!this->ready(category, RadioType::RX)) {
@@ -205,7 +240,7 @@ uint32_t RadioReceive::receive(const char* buf, int len) {
     return receive(buf, len, sourceMac, cv2x_mac_addr_len);
 }
 
-uint32_t RadioReceive::receive(const char* buf, int len, 
+uint32_t RadioReceive::receive(const char* buf, int len,
             uint8_t *sourceMacAddr, int& macAdrLen) {
     int socket = -1;
     if (!buf || !sourceMacAddr ||
@@ -259,6 +294,8 @@ uint32_t RadioReceive::receive(const char* buf, int len,
         bytesReceived = recv(socket, (char*) buf, len, 0);
     }
 
+    msgL2SrcAdrr = ntohl(from.sin6_addr.s6_addr32[3]);
+
     if(bytesReceived > 0){
         sourceMacAddr[0] = 0;
         sourceMacAddr[1] = 0;
@@ -282,6 +319,19 @@ uint32_t RadioReceive::receive(const char* buf, int len,
     }
 
     return bytesReceived;
+}
+
+int RadioReceive::setL2Filters(std::vector<L2FilterInfo> filterList){
+    promise<ErrorCode> p;
+    cv2xRadioManager->setL2Filters(filterList, [&p](ErrorCode error) {p.set_value(error);});
+    if (ErrorCode::SUCCESS == p.get_future().get()) {
+        if(rVerbosity) {
+            std::cout << "success to setL2Filters" << std::endl ;
+        }
+        return 0;
+    }
+    cerr << "Failed to setL2Filters" << endl;
+    return -1;
 }
 
 uint8_t RadioReceive::closeFlow(){
@@ -365,7 +415,7 @@ int RadioReceive::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr,
     auto sockRespCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error){
                 createTcpSocketCallback(sock, error);
         };
-    if (Status::SUCCESS == 
+    if (Status::SUCCESS ==
         cv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, sockRespCb))
     {
         auto error = this->gCallbackPromise.get_future().get();
@@ -376,7 +426,7 @@ int RadioReceive::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr,
             ret = 0;
         }else{
             if(rVerbosity)
-                cerr<<"createCv2xTcpSocket fails: ." << 
+                cerr<<"createCv2xTcpSocket fails: ." <<
                     static_cast<int>(error) << endl;;
             ret = -1;
         }

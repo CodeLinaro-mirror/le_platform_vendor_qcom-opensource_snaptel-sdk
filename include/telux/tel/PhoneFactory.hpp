@@ -106,9 +106,14 @@ public:
     * Get Call Manager instance to determine state of active calls and perform
     * other functions like dial, conference, swap call.
     *
-    * @returns Pointer of ICallManager object.
+    * @param [in] callback  Optional callback pointer to get response of CallManager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Call Manager object will no
+    *                       more be a valid object.
+    * @returns Pointer of ICallManager object or nullptr in case of failure.
     */
-   std::shared_ptr<ICallManager> getCallManager();
+   std::shared_ptr<ICallManager> getCallManager(telux::common::InitResponseCb callback = nullptr);
 
    /**
     * Get Card Manager instance to handle services such as transmitting APDU,
@@ -251,6 +256,7 @@ private:
    std::shared_ptr<IEcallManager> ecallManager_;
    telux::common::ServiceStatus ecallMgrInitStatus_;
    std::vector<telux::common::InitResponseCb> ecallMgrCallbacks_;
+   telux::common::ServiceStatus callMgrInitStatus_;
 
    std::map<SlotId, std::vector<telux::common::InitResponseCb>> imsServSysCallbacks_;
    telux::common::ServiceStatus imsServSysInitStatus_;
@@ -260,10 +266,12 @@ private:
    std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
    std::vector<telux::common::InitResponseCb> imssCallbacks_;
    telux::common::ServiceStatus imssInitStatus_;
+   std::vector<telux::common::InitResponseCb> callMgrInitCallbacks_;
 
    void onEcallMgrInitResponse(telux::common::ServiceStatus status);
    void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
    void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
+   void onCallMgrInitResponse(telux::common::ServiceStatus status);
 
    PhoneFactory();
    ~PhoneFactory();

@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file       PhoneFactory.hpp
@@ -101,9 +136,14 @@ public:
     * Get Call Manager instance to determine state of active calls and perform
     * other functions like dial, conference, swap call.
     *
-    * @returns Pointer of ICallManager object.
+    * @param [in] callback  Optional callback pointer to get response of CallManager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Call Manager object will no
+    *                       more be a valid object.
+    * @returns Pointer of ICallManager object or nullptr in case of failure.
     */
-   std::shared_ptr<ICallManager> getCallManager();
+   std::shared_ptr<ICallManager> getCallManager(telux::common::InitResponseCb callback = nullptr);
 
    /**
     * Get Card Manager instance to handle services such as transmitting APDU,
@@ -260,6 +300,8 @@ private:
    std::map<int, telux::common::ServiceStatus> networkSelMgrInitStatus_;
    std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
    std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
+   std::vector<telux::common::InitResponseCb> callMgrInitCallbacks_;
+   common::ServiceStatus callMgrInitStatus_ = common::ServiceStatus::SERVICE_UNAVAILABLE;
 
    void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
    void onHttpTransactionManagerResponse(telux::common::ServiceStatus status);
@@ -269,6 +311,7 @@ private:
    telux::common::ServiceStatus imsServSysInitStatus_;
    void initImsServSysManagerNotifier(telux::common::ServiceStatus status, SlotId slotId);
    void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
+   void onCallMgrInitResponse(telux::common::ServiceStatus status);
 
    PhoneFactory();
    ~PhoneFactory();

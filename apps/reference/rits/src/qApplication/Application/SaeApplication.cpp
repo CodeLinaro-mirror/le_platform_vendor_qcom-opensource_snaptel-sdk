@@ -336,7 +336,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
     if(ret >= 0){
         rxSuccess++;
-        if(appVerbosity > 2){
+        if(appVerbosity > 2 && MsgType == MessageType::BSM){
             printf("Decoded BSM Summary: \n");
             print_summary_RV(threadMc.get());
         }

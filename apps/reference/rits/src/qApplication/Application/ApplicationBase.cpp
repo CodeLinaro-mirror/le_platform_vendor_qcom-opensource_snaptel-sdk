@@ -159,19 +159,21 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
         this->simRxSetup(rxIpv4, rxPort);
         this->isRxSim = true;
         // check if we want to also send packets while we receive over Ethernet
-        if(this->configuration.enableTxAlways && this->configuration.tx_port &&
+        if(this->configuration.enableTxAlways){
+            if(this->configuration.tx_port &&
                     !this->configuration.ipv4_dest.empty()){
-            printf("Attempting RX and TX over Ethernet at same time\n");
-            this->simTxSetup(this->configuration.ipv4_dest,
-                    this->configuration.tx_port);
-            this->isTxSim = true;
-            // default is asymmetric in tx mode
-            keyGenMethod = ASYMMETRIC_KEY_GEN;
-        }else{
-            // turn the flag off so that driver program knows
-            printf("Please provide TX Port and Dest IP in config file\n");
-            printf("Entering only RX mode\n");
-            this->configuration.enableTxAlways = false;
+                printf("Attempting RX and TX over Ethernet at same time\n");
+                this->simTxSetup(this->configuration.ipv4_dest,
+                        this->configuration.tx_port);
+                this->isTxSim = true;
+                // default is asymmetric in tx mode
+                keyGenMethod = ASYMMETRIC_KEY_GEN;
+            }else{
+                // turn the flag off so that driver program knows
+                printf("Please provide TX Port and Dest IP in config file\n");
+                printf("Entering only RX mode\n");
+                this->configuration.enableTxAlways = false;
+            }
         }
     }
     if (this->configuration.enableSecurity == true) {
@@ -770,15 +772,12 @@ void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
     simTransmit->set_radio_verbosity(this->configuration.codecVerbosity);
     txSimMsg = std::make_shared<msg_contents>();
     abuf_alloc(&txSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
-    if (this->configuration.ldmSize && this->ldm == nullptr) {
-        this->ldm = new Ldm(this->configuration.ldmSize);
-        this->ldm->startGb(this->configuration.ldmGbTime,
-            this->configuration.ldmGbTimeThreshold);
-        this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
-    }
 }
 
 void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
+    if (this->configuration.ldmSize && this->ldm == nullptr) {
+        this->ldm = new Ldm(this->configuration.ldmSize);
+    }
     RadioOpt radioOpt;
     radioOpt.enableUdp = configuration.enableUdp;
     radioOpt.ipv4_src = configuration.ipv4_src;
@@ -787,16 +786,14 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
     simReceive->set_radio_verbosity(this->configuration.codecVerbosity);
     rxSimMsg = std::make_shared<msg_contents>();
     abuf_alloc(&rxSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
-    if (this->configuration.ldmSize && this->ldm ==nullptr) {
-        this->ldm = new Ldm(this->configuration.ldmSize);
-        this->ldm->startGb(this->configuration.ldmGbTime,
-            this->configuration.ldmGbTimeThreshold);
-        this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
-    }
 }
 
 void ApplicationBase::setup() {
     uint8_t i = 0;
+    // setup ldm
+    if(this->configuration.ldmSize){
+        this->ldm = new Ldm(this->configuration.ldmSize);
+    }
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
     spsInfo.periodicityMs = this->configuration.transmitRate;
@@ -898,19 +895,19 @@ void ApplicationBase::setup() {
         this->eventContents.push_back(mc);
         i += 1;
     }
-    // setup ldm
-    if (this->configuration.ldmSize) {
-        this->ldm = new Ldm(this->configuration.ldmSize);
-        this->ldm->startGb(this->configuration.ldmGbTime,
-                this->configuration.ldmGbTimeThreshold);
-        this->ldm->packeLossThresh = this->configuration.packetError;
-        this->ldm->distanceThresh = this->configuration.distance3D;
-        this->ldm->positionCertaintyThresh = this->configuration.uncertainty3D;
-        this->ldm->tuncThresh = this->configuration.tunc;
-        this->ldm->ageThresh = this->configuration.age;
-        this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
-    }
 }
+
+void ApplicationBase::setupLdm(){
+    this->ldm->startGb(this->configuration.ldmGbTime,
+            this->configuration.ldmGbTimeThreshold);
+    this->ldm->packeLossThresh = this->configuration.packetError;
+    this->ldm->distanceThresh = this->configuration.distance3D;
+    this->ldm->positionCertaintyThresh = this->configuration.uncertainty3D;
+    this->ldm->tuncThresh = this->configuration.tunc;
+    this->ldm->ageThresh = this->configuration.age;
+    this->ldm->setLdmVerbosity(this->configuration.ldmVerbosity);
+}
+
 void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
     secData->protocolVersion = 3;
     if (this->configuration.enableSecurity == true)

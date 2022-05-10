@@ -337,6 +337,7 @@ public:
     void printRxStats();
     void printTxStats();
     void setup();
+    void setupLdm();
 
     /*********************************************************************************
      * data members.

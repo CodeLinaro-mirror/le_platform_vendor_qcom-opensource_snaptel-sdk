@@ -352,6 +352,7 @@ public:
     void printRxStats();
     void printTxStats();
     void setup();
+    void setupLdm();
 
     /**
      * Function that calculates incoming RX rate(the number of received packets per second) and

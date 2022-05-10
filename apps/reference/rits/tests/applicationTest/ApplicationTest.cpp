@@ -119,6 +119,12 @@ void joinThreads() {
 }
 
 void signalHandler(int signum) {
+    if(signum == SIGSEGV){
+        if(application->ldm != nullptr)
+            application->ldm->stopGb();
+        application->closeAllRadio();
+        exit(signum);
+    }
     cout << "Interrupt signal (" << signum << ") received.\n";
     cout << "Exiting..." << endl;
     stopThread = true;
@@ -253,23 +259,10 @@ void ldmRx(void) {
         return;
     }
 
-    int ret;
-
+    int ret = 0;
     uint32_t ldmIndex = 0;
     while (!stopThread)
     {
-        if (application->receivedContents.size() == 0 ||
-                application->radioReceives.size() == 0) {
-            cerr <<
-       "receivedContents size 0, please check configuration and prameters" << endl;
-            sleep(1);
-            continue;
-        }
-        const auto mc = application->receivedContents[0];
-        if (nullptr == mc || mc->abuf.data == nullptr) {
-            cerr << "mc or mc->abuf.data nullptr" << endl;
-            continue;
-        }
         // if a new ldm slot index is necessary, retrieve one
         if(ret >= 0){
             ldmIndex = application->ldm->getFreeBsmSlotIdx();
@@ -548,8 +541,7 @@ void tunnelModeRx(void) {
                 SaeApp->radioReceives[0].receive(mc->abuf.data,
                                                     MAX_PACKET_LEN-ABUF_HEADROOM);
         abuf_put(&mc->abuf, recCount);
-        //const auto ldmIndex = application->ldm->getFreeBsm();
-        const auto ldmIndex = 0;
+        const auto ldmIndex = application->ldm->getFreeBsmSlotIdx();
         SaeApp->receiveTuncBsm(0, recCount, ldmIndex);
         if (!SaeApp->ldm->filterBsm(ldmIndex)) {
             const auto bsm = static_cast<bsm_value_t *>(mc->j2735_msg);
@@ -776,6 +768,7 @@ int setup(const bool tx, const bool rx,
     std::signal(SIGHUP, signalHandler);
     std::signal(SIGINT, signalHandler);
     std::signal(SIGTERM, signalHandler);
+    std::signal(SIGSEGV, signalHandler);
     if (help)
     {
         printUse();
@@ -899,6 +892,10 @@ int setup(const bool tx, const bool rx,
                 cout << "LDM Mode only supports BSM" << endl;
                 return -1;
             }
+            // setup full ldm
+            if(application->configuration.ldmSize) {
+                application->setupLdm();
+            }
             if (tunnelRx) {
                 threads.push_back(thread(tunnelModeRx));
             }
@@ -970,6 +967,10 @@ int setup(const bool tx, const bool rx,
             if (cam || denm) {
                     cout << "LDM Mode only supports BSM" << endl;
                 return -1;
+            }
+            // setup full ldm
+            if(application->configuration.ldmSize) {
+                application->setupLdm();
             }
             // TODO: Implement for CAM, DENM as well
             if (application->configuration.driverVerbosity) {

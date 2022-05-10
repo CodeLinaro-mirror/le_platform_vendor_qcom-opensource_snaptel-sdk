@@ -376,7 +376,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         sem_wait(&this->log_sem);
         totalRxSuccessPerSecond++;
         sem_post(&this->log_sem);
-        if(appVerbosity > 2){
+        if(appVerbosity > 2 && MsgType == MessageType::BSM){
             printf("Decoded BSM Summary: \n");
             print_summary_RV(threadMc.get());
         }

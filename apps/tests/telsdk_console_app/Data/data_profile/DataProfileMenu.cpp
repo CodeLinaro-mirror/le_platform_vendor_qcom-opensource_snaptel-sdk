@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -523,7 +523,7 @@ bool DataProfileMenu::isDefaultProfile(SlotId slotId, int profileId) {
 
 int DataProfileMenu::getDefaultProfile(SlotId slotId, telux::data::OperationType opr) {
 
-    std::promise<telux::common::ErrorCode> prom{};
+    std::promise<telux::common::ErrorCode> prom;
     int profileId = -1;
 
     auto defaultProfileCb =
@@ -554,7 +554,7 @@ bool DataProfileMenu::initalizeDCM(SlotId slotId) {
 
     telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     bool retValue = false;
-    std::promise<telux::common::ServiceStatus> prom{};
+    std::promise<telux::common::ServiceStatus> prom;
 
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();

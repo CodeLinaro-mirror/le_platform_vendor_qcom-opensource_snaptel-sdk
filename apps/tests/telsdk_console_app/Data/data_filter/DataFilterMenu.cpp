@@ -114,7 +114,7 @@ bool DataFilterMenu::initializeSDK() {
     SlotId slotId = DEFAULT_SLOT_ID;
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
-    std::promise<telux::common::ServiceStatus> dcmProm{};
+    std::promise<telux::common::ServiceStatus> dcmProm;
 
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -144,7 +144,7 @@ bool DataFilterMenu::initializeSDK() {
         }
     }
     subSystemStatusUpdated_ = false;
-    std::promise<telux::common::ServiceStatus> dfsProm{};
+    std::promise<telux::common::ServiceStatus> dfsProm;
     // Get data filter manager object
     dataFilterMgr_ = dataFactory.getDataFilterManager(DEFAULT_SLOT_ID,
         [&dfsProm](telux::common::ServiceStatus status) { dfsProm.set_value(status); });

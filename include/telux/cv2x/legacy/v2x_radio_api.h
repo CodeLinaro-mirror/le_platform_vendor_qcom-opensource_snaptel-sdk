@@ -207,9 +207,10 @@ typedef enum  {
 
 /**
     Defines possible values for CV2X radio RX/TX status.
-    1. If Tx is in active state, Rx should also be in active statue.
-    2. If Rx is in active statue, Tx should be in active(normal case)
+    1. If Rx is in inactive state, Tx should also be in inactive state.
+    2. If Rx is in active state, Tx should be in active(normal case)
        or suspended state(sensing or tunnel mode).
+    3. If Rx is in suspended state, Tx should be in suspended state.
     Used in @ref v2x_status_info_t
  */
 typedef enum {
@@ -226,24 +227,13 @@ typedef enum {
     Used in @ref v2x_status_info_t
  */
 typedef enum {
-    V2X_RADIO_CAUSE_TIMING,           /**< CV2X is suspended when GNSS signal is lost. */
-    V2X_RADIO_CAUSE_CONFIG,           /**< This cause is not used currently. */
-    V2X_RADIO_CAUSE_UE_MODE,          /**< CV2X status is either suspended or inactive.
-                                           - Suspend case:
-                                           CV2X is suspended temporarily when processing the stop
-                                           of CV2X, after CV2X is stopped, CV2X status will change
-                                           to inactive.
-                                           - Inactive case:
-                                            - CV2X is disabled by EFS/NV.
-                                            - QWES license is not valid.
-                                            - CV2X is stopped by user.
-                                            - An invalid v2x.xml is updated to modem when CV2X is
-                                              aready active.
-                                            - UE enters a geopolygon that does not support CV2X
-                                              when CV2X is already active. */
-    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< CV2X is inactive due to there's no valid CV2X
-                                           configuration when starting CV2X, or the v2x.xml is
-                                           corrupted. */
+    V2X_RADIO_CAUSE_TIMING,           /**< CV2X is suspended due to the outage of timing
+                                           reference. */
+    V2X_RADIO_CAUSE_CONFIG,           /**< CV2X is inactive due to v2x.xml is missing, invalid,
+                                           or expired. */
+    V2X_RADIO_CAUSE_UE_MODE,          /**< CV2X is inactive due to CV2X mode is not started. */
+    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< CV2X is inactive due to UE enters a geo-polygon that
+                                           does not support cv2x. */
     V2X_RADIO_CAUSE_THERMAL,          /**< CV2X is suspended when the device's temperature
                                            is high. */
     V2X_RADIO_CAUSE_THERMAL_ECALL,    /**< CV2X is suspended when the device's temperature
@@ -257,6 +247,10 @@ typedef enum {
                                            Tx can begin, Tx status will change to active after
                                            sensing is done. */
     V2X_RADIO_CAUSE_LPM,              /**< CV2X is inactive when UE enters Low Power Mode. */
+    V2X_RADIO_CAUSE_DISABLED,         /**< CV2X is inactive due to CV2X is disabled in the EFS. */
+    V2X_RADIO_CAUSE_NO_GNSS,          /**< CV2X is inactive due to GNSS signal is not available
+                                           when starting CV2X. */
+    V2X_RADIO_CAUSE_INVALID_LICENSE,  /**< CV2X is inactive due to invalid license. */
     V2X_RADIO_CAUSE_UNKNOWN,          /**< Invalid cause type only used internally. */
 } v2x_radio_cause_type_t;
 

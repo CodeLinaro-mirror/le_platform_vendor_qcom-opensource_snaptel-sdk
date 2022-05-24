@@ -106,9 +106,10 @@ enum class TrafficCategory {
 
 /**
  * Defines possible values for CV2X radio RX/TX status.
- * 1. If Tx is in active state, Rx should also be in active statue.
- * 2. If Rx is in active statue, Tx should be in active(normal case)
+ * 1. If Rx is in inactive state, Tx should also be in inactive state.
+ * 2. If Rx is in active state, Tx should be in active(normal case)
  *    or suspended state(sensing or tunnel mode).
+ * 3. If Rx is in suspended state, Tx should be in suspended state.
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xStatusType {
@@ -125,30 +126,26 @@ enum class Cv2xStatusType {
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xCauseType {
-    TIMING,            /**< CV2X is suspended when GNSS signal is lost. */
-    CONFIG,            /**< This cause is not used currently. */
-    UE_MODE,           /**< CV2X status is either suspended or inactive.
-                            - Suspend case: CV2X is suspended temporarily when processing the stop
-                            of CV2X, after CV2X is stopped, CV2X status will change to inactive.
-                            - Inactive case:
-                             - CV2X is disabled by EFS/NV.
-                             - QWES license is not valid.
-                             - CV2X is stopped by user.
-                             - An invalid v2x.xml is updated to modem when CV2X is aready active.
-                             - UE enters a geopolygon that does not support CV2X when CV2X is
-                               already active. */
-    GEOPOLYGON,        /**< CV2X is inactive due to there's no valid CV2X configuration when
-                            starting CV2X, or the v2x.xml is corrupted. */
+    TIMING,            /**< CV2X is suspended due to the outage of timing reference. */
+    CONFIG,            /**< CV2X is inactive due to v2x.xml is missing, invalid,
+                            or expired. */
+    UE_MODE,           /**< CV2X is inactive due to CV2X mode is not started. */
+    GEOPOLYGON,        /**< CV2X is inactive due to UE enters a geo-polygon that
+                            does not support cv2x. */
     THERMAL,           /**< CV2X is suspended when the device's temperature is high. */
     THERMAL_ECALL,     /**< CV2X is suspended when the device's temperature is high
                             and emergency call is ongoing. */
-    GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon that also
-                            supports CV2X and UE is already in CV2X active status, CV2X status
-                            will change to active after the update is done. */
-    SENSING,           /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode just
-                            starts. UE needs sensing for 1 second before Tx can begin,
+    GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon that
+                            also supports CV2X and UE is already in CV2X active status,
+                            CV2X status will change to active after the update is done. */
+    SENSING,           /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode
+                            just starts. UE needs sensing for 1 second before Tx can begin,
                             Tx status will change to active after sensing is done. */
     LPM,               /**< CV2X is inactive when UE enters Low Power Mode. */
+    DISABLED,          /**< CV2X is inactive due to CV2X is disabled in the EFS. */
+    NO_GNSS,           /**< CV2X is inactive due to GNSS signal is not available when
+                            starting CV2X. */
+    INVALID_LICENSE,   /**< CV2X is inactive due to invalid license. */
     UNKNOWN,           /**< Invalid cause type only used internally. */
 };
 

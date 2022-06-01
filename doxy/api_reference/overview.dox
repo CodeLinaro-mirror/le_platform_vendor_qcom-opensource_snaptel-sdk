@@ -608,25 +608,24 @@ Data services behavior when Subsystem Restart event occur is shown in table belo
 
 @section Security
 @subsection SELinux
-    SELinux is an access control framework provided by the Linux kernel. It provides a mechanism to restrict/control access to system resources such as file nodes and sockets. SELinux framework expects any process running in userspace to declare all its interactions with the system resources in the form of SELinux policies. On platforms enabled with SELinux, an app that uses an SDK API would also need to declare its usage through SELinux policies to ensure that it has all the required permissions. In order for an application to use the SDK's APIs on such a platform, SELinux interfaces have been defined that the app needs to declare in its policies.
+    SELinux is an access control framework provided by the Linux kernel. It provides a mechanism to restrict/control access to system resources such as file nodes and sockets. SELinux framework expects any process running in userspace to declare all its interactions with the system resources in the form of SELinux policies. On platforms enabled with SELinux, an app that uses an SDK API would also need to declare its usage through SELinux policies to ensure that it has all the required permissions.
 
-    Listed below are the interfaces to be used when an app uses APIs belonging to a given namespace/class of the SDK.
+   Listed below are the SELinux Interfaces which are generic for any API in particular namespace that app needs to declare in its policies.
 
     <b>Note</b> For the below list, let us consider the application's security context to be ``app_t`` (also called domain context).
 
-@table{4,{\raggedright}p{1.52in},{\raggedright}p{1.63in},{\raggedright}p{1.43in},{\raggedright}p{1.63in}}
+@table{4,{\centering}p{0.90in},{\centering}p{2.0in},{\centering}p{0.80in},{\centering}p{2.40in}}
 @trfirsthdg
-@thmultcol{1,|c|} SDK Namespace/Class @thmultcolend @thmultcol{1,c|} SELinux interface @thmultcolend @thmultcol{1,c|} Arguments @thmultcolend @thmultcollast{1,c|} Usage @thmultcollastend
+@thmultcol{1,|c|} Namespace @thmultcolend @thmultcol{1,c|} SELinux interface @thmultcolend @thmultcol{1,c|} Arguments @thmultcolend @thmultcollast{1,c|} Usage @thmultcollastend
 @trfirsthdgend
 @trhdg
-@thdg{1,|c|, SDK Namespace/Class} @thdg{1,c|,SELinux interface} @thdg{1,c|,Arguments} @thdglast{1,c|,Usage}
+@thdg{1,|c|, Namespace} @thdg{1,c|,SELinux interface} @thdg{1,c|,Arguments} @thdglast{1,c|,Usage}
 @trhdgend
 @tr @td tel @tdend @td telux_allow_tel() @tdend @td domain context @tdend @tdlast telux_allow_tel(app_t) @tdlastend @trend
 @tr @td data @tdend @td telux_allow_data() @tdend @td domain context @tdend @tdlast telux_allow_data(app_t) @tdlastend @trend
 @tr @td audio @tdend @td telux_allow_audio() @tdend @td domain context @tdend @tdlast telux_allow_audio(app_t) @tdlastend @trend
 @tr @td loc @tdend @td telux_allow_loc() @tdend @td domain context @tdend @tdlast telux_allow_loc(app_t) @tdlastend @trend
-@tr @td IThermalManager @tdend @td telux_allow_thermalmanager() @tdend @td domain context @tdend @tdlast telux_allow_thermalmanager(app_t) @tdlastend @trend
-@tr @td IThermalShutdownManager @tdend @td telux_allow_thermalshutdown() @tdend @td domain context @tdend @tdlast telux_allow_thermalshutdown(app_t) @tdlastend @trend
+@tr @td thermal @tdend @td telux_allow_thermalmanager() @tdend @td domain context @tdend @tdlast telux_allow_thermalmanager(app_t) @tdlastend @trend
 @tr @td power @tdend @td telux_allow_power() @tdend @td domain context @tdend @tdlast telux_allow_power(app_t) @tdlastend @trend
 @tr @td config @tdend @td telux_allow_modemconfig() @tdend @td domain context @tdend @tdlast telux_allow_modemconfig(app_t) @tdlastend @trend
 @tr @td cv2x @tdend @td telux_allow_v2x() @tdend @td domain context @tdend @tdlast telux_allow_v2x(app_t) @tdlastend @trend
@@ -634,7 +633,7 @@ Data services behavior when Subsystem Restart event occur is shown in table belo
 @tr @td platform @tdend @td telux_allow_platform() @tdend @td domain context @tdend @tdlast telux_allow_platform(app_t) @tdlastend @trend
 @tableend
 
-The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform all SDK data operations.
+The following example illustrates how an application can incorporate the SELinux interfaces exposed by SDK in its SELinux policies. Below code snippet is part of a Type Enforcement (TE) file of the application which grants required permissions to perform SDK data operations.
 \code{.cpp}
 
     policy_module(application, 1.0)
@@ -643,6 +642,97 @@ The following example illustrates how an application can incorporate the SELinux
     #Granting SDK data client permissions to the application
 
     telux_allow_data(app_t);
+
 \endcode
+
+
+In addition to the above SELinux interfaces list, below are the SELinux interfaces specific to a usecase. When an app needs to use any API, it should
+identify which SELinux interface to be used corresponding to the permission type from the below table and add it to the policy file.
+
+To determine which permission type to be used for a API, please refer to the documentation for the API in the API Reference or in the API header file
+
+<b>Note</b> The system integrator has the option to turn on/off this feature, where APIs related to a particular use case require certain permissions. If this feature is turned off, the use case specific permissions listed below are not required by the caller.
+
+@table{3,{\centering}p{1.00in},{\centering}p{2.80in},{\centering}p{2.50in}}
+@trfirsthdg
+@thmultcol{1,|c|} Tech Area @thmultcolend @thmultcol{1,c|} Permission Type @thmultcolend @thmultcollast{1,c|} SELinux Interface @thmultcollastend
+@trfirsthdgend
+@trhdg
+@thdg{1,|c|,Tech Area} @thdg{1,c|,Permmission Type} @thdglast{1,c|,SELinux Interface}
+@trhdgend
+@tr @tdmulrow{5,Audio} @tdmulrowend @td TELUX_AUDIO_VOICE @tdend @tdlast telux_allow_audio_voice @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_AUDIO_PLAY @tdend @tdlast telux_allow_audio_play @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_AUDIO_FACTORY_TEST @tdend @tdlast telux_allow_audio_factory_test @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_AUDIO_CAPTURE @tdend @tdlast telux_allow_audio_capture @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_AUDIO_TRANSCODE @tdend @tdlast telux_allow_audio_transcode @tdlastend @trend
+
+@tr @tdmulrow{6,Data} @tdmulrowend @td TELUX_DATA_SETTING @tdend @tdlast telux_allow_data_setting @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_DATA_CALL_OPS @tdend @tdlast telux_allow_data_call_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_DATA_CALL_PROPS @tdend @tdlast telux_allow_data_call_props @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_DATA_PROFILE_OPS @tdend @tdlast telux_allow_data_profile_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_DATA_FILTER_OPS @tdend @tdlast telux_allow_data_filter_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_DATA_NETWORK_CONFIG @tdend @tdlast telux_data_network_config @tdlastend @trend
+
+@tr @tdmulrow{1,ModemConfig} @tdmulrowend @td TELUX_CONFIG_MODEM_CONFIG @tdend @tdlast telux_allow_config_modem_config @tdlastend @trend
+
+@tr @tdmulrow{1,Power} @tdmulrowend @td TELUX_POWER_CONTROL_STATE @tdend @tdlast telux_allow_power_control_state_t @tdlastend @trend
+
+@tr @tdmulrow{3,Sensor} @tdmulrowend @td TELUX_SENSOR_DATA_READ @tdend @tdlast telux_allow_sensor_data_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_SENSOR_PRIVILEGED_OPS @tdend @tdlast telux_allow_sensor_privileged_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_SENSOR_FEATURE_CONTROL @tdend @tdlast telux_allow_sensor_feature_control @tdlastend @trend
+
+@tr @tdmulrow{5,Telephony} @tdmulrowend @td TELUX_TEL_CARD_POWER @tdend @tdlast telux_allow_tel_card_power @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_CARD_OPS @tdend @tdlast telux_allow_tel_card_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_PRIVATE_INFO_READ @tdend @tdlast telux_allow_tel_private_info_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_CARD_PRIVILEGED_OPS @tdend @tdlast telux_allow_tel_card_privileged_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SAP @tdend @tdlast telux_allow_tel_sap @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_CELL_BROADCAST_CONFIG @tdend @tdlast telux_allow_tel_cell_broadcast_config @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_CELL_BROADCAST_LISTEN @tdend @tdlast telux_allow_tel_cell_broadcast_listen @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SIM_PROFILE_OPS @tdend @tdlast telux_allow_tel_sim_profile_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SIM_PROFILE_USER_CONSENT @tdend @tdlast telux_allow_tel_sim_profile_user_consent @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SIM_PROFILE_CONFIG @tdend @tdlast telux_allow_tel_sim_profile_config @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SIM_PROFILE_READ @tdend @tdlast telux_allow_tel_sim_profile_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SIM_PROFILE_HTTP_PROXY @tdend @tdlast telux_allow_tel_sim_profile_http_proxy @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_REMOTE_SIM @tdend @tdlast telux_allow_tel_remote_sim @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SMS_OPS @tdend @tdlast telux_allow_tel_sms_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SMS_LISTEN @tdend @tdlast telux_access_tel_sms_listen_t @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SMS_CONFIG @tdend @tdlast telux_access_tel_sms_config @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_IMS_SETTINGS @tdend @tdlast telux_allow_tel_ims_settings @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SRV_SYSTEM_CONFIG @tdend @tdlast telux_allow_tel_srv_system_config @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SRV_SYSTEM_READ @tdend @tdlast telux_allow_tel_srv_system_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_NETWORK_SELECTION_OPS @tdend @tdlast telux_allow_tel_network_selection_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_NETWORK_SELECTION_READ @tdend @tdlast telux_allow_tel_network_selection_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_MULTISIM_MGMT @tdend @tdlast telux_allow_tel_multisim_mgmt @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_PRIVATE_INFO_READ @tdend @tdlast telux_allow_tel_private_info_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SUB_PRIVATE_INFO @tdend @tdlast telux_allow_tel_sub_private_info_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SUBSCRIPTION_READ @tdend @tdlast telux_allow_tel_subscription_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_CALL_INFO_READ @tdend @tdlast telux_allow_tel_call_info_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_CALL_MGMT @tdend @tdlast telux_allow_tel_call_mgmt @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_CALL_PRIVATE_INFO @tdend @tdlast telux_allow_tel_call_private_info @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_EMERGENCY_OPS @tdend @tdlast telux_allow_tel_emergency_ops @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_ECALL_MGMT @tdend @tdlast telux_allow_tel_ecall_mgmt @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_PHONE_MGMT @tdend @tdlast telux_allow_tel_phone_mgmt @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_PRIVATE_INFO_READ @tdend @tdlast telux_access_tel_private_info_read @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_PHONE_CONFIG @tdend @tdlast telux_allow_tel_phone_config @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_ECALL_CONFIG @tdend @tdlast telux_allow_tel_ecall_config @tdlastend @trendcline
+@tr @tdmulrowempty @td TELUX_TEL_SUPP_SERVICES @tdend @tdlast telux_allow_tel_supp_services @tdlastend @trend
+
+@tableend
+
+The following example illustrates how to declare permissions for an application that wants to use telux::data::IDataConnectionManager::startDataCall() to setup a cellular data connection.The documentation of this API indicates
+that the caller needs to have TELUX_DATA_CALL_OPS permission. From the above table, the permission maps to <b> telux_allow_data_call_ops </b> SELinux interface:
+
+In order for the app to use the API the below code snippet needs to be entered in the Type Enforcement (TE) file of the application.
+
+\code{.cpp}
+
+    policy_module(application, 1.0)
+    type app_t;
+
+    #Allow data call operations
+
+    telux_allow_data_call_ops(app_t)
+\endcode
+
 
 */

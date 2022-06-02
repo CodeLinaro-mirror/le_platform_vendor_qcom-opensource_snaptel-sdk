@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -83,8 +83,8 @@
 
 CallMenu::CallMenu(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
+   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+   startTime = std::chrono::steady_clock::now();
    // Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    phoneManager_ = phoneFactory.getPhoneManager();
@@ -102,7 +102,7 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
 
    // Exit the application, if SDK is unable to initialize telephony subsystems
    if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
+      endTime = std::chrono::steady_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s"
                 << std::endl;

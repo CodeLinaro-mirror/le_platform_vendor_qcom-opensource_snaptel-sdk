@@ -148,6 +148,18 @@ using EcbmStatusCallback
 class ICallManager {
 public:
    /**
+    * This status indicates whether the ICallManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    -  If CallManager is ready for service.
+    *          SERVICE_UNAVAILABLE  -  If CallManager is temporarily unavailable.
+    *          SERVICE_FAILED       -  If CallManager encountered an irrecoverable failure.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
+   /**
     * Initiate a voice call. This API can also be used for e911/e112 type of regular emergency call.
     * This is not meant for an automotive eCall.
     *

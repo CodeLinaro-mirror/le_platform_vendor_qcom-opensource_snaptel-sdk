@@ -138,9 +138,15 @@ class PhoneFactory {
     * Get Call Manager instance to determine state of active calls and perform
     * other functions like dial, conference, swap call.
     *
-    * @returns Pointer of ICallManager object.
+    * @param [in] callback  Optional callback pointer to get response of CallManager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Call Manager object will no
+    *                       more be a valid object.
+    * @returns Pointer of ICallManager object or nullptr in case of failure.
     */
-   virtual std::shared_ptr<ICallManager> getCallManager() = 0;
+   virtual std::shared_ptr<ICallManager> getCallManager(telux::common::InitResponseCb
+      callback = nullptr) = 0;
 
    /**
     * Get Card Manager instance to handle services such as transmitting APDU,

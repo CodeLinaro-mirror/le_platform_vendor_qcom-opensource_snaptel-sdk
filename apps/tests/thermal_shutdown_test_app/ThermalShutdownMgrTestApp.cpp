@@ -211,7 +211,7 @@ void ThermalShutdownTestApp::consoleinit() {
 int main(int argc, char ** argv) {
 
     Status ret = Status::FAILED;
-    std::vector<std::string> supplementaryGrps{"system"};
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;

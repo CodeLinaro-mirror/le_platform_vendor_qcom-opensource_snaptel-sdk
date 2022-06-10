@@ -262,7 +262,7 @@ int main(int argc, char **argv) {
                             + std::to_string(sdkVersion.patch);
 
     auto audioConsoleApp = std::make_shared<AudioConsoleApp>(appName, "audio> ");
-    std::vector<std::string> supplementaryGrps{"system"};
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;

@@ -1614,7 +1614,7 @@ int main(int argc, char **argv) {
     std::string appName = "Location Menu - SDK v" + std::to_string(sdkVersion.major) + "."
         + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch);
     LocationMenu locationMenu(appName, "location> ");
-    std::vector<std::string> supplementaryGrps{"system"};
+    std::vector<std::string> supplementaryGrps{ "system", "diag" };
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

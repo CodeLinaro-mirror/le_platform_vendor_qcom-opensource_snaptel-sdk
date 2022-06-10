@@ -488,7 +488,7 @@ telux::common::Status ModemConfigurator::parseArguments(int argc, char **argv) {
 int main(int argc, char **argv) {
 
     std::shared_ptr<ModemConfigurator> modemConfigurator = std::make_shared<ModemConfigurator>();
-    std::vector<std::string> supplementaryGrps{"system"};
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

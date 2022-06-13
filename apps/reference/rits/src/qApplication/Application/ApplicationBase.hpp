@@ -28,39 +28,39 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
+ *Redistribution and use in source and binary forms, with or without
+ *modification, are permitted (subject to the limitations in the
+ *disclaimer below) provided that the following conditions are met:
  *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
  *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
+ *    * Redistributions in binary form must reproduce the above
+ *      copyright notice, this list of conditions and the following
+ *      disclaimer in the documentation and/or other materials provided
+ *      with the distribution.
  *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
+ *    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *      contributors may be used to endorse or promote products derived
+ *      from this software without specific prior written permission.
  *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
  /**
@@ -68,6 +68,7 @@
   *
   * @brief: Base class for ITS stack
   */
+
 #ifndef __APPLICATION_BASE_HPP__
 #define __APPLICATION_BASE_HPP__
 #include <vector>
@@ -88,6 +89,8 @@
 #include "RadioReceive.h"
 #include "RadioTransmit.h"
 #include "Ldm.h"
+#include "ThrottleManager.h"
+#include "safetyapp_util.h"
 #ifdef AEROLINK
 #include "AerolinkSecurity.hpp"
 #else
@@ -212,6 +215,12 @@ struct Config{
     bool enableMbdStatLog = false;
     uint32_t mbdStatLogListSize = 10000;
     string mbdStatLogFile = "/tmp/misbehavior_stats.log";
+    unsigned int filterInterval = 1000; // 1 s by default
+    unsigned int deltaInRxRate = 200; // 200 pkts by default
+    bool enableL2Filtering = false;
+    unsigned int l2FilteringTime = 1; //1 s by default
+    uint8_t l2IdTimeThreshold = 5;
+
 };
 
 class ApplicationBase
@@ -224,6 +233,12 @@ public:
     int totalRxSuccess = 0;
     int totalThrds = 0;
     int tempId = 0;
+    int totalRxSuccessPerSecond = 0;
+    int load = 0;
+    int prevArrivalRate=0;
+    int prevFilterRate= 0;
+    int filterRate=0;
+
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;
     std::map<std::thread::id, int> signStatIdx;
@@ -338,6 +353,12 @@ public:
     void printTxStats();
     void setup();
 
+    /**
+     * Function that calculates incoming RX rate(the number of received packets per second) and
+     * updates verifcation load to TM
+     */
+    void tmCommunication();
+
     /*********************************************************************************
      * data members.
      ********************************************************************************/
@@ -402,6 +423,26 @@ public:
 
     bool writeToCsvFile = false;
 
+    /**
+     * @brief Function that filters RV based on the filter rate produced by Throttle Manager.
+     * @param rate
+     */
+    void setL2RvFilteringList(int rate);
+
+    /**
+     * @brief Function that checks whether the L2 src addr is present in the map, if the l2 addr is
+     * present it updates the RV specs otherwise adds the L2 addr to the map.
+     * @param l2_id
+     * @param rvSpec
+     */
+    void updateL2RvMap(uint32_t l2_id ,rv_specs* rvSpec);
+
+    /**
+     * Object that registers a listener to throttle manager
+     * and allows to set load and get filter rate.
+     */
+    shared_ptr<Cv2xTmListener> cv2xTmListener;
+
 protected:
     bool isTx = false;
     bool isRx = false;
@@ -440,11 +481,12 @@ protected:
 
 
 private:
+    unordered_map <uint32_t,rv_specs> l2RvMap;
+    std::mutex l2MapMtx;
     void simTxSetup(const string ipv4, const uint16_t port);
     void simRxSetup(const string ipv4, const uint16_t port);
     static uint16_t delimiterPos(string line, vector<string> delimiters);
     int loadConfiguration(char* file);
     void saveConfiguration(map<string, string> configs);
-
 };
 #endif

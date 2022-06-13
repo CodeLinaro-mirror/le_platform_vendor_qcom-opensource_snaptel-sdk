@@ -88,6 +88,7 @@ thread_local int verifSuccess = 0;
 thread_local int signFail = 0;
 thread_local int signSuccess = 0;
 thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
+thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
     ApplicationBase(fileConfiguration) {
@@ -269,6 +270,42 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 
     // Decode packet as WSMP Packet and IEEE 1609.2 Header
     ret = decode_msg(threadMc.get());
+    if (configuration.enableL2Filtering) {
+        uint32_t l2SrcAddr = radioReceives[0].msgL2SrcAdrr;
+        if (appVerbosity >= 5) {
+            std::cout << "L2 ID is " << l2SrcAddr << std::endl;
+        }
+        auto remote_bsm = reinterpret_cast<bsm_value_t *>(threadMc->j2735_msg);
+        if (hostMc == nullptr) {
+            try {
+                hostMc = std::make_shared<msg_contents>();
+            } catch (std::bad_alloc & e) {
+                cerr << "Error: Create Host bsm failed!" << endl;
+                return -1;
+            }
+        }
+        if (hostMc->abuf.head == NULL || hostMc->abuf.size == 0) {
+            abuf_alloc(&hostMc->abuf, ABUF_LEN, ABUF_HEADROOM);
+            initMsg(hostMc);
+        } else {
+            abuf_reset(&hostMc->abuf, ABUF_HEADROOM);
+        }
+
+        fillBsm(reinterpret_cast<bsm_value_t *>(hostMc->j2735_msg));
+        std::shared_ptr<rv_specs> rvsp;
+        try {
+            rvsp = std::make_shared<rv_specs>();
+        } catch (std::bad_alloc & e) {
+            cerr << "Error: Create rv specs failed!" << endl;
+            return -1;
+        }
+        fill_RV_specs(hostMc.get(), threadMc.get(), rvsp.get());
+        if (appVerbosity > 5) {
+            print_rvspecs(rvsp.get());
+        }
+        this->updateL2RvMap(l2SrcAddr,rvsp.get());
+    }
+
     // Determine if we are expecting signed packet or not
     if(this->configuration.enableSecurity){
         // check if the message is signed/encrypted IEEE1609.2 content.
@@ -336,6 +373,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
     if(ret >= 0){
         rxSuccess++;
+        sem_wait(&this->log_sem);
+        totalRxSuccessPerSecond++;
+        sem_post(&this->log_sem);
         if(appVerbosity > 2){
             printf("Decoded BSM Summary: \n");
             print_summary_RV(threadMc.get());
@@ -610,7 +650,7 @@ void SaeApplication::fillWsmp(wsmp_data_t *wsmp) {
     memset(wsmp, 0, sizeof(wsmp_data_t));
     wsmp->n_header.data = 3;
     wsmp->tpid.octet = 0;
-    if(!this->configuration.psid){
+    if(this->configuration.psid){
         wsmp->psid = this->configuration.psid;
     }else{
         wsmp->psid = PSID_BSM; // default 0x20

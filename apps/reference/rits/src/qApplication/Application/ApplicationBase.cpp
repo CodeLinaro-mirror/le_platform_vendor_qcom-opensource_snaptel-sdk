@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
  /**
   * @file: Application.cpp
@@ -79,6 +114,72 @@ void ApplicationBase::changeIdentity(){
     sem_post(&idChangeData.idSem);
 }
 
+void ApplicationBase::updateL2RvMap(uint32_t l2SrcId, rv_specs* rvSpec) {
+
+    lock_guard<mutex> lk(l2MapMtx);
+    this->l2RvMap[l2SrcId] = *rvSpec;
+}
+
+void ApplicationBase::setL2RvFilteringList(int rate) {
+    if (appVerbosity > 5) {
+        std::cout << "L2 list filtering rate is" << rate << std::endl;
+    }
+    //Assuming RV are sending at 10 HZ, find the no. of vehicles to filter
+    //Should we make this divisor dynamic?
+    int vehsToFilter = rate / 10;
+    int vehsFiltered = 0;
+    lock_guard<mutex> lk(l2MapMtx);
+    std::vector<L2FilterInfo> rvListToFilter;
+
+    for (pair<uint32_t, rv_specs> element : this->l2RvMap) {
+        L2FilterInfo rvSrc = {0};
+        rvSrc.srcL2Id = element.first;
+        rvSrc.pppp = 0;
+        rvSrc.durationMs = this->configuration.l2FilteringTime;
+        const auto now = timestamp_now();
+        const auto diff = now - element.second.hv_timestamp_ms;
+        //Remove the L2 id entery for Rv that has not sent a message in a long time.
+        if (this->configuration.l2IdTimeThreshold * 10000 < diff) {
+            if (appVerbosity > 5)
+                cout << "Removing L2 id:" << element.first << endl;
+            this->l2RvMap.erase(element.first);
+        } else {
+            //RV is out of HV zone
+            if (element.second.out_of_zone == true) {
+                rvListToFilter.push_back(rvSrc);
+                vehsFiltered++;
+
+            }
+            //RV ttc is greater than max ttc and it's not deacclerating. If a car ahead of us
+            //start deacc chances are it might crash with us.
+            else if ((element.second.ttc >= 10000) && (element.second.rapid_decl == false)) {
+                rvListToFilter.push_back(rvSrc);
+                vehsFiltered++;
+            }
+
+            //RV behind us are deacc then we can filter it
+            else if ((element.second.ttc >= 10000) && (element.second.rapid_decl == true) &&
+                    (element.second.lt == SAME_LANE_BACK_SAMEDIR || element.second.lt ==
+                    ADJLEFT_LANE_BACK_SAMEDIR || element.second.lt == ADJRIGHT_LANE_BACK_SAMEDIR)) {
+                rvListToFilter.push_back(rvSrc);
+                vehsFiltered++;
+            }
+
+            //RV is stopped and not in the same lane ahead
+            else if (element.second.stopped == true && element.second.lt != 1) {
+                rvListToFilter.push_back(rvSrc);
+                vehsFiltered++;
+            }
+
+            //After checking the cases, check if the no of RV to filter is met.
+            if (vehsFiltered == vehsToFilter) {
+                radioReceives[0].setL2Filters(rvListToFilter);
+                break;
+            }
+        }
+    }
+}
+
 ApplicationBase::ApplicationBase(char* fileConfiguration){
     // set parameters according to config file
     if (this->loadConfiguration(fileConfiguration)) {
@@ -88,6 +189,9 @@ ApplicationBase::ApplicationBase(char* fileConfiguration){
     // set up kinematics listener
     kinematicsReceive = std::make_shared<KinematicsReceive>
                  (this->configuration.locationInterval);
+    if(configuration.enableL2Filtering) {
+        cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
+    }
 
     uint8_t keyGenMethod = NO_KEY_GEN;
     // setup radio flows
@@ -146,6 +250,10 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 
     kinematicsReceive = std::make_shared<KinematicsReceive>
                         (this->configuration.locationInterval);
+    if(configuration.enableL2Filtering) {
+        cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
+    }
+
     // set to no encryption key generation by default
     uint8_t keyGenMethod = NO_KEY_GEN;
     if (txPort)
@@ -187,6 +295,27 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     }
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
+}
+
+//Calculates received packets per second for Throttle Manager
+void ApplicationBase::tmCommunication() {
+    int load = 0;
+    sem_wait(&this->log_sem);
+    if (appVerbosity > 3) {
+        printf("Arrival rate is: %d\n", this->totalRxSuccessPerSecond);
+    }
+    load = this->totalRxSuccessPerSecond;
+    this->totalRxSuccessPerSecond = 0;
+    sem_post(&this->log_sem);
+
+    if (load != 0) {
+        this->prevFilterRate = this->filterRate;
+        if (abs((load)-(this->prevArrivalRate)) >= this->configuration.deltaInRxRate) {
+            //set load to throttle manager
+            cv2xTmListener->setLoad(load);
+            this->prevArrivalRate=load;
+        }
+    }
 }
 
 uint16_t ApplicationBase::delimiterPos(string line, vector<string> delimiters){
@@ -707,6 +836,32 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.numRxThreadsRadio = (uint8_t)stoi(configs["numRxThreadsRadio"]);
     }
 
+    /** Filtering */
+    if (configs.find("filterInterval") != configs.end()) {
+        this->configuration.filterInterval = (unsigned int)stoi(configs["filterInterval"]);
+    }
+
+    /** Increase/decrease in the rx rate required to communicate to TM */
+    if (configs.find("deltaInRxRate") != configs.end()) {
+        this->configuration.deltaInRxRate = (unsigned int)stoi(configs["deltaInRxRate"]);
+    }
+
+    /** Enable L2 src filtering */
+    if (configs.find("enableL2SrcFiltering") != configs.end()) {
+        istringstream ipstream1(configs["enableL2SrcFiltering"]);
+        ipstream1 >> boolalpha >> configuration.enableL2Filtering;
+    }
+
+    if (configs.find("l2SrcFilteringTime") != configs.end()) {
+        istringstream ipstream2(configs["l2SrcFilteringTime"]);
+        ipstream2 >> boolalpha >> configuration.l2FilteringTime;
+    }
+
+    if (configs.find("l2SrcIdTimeThresholdSec") != configs.end()) {
+        istringstream ipstream3(configs["l2SrcIdTimeThresholdSec"]);
+        ipstream3 >> boolalpha >> configuration.l2IdTimeThreshold;
+    }
+
     /* Misbehavior-related statistics */
     if(configs.find("enableMbd") != configs.end()){
         istringstream is1(configs["enableMbd"]);
@@ -808,8 +963,8 @@ void ApplicationBase::setup() {
         if (tx.flow) {
             this->spsTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" << 
-                    " with spsServiceId: " << this->configuration.spsServiceIDs[i] 
+            cerr << "ApplicationBase::setup error in creating Tx SPS flow!" <<
+                    " with spsServiceId: " << this->configuration.spsServiceIDs[i]
                     << endl;
             return;
         }
@@ -850,7 +1005,7 @@ void ApplicationBase::setup() {
             if (rx.gRxSub) {
                 this->radioReceives.push_back(std::move(rx));
             } else {
-                cerr << "ApplicationBase::setup error in creating non-wildcard Rx!" 
+                cerr << "ApplicationBase::setup error in creating non-wildcard Rx!"
                         << " with spsServiceIds: ";
                 for(int j = 0; j < configuration.spsServiceIDs.size(); j++){
                     cerr << "" << this->configuration.spsServiceIDs[i]<< ", ";
@@ -880,7 +1035,7 @@ void ApplicationBase::setup() {
         if (tx.flow) {
             this->eventTransmits.push_back(std::move(tx));
         } else {
-            cerr << "ApplicationBase::setup error in creating Tx event flow!" 
+            cerr << "ApplicationBase::setup error in creating Tx event flow!"
                     << endl;
             return;
         }
@@ -955,10 +1110,9 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
         return -1;
     }
     abuf_reset(&mc->abuf, ABUF_HEADROOM);
-    auto bsm = reinterpret_cast<bsm_value_t *>(mc->j2735_msg);
     fillMsg(mc);
     encLength = encode_msg(mc.get());
-    if (encLength == 1) {
+    if (this->configuration.enableSecurity) {
         encLength = encodeAndSignMsg(mc);
     }
     int ret = this->transmit(index, mc, encLength, txType);

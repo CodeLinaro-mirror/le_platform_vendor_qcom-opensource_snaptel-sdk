@@ -28,6 +28,12 @@
  */
 
 /**
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
+
+/**
  * @file       TelSdkConsoleApp.cpp
  *
  * @brief      This is entry class for console application for Telematics SDK,
@@ -209,7 +215,7 @@ int main(int argc, char **argv) {
                           + std::to_string(sdkVersion.minor) + "."
                           + std::to_string(sdkVersion.patch);
     setupSignal();
-    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    std::vector<std::string> supplementaryGrps{"system", "diag", "radio"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1){
         std::cout << "Adding supplementary groups failed!" << std::endl;

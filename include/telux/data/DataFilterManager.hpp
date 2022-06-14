@@ -28,6 +28,12 @@
  */
 
 /**
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/**
  * @file       DataFilterManager.hpp
  *
  * @brief      It manages Data Restrict Filters. When the filters are enabled, only the data packets
@@ -162,6 +168,11 @@ public:
      * Get the current Data Powersave filter mode
      *
      * @param [in]  ifaceName - Interface name for data connection.
+     *                          Note: Some platforms support filter mode that applies to all PDNs
+     *                          (i.e. global) and some platforms support filter mode per PDN. On
+     *                          platforms that support global filter mode, this parameter will be
+     *                          ignored.
+     *
      * @param [in]  callback - callback function to get the result of API.
      *
      * @returns Status of requestDataRestrictMode i.e. success or suitable status code.

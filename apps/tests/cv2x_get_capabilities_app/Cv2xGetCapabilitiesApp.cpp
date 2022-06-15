@@ -49,6 +49,7 @@
 
 #include "../../common/utils/Utils.hpp"
 
+#include "../../common/utils/SignalHandler.hpp"
 #include <telux/cv2x/Cv2xRadio.hpp>
 #include <telux/cv2x/Cv2xRadioListener.hpp>
 #include <telux/cv2x/Cv2xRadioTypes.hpp>

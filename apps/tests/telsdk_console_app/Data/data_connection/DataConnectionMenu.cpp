@@ -432,8 +432,6 @@ void DataConnectionMenu::requestDataCallBitRate(std::vector<std::string> inputCo
                       << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
             if (error == telux::common::ErrorCode::SUCCESS) {
                 std::cout << std::endl;
-                std::cout << "Current Tx Rate (bits/sec): " << bitRate.txRate << std::endl;
-                std::cout << "Current Rx Rate (bits/sec): " << bitRate.rxRate << std::endl;
                 std::cout << "Maximum Tx Rate (bits/sec): " << bitRate.maxTxRate << std::endl;
                 std::cout << "Maximum Rx Rate (bits/sec): " << bitRate.maxRxRate << std::endl;
             }

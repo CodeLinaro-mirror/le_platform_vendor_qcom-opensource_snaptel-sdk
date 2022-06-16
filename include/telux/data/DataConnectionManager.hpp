@@ -151,8 +151,8 @@ struct TftChangeInfo {
  * Data call bit rate info
  */
 struct BitRateInfo {
-    uint64_t txRate;      /**< Instantaneous channel transmit rate in bits/sec                  */
-    uint64_t rxRate;      /**< Instantaneous channel receive rate in bits/sec                   */
+    uint64_t txRate;      /**< @deprecated Unused */
+    uint64_t rxRate;      /**< @deprecated Unused */
     uint64_t maxTxRate;   /**< Maximum transmit rate that can be assigned to device in bits/sec */
     uint64_t maxRxRate;   /**< Maximum receive rate that can be assigned to device in bits/sec  */
 };

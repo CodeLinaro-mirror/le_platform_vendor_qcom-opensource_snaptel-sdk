@@ -223,7 +223,7 @@ struct NetworkScanInfo {
  * @param [in] mode       @ref NetworkSelectionMode
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not
- *                        @ref ErrorCode
+ *                        @ref telux::common::ErrorCode
  */
 using SelectionModeResponseCallback
    = std::function<void(NetworkSelectionMode mode, telux::common::ErrorCode error)>;
@@ -238,7 +238,7 @@ using SelectionModeResponseCallback
  * @param [in] staticInfo   Static 3GPP preferred networks list i.e OPLMN list.
  * @param [in] error        Return code which indicates whether the operation
  *                          succeeded or not.
- *                          @ref ErrorCode
+ *                          @ref telux::common::ErrorCode
  */
 using PreferredNetworksCallback = std::function<void(std::vector<PreferredNetworkInfo> info,
                                                      std::vector<PreferredNetworkInfo> staticInfo,
@@ -254,7 +254,7 @@ using PreferredNetworksCallback = std::function<void(std::vector<PreferredNetwor
  *                             name, MCC, MNC and status.
  * @param [in] error           Return code which indicates whether the operation
  *                             succeeded or not.
- *                             @ref ErrorCode
+ *                             @ref telux::common::ErrorCode
  */
 using NetworkScanCallback
    = std::function<void(std::vector<OperatorInfo> operatorInfos, telux::common::ErrorCode error)>;

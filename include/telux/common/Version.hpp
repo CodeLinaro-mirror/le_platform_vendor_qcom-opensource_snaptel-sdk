@@ -72,7 +72,6 @@
 #define VERSION_HPP
 
 #include <string>
-#include "CommonDefines.hpp"
 
 #define DEFAULT_VALUE -1
 
@@ -95,20 +94,6 @@ struct SdkVersion {
 };
 
 /**
- * Structure contains the version of the platform software
- */
-struct PlatformVersion {
-   std::string meta; /**< Meta Version,
-                                for example: SA2150P_SA515M.LE_LE.1-3_2-1-00297-STD.INT-1*/
-   std::string modem; /**< Modem Version,
-                                for example: MPSS.HI.3.1.c3-00114-SDX55_GENAUTO_TEST-1*/
-   std::string externalApp; /**< External App Version,
-                                for example: LE.UM.3.2.3-72102-SA2150p.Int-1*/
-   std::string integratedApp; /**< Integrated App MDM Version,
-                                for example: LE.UM.4.1.1-71802-sa515m.Int-1*/
-};
-
-/**
  * @brief Provides version of SDK.
  */
 class Version {
@@ -126,17 +111,6 @@ public:
     * @returns @ref SdkVersion structure of major, minor and patch version
     */
    static SdkVersion getSdkVersion();
-
-   /**
-    * Get the platform version.
-    * Need obtain required permissions from telux_allow_version.
-    *
-    * @param[in] @ref PlatformVersion structure of modem version, meta version, apps version and
-    *                 apps mdm version.
-    * @returns Status of getPlatformVersion i.e. success or suitable error code.
-    *
-    */
-   static Status getPlatformVersion(PlatformVersion & pv);
 };
 /** @} */ /* end_addtogroup telematics_common */
 }

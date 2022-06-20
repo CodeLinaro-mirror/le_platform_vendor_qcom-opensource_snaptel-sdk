@@ -276,7 +276,7 @@ public:
     */
    virtual telux::common::Status
       sendSms(const std::string &message, const std::string &receiverAddress,
-              std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr,
+              std::shared_ptr<telux::common::ICommandResponseCallback> sentCallback = nullptr,
               std::shared_ptr<telux::common::ICommandResponseCallback> deliveryCallback = nullptr)
       = 0;
 
@@ -422,7 +422,7 @@ public:
     *
     * @param [in] phoneId      Unique identifier per SIM slot. Phone on which the message is
     *                          received.
-    * @param [in] SmsMessage   Pointer to SmsMessage object
+    * @param [in] message   Pointer to SmsMessage object
     */
    virtual void onIncomingSms(int phoneId, std::shared_ptr<SmsMessage> message) {
    }
@@ -486,7 +486,7 @@ public:
     * This function is called with the response to the Smsc address request.
     *
     * @param [in] address    Smsc address
-    * @param [in] error      @ref ErrorCode
+    * @param [in] error      @ref telux::common::ErrorCode
     */
    virtual void smscAddressResponse(const std::string &address, telux::common::ErrorCode error) = 0;
 };

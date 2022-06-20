@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -109,6 +109,9 @@ public:
  * multiple engines running on the system, the received location information is
  * fused report from all engines.
  *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
  * @param [in] locationInfo - Location information  like latitude, longitude,
  * timeInfo other information such as heading, altitude and velocity etc.
  *
@@ -120,6 +123,9 @@ public:
  * This function is called when device receives Gnss location update. When there
  * are multiple engines running on the system, the received location information
  * is fused report from all engines.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
  *
  * @param [in] locationInfo - Contains richer set of location information
  * like latitude, longitude, timeInfo, heading, altitude, velocity and other
@@ -134,7 +140,10 @@ public:
  * the different engine types requested, which are SPE/PPE/FUSED.
  * This API will be called ONLY if we use startDetailedEngineReports.
  *
- * @param [in] locationInfo - Contains a list of location infos. Each element in
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
+ * @param [in] locationEngineInfo - Contains a list of location infos. Each element in
  * the list corresponds to one of SPE/PPE/FUSED.
  *
  */
@@ -143,6 +152,9 @@ public:
 
 /**
  * This function is called when device receives GNSS satellite information.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
  *
  * @param [in] gnssSVInfo - GNSS satellite information
  *
@@ -153,6 +165,9 @@ public:
  * This function is called when device receives GNSS data information
  * like jammer metrics and automatic gain control for satellite signal type.
  *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
  * @param [in] info - GNSS signal info
  *
  */
@@ -160,6 +175,9 @@ public:
 
 /**
  * This function is called when device receives GNSS NMEA sentences.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
  *
  * @param [in] timestamp - Timestamp
  * @param [in] nmea - Nmea sentence
@@ -171,9 +189,12 @@ public:
  * such as satellite vehicle pseudo range, satellite vehicle clock time, carrier phase
  * measurement etc.
  * The frequency at which this API is called is determined by what was requested
- * @ref GnssReportType::MEASUREMENT or @ref GnssReportType::HIGH_RATE_MEASUREMENT in
+ * @ref telux::loc::GnssReportType::MEASUREMENT or @ref telux::loc::GnssReportType::HIGH_RATE_MEASUREMENT in
  * @ref ILocationManager::startDetailedReports and
  * @ref ILocationManager::startDetailedEngineReports.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
  *
  * @param [in] measurementInfo - GNSS measurement information
  *
@@ -182,6 +203,9 @@ public:
 
 /**
  * This function is called when the capabilities of the location stack gets updated.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
  *
  * @param [in] capabilityInfo - @ref telux::loc::LocCapability, capability information
  *
@@ -200,6 +224,9 @@ public:
 /**
  * This function is called when device receives location related system information
  * such as leap second change.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
  *
  * @param [in] locationSystemInfo - contains location system information such as
  *                                  current leap seconds change

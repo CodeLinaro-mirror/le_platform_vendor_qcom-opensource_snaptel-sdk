@@ -198,6 +198,9 @@ public:
  * defined if client issues a second request of configureCTunc without waiting for the finish of
  * the previous configureCTunc request.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] enable - true for enable C-TUNC feature and false for disable C-TUNC
  *                      feature.
  *
@@ -228,6 +231,9 @@ public:
  * not defined if client issues a second request of configurePACE without waiting for
  * the finish of the previous configurePACE request.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] enable - to enable/disable position assisted clock estimator feature.
  *
  * @param [in] callback - Optional callback to get the response of enablement/disablement of
@@ -245,6 +251,9 @@ public:
  * performance impact. So, this API should only be exercised with caution and only for very
  * limited usage scenario, e.g.: for performance test and certification process.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] callback - Optional callback to get the response of delete aiding data.
  *
  */
@@ -259,6 +268,9 @@ public:
  * command to finish, e.g.: via ResponseCallback received before issuing a second
  * configureLeverArm command. Behavior is not defined if client issues a second request of
  * configureLeverArm without waiting for the finish of the previous configureLeverArm request.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
  *
  * @param [in] info - lever arm configuration info regarding below three
  *                   types of lever arm info:
@@ -298,6 +310,9 @@ public:
  * the finish of the previous configureConstellations request. This API call is not incremental
  * and the new settings will completely overwrite the previous call.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] list - specify the set of constellations and SVs that should not be used
  *                    by the GNSS engine on modem. Constellations and SVs not specified
  *                    in blacklistedSvList could get used by the GNSS engine on modem.
@@ -331,6 +346,9 @@ public:
  * Behavior is not defined if client issues a second request of configureSecondaryBand without
  * waiting for the finish of the previous configureSecondaryBand request.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] set - specifies the set of constellations whose secondary bands need to be
  *                   disabled.
  *
@@ -363,6 +381,9 @@ public:
  * for navigation solution conform to expectations. In the presence of detected spoofed inputs,
  * the navigation solution may take corrective actions to mitigate the spoofed inputs and improve
  * robustness of the solution.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
  *
  * @param [in] enable - true to enable robust location and false to disable robust location.
  *
@@ -400,6 +421,9 @@ public:
  * issuing a second configureMinGpsWeek command. Behavior is not defined if client issues a second
  * request of configureMinGpsWeek without waiting for the previous configureMinGpsWeek to finish.
  * Additionally minimum GPS week number shall NEVER be in the future of the current GPS Week.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
  *
  * @param [in] minGpsWeek - minimum GPS week to be used by modem GNSS engine.
  *
@@ -457,6 +481,9 @@ public:
  * be applied until the current session ends, and this may take up to 255 seconds in poor GPS
  * signal condition.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] minSVElevation - minimum SV elevation to be used by GNSS standard position
  *                              engine (SPE). Valid range is [0, 90] in unit of degree.
  *
@@ -497,6 +524,9 @@ public:
  * performance impact. So, this API should only be exercised with caution and only for very
  * limited usage scenario, e.g.: for performance test and certification process.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] aidingDataMask - specify the set of aiding data to be deleted from all position
  *                              engines. Currently, only ephemeris deletion is supported.
  *
@@ -516,6 +546,9 @@ public:
  * second configureDR command. Behavior is not defined if client issues a second
  * request of configureDR without waiting for the completion of the previous
  * configureDR request.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
  *
  * @param [in] config - specify dead reckoning engine configuration.
  *
@@ -540,6 +573,9 @@ public:
  * can be made with or without an on-going session. With DR engine, on resume, GNSS position &
  * heading re-acquisition may be needed for DR to engage.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] engineType - the engine that is instructed to change its run state.
  *
  * @param [in] engineState - the new engine run state that the engine is instructed to be in.
@@ -562,6 +598,9 @@ public:
  *
  * The consent will remain effective across power cycles, until this API is called with a
  * different value.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONSENT permission to
+ * invoke this API successfully.
  *
  * @param [in] userConsent - true indicates user consents to sending device data to cloud,
  *                           false indicates user does not consent.
@@ -588,6 +627,9 @@ public:
  * This API call is not incremental and the new NMEA sentence types will completely overwrite the
  * previous call to this API.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
  * @param [in] nmeaType - specify the set of NMEA sentences
  *
  * @param [in] callback - Optional callback to get the response of configureNmeaTypes.
@@ -606,7 +648,11 @@ public:
  * Prior to calling this API for a particular engine, the engine shall not calculate the
  * protection levels and shall not include the protection levels in its position report.
  * The implementation might not support protection levels across all engines. For engines that
- * don't support it, @ref ResponseCallback will get invoked with @ref ErrorCode::NOT_SUPPORTED.
+ * don't support it, @ref telux::common::ResponseCallback will get invoked with
+ * @ref telux::common::ErrorCode::NOT_SUPPORTED.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
  *
  * @param [in] engineType - the engine that is instructed to use the specified integrity risk
  *                          level for protection level calculation.
@@ -640,6 +686,9 @@ public:
  *    undefined.
  * 2. The API is non-incremental i.e, the second call will overwrite the first call. Also the
  *    configured XTRA params will be persistent.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
  *
  * @param [in] enable - Enable XTRA Feature on the device. False would disable both the XTRA
  *                      Assistance Data and NTP Time Download.

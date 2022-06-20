@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,18 +62,21 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef THERMALTESTAPP_HPP
 #define THERMALTESTAPP_HPP
 
 #include <memory>
 #include <string>
+#include <sstream>
 #include <vector>
+#include <map>
 
 #include <telux/therm/ThermalManager.hpp>
 #include "ThermalHelper.hpp"
 
 #include "console_app_framework/ConsoleApp.hpp"
+
+class ThermalListener;
 
 class ThermalTestApp : public ConsoleApp {
  public:
@@ -91,10 +94,44 @@ class ThermalTestApp : public ConsoleApp {
     void getThermalZoneById(std::vector<std::string> userInput);
     void getCoolingDeviceById(std::vector<std::string> userInput);
 
+    void signalHandler(int signum);
+    void cleanup();
+
  private:
-    std::shared_ptr<telux::therm::IThermalManager> thermalManager_ = nullptr;
+    std::map<telux::common::ProcType, std::shared_ptr<telux::therm::IThermalManager>>
+        thermalManagerMap_;
     void printThermalZoneHeader();
     void printCoolingDeviceHeader();
+    bool initThermalManager(telux::common::ProcType procType);
+    std::map<telux::common::ProcType, std::shared_ptr<ThermalListener>> thermalListenerMap_;
+    int readAndValidateProcType();
+
+    template <typename T>
+    static void getInput(std::string prompt, T &input) {
+        std::cout << prompt;
+        std::string line;
+        std::getline(std::cin, line);
+        std::stringstream ss(line);
+        ss >> input;
+        bool valid = false;
+        do {
+            if (!ss.bad() && ss.eof() && !ss.fail()) {
+                valid = true;
+            } else {
+                // If an error occurs then an error flag is set and future attempts to get
+                // input will fail. Clear the error flag on cin.
+                std::cin.clear();
+                // Clear the string stream's states and buffer
+                ss.clear();
+                ss.str("");
+                std::cout << "Invalid input, please re-enter" << std::endl;
+                std::cout << prompt;
+                std::getline(std::cin, line);
+                ss << line;
+                ss >> input;
+            }
+        } while (!valid);
+    }
 };
 
 #endif  // THERMALTESTAPP_HPP

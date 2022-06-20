@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_TELUX_VERSION_APP telux_version_app)
 
+pkg_check_modules(TELUXPLATFORM REQUIRED telux-platform)
+add_compile_options(${TELUXPLATFORM_CFLAGS})
 set(TELUX_VERSION_APP_SOURCES
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     TeluxVersionApp.cpp
@@ -11,7 +13,7 @@ set(TELUX_VERSION_APP_SOURCES
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_executable (${TARGET_TELUX_VERSION_APP} ${TELUX_VERSION_APP_SOURCES})
-target_link_libraries(${TARGET_TELUX_VERSION_APP} telux_common)
+target_link_libraries(${TARGET_TELUX_VERSION_APP} telux_common ${TELUXPLATFORM_LIBRARIES})
 
 # install to target
 install ( TARGETS ${TARGET_TELUX_VERSION_APP}

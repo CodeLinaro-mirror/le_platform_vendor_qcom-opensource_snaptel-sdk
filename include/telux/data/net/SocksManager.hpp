@@ -133,7 +133,7 @@ class ISocksManager {
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
      * permission to invoke this API successfully.
      *
-     * @param [in] enble             true: enable proxy, false: disable proxy
+     * @param [in] enable            true: enable proxy, false: disable proxy
      * @param [in] callback          optional callback to get the operation error code if any
      *
      * @returns Status of proxy enablement i.e. success or suitable status code.

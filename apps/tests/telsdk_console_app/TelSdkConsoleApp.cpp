@@ -90,10 +90,11 @@ extern "C" {
 #include "Cellbroadcast/CellbroadcastMenu.hpp"
 #include "Rsp/RspMenu.hpp"
 #include "ImsSettings/ImsSettingsMenu.hpp"
-#include "../../common/utils/Utils.hpp"
 #include "ImsServingSystem/ImsServingSystemMenu.hpp"
-
 #include "TelSdkConsoleApp.hpp"
+
+#include "../../common/utils/Utils.hpp"
+#include "../../common/utils/SignalHandler.hpp"
 
 TelSdkConsoleApp::TelSdkConsoleApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -247,29 +248,27 @@ void TelSdkConsoleApp::onModemAvailable() {
 #endif
 }
 
-void signalHandler(int sig) {
-    exit(1);
-}
-
-void setupSignal() {
-    signal(SIGSEGV, signalHandler);
-    signal(SIGABRT, signalHandler);
-    signal(SIGBUS, signalHandler);
-    signal(SIGILL, signalHandler);
-    signal(SIGFPE, signalHandler);
-    signal(SIGPIPE, signalHandler);
-}
-
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
 
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    sigaddset(&sigset, SIGHUP);
+    SignalHandlerCb cb = [](int sig) {
+        // We can call exit() here if no cleanups needed,
+        // or maybe just set a flag, and let the main thread to decide
+        // when to exit.
+        exit(sig);
+    };
+    SignalHandler::registerSignalHandler(sigset, cb);
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::string appName = "Telematics SDK v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."
                           + std::to_string(sdkVersion.patch) +"\n" +
                           "Release name: " + sdkReleaseName;
-    setupSignal();
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "radio"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);

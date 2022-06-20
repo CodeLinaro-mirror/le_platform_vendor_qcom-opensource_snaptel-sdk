@@ -173,7 +173,7 @@ struct SensorInfo {
 };
 
 /**
- * Enumeration listing the different configuration parameters in @SensorConfiguration
+ * Enumeration listing the different configuration parameters in @ref SensorConfiguration
  */
 enum SensorConfigParams {
     /** Corresponds to SensorConfiguration::samplingRate */
@@ -256,7 +256,7 @@ struct SensorConfiguration {
      * Bitset indicating the validity of the received sensor configuration via @ref
      * telux::sensor::ISensorClient::getConfiguration and @ref
      * telux::sensor::ISensorEventListener::onConfigurationUpdate. The configuration items that were
-     * never set would have return false when tested for using @ref std::bitset::test
+     * never set would have return false when tested for using std::bitset::test.
      *
      * Further, this bitset should be set by the user to indicate the valid fields while configuring
      * the sensor using @ref telux::sensor::ISensorClient::configure.

@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -121,8 +122,9 @@ public:
        telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
-    * Get instance of Dgnss manager
+    * Get instance of Dgnss manager.
     *
+    * @param[in] dataFormat @ref DgnssDataFormat RTCM injection data format
     * @param[in] callback   Optional callback pointer to get the response of the manager
     *                       initialisation.
     *
@@ -132,9 +134,11 @@ public:
        DgnssDataFormat dataFormat = DgnssDataFormat::DATA_FORMAT_RTCM_3,
            telux::common::InitResponseCb callback = nullptr) = 0;
 
+#ifndef TELUX_DOXY_SKIP
 protected:
    LocationFactory();
    ~LocationFactory();
+#endif
 
 private:
    LocationFactory(const LocationFactory &) = delete;

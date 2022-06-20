@@ -368,7 +368,6 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
             }
             // if ret is 0, then polling timed out
         }
-        //if(ret != 0) rxFail++;
         return -1;
     }
 

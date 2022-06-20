@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -199,6 +199,8 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
 
    if(status == telux::common::Status::SUCCESS) {
       std::cout << "Send SMS request successful\n";
+   } else if (status == telux::common::Status::INVALIDPARAM) {
+      std::cout << "Entered SMS text is not in UTF-8 encoded format.\n";
    } else {
       std::cout << "Send SMS request failed\n";
    }
@@ -241,6 +243,8 @@ void SmsMenu::sendEnhancedSms(std::vector<std::string> userInput) {
 
    if(status == telux::common::Status::SUCCESS) {
       std::cout << "Send SMS request successful\n";
+   } else if (status == telux::common::Status::INVALIDPARAM) {
+      std::cout << "Please use Putty with character-set as UTF-8 to provide the input\n";
    } else {
       std::cout << "Send SMS request failed\n";
    }
@@ -257,6 +261,10 @@ void SmsMenu::sendRawSms(std::vector<std::string> userInput) {
       std::string message;
       std::cout << "Enter raw pdu: ";
       std::getline(std::cin, message, delimiter);
+      if (message.empty()) {
+          std::cout << " Raw PDU input is empty\n";
+          return;
+      }
 
       std::vector<uint8_t> buffer(message.begin(), message.end());
       rawPdus.emplace_back(buffer);
@@ -277,6 +285,8 @@ void SmsMenu::sendRawSms(std::vector<std::string> userInput) {
 
    if(status == telux::common::Status::SUCCESS) {
       std::cout << "Send SMS request successful\n";
+   } else if(status == telux::common::Status::INVALIDPARAM) {
+      std::cout << "Send SMS request failed - Invalid input(s)\n";
    } else {
       std::cout << "Send SMS request failed\n";
    }

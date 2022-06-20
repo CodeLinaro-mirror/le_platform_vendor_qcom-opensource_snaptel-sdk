@@ -144,7 +144,7 @@ public:
    /**
     * This function is called when radio state changes on phone
     *
-    * @param [in] phone       Unique id of the phone on which radio state
+    * @param [in] phoneId     Unique id of the phone on which radio state
     *                         changed
     *
     * @param [in] radioState  Radio state of the phone @ref RadioState
@@ -157,7 +157,7 @@ public:
    /**
     * This function is called when the radio technology for voice service changes
     *
-    * @param [in] phone       Unique id of the phone on which radio technology
+    * @param [in] phoneId     Unique id of the phone on which radio technology
     *                         changed
     *
     * @param [in] radioTech   Radio state of the phone
@@ -171,7 +171,7 @@ public:
    /**
     * This function is called when the service state for voice service changes
     *
-    * @param [in] phone       Unique id of the phone on which radio technology
+    * @param [in] phoneId     Unique id of the phone on which radio technology
     *                         changed
     *
     * @param [in] serviceInfo pointer of voice service state info object
@@ -195,7 +195,7 @@ public:
     *
     * @param [in] phoneId - Unique Id of phone for which eCall operating mode changed
     * @param [in] info - Indicates eCall operating mode change reason
-    * @Ref ECallModeInfo
+    * @ref ECallModeInfo
     */
    virtual void onECallOperatingModeChange(int phoneId, telux::tel::ECallModeInfo info) {
    }

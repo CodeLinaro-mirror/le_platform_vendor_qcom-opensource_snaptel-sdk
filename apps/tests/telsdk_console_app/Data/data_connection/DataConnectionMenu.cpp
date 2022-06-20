@@ -604,8 +604,10 @@ void DataConnectionMenu::requestRoamingMode(std::vector<std::string> inputComman
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        std::cout << "Roaming mode on profile: " << profileId << " is "
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Roaming mode on profile: " << profileId << " is "
                   << (enable ? "enabled" : "disabled") << "\n";
+        }
     };
 
     bool profileFound = validateProfile(slotId,profileId);

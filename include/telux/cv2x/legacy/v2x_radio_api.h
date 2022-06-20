@@ -207,9 +207,10 @@ typedef enum  {
 
 /**
     Defines possible values for CV2X radio RX/TX status.
-    1. If Tx is in active state, Rx should also be in active statue.
-    2. If Rx is in active statue, Tx should be in active(normal case)
+    1. If Rx is in inactive state, Tx should also be in inactive state.
+    2. If Rx is in active state, Tx should be in active(normal case)
        or suspended state(sensing or tunnel mode).
+    3. If Rx is in suspended state, Tx should be in suspended state.
     Used in @ref v2x_status_info_t
  */
 typedef enum {
@@ -226,24 +227,13 @@ typedef enum {
     Used in @ref v2x_status_info_t
  */
 typedef enum {
-    V2X_RADIO_CAUSE_TIMING,           /**< CV2X is suspended when GNSS signal is lost. */
-    V2X_RADIO_CAUSE_CONFIG,           /**< This cause is not used currently. */
-    V2X_RADIO_CAUSE_UE_MODE,          /**< CV2X status is either suspended or inactive.
-                                           - Suspend case:
-                                           CV2X is suspended temporarily when processing the stop
-                                           of CV2X, after CV2X is stopped, CV2X status will change
-                                           to inactive.
-                                           - Inactive case:
-                                            - CV2X is disabled by EFS/NV.
-                                            - QWES license is not valid.
-                                            - CV2X is stopped by user.
-                                            - An invalid v2x.xml is updated to modem when CV2X is
-                                              aready active.
-                                            - UE enters a geopolygon that does not support CV2X
-                                              when CV2X is already active. */
-    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< CV2X is inactive due to there's no valid CV2X
-                                           configuration when starting CV2X, or the v2x.xml is
-                                           corrupted. */
+    V2X_RADIO_CAUSE_TIMING,           /**< CV2X is suspended due to the outage of timing
+                                           reference. */
+    V2X_RADIO_CAUSE_CONFIG,           /**< CV2X is inactive due to v2x.xml is missing, invalid,
+                                           or expired. */
+    V2X_RADIO_CAUSE_UE_MODE,          /**< CV2X is inactive due to CV2X mode is not started. */
+    V2X_RADIO_CAUSE_GEOPOLYGON,       /**< CV2X is inactive due to UE enters a geo-polygon that
+                                           does not support cv2x. */
     V2X_RADIO_CAUSE_THERMAL,          /**< CV2X is suspended when the device's temperature
                                            is high. */
     V2X_RADIO_CAUSE_THERMAL_ECALL,    /**< CV2X is suspended when the device's temperature
@@ -257,6 +247,10 @@ typedef enum {
                                            Tx can begin, Tx status will change to active after
                                            sensing is done. */
     V2X_RADIO_CAUSE_LPM,              /**< CV2X is inactive when UE enters Low Power Mode. */
+    V2X_RADIO_CAUSE_DISABLED,         /**< CV2X is inactive due to CV2X is disabled in the EFS. */
+    V2X_RADIO_CAUSE_NO_GNSS,          /**< CV2X is inactive due to GNSS signal is not available
+                                           when starting CV2X. */
+    V2X_RADIO_CAUSE_INVALID_LICENSE,  /**< CV2X is inactive due to invalid license. */
     V2X_RADIO_CAUSE_UNKNOWN,          /**< Invalid cause type only used internally. */
 } v2x_radio_cause_type_t;
 
@@ -1039,8 +1033,7 @@ typedef struct {
 
 /**
     Callback made when a CV2X transport block is transmitted in low layer if
-    CV2X Tx staus report has been enabled by calling @ref v2x_set_tx_status_report
-    and a listener has been registered by calling @ref v2x_register_for_tx_status_report.
+    a listener has been registered by calling @ref v2x_register_tx_status_report_listener.
 
     @datatypes
     #v2x_tx_status_report_t
@@ -1131,14 +1124,12 @@ extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v
                                callback.
 
     @detdesc
-    This function call is a nonblocking, and it is a control plane action.
+    This function call is a blocking, and it is a control plane action.
     @par
     Use v2x_radio_deinit() when radio operations are complete.
     @par
-    @note1hang Currently, the channel and transmit power are not specified.
-               They are specified with a subsequent call to
-               #v2x_radio_calls_t::v2x_radio_init_complete() when 
-               initialization is complete.
+    Callback @ref v2x_radio_calls_t::v2x_radio_init_complete()is made when
+    initialization is complete.
 
     @return
     Handle to the specified initialized radio. The handle is used for
@@ -1223,8 +1214,8 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
     You can execute any sockopts that are appropriate for this type of socket
     (AF_INET6).
     @par
-    @note1hang The port number for the receive path is not exposed, but it is
-               in the sockaddr_ll structure (if the caller is interested).
+    The port number for the receive path is not exposed, but it is in the
+    sockaddr_in6 structure (if the caller is interested).
 
     @return
     0 -- On success.
@@ -1263,10 +1254,9 @@ extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *soc
     You can execute any sockopts that are appropriate for this type of socket
     (AF_INET6).
     @par
-    @note1hang This API can be used to subscribe wildcard, catchall port, or specifc
-               service IDs. The Rx port should be set with v2x_set_rx_port()
-               before any subscription via this API, otherwise a default port
-               number will be used.
+    This API can be used to subscribe wildcard, catchall port, or specifc service IDs.
+    The Rx port should be set with v2x_set_rx_port() before any subscription via this API,
+    otherwise a default port number 9000 will be used.
     @par
     Wildcard is used to receive all traffic. Only one port can be registered as
     wildcard port. Once wildcard is registered successfully, all received packets
@@ -1346,8 +1336,7 @@ extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
     You can execute any sockopts that are appropriate for this type of socket
     (AF_INET6).
     @par
-    @note1hang This API can be used to subscribe wildcard, catchall port, or
-               specifc service IDs.
+    This API can be used to subscribe wildcard, catchall port, or specifc service IDs.
     @par
     Wildcard is used to receive all traffic. Only one port can be registered as
     wildcard port. Once wildcard is registered successfully, all received packets
@@ -1481,9 +1470,9 @@ extern int v2x_radio_enable_rx_meta_data(v2x_radio_handle_t handle,
     You can execute any sockopts that are appropriate for this type of socket
     (AF_INET6).
     @par
-    @note1hang This API can be used for the registeration of both Tx and Rx.
-               It sets up sockets on the requested port numbers. A negative
-               port number corresponds to no actions for Tx or Rx.
+    This API can be used for the registeration of both Tx and Rx. It sets up sockets
+    on the requested port numbers. A negative port number corresponds to no actions
+    for Tx or Rx.
 
     @par
     Wildcard is used to receive all traffic. Only one port can be registered as
@@ -1600,10 +1589,9 @@ extern int v2x_radio_sock_create_and_bind(
     sent on these sockets must have a configurable IPv6 destination address for
     the non-IP traffic.
     @par
-    @note1hang The Priority parameter of the SPS reservation is used only for
-               the reserved Tx bandwidth (SPS) flow. The non-SPS/event-driven
-               data sent to the event_portnum parameter is prioritized on the
-               air, based on the IPv67 Traffic Class of the packet.
+    The Priority parameter of the SPS reservation is used only for the reserved
+    Tx bandwidth (SPS) flow. The non-SPS/event-driven data sent to the event_portnum
+    parameter is prioritized on the air, based on the IPv67 Traffic Class of the packet.
     @par
     The caller is expected to identify two unused local port numbers to use for
     binding: one for the event-driven flow and one for the SPS flow.
@@ -1636,8 +1624,8 @@ extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
 /**
     Creates a socket with a bandwidth-reserved (SPS) Tx flow.
 
-    @note1hang Only SPS transmissions are to be implemented for the socket,
-               which is created as an IPv6 UDP socket.
+    Only SPS transmissions are to be implemented for the socket, which is created
+    as an IPv6 UDP socket.
 
     @datatypes
     #v2x_radio_handle_t \n
@@ -1683,8 +1671,8 @@ extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
     sent on the socket must have a configurable IPv6 destination address for
     the non-IP traffic.
     @par
-    @note1hang The Priority parameter of the SPS reservation is used only for
-               the reserved Tx bandwidth (SPS) flow.
+    The Priority parameter of the SPS reservation is used only for the reserved
+    Tx bandwidth (SPS) flow.
     @par
     The caller is expected to identify an unused local port number for the SPS
     flow.
@@ -2046,10 +2034,9 @@ int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
     sent on these sockets must have a configurable IPv6 destination address for
     the non-IP traffic.
     @par
-    @note1hang The Priority parameter of the SPS reservation is used only for
-               the reserved Tx bandwidth (SPS) flow. The non-SPS/event-driven
-               data sent to the event_portnum parameter is prioritized on the
-               air, based on the IPv67 Traffic Class of the packet.
+    The Priority parameter of the SPS reservation is used only for the reserved
+    Tx bandwidth (SPS) flow. The non-SPS/event-driven data sent to the event_portnum
+    parameter is prioritized on the air, based on the IPv67 Traffic Class of the packet.
     @par
     The caller is expected to identify two unused local port numbers to use for
     binding: one for the event-driven flow and one for the SPS flow.
@@ -2083,8 +2070,8 @@ extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
 /**
     Creates a socket with a bandwidth-reserved (SPS) Tx flow.
 
-    @note1hang Only SPS transmissions are to be implemented for the socket,
-               which is created as an IPv6 UDP socket.
+    Only SPS transmissions are to be implemented for the socket, which is
+    created as an IPv6 UDP socket.
 
     This %v2x_radio_tx_sps_only_create_v2() method differs from
     v2x_radio_tx_sps_only_create() in that you can use the sps_flow_info
@@ -2326,7 +2313,8 @@ extern v2x_status_enum_type start_v2x_mode();
 extern v2x_status_enum_type stop_v2x_mode();
 
 /** @ingroup v2x_deprecated_radio
-    @deprecated This API has been deprecated. Please use %v2x_radio_init_v3() instead.
+    @deprecated This API has been deprecated. Please use @ref v2x_radio_init_v3()
+    instead.
 
     Initializes the Radio interface and sets the callback that will be used
     when events in the radio change (including when radio initialization is
@@ -2340,25 +2328,23 @@ extern v2x_status_enum_type stop_v2x_mode();
     @param[in] ip_type         The Ip or non-Ip interface.
     @param[in] mode            WAN concurrency mode, although the radio might
                                not support concurrency. Errors can be generated.
-    @param[in] callbacks       Pointer to the v2x_radio_calls_t structure that
+    @param[in] callbacks_p     Pointer to the v2x_radio_calls_t structure that
                                is prepopulated with function pointers used
                                during radio events (such as loss of time
                                synchronization or accuracy) for subscribers. \n
                                @vertspace{3}
                                This parameter also points to a callback for
                                this initialization function.
-    @param[in] context         Voluntary pointer to the first parameter on the
+    @param[in] ctx_p           Voluntary pointer to the first parameter on the
                                callback.
 
     @detdesc
-    This function call is a nonblocking, and it is a control plane action.
+    This function call is a blocking, and it is a control plane action.
     @par
     Use v2x_radio_deinit() when radio operations are complete.
     @par
-    @note1hang Currently, the channel and transmit power are not specified.
-               They are specified with a subsequent call to
-               #v2x_radio_calls_t::v2x_radio_init_complete() when
-               initialization is complete.
+    Callback @ref v2x_radio_calls_t::v2x_radio_init_complete()is made when
+    initialization is complete.
 
     @return
     Handle to the specified initialized radio. The handle is used for
@@ -2385,14 +2371,14 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
 
     @param[in] mode              WAN concurrency mode, although the radio might
                                  not support concurrency. Errors can be generated.
-    @param[in] callbacks         Pointer to the v2x_radio_calls_t structure that
+    @param[in] callbacks_p       Pointer to the v2x_radio_calls_t structure that
                                  is prepopulated with function pointers used
                                  during radio events (such as loss of time
                                  synchronization or accuracy) for subscribers. \n
                                  @vertspace{3}
                                  This parameter also points to a callback for
                                  this initialization function.
-    @param[in] context           Voluntary pointer to the first parameter on the
+    @param[in] ctx_p             Voluntary pointer to the first parameter on the
                                  callback.
     @param[out] ip_handle_p      Pointer to the handle of IP interface. Pass nullptr
                                  if IP interface is not used.
@@ -2400,14 +2386,12 @@ v2x_radio_handle_t v2x_radio_init_v2(traffic_ip_type_t ip_type,
                                  if non-IP interface is not used.
 
     @detdesc
-    This function call is a nonblocking, and it is a control plane action.
+    This function call is a blocking, and it is a control plane action.
     @par
     Use v2x_radio_deinit() with either IP or non-IP handle when radio operations are complete.
     @par
-    @note1hang Currently, the channel and transmit power are not specified.
-               They are specified with a subsequent call to
-               #v2x_radio_calls_t::v2x_radio_init_complete() when
-               initialization is complete.
+    Callback @ref v2x_radio_calls_t::v2x_radio_init_complete()is made when
+    initialization is complete.
 
     @return
     0 -- On success.
@@ -2445,7 +2429,7 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode,
     @param[in]  event_portnum    Local port number to which the socket is
                                  bound. Used for transmissions of this ID.
     @param[in]  event_flow_info  Pointer to the event flow parameters.
-    @param[out] event_sock_addr  Pointer to the sockaddr_ll structure buffer
+    @param[out] event_sockaddr   Pointer to the sockaddr_ll structure buffer
                                  to be initialized.
     @param[out] sock             Pointer to the file descriptor. Loaded when
                                  the function is successful.
@@ -2607,11 +2591,6 @@ v2x_status_enum_type v2x_remove_l2_filters(uint32_t list_len, uint32_t* l2_id_li
     @param[in] callback        Callback function of @ref v2x_tx_status_report_listener
                                structure that is called on Tx status reports. \n
                                @vertspace{3}
-
-    @detdesc
-    This function should be called before the enable of Tx status report by calling
-    @ref v2x_set_tx_status_report if the caller has interest in the notification
-    of CV2X Tx status reports.
 
     @return
     #V2X_STATUS_SUCCESS.

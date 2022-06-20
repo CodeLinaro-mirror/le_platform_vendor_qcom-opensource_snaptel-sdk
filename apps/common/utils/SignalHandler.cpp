@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -31,7 +31,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -79,7 +78,7 @@ void SignalHandler::dumpTrace(int sigNum, siginfo_t* info, void* ptr) {
         return;
     }
 
-    for (auto i = 2; i < nptrs; ++i) {
+    for (size_t i = 2; i < nptrs; ++i) {
         std::string name(strings[i]);
         // the output from backtrace_symbols follows following
         // format: <library path>(<Function Name>+<offset with the function>) [Symbol address].

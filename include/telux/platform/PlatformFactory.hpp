@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,7 +32,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file       PlatformFactory.hpp
  *
@@ -47,6 +46,7 @@
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/platform/FsManager.hpp>
+#include <telux/platform/DeviceInfoManager.hpp>
 
 namespace telux {
 
@@ -77,9 +77,23 @@ class PlatformFactory {
     virtual std::shared_ptr<IFsManager> getFsManager(
         telux::common::InitResponseCb callback = nullptr) = 0;
 
+    /**
+     * Get instance of device info manager (IDeviceInfoManager). The device info manager
+     * supports device info request like retrieving IMEI and platform version.
+     *
+     * @param [in] callback      Optional callback to get the initialization status of
+     *                           FsManager. @ref telux::common::InitResponseCb
+     *
+     * @returns pointer of @ref IDeviceInfoManager object.
+     */
+    virtual std::shared_ptr<IDeviceInfoManager> getDeviceInfoManager(
+        telux::common::InitResponseCb callback = nullptr) = 0;
+
+#ifndef TELUX_DOXY_SKIP
  protected:
     PlatformFactory();
     virtual ~PlatformFactory();
+#endif
 
  private:
     PlatformFactory(const PlatformFactory &) = delete;

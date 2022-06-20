@@ -16,6 +16,7 @@ set(ECALL_APP_SOURCES
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
 )
 
 include_directories(BEFORE

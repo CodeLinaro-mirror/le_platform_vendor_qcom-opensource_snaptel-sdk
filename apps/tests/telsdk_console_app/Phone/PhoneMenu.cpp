@@ -436,6 +436,7 @@ void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
       std::cout << std::endl;
       std::cout << "Enter eCall Operating Mode(0-NORMAL, 1-ECALL_ONLY): ";
       std::cin >> eCallMode;
+      Utils::validateInput(eCallMode);
 
       if(eCallMode == 0 || eCallMode == 1) {
          auto ret = phone->setECallOperatingMode(

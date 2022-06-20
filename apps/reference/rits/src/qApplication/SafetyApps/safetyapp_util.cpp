@@ -111,7 +111,7 @@ double MIN_TTC_THR;
 double MIN_SAFE_TTC_THR;
 
 /** Speed in m/sec. Consider the vehicle to be stopped if its speed is less than this */
-double MOVING_VEH_SPEED_THR;
+double MOVING_VEH_SPEED_THR = 20;
 
 /** Distance in meters. If perpendicular distance between HV and Rv is less than this,
  * consider they are in same lane */
@@ -123,7 +123,7 @@ double IN_ZONE_DIST_THR;
 
 /** Acceleration in meter/sec^2. If difference in acceleration between current and previous (recent)
  * accleration is less than this, consider it is rapidly decelerating */
-double RAPID_DECL_THR;
+double RAPID_DECL_THR = 2;
 
 /** Speed in m/sec. If a vehicle is moving less than this speed, perceive that accident might
  * have happened ahead */

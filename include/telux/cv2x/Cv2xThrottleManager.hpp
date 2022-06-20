@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
 * @file       Cv2xThrottleManager.hpp
 *
@@ -51,11 +87,11 @@ namespace cv2x {
  *  * @{ */
 
 /**
- * This function is called as a response to @ref setVerificationLoad
+ * This function is called as a response to @ref ICv2xThrottleManager::setVerificationLoad
  *
  * @param [in] error     - SUCCESS if verification load was set successfully
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
  *
  */
 using setVerificationLoadCallback = std::function<void (telux::common::ErrorCode error)>;
@@ -83,7 +119,7 @@ public:
     * This API is invoked when the service status changes for example when a subsytem restart (SSR)
     * occurs
     *
-    * @param [in] status - @ref ServiceStatus
+    * @param [in] status - @ref telux::common::ServiceStatus
     *
     * @note    Eval: This is a new API and is being evaluated. It is subject to change
     *          and could break backwards compatibility.
@@ -124,7 +160,7 @@ public:
     /**
      * Registers a listener to receive the updated filer rate adjustment data.
      *
-     * @param[in] listner - Listener that implement ICv2xThrottleManagerListener interface.
+     * @param[in] listener - Listener that implement ICv2xThrottleManagerListener interface.
      */
     virtual telux::common::Status registerListener(
             std::weak_ptr<ICv2xThrottleManagerListener> listener) = 0;
@@ -142,6 +178,8 @@ public:
      * Set current measured/average verification load.
      *
      * @param[in] load - current measured verification load(verification/second).
+     *
+     * @param[in] cb   - callack for indicating the result of set verfication load.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.

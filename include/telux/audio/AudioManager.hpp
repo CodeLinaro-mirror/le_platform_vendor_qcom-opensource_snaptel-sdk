@@ -482,7 +482,7 @@ public:
    virtual StreamType getType() = 0;
 
    /**
-    * Set Device for audio stream. For @ref VOICE_CALL, @ref startAudio API is required to be called
+    * Set Device for audio stream. For @ref VOICE_CALL, @ref IAudioVoiceStream::startAudio API is required to be called
     * on audio stream object for this API to take effect.
     *
     * @param [in] devices     Devices list.
@@ -530,8 +530,8 @@ public:
       = 0;
 
    /**
-    * Request to mute/unmute audio stream. For @ref VOICE_CALL, @ref startAudio API is required to be called
-    * on audio stream object for this API to take effect.
+    * Request to mute/unmute audio stream. For @ref VOICE_CALL, @ref IAudioVoiceStream::startAudio
+    * API is required to be called on audio stream object for this API to take effect.
     *
     * @param [in] mute        mute setting for direction.
     * @param [in] callback    callback to know the status of the request.
@@ -586,10 +586,10 @@ public:
     * use @ref telux::tel::ICall::startDtmfTone API.
     *
     * @param [in] dtmfTone     DTMF tone properties
-    *        [in] duration     Duration (in milliseconds) for which the tone needs to be played. The
+    * @param [in] duration     Duration (in milliseconds) for which the tone needs to be played. The
     *                          constant infiniteDtmfDuration(=0xFFFF) represents infinite duration.
-    *        [in] gain         DTMF tone gain
-    *        [in] callback     callback to get the response of playDtmfTone.
+    * @param [in] gain         DTMF tone gain
+    * @param [in] callback     callback to get the response of playDtmfTone.
     *
     * @returns Status of the request i.e. success or suitable status code.
     */
@@ -601,7 +601,7 @@ public:
     * stream
     *
     * @param [in] direction   Direction associated with the DTMF tone
-    * @      [in] callback    callback to get the response of stopDtmfTone.
+    * @param [in] callback    callback to get the response of stopDtmfTone.
     *
     * @returns Status of the request i.e. success or suitable status code.
     */
@@ -612,7 +612,7 @@ public:
     * Register a listener to get notified when a DTMF tone is detected in the active voice stream
     *
     * @param [in] listener     Pointer of IVoiceListener object that processes the notification
-    *        [in] callback     callback to get the response of registerListener
+    * @param [in] callback     callback to get the response of registerListener
     *
     * @returns Status of registerListener i.e success or suitable status code.
     */
@@ -665,14 +665,14 @@ public:
     virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
 
    /**
-    * Write Samples\Frames to audio stream. First write starts playback operation.
+    * Write Samples/Frames to audio stream. First write starts playback operation.
     *
     * Write in case of compressed audio format maintains a pipeline, if the callback returns with
     * same number of bytes written as requested and no error occured, user can send next buffer.
     * If the number of bytes returned are not equal to the requested write size, then need to resend
-    * the buffer again from the leftover offset after waiting for the @onReadyForWrite() event.
-    * Once the last buffer is sent and the playback operation is complete, delete the playback
-    * stream to avoid receiving silent packets on RX path.
+    * the buffer again from the leftover offset after waiting for the
+    * IPlayListener::onReadyForWrite() event. Once the last buffer is sent and the playback
+    * operation is complete, delete the playback stream to avoid receiving silent packets on RX path.
     *
     * @param [in] buffer       stream buffer for write.
     * @param [in] callback     callback to get the response of write.

@@ -100,7 +100,7 @@ struct NatConfig {
     std::string addr;    /**< Private IP address */
     uint16_t port;       /**< Private port */
     uint16_t globalPort; /**< Global port */
-    IpProtocol proto;    /**< IP protocol @ref telux::net::IpProtocol */
+    IpProtocol proto;    /**< IP protocol @ref telux::data::IpProtocol */
 };
 
 /**
@@ -162,7 +162,7 @@ class INatManager {
      * permission to invoke this API successfully.
      *
      * @param [in] profileId         Profile identifier to which static entry will be mapped to.
-     * @param [in] snatConfig        snatConfiguration @ref telux::net::NatConfig
+     * @param [in] snatConfig        snatConfiguration @ref telux::data::net::NatConfig
      * @param [in] callback          optional callback to get the response addStaticNatEntry
      * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *
@@ -180,7 +180,7 @@ class INatManager {
      * permission to invoke this API successfully.
      *
      * @param [in] profileId         Profile identifier to which static entry will be removed from.
-     * @param [in] snatConfig        snatConfiguration @ref telux::net::NatConfig
+     * @param [in] snatConfig        snatConfiguration @ref telux::data::net::NatConfig
      * @param [in] callback          optional callback to get the response removeStaticNatEntry
      * @param [in] slotId            Specify slot id which has the sim that contains profile id
      *

@@ -395,7 +395,7 @@ class ICardChannelCallback : public telux::common::ICommandCallback {
      *
      * @param [in] channel  Channel Id for the logical channel.
      * @param [in] result   @ref IccResult of open logical channel.
-     * @param [in] error    @ref ErrorCode of the request.
+     * @param [in] error    @ref telux::common::ErrorCode of the request.
      *
      */
     virtual void onChannelResponse(int channel, IccResult result, telux::common::ErrorCode error)
@@ -409,13 +409,13 @@ class ICardCommandCallback : public telux::common::ICommandCallback {
      * Exchange Sim IO.
      *
      * @param [in] result   @ref IccResult of transmit APDU command
-     * @param [in] error    @ref ErrorCode of the request,
+     * @param [in] error    @ref telux::common::ErrorCode of the request,
      *                      Possible error codes are
-     *                      - @ref SUCCESS
-     *                      - @ref INTERNAL
-     *                      - @ref NO_MEMORY
-     *                      - @ref INVALID_ARG
-     *                      - @ref MISSING_ARG
+     *                      - @ref telux::common::ErrorCode::SUCCESS
+     *                      - @ref telux::common::ErrorCode::INTERNAL
+     *                      - @ref telux::common::ErrorCode::NO_MEMORY
+     *                      - @ref telux::common::ErrorCode::INVALID_ARG
+     *                      - @ref telux::common::ErrorCode::MISSING_ARG
      */
     virtual void onResponse(IccResult result, telux::common::ErrorCode error) = 0;
 };

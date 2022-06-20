@@ -88,6 +88,7 @@ when       who     what, where, why
 @trhdgend
 @tr @tdmulrow{1,AB} @tdmulrowend @td Apr 2022 @tdend @tdlast Added documentation for API access control @tdlastend @trend
 @tr @tdmulrow{48,AA} @tdmulrowend @td Mar 2022 @tdend @tdlast Addition of documentation for Call flow of control filesystem for ECALL operation @tdlastend @trendcline
+@tr @tdmulrowempty @td Apr 2022 @tdend @tdlast Added crypto APIs call flows @tdlastend @trendcline
 @tr @tdmulrowempty @td Jan 2022 @tdend @tdlast Updated C-V2X radio call flows @tdlastend @trendcline
 @tr @tdmulrowempty @td Dec 2021 @tdend @tdlast Addition of documentation for sensor self test APIs @tdlastend @trendcline
 @tr @tdmulrowempty @td Dec 2021 @tdend @tdlast Addition of documentation for ECALL and OTA operation APIs @tdlastend @trendcline

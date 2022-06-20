@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       CommonDefines.hpp
  * @brief      Contains enumerations and variables used across telephony, location, data subsystems.
@@ -339,7 +375,6 @@ enum class ErrorCode {
    DS_PROFILE_3GPP2_ERR_OUT_OF_PROFILE = 4354,            /**< Creation of a new 3GPP2 profile
                                                                failed because the limit has already
                                                                been reached*/
-
    // Transport error codes
    INTERNAL_ERROR = -1,        /**< Internal error */
    SERVICE_ERROR = -2,         /**< Service error */
@@ -360,6 +395,73 @@ enum class ErrorCode {
    SUBSYSTEM_UNAVAILABLE = 5000, /**< Underlying service currently unavailable */
    OPERATION_TIMEOUT = 5001,     /**< Timeout error */
    ROLLBACK_FAILED = 5002,       /**< Rollback to initial state failed */
+
+   // Security error codes
+   ROT_ALREADY_SET = 5003,           /**< Root of trust already configured */
+   UNSUPPORTED_PURPOSE = 5004,       /**< Unsupported use of the key */
+   INCOMPATIBLE_PURPOSE = 5005,      /**< Incompatible purpose */
+   UNSUPPORTED_ALGO = 5006,          /**< Unsupported algorithm */
+   INCOMPATIBLE_ALGO = 5007,         /**< Incompatible algorithm */
+   UNSUPPORTED_KEY_SIZE = 5008,      /**< Unsupported key size */
+   UNSUPPORTED_BLOCK_MODE = 5009,    /**< Unsupported block mode */
+   INCOMPATIBLE_BLOCK_MODE = 5010,   /**< Incompatible block mode */
+   UNSUPPORTED_MAC_LEN = 5011,       /**< Unsupported MAC length */
+   UNSUPPORTED_PADDING_MODE = 5012,  /**< Unsupported padding mode */
+   UNSUPPORTED_DIGEST = 5013,        /**< Unsupported digest */
+   INCOMPATIBLE_DIGEST = 5014,       /**< Incompatible digest */
+   INVAL_EXP_TIME = 5015,            /**< Invalid expiration time */
+   INVAL_USR_ID = 5016,              /**< Invalid user ID */
+   INVAL_AUTH_TIMEOUT = 5017,        /**< Invalid authorization timeout */
+   UNSUPPORTED_KEY_FMT = 5018,       /**< Unsupported key format */
+   INCOMPATIBLE_KEY_FMT = 5019,      /**< Incompatible key format */
+   UNSUPPORTED_KEY_ENC_ALGO = 5020,  /**< Unsupported key encryption algorithm
+                                          (for PKCS8 & PKCS12) */
+   UNSUPPORTED_KEY_VRFY_ALGO = 5021, /**< Unsupported key verification algorithm
+                                          (for PKCS8 & PKCS12) */
+   INVAL_IN_LEN = 5022,              /**< Invalid input length */
+   INVAL_KEY_EXPRT_OPTNS = 5023,     /**< Invalid oprions for key export */
+   DELEGATION_NOT_ALLOWED = 5024,    /**< Delegation not allowed */
+   KEY_NOT_YET_VALID = 5025,         /**< Key still not valid */
+   KEY_EXPIRED = 5026,               /**< Key has expired */
+   KEY_USR_NOT_AUTHENTICATED = 5027, /**< Key user not authenticated */
+   OUT_PARAMETER_NULL = 5028,        /**< Null output argument */
+   INVAL_OPERATION_HNDL = 5029,      /**< Invalid operation handle */
+   INSUFFICIENT_BUF_SPACE = 5030,    /**< Insufficient buffer space */
+   VERIFICATION_FAILED = 5031,       /**< Verifcation failed */
+   TOO_MANY_OPS = 5032,              /**< Too many operations */
+   UNEXPECTED_NULL_PTR = 5033,       /**< Unexpected null pointer */
+   INVAL_KEY_BLOB = 5034,            /**< Invalid key blob */
+   IMPORTED_KEY_NOT_ENC = 5035,      /**< Imported key not encrypted */
+   IMPORTED_KEY_DEC_FAIL = 5036,     /**< Imported key decryption failed */
+   IMPORTED_KEY_NOT_SIGNED = 5037,   /**< Imported key not signed */
+   IMPORTED_KEY_VRFY_FAIL = 5038,    /**< Imported key verification failed */
+   UNSUPPORTED_TAG = 5039,           /**< Unsupported tag */
+   INVAL_TAG = 5040,                 /**< Invalid TAG */
+   IMPORT_PARAM_MISMATCH = 5041,     /**< Mismatch in import parameters */
+   SEC_HW_ACCESS_DENIED = 5042,      /**< Secure hardware access denied */
+   CONCUR_ACCESS_CONFLICT = 5043,    /**< Concurrent access conflict */
+   SEC_HW_BUSY = 5044,               /**< Secure hardware busy */
+   SEC_HW_COM_FAIL = 5045,           /**< Secure hardware communication failed */
+   UNSUPPORTED_EC_FIELD = 5046,      /**< Unsupported EC field */
+   MISSING_NONCE = 5047,             /**< Missing nonce */
+   INVAL_NONCE = 5048,               /**< Invalid nonce */
+   MISSING_MAC_LEN = 5049,           /**< Missing MAC length */
+   KEY_RATE_LIMIT_EXCEEDED = 5050,   /**< Key limit exceeded */
+   CALLER_NONCE_PROHIBITED = 5051,   /**< Caller nonce proibited */
+   KEY_MAX_OPS_EXCEEDED = 5052,      /**< Key maximum operations exceeded */
+   INVAL_MAC_LEN = 5053,             /**< Invalid MAC length */
+   MISSING_MIN_MAC_LEN = 5054,       /**< Missing minimum MAC length */
+   UNSUPPORTED_MIN_MAC_LEN = 5055,   /**< Unsupported minimum MAC length */
+   UNSUPPORTED_KDF = 5056,           /**< Unsupported KDF */
+   UNSUPPORTED_EC_CURVE = 5057,      /**< Unsupported EC curve */
+   KEY_REQ_UPGRADE = 5058,           /**< Key requires upgrade */
+   ATTESTATION_CHLNG_MIS = 5059,     /**< Attestation challenge missing */
+   KM_NOT_CONFGRD = 5060,            /**< Keymaster not configured */
+   ATTESTATION_APPID_MIS = 5061,     /**< Attestation app ID missing */
+   CANNOT_ATTEST_IDS = 5062,         /**< Can not attest IDs */
+   UNIMPLEMENTED = 5063,             /**< Unimplemented */
+   VER_MISMATCH = 5064,              /**< Version mismatch */
+   SOTER_ERR = 5065                  /**< Soter error */
 };
 
 /**
@@ -428,7 +530,7 @@ using ResponseCallback = std::function<void(telux::common::ErrorCode errorCode)>
 /**
  * This API is invoked when the initialization of an object completes.
  *
- * @param[in] status - @ref Service status
+ * @param[in] status - @ref ServiceStatus
  *
  */
 using InitResponseCb = std::function<void(telux::common::ServiceStatus status)>;

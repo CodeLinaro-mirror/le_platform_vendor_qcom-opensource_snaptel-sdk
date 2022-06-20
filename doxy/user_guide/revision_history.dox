@@ -86,6 +86,8 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrowempty @td Apr 2022 @tdend @tdlast
+\- Added sample apps for crypto APIs @tdlastend @trendcline
 @tr @tdmulrow{26,AA} @tdmulrowend
 @td Mar 2022 @tdend @tdlast
 \- Addition of documentation for Call flow of control filesystem for ECALL operation. @tdlastend @trendcline

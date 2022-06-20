@@ -445,6 +445,7 @@ public:
     * @param [in] severity                @ref CmasSeverity
     * @param [in] urgency                 @ref CmasUrgency
     * @param [in] certainty               @ref CmasCertainty
+    * @param [in] warningAreaInfo         @ref WarningAreaInfo
     */
    CmasInfo(GeographicalScope geographicalScope, int msgId, int serialNumber,
       std::string languageCode, std::string messageText, MessagePriority priority,

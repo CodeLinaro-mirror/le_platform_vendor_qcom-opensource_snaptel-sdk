@@ -138,9 +138,11 @@ class SensorFactory {
     virtual std::shared_ptr<ISensorFeatureManager> getSensorFeatureManager(
         telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
+#ifndef TELUX_DOXY_SKIP
  protected:
     SensorFactory();
     virtual ~SensorFactory();
+#endif
 
  private:
     SensorFactory(const SensorFactory &) = delete;

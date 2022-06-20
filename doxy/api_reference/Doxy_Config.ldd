@@ -27,6 +27,42 @@
 #  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
 
+##############################################################################
+#  Changes from Qualcomm Innovation Center are provided under the following license:
+#
+#  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted (subject to the limitations in the
+#  disclaimer below) provided that the following conditions are met:
+#
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#
+#      * Redistributions in binary form must reproduce the above
+#        copyright notice, this list of conditions and the following
+#        disclaimer in the documentation and/or other materials provided
+#        with the distribution.
+#
+#      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+#        contributors may be used to endorse or promote products derived
+#        from this software without specific prior written permission.
+#
+#  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+#  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+#  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+#  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+#  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+#  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+#  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+#  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+#  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+#  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+
 #---------------------------------------------------------------------------
 # Project-related configuration options
 #---------------------------------------------------------------------------
@@ -34,9 +70,9 @@
 DOXYFILE_ENCODING      = UTF-8
 #                        The PROJECT_NAME and PROJECT_NUMBER appear in the header
 #                        on each HTML page.
-PROJECT_NAME           = "Telematics SDK - Interface Specification"
+PROJECT_NAME           = "Telematics SDK - API Reference"
 PROJECT_NUMBER         = "v$(SDK_VERSION)"
-PROJECT_BRIEF          = 
+PROJECT_BRIEF          =
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = "."
 CREATE_SUBDIRS         = NO
@@ -140,7 +176,7 @@ ALIASES +=               "limit=@par Limitations"
 #                     CUSTOM ALIASES TO SUPPORT BOTH HTML AND LATEX OUTPUT:
 ALIASES +=              "apr_msgpayload=@par APR message payload" \
                         "apr_msgpayload{1}=@par APR message payload (\1)" \
-                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics SDK </b> <br /><br /><br /> Interface Specification</span>\
+                        "titlepage=@htmlonly <center><span style='font-size:1cm;'><b>Telematics SDK </b> <br /><br /><br /> API Reference</span>\
                         <br /><span style='font-size:0.8cm;'></span><br /> \
                         <span style='font-size:0.4cm;'><br /> $(today)<br /><br /></span></>@endhtmlonly \
                         @latexonly \vspace{1.0in}\begin{flushleft}\textbf{\Huge \doctitle} \par \vspace{6pt} {\huge \doctype} \par \vspace{16pt} {\Large \dcn \par \vspace{1pt} \docdate} \end{flushleft}\sffamily\small@endlatexonly" \
@@ -193,6 +229,7 @@ ALIASES +=              "tdmultcol{2}=@htmlonly<tr><td colspan=\"\1\">@endhtmlon
 ALIASES +=              "tdmulrow{2}=@htmlonly<td rowspan=\"\1\">\2@endhtmlonly@latexonly\multirow{\1}{*}{\small\sf\textbf{\2}}@endlatexonly" \
                         "tdmulrowend=@htmlonly</td>@endhtmlonly@latexonly & @endlatexonly" \
                         "tdmulrowempty=@latexonly & @endlatexonly"
+ALIASES += "deprecated=@par Deprecated\n"
 
 @INCLUDE=$(ALIAS_INCLUDE_FILE)
 OPTIMIZE_OUTPUT_FOR_C  = YES
@@ -240,7 +277,7 @@ STRICT_PROTO_MATCHING  = NO
 GENERATE_TODOLIST      = NO
 GENERATE_TESTLIST      = NO
 GENERATE_BUGLIST       = NO
-GENERATE_DEPRECATEDLIST= YES
+GENERATE_DEPRECATEDLIST= NO
 #      Uncomment one of the following ENABLED_SECTION lines
 ENABLED_SECTIONS       =
 MAX_INITIALIZER_LINES  = 30
@@ -437,7 +474,7 @@ INCLUDE_PATH           = $(TELUX_GIT_ROOT)/include \
                          $(TELUX_GIT_ROOT)/doxy/images
 INCLUDE_FILE_PATTERNS  = *.hpp \
                          *.png
-PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS
+PREDEFINED             = TELUX_DOXY_SKIP
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = NO
 #---------------------------------------------------------------------------

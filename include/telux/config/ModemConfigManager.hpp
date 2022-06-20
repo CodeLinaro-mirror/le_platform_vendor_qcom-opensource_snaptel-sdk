@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -156,7 +156,7 @@ public:
     * @returns    A future that caller can wait on to be notified when modem config
     *             subsystem is ready.
     *
-    * @deprecated Use InitResponseCb callback in factory API @ref getModemConfigManager.
+    * @deprecated Use InitResponseCb callback in factory API @ref ConfigFactory::getModemConfigManager.
     */
     virtual std::future<bool> onSubsystemReady() = 0;
 

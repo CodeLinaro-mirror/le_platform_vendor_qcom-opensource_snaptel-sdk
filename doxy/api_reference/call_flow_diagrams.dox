@@ -3170,7 +3170,7 @@ Application must perform C-V2X radio initialization before calling any methods o
 \end{figure}
 @endlatexonly
 
-@html_image{compressed_audio_format_playback.png,Audio Compressed Audio Format Playback call flow,80,80,Compressed Audio Format Playback call flow}
+@html_image{compressed_audio_format_playback_callflow.png,Audio Compressed Audio Format Playback call flow,80,80,Compressed Audio Format Playback call flow}
 
 1. Application requests Audio factory for an Audio Manager.
 2. Audio factory return IAudioManager object to application.
@@ -3233,7 +3233,7 @@ Application must perform C-V2X radio initialization before calling any methods o
 \end{figure}
 @endlatexonly
 
-@html_image{audio_playback_on_voice_paths_callflow.png,Compressed audio format playback on Voice Paths Callflow,80,80,Compressed audio format playback on Voice Paths Callflow}
+@html_image{compressed_audio_format_playback_on_voice_paths_callflow.png,Compressed audio format playback on Voice Paths Callflow,80,80,Compressed audio format playback on Voice Paths Callflow}
 
 1. Application requests Audio factory for an Audio Manager.
 2. Audio factory return IAudioManager object to application.
@@ -4007,4 +4007,83 @@ sensor object being returned.
 invoked by the sensor framework once the self test is completed.
 4. Once the self test is completed, the callback gets invoked indicating the result of the self
 test.
+
+@section crypto_call_flow Security
+
+The CryptoManager class provides APIs to generate, import, export and upgrade key based on various cryptographic algorithms. Data can be signed and verified using this key. Further data can be encrypted and decrypted with the key.
+
+@subsection crypto_gen_key_call_flow Call flow to generate and export key
+
+@anchor crypto_gen_key_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{crypto_gen_key_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to generate and export key}
+  \label{crypto_gen_key_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{crypto_gen_key_call_flow.png,Call flow to generate and export key,80,80,Call flow to generate and export key}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoManager.
+4. An instance of ICryptoManager is received by the application.
+5. Application creates an instance of ICryptoParam using CryptoParamBuilder to define input parameters for the key.
+6. Application calls generateKey() API of ICryptoManager. Now, the application has a key blob which represents the crypto key. Application should use this key blob for signing, verification, encryption and decryption operations.
+7. For a given use-case, if the application wants to extract public key out of the key blob, it can do so by calling export key.
+8. ICryptoManager returns key in the format requested for ex; X509.
+
+@subsection crypto_sign_call_flow Call flow to sign and verify data
+
+@anchor crypto_sign_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{crypto_sign_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to sign and verify data}
+  \label{crypto_sign_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{crypto_sign_call_flow.png,Call flow to sign and verify data,80,80,Call flow to sign and verify data}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoManager.
+4. Application creates an instance of ICryptoParam using CryptoParamBuilder to define input parameters for how the signing should occur.
+5. Application calls signData() API of ICryptoManager passing the key blob, data to be signed and input parameters.
+6. ICryptoManager returns signature corresponding to the inputs given.
+7. Application creates an instance of ICryptoParam using CryptoParamBuilder to define input parameters for how the verification should occur.
+8. Application calls verifyData() API of ICryptoManager passing the key blob, signature, data to be verified and input parameters.
+9. ICryptoManager returns success if the verification succeeds (valid data and signature) otherwise appropriate error code.
+
+@subsection crypto_enc_call_flow Call flow to encrypt and decrypt data
+
+@anchor crypto_enc_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{crypto_enc_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to encrypt and decrypt data}
+  \label{crypto_enc_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{crypto_enc_call_flow.png,Call flow to encrypt and decrypt data,80,80,Call flow to encrypt and decrypt data}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoManager.
+4. Application creates an instance of ICryptoParam using CryptoParamBuilder to define input parameters for how the encryption should occur.
+5. Application calls encryptData() API of ICryptoManager passing the key blob, data to be encrypted and input parameters.
+6. ICryptoManager returns encrypted data corresponding to the inputs given.
+7. Application creates an instance of ICryptoParam using CryptoParamBuilder to define input parameters for how the decryption should occur.
+8. Application calls decryptData() API of ICryptoManager passing the key blob, encrypted data and input parameters.
+9. ICryptoManager returns decrypted data otherwise appropriate error code.
+
 */

@@ -64,7 +64,7 @@
  */
 
 /**
- * @file       ServingSystemManager.hpp
+ * @file       data/ServingSystemManager.hpp
  *
  * @brief      Serving System Manager class provides the interface to access network and modem
  *             low level services.

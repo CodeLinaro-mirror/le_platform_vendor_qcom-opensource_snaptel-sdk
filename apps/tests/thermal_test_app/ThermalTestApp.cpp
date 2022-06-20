@@ -62,10 +62,10 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <iostream>
 #include <memory>
 #include <iomanip>
+#include <csignal>
 
 #include <telux/common/Version.hpp>
 #include <telux/common/CommonDefines.hpp>
@@ -74,22 +74,76 @@
 
 #include "ThermalHelper.hpp"
 #include "ThermalTestApp.hpp"
+#include "ThermalListener.hpp"
 
 using namespace telux::common;
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
+
+std::shared_ptr<ThermalTestApp> thermalTestApp_ = nullptr;
+auto sdkVersion = telux::common::Version::getSdkVersion();
+std::string sdkReleaseName = telux::common::Version::getReleaseName();
+std::string APP_NAME = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."
+                       + std::to_string(sdkVersion.minor) + "." + std::to_string(sdkVersion.patch)
+                       + "\n" + "Release name: " + sdkReleaseName;
 
 ThermalTestApp::ThermalTestApp(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
 }
 
 ThermalTestApp::~ThermalTestApp() {
-    if (thermalManager_) {
-        thermalManager_ = nullptr;
+    thermalManagerMap_.clear();
+}
+
+void signalHandler(int signum) {
+    thermalTestApp_->signalHandler(signum);
+}
+
+void ThermalTestApp::signalHandler(int signum) {
+    std::cout << APP_NAME << " Interrupt signal (" << signum << ") received.." << std::endl;
+    cleanup();
+    exit(1);
+}
+
+void ThermalTestApp::cleanup() {
+    for (auto thermalManager : thermalManagerMap_) {
+        auto procType = thermalManager.first;
+        auto manager = thermalManager.second;
+        if (manager) {
+            Status status = manager->deregisterListener(thermalListenerMap_[procType]);
+            if (status == Status::SUCCESS) {
+                std::cout << "Deregister for Thermal Listener succeed." << std::endl;
+            } else {
+                std::cout << "Deregister for Thermal Listener failed." << std::endl;
+            }
+        }
     }
+    thermalManagerMap_.clear();
 }
 
 bool ThermalTestApp::init() {
+    bool initStatus = false;
+    int cid = -1;
+
+    do {
+        ThermalTestApp::getInput(
+            "Select the application processor for operations(1-LOCAL/2-REMOTE/3-BOTH): ", cid);
+        if (cid == 1) {
+            initStatus = initThermalManager(telux::common::ProcType::LOCAL_PROC);
+        } else if (cid == 2) {
+            initStatus = initThermalManager(telux::common::ProcType::REMOTE_PROC);
+        } else if (cid == 3) {
+            initThermalManager(telux::common::ProcType::LOCAL_PROC);
+            initStatus |= initThermalManager(telux::common::ProcType::REMOTE_PROC);
+        } else {
+            std::cout << " Invalid input:  " << cid << ", please re-enter" << std::endl;
+        }
+    } while ((cid != 1) && (cid != 2) && (cid != 3));
+
+    if (!initStatus) {
+        return false;
+    }
+
     std::shared_ptr<ConsoleAppCommand> thermalZonesCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "thermal_zones", {},
             std::bind(&ThermalTestApp::getThermalZones, this, std::placeholders::_1)));
@@ -106,21 +160,41 @@ bool ThermalTestApp::init() {
         = {thermalZonesCommand, coolingDevicesCommand, thermalZoneByIdCommand,
             coolingDeviceByIdCommand};
     addCommands(commandsListThermalSubMenu);
-    if (thermalManager_ == nullptr) {
-        std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
-        auto &thermalFactory = telux::therm::ThermalFactory::getInstance();
-        thermalManager_ = thermalFactory.getThermalManager([&](ServiceStatus status) {
-            prom.set_value(status);
-        });
-        ServiceStatus mgrStatus = prom.get_future().get();
-        if(mgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "Thermal Subsystem is ready " << std::endl;
-        } else {
-            std::cout << "ERROR - Unable to initialize Thermal subsystem" << std::endl;
-            return false;
-        }
-    }
     ConsoleApp::displayMenu();
+    return true;
+}
+
+bool ThermalTestApp::initThermalManager(telux::common::ProcType procType) {
+    // Get thermal factory instance
+    auto &thermalFactory = telux::therm::ThermalFactory::getInstance();
+    // Get thermal manager instance
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    auto thermalManager = thermalFactory.getThermalManager(
+        [&](ServiceStatus status) { prom.set_value(status); }, procType);
+
+    if (thermalManager == nullptr) {
+        std::cout << " ERROR - Failed to get thermal manager instance \n";
+        return false;
+    }
+
+    thermalListenerMap_.emplace(procType, std::make_shared<ThermalListener>());
+    Status status = thermalManager->registerListener(thermalListenerMap_[procType]);
+    if (status == Status::SUCCESS) {
+        std::cout << "Register for Thermal Listener succeed." << std::endl;
+    } else {
+        std::cout << "Register for Thermal Listener failed." << std::endl;
+    }
+
+    std::cout << " thermal manager instance returned for proc type:" << static_cast<int>(procType);
+    thermalManagerMap_.emplace(procType, thermalManager);
+    // Wait for thermal manager to be ready
+    ServiceStatus mgrStatus = prom.get_future().get();
+    if (mgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Thermal Subsystem is ready " << std::endl;
+    } else {
+        std::cout << "ERROR - Unable to initialize Thermal subsystem" << std::endl;
+        return false;
+    }
     return true;
 }
 
@@ -139,36 +213,58 @@ void ThermalTestApp::printThermalZoneHeader() {
               << std::endl;
 }
 
+int ThermalTestApp::readAndValidateProcType() {
+    int operationType = -1;
+    do {
+        ThermalTestApp::getInput(" Enter operation type (0 - LOCAL, 1 - REMOTE)", operationType);
+        if ((operationType < 0) || (operationType > 1)) {
+            std::cout << " Invalid input:  " << operationType << ", please re-enter" << std::endl;
+        }
+    } while ((operationType != 0) && (operationType != 1));
+    return operationType;
+}
+
 void ThermalTestApp::getThermalZones(std::vector<std::string> userInput) {
-    if (thermalManager_) {
-        std::vector<std::shared_ptr<telux::therm::IThermalZone>> zoneInfo
-            = thermalManager_->getThermalZones();
-        if (zoneInfo.size() > 0) {
-            printThermalZoneHeader();
-            for (size_t index = 0; index < zoneInfo.size(); index++) {
+
+    int operationType = readAndValidateProcType();
+    telux::common::ProcType procType = static_cast<telux::common::ProcType>(operationType);
+    if (thermalManagerMap_.find(procType) == thermalManagerMap_.end()) {
+        std::cout << " Thermal manager is not ready for operation type: " << operationType;
+        return;
+    }
+    std::vector<std::shared_ptr<telux::therm::IThermalZone>> zoneInfo
+        = thermalManagerMap_[procType]->getThermalZones();
+    if (zoneInfo.size() > 0) {
+        printThermalZoneHeader();
+        for (size_t index = 0; index < zoneInfo.size(); index++) {
+            if (zoneInfo[index]) {
                 ThermalHelper::printThermalZoneInfo(zoneInfo[index]);
+            } else {
+                std::cout << "No thermal zone found at index: " << index << std::endl;
             }
         }
     }
 }
 
 void ThermalTestApp::getThermalZoneById(std::vector<std::string> userInput) {
-    if (thermalManager_) {
-        int thermalZoneId = -1;
-        std::cout << "Enter thermal zone id: ";
-        if (!(std::cin >> thermalZoneId)) {
-            std::cout << "ERROR Invalid input " << std::endl;
-            std::cin.clear();
-        }
-        std::cin.ignore();
-        std::cout << "Thermal zone Id: " << thermalZoneId << std::endl;
-        std::shared_ptr<telux::therm::IThermalZone> tzInfo
-            = thermalManager_->getThermalZone(thermalZoneId);
-        if (tzInfo != nullptr) {
-            printThermalZoneHeader();
-            ThermalHelper::printThermalZoneInfo(tzInfo);
-            ThermalHelper::printBindingInfo(tzInfo);
-        }
+    int thermalZoneId = -1;
+    std::cout << "Enter thermal zone id: ";
+    ThermalTestApp::getInput("Enter thermal zone id: ", thermalZoneId);
+    int operationType = readAndValidateProcType();
+    telux::common::ProcType procType = static_cast<telux::common::ProcType>(operationType);
+    if (thermalManagerMap_.find(procType) == thermalManagerMap_.end()) {
+        std::cout << " Thermal manager is not ready for operation type: " << operationType;
+        return;
+    }
+    std::cout << "Thermal zone Id: " << thermalZoneId << std::endl;
+    std::shared_ptr<telux::therm::IThermalZone> tzInfo
+        = thermalManagerMap_[procType]->getThermalZone(thermalZoneId);
+    if (tzInfo != nullptr) {
+        printThermalZoneHeader();
+        ThermalHelper::printThermalZoneInfo(tzInfo);
+        ThermalHelper::printBindingInfo(tzInfo);
+    } else {
+        std::cout << "No thermal zone found for Id: " << thermalZoneId << std::endl;
     }
 }
 
@@ -186,42 +282,45 @@ void ThermalTestApp::printCoolingDeviceHeader() {
 }
 
 void ThermalTestApp::getCoolingDevices(std::vector<std::string> userInput) {
-    if (thermalManager_) {
-        std::vector<std::shared_ptr<telux::therm::ICoolingDevice>> coolingDevice
-            = thermalManager_->getCoolingDevices();
-        if (coolingDevice.size() > 0) {
-            printCoolingDeviceHeader();
-            for (size_t index = 0; index < coolingDevice.size(); index++) {
+    int operationType = readAndValidateProcType();
+    telux::common::ProcType procType = static_cast<telux::common::ProcType>(operationType);
+    if (thermalManagerMap_.find(procType) == thermalManagerMap_.end()) {
+        std::cout << " Thermal manager is not ready for operation type: " << operationType;
+        return;
+    }
+    std::vector<std::shared_ptr<telux::therm::ICoolingDevice>> coolingDevice
+        = thermalManagerMap_[procType]->getCoolingDevices();
+    if (coolingDevice.size() > 0) {
+        printCoolingDeviceHeader();
+        for (size_t index = 0; index < coolingDevice.size(); index++) {
+            if (coolingDevice[index]) {
                 ThermalHelper::printCoolingDevInfo(coolingDevice[index]);
+            } else {
+                std::cout << "No cooling devices found at index: " << index << std::endl;
             }
-        } else {
-            std::cout << "No cooling devices found!" << std::endl;
         }
+    } else {
+        std::cout << "No cooling devices found!" << std::endl;
     }
 }
 
 void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
-    if (thermalManager_) {
-        int coolingDevId = -1;
-        std::cout << "Enter cooling device Id: ";
-        if (!(std::cin >> coolingDevId)) {
-            std::cout << "ERROR Invalid input " << std::endl;
-            std::cin.clear();
-        }
-        std::cin.ignore();
-        if (coolingDevId >= 0) {
-            std::cout << "Cooling device Id: " << coolingDevId << std::endl;
-            std::shared_ptr<telux::therm::ICoolingDevice> cdev
-                = thermalManager_->getCoolingDevice(coolingDevId);
-            if (cdev != nullptr) {
-                printCoolingDeviceHeader();
-                ThermalHelper::printCoolingDevInfo(cdev);
-            } else {
-                std::cout << "Cooling device not found!" << std::endl;
-            }
-        } else {
-            std::cout << " Invalid input: " << coolingDevId << std::endl;
-        }
+    int coolingDevId = -1;
+    ThermalTestApp::getInput("Enter cooling device Id: ", coolingDevId);
+    int operationType = readAndValidateProcType();
+    telux::common::ProcType procType = static_cast<telux::common::ProcType>(operationType);
+    if (thermalManagerMap_.find(procType) == thermalManagerMap_.end()) {
+        std::cout << " Thermal manager is not ready for operation type: " << operationType;
+        return;
+    }
+    std::cout << "Cooling device Id: " << coolingDevId << std::endl;
+    std::shared_ptr<telux::therm::ICoolingDevice> cdev
+        = thermalManagerMap_[procType]->getCoolingDevice(coolingDevId);
+    if (cdev != nullptr) {
+        printCoolingDeviceHeader();
+        ThermalHelper::printCoolingDevInfo(cdev);
+    } else {
+        std::cout << "No cooling device found for Id: " << coolingDevId << std::endl;
     }
 }
 
@@ -230,19 +329,14 @@ int main(int argc, char **argv) {
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
-    if (rc == -1){
+    if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
-    auto sdkVersion = telux::common::Version::getSdkVersion();
-    std::string sdkReleaseName = telux::common::Version::getReleaseName();
-    std::string appName = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."
-                          + std::to_string(sdkVersion.minor) + "."
-                          + std::to_string(sdkVersion.patch) +"\n" +
-                          "Release name: " + sdkReleaseName;
-    ThermalTestApp thermalTestApp(appName, "Therm> ");
+    thermalTestApp_ = std::make_shared<ThermalTestApp>(APP_NAME, "Therm> ");
+    signal(SIGINT, signalHandler);
     // initialize commands and display
-    if(!thermalTestApp.init()) {
+    if (!thermalTestApp_->init()) {
         return 1;
     }
-    return thermalTestApp.mainLoop();  // Main loop to continuously read and execute commands
+    return thermalTestApp_->mainLoop();  // Main loop to continuously read and execute commands
 }

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -214,6 +214,7 @@ void AudioClient::loadConfFileData() {
         config_.sampleRate = static_cast<uint32_t>(std::stoi(input));
         input = parser.getValue("DEVICE_TYPE");
         DeviceType device = static_cast<DeviceType>(std::stoi(input));
+        config_.deviceTypes.clear();
         config_.deviceTypes.emplace_back(device);
         input = parser.getValue("CHANNEL_MASK");
         command = std::stoi(input);
@@ -243,6 +244,7 @@ void AudioClient::loadConfFileData() {
         std::cout << "ERROR: "<< "Unable to read from file" << std::endl;
         std::cout << "Using default parameters" << std::endl;
         config_.sampleRate = DEFAULT_SAMPLE_RATE;
+        config_.deviceTypes.clear();
         config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE));
         config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
         config_.ecnrMode = static_cast<EcnrMode>(DEFAULT_ECNR_MODE);
@@ -308,6 +310,7 @@ void AudioClient::queryInputType() {
     if (!consoleFlag) {
         AudioHelper::getUserSampleRateInput(config_.sampleRate);
         AudioHelper::getUserChannelInput(config_.channelTypeMask);
+        config_.deviceTypes.clear();
         AudioHelper::getUserDeviceInput(config_.deviceTypes);
         AudioHelper::getUserEcnrModeInput(config_.ecnrMode);
     }

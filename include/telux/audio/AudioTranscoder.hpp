@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -161,8 +161,8 @@ public:
      * Write in case of compressed audio format maintains a pipeline, if the callback returns with
      * same number of bytes written as requested and no error occured, user can send next buffer.
      * If the number of bytes returned are not equal to the requested write size, then user needs to
-     * resend the buffer again from the leftover offset after waiting for the @onReadyForWrite()
-     * event.
+     * resend the buffer again from the leftover offset after waiting for the
+     * ITranscodeListener::onReadyForWrite() event.
      *
      * @param [in] buffer         buffer that needs to be transcoded.
      * @param [in] isLastBuffer   represents whether this buffer is last buffer or not. Once last

@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -2327,7 +2328,7 @@ public:
  * Valid range is [1 to (4e9-1)]. Values other than valid range means integrity risk is disabled
  * and @ref ILocationInfoEx::getProtectionLevelAlongTrack,
  * @ref ILocationInfoEx::getProtectionLevelCrossTrack and
- * @ref ILocationInfoEx::getProtecttionLevelVertical will not be available.
+ * @ref ILocationInfoEx::getProtectionLevelVertical will not be available.
  *
  */
   virtual uint32_t getIntegrityRiskUsed() = 0;

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -225,8 +225,6 @@ void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCa
 
    std::cout << " IpFamilyType: " << DataUtils::ipFamilyTypeToString(dataCall->getIpFamilyType()) << '\n';
    std::cout << " TechPreference: " << DataUtils::techPreferenceToString(dataCall->getTechPreference())
-             << '\n';
-   std::cout << " DataBearerTechnology: " << DataUtils::bearerTechToString(dataCall->getCurrentBearerTech())
              << '\n';
    std::cout << " OperationType: " << DataUtils::operationTypeToString(dataCall->getOperationType())
              << '\n';

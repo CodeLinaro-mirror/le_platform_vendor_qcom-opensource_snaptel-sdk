@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,7 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file       ThermalFactory.hpp
  * @brief      ThermalFactory allows creation of thermal manager.
@@ -94,21 +93,35 @@ class ThermalFactory {
     static ThermalFactory &getInstance();
 
     /**
-     * Get thermal manager instance to get list of thermal zones (sensors) and
-     * cooling devices supported by the device
+     * Get thermal manager instance associated with a @ref telux::common::ProcType to get list of
+     * thermal zones (sensors) and cooling devices supported by the device
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_THERM_DATA_READ
+     * permission to invoke this API successfully.
      *
      * @param [in] callback  Optional callback pointer to get the response of the manager
      *                       initialization.
+     *
+     * @param [in] oprType   Operation type @ref telux::common::ProcType. Local operation type
+     *                       fetches the thermal zones information where the application is running.
+     *                       Remote operation type fetches the thermal zones information of modem
+     *                       if the application is running on external application processor(EAP)
+     *                       and vice versa.
      *
      * @returns Pointer of IThermalManager object.
      *
      */
     virtual std::shared_ptr<IThermalManager> getThermalManager(
-        telux::common::InitResponseCb callback = nullptr) = 0;
+        telux::common::InitResponseCb callback = nullptr,
+        telux::common::ProcType operType = telux::common::ProcType::LOCAL_PROC)
+        = 0;
 
     /**
      * Get thermal shutdown manager instance to control automatic thermal shutdown and get relevant
      * notifications
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_THERM_SHUTDOWN_CTRL
+     * permission to invoke this API successfully.
      *
      * @param [in] callback  Optional callback pointer to get the response of the manager
      *                       initialization.
@@ -116,11 +129,14 @@ class ThermalFactory {
      * @returns Pointer of IThermalShutdownManager object.
      */
     virtual std::shared_ptr<IThermalShutdownManager> getThermalShutdownManager(
-        telux::common::InitResponseCb callback = nullptr) = 0;
+        telux::common::InitResponseCb callback = nullptr)
+        = 0;
 
+#ifndef TELUX_DOXY_SKIP
  protected:
     ThermalFactory();
     virtual ~ThermalFactory();
+#endif
 
  private:
     ThermalFactory(const ThermalFactory &) = delete;

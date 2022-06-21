@@ -681,7 +681,7 @@ To determine which permission type to be used for a API, please refer to the doc
 @tr @tdmulrowempty @td TELUX_SENSOR_PRIVILEGED_OPS @tdend @tdlast telux_allow_sensor_privileged_ops @tdlastend @trendcline
 @tr @tdmulrowempty @td TELUX_SENSOR_FEATURE_CONTROL @tdend @tdlast telux_allow_sensor_feature_control @tdlastend @trend
 
-@tr @tdmulrow{5,Telephony} @tdmulrowend @td TELUX_TEL_CARD_POWER @tdend @tdlast telux_allow_tel_card_power @tdlastend @trendcline
+@tr @tdmulrow{35,Telephony} @tdmulrowend @td TELUX_TEL_CARD_POWER @tdend @tdlast telux_allow_tel_card_power @tdlastend @trendcline
 @tr @tdmulrowempty @td TELUX_TEL_CARD_OPS @tdend @tdlast telux_allow_tel_card_ops @tdlastend @trendcline
 @tr @tdmulrowempty @td TELUX_TEL_PRIVATE_INFO_READ @tdend @tdlast telux_allow_tel_private_info_read @tdlastend @trendcline
 @tr @tdmulrowempty @td TELUX_TEL_CARD_PRIVILEGED_OPS @tdend @tdlast telux_allow_tel_card_privileged_ops @tdlastend @trendcline

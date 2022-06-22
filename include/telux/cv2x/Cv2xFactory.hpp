@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -133,10 +133,11 @@ public:
     virtual std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager(
         telux::common::InitResponseCb cb = nullptr) = 0;
 
+#ifndef TELUX_DOXY_SKIP
 protected:
-
     Cv2xFactory();
     virtual ~Cv2xFactory();
+#endif
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

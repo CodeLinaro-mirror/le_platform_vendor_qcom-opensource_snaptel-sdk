@@ -31,46 +31,45 @@
  *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /**
- * @brief DeviceInfo provides utility functions to get device information
- * such as IMEI.
+ * @file       ThermalListener.hpp
+ *
+ * @brief      IThermalListener - Interface for Thermal listener object. the clients needs
+ *             to implement this interface to get access to thermal service notifications
+ *             like onServiceStatusChange.
+ *             The methods in listener can be invoked from multiple threads.So the client
+ *             needs to make sure that the implementation is thread-safe.
  */
 
-#ifndef DEVICEINFO_HPP
-#define DEVICEINFO_HPP
-
-#include <string.h>
+#ifndef THERMAL_LISTENER_HPP
+#define THERMAL_LISTENER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
-namespace common {
+namespace therm {
 
-/** @addtogroup telematics_common
+/** @addtogroup telematics_therm_management
  * @{ */
 
-/*
- * DeviceInfo provides utility functions to get device information.
+/**
+ * @brief Listener class for getting notifications when thermal service status changes.
+ *        The client needs to implement these methods as briefly as possible and avoid blocking
+ *        calls in it. The methods in this class can be invoked from multiple different threads.
+ *        Client needs to make sure that the implementation is thread-safe.
  */
-class DeviceInfo {
-public:
-   /**
-    * Get the international mobile equipment identity.
-    *
-    * @param [out] imei string
-    *
-    * @returns Status of getIMEI i.e. success or suitable error code.
-    *
-    * @note Eval: This is a new API and is being evaluated.It is subject to change
-    *       and could break backwards compatibility.
-    */
-    static Status getIMEI(std::string & imei);
-
+class IThermalListener : public telux::common::IServiceStatusListener {
+ public:
+    /**
+     * Destructor of IThermalListener
+     */
+    virtual ~IThermalListener() {
+    }
 };
-/** @} */ /* end_addtogroup telematics_common */
 
-}  // End of namespace common
-}  // End of namespace telux
+/** @} */ /* end_addtogroup telematics_therm_management */
 
-#endif  // DEVICEINFO_HPP
+}  // end of namespace therm
+}  // end of namespace telux
+
+#endif  // THERMAL_LISTENER_HPP

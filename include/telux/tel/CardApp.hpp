@@ -150,7 +150,7 @@ public:
     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_PRIVILEGED_OPS
     * permission to invoke this API successfully.
     *
-    * @param [in] lockType  @Ref  CardLockType. Applicable lock types are PIN1 and PIN2.
+    * @param [in] lockType  @ref  CardLockType. Applicable lock types are PIN1 and PIN2.
     * @param [in] oldPwd    Old password
     * @param [in] newPwd    New password
     * @param [in] callback  Callback function to get the response of change pin password.
@@ -166,9 +166,9 @@ public:
     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_PRIVILEGED_OPS
     * permission to invoke this API successfully.
     *
-    * @param [in] lockType  @Ref  CardLockType. Applicable lock types are PUK1 and PUK2
+    * @param [in] lockType  @ref  CardLockType. Applicable lock types are PUK1 and PUK2
     * @param [in] puk       PUK1/PUK2
-    * @param [in] pin       New PIN1/PIN2
+    * @param [in] newPin    New PIN1/PIN2
     * @param [in] callback  Callback function to get the response of unlock card lock.
     *
     */
@@ -183,7 +183,7 @@ public:
     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_PRIVILEGED_OPS
     * permission to invoke this API successfully.
     *
-    * @param [in] lockType  @Ref  CardLockType. Applicable lock types are PIN1 and PIN2.
+    * @param [in] lockType  @ref  CardLockType. Applicable lock types are PIN1 and PIN2.
     * @param [in] pin       New PIN1/PIN2
     * @param [in] callback  Callback function to get the response of unlock card lock.
     *
@@ -218,7 +218,7 @@ public:
     * On platforms with access control enabled, caller needs to have TELUX_TEL_CARD_PRIVILEGED_OPS
     * permission to invoke this API successfully.
     *
-    * @param [in] lockType   @Ref CardLockType. Applicable lock type such as PIN1 and FDN
+    * @param [in] lockType   @ref CardLockType. Applicable lock type such as PIN1 and FDN
     * @param [in] password   Password of PIN1 and FDN
     * @param [in] isEnabled  If true then enable else disable.
     * @param [in] callback   Callback function to get the response of set card lock.

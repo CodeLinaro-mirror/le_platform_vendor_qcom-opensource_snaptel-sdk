@@ -38,37 +38,52 @@
  * @brief: Simple application that queries platform versions.
  */
 
+#include <future>
 #include <string>
 #include <vector>
+#include <condition_variable>
 
 #include <telux/common/Version.hpp>
 #include "../../common/utils/Utils.hpp"
+#include <telux/platform/PlatformFactory.hpp>
 
 using std::cout;
 using std::endl;
 using std::string;
-using telux::common::Status;
-using telux::common::PlatformVersion;
+using namespace telux::common;
+using namespace telux::platform;
+
 
 int main(int argc, char *argv[]) {
     cout << "Running telux version app" << endl;
+    auto &platformFactory = PlatformFactory::getInstance();
 
-    std::vector<std::string> groups{"system"};
-    int rc = Utils::setSupplementaryGroups(groups);
-    if (rc == -1){
-        cout << "Adding supplementary group failed!" << std::endl;
+    std::promise<ServiceStatus> p;
+    auto initCb = [&p](ServiceStatus status) {
+        std::cout << "Received service status: " << static_cast<int>(status) << std::endl;
+        p.set_value(status);
+    };
+    std::shared_ptr<IDeviceInfoManager> deviceInfoManager = platformFactory.getDeviceInfoManager(initCb);
+    if (deviceInfoManager == nullptr) {
+        std::cout << "DeviceInfo manager is nullptr" << std::endl;
+        exit(1);
+    }
+    std::cout << "Obtained deviceInfo manager" << std::endl;
+    p.get_future().get();
+    if (deviceInfoManager->getServiceStatus() != ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "DeviceInfo service not available" << std::endl;
+        exit(1);
     }
     PlatformVersion version;
-    if (Status::SUCCESS == telux::common::Version::getPlatformVersion(version)) {
+    if (Status::SUCCESS == deviceInfoManager->getPlatformVersion(version)) {
         auto sdkVersion = telux::common::Version::getSdkVersion();
         cout << "Request telux version success" << endl << "modem: " << version.modem
             << endl << "meta: " << version.meta << endl << "externalApp: "
             << version.externalApp << endl << "integratedApp: " << version.integratedApp
             << endl << "SDK: " << std::to_string(sdkVersion.major) << "."
             << std::to_string(sdkVersion.minor) << "." << std::to_string(sdkVersion.patch) << endl;
-        return EXIT_SUCCESS;
     } else {
         cout << "Error : request for telux version failed." << endl;
-        return EXIT_FAILURE;
     }
+    return 0;
 }

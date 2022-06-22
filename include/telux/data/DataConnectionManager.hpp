@@ -344,7 +344,7 @@ class IDataConnectionManager {
     * @returns Immediate status of setDefaultProfile i.e. success or suitable status.
     *
     */
-   virtual telux::common::Status setDefaultProfile(OperationType oprType, uint8_t profileId,
+   virtual telux::common::Status setDefaultProfile(OperationType operationType, uint8_t profileId,
        telux::common::ResponseCallback callback = nullptr)  = 0;
 
    /**
@@ -357,7 +357,7 @@ class IDataConnectionManager {
     *
     */
    virtual telux::common::Status getDefaultProfile(
-       OperationType oprType, DefaultProfileIdResponseCb callback)  = 0;
+       OperationType operationType, DefaultProfileIdResponseCb callback)  = 0;
 
     /**
      * Enable roaming mode for profile id. If disabled, any client attempt to bring up data call on
@@ -502,11 +502,11 @@ class IDataConnectionManager {
     /**
      * Request list of data calls available in the system
      *
-     * @param [out] OperationType    @ref telux::data::OperationType
+     * @param [out] operationType    @ref telux::data::OperationType
      * @param [out] callback         Callback with list of supported data calls
      *
      */
-    virtual telux::common::Status requestDataCallList(OperationType type,
+    virtual telux::common::Status requestDataCallList(OperationType operationType,
         DataCallListResponseCb callback) = 0;
 
     /**
@@ -530,18 +530,9 @@ class IDataCall {
     virtual const std::string &getInterfaceName() = 0;
 
     /**
-     * Get the bearer technology on which earlier data call was brought up like LTE, WCDMA and etc.
-     * This is synchronous API called by client to get bearer technology corresponding to data call.
-     *
-     * @returns @ref DataBearerTechnology
-     *
-     */
-    virtual DataBearerTechnology getCurrentBearerTech() = 0;
-
-    /**
      * Get failure reason for the data call.
      *
-     * @returns @ref DataCallFailReason.
+     * @returns @ref DataCallEndReason
      *
      */
     virtual DataCallEndReason getDataCallEndReason() = 0;
@@ -672,6 +663,17 @@ class IDataCall {
      * Destructor for IDataCall
      */
     virtual ~IDataCall(){};
+
+    /**
+     * Get the bearer technology on which earlier data call was brought up like LTE, WCDMA and etc.
+     * This is synchronous API called by client to get bearer technology corresponding to data call.
+     *
+     * @returns @ref DataBearerTechnology
+     *
+     * @deprecated, use telux::data::IServingSystemManager::requestServiceStatus instead
+     *
+     */
+    virtual DataBearerTechnology getCurrentBearerTech() = 0;
 };
 
 /**
@@ -694,9 +696,6 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
     /**
      * This function is called when there is a change in the data call.
      *
-     * On platforms with Access control enabled, the client needs to have TELUX_DATA_CALL_OPS
-     * permission for this listener API to be invoked.
-     *
      * @param [in] dataCall   Pointer to IDataCall
      *
      */
@@ -704,6 +703,12 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
 
     /**
      * This function is called when a change occur in hardware acceleration service.
+     * If reported state is @ref ServiceState::INACTIVE:
+     *   All existing data calls will take software acceleration path.
+     * If reported state is @ref ServiceState::ACTIVE:
+     *   All new data calls that are started after this API invocation will be H/w accelerated.
+     *   Data calls that existed before this API was invoked will continue without h/w acceleration.
+     *   Client could stop and re-start pre-existing data calls in order to use H/w acceleration.
      *
      * @param [in] state   New state of hardware Acceleration service (Active/Inactive)
      *
@@ -712,9 +717,6 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
 
     /**
      * This function is called when the TFT's parameters are changed for a packet data session.
-     *
-     * On platforms with Access control enabled, the client needs to have TELUX_DATA_CALL_OPS
-     * permission for this listener API to be invoked.
      *
      * @param [in] dataCall     Pointer to IDataCall
      * @param [in] tft          vector of TftChangeInfo @ref TftChangeInfo

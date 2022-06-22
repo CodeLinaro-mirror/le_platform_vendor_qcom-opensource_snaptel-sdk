@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -152,6 +188,24 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
     std::cin >> vlanId;
     Utils::validateInput(vlanId);
 
+    int pcp;
+    std::cout << "Do you want to enter Vlan Priority? (0-No, 1-Yes): ";
+    std::cin >> pcp;
+    std::cout << std::endl;
+    Utils::validateInput(pcp);
+    if(pcp != 0) {
+        pcp = -1;
+        while(pcp == -1) {
+            std::cout << "Enter Vlan Priority (0-7): ";
+            std::cin >> pcp;
+            std:cout << std::endl;
+            if((pcp < 0 ) || (pcp >7)) {
+                std::cout << "Invalid Entry. Please try again." << std::endl;
+                pcp = -1;
+            }
+        }
+    }
+
     int acc;
     std::cout << "Enter acceleration  (0-false, 1-true): ";
     std::cin >> acc;
@@ -168,12 +222,16 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        std::cout << "Acceleration " << (isAccelerated ? "is allowed" : "is not allowed") << "\n";
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Acceleration "
+                  << (isAccelerated ? "is allowed" : "is not allowed") << "\n";
+        }
     };
 
     VlanConfig config;
     config.iface = infType;
     config.vlanId = vlanId;
+    config.priority = pcp;
     config.isAccelerated = isAccelerated;
 
     retStat = vlanManagerMap_[opType]->createVlan(config, respCb);
@@ -245,7 +303,8 @@ void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
         } else {
             for (auto c : configs) {
                 std::cout << "iface: " << (int)c.iface << ", vlanId: " << c.vlanId
-                        << ", accelerated: " << (int)c.isAccelerated << "\n";
+                          << ", Priority: " << static_cast<int>(c.priority)
+                          << ", accelerated: " << (int)c.isAccelerated << "\n";
             }
         }
     };

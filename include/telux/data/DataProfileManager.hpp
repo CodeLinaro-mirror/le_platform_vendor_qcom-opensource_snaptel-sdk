@@ -242,7 +242,7 @@ public:
     *
     * @param [in] listener - Listener that processes the notification.
     *
-    * @returns @ref Status.
+    * @returns @ref telux::common::Status
     */
    virtual telux::common::Status registerListener(
       std::weak_ptr<telux::data::IDataProfileListener> listener) = 0;
@@ -252,7 +252,7 @@ public:
     *
     * @param [in] listener - Listener to be de-registered.
     *
-    * @returns @ref Status.
+    * @returns @ref telux::common::Status
     */
    virtual telux::common::Status deregisterListener(
       std::weak_ptr<telux::data::IDataProfileListener> listener) = 0;

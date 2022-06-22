@@ -105,16 +105,16 @@ public:
     *
     * @param [in] callback - optional callback pointer to get the response of answer request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of hold function i.e. success or suitable error code.
     */
@@ -130,16 +130,16 @@ public:
     *
     * @param [in] callback - optional callback pointer to get the response of hold request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     *  @returns Status of hold function i.e. success or suitable error code.
     */
@@ -155,16 +155,16 @@ public:
     *
     * @param [in] callback - optional callback pointer to get the response of resume request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     *  @returns Status of resume function i.e. success or suitable error code.
     */
@@ -181,16 +181,16 @@ public:
     *
     * @param [in] callback - optional callback pointer to get the response of reject request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of reject function i.e. success or suitable error code.
     */
@@ -208,16 +208,16 @@ public:
     * @param [in] rejectSMS SMS string used to send in response to a call rejection.
     * @param [in] callback - optional callback pointer to get the response of rejectwithSMS request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     *  @deprecated This API not being supported
     *
@@ -237,16 +237,16 @@ public:
     *
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of hangup i.e. success or suitable error code.
     */

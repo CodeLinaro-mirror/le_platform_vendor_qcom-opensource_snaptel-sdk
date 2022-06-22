@@ -227,7 +227,7 @@ public:
    /**
     * This function is called when IImsSettingsManager service status changes.
     *
-    * @param [in] status - @ref ServiceStatus
+    * @param [in] status - @ref telux::common::ServiceStatus
     *
     */
    virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}

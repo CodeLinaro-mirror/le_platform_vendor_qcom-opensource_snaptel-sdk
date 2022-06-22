@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
@@ -220,7 +221,7 @@ class PhoneFactory {
     * Get CellBroadcast Manager instance for Slot ID. CellBroadcast manager used to receive
     * broacast messages and configure broadcast messages.
     *
-    * @param [in] SlotId   @ref telux::common::SlotId
+    * @param [in] slotId   @ref telux::common::SlotId
     *
     * @returns Pointer of ICellBroadcastManager object or nullptr in case of failure.
     */
@@ -287,9 +288,11 @@ class PhoneFactory {
    virtual std::shared_ptr<ISuppServicesManager> getSuppServicesManager(
       SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr) = 0;
 
+#ifndef TELUX_DOXY_SKIP
  protected:
    PhoneFactory();
    virtual ~PhoneFactory();
+#endif
 
  private:
    PhoneFactory(const PhoneFactory &) = delete;

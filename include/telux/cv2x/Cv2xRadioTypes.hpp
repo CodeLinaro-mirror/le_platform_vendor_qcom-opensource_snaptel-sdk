@@ -64,7 +64,7 @@
  */
 
 /**
-* @file       Cv2xRxTypes.hpp
+* @file       Cv2xRadioTypes.hpp
 *
 * @brief      Contains common data types used in Cv2x Radio API
 */
@@ -96,8 +96,6 @@ constexpr uint8_t MAX_ANTENNAS_SUPPORTED = 2u;
 
 /**
  * Defines CV2X Traffic Types.
- *
- * Used in @ref Cv2xRadioManager::getCv2xRadio
  */
 enum class TrafficCategory {
     SAFETY_TYPE,      /**< Safety message traffic category */
@@ -106,9 +104,10 @@ enum class TrafficCategory {
 
 /**
  * Defines possible values for CV2X radio RX/TX status.
- * 1. If Tx is in active state, Rx should also be in active statue.
- * 2. If Rx is in active statue, Tx should be in active(normal case)
+ * 1. If Rx is in inactive state, Tx should also be in inactive state.
+ * 2. If Rx is in active state, Tx should be in active(normal case)
  *    or suspended state(sensing or tunnel mode).
+ * 3. If Rx is in suspended state, Tx should be in suspended state.
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xStatusType {
@@ -125,37 +124,33 @@ enum class Cv2xStatusType {
  * Used in @ref Cv2xStatus
  */
 enum class Cv2xCauseType {
-    TIMING,            /**< CV2X is suspended when GNSS signal is lost. */
-    CONFIG,            /**< This cause is not used currently. */
-    UE_MODE,           /**< CV2X status is either suspended or inactive.
-                            - Suspend case: CV2X is suspended temporarily when processing the stop
-                            of CV2X, after CV2X is stopped, CV2X status will change to inactive.
-                            - Inactive case:
-                             - CV2X is disabled by EFS/NV.
-                             - QWES license is not valid.
-                             - CV2X is stopped by user.
-                             - An invalid v2x.xml is updated to modem when CV2X is aready active.
-                             - UE enters a geopolygon that does not support CV2X when CV2X is
-                               already active. */
-    GEOPOLYGON,        /**< CV2X is inactive due to there's no valid CV2X configuration when
-                            starting CV2X, or the v2x.xml is corrupted. */
+    TIMING,            /**< CV2X is suspended due to the outage of timing reference. */
+    CONFIG,            /**< CV2X is inactive due to v2x.xml is missing, invalid,
+                            or expired. */
+    UE_MODE,           /**< CV2X is inactive due to CV2X mode is not started. */
+    GEOPOLYGON,        /**< CV2X is inactive due to UE enters a geo-polygon that
+                            does not support cv2x. */
     THERMAL,           /**< CV2X is suspended when the device's temperature is high. */
     THERMAL_ECALL,     /**< CV2X is suspended when the device's temperature is high
                             and emergency call is ongoing. */
-    GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon that also
-                            supports CV2X and UE is already in CV2X active status, CV2X status
-                            will change to active after the update is done. */
-    SENSING,           /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode just
-                            starts. UE needs sensing for 1 second before Tx can begin,
+    GEOPOLYGON_SWITCH, /**< CV2X is suspended when UE switches to a new geopolygon that
+                            also supports CV2X and UE is already in CV2X active status,
+                            CV2X status will change to active after the update is done. */
+    SENSING,           /**< CV2X Tx is suspended when GNSS signal recovers or CV2X mode
+                            just starts. UE needs sensing for 1 second before Tx can begin,
                             Tx status will change to active after sensing is done. */
     LPM,               /**< CV2X is inactive when UE enters Low Power Mode. */
+    DISABLED,          /**< CV2X is inactive due to CV2X is disabled in the EFS. */
+    NO_GNSS,           /**< CV2X is inactive due to GNSS signal is not available when
+                            starting CV2X. */
+    INVALID_LICENSE,   /**< CV2X is inactive due to invalid license. */
     UNKNOWN,           /**< Invalid cause type only used internally. */
 };
 
 /**
  * Encapsulates parameters of a CV2X socket.
  *
- * Used in @ref createCv2xTcpSocket.
+ * Used in @ref ICv2xRadio::createCv2xTcpSocket.
  */
 struct SocketInfo {
     uint32_t serviceId;
@@ -167,7 +162,7 @@ struct SocketInfo {
 /**
  * Encapsulates status of CV2X radio.
  *
- * Used in @ref Cv2xRadioManager:requestV2xStatus and Cv2xRadioListener.
+ * Used in @ref ICv2xRadioManager::requestCv2xStatus and ICv2xRadioListener.
  */
 struct Cv2xStatus {
     Cv2xStatusType rxStatus = Cv2xStatusType::UNKNOWN;  /**< RX status */
@@ -191,7 +186,7 @@ struct Cv2xPoolStatus {
 /**
  * Encapsulates status of CV2X radio and per pool status.
  *
- * Used in @ref Cv2xRadioManager:requestV2xStatus and
+ * Used in @ref ICv2xRadioManager::requestCv2xStatus and
  * Cv2xRadioListener.
  */
 struct Cv2xStatusEx {
@@ -203,8 +198,6 @@ struct Cv2xStatusEx {
 
 /**
  * Defines CV2X traffic type in terms of IP or NON-IP.
- *
- * Used in @ref createRxSock, @ref createTxSpsSock, and @ref createTxEventSock
  */
 enum class TrafficIpType {
    TRAFFIC_IP,     /**< IP message traffic */
@@ -226,7 +219,7 @@ enum class RadioConcurrencyMode {
  * Defines CV2X status change events. The state can change in response to the
  * loss of timing precision or a geofencing change.
  *
- * Used in @ref onStatusChanged in ICv2xRadioListener
+ * Used in @ref ICv2xRadioListener::onStatusChanged
  */
 enum class Cv2xEvent {
     CV2X_INACTIVE,  /**<  */
@@ -258,7 +251,7 @@ enum class Priority {
  *
  * Used in @ref Cv2xRadioCapabilities and @ref SpsFlowInfo
  *
- * @Deprecated: enum class not going to be supported in future releases. Clients should stop using
+ * @deprecated: enum class not going to be supported in future releases. Clients should stop using
  * this. Once a class has been marked as Deprecated, the class could be removed in future releases.
  *
  */
@@ -293,7 +286,7 @@ struct TxPoolIdInfo {
 /**
  * Contains event flow configuration parameters.
  *
- * Used in @ref createTxEventFlow
+ * Used in @ref ICv2xRadio::createTxEventFlow
  */
 struct EventFlowInfo {
     bool autoRetransEnabledValid = true;
@@ -328,7 +321,7 @@ struct EventFlowInfo {
  * The underlying radio providing the interface might support periodicities of
  * various granularity in 100ms integer multiples (e.g. 200ms, 300ms).
  *
- * Used in @ref txSpsCreateAndBindSock and @ref changeSpsFlowInfo
+ * Used in @ref ICv2xRadio::createTxSpsFlow and @ref ICv2xRadio::changeSpsFlowInfo
  */
 struct SpsFlowInfo {
     Priority priority = Priority::PRIORITY_2;
@@ -336,7 +329,7 @@ struct SpsFlowInfo {
          pre-reserved on the SPS flow. Default is PRIORITY_2.
 
          Use getCapabilities() to discover the supported priority levels.
-         @Deprecated: periodicity, Use new periodicityMs instead */
+         @deprecated: periodicity, Use new periodicityMs instead */
     Periodicity periodicity = Periodicity::PERIODICITY_100MS;
     /**This is the new interface to specify periodicity in milliseconds for
        SpsFlowInfo. Enum Periodicity is deprecated and will be removed in future
@@ -376,7 +369,8 @@ struct SpsFlowInfo {
 /**
  * Contains capabilities of the Cv2xRadio.
  *
- * Used in @ref requestCapabilities and @ref onCapabilitiesChanged
+ * Used in @ref ICv2xRadio::requestCapabilities and @ref
+ * ICv2xRadioListener::onCapabilitiesChanged
  */
 struct Cv2xRadioCapabilities {
     uint32_t linkIpMtuBytes;
@@ -392,7 +386,7 @@ struct Cv2xRadioCapabilities {
     /**< Byte offset in a non-IP Tx packet before the actual payload begins. */
     uint16_t nonIpRxPayloadOffsetBytes;
     /**< Byte offset in a non-IP Rx packet before the actual payload begins.
-         @Deprecated: periodicitiesSupported, Use new periodicities instead */
+         @deprecated: periodicitiesSupported, Use new periodicities instead */
     std::bitset<8> periodicitiesSupported;
     std::vector<uint64_t> periodicities;
     /**< Specifies the periodicities supported */
@@ -411,7 +405,7 @@ struct Cv2xRadioCapabilities {
          address to generate. */
     std::bitset<8> prioritiesSupported;
     /**< Bit set of different priority levels supported by this Cv2xRadio.
-         Refer to @ref: Priority */
+         Refer to @ref Priority */
     uint16_t maxNumSpsFlows;
     /**< Maximum number of supported SPS reservations. */
     uint16_t maxNumNonSpsFlows;
@@ -447,7 +441,7 @@ struct MacDetails {
 /**
  * Contains SPS packet scheduling information that is reported from the radio.
  *
- * Used in @ref onSpsSchedulingChanged
+ * Used in @ref ICv2xRadioListener::onSpsSchedulingChanged
  */
 struct SpsSchedulingInfo {
     uint8_t spsId;
@@ -486,7 +480,7 @@ struct TrustedUEInfo {
  * Contains list of malicious UE source L2 IDs.
  * Contains list of trusted UE source L2 IDs and associated confidence values.
  *
- * Used in @ref updateTrustedUEList
+ * Used in @ref ICv2xRadio::updateTrustedUEList
  */
 struct TrustedUEInfoList {
     bool maliciousIdsValid = false;
@@ -511,7 +505,7 @@ struct IPv6Address {
 /**
  * Contains packet data session settings.
  *
- * Used in @ref requestDataSessionSettings
+ * Used in @ref ICv2xRadio::requestDataSessionSettings
  */
 struct DataSessionSettings {
     bool mtuValid = false;
@@ -551,7 +545,7 @@ enum class ConfigEvent {
 /**
  * Information about any update to a CV2X config file.
  *
- * Used in @ref onConfigFileChanged
+ * Used in @ref ICv2xConfigListener::onConfigChanged
  */
 struct ConfigEventInfo {
     ConfigSourceType source;
@@ -563,7 +557,7 @@ struct ConfigEventInfo {
 /**
  * Contains remote UE source L2 ID that modem will drop on Rx.
  *
- * Used in @ref setL2Filters
+ * Used in @ref ICv2xRadioManager::setL2Filters
  */
 struct L2FilterInfo {
     /**< remote UE L2 MAC addr to filter. */
@@ -642,7 +636,7 @@ enum class TxType {
  * being used has valid power (not -700) in the array of rfInfo, rfInfo[i].status
  * is reflecting the status of Tx chain i or the status of the Tx antenna i whose
  * power is valid (not -700) in the array of rfInfo.
- * Used in @ref onTxStatusReport
+ * Used in @ref ICv2xTxStatusReportListener::onTxStatusReport
  */
 struct TxStatusReport {
     RFTxInfo rfInfo[MAX_ANTENNAS_SUPPORTED];
@@ -670,7 +664,7 @@ struct TxStatusReport {
 /**
  * Encapsulates ipv6 prefix length in bits and ipv6 prefix.
  *
- * Used in @ref setGlobalIPInfo.
+ * Used in @ref ICv2xRadio::setGlobalIPInfo.
  */
 struct IPv6AddrType
 {
@@ -682,7 +676,7 @@ struct IPv6AddrType
 /**
  * Encapsulates destination L2 address.
  *
- * Used in @ref setGlobalIPUnicastRoutingInfo.
+ * Used in @ref ICv2xRadio::setGlobalIPUnicastRoutingInfo.
  */
 struct GlobalIPUnicastRoutingInfo
 {

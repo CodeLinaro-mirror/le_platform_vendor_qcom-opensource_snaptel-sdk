@@ -134,10 +134,10 @@ public:
     * to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
-    * @param [in] status - Indicates MSD Transmission status i.e. success or failure
+    * @param [in] errorCode - Indicates MSD Transmission status i.e. success or failure
     *
     * @deprecated Use another onECallMsdTransmissionStatus() API with argument
-    * @Ref ECallMsdTransmissionStatus
+    * @ref ECallMsdTransmissionStatus
     */
    virtual void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) {
    }
@@ -150,7 +150,7 @@ public:
     *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
     * @param [in] msdTransmissionStatus - Indicates MSD Transmission status
-    * @Ref ECallMsdTransmissionStatus
+    * @ref ECallMsdTransmissionStatus
     */
    virtual void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
@@ -165,7 +165,7 @@ public:
     *
     * @param [in] phoneId - Unique Id of phone on which HLAP timer status is being reported
     * @param [in] timersStatus - Indicates the HLAP timer event
-    *                            @Ref ECallHlapTimerEvents
+    *                            @ref ECallHlapTimerEvents
     *
     */
    virtual void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timersStatus) {

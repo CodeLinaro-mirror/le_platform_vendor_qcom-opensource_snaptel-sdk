@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
 * @file       Cv2xRadio.hpp
 *
@@ -60,28 +96,29 @@ class ICv2xTxRxSocket;
 
 
 /**
- * This function is called as a response to @ref createRxSubscription.
+ * This function is called as a response to @ref ICv2xRadio::createRxSubscription.
  *
  * @param [in] rxSub       - Rx Subscription
  * @param [in] error       - Indicates whether socket creation succeeded
- *                         - @ref SUCCESS
- *                         - @ref GENERIC_FAILURE
+ *                         - SUCCESS
+ *                         - GENERIC_FAILURE
  */
 using CreateRxSubscriptionCallback =
     std::function<void (std::shared_ptr<ICv2xRxSubscription> rxSub,
                         telux::common::ErrorCode error)>;
 
 /**
- * This function is called as a  response to @ref createTxSpsFlow
+ * This function is called as a  response to @ref ICv2xRadio::createTxSpsFlow
  *
- * @param [in] spsFlow        - Sps flow
- * @param [in] eventFlow      - Optional event flow. Will be nullptr if event flow was
+ * @param [in] txSpsFlow      - Sps flow
+ * @param [in] txEventFlow    - Optional event flow. Will be nullptr if event flow was
  *                              not specified in the request
- * @param [in] error          - Indicates whether Tx SPS flow creation succeeded
- *                            - @ref SUCCESS
- *                            - @ref GENERIC_FAILURE
- * @param [in] error          - Indicates whether optional Tx Event flow creation succeeded
- *                            - @ref SUCCESS
+ * @param [in] spsError       - Indicates whether Tx SPS flow creation succeeded
+ *                            - SUCCESS
+ *                            - GENERIC_FAILURE
+ * @param [in] eventError     - Indicates whether optional Tx Event flow creation succeeded
+ *                            - SUCCESS
+ *                            - GENERIC_FAILURE
  *
  */
 using CreateTxSpsFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txSpsFlow,
@@ -90,34 +127,34 @@ using CreateTxSpsFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow>
                                                     telux::common::ErrorCode eventError)>;
 
 /**
- * This function is called with the response to @ref createTxEventFlow
+ * This function is called with the response to @ref ICv2xRadio::createTxEventFlow
  *
  * @param [in] txEventFlow    - Event flow
  * @param [in] error          - Indicates whether Tx event flow creation succeeded
- *                            - @ref SUCCESS
- *                            - @ref GENERIC_FAILURE
+ *                            - SUCCESS
+ *                            - GENERIC_FAILURE
  */
 using CreateTxEventFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txEventFlow,
                                                       telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to @ref closeTxFlow.
+ * This function is called with the response to @ref ICv2xRadio::closeTxFlow.
  *
  * @param [in] txFlow    - Closed tx flow
  * @param [in] error     - Indicates whether close operation succeeded
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
  */
 using CloseTxFlowCallback = std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow,
                                                 telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to @ref closeRxSubscription.
+ * This function is called with the response to @ref ICv2xRadio::closeRxSubscription.
  *
  * @param [in] rxSub     - Closed rx subscription
  * @param [in] error     - Indicates whether Rx subscription close succeeded
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
  */
 using CloseRxSubscriptionCallback =
     std::function<void (std::shared_ptr<ICv2xRxSubscription> rxSub,
@@ -125,105 +162,105 @@ using CloseRxSubscriptionCallback =
 
 
 /**
- * This function is called with the response to @ref changeSpsFlowInfo.
+ * This function is called with the response to @ref ICv2xRadio::changeSpsFlowInfo.
  *
  * @param [in] txFlow    - Sps flow that requested reservation change
  * @param [in] error     - SUCCESS if Tx reservation change succeeded
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
  */
 using ChangeSpsFlowInfoCallback =
     std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to @ref requestSpsFlowInfo.
+ * This function is called with the response to @ref ICv2xRadio::requestSpsFlowInfo.
  *
  * @param [in] txFlow      - SPS flow that requested info
  * @param [in] spsInfo     - SPS flow reservation info
  * @param [in] error       - SUCCESS if Tx reservation change succeeded
- *                         - @ref SUCCESS
- *                         - @ref GENERIC_FAILURE
+ *                         - SUCCESS
+ *                         - GENERIC_FAILURE
  */
 using RequestSpsFlowInfoCallback =
     std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow,
                         const SpsFlowInfo & spsInfo,
                         telux::common::ErrorCode error)>;
 /**
- * This function is called with the response to @ref changeEventFlowInfo.
+ * This function is called with the response to @ref ICv2xRadio::changeEventFlowInfo.
  *
  * @param [in] txFlow    - Event flow that requested reservation change
  * @param [in] error     - SUCCESS if Tx parameter change succeeded
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
  */
 using ChangeEventFlowInfoCallback =
     std::function<void (std::shared_ptr<ICv2xTxFlow> txFlow, telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to @ref requestCapabilities.
+ * This function is called with the response to @ref ICv2xRadio::requestCapabilities.
  *
  * @param [in] capabilities     - Capability info
  * @param [in] error       - SUCCESS if capabilities request succeeded
- *                         - @ref SUCCESS
- *                         - @ref GENERIC_FAILURE
+ *                         - SUCCESS
+ *                         - GENERIC_FAILURE
  */
 using RequestCapabilitiesCallback =
     std::function<void(const Cv2xRadioCapabilities & capabilities,
                        telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to @ref requestDataSessionSettings.
+ * This function is called with the response to @ref ICv2xRadio::requestDataSessionSettings.
  *
  * @param [in] settings     - Data session settings
  * @param [in] error       - SUCCESS if data session settings request succeeded
- *                         - @ref SUCCESS
- *                         - @ref GENERIC_FAILURE
+ *                         - SUCCESS
+ *                         - GENERIC_FAILURE
  */
 using RequestDataSessionSettingsCallback =
     std::function<void (const DataSessionSettings & settings,
                         telux::common::ErrorCode error)>;
 /**
- * This function is called with the response to @ref updateTrustedUEList.
+ * This function is called with the response to @ref ICv2xRadio::updateTrustedUEList.
  *
  * @param [in] error       - SUCCESS if update succeeded
  *                         - INVALID_ARGUMENTS if trustedUEs or maliciousIds
  *                           length greater than maximum value
- *                         - @ref SUCCESS
- *                         - @ref GENERIC_FAILURE
- *                         - @ref INVALID_ARGUMENTS
+ *                         - SUCCESS
+ *                         - GENERIC_FAILURE
+ *                         - INVALID_ARGUMENTS
  */
 using UpdateTrustedUEListCallback =
     std::function<void(telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to updateSrcL2Info.
+ * This function is called with the response to ICv2xRadio::updateSrcL2Info.
  *
  * @param [in] error       - SUCCESS if Tx reservation change succeeded
- *                         - @ref SUCCESS
- *                         - @ref GENERIC_FAILURE
+ *                         - SUCCESS
+ *                         - GENERIC_FAILURE
  */
 using UpdateSrcL2InfoCallback =
     std::function<void (telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to @ref createCv2xTcpSocket.
+ * This function is called with the response to @ref ICv2xRadio::createCv2xTcpSocket.
  *
  * @param [in] sock      - TCP socket
  * @param [in] error     - Indicates whether TCP socket creation succeeded
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILUREs
  */
 using CreateTcpSocketCallback =
     std::function<void (std::shared_ptr<ICv2xTxRxSocket> sock,
                         telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to @ref closeCv2xTcpSocket.
+ * This function is called with the response to @ref ICv2xRadio::closeCv2xTcpSocket.
  *
  * @param [in] sock      - Closed TCP socket
  * @param [in] error     - Indicates whether close operation succeeded
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
  */
 using CloseTcpSocketCallback = std::function<void (std::shared_ptr<ICv2xTxRxSocket> sock,
                                              telux::common::ErrorCode error)>;
@@ -234,7 +271,7 @@ using CloseTcpSocketCallback = std::function<void (std::shared_ptr<ICv2xTxRxSock
 /**
  * This is class encapsulates a Cv2xRadio interface.
  *
- * Returned from @ref getCv2xRadio in Cv2xFactory
+ * Returned from @ref ICv2xRadioManager::getCv2xRadio
  */
 class ICv2xRadio {
 public:
@@ -349,7 +386,7 @@ public:
      *                                 Variable length 4-byte PSID or ITS_AID, or
      *                                 another service ID.
      * @param [in] spsInfo           - SPS reservation parameters.
-     * @param [in] spsPort           - Requested source port number for the
+     * @param [in] spsSrcPort        - Requested source port number for the
      *                                 bandwidth reserved SPS transmissions.
      * @param [in] eventSrcPortValid - True if an optional event flow is desired. If
      *                                 this field is left false, the event flow will
@@ -481,7 +518,7 @@ public:
     /**
      * Request SPS flow info.
      *
-     * @param [in] sock         - Tx SPS flow
+     * @param [in] txFlow       - Tx SPS flow
      * @param [in] cb           - Callback that will be invoked and returns the SPS info.
      *                            Must not be null.
      *

@@ -265,7 +265,7 @@ class ISensorClient {
      *
      * @param[in]   selfTestType - The type of self test to be performed - @ref
      *                             telux::sensor::SelfTestType
-     * @param[in]   SelfTestResultCallback - Callback to get the result of the self test initiated
+     * @param[in]   cb - Callback to get the result of the self test initiated
      *
      * @returns status of the request - @ref telux::common::Status. Note that the result of the self
      *          test done by the sensor is provided via the callback - @ref

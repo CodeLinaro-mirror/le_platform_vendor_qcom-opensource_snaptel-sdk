@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
@@ -165,7 +166,7 @@ public:
     *
     * @returns Status of getPhoneId i.e. success or suitable error code.
     */
-   virtual telux::common::Status getPhoneId(int &phId) = 0;
+   virtual telux::common::Status getPhoneId(int &phoneId) = 0;
 
    /**
     * Get Radio state of device.
@@ -238,7 +239,7 @@ public:
     * permission to invoke this API successfully.
     *
     * @param [in] callback    Callback to get the response of cell info request
-    *                         @telux::tel::CellInfoCallback
+    *                         @ref telux::tel::CellInfoCallback
     *
     * @returns Status of requestCellInfo i.e. success or suitable error
     *
@@ -340,7 +341,7 @@ public:
     * @param [in] error            Return code for whether the operation
     *                              succeeded or failed
     *                              @ref SUCCESS
-    *                              @ref RADIO_NOT_AVAILABLE
+    *                              @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
     */
    virtual void signalStrengthResponse(std::shared_ptr<SignalStrength> signalStrength,
                                        telux::common::ErrorCode error) {

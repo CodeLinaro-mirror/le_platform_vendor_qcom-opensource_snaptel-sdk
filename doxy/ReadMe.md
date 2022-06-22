@@ -10,7 +10,7 @@ This page contains instruction for creating HTML version of API reference and Us
   $ sudo apt-get install graphviz
   ```
 
-#### Telematics SDK - Interface Specification
+#### Telematics SDK - API Reference
 
 - Go to api_reference folder and run the make command as follows
 

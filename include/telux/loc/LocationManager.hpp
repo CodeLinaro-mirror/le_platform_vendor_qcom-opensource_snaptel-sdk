@@ -218,6 +218,9 @@ public:
  * GnssReportTypeMask. If a client issues second request to this API then new request for
  * GnssReportTypeMask will over write the previous call to this API.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
+ * invoke this API successfully.
+ *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
  *
@@ -260,6 +263,9 @@ public:
  * GnssReportTypeMask. If a client issues second request to this API then new request for
  * GnssReportTypeMask will over write the previous call to this API.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
+ * invoke this API successfully.
+ *
  * @param [in] interval - Minimum time interval between two consecutive
  * reports in milliseconds.
  *
@@ -299,10 +305,8 @@ public:
  * periodicities.
  * This Api enables the onBasicLocationUpdate Api on the listener.
  *
- * @param [in] distanceInMeters - distanceInMeters between two
- * consecutive reports in meters.
- * intervalInMs - Minimum time interval between two consecutive
- * reports in milliseconds.
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
+ * invoke this API successfully.
  *
  * E.g. If intervalInMs is 1000 milliseconds and distanceInMeters is 100m,
  * reports will be provided according to the condition that happens first. So we need to
@@ -317,6 +321,9 @@ public:
  * Where there is another application in the system having a session with
  * shorter distance, this client may benefit and receive reports at that distance.
  *
+ * @param [in] distanceInMeters - DistanceInMeters between two consecutive reports in meters.
+ * @param [in] intervalInMs - Minimum time interval between two consecutive reports in
+ *                            milliseconds.
  * @param [in] callback - Optional callback to get the response of set
  *                        minimum distance for reports.
  *
@@ -380,6 +387,9 @@ public:
  * This API will stop reports started using startDetailedReports or startBasicReports
  * or registerListener or setMinIntervalForReports.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
+ * invoke this API successfully.
+ *
  * @param [in] callback - Optional callback to get the response of stop reports.
  *
  * @returns Status of stopReports i.e. success or suitable status code.
@@ -404,16 +414,19 @@ public:
  * This API can be invoked even while there is an on-going tracking session that was started using
  * startBasicReports/startDetailedReports/startDetailedEngineReports.
  * If this API is invoked while there is already a pending request for terrestrial position, the
- * request will fail and @ref ResponseCallback will get invoked with @ref
- * ErrorCode::OP_IN_PROGRESS.
+ * request will fail and @ref telux::common::ResponseCallback will get invoked with @ref
+ * telux::common::ErrorCode::OP_IN_PROGRESS.
  * To cancel a pending request, use @ref ILocationManager::cancelTerrestrialPositionRequest.
  * Before using this API, user consent needs to be set true via
  * @ref ILocationConfigurator::provideConsentForTerrestrialPositioning.
  *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
+ * invoke this API successfully.
+ *
  * @param[in] timeoutMsec - the time in milliseconds within which the client is expecting a
  *                          response. If the system is unable to provide a report within this
- *                          time, the @ref ResponseCallback will be invoked with
- *                          @ref ErrorCode::OPERATION_TIMEOUT.
+ *                          time, the @ref telux::common::ResponseCallback will be invoked with
+ *                          @ref telux::common::ErrorCode::OPERATION_TIMEOUT.
  *
  * @param[in] techMask - the set of terrestrial technologies that are allowed to be used for
  *                       producing the position.
@@ -433,8 +446,11 @@ public:
 /**
  * This API cancels the pending request invoked by @ref ILocationManager::getTerrestrialPosition.
  * If this API is invoked while there is no pending request for terrestrial position from
- * @ref ILocationManager::getTerrestrialPosition, then @ref ResponseCallback will be invoked
- * with @ref ErrorCode::INVALID_ARGUMENTS.
+ * @ref ILocationManager::getTerrestrialPosition, then @ref telux::common::ResponseCallback will be invoked
+ * with @ref telux::common::ErrorCode::INVALID_ARGUMENTS.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_DATA permission to
+ * invoke this API successfully.
  *
  * @param [in] callback - Optional callback to get the response of
  *                        cancelTerrestrialPositionRequest.
@@ -447,8 +463,6 @@ public:
 
 /**
  * This API retrieves capability information.
- *
- * @param[in] cb - callback to get information related to capability.
  *
  * @returns Status of getCapabilities i.e success or suitable status code.
  *

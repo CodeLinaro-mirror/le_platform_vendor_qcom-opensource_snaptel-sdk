@@ -119,7 +119,7 @@ class ISimProfileListener : public telux::common::IServiceStatusListener {
      * @param [in] slotId                   Slot on which profile get downloaded and installed.
      * @param [in] userConsentRequired      User consent required or not. If true it means user is
      *                                      expected to provide consent for download and install.
-     * @param [in] mask                     @ref telux::tel::PprMask (Profile policy rules Mask)
+     * @param [in] mask                     @ref telux::tel::PolicyRuleMask (Profile policy rules Mask)
      *
      */
     virtual void onUserDisplayInfo(SlotId slotId, bool userConsentRequired,

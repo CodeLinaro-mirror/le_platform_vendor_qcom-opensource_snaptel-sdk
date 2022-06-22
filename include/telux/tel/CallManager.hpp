@@ -505,18 +505,19 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
     * to invoke this API successfully.
     *
+    * @param [in] phoneId - Represents phone corresponding to which this operation is performed.
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of hangupForegroundResumeBackground i.e. success or suitable error code.
     *
@@ -538,18 +539,19 @@ public:
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
     * to invoke this API successfully.
     *
+    * @param [in] phoneId - Represents phone corresponding to which this operation is performed.
     * @param [in] callback - optional callback pointer to get the response of hangup request
     * below are possible error codes for callback response
-    *        - @ref SUCCESS
-    *        - @ref RADIO_NOT_AVAILABLE
-    *        - @ref NO_MEMORY
-    *        - @ref MODEM_ERR
-    *        - @ref INTERNAL_ERR
-    *        - @ref INVALID_STATE
-    *        - @ref INVALID_CALL_ID
-    *        - @ref INVALID_ARGUMENTS
-    *        - @ref OPERATION_NOT_ALLOWED
-    *        - @ref GENERIC_FAILURE
+    *        - @ref telux::common::ErrorCode::SUCCESS
+    *        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
+    *        - @ref telux::common::ErrorCode::NO_MEMORY
+    *        - @ref telux::common::ErrorCode::MODEM_ERR
+    *        - @ref telux::common::ErrorCode::INTERNAL_ERR
+    *        - @ref telux::common::ErrorCode::INVALID_STATE
+    *        - @ref telux::common::ErrorCode::INVALID_CALL_ID
+    *        - @ref telux::common::ErrorCode::INVALID_ARGUMENTS
+    *        - @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+    *        - @ref telux::common::ErrorCode::GENERIC_FAILURE
     *
     * @returns Status of hangupWaitingOrBackground i.e. success or suitable error code.
     *
@@ -627,7 +629,7 @@ public:
    /**
     * This function is called with the response to makeCall API.
     *
-    * @param [out] error  @ref ErrorCode
+    * @param [out] error  @ref telux::common::ErrorCode
     * @param [out] call   Pointer to Call object or nullptr in case of failure
     */
    virtual void makeCallResponse(telux::common::ErrorCode error,

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -114,7 +114,7 @@ class DataFactory {
      *
      * @param [in] slotId           Unique identifier for the SIM slot
      * @param [in] clientCallback   Optional callback to get the initialization status of
-     *                              DataConnectionManager @ref telux::data::InitResponseCb.
+     *                              DataConnectionManager @ref telux::common::InitResponseCb
      *
      * @returns instance of IDataConnectionManager
      *
@@ -128,7 +128,7 @@ class DataFactory {
      *
      * @param [in] slotId           Unique identifier for the SIM slot
      * @param [in] clientCallback   Optional callback to get the initialization status of
-     *                              DataProfileManager @ref telux::data::InitResponseCb.
+     *                              DataProfileManager @ref telux::common::InitResponseCb
      *
      * @returns instance of IDataProfileManager
      *
@@ -142,7 +142,7 @@ class DataFactory {
      *
      * @param [in] slotId            Unique identifier for the SIM slot
      * @param [in] clientCallback    Optional callback to get the initialization status of
-     *                               ServingSystemManager @ref telux::data::InitResponseCb.
+     *                               ServingSystemManager @ref telux::common::InitResponseCb
      *
      * @returns instance of IServingSystemManager
      *
@@ -156,7 +156,7 @@ class DataFactory {
      *
      * @param [in] slotId           Unique identifier for the SIM slot
      * @param [in] clientCallback   Optional callback to get the initialization status of
-     *                              Serving System Manager @ref telux::data::InitResponseCb.
+     *                              Serving System Manager @ref telux::common::InitResponseCb
      *
      * @returns instance of IDataFilterManager.
      *
@@ -289,9 +289,11 @@ class DataFactory {
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr)
         = 0;
 
+#ifndef TELUX_DOXY_SKIP
  protected:
     DataFactory();
     virtual ~DataFactory();
+#endif
 
  private:
     DataFactory(const DataFactory &) = delete;

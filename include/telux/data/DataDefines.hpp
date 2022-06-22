@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -124,7 +124,6 @@ enum class AuthProtocolType {
 
 /**
  * Defines the supported filtering mode of the packet data session.
- * @ref DataRestrictFilter
  */
 enum class DataRestrictModeType {
     UNKNOWN = -1,
@@ -134,7 +133,7 @@ enum class DataRestrictModeType {
 
 /**
  * Defines the supported powersave filtering mode and autoexit for the packet data session.
- * @ref DataRestrictFilter
+ * @ref DataRestrictModeType
  */
 struct DataRestrictMode {
     DataRestrictModeType filterMode; /**< Disable or enable data filter mode. When disabled all the
@@ -200,7 +199,7 @@ struct ProfileParams {
     IpFamilyType ipFamilyType = IpFamilyType::UNKNOWN;       /**< Preferred IP family for the call,
                                                                   default is
                                                                   IpFamilyType::UNKNOWN */
-    ApnTypes apnTypes;                                       /**< APN Types ref @ApnMaskType */
+    ApnTypes apnTypes;                                       /**< APN Types @ref ApnMaskType */
 };
 
 /**
@@ -770,9 +769,11 @@ enum class ServiceState {
  * Structure for vlan configuration
  */
 struct VlanConfig {
-    InterfaceType iface; /**< PHY interfaces (i.e. ETH, ECM and RNDIS)*/
-    int16_t vlanId;      /**< Vlan identifier (i.e 1-4094)*/
-    bool isAccelerated;  /**< is acceleration allowed */
+    InterfaceType iface;       /**< PHY interfaces (i.e. ETH, ECM and RNDIS)                     */
+    int16_t vlanId;            /**< Vlan identifier (i.e 1-4094)                                 */
+    bool isAccelerated;        /**< is acceleration allowed                                      */
+    uint8_t priority = 0;      /**< Vlan priority - A 3-bit field which refers to the IEEE 802.1p
+                                    class of service to traffic priority level. Don't care = 0   */
 };
 
 /**
@@ -829,8 +830,8 @@ using QosIPFlowMask = std::bitset<16>;
  */
 struct QosIPFlowInfo {
     QosIPFlowMask mask;                     /**< Valid parameters of QosIPFlowInfo
-                                                 ref @QosIPFlowMaskType */
-    IpTrafficClassType tfClass;             /**< IP Traffic class type @ref IpFamilyType */
+                                                 @ref QosIPFlowMaskType */
+    IpTrafficClassType tfClass;             /**< IP Traffic class type @ref IpTrafficClassType */
     FlowDataRate dataRate;                  /**< Flow data rate @ref FlowDataRate */
 };
 

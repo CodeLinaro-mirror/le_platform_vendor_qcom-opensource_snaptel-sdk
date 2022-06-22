@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -61,7 +62,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 /**
  * @file       PowerFactory.hpp
@@ -95,12 +95,12 @@ public:
     /**
      * API to get the TCU-activity Manager instance
      *
-     * @param [in] type      Type of the client that is going to access ITcuActivityManager APIs
-     *                       @ref ClientType
-     * @param [in] procType  Required processor type on which the operations will be performed
-     *                       @ref telux::common::ProcType
-     * @param [in] callback  Optional callback pointer to get the response of the manager
-     *                       initialization.
+     * @param [in] clientType Type of the client that is going to access ITcuActivityManager APIs
+     *                        @ref ClientType
+     * @param [in] procType   Required processor type on which the operations will be performed
+     *                        @ref telux::common::ProcType
+     * @param [in] callback   Optional callback pointer to get the response of the manager
+     *                        initialization.
      *
      * @returns Pointer of ITcuActivityManager object.
      */
@@ -109,9 +109,11 @@ public:
         common::ProcType procType = common::ProcType::LOCAL_PROC,
         telux::common::InitResponseCb callback = nullptr) = 0;
 
+#ifndef TELUX_DOXY_SKIP
 protected:
     PowerFactory();
     virtual ~PowerFactory();
+#endif
 
 private:
     PowerFactory(const PowerFactory &) = delete;

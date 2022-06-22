@@ -88,7 +88,6 @@ using std::shared_ptr;
 using telux::cv2x::TrustedUEInfo;
 using telux::cv2x::TrafficCategory;
 static bool stopThread = false;
-static sem_t gbSem;
 
 // mutexes defined in header
 /*
@@ -188,7 +187,7 @@ void Ldm::gbCollector(const uint16_t waitTime, const uint8_t timeThreshold) {
         if(ldmVerbosity){
             printLdmIdMap();
         }
-        lock_guard<mutex> lk(this->idIndexMapMutex);
+        this->idIndexMapMutex.lock();
         // go through id - slot map to remove old ldm contents
         for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
             if(element.second != DIRTY_DATA &&
@@ -217,7 +216,7 @@ void Ldm::gbCollector(const uint16_t waitTime, const uint8_t timeThreshold) {
                 }
             }
         }
-        lk.~lock_guard();
+        this->idIndexMapMutex.unlock();
         sleep(waitTime);
     }
 }
@@ -229,7 +228,6 @@ void Ldm::startGb(const uint16_t gbTime, const uint8_t timeThreshold) {
     if (!gbStarted) {
         this->gbThread = thread(gbThread, gbTime, timeThreshold);
         gbStarted = true;
-        sem_init(&gbSem, 0, 1);
     }
     else {
         if(ldmVerbosity)
@@ -238,16 +236,13 @@ void Ldm::startGb(const uint16_t gbTime, const uint8_t timeThreshold) {
 }
 
 void Ldm::stopGb(){
-    sem_wait(&gbSem);
     if(gbStopped){
-        sem_post(&gbSem);
         return;
     }
     if(ldmVerbosity)
         cout << "Stopping Garbage Collector.\n";
     stopThread = true;
     gbStopped = true;
-    sem_post(&gbSem);
 }
 
 void Ldm::cv2xUpdateTrustedUEListCallback(ErrorCode error) {

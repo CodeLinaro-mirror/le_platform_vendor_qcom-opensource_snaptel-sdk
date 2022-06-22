@@ -181,7 +181,7 @@ public:
      *                         the profile id, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its profile id can be specified as input.
-     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType.If user does not specify
+     * @param [in] ipFamilyType - Optional IP Family type @ref IpFamilyType . If user does not specify
      *                         the ip family type, then the API applies to all the currently running
      *                         data connection. If user wants to apply the changes to any specific
      *                         data connection, then its ip family type can be specified as input.

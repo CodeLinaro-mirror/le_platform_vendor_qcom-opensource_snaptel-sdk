@@ -212,7 +212,7 @@ class IL2tpManager {
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
      * permission to invoke this API successfully.
      *
-     * @param [in] l2tpTunnelConfig     Configuration to be set @ref telux::net::L2tpTunnelConfig
+     * @param [in] l2tpTunnelConfig     Configuration to be set @ref telux::data::net::L2tpTunnelConfig
      * @param [in] callback             Optional callback to get the response addTunnel
      *
      * @returns Status of addTunnel i.e. success or suitable status code.

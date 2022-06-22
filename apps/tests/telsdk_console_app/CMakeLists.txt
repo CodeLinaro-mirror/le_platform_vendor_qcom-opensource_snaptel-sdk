@@ -80,6 +80,7 @@ set(TELSDK_CONSOLE_APP_SOURCES
    ImsServingSystem/MyImsServSysListener.cpp
 
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
+   ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
    ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
@@ -106,9 +107,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_executable (${TARGET_TELSDK_CONSOLE_APP} ${TELSDK_CONSOLE_APP_SOURCES})
 
 if (AUDIO_ENABLED)
-target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common telux_audio)
+target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common telux_audio
+    pthread)
 else (!AUDIO_ENABLED)
-target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common)
+target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common pthread)
 endif (AUDIO_ENABLED)
 
 # install to target

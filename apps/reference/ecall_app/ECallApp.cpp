@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file       ECallApp.cpp
@@ -42,6 +77,7 @@
 
 #include "ECallApp.hpp"
 #include "../../common/utils/Utils.hpp"
+#include "../../common/utils/SignalHandler.hpp"
 
 #define ECALL_CATEGORY_AUTO 1
 #define ECALL_CATEGORY_MANUAL 2
@@ -376,24 +412,23 @@ telux::common::Status ECallApp::getMsdTransmissionConfig(bool &transmitMsd) {
     return telux::common::Status::SUCCESS;
 }
 
-void signalHandler(int sig) {
-    ECallApp::getInstance().cleanup();
-    exit(1);
-}
-
-void setupSignalHandler() {
-    signal(SIGINT, signalHandler);
-    signal(SIGSEGV, signalHandler);
-    signal(SIGABRT, signalHandler);
-    signal(SIGBUS, signalHandler);
-    signal(SIGILL, signalHandler);
-    signal(SIGFPE, signalHandler);
-    signal(SIGPIPE, signalHandler);
-}
-
 // Main function that displays the interactive console for eCall related operations
 int main(int argc, char **argv) {
-    setupSignalHandler();
+
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    sigaddset(&sigset, SIGHUP);
+    SignalHandlerCb cb = [](int sig) {
+        // We can call exit() here if no cleanups needed,
+        // or maybe just set a flag, and let the main thread to decide
+        // when to exit.
+        ECallApp::getInstance().cleanup();
+        exit(sig);
+    };
+    SignalHandler::registerSignalHandler(sigset, cb);
+
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "locclient"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);

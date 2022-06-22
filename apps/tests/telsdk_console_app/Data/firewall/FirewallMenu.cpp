@@ -301,10 +301,12 @@ void FirewallMenu::requestFirewallStatus(std::vector<std::string> inputCommand) 
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        std::cout << "Firewall " << (enable ? "is enabled" : "not enabled") << "\n";
-        if (enable) {
-            std::cout << "Firewall enabled to "
-                      << (allowPackets ? "Accept Packets" : "Drop packets") << "\n";
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Firewall " << (enable ? "is enabled" : "not enabled") << "\n";
+            if (enable) {
+                std::cout << "Firewall enabled to "
+                  << (allowPackets ? "Accept Packets" : "Drop packets") << "\n";
+            }
         }
     };
 
@@ -704,10 +706,11 @@ void FirewallMenu::requestFirewallEntries(std::vector<std::string> inputCommand)
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-
-        std::cout << "Found " << entries.size() << " entries\n";
-        this->fwEntries_ = entries;
-        this->displayFirewallEntry();
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Found " << entries.size() << " entries\n";
+            this->fwEntries_ = entries;
+            this->displayFirewallEntry();
+        }
     };
 
     retStat = firewallManager_->requestFirewallEntries(profileId, respCb, static_cast<SlotId>(slotId));

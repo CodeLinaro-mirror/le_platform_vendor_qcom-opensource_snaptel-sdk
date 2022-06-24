@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -171,7 +171,17 @@ struct BitRateInfo {
  *    call will NET_CONNECTED and onDataCallInfoChanged will not get called.
  *  - If any client that start data call and error is detected, error argument will contain error
  *    code and onDataCallInfoChanged will not get called.
-
+ *  - If client tries to start data call on specific profile id and network interface and:
+ *      - Data call exist with same profile id and different network interface or data call exist
+ *        with same network interface and different profile id, error argument will be set to
+ *        telux::ErrorCode::INVALID_OPERATION and onDataCallInfoChanged will not get called.
+ *      - Existing data call with same profile id and network interface is in process of tearing
+ *        down requested by another client, error argument will be set to
+ *        telux::ErrorCode::OP_IN_PROGRESS and onDataCallInfoChanged will not get called.
+ *  - On platforms where a client is not allowed to specify the name of the network interface when
+ *    starting a data call, the callback will be invoked with error
+ *    telux::ErrorCode::REQUEST_NOT_SUPPORTED and onDataCallInfoChanged will not get called.
+ *
  * When callback is used with stopDataCall, expected behavior is as following:
  *  - First/Last client that attempts to stop data call and no error is detected, state of data call
  *    will be NET_DISCONNECTING and onDataCallInfoChanged will be called once data call is down.
@@ -324,9 +334,13 @@ class IDataConnectionManager {
     /**
      * Starts a data call corresponding to default or specified profile identifier.
      *
-     * This will bring up data call connection based on specified profile identifier. This is an
-     * asynchronous API, client receives notification indicating the data call establishment
-     * or failure in callback.
+     * This will bring up data call connection based on specified profile identifier, IP family
+     * type, and operation type (local/remote). Clients can also specify network interface name
+     * that will be associated with data call to be started. This is an asynchronous API.
+     * If telux::common::Status::SUCCESS is returned, client provided callback will be invoked at
+     * later time with error code and DataCall object associated with requested call.
+     * Clients might receive additional notification for the final data call status. For details
+     * see @ref telux::data::DataCallResponseCb.
      *
      * @note       if application starts data call on IPV4V6 then it's expected to stop the
      *             data call on same ip family type (i.e IPV4V6).
@@ -337,16 +351,21 @@ class IDataConnectionManager {
      * @param [in] ipFamilyType  Identifies IP family type
      * @param [out] callback     Optional callback to get the response of start data call.
      * @param [in] operationType Optional @ref telux::data::OperationType
-     * @param [in] apn           Deprecated and currently unsued
+     * @param [in] interfaceName Optional name to be assigned to the network interface representing
+     *                           this data call. This option is not supported on all platforms.
+     *                           See documentation of telux::data::DataCallResponseCb for error
+     *                           returned on such platforms.
      *
      * @returns Immediate status of startDataCall() request sent
      *                   i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backwards compatibility.
      *
      */
     virtual telux::common::Status startDataCall(int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::IPV4V6, DataCallResponseCb callback = nullptr,
-        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "")
+        OperationType operationType = OperationType::DATA_LOCAL, std::string interfaceName = "")
         = 0;
 
     /**
@@ -374,8 +393,7 @@ class IDataConnectionManager {
      */
     virtual telux::common::Status stopDataCall(int profileId,
         IpFamilyType ipFamilyType = IpFamilyType::IPV4V6, DataCallResponseCb callback = nullptr,
-        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "")
-        = 0;
+        OperationType operationType = OperationType::DATA_LOCAL, std::string apn = "") = 0;
 
     /**
      * Register a listener for specific events in the Connection Manager like establishment of new

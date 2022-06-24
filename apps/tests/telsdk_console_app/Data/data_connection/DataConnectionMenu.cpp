@@ -230,6 +230,8 @@ void DataConnectionMenu::onInitCompleted(telux::common::ServiceStatus status) {
 
 void DataConnectionMenu::startDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStart data call" << std::endl;
+    telux::common::Status retStat;
+
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
@@ -239,7 +241,7 @@ void DataConnectionMenu::startDataCall(std::vector<std::string> inputCommand) {
         std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
     }
-    telux::common::Status retStat = telux::common::Status::SUCCESS;
+
     int profileId;
     std::cout << "Enter Profile Id : ";
     std::cin >> profileId;
@@ -255,18 +257,30 @@ void DataConnectionMenu::startDataCall(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
 
+    std::string interfaceName = "";
+    int userChoice;
+    std::cout << "Start data call on specific interface name? (1-Yes, 0-No): ";
+    std::cin>> userChoice;
+    Utils::validateInput(userChoice);
+    std::cout << std::endl;
+    if(userChoice) {
+        std::cout << "Enter interface name: ";
+        std::cin >> interfaceName;
+        Utils::validateInput(interfaceName);
+        std::cout << std::endl;
+    }
+
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-
-    retStat =
-        dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->startDataCall(profileId, ipFamType,
-        MyDataCallResponseCallback::startDataCallResponseCallBack, opType);
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->startDataCall(profileId,
+        ipFamType,MyDataCallResponseCallback::startDataCallResponseCallBack, opType, interfaceName);
     Utils::printStatus(retStat);
 }
 
 void DataConnectionMenu::stopDataCall(std::vector<std::string> inputCommand) {
     std::cout << "\nStop data call" << std::endl;
-    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    telux::common::Status retStat;
+
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
@@ -277,6 +291,14 @@ void DataConnectionMenu::stopDataCall(std::vector<std::string> inputCommand) {
         return;
     }
 
+    int userChoice;
+    int operationType;
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    Utils::validateInput(operationType);
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+    std::cout << std::endl;
+
     int profileId;
     std::cout << "Enter Profile Id : ";
     std::cin >> profileId;
@@ -286,17 +308,9 @@ void DataConnectionMenu::stopDataCall(std::vector<std::string> inputCommand) {
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
     std::cin >> ipFamilyType;
     Utils::validateInput(ipFamilyType);
-
-    int operationType;
-    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
-    std::cin >> operationType;
-    Utils::validateInput(operationType);
-
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
-    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-    retStat =
-        dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->stopDataCall(profileId, ipFamType,
-        MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->stopDataCall(
+        profileId, ipFamType, MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
     Utils::printStatus(retStat);
 }
 

@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
 * @file       Cv2xFactory.hpp
@@ -74,8 +80,8 @@ public:
      * @returns shared pointer to Cv2x Radio Manager upon success.
      *          nullptr otherwise.
      */
-    std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager(
-        telux::common::InitResponseCb cb = nullptr);
+    virtual std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager(
+        telux::common::InitResponseCb cb = nullptr) = 0;
 
     /**
      * Get Cv2xConfig instance.
@@ -85,8 +91,8 @@ public:
      * @returns shared pointer to Cv2x Config upon success.
      *          nullptr otherwise.
      */
-    std::shared_ptr<ICv2xConfig> getCv2xConfig(
-        telux::common::InitResponseCb cb = nullptr);
+    virtual std::shared_ptr<ICv2xConfig> getCv2xConfig(
+        telux::common::InitResponseCb cb = nullptr) = 0;
 
     /**
      * Get Cv2xThrottleManager instance.
@@ -94,27 +100,13 @@ public:
      * @returns shared pointer to Cv2x ThrottleManager upon success.
      *          nullptr otherwise.
      */
-    std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager(
-        telux::common::InitResponseCb cb = nullptr);
+    virtual std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager(
+        telux::common::InitResponseCb cb = nullptr) = 0;
 
-private:
-
-    void onGetCv2xConfigResponse(telux::common::ServiceStatus status);
-    void onGetCv2xRadioManagerResponse(telux::common::ServiceStatus status);
-    void onGetCv2xThrottleManagerResponse(telux::common::ServiceStatus status);
-
-    std::mutex mutex_;
-    std::shared_ptr<ICv2xRadioManager> radioManager_ = nullptr;
-    std::shared_ptr<ICv2xConfig> config_ = nullptr;
-    std::shared_ptr<ICv2xThrottleManager> throttleManager_ = nullptr;
-    std::vector<telux::common::InitResponseCb> cv2xManagerInitCallbacks_;
-    std::vector<telux::common::InitResponseCb> cv2xConfigInitCallbacks_;
-    std::vector<telux::common::InitResponseCb> cv2xThrottleMgrInitCallbacks_;
-    telux::common::ServiceStatus cv2xManagerInitStatus_;
-    telux::common::ServiceStatus cv2xConfigInitStatus_;
-    telux::common::ServiceStatus cv2xThrottleMgrInitStatus_;
+protected:
 
     Cv2xFactory();
+    virtual ~Cv2xFactory();
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

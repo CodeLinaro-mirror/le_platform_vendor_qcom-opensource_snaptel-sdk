@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       ServingSystemManager.hpp
  *
@@ -129,6 +135,20 @@ struct DcStatus {
  * defined in RatPrefType enum are used to set or get RAT preference.
  */
 using RatPreference = std::bitset<16>;
+
+/**
+ * Defines some of the notifications supported by @ref IServingSystemListener which can be
+ * dynamically disabled/enabled. Each entry represents one or more listener callbacks in
+ * @ref IServingSystemListener
+ */
+enum ServingSystemNotificationType {
+   SYSTEM_INFO,      /* Represents @ref onSystemInfoChanged() and @ref onDcStatusChanged() */
+};
+
+/**
+ * Bit mask that denotes a set of notifications defined in @ref ServingSystemNotificationType
+ */
+using ServingSystemNotificationMask = std::bitset<32>;
 
 /**
  * This function is called with the response to requestRatPreference API.
@@ -279,22 +299,47 @@ public:
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
     *                          processes the notification
+    * @param [in] mask         Bit mask representing a set of notifications that needs to be
+    *                          registered - @ref ServingSystemNotificationMask
+    *                          Notifications under IServingSystemListener that are not listed in
+    *                          in @ref ServingSystemNotificationType would always be registered by
+    *                          default.
+    *                          All the notifications will be registered when the client provides
+    *                          ALL_NOTIFICATIONS as input. The bits that are not set in the mask are
+    *                          ignored and do not have any effect on registration.
+    *                          To deregister, the API @ref deregisterListener should be used.
     *
     * @returns Status of registerListener i.e success or suitable status code.
     */
-   virtual telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener)
-      = 0;
+   virtual telux::common::Status registerListener(std::weak_ptr<IServingSystemListener> listener,
+        ServingSystemNotificationMask mask = ALL_NOTIFICATIONS) = 0;
 
    /**
     * Deregister the previously added listener.
     *
     * @param [in] listener     Previously registered IServingSystemListener that
     *                          needs to be removed
+    * @param [in] mask         Bit mask that denotes a set of notifications that needs to be
+    *                          de-registered - @ref ServingSystemNotificationMask
+    *                          Notifications under IServingSystemListener that are not listed in
+    *                          @ref ServingSystemNotificationType will be de-registered only when
+    *                          ALL_NOTIFICATIONS is provided as input.
+    *                          The bits that are not set in the mask are ignored and does not have
+    *                          any effect on de-registration. However, providing an empty mask is
+    *                          an invalid operation.
+    *                          To register again, the API @ref deregisterListener should be used.
     *
     * @returns Status of removeListener i.e. success or suitable status code
     */
-   virtual telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener)
-      = 0;
+   virtual telux::common::Status deregisterListener(std::weak_ptr<IServingSystemListener> listener,
+        ServingSystemNotificationMask mask = ALL_NOTIFICATIONS) = 0;
+
+   /**
+    * Represents the set of all notifications defined in @ref ServingSystemNotificationType.
+    * When this constant value is provided for registration or deregistration, all notifications
+    * will be registered or deregistered.
+    */
+   static const uint32_t ALL_NOTIFICATIONS = 0xFFFFFFFF;
 
    /**
     * Destructor of IServingSystemManager
@@ -304,8 +349,13 @@ public:
 };
 
 /**
- * @brief Listener class for getting radio access technology mode preference
- *        change notification.
+ * @brief Listener class for getting notifications related to updates in radio access technology
+ *        mode preference, service domain preference, serving system information, etc.
+ *        Some notifications in this listener could be frequent in nature. When the system is in a
+ *        suspended/low power state, those indications will wake the system up. This could result
+ *        in increased power consumption by the system. If those notifications are not required in
+ *        the suspended/low power state, it is recommended for the client to de-register specific
+ *        notifications using the @ref deregisterListener API.
  *
  *        The listener method can be invoked from multiple different threads.
  *        Client needs to make sure that implementation is thread-safe.
@@ -332,6 +382,9 @@ public:
     * This function is called whenever the Serving System information is changed.
     * Supports only 3GPP RATs.
     *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO bit in the bitmask.
+    *
     * @param [in] sysInfo    @ref ServingSystemInfo
     *
     * @note Eval: This is a new API and is being evaluated. It is subject to change and
@@ -342,6 +395,9 @@ public:
 
    /**
     * This function is called whenever the Dual Connnectivity status is changed on 5G NR.
+    *
+    * To receive this notification, client needs to register a listener using @ref registerListener
+    * API by setting the @ref ServingSystemNotificationType::SYSTEM_INFO bit in the bitmask.
     *
     * @param [in] dcStatus       @ref DcStatus
     *

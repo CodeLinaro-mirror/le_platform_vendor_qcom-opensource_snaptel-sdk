@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -114,9 +114,12 @@ bool DataServingSystemMenu::init() {
         std::shared_ptr<ConsoleAppCommand> requestRoamingStatus =
             std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_roaming_status", {},
             std::bind(&DataServingSystemMenu::requestRoamingStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestNrIconType =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "request_nr_icon_type", {},
+            std::bind(&DataServingSystemMenu::requestNrIconType, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            getDrbStatus, requestServiceStatus, requestRoamingStatus};
+            getDrbStatus, requestServiceStatus, requestRoamingStatus, requestNrIconType};
         addCommands(commandsList);
     }
 
@@ -285,5 +288,52 @@ void DataServingSystemMenu::requestRoamingStatus(std::vector<std::string> inputC
 
     retStat =
         dataServingSystemManagers_[static_cast<SlotId>(slotId)]->requestRoamingStatus(respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataServingSystemMenu::requestNrIconType(std::vector<std::string> inputCommand) {
+    std::cout << "Request Nr Icon Type\n";
+    telux::common::Status retStat;
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    if (dataServingSystemManagers_.find(static_cast<SlotId>(slotId)) ==
+        dataServingSystemManagers_.end()) {
+        std::cout << "Serving System Manager on SlotId: " << slotId << " is not ready" << std::endl;
+        return;
+    }
+
+    // Callback
+    auto respCb = [slotId](
+            telux::data::NrIconType type, telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                    << "requestNrIconType Response on slotid " << static_cast<int>(slotId);
+        if(error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << " is successful" << std::endl;
+            std::cout << "Nr Icon Type: ";
+            switch(type)  {
+                case telux::data::NrIconType::BASIC:
+                    std::cout << "Basic" << std::endl;
+                break;
+                case telux::data::NrIconType::UWB:
+                    std::cout << "Ultrawide Band" << std::endl;
+                break;
+                default:
+                    std::cout << "Unknown" << std::endl;
+            }
+        }
+        else {
+            std::cout << " failed"
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        }
+    };
+
+    retStat =
+        dataServingSystemManagers_[static_cast<SlotId>(slotId)]->requestNrIconType(respCb);
     Utils::printStatus(retStat);
 }

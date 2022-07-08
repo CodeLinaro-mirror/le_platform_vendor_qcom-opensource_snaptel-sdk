@@ -220,6 +220,10 @@ Its APIs provide functionality such as
    - Query the software bridges configured in the system
    - Enable / Disable the software bridge management
 
+Data client Manager APIs provide functionality such as
+   - fetch device data usage
+Configurations relevant to device data usage monitoring are available in data related configuration files - /etc/data/mobileap_cfg.xml and /etc/data/ipa/IPACM_cfg.xml
+
 @subsection nw_srv_sys_services Network Selection and Serving System Management
 Network Selection and Service System Management APIs in the Telematics SDK used for configuring the networks and preferences
 

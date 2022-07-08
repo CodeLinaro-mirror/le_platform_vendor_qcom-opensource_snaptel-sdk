@@ -171,6 +171,22 @@ std::string DataUtils::dataCallStatusToString(telux::data::DataCallStatus dcStat
    }
 }
 
+std::string DataUtils::usageResetReasonToString(telux::data::UsageResetReason usageResetReason) {
+   switch(usageResetReason) {
+      case telux::data::UsageResetReason::SUBSYSTEM_UNAVAILABLE:
+         return "SUBSYSTEM_UNAVAILABLE";
+      case telux::data::UsageResetReason::BACKHAUL_SWITCHED:
+         return "BACKHAUL_SWITCHED";
+      case telux::data::UsageResetReason::DEVICE_DISCONNECTED:
+         return "DEVICE_DISCONNECTED";
+      case telux::data::UsageResetReason::WLAN_DISABLED:
+         return "WLAN_DISABLED";
+      case telux::data::UsageResetReason::WWAN_DISCONNECTED:
+         return "WWAN_DISCONNECTED";
+      default: { return "UNKNOWN"; }
+   }
+}
+
 std::string DataUtils::bearerTechToString(telux::data::DataBearerTechnology bearerTech) {
    switch(bearerTech) {
       case telux::data::DataBearerTechnology::CDMA_1X:

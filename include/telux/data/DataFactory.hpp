@@ -91,6 +91,7 @@
 #include <telux/data/net/BridgeManager.hpp>
 #include <telux/data/net/L2tpManager.hpp>
 #include <telux/data/DataSettingsManager.hpp>
+#include <telux/data/ClientManager.hpp>
 
 namespace telux {
 namespace data {
@@ -288,6 +289,18 @@ class DataFactory {
     virtual std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
         telux::data::OperationType oprType, telux::common::InitResponseCb clientCallback = nullptr)
         = 0;
+
+    /**
+     * Get Client Manager
+     *
+     * @param [in] clientCallback   Optional callback to get the initialization status of
+     *                              ClientManager @ref telux::common::InitResponseCb.
+     *
+     * @returns instance of IClientManager
+     *
+     */
+    virtual std::shared_ptr<IClientManager> getClientManager(
+        telux::common::InitResponseCb clientCallback = nullptr) = 0;
 
  protected:
     DataFactory();

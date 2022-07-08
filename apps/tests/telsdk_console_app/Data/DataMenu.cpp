@@ -163,10 +163,15 @@ void DataMenu::init() {
             "11", "Data_Settings_Menu",
             {}, std::bind(&DataMenu::dataSettingsMenu, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> clientManagerMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "12", "Client_Menu",
+            {}, std::bind(&DataMenu::clientMenu, this, std::placeholders::_1)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {dataConnectionMenu,
         dataFilterMenu, snatMenuCommand, firewallMenuCommand, vlanMenuCommand, bridgeMenuCommand,
         socksMenuCommand, l2tpMenuCommand, servingSystemMenuCommand, dataProfileManagerMenuCommand,
-        dataSettingsMenuCommand};
+        dataSettingsMenuCommand, clientManagerMenuCommand};
 
     addCommands(commandsList);
 
@@ -285,5 +290,14 @@ void DataMenu::dataSettingsMenu(std::vector<std::string> userInput) {
         settingsMenu_->mainLoop();
     }
     settingsMenu_ = nullptr;
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::clientMenu(std::vector<std::string> userInput) {
+    clientMenu_ = std::make_shared<ClientMenu>("Client Menu", "client> ");
+    if(clientMenu_->init()) {
+        clientMenu_->mainLoop();
+    }
+    clientMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }

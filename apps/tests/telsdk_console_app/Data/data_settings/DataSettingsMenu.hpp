@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -105,6 +105,7 @@ class DataSettingsMenu : public ConsoleApp ,
     void requestBandInterferenceConfig(std::vector<std::string> inputCommand);
     void setWwanConnectivityConfig(std::vector<std::string> inputCommand);
     void requestWwanConnectivityConfig(std::vector<std::string> inputCommand);
+    void isDeviceDataUsageMonitoringEnabled(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
 
     //Initialization callback

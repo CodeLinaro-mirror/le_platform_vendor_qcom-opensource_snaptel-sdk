@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -73,6 +73,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
+#include <atomic>
 
 class SaeApplication : public ApplicationBase {
 public:
@@ -123,7 +124,7 @@ public:
 
 private:
     uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
-    bool GlobalIpSessionActive = false;
+    std::atomic<bool>  GlobalIpSessionActive{false};
     std::chrono::milliseconds wraInterval;
     std::thread wraThread;
     std::mutex wraMutex;
@@ -133,6 +134,11 @@ private:
     bool initialized = false;   // used to initialize temp id
     unsigned int msgCount = 0;      // Ranges from 1 - 127 in cyclic fashion.
     unsigned int tempId = 0;        // 32 bit identifier
+    string rsuGateway_;    // used to store the RSU gateway parsed from received wsa
+    string rsuPrimaryDns_; // used to store the RSU primray DNS parsed from received wsa
+    std::atomic<bool> obuRouteSet_ {false}; // indicate whether the default route is set in OBU
+    bool exit_ = false;
+
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access
@@ -173,6 +179,30 @@ private:
      */
     void fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra);
 #endif
+    /**
+    * Method for RSU to get the static application server IPv6 address from
+    * configuration or the dynamic address of C-V2X IP rmnet interface.
+    * @param buf     - A pointer to the buffer for storing the IPv6 address
+    * @param len     - The length of the ipAddr in bytes
+    */
+    int getDefaultGWAddrInRsu(char *buf, int& len);
+
+    /**
+    * Method for OBU to store the WRA information retrieved from RSU.
+    * @param wra  - A pointer to WRA message
+    */
+    int storeWraInfoInObu(RoutingAdvertisement_t* wra);
+
+    /**
+    * Method for OBU to set default route in OBU on receivng default gateway from the RSU.
+    * @param addr  - route to set.
+    */
+    int setDefaultRouteInObu(string addr);
+
+    /**
+    * Method for OBU to delete the default route set previously.
+    */
+    int deleteDefaultRouteInObu();
 
     /**
     * Method to initialize SAE packets in msg_contents struct.
@@ -218,7 +248,22 @@ private:
     */
     void initRecordedBsm(bsm_value_t* bsm);
 
-    int parseIPv6Prefix(char *prefix, int& len);
+    /**
+    * Method to parse IPv6 Address from input string.
+    * @param str    - A string that includes the IPv6 address
+    * @param buf    - A pointer to the decoded IPv6 address
+    * @param bufLen - Length of decoded IPv6 address
+    */
+    int parseIPv6Addr(const string& str, char *buf, int& bufLen);
+
+    /**
+    * Method to convert IPv6 Address from input buffer to string.
+    * @param buf    - A pointer to the decoded IPv6 address
+    * @param bufLen - Length of decoded IPv6 address
+    * @param str    - A string that includes the IPv6 address
+    */
+    int convertIpv6Addr2Str(char* buf, int bufLen, string& addr);
+
     std::mutex wramutex;
     std::mutex csvMutex;
 };

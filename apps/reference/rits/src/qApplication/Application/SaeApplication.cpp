@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -70,6 +70,9 @@
   */
 #include "SaeApplication.hpp"
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
+#include <fstream>
+#include <sstream>
+
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verifStatIdx = 0;
@@ -91,7 +94,7 @@ thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
 thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
-    ApplicationBase(fileConfiguration) {
+    ApplicationBase(fileConfiguration, msgType) {
     if (not configuration.isValid) {
         return;
     }
@@ -149,6 +152,13 @@ SaeApplication::~SaeApplication() {
     printf("Total number of transmitted packets: %d\n",totalTxSuccess);
     printf("Total number of received packets: %d\n",totalRxSuccess);
 
+    // notify the wraThread to exit
+    exit_ = true;
+    {
+        std::unique_lock<std::mutex> lk(wraMutex);
+        wraCv.notify_all();
+    }
+
     if (wraThread.joinable() == true) {
         wraThread.join();
     }
@@ -167,31 +177,33 @@ SaeApplication::~SaeApplication() {
     for (auto mc : receivedContents) {
         freeMsg(mc);
     }
+    // delete default route in OBU if previously set
+    deleteDefaultRouteInObu();
 }
 
-void SaeApplication::printRxStats(){
+void SaeApplication::printRxStats() {
     sem_wait(&this->log_sem);
     std::thread::id tid = std::this_thread::get_id();
     printf("Thread (%04x) rx fails is: %d\n", tid, rxFail);
     printf("Thread (%04x) decode fails is: %d\n", tid, decFail);
     printf("Thread (%04x) rx successes is: %d\n", tid, rxSuccess);
-    if(verifFail)
+    if (verifFail)
         printf("Thread (%04x) verif fails is: %d\n", tid, verifFail);
-    if(verifSuccess)
+    if (verifSuccess)
         printf("Thread (%04x) verif success is: %d\n", tid, verifSuccess);
     totalRxSuccess+=rxSuccess;
     sem_post(&this->log_sem);
 }
 
-void SaeApplication::printTxStats(){
+void SaeApplication::printTxStats() {
     printf("Printing tx stats\n");
     sem_wait(&this->log_sem);
     std::thread::id tid = std::this_thread::get_id();
     printf("Thread (%04x) tx fails is: %d\n", tid, txFail);
     printf("Thread (%04x) tx successes is: %d\n", tid, txSuccess);
-    if(signFail)
+    if (signFail)
         printf("Thread (%04x) sign fails is: %d\n", tid, signFail);
-    if(signSuccess)
+    if (signSuccess)
         printf("Thread (%04x) sign success is: %d\n", tid, signSuccess);
     totalTxSuccess+=txSuccess;
     sem_post(&this->log_sem);
@@ -207,17 +219,17 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 
     // make sure that the threadMc is initialized
     if (threadMc == nullptr) {
-        if(ldm == nullptr){
+        if (ldm == nullptr) {
             // allocate a new one since ldm is not active
             threadMc = std::make_shared<msg_contents>();
-        }else{
+        } else {
             // use a ldm-provided msg contents struct for rx and decoding
             uint32_t ldmIndex = this->ldm->getFreeBsmSlotIdx();
             threadMc = this->ldm->bsmContents[ldmIndex];
         }
     }
 
-    if(threadMc->abuf.head == NULL || threadMc->abuf.size == 0){
+    if (threadMc->abuf.head == NULL || threadMc->abuf.size == 0) {
         abuf_alloc(&threadMc->abuf, bufLen, ABUF_HEADROOM);
         initMsg(threadMc, true);
     } else {
@@ -240,29 +252,29 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
 
     // Make sure packet is successfully received
-    if(ret < MIN_PACKET_LEN || ret > MAX_PACKET_LEN || threadMc == nullptr){
-        if(appVerbosity > 4){
-            if(ret < 0){
+    if (ret < MIN_PACKET_LEN || ret > MAX_PACKET_LEN || threadMc == nullptr) {
+        if (appVerbosity > 4) {
+            if (ret < 0) {
                 printf("Receive returned with error.\n");
-            }else if(ret > 0 && ret < MIN_PACKET_LEN){
+            } else if (ret > 0 && ret < MIN_PACKET_LEN) {
                 printf(
                 "Dropping packet with %d bytes. Needs to be at least %d bytes.\n",
                         ret, MIN_PACKET_LEN);
-            }else if(ret > 0 && ret >= MAX_PACKET_LEN){
+            } else if (ret > 0 && ret >= MAX_PACKET_LEN) {
                 printf(
                 "Dropping packet with %d bytes. Needs to be less than %d bytes.\n",
                         ret, MAX_PACKET_LEN);
             }
             // if ret is 0, then polling timed out
         }
-        if(ret != 0) rxFail++;
+        if (ret != 0) rxFail++;
         return -1;
     }
 
     // needs to be done for data pointer to not override tail pointer
     threadMc->abuf.tail = threadMc->abuf.data+ret;
 
-    if(appVerbosity > 7){
+    if (appVerbosity > 7) {
        printf("\n 2) Full rx packet with length %d\n", ret);
        print_buffer((uint8_t*)threadMc->abuf.data, ret);
        printf("\n");
@@ -307,18 +319,18 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
 
     // Determine if we are expecting signed packet or not
-    if(this->configuration.enableSecurity){
+    if (this->configuration.enableSecurity) {
         // check if the message is signed/encrypted IEEE1609.2 content.
         if (ret == 1) { // message is secured
             ret = decodeAndVerify(threadMc.get());
-        }else if(ret >= 0){
+        } else if (ret >= 0) {
             // here we need to check option for processing both unsigned/signed packets
-            if(!configuration.acceptAll){
-                if(appVerbosity > 3)
+            if (!configuration.acceptAll) {
+                if (appVerbosity > 3)
                     printf("Error in decoding unsigned packet - security enabled.\n");
                 ret = -1;
-            }else{
-                if(appVerbosity > 3)
+            } else {
+                if (appVerbosity > 3)
                     printf("Decoded unsigned packet successfully.\n");
                 // process WSA and other WSMP packets
                 wsmpp = (wsmp_data_t *)threadMc->wsmp;
@@ -336,16 +348,16 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 }
                 ret = 1;
             }
-        }else{
-            if(appVerbosity > 3)
+        } else {
+            if (appVerbosity > 3)
                 printf("Error in decoding packet\n");
             ret = -1;
         }
-    }else{
+    } else {
         // determine if unsigned packet decoded properly
-        switch(ret){
+        switch (ret) {
             case 0:
-                if(appVerbosity > 3)
+                if (appVerbosity > 3)
                     printf("Successful decode\n");
                 ret = 0;
                 wsmpp = (wsmp_data_t *)threadMc->wsmp;
@@ -360,31 +372,30 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 }
                 break;
             case 1:
-                if(appVerbosity > 3)
+                if (appVerbosity > 3)
                     printf("Error in decoding packet. Expecting unsigned packet.\n");
                 ret = -1;
                 break;
             default:
-                if(appVerbosity > 3)
+                if (appVerbosity > 3)
                     printf("Error in decoding unsigned packet\n");
                 ret = -1;
                 break;
         }
     }
-    if(ret >= 0){
+    if (ret >= 0) {
         rxSuccess++;
         sem_wait(&this->log_sem);
         totalRxSuccessPerSecond++;
         sem_post(&this->log_sem);
-        if(appVerbosity > 2 && MsgType == MessageType::BSM){
+        if (appVerbosity > 2 && MsgType == MessageType::BSM) {
             printf("Decoded BSM Summary: \n");
             print_summary_RV(threadMc.get());
         }
-    }
-    else{
+    } else {
         decFail++;
     }
-    if(writeToCsvFile && (ret != -1)){
+    if (writeToCsvFile && (ret != -1)) {
         csvMutex.lock();
         writeToCsv(threadMc.get(),csvfp);
         csvMutex.unlock();
@@ -398,7 +409,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
     threadMc = this->ldm->bsmContents[ldmIndex];
     int ret = receive(index, bufLen);
     if (ret >= 0) {
-        if(threadMc->j2735_msg != nullptr){
+        if (threadMc->j2735_msg != nullptr) {
             auto bsm = reinterpret_cast<bsm_value_t *>(threadMc->j2735_msg);
             this->ldm->setIndex((uint32_t)bsm->id, ldmIndex, nullptr);
         }
@@ -406,7 +417,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
     return ret;
 }
 
-int SaeApplication::decodeAndVerify(msg_contents* mc){
+int SaeApplication::decodeAndVerify(msg_contents* mc) {
     int ret = -1;
     wsmp_data_t *wsmpp;
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
@@ -430,7 +441,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
         (uint8_t*)mc->l3_payload,mc->l3_payload_len,
         payload, payloadLen,
         dot2HdrLen);
-    if(ret == -1){
+    if (ret == -1) {
         printf("Error in extracting security header from signed packet.\n");
         verifFail++;
         return -1;
@@ -440,17 +451,17 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
     abuf_pull(&mc->abuf, dot2HdrLen - IEEE_1609_2_HDR_LEN);
     mc->l3_payload=mc->l3_payload+dot2HdrLen;
     mc->payload_len=payloadLen;
-    if(appVerbosity > 4){
+    if (appVerbosity > 4) {
         printf("Total security header length is: %d bytes\n",
                 dot2HdrLen);
         printf("payload length is %d bytes\n", ret);
     }
     wsmpp = (wsmp_data_t *)mc->wsmp;
-    if(MsgType == MessageType::BSM && wsmpp->psid == PSID_BSM) {
+    if (MsgType == MessageType::BSM && wsmpp->psid == PSID_BSM) {
         ret = decode_as_j2735(mc);
         // here the secure header was extracted properly, packet decoded incorrectly
-        if(ret == -1){
-            if(appVerbosity > 3)
+        if (ret == -1) {
+            if (appVerbosity > 3)
                 printf("Error in decoding unsigned packet - security enabled.\n");
             decFail++;
             return -1;
@@ -458,12 +469,12 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
     }
 
     // if a bsm is decoded properly, need to extract the lat/lon from the packet (if bsm)
-    if(mc->j2735_msg != nullptr){
+    if (mc->j2735_msg != nullptr) {
         bsm_value_t* bsm = (bsm_value_t*)mc->j2735_msg;
         sopt.rvKine.latitude = bsm->Latitude;
         sopt.rvKine.longitude = bsm->Longitude;
         sopt.rvKine.elevation = bsm->Elevation;
-        if(configuration.enableMbd){
+        if (configuration.enableMbd) {
             sopt.enableMbd = configuration.enableMbd;
             sopt.rvKine.id = bsm->id;
             sopt.rvKine.dataType = this->configuration.psid;
@@ -484,45 +495,44 @@ int SaeApplication::decodeAndVerify(msg_contents* mc){
     sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
 
     // prepare verification statistics logging
-    if(configuration.enableVerifStatLog){
+    if (configuration.enableVerifStatLog) {
         std::thread::id tid = std::this_thread::get_id();
         if (thrVerifLatencies[tid].size() >= verifStatIdx[tid]) {
             sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
-        }else{
+        } else {
             verifStatIdx[tid] = 0;
             sopt.verifStat = &thrVerifLatencies[tid].at(verifStatIdx[tid]);
         }
         verifStatIdx[tid]++;
         verifStatIdx[tid]%=thrVerifLatencies[tid].size();
-    }else{
+    } else {
         sopt.verifStat = nullptr;
     }
 
-    if(configuration.enableMbdStatLog){
+    if (configuration.enableMbdStatLog) {
         std::thread::id tid = std::this_thread::get_id();
         if (thrMisbehaviorLatencies[tid].size() >= misbehaviorStatIdx[tid]) {
             sopt.misbehaviorStat =
                 &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
-        }else{
+        } else {
             misbehaviorStatIdx[tid] = 0;
             sopt.misbehaviorStat =
                 &thrMisbehaviorLatencies[tid].at(misbehaviorStatIdx[tid]);
         }
         misbehaviorStatIdx[tid]++;
         misbehaviorStatIdx[tid]%=thrMisbehaviorLatencies[tid].size();
-    }else{
+    } else {
         sopt.misbehaviorStat = nullptr;
     }
 
     // Verify packet signature ; providing lat/lon from the rx message
     ret = SecService->VerifyMsg(sopt);
-    if(ret == -1){
+    if (ret == -1) {
         verifFail++;
-        if(appVerbosity > 3)
+        if (appVerbosity > 3)
             printf("Error in verifying secured packet.\n");
         ret = -1;
-    }
-    else{
+    } else {
         verifSuccess++;
         // process WSA and other WSMP packets after verification
         wsmpp = (wsmp_data_t *)mc->wsmp;
@@ -650,69 +660,226 @@ void SaeApplication::fillWsmp(wsmp_data_t *wsmp) {
     memset(wsmp, 0, sizeof(wsmp_data_t));
     wsmp->n_header.data = 3;
     wsmp->tpid.octet = 0;
-    if(this->configuration.psid){
+    if (this->configuration.psid) {
         wsmp->psid = this->configuration.psid;
-    }else{
+    } else {
         wsmp->psid = PSID_BSM; // default 0x20
     }
     wsmp->chan_load_ptr = nullptr;
     wsmp->chan_load_len = 0;
 }
 
-int SaeApplication::parseIPv6Prefix(char *ipPrefix, int& bufLen)
-{
+int SaeApplication::parseIPv6Addr(const string& str, char *buf, int& bufLen) {
     int i = 0;
     auto pos = 0, prev = 0;
-    string prefixStr = configuration.ipPrefix + ":"; /* help parsing */
+
+    if (str.empty() or bufLen < 0) {
+        cerr << "Input error for parseIPv6Addr!" << endl;
+        return -1;
+    }
+
+    string ipAddr = str + ":"; /* help parsing */
     do {
         if (i >= bufLen) {
-            std::cout << "ipPrefix " << i << " too long" << std::endl;
+            cerr << "Input IPv6 Address too long!" << endl;
             return -1;
         }
-        pos = prefixStr.find(":", prev);
-        if (pos != std::string::npos) {
-            uint16_t val = stoi(prefixStr.substr(prev, pos), 0, 16);
-            ipPrefix[i] = (val >> 8);
-            ipPrefix[i + 1] = (val & 0xFF);
+        pos = ipAddr.find(":", prev);
+        if (pos == std::string::npos or pos == prev) {
+            break;
         }
+        string sub = ipAddr.substr(prev, pos - prev);
+        if (sub.size() > 4) {
+            cerr << "sub string " << sub << " too long!" << endl;
+            return -1;
+        }
+        uint16_t val = stoi(sub, 0, 16);
+        buf[i] = (val >> 8);
+        buf[i + 1] = (val & 0xFF);
         prev = pos + 1;
         i += 2;
-    } while(pos != std::string::npos);
+    } while (prev < ipAddr.size());
 
-    bufLen = i - 2;
+    bufLen = i;
 
     return 0;
 }
+
+int SaeApplication::getDefaultGWAddrInRsu(char *buf, int& len) {
+    if (!buf or len <= 0 or len > CV2X_IPV6_ADDR_ARRAY_LEN) {
+        cerr << "Input error for getDefaultGWAddrInRsu!"<< endl;
+        return -1;
+    }
+
+    string strAddr;
+    if (configuration.defaultGateway.empty()) {
+        // If the static defaultGateway is not configured, get V2X IP rmnet addr
+        if (0 != getV2xIpIfaceAddr(strAddr)) {
+            std::cerr << "retrieve V2X IP addr error!" << endl;
+            return -1;
+        }
+    } else {
+        strAddr = configuration.defaultGateway;
+    }
+
+    if (appVerbosity > 3) {
+        cout << "GW:" << strAddr << endl;
+    }
+
+    // parse the addr
+    return parseIPv6Addr(strAddr, buf, len);
+}
+
+int SaeApplication::convertIpv6Addr2Str(char* buf, int bufLen, string& addr) {
+    if (not buf or bufLen <= 0 or bufLen > CV2X_IPV6_ADDR_ARRAY_LEN) {
+        cerr << "Input error for convertIpv6Addr2Str!" << endl;
+        return -1;
+    }
+
+    std::ostringstream ss;
+    for (int i = 0; i + 1 < bufLen; i += 2) {
+        // add colon in front if it's not the first element
+        if (0 != i) {
+            ss << ':';
+        }
+
+        uint16_t val = buf[i] << 8 | buf[i + 1];
+        ss << std::hex << val;
+    }
+    addr = ss.str();
+    return 0;
+}
+
+int SaeApplication::setDefaultRouteInObu(string addr) {
+    // delelte default route if already exist
+    deleteDefaultRouteInObu();
+
+    // set default route of OBU to the defaultGateway received from RSU
+    string cmd = "ip -6 route add default via " + addr;
+    FILE *fp;
+    fp = popen(cmd.c_str(), "r");
+    if (not fp) {
+        cerr << "popen failed when set default route!" << endl;
+        return -1;
+    }
+    if (pclose(fp) < 0) {
+        cerr << "Set default route failed!" << endl;
+        return -1;
+    }
+    obuRouteSet_ = true;
+    if (appVerbosity > 3) {
+        cout << "Set default route " << addr << endl;
+    }
+    return 0;
+}
+
+int SaeApplication::deleteDefaultRouteInObu() {
+    if (not obuRouteSet_) {
+        return 0;
+    }
+
+    FILE *fp;
+    fp = popen("ip -6 route del default", "r");
+    if (not fp) {
+        cerr << "popen failed when delete default route!" << endl;
+        return -1;
+    }
+    if (pclose(fp) < 0) {
+        cerr << "Delete default route failed!" << endl;
+        return -1;
+    }
+
+    if (appVerbosity > 3) {
+        cout << "Delete default route" << endl;
+    }
+    return 0;
+}
+
+int SaeApplication::storeWraInfoInObu(RoutingAdvertisement_t* wra) {
+    if (not wra) {
+        cerr << "Input error for storeWraInfoInObu" << endl;
+        return -1;
+    }
+
+    // convert defaultGateway and primaryDns to readable format
+    string addr1, addr2;
+    if (convertIpv6Addr2Str((char *)wra->defaultGateway.buf, wra->defaultGateway.size, addr1)
+        or convertIpv6Addr2Str((char *)wra->primaryDns.buf, wra->primaryDns.size, addr2)) {
+        cerr << "convert gateway or DNS error" << endl;
+        return -1;
+    }
+
+    if (appVerbosity > 3) {
+        cout << "defaultGateway = " << addr1 << " primaryDns = " << addr2 << endl;
+    }
+
+    // check if the RSU gateway or primary DNS addr has changed
+    if (not rsuGateway_.empty() and 0 == addr1.compare(rsuGateway_)
+        and not rsuPrimaryDns_.empty() and 0 == addr2.compare(rsuPrimaryDns_)) {
+        if (appVerbosity > 3) {
+            cout << "RSU address not changed." << endl;
+        }
+        return 0;
+    }
+
+    // store the updated addr to the configured file
+    ofstream file(configuration.wsaInfoFile);
+    if (!file) {
+        cerr << "Failed to create wsa file!" << endl;
+        return -1;
+    }
+
+    file << "defaultGateway = " << addr1 << endl;
+    file << "primaryDns = " << addr2;
+    rsuGateway_ = addr1;
+    rsuPrimaryDns_ = addr2;
+
+    // set default route to the RSU rmnet addr
+    // The DNS address is not actually used for now
+    return setDefaultRouteInObu(rsuGateway_);
+}
+
 #ifdef WITH_WSA
 void SaeApplication::fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra) {
-    char ipPrefix[16];
-    int prefixLen = 16;
     memset(wsa, 0, sizeof(SrvAdvMsg_t));
     wsa->version = 3;  /* 1609.3 2016 */
     wsa->body.routingAdvertisement = wra;
     memset(wra, 0, sizeof(RoutingAdvertisement_t));
-    memset(ipPrefix, 0, 16);
 
     wra->lifetime = configuration.routerLifetime;
 
-    if (parseIPv6Prefix(&ipPrefix[0], prefixLen) < 0) {
+    /* Fill in the IPv6 prefix */
+    char ipAddr[CV2X_IPV6_ADDR_ARRAY_LEN] = {0};
+    int addrLen = CV2X_IPV6_ADDR_ARRAY_LEN;
+    if (parseIPv6Addr(configuration.ipPrefix, ipAddr, addrLen) < 0) {
+        cerr << " Parse IPv6 prefix error" << endl;
         return;
     }
-    if (OCTET_STRING_fromBuf(&wra->ipPrefix, ipPrefix, 16) < 0) {
-        if(appVerbosity > 3)
+    if (OCTET_STRING_fromBuf(&wra->ipPrefix, ipAddr, CV2X_IPV6_ADDR_ARRAY_LEN) < 0) {
+        if (appVerbosity > 3)
             std::cerr << "wra conversion failure for ipPrefix" << std::endl;
     }
     wra->ipPrefixLength = configuration.ipPrefixLength;
 
-    /* Not actually using defaultGateway and primaryDns, but it can not be empty*/
-    if (OCTET_STRING_fromBuf(&wra->defaultGateway, configuration.defaultGateway.c_str(),
-                configuration.defaultGateway.length()) < 0) {
-        if(appVerbosity > 3)
-            std::cerr << "wra conversion failure for defaultGateway" << std::endl;
+    /* Fill in the defaultGateway, it's either from the configuration or the dynamic rmnet addr */
+    addrLen = CV2X_IPV6_ADDR_ARRAY_LEN;
+    memset(ipAddr, 0, CV2X_IPV6_ADDR_ARRAY_LEN);
+    if (0 == getDefaultGWAddrInRsu(ipAddr, addrLen)) {
+        if (OCTET_STRING_fromBuf(&wra->defaultGateway, ipAddr, addrLen) < 0) {
+            if (appVerbosity > 3)
+                std::cerr << "wra conversion failure for defaultGateway" << std::endl;
+        }
     }
-    if (OCTET_STRING_fromBuf(&wra->primaryDns, configuration.primaryDns.c_str(),
-                configuration.primaryDns.length()) < 0) {
-        if(appVerbosity > 3)
+
+    /* Fill in the primary DNS */
+    addrLen = CV2X_IPV6_ADDR_ARRAY_LEN;
+    memset(ipAddr, 0, CV2X_IPV6_ADDR_ARRAY_LEN);
+    if (parseIPv6Addr(configuration.primaryDns, ipAddr, addrLen) < 0) {
+        cerr << " Parse primary DNS error" << endl;
+        return;
+    }
+    if (OCTET_STRING_fromBuf(&wra->primaryDns, ipAddr, CV2X_IPV6_ADDR_ARRAY_LEN) < 0) {
+        if (appVerbosity > 3)
             std::cerr << "wra conversion failure for primaryDns" << std::endl;
     }
 }
@@ -726,10 +893,10 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     bsm->timestamp_ms = timestamp_now();
     bsm->VehicleLength_cm = configuration.vehicleLength;
     bsm->VehicleWidth_cm = configuration.vehicleWidth;
-    if(configuration.enableVehicleExt==true){
+    if (configuration.enableVehicleExt==true) {
         bsm->has_safety_extension = v2x_bool_t::V2X_True;
         bsm->has_supplemental_extension = v2x_bool_t::V2X_True;
-    }else{
+    } else {
         bsm->has_safety_extension = v2x_bool_t::V2X_False;
         bsm->has_supplemental_extension = v2x_bool_t::V2X_False;
     }
@@ -738,7 +905,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
 
     // check if msg count has been randomized and we haven't updated this yet
     // if so, keep adding and modding 127
-    if(!this->configuration.lcmName.empty() &&
+    if (!this->configuration.lcmName.empty() &&
         this->configuration.idChangeInterval) {
         idChangeEnabled = true;
     }
@@ -747,16 +914,16 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
         sem_wait(&idChangeData.idSem);
     }
         // for synchronization between Application and Aerolink sides
-    if(!initialized){
+    if (!initialized) {
         bsm->MsgCount = (rand() % 127);
         bsm->id = rand();
         initialized = true;
 
-        if(appVerbosity > 1){
+        if (appVerbosity > 1) {
             printf("Msg count: %d, id: %u\n", bsm->MsgCount, bsm->id);
         }
     }
-    else if(idChangeData.idChanged){
+    else if (idChangeData.idChanged) {
         // randomize msg count
         bsm->MsgCount = (rand() % 127);
         // update the temp id
@@ -765,7 +932,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
         (uint32_t)idChangeData.tempId[2] << 8  |
         (uint32_t)idChangeData.tempId[3];
         idChangeData.idChanged = false;
-        if(appVerbosity > 1)
+        if (appVerbosity > 1)
             printf("Id changed, new msgcount is: %d, and new temp id is: %u\n",
                                     bsm->MsgCount, bsm->id);
         this->tempId = bsm->id;
@@ -955,7 +1122,7 @@ int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
     int encLength = bufLen;
     int ret = -1;
     // let the transmit function handle the actual transmission
-    if (encLength){
+    if (encLength) {
         // insert family ID of 0x01
         char *p = abuf_push(&mc_->abuf, 1);
         if (p != NULL) {
@@ -963,7 +1130,7 @@ int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
             ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
         }
     }
-    if(ret > 0)
+    if (ret > 0)
         txSuccess++;
     else
         txFail++;
@@ -1034,7 +1201,7 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
     telux::cv2x::IPv6AddrType IpPrefix;
     telux::cv2x::GlobalIPUnicastRoutingInfo RoutingInfo;
     int ret = 0;
-    auto func = [&](int routerLifetime) {
+    auto func = [this](int routerLifetime) {
         wraThreadFunc(routerLifetime);
     };
 
@@ -1045,56 +1212,59 @@ int SaeApplication::onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMac
             //OBU went out of range of the associated RSU.
             auto diff = std::chrono::high_resolution_clock::now() - now;
             wraInterval = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
-            if(appVerbosity > 3)
+            if (appVerbosity > 3)
                 cout << "wraInterval=" << wraInterval.count() << endl;
         }
         wraCv.notify_all();
         if (memcmp(sourceMacAddr, prevSourceMac, CV2X_MAC_ADDR_LEN)) {
             memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
             memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
-            if(appVerbosity > 3)
+            if (appVerbosity > 3)
                 std::cout << "Updating routing info" << endl;
             ret = radioReceives[0].setRoutingInfo(RoutingInfo);
         }
-        return ret;
-    }
-    if (wra->ipPrefix.size > CV2X_IPV6_ADDR_ARRAY_LEN) {
-        if(appVerbosity > 3)
-            std::cerr << "Invalid ip prefix length received: " <<
-                    wra->ipPrefix.size << endl;
-        ret = -1;
     } else {
-        //Received first valid WRA.
-        now = std::chrono::high_resolution_clock::now();
-        memcpy(IpPrefix.ipv6Addr, wra->ipPrefix.buf, wra->ipPrefix.size);
-        IpPrefix.prefixLen = wra->ipPrefixLength;
-        if(appVerbosity > 3)
-            cout << "Setting Global IP address" << endl;
-        memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
-        ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
-        if (!ret) {
-            memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
-            ret = radioReceives[0].setRoutingInfo(RoutingInfo);
-            if (ret) {
-                return ret;
-            }
-            //Launch Wra thread to monitor WRA timeout.
-            if (wraThread.joinable() == false) {
-                wraThread = std::thread(func, wra->lifetime);
-                GlobalIpSessionActive = true;
-            } else {
-                if (GlobalIpSessionActive == false) {
-                    wraThread.join();
+        if (wra->ipPrefix.size > CV2X_IPV6_ADDR_ARRAY_LEN) {
+            if (appVerbosity > 3)
+                std::cerr << "Invalid ip prefix length received: " <<
+                        wra->ipPrefix.size << endl;
+            ret = -1;
+        } else {
+            //Received first valid WRA.
+            now = std::chrono::high_resolution_clock::now();
+            memcpy(IpPrefix.ipv6Addr, wra->ipPrefix.buf, wra->ipPrefix.size);
+            IpPrefix.prefixLen = wra->ipPrefixLength;
+            if (appVerbosity > 3)
+                cout << "Setting Global IP address" << endl;
+            memcpy(prevSourceMac, sourceMacAddr, CV2X_MAC_ADDR_LEN);
+            ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
+            if (!ret) {
+                memcpy(RoutingInfo.destMacAddr, sourceMacAddr, CV2X_MAC_ADDR_LEN);
+                ret = radioReceives[0].setRoutingInfo(RoutingInfo);
+                if (ret) {
+                    return ret;
+                }
+                //Launch Wra thread to monitor WRA timeout.
+                if (wraThread.joinable() == false) {
                     wraThread = std::thread(func, wra->lifetime);
                     GlobalIpSessionActive = true;
                 } else {
-                    //Notify Wra thread we got new WRA message
-                    wraCv.notify_all();
+                    if (GlobalIpSessionActive == false) {
+                        wraThread.join();
+                        wraThread = std::thread(func, wra->lifetime);
+                        GlobalIpSessionActive = true;
+                    } else {
+                        //Notify Wra thread we got new WRA message
+                        wraCv.notify_all();
+                    }
                 }
             }
         }
     }
-
+    // store the wra info from RSU if wsaInfoFile is configured in ObeConfig.conf
+    if (0 == ret and not configuration.wsaInfoFile.empty()) {
+        return storeWraInfoInObu(wra);
+    }
     return ret;
 }
 #endif
@@ -1104,7 +1274,7 @@ void SaeApplication::wraThreadFunc(int routerLifetime)
     std::cv_status status;
 
     lk.unlock();
-    while(true) {
+    while (not exit_) {
         lk.lock();
         if (wraInterval == std::chrono::milliseconds::zero()) {
             // we didn't receive 2nd WRA yet, no idea about the WRA interval.
@@ -1119,7 +1289,7 @@ void SaeApplication::wraThreadFunc(int routerLifetime)
         if (status == std::cv_status::timeout) {
             radioReceives[0].onWraTimedout();
             GlobalIpSessionActive = false;
-            if(appVerbosity > 3)
+            if (appVerbosity > 3)
                 std::cout << "WRA timeout, global IP session stopped" << endl;
             return;
         }
@@ -1129,14 +1299,14 @@ void SaeApplication::wraThreadFunc(int routerLifetime)
 /* For RSU use case only */
 int SaeApplication::setGlobalIPv6Prefix(void)
 {
-    char ipPrefix[16];
-    int prefixLen = 16;
+    char ipPrefix[CV2X_IPV6_ADDR_ARRAY_LEN];
+    int prefixLen = CV2X_IPV6_ADDR_ARRAY_LEN;
     telux::cv2x::IPv6AddrType IpPrefix;
     int ret = 0;
 
     if (GlobalIpSessionActive == false) {
-        memset(ipPrefix, 0, 16);
-        if (!parseIPv6Prefix(ipPrefix, prefixLen)) {
+        memset(ipPrefix, 0, CV2X_IPV6_ADDR_ARRAY_LEN);
+        if (!parseIPv6Addr(configuration.ipPrefix, ipPrefix, prefixLen)) {
             IpPrefix.prefixLen = configuration.ipPrefixLength;
             memcpy(IpPrefix.ipv6Addr, ipPrefix, prefixLen);
             ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);

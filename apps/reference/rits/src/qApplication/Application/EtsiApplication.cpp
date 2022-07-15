@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -70,7 +70,8 @@
   */
 #include "EtsiApplication.hpp"
 
-EtsiApplication::EtsiApplication(char *fileConfiguration): ApplicationBase(fileConfiguration) {
+EtsiApplication::EtsiApplication(char *fileConfiguration, MessageType msgType):
+    ApplicationBase(fileConfiguration, msgType) {
     if (not configuration.isValid) {
         return;
     }

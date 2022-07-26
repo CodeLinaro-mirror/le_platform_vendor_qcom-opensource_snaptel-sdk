@@ -25,6 +25,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef _WSMP_H_
@@ -64,6 +69,8 @@ typedef enum {
  */
 #define PSID_LEN_MAX                4
 #define MAX_PSID            (0x1020407f)
+#define WSMP_ABUF_DEFAULT_SIZE 8000
+#define WSMP_ABUF_DEFAULT_HEADROOM 20
 
 /**
  *  see IEEE 1609.3 annex E  -- or Annex F in the 2016 standard
@@ -245,13 +252,30 @@ typedef struct {
 } wsmp_data_t;
 
 /**
- * eecode wsmp packet.
+ * encode wsmp packet.
  *
  * @param [in] buf input buffer contains the wsmp payload(already encoded)
  * @param [in] db buffer contain packet data to be encoded.
  * @returns 0 on success.
  */
 extern int wsmp_encode(msg_contents *mc);
+
+
+/**
+ * @brief Encodes wsm packet using wsmp data structure.
+ *
+ * @param wsmp data structure that contains wsmp data variables.
+ * @return int 0 on success, else fail
+ */
+extern int wsmp_data_encode(wsmp_data_t* wsmp);
+
+/**
+ * @brief Decodes wsm packet using wsmp data structure.
+ *
+ * @param wsmp data structure that contains wsmp data variables.
+ * @return int 0 on success, else fail
+ */
+extern int wsmp_data_decode(wsmp_data_t* wsmp);
 
 /**
  * decode wsmp packet.
@@ -264,7 +288,6 @@ extern int wsmp_encode(msg_contents *mc);
  */
 extern int wsmp_decode(msg_contents *mc);
 
-void set_savari_workaround(int value);
 #ifdef __cplusplus
 }
 #endif

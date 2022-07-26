@@ -25,6 +25,11 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
  /**
@@ -81,14 +86,17 @@ struct Kinematics
  */
 typedef struct SecurityOpt {
     uint32_t psidValue;
-    uint8_t sspValue [32];
-    uint32_t sspLength;
-    uint8_t externalDataHash[32];
+    uint8_t sspValue [31];
+    uint32_t sspLength = 0;
+    uint8_t externalDataHash[31];
+    char *bitMapToken = NULL;
+    char *sspMaskTokens = NULL;
+    char *sspTokens = NULL;
     Kinematics hvKine;
     Kinematics rvKine;
     bool enableAsync;
-    uint32_t sspMaskValue [32];
-    uint32_t sspMaskLength;
+    uint32_t sspMaskValue [31];
+    uint32_t sspMaskLength = 0;
     bool enableEnc;
     bool enableMbd = false;
     uint8_t secVerbosity;

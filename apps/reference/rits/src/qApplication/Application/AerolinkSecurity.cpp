@@ -25,6 +25,11 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include <iostream>
 #include "AerolinkSecurity.hpp"
@@ -70,6 +75,19 @@ static bool retChangeId_status; // tells thread if callback has completed
 // > 4 -> Verbose Mode
 void AerolinkSecurity::setSecVerbosity(uint8_t verbosity){
     secVerbosity = verbosity;
+}
+
+void AerolinkSecurity::printBytes(char *label, uint8_t buffer[], uint32_t length)
+{
+    uint32_t i = 0;
+
+    printf("%s (%d bytes): ", label, length);
+
+    for( i = 0; i < length; i++ ) {
+        printf("%02x ", buffer[i] & 0xffU);
+    }
+
+    printf("\n");
 }
 
 void AerolinkSecurity::setStartTime(double start){
@@ -756,6 +774,9 @@ int AerolinkSecurity::syncVerify(
         return -1;
     }
 
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now checking relevance of signed message\n");
+    }
     // smp_checkRelevance
     result = smp_checkRelevance(*smp);
     if (result != WS_SUCCESS)
@@ -765,6 +786,9 @@ int AerolinkSecurity::syncVerify(
         return -1;
     }
 
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now checking consistency of signed message\n");
+    }
     // smp_checkConsistency
     result = smp_checkConsistency(*smp);
     if(result != WS_SUCCESS){
@@ -1002,6 +1026,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         }
         return -1;
     }
+
     // Get corresponding smp for this thread
     SecuredMessageGeneratorC* smg;
     smg = getThrSmg(thrId);
@@ -1033,24 +1058,36 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
 
     // Set signing permissions.
     uint32_t  ieeePsidValue = 0x20;
-    uint8_t   ieeeSsp [32] = {0};
+    uint8_t   ieeeSsp [31] = {0};
     uint32_t  ieeeSspLength = 0;
-    uint8_t   ieeeSspMask [32] = {0};
+    uint8_t   ieeeSspMask [31] = {0};
     uint32_t  ieeeSspMaskLength = 0;
-    uint32_t  psidValue = opt.psidValue;
-    uint8_t   sspValue [32] = {0};
+    uint32_t  psidValue = 0;
+    uint8_t   sspValue [31] = {0};
     uint32_t  sspLength = 0;
-    uint8_t   sspMaskValue[32] = {0};
+    uint8_t   sspMaskValue[31] = {0};
     uint32_t  sspMaskLength = 0;
-
     const AerolinkEncryptionKey* pubEncryptKey = NULL;
+
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now setting the provider service id and permissions\n");
+        fprintf(stdout, "User provided psid is: %02x\n", opt.psidValue);
+        fprintf(stdout, "User provided ssp length is %d\n", opt.sspLength);
+        fprintf(stdout, "User provided ssp mask length is %d\n", opt.sspMaskLength);
+    }
 
     if(opt.enableEnc && keyGenMethod_ == ASYMMETRIC_KEY_GEN ){
         pubEncryptKey = &encryptionKey;
     }
 
     psidValue = (opt.psidValue > 0) ? opt.psidValue : ieeePsidValue;
-    if (opt.sspLength > 0)
+
+    if(opt.sspLength > 31 && secVerbosity > 0){
+        fprintf(stderr, "User provided spp length exceeds limits (31)\n");
+        fprintf(stderr, "Using default value.\n");
+    }
+
+    if (opt.sspLength > 0 && opt.sspLength <= 31)
     {
         sspLength = opt.sspLength;
         memcpy(sspValue, opt.sspValue, opt.sspLength);
@@ -1061,7 +1098,11 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         memcpy(sspValue, ieeeSsp, ieeeSspLength);
     }
 
-    if (opt.sspMaskLength > 0)
+    if(opt.sspLength > 31 && secVerbosity > 0){
+        fprintf(stderr, "User provided spp mask length exceeds limits (31)\n");
+        fprintf(stderr, "Using default value.\n");
+    }
+    if (opt.sspMaskLength > 0 && opt.sspLength <= 31)
     {
         sspMaskLength = opt.sspMaskLength;
         memcpy(sspMaskValue, opt.sspMaskValue, opt.sspMaskLength);
@@ -1072,8 +1113,9 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         memcpy(sspMaskValue, ieeeSspMask, ieeeSspMaskLength);
     }
 
-   if(secVerbosity > 7){
-        fprintf(stdout,"\nSigning permissions: psid = 0x%02x\n", psidValue);
+    if(secVerbosity > 7){
+        fprintf(stdout, "\nSetting the signing permissions\n");
+        fprintf(stdout, "Signing permissions: psid = 0x%02x\n", psidValue);
         if(sspLength>0){
             printf("SSP Length: %d\n", sspLength);
             printf("SSP = ");
@@ -1252,4 +1294,3 @@ int AerolinkSecurity::encryptMsg(
 int AerolinkSecurity::decryptMsg(){
     return 0;
 }
-

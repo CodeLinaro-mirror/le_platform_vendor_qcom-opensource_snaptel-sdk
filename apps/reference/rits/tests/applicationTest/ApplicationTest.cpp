@@ -98,7 +98,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
  /**
   * @file: ApplicationTest.cpp
   *
@@ -122,6 +121,7 @@
 #include "safetyapp_util.h"
 #include "bsm_utils.h"
 #include "../../../../common/utils/Utils.hpp"
+#include "../../../../common/utils/SignalHandler.hpp"
 #include <telux/common/Version.hpp>
 
 using std::thread;
@@ -149,24 +149,24 @@ bool haltRx = false;
 std::mutex cv2xStatusMtx;
 bool simMode = false;
 
+// catch specified signals and gracefully shut down program
+void signalHandler(int signum) {
+    fprintf(stderr, "Interrupt signal (%d) received.\n", signum);
+    stopThread = true;
+    if(signum == SIGSEGV || signum == SIGABRT){
+        if(application->ldm != nullptr)
+            application->ldm->stopGb();
+        fprintf(stderr, "Attempting to close all flows and subscriptions\n");
+        application->closeAllRadio();
+    }
+}
+
+// allow the main thread to wait on the threads to join
 void joinThreads() {
     for (int i = 0; i < threads.size(); i++)
     {
         threads[i].join();
     }
-}
-
-void signalHandler(int signum) {
-    if(signum == SIGSEGV){
-        if(application->ldm != nullptr)
-            application->ldm->stopGb();
-        application->closeAllRadio();
-        exit(signum);
-    }
-    cout << "Interrupt signal (" << signum << ") received.\n";
-    cout << "Exiting..." << endl;
-    stopThread = true;
-    return;
 }
 
 //Returns the value of enableL2filtering config
@@ -247,9 +247,10 @@ void receive(MessageType msgType, int index) {
             if (application->configuration.driverVerbosity) {
                 if (rxsuccess % 50 == 0 && rxsuccess > 0){
                     gettimeofday(&currTime, NULL);
-                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                        " Decode/Rx Success #: " << rxsuccess <<
-                        " Decode/Rx Fail #: " << rxfail << std::endl;
+                    cout << "Dur(s): " << std::dec
+                        << (currTime.tv_sec-startTime) <<
+                        " Decode/Rx Success #: " << std::dec << rxsuccess <<
+                        " Decode/Rx Fail #: " << std::dec << rxfail << std::endl;
                 }
             }
         } else {
@@ -317,9 +318,9 @@ void ldmRx(void) {
             if (application->configuration.driverVerbosity) {
                 if (rxsuccess % 50 == 0 && rxsuccess > 0){
                     gettimeofday(&currTime, NULL);
-                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                        " Decode/Rx Success #: " << rxsuccess <<
-                        " Decode/Rx Fail #: " << rxfail << std::endl;
+                    cout << "Dur(s): " << std::dec << (currTime.tv_sec-startTime) <<
+                        " Decode/Rx Success #: " << std::dec << rxsuccess <<
+                        " Decode/Rx Fail #: " << std::dec << rxfail << std::endl;
                 }
             }
         } else {
@@ -360,7 +361,7 @@ int start_tx_timer(uint32_t interval_ms) {
 
     /* Start the timer */
     its.it_value.tv_sec = interval_ms / 1000;
-    its.it_value.tv_nsec = interval_ms % 1000;
+    its.it_value.tv_nsec = (interval_ms%1000) * 1000000;
     its.it_interval = its.it_value;
 
     if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
@@ -549,7 +550,7 @@ void transmit(MessageType msgType) {
             txfail++;
         }
 
-        s = read(tx_timer_fd, &exp, sizeof(uint64_t));
+        s = read(tx_timer_fd, &exp, sizeof(exp));
         if (s == sizeof(uint64_t) && exp > 1) {
             timer_misses += (exp-1);
             cout << "TX timer overruns: Total missed: " << timer_misses << endl;
@@ -914,10 +915,7 @@ int setup(const bool tx, const bool rx,
     const string  rxSimIp, const  uint16_t txSimPort,
     const uint16_t rxSimPort, char* configFile)
 {
-    std::signal(SIGHUP, signalHandler);
-    std::signal(SIGINT, signalHandler);
-    std::signal(SIGTERM, signalHandler);
-    std::signal(SIGSEGV, signalHandler);
+
     if (help)
     {
         printUse();
@@ -925,9 +923,11 @@ int setup(const bool tx, const bool rx,
     }
 
     auto sdkVersion = telux::common::Version::getSdkVersion();
+    std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::cout << "Telematics SDK v" << std::to_string(sdkVersion.major) << "."
                           << std::to_string(sdkVersion.minor) << "."
-                          << std::to_string(sdkVersion.patch) << std::endl;
+                          << std::to_string(sdkVersion.patch) << std::endl <<
+                          "Release name: " << sdkReleaseName << std::endl;
 
     MessageType msgType = MessageType::BSM;
     if (bsm || wsa) {
@@ -1174,6 +1174,14 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGHUP);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    SignalHandlerCb cb = (SignalHandlerCb) signalHandler;
+    SignalHandler::registerSignalHandler(sigset, cb);
+
     std::vector<std::string> groups{"system", "diag", "radio"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;

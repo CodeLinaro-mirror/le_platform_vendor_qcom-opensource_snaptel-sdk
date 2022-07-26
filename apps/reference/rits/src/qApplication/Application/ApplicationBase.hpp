@@ -101,6 +101,7 @@
 #define ABUF_HEADROOM       256
 #define MIN_PACKET_LEN      20
 #define MAX_PACKET_LEN      8192
+#define DEFAULT_BSM_PSID    32
 
 using namespace std;
 enum class TransmitType {
@@ -121,6 +122,8 @@ struct Config{
     int codecVerbosity = 0;
     int ldmVerbosity = 0;
     vector<uint16_t> receivePorts;
+    vector<uint32_t> receiveSubIds;
+    uint32_t receiveSubId;
     vector<uint16_t> eventPorts;
     vector<uint16_t> spsPorts;
     vector<uint32_t> spsServiceIDs;
@@ -174,10 +177,14 @@ struct Config{
     string securityContextName;
     uint16_t securityCountryCode;
     uint32_t psid;
-    uint8_t ssp[32];
+    uint8_t ssp[31];
     uint32_t sspLength = 0;
-    uint8_t sspMask[32];
+    uint8_t sspMask[31];
     uint32_t sspMaskLength = 0;
+    bool enableSsp = false;
+    bool enableSspMask = false;
+    vector<string> sspValueVect;
+    vector<string> sspMaskVect;
     bool enableAsync = false;
     bool enableEncrypt = false;
     uint8_t externalDataHash[32];
@@ -199,6 +206,7 @@ struct Config{
     bool enableSignStatLog = false;
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
+    bool enableLocationFixes = true;
 
     /* config data for Ieee1609.3 Wsa */
     long routerLifetime;

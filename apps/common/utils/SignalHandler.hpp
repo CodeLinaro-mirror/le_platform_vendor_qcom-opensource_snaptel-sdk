@@ -72,9 +72,14 @@ public:
     *    SIGABRT, etc) which are caused because of hardware exception. A method is registered
     *    to generate the backtrace for analysis. This method also saves the previous action for
     *    these signals in order to have the the coredump file generated.
+    *    If a valid callback function is provided, it will be called. However, if calling it causes
+    *    a hardware exception signal to be raised, then the SignalHandler will prevent any future
+    *    calls to the callback function from happening.
     *
     * @param[in] sigset - specify which signals to be blocked and handled
     * @param[in] cb     - the callback registered which is used to handle the signals
+    *                   - if cb is not provided or set to nullptr, the signals in sigset
+    *                   - will still be caught and the backtrace will still be dumped
     *
     * NOTE:
     * The parameter sigset should not contain thread directed signals (SIGBUS, SIGFPE, SIGILL,
@@ -86,9 +91,13 @@ public:
    static bool registerSignalHandler(sigset_t sigset, SignalHandlerCb cb = nullptr);
 
 private:
+   // private static variable declarations
+   static constexpr unsigned MAX_BT_SIZE = 20;
    static constexpr unsigned STANDARD_SIGNAL_NUMS = 32;
    static struct sigaction oldacts_[STANDARD_SIGNAL_NUMS];
    static std::stringstream logStream_;
+   static SignalHandlerCb cb_;
+   static bool callbackFlag;
 
    /**
     * Generate backtrace and dump Core registers

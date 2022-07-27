@@ -81,11 +81,10 @@
 #include <list>
 #include <memory>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataProfile.hpp>
 #include <telux/data/IpFilter.hpp>
-
-#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace data {

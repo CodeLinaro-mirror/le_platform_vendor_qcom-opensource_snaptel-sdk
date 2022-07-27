@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2019-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -91,6 +91,11 @@ namespace net {
 // Forward declarations
 class IVlanListener;
 
+struct VlanBindConfig {
+    int vlanId;                         /** VLAN ID to be bound to the specified backhaul     */
+    BackhaulInfo bhInfo;                /**< Configuration of Backhaul to bind VLAN to        */
+};
+
 /**
  * This function is called as a response to @ref createVlan()
  *
@@ -132,6 +137,19 @@ using VlanMappingResponseCb = std::function<void(
 
 /** @addtogroup telematics_net
  * @{ */
+
+/**
+ * This function is called as a response to @ref queryVlanToBackhaulBindings()
+ *
+ * @param [in] bindings        list of Vlan binding configurations
+ *                             @ref telux::data::net::VlanBindConfig
+ * @param [in] error           Return code which indicates whether the operation
+ *                             succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change.
+ */
+using VlanBindingsResponseCb = std::function<void(
+    const std::vector<VlanBindConfig> bindings, telux::common::ErrorCode error)>;
 
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).
@@ -212,53 +230,65 @@ class IVlanManager {
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
     /**
-     * Bind a Vlan with a particular profile ID. When a WWAN network interface is
-     * brought up using IDataConnectionManager::startDataCall on that profile ID,
-     * that interface will be accessible from this Vlan
+     * Bind Vlan to a particular backhaul. When network interface associated with specified
+     * backhaul is brought up, VLAN traffic will be forwarded to specified backhaul via the
+     * network interface.
+     * Slot ID and profile ID are relevant only for WWAN backhaul. For all other backhauls types,
+     * values are don't care.
      *
-     * @param [in] profileId    profile id for vlan association
-     * @param [in] vlanId       sets vlan id
-     * @param [out] callback    callback to get the response of associateWithProfileId API
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
      *
-     * @returns Immediate status of associateWithProfileId() request sent i.e. success or
+     * @param [in] vlanBindConfig       Backhaul information and vlan id to bind it to.
+     *                                  @ref telux::data::net::VlanBindConfig
+     * @param [out] callback            Callback to get the response of bindToBackhaul API
+     *
+     * @returns Immediate status of bindToBackhaul() request sent i.e. success or
      * suitable status code.
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
+     *
      */
-    virtual telux::common::Status bindWithProfile(
-        int profileId, int vlanId, telux::common::ResponseCallback callback)
-        = 0;
+    virtual telux::common::Status bindToBackhaul(VlanBindConfig vlanBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Unbind VLAN id with given profile id
+     * Unbind VLAN from particular backhaul. This API will stop vlan traffic flow to/from specified
+     * backhaul type.
+     * Slot ID and profile ID are relevant only for WWAN backhaul. For all other backhauls types,
+     * values are don't care.
      *
-     * @param [in] profileId    profile id for vlan association
-     * @param [in] vlanId       vlan id
-     * @param [in] callback     callback to get the response of associateWithProfileId API
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
      *
-     * @returns Immediate status of disassociateFromProfileId() request sent i.e. success or
+     * @param [in] vlanBindConfig       Backhaul information and vlan id to unbind it from.
+     *                                  @ref telux::data::net::VlanBindConfig
+     * @param [in] callback             Callback to get the response of unbindFromBackhaul API
+     *
+     * @returns Immediate status of unbindFromBackhaul() request sent i.e. success or
      * suitable status code
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    virtual telux::common::Status unbindFromProfile(
-        int profileId, int vlanId, telux::common::ResponseCallback callback)
-        = 0;
+    virtual telux::common::Status unbindFromBackhaul(VlanBindConfig vlanBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Query VLAN mapping list with associated profile id and vlan id
+     * Query VLAN to backhaul binding configurations
      *
-     * @param [in] callback    callback to get the response of queryVlanMappingList API
+     * @param [in] backhaul      Backhaul to query vlan binding for.
+     * @param [in] callback      callback to get the response of queryVlanToBackhaulBindings API
      *
-     * @returns Immediate status of queryVlanMappingList() request sent i.e. success or
+     * @returns Immediate status of queryVlanToBackhaulBindings() request sent i.e. success or
      * suitable status code
      *
      * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
      *           break backwards compatibility.
      */
-    virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback) = 0;
+    virtual telux::common::Status queryVlanToBackhaulBindings(
+        BackhaulType backhaul, VlanBindingsResponseCb callback) = 0;
 
     /**
      * Register Vlan Manager as a listener for Data Service health events like data service
@@ -291,6 +321,52 @@ class IVlanManager {
      *          and could break backwards compatibility.
      */
     virtual telux::data::OperationType getOperationType() = 0;
+
+    /**
+     * Bind a Vlan with a particular profile ID. When a WWAN network interface is
+     * brought up using IDataConnectionManager::startDataCall on that profile ID,
+     * that interface will be accessible from this Vlan
+     *
+     * @param [in] profileId    profile id for vlan association
+     * @param [in] vlanId       sets vlan id
+     * @param [out] callback    callback to get the response of associateWithProfileId API
+     *
+     * @returns Immediate status of associateWithProfileId() request sent i.e. success or
+     * suitable status code.
+     *
+     * @deprecated Use bindToBackhaul() API below to bind VLAN to backhaul
+     */
+    virtual telux::common::Status bindWithProfile(
+        int profileId, int vlanId, telux::common::ResponseCallback callback)
+        = 0;
+
+    /**
+     * Unbind VLAN id with given profile id
+     *
+     * @param [in] profileId    profile id for vlan association
+     * @param [in] vlanId       vlan id
+     * @param [in] callback     callback to get the response of associateWithProfileId API
+     *
+     * @returns Immediate status of disassociateFromProfileId() request sent i.e. success or
+     * suitable status code
+     *
+     * @deprecated Use unbindFromBackhaul() API below to unbind VLAN to backhaul
+     */
+    virtual telux::common::Status unbindFromProfile(
+        int profileId, int vlanId, telux::common::ResponseCallback callback)
+        = 0;
+
+    /**
+     * Query VLAN mapping list with associated profile id and vlan id
+     *
+     * @param [in] callback    callback to get the response of queryVlanMappingList API
+     *
+     * @returns Immediate status of queryVlanMappingList() request sent i.e. success or
+     * suitable status code
+     *
+     * @deprecated Use queryVlanToBackhaulBindings() API below to request VLAN to backhaul mapping
+     */
+    virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback) = 0;
 
     /**
      * Destructor for IVlanManager

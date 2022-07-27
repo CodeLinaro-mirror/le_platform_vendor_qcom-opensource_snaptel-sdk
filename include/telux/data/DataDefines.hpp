@@ -29,8 +29,8 @@
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -731,6 +731,30 @@ enum class InterfaceType {
     ECM = 3,     /**< Ethernet Control Model (ECM) */
     RNDIS = 4,   /**< Remote Network Driver Interface Specification (RNDIS) */
     MHI = 5,     /**< Modem Host Interface (MHI) */
+};
+
+/**
+ * Specifies backhaul types
+ */
+enum class BackhaulType {
+    ETH           = 0  ,    /** Ethernet Backhaul        */
+    USB           = 1  ,    /** USB Backhaul             */
+    WLAN          = 2  ,    /** WLAN Backhaul            */
+    WWAN          = 3  ,    /** WWAN Backhaul with default profile ID set by */
+                            /** @ref telux::data::DataConnectionManager::setDefaultProfile  */
+    BLE           = 4  ,    /** Bluetooth Backhaul       */
+    MAX_SUPPORTED = 5  ,    /** Max Supported Backhauls  */
+};
+
+/**
+ * Encapsulate backhaul configuration parameters
+ */
+struct BackhaulInfo {
+    BackhaulType backhaul;              /** Backhaul type to apply configuration on.           */
+    SlotId slotId = DEFAULT_SLOT_ID;    /** Slot Id which has sim that contains profile id    */
+                                        /** Needed only for WWAN backhaul                     */
+    int profileId = -1;                 /** Profile id to apply configuration on              */
+                                        /** Needed only for WWAN backhaul                     */
 };
 
 /**

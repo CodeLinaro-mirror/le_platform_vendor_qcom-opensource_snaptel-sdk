@@ -73,6 +73,7 @@ class ServingSystemListener : public telux::data::IServingSystemListener {
 public:
     ServingSystemListener(SlotId slotId);
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
+    void onDrbStatusChanged(telux::data::DrbStatus status) override;
     void onServiceStateChanged(telux::data::ServiceStatus status) override;
     void onRoamingStatusChanged(telux::data::RoamingStatus status) override;
 

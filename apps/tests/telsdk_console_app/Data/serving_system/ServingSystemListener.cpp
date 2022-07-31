@@ -95,6 +95,13 @@ void ServingSystemListener::onServiceStatusChange(
         <<  " **\n" << stat << std::endl;
 }
 
+void ServingSystemListener::onDrbStatusChanged(telux::data::DrbStatus status) {
+   std::cout << std::endl << std::endl;
+   PRINT_NOTIFICATION <<
+   " Serving System Listener - received Drb status: " << DataUtils::drbStatusToString(status)
+   << " on SlotId: " << static_cast<int>(slotId_) << std::endl << std::endl;
+}
+
 void ServingSystemListener::onServiceStateChanged(telux::data::ServiceStatus status) {
    std::cout << std::endl << std::endl;
    PRINT_NOTIFICATION << "Service Status Notification on SlotId " << slotId_ << std::endl;

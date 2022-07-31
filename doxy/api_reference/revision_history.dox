@@ -86,6 +86,7 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AC} @tdmulrowend @td Jul 2022 @tdend @tdlast Updated documentation @tdlastend @trend
 @tr @tdmulrow{1,AB} @tdmulrowend @td Apr 2022 @tdend @tdlast Added documentation for API access control @tdlastend @trend
 @tr @tdmulrow{48,AA} @tdmulrowend @td Mar 2022 @tdend @tdlast Addition of documentation for Call flow of control filesystem for ECALL operation @tdlastend @trendcline
 @tr @tdmulrowempty @td Apr 2022 @tdend @tdlast Added crypto APIs call flows @tdlastend @trendcline

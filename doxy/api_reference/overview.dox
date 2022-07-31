@@ -487,6 +487,7 @@ This table captures when stream could be muted and in which direction.
 @tableend
 
 In case QTI's reference design does not support mute for specific stream category, API responds with error.
+<b> Note: </b>If mute operations is performed for  play or capture stream direction(Tx or RX), the stream will get muted irrespective of the direction provided.
 
 @subsection thermal_management Thermal Management
 Thermal Management APIs in the Telematics SDK are used for reading thermal zone, cooling device and binding information.

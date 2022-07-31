@@ -105,15 +105,18 @@ bool DataServingSystemMenu::init() {
 
     if (addMenuCmds_ == false) {
         addMenuCmds_ = true;
+        std::shared_ptr<ConsoleAppCommand> getDrbStatus =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "get_drb_status", {},
+            std::bind(&DataServingSystemMenu::getDrbStatus, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> requestServiceStatus =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "request_service_status", {},
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "request_service_status", {},
             std::bind(&DataServingSystemMenu::requestServiceStatus, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> requestRoamingStatus =
-            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "request_roaming_status", {},
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_roaming_status", {},
             std::bind(&DataServingSystemMenu::requestRoamingStatus, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            requestServiceStatus, requestRoamingStatus};
+            getDrbStatus, requestServiceStatus, requestRoamingStatus};
         addCommands(commandsList);
     }
 
@@ -172,6 +175,23 @@ void DataServingSystemMenu::onInitCompleted(telux::common::ServiceStatus status)
     cv_.notify_all();
 }
 
+void DataServingSystemMenu::getDrbStatus(std::vector<std::string> inputCommand) {
+    std::cout << "Get DRB Status\n";
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+
+    if (dataServingSystemManagers_.find(static_cast<SlotId>(slotId)) ==
+        dataServingSystemManagers_.end()) {
+        std::cout << "Serving System Manager on SlotId: " << slotId << " is not ready" << std::endl;
+        return;
+    }
+
+    telux::data::DrbStatus stat =
+        dataServingSystemManagers_[static_cast<SlotId>(slotId)]->getDrbStatus();
+    std::cout << "Current Drb Status is : " << DataUtils::drbStatusToString(stat) << std::endl;
+}
 
 void DataServingSystemMenu::requestServiceStatus(std::vector<std::string> inputCommand) {
     std::cout << "Request Service Status\n";

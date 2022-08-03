@@ -88,6 +88,7 @@ void SensorTestApp::sensorControlMenu(std::vector<std::string> userInput) {
             "Sensor control menu", "sensor_control> ", commandlineArgs_);
         if (sensorControlMenu_->init(true) != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Failed to initialize sensor control menu" << std::endl;
+            sensorControlMenu_ = nullptr;
             return;
         }
     } else {
@@ -105,6 +106,7 @@ void SensorTestApp::sensorFeatureControlMenu(std::vector<std::string> userInput)
         if (sensorFeatureControlMenu_->init(true)
             != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Failed to initialize sensor control menu" << std::endl;
+            sensorFeatureControlMenu_ = nullptr;
             return;
         }
     } else {

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       ServingSystemManager.hpp
  *
@@ -178,6 +214,31 @@ public:
      *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestRoamingStatus(RequestRoamingStatusResponseCb callback) = 0;
+
+    /**
+     * Request modem switch to dormant state: Certain network operations can only be performed when
+     * modem is in dormant state. This API provides an ability for clients to request modem to
+     * immediately transition to dormant state for such scenarios.
+     *
+     * Clients must ensure no data calls are in process of bring up/tear down and there is no
+     * traffic on any active data calls when this API is called.
+     *
+     * @param [in] callback              optional callback to get the response of makeDormancy
+     *
+     * @returns
+     * telux::common::ErrorCode::SUCCESS if request is honored by network.
+     * telux::common::ErrorCode::INVALID_STATE is returned if:
+     *  - There is no active data calls
+     *  - Any Data calls is going through bring up/tear down
+     *  - There is data traffic on any active data calls
+     * If API fails, application is responsible for re-attempting operation at later time once the
+     * above conditions are met.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status makeDormant(
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * Register a listener for specific updates from serving system.

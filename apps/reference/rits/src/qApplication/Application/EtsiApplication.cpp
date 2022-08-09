@@ -305,7 +305,7 @@ int EtsiApplication::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, i
     gd.payload_len = static_cast<int>(bufLen);
     gd.tc = 2;
 
-    int ret;
+    int ret = -1;
     // if the packet type is GBC(GeoNetwork Broadcast) or GAC (GeoNetwork Any
     // Cast), we also need to set the destination geographic area. But since we
     // are tesitng SHB here, we don't need to do that.

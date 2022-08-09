@@ -1115,7 +1115,7 @@ int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
     int16_t bufLen, TransmitType txType) {
     // If positive, should be the # of bytes sent
     // Else, something went wrong
-    int ret;
+    int ret = -1;
     // ethernet
     if (this->isTxSim) {
         ret = simTransmit->transmit(mc->abuf.data, bufLen);

@@ -980,7 +980,7 @@ namespace gn {
 
 
     int GeoNetRouterImpl::Receive(uint8_t *Buffer, size_t BufLen, GnData_t &data) {
-        int retVal;
+        int retVal = -1;
 
         if (Buffer == NULL) {
             std::cerr <<"invlaid input" << std::endl;

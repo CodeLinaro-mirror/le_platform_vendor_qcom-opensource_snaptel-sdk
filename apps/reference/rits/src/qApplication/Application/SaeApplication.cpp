@@ -795,6 +795,7 @@ int SaeApplication::deleteDefaultRouteInObu() {
     return 0;
 }
 
+#ifdef WITH_WSA
 int SaeApplication::storeWraInfoInObu(RoutingAdvertisement_t* wra) {
     if (not wra) {
         cerr << "Input error for storeWraInfoInObu" << endl;
@@ -839,7 +840,6 @@ int SaeApplication::storeWraInfoInObu(RoutingAdvertisement_t* wra) {
     return setDefaultRouteInObu(rsuGateway_);
 }
 
-#ifdef WITH_WSA
 void SaeApplication::fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra) {
     memset(wsa, 0, sizeof(SrvAdvMsg_t));
     wsa->version = 3;  /* 1609.3 2016 */

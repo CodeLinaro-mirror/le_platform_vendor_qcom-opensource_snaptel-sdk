@@ -178,7 +178,14 @@ private:
      * @param wra - A pointer to RoutingAdvertisement_t struct
      */
     void fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra);
+
+    /**
+    * Method for OBU to store the WRA information retrieved from RSU.
+    * @param wra  - A pointer to WRA message
+    */
+    int storeWraInfoInObu(RoutingAdvertisement_t* wra);
 #endif
+
     /**
     * Method for RSU to get the static application server IPv6 address from
     * configuration or the dynamic address of C-V2X IP rmnet interface.
@@ -186,12 +193,6 @@ private:
     * @param len     - The length of the ipAddr in bytes
     */
     int getDefaultGWAddrInRsu(char *buf, int& len);
-
-    /**
-    * Method for OBU to store the WRA information retrieved from RSU.
-    * @param wra  - A pointer to WRA message
-    */
-    int storeWraInfoInObu(RoutingAdvertisement_t* wra);
 
     /**
     * Method for OBU to set default route in OBU on receivng default gateway from the RSU.

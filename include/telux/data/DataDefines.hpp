@@ -75,6 +75,7 @@
 #include <string>
 #include <vector>
 #include <bitset>
+#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace data {

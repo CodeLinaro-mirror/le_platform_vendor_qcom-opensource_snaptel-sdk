@@ -1024,7 +1024,7 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     std::cin >> operationType;
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
-    telux::data::net::FirewallConfig firewallConfig;
+    telux::data::net::FirewallConfig firewallConfig  = {};
     firewallConfig.bhInfo.backhaul = telux::data::BackhaulType::WLAN;
     firewallMgr = getFirewallManagerInstance(opType);
 
@@ -1049,6 +1049,8 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     Utils::validateInput(enableFwFlag);
     if (enableFwFlag) {
         firewallConfig.enable = true;
+    } else {
+        firewallConfig.enable = false;
     }
 
     int allowPacketsFlag;
@@ -1057,6 +1059,8 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     Utils::validateInput(allowPacketsFlag);
     if (allowPacketsFlag) {
         firewallConfig.allowPackets = true;
+    } else {
+        firewallConfig.allowPackets = false;
     }
 
     auto respCb = [](telux::common::ErrorCode error) {
@@ -1114,7 +1118,7 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
                       << (fwConfig.allowPackets ? "Accept Packets" : "Drop packets") << "\n";
             std::cout << "On Backhaul: " << DataUtils::backhaulToString(fwConfig.bhInfo.backhaul);
             if(fwConfig.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
-                std::cout << "And Profile id: " << fwConfig.bhInfo.profileId;
+                std::cout << ", Profile id: " << fwConfig.bhInfo.profileId;
             }
         }
         std::cout << "\n";
@@ -1496,6 +1500,8 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
         Utils::validateInput(profileId);
         backhaulConfig.backhaul = telux::data::BackhaulType::WWAN;
         backhaulConfig.profileId = profileId;
+    } else {
+        backhaulConfig.backhaul = telux::data::BackhaulType::WLAN;
     }
 
     firewallMgr = getFirewallManagerInstance(opType);

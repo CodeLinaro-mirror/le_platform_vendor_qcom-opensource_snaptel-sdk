@@ -221,6 +221,9 @@ void MyLocationListener::printLocationExValidity(
     if((validityMask & telux::loc::HAS_PROTECT_LEVEL_VERTICAL)) {
       std::cout << "valid protect vertical" << std::endl;
     }
+    if((validityMask & telux::loc::HAS_DGNSS_STATION_ID)) {
+      std::cout << "valid dgnss station id" << std::endl;
+    }
 
 }
 
@@ -967,6 +970,18 @@ void MyLocationListener::printReportStatus(telux::loc::ReportStatus status) {
   }
 }
 
+void MyLocationListener::printDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
+    if(!dgnssStationIds.empty()) {
+        std::cout << "Dgnss Station IDs : ";
+        for(auto id: dgnssStationIds) {
+            std::cout << id << " ";
+        }
+        std::cout << std::endl;
+    } else {
+        std::cout << "No Dgnss Station Id is present\n";
+    }
+}
+
 void MyLocationListener::onBasicLocationUpdate(
    const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) {
    if(!isBasicReportFlagEnabled_) {
@@ -1123,6 +1138,7 @@ void MyLocationListener::onDetailedLocationUpdate(
        locationInfo->getProtectionLevelCrossTrack() << std::endl;
    std::cout << "Protection level vertical : " <<
        locationInfo->getProtectionLevelVertical() << std::endl;
+   printDgnssStationIds(locationInfo->getDgnssStationIds());
    std::cout << "*************************************************************" << std::endl;
 }
 
@@ -1244,6 +1260,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
          locationInfo->getProtectionLevelCrossTrack() << std::endl;
      std::cout << "Protection level vertical : " <<
          locationInfo->getProtectionLevelVertical() << std::endl;
+     printDgnssStationIds(locationInfo->getDgnssStationIds());
      std::cout << "*************************************************************" << std::endl;
     }
 }

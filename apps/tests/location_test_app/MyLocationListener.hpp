@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -139,6 +139,9 @@ private:
    void printENUVelocityVRPBased(std::vector<float> enuVelocityVRPBased);
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
+   void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
+   std::mutex mutex_;
+   std::condition_variable cv_;
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

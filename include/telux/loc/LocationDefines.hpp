@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -864,7 +864,9 @@ enum LocationInfoExValidityType {
   /** valid protect level cross track*/
   HAS_PROTECT_LEVEL_CROSS_TRACK = (1ULL << 36),
   /** valid protect level vertical*/
-  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37)
+  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37),
+  /** valid dgnssStationId */
+  HAS_DGNSS_STATION_ID = (1ULL<<39)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -2348,6 +2350,14 @@ public:
  *
  */
   virtual float getProtectionLevelVertical() = 0;
+
+/** List of DGNSS station IDs providing corrections.
+ *  Range:
+ *  - SBAS --  120 to 158 and 183 to 191
+ *  - Monitoring station -- 1000-2023 (Station ID biased by 1000)
+ *  - Other values reserved.
+ */
+  virtual std::vector<uint16_t> getDgnssStationIds() = 0;
 
 };
 

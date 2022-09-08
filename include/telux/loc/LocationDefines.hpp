@@ -694,7 +694,7 @@ enum LocationInfoExValidityType {
   /** valid altitude type*/
   HAS_ALTITUDE_TYPE = (1ULL << 32),
   /** valid report status*/
-  HAS_REPORT_STATUS = (1ULL << 33)
+  HAS_REPORT_STATUS = (1ULL << 33),
   /** valid dgnssStationId */
   HAS_DGNSS_STATION_ID = (1ULL<<39)
 };

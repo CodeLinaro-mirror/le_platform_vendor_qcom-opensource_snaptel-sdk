@@ -147,6 +147,10 @@ typedef int v2x_radio_handle_t;
     Used in @ref v2x_radio_status_ex_t */
 #define V2X_MAX_RX_POOL_NUM (4)
 
+/** Maximum number of detected SLSS sync reference UEs.
+    Used in @ref v2x_slss_rx_info_t */
+#define V2X_MAX_SLSS_SYNC_REF_UE_NUM (16)
+
 /**
     Describes whether the radio chip modem should attempt or support concurrent
     3GPP CV2X operation with a WWAN 4G/5G data call.
@@ -826,6 +830,60 @@ typedef enum {
 } v2x_auto_retransmit_policy_t;
 
 /**
+    Defines possible values for SLSS sync pattern.
+    Used in @ref v2x_slss_sync_ref_ue_info_t
+ */
+typedef enum {
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_1,   /**< UE transmits SLSS in subframes indicated by
+                                               the syncOffsetIndicator1 specified in V2X
+                                               configuration. */
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_2,   /**< UE transmits SLSS in subframes indicated by
+                                               the syncOffsetIndicator2 specified in V2X
+                                               configuration. */
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_3,   /**< UE transmits SLSS in subframes indicated by
+                                               the syncOffsetIndicator3 specified in V2X
+                                               configuration. */
+    V2X_SLSS_SYNC_PATTERN_ODD_RESERVED,   /**< UE transmits SLSS in odd-numbered reserved
+                                               subframes. */
+    V2X_SLSS_SYNC_PATTERN_EVEN_RESERVED,  /**< UE transmits SLSS in even-numbered reserved
+                                               subframes. */
+    V2X_SLSS_SYNC_PATTERN_UNKNOWN,        /**< Unkown SLSS sync pattern. */
+} v2x_slss_sync_pattern_t;
+
+/**
+ * Encapsulates parameters of an SLSS sync reference UE.
+ * Used in @ref v2x_slss_rx_info_t.
+ */
+typedef struct {
+    uint16_t slss_id;
+    /**< The SLSS ID of the sync reference UE that is defined in 3GPP TS 36.331
+         chapter 6.3.8. */
+    bool in_coverage;
+    /**< Indicates whether or not the UE is in coverage of GNSS that is defined in
+         3GPP TS 36.331 chapter 6.5.2. */
+    v2x_slss_sync_pattern_t pattern;
+    /**< Indicates the SLSS sync pattern of the UE that is defined in 3GPP TS 36.331
+         chapter 6.3.8. */
+    uint8_t rsrp;
+    /**< SLSS RSRP value of the UE in dBm is ((float)rsrp - 256)/2. */
+    bool selected;
+    /**< Indicates whether or not the sync reference UE has been selected
+         as the timing source. */
+} v2x_slss_sync_ref_ue_info_t;
+
+/**
+ * Encapsulates parameters of CV2X SLSS Rx Information.
+ *
+ * Used in @ref v2x_get_slss_rx_info and @ref v2x_slss_rx_info_listener.
+ */
+typedef struct {
+    uint32_t num_ue;
+    /**< The number of SLSS sync reference UEs in array ueInfo. */
+    v2x_slss_sync_ref_ue_info_t ue_info[V2X_MAX_SLSS_SYNC_REF_UE_NUM];
+    /**< Array of detected SLSS sync reference UEs. */
+} v2x_slss_rx_info_t;
+
+/**
     Advanced parameters that can be specified for Tx SPS and event-driven
     flows.
  */
@@ -986,6 +1044,7 @@ typedef enum {
 typedef enum {
     V2X_NEW_TX,        /**< New Tx of the V2X transport block. */
     V2X_RE_TX,         /**< Re-Tx of the V2X transport block. */
+    V2X_SLSS_TX,       /**< Tx of SLSS. */
 } v2x_tx_type_t;
 
 /**
@@ -1045,8 +1104,8 @@ typedef struct {
 typedef void (*v2x_tx_status_report_listener)(const v2x_tx_status_report_t info);
 
 /**
-     Callback made when CV2X Tx/Rx status is changed and a listener has been registered
-     by calling @ref v2x_register_ext_radio_status_listener.
+    Callback made when CV2X Tx/Rx status is changed and a listener has been registered
+    by calling @ref v2x_register_ext_radio_status_listener.
 
     @datatypes
     #v2x_radio_status_ex_t
@@ -1055,6 +1114,22 @@ typedef void (*v2x_tx_status_report_listener)(const v2x_tx_status_report_t info)
     @newpage
 */
 typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* status);
+
+/**
+    Called when CV2X SLSS Rx is enabled and any of below events has occurred:
+    - A new SLSS synce reference UE is detected, lost, or selected as the timing source,
+      report the present sync reference UEs.
+    - UE timing source switches from SLSS to GNSS, report 0 sync reference UE.
+    - SLSS Rx is disabled, report 0 sync reference UE.
+    - Cv2x is stopped, report 0 sync reference UE.
+
+    @datatypes
+    #v2x_slss_rx_info_t
+
+    @param[out] info     Pointer to V2X SLSS Rx information.
+    @newpage
+*/
+typedef void (*v2x_slss_rx_listener)(const v2x_slss_rx_info_t* info);
 
 /**
     Method used to query the platform SDK for its version number, build
@@ -2693,6 +2768,49 @@ v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
  */
 v2x_status_enum_type v2x_register_ext_radio_status_listener(
     v2x_ext_radio_status_listener callback);
+
+/**
+    Get the current V2X SLSS Rx information.
+
+    @param [out] slss_info     Pointer to structure v2x_slss_rx_info_t, which
+                               contains V2X SLSS Rx information on success.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_get_slss_rx_info(v2x_slss_rx_info_t* slss_info);
+
+/**
+    Registers a listener for CV2X SLSS Rx information.
+
+    @datatypes
+    v2x_slss_rx_info_listener
+
+    @param[in] callback        Callback function of @ref v2x_slss_rx_listener
+                               structure that is called on SLSS Rx information change.\n
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+ */
+v2x_status_enum_type v2x_register_slss_rx_listener(v2x_slss_rx_listener callback);
+
+/**
+    Deregisters a listener for CV2X SLSS Rx information.
+
+    @datatypes
+    v2x_slss_rx_info_listener
+
+    @param[in] callback        Previously registered @ref v2x_slss_rx_listener that
+                               is to be deregistered.\n
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+ */
+v2x_status_enum_type v2x_deregister_slss_rx_listener(v2x_slss_rx_listener callback);
+
 
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 

@@ -64,7 +64,7 @@
  */
 
 /**
-* @file       Cv2xRxTypes.hpp
+* @file       Cv2xRadioTypes.hpp
 *
 * @brief      Contains common data types used in Cv2x Radio API
 */
@@ -147,6 +147,53 @@ enum class Cv2xCauseType {
                             starting CV2X. */
     INVALID_LICENSE,   /**< CV2X is inactive due to invalid license. */
     UNKNOWN,           /**< Invalid cause type only used internally. */
+};
+
+/**
+ * Defines possible values for SLSS sync pattern.
+ * Used in @ref SyncRefUeInfo
+ */
+enum class SlssSyncPattern {
+    OFFSET_IND_1,      /**< UE transmits SLSS in subframes indicated by the
+                            syncOffsetIndicator1 specified in V2X configuration. */
+    OFFSET_IND_2,      /**< UE transmits SLSS in subframes indicated by the
+                            syncOffsetIndicator2 specified in V2X configuration. */
+    OFFSET_IND_3,      /**< UE transmits SLSS in subframes indicated by the
+                            syncOffsetIndicator3 specified in V2X configuration. */
+    ODD_RESERVED,      /**< UE transmits SLSS in odd-numbered reserved subframes. */
+    EVEN_RESERVED,     /**< UE transmits SLSS in even-numbered reserved subframes. */
+    UNKNOWN,           /**< Invalid cause type only used internally. */
+};
+
+/**
+ * Encapsulates parameters of an SLSS sync reference UE.
+ * Used in @ref SlssRxInfo.
+ */
+struct SyncRefUeInfo {
+    uint16_t slssId;
+    /**< The SLSS ID of the sync reference UE that is defined in 3GPP TS 36.331
+         chapter 6.3.8. */
+    bool inCoverage;
+    /**< Indicates whether or not the UE is in coverage of GNSS that is defined in
+         3GPP TS 36.331 chapter 6.5.2. */
+    SlssSyncPattern pattern = SlssSyncPattern::UNKNOWN;
+    /**< Indicates the SLSS sync pattern of the UE that is defined in 3GPP TS 36.331
+         chapter 6.3.8. */
+    uint8_t rsrp;
+    /**< SLSS RSRP value of the UE in dBm is ((float)rsrp - 256)/2. */
+    bool selected;
+    /**< Indicates whether or not the sync reference UE has been selected
+         as the timing source. */
+};
+
+/**
+ * Encapsulates parameters of CV2X SLSS Rx Information.
+ *
+ * Used in @ref telux::cv2x::ICv2xListener::onSlssRxInfoChanged.
+ */
+struct SlssRxInfo {
+    std::vector<SyncRefUeInfo> ueInfo;
+    /**< Vector of detected SLSS sync reference UEs. */
 };
 
 /**
@@ -617,8 +664,9 @@ enum class SegmentType {
  * Used in @ref TxStatusReport
  */
 enum class TxType {
-    NEW_TX,        /**< New Tx of the V2X transport block. */
+    NEW_TX,      /**< New Tx of the V2X transport block. */
     RE_TX,       /**< Re-Tx of the V2X transport block. */
+    SLSS_TX,     /**< Tx of SLSS. */
 };
 
 /**

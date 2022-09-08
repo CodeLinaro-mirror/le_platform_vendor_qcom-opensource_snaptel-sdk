@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
 * @file       Cv2xRadioManager.hpp
 *
@@ -71,6 +107,17 @@ public:
      * @param [in] status - CV2X radio status.
      */
     virtual void onStatusChanged(Cv2xStatusEx status) {}
+
+    /**
+     * Called when CV2X SLSS Rx is enabled and any of below events has occurred:
+     *  - A new SLSS synce reference UE is detected, lost, or selected as the timing source,
+     *    report the present sync reference UEs.
+     *  - UE timing source switches from SLSS to GNSS, report 0 sync reference UE.
+     *  - SLSS Rx is disabled, report 0 sync reference UE.
+     *  - Cv2x is stopped, report 0 sync reference UE.
+     * @param [in] info - CV2X SLSS Rx information.
+     */
+    virtual void onSlssRxInfoChanged(const SlssRxInfo& slssInfo) {}
 
     /**
      * Destructor for ICv2xListener
@@ -136,6 +183,17 @@ using RequestCv2xStatusCallbackEx = std::function<void (Cv2xStatusEx status,
  */
 using UpdateConfigurationCallback =
     std::function<void (telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref ICv2xRadioManager::getCv2xSlssRxInfo
+ *
+ * @param [out] info     - Cv2x SLSS Rx Information
+ * @param [out] error    - SUCCESS if Cv2x SLSS Rx Information was successully retrieved
+ *                       - @ref SUCCESS
+ *                       - @ref GENERIC_FAILURE
+ */
+using GetSlssRxInfoCallback = std::function<void (const SlssRxInfo& info,
+                                                  telux::common::ErrorCode error)>;
 
 
 /** @addtogroup telematics_cv2x_cpp
@@ -292,6 +350,15 @@ public:
      */
     virtual telux::common::Status removeL2Filters(const std::vector<uint32_t> &l2IdList,
         common::ResponseCallback cb) = 0;
+
+    /**
+     * Get CV2X SLSS Rx information from modem.
+     *
+     * @param [in] cb   - Callback that is invoked when Cv2x SLSS Rx information is retrieved.
+     *
+     * @returns SUCCESS on success. Error status otherwise.
+     */
+    virtual telux::common::Status getSlssRxInfo(GetSlssRxInfoCallback cb) = 0;
 
     virtual ~ICv2xRadioManager() {}
 };

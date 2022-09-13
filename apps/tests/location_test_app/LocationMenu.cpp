@@ -1153,58 +1153,107 @@ void LocationMenu::configureConstellationDeviceDefault(std::vector<std::string> 
 }
 
 void LocationMenu::configureNmeaSentence(std::vector<std::string> userInput) {
-   if(locationConfigurator_) {
-      char delimiter = '\n';
-      std::string nmeaSentencePreference;
-      NmeaSentenceConfig nmeaType = DEFAULT_UNKNOWN;
-      std::vector<int> options;
-      std::cout << "Enter the nmea sentence types to be enabled : \n"
-                   "0 - GGA, 1 - RMC, 2 - GSA, 3 - VTG, \n"
-                   "4 - GNS, 5 - DTM, 6 - GPGSV, 7 - GLGSV \n"
-                   "8 - GAGSV, 9 - GQGSV, 10 - GBGSV, 11 - GIGSV \n"
-                   "Enter your nmea type preference\n"
-                   "(Example: enter 0,1,3 to enable GGA, RMC and VTG):\n";
-      std::getline(std::cin,nmeaSentencePreference,delimiter);
-      std::stringstream ss(nmeaSentencePreference);
-      int i = -1;
-      while(ss >> i) {
-        options.push_back(i);
-        if(ss.peek() == ',' || ss.peek() == ' ')
-          ss.ignore();
-      }
-      for(auto &opt : options) {
-        if(opt >= 0 && opt <= 11) {
-            nmeaType |= 1UL << opt;
-        } else {
-            std::cout << "Nmea types should not be out of range" << std::endl;
+    if(locationConfigurator_) {
+        char delimiter = '\n';
+        std::string nmeaSentencePreference;
+        NmeaSentenceConfig nmeaType = DEFAULT_UNKNOWN;
+        std::vector<int> options;
+        std::cout << "Enter the nmea sentence types to be enabled : \n"
+                    "0 - GGA, 1 - RMC, 2 - GSA, 3 - VTG, \n"
+                    "4 - GNS, 5 - DTM, 6 - GPGSV, 7 - GLGSV \n"
+                    "8 - GAGSV, 9 - GQGSV, 10 - GBGSV, 11 - GIGSV \n"
+                    "Enter your nmea type preference\n"
+                    "(Example: enter 0,1,3 to enable GGA, RMC and VTG):\n";
+        std::getline(std::cin,nmeaSentencePreference,delimiter);
+        std::stringstream ss(nmeaSentencePreference);
+        int i = -1;
+        while(ss >> i) {
+            options.push_back(i);
+            if(ss.peek() == ',' || ss.peek() == ' ')
+            ss.ignore();
         }
-      }
+        for(auto &opt : options) {
+            if(opt >= 0 && opt <= 11) {
+                nmeaType |= 1UL << opt;
+            } else {
+                std::cout << "Nmea types should not be out of range" << std::endl;
+            }
+        }
 
-      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-          "Configure Nmea sentence types");
-      telux::common::Status status = locationConfigurator_->configureNmeaTypes(nmeaType,
-          std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-              std::placeholders::_1));
-      if (status != telux::common::Status::SUCCESS) {
-          std::cout << "Configure Nmea sentence types failed" << std::endl;
-      }
-   }
+        int nmeaDatumPref;
+        std::cout << "\nEnter Nmea Datum Type to be used: \n"
+                        "-1 - NONE \n"
+                        "0 - WGS_84 \n"
+                        "1 - PZ-90 \n";
+        std::cin >> nmeaDatumPref;
+        Utils::validateInput(nmeaDatumPref);
+        telux::common::Status status;
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "Configure Nmea sentence types");
+
+        if(nmeaDatumPref == -1) {
+            //No Datum Type is needed.
+            status = locationConfigurator_->configureNmeaTypes(nmeaType,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                    std::placeholders::_1));
+        } else {
+            //Datum type is configured.
+            telux::loc::NmeaConfig nmeaConfigParams;
+            nmeaConfigParams.sentenceConfig = nmeaType;
+            if(nmeaDatumPref > 1) {
+                nmeaDatumPref = 0;
+            }
+            nmeaConfigParams.datumType =
+                static_cast<telux::loc::GeodeticDatumType>(nmeaDatumPref);
+            status = locationConfigurator_->configureNmea(nmeaConfigParams,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                    std::placeholders::_1));
+        }
+
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Configure Nmea sentence types failed" << std::endl;
+        }
+    }
 }
 
 void LocationMenu::configureAllNmeaSentence(std::vector<std::string> userInput) {
-   if(locationConfigurator_) {
+    if(locationConfigurator_) {
+        telux::loc::NmeaSentenceConfig nmeaType = telux::loc::NmeaSentenceType::ALL;
 
-      telux::loc::NmeaSentenceConfig nmeaType = telux::loc::NmeaSentenceType::ALL;
+        int nmeaDatumPref;
+        std::cout << "\nEnter Nmea Datum Type to be used: \n"
+                        "-1 - NONE \n"
+                        "0 - WGS_84 \n"
+                        "1 - PZ-90 \n";
+        std::cin >> nmeaDatumPref;
+        Utils::validateInput(nmeaDatumPref);
+        telux::common::Status status;
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "Configure All Nmea sentence types");
 
-      myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
-          "Configure All Nmea sentence types");
-      telux::common::Status status = locationConfigurator_->configureNmeaTypes(nmeaType,
-          std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-              std::placeholders::_1));
-      if (status != telux::common::Status::SUCCESS) {
-          std::cout << "Configure All Nmea sentence types failed" << std::endl;
-      }
-   }
+        if(nmeaDatumPref == -1) {
+            //No Datum Type is needed.
+            status = locationConfigurator_->configureNmeaTypes(nmeaType,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                    std::placeholders::_1));
+        } else {
+            //Datum type is configured.
+            telux::loc::NmeaConfig nmeaConfigParams;
+            nmeaConfigParams.sentenceConfig = nmeaType;
+            if(nmeaDatumPref > 1) {
+                nmeaDatumPref = 0;
+            }
+            nmeaConfigParams.datumType =
+                static_cast<telux::loc::GeodeticDatumType>(nmeaDatumPref);
+            status = locationConfigurator_->configureNmea(nmeaConfigParams,
+                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                    std::placeholders::_1));
+        }
+
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Configure All Nmea sentence types failed" << std::endl;
+        }
+    }
 }
 
 void LocationMenu::configureRobustLocation(std::vector<std::string> userInput) {

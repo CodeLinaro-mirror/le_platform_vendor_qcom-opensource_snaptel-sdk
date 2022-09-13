@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -467,6 +467,36 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
+ * This API is used to configure the NMEA sentences that the clients will receive via
+ * @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ * Without prior invocation to this API, all NMEA sentences supported in the system will get
+ * generated and delivered to all the clients that register to receive NMEA sentences.
+ * The NMEA sentence type configuration is common across all clients and updating it will affect
+ * all clients.
+ *
+ * Please note that for the NMEA datum type request to be successful,
+ * the nmea provider configuration in the GPS configuration file
+ * should be set to application processor.
+ *
+ * This API call is not incremental and the new NMEA configuration will completely overwrite the
+ * previous call to this API.
+ *
+ * @param [in] configParams - Configuration Parameters for Nmea on the device.
+ *
+ * @param [in] callback - Optional callback to get the response of configureNmea.
+ *
+ * @returns Status of configureNmea i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureNmea(const NmeaConfig configParams,
+    telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
  * Clients can request Terrestrial Positioning using @ref ILocationManager::getTerrestrialPosition.
  * Terrestrial Positioning requires sending device data to the cloud to get the position.
  * This functionality requires user consent. This API needs to be invoked to provide the user
@@ -543,7 +573,6 @@ using GetRobustLocationCallback = std::function<void(const telux::loc::
  *
  */
   virtual telux::common::Status injectLocationData(const ExternalLocationInfo& location) = 0;
-
 
 /**
  * This API is used to instruct the specified engine to use the provided integrity risk level for

@@ -609,6 +609,36 @@ public:
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
+ * This API is used to configure the NMEA sentences that the clients will receive via
+ * @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ * Without prior invocation to this API, all NMEA sentences supported in the system will get
+ * generated and delivered to all the clients that register to receive NMEA sentences.
+ * The NMEA sentence type configuration is common across all clients and updating it will affect
+ * all clients.
+ *
+ * Please note that for the NMEA datum type request to be successful,
+ * the nmea provider configuration in the GPS configuration file
+ * should be set to application processor.
+ *
+ * This API call is not incremental and the new NMEA configuration will completely overwrite the
+ * previous call to this API.
+ *
+ * @param [in] configParams - Configuration Parameters for Nmea on the device.
+ *
+ * @param [in] callback - Optional callback to get the response of configureNmea.
+ *
+ * @returns Status of configureNmea i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureNmea(const NmeaConfig configParams,
+    telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
  * This API is used to instruct the specified engine to use the provided integrity risk level for
  * protection level calculation in position report.
  * This API can be called when a position session is in progress.

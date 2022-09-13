@@ -1488,6 +1488,24 @@ enum NmeaSentenceType {
 /** Specifies NmeaSentenceType mask */
 using NmeaSentenceConfig = uint32_t;
 
+/** Specify the Geodetic datum for NMEA sentence types that are generated. */
+enum class GeodeticDatumType {
+    /** No type*/
+    GEODETIC_TYPE_NONE = -1,
+    /** Geodetic datum type to indicate the use of World Geodetic System 1984 (WGS84) system */
+    GEODETIC_TYPE_WGS_84 = 0,
+    /** Geodetic datum type to indicate the use of PZ90/GLONASS system */
+    GEODETIC_TYPE_PZ_90 = 1,
+};
+
+/** Specify the Nmea Config Parameters */
+struct NmeaConfig {
+    /** Specify the sentences to be configured. */
+    NmeaSentenceConfig sentenceConfig;
+    /** Specify the datum type to be configured. */
+    GeodeticDatumType datumType;
+};
+
 /** Specify the valid mask for robust location configuration
  *  used by the GNSS standard position engine (SPE). */
 enum RobustLocationConfigType {

@@ -97,10 +97,10 @@ using telux::cv2x::Cv2xStatusType;
 using telux::cv2x::Cv2xCauseType;
 using telux::cv2x::Cv2xPoolStatus;
 using telux::cv2x::ICv2xListener;
+using telux::cv2x::ICv2xRadioManager;
 
 static int gTerminate = 0;
 static int gTerminatePipe[2];
-static std::shared_ptr<ICv2xListener> gStatusListener = nullptr;
 static bool gListenMode = false;
 static std::mutex gStatusMtx;
 static bool gExtStatus = false;
@@ -129,7 +129,7 @@ static map<Cv2xCauseType, string> gCv2xCauseToString = {
 };
 
 static void printCv2xStatus(Cv2xStatusEx eStatus) {
-    cout << "C-V2X Status:" << endl;
+    cout << Utils::getCurrentTimeString() << " C-V2X Status:" << endl;
     cout << "  Overall RX status=" << gCv2xStatusToString[eStatus.status.rxStatus];
     cout << ", cause=" << gCv2xCauseToString[eStatus.status.rxCause] << endl;
     cout << "  Overall TX status=" << gCv2xStatusToString[eStatus.status.txStatus];
@@ -199,12 +199,11 @@ static int parseOpts(int argc, char *argv[]) {
             cout << "Get V2X status and per pool status." << endl;
             gExtStatus = true;
             break;
-        case '?':
         case 'l':
-            cout << "Set listening mode." << endl;
             gListenMode = true;
             break;
         case 'h':
+        case '?':
         default:
             rc = -1;
             printUsage(argv[0]);
@@ -256,59 +255,77 @@ int main(int argc, char *argv[]) {
         install_signal_handler();
     }
 
-    bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    std::condition_variable cv;
-    std::mutex mtx;
-    auto statusCb = [&](telux::common::ServiceStatus status) {
-        std::lock_guard<std::mutex> lock(mtx);
-        cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
-        cv.notify_all();
-    };
-    // Get handle to Cv2xRadioManager
-    auto & cv2xFactory = Cv2xFactory::getInstance();
-    auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
-    if (!cv2xRadioManager) {
-        cout << "Error: failed to get Cv2xRadioManager." << endl;
-        return EXIT_FAILURE;
-    }
-    std::unique_lock<std::mutex> lck(mtx);
-    cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xRadioManagerStatus) {
-        cout << "Error: failed to initialize Cv2xRadioManager." << endl;
-        return EXIT_FAILURE;
-    }
-
-    // Register cv2x status listener
-    if (gListenMode) {
-        cout << "Enter listening mode, exit using CTRL+C." << endl;
-        gStatusListener = std::make_shared<Cv2xExtStatusListener>();
-        if (Status::SUCCESS != cv2xRadioManager->registerListener(gStatusListener)) {
-            cout << "Register cv2x status listener failed!"<< endl;
-            return EXIT_FAILURE;
+    int ret = EXIT_SUCCESS;
+    std::shared_ptr<ICv2xRadioManager> cv2xRadioManager;
+    std::shared_ptr<ICv2xListener> statusListener;
+    do {
+        bool cv2xRadioManagerStatusUpdated = false;
+        telux::common::ServiceStatus cv2xRadioManagerStatus =
+            telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+        std::condition_variable cv;
+        std::mutex mtx;
+        auto statusCb = [&](telux::common::ServiceStatus status) {
+            std::lock_guard<std::mutex> lock(mtx);
+            cv2xRadioManagerStatusUpdated = true;
+            cv2xRadioManagerStatus = status;
+            cv.notify_all();
+        };
+        // Get handle to Cv2xRadioManager
+        auto & cv2xFactory = Cv2xFactory::getInstance();
+        cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
+        if (!cv2xRadioManager) {
+            cout << "Error: failed to get Cv2xRadioManager." << endl;
+            ret = EXIT_FAILURE;
+            break;
         }
-    }
+        std::unique_lock<std::mutex> lck(mtx);
+        cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+            cv2xRadioManagerStatus) {
+            cout << "Error: failed to initialize Cv2xRadioManager." << endl;
+            ret = EXIT_FAILURE;
+            break;
+        }
 
-    Status ret = Status::SUCCESS;
-    // Get C-V2X Ext status
-    ret = cv2xRadioManager->requestCv2xStatus(cv2xExtStatusCallback);
-    if (Status::SUCCESS != ret) {
-        cout << "Error : request for C-V2X status failed." << endl;
-        return EXIT_FAILURE;
-    }
-    if (ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-        cout << "Error : failed to retrieve C-V2X status." << endl;
-        return EXIT_FAILURE;
-    }
+        // Register cv2x status listener
+        if (gListenMode) {
+            statusListener = std::make_shared<Cv2xExtStatusListener>();
+            if (Status::SUCCESS != cv2xRadioManager->registerListener(statusListener)) {
+                cout << "Register cv2x status listener failed!"<< endl;
+                statusListener = nullptr;
+                ret = EXIT_FAILURE;
+                break;
+            }
+        }
+
+        // Get C-V2X Ext status
+        if (Status::SUCCESS != cv2xRadioManager->requestCv2xStatus(cv2xExtStatusCallback)
+            or ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+            cout << "Error : Failed to retrieve C-V2X status failed." << endl;
+            // wait for indications even if the first query failed
+            if (not gListenMode) {
+                return EXIT_FAILURE;
+            }
+        }
+    } while (0);
 
     if (gListenMode) {
-        int terminate = 0;
-        read(gTerminatePipe[0], &terminate, sizeof(int));
-        cout << "Termination!" << endl;
+        if (EXIT_SUCCESS == ret) {
+            cout << "Enter listening mode, exit using CTRL+C." << endl;
+            int terminate = 0;
+            read(gTerminatePipe[0], &terminate, sizeof(int));
+            cout << "Termination!" << endl;
+        }
+
+        if (cv2xRadioManager and
+            statusListener and
+            Status::SUCCESS != cv2xRadioManager->deregisterListener(statusListener)) {
+            cout << "Deregister cv2x status listener failed!"<< endl;
+        }
+
+        close(gTerminatePipe[0]);
+        close(gTerminatePipe[1]);
     }
 
-    return EXIT_SUCCESS;
+    return ret;
 }

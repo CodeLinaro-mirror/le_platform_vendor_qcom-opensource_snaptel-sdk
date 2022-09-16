@@ -52,3 +52,4 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to enable/disable socks proxy](data/enable_disable_socks.md)
   * [How to use Location Configurator APIs](loc/location_services_configurator.md)
 
+  * [How to configure and enable Wlan](wlan/wlan_config.md)

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
 @page sequence_diagrams Call Flow Diagrams
 
@@ -2540,5 +2576,94 @@ The application can register a listener for updates reagrding modem config activ
 6. Application sends a request to get config auto selection mode.
 7. Application receives synchronous Status which indicates if the request to get config auto selection mode was sent successfully.
 8. Application is notified of the Status of the request setAutoSelectionMode (either SUCCESS or FAILED) via the application-supplied callback, along with mode and slot id.
+
+@section wlan_call_flow WLAN
+@subsection wlan_modify_config_call_flow Call flow to Modify WLAN Configuration
+
+@anchor fig_wlan_modify_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Configuration Call Flow}
+  \label{fig_wlan_modify_config_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_config.png,Modify WLAN Configuration Call Flow,80,80,Modify WLAN Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from Wlan factory.
+2. Wlan factory returns shared pointer to IWlandeviceManager to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
+   5. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+   6. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. On Readiness, application calls IWlanDeviceManager::getStatus to get Wlan enablement status.
+8. Application recieves Wlan enablement status.
+   9. If Wlan is enabled, application calls IWlanDeviceManager::enable(false) to disable Wlan.
+   10. Application recieves wlan disablement response and wait for Wlan status indication.
+   11. Application recieves Wlan status indication IWlanDeviceManager::onEnableChanged(false) to indicate Wlan is disabled.
+12. Application sets desired configuration using IWlanDeviceManager::setMode to set desired number of access points and stations to be enabled.
+13. Application recieves recieves response.
+14. Application calls IWlanDeviceManager::enable(true) to enable Wlan.
+15. Application recieves wlan enablement response and wait for Wlan status indication.
+16. Application recieves Wlan status indication IWlanDeviceManager::onEnableChanged(true) to indicate Wlan is enbaled.
+
+@subsection wlan_modify_station_config_call_flow Call flow to Modify WLAN Station Configuration
+
+@anchor fig_wlan_modify_station_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_station_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Station Configuration Call Flow}
+  \label{fig_wlan_modify_station_config_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_station_config.png,Modify WLAN Station Configuration Call Flow,80,80,Modify WLAN Station Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from Wlan factory.
+2. Wlan factory returns shared pointer to IWlandeviceManager to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
+   5. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+   6. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. On Readiness, requests IStaInterfaceManager object from Wlan factory.
+8. Wlan factory returns shared pointer to IStaInterfaceManager to the application.
+9. Application calls IStaInterfaceManager::setIpConfig to set desired IP configurations.
+10. Application recieves response set IP configuration.
+11. Application calls IStaInterfaceManager::managerStaService to restart wpa_supplicant daemon.
+12. Application recieves response to restart wpa_supplicant daemon and station configuration shall be active at this stage.
+
+@subsection wlan_modify_ap_config_call_flow Call flow to Modify WLAN Access Point Configuration
+
+@anchor fig_wlan_modify_ap_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_ap_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Access Point Configuration Call Flow}
+  \label{fig_wlan_modify_config_ap_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_ap_config.png,Modify WLAN Access Point Configuration Call Flow,80,80,Modify WLAN Access Point Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from Wlan factory.
+2. Wlan factory returns shared pointer to IWlandeviceManager to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
+   5. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+   6. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. On Readiness, requests IApInterfaceManager object from Wlan factory.
+8. Wlan factory returns shared pointer to IApInterfaceManager to the application.
+9. Application calls IApInterfaceManager::setConfig to set desired IP configurations.
+10. Application recieves response set configuration.
+11. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
+12. Application recieves response to restart hostapd daemon and access point configuration shall be active at this stage.
 
 */

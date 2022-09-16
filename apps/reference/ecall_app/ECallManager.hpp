@@ -31,7 +31,7 @@
  *
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -150,6 +150,16 @@ public:
      *
      */
     telux::common::Status requestHlapTimerStatus(int phoneId);
+
+    /**
+     * This function requests to stop T10 eCall High Level Application Protocol(HLAP) timer
+     *
+     * @param [in] phoneId   Represents phone corresponding to which eCall operation is performed
+     *
+     * @returns Status of stopT10Timer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status stopT10Timer(int phoneId);
 
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;

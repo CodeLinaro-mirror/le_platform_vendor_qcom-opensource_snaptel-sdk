@@ -272,6 +272,24 @@ telux::common::Status ECallManager::requestHlapTimerStatus(int phoneId) {
 }
 
 /**
+ * Request to stop T10 eCall High Level Application Protocol(HLAP) timer
+ */
+telux::common::Status ECallManager::stopT10Timer(int phoneId) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->stopT10Timer(phoneId);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to stop T10 HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request to stop T10 HLAP timer" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
  * Function to enable necessary functionalities in various subsystems(location, audio, etc.),
  * that are required for an eCall
  */

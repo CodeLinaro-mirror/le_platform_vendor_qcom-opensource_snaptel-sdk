@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -214,6 +214,16 @@ public:
     telux::common::Status requestECallHlapTimerStatus(int phoneId);
 
     /**
+     * This function requests to stop T10 eCall High Level Application Protocol(HLAP) timer
+     *
+     * @param [in] phoneId  Represents phone corresponding to which the operation will be performed
+     *
+     * @returns Status of stopT10Timer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status stopT10Timer(int phoneId);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.
@@ -231,6 +241,7 @@ public:
                                     std::shared_ptr<telux::tel::ICall>) override;
     void hlapTimerStatusResponse(telux::common::ErrorCode error, int phoneId,
                                  ECallHlapTimerStatus timersStatus);
+    void stopT10TimerResponse(telux::common::ErrorCode error);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();

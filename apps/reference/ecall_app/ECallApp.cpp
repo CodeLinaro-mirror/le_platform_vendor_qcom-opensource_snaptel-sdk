@@ -90,9 +90,13 @@ void ECallApp::init() {
         ConsoleAppCommand("6", "Get_ECall_HLAP_Timers_Status", {},
                           std::bind(&ECallApp::requestECallHlapTimerStatus, this)));
 
+    std::shared_ptr<ConsoleAppCommand> stopT10TimerCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("7", "Stop_T10_ECall_HLAP_Timer", {},
+                          std::bind(&ECallApp::stopT10Timer, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
-        hlapTimerStatusCommand};
+        hlapTimerStatusCommand, stopT10TimerCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -279,6 +283,23 @@ void ECallApp::requestECallHlapTimerStatus() {
     auto ret = eCallMgr_->requestHlapTimerStatus(phoneId);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to get eCall HLAP timers status" << std::endl;
+    }
+}
+
+/**
+ * Request to stop T10 eCall High Level Application Protocol(HLAP) timer, which causes the
+ * ecall-only modem to de-register from the network.
+ */
+void ECallApp::stopT10Timer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    auto ret = eCallMgr_->stopT10Timer(phoneId);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to stop T10 HLAP timer" << std::endl;
     }
 }
 

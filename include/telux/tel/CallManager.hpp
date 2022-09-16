@@ -479,6 +479,29 @@ public:
       = 0;
 
    /**
+    * De-register from the network after an ecall, when the modem is operating in eCall-only
+    * configuration.
+    * This is typically performed after expiry of T9 eCall HLAP timer(minimum network registration
+    * period), to stop T10 eCall HLAP timer i.e De-registration Fallback Timer (DFT) and de-register
+    * from the serving network.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
+    * @param [in] phoneId   Represents the phone corresponding to which the network deregistration
+    *                       will be performed.
+    * @param [in] callback  Callback function to get the response of the request. The response is
+    *                       sent after the operation is complete.
+    *
+    * @returns Status of requestNetworkDeregistration request i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+    virtual telux::common::Status requestNetworkDeregistration(int phoneId,
+        common::ResponseCallback callback = nullptr) = 0;
+
+   /**
     * Add a listener to listen for incoming call, call info change and eCall MSD
     * transmission status change.
     *

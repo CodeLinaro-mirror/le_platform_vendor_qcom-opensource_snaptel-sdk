@@ -31,7 +31,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -381,6 +381,17 @@ void TelClient::hlapTimerStatusResponse(telux::common::ErrorCode error, int phon
     std::cout << CLIENT_NAME << infoStr << std::endl;
 }
 
+// Callback which provides response to stop T10 HLAP timer
+void TelClient::stopT10TimerResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to stop T10 ECall HLAP timer with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully stopped T10 ECall HLAP timer" << std::endl;
+    }
+}
+
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
                                 ECallCategory category, ECallVariant variant, bool transmitMsd,
@@ -583,6 +594,23 @@ telux::common::Status TelClient::requestECallHlapTimerStatus(int phoneId) {
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request for HLAP timers status" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+// Stop T10 eCall High Level Application Protocol(HLAP) timer
+telux::common::Status TelClient::stopT10Timer(int phoneId) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to send request to stop T10 timer"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->requestNetworkDeregistration(phoneId,
+                            std::bind(&TelClient::stopT10TimerResponse, this,
+                            std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to stop T10 timer" << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;

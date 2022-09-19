@@ -122,11 +122,15 @@ class CryptoParamBuilder {
     /** When performing AES crypto operations, specifies initialization vector to be used. */
     CryptoParamBuilder setInitVector(std::vector<uint8_t> initVector);
 
-    /** When generating or importing a key, an arbitrary value can be supplied through this
-        method. In all subsequent use of the key, this value must be supplied again. The
+    /** When generating or importing a key, an optional arbitrary value can be supplied through
+        this method. In all subsequent use of the key, this value must be supplied again. The
         data given is bound to the key cryptographically. This data ties the key to the
         caller. */
     CryptoParamBuilder setUniqueData(std::vector<uint8_t> uniqueData);
+
+    /** When encrypting/decrypting data, this specifies optional associated data to be used.
+        This is applicable only for AES-GCM algorithm. */
+    CryptoParamBuilder setAssociatedData(std::vector<uint8_t> associatedData);
 
     /** Finally creates an instance of ICryptoParam based on the setter methods invoked
      * on the builder. After building the builder's state is resetted. */

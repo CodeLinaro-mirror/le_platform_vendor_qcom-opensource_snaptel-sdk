@@ -230,30 +230,6 @@ class ISensorClient {
     virtual telux::common::Status deactivate() = 0;
 
     /**
-     * Request the sensor to operate in low power mode. The sensor should be in deactivated state to
-     * exercise this API. The success of this request depends on the capabilities of the
-     * underlying hardware.
-     *
-     * @returns status of request - @ref telux::common::Status
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
-     */
-    virtual telux::common::Status enableLowPowerMode() = 0;
-
-    /**
-     * Request the sensor to exit low power mode. The sensor should be in deactivated state to
-     * exercise this API. The success of this request depends on the capabilities of the
-     * underlying hardware.
-     *
-     * @returns status of request - @ref telux::common::Status
-     *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
-     */
-    virtual telux::common::Status disableLowPowerMode() = 0;
-
-    /**
      * Initiate self test on this sensor
      *
      * If there are active data acquisition sessions corresponding to this sensor, these
@@ -306,6 +282,35 @@ class ISensorClient {
      *
      */
     virtual ~ISensorClient(){};
+
+    /**
+     * Deprecated APIs
+     *
+     */
+
+    /**
+     * Request the sensor to operate in low power mode. The sensor should be in deactivated state to
+     * exercise this API. The success of this request depends on the capabilities of the
+     * underlying hardware.
+     *
+     * @returns status of request - @ref telux::common::Status
+     *
+     * @deprecated This API is no longer supported.
+     *
+     */
+    virtual telux::common::Status enableLowPowerMode() = 0;
+
+    /**
+     * Request the sensor to exit low power mode. The sensor should be in deactivated state to
+     * exercise this API. The success of this request depends on the capabilities of the
+     * underlying hardware.
+     *
+     * @returns status of request - @ref telux::common::Status
+     *
+     * @deprecated This API is no longer supported.
+     *
+     */
+    virtual telux::common::Status disableLowPowerMode() = 0;
 };
 
 // Note that the class ISensor is an alias for ISensorClient and ISensor would deprecated and

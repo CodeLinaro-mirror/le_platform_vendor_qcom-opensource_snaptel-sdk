@@ -68,7 +68,8 @@
   * @brief: Base class for ITS stack application
   */
 
-
+#include <ifaddrs.h>
+#include <netdb.h>
 #include "ApplicationBase.hpp"
 using std::cout;
 using std::string;
@@ -180,7 +181,7 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
     }
 }
 
-ApplicationBase::ApplicationBase(char* fileConfiguration){
+ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType){
     // set parameters according to config file
     if (this->loadConfiguration(fileConfiguration)) {
         return;
@@ -195,7 +196,7 @@ ApplicationBase::ApplicationBase(char* fileConfiguration){
 
     uint8_t keyGenMethod = NO_KEY_GEN;
     // setup radio flows
-    this->setup();
+    this->setup(msgType);
     if(!this->isTx)
         keyGenMethod = ASYMMETRIC_KEY_GEN;
 
@@ -910,6 +911,17 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     if (configs.find("primaryDns") != configs.end()) {
         configuration.primaryDns = configs["primaryDns"];
     }
+    if (configs.find("wsaInfoFile") != configs.end()) {
+        configuration.wsaInfoFile = configs["wsaInfoFile"];
+    }
+    if (configs.end() != configs.find("wsaInterval")) {
+        this->configuration.wsaInterval = stoi(configs["wsaInterval"], nullptr, 10);
+        // assume WSA Tx interval < 100ms is incorrect, re-set it to 100ms.
+        if (this->configuration.wsaInterval < 100) {
+            this->configuration.wsaInterval = 100;
+        }
+    }
+
     if(configs.find("wildcardRx") != configs.end()){
        istringstream is8(configs["wildcardRx"]);
        is8 >> boolalpha >> configuration.wildcardRx;
@@ -943,7 +955,21 @@ void ApplicationBase::simRxSetup(const string ipv4, const uint16_t port) {
     abuf_alloc(&rxSimMsg->abuf, ABUF_LEN, ABUF_HEADROOM);
 }
 
-void ApplicationBase::setup() {
+// CV2X supported SPS period {20,50,100,...,900,1000} ms
+int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
+    if (intervalMs < 50) {
+        return 20;
+    } else if (intervalMs < 100) {
+        return 50;
+    }
+    int ret = intervalMs / 100;
+    if (ret >= 10) {
+        return 1000;
+    }
+    return (ret * 100);
+}
+
+void ApplicationBase::setup(MessageType msgType) {
     uint8_t i = 0;
     // setup ldm
     if(this->configuration.ldmSize){
@@ -951,7 +977,18 @@ void ApplicationBase::setup() {
     }
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
-    spsInfo.periodicityMs = this->configuration.transmitRate;
+
+    if (MessageType::WSA == msgType) {
+        spsInfo.periodicityMs = this->configuration.wsaInterval;
+    } else {
+        spsInfo.periodicityMs = this->configuration.transmitRate;
+    }
+    spsInfo.periodicityMs = adjustSpsPeriodicity(spsInfo.periodicityMs);
+
+    if(appVerbosity > 3) {
+        cout << "SPS period set to " << spsInfo.periodicityMs << "ms" << endl;
+    }
+
     for (auto port : this->configuration.spsPorts)
     {
         RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
@@ -1078,7 +1115,7 @@ int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
     int16_t bufLen, TransmitType txType) {
     // If positive, should be the # of bytes sent
     // Else, something went wrong
-    int ret;
+    int ret = -1;
     // ethernet
     if (this->isTxSim) {
         ret = simTransmit->transmit(mc->abuf.data, bufLen);
@@ -1316,4 +1353,90 @@ void ApplicationBase::writeMisbehaviorLogging() {
     }
     file.close();
     sem_post(&this->log_sem);
+}
+
+int ApplicationBase::getSysV2xIpIfaceAddr(string& ipAddr) {
+    int result = -1;
+    struct ifaddrs *ifap;
+    struct ifaddrs *ifa;
+    char addr[INET6_ADDRSTRLEN];
+    string v2xIfName;
+
+    //get V2X-IP iface name from the radio instance used for Tx WSA
+    if (this->spsTransmits.empty()
+        or this->spsTransmits[0].getV2xIfaceName(TrafficIpType::TRAFFIC_IP, v2xIfName)
+        or v2xIfName.empty()) {
+        cerr << "Failed to get V2X-IP iface name" << endl;
+        return -1;
+    }
+
+    getifaddrs(&ifap);
+    ifa = ifap;
+    while (ifa && ifa->ifa_name) {
+        if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET6) {
+            string ifaName(ifa->ifa_name);
+            if (ifaName == v2xIfName) {
+                getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), addr, sizeof(addr),
+                            NULL, 0, NI_NUMERICHOST);
+                ipAddr = string(addr);
+                if(appVerbosity > 3) {
+                    cout << "Found V2X ifaceName:" << ifaName << " addr:" << ipAddr << endl;
+                }
+                result = 0;
+                break;
+            }
+        }
+        ifa = ifa->ifa_next;
+    }
+    freeifaddrs(ifap);
+
+    if (result) {
+        cerr << "Found no global IPv6 address for V2X IP iface!" << endl;
+    }
+
+    return result;
+}
+
+int ApplicationBase::updateCachedV2xIpIfaceAddr() {
+    // get the old addr
+    string oldAddr;
+    {
+        std::unique_lock<std::mutex> lock(v2xIpAddrMtx_);
+        oldAddr = v2xIpAddr_;
+    }
+
+    string newAddr;
+    if (0 == getSysV2xIpIfaceAddr(newAddr) and !newAddr.empty()) {
+        if (oldAddr == newAddr) {
+            cout << "V2X IP address not changed!" << endl;
+        } else {
+            // update local stored address
+            std::unique_lock<std::mutex> lock(v2xIpAddrMtx_);
+            v2xIpAddr_ = newAddr;
+            if (appVerbosity > 3) {
+                cout << "V2X IP address is upated to:" << newAddr << endl;
+            }
+            return 0;
+        }
+    }
+
+    cerr << "Failed to update V2X IP iface address!" << endl;
+    return -1;
+}
+
+int ApplicationBase::getV2xIpIfaceAddr(string& addr) {
+    {
+        std::unique_lock<std::mutex> lock(v2xIpAddrMtx_);
+        addr = v2xIpAddr_;
+    }
+
+    if (addr.empty()) {
+        cout << "Get V2X IP address failed!" << endl;
+        return -1;
+    }
+
+    if (appVerbosity > 3) {
+        cout << "Get V2X IP address " << addr << endl;
+    }
+    return 0;
 }

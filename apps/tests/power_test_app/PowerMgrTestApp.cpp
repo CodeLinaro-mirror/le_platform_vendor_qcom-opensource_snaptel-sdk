@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -392,6 +392,10 @@ int main(int argc, char ** argv) {
         } else if (std::string(argv[i]) == "-c") {
             clientType = ClientType::MASTER;
             std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType, procType);
+            if(myPowerMgmtTest == nullptr) {
+                std::cout << "Exiting application..." << std::endl;
+                return 0;
+            }
             myPowerMgmtTest->registerForUpdates();
             listenerEnabled =true;
             myPowerMgmtTest->consoleinit();
@@ -404,6 +408,10 @@ int main(int argc, char ** argv) {
         }
     }
     std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = init(clientType, procType);
+    if(myPowerMgmtTest == nullptr) {
+        std::cout << "Exiting application..." << std::endl;
+        return 0;
+    }
     if(listenerEnabled) {
         myPowerMgmtTest->registerForUpdates();
     }

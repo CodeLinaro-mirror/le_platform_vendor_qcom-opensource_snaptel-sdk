@@ -94,9 +94,11 @@ using std::list;
 using std::ref;
 using std::lock_guard;
 using std::mutex;
+using std::shared_ptr;
+using std::make_shared;
 
 // Global variables
-ApplicationBase* application = nullptr;
+shared_ptr<ApplicationBase> application = nullptr;
 vector<thread> threads;
 bool csv = false;
 string csvFileName;
@@ -119,16 +121,14 @@ void joinThreads() {
 }
 
 void signalHandler(int signum) {
-    if(signum == SIGSEGV){
-        if(application->ldm != nullptr)
-            application->ldm->stopGb();
-        application->closeAllRadio();
-        exit(signum);
-    }
-    cout << "Interrupt signal (" << signum << ") received.\n";
-    cout << "Exiting..." << endl;
+    fprintf(stderr, "Interrupt signal (%d) received.\n", signum);
     stopThread = true;
-    return;
+    if(signum == SIGSEGV || signum == SIGABRT){
+        if(application->ldm != nullptr)
+          application->ldm->stopGb();
+        fprintf(stderr, "Attempting to close all flows and subscriptions\n");
+        application->closeAllRadio();
+    }
 }
 
 //Returns the value of enableL2filtering config
@@ -137,7 +137,7 @@ bool isL2SrcFilteringEnabled() {
 }
 
 //Function to trigger L2 src filtering
-void rvL2SrcFiltering(ApplicationBase* application) {
+void rvL2SrcFiltering(shared_ptr<ApplicationBase> application) {
     std::thread ([application]() {
         while (!stopThread) {
             application->filterRate=application->cv2xTmListener->getFilterRate();
@@ -189,7 +189,7 @@ void receive(MessageType msgType, int index) {
                 application->radioReceives[index].waitForCv2xToActivate(haltRx);
                 if (application->radioReceives[index].restartFlow) {
                     application->closeAllRadio();
-                    application->setup();
+                    application->setup(msgType);
                 }
             }
             else {// if TX is also enabled check the CV2X status in TX only
@@ -225,8 +225,12 @@ void receive(MessageType msgType, int index) {
     if(application->configuration.enableMbdStatLog){
         application->writeMisbehaviorLogging();
     }
-    if(msgType == MessageType::BSM || msgType == MessageType::WSA)
-        ((SaeApplication*)application)->printRxStats();
+    if(msgType == MessageType::BSM || msgType == MessageType::WSA) {
+        auto sp = dynamic_pointer_cast<SaeApplication>(application);
+        if (sp) {
+            sp->printRxStats();
+        }
+    }
     printf("Total of RX packets is: %d\n", application->totalRxSuccess);
 
     if(application->ldm != nullptr)
@@ -291,7 +295,11 @@ void ldmRx(void) {
     if(application->configuration.enableMbdStatLog){
         application->writeMisbehaviorLogging();
     }
-    ((SaeApplication*)application)->printRxStats();
+
+    auto sp = dynamic_pointer_cast<SaeApplication>(application);
+    if (sp) {
+        sp->printRxStats();
+    }
     printf("Total of RX packets is: %d\n", application->totalRxSuccess);
 
     if(application->ldm != nullptr)
@@ -300,10 +308,10 @@ void ldmRx(void) {
 }
 /**
  * Initialize timer for transmit
- * @param[in] interval_ns timer interval value in nano seconds
+ * @param[in] interval_ms timer interval value in miliseconds
  * @return timer's file descriptor if success or -1 on failure.
  */
-int start_tx_timer(long long interval_ns) {
+int start_tx_timer(uint32_t interval_ms) {
     int timerfd;
     struct itimerspec its = {0};
 
@@ -313,8 +321,8 @@ int start_tx_timer(long long interval_ns) {
     }
 
     /* Start the timer */
-    its.it_value.tv_sec = interval_ns / 1000000000;
-    its.it_value.tv_nsec = interval_ns % 1000000000;
+    its.it_value.tv_sec = interval_ms / 1000;
+    its.it_value.tv_nsec = interval_ms % 1000;
     its.it_interval = its.it_value;
 
     if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
@@ -325,6 +333,92 @@ int start_tx_timer(long long interval_ns) {
     return timerfd;
 
 }
+
+void onSrcL2AddrUpdate(uint32_t addr) {
+    if (application) {
+        if (application->configuration.driverVerbosity > 3) {
+            cout << "new L2 addr:" << addr << endl;
+        }
+
+        // update local V2X-IP rmnet addr in a new thread
+        std::thread ([application] () {
+            int i = 0;
+            while (!stopThread and application) {
+                if (0 == application->updateCachedV2xIpIfaceAddr()) {
+                    break;
+                }
+                // if update failed, try it again in 20ms
+                if (++i > 1) {
+                    break;
+                }
+                cerr << "Try to update V2X-IP rmnet addr later!" << endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            }
+        }).detach();
+    }
+}
+
+void clearWsaTxSettings() {
+    if (!application) {
+        cerr << "application invalid!" << endl;
+        return;
+    }
+
+    if (application->configuration.driverVerbosity > 3) {
+        cout << "Clear WSA Tx settings" << endl;
+    }
+
+    // deregister L2 addr callback if configured to use dynamic rmnet address
+    if (application->configuration.defaultGateway.empty()) {
+        if (application->spsTransmits.empty()
+            or application->spsTransmits[0].deregisterL2AddrCallback(onSrcL2AddrUpdate)) {
+            cerr << "Failed to deregister L2 address callback!" << endl;
+        }
+    }
+
+    // clear global IP prefix
+    auto sp = dynamic_pointer_cast<SaeApplication>(application);
+    if (sp) {
+        sp->clearGlobalIPv6Prefix();
+    }
+}
+
+int prepareWsaTx() {
+    if (!application) {
+        cerr << "application invalid!" << endl;
+        return -1;
+    }
+
+    if (application->configuration.driverVerbosity > 3) {
+        cout << "Prepare WSA Tx" << endl;
+    }
+
+    // clear previous WSA Tx settings if exist
+    clearWsaTxSettings();
+
+    // set global IPv6 prefix
+    auto sp = dynamic_pointer_cast<SaeApplication>(application);
+    if (not sp or sp->setGlobalIPv6Prefix() < 0) {
+        cerr << "Failed to set global IP info!" << endl;;
+        return -1;
+    }
+
+    // if configured to use dynamic rmnet address in WSA Tx msgs
+    // register listener for src L2 addr updates and get the inital rmnet address
+    if (application->configuration.defaultGateway.empty()) {
+        if (application->spsTransmits.empty()
+            or application->spsTransmits[0].registerL2AddrCallback(onSrcL2AddrUpdate)
+            or application->updateCachedV2xIpIfaceAddr()) {
+            cerr << "Failed to register L2 address callback!" << endl;
+            // clear global IPv6 prefix
+            sp->clearGlobalIPv6Prefix();
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 /**
  * transmit thread function
  * @param[in] msgType, type of message we are transmitting, so far only BSM and
@@ -332,40 +426,31 @@ int start_tx_timer(long long interval_ns) {
  * @returns none.
  */
 void transmit(MessageType msgType) {
-    int tx_timer_fd = -1;
     int timer_misses = 0;
     uint64_t exp;
     ssize_t s;
-    tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
-    if (tx_timer_fd == -1) {
-        cerr << "Failed to start Tx timer" << endl;
-        return;
-    }
-
     int txsuccess = 0;
     int txfail = 0;
     int ret = 0;
+    uint32_t txInterval = 0;
 
     // check if sign stat logging on
     // check off for now
     if(application->configuration.enableSignStatLog)
         application->initSignLogging();
 
-     struct timeval currTime;
-    gettimeofday(&currTime, NULL);
-    time_t startTime = currTime.tv_sec;
-
     //Perform message protocol specific setup here
     switch (msgType){
         case MessageType::BSM:
-            printf("Sending BSM messages\n");
+            txInterval = application->configuration.transmitRate;
+            cerr << "Sending BSM messages with period " << txInterval << "ms" << endl;
             break;
         case MessageType::WSA:
-            printf("Sending WSA messages\n");
-            //sending WSA, transmit only, we are simulating RSU, so set the IrevV6
-            if ((dynamic_cast<SaeApplication *>
-                    (application))->setGlobalIPv6Prefix() < 0) {
-                printf("Failed to set global IP info\n");
+            txInterval = application->configuration.wsaInterval;
+            cerr << "Sending WSA messages with period " << txInterval << "ms" << endl;
+            //sending WSA, transmit only, we are simulating RSU, so set the global IP prefix
+            if (prepareWsaTx() < 0) {
+                cerr << "Failed to prepare WSA Tx" << endl;;
                 return;
             }
             break;
@@ -378,6 +463,15 @@ void transmit(MessageType msgType) {
             break;
     }
 
+    int tx_timer_fd = start_tx_timer(txInterval);
+    if (tx_timer_fd == -1) {
+        cerr << "Failed to start Tx timer" << endl;
+        return;
+    }
+    struct timeval currTime;
+    gettimeofday(&currTime, NULL);
+    time_t startTime = currTime.tv_sec;
+
     // main transmitting code
     while (!stopThread){
         if(!simMode){
@@ -386,14 +480,20 @@ void transmit(MessageType msgType) {
             application->spsTransmits[0].waitForCv2xToActivate(haltRx);
             if (application->spsTransmits[0].restartFlow) {
                 application->closeAllRadio();
-                application->setup();
+                application->setup(msgType);
                 close(tx_timer_fd);
-                tx_timer_fd = start_tx_timer(1000000*application->configuration.transmitRate);
+                tx_timer_fd = start_tx_timer(txInterval);
                 {
                     std::lock_guard<std::mutex> lk(cv2xStatusMtx);
                     haltRx = false;
                 }
                 cv.notify_all();
+                // need to re-set the WSA Tx after the radio instance is re-created
+                if (MessageType::WSA == msgType
+                    and prepareWsaTx() < 0) {
+                    cerr << "Failed to prepare WSA Tx" << endl;;
+                    break;
+                }
             }
         }
         ret = application->send(0, TransmitType::SPS);
@@ -418,15 +518,20 @@ void transmit(MessageType msgType) {
         }
     }
     printf("Sending thread stopped\n");
-    if(msgType == MessageType::WSA)
-        (dynamic_cast<SaeApplication *>(application))->clearGlobalIPv6Prefix();
+    if(msgType == MessageType::WSA) {
+        clearWsaTxSettings();
+    }
 
     // dump out any logging information related to signing
     if(application->configuration.enableSignStatLog){
         application->writeSignLogging();
     }
-    if(msgType == MessageType::BSM || msgType == MessageType::WSA)
-        ((SaeApplication*)application)->printTxStats();
+    if(msgType == MessageType::BSM || msgType == MessageType::WSA) {
+        auto sp = dynamic_pointer_cast<SaeApplication>(application);
+        if (sp) {
+            sp->printTxStats();
+        }
+    }
     printf("Total of TX packets is: %d\n", application->totalTxSuccess);
 
     if(application->ldm != nullptr)
@@ -525,7 +630,10 @@ void tunnelModeTx(void) {
     while (!stopThread)
     {
         if (timer + application->configuration.transmitRate < timestamp_now()) {
-            SaeApplication *SaeApp = dynamic_cast<SaeApplication *>(application);
+            auto SaeApp = dynamic_pointer_cast<SaeApplication>(application);
+            if (not SaeApp) {
+                break;
+            }
             SaeApp->sendTuncBsm(0, TransmitType::SPS);
             timer = timestamp_now();
         }
@@ -535,7 +643,10 @@ void tunnelModeTx(void) {
 void tunnelModeRx(void) {
     while (!stopThread)
     {
-        SaeApplication *SaeApp = dynamic_cast<SaeApplication *>(application);
+        auto SaeApp = dynamic_pointer_cast<SaeApplication>(application);
+        if (not SaeApp) {
+            break;
+        }
         const auto mc = SaeApp->receivedContents[0];
         const auto recCount =
                 SaeApp->radioReceives[0].receive(mc->abuf.data,
@@ -776,11 +887,9 @@ int setup(const bool tx, const bool rx,
     }
 
     auto sdkVersion = telux::common::Version::getSdkVersion();
-    std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::cout << "Telematics SDK v" << std::to_string(sdkVersion.major) << "."
                           << std::to_string(sdkVersion.minor) << "."
-                          << std::to_string(sdkVersion.patch) << std::endl <<
-                          "Release name: " << sdkReleaseName << std::endl;
+                          << std::to_string(sdkVersion.patch) << std::endl;
 
     MessageType msgType = MessageType::BSM;
     if (bsm || wsa) {
@@ -796,15 +905,13 @@ int setup(const bool tx, const bool rx,
            return -1;
         }
         if (txSim)
-            application =
-                new SaeApplication(txSimIp, txSimPort, string(""), 0, configFile,
-                        msgType);
+            application = make_shared<SaeApplication>(txSimIp, txSimPort, string(""), 0,
+                                                      configFile, msgType);
         else if (rxSim)
-            application =
-                new SaeApplication(string(""), 0, rxSimIp, rxSimPort, configFile,
-                        msgType);
+            application = make_shared<SaeApplication>(string(""), 0, rxSimIp, rxSimPort,
+                                                      configFile, msgType);
         else
-            application = new SaeApplication(configFile, msgType);
+            application = make_shared<SaeApplication>(configFile, msgType);
 
     } else {
 #ifdef ETSI
@@ -821,13 +928,11 @@ int setup(const bool tx, const bool rx,
             return -1;
         }
         if (txSim)
-            application =
-                new EtsiApplication(txSimIp, txSimPort, string(""), 0, configFile);
+            application = make_shared<EtsiApplication>(txSimIp, txSimPort, string(""), 0, configFile);
         else if (rxSim)
-            application =
-                new EtsiApplication(string(""), 0, rxSimIp, rxSimPort, configFile);
+            application = make_shared<EtsiApplication>(string(""), 0, rxSimIp, rxSimPort, configFile);
         else
-            application = new EtsiApplication(configFile);
+            application = make_shared<EtsiApplication>(configFile, msgType);
 #endif
     }
 

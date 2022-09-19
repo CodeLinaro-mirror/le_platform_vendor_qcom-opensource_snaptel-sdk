@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -116,10 +116,16 @@ int btp_decode(msg_contents *mc ) {
     //GeoNetwork.
     if (btp->pkt_type == BTP_PACKET_TYPE_A) {
         struct _btp_hdr_A *h = (struct _btp_hdr_A *)abuf_pull(&mc->abuf, sizeof(struct _btp_hdr_A));
+        if (!h) {
+            return -1;
+        }
         btp->d_port = ntohs(h->d_port);
         btp->s_port = ntohs(h->s_port);
     } else {
         struct _btp_hdr_B *h = (struct _btp_hdr_B *)abuf_pull(&mc->abuf, sizeof(struct _btp_hdr_B));
+        if (!h) {
+            return -1;
+        }
         btp->d_port = ntohs(h->d_port);
         btp->dp_info = ntohs(h->dp_info);
     }

@@ -319,7 +319,9 @@ enum GnssPositionTechType {
   /** Location was calculated using Vehicular data. */
   GNSS_VEHICLE = (1 << 9),
   /** Location was calculated using Visual data. */
-  GNSS_VISUAL = (1 << 10)
+  GNSS_VISUAL = (1 << 10),
+  /** Location was calculated using Propagation logic, which uses cached measurements. */
+  GNSS_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from GnssPositionTechType */
@@ -782,6 +784,8 @@ enum LocationTechnologyType {
   LOC_VEH = (1 << 9),
   /** Location was calculated using Visual data. */
   LOC_VIS = (1 << 10),
+  /** Location was calculated using Propagation logic, which uses cached measurements. */
+  LOC_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from LocationTechnologyType */

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -304,6 +304,9 @@ void MyLocationListener::printLocationTech(telux::loc::LocationTechnology techMa
    }
    if((techMask & telux::loc::LOC_VIS)) {
       std::cout << "location calculated using Visual data" << std::endl;
+   }
+   if((techMask & telux::loc::LOC_PROPAGATED)) {
+      std::cout << "location calculated using Propagation logic" << std::endl;
    }
 }
 
@@ -625,6 +628,9 @@ void MyLocationListener::printLocationPositionTech(
    }
    if((gnssPositionTech & telux::loc::GNSS_VISUAL)) {
       std::cout << "VISUAL" << std::endl;
+   }
+   if((gnssPositionTech & telux::loc::GNSS_PROPAGATED)) {
+      std::cout << "PROPAGATED" << std::endl;
    }
    if((gnssPositionTech == telux::loc::GNSS_DEFAULT)) {
       std::cout << "DEFAULT" << std::endl;

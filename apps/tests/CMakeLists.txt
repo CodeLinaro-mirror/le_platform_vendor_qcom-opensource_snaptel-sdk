@@ -10,6 +10,7 @@ if(NOT BUILD_FOR_SIMULATION)
     add_subdirectory( data_qos_test_app )
     add_subdirectory( filesystem_test_app )
     add_subdirectory( telux_version_app )
+    add_subdirectory( wlan_test_app )
 
     pkg_check_modules(PWR_MGR_QMI_LIB powermanagerqmi)
     if (PWR_MGR_QMI_LIB_FOUND)

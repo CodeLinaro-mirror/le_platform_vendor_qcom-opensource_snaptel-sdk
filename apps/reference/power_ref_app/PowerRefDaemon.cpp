@@ -1,0 +1,175 @@
+/*
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <iostream>
+#include <csignal>
+#include <future>
+
+extern "C"
+{
+#include <getopt.h>
+}
+
+#include "PowerRefDaemon.hpp"
+
+PowerRefDaemon &PowerRefDaemon::getInstance() {
+    LOG(DEBUG, __FUNCTION__);
+    static PowerRefDaemon instance;
+    return instance;
+}
+
+telux::common::Status PowerRefDaemon::init() {
+    LOG(DEBUG, __FUNCTION__);
+    telux::common::Status initStatus = telux::common::Status::SUCCESS;
+
+    do {
+        shared_ptr<EventManager> eventManager(EventManager::getInstance());
+        if (eventManager && eventManager->init()) {
+            LOG(DEBUG, __FUNCTION__, " eventManager init succeed");
+            eventManager_ = eventManager;
+        } else {
+            LOG(ERROR, __FUNCTION__, " eventManager init failed");
+            initStatus = telux::common::Status::FAILED;
+            break;
+        }
+
+        naoIpTrigger_ = make_shared<NAOIpTrigger>(eventManager);
+        if (naoIpTrigger_ && naoIpTrigger_->init()) {
+            LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
+        } else {
+            LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
+            initStatus = telux::common::Status::FAILED;
+            break;
+        }
+    } while (0);
+
+    return initStatus;
+}
+
+int PowerRefDaemon::startDaemon(int argc, char **argv) {
+    LOG(DEBUG, __FUNCTION__);
+    if (parseArguments(argc, argv) != telux::common::Status::SUCCESS) {
+        return EXIT_FAILURE;
+    }
+
+    std::signal(SIGHUP, signalHandler);
+    std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
+
+    if (init() != telux::common::Status::SUCCESS) {
+
+        if (eventManager_) {
+            eventManager_ = nullptr;
+        }
+        if (naoIpTrigger_) {
+            naoIpTrigger_ = nullptr;
+        }
+        return EXIT_FAILURE;
+    }
+
+    {
+        // block current thread, till we get signal
+        std::unique_lock<std::mutex> lock(mtx_);
+        cv_.wait(lock, [this]
+                 { return exiting_; });
+    }
+    return EXIT_SUCCESS;
+}
+
+void PowerRefDaemon::stopDaemon() {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> lock(mtx_);
+    exiting_ = true;
+    naoIpTrigger_.reset();
+    eventManager_.reset();
+    cv_.notify_all();
+}
+
+void PowerRefDaemon::signalHandler(int signum) {
+    LOG(DEBUG, __FUNCTION__, "Received signal = ",signum, " terminating program.");
+    PowerRefDaemon::getInstance().stopDaemon();
+
+    std::signal(signum, SIG_DFL);
+    if (std::raise(signum) != 0) {
+        LOG(ERROR, __FUNCTION__, "raise(): error \n");
+    }
+}
+
+void PowerRefDaemon::printUsage(char **argv) {
+    LOG(DEBUG, __FUNCTION__);
+    LOG(DEBUG, __FUNCTION__, " Usage: ", string(argv[0]), " [options] ");
+    LOG(DEBUG, __FUNCTION__, " Options: ");
+    LOG(DEBUG, __FUNCTION__, " \t -h --help        Print helpful information");
+    LOG(DEBUG, __FUNCTION__, " Example: ");
+    LOG(DEBUG, __FUNCTION__, "    ./telux_power_refd ");
+    LOG(DEBUG, __FUNCTION__);
+}
+
+telux::common::Status PowerRefDaemon::parseArguments(int argc, char **argv) {
+    LOG(DEBUG, __FUNCTION__);
+    int c;
+    struct option long_options[] = {{"help", no_argument, 0, 'h'},
+                                    {"interface", required_argument, 0, 'i'},
+                                    {0, 0, 0, 0}};
+    while (1) {
+        int option_index = 0;
+        c = getopt_long(argc, argv, "dshi:", long_options, &option_index);
+        /* Detect the end of the options. */
+        if (c == -1) {
+            break;
+        }
+        switch (c) {
+        case 'h':
+        default:
+            printUsage(argv);
+            return telux::common::Status::INVALIDPARAM;
+            break;
+        }
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+
+using namespace std;
+
+int main(int argc, char *argv[]) {
+    // Setting required secondary groups for SDK file/diag logging
+    vector<string> supplementaryGrps{"system", "diag", "radio"};
+    int rc =  Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1) {
+        LOG(DEBUG, __FUNCTION__, " Adding supplementary groups failed ");
+    }
+    PowerRefDaemon::getInstance().startDaemon(argc, argv);
+
+}

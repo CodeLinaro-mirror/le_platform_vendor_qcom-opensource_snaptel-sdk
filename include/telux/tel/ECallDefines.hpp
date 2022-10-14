@@ -114,8 +114,10 @@ enum class ECallMsdTransmissionStatus {
    LL_ACK_RECEIVED = 6,          /**< Link-Layer Acknowledgement(LL-ACK) is received during in-band
                                       MSD transmission*/
    OUTBAND_MSD_TRANSMISSION_STARTED = 10,    /**< Outband MSD transmission started in NG eCall */
-   OUTBAND_MSD_TRANSMISSION_SUCCESS = 11,    /**< Outband MSD transmission succeeded in NG eCall */
-   OUTBAND_MSD_TRANSMISSION_FAILURE = 12,    /**< Outband MSD transmission failed in NG eCall */
+   OUTBAND_MSD_TRANSMISSION_SUCCESS = 11,    /**< Outband MSD transmission succeeded in NG eCall
+                                                  or Third Party Service (TPS) eCall */
+   OUTBAND_MSD_TRANSMISSION_FAILURE = 12,    /**< Outband MSD transmission failed in NG eCall
+                                                  or Third Party Service (TPS) eCall */
 };
 
 /**
@@ -385,6 +387,20 @@ struct ECallHlapTimerEvents {
    HlapTimerEvent t10;  /**< T10 Timer event */
 };
 
+/**
+ * Represents custom SIP headers for content type and accept info for a PSAP.
+ * This provides clients the ability to transfer custom SIP headers with the SIP INVITE
+ * that is sent as part of call connect on TPS eCall over IMS.
+ * The value corresponding to these data fields should be recognised by a PSAP
+ * otherwise no acknowledgement would be received by device.
+ */
+struct CustomSipHeader {
+   std::string contentType;    /**< Type of data being transmitted and should be filled as per
+                                    RFC 8147 i.e MSD. Max Length 128 bytes */
+   std::string acceptInfo;     /**< SIP Accept header. Max length 128 bytes */
+};
+static const std::string CONTENT_HEADER = "application/EmergencyCallData.eCall.MSD"; /**< Default
+                                                     value for CustomSipHeader::contentType */
 /** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel

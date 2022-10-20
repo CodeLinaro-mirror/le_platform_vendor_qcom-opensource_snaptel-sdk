@@ -68,7 +68,9 @@ struct IPv4Info {
  */
 struct IPv6Info {
     std::string srcAddr;        /**< address of the device that sends the packet. */
+    uint8_t srcPrefixLen;       /**< source prefix length used to create subnet */
     std::string destAddr;       /**< address of receiving end */
+    uint8_t dstPrefixLen;       /**< destination prefix length used to create subnet */
     IpProtocol nextProtoId = 0; /**< Protocol ID (i.e TCP, UDP or ICMP ) */
     TrafficClass val = 0;       /**< indicates the class or priority of the IPv6 packet,
                                      enables the ability to track specific traffic flows

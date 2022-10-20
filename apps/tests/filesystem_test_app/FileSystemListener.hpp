@@ -38,13 +38,14 @@ using namespace telux::common;
 class FileSystemListener : public telux::platform::IFsListener {
  public:
     void OnEfsRestoreEvent(EfsEventInfo event) override;
+    void OnEfsBackupEvent(EfsEventInfo event) override;
     void onServiceStatusChange(ServiceStatus status) override;
 
     FileSystemListener();
     ~FileSystemListener();
 
  private:
-    void printEfsRestoreMode(EfsEventInfo eventInfo);
+    void printEfsEvent(std::string type, EfsEventInfo eventInfo);
 };
 
 #endif  // FILESYSTEMLISTENER_HPP

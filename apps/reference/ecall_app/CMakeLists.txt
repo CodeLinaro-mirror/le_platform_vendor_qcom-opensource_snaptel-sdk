@@ -4,6 +4,7 @@ set(TARGET_ECALL_APP ecall_app)
 
 set(ECALL_APP_SOURCES
     ECallApp.cpp
+    EcallOverIms.cpp
     ECallManager.cpp
     ThermClient.cpp
     AudioClient.cpp

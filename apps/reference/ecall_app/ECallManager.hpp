@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,7 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef ECALLMANAGER_HPP
 #define ECALLMANAGER_HPP
 
@@ -78,7 +77,7 @@
 class ECallManager : public LocationListener,
                      public CallStatusListener,
                      public std::enable_shared_from_this<ECallManager> {
-public:
+ public:
     /**
      * Initialize necessary Telematics-SDK components like location, audio, etc. and and get
      * required parameters from the configuration file
@@ -95,8 +94,8 @@ public:
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(int phoneId, ECallCategory category, ECallVariant variant,
-                                       bool transmitMsd);
+    telux::common::Status triggerECall(
+        int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd);
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number
@@ -108,8 +107,21 @@ public:
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
-    telux::common::Status triggerECall(int phoneId, ECallCategory category,
-                                       const std::string dialNumber, bool transmitMsd);
+    telux::common::Status triggerECall(
+        int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd);
+
+    /**
+     * This function triggers a voice eCall procedure to the specified phone number over IMS
+     *
+     * @param [in] phoneId      Represents phone corresponding to which eCall operation is
+     *                          performed
+     * @param [in] dialNumber   phone number to be dialed
+     * @param [in] contentType  Optional content type for SIP request
+     * @param [in] acceptInfo   Optional accept type for SIP request
+     *
+     */
+    telux::common::Status triggerECall(
+        int phoneId, const std::string dialNumber, std::string contentType, std::string acceptInfo);
 
     /**
      * This function answers an incoming call
@@ -120,6 +132,12 @@ public:
      *
      */
     telux::common::Status answerCall(int phoneId);
+
+    /**
+     * This function is called to update eCall MSD for Tps eCall over IMS
+     *
+     */
+    telux::common::Status updateEcallMSD();
 
     /**
      * This function hangs up an ongoing call dialed/answered previously
@@ -156,7 +174,7 @@ public:
     ECallManager();
     ~ECallManager();
 
-private:
+ private:
     /**
      * This function updates the cached MSD data stored in Modem
      *
@@ -195,6 +213,11 @@ private:
      */
     void parseAppConfig();
 
+    /**
+     * Convert the hexadecimal string to bytes
+     */
+    std::vector<uint8_t> convertHexToBytes(std::string msdData);
+
     /** Member variables to hold Manager objects of various Telematics-SDK components */
     std::shared_ptr<TelClient> telClient_;
     std::shared_ptr<LocationClient> locClient_;
@@ -216,6 +239,7 @@ private:
     AudioFormat voiceFormat_;
     ChannelTypeMask voiceChannels_;
     EcnrMode ecnrMode_;
+    bool isTpsEcallOverImsTriggered;    //To check if Tps eCall over IMS is triggered
 };
 
 #endif  // ECALLMANAGER_HPP

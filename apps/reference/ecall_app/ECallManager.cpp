@@ -62,7 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file       ECallManager.cpp
  *
@@ -81,18 +80,19 @@
 #define CLIENT_NAME "ECall-Manager: "
 
 ECallManager::ECallManager()
-    : telClient_(nullptr)
-    , locClient_(nullptr)
-    , audioClient_(nullptr)
-    , thermClient_(nullptr)
-    , phoneId_(-1)
-    , locUpdateIntervalMs_(DEFAULT_LOCATION_FIX_INTERVAL_MS)
-    , locFixReceived_(false)
-    , audioDevice_(DeviceType::DEVICE_TYPE_SPEAKER)
-    , voiceSampleRate_(16000)
-    , voiceFormat_(AudioFormat::PCM_16BIT_SIGNED)
-    , voiceChannels_(ChannelType::LEFT | ChannelType::RIGHT)
-    , ecnrMode_(EcnrMode::ENABLE) {
+   : telClient_(nullptr)
+   , locClient_(nullptr)
+   , audioClient_(nullptr)
+   , thermClient_(nullptr)
+   , phoneId_(-1)
+   , locUpdateIntervalMs_(DEFAULT_LOCATION_FIX_INTERVAL_MS)
+   , locFixReceived_(false)
+   , audioDevice_(DeviceType::DEVICE_TYPE_SPEAKER)
+   , voiceSampleRate_(16000)
+   , voiceFormat_(AudioFormat::PCM_16BIT_SIGNED)
+   , voiceChannels_(ChannelType::LEFT | ChannelType::RIGHT)
+   , ecnrMode_(EcnrMode::ENABLE)
+   , isTpsEcallOverImsTriggered(false) {
 }
 
 ECallManager::~ECallManager() {
@@ -105,22 +105,22 @@ ECallManager::~ECallManager() {
 telux::common::Status ECallManager::init() {
     telClient_ = std::make_shared<TelClient>();
     auto status = telClient_->init();
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         return status;
     }
     locClient_ = std::make_shared<LocationClient>();
     status = locClient_->init();
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         return status;
     }
     audioClient_ = std::make_shared<AudioClient>();
     status = audioClient_->init();
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         return status;
     }
     thermClient_ = std::make_shared<ThermClient>();
     status = thermClient_->init();
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         return status;
     }
 
@@ -133,29 +133,29 @@ telux::common::Status ECallManager::init() {
 /**
  * Function to trigger the standard eCall procedure(eg.112)
  */
-telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category,
-                                                 ECallVariant variant, bool transmitMsd) {
-    if(!telClient_) {
+telux::common::Status ECallManager::triggerECall(
+    int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
-    if(telClient_->isECallInProgress()) {
+    if (telClient_->isECallInProgress()) {
         std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
         return telux::common::Status::FAILED;
     }
     phoneId_ = phoneId;
     setup(phoneId_);
-    if(transmitMsd && !isLocationReceived()) {
+    if (transmitMsd && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
-        if(std::cv_status::timeout
-                == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
-                std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
+        if (std::cv_status::timeout
+            == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
+            std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
-    auto status = telClient_->startECall(phoneId, msdData_, category, variant, transmitMsd,
-                                         shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    auto status = telClient_->startECall(
+        phoneId, msdData_, category, variant, transmitMsd, shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate eCall " << std::endl;
         cleanup();
         return telux::common::Status::FAILED;
@@ -168,29 +168,29 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
 /**
  * Function to trigger a voice eCall procedure to the specified phone number
  */
-telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category,
-                                                const std::string dialNumber, bool transmitMsd) {
-    if(!telClient_) {
+telux::common::Status ECallManager::triggerECall(
+    int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
-    if(telClient_->isECallInProgress()) {
+    if (telClient_->isECallInProgress()) {
         std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
         return telux::common::Status::FAILED;
     }
     phoneId_ = phoneId;
     setup(phoneId_);
-    if(transmitMsd && !isLocationReceived()) {
+    if (transmitMsd && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
-        if(std::cv_status::timeout
-                == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
-                std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
+        if (std::cv_status::timeout
+            == locUpdateCV_.wait_for(lock, std::chrono::milliseconds(locUpdateIntervalMs_))) {
+            std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
-    auto status = telClient_->startECall(phoneId, msdData_, category, dialNumber, transmitMsd,
-                                        shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    auto status = telClient_->startECall(
+        phoneId, msdData_, category, dialNumber, transmitMsd, shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate Voice eCall " << std::endl;
         cleanup();
         return telux::common::Status::FAILED;
@@ -201,22 +201,94 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
 }
 
 /**
+ * Function to trigger a voice eCall procedure to the specified phone number over IMS
+ *
+ */
+telux::common::Status ECallManager::triggerECall(
+    int phoneId, const std::string dialNumber, std::string contentType, std::string acceptInfo) {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    if (telClient_->isECallInProgress()) {
+        std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    char delimiter = '\n';
+    std::string msdData;
+    std::cout << "Enter MSD PDU: ";
+    std::getline(std::cin, msdData, delimiter);
+    std::vector<uint8_t> rawData;
+    if (!msdData.empty()) {
+        rawData = convertHexToBytes(msdData);
+    } else {
+        rawData = {2, 41, 68, 6, 128, 227, 10, 81, 67, 158, 41, 85, 212, 56, 0, 128, 4, 52, 10, 140,
+            65, 89, 164, 56, 119, 207, 131, 54, 210, 63, 65, 104, 16, 24, 8, 32, 19, 198, 68, 0, 0,
+            8, 20};
+    }
+    phoneId_ = phoneId;
+    isTpsEcallOverImsTriggered = true;
+    setup(phoneId_);
+    auto status = telClient_->startECall(
+        phoneId, rawData, dialNumber, contentType, acceptInfo, shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to initiate Voice eCall over IMS " << std::endl;
+        cleanup();
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Voice ECall initiated over IMS " << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Send MSD for Tps eCall over IMS
+ *
+ */
+telux::common::Status ECallManager::updateEcallMSD() {
+    if (!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    char delimiter = '\n';
+    std::string msdData;
+    std::cout << "Enter MSD PDU: ";
+    std::getline(std::cin, msdData, delimiter);
+    std::vector<uint8_t> rawData;
+    if (!msdData.empty()) {
+        rawData = convertHexToBytes(msdData);
+    } else {
+        rawData = {2, 41, 68, 6, 128, 227, 10, 81, 67, 158, 41, 85, 212, 56, 0, 128, 4, 52, 10, 140,
+            65, 89, 164, 56, 119, 207, 131, 54, 210, 63, 65, 104, 16, 24, 8, 32, 19, 198, 68, 0, 0,
+            48, 20};
+    }
+    auto status = telClient_->updateTpsEcallOverImsMSD(phoneId_, rawData);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to update MSD for Voice eCall over IMS " << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Update MSD for Voice ECall over IMS initiated " << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
  * Answer an incoming Call
  */
 telux::common::Status ECallManager::answerCall(int phoneId) {
-    if(!telClient_) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << " Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
-    if(telClient_->isECallInProgress()) {
+    if (telClient_->isECallInProgress()) {
         // If the existing/in-progress call is an MT call on the same phoneId, allow the app to
         // answer the WAITING call
-        if(telClient_->getECallDirection() == telux::tel::CallDirection::INCOMING) {
-            if(phoneId_ == phoneId) {
+        if (telClient_->getECallDirection() == telux::tel::CallDirection::INCOMING) {
+            if (phoneId_ == phoneId) {
                 std::cout << CLIENT_NAME << " Accepting the WAITING call" << std::endl;
             } else {
                 std::cout << CLIENT_NAME << " Operation not supported by the application"
-                    << std::endl;
+                          << std::endl;
                 return telux::common::Status::FAILED;
             }
         } else {
@@ -227,7 +299,7 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
     phoneId_ = phoneId;
     setup(phoneId);
     auto status = telClient_->answer(phoneId_, shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to answer call " << std::endl;
         cleanup();
         return telux::common::Status::FAILED;
@@ -241,12 +313,12 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
  * Hang-up an ongoing Call
  */
 telux::common::Status ECallManager::hangupCall(int phoneId, int callIndex) {
-    if(!telClient_) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = telClient_->hangup(phoneId, callIndex);
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to hangup the call" << std::endl;
         return telux::common::Status::FAILED;
     } else {
@@ -259,12 +331,12 @@ telux::common::Status ECallManager::hangupCall(int phoneId, int callIndex) {
  * Dump the list of calls in progress
  */
 telux::common::Status ECallManager::getCalls() {
-    if(!telClient_) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = telClient_->getCurrentCalls();
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to get current calls" << std::endl;
         return telux::common::Status::FAILED;
     }
@@ -275,12 +347,12 @@ telux::common::Status ECallManager::getCalls() {
  * Request status of various eCall HLAP timers
  */
 telux::common::Status ECallManager::requestHlapTimerStatus(int phoneId) {
-    if(!telClient_) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = telClient_->requestECallHlapTimerStatus(phoneId);
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request for HLAP timers status" << std::endl;
         return telux::common::Status::FAILED;
     } else {
@@ -295,25 +367,27 @@ telux::common::Status ECallManager::requestHlapTimerStatus(int phoneId) {
  */
 void ECallManager::setup(int phoneId) {
     // Start voice session
-    if(!audioClient_) {
+    if (!audioClient_) {
         std::cout << CLIENT_NAME << "Invalid Audio Client, cannot establish voice conversation"
-                << std::endl;
+                  << std::endl;
     } else {
-        audioClient_->startVoiceSession(phoneId, audioDevice_, voiceSampleRate_, voiceFormat_,
-                                voiceChannels_, ecnrMode_);
+        audioClient_->startVoiceSession(
+            phoneId, audioDevice_, voiceSampleRate_, voiceFormat_, voiceChannels_, ecnrMode_);
     }
     // Get the location updates
-    setLocationReceived(false);
-    if(!locClient_) {
-        std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"
-                << std::endl;
-    } else {
-        locClient_->startLocUpdates(locUpdateIntervalMs_, shared_from_this());
+    if(!isTpsEcallOverImsTriggered) {
+        setLocationReceived(false);
+        if (!locClient_) {
+            std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"
+                      << std::endl;
+        } else {
+            locClient_->startLocUpdates(locUpdateIntervalMs_, shared_from_this());
+        }
     }
     // Disable Thermal auto-shutdown
-    if(!thermClient_) {
+    if (!thermClient_) {
         std::cout << CLIENT_NAME << "Invalid Thermal Client, cannot disable thermal auto-shutdown"
-                << std::endl;
+                  << std::endl;
     } else {
         thermClient_->disableAutoShutdown();
     }
@@ -325,45 +399,45 @@ void ECallManager::setup(int phoneId) {
  */
 void ECallManager::cleanup() {
     // Stop voice session
-    if(!audioClient_) {
+    if (!audioClient_) {
         std::cout << CLIENT_NAME << "Invalid Audio Client, cannot disable voice conversation"
-            << std::endl;
+                  << std::endl;
     } else {
         audioClient_->stopVoiceSession();
     }
     // Get the location updates
-    if(!locClient_) {
+    if (!locClient_) {
         std::cout << CLIENT_NAME << "Invalid Location Client, cannot stop location updates"
-            << std::endl;
+                  << std::endl;
     } else {
         locClient_->stopLocUpdates();
     }
     // Enable Thermal auto-shutdown
-    if(!thermClient_) {
+    if (!thermClient_) {
         std::cout << CLIENT_NAME << "Invalid Thermal Client, cannot enable thermal auto-shutdown"
-            << std::endl;
+                  << std::endl;
     } else {
         thermClient_->enableAutoShutdown();
     }
     phoneId_ = -1;
+    isTpsEcallOverImsTriggered = false;
 }
 
 /**
  * Function to update the cached MSD data stored in Modem
  */
 telux::common::Status ECallManager::updateMSD(int phoneId) {
-    if(!telClient_) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
     auto status = telClient_->updateECallMSD(phoneId, msdData_);
-    if(status != telux::common::Status::SUCCESS) {
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to update MSD " << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;
 }
-
 /**
  * Function to indicate if atleast one location fix is received after the eCall is triggered.
  */
@@ -386,8 +460,10 @@ void ECallManager::onLocationUpdate(ECallLocationInfo locInfo) {
     msdData_.vehicleLocation.positionLongitude = locInfo.longitude;
     msdData_.timestamp = locInfo.timestamp;
     msdData_.vehicleDirection = locInfo.direction;
-    if(telClient_->isECallInProgress()) {
-        updateMSD(phoneId_);
+    if (telClient_->isECallInProgress()) {
+        if(!isTpsEcallOverImsTriggered) {
+            updateMSD(phoneId_);
+        }
     } else {
         setLocationReceived(true);
         locUpdateCV_.notify_all();
@@ -399,10 +475,10 @@ void ECallManager::onLocationUpdate(ECallLocationInfo locInfo) {
  */
 void ECallManager::parseAppConfig() {
     std::shared_ptr<ConfigParser> appSettings = std::make_shared<ConfigParser>(
-                                    DEFAULT_ECALL_CONFIG_FILE_NAME, DEFAULT_ECALL_CONFIG_FILE_PATH);
+        DEFAULT_ECALL_CONFIG_FILE_NAME, DEFAULT_ECALL_CONFIG_FILE_PATH);
     // Get the location of MSD data file and fetch the static MSD data
     std::string param = appSettings->getValue("MSD_FILE_NAME");
-    if(!param.empty()) {
+    if (!param.empty()) {
         MsdProvider msdSettings;
         std::string filePath = appSettings->getValue("MSD_FILE_PATH");
         msdSettings.init(param, filePath);
@@ -412,15 +488,16 @@ void ECallManager::parseAppConfig() {
     }
     // Get the periodic interval for which location updates needs to be received
     param = appSettings->getValue("LOCATION_UPDATE_INTERVAL_MS");
-    if(!param.empty()) {
+    if (!param.empty()) {
         locUpdateIntervalMs_ = atol(param.c_str());
     } else {
-        std::cout << CLIENT_NAME << "Using default location update interval(in ms): " <<
-            locUpdateIntervalMs_ << std::endl;
+        std::cout << CLIENT_NAME
+                  << "Using default location update interval(in ms): " << locUpdateIntervalMs_
+                  << std::endl;
     }
     // Get the configured output audio device
     param = appSettings->getValue("AUDIO_OUTPUT_DEVICE_TYPE");
-    if(!param.empty()) {
+    if (!param.empty()) {
         auto deviceValue = atoi(param.c_str());
         audioDevice_ = static_cast<DeviceType>(deviceValue);
     } else {
@@ -428,35 +505,35 @@ void ECallManager::parseAppConfig() {
     }
     // Get the configured audio sample rate
     param = appSettings->getValue("VOICE_SAMPLE_RATE");
-    if(!param.empty()) {
+    if (!param.empty()) {
         voiceSampleRate_ = atol(param.c_str());
     } else {
         std::cout << CLIENT_NAME << "Using default audio sample rate: " << voiceSampleRate_
-            << std::endl;
+                  << std::endl;
     }
     // Get the configured audio channels
     param = appSettings->getValue("VOICE_CHANNEL_TYPE");
-    if(param.compare("LEFT") == 0) {
+    if (param.compare("LEFT") == 0) {
         voiceChannels_ = ChannelType::LEFT;
-    } else if(param.compare("RIGHT") == 0) {
+    } else if (param.compare("RIGHT") == 0) {
         voiceChannels_ = ChannelType::RIGHT;
-    } else if(param.compare("STEREO") == 0) {
+    } else if (param.compare("STEREO") == 0) {
         voiceChannels_ = ChannelType::LEFT | ChannelType::RIGHT;
     } else {
         std::cout << CLIENT_NAME << "Using default audio channels: " << voiceChannels_ << std::endl;
     }
     // Get the configured audio sream format
     param = appSettings->getValue("VOICE_STREAM_FORMAT");
-    if(param.compare("PCM_16BIT_SIGNED") == 0) {
+    if (param.compare("PCM_16BIT_SIGNED") == 0) {
         voiceFormat_ = AudioFormat::PCM_16BIT_SIGNED;
     } else {
         std::cout << CLIENT_NAME << "Using default audio stream format" << std::endl;
     }
     // Get the ecnr mode status
     param = appSettings->getValue("ECNR_MODE");
-    if(param.compare("DISABLE") == 0) {
+    if (param.compare("DISABLE") == 0) {
         ecnrMode_ = EcnrMode::DISABLE;
-    } else if(param.compare("ENABLE") == 0) {
+    } else if (param.compare("ENABLE") == 0) {
         ecnrMode_ = EcnrMode::ENABLE;
     } else {
         std::cout << CLIENT_NAME << "Enabling ecnr mode by default" << std::endl;
@@ -474,5 +551,37 @@ void ECallManager::onCallDisconnect() {
  * application or modem
  */
 void ECallManager::onCallConnect(int phoneId) {
-   setup(phoneId);
+    setup(phoneId);
+}
+/** Convert the hexadecimal string to bytes
+ *  Eg: i/p: 0229440680E30A51439E
+ *      o/p: 2,41,68,6,128,227,10,81,67,158
+ */
+std::vector<uint8_t> ECallManager::convertHexToBytes(std::string msdData) {
+    std::vector<uint8_t> rawMsd;
+    size_t i, len;
+    uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
+
+    len = msdData.length();
+    for (i = 0; i < len; i = i + 2) {
+        if (msdData[i] >= '0' && msdData[i] <= '9') {
+            rawData1 = (msdData[i] - 48) * 16;
+        } else if (msdData[i] >= 'A' && msdData[i] <= 'F') {
+            rawData1 = (msdData[i] - 55) * 16;
+        } else if (msdData[i] >= 'a' && msdData[i] <= 'f') {
+            rawData1 = (msdData[i] - 87) * 16;
+        }
+
+        if (msdData[i + 1] >= '0' && msdData[i + 1] <= '9') {
+            rawData2 = msdData[i + 1] - 48;
+        } else if (msdData[i + 1] >= 'A' && msdData[i + 1] <= 'F') {
+            rawData2 = msdData[i + 1] - 55;
+        } else if (msdData[i + 1] >= 'a' && msdData[i + 1] <= 'f') {
+            rawData2 = msdData[i + 1] - 87;
+        }
+
+        rawData = rawData1 + rawData2;
+        rawMsd.emplace_back(rawData);
+    }
+    return rawMsd;
 }

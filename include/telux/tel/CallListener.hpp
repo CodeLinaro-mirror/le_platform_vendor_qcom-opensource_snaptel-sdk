@@ -143,17 +143,35 @@ public:
    }
 
    /**
-    * This function is called when MSD Transmission status is changed.
+    * This function is called when there is Minimum Set of Data (MSD) transmission.
+    * The MSD transmission happens at call connect and also when the modem or client
+    * responds to MSD pull request from PSAP.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to receive this notification.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to receive this notification.
     *
     * @param [in] phoneId - Unique Id of phone on which MSD Transmission Status is being reported
     * @param [in] msdTransmissionStatus - Indicates MSD Transmission status
     * @ref ECallMsdTransmissionStatus
+    *
     */
    virtual void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
+   }
+   /**
+    * This function is called when MSD update is requested by PSAP during Third Party Service (TPS)
+    * ecall over IMS.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to receive this notification.
+    *
+    * @param [in] phoneId - Unique Id of phone on which MSD update request is received.
+    *
+    * @note  Eval: This is a new API and is being evaluated. It is subject to
+    *        change and could break backwards compatibility.
+    */
+   virtual void OnTpsMsdUpdateRequest(int phoneId){
    }
 
    /**

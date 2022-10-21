@@ -3723,4 +3723,66 @@ or a failure.
 9. Once clean-up is necessary, deregister the registered listener, set all shared pointers to
 nullptr. This will make the underlying sub-system relinquish resources that are no longer
 necessary.
+
+@subsection platform_control_filesystem_for_ecall_start_end_call_flow Call flow of control filesystem for ECALL operation
+
+@anchor platform_control_filesystem_for_ecall_start_end_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{control_filesystem_for_ecall_start_end_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Control the filesystem for ECALL operation call flow}
+  \label{fig_platform_control_filesystem_for_ecall_start_end_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{control_filesystem_for_ecall_start_end_call_flow.png,Control the filesystem for ECALL operation call flow,80,80,Control the filesystem for ECALL operation call flow}
+
+The platform sub-system should have been initialized successfully with SERVICE_AVAILABLE as a
+pre-requisite for any filesystem operations and a valid FilesystemManager object is available.
+1. Before initiate an ECALL, the application should prepare the filesystem for ECALL operation,
+prepareForEcall should be invoked. If the status of this request fails, the client could re-invoke
+during an ECALL ongoing.
+2. The status of the request would return immediately indicating the preparation of the filesystem
+operation.
+3. The client should start an ECALL immediately even if the prepare for ECALL request failed.
+4. Once an ECALL complete, the client should notify ECALL completion to the filesystem manager.
+eCallCompleted should be invoked.
+5. The status of the request would return immediately indication the completion of the filesystem
+operation.
+
+@subsection platform_control_filesystem_for_ota_start_end_call_flow Call flow of control filesystem for OTA operation
+
+@anchor platform_control_filesystem_for_ota_start_end_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{control_filesystem_for_ota_start_end_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Control the filesystem for OTA operation call flow}
+  \label{fig_platform_control_filesystem_for_ota_start_end_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{control_filesystem_for_ota_start_end_call_flow.png,Control the filesystem for OTA operation call flow,80,80,Control the filesystem for OTA operation call flow}
+
+The platform sub-system should have been initialized successfully with SERVICE_AVAILABLE as a
+pre-requisite for any filesystem operations and a valid FilesystemManager object is available.
+1. Before initiate an OTA update, the application should prepare the filesystem for the OTA
+operation, prepareForOta should be invoked, which would return immediately indicating the
+status of the request.
+2. Once the filesystem has prepared for the OTA operation, the filesystem manager would invoke the
+callback which indicates the response of the API.
+3. Once the filesystem has prepared for the OTA operation, the client could initiate an OTA update.
+4. On OTA update completion, the client should notify the filesystem manager of the OTA
+completion status, otaCompleted should be invoked, which would return immediately indicating
+the status of the request.
+5. The filesystem manager would intern update the OTA status, the callback would invoked
+which indicates the response of the API.
+6. If the client decides to mirror the system, startAbSync should be invoked which would return
+immediately indicating the status of the request.
+7. Once the filesystem partition sync opration complete, the filesystem manager would invoke the
+callback which indicates the response of the API.
+
 */

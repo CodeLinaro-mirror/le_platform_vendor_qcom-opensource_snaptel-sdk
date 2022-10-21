@@ -63,3 +63,5 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to get data roaming status](data/get_roaming_status_and_indication.md)
   * [How to trigger sensor self test](sensor/sensor_self_test.md)
   * [How to receive EFS restore indications](platform/efs_restore_indications.md)
+  * [How to perform an ECALL operation](platform/ecall_operation.md)
+  * [How to perform an OTA operation](platform/ota_operation.md)

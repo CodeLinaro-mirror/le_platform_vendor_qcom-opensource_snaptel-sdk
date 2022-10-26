@@ -161,6 +161,32 @@ public:
      */
     telux::common::Status stopT10Timer(int phoneId);
 
+    /**
+     * This function requests to set the value of eCall High Level Application Protocol(HLAP)
+     * timer
+     *
+     * @param [in] phoneId       Represents phone corresponding to which eCall operation is
+     *                           performed
+     * @param [in] type          @ref HlapTimerType
+     * @param [in] timeDuration  Represents the time duration.
+     *
+     * @returns Status of setHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setHlapTimer(int phoneId, HlapTimerType type, int timeDuration);
+
+    /**
+     * This function requests to get the value of eCall High Level Application Protocol(HLAP)
+     * timer
+     *
+     * @param [in] phoneId   Represents phone corresponding to which eCall operation is performed
+     * @param [in] type      @ref HlapTimerType
+     *
+     * @returns Status of getHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status getHlapTimer(int phoneId, HlapTimerType type);
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;

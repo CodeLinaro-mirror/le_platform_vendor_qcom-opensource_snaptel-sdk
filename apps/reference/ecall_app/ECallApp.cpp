@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       ECallApp.cpp
  *
@@ -49,6 +85,8 @@
 #define ECALL_VARIANT_TEST 2
 #define ECALL_TRANSMIT_MSD 1
 #define ECALL_DO_NOT_TRANSMIT_MSD 2
+#define ECALL_T10_TIMER_MIN 60
+#define ECALL_T10_TIMER_MAX 720
 
 ECallApp::ECallApp(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
@@ -94,9 +132,17 @@ void ECallApp::init() {
         ConsoleAppCommand("7", "Stop_T10_ECall_HLAP_Timer", {},
                           std::bind(&ECallApp::stopT10Timer, this)));
 
+    std::shared_ptr<ConsoleAppCommand> setHlapTimerCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("8", "Set_ECall_HLAP_Timer", {},
+                          std::bind(&ECallApp::setHlapTimer, this)));
+
+    std::shared_ptr<ConsoleAppCommand> getHlapTimerCommand = std::make_shared<ConsoleAppCommand>(
+        ConsoleAppCommand("9", "Get_ECall_HLAP_Timer", {},
+                          std::bind(&ECallApp::getHlapTimer, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {eCallCommand,
         customNumberECallCommand, answerCallCommand, hangupCallCommand, getCallsCommand,
-        hlapTimerStatusCommand, stopT10TimerCommand};
+        hlapTimerStatusCommand, stopT10TimerCommand, setHlapTimerCommand, getHlapTimerCommand};
     addCommands(commandsList);
 
     if(!eCallMgr_) {
@@ -300,6 +346,117 @@ void ECallApp::stopT10Timer() {
     auto ret = eCallMgr_->stopT10Timer(phoneId);
     if(ret != telux::common::Status::SUCCESS) {
         std::cout << "Failed to stop T10 HLAP timer" << std::endl;
+    }
+}
+
+/**
+ * Request to set the value of eCall High Level Application Protocol(HLAP) timer.
+ */
+void ECallApp::setHlapTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    // Get timer type from user
+    HlapTimerType type = HlapTimerType::UNKNOWN_TIMER;
+    char delimiter = '\n';
+    std::string temp = "";
+    std::cout << "Enter HLAP timer type (10-T10 timer): ";
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            type = static_cast<HlapTimerType>(std::stoi(temp));
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    switch (type) {
+       case HlapTimerType::T10_TIMER:
+          std::cout << "Enter the time duration in minutes (ranges from " << ECALL_T10_TIMER_MIN
+              << " to " << ECALL_T10_TIMER_MAX << "): ";
+          break;
+       case HlapTimerType::T2_TIMER:
+       case HlapTimerType::T5_TIMER:
+       case HlapTimerType::T6_TIMER:
+       case HlapTimerType::T7_TIMER:
+       case HlapTimerType::T9_TIMER:
+          std::cout << "Currently not supported" << std::endl;
+          return;
+       default:
+          std::cout << "ERROR: invalid input, please enter corrected timer type, "
+                  << static_cast<int>(type) << std::endl;
+          return;
+    }
+
+    // Get time duration from user
+    int timeDuration = -1;
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            timeDuration = std::stoi(temp);
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values, "
+               << timeDuration << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    auto ret = eCallMgr_->setHlapTimer(phoneId, type, timeDuration);
+    if(ret != telux::common::Status::SUCCESS) {
+       std::cout << "Failed to set HLAP timer" << std::endl;
+    }
+}
+
+/**
+ * Request to get the value of eCall High Level Application Protocol(HLAP) timer.
+ */
+void ECallApp::getHlapTimer() {
+    if(!eCallMgr_) {
+        std::cout << "Invalid eCall Manager" << std::endl;
+        return;
+    }
+    // Get phoneId from user
+    int phoneId = getPhoneId();
+    // Get timer type from user
+    HlapTimerType type = HlapTimerType::UNKNOWN_TIMER;
+    char delimiter = '\n';
+    std::string temp = "";
+    std::cout << "Enter HLAP timer type (10-T10 timer): ";
+    std::getline(std::cin, temp, delimiter);
+    if(!temp.empty()) {
+        try {
+            type = static_cast<HlapTimerType>(std::stoi(temp));
+        } catch(const std::exception &e) {
+            std::cout << "ERROR: invalid input, please enter numerical values." << std::endl;
+        }
+    } else {
+        std::cout << "No input" << std::endl;
+        return;
+    }
+    switch (type) {
+       case HlapTimerType::T10_TIMER:
+           break;
+       case HlapTimerType::T2_TIMER:
+       case HlapTimerType::T5_TIMER:
+       case HlapTimerType::T6_TIMER:
+       case HlapTimerType::T7_TIMER:
+       case HlapTimerType::T9_TIMER:
+          std::cout << "Currently not supported" << std::endl;
+          return;
+       default:
+          std::cout << "ERROR: invalid input, please enter corrected timer type, "
+                  << static_cast<int>(type) << std::endl;
+          return;
+    }
+    auto ret = eCallMgr_->getHlapTimer(phoneId, type);
+    if(ret != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to get HLAP timer" << std::endl;
     }
 }
 

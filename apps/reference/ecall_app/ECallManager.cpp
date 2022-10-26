@@ -31,7 +31,7 @@
  *
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -285,6 +285,42 @@ telux::common::Status ECallManager::stopT10Timer(int phoneId) {
         return telux::common::Status::FAILED;
     } else {
         std::cout << CLIENT_NAME << "Sent request to stop T10 HLAP timer" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request to set the value of eCall High Level Application Protocol(HLAP) timer
+ */
+telux::common::Status ECallManager::setHlapTimer(int phoneId, HlapTimerType type, int timeDuration) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->setHlapTimer(phoneId, type, timeDuration);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to set HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request to set HLAP timer" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request to get the value of eCall High Level Application Protocol(HLAP) timer
+ */
+telux::common::Status ECallManager::getHlapTimer(int phoneId, HlapTimerType type) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->getHlapTimer(phoneId, type);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to get HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request to get HLAP timer" << std::endl;
     }
     return telux::common::Status::SUCCESS;
 }

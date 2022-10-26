@@ -137,6 +137,16 @@ private:
     void stopT10Timer();
 
     /**
+     * Request to set the value of eCall High Level Application Protocol(HLAP) timer.
+     */
+    void setHlapTimer();
+
+    /**
+     * Request to get the value of eCall High Level Application Protocol(HLAP) timer.
+     */
+    void getHlapTimer();
+
+    /**
      * Function to get phoneId from the user-interface
      */
     int getPhoneId();

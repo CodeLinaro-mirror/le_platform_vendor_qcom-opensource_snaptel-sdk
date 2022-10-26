@@ -392,6 +392,29 @@ void TelClient::stopT10TimerResponse(telux::common::ErrorCode error) {
     }
 }
 
+// Callback which provides response to set HLAP timer
+void TelClient::setHlapTimerResponse(telux::common::ErrorCode error) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set ECall HLAP timer with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully set ECall HLAP timer" << std::endl;
+    }
+}
+
+// Callback which provides response to get HLAP timer
+void TelClient::getHlapTimerResponse(telux::common::ErrorCode error, int timeDuration) {
+    if(error != telux::common::ErrorCode::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get ECall HLAP timer with error code: "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        return;
+    } else {
+        std::cout << CLIENT_NAME << "Successfully get ECall HLAP timer is " <<
+            timeDuration << std::endl;
+    }
+}
+
 // Initiate a standard eCall procedure(eg.112)
 telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
                                 ECallCategory category, ECallVariant variant, bool transmitMsd,
@@ -611,6 +634,40 @@ telux::common::Status TelClient::stopT10Timer(int phoneId) {
                             std::placeholders::_1));
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to send request to stop T10 timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+// Set the value of eCall High Level Application Protocol(HLAP) timer
+telux::common::Status TelClient::setHlapTimer(int phoneId, HlapTimerType type, int timeDuration) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to send request to set HLAP timer"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->updateEcallHlapTimer(phoneId, type, timeDuration,
+                            std::bind(&TelClient::setHlapTimerResponse, this,
+                            std::placeholders::_1));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to set HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+// Get the value of eCall High Level Application Protocol(HLAP) timer
+telux::common::Status TelClient::getHlapTimer(int phoneId, HlapTimerType type) {
+    if(!callMgr_) {
+        std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to send request to get HLAP timer"
+            << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = callMgr_->requestEcallHlapTimer(phoneId, type,
+                            std::bind(&TelClient::getHlapTimerResponse, this,
+                            std::placeholders::_1, std::placeholders::_2));
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to get HLAP timer" << std::endl;
         return telux::common::Status::FAILED;
     }
     return telux::common::Status::SUCCESS;

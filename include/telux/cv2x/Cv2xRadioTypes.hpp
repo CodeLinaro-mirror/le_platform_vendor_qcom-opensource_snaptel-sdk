@@ -27,8 +27,44 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
-* @file       Cv2xRxTypes.hpp
+* @file       Cv2xRadioTypes.hpp
 *
 * @brief      Contains common data types used in Cv2x Radio API
 */
@@ -45,6 +81,13 @@ namespace cv2x {
 
 /** @addtogroup telematics_cv2x
  * @{ */
+
+/**
+ * Defines Maximum number of antennas that is supported.
+ *
+ * Used in @ref TxStatusReport
+ */
+constexpr uint8_t MAX_ANTENNAS_SUPPORTED = 2u;
 
 /**
  * Defines CV2X Traffic Types.
@@ -487,6 +530,96 @@ struct ConfigEventInfo {
     /**< The type of the V2X config file. */
     ConfigEvent event;
     /**< V2X config event. */
+};
+
+/**
+ * Fault detection for Tx chain that including PA and front end.
+ *
+ * Used in @ref RFTxInfo
+ */
+enum class RFTxStatus {
+    INACTIVE,        /**< The Tx chain is not working. */
+    OPERATIONAL,     /**< The Tx chain is operational. */
+    FAULT,           /**< Fault detected on the Tx chain. */
+};
+
+/**
+ * Tx status per Tx chain and Tx power per Tx antenna for a specific transport block.
+ *
+ * Used in @ref TxStatusReport
+ */
+struct RFTxInfo {
+    RFTxStatus status;
+    /**< Fault detection status for a specific Tx chain. */
+    int32_t power;
+    /**< The target Tx power after MPR/AMPR reduction for a specific Tx antenna
+         in dBm*10 format. Invalid value is -700, it means the corresponding
+         antenna is not being used for the transmission of this transport block. */
+};
+
+/**
+ * Defines possible values for the segment type of a transport block.
+ *
+ * Used in @ref TxStatusReport
+ */
+enum class SegmentType {
+    FIRST,        /**< V2X packet is segmented, it's the first transport block. */
+    LAST,         /**< V2X packet is segmented, it's the last transport block. */
+    MIDDLE,       /**< V2X packet is segmented, it's a transport block between first and last. */
+    ONLY_ONE,     /**< V2X packet is not segmented, it's the only one transport block. */
+};
+
+/**
+ * Defines new Tx or re-Tx type relevant to a transport block.
+ *
+ * Used in @ref TxStatusReport
+ */
+enum class TxType {
+    NEW_TX,      /**< New Tx of the V2X transport block. */
+    RE_TX        /**< Re-Tx of the V2X transport block. */
+};
+
+/**
+ * Information on Tx status of a V2X transport block that is reported
+ * from low layer.
+ * 1. A V2X packet might trigger multiple reports because of the segmentaion
+ * and re-Tx in low layer.
+ * 2. If a transport block is dropped in low layer, no report will be triggered
+ * for that transport block.
+ * 3. The power in the array of rfInfo is the target Tx power value in dBm*10 after
+ * MPR/AMPR reduction for a specific Tx antenna. The status in the array of rfInfo
+ * is the fault detection status for a specific Tx chain.
+ *  - In CDD mode, two antennas are being used for a specific transport block,
+ * both rfInfo[0].power and rfInfo[1].power are valid (not -700), rfInfo[i].status
+ * is reflecting the status of Tx chain/Tx antenna i.
+ *  - In TXD mode, data transmission swtiches between two antennas/chains and only
+ * one antenna/chain is being used for a specific transport block, the Tx antenna
+ * being used has valid power (not -700) in the array of rfInfo, rfInfo[i].status
+ * is reflecting the status of Tx chain i or the status of the Tx antenna i whose
+ * power is valid (not -700) in the array of rfInfo.
+ * Used in @ref onTxStatusReport
+ */
+struct TxStatusReport {
+    RFTxInfo rfInfo[MAX_ANTENNAS_SUPPORTED];
+    /**< Tx status per Tx chain and Tx power per Tx antenna. */
+    uint8_t numRb;
+    /**< Number of resource blocks used for the transport block. */
+    uint8_t startRb;
+    /**< Start resource block index used for the transport block. */
+    uint8_t mcs;
+    /**< Modulation and coding scheme used for the transport block
+         that is defined in 3GPP TS 36.213. */
+    uint8_t segNum;
+    /**< Total number of segments of a V2X packet. */
+    SegmentType segType;
+    /**< Segment type of the transport block. */
+    TxType txType;
+    /**< Indication of new Tx or re-Tx of the transport block. */
+    uint16_t otaTiming;
+    /**< OTA timing in format of system frame number*10 + subframe number. */
+    uint16_t port;
+    /**< Port number that can be used to link the report to a specific Tx
+         flow which has the same source port number. */
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

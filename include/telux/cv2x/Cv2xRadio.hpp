@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
 * @file       Cv2xRadio.hpp
 *
@@ -43,6 +79,7 @@
 #include <telux/cv2x/Cv2xRxSubscription.hpp>
 #include <telux/cv2x/Cv2xTxFlow.hpp>
 #include <telux/cv2x/Cv2xTxRxSocket.hpp>
+#include <telux/cv2x/Cv2xTxStatusReportListener.hpp>
 
 #include <future>
 #include <memory>
@@ -588,6 +625,36 @@ public:
      */
     virtual telux::common::Status closeCv2xTcpSocket(std::shared_ptr<ICv2xTxRxSocket> sock,
                                                      CloseTcpSocketCallback cb) = 0;
+
+    /**
+     * Registers a listener for Tx status report.
+     *
+     * @param [in] port     - Set this value to the port number of registered Tx Flow
+     *                        if user wants to receive Tx status report associated with
+     *                        its own Tx flow. If user wants to receive Tx status report
+     *                        associated with all Tx flows in system, set this value to 0.
+     * @param [in] listener - Listener that implements ICv2xTxStatusReportListener
+     *                        interface.
+     * @param [in] cb       - Callback that is invoked when the registration of CV2X Tx
+     *                        status report is complete.
+     */
+    virtual telux::common::Status registerTxStatusReportListener(
+        uint16_t port,
+        std::weak_ptr<ICv2xTxStatusReportListener> listener,
+        telux::common::ResponseCallback cb) = 0;
+
+    /**
+     * Deregisters a listener for Tx status report.
+     *
+     * @param [in] port     - Port number of previously registered ICv2xTxStatusReportListener
+     *                        that is to be deregistered. If the listener is registered with
+     *                        port number 0, set this value to 0 to deregister the listener.
+     * @param [in] cb       - Callback that is invoked when the deregistration of CV2X Tx
+     *                        status report is complete.
+     */
+    virtual telux::common::Status deregisterTxStatusReportListener(
+        uint16_t port,
+        telux::common::ResponseCallback cb) = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x */

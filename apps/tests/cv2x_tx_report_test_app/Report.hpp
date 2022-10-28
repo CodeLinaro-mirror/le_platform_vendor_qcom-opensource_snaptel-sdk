@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -63,65 +63,48 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * Utility helper class
- * @brief Utils class performs common error code conversions
- */
+#ifndef REPORT_HPP
+#define REPORT_HPP
 
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#include <telux/cv2x/Cv2xRadioTypes.hpp>
+#include <telux/cv2x/Cv2xTxStatusReportListener.hpp>
 
-#include <iostream>
-#include <limits>
-#include <map>
-#include <memory>
-#include <string>
-#include <unistd.h>
-#include <vector>
-#include <telux/common/CommonDefines.hpp>
+using telux::cv2x::ICv2xTxStatusReportListener;
+using telux::cv2x::TxStatusReport;
+using telux::cv2x::TxType;
+using telux::cv2x::RFTxStatus;
+using telux::cv2x::SegmentType;
 
-class Utils {
+class Cv2xTxStatusReportListener : public ICv2xTxStatusReportListener {
 public:
-   // Validate the input and in case of invalid input request
-   // for proper input from user.
-   template <typename T>
-   static void validateInput(T &input) {
-      bool valid = false;
-      do {
-         if(std::cin.good()) {
-            valid = true;
-         } else {
-            // If an error occurs then an error flag is set and future attempts to get
-            // input will fail. Cear the error flag on cin.
-            std::cin.clear();
-            // Extracts characters from the previous input sequence and discards them,
-            // until entire stream have been extracted, or one compares equal to newline.
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "ERROR: Invalid input, please re-enter." << std::endl;
-            std::cin >> input;
-         }
-      } while(!valid);
-   }
 
-   // Validate input string(Ex: 1, 2, 3) which should contain
-   // atleast one number or numbers seperated by either comma, space or both.
-   static void validateNumericString(std::string &input);
-   /**
-    * Get error description for given ErrorCode
-    */
-   static std::string getErrorCodeAsString(telux::common::ErrorCode error);
+    Cv2xTxStatusReportListener(std::string fileName);
 
-   static int setSupplementaryGroups(std::vector<std::string> grps);
+    void onTxStatusReport(const TxStatusReport & info);
 
-   // Print status message that corresponds to the return value of managers api(s) of type
-   // telux::common::Status.
-   static void printStatus(telux::common::Status status);
+    ~Cv2xTxStatusReportListener();
 
-   // return current UTC time in microseconds
-   static uint64_t getCurrentTimestamp(void);
+private:
 
-   // Validate input V2X SPS interval which should comply with supported values in 3GPP
-   static int validateV2xSpsInterval(uint16_t interval);
+    std::string txType2String(TxType in);
+
+    std::string rfStatus2String(RFTxStatus in);
+
+    std::string segType2String(SegmentType in);
+
+    void writeReportToFile(const TxStatusReport & info);
+
+    void checkPerPktStatus(const TxStatusReport & info);
+
+    void checkTxChainStatus(const TxStatusReport & info);
+
+    void checkSpsTiming(const TxStatusReport & info);
+
+
+    FILE * file_ = nullptr; // user-specified file for logging reports
+    uint32_t pktCount_ = 0; // received report number of newTx with ONLY_ONE or First segment
+    uint32_t newTxCount_ = 0; // received newTx report number
+    uint32_t reTxCount_ = 0; // received reTx report number
 };
 
-#endif
+#endif  // REPORT_HPP

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
   @file v2x_radio_api.h
 
@@ -94,6 +130,10 @@ typedef int v2x_radio_handle_t;
      be passed in v2x_radio_rx_sock_create_and_bind_v2().
   */
 #define MAX_SUBSCRIBE_SIDS_LIST_LEN (10)
+
+/** Maximum number of antennas that is supported.
+    Used in @ref v2x_tx_status_report_t */
+#define V2X_MAX_ANTENNAS_SUPPORTED (2)
 
 /** Maximum number of V2X Tx pools that is supported.
     Used in @ref v2x_radio_status_ex_t */
@@ -850,6 +890,102 @@ typedef enum {
 } traffic_ip_type_t;
 
 typedef traffic_ip_type_t traffic_ip_type;
+
+/**
+    Fault detection for Tx chain that including PA and front end.
+ */
+typedef enum {
+    INACTIVE,      /**< The Tx chain is not working. */
+    OPERATIONAL,   /**< The Tx chain is operational. */
+    FAULT,         /**< Fault detected on the Tx chain. */
+} rf_status_t;
+
+/**
+    Tx status per Tx chain and Tx power per Tx antenna for a specific transport block.
+ */
+typedef struct {
+    rf_status_t status;
+    /**< Fault detection status for a specific Tx chain. */
+    int32_t power;
+    /**< The target Tx power after MPR/AMPR reduction for a specific Tx antenna
+         in dBm*10 format. Invalid value is -700, it means the corresponding
+         antenna is not being used for the transmission of this transport block. */
+} v2x_rf_tx_info_t;
+
+/**
+    Defines possible values for the segment type of a transport block.
+ */
+typedef enum {
+    FIRST,      /**< V2X packet is segmented, it's the first transport block. */
+    LAST,       /**< V2X packet is segmented, it's the last transport block. */
+    MIDDLE,     /**< V2X packet is segmented, it's a transport block between first and last. */
+    ONLY_ONE,   /**< V2X packet is not segmented, it's the only one transport block. */
+} v2x_segment_type_t;
+
+
+/**
+    Defines new Tx or re-Tx type relevant to a transport block.
+ */
+typedef enum {
+    V2X_NEW_TX,        /**< New Tx of the V2X transport block. */
+    V2X_RE_TX          /**< Re-Tx of the V2X transport block. */
+} v2x_tx_type_t;
+
+/**
+    Information on Tx status of a V2X transport block that is reported
+    from low layer.
+    1. A V2X Tx packet might trigger multiple reports because of the segmentaion
+    and re-Tx in low layer.
+    2. If a transport block is dropped in low layer, no report will be triggered
+    for that transport block.
+    3. The power in the array of rfInfo is the target Tx power value in dBm*10 after
+    MPR/AMPR reduction for a specific Tx antenna. The status in the array of rfInfo
+    is the fault detection status for a specific Tx chain.
+     - In CDD mode, two antennas have transmission for a specific transport block,
+    both rfInfo[0].power and rfInfo[1].power are valid (not -700), rfInfo[i].status
+    is reflecting the status of Tx chain/Tx antenna i.
+     - In TXD mode, data transmission swtiches between two antennas/chains and only
+    one antenna/chain has transmission for a specific transport block, the Tx antenna
+    being used has valid power (not -700) in the array of rfInfo, rfInfo[i].status
+    is reflecting the status of Tx chain i or the status of the Tx antenna i whose
+    power is valid (not -700) in the array of rfInfo.
+    Used in @ref v2x_tx_status_report_listener
+ */
+typedef struct {
+    v2x_rf_tx_info_t rf_info[V2X_MAX_ANTENNAS_SUPPORTED];
+    /**< Tx status per Tx chain and Tx power per Tx antenna. */
+    uint8_t num_rb;
+    /**< Number of resource blocks used for the transport block. */
+    uint8_t start_rb;
+    /**< Start resource block index used for the transport block. */
+    uint8_t mcs;
+    /**< Modulation and coding scheme used for the transport block
+         that is defined in 3GPP TS 36.213. */
+    uint8_t seg_num;
+    /**< Total number of segments of a V2X packet. */
+    v2x_segment_type_t seg_type;
+    /**< Segment type of the transport block. */
+    v2x_tx_type_t tx_type;
+    /**< Indication of new Tx or re-Tx of the transport block. */
+    uint16_t ota_timing;
+    /**< OTA timing in format of system frame number*10 + subframe number. */
+    uint16_t port;
+    /**< Port number that can be used to link the report to a specific Tx
+         flow which has the same source port number. */
+} v2x_tx_status_report_t;
+
+/**
+    Callback made when a CV2X transport block is transmitted in low layer if
+    CV2X Tx staus report has been enabled by calling @ref v2x_set_tx_status_report
+    and a listener has been registered by calling @ref v2x_register_for_tx_status_report.
+
+    @datatypes
+    #v2x_tx_status_report_t
+
+    @param[in] info     V2X Tx status report information.
+    @newpage
+*/
+typedef void (*v2x_tx_status_report_listener)(const v2x_tx_status_report_t info);
 
 /**
      Callback made when CV2X Tx/Rx status is changed and a listener has been registered
@@ -2267,6 +2403,64 @@ extern int v2x_radio_tcp_sock_create_and_bind(
     const socket_info_t *sock_info,
     int *sock_fd,
     struct sockaddr_in6 *sockaddr);
+
+/**
+    Registers a listener for CV2X Tx status report.
+
+    @datatypes
+    v2x_tx_status_report_listener
+
+    @param[in] port            Set this value to the port number of registered Tx Flow
+                               if user wants to receive Tx status report associated with
+                               its own Tx flow. If user wants to receive Tx status report
+                               associated with all Tx flows in system, set this value to 0.
+                               @vertspace{3}
+
+    @param[in] callback        Callback function of @ref v2x_tx_status_report_listener
+                               structure that is called on Tx status reports. \n
+                               @vertspace{3}
+
+    @detdesc
+    This function should be called before the enable of Tx status report by calling
+    @ref v2x_set_tx_status_report if the caller has interest in the notification
+    of CV2X Tx status reports.
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+
+    @dependencies
+    CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
+ */
+v2x_status_enum_type v2x_register_tx_status_report_listener(
+    uint16_t port,
+    v2x_tx_status_report_listener callback);
+
+/**
+    Deregisters a listener for CV2X Tx status report.
+
+    @datatypes
+    v2x_tx_status_report_listener
+
+    @param[in] port            Port number of previously registered
+                               @ref v2x_tx_status_report_listener that is to be deregistered.
+                               If the listener is registered with port number 0,
+                               set this value to 0 to deregister the listener.\n@vertspace{3}
+
+    @detdesc
+    User will not receive Tx status reports after the deregistration.
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+
+    @dependencies
+    CV2X radio must be pre-initialized with @ref v2x_radio_init_v2() or v2x_radio_init_v3().
+    @newpage
+ */
+v2x_status_enum_type v2x_deregister_tx_status_report_listener(uint16_t port);
 
 /**
     Get current V2X overall radio status and per pool status.

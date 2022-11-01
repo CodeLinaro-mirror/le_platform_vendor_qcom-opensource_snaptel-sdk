@@ -133,6 +133,9 @@ using std::mutex;
 using std::shared_ptr;
 using std::make_shared;
 
+#define IP_ADDR_RETRY_INTERVAL_MS (100) // interval for re-getting V2X IP address
+#define IP_ADDR_RETRY_TIMES (2) // maximum retries for getting V2X IP address
+
 // Global variables
 shared_ptr<ApplicationBase> application = nullptr;
 vector<thread> threads;
@@ -141,6 +144,8 @@ string csvFileName;
 sem_t cnt_sem;
 auto rxsuccess = 0;
 auto rxfail = 0;
+std::mutex gTerminateMtx;
+std::condition_variable gTerminateCv;
 bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
@@ -152,13 +157,15 @@ bool simMode = false;
 // catch specified signals and gracefully shut down program
 void signalHandler(int signum) {
     fprintf(stderr, "Interrupt signal (%d) received.\n", signum);
-    stopThread = true;
     if(signum == SIGSEGV || signum == SIGABRT){
         if(application->ldm != nullptr)
             application->ldm->stopGb();
         fprintf(stderr, "Attempting to close all flows and subscriptions\n");
         application->closeAllRadio();
     }
+    std::unique_lock<std::mutex> lk(gTerminateMtx);
+    stopThread = true;
+    gTerminateCv.notify_all();
 }
 
 // allow the main thread to wait on the threads to join
@@ -380,18 +387,26 @@ void onSrcL2AddrUpdate(uint32_t addr) {
         }
 
         // update local V2X-IP rmnet addr in a new thread
-        std::thread ([application] () {
+        std::thread([]() {
             int i = 0;
             while (!stopThread and application) {
                 if (0 == application->updateCachedV2xIpIfaceAddr()) {
                     break;
                 }
-                // if update failed, try it again in 20ms
-                if (++i > 1) {
+                // if update failed, try again in 100ms and break out after 2 retries
+                if (++i > IP_ADDR_RETRY_TIMES) {
                     break;
                 }
                 cerr << "Try to update V2X-IP rmnet addr later!" << endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                std::unique_lock<std::mutex> lck(gTerminateMtx);
+                if (gTerminateCv.wait_for(lck,
+                                          std::chrono::milliseconds(IP_ADDR_RETRY_INTERVAL_MS),
+                                          []{return stopThread == true;})) {
+                    if (application->configuration.driverVerbosity > 3) {
+                        cout << "Abort updating cached IP addr due to exiting" << endl;
+                    }
+                    break;
+                }
             }
         }).detach();
     }
@@ -1174,19 +1189,20 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
-    sigset_t sigset;
-    sigemptyset(&sigset);
-    sigaddset(&sigset, SIGHUP);
-    sigaddset(&sigset, SIGINT);
-    sigaddset(&sigset, SIGTERM);
-    SignalHandlerCb cb = (SignalHandlerCb) signalHandler;
-    SignalHandler::registerSignalHandler(sigset, cb);
-
     std::vector<std::string> groups{"system", "diag", "radio"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;
     }
+
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGHUP);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    SignalHandlerCb cb = (SignalHandlerCb)signalHandler;
+    SignalHandler::registerSignalHandler(sigset, cb);
+
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
     bool tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded, txSim, rxSim;
@@ -1253,5 +1269,6 @@ int main(int argc, char** argv) {
     printf("Attempting to close all flows\n");
     if(!rxSim && !txSim)
         application->closeAllRadio();
+
     return 0;
 }

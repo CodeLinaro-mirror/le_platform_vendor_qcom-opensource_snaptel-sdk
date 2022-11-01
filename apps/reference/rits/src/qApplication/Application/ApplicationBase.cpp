@@ -1473,7 +1473,11 @@ int ApplicationBase::getSysV2xIpIfaceAddr(string& ipAddr) {
         return -1;
     }
 
-    getifaddrs(&ifap);
+    if (-1 == getifaddrs(&ifap)) {
+        cerr << "Failed to get ifaddr!" << endl;
+        return -1;
+    }
+
     ifa = ifap;
     while (ifa && ifa->ifa_name) {
         if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET6) {
@@ -1523,7 +1527,6 @@ int ApplicationBase::updateCachedV2xIpIfaceAddr() {
         }
     }
 
-    cerr << "Failed to update V2X IP iface address!" << endl;
     return -1;
 }
 

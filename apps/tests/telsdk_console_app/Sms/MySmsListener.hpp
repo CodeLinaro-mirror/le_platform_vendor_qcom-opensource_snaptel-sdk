@@ -76,6 +76,7 @@ public:
       override;
    void onDeliveryReport(int phoneId, int msgRef, std::string receiverAddress,
       telux::common::ErrorCode error) override;
+   void onMemoryFull(int phoneId, telux::tel::StorageType type) override;
 };
 
 class MySmsCommandCallback : public telux::common::ICommandResponseCallback {
@@ -110,6 +111,8 @@ public:
       telux::common::ErrorCode errorCode);
    static void setPreferredStorageResponse(telux::common::ErrorCode errorCode);
    static void setTagResponse(telux::common::ErrorCode errorCode);
+   static void reqStorageDetailsResponse(uint32_t maxCount, uint32_t availableCount,
+      telux::common::ErrorCode errorCode);
    static std::string convertTagTypeToString(telux::tel::SmsTagType type);
    static std::string convertStorageTypeToString(telux::tel::StorageType type);
 };

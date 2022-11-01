@@ -362,6 +362,21 @@ using RequestPreferredStorageCb = std::function<void(StorageType type,
    telux::common::ErrorCode errorCode)>;
 
 /**
+ * This function can be invoked in response to request for storage details. The callback can be
+ * from multiple different threads. The implementation should be thread-safe.
+ *
+ * @param [in] maxCount              Maximum number of messages allowed for SIM storage.
+ * @param [in] availableCount        Available count in terms of SIM messages.
+ * @param [in] errorCode             Return code which indicates whether the operation
+ *                                   succeeded or not.  @ref telux::common::ErrorCode.
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change
+ *          and could break backwards compatibility.
+ */
+using RequestStorageDetailsCb = std::function<void(uint32_t maxCount, uint32_t availableCount,
+   telux::common::ErrorCode errorCode)>;
+
+/**
  * @brief SmsManager class is the primary interface to manage SMS operations such as
  *        send and receive an SMS text and raw encoded PDU(s). This class handles single part and
  *        multi-part messages.
@@ -576,6 +591,19 @@ public:
       telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
+    * Request details about SIM storage like total size and available size in terms of number of
+    * messages.
+    *
+    * @param [in] callback      Callback to get the response of storage detail request.
+    *
+    * @returns Status of requestStorageDetails i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backwards compatibility.
+    */
+   virtual telux::common::Status requestStorageDetails(RequestStorageDetailsCb callback) = 0;
+
+   /**
     * Calculate message attributes for the given message.
     *
     * @param [in] message         Message to send
@@ -674,6 +702,20 @@ public:
     */
    virtual void onDeliveryReport(int phoneId, int msgRef, std::string receiverAddress,
       telux::common::ErrorCode error) {
+   }
+
+   /**
+    * This function will be invoked when SMS storage is full.
+    *
+    * @param [in] phoneId             Unique identifier per SIM slot. Phone on which the message is
+    *                                 received.
+    * @param [in] type                @ref telux::tel::StorageType. Applicable storage type
+    *                                 StorageType::SIM
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backwards compatibility.
+    */
+   virtual void onMemoryFull(int phoneId, StorageType type) {
    }
 
    virtual ~ISmsListener() {

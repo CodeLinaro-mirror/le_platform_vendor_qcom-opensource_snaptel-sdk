@@ -135,6 +135,12 @@ void MySmsListener::onDeliveryReport(int phoneId, int msgRef, std::string receiv
                       << Utils::getErrorCodeAsString(error) << std::endl;
 }
 
+void MySmsListener::onMemoryFull(int phoneId, telux::tel::StorageType type) {
+   std::cout << std::endl << std::endl;
+   PRINT_NOTIFICATION << "Received memory full indication from phone ID " << phoneId <<
+       "  for Storage Type: " << SmsStorageCallback::convertStorageTypeToString(type) << "\n";
+}
+
 // Implementation of My SMS callback
 void MySmsCommandCallback::commandResponse(telux::common::ErrorCode error) {
    std::cout << std::endl << std::endl;
@@ -311,3 +317,16 @@ void SmsStorageCallback::setTagResponse(telux::common::ErrorCode error) {
    }
 }
 
+// Implementation of request storage details callback
+void SmsStorageCallback::reqStorageDetailsResponse(uint32_t maxCount, uint32_t availableCount,
+      telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " SIM Storage details: " << "\n";
+      PRINT_CB << " Maximum count of messages allowed: " << maxCount <<
+         " Available SIM messages count: " << availableCount <<"\n";
+   } else {
+      PRINT_CB << " Request for storage details failed with errorCode: " <<
+         static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}

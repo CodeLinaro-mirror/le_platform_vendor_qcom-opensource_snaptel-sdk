@@ -68,6 +68,8 @@ class FirewallMenu : public ConsoleApp,
     void enableDmz(std::vector<std::string> inputCommand);
     void disableDmz(std::vector<std::string> inputCommand);
     void requestDmzEntry(std::vector<std::string> inputCommand);
+    void addHwAccelerationFirewallEntry(std::vector<std::string> inputCommand);
+    void requestHwAccelerationFirewallEntries(std::vector<std::string> inputCommand);
 
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
@@ -89,6 +91,7 @@ class FirewallMenu : public ConsoleApp,
     void parseProtoInfo(std::shared_ptr<IIpFilter> filter, telux::data::IpProtocol protocol,
         int &srcPort, int &destPort, int &srcPortRange, int &dstPortRange, std::string &protoStr);
     void displayFirewallEntry();
+    std::vector<std::shared_ptr<IFirewallEntry>> configureNewFirewallEntry();
 
     std::mutex mtx_;
     bool menuOptionsAdded_;

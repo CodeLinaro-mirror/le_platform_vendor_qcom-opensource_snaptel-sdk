@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -103,6 +103,7 @@
 #include <iostream>
 #include <memory>
 #include <iomanip>
+#include <cstdint>
 
 #include <telux/loc/LocationDefines.hpp>
 #include "LocationUtils.hpp"
@@ -1481,6 +1482,24 @@ void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
    std::cout << "*************************************************************" << std::endl;
 }
 
+void MyLocationListener::onGnssDisasterCrisisInfo(
+    const telux::loc::GnssDisasterCrisisReport &dcReportInfo) {
+    if(!isDisasterCrisisInfoFlagEnabled_) {
+        return;
+    }
+    PRINT_NOTIFICATION << "\n************ Gnss Disaster-Crisis Information *************" << "\n";
+    LocationUtils::displayDisasterCrisisReportType(dcReportInfo);
+    std::cout << "Disaster-crisis Valid bits: " << dcReportInfo.numValidBits << "\n";
+    std::cout << "Disaster-crisis Report data: \n";
+    for(auto &itr: dcReportInfo.dcReportData) {
+        std::cout << (int)itr << ": ";
+        char hex_string[16];
+        snprintf(hex_string, 16, "%x", itr);
+        std::cout << "0x" << hex_string << "\n";
+    }
+    std::cout << "\n";
+}
+
 void MyLocationListener::onLocationSystemInfo(const telux::loc::LocationSystemInfo
      &locationSystemInfo) {
    if(!isLocSysInfoFlagEnabled_) {
@@ -1547,6 +1566,10 @@ void MyLocationListener::setDetailedEngineLocReportFlag(bool enable) {
 
 void MyLocationListener::setMeasurementsInfoFlag(bool enable) {
    isMeasurementsInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setDisasterCrisisInfoFlag(bool enable) {
+    isDisasterCrisisInfoFlagEnabled_ = enable;
 }
 
 void MyLocationListener::setLocSystemInfoFlag(bool enable) {

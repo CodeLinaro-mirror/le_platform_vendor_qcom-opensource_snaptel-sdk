@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -88,6 +88,8 @@ public:
 
    void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) override;
 
+   void onGnssDisasterCrisisInfo(const telux::loc::GnssDisasterCrisisReport &dcReportInfo) override;
+
    void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
 
    void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override;
@@ -99,6 +101,7 @@ public:
    void setDataInfoFlag(bool enable);
    void setNmeaInfoFlag(bool enable);
    void setMeasurementsInfoFlag(bool enable);
+   void setDisasterCrisisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
 
    ~MyLocationListener() {
@@ -109,6 +112,7 @@ private:
    bool isBasicReportFlagEnabled_ = false, isDataInfoFlagEnabled_ = false;
    bool isNmeaInfoFlagEnabled_ = false, isDetailedEngineReportFlagEnabled_ = false;
    bool isMeasurementsInfoFlagEnabled_ = false;
+   bool isDisasterCrisisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);

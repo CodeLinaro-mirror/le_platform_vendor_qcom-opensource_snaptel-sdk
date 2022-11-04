@@ -510,8 +510,8 @@ void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
             [&p, &devices_, this](std::vector<telux::audio::DeviceType> devices,
                      telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 devices_ = devices;
+                p.set_value(true);
             } else {
                 p.set_value(false);
                 std::cout << "Failed to get stream device" << std::endl;
@@ -527,6 +527,7 @@ void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
             for (auto deviceType : devices_) {
                 std::string deviceName;
                 std::cout << "Device Type"  << (static_cast<uint32_t>(deviceType)) << std::endl;
+                std::cout.flush();
             }
         }
     } else {
@@ -600,8 +601,8 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
         telux::common::Status status = stream_->getVolume(
            dir,  [&p,&vol,this](telux::audio::StreamVolume volume, telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 vol = volume;
+                p.set_value(true);
             } else {
                 p.set_value(false);
                 std::cout << "Failed to set stream device" << std::endl;
@@ -616,6 +617,7 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
         if (p.get_future().get()) {
             for (auto channelVolume : vol.volume) {
                 std::cout << "volume: "<< channelVolume.vol << std::endl;
+                std::cout.flush();
             }
         }
     } else {
@@ -695,8 +697,8 @@ void AudioClient::getMute(StreamType streamType, SlotId slotId) {
                dir,  [&p,&mute_,this](telux::audio::StreamMute mute,
                telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 mute_ = mute;
+                p.set_value(true);
             } else {
                 p.set_value(false);
                 std::cout << "Failed to get mute" << std::endl;
@@ -715,6 +717,7 @@ void AudioClient::getMute(StreamType streamType, SlotId slotId) {
                 muteStatus = "Unmuted";
             }
             std::cout << "Mute Status: " << muteStatus << std::endl;
+            std::cout.flush();
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;

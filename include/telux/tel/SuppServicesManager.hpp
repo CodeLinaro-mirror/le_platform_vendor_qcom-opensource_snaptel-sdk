@@ -68,9 +68,11 @@ enum class SuppServicesStatus {
  * Defines supplementary services provision status.
  */
 enum class SuppSvcProvisionStatus {
-    UNKNOWN = -1,            /**< Supplementary service provision status unknown */
-    NOT_PROVISIONED = 0,     /**< Supplementary service is not provisioned */
-    PROVISIONED = 1          /**< Supplementary service is provisioned */
+    UNKNOWN = -1,                   /**< Supplementary service provision status unknown */
+    NOT_PROVISIONED = 0,            /**< Supplementary service is not provisioned */
+    PROVISIONED = 1,                /**< Supplementary service is provisioned */
+    PRESENTATION_RESTRICTED = 2,    /**< Supplementary service is presentation restricted */
+    PRESENTATION_ALLOWED = 3,       /**< Supplementary service is presentation allowed */
 };
 
 /**
@@ -472,6 +474,25 @@ using GetForwardingPrefCb
         provisionStatus, FailureCause failureCause, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to the requestOirPref API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] suppSvcStatus       - OIR status @ref telux::tel::SuppServicesStatus
+ * @param [in] provisionStatus     - Provision status @ref telux::tel::SuppSvcProvisionStatus.
+ * @param [in] failureCause        - Returns failure cause in case the request fails.
+ * @param [in] error               - Return code which indicates whether the operation
+ *                                   succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+using GetOirPrefCb
+    = std::function<void(SuppServicesStatus suppSvcStatus, SuppSvcProvisionStatus
+        provisionStatus, FailureCause failureCause, telux::common::ErrorCode error)>;
+
+/**
  * @brief ISuppServicesManager is the interface to provide supplementary services like call
  * forwarding and call waiting.
  */
@@ -556,6 +577,43 @@ public:
      */
     virtual telux::common::Status requestForwardingPref(ServiceClass serviceClass,
         ForwardReason reason, GetForwardingPrefCb callback) = 0;
+
+    /**
+     * Activate/Deactivate originating identification restriction preference on the device.
+     * If the OIR service was activated, the original call number will be restricted to the
+     * target when a call is dialed to a subscriber.
+     *
+     * On platforms with access control enabled, the caller must have TELUX_TEL_SUPP_SERVICES
+     * permissions to invoke this API successfully.
+     *
+     * @param [in] serviceClass  -  Service class @ref telux::tel::ServiceClass.
+     * @param [in] suppSvcStatus -  OIR Status @ref telux::tel::SuppServicesStatus.
+     * @param [in] callback      -  Callback function to get the response of setOIRPref
+     *
+     * @returns Status of setOirPref i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status setOirPref(ServiceClass serviceClass,
+        SuppServicesStatus suppSvcStatus, SetSuppSvcPrefCallback callback = nullptr) = 0;
+
+    /**
+     * This API queries the originating identification restriction preference.
+     *
+     * On platforms with access control enabled, the caller must have TELUX_TEL_SUPP_SERVICES
+     * permissions to invoke this API successfully.
+     *
+     * @param [in] serviceClass  -  Service class @ref telux::tel::ServiceClass.
+     * @param [in] callback      -  Callback function to get the response of requestOIRPref
+     *
+     * @returns Status of requestOirPref i.e. success or suitable error code.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::Status requestOirPref(ServiceClass serviceClass,
+        GetOirPrefCb callback) = 0;
 
     /**
     * Register a listener for supplementary services events.

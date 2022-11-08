@@ -56,13 +56,25 @@ std::string SuppServicesHelper::suppServicesStatustoString(
 
 std::string SuppServicesHelper::SuppSvcProvisionStatustoString(
     telux::tel::SuppSvcProvisionStatus provisionStatus) {
-    if (provisionStatus == SuppSvcProvisionStatus::PROVISIONED) {
-        return "PROVISIONED";
-    } else if (provisionStatus == SuppSvcProvisionStatus::NOT_PROVISIONED) {
-        return "NOT_PROVISIONED";
-    } else {
-        return "UNKNOWN";
+    std::string status;
+    switch(provisionStatus) {
+        case SuppSvcProvisionStatus::PROVISIONED:
+            status = "PROVISIONED";
+            break;
+        case SuppSvcProvisionStatus::NOT_PROVISIONED:
+            status = "NOT_PROVISIONED";
+            break;
+        case SuppSvcProvisionStatus::PRESENTATION_RESTRICTED:
+            status = "PRESENTATION_RESTRICTED";
+            break;
+        case SuppSvcProvisionStatus::PRESENTATION_ALLOWED:
+            status = "PRESENTATION_ALLOWED";
+            break;
+        default:
+            status = "UNKNOWN";
+            break;
     }
+    return status;
 }
 
 void SetSuppSvcResponseCallback::setSuppSvcResp(ErrorCode error, FailureCause failureCause) {
@@ -112,3 +124,19 @@ void GetSuppSvcResponseCallback::getForwardingPrefResp(std::vector<ForwardInfo> 
     }
 }
 
+void GetSuppSvcResponseCallback::getOirStatusResp(SuppServicesStatus suppSvcStatus ,
+    SuppSvcProvisionStatus provisionStatus, FailureCause failureCause,
+    telux::common::ErrorCode error) {
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Get Call Identification Restriction Pref : "
+            << Utils::getErrorCodeAsString(error) << std::endl;
+        PRINT_CB << "Call Identification Restriction Provision Status : " <<
+            SuppServicesHelper::SuppSvcProvisionStatustoString(provisionStatus) << std::endl;
+        PRINT_CB << "Call Identification Restriction Status : " <<
+            SuppServicesHelper::suppServicesStatustoString(suppSvcStatus) << std::endl;
+    } else {
+        PRINT_CB << "Get Call Identification Restriction failed with ErrorCode: "
+            << static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error)
+            << "Failure Cause : " << static_cast<int>(failureCause) << std::endl;
+    }
+}

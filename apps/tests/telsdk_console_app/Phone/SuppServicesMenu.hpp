@@ -49,6 +49,8 @@ private:
    void getCallWaitingPref(std::vector<std::string> userInput);
    void setCallForwardingPref(std::vector<std::string> userInput);
    void getCallForwardingPref(std::vector<std::string> userInput);
+   void setOirPref(std::vector<std::string> userInput);
+   void getOirPref(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
 
    SlotId slot_ = DEFAULT_SLOT_ID;

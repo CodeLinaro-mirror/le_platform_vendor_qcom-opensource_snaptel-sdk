@@ -43,6 +43,8 @@
 #ifndef TELUX_WLAN_APINTERFACE_HPP
 #define TELUX_WLAN_APINTERFACE_HPP
 
+#include <memory>
+
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
 

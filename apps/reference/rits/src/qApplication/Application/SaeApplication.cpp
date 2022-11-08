@@ -72,7 +72,8 @@
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include <fstream>
 #include <sstream>
-
+#include "asnbuf.h"
+#include "wsmp.h"
 
 // Each thread that is receiving and verifying will use this for logging purposes
 thread_local int verifStatIdx = 0;
@@ -346,7 +347,6 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 } else {
                     ret = decode_as_j2735(threadMc.get());
                 }
-                ret = 1;
             }
         } else {
             if (appVerbosity > 3)
@@ -566,12 +566,28 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
             mc->msgId = (int)WSA_MSG_ID;
         }
     } else {
-        mc->wsmp = malloc(sizeof(wsmp_data_t));
+        mc->wsmp = (wsmp_data_t*) calloc(1, sizeof(wsmp_data_t));
         if (!mc->wsmp) {
-            std::cerr << "alloc wsmp failed" << endl;
+            std::cerr << "calloc wsmp failed" << endl;
             return;
         }
-        memset(mc->wsmp, 0, sizeof(wsmp_data_t));
+
+        ((wsmp_data_t*)mc->wsmp)->abp = (abuf_t*) calloc(1, sizeof(abuf_t));
+
+        if (!((wsmp_data_t*)mc->wsmp)->abp)
+        {
+            std::cerr << "calloc wsmp asnbuf structure failed" << endl;
+            return;
+        }
+
+        const auto abuf_ret = abuf_alloc(((wsmp_data_t*)mc->wsmp)->abp,
+                        WSMP_ABUF_DEFAULT_SIZE, WSMP_ABUF_DEFAULT_HEADROOM);
+
+        if (abuf_ret != WSMP_ABUF_DEFAULT_SIZE)
+        {
+            std::cerr << "alloc wsmp asn buffer failed" << endl;
+            return;
+        }
 
         mc->ieee1609_2data = malloc(sizeof(ieee1609_2_data));
         if (!mc->ieee1609_2data) {
@@ -617,6 +633,8 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 
 void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
     if (mc->wsmp) {
+        auto wsmp = (wsmp_data_t*)mc->wsmp;
+        abuf_free(wsmp->abp);
         free(mc->wsmp);
         mc->wsmp = nullptr;
     }
@@ -637,6 +655,7 @@ void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
         mc->wsa = nullptr;
     }
 #endif
+    abuf_free(&(mc->abuf));
 }
 
 void SaeApplication::fillMsg(std::shared_ptr<msg_contents> mc) {
@@ -657,7 +676,6 @@ void SaeApplication::fillMsg(std::shared_ptr<msg_contents> mc) {
 }
 
 void SaeApplication::fillWsmp(wsmp_data_t *wsmp) {
-    memset(wsmp, 0, sizeof(wsmp_data_t));
     wsmp->n_header.data = 3;
     wsmp->tpid.octet = 0;
     if (this->configuration.psid) {
@@ -889,7 +907,9 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     memset(bsm, 0, sizeof(bsm_value_t));
     srand(timestamp_now());
     fillBsmCan(bsm);
-    fillBsmLocation(bsm);
+    if(kinematicsReceive){
+        fillBsmLocation(bsm);
+    }
     bsm->timestamp_ms = timestamp_now();
     bsm->VehicleLength_cm = configuration.vehicleLength;
     bsm->VehicleWidth_cm = configuration.vehicleWidth;

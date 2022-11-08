@@ -182,14 +182,18 @@ void SmsMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "12", "Set_Tag", {}, std::bind(&SmsMenu::setTag, this,
          std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestStorageDetailsCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "13", "Request_Storage_Details", {}, std::bind(&SmsMenu::requestStorageDetails, this,
+         std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("13", "Select_sim_slot", {},
+      ConsoleAppCommand("14", "Select_sim_slot", {},
                         std::bind(&SmsMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
       = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand,
          sendEnhancedSmsCommand, sendRawSmsCommand, sendSmsMessageListCommand,
          sendReadMessageCommand, deleteMessageCommand, requestPreferredStorageCommand,
-         setPreferredStorageCommand, setTagCommand};
+         setPreferredStorageCommand, setTagCommand, requestStorageDetailsCommand};
 
    if (smsManagers_.size() > 1) {
        commandsListSmsSubMenu.emplace_back(selectSimSlotCommand);
@@ -563,5 +567,15 @@ void SmsMenu::setTag(std::vector<std::string> userInput) {
       std::cout << "Set tag request succeeded" << std::endl;
    } else {
       std::cout << "Set tag request failed" << std::endl;
+   }
+}
+
+void SmsMenu::requestStorageDetails(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   auto ret = smsManager->requestStorageDetails(SmsStorageCallback::reqStorageDetailsResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Request for SIM storage details succeeded" << std::endl;
+   } else {
+      std::cout << "Request for SIM storage details failed" << std::endl;
    }
 }

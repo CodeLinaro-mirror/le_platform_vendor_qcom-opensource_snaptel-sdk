@@ -156,7 +156,6 @@ void PlayMenu::setSystemReady() {
 
 
 void PlayMenu::closeFile() {
-    fflush(file_);
     fclose(file_);
 }
 

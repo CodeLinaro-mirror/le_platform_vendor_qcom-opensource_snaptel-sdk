@@ -71,6 +71,10 @@ public:
     static void getForwardingPrefResp(std::vector<telux::tel::ForwardInfo> forwardInfoList,
         telux::tel::SuppSvcProvisionStatus provisionStatus, telux::tel::FailureCause failureCause,
         telux::common::ErrorCode error);
+
+    static void getOirStatusResp(telux::tel::SuppServicesStatus activeStatus ,
+        telux::tel::SuppSvcProvisionStatus provisionStatus, telux::tel::FailureCause failureCause,
+        telux::common::ErrorCode error);
 };
 
 #endif // TELUX_TEL_SUPP_SERVICES_HANDLER_HPP

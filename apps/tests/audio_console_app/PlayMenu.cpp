@@ -76,6 +76,7 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
    audioClient_(audioClient) {
     pipeLineEmpty_ = true;
     ready_ = false;
+    playInProgress_ = false;
 
 }
 
@@ -247,9 +248,15 @@ void PlayMenu::setMute(std::vector<std::string> userInput) {
 
 void PlayMenu::startPlay(std::vector<std::string> userInput) {
     if(audioPlayStream_) {
-        audioClient_->getPlayConfig(filePath_, playFormat_);
-        std::thread playThread(&PlayMenu::play, this);
-        runningThreads_.emplace_back(std::move(playThread));
+        // Check if a file is already being played.
+        if(!playInProgress_) {
+            audioClient_->getPlayConfig(filePath_, playFormat_);
+            std::thread playThread(&PlayMenu::play, this);
+            runningThreads_.emplace_back(std::move(playThread));
+            playInProgress_ = true;
+        } else {
+            std::cout << "File Play in progress please wait" << std::endl;
+        }
     } else {
         std::cout << "No running Play session please create one" << std::endl;
     }
@@ -405,6 +412,7 @@ void PlayMenu::play() {
         std::cout << "Play Stopped" << std::endl;
     }
     playStatus_ = false;
+    playInProgress_ = false;
 }
 
 void PlayMenu::onReadyForWrite() {

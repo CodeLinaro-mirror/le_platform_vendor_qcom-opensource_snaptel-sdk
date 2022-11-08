@@ -97,16 +97,26 @@ static constexpr uint32_t SFN_LIMIIT = 10240u; // valid SFN value is 0~10239
 
 static constexpr uint32_t SPS_TIMING_CHANGE_NUM = 5u; // threshold for pkt jitter detection
 
-Cv2xTxStatusReportListener::Cv2xTxStatusReportListener(string fileName) {
+Cv2xTxStatusReportListener::Cv2xTxStatusReportListener(string fileName, uint16_t port, int & ret) {
+    ret = EXIT_SUCCESS;
+    port_ = port;
     // create csv file if specified valid file name
     if (not fileName.empty()) {
         file_ = fopen(fileName.c_str(), "w");
         if (not file_) {
-            cerr << "Failed to open log file %s" << fileName << endl;
+            cerr << "Failed to open log file " << fileName;
+            cerr << ", store to " << DEFAULT_LOG_FILE << " instead!" << endl;
+            file_ = fopen(DEFAULT_LOG_FILE, "w");
+            if (not file_) {
+                cerr << "Failed to open log file " << DEFAULT_LOG_FILE << endl;
+                ret = EXIT_FAILURE;
+            }
         } else {
             //print header to file
             fprintf(file_, "%s\n", gTxReportHeader);
         }
+    } else {
+        ret = EXIT_FAILURE;
     }
 }
 
@@ -117,7 +127,14 @@ Cv2xTxStatusReportListener::~Cv2xTxStatusReportListener() {
     }
     cout << "newTx report count:" << newTxCount_;
     cout << ", reTx report count:" << reTxCount_;
-    cout << ", slss Tx report count:" << slssTxCount_ << endl;
+
+    // only print SLSS counts when listener is associated with port 0,
+    // listener with other port cannot receive SLSS reports
+    if (0 == port_) {
+        cout << ", slss Tx report count:" << slssTxCount_ << endl;
+    } else {
+        cout << endl;
+    }
 }
 
 string Cv2xTxStatusReportListener::txType2String(TxType in) {

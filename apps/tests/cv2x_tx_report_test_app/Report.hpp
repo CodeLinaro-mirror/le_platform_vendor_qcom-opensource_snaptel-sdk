@@ -75,10 +75,12 @@ using telux::cv2x::TxType;
 using telux::cv2x::RFTxStatus;
 using telux::cv2x::SegmentType;
 
+#define DEFAULT_LOG_FILE ("/var/log/tx_report.csv")
+
 class Cv2xTxStatusReportListener : public ICv2xTxStatusReportListener {
 public:
 
-    Cv2xTxStatusReportListener(std::string fileName);
+    Cv2xTxStatusReportListener(std::string fileName, uint16_t port, int & ret);
 
     void onTxStatusReport(const TxStatusReport & info);
 
@@ -106,6 +108,7 @@ private:
     uint32_t newTxCount_ = 0; // received newTx report number
     uint32_t reTxCount_ = 0; // received reTx report number
     uint32_t slssTxCount_ = 0; // received SLSS Tx report number
+    uint16_t port_ = 0; // user specified listening port
 };
 
 #endif  // REPORT_HPP

@@ -28,8 +28,8 @@
  */
 
 /**
- * This sample application demonstrates the use of the filesystem manager (IFsManager) to register
- * and receive filesystem events like start or end of EFS restore
+ * This sample application demonstrates the use of the filesystem manager (IFsManager) to start
+ * EFS backup and receive filesystem events like start or end of EFS restore and backup events
  */
 
 #include <future>
@@ -69,7 +69,7 @@ class EfsEventListener : public telux::platform::IFsListener {
         std::cout << status << std::endl;
     }
 
-    // [7] Receive EFS restore notifications
+    // [8] Receive EFS restore and backup notifications
     virtual void OnEfsRestoreEvent(telux::platform::EfsEventInfo event) override {
         PRINT_NOTIFICATION
             << ": Received efs event: Restore"
@@ -78,10 +78,19 @@ class EfsEventListener : public telux::platform::IFsListener {
             std::cout << " with result: " << Utils::getErrorCodeAsString(event.error) << std::endl;
         }
     }
+
+    virtual void OnEfsBackupEvent(telux::platform::EfsEventInfo event) override {
+        PRINT_NOTIFICATION
+            << ": Received efs event: Backup"
+            << ((event.event == telux::platform::EfsEvent::START) ? " started" : "ended");
+        if (event.event == telux::platform::EfsEvent::END) {
+            std::cout << " with result: " << Utils::getErrorCodeAsString(event.error) << std::endl;
+        }
+    }
 };
 
 int main(int argc, char **argv) {
-    std::cout << "********* efs restore sample app *********" << std::endl;
+    std::cout << "********* efs backup restore sample app *********" << std::endl;
 
     // [1] Get platform factory
     auto &platformFactory = telux::platform::PlatformFactory::getInstance();
@@ -114,10 +123,19 @@ int main(int argc, char **argv) {
     std::shared_ptr<EfsEventListener> efsEventListener = std::make_shared<EfsEventListener>();
     fsManager->registerListener(efsEventListener);
 
+    // [7] Start EFS backup whenever necessary
+    telux::common::Status status = fsManager->startEfsBackup();
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Unable to start EFS backup: ";
+        Utils::printStatus(status);
+    } else {
+        std::cout << "Request to start EFS backup successful";
+    }
+
     std::cout << "\n\nPress ENTER to exit!!! \n\n";
     std::cin.ignore();
 
-    // [8] Clean-up
+    // [9] Clean-up
     fsManager->deregisterListener(efsEventListener);
     efsEventListener = nullptr;
     fsManager = nullptr;

@@ -1,9 +1,9 @@
-Using Platform APIs to register and handle EFS restore indications {#efs_restore_indications}
+EFS backup and restore {#efs_backup_restore}
 =============================================================
 
-# Using Platform APIs to receive EFS restore indications
+# Using Platform APIs to request EFS backup and listen to EFS restore and backup indications
 
-Please follow below steps as a guide to register EFS restore indications
+Please follow below steps as a guide to register EFS restore and backup indications
 
 ### 1. Get platform factory ###
 
@@ -78,7 +78,17 @@ Please follow below steps as a guide to register EFS restore indications
    }
    ~~~~~~
 
-### 7. Receive EFS restore notifications ###
+### 7. Start EFS backup whenever necessary ###
+
+   ~~~~~~{.cpp}
+   telux::common::Status status = fsManager->startEfsBackup();
+   if(status != telux::common::Status::SUCCESS) {
+      std::cout << "Unable to start EFS backup: ";
+      Utils::printStatus(status);
+   }
+   ~~~~~~
+
+### 8. Receive EFS restore and backup notifications ###
 
    ~~~~~~{.cpp}
    virtual void OnEfsRestoreEvent(telux::platform::EfsEventInfo event) override {
@@ -89,9 +99,18 @@ Please follow below steps as a guide to register EFS restore indications
          std::cout << " with result: " << Utils::getErrorCodeAsString(event.error) << std::endl;
       }
    }
+
+   virtual void OnEfsBackupEvent(telux::platform::EfsEventInfo event) override {
+      PRINT_NOTIFICATION
+         << ": Received efs event: Backup"
+         << ((event.event == telux::platform::EfsEvent::START) ? " started" : "ended");
+      if (event.event == telux::platform::EfsEvent::END) {
+         std::cout << " with result: " << Utils::getErrorCodeAsString(event.error) << std::endl;
+      }
+   }
    ~~~~~~
 
-### 8. Clean-up ###
+### 9. Clean-up ###
 
    ~~~~~~{.cpp}
    fsManager->deregisterListener(efsEventListener);

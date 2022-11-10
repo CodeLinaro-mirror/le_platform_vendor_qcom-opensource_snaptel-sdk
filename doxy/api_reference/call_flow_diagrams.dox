@@ -3670,4 +3670,51 @@ sensor object being returned.
 invoked by the sensor framework once the self test is completed.
 4. Once the self test is completed, the callback gets invoked indicating the result of the self
 test.
+@section platform_callflow Platform
+
+The platform sub-system provides APIs to configure and control platform functionalities.
+This sub-system provides notifications about certain system related events, for instance filesystem
+events such as EFS restore events.
+
+@subsection platform_efs_restore_notification_call_flow Call flow for EFS restore notification registration and handling
+
+@anchor platform_efs_restore_notification_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{platform_efs_restore_notification_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{EFS restore notification registration and handling call flow}
+  \label{fig_platform_efs_restore_notification_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{platform_efs_restore_notification_call_flow.png,EFS restore notification registration and handling call flow,80,80,EFS restore notification registration and handling call flow}
+
+1. Get the reference to the PlatformFactory, with which we can further acquire other sub-system
+objects.
+2. Prepare an initialization callback method or lambda which will be called by the platform
+sub-system once the initialization is complete.
+3. Request for the IFsManager (filesystem manager) object from PlatformFactory and provide the
+initalization callback. Retain the IFsManager shared_ptr as long as necessary. PlatformFactory does
+not hold on to the returned instance. If the received shared_ptr is released, FsManager would be
+destroyed and requesting PlatformFactory for FsManager again would result in the creation of a new
+instance.
+4. Wait for the initialization callback to be invoked. The platform sub-system invokes the callback
+once the underlying sub-system is available for usage. If the service status is notified as
+SERVICE_FAILED, retry intitialization starting with step (3). If the service status is notified as
+SERVICE_AVAILABLE, the filesystem manager is ready for usage.
+5. Create an listener object of type IFsListener and register with IFsManager for notifications.
+Once registered, the listener receives service status notifications and EFS restore event
+notifications.
+6. If a service status notification with status SERVICE_UNAVAILABLE, the application should wait
+for service to be re-initialized and once done, SERVICE_AVAILABLE will be notified. If the service
+fails, SERVICE_FAILED is notified and the IFsManager object held is no longer usable. A new object
+of type IFsManager needs to be re-acquired from the PlatformFactory.
+7. When EFS restore are detected, the event listener is notified via the OnEfsRestoreEvent method
+and the application can make use of the information appropriately. The EFS restore notification
+also has information if the restore started or ended and if the restore was successful or a failure.
+8. Once clean-up is necessary, deregister the registered listener, set all shared pointers to
+nullptr. This will make the underlying sub-system relinquish resources that are no longer
+necessary.
 */

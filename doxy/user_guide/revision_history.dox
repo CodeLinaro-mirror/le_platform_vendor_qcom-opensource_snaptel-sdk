@@ -152,6 +152,8 @@ when       who     what, where, why
 <br>\- Added instruction for creating platform SDK using CAF @tdlastend @trendcline
 @tr @tdmulrowempty @td Dec 2017 @tdend @tdlast \- Added subscription feature @tdlastend @trendcline
 @tr @tdmulrowempty @td Sep 2017 @tdend @tdlast \- Initial Release @tdlastend @trend
+@tr @tdmulrowempty @td Nov 2022 @tdend @tdlast Add support for WLAN features @tdlastend @trend
+
 @tableend
 @latexonly \rm @endlatexonly
 

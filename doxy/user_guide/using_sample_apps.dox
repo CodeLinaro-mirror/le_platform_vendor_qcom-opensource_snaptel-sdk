@@ -24,5 +24,6 @@ $ make_call_app /data/make_call_app.conf
 - @subpage sensor
 - @subpage platform
 - @subpage security
+- @subpage wlan
 
 */

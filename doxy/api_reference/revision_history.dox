@@ -141,6 +141,8 @@ when       who     what, where, why
 @tr @tdmulrowempty @td Jun 2018 @tdend @tdlast Added Cellular Connection Management APIs @tdlastend @trendcline
 @tr @tdmulrowempty @td Dec 2017 @tdend @tdlast Added subscription APIs and section on Versioning and API Status @tdlastend @trendcline
 @tr @tdmulrowempty @td Sep 2017 @tdend @tdlast Initial release @tdlastend @trend
+@tr @tdmulrowempty @td Nov 2022 @tdend @tdlast Addition of WLAN management support and call flow @tdlastend @trend
+
 @tableend
 @latexonly \rm @endlatexonly
 

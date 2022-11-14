@@ -3370,9 +3370,9 @@ As a reference, auto-shutdown management in an eCall application is described in
 7. Thermal factory invokes the callback once initialization completes.
 8. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
 9. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-10. Application recieves a notification that thermal auto-shutdown mode is disabled.
-11. Application recieves a notification that thermal auto-shutdown mode is going to enabled soon. The exact duration is also recieved as part of notification.
-12. Application recieves a notification that thermal auto-shutdown mode is enabled.
+10. Application receives a notification that thermal auto-shutdown mode is disabled.
+11. Application receives a notification that thermal auto-shutdown mode is going to enabled soon. The exact duration is also recieved as part of notification.
+12. Application receives a notification that thermal auto-shutdown mode is enabled.
 13. Application can remove listener.
 14. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
@@ -3432,18 +3432,18 @@ As a reference, auto-shutdown management in an eCall application is described in
 10. Application disables auto-shutdown using setAutoShutdownMode API, to prevent a possible thermal auto-shutdown during eCall.
 11. Application receives synchronous status which indicates if the request was sent successfully.
 12. Optionally, the response to setAutoShutdownMode request can be received by the application.
-13. Application recieves a notification that thermal auto-shutdown mode is disabled.
+13. Application receives a notification that thermal auto-shutdown mode is disabled.
 14. Application receives an imminent auto-shutdown enable notification and system will attempt to enable auto-shutdown after a certain period.
    This notification is received if application does not enable auto-shutdown due to an active eCall.
 15. If the eCall is still active, the application disables auto-shutdown before it gets enabled automatically.
 16. Application receives synchronous status which indicates if the request was sent successfully.
 17. Optionally, the response to setAutoShutdownMode request can be received by the application.
-18. Application recieves a notification that thermal auto-shutdown mode is disabled.
+18. Application receives a notification that thermal auto-shutdown mode is disabled.
     Steps 14 to 18 are repeated as long as the eCall is active.
 19. When the eCall is completed, the application immediately enables auto-shutdown using setAutoShutdownMode API.
 20. Application receives synchronous status which indicates if the request was sent successfully.
 21. Optionally, the response to setAutoShutdownMode request can be received by the application.
-22. Application recieves a notification that thermal auto-shutdown mode is enabled.
+22. Application receives a notification that thermal auto-shutdown mode is enabled.
 23. Application can remove listener.
 24. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
@@ -4085,5 +4085,95 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 7. Application creates an instance of ICryptoParam using CryptoParamBuilder to define input parameters for how the decryption should occur.
 8. Application calls decryptData() API of ICryptoManager passing the key blob, encrypted data and input parameters.
 9. ICryptoManager returns decrypted data otherwise appropriate error code.
+
+
+@section wlan_call_flow WLAN
+@subsection wlan_modify_config_call_flow Call flow to modify WLAN configuration
+
+@anchor fig_wlan_modify_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Configuration Call Flow}
+  \label{fig_wlan_modify_config_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_config.png,Modify WLAN Configuration Call Flow,80,80,Modify WLAN Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from WLAN factory.
+2. WLAN factory returns a shared pointer to the IWlanDeviceManger object to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the status, i.e., SERVICE_AVAILABLE or SERVICE_UNAVAILABLE, to indicate if the subsystem is ready.
+   5. If the subsystem is not ready, the application can wait for the callback provided in Step 1 for subsystem initialization status.
+   6. Application provided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. When the subsystem is ready, application calls IWlanDeviceManager::getStatus to get WLAN enablement status.
+8. Application receives WLAN enablement status.
+   9. If WLAN is enabled, application calls IWlanDeviceManager::enable(false) to disable WLAN.
+   10. Application receives WLAN disablement response and waits for WLAN status indication.
+   11. Application receives WLAN status indication IWlanDeviceManager::onEnableChanged(false) to indicate WLAN is disabled.
+12. Application sets desired configuration using IWlanDeviceManager::setMode to set desired number of access points and stations to be enabled.
+13. Application receives response.
+14. Application calls IWlanDeviceManager::enable(true) to enable WLAN.
+15. Application receives WLAN enablement response and waits for WLAN status indication.
+16. Application receives WLAN status indication IWlanDeviceManager::onEnableChanged(true) to indicate WLAN is enbaled.
+
+@subsection wlan_modify_station_config_call_flow Call flow to modify WLAN station configuration
+
+@anchor fig_wlan_modify_station_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_station_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Station Configuration Call Flow}
+  \label{fig_wlan_modify_station_config_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_station_config.png,Modify WLAN Station Configuration Call Flow,80,80,Modify WLAN Station Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from WLAN factory.
+2. WLAN factory returns shared pointer to IWlandeviceManager to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
+   5. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+   6. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. On Readiness, requests IStaInterfaceManager object from WLAN factory.
+8. WLAN factory returns shared pointer to IStaInterfaceManager to the application.
+9. Application calls IStaInterfaceManager::setIpConfig to set desired IP configurations.
+10. Application receives response set IP configuration.
+11. Application calls IStaInterfaceManager::managerStaService to restart wpa_supplicant daemon.
+12. Application receives response to restart wpa_supplicant daemon and station configuration shall be active at this stage.
+
+@subsection wlan_modify_ap_config_call_flow Call flow to Modify WLAN Access Point Configuration
+
+@anchor fig_wlan_modify_ap_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_ap_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Access Point Configuration Call Flow}
+  \label{fig_wlan_modify_config_ap_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_ap_config.png,Modify WLAN Access Point Configuration Call Flow,80,80,Modify WLAN Access Point Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from WLAN factory.
+2. WLAN factory returns shared pointer to IWlandeviceManager to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
+   5. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+   6. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. On Readiness, requests IApInterfaceManager object from WLAN factory.
+8. WLAN factory returns shared pointer to IApInterfaceManager to the application.
+9. Application calls IApInterfaceManager::setConfig to set desired IP configurations.
+10. Application receives response set configuration.
+11. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
+12. Application receives response to restart hostapd daemon and access point configuration shall be active at this stage.
 
 */

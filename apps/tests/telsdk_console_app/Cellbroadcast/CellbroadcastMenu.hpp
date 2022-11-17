@@ -59,7 +59,7 @@ private:
     void requestMessageFilters(std::vector<std::string> userInput);
     void requestActivationStatus(std::vector<std::string> userInput);
     void selectSimSlot(std::vector<std::string> userInput);
-    int slot_;
+    int slot_ = DEFAULT_SLOT_ID;
 
     void onRequestMsgFilterResponse(std::vector<telux::tel::CellBroadcastFilter> filters,
         bool isActivated, telux::common::ErrorCode errorCode);

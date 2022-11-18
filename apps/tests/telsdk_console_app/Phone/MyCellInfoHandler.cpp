@@ -193,24 +193,6 @@ void MyCellInfoCallback::cellInfoListResponse(
                    << std::endl;
             }
 
-            if(lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_CB << "LTE Reference Signal SNR(in dB): "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_CB << "LTE Reference Signal SNR(in dB): "
-                    << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr() * 0.1
-                    << std::endl;
-            }
-
-            if(lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_CB << "LTE Channel Quality Indicator: "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_CB << "LTE Channel Quality Indicator: "
-                    << lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
-                    << std::endl;
-            }
-
             if(lteCellInfo->getSignalStrengthInfo().getTimingAdvance()
                 == INVALID_SIGNAL_STRENGTH_VALUE) {
                PRINT_CB << "LTE Timing Advance: "<< "UNAVAILABLE" << std::endl;

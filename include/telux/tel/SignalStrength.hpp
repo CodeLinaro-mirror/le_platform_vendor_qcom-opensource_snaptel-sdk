@@ -194,6 +194,8 @@ public:
     * @deprecated This API not being supported
     *
     * @returns LteCqI.
+    *
+    * @deprecated As of version 1.54.0 this API is no longer supported.
     */
    const int getLteChannelQualityIndicator() const;
 

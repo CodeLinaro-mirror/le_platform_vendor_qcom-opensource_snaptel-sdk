@@ -172,24 +172,6 @@ void MySignalStrengthCallback::signalStrengthResponse(
                  << std::endl;
         }
 
-        if(signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_CB << "LTE Channel Quality Indicator: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_CB << "LTE Channel Quality Indicator: "
-                 << signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-                 << std::endl;
-        }
-
-        if(signalStrength->getLteSignalStrength()->getTimingAdvance()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_CB << "LTE Timing Advance: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_CB << "LTE Timing Advance: "
-                 << signalStrength->getLteSignalStrength()->getTimingAdvance()
-                 << std::endl;
-        }
-
         PRINT_CB << "LTE Signal Level: "
             << signalLevelToString(signalStrength->getLteSignalStrength()->getLevel())
              << std::endl;

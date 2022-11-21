@@ -102,14 +102,19 @@ void MySmsListener::onIncomingSms(int phoneId,
    std::cout << std::endl;
 
    std::string text = "";
-
-   PRINT_NOTIFICATION << " Consolidated Multipart Message: " << std::endl;
    std::vector<telux::tel::SmsMessage> messages = *(msgs.get());
-   PRINT_NOTIFICATION << "Count :" << messages.size() << std::endl;
+   if (messages.size() > 1) {
+      PRINT_NOTIFICATION << " Consolidated Multipart Message: " << std::endl;
+      PRINT_NOTIFICATION << " Count :" << messages.size() << std::endl;
+   } else {
+      PRINT_NOTIFICATION << " Message: " << std::endl;
+      PRINT_NOTIFICATION << " Count :" << messages.size() << std::endl;
+   }
    for (telux::tel::SmsMessage smsMsg : messages) {
       text = text + smsMsg.getText();
       std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
-      std::cout << "\033[1;35mSegment: \033[0m" << static_cast<int>(partInfo->segmentNumber)
+      if (partInfo) {
+         std::cout << "\033[1;35mSegment: \033[0m" << static_cast<int>(partInfo->segmentNumber)
                 << "\n SMS Part on phone ID " << phoneId << " from: "
                 << smsMsg.getSender() <<  " to: " << smsMsg.getReceiver()
                 << "\n Message Part: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
@@ -117,6 +122,7 @@ void MySmsListener::onIncomingSms(int phoneId,
                 << " NumberOfSegments:"
                 << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
                 << static_cast <int>(partInfo->segmentNumber) << std::endl;
+      }
       telux::tel::SmsMetaInfo metaInfo;
       auto status = smsMsg.getMetaInfo(metaInfo);
       if (status == telux::common::Status::SUCCESS) {

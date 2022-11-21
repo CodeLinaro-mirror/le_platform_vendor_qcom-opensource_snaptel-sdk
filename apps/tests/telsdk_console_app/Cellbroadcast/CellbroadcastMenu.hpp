@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file      CellbroadcastMenu.hpp
  * @brief     The reference application to demonstrate Cellbroadcast features
@@ -59,7 +65,7 @@ private:
     void requestMessageFilters(std::vector<std::string> userInput);
     void requestActivationStatus(std::vector<std::string> userInput);
     void selectSimSlot(std::vector<std::string> userInput);
-    int slot_;
+    int slot_ = DEFAULT_SLOT_ID;
 
     void onRequestMsgFilterResponse(std::vector<telux::tel::CellBroadcastFilter> filters,
         bool isActivated, telux::common::ErrorCode errorCode);

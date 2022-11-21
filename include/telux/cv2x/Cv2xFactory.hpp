@@ -111,7 +111,7 @@ public:
      *          nullptr otherwise.
      */
     virtual std::shared_ptr<ICv2xRadioManager> getCv2xRadioManager(
-        telux::common::InitResponseCb cb = nullptr) = 0;
+        telux::common::InitResponseCb cb = nullptr);
 
     /**
      * Get Cv2xConfig instance.
@@ -122,7 +122,7 @@ public:
      *          nullptr otherwise.
      */
     virtual std::shared_ptr<ICv2xConfig> getCv2xConfig(
-        telux::common::InitResponseCb cb = nullptr) = 0;
+        telux::common::InitResponseCb cb = nullptr);
 
     /**
      * Get Cv2xThrottleManager instance.
@@ -131,7 +131,7 @@ public:
      *          nullptr otherwise.
      */
     virtual std::shared_ptr<ICv2xThrottleManager> getCv2xThrottleManager(
-        telux::common::InitResponseCb cb = nullptr) = 0;
+        telux::common::InitResponseCb cb = nullptr);
 
 #ifndef TELUX_DOXY_SKIP
 protected:

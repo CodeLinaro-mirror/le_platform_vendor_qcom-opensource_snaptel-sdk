@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -121,6 +121,14 @@ int encode_as_wsa(msg_contents *mc) {
             mc->abuf.end - mc->abuf.data);
     if (rval.encoded < 0) {
         fprintf(stderr, "%s: failed to encode WSA %d\n", __func__, rval.encoded);
+        if (rval.failed_type) {
+            if (rval.failed_type->name) {
+                fprintf(stderr, "failed type:%s", rval.failed_type->name);
+            }
+            if (rval.failed_type->xml_tag) {
+                fprintf(stderr, " tag:%s", rval.failed_type->xml_tag);
+            }
+        }
         return -1;
     } else {
         if (rval.encoded % 8 == 0) {

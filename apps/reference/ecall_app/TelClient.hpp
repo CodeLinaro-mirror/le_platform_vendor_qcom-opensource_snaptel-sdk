@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,7 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef TELCLIENT_HPP
 #define TELCLIENT_HPP
 
@@ -77,25 +76,23 @@ using namespace telux::tel;
  * network scan fail indication is reported, when high capability switch is required.
  */
 struct ECallInfo {
-   bool transmitMsd;          /**< Set to true if MSD needs to be transmitted*/
-   ECallMsdData msdData;      /**< If the transmitMsd is true, msdData will holds all the details
-                                   required to construct an MSD */
-   bool isCustomNumber;       /**< Set to true if client is dialing*/
-   std::string dialNumber;    /**< If isCustomNumber is true, dialNumber holds the number */
-   ECallCategory category;    /**< ECall Category ie., automatic or normal */
-   ECallVariant variant;      /**< ECall Variant ie., test or emergency or voice call */
-   bool eCallNWScanFailed;   /**< Set to true if the emergency network scan fail indication is
-                                   reported */
-   bool triggerHighCapSwitch; /**< Set to true if high capability switch is required */
-   ECallMsdTransmissionStatus msdTransmissionStatus;
-                              /**< MSD transmission status */
-
+    bool transmitMsd;          /**< Set to true if MSD needs to be transmitted*/
+    ECallMsdData msdData;      /**< If the transmitMsd is true, msdData will holds all the details
+                                    required to construct an MSD */
+    bool isCustomNumber;       /**< Set to true if client is dialing*/
+    std::string dialNumber;    /**< If isCustomNumber is true, dialNumber holds the number */
+    ECallCategory category;    /**< ECall Category ie., automatic or normal */
+    ECallVariant variant;      /**< ECall Variant ie., test or emergency or voice call */
+    bool eCallNWScanFailed;    /**< Set to true if the emergency network scan fail indication is
+                                     reported */
+    bool triggerHighCapSwitch; /**< Set to true if high capability switch is required */
+    ECallMsdTransmissionStatus msdTransmissionStatus;
+    /**< MSD transmission status */
 };
-
 
 /** Listener class that provides eCall call status updates */
 class CallStatusListener {
-public:
+ public:
     /**
      * This function is called when the eCall is disconnected/ends
      */
@@ -119,7 +116,7 @@ public:
 class TelClient : public ICallListener,
                   public IMakeCallCallback,
                   public std::enable_shared_from_this<TelClient> {
-public:
+ public:
     /**
      * Initialize telephony subsystem
      */
@@ -140,9 +137,13 @@ public:
      *
      */
     telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-                    ECallVariant variant, bool transmitMsd,
-                    std::shared_ptr<CallStatusListener> callListener);
+        ECallVariant variant, bool transmitMsd, std::shared_ptr<CallStatusListener> callListener);
 
+    /**
+     * This function sends MSD for TPS eCall over IMS
+     *
+     */
+    telux::common::Status updateTpsEcallOverImsMSD(int phoneId, std::vector<uint8_t> msdPdurawData);
     /**
      * This function starts a voice eCall procedure to the specified phone number.
      * This is typically invoked when a TPS eCall is triggered.
@@ -158,8 +159,26 @@ public:
      *
      */
     telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-                    const std::string dialNumber, bool transmitMsd,
-                    std::shared_ptr<CallStatusListener> callListener);
+        const std::string dialNumber, bool transmitMsd,
+        std::shared_ptr<CallStatusListener> callListener);
+    /**
+     * This function starts a voice eCall procedure to the specified phone number over IMS.
+     * This is typically invoked when a TPS eCall over IMS is triggered.
+     *
+     * @param [in] phoneId      Represents phone corresponding to which eCall operation is
+     *                          performed
+     * @param [in] rawData      MSD data at call connect
+     * @param [in] dialNumber   phone number to be dialed
+     * @param [in] contentType  Content type for SIP request
+     * @param [in] acceptInfo   Accept info for SIP request
+     * @param [in] callListener pointer to CallStatusListener to notify call status changes
+     *
+     * @returns Status of startECall i.e success or suitable status code.
+     *
+     */
+    telux::common::Status startECall(int phoneId, const std::vector<uint8_t> rawData,
+        const std::string dialNumber, std::string contentType, std::string acceptInfo,
+        std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function updates the cached MSD data stored in Modem, which would be used in MSD pull
@@ -173,6 +192,13 @@ public:
      */
     telux::common::Status updateECallMSD(int phoneId, ECallMsdData msdData);
 
+    /**
+     * Response callback for MSD data for a Tps eCall over IMS
+     *
+     * @param [in] error  Error code for response of updateECallMSD i.e success or suitable error
+     * code
+     */
+    static void updateEcallResponse(telux::common::ErrorCode error);
     /**
      * This function is used to answer an incoming call
      *
@@ -231,38 +257,39 @@ public:
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
-    void onECallMsdTransmissionStatus(int phoneId,
-                    ECallMsdTransmissionStatus msdTransmissionStatus) override;
+    void onECallMsdTransmissionStatus(
+        int phoneId, ECallMsdTransmissionStatus msdTransmissionStatus) override;
+    void OnTpsMsdUpdateRequest(int phoneId) override;
     void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) override;
-    void makeCallResponse(telux::common::ErrorCode error,
-                                    std::shared_ptr<telux::tel::ICall>) override;
-    void hlapTimerStatusResponse(telux::common::ErrorCode error, int phoneId,
-                                 ECallHlapTimerStatus timersStatus);
+    void makeCallResponse(
+        telux::common::ErrorCode error, std::shared_ptr<telux::tel::ICall>) override;
+    void hlapTimerStatusResponse(
+        telux::common::ErrorCode error, int phoneId, ECallHlapTimerStatus timersStatus);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();
     ~TelClient();
 
-private:
+ private:
     void setECallProgressState(bool state);
-
     class AnswerCommandCallback : public telux::common::ICommandResponseCallback {
-    public:
+     public:
         void commandResponse(telux::common::ErrorCode error) override;
         AnswerCommandCallback(std::weak_ptr<TelClient> telClient);
-    private:
+
+     private:
         std::weak_ptr<TelClient> eCallTelClient_;
     };
     std::shared_ptr<AnswerCommandCallback> answerCommandCallback_;
 
     class HangupCommandCallback : public telux::common::ICommandResponseCallback {
-    public:
+     public:
         void commandResponse(telux::common::ErrorCode error) override;
     };
     std::shared_ptr<HangupCommandCallback> hangupCommandCallback_;
 
     class UpdateMsdCommandCallback : public telux::common::ICommandResponseCallback {
-    public:
+     public:
         void commandResponse(telux::common::ErrorCode error) override;
     };
     std::shared_ptr<UpdateMsdCommandCallback> updateMsdCommandCallback_;
@@ -278,32 +305,32 @@ private:
     std::mutex mutex_;
     std::shared_ptr<CallStatusListener> callListener_;
 
-    //Map to hold the ongoing eCall Info w.r.t phoneId
+    // Map to hold the ongoing eCall Info w.r.t phoneId
     std::map<int, ECallInfo> eCallDataMap_;
 
-    class EcallScanFailHandler :  public ICallListener,
-                                  public std::enable_shared_from_this<EcallScanFailHandler> {
-    public:
+    class EcallScanFailHandler : public ICallListener,
+                                 public std::enable_shared_from_this<EcallScanFailHandler> {
+     public:
         telux::common::Status init();
-       /**
-        * This function is called whenever there is a scan failure after one round of network scan
-        * during origination of emergency call or at any time during the emergency call.
-        *
-        * During origination of an ecall or in between an ongoing ecall, if the UE is in an area of
-        * no/poor coverage and loses service, the modem will perform network scan and try toi
-        * register on any available network.
-        * If the scan completes successfully and the device finds a suitable cell, the ecall will be
-        * placed and the call state changes to the active state.
-        * If the network scan fails then this function will be invoked after one round of network
-        * scan.
-        *
-        * @param [in] phoneId - Unique Id of phone on which network scan failure reported.
-        *
-        */
+        /**
+         * This function is called whenever there is a scan failure after one round of network scan
+         * during origination of emergency call or at any time during the emergency call.
+         *
+         * During origination of an ecall or in between an ongoing ecall, if the UE is in an area of
+         * no/poor coverage and loses service, the modem will perform network scan and try toi
+         * register on any available network.
+         * If the scan completes successfully and the device finds a suitable cell, the ecall will
+         * be placed and the call state changes to the active state. If the network scan fails then
+         * this function will be invoked after one round of network scan.
+         *
+         * @param [in] phoneId - Unique Id of phone on which network scan failure reported.
+         *
+         */
         void onEmergencyNetworkScanFail(int phoneId) override;
         EcallScanFailHandler(std::weak_ptr<TelClient> telClient);
         ~EcallScanFailHandler();
-    private:
+
+     private:
         telux::common::Status setHighCapability(int phoneId);
         telux::common::Status requestHighCapability();
 

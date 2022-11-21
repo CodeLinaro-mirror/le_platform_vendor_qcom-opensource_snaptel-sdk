@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -74,7 +74,7 @@ using namespace gn;
 
 class EtsiApplication : public ApplicationBase {
 public:
-    EtsiApplication(char *fileConfiguration);
+    EtsiApplication(char *fileConfiguration, MessageType msgType);
     EtsiApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort, char* fileConfiguration);
 

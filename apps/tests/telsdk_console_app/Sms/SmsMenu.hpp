@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -86,6 +86,12 @@ private:
    void sendRawSms(std::vector<std::string> userInput);
    void getSmscAddr(std::vector<std::string> userInput);
    void setSmscAddr(std::vector<std::string> userInput);
+   void sendRequestMessageList(std::vector<std::string> userInput);
+   void sendReadMessage(std::vector<std::string> userInput);
+   void deleteMessage(std::vector<std::string> userInput);
+   void requestPreferredStorage(std::vector<std::string> userInput);
+   void setPreferredStorage(std::vector<std::string> userInput);
+   void setTag(std::vector<std::string> userInput);
    void calculateMessageAttributes(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
    std::string smsEncodingTypeToString(telux::tel::SmsEncoding format);

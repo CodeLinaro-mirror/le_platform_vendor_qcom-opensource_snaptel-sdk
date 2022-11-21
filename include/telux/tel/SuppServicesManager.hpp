@@ -92,6 +92,7 @@ enum class ForwardReason {
     BUSY = 2,               /**< Forward when the device is busy on another call*/
     NOREPLY = 3,            /**< Forward when there is no reply */
     NOT_REACHABLE = 4,      /**< Forward when the device is unreachable */
+    NOT_LOGGED_IN = 23      /**< Forward when the device is not logged in */
 };
 
 /**

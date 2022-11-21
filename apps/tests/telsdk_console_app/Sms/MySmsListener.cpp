@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -77,7 +77,7 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMe
    if (partInfo) {
       PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId << " from: "
             << smsMsg->getSender() <<  " to: " << smsMsg->getReceiver()
-            << "\n Message: " << smsMsg->getText()
+            << "\n Message: " << smsMsg->getText() << "\n PDU: " << smsMsg->getPdu()
             << " \n RefNumber:" << static_cast <int>(partInfo->refNumber) << " NumberOfSegments:"
             << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
             << static_cast <int>(partInfo->segmentNumber)
@@ -85,7 +85,15 @@ void MySmsListener::onIncomingSms(int phoneId, std::shared_ptr<telux::tel::SmsMe
    } else {
       PRINT_NOTIFICATION << "Received SMS on phone ID " << phoneId << " from: "
             << smsMsg->getSender() <<  " to: " << smsMsg->getReceiver()
-            << "\n Message: " << smsMsg->getText() << std::endl;
+            << "\n Message: " << smsMsg->getText() << "\n PDU: " << smsMsg->getPdu()
+            << std::endl;
+   }
+
+   telux::tel::SmsMetaInfo metaInfo;
+   auto status = smsMsg->getMetaInfo(metaInfo);
+   if (status == telux::common::Status::SUCCESS) {
+      PRINT_NOTIFICATION << " MsgIndex:" << static_cast <int>(metaInfo.msgIndex) << " Tag: "
+            << SmsStorageCallback::convertTagTypeToString(metaInfo.tagType) << std::endl;
    }
 }
 
@@ -96,18 +104,25 @@ void MySmsListener::onIncomingSms(int phoneId,
    std::string text = "";
 
    PRINT_NOTIFICATION << " Consolidated Multipart Message: " << std::endl;
-
-   for (telux::tel::SmsMessage smsMsg : *(msgs.get())) {
+   std::vector<telux::tel::SmsMessage> messages = *(msgs.get());
+   PRINT_NOTIFICATION << "Count :" << messages.size() << std::endl;
+   for (telux::tel::SmsMessage smsMsg : messages) {
       text = text + smsMsg.getText();
       std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
       std::cout << "\033[1;35mSegment: \033[0m" << static_cast<int>(partInfo->segmentNumber)
                 << "\n SMS Part on phone ID " << phoneId << " from: "
                 << smsMsg.getSender() <<  " to: " << smsMsg.getReceiver()
-                << "\n Message Part: " << smsMsg.getText()
+                << "\n Message Part: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
                 << "\n RefNumber:" << static_cast <int>(partInfo->refNumber)
                 << " NumberOfSegments:"
                 << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
                 << static_cast <int>(partInfo->segmentNumber) << std::endl;
+      telux::tel::SmsMetaInfo metaInfo;
+      auto status = smsMsg.getMetaInfo(metaInfo);
+      if (status == telux::common::Status::SUCCESS) {
+         std::cout << "\n MsgIndex:" << static_cast <int>(metaInfo.msgIndex) << " Tag: "
+               << SmsStorageCallback::convertTagTypeToString(metaInfo.tagType) << std::endl;
+      }
    }
    std::cout << "\033[1;35mComplete Message: \033[0m" <<  "\n" << text << std::endl;
 }
@@ -178,3 +193,121 @@ void MySmsDeliveryCallback::commandResponse(telux::common::ErrorCode error) {
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
+
+std::string SmsStorageCallback::convertTagTypeToString(telux::tel::SmsTagType type) {
+   switch(type) {
+      case telux::tel::SmsTagType::UNKNOWN:
+         return "Unknown";
+      case telux::tel::SmsTagType::MT_READ:
+         return "MT_READ";
+      case telux::tel::SmsTagType::MT_NOT_READ:
+         return "MT_NOT_READ";
+   }
+   return "Unknown";
+}
+
+std::string SmsStorageCallback::convertStorageTypeToString(telux::tel::StorageType type) {
+   switch(type) {
+      case telux::tel::StorageType::UNKNOWN:
+         return "Unknown";
+      case telux::tel::StorageType::NONE:
+         return "NONE";
+      case telux::tel::StorageType::SIM:
+         return "SIM";
+   }
+   return "Unknown";
+}
+
+// Implementation of request message list callback
+void SmsStorageCallback::reqMessageListResponse(std::vector<telux::tel::SmsMetaInfo> infos,
+   telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " Request for message list sent successfully " << "\n";
+      PRINT_CB << " SMS List Size: " << infos.size() << "\n";
+      for (auto &info : infos) {
+         PRINT_CB << " Msg Index: " << info.msgIndex << " Tag Type: "
+                  << convertTagTypeToString(info.tagType) << "\n";
+      }
+   } else {
+      PRINT_CB << " Request for message list failed with errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+
+// Implementation of read message callback
+void SmsStorageCallback::readMsgResponse(telux::tel::SmsMessage smsMsg,
+   telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " Read message sent successfully " << "\n";
+      std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
+      if (partInfo) {
+         PRINT_CB << " Multi Part Message " << std::endl;
+         PRINT_CB << " Message: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
+               << " \n RefNumber:" << static_cast <int>(partInfo->refNumber) << " NumberOfSegments:"
+               << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
+               << static_cast <int>(partInfo->segmentNumber)
+               << std::endl;
+      } else {
+         PRINT_CB << "\n Message: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
+               << std::endl;
+      }
+   } else {
+      PRINT_CB << " Request for read message failed with errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+   telux::tel::SmsMetaInfo metaInfo;
+   auto status = smsMsg.getMetaInfo(metaInfo);
+   if (status == telux::common::Status::SUCCESS) {
+      PRINT_CB << " MsgIndex:" << static_cast <int>(metaInfo.msgIndex) << " Tag: "
+            << convertTagTypeToString(metaInfo.tagType) << std::endl;
+   }
+}
+
+// Implementation of delete message callback
+void SmsStorageCallback::deleteResponse(telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " Delete message successfully " << "\n";
+   } else {
+      PRINT_CB << " Delete message failed with errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+
+// Implementation of request preferred storage callback
+void SmsStorageCallback::reqPreferredStorageResponse(telux::tel::StorageType type,
+   telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " Request for preferred storage sent successfully " << "\n";
+      PRINT_CB << " Storage Type: " << convertStorageTypeToString(type) << "\n";
+   } else {
+      PRINT_CB << " Request for preferred storage failed with errorCode: " <<
+         static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+
+// Implementation of set preferred storage callback
+void SmsStorageCallback::setPreferredStorageResponse(telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " Set preferred storage successfully " << "\n";
+   } else {
+      PRINT_CB << " Set preferred storage failed with errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+
+// Implementation of set tag callback
+void SmsStorageCallback::setTagResponse(telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " Set tag successfully " << "\n";
+   } else {
+      PRINT_CB << " Set tag failed with errorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}
+

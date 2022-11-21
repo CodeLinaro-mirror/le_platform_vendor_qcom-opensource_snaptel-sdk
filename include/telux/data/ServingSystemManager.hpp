@@ -146,6 +146,15 @@ struct ServiceStatus {
 };
 
 /**
+ * @brief NR icon type.
+ */
+enum class NrIconType {
+    NONE  ,      /**< Unspecified       */
+    BASIC ,      /**< 5G basic         */
+    UWB   ,      /**< 5G ultrawide band */
+};
+
+/**
  * This function is called in response to requestServiceStatus API.
  *
  * The callback can be invoked from multiple different threads.
@@ -170,6 +179,21 @@ using RequestServiceStatusResponseCb
 */
 using RequestRoamingStatusResponseCb
     = std::function<void(RoamingStatus roamingStatus, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to RequestNrIconType API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] type                Current NR icon type @ref telux::data::NrIconType
+ * @param [in] error               Return code for whether the operation succeeded or failed.
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change
+ *          and could break backwards compatibility.
+*/
+using RequestNrIconTypeResponseCb
+    = std::function<void(NrIconType type, telux::common::ErrorCode error)>;
 
 /**
  * @brief Serving System Manager class provides APIs related to the serving system for data
@@ -216,6 +240,19 @@ public:
      *
      */
     virtual telux::common::Status requestRoamingStatus(RequestRoamingStatusResponseCb callback) = 0;
+
+    /**
+     * Queries the NR icon type to be displayed based on the serving system that the
+     * device has acquired service on.
+     *
+     * @param [in] callback         callback to get response for requestNrIconType
+     *
+     * @returns Status of requestNrIconType i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *         and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestNrIconType(RequestNrIconTypeResponseCb callback) = 0;
 
    /**
     * Register a listener for specific updates from serving system.
@@ -289,6 +326,13 @@ public:
     * @param [in] status      @ref RoamingStatus
     */
    virtual void onRoamingStatusChanged(RoamingStatus status) {};
+
+   /**
+    * This function is called whenever NR icon type is changed.
+    *
+    * @param [in] type      @ref NrIconType
+    */
+   virtual void onNrIconTypeChanged(NrIconType type) {};
 
    /**
     * Destructor of IServingSystemListener

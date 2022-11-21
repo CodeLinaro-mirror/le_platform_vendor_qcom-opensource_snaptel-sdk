@@ -54,6 +54,7 @@
 #define INPUT_BUSY 2
 #define INPUT_NO_REPLY 3
 #define INPUT_NOT_REACHABLE 4
+#define INPUT_NOT_LOGGED_IN 23
 #define SLOT_COUNT_1 1
 #define SLOT_COUNT_2 2
 #define SERVICE_CLASS_VOICE 1
@@ -172,12 +173,16 @@ void SuppServicesMenu::setCallForwardingPref(std::vector<std::string> userInput)
     ForwardReq req;
     int command = -1;
     req.serviceClass = SERVICE_CLASS_VOICE;
-    std::cout <<
-        "\nEnter reason for call forwarding 1-Unconditional, 2-Busy, 3-Noreply, 4-NotReachable) : ";
+    std::cout << "Enter reason for call forwarding: \n\
+    1 - Unconditional\n\
+    2 - Busy\n\
+    3 - Noreply\n\
+    4 - NotReachable\n\
+    23 - NotLoggedIn\n";
     std::cin >> command;
     Utils::validateInput(command);
     if (command == INPUT_UNCONDITIONAL || command == INPUT_BUSY || command == INPUT_NO_REPLY ||
-        command == INPUT_NOT_REACHABLE) {
+        command == INPUT_NOT_REACHABLE || command == INPUT_NOT_LOGGED_IN) {
         req.reason = static_cast<ForwardReason>(command);
         if (req.reason == ForwardReason::NOREPLY) {
             std::cout << "\nEnter no reply timer value : ";
@@ -221,12 +226,16 @@ void SuppServicesMenu::getCallForwardingPref(std::vector<std::string> userInput)
     ServiceClass serviceClass = SERVICE_CLASS_VOICE;
     int command = -1;
     ForwardReason reason = ForwardReason::UNCONDITIONAL;
-    std::cout <<
-        "\nEnter reason for call forwarding 1-Unconditional, 2-Busy, 3-Noreply, 4-NotReachable) : ";
+    std::cout << "Enter reason for call forwarding: \n\
+    1 - Unconditional\n\
+    2 - Busy\n\
+    3 - Noreply\n\
+    4 - NotReachable\n\
+    23 - NotLoggedIn\n";
     std::cin >> command;
     Utils::validateInput(command);
     if (command == INPUT_UNCONDITIONAL || command == INPUT_BUSY || command == INPUT_NO_REPLY ||
-        command == INPUT_NOT_REACHABLE) {
+        command == INPUT_NOT_REACHABLE || command == INPUT_NOT_LOGGED_IN) {
         reason = static_cast<ForwardReason>(command);
     } else {
         std::cout << "Invalid input" << std::endl;

@@ -8,6 +8,8 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Phone/MySubscriptionListener.cpp
    Phone/MySignalStrengthHandler.cpp
    Phone/MyCellInfoHandler.cpp
+   Phone/SuppServicesMenu.cpp
+   Phone/SuppServicesHandler.cpp
 
    Call/CallMenu.cpp
    Call/MyCallListener.cpp

@@ -77,6 +77,7 @@
 #include "NetworkMenu.hpp"
 #include "PhoneMenu.hpp"
 #include "ServingSystemMenu.hpp"
+#include "SuppServicesMenu.hpp"
 
 PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -225,9 +226,14 @@ void PhoneMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Exit_ECBM", {},
          std::bind(&PhoneMenu::exitEcbm, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> suppServicesMenuCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("15", "Supp_Services_Menu", {},
+                        std::bind(&PhoneMenu::suppServicesMenu, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("15", "Select_sim_slot", {},
+      ConsoleAppCommand("16", "Select_sim_slot", {},
                         std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
+
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListPhoneSubMenu
       = {getSignalStrengthCommand,
@@ -243,7 +249,8 @@ void PhoneMenu::init() {
          setECallOperatingModeCommand,
          requestECallOperatingModeCommand,
          requestEcbmCommand,
-         exitEcbmCommand};
+         exitEcbmCommand,
+         suppServicesMenuCommand};
 
    if (phones_.size() > 1) {
        commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
@@ -511,4 +518,10 @@ void PhoneMenu::exitEcbm(std::vector<std::string> userInput) {
     } else {
         std::cout << "ERROR - CallManager is null \n";
     }
+}
+
+void PhoneMenu::suppServicesMenu(std::vector<std::string> userInput) {
+   SuppServicesMenu suppServicesMenu("Supp Services Menu", "SuppServices> ");
+   suppServicesMenu.init();
+   suppServicesMenu.mainLoop();
 }

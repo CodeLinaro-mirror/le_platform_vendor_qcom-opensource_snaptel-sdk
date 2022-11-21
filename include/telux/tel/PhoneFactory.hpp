@@ -90,6 +90,7 @@
 #include <telux/tel/ImsSettingsManager.hpp>
 #include <telux/tel/HttpTransactionManager.hpp>
 #include <telux/tel/ImsServingSystemManager.hpp>
+#include <telux/tel/SuppServicesManager.hpp>
 
 namespace telux {
 
@@ -274,6 +275,22 @@ public:
    std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(SlotId slotId,
       telux::common::InitResponseCb callback = nullptr);
 
+   /**
+    * Get Supplementary service manager instance to set/get preference for supplementary services
+    * like call waiting, call forwarding etc.
+    *
+    * @param [in] SlotId     @ref telux::common::SlotId
+    * @param [in] callback   Optional callback pointer to get the response of the manager
+    *                        initialisation.
+    *
+    * @returns Pointer of ISuppServicesManager object.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual std::shared_ptr<ISuppServicesManager> getSuppServicesManager(
+      SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr);
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
@@ -283,6 +300,7 @@ private:
    std::shared_ptr<ISimProfileManager> simProfileManager_;
    std::shared_ptr<IImsSettingsManager> imsSettingsManager_;
    std::shared_ptr<IHttpTransactionManager> httpTransactionManager_;
+   std::map<int, std::shared_ptr<ISuppServicesManager>> suppSvcManagerMap_;
    std::map<SlotId, std::shared_ptr<IImsServingSystemManager>> imsServSysManagerMap_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
    std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
@@ -300,9 +318,10 @@ private:
    std::map<int, telux::common::ServiceStatus> networkSelMgrInitStatus_;
    std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
    std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
+   std::map<int, std::vector<telux::common::InitResponseCb>> suppSvcCallbacks_;
+   std::map<int, telux::common::ServiceStatus> suppSvcInitStatus_;
    std::vector<telux::common::InitResponseCb> callMgrInitCallbacks_;
    common::ServiceStatus callMgrInitStatus_ = common::ServiceStatus::SERVICE_UNAVAILABLE;
-
    void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
    void onHttpTransactionManagerResponse(telux::common::ServiceStatus status);
    void onServingSystemInitResponse(int slotId, telux::common::ServiceStatus status);
@@ -312,6 +331,7 @@ private:
    void initImsServSysManagerNotifier(telux::common::ServiceStatus status, SlotId slotId);
    void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
    void onCallMgrInitResponse(telux::common::ServiceStatus status);
+   void onSuppSvcInitResponse(SlotId slotId, telux::common::ServiceStatus status);
 
    PhoneFactory();
    ~PhoneFactory();

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -93,14 +93,36 @@ const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
  * @{ */
 
 /**
- * Represent type of device like SPEAKER, MIC, etc.
+ * List of mic and speaker devices supported in SDK
+ * ----------------- mic --------------------------
+ * DEVICE_TYPE_MIC --> SPEAKER MIC
+ * DEVICE_TYPE_MIC_2 --> HANDSET MIC
+ * DEVICE_TYPE_MIC_3 --> HEADSET MIC
+ * DEVICE_TYPE_BT_SCO_MIC --> BLUETOOTH MIC
+ * DEVICE_TYPE_PROXY_MIC --> PROXY MIC
+ * -------------------------------------------------
+ * --------------- speaker -------------------------
+ * DEVICE_TYPE_SPEAKER --> SPEAKER
+ * DEVICE_TYPE_SPEAKER_2 --> HANDSET
+ * DEVICE_TYPE_SPEAKER_3 --> HEADSET
+ * DEVICE_TYPE_BT_SCO_SPEAKER --> BLUETOOTH
+ * DEVICE_TYPE_PROXY_SPEAKER --> PROXY
+ * --------------------------------------------------
  */
 enum DeviceType {
     DEVICE_TYPE_NONE = -1,
     /* output devices */
     DEVICE_TYPE_SPEAKER = 1,
+    DEVICE_TYPE_SPEAKER_2 = 2,
+    DEVICE_TYPE_SPEAKER_3 = 3,
+    DEVICE_TYPE_BT_SCO_SPEAKER = 4,
+    DEVICE_TYPE_PROXY_SPEAKER = 5,
     /* input devices */
     DEVICE_TYPE_MIC = 257,
+    DEVICE_TYPE_MIC_2 = 258,
+    DEVICE_TYPE_MIC_3 = 259,
+    DEVICE_TYPE_BT_SCO_MIC = 260,
+    DEVICE_TYPE_PROXY_MIC = 261,
 };
 
 /**

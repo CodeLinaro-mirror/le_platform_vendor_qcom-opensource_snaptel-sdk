@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -51,37 +87,44 @@ NetworkMenu::NetworkMenu(std::string appName, std::string cursor)
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
    networkManager_
       = telux::tel::PhoneFactory::getInstance().getNetworkSelectionManager(DEFAULT_SLOT_ID);
+   if (!networkManager_) {
+       std::cout << " *** ERROR - Invalid network manager" << std::endl;
+       return;
+   }
 
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
    startTime = std::chrono::system_clock::now();
-
    //  Check if network subsystem is ready
    bool subSystemStatus = networkManager_->isSubsystemReady();
 
    //  If network subsystem is not ready, wait for it to be ready
    if(!subSystemStatus) {
-      std::cout << "\n\n Network subsystem is not ready, Please wait." << std::endl;
-      std::future<bool> f = networkManager_->onSubsystemReady();
-      // If we want to wait unconditionally for network subsystem to be ready
-      subSystemStatus = f.get();
+       std::cout << "\n\n Network subsystem is not ready, Please wait." << std::endl;
+       std::future<bool> f = networkManager_->onSubsystemReady();
+       // If we want to wait unconditionally for network subsystem to be ready
+       subSystemStatus = f.get();
    }
 
    //  Exit the application, if SDK is unable to initialize network subsystems
    if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready: " << elapsedTime.count() << "s\n"
-                << std::endl;
+       endTime = std::chrono::system_clock::now();
+       std::chrono::duration<double> elapsedTime = endTime - startTime;
+       std::cout << "Elapsed Time for Subsystems to ready: " << elapsedTime.count() << "s\n"
+           << std::endl;
    } else {
-      std::cout << " *** ERROR - Unable to initialize network subsystem" << std::endl;
-      exit(0);
+       std::cout << " *** ERROR - Unable to initialize network subsystem" << std::endl;
+       exit(0);
    }
 
    networkListener_ = std::make_shared<MyNetworkSelectionListener>();
+   if (!networkListener_) {
+       std::cout << " *** ERROR - Unable to create network listener" << std::endl;
+       return;
+   }
    telux::common::Status status = networkManager_->registerListener(networkListener_);
 
    if(status != telux::common::Status::SUCCESS) {
-      std::cout << "Failed to registerListener for network Manager" << std::endl;
+       std::cout << "Failed to registerListener for network Manager" << std::endl;
    }
 }
 

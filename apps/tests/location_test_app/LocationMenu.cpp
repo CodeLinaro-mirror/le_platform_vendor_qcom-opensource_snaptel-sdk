@@ -87,6 +87,7 @@ telux::common::Status LocationMenu::initLocationManager(std::shared_ptr<ILocatio
       posListener->setDetailedLocationReportFlag(false);
       posListener->setBasicLocationReportFlag(false);
       posListener->setDataInfoFlag(false);
+      posListener->setLocSystemInfoFlag(false);
 
       //Registering listener for fixes
       locationManager->registerListenerEx(posListener_);
@@ -154,9 +155,20 @@ int LocationMenu::init() {
       ConsoleAppCommand("6", "C-TUNC", {},
                         std::bind(&LocationMenu::enableDisableTunc, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> registerLocationSystemInfo =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7",
+            "Register Location System Info", {},
+                std::bind(&LocationMenu::registerLocationSystemInfo, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> deRegisterLocationSystemInfo =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8",
+            "Deregister Location System Info", {},
+              std::bind(&LocationMenu::deRegisterLocationSystemInfo, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
       = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
-         stopReportsCommand, enableReportLogsCommand, enableDisableTunc};
+         stopReportsCommand, enableReportLogsCommand, enableDisableTunc, registerLocationSystemInfo,
+         deRegisterLocationSystemInfo};
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
 
@@ -363,6 +375,20 @@ void LocationMenu::enableDisableTunc(std::vector<std::string> userInput) {
    }
 }
 
+void LocationMenu::registerLocationSystemInfo(std::vector<std::string> userInput) {
+    myLocCmdResponseCb_ =
+        std::make_shared<MyLocationCommandCallback>("Register Location System Info");
+    locationManager_->registerForSystemInfoUpdates(posListener_, std::bind(
+        &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_, std::placeholders::_1));
+}
+
+void LocationMenu::deRegisterLocationSystemInfo(std::vector<std::string> userInput) {
+    myLocCmdResponseCb_ =
+        std::make_shared<MyLocationCommandCallback>("Deregister Location System Info");
+    locationManager_->deRegisterForSystemInfoUpdates(posListener_, std::bind(
+        &MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_, std::placeholders::_1));
+}
+
 int LocationMenu::enableReportLogsUtility() {
    char delimiter = '\n';
    std::string usrInput;
@@ -412,7 +438,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  1 - Basic_location_notifications" << std::endl;
      std::cout << "  2 - Detailed/Detailed_engine_location_notifications" << std::endl;
      std::cout << "  3 - SV_info_notifications" << std::endl;
-     std::cout << "  4 - Data_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  4 - Data_info_notifications" << std::endl;
+     std::cout << "  5 - Location_system_information" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -430,6 +457,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableSvInfoLogs();
      } else if(usrInput == "4") {
          LocationMenu::enableDataInfoLogs();
+     } else if(usrInput == "5") {
+         LocationMenu::enableLocationSystemInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -459,6 +488,15 @@ void LocationMenu::enableDataInfoLogs() {
    } else {
       std::cout << "ERROR: invalid input, please enter 0 or 1\n";
    }
+}
+
+void LocationMenu::enableLocationSystemInfoLogs() {
+    int opt = enableReportLogsUtility();
+    if((opt == 0) || (opt == 1)) {
+        posListener_->setLocSystemInfoFlag(opt);
+    } else {
+        std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+    }
 }
 
 // Main function that displays the console and processes user input

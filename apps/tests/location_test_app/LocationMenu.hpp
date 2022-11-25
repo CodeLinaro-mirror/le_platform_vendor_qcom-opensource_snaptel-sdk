@@ -66,12 +66,15 @@ public:
    void startBasicReports(std::vector<std::string> userInput);
    void stopReports(std::vector<std::string> userInput);
    void enableDisableTunc(std::vector<std::string> userInput);
+   void registerLocationSystemInfo(std::vector<std::string> userInput);
+   void deRegisterLocationSystemInfo(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();
    void enableDetailedLocationReportLogs();
    void enableSvInfoLogs();
    void enableDataInfoLogs();
+   void enableLocationSystemInfoLogs();
 
 private:
    telux::common::Status initLocationManager(std::shared_ptr<ILocationManager>

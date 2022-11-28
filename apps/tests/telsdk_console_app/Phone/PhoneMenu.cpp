@@ -421,12 +421,14 @@ void PhoneMenu::servingSystemMenu(std::vector<std::string> userInput) {
    ServingSystemMenu servingSystemMenu("Serving System Menu", "ServingSystem> ");
    servingSystemMenu.init();
    servingSystemMenu.mainLoop();
+   ConsoleApp::displayMenu();
 }
 
 void PhoneMenu::networkMenu(std::vector<std::string> userInput) {
    NetworkMenu networkMenu("Network Menu", "Network> ");
    networkMenu.init();
    networkMenu.mainLoop();
+   ConsoleApp::displayMenu();
 }
 
 void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
@@ -548,4 +550,5 @@ void PhoneMenu::suppServicesMenu(std::vector<std::string> userInput) {
    SuppServicesMenu suppServicesMenu("Supp Services Menu", "SuppServices> ");
    suppServicesMenu.init();
    suppServicesMenu.mainLoop();
+   ConsoleApp::displayMenu();
 }

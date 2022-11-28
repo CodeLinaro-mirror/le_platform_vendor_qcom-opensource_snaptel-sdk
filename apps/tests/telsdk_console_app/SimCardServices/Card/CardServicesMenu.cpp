@@ -895,4 +895,5 @@ void CardServicesMenu::cardFileMenu(std::vector<std::string> userInput) {
    CardFileMenu cardFileMenu("Card File Menu", "CardFile> ");
    cardFileMenu.init();
    cardFileMenu.mainLoop();
+   ConsoleApp::displayMenu();
 }

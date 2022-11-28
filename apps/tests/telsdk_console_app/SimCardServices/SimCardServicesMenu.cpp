@@ -58,10 +58,12 @@ void SimCardServicesMenu::cardServicesMenu(std::vector<std::string> userInput) {
    CardServicesMenu cardServicesMenu("Card Services Menu", "card> ");
    cardServicesMenu.init();
    cardServicesMenu.mainLoop();  // Main loop to continuously read and execute commands
+   ConsoleApp::displayMenu();
 }
 
 void SimCardServicesMenu::sapCardMenu(std::vector<std::string> userInput) {
    SapCardServicesMenu sapCardServicesMenu("SapCard Services Menu", "sap> ");
    sapCardServicesMenu.init();
    sapCardServicesMenu.mainLoop();  // Main loop to continuously read and execute commands
+   ConsoleApp::displayMenu();
 }

@@ -721,6 +721,76 @@ enum PositioningEngineType{
 /** Specifies PositioningEngineType mask */
 using PositioningEngine = uint32_t;
 
+/** Specify the set of valid fields in LocationSystemInfo*/
+enum LocationSystemInfoValidityType{
+    /** contains current leap second or leap second change info */
+    LOCATION_SYS_INFO_LEAP_SECOND = (1ULL << 0),
+};
+
+/** Specifies LocationSystemInfoValidityType mask */
+using LocationSystemInfoValidity = uint32_t;
+
+/** Specify leap second change event info.*/
+struct LeapSecondChangeInfo {
+    /** GPS timestamp that corrresponds to the last known leap
+     *  second change event.
+     *  The info can be available on two scenario:
+     *  1: This leap second change event has been scheduled and yet
+     *     to happen
+     *  2: This leap second change event has already happened and
+     *     next leap second change event has not yet been
+     *     scheduled.*/
+    TimeInfo timeInfo;
+    /** Number of leap seconds prior to the leap second change event
+     *  that corresponds to the timestamp at timeInfo.*/
+    uint8_t leapSecondsBeforeChange;
+    /** Number of leap seconds after the leap second change event
+     *  that corresponds to the timestamp at timeInfo.*/
+    uint8_t leapSecondsAfterChange;
+};
+
+/** Specify the valid fields in LeapSecondInfo.*/
+enum LeapSecondInfoValidityType{
+    /** Validity of LeapSecondInfo::current.*/
+    LEAP_SECOND_SYS_INFO_CURRENT_LEAP_SECONDS_BIT = (1ULL << 0),
+    /** Validity of LeapSecondInfo::info.*/
+    LEAP_SECOND_SYS_INFO_LEAP_SECOND_CHANGE_BIT = (1ULL << 1)
+};
+
+/** Specifies LeapSecondInfoValidityType mask */
+using LeapSecondInfoValidity = uint32_t;
+
+/** Specify leap second info, including current leap second and
+ *  leap second change event info if available.*/
+struct LeapSecondInfo {
+    /** Validity of LeapSecondInfo fields. */
+    LeapSecondInfoValidity valid;
+    /** Current leap seconds, in unit of seconds.
+     *  This info will only be available only if the leap second change info
+     *  is not available.*/
+    uint8_t               current;
+    /** Leap second change event info. The info can be available on
+     *  two scenario:
+     *  1: this leap second change event has been scheduled and yet
+     *     to happen
+     *  2: this leap second change event has already happened and
+     *     next leap second change event has not yet been scheduled.
+     *  If leap second change info is available, to figure out the
+     *  current leap second info, compare current gps time with
+     *  LeapSecondChangeInfo::timeInfo to know whether
+     *  to choose leapSecondBefore or leapSecondAfter as current
+     *  leap second.*/
+    LeapSecondChangeInfo  info;
+};
+
+/** Specify location system information.*/
+struct LocationSystemInfo {
+    /** validity of LocationSystemInfo::info*/
+    LocationSystemInfoValidity valid;
+    /** Current leap second and leap second info.*/
+    LeapSecondInfo   info;
+};
+
 /**
  * @brief IGpsTime provides interface to get current GPS week and elapsed
  *        time in current GPS week

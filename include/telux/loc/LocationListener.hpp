@@ -120,6 +120,28 @@ public:
  */
   virtual ~ILocationListener() {}
 };
+
+class ILocationSystemInfoListener {
+public:
+/**
+ * This function is called when device receives location related system information
+ * such as leap second change.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
+ * @param [in] locationSystemInfo - contains location system information such as
+ *                                  current leap seconds change
+ */
+  virtual void onLocationSystemInfo(const LocationSystemInfo &locationSystemInfo) {}
+
+/**
+ * Destructor of ILocationSystemInfoListener
+ */
+  virtual ~ILocationSystemInfoListener() {}
+
+};
+
 /** @} */ /* end_addtogroup telematics_location */
 }         // end of namespace loc
 

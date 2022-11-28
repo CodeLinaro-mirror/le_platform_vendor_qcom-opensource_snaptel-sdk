@@ -244,6 +244,43 @@ public:
       removeListener(std::weak_ptr<ILocationListener> listener) = 0;
 
 /**
+ * This API registers a ILocationSystemInfoListener listener and will receive information related
+ * to location system that are not tied with location fix session, e.g.: next leap second event.
+ * The startBasicReports, startDetailedReports, startDetailedEngineReports does not need to be
+ * called before calling this API, in order to receive updates.
+ *
+ * @param [in] listener - Pointer of ILocationSystemInfoListener object.
+ *
+ * @param [in] callback - Optional callback to get the response of location
+ *                        system info.
+ *
+ * @returns Status of getLocationSystemInfo i.e success or suitable status code.
+ *
+ *
+ */
+  virtual telux::common::Status
+      registerForSystemInfoUpdates(std::weak_ptr<ILocationSystemInfoListener> listener,
+          telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API removes a previously registered listener and will also stop receiving informations
+ * related to location system for that particular listener.
+ *
+ * @param [in] listener - Previously registered ILocationSystemInfoListener that needs to be
+ *                        removed.
+ *
+ * @param [in] callback - Optional callback to get the response of location
+ *                        system info.
+ *
+ * @returns Status of deRegisterForSystemInfoUpdates success or suitable status code.
+ *
+ *
+ */
+  virtual telux::common::Status
+      deRegisterForSystemInfoUpdates(std::weak_ptr<ILocationSystemInfoListener> listener,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
  * Configures position report timeout.
  * LocationManager tries to determine the position until the position report timeout has
  * elapsed. If the final position cannot be determined before the timeout period, it returns

@@ -33,7 +33,8 @@
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationListener.hpp>
 
-class MyLocationListener : public telux::loc::ILocationListener {
+class MyLocationListener : public telux::loc::ILocationListener,
+   public telux::loc::ILocationSystemInfoListener {
 public:
    void onBasicLocationUpdate(
       const std::shared_ptr<telux::loc::ILocationInfoBase> &locationInfo) override;
@@ -44,10 +45,13 @@ public:
 
    void onGnssSignalInfo(const std::shared_ptr<telux::loc::IGnssSignalInfo> &gnssDatainfo) override;
 
+   void onLocationSystemInfo(const telux::loc::LocationSystemInfo &locationSystemInfo) override;
+
    void setDetailedLocationReportFlag(bool enable);
    void setBasicLocationReportFlag(bool enable);
    void setSvInfoFlag(bool enable);
    void setDataInfoFlag(bool enable);
+   void setLocSystemInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -56,6 +60,7 @@ private:
    bool isSvInfoFlagEnabled_ = false, isDetailedReportFlagEnabled_ = false;
    bool isBasicReportFlagEnabled_ = false, isDataInfoFlagEnabled_ = false;
    bool isTimerExpired = false;
+   bool isLocSysInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);

@@ -722,6 +722,46 @@ void MyLocationListener::onGnssSignalInfo(
    std::cout << "*************************************************************" << std::endl;
 }
 
+void MyLocationListener::onLocationSystemInfo(const telux::loc::LocationSystemInfo
+     &locationSystemInfo) {
+   if(!isLocSysInfoFlagEnabled_) {
+      return;
+   }
+   std::cout << std::endl;
+   PRINT_NOTIFICATION << "\n************ Location System Information *************" << std::endl;
+   std::cout << "<<< onLocationSystemInfoCb\n" << std::endl;
+   std::cout << " LocationSystemInfoValidity : " << std::endl;
+   telux::loc::LocationSystemInfoValidity locationSystemInfoMask = locationSystemInfo.valid;
+   if(locationSystemInfoMask & telux::loc::LOCATION_SYS_INFO_LEAP_SECOND) {
+       std::cout << " Contains current leap second or leap second change info" << std::endl;
+   }
+   std::cout << " LeapSecondInfoValidity : " << std::endl;
+   telux::loc::LeapSecondInfoValidity leapSecondSysInfoMask = locationSystemInfo.info.
+       valid;
+   if(leapSecondSysInfoMask & telux::loc::LEAP_SECOND_SYS_INFO_CURRENT_LEAP_SECONDS_BIT) {
+       std::cout << " Current leap second info is available." << std::endl;
+   }
+   if(leapSecondSysInfoMask & telux::loc::LEAP_SECOND_SYS_INFO_LEAP_SECOND_CHANGE_BIT) {
+       std::cout << " The last known leap change event is available." << std::endl;
+   }
+   std::cout << " leapSecondCurrent : " << unsigned(locationSystemInfo.info.current) << std::endl;
+   telux::loc::TimeInfo timeInfo = locationSystemInfo.info.info.
+       timeInfo;
+   std::cout << "TimeInfo : " << std::endl;
+
+   std::cout << "System time week: " << timeInfo.systemWeek << std::endl;
+   std::cout << "System time week ms: " << timeInfo.systemMsec << std::endl;
+   std::cout << "System clk time: " << timeInfo.systemClkTimeBias << std::endl;
+   std::cout << "System clk time uncertainty valid: " << timeInfo.systemClkTimeUncMs << std::endl;
+   std::cout << "System reference valid: " << timeInfo.refFCount << std::endl;
+   std::cout << "System num clock reset valid: " << timeInfo.numClockResets << std::endl;
+
+   std::cout << " leapSecondsBeforeChange" << unsigned(locationSystemInfo.info.
+       info.leapSecondsBeforeChange) << std::endl;
+   std::cout << " leapSecondsAfterChange" << unsigned(locationSystemInfo.info.
+       info.leapSecondsAfterChange) << std::endl;
+}
+
 void MyLocationListener::setDetailedLocationReportFlag(bool enable) {
    isDetailedReportFlagEnabled_ = enable;
 }
@@ -736,4 +776,8 @@ void MyLocationListener::setSvInfoFlag(bool enable) {
 
 void MyLocationListener::setDataInfoFlag(bool enable) {
    isDataInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setLocSystemInfoFlag(bool enable) {
+   isLocSysInfoFlagEnabled_ = enable;
 }

@@ -109,6 +109,17 @@ public:
     virtual void onStatusChanged(Cv2xStatusEx status) {}
 
     /**
+     * Called when CV2X SLSS Rx is enabled and any of below events has occurred:
+     *  - A new SLSS synce reference UE is detected, lost, or selected as the timing source,
+     *    report the present sync reference UEs.
+     *  - UE timing source switches from SLSS to GNSS, report 0 sync reference UE.
+     *  - SLSS Rx is disabled, report 0 sync reference UE.
+     *  - Cv2x is stopped, report 0 sync reference UE.
+     * @param [in] info - CV2X SLSS Rx information.
+     */
+    virtual void onSlssRxInfoChanged(const SlssRxInfo& slssInfo) {}
+
+    /**
      * Destructor for ICv2xListener
      */
     virtual ~ICv2xListener() {}
@@ -171,6 +182,17 @@ using RequestCv2xStatusCallbackEx = std::function<void (Cv2xStatusEx status,
  */
 using UpdateConfigurationCallback =
     std::function<void (telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref ICv2xRadioManager::getCv2xSlssRxInfo
+ *
+ * @param [out] info     - Cv2x SLSS Rx Information
+ * @param [out] error    - SUCCESS if Cv2x SLSS Rx Information was successully retrieved
+ *                       - @ref SUCCESS
+ *                       - @ref GENERIC_FAILURE
+ */
+using GetSlssRxInfoCallback = std::function<void (const SlssRxInfo& info,
+                                                  telux::common::ErrorCode error)>;
 
 
 /** @addtogroup telematics_cv2x_cpp
@@ -327,6 +349,15 @@ public:
      */
     virtual telux::common::Status removeL2Filters(const std::vector<uint32_t> &l2IdList,
         common::ResponseCallback cb) = 0;
+
+    /**
+     * Get CV2X SLSS Rx information from modem.
+     *
+     * @param [in] cb   - Callback that is invoked when Cv2x SLSS Rx information is retrieved.
+     *
+     * @returns SUCCESS on success. Error status otherwise.
+     */
+    virtual telux::common::Status getSlssRxInfo(GetSlssRxInfoCallback cb) = 0;
 
     virtual ~ICv2xRadioManager() {}
 };

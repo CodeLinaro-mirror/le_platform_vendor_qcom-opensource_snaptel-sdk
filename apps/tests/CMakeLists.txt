@@ -18,6 +18,7 @@ if(NOT BUILD_FOR_SIMULATION)
     endif (PWR_MGR_QMI_LIB_FOUND)
 
     if(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
+        add_subdirectory( cv2x_slss_rx_app)
         add_subdirectory( cv2x_tcp_test )
         add_subdirectory( cv2x_unicast_app)
         add_subdirectory( cv2x_config_app )

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file: Cv2xConfigApp.cpp
  *
@@ -102,63 +138,6 @@ private:
     std::atomic<bool> promiseSet_{false};
 };
 
-class Cv2xStatusListener : public ICv2xListener {
-public:
-
-    Cv2xStatusListener(Cv2xStatus status) {
-        cv2xStatus_ = status;
-    };
-
-    Cv2xStatus getCurrentStatus() {
-        lock_guard<mutex> lock(cv2xStatusMutex_);
-        return cv2xStatus_;
-    }
-
-    void waitForCv2xStatus(Cv2xStatusType status) {
-        // get the inital status
-        Cv2xStatus tmpStatus;
-        {
-            lock_guard<mutex> lock(cv2xStatusMutex_);
-            tmpStatus = cv2xStatus_;
-        }
-
-        while (tmpStatus.rxStatus != status or tmpStatus.txStatus != status) {
-            // the initial status or the received status is not as expected,
-            // wait for the next status change
-            statusPromise_ = promise<Cv2xStatus>();
-            promiseSet_ = false;
-            tmpStatus = statusPromise_.get_future().get();
-        }
-    }
-
-    void onStatusChanged(Cv2xStatus status) override {
-        {
-            lock_guard<mutex> lock(cv2xStatusMutex_);
-
-            if (status.rxStatus != cv2xStatus_.rxStatus or
-                status.txStatus != cv2xStatus_.txStatus) {
-                cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
-                cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
-                cv2xStatus_ = status;
-            } else {
-                // no need set promise if status is not changed
-                return;
-            }
-        }
-
-        if (not promiseSet_) {
-            promiseSet_ = true;
-            statusPromise_.set_value(status);
-        }
-    }
-
-private:
-    promise<Cv2xStatus> statusPromise_;
-    std::atomic<bool> promiseSet_{false};
-    mutex cv2xStatusMutex_;
-    Cv2xStatus cv2xStatus_;
-};
-
 Cv2xConfigApp::Cv2xConfigApp()
     : ConsoleApp("Cv2x Config Menu", "config> ") {
 }
@@ -166,10 +145,6 @@ Cv2xConfigApp::Cv2xConfigApp()
 Cv2xConfigApp::~Cv2xConfigApp() {
    if(cv2xConfig_ and configListener_) {
       cv2xConfig_->deregisterListener(configListener_);
-   }
-
-   if(cv2xRadioManager_ and cv2xStatusListener_) {
-      cv2xRadioManager_->deregisterListener(cv2xStatusListener_);
    }
 }
 
@@ -222,52 +197,6 @@ int Cv2xConfigApp::cv2xInit() {
         return EXIT_FAILURE;
     }
 
-    // Get handle to Cv2xRadioManager
-    bool cv2xRadioManagerStatusUpdated = false;
-    telux::common::ServiceStatus cv2xRadioManagerStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-
-    auto cb = [&](telux::common::ServiceStatus status) {
-        std::lock_guard<std::mutex> lock(mtx);
-        cv2xRadioManagerStatusUpdated = true;
-        cv2xRadioManagerStatus = status;
-        cv.notify_all();
-    };
-
-    cv2xRadioManager_ = cv2xFactory.getCv2xRadioManager(cb);
-    if (!cv2xRadioManager_) {
-        cout << "Error: failed to get Cv2xRadioManager." << endl;
-        return EXIT_FAILURE;
-    }
-    {
-        std::unique_lock<std::mutex> lk(mtx);
-        cv.wait(lk, [&] { return cv2xRadioManagerStatusUpdated; });
-    }
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xRadioManagerStatus) {
-        cerr << "C-V2X Radio Manager initialization failed, exiting" << endl;
-        return EXIT_FAILURE;
-    }
-
-    // get initial Cv2x status
-    promise<Cv2xStatus> prom;
-    auto res = cv2xRadioManager_->requestCv2xStatus([&prom](Cv2xStatus status, ErrorCode code)
-                                                    {
-                                                        prom.set_value(status);
-                                                    });
-    if (Status::SUCCESS != res) {
-        cout << "Error : Request for Cv2x status failed!" << endl;
-        return EXIT_FAILURE;
-    };
-    auto status = prom.get_future().get();
-
-    // register listener for cv2x status change
-    cv2xStatusListener_ = make_shared<Cv2xStatusListener>(status);
-    if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
-        cout << "Error : register Cv2x status listener failed!" << endl;
-        return EXIT_FAILURE;
-    }
-
     return EXIT_SUCCESS;
 }
 
@@ -291,85 +220,6 @@ void Cv2xConfigApp::consoleInit() {
         = {retrieveCmd, updateCmd, enforceExpirationCmd};
     ConsoleApp::addCommands(commandsList);
     ConsoleApp::displayMenu();
-}
-
-int Cv2xConfigApp::startCv2xMode() {
-    auto sp = std::dynamic_pointer_cast<Cv2xStatusListener>(cv2xStatusListener_);
-    if (!sp) {
-        cout << "Error: Get cv2x status listener failed!" << endl;
-        return EXIT_FAILURE;
-    }
-
-    // check if Cv2x is already started before running the test
-    auto status = sp->getCurrentStatus();
-    if (Cv2xStatusType::UNKNOWN == status.rxStatus or
-        Cv2xStatusType::UNKNOWN == status.txStatus) {
-        cout << "Error : Cv2x status is unknown!" << endl;
-        return EXIT_FAILURE;
-    }
-
-    if (Cv2xStatusType::INACTIVE == status.rxStatus and
-        Cv2xStatusType::INACTIVE == status.txStatus) {
-        // need start cv2x later
-        cout << "Cv2x is not started." << endl;
-    } else if (Cv2xStatusType::ACTIVE == status.rxStatus and
-        Cv2xStatusType::ACTIVE == status.txStatus) {
-        cout << "Cv2x is started and active." << endl;
-        return EXIT_SUCCESS;
-    } else {
-        // cv2x is started before running this tool but not ready
-        cout << "Error: Cv2x is started already but status is not active!" << endl;
-        return EXIT_FAILURE;
-    }
-
-    // start cv2x mode
-    cout << "Starting Cv2x..." << endl;
-
-    promise<ErrorCode> prom;
-    if (Status::SUCCESS != cv2xRadioManager_->startCv2x(
-        [&prom](ErrorCode error) { prom.set_value(error); })) {
-        cout << "Error : Unable to start Cv2x mode!" << endl;
-        return EXIT_FAILURE;
-    }
-
-    auto res = prom.get_future().get();
-    if (ErrorCode::SUCCESS != res) {
-        cout << "Error : Start Cv2x mode failed with error code: "
-            << static_cast<int>(res) << "!" << endl;
-        return EXIT_FAILURE;
-    }
-    stopCv2x_ = true; //need stop cv2x when exit
-
-    // wait until status changes to active
-    sp->waitForCv2xStatus(Cv2xStatusType::ACTIVE);
-
-    return EXIT_SUCCESS;
-}
-
-int Cv2xConfigApp::stopCv2xMode() {
-    cout << "Stopping Cv2x..." << endl;
-
-    promise<ErrorCode> prom;
-    if (Status::SUCCESS != cv2xRadioManager_->stopCv2x(
-        [&prom](ErrorCode error) { prom.set_value(error); })) {
-        cout << "Error : Unable to stop Cv2x mode!" << endl;
-        return EXIT_FAILURE;
-    }
-
-    auto res = prom.get_future().get();
-    if (ErrorCode::SUCCESS != res) {
-        cout << "Error : Stop Cv2x mode failed with error: "
-            << static_cast<int>(res) << "!" << endl;
-        return EXIT_FAILURE;
-    }
-
-    auto sp = std::dynamic_pointer_cast<Cv2xStatusListener>(cv2xStatusListener_);
-    if (sp) {
-        // wait until status changes to inactive
-        sp->waitForCv2xStatus(Cv2xStatusType::INACTIVE);
-    }
-
-    return EXIT_SUCCESS;
 }
 
 int Cv2xConfigApp::retrieveConfigFile(string path) {
@@ -492,11 +342,6 @@ int Cv2xConfigApp::generateExpiryConfigFile(string configFilePath, string expiry
 int Cv2xConfigApp::enforceConfigExpiration() {
     int ret = EXIT_SUCCESS;
 
-    // cv2x must be active for the listening of config change indcations
-    if (EXIT_SUCCESS != startCv2xMode()) {
-        return EXIT_FAILURE;
-    }
-
     // generate expiry config file based on the retrieved config file
     // and then update the exipry config file
     if (EXIT_SUCCESS == retrieveConfigFile(CONFIG_FILE) and
@@ -516,14 +361,6 @@ int Cv2xConfigApp::enforceConfigExpiration() {
         }
     } else {
         ret = EXIT_FAILURE;
-    }
-
-    // stop cv2x if not started originally
-    if (stopCv2x_) {
-        stopCv2x_ = false;
-        if (EXIT_SUCCESS != stopCv2xMode()) {
-            return EXIT_FAILURE;
-        }
     }
 
     return ret;

@@ -66,6 +66,7 @@
 #include <iomanip>
 
 #include "DataUtils.hpp"
+#include "../../common/utils/Utils.hpp"
 
 std::string DataUtils::techPreferenceToString(telux::data::TechPreference techPref) {
    switch(techPref) {
@@ -292,3 +293,35 @@ std::string DataUtils::backhaulToString(telux::data::BackhaulType backhaul) {
    return retString;
 }
 
+//Retuns true if multiple backhauls are supported
+bool DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo) {
+    int isMultiBackhauls = 1;
+    std::cout << "Multiple Backhaul Supported? (0-No, 1-Yes): ";
+    std::cin >> isMultiBackhauls;
+    Utils::validateInput(isMultiBackhauls);
+    std::cout << std::endl;
+
+    int backhaul = 0, profileId = 0;
+    if(isMultiBackhauls) {
+      std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+      std::cin >> backhaul;
+      Utils::validateInput(backhaul);
+      std::cout << std::endl;
+      if(backhaul) {
+         backhaulInfo.backhaul = telux::data::BackhaulType::WWAN;
+         std::cout << "Enter Profile Id: ";
+         std::cin >> profileId;
+         Utils::validateInput(profileId);
+         backhaulInfo.profileId = profileId;
+      } else {
+         backhaulInfo.backhaul = telux::data::BackhaulType::WLAN;
+      }
+      return true;
+    } else {
+      std::cout << "Enter Profile Id: ";
+      std::cin >> profileId;
+      Utils::validateInput(profileId);
+      backhaulInfo.profileId = profileId;
+      return false;
+    }
+}

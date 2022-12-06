@@ -1028,20 +1028,7 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     firewallConfig.bhInfo.backhaul = telux::data::BackhaulType::WLAN;
     firewallMgr = getFirewallManagerInstance(opType);
 
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-
-    if(backhaul) {
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        firewallConfig.bhInfo.profileId = profileId;
-        firewallConfig.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-    }
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(firewallConfig.bhInfo);
 
     int enableFwFlag;
     std::cout << "Enter Enable Firewall (1 - On, 0 - Off): ";
@@ -1072,7 +1059,12 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = firewallMgr->setFirewallConfig(firewallConfig, respCb);
+    if(isMultiBackhauls) {
+        retStat = firewallMgr->setFirewallConfig(firewallConfig, respCb);
+    } else {
+        retStat = firewallMgr->setFirewall(firewallConfig.bhInfo.profileId,
+            firewallConfig.enable, firewallConfig.allowPackets, respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -1089,42 +1081,47 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     int profileId;
     telux::data::BackhaulInfo backhaulConfig;
     backhaulConfig.backhaul = telux::data::BackhaulType::WLAN;
-
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-
-    if(backhaul) {
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        backhaulConfig.backhaul = telux::data::BackhaulType::WWAN;
-        backhaulConfig.profileId = profileId;
-    }
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(backhaulConfig);
 
     firewallMgr = getFirewallManagerInstance(opType);
-    auto respCb = [](FirewallConfig fwConfig, telux::common::ErrorCode error) {
-        std::cout << std::endl << std::endl;
-        std::cout << "CALLBACK: "
-                  << "requestFirewallConfig Response"
-                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                  << ". ErrorCode: " << static_cast<int>(error)
-                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        std::cout << "Firewall " << (fwConfig.enable ? "is enabled" : "not enabled") << "\n";
-        if (fwConfig.enable) {
-            std::cout << "Firewall enabled to "
-                      << (fwConfig.allowPackets ? "Accept Packets" : "Drop packets") << "\n";
-            std::cout << "On Backhaul: " << DataUtils::backhaulToString(fwConfig.bhInfo.backhaul);
-            if(fwConfig.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
-                std::cout << ", Profile id: " << fwConfig.bhInfo.profileId;
+    if(isMultiBackhauls) {
+        auto respCb = [](FirewallConfig fwConfig, telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                      << "requestFirewallConfig Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            std::cout << "Firewall " << (fwConfig.enable ? "is enabled" : "not enabled") << "\n";
+            if (fwConfig.enable) {
+                std::cout << "Firewall enabled to "
+                          << (fwConfig.allowPackets ? "Accept Packets" : "Drop packets") << "\n";
+                std::cout << "On Backhaul: " << DataUtils::backhaulToString(fwConfig.bhInfo.backhaul);
+                if(fwConfig.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+                    std::cout << ", Profile id: " << fwConfig.bhInfo.profileId;
+                }
             }
-        }
-        std::cout << "\n";
-    };
-
-    retStat = firewallMgr->requestFirewallConfig(backhaulConfig, respCb);
+            std::cout << "\n";
+        };
+        retStat = firewallMgr->requestFirewallConfig(backhaulConfig, respCb);
+    } else {
+        auto respCb = [](bool enable, bool allowPackets, telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                    << "requestFirewallStatus Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << "Firewall " << (enable ? "is enabled" : "not enabled") << "\n";
+                if (enable) {
+                    std::cout << "Firewall enabled to "
+                    << (allowPackets ? "Accept Packets" : "Drop packets") << "\n";
+                }
+            }
+        };
+        retStat = firewallMgr->requestFirewallStatus(backhaulConfig.profileId, respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -1402,21 +1399,7 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
 
     FirewallEntryInfo bhFirewallEntry = {};
     FirewallEntryInfo bhFirewallEntryTcpUdp = {};
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-WLAN, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-    if(backhaul) {
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        bhFirewallEntry.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        bhFirewallEntry.bhInfo.profileId = profileId;
-    } else {
-        bhFirewallEntry.bhInfo.backhaul = telux::data::BackhaulType::WLAN;
-    }
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhFirewallEntry.bhInfo);
 
     bhFirewallEntryTcpUdp.bhInfo = bhFirewallEntry.bhInfo;
     firewallMgr = getFirewallManagerInstance(opType);
@@ -1483,7 +1466,12 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     };
 
     bhFirewallEntry.fwEntry = fwEntry;
-    retStat = firewallMgr->addFirewallEntry(bhFirewallEntry, respCb);
+    if(isMultiBackhauls) {
+        retStat = firewallMgr->addFirewallEntry(bhFirewallEntry, respCb);
+    } else {
+        retStat = firewallMgr->addFirewallEntry(
+            bhFirewallEntry.bhInfo.profileId, fwEntry, respCb);
+    }
     Utils::printStatus(retStat);
 
     if (proto == 253) {
@@ -1497,7 +1485,7 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     std::shared_ptr<telux::data::net::IFirewallManager> firewallMgr;
     int operationType;
     telux::common::Status retStat;
-    BackhaulInfo backhaulConfig = {};
+    telux::data::BackhaulInfo backhaulConfig = {};
 
     std::cout << "request Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
@@ -1505,42 +1493,57 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-
-    int profileId;
-    if(backhaul) {
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        backhaulConfig.backhaul = telux::data::BackhaulType::WWAN;
-        backhaulConfig.profileId = profileId;
-    } else {
-        backhaulConfig.backhaul = telux::data::BackhaulType::WLAN;
-    }
-
     firewallMgr = getFirewallManagerInstance(opType);
-    auto respCb = [this](
-        std::vector<FirewallEntryInfo> entries,
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(backhaulConfig);
+
+    if(isMultiBackhauls) {
+        auto respCb = [this](
+            std::vector<FirewallEntryInfo> entries,
             telux::common::ErrorCode error) {
-        std::cout << std::endl << std::endl;
-        std::cout << "CALLBACK: "
-                  << "requestFirewallEntries Response"
-                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                  << ". ErrorCode: " << static_cast<int>(error)
-                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+                std::cout << std::endl << std::endl;
+                std::cout << "CALLBACK: "
+                      << "requestFirewallEntries Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 
-        std::cout << "Found " << entries.size() << " entries\n";
-        this->fwEntries_ = entries;
-        if (entries.size() > 0) {
-            this->displayFirewallEntry();
-        }
-    };
-
-    retStat = firewallMgr->requestFirewallEntries(backhaulConfig, respCb);
+            std::cout << "Found " << entries.size() << " entries\n";
+            this->fwEntries_ = entries;
+            if (entries.size() > 0) {
+                this->displayFirewallEntry();
+            }
+        };
+        retStat = firewallMgr->requestFirewallEntries(backhaulConfig, respCb);
+    } else {
+        int profileId = backhaulConfig.profileId;
+        auto respCb = [this, profileId](
+            std::vector<shared_ptr<IFirewallEntry>> entries,
+                telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                    << "requestFirewallEntries Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                std::cout << "Found " << entries.size() << " entries\n";
+                if (entries.size() > 0) {
+                    telux::data::BackhaulInfo backhaulInfo;
+                    backhaulInfo.backhaul = telux::data::BackhaulType::WWAN;
+                    backhaulInfo.profileId = profileId;
+                    this->fwEntries_.clear();
+                    for(auto& entry:entries) {
+                        telux::data::net::FirewallEntryInfo fwInfo {};
+                        fwInfo.bhInfo = backhaulInfo;
+                        fwInfo.fwEntry = entry;
+                        this->fwEntries_.push_back(fwInfo);
+                    }
+                    this->displayFirewallEntry();
+                }
+            }
+        };
+        retStat = firewallMgr->requestFirewallEntries(profileId, respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -1635,20 +1638,7 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
-    bhInfo.backhaul = telux::data::BackhaulType::WLAN;
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-WLAN, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-    if(backhaul) {
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        bhInfo.profileId = profileId;
-    }
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
 
     firewallMgr = getFirewallManagerInstance(opType);
     int entryHandle;
@@ -1664,8 +1654,12 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
+    if(isMultiBackhauls) {
+        retStat = firewallMgr->removeFirewallEntry(bhInfo, entryHandle, respCb);
+    } else {
+        retStat = firewallMgr->removeFirewallEntry(bhInfo.profileId, entryHandle, respCb);
 
-    retStat = firewallMgr->removeFirewallEntry(bhInfo, entryHandle, respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -1681,20 +1675,8 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
     bhInfo.backhaul = telux::data::BackhaulType::WLAN;
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-WLAN, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-    if(backhaul) {
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        bhInfo.profileId = profileId;
-    }
 
     firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';
@@ -1714,7 +1696,11 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
     telux::data::net::DmzConfig config;
     config.bhInfo = bhInfo;
     config.ipAddr = ipAddr;
-    retStat = firewallMgr->enableDmz(config, respCb);
+    if(isMultiBackhauls) {
+        retStat = firewallMgr->enableDmz(config, respCb);
+    } else {
+        retStat = firewallMgr->enableDmz(bhInfo.profileId, ipAddr, respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -1730,20 +1716,8 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
     bhInfo.backhaul = telux::data::BackhaulType::WLAN;
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-WLAN, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-    if(backhaul) {
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        bhInfo.profileId = profileId;
-    }
 
     firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';
@@ -1768,8 +1742,13 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
-    retStat = firewallMgr->disableDmz(
-        bhInfo, static_cast<telux::data::IpFamilyType>(ipType), respCb);
+    if(isMultiBackhauls) {
+        retStat = firewallMgr->disableDmz(
+            bhInfo, static_cast<telux::data::IpFamilyType>(ipType), respCb);
+    } else {
+        retStat = firewallMgr->disableDmz(bhInfo.profileId,
+            static_cast<telux::data::IpFamilyType>(ipType), respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -1785,46 +1764,52 @@ void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
-    bhInfo.backhaul = telux::data::BackhaulType::WLAN;
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-WLAN, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-    if(backhaul) {
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        bhInfo.profileId = profileId;
-    }
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
 
     firewallMgr = getFirewallManagerInstance(opType);
-    auto respCb =
-        [](std::vector<telux::data::net::DmzConfig> dmzEntries, telux::common::ErrorCode error) {
-        std::cout << std::endl << std::endl;
-        std::cout << "CALLBACK: "
-                  << "requestDmzEntry Response"
-                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                  << ". ErrorCode: " << static_cast<int>(error)
-                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    if(isMultiBackhauls) {
+        auto respCb =
+            [](std::vector<telux::data::net::DmzConfig> dmzEntries, telux::common::ErrorCode error){
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                      << "requestDmzEntry Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 
-        if (dmzEntries.size() > 0) {
-            std::cout << "=============================================\n";
-        }
-        for (auto entry : dmzEntries) {
-            std::cout << "On Backhaul: " << DataUtils::backhaulToString(entry.bhInfo.backhaul);
-            if(entry.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
-                std::cout << " And Profile id: " << entry.bhInfo.profileId;
+            if (dmzEntries.size() > 0) {
+                std::cout << "=============================================\n";
             }
-            std::cout << std::endl;
-            std::cout << "address: " << entry.ipAddr
-                      << "\n=============================================\n";
-        }
-    };
+            for (auto entry : dmzEntries) {
+                std::cout << "On Backhaul: " << DataUtils::backhaulToString(entry.bhInfo.backhaul);
+                if(entry.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+                    std::cout << " And Profile id: " << entry.bhInfo.profileId;
+                }
+                std::cout << std::endl;
+                std::cout << "address: " << entry.ipAddr
+                          << "\n=============================================\n";
+            }
+        };
+        retStat = firewallMgr->requestDmzEntry(bhInfo, respCb);
+    } else {
+        auto respCb = [](std::vector<std::string> dmzEntries, telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                    << "requestDmzEntry Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
 
-    retStat = firewallMgr->requestDmzEntry(bhInfo, respCb);
+            if (dmzEntries.size() > 0) {
+                std::cout << "=============================================\n";
+                for (auto entry : dmzEntries) {
+                    std::cout << "address: " << entry
+                        << "\n=============================================\n";
+                }
+            }
+        };
+        retStat = firewallMgr->requestDmzEntry(bhInfo.profileId, respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -2069,22 +2054,7 @@ void DataMenu::bindToBackhaul(std::vector<std::string> inputCommand) {
     }
 
     telux::data::net::VlanBindConfig vlanBindConfig = {};
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-    if(backhaul) {
-        vlanBindConfig.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        vlanBindConfig.bhInfo.profileId = profileId;
-    } else {
-        vlanBindConfig.bhInfo.backhaul = telux::data::BackhaulType::WLAN;
-    }
-
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(vlanBindConfig.bhInfo);
     int vlanId;
     std::cout << "Enter Vlan Id: ";
     std::cin >> vlanId;
@@ -2100,7 +2070,11 @@ void DataMenu::bindToBackhaul(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = vlanMgr->bindToBackhaul(vlanBindConfig, respCb);
+    if(isMultiBackhauls) {
+        retStat = vlanMgr->bindToBackhaul(vlanBindConfig, respCb);
+    } else {
+        retStat = vlanMgr->bindWithProfile(vlanBindConfig.bhInfo.profileId, vlanId, respCb);
+    }
     Utils::printStatus(retStat);
 }
 
@@ -2127,21 +2101,7 @@ void DataMenu::unbindFromBackhaul(std::vector<std::string> inputCommand) {
     }
 
     telux::data::net::VlanBindConfig vlanBindConfig = {};
-    int backhaul;
-    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
-    std::cout << std::endl;
-    if(backhaul) {
-        vlanBindConfig.bhInfo.backhaul = telux::data::BackhaulType::WWAN;
-        int profileId;
-        std::cout << "Enter Profile Id: ";
-        std::cin >> profileId;
-        Utils::validateInput(profileId);
-        vlanBindConfig.bhInfo.profileId = profileId;
-    } else {
-        vlanBindConfig.bhInfo.backhaul = telux::data::BackhaulType::WLAN;
-    }
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(vlanBindConfig.bhInfo);
 
     int vlanId;
     std::cout << "Enter Vlan Id: ";
@@ -2158,7 +2118,11 @@ void DataMenu::unbindFromBackhaul(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-   retStat = vlanMgr->unbindFromBackhaul(vlanBindConfig, respCb);
+    if(isMultiBackhauls) {
+        retStat = vlanMgr->unbindFromBackhaul(vlanBindConfig, respCb);
+    } else {
+        retStat = vlanMgr->unbindFromProfile(vlanBindConfig.bhInfo.profileId, vlanId, respCb);
+    }
    Utils::printStatus(retStat);
 }
 
@@ -2186,34 +2150,53 @@ void DataMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
 
     telux::data::BackhaulType backhaulType = {};
     int backhaul;
-    std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
-    std::cin >> backhaul;
-    Utils::validateInput(backhaul);
+    int isMultiBackhauls = 1;
+    std::cout << "Multiple Backhaul Supported? (0-No, 1-Yes): ";
+    std::cin >> isMultiBackhauls;
+    Utils::validateInput(isMultiBackhauls);
     std::cout << std::endl;
-    if(backhaul) {
-        backhaulType = telux::data::BackhaulType::WWAN;
-    } else {
-        backhaulType = telux::data::BackhaulType::WLAN;
-    }
-
-    auto respCb = [](
-        const std::vector<telux::data::net::VlanBindConfig> bindings,
-            telux::common::ErrorCode error) {
-        std::cout << std::endl << std::endl;
-        std::cout << "CALLBACK: "
-                  << "queryVlanToBackhaulBindings Response"
-                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                  << ". ErrorCode: " << static_cast<int>(error)
-                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        for (auto c : bindings) {
-            std::cout << "Backhaul: " << DataUtils::backhaulToString(c.bhInfo.backhaul);
-            if(c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
-                std::cout << ", profile id: " << c.bhInfo.profileId;
-            }
-            std::cout << ", vlanId: " << c.vlanId << "\n";
+    if(isMultiBackhauls) {
+        std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+        std::cin >> backhaul;
+        Utils::validateInput(backhaul);
+        std::cout << std::endl;
+        if(backhaul) {
+            backhaulType = telux::data::BackhaulType::WWAN;
+        } else {
+            backhaulType = telux::data::BackhaulType::WLAN;
         }
-    };
-
-    retStat = vlanMgr->queryVlanToBackhaulBindings(backhaulType, respCb);
+        auto respCb = [](
+            const std::vector<telux::data::net::VlanBindConfig> bindings,
+                telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                      << "queryVlanToBackhaulBindings Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            for (auto c : bindings) {
+                std::cout << "Backhaul: " << DataUtils::backhaulToString(c.bhInfo.backhaul);
+                if(c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+                    std::cout << ", profile id: " << c.bhInfo.profileId;
+                }
+                std::cout << ", vlanId: " << c.vlanId << "\n";
+            }
+        };
+        retStat = vlanMgr->queryVlanToBackhaulBindings(backhaulType, respCb);
+    } else {
+        auto respCb = [](
+            const std::list<std::pair<int, int>> &mapping, telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                    << "queryVlanMappingList Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            for (auto c : mapping) {
+                std::cout << "profId: " << (int)c.first << ", vlanId: " << c.second << "\n";
+            }
+        };
+        retStat = vlanMgr->queryVlanMappingList(respCb);
+    }
     Utils::printStatus(retStat);
 }

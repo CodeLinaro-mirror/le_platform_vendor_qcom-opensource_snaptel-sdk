@@ -80,6 +80,8 @@ public:
    static std::string protocolToString(telux::data::IpProtocol proto);
    static std::string serviceRatToString(telux::data::NetworkRat rat);
    static std::string backhaulToString(telux::data::BackhaulType backhaul);
+   //Retuns true if multiple backhauls are supported
+   static bool populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo);
 };
 
 #endif  // DATAUTILS_HPP

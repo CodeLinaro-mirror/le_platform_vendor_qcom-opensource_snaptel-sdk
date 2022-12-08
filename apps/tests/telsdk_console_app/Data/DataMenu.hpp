@@ -91,6 +91,7 @@
 #include "l2tp/L2tpMenu.hpp"
 #include "data_filter/DataFilterMenu.hpp"
 #include "serving_system/ServingSystemMenu.hpp"
+#include "data_settings/DataSettingsMenu.hpp"
 
 #include <telux/data/DataDefines.hpp>
 #include <telux/data/DataFactory.hpp>
@@ -152,6 +153,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     void bridgeMenu(std::vector<std::string> inputCommand);
     void l2tpMenu(std::vector<std::string> inputCommand);
     void servingSystemMenu(std::vector<std::string> inputCommand);
+    void dataSettingsMenu(std::vector<std::string> inputCommand);
  private:
     void requestDataCallList(OperationType operationType, DataCallListResponseCb cb);
     bool validateProfile(int profileId);

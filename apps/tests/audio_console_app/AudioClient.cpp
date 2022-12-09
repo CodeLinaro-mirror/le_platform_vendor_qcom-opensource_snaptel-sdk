@@ -62,8 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
 /**
  * Audio Client class provides functionality in SDK to create Audio Stream,
  * start/stop Audio on the created Stream and delete the Stream.
@@ -689,7 +687,11 @@ void AudioClient::setMute(StreamType streamType) {
             std::cout << "Request to set mute failed" << std::endl;
         }
         if (p.get_future().get()) {
-            std::cout << "set mute succeeded." << std::endl;
+            if (mute.enable) {
+                std::cout << "Stream Muted" << std::endl;
+            } else {
+                std::cout << "Stream Unmuted" << std::endl;
+            }
         }
 
     } else {

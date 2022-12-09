@@ -367,6 +367,8 @@ void PlayMenu::play() {
         std::cout << "Play Stopped" << std::endl;
     }
     playStatus_ = false;
+    //After the play is finished, marking the status to false.
+    playInProgress_ = false;
 }
 
 void PlayMenu::onReadyForWrite() {

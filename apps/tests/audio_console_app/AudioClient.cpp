@@ -521,8 +521,8 @@ void AudioClient::getStreamDevice(StreamType streamType) {
             [&p, &devices_, this](std::vector<telux::audio::DeviceType> devices,
                      telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 devices_ = devices;
+                p.set_value(true);
             } else {
                 p.set_value(false);
                 std::cout << "Failed to get stream device" << std::endl;
@@ -614,8 +614,8 @@ void AudioClient::getVolume(StreamType streamType) {
         telux::common::Status status = stream_->getVolume(
         dir,  [&p,&vol,this](telux::audio::StreamVolume volume, telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 vol = volume;
+                p.set_value(true);
             } else {
                 p.set_value(false);
                 std::cout << "Failed to set stream device" << std::endl;
@@ -712,8 +712,8 @@ void AudioClient::getMute(StreamType streamType) {
                dir,  [&p,&mute_,this](telux::audio::StreamMute mute,
                telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 mute_ = mute;
+                p.set_value(true);
             } else {
                 p.set_value(false);
                 std::cout << "Failed to get mute" << std::endl;

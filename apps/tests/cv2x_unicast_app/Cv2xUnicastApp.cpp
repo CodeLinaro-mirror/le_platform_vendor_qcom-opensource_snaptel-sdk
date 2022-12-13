@@ -76,7 +76,6 @@
 #include <cstring>
 #include <sys/time.h>
 #include <unistd.h>
-#include <glib.h>
 #include <iostream>
 #include <memory>
 #include <atomic>

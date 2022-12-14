@@ -1029,7 +1029,6 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     telux::data::net::FirewallConfig firewallConfig  = {};
-    firewallConfig.bhInfo.backhaul = telux::data::BackhaulType::WLAN;
     firewallMgr = getFirewallManagerInstance(opType);
 
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(firewallConfig.bhInfo);
@@ -1084,7 +1083,6 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     int profileId;
     telux::data::BackhaulInfo backhaulConfig;
-    backhaulConfig.backhaul = telux::data::BackhaulType::WLAN;
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(backhaulConfig);
 
     firewallMgr = getFirewallManagerInstance(opType);
@@ -1680,7 +1678,6 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
 
     telux::data::BackhaulInfo bhInfo;
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
-    bhInfo.backhaul = telux::data::BackhaulType::WLAN;
 
     firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';
@@ -1721,7 +1718,6 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
 
     telux::data::BackhaulInfo bhInfo;
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
-    bhInfo.backhaul = telux::data::BackhaulType::WLAN;
 
     firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';

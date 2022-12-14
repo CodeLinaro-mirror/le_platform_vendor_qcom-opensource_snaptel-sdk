@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -412,6 +412,7 @@ void PlayMenu::play() {
         std::cout << "Play Stopped" << std::endl;
     }
     playStatus_ = false;
+    //After the play is finished, marking the status to false.
     playInProgress_ = false;
 }
 

@@ -79,6 +79,11 @@
 #define MIN_SIM_SLOT_COUNT 1
 #define MAX_SIM_SLOT_COUNT 2
 
+#define DELETE_ALL 0
+#define DELETE_ALL_MESSAGE_TAG 1
+#define DELETE_AT_INDEX 2
+#define DEFAULT_INDEX 0
+
 #include "SmsMenu.hpp"
 
 SmsMenu::SmsMenu(std::string appName, std::string cursor)
@@ -153,12 +158,38 @@ void SmsMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "6", "Send_Raw_SMS", {}, std::bind(&SmsMenu::sendRawSms, this,
          std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> sendSmsMessageListCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "7", "Send_Request_Message_List", {}, std::bind(&SmsMenu::sendRequestMessageList, this,
+         std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> sendReadMessageCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "8", "Send_Read_Message", {}, std::bind(&SmsMenu::sendReadMessage, this,
+         std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> deleteMessageCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "9", "Delete_Message", {}, std::bind(&SmsMenu::deleteMessage, this,
+         std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestPreferredStorageCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "10", "Request_Preferred_Storage", {}, std::bind(&SmsMenu::requestPreferredStorage, this,
+         std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> setPreferredStorageCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "11", "Set_Preferred_Storage", {}, std::bind(&SmsMenu::setPreferredStorage, this,
+         std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> setTagCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "12", "Set_Tag", {}, std::bind(&SmsMenu::setTag, this,
+         std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("7", "Select_sim_slot", {},
+      ConsoleAppCommand("13", "Select_sim_slot", {},
                         std::bind(&SmsMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
       = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand,
-         sendEnhancedSmsCommand, sendRawSmsCommand};
+         sendEnhancedSmsCommand, sendRawSmsCommand, sendSmsMessageListCommand,
+         sendReadMessageCommand, deleteMessageCommand, requestPreferredStorageCommand,
+         setPreferredStorageCommand, setTagCommand};
 
    if (smsManagers_.size() > 1) {
        commandsListSmsSubMenu.emplace_back(selectSimSlotCommand);
@@ -375,5 +406,162 @@ void SmsMenu::selectSimSlot(std::vector<std::string> userInput) {
       }
    } else {
       std::cout << "Empty input, enter the correct slot" << std::endl;
+   }
+}
+
+void SmsMenu::sendRequestMessageList(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   std::cout << " Request Message List \n" << std::endl;
+   char delimiter = '\n';
+   std::string tagType;
+   std::cout << "Enter SMS tag type : \nUNKNOWN = -1 \nMT_READ = 0 \nMT_NOT_READ = 1";
+   std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
+   std::getline(std::cin, tagType, delimiter);
+   int smsTagType = -1;
+   try {
+      smsTagType = stoi(tagType);
+   } catch (const std::exception &e) {
+      std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+         << tagType << std::endl;
+      return;
+   }
+   auto ret = smsManager->requestSmsMessageList(static_cast<telux::tel::SmsTagType>(smsTagType),
+      SmsStorageCallback::reqMessageListResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Request message list succeeded" << std::endl;
+   } else {
+      std::cout << "Request message list failed" << std::endl;
+   }
+}
+
+void SmsMenu::sendReadMessage(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   std::cout << " Read Message \n" << std::endl;
+   char delimiter = '\n';
+   std::string messageIndex;
+   std::cout << "Enter message index: ";
+   std::getline(std::cin, messageIndex, delimiter);
+   uint32_t msgIndex = DEFAULT_INDEX;
+   try {
+      msgIndex = stoi(messageIndex);
+   } catch (const std::exception &e) {
+      std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+         << messageIndex << std::endl;
+      return;
+   }
+   auto ret = smsManager->readMessage(msgIndex, SmsStorageCallback::readMsgResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Read message request succeeded" << std::endl;
+   } else {
+      std::cout << "Read message request failed" << std::endl;
+   }
+}
+
+void SmsMenu::deleteMessage(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   std::cout << " Delete Message \n" << std::endl;
+   char delimiter = '\n';
+   std::string delType;
+   std::cout << "Enter Delete type : \nDELETE_ALL = 0 \nDELETE_ALL_MESSAGE_TAG = 1";
+   std::cout << "\nDELETE_AT_INDEX = 2 \nChoose type: ";
+   std::getline(std::cin, delType, delimiter);
+
+   int deleteType = -1;
+   int smsTagType = -1;
+   uint32_t msgIndex = DEFAULT_INDEX;
+   try {
+      deleteType = stoi(delType);
+      if (deleteType == DELETE_ALL_MESSAGE_TAG) {
+         std::string tagType;
+         std::cout << "Enter SMS tag type : \nUNKNOWN = -1 \nMT_READ = 0 \nMT_NOT_READ = 1";
+         std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
+         std::getline(std::cin, tagType, delimiter);
+         smsTagType = stoi(tagType);
+      } else if (deleteType == DELETE_AT_INDEX) {
+         std::string messageIndex;
+         std::cout << "Enter message index: ";
+         std::getline(std::cin, messageIndex, delimiter);
+         msgIndex = stoi(messageIndex);
+      }
+   } catch (const std::exception &e) {
+      std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: " << std::endl;
+      return;
+   }
+
+   telux::tel::DeleteInfo info;
+   info.delType = static_cast<telux::tel::DeleteType>(deleteType);
+   info.tagType = static_cast<telux::tel::SmsTagType>(smsTagType);
+   info.msgIndex = msgIndex;
+
+   auto ret = smsManager->deleteMessage(info, SmsStorageCallback::deleteResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Delete message succeeded" << std::endl;
+   } else {
+      std::cout << "Delete message failed" << std::endl;
+   }
+}
+
+void SmsMenu::requestPreferredStorage(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   std::cout << " Request Preferred Storage \n" << std::endl;
+   auto ret = smsManager->requestPreferredStorage(SmsStorageCallback::reqPreferredStorageResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Request preferred storage succeeded" << std::endl;
+   } else {
+      std::cout << "Request preferred storage failed" << std::endl;
+   }
+}
+
+void SmsMenu::setPreferredStorage(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   std::cout << " Set Preferred Storage \n" << std::endl;
+   char delimiter = '\n';
+   std::string storageType;
+   std::cout << "Enter Storage type : \nNONE = 0 \nSIM = 1 \nChoose type: ";
+   std::getline(std::cin, storageType, delimiter);
+   int type = -1;
+   try {
+      type = stoi(storageType);
+   } catch (const std::exception &e) {
+      std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+         << storageType << std::endl;
+      return;
+   }
+   auto ret = smsManager->setPreferredStorage(static_cast<telux::tel::StorageType>(type),
+      SmsStorageCallback::setPreferredStorageResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Set Preferred Storage request succeeded" << std::endl;
+   } else {
+      std::cout << "Set Preferred Storage request failed" << std::endl;
+   }
+}
+
+void SmsMenu::setTag(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   std::cout << " Set Tag \n" << std::endl;
+   char delimiter = '\n';
+   std::string messageIndex;
+   std::cout << "Enter message index: ";
+   std::getline(std::cin, messageIndex, delimiter);
+   uint32_t msgIndex = DEFAULT_INDEX;
+   std::string tagType;
+   std::cout << "Enter SMS tag type : \nUNKNOWN = -1 \nMT_READ = 0 \nMT_NOT_READ = 1";
+   std::cout << "\nMO_SENT = 2 \nMO_NOT_SENT = 3 \nChoose type: ";
+   std::getline(std::cin, tagType, delimiter);
+   int smsTagType = -1;
+   try {
+      smsTagType = stoi(tagType);
+      msgIndex = stoi(messageIndex);
+   } catch (const std::exception &e) {
+      std::cout << "ERROR: invalid input, please enter a numerical value. INPUT: "
+         << messageIndex << std::endl;
+      return;
+   }
+   auto ret = smsManager->setTag(msgIndex, static_cast<telux::tel::SmsTagType>(smsTagType),
+      SmsStorageCallback::setTagResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Set tag request succeeded" << std::endl;
+   } else {
+      std::cout << "Set tag request failed" << std::endl;
    }
 }

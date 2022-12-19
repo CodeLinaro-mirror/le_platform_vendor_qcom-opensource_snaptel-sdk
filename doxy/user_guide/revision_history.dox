@@ -86,12 +86,17 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
-@tr @tdmulrowempty @td Apr 2022 @tdend @tdlast
-\- Added sample apps for crypto APIs @tdlastend @trendcline
-@tr @tdmulrow{26,AA} @tdmulrowend
+@tr @tdmulrow{1,AD} @tdmulrowend
+@td Sep 2022 @tdend @tdlast
+\- Added information of linux group IDs @tdlastend @trend
+@tr @tdmulrow{1,AC} @tdmulrowend
+@td Jul 2022 @tdend @tdlast
+\- Added sample apps for crypto APIs @tdlastend @trend
+@tr @tdmulrow{1,AB} @tdmulrowend
 @td Mar 2022 @tdend @tdlast
-\- Addition of documentation for Call flow of control filesystem for ECALL operation. @tdlastend @trendcline
-@td @tdmulrowempty @td Jan 2022 @tdend @tdlast
+\- Addition of documentation for Call flow of control filesystem for ECALL operation. @tdlastend @trend
+@tr @tdmulrow{25,AA} @tdmulrowend
+@td Jan 2022 @tdend @tdlast
 \- Addition of documentation for sensor self test APIs. @tdlastend @trendcline
 @tr @tdmulrowempty @td Dec 2021 @tdend @tdlast
 \- Addition of documentation for ECALL and OTA operation APIs @tdlastend @trendcline

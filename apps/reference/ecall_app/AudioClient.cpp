@@ -153,6 +153,12 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
         audioVoiceStream_ = nullptr;
     } else if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Audio subsystem is AVAILABLE" << std::endl;
+        // In case of an SSR, automatically start audio session post SSR
+        if(keepVoiceSessionActive_) {
+            startVoiceSession(streamConfig_.modemSubId, streamConfig_.deviceTypes[0],
+                streamConfig_.sampleRate, streamConfig_.format, streamConfig_.channelTypeMask,
+                streamConfig_.ecnrMode);
+        }
     }
 }
 
@@ -174,6 +180,11 @@ telux::common::Status AudioClient::init() {
         std::cout << CLIENT_NAME << "*** ERROR - Failed to get Audio Manager instance" << std::endl;
         return telux::common::Status::FAILED;
     }
+    auto status = audioMgr_->registerListener(shared_from_this());
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to register Audio listener" << std::endl;
+        return telux::common::Status::FAILED;
+    }
     return telux::common::Status::SUCCESS;
 }
 
@@ -191,6 +202,7 @@ void AudioClient::setVoiceState(bool state) {
 // Function to start an active voice session
 telux::common::Status AudioClient::startVoiceSession(int phoneId, DeviceType deviceType,
     uint32_t sampleRate, AudioFormat voiceFormat, ChannelTypeMask channels, EcnrMode ecnrMode) {
+    keepVoiceSessionActive_ = true;
     if(isVoiceEnabled()) {
         std::cout << CLIENT_NAME << "Voice stream is enabled already" << std::endl;
         return telux::common::Status::SUCCESS;
@@ -204,16 +216,18 @@ telux::common::Status AudioClient::startVoiceSession(int phoneId, DeviceType dev
     }
     if(!audioVoiceStream_) {
         // Create a Voice Stream
-        StreamConfig config = {};
-        config.type = StreamType::VOICE_CALL;
-        config.modemSubId = phoneId;
-        config.sampleRate = sampleRate;
-        config.format = voiceFormat;
-        config.channelTypeMask = channels;
-        config.deviceTypes.emplace_back(deviceType);
-        config.ecnrMode = ecnrMode;
-        auto status = audioMgr_->createStream(config, std::bind(&AudioClient::createStreamCallback,
-                                            this, std::placeholders::_1, std::placeholders::_2));
+        streamConfig_ = {};
+        streamConfig_.type = StreamType::VOICE_CALL;
+        streamConfig_.modemSubId = phoneId;
+        streamConfig_.sampleRate = sampleRate;
+        streamConfig_.format = voiceFormat;
+        streamConfig_.channelTypeMask = channels;
+        streamConfig_.deviceTypes.clear();
+        streamConfig_.deviceTypes.emplace_back(deviceType);
+        streamConfig_.ecnrMode = ecnrMode;
+        auto status = audioMgr_->createStream(streamConfig_,
+            std::bind(&AudioClient::createStreamCallback, this, std::placeholders::_1,
+            std::placeholders::_2));
         if (status == telux::common::Status::SUCCESS) {
             std::cout << CLIENT_NAME << "Request to create voice stream sent." << std::endl;
         } else {
@@ -237,6 +251,7 @@ telux::common::Status AudioClient::startVoiceSession(int phoneId, DeviceType dev
 
 // Function to stop an active voice session
 telux::common::Status AudioClient::stopVoiceSession() {
+    keepVoiceSessionActive_ = false;
     if(!isVoiceEnabled()) {
         std::cout << CLIENT_NAME << "Voice stream is disabled already" << std::endl;
         return telux::common::Status::SUCCESS;

@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * This is a reference application that is used to feed GNSS time data
  * obtained from the Location APIs to the Chrony NTP server via the SOCK
@@ -51,6 +58,8 @@
 #include <telux/loc/LocationFactory.hpp>
 #include <telux/loc/LocationManager.hpp>
 #include <telux/loc/LocationListener.hpp>
+
+#include "../../common/utils/SignalHandler.hpp"
 
 #define SOCK_NAME "/var/run/chrony.sock"
 #define SOCK_MAGIC 0x534f434b
@@ -79,6 +88,8 @@ struct TimeSample {
 };
 
 static int chronyfd;
+static bool gTimeCapability = false;
+static bool gExit = false;
 
 bool enableDebug = false;
 bool enableSyslog = false;
@@ -219,6 +230,17 @@ public:
             exit(-EIO);
         }
     }
+
+    void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override {
+        if (capabilityMask & telux::loc::TIME_BASED_TRACKING) {
+            std::unique_lock<std::mutex> lck(mtx);
+            LOGI("Time based tracking session is supported\n");
+            if (!gTimeCapability) {
+                gTimeCapability = true;
+                cv.notify_all();
+            }
+        }
+    }
 };
 
 int setupSocket(int *fd) {
@@ -273,6 +295,19 @@ void parseArguments(int& argc, char **argv) {
 }
 
 int main(int argc, char *argv[]) {
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    sigaddset(&sigset, SIGHUP);
+    SignalHandlerCb cb = [](int sig) {
+        std::unique_lock<std::mutex> lck(mtx);
+        gExit = true;
+        cv.notify_all();
+    };
+
+    SignalHandler::registerSignalHandler(sigset, cb);
+
     int ret = 0;
 
     // Exits if invalid arguments passed
@@ -315,6 +350,23 @@ int main(int argc, char *argv[]) {
         return -EINVAL;
     }
 
+    auto capabilities = locationManager->getCapabilities();
+    if (not (capabilities & telux::loc::TIME_BASED_TRACKING)) {
+        LOGI("Wait for time based tracking capability\n");
+        std::unique_lock<std::mutex> lck(mtx);
+        while (!gTimeCapability && !gExit) {
+            cv.wait(lck);
+        }
+
+        if (gExit) {
+            return 0;
+        }
+    } else {
+        std::unique_lock<std::mutex> lck(mtx);
+        LOGI("Time based tracking capability is supported\n");
+        gTimeCapability = true;
+    }
+
     status = locationManager->startBasicReports(0, 100, responseCallback);
     if (status != Status::SUCCESS) {
         LOGE("Failed to start basic location reports\n");
@@ -322,11 +374,15 @@ int main(int argc, char *argv[]) {
     }
 
     {
-     // Wait for responseCallback to be called
-     std::unique_lock<std::mutex> lck(mtx);
-     while (!cv_done) {
-         cv.wait(lck);
-     }
+        // Wait for responseCallback to be called
+        std::unique_lock<std::mutex> lck(mtx);
+        while (!cv_done && !gExit) {
+            cv.wait(lck);
+        }
+    }
+
+    if (gExit) {
+        return 0;
     }
 
     if (ec != ErrorCode::SUCCESS) {
@@ -336,8 +392,14 @@ int main(int argc, char *argv[]) {
 
     LOGI("Started providing fixes to chronyd\n");
 
-    // Wait until signaled
-    pause();
+    {
+        std::unique_lock<std::mutex> lck(mtx);
+        while (!gExit) {
+            cv.wait(lck);
+        }
+    }
+
+    locationManager->deRegisterListenerEx(myLocationListener);
 
     return 0;
 }

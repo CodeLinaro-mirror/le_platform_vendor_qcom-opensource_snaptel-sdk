@@ -220,7 +220,8 @@ struct Config{
     bool enableL2Filtering = false;
     unsigned int l2FilteringTime = 1; //1 s by default
     uint8_t l2IdTimeThreshold = 5;
-
+    string wsaInfoFile;
+    uint32_t wsaInterval = 1000; // WSA Tx interval, 1s by default
 };
 
 class ApplicationBase
@@ -247,6 +248,12 @@ public:
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
     std::map<std::thread::id, std::vector<MisbehaviorStats>> thrMisbehaviorLatencies;
 
+    /* Method to update the local stored V2X IP rmnet addr */
+    int updateCachedV2xIpIfaceAddr();
+
+    /* Method to get the local stored V2X IP rmnet addr */
+    int getV2xIpIfaceAddr(string& addr);
+
     /* Identity Change Related Functions and Variables */
     void changeIdTimer(unsigned int interval);
     void changeIdentity();
@@ -262,9 +269,9 @@ public:
     * Constructor of  Application instance with all the
     * specifications of a configuration file.
     * @param fileConfiguration a char* that contains the file path of the
-    * configuration file.
+    * @param msgType application message type .
     */
-    ApplicationBase(char* fileConfiguration);
+    ApplicationBase(char* fileConfiguration, MessageType msgType);
 
     /**
     * Constructs Application with all the specifications of a
@@ -351,7 +358,7 @@ public:
 
     void printRxStats();
     void printTxStats();
-    void setup();
+    void setup(MessageType msgType);
     void setupLdm();
 
     /**
@@ -452,6 +459,12 @@ protected:
     MessageType MsgType;
     uint8_t msgCount;
 
+    /**
+     * Adjust the specified transmit interval to cv2x supported reservation period.
+     * @param intervalMs user specified transmit interval in milliseconds
+     */
+    int adjustSpsPeriodicity(int intervalMs);
+
     void fillSecurity(ieee1609_2_data* secData);
     /**
      * Overloaded function to initialize the message content for transmition.
@@ -484,6 +497,14 @@ protected:
 private:
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
+
+    /* For local stored v2x IP rmnet address */
+    std::mutex v2xIpAddrMtx_;
+    string v2xIpAddr_;
+
+    /* method to retrieve V2X IP rmnet address from the system */
+    int getSysV2xIpIfaceAddr(string& ipAddr);
+
     void simTxSetup(const string ipv4, const uint16_t port);
     void simRxSetup(const string ipv4, const uint16_t port);
     static uint16_t delimiterPos(string line, vector<string> delimiters);

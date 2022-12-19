@@ -145,10 +145,10 @@ using AlgorithmTypes = int32_t;
  * NIST curves used with ECDSA.
  */
 enum Curve {
-    CURVE_P_0 = 1,  /**< NIST curve */
-    CURVE_P_256,    /**< NIST curve P-256 */
-    CURVE_P_384,    /**< NIST curve P-384 */
-    CURVE_P_521     /**< NIST curve P-521 */
+    CURVE_P_224, /**< NIST curve P-224 */
+    CURVE_P_256, /**< NIST curve P-256 */
+    CURVE_P_384, /**< NIST curve P-384 */
+    CURVE_P_521  /**< NIST curve P-521 */
 };
 
 /**
@@ -160,7 +160,6 @@ using CurveTypes = int32_t;
  * Formats for key import and export.
  */
 enum KeyFormat {
-    KEY_FORMAT_NONE,    /**< Unspecified format */
     KEY_FORMAT_X509,    /**< Public key export */
     KEY_FORMAT_PKCS8,   /**< Asymmetric key pair import */
     KEY_FORMAT_RAW      /**< Symmetric key import and export */

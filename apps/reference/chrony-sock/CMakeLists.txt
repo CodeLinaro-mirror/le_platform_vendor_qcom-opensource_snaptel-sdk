@@ -15,13 +15,15 @@ set(EXEC_PERM OWNER_EXECUTE OWNER_WRITE OWNER_READ
               GROUP_EXECUTE GROUP_READ
               WORLD_EXECUTE WORLD_READ)
 
-set(SOURCES chrony-sock.cpp)
+set(SOURCES
+    ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
+    chrony-sock.cpp)
 
 add_executable(${APP_NAME} ${SOURCES})
 target_compile_options(${APP_NAME} PRIVATE ${TELUXCOMMON_CFLAGS}
                        ${TELUXLOC_CFLAGS} -std=c++11 -Wall -Werror)
 target_link_libraries(${APP_NAME} rt ${GLIB_LIBRARIES}
-                      ${TELUXCOMMON_LIBRARIES} ${TELUXLOC_LIBRARIES})
+                      ${TELUXCOMMON_LIBRARIES} ${TELUXLOC_LIBRARIES} pthread)
 
 install(TARGETS ${APP_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

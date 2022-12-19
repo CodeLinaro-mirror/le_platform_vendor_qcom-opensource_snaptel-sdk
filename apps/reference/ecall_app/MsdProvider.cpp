@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file       MsdProvider.cpp
@@ -42,6 +77,9 @@
 #include "MsdProvider.hpp"
 #include "ConfigParser.hpp"
 
+#define MSD_VERSION_TWO 2
+#define MSD_VERSION_THREE 3
+
 telux::tel::ECallMsdData MsdProvider::msdData_ = {};
 
 /**
@@ -55,21 +93,40 @@ telux::tel::ECallMsdData MsdProvider::getMsd() {
  * Function to read MSD config file containing key value pairs
  */
 void MsdProvider::init(std::string filename, std::string filePath) {
-    std::shared_ptr<ConfigParser> msdSettings = std::make_shared<ConfigParser>(filename, filePath);
+    std::shared_ptr<ConfigParser> msdSettings = nullptr;
+    try {
+        msdSettings = std::make_shared<ConfigParser>(filename, filePath);
+    } catch (std::bad_alloc & e) {
+        std::cout << "MSD parsing failed, error: "<< e.what() << std::endl;
+        return;
+    }
+    // Parse MSD Version. When relevant config is not found, default to MSD version-2
+    if(msdSettings->getValue("MSD_VERSION").empty()) {
+        msdData_.msdVersion = MSD_VERSION_TWO;
+    } else {
+        msdData_.msdVersion = atoi(msdSettings->getValue("MSD_VERSION").c_str());
+    }
+    std::cout << "ECall MSD Version: " << static_cast<int>(msdData_.msdVersion) << std::endl;
 
-    // RECENT_LOCATION_N1_PRESENT
-    auto recentVehicleLocationN1PresentAsString
-      = msdSettings->getValue("RECENT_LOCATION_N1_PRESENT");
-    bool recentVehicleLocationN1PresentAsBool
-      = atoi(recentVehicleLocationN1PresentAsString.c_str()) ? true : false;
-    msdData_.optionals.recentVehicleLocationN1Present = recentVehicleLocationN1PresentAsBool;
+    // Recent location information is optional only in MSD version-2
+    if(msdData_.msdVersion == MSD_VERSION_TWO) {
+        // RECENT_LOCATION_N1_PRESENT
+        auto recentVehicleLocationN1PresentAsString
+          = msdSettings->getValue("RECENT_LOCATION_N1_PRESENT");
+        bool recentVehicleLocationN1PresentAsBool
+          = atoi(recentVehicleLocationN1PresentAsString.c_str()) ? true : false;
+        msdData_.optionals.recentVehicleLocationN1Present = recentVehicleLocationN1PresentAsBool;
 
-    // RECENT_LOCATION_N2_PRESENT
-    auto recentVehicleLocationN2PresentAsString
-      = msdSettings->getValue("RECENT_LOCATION_N2_PRESENT");
-    bool recentVehicleLocationN2PresentAsBool
-      = atoi(recentVehicleLocationN2PresentAsString.c_str()) ? true : false;
-    msdData_.optionals.recentVehicleLocationN2Present = recentVehicleLocationN2PresentAsBool;
+        // RECENT_LOCATION_N2_PRESENT
+        auto recentVehicleLocationN2PresentAsString
+          = msdSettings->getValue("RECENT_LOCATION_N2_PRESENT");
+        bool recentVehicleLocationN2PresentAsBool
+          = atoi(recentVehicleLocationN2PresentAsString.c_str()) ? true : false;
+        msdData_.optionals.recentVehicleLocationN2Present = recentVehicleLocationN2PresentAsBool;
+    } else if(msdData_.msdVersion == MSD_VERSION_THREE) {
+        msdData_.optionals.recentVehicleLocationN1Present = true;
+        msdData_.optionals.recentVehicleLocationN2Present = true;
+    }
 
     // NUMBER_OF_PASSENGERS_PRESENT
     auto numberOfPassengersPresentAsString = msdSettings->getValue("NUMBER_OF_PASSENGERS_PRESENT");

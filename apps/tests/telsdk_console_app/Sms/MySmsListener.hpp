@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -99,5 +99,21 @@ class MySmsDeliveryCallback : public telux::common::ICommandResponseCallback {
 public:
    void commandResponse(telux::common::ErrorCode error) override;
 };
+
+class SmsStorageCallback {
+public:
+   static void reqMessageListResponse(std::vector<telux::tel::SmsMetaInfo> infos,
+      telux::common::ErrorCode errorCode);
+   static void readMsgResponse(telux::tel::SmsMessage smsMsg,  telux::common::ErrorCode errorCode);
+   static void deleteResponse(telux::common::ErrorCode errorCode);
+   static void reqPreferredStorageResponse(telux::tel::StorageType type,
+      telux::common::ErrorCode errorCode);
+   static void setPreferredStorageResponse(telux::common::ErrorCode errorCode);
+   static void setTagResponse(telux::common::ErrorCode errorCode);
+   static std::string convertTagTypeToString(telux::tel::SmsTagType type);
+   static std::string convertStorageTypeToString(telux::tel::StorageType type);
+};
+
+
 
 #endif

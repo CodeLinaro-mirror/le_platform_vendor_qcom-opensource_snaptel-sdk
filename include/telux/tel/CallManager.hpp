@@ -154,7 +154,7 @@ using EcbmStatusCallback
  *           break backwards compatibility.
  */
 using ECallHlapTimerCallback
-   = std::function<void(telux::common::ErrorCode error, int timeDuration)>;
+   = std::function<void(telux::common::ErrorCode error, uint32_t timeDuration)>;
 
 /**
  * @brief Call Manager is the primary interface for call related operations
@@ -585,7 +585,7 @@ public:
     *         change and could break backwards compatibility.
     */
    virtual telux::common::Status updateEcallHlapTimer(int phoneId, HlapTimerType type,
-       int timeDuration, common::ResponseCallback callback = nullptr) = 0;
+       uint32_t timeDuration, common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * Get the value of an eCall HLAP timer.

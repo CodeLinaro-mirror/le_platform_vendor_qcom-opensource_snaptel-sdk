@@ -173,7 +173,7 @@ public:
      * @returns Status of setHlapTimer i.e success or suitable status code.
      *
      */
-    telux::common::Status setHlapTimer(int phoneId, HlapTimerType type, int timeDuration);
+    telux::common::Status setHlapTimer(int phoneId, HlapTimerType type, uint32_t timeDuration);
 
     /**
      * This function requests to get the value of eCall High Level Application Protocol(HLAP)

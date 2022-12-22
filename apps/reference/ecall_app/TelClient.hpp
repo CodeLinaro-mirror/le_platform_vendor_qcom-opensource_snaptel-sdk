@@ -236,7 +236,7 @@ public:
      * @returns Status of setHlapTimer i.e success or suitable status code.
      *
      */
-    telux::common::Status setHlapTimer(int phoneId, HlapTimerType type, int timeDuration);
+    telux::common::Status setHlapTimer(int phoneId, HlapTimerType type, uint32_t timeDuration);
 
     /**
      * This function requests to get the value of eCall High Level Application Protocol(HLAP)
@@ -287,7 +287,7 @@ public:
                                  ECallHlapTimerStatus timersStatus);
     void stopT10TimerResponse(telux::common::ErrorCode error);
     void setHlapTimerResponse(telux::common::ErrorCode error);
-    void getHlapTimerResponse(telux::common::ErrorCode error, int timeDuration);
+    void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();

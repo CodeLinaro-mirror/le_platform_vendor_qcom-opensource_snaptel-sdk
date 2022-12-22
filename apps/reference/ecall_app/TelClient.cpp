@@ -404,7 +404,7 @@ void TelClient::setHlapTimerResponse(telux::common::ErrorCode error) {
 }
 
 // Callback which provides response to get HLAP timer
-void TelClient::getHlapTimerResponse(telux::common::ErrorCode error, int timeDuration) {
+void TelClient::getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration) {
     if(error != telux::common::ErrorCode::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to get ECall HLAP timer with error code: "
             << Utils::getErrorCodeAsString(error) << std::endl;
@@ -640,7 +640,8 @@ telux::common::Status TelClient::stopT10Timer(int phoneId) {
 }
 
 // Set the value of eCall High Level Application Protocol(HLAP) timer
-telux::common::Status TelClient::setHlapTimer(int phoneId, HlapTimerType type, int timeDuration) {
+telux::common::Status TelClient::setHlapTimer(int phoneId, HlapTimerType type,
+    uint32_t timeDuration) {
     if(!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to send request to set HLAP timer"
             << std::endl;

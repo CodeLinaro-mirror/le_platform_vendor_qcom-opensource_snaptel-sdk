@@ -404,7 +404,7 @@ void ECallApp::setHlapTimer() {
     }
 
     // Get time duration from user
-    int timeDuration = -1;
+    uint32_t timeDuration = 0;
     std::getline(std::cin, temp, delimiter);
     if(!temp.empty()) {
         try {

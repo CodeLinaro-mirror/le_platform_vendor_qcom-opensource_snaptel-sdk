@@ -318,7 +318,8 @@ telux::common::Status ECallManager::stopT10Timer(int phoneId) {
 /**
  * Request to set the value of eCall High Level Application Protocol(HLAP) timer
  */
-telux::common::Status ECallManager::setHlapTimer(int phoneId, HlapTimerType type, int timeDuration) {
+telux::common::Status ECallManager::setHlapTimer(int phoneId, HlapTimerType type,
+    uint32_t timeDuration) {
     if(!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;

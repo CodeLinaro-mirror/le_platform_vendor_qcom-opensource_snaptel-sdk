@@ -76,6 +76,7 @@
 #include <iostream>
 
 #include "ECallManager.hpp"
+#include "../../common/utils/Utils.hpp"
 
 #define DEFAULT_ECALL_CONFIG_FILE_PATH "/etc"
 #define DEFAULT_ECALL_CONFIG_FILE_NAME "eCall.conf"
@@ -127,9 +128,10 @@ telux::common::Status ECallManager::init() {
 /**
  * Function to trigger the standard eCall procedure(eg.112)
  */
-telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category,
-                                                 ECallVariant variant, bool transmitMsd) {
-    if(!telClient_) {
+telux::common::Status ECallManager::triggerECall(
+    int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd,
+    std::vector<uint8_t> msdPdu) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
@@ -137,9 +139,12 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
         std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
         return telux::common::Status::FAILED;
     }
-    phoneId_ = phoneId;
-    setup(phoneId_);
-    if(transmitMsd && !isLocationReceived()) {
+    msdPdu_.clear();
+    if(!msdPdu.empty()) {
+        msdPdu_ = msdPdu;
+    }
+    setup(phoneId);
+    if (transmitMsd && msdPdu_.empty() && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
@@ -147,9 +152,9 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
-    auto status = telClient_->startECall(phoneId, msdData_, category, variant, transmitMsd,
-                                         shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    auto status = telClient_->startECall(
+        phoneId, msdPdu_, msdData_, category, variant, transmitMsd, shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate eCall " << std::endl;
         cleanup();
         return telux::common::Status::FAILED;
@@ -162,9 +167,10 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
 /**
  * Function to trigger a voice eCall procedure to the specified phone number
  */
-telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory category,
-                                                const std::string dialNumber, bool transmitMsd) {
-    if(!telClient_) {
+telux::common::Status ECallManager::triggerECall(
+    int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd,
+    std::vector<uint8_t> msdPdu) {
+    if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
     }
@@ -172,9 +178,12 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
         std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
         return telux::common::Status::FAILED;
     }
-    phoneId_ = phoneId;
-    setup(phoneId_);
-    if(transmitMsd && !isLocationReceived()) {
+    msdPdu_.clear();
+    if(!msdPdu.empty()) {
+        msdPdu_ = msdPdu;
+    }
+    setup(phoneId);
+    if (transmitMsd && msdPdu_.empty() && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if(std::cv_status::timeout
@@ -182,9 +191,9 @@ telux::common::Status ECallManager::triggerECall(int phoneId, ECallCategory cate
                 std::cout << CLIENT_NAME << "Error: Location fetch timeout! " << std::endl;
         }
     }
-    auto status = telClient_->startECall(phoneId, msdData_, category, dialNumber, transmitMsd,
-                                        shared_from_this());
-    if(status != telux::common::Status::SUCCESS) {
+    auto status = telClient_->startECall(
+        phoneId, msdPdu_, msdData_, category, dialNumber, transmitMsd, shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate Voice eCall " << std::endl;
         cleanup();
         return telux::common::Status::FAILED;
@@ -410,13 +419,17 @@ void ECallManager::setup(int phoneId) {
         audioClient_->startVoiceSession(phoneId, audioDevice_, voiceSampleRate_, voiceFormat_,
                                 voiceChannels_, ecnrMode_);
     }
-    // Get the location updates
-    setLocationReceived(false);
-    if(!locClient_) {
-        std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"
-                << std::endl;
-    } else {
-        locClient_->startLocUpdates(locUpdateIntervalMs_, shared_from_this());
+    // Get the location updates. This application doesn't update the MSD automatically when a TPS
+    // eCall over IMS is triggered or when user provides MSD in raw PDU format(contains location
+    // info). Hence location reports are not enabled in these scenarios.
+    if(!isTpsEcallOverImsTriggered && msdPdu_.empty()) {
+        setLocationReceived(false);
+        if (!locClient_) {
+            std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"
+                      << std::endl;
+        } else {
+            locClient_->startLocUpdates(locUpdateIntervalMs_, shared_from_this());
+        }
     }
     // Disable Thermal auto-shutdown
     if(!thermClient_) {

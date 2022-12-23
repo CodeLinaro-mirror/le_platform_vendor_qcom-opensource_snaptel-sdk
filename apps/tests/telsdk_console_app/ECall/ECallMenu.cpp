@@ -597,7 +597,7 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
       std::vector<uint8_t> rawData;
 
       if(!msdData.empty()) {
-         rawData = convertHexToBytes(msdData);
+         rawData = Utils::convertHexToBytes(msdData);
       } else {
          rawData = {2,   41,  68, 6,  128, 227, 10, 81,  67, 158, 41,  85,  212, 56,  0,
                     128, 4,   52, 10, 140, 65,  89, 164, 56, 119, 207, 131, 54,  210, 63,
@@ -642,7 +642,7 @@ void ECallMenu::updateEcallMsdWithPdu(std::vector<std::string> userInput) {
       std::vector<uint8_t> rawData;
 
       if(!msdData.empty()) {
-         rawData = convertHexToBytes(msdData);
+         rawData = Utils::convertHexToBytes(msdData);
       } else {
          rawData = {2,   41,  68, 6,  128, 227, 10, 81,  67, 158, 41,  85,  212, 56,  0,
                     128, 4,   52, 10, 140, 65,  89, 164, 56, 119, 207, 131, 54,  210, 63,
@@ -785,38 +785,6 @@ void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode 
                      + Utils::getErrorCodeAsString(errorCode));
    }
    PRINT_NOTIFICATION << infoStr << std::endl;
-}
-/** Convert the hexadecimal string to bytes
- *  Eg: i/p: 0229440680E30A51439E
- *      o/p: 2,41,68,6,128,227,10,81,67,158
- */
-std::vector<uint8_t> ECallMenu::convertHexToBytes(std::string msdData) {
-   std::vector<uint8_t> rawMsd;
-   size_t i, len;
-   uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
-
-   len = msdData.length();
-   for(i = 0; i < len; i = i + 2) {
-      if(msdData[i] >= '0' && msdData[i] <= '9') {
-         rawData1 = (msdData[i] - 48) * 16;
-      } else if(msdData[i] >= 'A' && msdData[i] <= 'F') {
-         rawData1 = (msdData[i] - 55) * 16;
-      } else if(msdData[i] >= 'a' && msdData[i] <= 'f') {
-         rawData1 = (msdData[i] - 87) * 16;
-      }
-
-      if(msdData[i + 1] >= '0' && msdData[i + 1] <= '9') {
-         rawData2 = msdData[i + 1] - 48;
-      } else if(msdData[i + 1] >= 'A' && msdData[i + 1] <= 'F') {
-         rawData2 = msdData[i + 1] - 55;
-      } else if(msdData[i + 1] >= 'a' && msdData[i + 1] <= 'f') {
-         rawData2 = msdData[i + 1] - 87;
-      }
-
-      rawData = rawData1 + rawData2;
-      rawMsd.emplace_back(rawData);
-   }
-   return rawMsd;
 }
 
 void ECallMenu::enableAudio(std::vector<std::string> userInput) {

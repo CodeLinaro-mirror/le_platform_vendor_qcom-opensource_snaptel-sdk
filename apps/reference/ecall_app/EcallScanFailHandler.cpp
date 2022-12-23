@@ -122,11 +122,11 @@ void TelClient::EcallScanFailHandler::setHighCapabilityResponse(telux::common::E
             (it->second.msdTransmissionStatus == telux::tel::ECallMsdTransmissionStatus::SUCCESS)) {
             auto status = telux::common::Status::FAILED;
             if (it->second.isCustomNumber) {
-               status = sp->startECall(it->first, it->second.msdData,
+               status = sp->startECall(it->first, it->second.msdPdu, it->second.msdData,
                   it->second.category, it->second.dialNumber, it->second.transmitMsd,
                      callListener );
             } else {
-               status = sp->startECall(it->first, it->second.msdData,
+               status = sp->startECall(it->first, it->second.msdPdu, it->second.msdData,
                   it->second.category, it->second.variant, it->second.transmitMsd, callListener);
             }
             if (status == telux::common::Status::SUCCESS) {

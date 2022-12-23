@@ -418,10 +418,10 @@ void TelClient::restartHlapTimerResponse(telux::common::ErrorCode error) {
 }
 
 // Initiate a standard eCall procedure(eg.112)
-telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
-                                ECallCategory category, ECallVariant variant, bool transmitMsd,
-                                std::shared_ptr<CallStatusListener> callListener) {
-    if(!callMgr_) {
+telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> msdPdu,
+    ECallMsdData msdData, ECallCategory category, ECallVariant variant, bool transmitMsd,
+    std::shared_ptr<CallStatusListener> callListener) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
             << std::endl;
         return telux::common::Status::FAILED;
@@ -429,9 +429,15 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
     setECallProgressState(true);
     // Initiate an eCall
     telux::common::Status status = telux::common::Status::FAILED;
-    if(transmitMsd) {
-        status = callMgr_->makeECall(phoneId, msdData, (int)category, (int)variant,
-                                     shared_from_this());
+    if (transmitMsd) {
+        if(msdPdu.empty()) {
+            status = callMgr_->makeECall(phoneId, msdData, (int)category, (int)variant,
+                shared_from_this());
+        } else {
+            status = callMgr_->makeECall(phoneId, msdPdu, (int)category, (int)variant,
+                 std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
+                 std::placeholders::_2));
+        }
     } else {
         status = callMgr_->makeECall(phoneId, (int)category, (int)variant,
                                      std::bind(&TelClient::makeCallResponse, this,
@@ -443,6 +449,7 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
         ECallInfo ecallInfo = {};
         ecallInfo.transmitMsd = transmitMsd;
         ecallInfo.msdData = msdData;
+        ecallInfo.msdPdu = msdPdu;
         ecallInfo.isCustomNumber = false;
         ecallInfo.category = category;
         ecallInfo.variant = variant;
@@ -460,10 +467,10 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
 }
 
 // Initiate a voice eCall procedure to the specified phone number
-telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
-                                ECallCategory category, const std::string dialNumber,
-                                bool transmitMsd, std::shared_ptr<CallStatusListener> callListener){
-    if(!callMgr_) {
+telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> msdPdu,
+    ECallMsdData msdData, ECallCategory category, const std::string dialNumber, bool transmitMsd,
+    std::shared_ptr<CallStatusListener> callListener) {
+    if (!callMgr_) {
         std::cout << CLIENT_NAME << "Invalid Call Manager, Failed to initiate an eCall"
             << std::endl;
         return telux::common::Status::FAILED;
@@ -471,9 +478,15 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
     setECallProgressState(true);
     // Initiate voice eCall
     telux::common::Status status = telux::common::Status::FAILED;
-    if(transmitMsd) {
-        status = callMgr_->makeECall(phoneId, dialNumber, msdData, (int)category,
-                                            shared_from_this());
+    if (transmitMsd) {
+        if(msdPdu.empty()) {
+            status = callMgr_->makeECall(phoneId, dialNumber, msdData, (int)category,
+                shared_from_this());
+        } else {
+            status = callMgr_->makeECall(phoneId, dialNumber, msdPdu, (int)category,
+                 std::bind(&TelClient::makeCallResponse, this, std::placeholders::_1,
+                 std::placeholders::_2));
+        }
     } else {
         status = callMgr_->makeECall(phoneId, dialNumber, (int)category,
                                      std::bind(&TelClient::makeCallResponse, this,
@@ -485,6 +498,7 @@ telux::common::Status TelClient::startECall(int phoneId, ECallMsdData msdData,
         ECallInfo ecallInfo = {};
         ecallInfo.transmitMsd = transmitMsd;
         ecallInfo.msdData = msdData;
+        ecallInfo.msdPdu = msdPdu;
         ecallInfo.isCustomNumber = true;
         ecallInfo.category = category;
         ecallInfo.dialNumber = dialNumber;

@@ -31,7 +31,7 @@
 #include <sstream>
 
 #include "ThermalCommandMgr.hpp"
-#include "../telsdk_console_app/Utils.hpp"
+#include "Utils.hpp"
 #include "ThermalShutdownMgrTestApp.hpp"
 
 ThermalCommandMgr::ThermalCommandMgr() {

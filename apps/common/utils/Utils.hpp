@@ -80,6 +80,9 @@
 #include <vector>
 #include <telux/common/CommonDefines.hpp>
 
+#define SEC_TO_NANOS 1000000000
+#define SEC_TO_MICROS 1000000
+
 class Utils {
 public:
    // Validate the input and in case of invalid input request
@@ -162,6 +165,16 @@ public:
 
    // Validate input V2X SPS interval which should comply with supported values in 3GPP
    static int validateV2xSpsInterval(uint16_t interval);
+
+   // Get the number of nanoseconds elapsed since boot
+   static uint64_t getNanosecondsSinceBoot();
+
+   /**
+    * Convert the hexadecimal string to byte array/vector
+    *  Eg: i/p: 0229440680E30A51439E
+    *      o/p: 2,41,68,6,128,227,10,81,67,158
+    */
+   static std::vector<uint8_t> convertHexToBytes(std::string hexData);
 };
 
 #endif

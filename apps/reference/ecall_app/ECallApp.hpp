@@ -138,10 +138,15 @@ private:
     /**
      * Function to configure MSD transmission at call connect
      */
-    telux::common::Status getMsdTransmissionConfig(bool &transmitMsd);
+    telux::common::Status getMsdTransmissionConfig(bool &transmitMsd, std::vector<uint8_t> &msdPdu);
 
     telux::common::Status getIntegerInput(uint32_t &value, std::string prompt,
         std::vector<uint32_t> validValues);
+
+    /**
+     * Utility function to get user input for MSD PDU
+     */
+    std::vector<uint8_t> getMsdPduInput();
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;

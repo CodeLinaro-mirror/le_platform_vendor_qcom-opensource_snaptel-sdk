@@ -70,6 +70,7 @@
 
 #include <getopt.h>
 #include <iostream>
+#include <sstream>
 #include <memory>
 
 extern "C" {
@@ -78,7 +79,6 @@ extern "C" {
 #include <signal.h>
 }
 
-#include <telux/sensor/SensorFactory.hpp>
 #include "SensorTestApp.hpp"
 #include <telux/common/Version.hpp>
 #include "../../common/utils/Utils.hpp"
@@ -157,6 +157,18 @@ void SensorTestApp::printHelp(std::string programName) {
               << "-q [period]  Quiet mode with threshold, events count will be printed once every "
                  "[period] seconds"
               << std::endl
+              << "To launch sensor test app in non-interactive mode, refer to the -a or -g options."
+              << std::endl
+              << "-a samplerate,batchcount      Creates an accelerometer client with the arguments."
+                 "To create multiple accelerometer clients- "
+              << std::endl
+              << " -a samplerate,batchcount -a samplerate,batchcount"
+              << std::endl
+              << "-g samplerate,batchcount      Creates a gyroscope client with the arguments. "
+                 "To create multiple gyroscope clients- "
+              << std::endl
+              << " -g samplerate,batchcount -g samplerate,batchcount"
+              << std::endl
               << "-h           This help" << std::endl
               << "In case -q and -n both are specified, the argument specified in the end would "
                  "take effect"
@@ -167,9 +179,11 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
     int c = -1;
     static const struct option long_options[]
         = {{"notification configuration", no_argument, 0, 'n'}, {"help", no_argument, 0, 'h'},
-            {"quiet mode", required_argument, 0, 'q'}, {0, 0, 0, 0}};
+            {"quiet mode", required_argument, 0, 'q'},
+            {"accel", required_argument, nullptr, 'a'},
+            {"gyro", required_argument, nullptr, 'g'}, {0, 0, 0, 0}};
     int option_index = 0;
-    c = getopt_long(argc, argv, "nq:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "nq:a:g:h", long_options, &option_index);
     if (c == -1) {
         return;
     }
@@ -180,6 +194,24 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
     }
     do {
         switch (c) {
+            case 'a' : {
+                commandlineArgs_.verboseNotification = true;
+                commandlineArgs_.quiet = false;
+                std::string str = optarg;
+                telux::sensor::SensorConfiguration sensorConfig;
+                updateSensorConfig(str, sensorConfig);
+                sensorList_.push_back({"Accel", sensorConfig});
+                break;
+            }
+            case 'g' : {
+                commandlineArgs_.verboseNotification = true;
+                commandlineArgs_.quiet = false;
+                std::string str = optarg;
+                telux::sensor::SensorConfiguration sensorConfig;
+                updateSensorConfig(str, sensorConfig);
+                sensorList_.push_back({"Gyro", sensorConfig});
+                break;
+            }
             case 'n': {
                 commandlineArgs_.verboseNotification = true;
                 commandlineArgs_.quiet = false;
@@ -202,7 +234,7 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
                 exit(0);
             }
         }
-        c = getopt_long(argc, argv, "nq:h", long_options, &option_index);
+        c = getopt_long(argc, argv, "nq:a:g:h", long_options, &option_index);
     } while (c != -1);
     if (commandlineArgs_.verboseNotification) {
         std::cout << "Enabling verbose notification" << std::endl;
@@ -210,6 +242,90 @@ void SensorTestApp::parseArgs(int argc, char **argv) {
     if (commandlineArgs_.quiet) {
         std::cout << "Enabling quiet mode with period = " << commandlineArgs_.printPeriod
                   << std::endl;
+    }
+}
+
+void SensorTestApp::updateSensorConfig(std::string str,
+    telux::sensor::SensorConfiguration &sensorConfig) {
+    std::istringstream ss(str);
+    std::string token;
+    std::vector<std::string> configList;
+    while(std::getline(ss, token, ',')) {
+        configList.push_back(token);
+    }
+    sensorConfig.samplingRate = std::stof(configList[0]);
+    sensorConfig.batchCount = std::stoi(configList[1]);
+    sensorConfig.validityMask.set(telux::sensor::SensorConfigParams::SAMPLING_RATE);
+    sensorConfig.validityMask.set(telux::sensor::SensorConfigParams::BATCH_COUNT);
+}
+
+void SensorTestApp::nonInteractiveLaunch() {
+    //Sensor Mgr init
+    std::shared_ptr<SensorControlMenu> sensorControlMenu = std::make_shared<SensorControlMenu>(
+            "Sensor control menu", "sensor_control> ", commandlineArgs_);
+    if (sensorControlMenu->init(false) != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Failed to initialize sensor manager" << std::endl;
+        return;
+    }
+
+    //Retrieve Sensor Mgr.
+    std::shared_ptr<telux::sensor::ISensorManager>
+        sensorManager = sensorControlMenu->getSensorManager();
+
+    //Creating extra client IDs for tracking different accelerometers and gyroscopes.
+    int accelID = 1;
+    int gyroID = 1;
+    for(auto it: sensorList_) {
+        // "it" represents a sensor - {Sensor Name, Sensor Configuration}
+        std::string sensorName = it.first;
+        int sensorID;
+        if(sensorName == "Accel") {
+            sensorID = accelID;
+            accelID++;
+        } else {
+            sensorID = gyroID;
+            gyroID++;
+        }
+
+        //Create corresponding sensor client and register listener.
+        std::shared_ptr<telux::sensor::ISensorClient> sensor;
+        telux::common::Status status = sensorManager->getSensorClient(sensor, sensorName);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << " Failed to get sensor: "<< sensorName << " " << sensorID << "\n";
+            return;
+        }
+        std::cout << " Getting sensor: " << sensorName << " " << sensorID <<
+            " Sampling Rate: " << it.second.samplingRate << " Batch Count: " <<
+                it.second.batchCount << "\n";
+
+        std::shared_ptr<SensorClient> sensorClient
+            = std::make_shared<SensorClient>(sensorID, sensor, commandlineArgs_);
+        sensorClient->init();
+        sensorClientList_.push_back(sensorClient);
+
+        //Use SensorClient to configure Sensor
+        telux::sensor::SensorConfiguration sensorConfig = it.second;
+        status = sensorClient->configure(sensorConfig);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << " Failed to configure sensor: "<< sensorName << " " << sensorID << "\n";
+            return;
+        }
+
+        //Activate the client.
+        status = sensorClient->activate();
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Failed to activate sensor \n";
+            return;
+        }
+    }
+    //Retrieve reports for a minute
+    std::this_thread::sleep_for(std::chrono::seconds(60));
+
+    //Cleanup the clients.
+    std::cout << "Deactivating clients \n";
+    for(auto sensorClient: sensorClientList_) {
+        //Deactivate the client and deregister the listener.
+        sensorClient->cleanup();
     }
 }
 
@@ -232,18 +348,23 @@ int main(int argc, char **argv) {
 
     setupSignalHandler();
     sensorTestApp = std::make_shared<SensorTestApp>(appName, "sensor> ");
-    sensorTestApp->parseArgs(argc, argv);
     // Setting required secondary groups for SDK file/diag logging
     std::vector<std::string> supplementaryGrps{"system", "diag", "sensors"};
     int rc = Utils::setSupplementaryGroups(supplementaryGrps);
     if (rc == -1) {
         std::cout << "Adding supplementary groups failed!" << std::endl;
     }
-    // initialize commands and display
-    if (sensorTestApp->init() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        return -1;
+    sensorTestApp->parseArgs(argc, argv);
+    if(!sensorTestApp->sensorList_.empty()) {
+        std::cout << "Sensor App launched During boot\n";
+        sensorTestApp->nonInteractiveLaunch();
+    } else {
+        // initialize commands and display
+        if (sensorTestApp->init() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            return -1;
+        }
+        sensorTestApp->mainLoop();  // Main loop to continuously read and execute commands
+        sensorTestApp = nullptr;
     }
-    sensorTestApp->mainLoop();  // Main loop to continuously read and execute commands
-    sensorTestApp = nullptr;
     return 0;
 }

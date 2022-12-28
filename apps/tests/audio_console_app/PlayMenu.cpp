@@ -347,6 +347,12 @@ void PlayMenu::play() {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
             numBytes = fread(streamBuffer->getRawBuffer(),1,size,file_);
+            if (numBytes == 0 && feof(file_)) {
+                streamBuffer->reset();
+                freeBuffers_.push(streamBuffer);
+                playStatus_ = true;
+                break;
+            }
             if(numBytes != size && !feof(file_)) {
                 std::cout << "Unable to read specified bytes, bytes read: " << numBytes<< std::endl;
                 streamBuffer->reset();

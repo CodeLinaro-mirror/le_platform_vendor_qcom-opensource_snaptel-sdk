@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -112,6 +112,7 @@ when       who     what, where, why
 12/21/21   BS      Added documentation for sensor self test.
 07/11/22   SS      Added Third Party Service eCall over IMS support in Telematics SDK
 11/02/22   FS      Added support Wlan Management support in Telematics SDK
+06/03/23   MH      Added notifications for thermal sub-system.
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

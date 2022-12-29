@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -38,10 +38,13 @@
 #include <telux/therm/ThermalListener.hpp>
 
 using namespace telux::common;
+using namespace telux::therm;
 
 class ThermalListener : public telux::therm::IThermalListener {
  public:
     void onServiceStatusChange(ServiceStatus status) override;
+    void onCoolingDeviceLevelChange(std::shared_ptr<ICoolingDevice> coolingDevice) override;
+    void onTripEvent(std::shared_ptr<ITripPoint> tripPoint, TripEvent tripEvent) override;
 
     ThermalListener();
     ~ThermalListener();

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,7 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <iomanip>
 #include <iostream>
 #include <vector>
@@ -74,50 +73,50 @@
 std::string ThermalHelper::convertTripTypeToStr(telux::therm::TripType type) {
     std::string tripType;
     switch (type) {
-    case telux::therm::TripType::CRITICAL:
-        tripType = "CRITICAL";
-        break;
-    case telux::therm::TripType::HOT:
-        tripType = "HOT";
-        break;
-    case telux::therm::TripType::PASSIVE:
-        tripType = "PASSIVE";
-        break;
-    case telux::therm::TripType::ACTIVE:
-        tripType = "ACTIVE";
-        break;
-    case telux::therm::TripType::CONFIGURABLE_HIGH:
-        tripType = "CONFIGURABLE_HIGH";
-        break;
-    case telux::therm::TripType::CONFIGURABLE_LOW:
-        tripType = "CONFIGURABLE_LOW";
-        break;
-    default:
-        tripType = "UNKNOWN";
-        break;
+        case telux::therm::TripType::CRITICAL:
+            tripType = "CRITICAL";
+            break;
+        case telux::therm::TripType::HOT:
+            tripType = "HOT";
+            break;
+        case telux::therm::TripType::PASSIVE:
+            tripType = "PASSIVE";
+            break;
+        case telux::therm::TripType::ACTIVE:
+            tripType = "ACTIVE";
+            break;
+        case telux::therm::TripType::CONFIGURABLE_HIGH:
+            tripType = "CONFIGURABLE_HIGH";
+            break;
+        case telux::therm::TripType::CONFIGURABLE_LOW:
+            tripType = "CONFIGURABLE_LOW";
+            break;
+        default:
+            tripType = "UNKNOWN";
+            break;
     }
     return tripType;
 }
 
 std::string ThermalHelper::tripPointToString(
-    std::shared_ptr<telux::therm::ITripPoint> &tripInfo, std::string &trip) {
+    std::shared_ptr<telux::therm::ITripPoint> &tripInfo, std::string &type) {
     std::string tripTempPoints;
-    if (trip == "CRITICAL")
+    if (type == "CRITICAL")
         tripTempPoints
             += "C" + std::string("(") + std::to_string(tripInfo->getThresholdTemp()) + ")";
-    else if (trip == "HOT")
+    else if (type == "HOT")
         tripTempPoints
             += "H" + std::string("(") + std::to_string(tripInfo->getThresholdTemp()) + ")";
-    else if (trip == "ACTIVE")
+    else if (type == "ACTIVE")
         tripTempPoints
             += "A" + std::string("(") + std::to_string(tripInfo->getThresholdTemp()) + ")";
-    else if (trip == "PASSIVE")
+    else if (type == "PASSIVE")
         tripTempPoints
             += "P" + std::string("(") + std::to_string(tripInfo->getThresholdTemp()) + ")";
-    else if (trip == "CONFIGURABLE_HIGH")
+    else if (type == "CONFIGURABLE_HIGH")
         tripTempPoints
             += "CH" + std::string("(") + std::to_string(tripInfo->getThresholdTemp()) + ")";
-    else if (trip == "CONFIGURABLE_LOW")
+    else if (type == "CONFIGURABLE_LOW")
         tripTempPoints
             += "CL" + std::string("(") + std::to_string(tripInfo->getThresholdTemp()) + ")";
     else
@@ -161,6 +160,21 @@ void ThermalHelper::printBindingInfo(std::shared_ptr<telux::therm::IThermalZone>
     }
 }
 
+void ThermalHelper::printThermalZoneHeader() {
+    std::cout << "*** Thermal zones ***" << std::endl;
+    std::cout << std::setw(2)
+              << "+---------------------------------------------------------------------------"
+                 "--------------------+"
+              << std::endl;
+    std::cout << std::setw(3) << "| Tzone Id | " << std::setw(10) << "Type  " << std::setw(35)
+              << " | Current Temp  " << std::setw(5) << "|  Passive Temp  |" << std::setw(20)
+              << " Trip Points  " << std::endl;
+    std::cout << std::setw(2)
+              << "+---------------------------------------------------------------------------"
+                 "--------------------+"
+              << std::endl;
+}
+
 void ThermalHelper::printThermalZoneInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo) {
     std::vector<std::shared_ptr<telux::therm::ITripPoint>> tripInfo;
     tripInfo = tzInfo->getTripPoints();
@@ -180,9 +194,53 @@ void ThermalHelper::printThermalZoneInfo(std::shared_ptr<telux::therm::IThermalZ
     std::cout << std::endl;
 }
 
+void ThermalHelper::printCoolingDeviceHeader() {
+    std::cout << "*** Cooling Devices ***" << std::endl;
+    std::cout << std::setw(2)
+              << "+--------------------------------------------------------------------------+"
+              << std::endl;
+    std::cout << std::setw(3) << " | CDev Id " << std::setw(20) << " | CDev Type " << std::setw(5)
+              << " | Max Cooling State |" << std::setw(5) << " Current Cooling State |"
+              << std::endl;
+    std::cout << std::setw(2)
+              << "+--------------------------------------------------------------------------+"
+              << std::endl;
+}
+
 void ThermalHelper::printCoolingDevInfo(std::shared_ptr<telux::therm::ICoolingDevice> &cdevInfo) {
     std::cout << std::left << std::setw(5) << " " << std::setw(3) << cdevInfo->getId()
               << std::setw(7) << " " << std::setw(20) << cdevInfo->getDescription() << std::setw(7)
               << " " << std::setw(5) << cdevInfo->getMaxCoolingLevel() << std::setw(15) << " "
               << std::setw(5) << cdevInfo->getCurrentCoolingLevel() << std::endl;
+}
+
+void ThermalHelper::printTripPointHeader() {
+    std::cout << "*** Trip point ***" << std::endl;
+    std::cout << std::setw(2)
+              << "+---------------------------------------------------------------------------"
+                 "--------------------+"
+              << std::endl;
+    std::cout << std::setw(3) << "| Tzone Id | " << std::setw(10) << "Trip Id | " << std::setw(15)
+              << "  Threshold Temp  |"
+              << " " << std::setw(8) << "  Hysteresis Temp  |"
+              << " " << std::setw(8) << "  Trip Event  |"
+              << " " << std::setw(10) << "  Trip Point  |" << std::endl;
+    std::cout << std::setw(2)
+              << "+---------------------------------------------------------------------------"
+                 "--------------------+"
+              << std::endl;
+}
+
+void ThermalHelper::printTripPointInfo(
+    std::shared_ptr<telux::therm::ITripPoint> &tripPointInfo, TripEvent event) {
+    std::string tripPoints;
+    std::string trip = convertTripTypeToStr(tripPointInfo->getType());
+    tripPoints += tripPointToString(tripPointInfo, trip);
+    std::cout
+        << std::left << std::setw(3) << " " << std::setw(2) << tripPointInfo->getTZoneId()
+        << std::setw(10) << " " << std::setw(2) << tripPointInfo->getTripId() << std::setw(10)
+        << " " << std::setw(6) << tripPointInfo->getThresholdTemp() << std::setw(13) << " "
+        << std::setw(10) << tripPointInfo->getHysteresis() << std::setw(9) << " " << std::setw(2)
+        << ((event == TripEvent::CROSSED_UNDER) ? "CROSSED_UNDER" : "CROSSED_OVER ") << std::setw(5)
+        << " " << std::setw(2) << tripPoints << std::endl;
 }

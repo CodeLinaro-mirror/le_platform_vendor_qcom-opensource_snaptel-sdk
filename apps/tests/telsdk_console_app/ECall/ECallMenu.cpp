@@ -40,7 +40,7 @@
 
 #include "ECallMenu.hpp"
 #include "MyECallListener.hpp"
-#include "Utils.hpp"
+#include "../../common/utils/Utils.hpp"
 
 // Config file name. Using current directory as default path.
 #define MSDSETTINGS_FILE "./msdsettings.txt"
@@ -195,6 +195,14 @@ bool ECallMenu::init() {
       ConsoleAppCommand("u", "Update_eCall_MSD_PDU", {},
                         std::bind(&ECallMenu::updateEcallMsdWithPdu, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> requestEcbmCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ge", "Get_ECBM", {},
+         std::bind(&ECallMenu::requestEcbm, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> exitEcbmCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ee", "Exit_ECBM", {},
+         std::bind(&ECallMenu::exitEcbm, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> getEncodedOADContentCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("gee",
          "Get_Encoded_Euro_NCAP_Optional_Additional_Data_Content", {},
@@ -204,11 +212,10 @@ bool ECallMenu::init() {
    std::shared_ptr<ConsoleAppCommand> selectPhoneId = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("i", "Select_Phone_Id", {},
                         std::bind(&ECallMenu::selectPhoneId, this, std::placeholders::_1)));
-
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
       = {eCallSosCommand, eCallCommand, customECallCommand, updateMsdCommand, dialCommad,
          hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu, updateEcallMsd,
-         getEncodedOADContentCommand};
+         requestEcbmCommand, exitEcbmCommand, getEncodedOADContentCommand};
 
    if(ECallMenu::initalizeSDK()) {
       if (phoneIds_.size() > 1) {
@@ -786,4 +793,41 @@ void ECallMenu::getEncodedOptionalAdditionalDataContent(std::vector<std::string>
    } else {
       std::cout << "ERROR: Phone Manager is NULL, failed to make ECall SOS" << std::endl;
    }
+}
+
+void ECallMenu::requestEcbm(std::vector<std::string> userInput) {
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto callManager = phoneFactory.getCallManager();
+   if(callManager) {
+        telux::common::Status status = callManager->requestEcbm(phoneId_,
+            MyEcbmCallback::onRequestEcbmResponseCallback);
+
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Request for ECBM successful \n";
+        } else {
+            std::cout << "ERROR - Failed to request ECBM,"
+                      << "Status:" << static_cast<int>(status) << "\n";
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - CallManager is null \n";
+    }
+}
+
+void ECallMenu::exitEcbm(std::vector<std::string> userInput) {
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto callManager = phoneFactory.getCallManager();
+    if(callManager) {
+        telux::common::Status status = callManager->exitEcbm(phoneId_,
+            MyEcbmCallback::onResponseCallback);
+        if (status == telux::common::Status::SUCCESS) {
+            std::cout << "Request for ECBM exit successful \n";
+        } else {
+            std::cout << "ERROR - Failed to request for ECBM exit,"
+                      << "Status:" << static_cast<int>(status) << "\n";
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - CallManager is null \n";
+    }
 }

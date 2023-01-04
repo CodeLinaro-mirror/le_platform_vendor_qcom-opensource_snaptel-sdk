@@ -122,6 +122,22 @@ using MakeCallCallback
 using ECallHlapTimerStatusCallback = std::function<void(telux::common::ErrorCode error, int phoneId,
                                                         ECallHlapTimerStatus timersStatus)>;
 
+/**
+ * This function is called with response to request for ECBM(requestEcbm API).
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] ecbMode       Indicates the status of the ECBM.
+ *                            @ref EcbMode
+ * @param [out] error         @ref ErrorCode
+ *
+ * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+ *           break backwards compatibility.
+ */
+using EcbmStatusCallback
+    = std::function<void(telux::tel::EcbMode ecbMode, telux::common::ErrorCode error)>;
+
 /** @addtogroup telematics_call
  * @{ */
 
@@ -451,6 +467,33 @@ public:
    virtual telux::common::Status
       swap(std::shared_ptr<ICall> callToHold, std::shared_ptr<ICall> callToActivate,
            std::shared_ptr<telux::common::ICommandResponseCallback> callback = nullptr)
+      = 0;
+
+   /**
+    * Request for emergency callback mode
+    * @param [in] phoneId      Represents the phone corresponding to which the emergency callback
+    *                          mode(ECBM) status is requested.
+    * param [in] callback      Callback pointer to get the result of ECBM status request
+    *
+    * @returns Status of requestEcbm i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    *          change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestEcbm(int phoneId, EcbmStatusCallback callback) = 0;
+
+   /**
+    * Exit emergency callback mode.
+    * @param [in] phoneId      Represents the phone corresponding to which the emergency callback
+    *                          mode(ECBM) exit is requested.
+    * param [in] callback      Optional callback pointer to get the result of exit ECBM request
+    *
+    * @returns Status of exitEcbm i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to
+    *          change and could break backwards compatibility.
+    */
+   virtual telux::common::Status exitEcbm(int phoneId, common::ResponseCallback callback = nullptr)
       = 0;
 
    /**

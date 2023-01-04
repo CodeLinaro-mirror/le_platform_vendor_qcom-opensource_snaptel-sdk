@@ -98,8 +98,6 @@ private:
    void networkMenu(std::vector<std::string> userInput);
    void setECallOperatingMode(std::vector<std::string> userInput);
    void requestECallOperatingMode(std::vector<std::string> userInput);
-   void requestEcbm(std::vector<std::string> userInput);
-   void exitEcbm(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
    void suppServicesMenu(std::vector<std::string> userInput);
 
@@ -111,7 +109,6 @@ private:
    std::shared_ptr<telux::tel::ISubscriptionManager> subscriptionMgr_;
    std::shared_ptr<MySubscriptionListener> subscriptionListener_;
    std::shared_ptr<telux::tel::ICallListener> callListener_;
-   std::shared_ptr<telux::tel::ICallManager> callManager_;
    std::shared_ptr<MySignalStrengthCallback> mySignalStrengthCb_;
    std::shared_ptr<MyVoiceServiceStateCallback> myVoiceSrvStateCb_;
    std::shared_ptr<MyCellularCapabilityCallback> myCellularCapabilityCb_;

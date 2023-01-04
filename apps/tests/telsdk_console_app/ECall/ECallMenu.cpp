@@ -33,7 +33,7 @@
 
 #include "ECallMenu.hpp"
 #include "MyECallListener.hpp"
-#include "Utils.hpp"
+#include "../../common/utils/Utils.hpp"
 
 // Config file name. Using current directory as default path.
 #define MSDSETTINGS_FILE "./msdsettings.txt"
@@ -132,10 +132,18 @@ void ECallMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ea", "Enable_Audio", {},
          std::bind(&ECallMenu::enableAudio, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> requestEcbmCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ge", "Get_ECBM", {},
+         std::bind(&ECallMenu::requestEcbm, this, std::placeholders::_1)));
+
+   std::shared_ptr<ConsoleAppCommand> exitEcbmCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("ee", "Exit_ECBM", {},
+         std::bind(&ECallMenu::exitEcbm, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList
       = {eCallSosCommand, eCallCommand, customECallCommand, updateMsdCommand, dialCommad,
          hangupCommand, getCallsCommand, answerCallCommand, eCallWithPdu, updateEcallMsd,
-         enableAudioCommand};
+         enableAudioCommand, requestEcbmCommand, exitEcbmCommand};
 
    if(ECallMenu::initalizeSDK()) {
       if (phoneIds_.size() > 1) {
@@ -820,5 +828,40 @@ bool ECallMenu::queryAudioState() {
       return false;
    }
    return true;
+}
+void ECallMenu::requestEcbm(std::vector<std::string> userInput) {
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   auto callManager = phoneFactory.getCallManager();
+   if(callManager) {
+        Status status = callManager->requestEcbm(phoneId_,
+            MyEcbmCallback::onRequestEcbmResponseCallback);
+
+        if (status == Status::SUCCESS) {
+            std::cout << "Request for ECBM successful \n";
+        } else {
+            std::cout << "ERROR - Failed to request ECBM,"
+                      << "Status:" << static_cast<int>(status) << "\n";
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - CallManager is null \n";
+    }
+}
+
+void ECallMenu::exitEcbm(std::vector<std::string> userInput) {
+	auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    auto callManager = phoneFactory.getCallManager();
+    if(callManager) {
+        Status status = callManager->exitEcbm(phoneId_, MyEcbmCallback::onResponseCallback);
+        if (status == Status::SUCCESS) {
+            std::cout << "Request for ECBM exit successful \n";
+        } else {
+            std::cout << "ERROR - Failed to request for ECBM exit,"
+                      << "Status:" << static_cast<int>(status) << "\n";
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - CallManager is null \n";
+    }
 }
 

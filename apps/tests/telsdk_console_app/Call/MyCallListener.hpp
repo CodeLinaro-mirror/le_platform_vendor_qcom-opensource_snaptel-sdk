@@ -77,7 +77,6 @@ public:
    void onIncomingCall(std::shared_ptr<telux::tel::ICall> call) override;
    void onCallInfoChange(std::shared_ptr<telux::tel::ICall> call) override;
    void onECallMsdTransmissionStatus(int phoneId, telux::common::ErrorCode errorCode) override;
-   void onEcbmChange(telux::tel::EcbMode mode) override;
 
    std::string getCallStateString(telux::tel::CallState cs);
    std::string getCallEndCauseString(telux::tel::CallEndCause causeCode);
@@ -101,12 +100,6 @@ private:
    std::shared_ptr<telux::tel::ICall> callObj_;
 };
 
-class MyEcbmCallback {
-public:
-   static void onRequestEcbmResponseCallback(telux::tel::EcbMode ecbMode,
-       telux::common::ErrorCode error);
-   static void onResponseCallback(telux::common::ErrorCode error);
-};
 class MyCallCommandCallback : public telux::common::ICommandResponseCallback {
 public:
    MyCallCommandCallback(std::string commandName);

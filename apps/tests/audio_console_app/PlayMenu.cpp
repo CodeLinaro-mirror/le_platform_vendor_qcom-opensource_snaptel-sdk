@@ -79,14 +79,7 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
 }
 
 PlayMenu::~PlayMenu() {
-    audioClient_ = nullptr;
-    playStatus_ = false;
-
-    for(std::thread &th : runningThreads_) {
-        if(th.joinable()){
-            th.join();
-        }
-    }
+    cleanup();
 }
 
 void PlayMenu::init() {

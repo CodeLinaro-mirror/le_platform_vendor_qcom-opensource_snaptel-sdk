@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -584,7 +584,7 @@ typedef struct {
     /**< Specifies one of the 3GPP levels of priority for the traffic that is
          pre-reserved on the SPS flow.
 
-         Use v2x_radio_query_parameters() to get the exact number of
+         Use v2x_radio_query_capabilities() to get the exact number of
          supported priority levels. */
 
     int period_interval_ms;
@@ -1141,7 +1141,26 @@ typedef void (*v2x_slss_rx_listener)(const v2x_slss_rx_info_t* info);
 extern v2x_api_ver_t v2x_radio_api_version();
 
 /**
-    Gets the capabilities of a specific Radio interface attached to the system.
+    Gets the capabilities of CV2X radio.
+
+    @datatypes
+    #v2x_iface_capabilities_t
+
+    @param[out] caps       Pointer to the v2x_iface_capabilities_t structure,
+                           which contains the capabilities of this specific
+                           interface.
+
+    @return
+    #V2X_STATUS_SUCCESS -- The radio is ready for data-plane sockets to be
+    created and bound.
+    @par
+    Error code -- If there is a problem (see #v2x_status_enum_type).
+ */
+extern v2x_status_enum_type v2x_radio_query_capabilities(v2x_iface_capabilities_t *caps);
+/** @} *//* end_addtogroup telematics_cv2x_c_radio */
+
+/** @ingroup v2x_deprecated_radio
+    Deprecated. Gets the capabilities of a specific Radio interface attached to the system.
 
     @datatypes
     #v2x_iface_capabilities_t
@@ -1164,7 +1183,6 @@ extern v2x_api_ver_t v2x_radio_api_version();
     Error code -- If there is a problem (see #v2x_status_enum_type).
  */
 extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v2x_iface_capabilities_t *caps);
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Pass #traffic_ip_type_t on radio init.

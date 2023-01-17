@@ -163,6 +163,12 @@ private:
     */
    bool queryAudioState();
 
+   /* This method is used to get emergency callback mode */
+   void requestEcbm(std::vector<std::string> userInput);
+
+   /* This method is used to exit emergency callback mode */
+   void exitEcbm(std::vector<std::string> userInput);
+
    // Member variable to keep the Listener object alive till application ends.
    std::shared_ptr<telux::tel::ICallListener> callListener_;
 

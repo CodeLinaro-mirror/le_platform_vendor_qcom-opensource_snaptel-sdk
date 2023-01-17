@@ -270,7 +270,7 @@ public:
      * @returns SlotId
      *
      */
-    virtual int getSlotId() = 0;
+    virtual SlotId getSlotId() = 0;
 
     /**
      * Destructor of IDataFilterManager

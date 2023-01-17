@@ -88,28 +88,21 @@ void SetSuppSvcResponseCallback::setSuppSvcResp(ErrorCode error, FailureCause fa
 }
 
 void GetSuppSvcResponseCallback::getCallWaitingPrefResp(SuppServicesStatus suppSvcStatus,
-    SuppSvcProvisionStatus provisionStatus, FailureCause failureCause,
-    telux::common::ErrorCode error) {
-
+    FailureCause failureCause, telux::common::ErrorCode error) {
     if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Get Call Waiting Pref : "
             << Utils::getErrorCodeAsString(error) << std::endl;
-        PRINT_CB << "Call Waiting Provision Status : " <<
-            SuppServicesHelper::SuppSvcProvisionStatustoString(provisionStatus) << std::endl;
         PRINT_CB << "Call Waiting Status : " <<
             SuppServicesHelper::suppServicesStatustoString(suppSvcStatus) << std::endl;
     } else {
         PRINT_CB << " get Call waiting pref failed with ErrorCode: " << static_cast<int>(error)
-            << ", description: " << Utils::getErrorCodeAsString(error) << "Failure Cause : "
+            << ", description: " << Utils::getErrorCodeAsString(error) << " Failure Cause : "
             << static_cast<int>(failureCause) << std::endl;
     }
 }
 
 void GetSuppSvcResponseCallback::getForwardingPrefResp(std::vector<ForwardInfo> forwardInfoList,
-    SuppSvcProvisionStatus provisionStatus, FailureCause failureCause,
-    telux::common::ErrorCode error) {
-    PRINT_CB << "Call Forwarding Provision Status : " <<
-        SuppServicesHelper::SuppSvcProvisionStatustoString(provisionStatus) << std::endl;
+    FailureCause failureCause, telux::common::ErrorCode error) {
     if (error == telux::common::ErrorCode::SUCCESS) {
         PRINT_CB << "Get Forwarding pref : "<< Utils::getErrorCodeAsString(error) << std::endl;
         for (auto &forwardInfo : forwardInfoList) {

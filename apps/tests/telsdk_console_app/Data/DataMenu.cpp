@@ -187,13 +187,17 @@ void DataMenu::dataConnectionMenu(std::vector<std::string> userInput) {
     ConsoleApp::displayMenu();
 }
 
-void DataMenu::openDataFilterMenu(std::vector<std::string> userInput) {
-    DataFilterMenu dataFilterMenu("Data Filter Menu", "data_filter> ");
-    dataFilterMenu.init();
-    dataFilterMenu.mainLoop();
+void DataMenu::openDataFilterMenu(std::vector<std::string> userInput)
+{
+    dataFilterMenu_ = std::make_shared<DataFilterMenu>("Data Filter Menu", "data_filter> ");
+
+    if (dataFilterMenu_->init())
+    {
+        dataFilterMenu_->mainLoop();
+    }
+    dataFilterMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
-
 
 void DataMenu::commandCallback(ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {

@@ -26,6 +26,43 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
@@ -512,6 +549,7 @@ void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
     resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     std::vector<telux::audio::DeviceType> devices_;
+
     if(stream_) {
         telux::common::Status status = stream_->getDevice(
             [&p, &devices_, this](std::vector<telux::audio::DeviceType> devices,
@@ -545,9 +583,10 @@ void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
 void AudioClient::setStreamDevice(StreamType streamType, SlotId slotId) {
     resolveStreamType(streamType, slotId);
     std::promise<bool> p;
+    std::vector<telux::audio::DeviceType> devices;
+    takeUserDeviceInput(devices, streamType);
+
     if(stream_) {
-        std::vector<telux::audio::DeviceType> devices;
-        takeUserDeviceInput(devices, streamType);
         telux::common::Status status = stream_->setDevice(devices,
            [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -573,9 +612,10 @@ void AudioClient::setStreamDevice(StreamType streamType, SlotId slotId) {
 void AudioClient::setVolume(StreamType streamType, SlotId slotId) {
     resolveStreamType(streamType, slotId);
     std::promise<bool> p;
+    telux::audio::StreamVolume streamVol;
+    takeUserVolumeInput(streamVol);
+
     if(stream_) {
-        telux::audio::StreamVolume streamVol;
-        takeUserVolumeInput(streamVol);
         telux::common::Status status = stream_->setVolume(streamVol,
               [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -602,11 +642,12 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
     resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::audio::StreamVolume vol;
+    telux::audio::StreamDirection dir;
+    takeUserDirectionInput(dir);
+
     if(stream_) {
-        telux::audio::StreamDirection dir;
-        takeUserDirectionInput(dir);
         telux::common::Status status = stream_->getVolume(
-           dir,  [&p,&vol,this](telux::audio::StreamVolume volume, telux::common::ErrorCode error) {
+        dir,  [&p,&vol,this](telux::audio::StreamVolume volume, telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 vol = volume;
                 p.set_value(true);
@@ -615,6 +656,7 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
                 p.set_value(false);
             }
         });
+
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to get volume sent" << std::endl;
         } else {
@@ -636,35 +678,36 @@ void AudioClient::setMute(StreamType streamType, SlotId slotId) {
     resolveStreamType(streamType, slotId);
     StreamMute mute;
     std::promise<bool> p;
-    if(stream_) {
-        takeUserDirectionInput(mute.dir);
 
-        std::string userInput = "";
-        int muteStatus;
-        while(1) {
-            std::cout << "Enter 0 to Unmute and 1 to Mute: " ;
-            if(std::getline(std::cin, userInput)) {
-                std::stringstream inputStream(userInput);
-                if(inputStream >> muteStatus) {
-                    if(muteStatus == 0 || muteStatus == 1) {
-                        break;
-                    } else {
-                        std::cout << "Invalid Input" << std::endl;
-                    }
+    takeUserDirectionInput(mute.dir);
+
+    std::string userInput = "";
+    int muteStatus;
+    while(1) {
+        std::cout << " Enter 0 to Unmute and 1 to Mute" ;
+        if(std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if(inputStream >> muteStatus) {
+                if(muteStatus == 0 || muteStatus == 1) {
+                    break;
                 } else {
                     std::cout << "Invalid Input" << std::endl;
                 }
             } else {
                 std::cout << "Invalid Input" << std::endl;
             }
+        } else {
+            std::cout << "Invalid Input" << std::endl;
         }
+    }
+
+    if(stream_) {
 
         if(muteStatus == 0) {
             mute.enable = false;
         } else if (muteStatus == 1) {
             mute.enable = true;
         }
-
         telux::common::Status status = stream_->setMute(mute,
                [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -696,10 +739,11 @@ void AudioClient::getMute(StreamType streamType, SlotId slotId) {
     resolveStreamType(streamType, slotId);
     std::promise<bool> p;
     telux::audio::StreamMute mute_;
+    telux::audio::StreamDirection dir;
+    std::string input;
+    takeUserDirectionInput(dir);
+
     if (stream_) {
-        telux::audio::StreamDirection dir;
-        std::string input;
-        takeUserDirectionInput(dir);
         telux::common::Status status = stream_->getMute(
                dir,  [&p,&mute_,this](telux::audio::StreamMute mute,
                telux::common::ErrorCode error) {

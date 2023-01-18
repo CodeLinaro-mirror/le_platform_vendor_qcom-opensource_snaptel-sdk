@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file       L2tpManager.hpp
@@ -53,17 +88,26 @@ namespace net {
 
 /** @addtogroup telematics_net
  * @{ */
+
 /**
- * L2TP encapsulation protocols
+ * L2TP session binding to backhaul configuration.
  */
-enum class L2tpProtocol {
-    NONE = 0,
-    IP   = 0x01,   /**< IP Protocol used for encapsulation */
-    UDP  = 0x02    /**< UDP Protocol used for encapsulation */
+struct L2tpSessionBindConfig {
+    uint32_t locId;                 /** Local ID of session to be bound to the specified backhaul */
+    BackhaulInfo bhInfo;            /**< Configuration of backhaul to bind L2TP session to        */
 };
 
 /**
- * L2TP tunnel sessions configuration
+ * L2TP encapsulation protocols.
+ */
+enum class L2tpProtocol {
+    NONE = 0,
+    IP   = 0x01,   /**< IP protocol used for encapsulation  */
+    UDP  = 0x02    /**< UDP protocol used for encapsulation */
+};
+
+/**
+ * L2TP tunnel sessions configuration.
  */
 struct L2tpSessionConfig {
     uint32_t locId;      /**< Local session id */
@@ -71,23 +115,25 @@ struct L2tpSessionConfig {
 };
 
 /**
- * L2TP tunnel configuration
+ * L2TP tunnel configuration.
  */
 struct L2tpTunnelConfig {
     L2tpProtocol                prot;          /**< Encapsulation protocols */
     uint32_t                    locId;         /**< Local tunnel id */
     uint32_t                    peerId;        /**< Peer tunnel id */
     uint32_t                    localUdpPort;  /**< Local udp port - if UDP encapsulation is used */
-    uint32_t                    peerUdpPort;   /**< Peer udp port - if IP encapsulation is used */
-    std::string                 peerIpv6Addr;  /**< Peer IPv6 Address - for Ipv6 tunnels */
-    std::string                 peerIpv4Addr;  /**< Peer IPv4 Address - for Ipv4 tunnels */
-    std::string                 locIface;      /**< interface name to create L2TP tunnel on */
+    uint32_t                    peerUdpPort;   /**< Peer udp port - if IP encapsulation is used   */
+    std::string                 peerIpv6Addr;  /**< Peer IPv6 Address - for Ipv6 tunnels          */
+    std::string                 peerIpv6GwAddr;/**< Peer IPv6 Gateway Address - for Ipv6 tunnels  */
+    std::string                 peerIpv4Addr;  /**< Peer IPv4 Address - for Ipv4 tunnels          */
+    std::string                 peerIpv4GwAddr;/**< Peer IPv4 Gateway Address - for Ipv4 tunnels  */
+    std::string                 locIface;      /**< interface name to create L2TP tunnel on       */
     telux::data::IpFamilyType   ipType;        /**< Ip family type @ref telux::data::IpFamilyType */
-    std::vector<L2tpSessionConfig> sessionConfig;  /**< List of L2tp tunnel sessions */
+    std::vector<L2tpSessionConfig> sessionConfig;  /**< List of L2tp tunnel sessions              */
 };
 
 /**
- * L2TP Configuration
+ * L2TP Configuration.
  */
 struct L2tpSysConfig {
     std::vector<L2tpTunnelConfig>configList;       /**< List of L2tp tunnel configurations */
@@ -98,17 +144,33 @@ struct L2tpSysConfig {
 /** @} */ /* end_addtogroup telematics_net */
 
 /**
- * This function is called as a response to @ref requestConfig()
+ * This function is called as a response to @ref requestConfig().
  *
  * @param [in] l2tpSysConfig       Current L2TP configuration
- * @param [in] error          Return code which indicates whether the operation
- *                            succeeded or not @ref telux::common::ErrorCode
+ * @param [in] error               Return code which indicates whether the operation
+ *                                 succeeded or not @ref telux::common::ErrorCode
  *
  * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
  *         break backwards compatibility.
  */
 using L2tpConfigCb
     = std::function<void(const L2tpSysConfig &l2tpSysConfig, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to
+ * @ref telux::data::net::IL2tpManager::querySessionToBackhaulBindings().
+ *
+ * @param [in] bindings        List of L2TP session binding configurations
+ *                             @ref telux::data::net::L2tpSessionBindConfig
+ * @param [in] error           Return code which indicates whether the operation
+ *                             succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note    Eval: This is a new API and is being evaluated.It is subject to change
+ *          and could break backwards compatibility.
+ */
+using L2tpSessionBindingsResponseCb = std::function<void(
+    const std::vector<L2tpSessionBindConfig> bindings, telux::common::ErrorCode error)>;
+
 
 /** @addtogroup telematics_net
  * @{ */
@@ -140,7 +202,7 @@ class IL2tpManager {
     virtual std::future<bool> onSubsystemReady() = 0;
 
     /**
-     * Enable L2TP for unmanaged Tunnel State
+     * Enable L2TP for unmanaged Tunnel State.
      *
      * @param [in] enable         Enable/Disable L2TP for unmanaged tunnels.
      * @param [in] enableMss      Enable/Disable TCP MSS to be clamped on L2TP interfaces to
@@ -160,7 +222,11 @@ class IL2tpManager {
         telux::common::ResponseCallback callback = nullptr, uint32_t mtuSize = 0) = 0;
 
     /**
-     * Set L2TP Configuration for one tunnel
+     * Sets the L2TP configuration for one tunnel.
+     * Add and configure L2TP tunnel and associated sessions (if needed). Sessions can be added or
+     * deleted from any tunnel at later time through @ref telux::data::net::IL2tpManager::addSession
+     * and @ref telux::data::net::IL2tpManager::removeSession respectively.
+     * This setting is persistent across reboots.
      *
      * @param [in] l2tpTunnelConfig     Configuration to be set @ref telux::net::L2tpTunnelConfig
      * @param [in] callback             Optional callback to get the response addTunnel
@@ -174,7 +240,7 @@ class IL2tpManager {
         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Get Current L2TP Configuration
+     * Get Current L2TP Configuration.
      *
      * @param [in] l2tpConfigCb      Asynchronous callback to get current L2TP configurations
      *
@@ -186,7 +252,8 @@ class IL2tpManager {
     virtual telux::common::Status requestConfig(L2tpConfigCb l2tpConfigCb) = 0;
 
     /**
-     * Remove L2TP Tunnel
+     * Removes L2TP tunnel and all associated sessions.
+     * This setting is persistent across reboots.
      *
      * @param [in] tunnelId          Tunnel ID to be removed
      * @param [in] callback          optional callback to get the response removeConfig
@@ -198,6 +265,95 @@ class IL2tpManager {
      */
     virtual telux::common::Status removeTunnel(
         uint32_t tunnelId, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Adds L2TP session to the specified tunnel.
+     * Adds the L2TP session to a pre-existing tunnel at run time. Existing tunnel configurations
+     * and sessions are not changed by this API. This API only adds a new session to the tunnel.
+     * This setting is persistent across reboots.
+     *
+     *
+     * @param [in] tunnelId          Tunnel ID to add the session to.
+     * @param [in] sessionConfig     Configuration of added session.
+     * @param [in] callback          Callback to get the addSession response; optional.
+     *
+     * @returns Status of addSession, i.e., success or applicable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status addSession(uint32_t tunnelId,
+        L2tpSessionConfig sessionConfig, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Removes L2TP Session from specified tunnel.
+     * Removes L2TP session from a pre-existing tunnel at run time. Existing tunnel configurations
+     * and sessions will not change by this API. This API only removes a session from the tunnel.
+     * This setting is persistent across reboots.
+     *
+     *
+     * @param [in] tunnelId          Tunnel ID to remove the session from
+     * @param [in] sessionId         Session ID to be removed.
+     * @param [in] callback          Callback to get the removeSession response; optional.
+     *
+     * @returns Status of removeSession, i.e. success or applicable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status removeSession(uint32_t tunnelId,
+        uint32_t sessionId, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Binds L2TP Session to the specified backhaul.
+     * For WWAN backhaul, sessions can be bound to both default bridge (bridge0) and on-demand
+     * bridges associated with VLANs.
+     * This setting is persistent across reboots.
+     *
+     * @param [in] sessionBindConfig   Backhaul information to bind session ID to.
+     *                                 @ref telux::data::net::L2tpSessionBindConfig
+     * @param [in] callback            Callback to get the bindSessionToBackhaul response; optional
+     *
+     * @returns Status of bindSessionToBackhaul(), i.e. success or applicable status code.
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status bindSessionToBackhaul(L2tpSessionBindConfig sessionBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Unbind L2TP session from the specified backhaul. This API will stop L2TP session traffic flow
+     * to/from specified backhaul type.
+     * This setting is persistent across reboots.
+     *
+     * @param [in] sessionBindConfig     Backhaul information to unbind VLAN ID from.
+     *                                   @ref telux::data::net::L2tpSessionBindConfig
+     * @param [in] callback              Callback to get the unbindSessionFromBackhaul response;
+     *                                   optional.
+     *
+     * @returns Status of unbindSessionFromBackhaul(), i.e. success or applicable status code
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status unbindSessionFromBackhaul(L2tpSessionBindConfig sessionBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Queries L2TP session bindings to the specified backhaul.
+     *
+     * @param [in] backhaul    Backhaul to query L2TP session binding for.
+     * @param [in] callback    callback to get the querySessionToBackhaulBindings response; optional
+     *
+     * @returns Status of querySessionToBackhaulBindings(), i.e. success or applicable status code
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status querySessionToBackhaulBindings(
+        BackhaulType backhaul, L2tpSessionBindingsResponseCb callback) = 0;
 
     /**
      * Destructor for IL2tpManager

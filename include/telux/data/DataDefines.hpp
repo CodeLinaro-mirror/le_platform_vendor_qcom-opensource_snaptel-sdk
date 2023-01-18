@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file       DataDefines.hpp
@@ -39,6 +74,7 @@
 #include <string>
 #include <vector>
 #include <bitset>
+#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace data {
@@ -698,6 +734,29 @@ struct VlanConfig {
     InterfaceType iface; /**< PHY interfaces (i.e. ETH, ECM and RNDIS)*/
     int16_t vlanId;      /**< Vlan identifier (i.e 1-4094)*/
     bool isAccelerated;  /**< is acceleration allowed */
+};
+
+/**
+ * Specifies backhaul types.
+ */
+enum class BackhaulType {
+    ETH           = 0  ,    /** Ethernet backhaul                          */
+    USB           = 1  ,    /** USB backhaul                               */
+    WLAN          = 2  ,    /** WLAN backhaul                              */
+    WWAN          = 3  ,    /** WWAN backhaul                              */
+    BLE           = 4  ,    /** Bluetooth backhaul                         */
+    MAX_SUPPORTED = 5  ,    /** The maximum number of supported backhauls  */
+};
+
+/**
+ * Encapsulated backhaul configuration parameters.
+ */
+struct BackhaulInfo {
+    BackhaulType backhaul;              /** Backhaul type to apply configuration on.          */
+    SlotId slotId = DEFAULT_SLOT_ID;    /** Slot ID for the SIM that contains the profile ID  */
+                                        /** Needed only for WWAN backhaul.                    */
+    int profileId = -1;                 /** Profile ID to apply configuration on              */
+                                        /** Needed only for WWAN backhaul.                    */
 };
 
 /** @} */ /* end_addtogroup telematics_data */

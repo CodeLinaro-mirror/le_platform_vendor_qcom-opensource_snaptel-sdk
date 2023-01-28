@@ -1478,7 +1478,12 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
 
     if (proto == 253) {
         bhFirewallEntryTcpUdp.fwEntry = fwEntryTcpUdp;
-        retStat = firewallMgr->addFirewallEntry(bhFirewallEntryTcpUdp, respCb);
+        if(isMultiBackhauls) {
+            retStat = firewallMgr->addFirewallEntry(bhFirewallEntryTcpUdp, respCb);
+        } else {
+            retStat = firewallMgr->addFirewallEntry(
+                bhFirewallEntryTcpUdp.bhInfo.profileId, fwEntryTcpUdp, respCb);
+        }
         Utils::printStatus(retStat);
     }
 }

@@ -71,6 +71,8 @@ class DataSettingsMenu : public ConsoleApp ,
 
     void setWwanConnectivityConfig(std::vector<std::string> inputCommand);
     void requestWwanConnectivityConfig(std::vector<std::string> inputCommand);
+    void setMacSecState(std::vector<std::string> inputCommand);
+    void requestMacSecState(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);

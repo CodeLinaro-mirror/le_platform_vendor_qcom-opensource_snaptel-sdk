@@ -110,6 +110,7 @@ when       who     what, where, why
 11/25/21   RR      Added support for Xtra feature for location in Telematics SDK
 12/24/21   MH      Added filesystem control API for ECALL and OTA operation for platform sub-system.
 12/21/21   BS      Added documentation for sensor self test.
+07/11/22   SS      Added Third Party Service eCall over IMS support in Telematics SDK
 11/02/22   FS      Added support Wlan Management support in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename

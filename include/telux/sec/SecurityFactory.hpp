@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -34,16 +34,14 @@
 
 /**
  * @file  SecurityFactory.hpp
- *
  * @brief SecurityFactory allows creation of CryptoManager.
  */
 
 #ifndef TELUX_SEC_SECURITYFACTORY_HPP
 #define TELUX_SEC_SECURITYFACTORY_HPP
 
-#include <memory>
-
 #include <telux/sec/CryptoManager.hpp>
+#include <telux/sec/CryptoAcceleratorManager.hpp>
 
 namespace telux {
 namespace sec {
@@ -52,10 +50,9 @@ namespace sec {
  * @{ */
 
 /**
- * @brief SecurityFactory allows creation of CryptoManager.
+ * @brief SecurityFactory allows creation of ICryptoManager and ICryptoAcceleratorManager.
  */
 class SecurityFactory {
-
  public:
     /**
      * Gets the SecurityFactory instance.
@@ -63,16 +60,43 @@ class SecurityFactory {
     static SecurityFactory &getInstance();
 
     /**
-     * Provides instance of CryptoManager through which key management
-     * and cryptographic operations can be performed.
+     * Provides a CryptoManager instance that can be used to perform key management
+     * and cryptographic operations.
      *
-     * @returns Shared pointer to the ICryptoManager instance.
+     * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoManager is created
+     *                successfully, otherwise, an appropriate error code
+     *
+     * @returns ICryptoManager instance
      *
      * @note Eval: This is a new API and is being evaluated. It is subject
-                    to change and could break backwards compatibility.
+     *             to change and could break backwards compatibility.
      */
     virtual std::shared_ptr<ICryptoManager> getCryptoManager(
-                    telux::common::ErrorCode &ec) = 0;
+       telux::common::ErrorCode &ec) = 0;
+
+    /**
+     * Provides a CryptoAcceleratorManager instance that can be used to perform
+     * cryptographic operations requiring elliptic-curve cryptography (ECC)
+     * verifications and calculations.
+     *
+     * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoAcceleratorManager is created
+     *                successfully, otherwise, an appropriate error code
+     *
+     * @param[in] mode Defines how users obtain verification and calculation results
+     *
+     * @param[in] cryptoAccelListener Optional, listener for ECC signature verification
+     *                                and ECQV calculation results
+     *
+     * @returns ICryptoAcceleratorManager instance
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual std::shared_ptr<ICryptoAcceleratorManager> getCryptoAcceleratorManager(
+      telux::common::ErrorCode &ec, Mode mode,
+      std::weak_ptr<ICryptoAcceleratorListener> cryptoAccelListener = std::weak_ptr<
+      ICryptoAcceleratorListener>()
+    ) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

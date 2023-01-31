@@ -300,6 +300,10 @@ void SensorTestApp::nonInteractiveLaunch() {
 
         std::shared_ptr<SensorClient> sensorClient
             = std::make_shared<SensorClient>(sensorID, sensor, commandlineArgs_);
+        if (!sensorClient) {
+            std::cout << "sensorclinet is Null \n";
+            return;
+        }
         sensorClient->init();
         sensorClientList_.push_back(sensorClient);
 

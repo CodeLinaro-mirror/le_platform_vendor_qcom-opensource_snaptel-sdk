@@ -157,6 +157,45 @@ Example:
 13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
 14. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 
+@subsection Tps_e_call_over_Ims TPS eCall over IMS call flow
+
+Private eCall:
+1. It is a normal VOLTE call(to a custom number) with MSD information.
+2. Application processor (AP) sends the MSD data at call connect and later AP gets an explicit indication,
+   upon which it can provide updated MSD(unlike standard eCall where AP updates MSD constantly)
+3. Device doesn't support fallback to CS. It is the AP's responsibility to retry over CS.
+4. AP can send the MSD information data in non standard format and PSAP should be able to
+   recognize it.
+
+@anchor fig_e_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{tps_ecall_over_ims_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{ECall call flow}
+  \label{fig_e_call}
+\end{figure}
+@endlatexonly
+
+@html_image{tps_ecall_over_ims_call_flow.png,ECall call flow,80,80,TPS eCall over IMS call flow}
+
+1. The application gets the CallManager object using PhoneFactory.
+2. The application receives the CallManager object in order to make eCall.
+3. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
+4. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
+5. The application dials a TPS emergency call over IMS(i.e normal VOLTE call) by using makeECall API, optionally specifying header and callback to get asynchronous response.
+6. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
+7. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
+8. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API.
+9. CallManager sends MSD update request recieved from network to the application by using OnTpsMsdUpdateRequest API.
+10. The application sends the MSD data to network using updateECallMsd API, optionally specifying callback to get asynchronous response.
+11. The application receives the status like SUCCESS, FAILED etc based on the execution of updateECallMsd API.
+12. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API for MSD sent at step 10.
+13. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
+14. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
+15. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+16. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 @subsection signal_strength Signal strength call flow
 
 @anchor fig_signal_strength
@@ -4008,13 +4047,13 @@ invoked by the sensor framework once the self test is completed.
 4. Once the self test is completed, the callback gets invoked indicating the result of the self
 test.
 
-@section crypto_call_flow Security
+@section crypto_call_flow Crypto
 
 The CryptoManager class provides APIs to generate, import, export and upgrade key based on various cryptographic algorithms. Data can be signed and verified using this key. Further data can be encrypted and decrypted with the key.
 
 @subsection crypto_gen_key_call_flow Call flow to generate and export key
 
-@anchor crypto_gen_key_call_flow
+@anchor fig_crypto_gen_key_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
@@ -4038,7 +4077,7 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 
 @subsection crypto_sign_call_flow Call flow to sign and verify data
 
-@anchor crypto_sign_call_flow
+@anchor fig_crypto_sign_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
@@ -4063,7 +4102,7 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 
 @subsection crypto_enc_call_flow Call flow to encrypt and decrypt data
 
-@anchor crypto_enc_call_flow
+@anchor fig_crypto_enc_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
@@ -4086,6 +4125,155 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 8. Application calls decryptData() API of ICryptoManager passing the key blob, encrypted data and input parameters.
 9. ICryptoManager returns decrypted data otherwise appropriate error code.
 
+@section crypto_accelerato_call_flow Crypto accelerator
+
+The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calculation based on elliptic-curve cryptography.
+
+@subsection ecc_verify_sync_call_flow Call flow for signature verification synchronous mode
+
+@anchor fig_ecc_verify_sync_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecc_verify_sync_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for signature verification synchronous mode}
+  \label{ecc_verify_sync_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecc_verify_sync_call_flow.png,Call flow for signature verification synchronous mode,80,80,Call flow for signature verification synchronous mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for verification.
+6. Application calls eccVerifyDigest() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if verification passed otherwise appropriate error code.
+
+@subsection ecc_verify_async_poll_call_flow Call flow for signature verification asynchronous poll mode
+
+@anchor fig_ecc_verify_async_poll_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecc_verify_async_poll_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for signature verification asynchronous poll mode}
+  \label{ecc_verify_async_poll_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecc_verify_async_poll_call_flow.png,Call flow for signature verification asynchronous poll mode,80,80,Call flow for signature verification asynchronous poll mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for verification.
+6. Application calls eccPostDigestForVerification() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for verification.
+8. Application calls getAsyncResults() API of ICryptoAcceleratorManager to get the results.
+9. ICryptoAcceleratorManager returns verification data obtained from crypto accelerator.
+10. Application calls various APIs of ResultParser to get exact verification result.
+
+@subsection ecc_verify_async_listener_call_flow Call flow for signature verification asynchronous listener mode
+
+@anchor fig_ecc_verify_async_listener_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecc_verify_async_listener_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for signature verification asynchronous listener mode}
+  \label{ecc_verify_async_listener_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecc_verify_async_listener_call_flow.png,Call flow for signature verification asynchronous listener mode,80,80,Call flow for signature verification asynchronous listener mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for verification.
+6. Application calls eccPostDigestForVerification() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for verification.
+8. Application receives result in method onVerificationResult() of class implementing ICryptoAcceleratorListener interface.
+
+@subsection ecqv_calc_sync_call_flow Call flow for ECQV calculation synchronous mode
+
+@anchor fig_ecqv_calc_sync_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecqv_calc_sync_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for ECQV calculation synchronous mode}
+  \label{ecqv_calc_sync_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecqv_calc_sync_call_flow.png,Call flow for ECQV calculation synchronous mode,80,80,Call flow for ECQV calculation synchronous mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for calculation.
+6. Application calls ecqvPointMultiplyAndAdd() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if calculation result otherwise appropriate error code.
+
+@subsection ecqv_calc_async_poll_call_flow Call flow for ECQV calculation asynchronous poll mode
+
+@anchor fig_ecqv_calc_async_poll_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecqv_calc_async_poll_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for ECQV calculation asynchronous poll mode}
+  \label{ecqv_calc_async_poll_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecqv_calc_async_poll_call_flow.png,Call flow for ECQV calculation asynchronous poll mode,80,80,Call flow for ECQV calculation asynchronous poll mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for calculation.
+6. Application calls ecqvPostDataForMultiplyAndAdd() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for calculation.
+8. Application calls getAsyncResults() API of ICryptoAcceleratorManager to get the results.
+9. ICryptoAcceleratorManager returns calculation data obtained from crypto accelerator.
+10. Application calls various APIs of ResultParser to get exact calculation result.
+
+@subsection ecqv_calc_async_listener_call_flow Call flow for ECQV calculation asynchronous listener mode
+
+@anchor fig_ecqv_calc_async_listener_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecqv_calc_async_listener_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for ECQV calculation asynchronous listener mode}
+  \label{ecqv_calc_async_listener_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecqv_calc_async_listener_call_flow.png,Call flow for ECQV calculation asynchronous listener mode,80,80,Call flow for ECQV calculation asynchronous listener mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for calculation.
+6. Application calls ecqvPostDataForMultiplyAndAdd() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for calculation.
+8. Application receives result in method onCalculationResult() of class implementing ICryptoAcceleratorListener interface.
 
 @section wlan_call_flow WLAN
 @subsection wlan_modify_config_call_flow Call flow to modify WLAN configuration

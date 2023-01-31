@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -1387,6 +1387,10 @@ namespace gn {
                 }
                 p = (uint8_t *)abuf_push(&mc->abuf, sizeof(gn_guc_hdr_t) + 1);
                 BufLen += sizeof(gn_guc_hdr_t) + 1;
+                if (!p) {
+                   std::cerr << "GN_PACKET_TYPE_GEOUNICAST req is null" << std::endl;
+                   return retVal;
+                }
                 *p = 0x03;
                 retVal = TransmitGUC(p, BufLen, data, txcb);
                 break;
@@ -1398,6 +1402,11 @@ namespace gn {
                 }
                 p = (uint8_t *)abuf_push(&mc->abuf, sizeof(gn_gbc_gac_hdr_t) + 1);
                 BufLen += sizeof(gn_gbc_gac_hdr_t) + 1;
+                if (!p) {
+                   std::cerr << "GN_PACKET_TYPE_GEOANYCAST| GN_PACKET_TYPE_GEOBROADCAST \
+                       req is null" << std::endl;
+                   return retVal;
+                }
                 *p = 0x03;
                 retVal = TransmitGBCGAC(p, BufLen, data, txcb);
             case PacketType::GN_PCCKET_TYPE_TSB:
@@ -1408,6 +1417,10 @@ namespace gn {
                     }
                     p = (uint8_t *)abuf_push(&mc->abuf, sizeof(gn_tsb_hdr_t) + 1);
                     BufLen += sizeof(gn_tsb_hdr_t) + 1;
+                    if (!p) {
+                       std::cerr << "GN_PCCKET_TYPE_TSB req is null" << std::endl;
+                       return retVal;
+                    }
                     *p = 0x03;
                     retVal = TransmitTSB(p, BufLen, data, txcb);
                 } else {
@@ -1417,6 +1430,10 @@ namespace gn {
                     }
                     p = (uint8_t *)abuf_push(&mc->abuf, sizeof(gn_shb_hdr_t) + 1);
                     BufLen += sizeof(gn_shb_hdr_t) + 1;
+                    if (!p) {
+                       std::cerr << "GN_PCCKET_TYPE_TSB req data is null" << std::endl;
+                       return retVal;
+                    }
                     *p = 0x03;
                     retVal = TransmitSHB(p, BufLen, data, txcb);
                 }

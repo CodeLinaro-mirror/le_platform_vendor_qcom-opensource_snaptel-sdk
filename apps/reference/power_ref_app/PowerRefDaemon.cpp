@@ -42,6 +42,7 @@ extern "C"
 }
 
 #include "PowerRefDaemon.hpp"
+#include <telux/common/DeviceConfig.hpp>
 
 PowerRefDaemon &PowerRefDaemon::getInstance() {
     LOG(DEBUG, __FUNCTION__);
@@ -52,6 +53,7 @@ PowerRefDaemon &PowerRefDaemon::getInstance() {
 telux::common::Status PowerRefDaemon::init() {
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status initStatus = telux::common::Status::SUCCESS;
+    config_ = ConfigParser::getInstance();
 
     do {
         shared_ptr<EventManager> eventManager(EventManager::getInstance());
@@ -64,13 +66,49 @@ telux::common::Status PowerRefDaemon::init() {
             break;
         }
 
-        naoIpTrigger_ = make_shared<NAOIpTrigger>(eventManager);
-        if (naoIpTrigger_ && naoIpTrigger_->init()) {
-            LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
+        if (config_->getValue("TRIGGER", "NAOIP_TRIGGER") == "ENABLE") {
+            naoIpTrigger_ = make_shared<NAOIpTrigger>(eventManager);
+            if (naoIpTrigger_ && naoIpTrigger_->init()) {
+                LOG(DEBUG, __FUNCTION__, " naoIpTrigger init succeed");
+            } else {
+                LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
+                initStatus = telux::common::Status::FAILED;
+                break;
+            }
         } else {
-            LOG(ERROR, __FUNCTION__, " naoIpTrigger init failed");
-            initStatus = telux::common::Status::FAILED;
-            break;
+            LOG(DEBUG, __FUNCTION__, " naoIpTrigger ",
+                config_->getValue("TRIGGER", "NAOIP_TRIGGER"));
+        }
+
+        if (config_->getValue("TRIGGER", "SMS_TRIGGER") == "ENABLE") {
+            smsTrigger_ = make_shared<SMSTrigger>(eventManager);
+            if (smsTrigger_ && smsTrigger_->init()) {
+                LOG(DEBUG, __FUNCTION__, " smsTrigger init succeeded");
+            } else {
+                LOG(ERROR, __FUNCTION__, " smsTrigger init failed");
+                initStatus = telux::common::Status::FAILED;
+                break;
+            }
+        } else {
+            LOG(DEBUG, __FUNCTION__, " smsTrigger ", config_->getValue("TRIGGER", "SMS_TRIGGER"));
+        }
+
+        if (config_->getValue("TRIGGER", "CAN_TRIGGER") == "ENABLE") {
+#ifdef CAN_TRIGGER_SUPPORTED
+                canTrigger_ = CANTrigger::getInstance(eventManager);
+                if (canTrigger_ && canTrigger_->init()) {
+                    LOG(DEBUG, __FUNCTION__, " canTrigger init succeeded");
+                } else {
+                    LOG(ERROR, __FUNCTION__, " canTrigger init failed");
+                    initStatus = telux::common::Status::FAILED;
+                    break;
+                }
+#else // CAN_TRIGGER_SUPPORTED
+                LOG(ERROR, " CAN trigger is not supported");
+#endif // CAN_TRIGGER_SUPPORTED
+
+        } else {
+            LOG(DEBUG, __FUNCTION__, " CAN trigger ", config_->getValue("TRIGGER", "CAN_TRIGGER"));
         }
     } while (0);
 
@@ -95,6 +133,9 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
         if (naoIpTrigger_) {
             naoIpTrigger_ = nullptr;
         }
+        if (smsTrigger_) {
+            smsTrigger_ = nullptr;
+        }
         return EXIT_FAILURE;
     }
 
@@ -113,6 +154,7 @@ void PowerRefDaemon::stopDaemon() {
     exiting_ = true;
     naoIpTrigger_.reset();
     eventManager_.reset();
+    smsTrigger_.reset();
     cv_.notify_all();
 }
 
@@ -172,4 +214,5 @@ int main(int argc, char *argv[]) {
     }
     PowerRefDaemon::getInstance().startDaemon(argc, argv);
 
+    return 0;
 }

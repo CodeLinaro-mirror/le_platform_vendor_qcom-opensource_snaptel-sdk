@@ -72,6 +72,7 @@
 #define ECALLDEFINES_HPP
 
 #include <string>
+#include <bitset>
 
 namespace telux {
 
@@ -401,6 +402,81 @@ struct CustomSipHeader {
 };
 static const std::string CONTENT_HEADER = "application/EmergencyCallData.eCall.MSD"; /**< Default
                                                      value for CustomSipHeader::contentType */
+
+/**
+ * Represents the type of an eCall High Level Application Protocol(HLAP) timer that is maintained
+ * by the UE state machine.
+ * The timers are represented according to EN 16062:2015 standard.
+ */
+enum class HlapTimerType {
+   UNKNOWN_TIMER = 0,       /**< eCall unknown timer */
+   T2_TIMER = 2,            /**< eCall T2 timer */
+   T5_TIMER = 5,            /**< eCall T5 timer  */
+   T6_TIMER = 6,            /**< eCall T6 timer  */
+   T7_TIMER = 7,            /**< eCall T7 timer  */
+   T9_TIMER = 9,            /**< eCall T9 timer  */
+   T10_TIMER = 10,          /**< eCall T10 timer  */
+};
+
+/**
+ * Configuration that represents the type of the number to be dialed when an automotive emergency
+ * call is initiated.
+ */
+enum class ECallNumType {
+   DEFAULT,         /* Default configured number is dialed */
+   OVERRIDDEN,      /* User configured/overridden number is dialed */
+};
+
+/**
+ * Defines the supported ECall configuration parameters
+ */
+enum EcallConfigType {
+    ECALL_CONFIG_MUTE_RX_AUDIO,        /**< Mute the local audio device during MSD transmission */
+    ECALL_CONFIG_NUM_TYPE,             /**< Decides which number needs to be dialed when an eCall
+                                            is initiated */
+    ECALL_CONFIG_OVERRIDDEN_NUM,       /**< User configured/overridden number that will be dialed
+                                            for eCall */
+    ECALL_CONFIG_USE_CANNED_MSD,       /**< Use the pre-defined MSD in modem for eCall */
+    ECALL_CONFIG_GNSS_UPDATE_INTERVAL, /**< Time interval in milliseconds, at which modem updates
+                                            the GNSS information in its internally generated MSD */
+    ECALL_CONFIG_T2_TIMER,             /**< T2 timer value */
+    ECALL_CONFIG_T7_TIMER,             /**< T7 timer value */
+    ECALL_CONFIG_T9_TIMER,             /**< T9 timer value */
+    ECALL_CONFIG_MSD_VERSION,          /**< MSD version to be used by modem when it internally
+                                            generates MSD i.e when MSD is not sent by application
+                                            and also canned MSD is not used */
+    ECALL_CONFIG_COUNT,
+};
+
+/**
+ * Bit mask that denotes which of the ECall configuration parameters defined in EcallConfigType
+ * enum are valid(and to be considered) in the provided EcallConfig structure.
+ * For example, if the configuration related to Canned MSD is provided, then
+ * EcallConfigValidity valid = (1 << ECALL_CONFIG_USE_CANNED_MSD).
+ */
+using EcallConfigValidity = std::bitset<ECALL_CONFIG_COUNT>;
+
+/**
+ * Represents various configuration parameters related to automotive emergency call
+ */
+struct EcallConfig {
+   EcallConfigValidity configValidityMask;   /**< Indicates the valid configuration parameters in
+                                                  the structure. A bit set to 1 denotes that the
+                                                  corresponding configuration parameter is valid */
+   bool muteRxAudio;    /* Mute the local audio device(ex: speaker) during MSD transmission */
+   ECallNumType numType;    /* Represents the type of number to be dialed when eCall is initiated */
+   std::string overriddenNum; /* User configured/overridden number that will be dialed when
+                                 ECallNumType configuration parameter is set to OVERRIDE */
+   bool useCannedMsd;   /* Use the pre-defined MSD in modem for eCall */
+   uint32_t gnssUpdateInterval; /* Time interval in milliseconds at which the modem updates the
+                                   GNSS information, in its internally generated MSD */
+   uint32_t t2Timer;    /* T2 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint32_t t7Timer;    /* T7 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint32_t t9Timer;    /* T9 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint8_t msdVersion;  /* MSD version to be used by modem when it internally generates MSD for
+                           transmission */
+};
+
 /** @} */ /* end_addtogroup telematics_phone */
 
 }  // End of namespace tel

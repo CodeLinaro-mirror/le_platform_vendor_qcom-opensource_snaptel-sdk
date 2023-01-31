@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,14 +62,11 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file    AudioTranscoder.hpp
- *
- * @brief   Audio Transcoder is a primary interface for audio transcoding operations. It provides
- *          APIs to convert one audio format to another. The supported transcoding is real time
- *          transcoding, which takes the playback time of file for completing the opearation.
- *
+ * @brief   Contain the APIs for transcoding audio data. Transcoding is real time
+ *          taking the playback time of the file. For all APIs, the same transcoder
+ *          instance should be used.
  */
 
 #ifndef AUDIOTRANSCODER_HPP
@@ -78,154 +75,147 @@
 #include <future>
 #include <memory>
 
-#include <telux/common/CommonDefines.hpp>
-#include <telux/audio/AudioDefines.hpp>
 #include <telux/audio/AudioListener.hpp>
 
 namespace telux {
-
 namespace audio {
+
 /** @addtogroup telematics_audio_transcoder
  * @{ */
 
 class IAudioBuffer;
 
 /**
- * This function is called with the response to ITranscoder::read().
+ * Called to pass the transcoded audio data. Used with @ref ITranscoder:read().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] buffer       Contains the transcoded data with @ref IAudioBuffer::getDataSize()
+ *                          giving the actual number of data bytes in this buffer. Should be
+ *                          cleared using @ref IAudioBuffer::reset() before reusing it for
+ *                          sending the next compressed data for transcoding.
  *
- * @param [in] buffer         Buffer that was used to capture the data from the transcode read
- *                            operation. Applications could call IAudioBuffer::reset() and reuse
- *                            this buffer for subsequent read operations on the same transcoder
- *                            instance. Also buffer.getDataSize() will represent the number of
- *                            bytes contained in a buffer.
+ * @param [in] isLastBuffer Indicates that this is the last chunk of the transcoded data
  *
- * @param [in] isLastBuffer   represents whether the transcoded buffer is last buffer or not. Once
- *                            the last buffer is received no more further read operations are
- *                            required.
- *
- * @param [in] error  Return code which indicates whether the operation succeeded or not.
- *                    @ref ErrorCode
- *
+ * @param [in] error        @ref telux::common::ErrorCode::SUCCESS if the transcoding
+ *                          was successful, an appropriate error code otherwise
  */
 using TranscoderReadResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
         uint32_t isLastBuffer, telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to ITranscoder::write().
+ * Called when the compressed data has been sent for transcoding. Used with
+ * @ref ITranscoder:write().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] buffer       Buffer that is passed to @ref ITranscoder::write(). To reuse it for
+ *                          sending the next compressed data for transcoding, clear it using
+ *                          @ref IAudioBuffer::reset().
  *
- * @param [in] buffer       Buffer that was used for the write operation for transcoding.
- *                          Application could call IAudioBuffer::reset() and reuse this buffer
- *                          for subsequent write operations on the same transcoder instance.
+ * @param [in] bytesWritten Number of data bytes sent for transcoding
  *
- * @param [in] bytesWritten Return how many bytes are sent for transcoding.
- *
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
- *
+ * @param [in] error        @ref telux::common::ErrorCode::SUCCESS if the data was sent
+ *                          successfully, an appropriate error code otherwise
  */
 using TranscoderWriteResponseCb = std::function<void(std::shared_ptr<IAudioBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error)>;
 
 /**
- * @brief   ITranscoder is used to convert one audio format to another audio format
- *          using the transcoding operation.
+ *  Provides the methods for transcoding the compressed audio data.
  */
 class ITranscoder {
-public:
+ public:
     /**
-     * Get a buffer to be used for writing samples for transcoding operation.
+     * Gets a buffer for sending the data for transcoding.
      *
-     * @returns            a buffer or nullptr in case of failure.
-     *
+     * @returns @ref IAudioBuffer instance representing the buffer or nullptr if allocation failed
      */
     virtual std::shared_ptr<IAudioBuffer> getWriteBuffer() = 0;
 
     /**
-     * Get a buffer to be used for reading samples from transcoding operation.
+     * Gets a buffer that will contain the transcoded data.
      *
-     * @returns            a buffer or nullptr in case of failure.
-     *
+     * @returns @ref IAudioBuffer instance representing the buffer or nullptr if allocation failed
      */
     virtual std::shared_ptr<IAudioBuffer> getReadBuffer() = 0;
 
     /**
-     * Write Samples/Frames to transcode stream. First write starts transcoding operation.
+     * Sends the compressed data for transcoding. First write starts the transcoding operation.
      *
-     * Write in case of compressed audio format maintains a pipeline, if the callback returns with
-     * same number of bytes written as requested and no error occured, user can send next buffer.
-     * If the number of bytes returned are not equal to the requested write size, then user needs to
-     * resend the buffer again from the leftover offset after waiting for the
-     * ITranscodeListener::onReadyForWrite() event.
+     * Internally, a pipeline is maintained for the data to transcode. The application should send
+     * the next data for transcoding only when the pipeline can accomodate more data. This readiness
+     * is indicated by calling the @ref ITranscodeListener::onReadyForWrite() method.
      *
-     * @param [in] buffer         buffer that needs to be transcoded.
-     * @param [in] isLastBuffer   represents whether this buffer is last buffer or not. Once last
-     *                            buffer is set no more write operations are required.
-     * @param [in] callback       callback to get the response of write.
+     * @param [in] buffer        Contains the data to transcode
      *
-     * @returns Status of the request i.e. success or suitable status code.
+     * @param [in] isLastBuffer  Marks that this is the last chunk of the data to transcode
      *
+     * @param [in] callback      Optional, invoked to pass the status of pushing the data in the pipeline
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the data is sent, otherwise,
+     *          an appropriate error code
      */
     virtual telux::common::Status write(std::shared_ptr<IAudioBuffer> buffer,
-            uint32_t isLastBuffer, TranscoderWriteResponseCb callback = nullptr) = 0;
+        uint32_t isLastBuffer, TranscoderWriteResponseCb callback = nullptr) = 0;
 
     /**
-     * It is mandatory to call this API after the end of a transcode operation or to abort a
-     * transcode operation. After this API call the ITranscoder object is no longer usable.
+     * Destroys the ITranscoder instance created with @ref IAudioManager::createTranscoder().
+     * This must be called after the transcoding is finished.
      *
-     * @param [in] callback      callback to get the response of tearDown.
+     * @param [in] callback Optional, invoked to pass the result of the destruction
      *
-     * @returns Status of the request i.e. success or suitable status code.
-     *
+     * @returns @ref telux::common::Status::SUCCESS if the teardown was initiated,
+     *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status tearDown(telux::common::ResponseCallback callback = nullptr) = 0;
+    virtual telux::common::Status tearDown(
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Reads samples/Frames from transcoder during transcoding operation.
+     * Initiates a read request to fetch the transcoded data. Transcoded data will be by the
+     * @ref TranscoderReadResponseCb callback.
      *
-     * @param [in] buffer       stream buffer for read.
-     * @param [in] bytesToRead  specifying how many bytes to be read from stream.
-     * @param [in] callback     callback to get the response of read.
+     * @param [in] buffer       Buffer that will contain the transcoded data
      *
-     * @returns Status of the request i.e. success or suitable status code.
+     * @param [in] bytesToRead  Length of the data to fetch
      *
+     * @param [in] callback     Optional, invoked to pass the transcoded data
+     *
+     * @returns @ref telux::common::Status::SUCCESS if the request is sent,
+     *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status read(std::shared_ptr<IAudioBuffer> buffer, uint32_t bytesToRead,
-            TranscoderReadResponseCb callback = nullptr) = 0;
+    virtual telux::common::Status read(std::shared_ptr<IAudioBuffer> buffer,
+        uint32_t bytesToRead, TranscoderReadResponseCb callback = nullptr) = 0;
 
     /**
-     * Register a listener to get notified for events of Transcoder.
+     * Registers the given listener to know 'when the pipeline is ready to accept the next buffer'
+     * for transcoding. Event is received by the @ref ITranscodeListener::onReadyForWrite()
+     * method.
      *
-     * @param [in] listener    Pointer of ITranscodeListener object that processes the notification.
+     * @param [in] listener Receives the events during transcoding
      *
-     * @returns Status of registerListener i.e success or suitable status code.
-     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+     *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status registerListener(std::weak_ptr<ITranscodeListener> listener) = 0;
+    virtual telux::common::Status registerListener(
+        std::weak_ptr<ITranscodeListener> listener) = 0;
 
     /**
-     * Remove a previously registered listener.
+     * Unregisters the given listener registered with @ref ITranscoder::registerListener().
      *
-     * @param [in] listener Previously registered ITranscodeListener that needs to be removed.
+     * @param [in] listener Listener to unregister
      *
-     * @returns Status of deRegisterListener, success or suitable status code.
-     *
+     * @returns @ref telux::common::Status::SUCCESS if the listener is unregistered,
+     *          otherwise, an appropriate error code
      */
-    virtual telux::common::Status
-            deRegisterListener(std::weak_ptr<ITranscodeListener> listener) = 0;
+    virtual telux::common::Status deRegisterListener(
+        std::weak_ptr<ITranscodeListener> listener) = 0;
 
+    /**
+     * Destructor of the ITranscoder.
+     */
     virtual ~ITranscoder() {};
 };
 
 /** @} */ /* end_addtogroup telematics_audio_transcoder */
-}  // End of namespace audio
 
+}  // End of namespace audio
 }  // End of namespace telux
 
 #endif  // end of AUDIOTRANSCODER_HPP

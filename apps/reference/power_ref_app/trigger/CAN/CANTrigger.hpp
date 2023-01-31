@@ -32,12 +32,52 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-class CANTrigger
+#ifndef CANTRIGGER_HPP
+#define CANTRIGGER_HPP
+
+#include "../../Event.hpp"
+#include "../../EventManager.hpp"
+#include "../../IEventListener.hpp"
+#include "../../common/ConfigParser.hpp"
+
+#include <CwBase.h>
+#include <CanWrapper.h>
+#include <CwFrame.h>
+
+typedef int RegistrationToken;
+
+class CANTrigger :  public IEventListener ,
+                    public enable_shared_from_this<CANTrigger>
 {
 private:
-    /* data */
+
+    static std::shared_ptr<CANTrigger> canTrigger_;
+    static void triggerEvent(CwFrame * pf, void* userData, int ifNo);
+
+    CANTrigger(std::shared_ptr<EventManager> eventManager);
+    std::shared_ptr<EventManager> eventManager_;
+
+    /** map to store can frame id along with respective expected TcuActivityState
+     * and registration token*/
+    std::map<uint32_t, pair<TcuActivityState, RegistrationToken>> triggers_;
+
+    ConfigParser * config_;     /** config parser to fetch data from config file */
+    CanWrapper * canWrapper_;
+
+    bool loadTrigger();
+    bool registerCanListener();
+    void deRegisterCanListener();
+    bool loadTriggers();
+
 public:
-    CANTrigger(/* args */);
+    static std::shared_ptr<CANTrigger> getInstance(std::shared_ptr<EventManager> eventManager);
+    bool init();
+
     ~CANTrigger();
+
+    //EventListener
+    void onEventRejected(shared_ptr<Event> event,EventStatus reason) override;
+    void onEventProcessed(shared_ptr<Event> event,bool success) override;
 };
 
+#endif //CANTRIGGER_HPP

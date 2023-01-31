@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -73,6 +73,7 @@
 #include <iostream>
 
 #include "ECallManager.hpp"
+#include "../../common/utils/Utils.hpp"
 
 #define DEFAULT_ECALL_CONFIG_FILE_PATH "/etc"
 #define DEFAULT_ECALL_CONFIG_FILE_NAME "eCall.conf"
@@ -134,7 +135,8 @@ telux::common::Status ECallManager::init() {
  * Function to trigger the standard eCall procedure(eg.112)
  */
 telux::common::Status ECallManager::triggerECall(
-    int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd) {
+    int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd,
+    std::vector<uint8_t> msdPdu) {
     if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
@@ -144,8 +146,12 @@ telux::common::Status ECallManager::triggerECall(
         return telux::common::Status::FAILED;
     }
     phoneId_ = phoneId;
+    msdPdu_.clear();
+    if(!msdPdu.empty()) {
+        msdPdu_ = msdPdu;
+    }
     setup(phoneId_);
-    if (transmitMsd && !isLocationReceived()) {
+    if (transmitMsd && msdPdu_.empty() && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if (std::cv_status::timeout
@@ -154,7 +160,7 @@ telux::common::Status ECallManager::triggerECall(
         }
     }
     auto status = telClient_->startECall(
-        phoneId, msdData_, category, variant, transmitMsd, shared_from_this());
+        phoneId, msdPdu_, msdData_, category, variant, transmitMsd, shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate eCall " << std::endl;
         cleanup();
@@ -169,7 +175,8 @@ telux::common::Status ECallManager::triggerECall(
  * Function to trigger a voice eCall procedure to the specified phone number
  */
 telux::common::Status ECallManager::triggerECall(
-    int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd) {
+    int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd,
+    std::vector<uint8_t> msdPdu) {
     if (!telClient_) {
         std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
         return telux::common::Status::FAILED;
@@ -179,8 +186,12 @@ telux::common::Status ECallManager::triggerECall(
         return telux::common::Status::FAILED;
     }
     phoneId_ = phoneId;
+    msdPdu_.clear();
+    if(!msdPdu.empty()) {
+        msdPdu_ = msdPdu;
+    }
     setup(phoneId_);
-    if (transmitMsd && !isLocationReceived()) {
+    if (transmitMsd && msdPdu_.empty() && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if (std::cv_status::timeout
@@ -189,7 +200,7 @@ telux::common::Status ECallManager::triggerECall(
         }
     }
     auto status = telClient_->startECall(
-        phoneId, msdData_, category, dialNumber, transmitMsd, shared_from_this());
+        phoneId, msdPdu_, msdData_, category, dialNumber, transmitMsd, shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to initiate Voice eCall " << std::endl;
         cleanup();
@@ -220,7 +231,7 @@ telux::common::Status ECallManager::triggerECall(
     std::getline(std::cin, msdData, delimiter);
     std::vector<uint8_t> rawData;
     if (!msdData.empty()) {
-        rawData = convertHexToBytes(msdData);
+        rawData = Utils::convertHexToBytes(msdData);
     } else {
         rawData = {2, 41, 68, 6, 128, 227, 10, 81, 67, 158, 41, 85, 212, 56, 0, 128, 4, 52, 10, 140,
             65, 89, 164, 56, 119, 207, 131, 54, 210, 63, 65, 104, 16, 24, 8, 32, 19, 198, 68, 0, 0,
@@ -256,7 +267,7 @@ telux::common::Status ECallManager::updateEcallMSD() {
     std::getline(std::cin, msdData, delimiter);
     std::vector<uint8_t> rawData;
     if (!msdData.empty()) {
-        rawData = convertHexToBytes(msdData);
+        rawData = Utils::convertHexToBytes(msdData);
     } else {
         rawData = {2, 41, 68, 6, 128, 227, 10, 81, 67, 158, 41, 85, 212, 56, 0, 128, 4, 52, 10, 140,
             65, 89, 164, 56, 119, 207, 131, 54, 210, 63, 65, 104, 16, 24, 8, 32, 19, 198, 68, 0, 0,
@@ -361,6 +372,87 @@ telux::common::Status ECallManager::requestHlapTimerStatus(int phoneId) {
     return telux::common::Status::SUCCESS;
 }
 
+telux::common::Status ECallManager::getECallConfig() {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->getECallConfig();
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to get eCall configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+telux::common::Status ECallManager::setECallConfig(EcallConfig config) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->setECallConfig(config);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request to stop T10 eCall High Level Application Protocol(HLAP) timer
+ */
+telux::common::Status ECallManager::stopT10Timer(int phoneId) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->stopT10Timer(phoneId);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to stop T10 HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request to stop T10 HLAP timer" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request to set the value of eCall High Level Application Protocol(HLAP) timer
+ */
+telux::common::Status ECallManager::setHlapTimer(int phoneId, HlapTimerType type,
+    uint32_t timeDuration) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->setHlapTimer(phoneId, type, timeDuration);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to set HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request to set HLAP timer" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
+/**
+ * Request to get the value of eCall High Level Application Protocol(HLAP) timer
+ */
+telux::common::Status ECallManager::getHlapTimer(int phoneId, HlapTimerType type) {
+    if(!telClient_) {
+        std::cout << CLIENT_NAME << "Invalid Telephony Client" << std::endl;
+        return telux::common::Status::FAILED;
+    }
+    auto status = telClient_->getHlapTimer(phoneId, type);
+    if(status != telux::common::Status::SUCCESS) {
+        std::cout << CLIENT_NAME << "Failed to send request to get HLAP timer" << std::endl;
+        return telux::common::Status::FAILED;
+    } else {
+        std::cout << CLIENT_NAME << "Sent request to get HLAP timer" << std::endl;
+    }
+    return telux::common::Status::SUCCESS;
+}
+
 /**
  * Function to enable necessary functionalities in various subsystems(location, audio, etc.),
  * that are required for an eCall
@@ -374,8 +466,10 @@ void ECallManager::setup(int phoneId) {
         audioClient_->startVoiceSession(
             phoneId, audioDevice_, voiceSampleRate_, voiceFormat_, voiceChannels_, ecnrMode_);
     }
-    // Get the location updates
-    if(!isTpsEcallOverImsTriggered) {
+    // Get the location updates. This application doesn't update the MSD automatically when a TPS
+    // eCall over IMS is triggered or when user provides MSD in raw PDU format(contains location
+    // info). Hence location reports are not enabled in these scenarios.
+    if(!isTpsEcallOverImsTriggered && msdPdu_.empty()) {
         setLocationReceived(false);
         if (!locClient_) {
             std::cout << CLIENT_NAME << "Invalid Location Client, cannot provide current location"
@@ -552,36 +646,4 @@ void ECallManager::onCallDisconnect() {
  */
 void ECallManager::onCallConnect(int phoneId) {
     setup(phoneId);
-}
-/** Convert the hexadecimal string to bytes
- *  Eg: i/p: 0229440680E30A51439E
- *      o/p: 2,41,68,6,128,227,10,81,67,158
- */
-std::vector<uint8_t> ECallManager::convertHexToBytes(std::string msdData) {
-    std::vector<uint8_t> rawMsd;
-    size_t i, len;
-    uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
-
-    len = msdData.length();
-    for (i = 0; i < len; i = i + 2) {
-        if (msdData[i] >= '0' && msdData[i] <= '9') {
-            rawData1 = (msdData[i] - 48) * 16;
-        } else if (msdData[i] >= 'A' && msdData[i] <= 'F') {
-            rawData1 = (msdData[i] - 55) * 16;
-        } else if (msdData[i] >= 'a' && msdData[i] <= 'f') {
-            rawData1 = (msdData[i] - 87) * 16;
-        }
-
-        if (msdData[i + 1] >= '0' && msdData[i + 1] <= '9') {
-            rawData2 = msdData[i + 1] - 48;
-        } else if (msdData[i + 1] >= 'A' && msdData[i + 1] <= 'F') {
-            rawData2 = msdData[i + 1] - 55;
-        } else if (msdData[i + 1] >= 'a' && msdData[i + 1] <= 'f') {
-            rawData2 = msdData[i + 1] - 87;
-        }
-
-        rawData = rawData1 + rawData2;
-        rawMsd.emplace_back(rawData);
-    }
-    return rawMsd;
 }

@@ -53,8 +53,12 @@
 #include "Event.hpp"
 #include "EventManager.hpp"
 #include "trigger/NAOIP/NAOIpTrigger.hpp"
+#include "trigger/SMS/SMSTrigger.hpp"
 #include "../../common/utils/Utils.hpp"
 
+#ifdef CAN_TRIGGER_SUPPORTED
+#include "trigger/CAN/CANTrigger.hpp"
+#endif // CAN_TRIGGER_SUPPORTED
 
 
 using namespace telux::power;
@@ -77,8 +81,14 @@ private:
    std::mutex mtx_;
    std::condition_variable cv_;
    bool exiting_ = false;
+   ConfigParser* config_;
    shared_ptr<EventManager> eventManager_;
    shared_ptr<NAOIpTrigger> naoIpTrigger_;
+   shared_ptr<SMSTrigger> smsTrigger_;
+
+   #ifdef CAN_TRIGGER_SUPPORTED
+   shared_ptr<CANTrigger> canTrigger_;
+   #endif // CAN_TRIGGER_SUPPORTED
 
    static void signalHandler(int signum);
    void printUsage(char **argv);

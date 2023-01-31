@@ -510,190 +510,193 @@ std::string RefAppUtils::drbStatusToString(telux::data::DrbStatus stat) {
 }
 
 std::string RefAppUtils::serviceRatToString(telux::data::NetworkRat rat) {
-   std::string ratStr = "UNKNOWN";
+   std::string returnStingValue = "UNKNOWN";
    switch (rat) {
       case telux::data::NetworkRat::CDMA_1X:
-         ratStr = "CDMA 1X";
+         returnStingValue = "CDMA 1X";
          break;
       case telux::data::NetworkRat::CDMA_EVDO:
-         ratStr = "CDMA EVDO";
+         returnStingValue = "CDMA EVDO";
          break;
       case telux::data::NetworkRat::GSM:
-         ratStr = "GSM";
+         returnStingValue = "GSM";
          break;
       case telux::data::NetworkRat::WCDMA:
-         ratStr = "WCDMA";
+         returnStingValue = "WCDMA";
          break;
       case telux::data::NetworkRat::LTE:
-         ratStr = "LTE";
+         returnStingValue = "LTE";
          break;
       case telux::data::NetworkRat::TDSCDMA:
-         ratStr = "TDSCDMA";
+         returnStingValue = "TDSCDMA";
          break;
       default:
          break;
    }
-   return ratStr;
+   return returnStingValue;
 }
 
 std::string RefAppUtils::eventStatusToString(EventStatus status) {
-   std::string ratStr = "UNKNOWN";
+   std::string returnStingValue = "UNKNOWN";
    switch (status) {
       case EventStatus::INITIALIZED:
-         ratStr = "INITIALIZED";
+         returnStingValue = "INITIALIZED";
          break;
       case EventStatus::IN_QUEUE:
-         ratStr = "IN_QUEUE";
+         returnStingValue = "IN_QUEUE";
          break;
       case EventStatus::IN_PROGRESS_TCU_ACTIVITY:
-         ratStr = "IN_PROGRESS_TCU_ACTIVITY";
+         returnStingValue = "IN_PROGRESS_TCU_ACTIVITY";
          break;
       case EventStatus::REJECTED_INVALID_STATE_TRANSITION:
-         ratStr = "REJECTED_INVALID_STATE_TRANSITION";
+         returnStingValue = "REJECTED_INVALID_STATE_TRANSITION";
          break;
       case EventStatus::REJECTED_EVENT_OVERRIDDEN:
-         ratStr = "REJECTED_EVENT_OVERRIDDEN";
+         returnStingValue = "REJECTED_EVENT_OVERRIDDEN";
          break;
       case EventStatus::FAILED_TCU_ACTIVITY:
-         ratStr = "FAILED_TCU_ACTIVITY";
+         returnStingValue = "FAILED_TCU_ACTIVITY";
          break;
       case EventStatus::FAILED_TCU_ACTIVITY_TIMEOUT:
-         ratStr = "FAILED_TCU_ACTIVITY_TIMEOUT";
+         returnStingValue = "FAILED_TCU_ACTIVITY_TIMEOUT";
          break;
       case EventStatus::SUCCEED:
-         ratStr = "SUCCEED";
+         returnStingValue = "SUCCEED";
          break;
       default:
          break;
    }
-   return ratStr;
+   return returnStingValue;
 }
 
 std::string RefAppUtils::tcuActivityStateToString(telux::power::TcuActivityState state) {
-   std::string ratStr = "UNKNOWN";
+   std::string returnStingValue = "UNKNOWN";
    switch (state) {
       case telux::power::TcuActivityState::SUSPEND:
-         ratStr = "TcuActivityState::SUSPEND";
+         returnStingValue = "TcuActivityState::SUSPEND";
          break;
       case telux::power::TcuActivityState::RESUME:
-         ratStr = "TcuActivityState::RESUME";
+         returnStingValue = "TcuActivityState::RESUME";
          break;
       case telux::power::TcuActivityState::SHUTDOWN:
-         ratStr = "TcuActivityState::SHUTDOWN";
+         returnStingValue = "TcuActivityState::SHUTDOWN";
          break;
       case telux::power::TcuActivityState::UNKNOWN:
-         ratStr = "TcuActivityState::UNKNOWN";
+         returnStingValue = "TcuActivityState::UNKNOWN";
          break;
       default:
          break;
    }
-   return ratStr;
+   return returnStingValue;
 }
 
 std::string RefAppUtils::teluxStatusToString(telux::common::Status status) {
-   std::string ratStr = "UNKNOWN";
+   std::string returnStingValue = "UNKNOWN";
 
    switch (status) {
       case telux::common::Status::SUCCESS:
-         ratStr = "Operation processed successfully";
+         returnStingValue = "Operation processed successfully";
          break;
       case telux::common::Status::FAILED:
-         ratStr = "Operation processing failed";
+         returnStingValue = "Operation processing failed";
          break;
       case telux::common::Status::NOCONNECTION:
-         ratStr = "Connection to Socket server has not been established";
+         returnStingValue = "Connection to Socket server has not been established";
          break;
       case telux::common::Status::NOSUBSCRIPTION:
-         ratStr = "Subscription not available";
+         returnStingValue = "Subscription not available";
          break;
       case telux::common::Status::INVALIDPARAM:
-         ratStr = "Input parameters are invalid";
+         returnStingValue = "Input parameters are invalid";
          break;
       case telux::common::Status::INVALIDSTATE:
-         ratStr = "Invalid State detected";
+         returnStingValue = "Invalid State detected";
          break;
       case telux::common::Status::NOTREADY:
-         ratStr = "Subsystem is not ready";
+         returnStingValue = "Subsystem is not ready";
          break;
       case telux::common::Status::NOTALLOWED:
-         ratStr = "Operation not allowed";
+         returnStingValue = "Operation not allowed";
          break;
       case telux::common::Status::NOTIMPLEMENTED:
-         ratStr = "Feature not supported";
+         returnStingValue = "Feature not supported";
          break;
       case telux::common::Status::CONNECTIONLOST:
-         ratStr = "Connection to Socket server lost";
+         returnStingValue = "Connection to Socket server lost";
          break;
       case telux::common::Status::EXPIRED:
-         ratStr = "Operation has expired";
+         returnStingValue = "Operation has expired";
          break;
       case telux::common::Status::ALREADY:
-         ratStr = "Already registered handler";
+         returnStingValue = "Already registered handler";
          break;
       case telux::common::Status::NOSUCH:
-         ratStr = "No such object";
+         returnStingValue = "No such object";
          break;
       case telux::common::Status::NOTSUPPORTED:
-         ratStr = "Not supported on target platform";
+         returnStingValue = "Not supported on target platform";
          break;
       default:
          break;
    }
 
-   return ratStr;
+   return returnStingValue;
 }
 
 std::string RefAppUtils::triggerTypeToString(TriggerType triggeredBy) {
-   std::string ratStr = "UNKNOWN";
+   std::string returnStingValue = "UNKNOWN";
 
    switch (triggeredBy) {
       case TriggerType::NAOIP_TRIGGER:
-         ratStr = "NAOIP_TRIGGER";
+         returnStingValue = "NAOIP_TRIGGER";
          break;
       case TriggerType::SMS_TRIGGER:
-         ratStr = "SMS_TRIGGER";
+         returnStingValue = "SMS_TRIGGER";
          break;
       case TriggerType::GPIO_TRIGGER:
-         ratStr = "GPIO_TRIGGER";
+         returnStingValue = "GPIO_TRIGGER";
+         break;
+      case TriggerType::CAN_TRIGGER:
+         returnStingValue = "CAN_TRIGGER";
          break;
       default:
          break;
    }
-   return ratStr;
+   return returnStingValue;
 }
 
 std::string RefAppUtils::serviceStatusToString(telux::common::ServiceStatus status) {
-   std::string ratStr = "UNKNOWN";
+   std::string returnStingValue = "UNKNOWN";
 
    switch (status) {
       case telux::common::ServiceStatus::SERVICE_UNAVAILABLE:
-         ratStr = "SERVICE_UNAVAILABLE";
+         returnStingValue = "SERVICE_UNAVAILABLE";
          break;
       case telux::common::ServiceStatus::SERVICE_AVAILABLE:
-         ratStr = "SERVICE_AVAILABLE";
+         returnStingValue = "SERVICE_AVAILABLE";
          break;
       case telux::common::ServiceStatus::SERVICE_FAILED:
-         ratStr = "SERVICE_FAILED";
+         returnStingValue = "SERVICE_FAILED";
          break;
       default:
          break;
    }
-   return ratStr;
+   return returnStingValue;
 }
 
 
 std::string RefAppUtils::dataRestrictModeTypeToString(telux::data::DataRestrictModeType filterMode) {
-   std::string ratStr = "UNKNOWN";
+   std::string returnStingValue = "UNKNOWN";
    switch (filterMode) {
       case telux::data::DataRestrictModeType::DISABLE:
-         ratStr = "Disabled";
+         returnStingValue = "Disabled";
          break;
       case telux::data::DataRestrictModeType::ENABLE:
-         ratStr = "Enabled";
+         returnStingValue = "Enabled";
          break;
       default:
          break;
    }
 
-   return ratStr;
+   return returnStingValue;
 }

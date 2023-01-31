@@ -104,7 +104,7 @@ private:
     void listenNewTriggerClient(int triggerSocket);
     void cleanOldDisconnectedClientThreads();
     TcuActivityState validateTrigger(char* buffer, int length);
-    bool loadTriggerText();
+    bool loadConfig();
     void triggerEvent(TcuActivityState event);
     bool enableFilter();
     bool disableFilter();

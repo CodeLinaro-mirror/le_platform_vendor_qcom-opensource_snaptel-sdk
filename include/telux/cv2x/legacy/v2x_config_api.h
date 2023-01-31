@@ -155,6 +155,9 @@ v2x_status_enum_type v2x_register_for_config_change_ind(cv2x_config_event_listen
 /**
     Updates the OMA-DM V2X radio configuration file.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
+
     @param[in] config_file_path  Pointer to the path of the configuration file.
 
     @detdesc
@@ -185,6 +188,9 @@ extern v2x_status_enum_type v2x_update_configuration(const char *config_file_pat
 
 /**
     Retrieve the V2X radio configuration file.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
 
     @param[in] config_file_path  Pointer to the path of the configuration file.
 

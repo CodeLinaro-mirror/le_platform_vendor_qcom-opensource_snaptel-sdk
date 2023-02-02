@@ -1,35 +1,6 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include "WlanApInterfaceManagerMenu.hpp"
@@ -254,6 +225,37 @@ void WlanApInterfaceManagerMenu::onApBandChanged(telux::wlan::BandType band) {
    }
 }
 
+void WlanApInterfaceManagerMenu::onApDeviceStatusChanged(
+    telux::wlan::ApDeviceConnectionEvent event, std::vector<telux::wlan::DeviceIndInfo> info) {
+    PRINT_NOTIFICATION << " ** Wlan onApDeviceStatusChanged **\n";
+    std::cout << "Event: ";
+    switch(event) {
+        case telux::wlan::ApDeviceConnectionEvent::CONNECTED:
+            std::cout << "New Device is connected" << std::endl;
+            break;
+        case telux::wlan::ApDeviceConnectionEvent::DISCONNECTED:
+            std::cout << "Existing Device is disconnected" << std::endl;
+            break;
+        case telux::wlan::ApDeviceConnectionEvent::IPV4_UPDATED:
+            std::cout << "Existing Device IPv4 is Updated" << std::endl;
+            break;
+        case telux::wlan::ApDeviceConnectionEvent::IPV6_UPDATED:
+            std::cout << "Existing Device IPv6 is Updated" << std::endl;
+            break;
+        default:
+            break;
+    }
+    if(info.size() > 0) {
+        std::cout << "List of connected devices:" << std::endl;
+        for(auto& dev:info) {
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << "Associated AP       : " << WlanUtils::getWlanId(dev.id) << std::endl;
+            std::cout << "Device MAC Address  : " << dev.macAddress << std::endl;
+        }
+    }
+}
+
+// Deprecated APIs
 void WlanApInterfaceManagerMenu::onApDeviceStatusChanged(
     telux::wlan::ApDeviceConnectionEvent event, std::vector<telux::wlan::DeviceInfo> info) {
    PRINT_NOTIFICATION << " ** Wlan onApDeviceStatusChanged **\n";

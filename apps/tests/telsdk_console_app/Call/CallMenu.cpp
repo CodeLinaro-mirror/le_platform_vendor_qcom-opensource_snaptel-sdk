@@ -106,9 +106,27 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
       std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
       exit(0);
    }
+   std::promise<ServiceStatus> prom;
+   //  Get the PhoneFactory and CallManager instances.
+   callManager_ = phoneFactory.getCallManager([&](ServiceStatus status) {
+   if(status == ServiceStatus::SERVICE_AVAILABLE) {
+      prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+   } else {
+      prom.set_value(ServiceStatus::SERVICE_FAILED);
+   }
+   });
+   if(!callManager_) {
+      std::cout << "ERROR - Failed to get CallManager instance \n";
+      exit(1);
+    }
 
-   if(subSystemStatus) {
-      callManager_ = telux::tel::PhoneFactory::getInstance().getCallManager();
+    ServiceStatus callMgrsubSystemStatus = callManager_->getServiceStatus();
+    if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "CallManager subsystem is not ready "
+                  << ", Please wait " << std::endl;
+       callMgrsubSystemStatus = prom.get_future().get();
+    }
+   if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
       myDialCallCmdCb_ = std::make_shared<MyDialCallback>();
       myHangupCb_ = std::make_shared<MyCallCommandCallback>("Hang");
       myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");
@@ -125,8 +143,12 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
       telux::common::Status status = callManager_->registerListener(callListener_);
       if(status != telux::common::Status::SUCCESS) {
          std::cout << "Unable to register Call Manager listener" << std::endl;
+         exit(1);
       }
-   }
+    } else {
+       std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+       exit(1);
+    }
 }
 
 CallMenu::~CallMenu() {

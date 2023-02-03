@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       ServingSystemManager.hpp
  *
@@ -105,6 +141,25 @@ struct DcStatus {
 /** @} */ /* end_addtogroup telematics_serving_system */
 
 /**
+ * Defines Network time information
+ */
+struct NetworkTimeInfo {
+   uint16_t year;         /**< Year. */
+   uint8_t month;         /**< Month. 1 is January and 12 is December. */
+   uint8_t day;           /**< Day. Range: 1 to 31.  */
+   uint8_t hour;          /**< Hour. Range: 0 to 23. */
+   uint8_t minute;        /**< Minute. Range: 0 to 59. */
+   uint8_t second;        /**< Second. Range: 0 to 59. */
+   uint8_t dayOfWeek;     /**< Day of the week. 0 is Monday and 6 is Sunday. */
+   int8_t timeZone;       /**< Offset between UTC and local time in units of 15 minutes (signed
+                               value). Actual value = field value * 15 minutes. */
+   uint8_t dstAdj;        /**< Daylight saving adjustment in hours to obtain local time.
+                               Possible values: 0, 1, and 2.*/
+   std::string nitzTime;  /**< Network Identity and Time Zone(NITZ) information in the form
+                               "yyyy/mm/dd,hh:mm:ss(+/-)tzh:tzm,dt */
+};
+
+/**
  * 16 bit mask that denotes which of the radio access technology mode preference
  * defined in RatPrefType enum are used to set or get RAT preference.
  */
@@ -146,6 +201,23 @@ using ServiceDomainPreferenceCallback
  * @brief Serving System Manager class provides the API to request and set
  *        service domain preference and RAT preference.
  */
+
+/**
+ * This function is called with the response to requestNetworkTime API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] info       @ref NetworkTimeInfo
+ * @param [in] error      Return code which indicates whether the operation
+ *                        succeeded or not @ref ErrorCode
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+using NetworkTimeResponseCallback
+   = std::function<void(NetworkTimeInfo info, telux::common::ErrorCode error)>;
+
 class IServingSystemManager {
 public:
    /**
@@ -229,6 +301,19 @@ public:
    virtual telux::tel::DcStatus getDcStatus() = 0;
 
    /**
+    * Get network time information asynchronously.
+    *
+    * @param [in] callback    Callback function to get the response of get
+    *                         network time information request.
+    *
+    * @returns Status of requestNetworkTime i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) = 0;
+
+   /**
     * Register a listener for specific updates from serving system.
     *
     * @param [in] listener     Pointer of IServingSystemListener object that
@@ -291,6 +376,17 @@ public:
     *          and could break backwards compatibility.
     */
    virtual void onDcStatusChanged(DcStatus dcStatus) {
+   }
+
+   /**
+    * This function is called whenever network time information is changed.
+    *
+    * @param [in] info    Network time information @ref NetworkTimeInfo
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual void onNetworkTimeChanged(NetworkTimeInfo info) {
    }
 
    /**

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -250,12 +250,15 @@ void DataConnectionMenu::startDataCall(std::vector<std::string> inputCommand) {
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
 
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
 
     std::string interfaceName = "";
     int userChoice;
@@ -295,7 +298,8 @@ void DataConnectionMenu::stopDataCall(std::vector<std::string> inputCommand) {
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     std::cout << std::endl;
 
@@ -307,7 +311,9 @@ void DataConnectionMenu::stopDataCall(std::vector<std::string> inputCommand) {
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->stopDataCall(
         profileId, ipFamType, MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
@@ -397,7 +403,8 @@ void DataConnectionMenu::requestDataCallList() {
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
 
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->requestDataCallList(
@@ -421,7 +428,8 @@ void DataConnectionMenu::setDefaultProfile() {
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     int profileId;
@@ -507,7 +515,8 @@ void DataConnectionMenu::getDefaultProfile() {
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     // Callback

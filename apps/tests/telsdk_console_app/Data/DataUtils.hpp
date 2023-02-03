@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -69,43 +69,14 @@
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataConnectionManager.hpp>
 #include <telux/data/ServingSystemManager.hpp>
+#include "../../../common/utils/Utils.hpp"
 
 class DataUtils {
 public:
-    // Validate the input and in case of invalid input request
-    // for proper input from user.
-    template <typename T>
-    static bool isInputValid(T input, std::initializer_list<T> list) {
-        for (auto elem = list.begin(); elem != list.end(); ++elem)
-        {
-            if (*elem == input)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
 
     template <typename T>
     static void validateInput(T &input, std::initializer_list<T> list) {
-        bool valid = false;
-        do {
-            //If user input is within the list, just exist
-            if ((std::cin.good()) && (isInputValid(input, list)))
-            {
-                valid = true;
-            }
-            else {
-                //User input does not match any of the possible entries
-                std::cin.clear();
-                // Extracts characters from the previous input sequence and discards them,
-                // until entire stream have been extracted, or one compares equal to newline.
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << "ERROR: Invalid input, please re-enter." << std::endl;
-                std::cin >> input;
-                valid = isInputValid(input, list);
-            }
-        } while (!valid);
+        return Utils::validateInput(input, list);
     }
 
    static std::string callEndReasonTypeToString(telux::data::EndReasonType type);

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -171,7 +171,9 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
     std::cout << "Create VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
         std::cout << "Vlan Manager is not ready" << std::endl;
@@ -180,7 +182,11 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
     int ifaceType;
     std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI): ";
     std::cin >> ifaceType;
-    Utils::validateInput(ifaceType);
+    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+        static_cast<int>(telux::data::InterfaceType::ETH),
+        static_cast<int>(telux::data::InterfaceType::ECM),
+        static_cast<int>(telux::data::InterfaceType::RNDIS),
+        static_cast<int>(telux::data::InterfaceType::MHI)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
 
     int vlanId;
@@ -243,7 +249,9 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
     std::cout << "Remove VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
         std::cout << "Vlan Manager is not ready" << std::endl;
@@ -253,7 +261,12 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
     int ifaceType;
     std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI): ";
     std::cin >> ifaceType;
-    Utils::validateInput(ifaceType);
+    Utils::validateInput(ifaceType,
+        {static_cast<int>(telux::data::InterfaceType::WLAN),
+        static_cast<int>(telux::data::InterfaceType::ETH),
+        static_cast<int>(telux::data::InterfaceType::ECM),
+        static_cast<int>(telux::data::InterfaceType::RNDIS),
+        static_cast<int>(telux::data::InterfaceType::MHI)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
 
     int vlanId;
@@ -281,7 +294,9 @@ void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
     std::cout << "Query VLAN info\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
         std::cout << "Vlan Manager is not ready" << std::endl;
@@ -324,7 +339,9 @@ void VlanMenu::bindWithProfile(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
         std::cout << "Vlan Manager is not ready" << std::endl;
@@ -369,7 +386,9 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
         std::cout << "Vlan Manager is not ready" << std::endl;
@@ -414,7 +433,9 @@ void VlanMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
         std::cout << "Vlan Manager is not ready" << std::endl;

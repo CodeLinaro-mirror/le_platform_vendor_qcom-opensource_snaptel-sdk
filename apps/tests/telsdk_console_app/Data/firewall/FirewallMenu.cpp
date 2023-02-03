@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -250,7 +250,7 @@ void FirewallMenu::setFirewall(std::vector<std::string> inputCommand) {
     int enableFwFlag;
     std::cout << "Enter Enable Firewall (1 - On, 0 - Off): ";
     std::cin >> enableFwFlag;
-    Utils::validateInput(enableFwFlag);
+    Utils::validateInput(enableFwFlag, {0, 1});
     if (enableFwFlag) {
         fwEnable = true;
     }
@@ -259,7 +259,7 @@ void FirewallMenu::setFirewall(std::vector<std::string> inputCommand) {
         int allowPacketsFlag;
         std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
         std::cin >> allowPacketsFlag;
-        Utils::validateInput(allowPacketsFlag);
+        Utils::validateInput(allowPacketsFlag, {0, 1});
         if (allowPacketsFlag) {
             allowPackets = true;
         }
@@ -434,7 +434,7 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     int natEnabled;
     std::cout << "Enter IPv6 nat enabled (1-Enable, 0-Disabled): ";
     std::cin >> natEnabled;
-    Utils::validateInput(natEnabled);
+    Utils::validateInput(natEnabled, {0, 1});
 
     IPv6Info info;
     info.srcAddr = srcAddr;
@@ -613,12 +613,13 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     int fwDirection;
     std::cout << "Enter Firewall Direction (1-Uplink, 2-Downlink): ";
     std::cin >> fwDirection;
-    Utils::validateInput(fwDirection);
+    Utils::validateInput(fwDirection, {1, 2});
     telux::data::Direction fwDir = static_cast<telux::data::Direction>(fwDirection);
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6)});
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
 
     char delimiter = '\n';
@@ -875,7 +876,8 @@ void FirewallMenu::disableDmz(std::vector<std::string> inputCommand) {
     std::cin.get();
     std::cout << "Enter IP Type (4-IPv4, 6-IPv6): ";
     std::cin >> ipType;
-    Utils::validateInput(ipType);
+    Utils::validateInput(ipType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6)});
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;

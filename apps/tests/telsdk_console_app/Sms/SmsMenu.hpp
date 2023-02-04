@@ -92,6 +92,7 @@ private:
    void requestPreferredStorage(std::vector<std::string> userInput);
    void setPreferredStorage(std::vector<std::string> userInput);
    void setTag(std::vector<std::string> userInput);
+   void requestStorageDetails(std::vector<std::string> userInput);
    void calculateMessageAttributes(std::vector<std::string> userInput);
    void selectSimSlot(std::vector<std::string> userInput);
    std::string smsEncodingTypeToString(telux::tel::SmsEncoding format);

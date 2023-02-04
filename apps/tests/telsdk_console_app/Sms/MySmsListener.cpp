@@ -102,14 +102,19 @@ void MySmsListener::onIncomingSms(int phoneId,
    std::cout << std::endl;
 
    std::string text = "";
-
-   PRINT_NOTIFICATION << " Consolidated Multipart Message: " << std::endl;
    std::vector<telux::tel::SmsMessage> messages = *(msgs.get());
-   PRINT_NOTIFICATION << "Count :" << messages.size() << std::endl;
+   if (messages.size() > 1) {
+      PRINT_NOTIFICATION << " Consolidated Multipart Message: " << std::endl;
+      PRINT_NOTIFICATION << " Count :" << messages.size() << std::endl;
+   } else {
+      PRINT_NOTIFICATION << " Message: " << std::endl;
+      PRINT_NOTIFICATION << " Count :" << messages.size() << std::endl;
+   }
    for (telux::tel::SmsMessage smsMsg : messages) {
       text = text + smsMsg.getText();
       std::shared_ptr<telux::tel::MessagePartInfo> partInfo = smsMsg.getMessagePartInfo();
-      std::cout << "\033[1;35mSegment: \033[0m" << static_cast<int>(partInfo->segmentNumber)
+      if (partInfo) {
+         std::cout << "\033[1;35mSegment: \033[0m" << static_cast<int>(partInfo->segmentNumber)
                 << "\n SMS Part on phone ID " << phoneId << " from: "
                 << smsMsg.getSender() <<  " to: " << smsMsg.getReceiver()
                 << "\n Message Part: " << smsMsg.getText() << "\n PDU: " << smsMsg.getPdu()
@@ -117,6 +122,7 @@ void MySmsListener::onIncomingSms(int phoneId,
                 << " NumberOfSegments:"
                 << static_cast <int>(partInfo->numberOfSegments) << " SegmentNumber: "
                 << static_cast <int>(partInfo->segmentNumber) << std::endl;
+      }
       telux::tel::SmsMetaInfo metaInfo;
       auto status = smsMsg.getMetaInfo(metaInfo);
       if (status == telux::common::Status::SUCCESS) {
@@ -133,6 +139,12 @@ void MySmsListener::onDeliveryReport(int phoneId, int msgRef, std::string receiv
    PRINT_NOTIFICATION << "Received delivery report from phone ID " << phoneId << " with MsgRef: "
                       << msgRef << " Receiver Address: "<< receiverAddress <<" Error Desc: "
                       << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+void MySmsListener::onMemoryFull(int phoneId, telux::tel::StorageType type) {
+   std::cout << std::endl << std::endl;
+   PRINT_NOTIFICATION << "Received memory full indication from phone ID " << phoneId <<
+       "  for Storage Type: " << SmsStorageCallback::convertStorageTypeToString(type) << "\n";
 }
 
 // Implementation of My SMS callback
@@ -311,3 +323,16 @@ void SmsStorageCallback::setTagResponse(telux::common::ErrorCode error) {
    }
 }
 
+// Implementation of request storage details callback
+void SmsStorageCallback::reqStorageDetailsResponse(uint32_t maxCount, uint32_t availableCount,
+      telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if (error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << " SIM Storage details: " << "\n";
+      PRINT_CB << " Maximum count of messages allowed: " << maxCount <<
+         " Available SIM messages count: " << availableCount <<"\n";
+   } else {
+      PRINT_CB << " Request for storage details failed with errorCode: " <<
+         static_cast<int>(error) << ", description: " << Utils::getErrorCodeAsString(error) << "\n";
+   }
+}

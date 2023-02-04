@@ -16,4 +16,4 @@ if(NOT BUILD_FOR_SIMULATION)
         add_subdirectory( ecall_app )
     endif(NOT MACHINE_HAS_CV2X_ONLY)
 endif(NOT BUILD_FOR_SIMULATION)
-
+add_subdirectory( power_ref_app )

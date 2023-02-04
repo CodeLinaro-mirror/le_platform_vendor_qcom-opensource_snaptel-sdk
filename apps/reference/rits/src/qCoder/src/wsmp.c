@@ -93,11 +93,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Global for printing more useful information
 extern int gVerbosity;
-static int savari_workaround = 0;
 
-void set_savari_workaround(int value) {
-    savari_workaround = value;
-}
 /**
  * Decode the variable length PSID, and un p-code the field. The wsmp* whould
  * point to the beginning of the WSMP PSID field(after N-header,& T header) and
@@ -812,11 +808,7 @@ static int  wsmp_decode_header(msg_contents *mc)
         // Get datalength from ASN UPER
         if(gVerbosity>2)
             printf("Getting payload length from wsmp header\n");
-        if (savari_workaround) {
-            mc->payload_len =  get_next_n_bits((unsigned char **)&bp->data, 8, &bits_left);
-        } else {
-            mc->payload_len = parse_asn_variable_length_enc((unsigned char **)&bp->data, &bits_left);
-        }
+        mc->payload_len = parse_asn_variable_length_enc((unsigned char **)&bp->data, &bits_left);
 
         if (ElementExtensionPresent) {
             // Zero param flags that it is a full WSEE and length is next byte in stream
@@ -910,8 +902,13 @@ wsmp_pkt_err:
     return retcode;
 }
 
+extern int wsmp_data_decode(wsmp_data_t* wsmp){
+    return 0;
+}
+
 int wsmp_encode(msg_contents *mc)
 {
+    wsmp_data_t *wsmp = (wsmp_data_t*) (mc->wsmp);
     if (!mc->wsmp) {
         if(gVerbosity > 2)
             fprintf(stderr, "%s: invalid input\n", __func__);
@@ -921,11 +918,61 @@ int wsmp_encode(msg_contents *mc)
             fprintf(stderr, "%s: no input to encode\n", __func__);
         return -1;
     }
-    abuf_t ab;
-    abuf_alloc(&ab, 2000, 20);
-    wsmp_data_t *wsmp = mc->wsmp;
-    wsmp->abp = &ab;
+
+    if (wsmp->abp == NULL)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no asnbuf \n",
+             __func__);
+        }
+        return -1;
+    }
+
+    if (wsmp->abp->size <= 0)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no allocated asnbuf\n",
+                 __func__);
+        }
+        return -1;
+    }
+    //Resetting buffer before using it for encodeing.
+    abuf_reset(wsmp->abp, WSMP_ABUF_DEFAULT_HEADROOM);
     int ret = encode_wsm2016(wsmp, &(mc->abuf));
-    abuf_free(&ab);
     return ret;
 }
+
+int wsmp_data_encode(wsmp_data_t* wsmp)
+{
+    if (!wsmp) {
+        if(gVerbosity > 2)
+            fprintf(stderr, "%s: wsmp input is null\n", __func__);
+        return -1;
+    }
+
+    if (wsmp->abp == NULL)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no asnbuf \n",
+             __func__);
+        }
+        return -1;
+    }
+
+    if (wsmp->abp->size <= 0)
+    {
+        if(gVerbosity > 1)
+        {
+            fprintf(stderr, "%s: passing wsmp data with no allocated asnbuf \n",
+                __func__);
+        }
+        return -1;
+    }
+
+    int ret = encode_wsm2016(wsmp, wsmp->abp);
+    return ret;
+}
+

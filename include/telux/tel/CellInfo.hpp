@@ -176,6 +176,8 @@ private:
 /**
  * CdmaCellIdentity class provides methods to get the network identifier, system identifier, base
  * station identifier, longitude and latitude.
+ *
+ * @deprecated As of version 1.53.0 this API is no longer supported.
  */
 class CdmaCellIdentity {
 public:
@@ -383,6 +385,8 @@ private:
 /**
  * TdscdmaCellIdentity class provides methods to get the mobile country code, mobile
  * network code, location area code, cell identity and cell parameters identifier.
+ *
+ * @deprecated As of version 1.53.0 this API is no longer supported.
  */
 class TdscdmaCellIdentity {
 public:
@@ -577,6 +581,8 @@ private:
 /**
  *CdmaCellInfo class provides methods to get cell type, cell registration status, cell
  *identity and signal strength information.
+ *
+ * @deprecated As of version 1.53.0 this API is no longer supported.
  */
 class CdmaCellInfo : public CellInfo {
 public:
@@ -676,6 +682,8 @@ private:
 /**
  *TdscdmaCellInfo class provides methods to get cell type, cell registration status, cell
  *identity and signal strength information.
+ *
+ * @deprecated As of version 1.53.0 this API is no longer supported.
  */
 class TdscdmaCellInfo : public CellInfo {
 public:

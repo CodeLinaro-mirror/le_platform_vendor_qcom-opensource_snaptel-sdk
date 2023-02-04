@@ -76,7 +76,7 @@ public:
     void onDrbStatusChanged(telux::data::DrbStatus status) override;
     void onServiceStateChanged(telux::data::ServiceStatus status) override;
     void onRoamingStatusChanged(telux::data::RoamingStatus status) override;
-
+    void onNrIconTypeChanged(telux::data::NrIconType type) override;
 private:
     SlotId slotId_;
 

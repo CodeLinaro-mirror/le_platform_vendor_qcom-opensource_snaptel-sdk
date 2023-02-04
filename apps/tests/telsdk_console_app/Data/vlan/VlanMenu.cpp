@@ -392,7 +392,7 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
-                  << "bindWithProfile Response"
+                  << "unbindFromProfile Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;

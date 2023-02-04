@@ -162,6 +162,7 @@ public:
    /**
     * Initiate a voice call. This API can also be used for e911/e112 type of regular emergency call.
     * This is not meant for an automotive eCall.
+    * Regular voice call will be blocked by device while eCall is in progress.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_CALL_MGMT permission
     * to invoke this API successfully.
@@ -200,6 +201,7 @@ public:
 
    /**
     * Initiate an automotive eCall.
+    * Regular voice calls will be blocked by device while eCall is in progress.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.
@@ -232,11 +234,15 @@ public:
       = 0;
 
    /**
-    * Initiate an automotive eCall to the specified phone number for TPS eCall. It will be
-    * treated like a regular voice call by the UE and the network.
+    * Initiate an automotive Third Party Service(TPS) eCall over CS technologies only
+    * (i.e. not IMS) to the specified phone number with Minimum Set of Data(MSD) at call connect.
+    * It will be treated like a regular voice call by the UE and the network.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
-    * to invoke this API successfully.
+    * It is the responsibility of application to make sure that another call is not dialed while
+    * Third Party Service eCall is in progress.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * permission to invoke this API successfully.
     *
     * @param [in] phoneId      Represents phone corresponding to which make
     *                          eCall operation is performed
@@ -265,9 +271,42 @@ public:
                                            const ECallMsdData &eCallMsdData, int category,
                                            std::shared_ptr<IMakeCallCallback> callback = nullptr)
       = 0;
-
+   /**
+    * Initiate an automotive Third Party Service(TPS) eCall over IMS to the specified phone number
+    * with Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice
+    * call over IMS by the UE and the network.
+    *
+    * Application is expected to dial only one Third Party Service eCall per subscription.
+    * It is the responsibility of application to make sure that another call is not dialed while
+    * Third Party Service eCall is in progress.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * permissionto invoke this API successfully.
+    *
+    * @param [in] phoneId      Represents phone corresponding to which make
+    *                          eCall operation is performed
+    * @param [in] dialNumber   String representing the dialing number
+    * @param [in] msdPdu       Encoded MSD(Minimum Set of Data) PDU as per spec EN
+    *                          15722 2015 or GOST R 54620-2011/33464-2015
+    *                          Max size 255 bytes
+    * @param [in] header       Optional SIP headers intended to be sent in the
+    *                          SIP invite message to the network for PSAP
+    *                          - @ref telux::tel::CustomSipHeader
+    * @param [in] callback     Optional callback function to get the response of
+    *                          makeECall request.
+    *
+    * @returns Status of makeECall i.e. success or suitable status code.
+    *
+    * @note  Eval: This is a new API and is being evaluated. It is subject to
+    *        change and could break backwards compatibility.
+    */
+   virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
+      const std::vector<uint8_t> &msdPdu,
+      CustomSipHeader header = {telux::tel::CONTENT_HEADER,""},
+      std::shared_ptr<IMakeCallCallback> callback = nullptr) = 0;
    /**
     * Initiate an automotive eCall with raw MSD pdu.
+    * Regular voice calls will be blocked by device while eCall is in progress.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.
@@ -300,8 +339,12 @@ public:
       = 0;
 
    /**
-    * Initiate an automotive eCall with raw MSD pdu, to the specified phone number for TPS eCall. It
-    * will be treated like a regular voice call by the UE and the network.
+    * Initiate an automotive eCall with raw MSD pdu, to the specified phone number for TPS eCall
+    * over CS Technologies only (i.e. not IMS).
+    * It will be treated like a regular voice call by the UE and the network.
+    *
+    * It is the responsibility of application to make sure that another call is not dialed while
+    * Third Party Service eCall is in progress.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.
@@ -336,6 +379,7 @@ public:
 
    /**
     * Initiate an automotive eCall without transmitting Minimum Set of Data (MSD) at call connect.
+    * Regular voice calls will be blocked by device while eCall is in progress.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.
@@ -365,9 +409,13 @@ public:
       = 0;
 
    /**
-    * Initiate an automotive eCall to the specified phone number for TPS eCall, without transmitting
-    * Minimum Set of Data(MSD) at call connect. It will be treated like a regular voice call by the
-    * UE and the network.
+    * Initiate an automotive eCall to the specified phone number for TPS eCall over CS
+    * technologies only (i.e. not IMS), without transmitting Minimum Set of Data(MSD) at call
+    * connect.
+    * It will be treated like a regular voice call by the UE and the network.
+    *
+    * It is the responsibility of application to make sure that another call is not dialed while
+    * Third Party Service eCall is in progress.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.
@@ -418,8 +466,15 @@ public:
       = 0;
 
    /**
-    * Update the eCall MSD in modem to be sent to Public Safety Answering Point
-    * (PSAP) when requested.
+    * For Third Party Service(TPS) eCall over IMS technology:
+    * This API could be used to explicitly send MSD to PSAP in respnse to MSD pull request
+    * from the PSAP.The modem will not automatically update MSD to the Public Safety Answering
+    * Point(PSAP) @ref- telux::tel::ICallListener::OnTpsMsdUpdateRequest.
+    *
+    * For all other types of eCall:
+    * This API will update the eCall MSD in modem's cache.The modem automatically transmits MSD
+    * from this cache whenever there is an MSD pull request from Public Safety Answering Point
+    * (PSAP).
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.
@@ -428,6 +483,10 @@ public:
     *                       updateECallMsd operation is performed
     * @param [in] msdPdu    Encoded MSD(Minimum Set of Data) PDU as per spec EN
     *                       15722 2015 or GOST R 54620-2011/33464-2015
+    *                       For Third Party Service(TPS) eCall over IMS technology:
+    *                       Maximum length allowed for MSD is 255 bytes
+    *                       For all other types of eCall:
+    *                       Maximum length allowed for MSD is 140 bytes
     * @param [in] callback  Callback function to get the response of
     *                       updateECallMsd.
     *

@@ -26,7 +26,8 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
+
+ /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
  *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
@@ -61,6 +62,7 @@
  *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /**
  * @file       Utils.cpp
  *
@@ -72,6 +74,8 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <iomanip>
+#include <sstream>
 
 #include "Utils.hpp"
 
@@ -439,7 +443,17 @@ void Utils::printStatus(telux::common::Status status) {
 uint64_t Utils::getCurrentTimestamp(void) {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    return (uint64_t)ts.tv_sec * 1000000LL + (uint64_t)ts.tv_nsec / 1000;
+    return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+}
+
+const std::string Utils::getCurrentTimeString(void) {
+    std::stringstream ss;
+    std::tm tmSnapshot;
+    std::time_t now = std::time(nullptr);
+
+    // convert current time to format of hour:minute:second
+    ss << std::put_time(::localtime_r(&now, &tmSnapshot), "%H:%M:%S");
+    return ss.str();
 }
 
 int Utils::validateV2xSpsInterval(uint16_t interval) {

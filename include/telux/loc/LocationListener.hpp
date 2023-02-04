@@ -202,6 +202,15 @@ public:
   virtual void onGnssMeasurementsInfo(const telux::loc::GnssMeasurements &measurementInfo) {}
 
 /**
+ * This function is called during a disaster/crisis to update the
+ * disaster/crisis reports.
+ *
+ * @param [in] dcReportInfo - GNSS disaster/crisis report information.
+ *             This includes the report type and data payload received from the GNSS engine.
+ */
+  virtual void onGnssDisasterCrisisInfo(const telux::loc::GnssDisasterCrisisReport &dcReportInfo){}
+
+/**
  * This function is called when the capabilities of the location stack gets updated.
  *
  * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission

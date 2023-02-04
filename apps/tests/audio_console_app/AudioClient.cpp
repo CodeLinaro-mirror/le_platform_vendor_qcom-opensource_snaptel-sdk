@@ -520,8 +520,8 @@ void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
                 devices_ = devices;
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to get stream device" << std::endl;
+                p.set_value(false);
             }
         });
         if(status == telux::common::Status::SUCCESS) {
@@ -533,7 +533,8 @@ void AudioClient::getStreamDevice(StreamType streamType, SlotId slotId) {
         if (p.get_future().get()) {
             for (auto deviceType : devices_) {
                 std::string deviceName;
-                std::cout << "Device Type"  << (static_cast<uint32_t>(deviceType)) << std::endl;
+                std::cout << "Device type: "  << (static_cast<uint32_t>(deviceType)) << std::endl;
+                std::cout.flush();
             }
         }
     } else {
@@ -610,8 +611,8 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
                 vol = volume;
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to set stream device" << std::endl;
+                p.set_value(false);
             }
         });
         if(status == telux::common::Status::SUCCESS) {
@@ -622,7 +623,8 @@ void AudioClient::getVolume(StreamType streamType, SlotId slotId) {
 
         if (p.get_future().get()) {
             for (auto channelVolume : vol.volume) {
-                std::cout << "volume: "<< channelVolume.vol << std::endl;
+                std::cout << "Volume: "<< channelVolume.vol << std::endl;
+                std::cout.flush();
             }
         }
     } else {
@@ -705,8 +707,8 @@ void AudioClient::getMute(StreamType streamType, SlotId slotId) {
                 mute_ = mute;
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to get mute" << std::endl;
+                p.set_value(false);
             }
         });
         if(status == telux::common::Status::SUCCESS) {
@@ -721,7 +723,8 @@ void AudioClient::getMute(StreamType streamType, SlotId slotId) {
             } else {
                 muteStatus = "Unmuted";
             }
-            std::cout << "Mute Status: " << muteStatus << std::endl;
+            std::cout << "Mute status: " << muteStatus << std::endl;
+            std::cout.flush();
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;

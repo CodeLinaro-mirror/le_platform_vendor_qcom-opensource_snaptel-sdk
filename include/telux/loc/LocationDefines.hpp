@@ -1371,6 +1371,40 @@ struct GnssMeasurements {
     bool isNHz;
 };
 
+/**
+ * Disaster and crisis report types that are currently supported by the GNSS Engine.
+ */
+enum GnssReportDCType {
+    /**
+     * Disaster Prevention information provided by Japan Meteorological Agency.
+     */
+    QZSS_JMA_DISASTER_PREVENTION_INFO = 43,
+    /**
+     * Disaster Prevention information provided by other organizations.
+     */
+    QZSS_NON_JMA_DISASTER_PREVENTION_INFO = 44
+};
+
+/**
+ * Specify the Disaster-crisis type and data payload received from the GNSS engine.
+ */
+struct GnssDisasterCrisisReport {
+    /**
+     * Disaster and crisis report types supported by the GNSS Engine.
+     */
+    GnssReportDCType dcReportType;
+    /**
+     * The disaster crisis report data, packed into uint8_t.
+     * The bits in the payload are packed w.r.t the MSB First ordering.
+     */
+    std::vector<uint8_t> dcReportData;
+    /**
+     * Number of valid bits that client should use in the payload as
+     * per the dcReportData.
+     */
+    uint16_t numValidBits;
+};
+
 /** Specify leap second change event info.*/
 struct LeapSecondChangeInfo {
     /** GPS timestamp that corrresponds to the last known leap
@@ -1626,7 +1660,9 @@ enum GnssReportType {
     /** High rate measurement reports. Currently the rate is defined to be 10 Hz.
      *  Client cannot specify rates. The data in high rate would be different that from low rate.
      *  Also there might be difference in accuracy of fields for the both the rates. */
-    HIGH_RATE_MEASUREMENT    = (1 << 5)
+    HIGH_RATE_MEASUREMENT    = (1 << 5),
+    /*Disaster Crisis Reports*/
+    DISASTER_CRISIS   = (1 << 6)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */

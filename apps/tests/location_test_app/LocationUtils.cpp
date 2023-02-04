@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -134,6 +134,19 @@ void LocationUtils::displayXtraStatus(telux::loc::XtraStatus xtraStatus) {
             break;
         case telux::loc::XtraDataStatus::STATUS_VALID :
             std::cout << "Valid \n";
+            break;
+    }
+}
+
+void LocationUtils::displayDisasterCrisisReportType(telux::loc::GnssDisasterCrisisReport
+    dcReportInfo) {
+    std::cout << "Disaster Crisis Report type: ";
+    switch(dcReportInfo.dcReportType) {
+        case telux::loc::GnssReportDCType::QZSS_JMA_DISASTER_PREVENTION_INFO :
+            std::cout << "QZSS_JMA_DISASTER_PREVENTION_INFO \n";
+            break;
+        case telux::loc::GnssReportDCType::QZSS_NON_JMA_DISASTER_PREVENTION_INFO :
+            std::cout << "QZSS_NON_JMA_DISASTER_PREVENTION_INFO \n";
             break;
     }
 }

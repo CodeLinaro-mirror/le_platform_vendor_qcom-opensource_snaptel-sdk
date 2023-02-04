@@ -54,6 +54,7 @@
 #define INPUT_BUSY 2
 #define INPUT_NO_REPLY 3
 #define INPUT_NOT_REACHABLE 4
+#define INPUT_NOT_LOGGED_IN 23
 #define SLOT_COUNT_1 1
 #define SLOT_COUNT_2 2
 #define SERVICE_CLASS_VOICE 1
@@ -113,14 +114,23 @@ void SuppServicesMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "4", "Get_call_forwarding_pref", {},
             std::bind(&SuppServicesMenu::getCallForwardingPref, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setOirPrefCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "5", "Set_OIR_pref", {},
+            std::bind(&SuppServicesMenu::setOirPref, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> getOirPrefCmd
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "6", "Get_OIR_pref", {},
+            std::bind(&SuppServicesMenu::getOirPref, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-            "5", "Select_sim_slot", {},
+            "7", "Select_sim_slot", {},
             std::bind(&SuppServicesMenu::selectSimSlot, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSuppServicesMenu
           = {setCallWaitingPrefCmd, getCallWaitingPrefCmd,
-             setCallForwardingPrefCmd, getCallForwardingPrefCmd};
+             setCallForwardingPrefCmd, getCallForwardingPrefCmd,
+             setOirPrefCmd, getOirPrefCmd};
     if (suppServicesManagers_.size() > 1) {
         commandsListSuppServicesMenu.emplace_back(selectSimSlotCommand);
     }
@@ -172,12 +182,16 @@ void SuppServicesMenu::setCallForwardingPref(std::vector<std::string> userInput)
     ForwardReq req;
     int command = -1;
     req.serviceClass = SERVICE_CLASS_VOICE;
-    std::cout <<
-        "\nEnter reason for call forwarding 1-Unconditional, 2-Busy, 3-Noreply, 4-NotReachable) : ";
+    std::cout << "Enter reason for call forwarding: \n\
+    1 - Unconditional\n\
+    2 - Busy\n\
+    3 - Noreply\n\
+    4 - NotReachable\n\
+    23 - NotLoggedIn\n";
     std::cin >> command;
     Utils::validateInput(command);
     if (command == INPUT_UNCONDITIONAL || command == INPUT_BUSY || command == INPUT_NO_REPLY ||
-        command == INPUT_NOT_REACHABLE) {
+        command == INPUT_NOT_REACHABLE || command == INPUT_NOT_LOGGED_IN) {
         req.reason = static_cast<ForwardReason>(command);
         if (req.reason == ForwardReason::NOREPLY) {
             std::cout << "\nEnter no reply timer value : ";
@@ -221,12 +235,16 @@ void SuppServicesMenu::getCallForwardingPref(std::vector<std::string> userInput)
     ServiceClass serviceClass = SERVICE_CLASS_VOICE;
     int command = -1;
     ForwardReason reason = ForwardReason::UNCONDITIONAL;
-    std::cout <<
-        "\nEnter reason for call forwarding 1-Unconditional, 2-Busy, 3-Noreply, 4-NotReachable) : ";
+    std::cout << "Enter reason for call forwarding: \n\
+    1 - Unconditional\n\
+    2 - Busy\n\
+    3 - Noreply\n\
+    4 - NotReachable\n\
+    23 - NotLoggedIn\n";
     std::cin >> command;
     Utils::validateInput(command);
     if (command == INPUT_UNCONDITIONAL || command == INPUT_BUSY || command == INPUT_NO_REPLY ||
-        command == INPUT_NOT_REACHABLE) {
+        command == INPUT_NOT_REACHABLE || command == INPUT_NOT_LOGGED_IN) {
         reason = static_cast<ForwardReason>(command);
     } else {
         std::cout << "Invalid input" << std::endl;
@@ -272,4 +290,45 @@ void SuppServicesMenu::selectSimSlot(std::vector<std::string> userInput) {
    } else {
       std::cout << "Empty input, enter the correct slot" << std::endl;
    }
+}
+
+void SuppServicesMenu::setOirPref(std::vector<std::string> userInput) {
+    auto suppServicesManager = suppServicesManagers_[slot_ - 1];
+    int command = -1;
+    ServiceClass serviceClass = SERVICE_CLASS_VOICE;
+
+    std::cout << "Enter originating identification restriction Pref(1-Enable, 2-Disable) : ";
+    std::cin >> command;
+    Utils::validateInput(command);
+    if (command == 1 || command == 2 ) {
+        if (suppServicesManager) {
+            auto ret = suppServicesManager->setOirPref(serviceClass,
+                static_cast<SuppServicesStatus>(command),
+                SetSuppSvcResponseCallback::setSuppSvcResp);
+            if (ret == telux::common::Status::SUCCESS) {
+                std::cout << "\nSet OIR request sent successfully" << std::endl;
+            } else {
+                std::cout << "\nSet OIR request failed" << std::endl;
+            }
+        } else {
+                std::cout << "Invalid Manager Object" << std::endl;
+        }
+    }
+}
+
+void SuppServicesMenu::getOirPref(std::vector<std::string> userInput) {
+    auto suppServicesManager = suppServicesManagers_[slot_ - 1];
+    ServiceClass serviceClass = SERVICE_CLASS_VOICE;
+
+    if (suppServicesManager) {
+        auto ret = suppServicesManager->requestOirPref(serviceClass,
+            GetSuppSvcResponseCallback::getOirStatusResp);
+        if (ret == telux::common::Status::SUCCESS) {
+            std::cout << "\nGet OIR request sent successfully\n";
+        } else {
+            std::cout << "\nGet OIR request failed \n";
+        }
+    } else {
+            std::cout << "Invalid Manager Object" << std::endl;
+    }
 }

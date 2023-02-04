@@ -32,7 +32,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file    FsListener.hpp
  *
@@ -66,6 +65,9 @@ class IFsListener : public common::IServiceStatusListener {
     /**
      * This function is called when a EFS restore operation is detected.
      *
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_PLATFORM_LISTEN_FS_EVENTS permission to receive this event.
+     *
      * @param [in] event    Event related data.  @ref telux::platform::EfsEventInfo.
      *
      */
@@ -74,6 +76,9 @@ class IFsListener : public common::IServiceStatusListener {
 
     /**
      * This function is called when a EFS backup operation is detected.
+     *
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_PLATFORM_LISTEN_FS_EVENTS permission to receive this event.
      *
      * @param [in] event    Event related data.  @ref telux::platform::EfsEventInfo.
      *

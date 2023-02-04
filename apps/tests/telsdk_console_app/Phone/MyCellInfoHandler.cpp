@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -138,52 +138,6 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "GSM Signal Level: "
                << signalLevelToString(gsmCellInfo->getSignalStrengthInfo().getLevel())<< std::endl;
 
-         } else if(cellinfo->getType() == telux::tel::CellType::CDMA) {
-            PRINT_CB << "CDMA Cellinfo " << std::endl;
-            auto cdmaCellInfo = std::static_pointer_cast<telux::tel::CdmaCellInfo>(cellinfo);
-            PRINT_CB << "CDMA isRegistered: " << cdmaCellInfo->isRegistered() << std::endl;
-            PRINT_CB << "CDMA networkId: " << cdmaCellInfo->getCellIdentity().getNid() << std::endl;
-            PRINT_CB << "CDMA SystemId: " << cdmaCellInfo->getCellIdentity().getSid() << std::endl;
-            PRINT_CB << "CDMA BaseStationId: " << cdmaCellInfo->getCellIdentity().getBaseStationId()
-                     << std::endl;
-            PRINT_CB << "CDMA Longitude: " << cdmaCellInfo->getCellIdentity().getLongitude()
-                     << std::endl;
-            PRINT_CB << "CDMA Latitude: " << cdmaCellInfo->getCellIdentity().getLatitude()
-                     << std::endl;
-            // CDMA Signal Strength
-            if(cdmaCellInfo->getSignalStrengthInfo().getDbm() == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_CB << "CDMA/EVDO Signal Strength(in dBm): "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_CB << "CDMA/EVDO Signal Strength(in dBm): "
-               << cdmaCellInfo->getSignalStrengthInfo().getDbm() << std::endl;
-            }
-
-            if(cdmaCellInfo->getSignalStrengthInfo().getCdmaEcio()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_CB << "CDMA Ec/Io(in dB): "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_CB << "CDMA Ec/Io(in dB): " <<
-                   cdmaCellInfo->getSignalStrengthInfo().getCdmaEcio() << std::endl;
-            }
-
-            if(cdmaCellInfo->getSignalStrengthInfo().getEvdoEcio()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_CB << "EVDO Ec/Io(in dB): "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_CB << "EVDO Ec/Io(in dB): " <<
-                   cdmaCellInfo->getSignalStrengthInfo().getEvdoEcio() << std::endl;
-            }
-
-            if(cdmaCellInfo->getSignalStrengthInfo().getEvdoSignalNoiseRatio()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_CB << "EVDO Signal Noise Ratio: "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_CB << "EVDO Signal Noise Ratio: "
-                    << cdmaCellInfo->getSignalStrengthInfo().getEvdoSignalNoiseRatio() << std::endl;
-            }
-            PRINT_CB
-            << "CDMA Signal Level: "
-            << signalLevelToString(cdmaCellInfo->getSignalStrengthInfo().getLevel())<< std::endl;
          } else if(cellinfo->getType() == telux::tel::CellType::LTE) {
             PRINT_CB << "LTE Cellinfo  " << std::endl;
             auto lteCellInfo = std::static_pointer_cast<telux::tel::LteCellInfo>(cellinfo);
@@ -304,30 +258,6 @@ void MyCellInfoCallback::cellInfoListResponse(
                << "WCDMA Signal Level: "
                << signalLevelToString(wcdmaCellInfo->getSignalStrengthInfo().getLevel())
                << std::endl;
-         } else if(cellinfo->getType() == telux::tel::CellType::TDSCDMA) {
-            PRINT_CB << "TDSCDMA Cellinfo " << std::endl;
-            auto tdsCdmaCellInfo = std::static_pointer_cast<telux::tel::TdscdmaCellInfo>(cellinfo);
-            PRINT_CB << "TDSCDMA isRegistered: " << tdsCdmaCellInfo->isRegistered() << std::endl;
-            PRINT_CB << "TDSCDMA MCC: " << tdsCdmaCellInfo->getCellIdentity().getMobileCountryCode()
-                << std::endl;
-            PRINT_CB << "TDSCDMA MNC: " << tdsCdmaCellInfo->getCellIdentity().getMobileNetworkCode()
-                << std::endl;
-            PRINT_CB << "TDSCDMA LAC : " << tdsCdmaCellInfo->getCellIdentity().getLac()
-                     << std::endl;
-            PRINT_CB << "TDSCDMA CID: " << tdsCdmaCellInfo->getCellIdentity().getIdentity()
-                     << std::endl;
-            PRINT_CB << "TDSCDMA Cell Parameters Id : "
-                     << tdsCdmaCellInfo->getCellIdentity().getParametersId() << std::endl;
-            // TDSCDMA signal strength..
-            if(tdsCdmaCellInfo->getSignalStrengthInfo().getRscp()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_CB << "TDSCDMA  Reference Signal Code Power(in dBm): "<< "UNAVAILABLE"
-                   << std::endl;
-            } else {
-               PRINT_CB
-               << "TDSCDMA  Reference Signal Code Power(in dBm): "
-               << tdsCdmaCellInfo->getSignalStrengthInfo().getRscp() << std::endl;
-            }
          } else if(cellinfo->getType() == telux::tel::CellType::NR5G) {
             PRINT_CB << "NR5G Cellinfo  " << std::endl;
             auto nr5gCellInfo = std::static_pointer_cast<telux::tel::Nr5gCellInfo>(cellinfo);

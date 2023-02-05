@@ -60,6 +60,7 @@ class ResultListener : public telux::sec::ICryptoAcceleratorListener {
         }
 
         if (resultData.size()) {
+            std::cout << "verification result: " << std::endl;
             uint8_t *data = resultData.data();
             for (uint32_t x = 0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
                 printf("%02x", data[x] & 0xffU);
@@ -86,6 +87,7 @@ class ResultListener : public telux::sec::ICryptoAcceleratorListener {
         }
 
         if (resultData.size()) {
+            std::cout << "calculation result: " << std::endl;
             uint8_t *data = resultData.data();
             for (uint32_t x = 0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
                 printf("%02x", data[x] & 0xffU);
@@ -140,11 +142,12 @@ void CommandProcessor::verifyDigestSync(VerificationRequest request) {
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "verification failed, err: " << static_cast<int>(ec) << std::endl;
     } else {
-        std::cout << "verification passed" << std::endl;
+        std::cout << "verification passed." << std::endl;
     }
     fflush(stdout);
 
     if (resultData.size()) {
+        std::cout << "verification result: " << std::endl;
         data = resultData.data();
         for (uint32_t x=0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
             printf("%02x", data[x] & 0xffU);
@@ -221,7 +224,7 @@ void CommandProcessor::verifyDigestAsyncPoll(VerificationRequest request) {
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "verification failed, err: " << static_cast<int>(ec) << std::endl;
     } else {
-        std::cout << "verification passed" << std::endl;
+        std::cout << "verification passed." << std::endl;
     }
     fflush(stdout);
 
@@ -230,6 +233,7 @@ void CommandProcessor::verifyDigestAsyncPoll(VerificationRequest request) {
 
     data = telux::sec::ResultParser::getData(results[0]);
     if (data) {
+        std::cout << "verification result: " << std::endl;
         for (uint32_t x=0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
             printf("%02x", data[x] & 0xffU);
             if (x & !(x % 32)) {
@@ -332,11 +336,12 @@ void CommandProcessor::calculatePointSync(CalculationRequest request) {
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "calculation failed, err: " << static_cast<int>(ec) << std::endl;
     } else {
-        std::cout << "calculation done" << std::endl;
+        std::cout << "calculation done." << std::endl;
     }
     fflush(stdout);
 
     if (resultData.size()) {
+        std::cout << "calculation result: " << std::endl;
         for (uint32_t x=0; x < resultData.size(); x++) {
             printf("%02x", resultData.at(x) & 0xffU);
             if (x & !(x % 32)) {
@@ -414,7 +419,7 @@ void CommandProcessor::calculatePointAsyncPoll(CalculationRequest request) {
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "calculation failed, err: " << static_cast<int>(ec) << std::endl;
     } else {
-        std::cout << "calculation done" << std::endl;
+        std::cout << "calculation done." << std::endl;
     }
     fflush(stdout);
 
@@ -423,6 +428,7 @@ void CommandProcessor::calculatePointAsyncPoll(CalculationRequest request) {
 
     data = telux::sec::ResultParser::getData(results[0]);
     if (data) {
+        std::cout << "calculation result: " << std::endl;
         for (uint32_t x=0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
             printf("%02x", data[x] & 0xffU);
             if (x & !(x % 32)) {

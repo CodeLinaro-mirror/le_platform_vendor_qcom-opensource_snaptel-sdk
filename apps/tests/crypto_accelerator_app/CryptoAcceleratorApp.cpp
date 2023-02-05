@@ -179,7 +179,7 @@ void CryptoAcceleratorApp::getPriorityFromUser(telux::sec::RequestPriority& prio
     uint32_t usrEntry;
 
     getChoiceNumberFromUsr(
-        "Enter mode (1 - normal, 2 - high): ", 1, 2, usrEntry);
+        "Enter priority (1 - normal, 2 - high): ", 1, 2, usrEntry);
 
     switch (usrEntry) {
         case 1:

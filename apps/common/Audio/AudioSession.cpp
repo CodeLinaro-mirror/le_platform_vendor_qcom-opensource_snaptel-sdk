@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -86,26 +86,30 @@ AudioSession::~AudioSession() {
 }
 
 Status AudioSession::createStream(StreamConfig config) {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (!stream_) {
         std::promise<bool> p;
         auto &audioFactory = AudioFactory::getInstance();
         auto audioManager = audioFactory.getAudioManager();
         if (audioManager) {
             // Sending request to create audio stream
-            status = audioManager->createStream(config,
-                [&p, &status, this](std::shared_ptr<IAudioStream> &audioStream,
+            statusFromRequest = audioManager->createStream(config,
+                [&p, &statusFromResponse, this](std::shared_ptr<IAudioStream> &audioStream,
                     ErrorCode error) {
                     if (error == ErrorCode::SUCCESS) {
                         stream_ = audioStream;
+                        statusFromResponse = telux::common::Status::SUCCESS;
                         p.set_value(true);
                     } else {
-                        status = Status::FAILED;
+                        statusFromResponse = telux::common::Status::FAILED;
                         p.set_value(false);
                     }
                 });
-            if(status == Status::SUCCESS) {
+            if(statusFromRequest == Status::SUCCESS) {
                 p.get_future().wait();
+                return statusFromResponse;
             }
         } else {
             LOG(ERROR, "Invalid audio Manager");
@@ -113,175 +117,206 @@ Status AudioSession::createStream(StreamConfig config) {
         }
     } else {
         LOG(DEBUG, "Stream already exist");
-        status = Status::SUCCESS;
+        return Status::SUCCESS;
     }
-    return status;
+    return statusFromRequest;
 }
 
 Status AudioSession::deleteStream() {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (stream_) {
         std::promise<bool> p;
         auto &audioFactory = AudioFactory::getInstance();
         auto audioManager = audioFactory.getAudioManager();
         if (audioManager) {
-            status = audioManager-> deleteStream(stream_, [&p, &status, this](ErrorCode error) {
+            statusFromRequest = audioManager-> deleteStream(stream_,
+                    [&p, &statusFromResponse, this](ErrorCode error) {
                 if (error == ErrorCode::SUCCESS) {
                     stream_ = nullptr;
+                    statusFromResponse = telux::common::Status::SUCCESS;
                     p.set_value(true);
                 } else {
-                    status = Status::FAILED;
+                    statusFromResponse = telux::common::Status::FAILED;
                     p.set_value(false);
                 }
             });
-            if(status == Status::SUCCESS) {
+            if(statusFromRequest == Status::SUCCESS) {
                 p.get_future().wait();
+                return statusFromResponse;
             }
         } else {
             LOG(ERROR, "Invalid audio Manager");
             return Status::FAILED;
         }
     } else {
-        status = Status::SUCCESS;
         LOG(ERROR, "No stream exists");
+        return Status::FAILED;
     }
-    return status;
+    return statusFromRequest;
 }
 
 Status AudioSession::getStreamDevice(std::vector<DeviceType> &devices) {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (stream_) {
         std::promise<bool> p;
-        status = stream_->getDevice(
-            [&p, &status, &devices, this](std::vector<DeviceType> myDevices, ErrorCode error) {
+        statusFromRequest = stream_->getDevice([&p, &statusFromResponse, &devices, this]
+                (std::vector<DeviceType> deviceTypes, ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
+                statusFromResponse = telux::common::Status::SUCCESS;
+                devices = deviceTypes;
                 p.set_value(true);
-                devices = myDevices;
             } else {
-                status = Status::FAILED;
+                statusFromResponse = telux::common::Status::FAILED;
                 p.set_value(false);
             }
         });
-        if(status == Status::SUCCESS) {
+        if(statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
+            return statusFromResponse;
         }
     } else {
-        status = Status::FAILED;
         LOG(ERROR, "No stream exists");
+        return Status::FAILED;
     }
-    return status;
+    return statusFromRequest;
 }
 
 Status AudioSession::setStreamDevice(std::vector<DeviceType> devices) {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (stream_) {
         std::promise<bool> p;
-        status = stream_->setDevice(devices, [&p, &status, this](ErrorCode error) {
+        statusFromRequest = stream_->setDevice(devices,
+            [&p, &statusFromResponse, this](ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
+                statusFromResponse = telux::common::Status::SUCCESS;
                 p.set_value(true);
             } else {
+                statusFromResponse = telux::common::Status::FAILED;
                 p.set_value(false);
-                status = Status::FAILED;
             }
         });
-        if(status == Status::SUCCESS) {
+        if(statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
+            return statusFromResponse;
         }
     } else {
-        status = Status::FAILED;
         LOG(ERROR, "No stream exists");
+        return Status::FAILED;
     }
-    return status;
+    return statusFromRequest;
 }
 
 Status AudioSession::setVolume(StreamVolume streamVol) {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (stream_) {
         std::promise<bool> p;
-        status = stream_->setVolume(streamVol, [&p, &status, this](ErrorCode error) {
+        statusFromRequest = stream_->setVolume(streamVol,
+            [&p, &statusFromResponse, this](ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
+                statusFromResponse = telux::common::Status::SUCCESS;
                 p.set_value(true);
             } else {
+                statusFromResponse = telux::common::Status::FAILED;
                 p.set_value(false);
-                status = Status::FAILED;
             }
         });
-        if(status == Status::SUCCESS) {
+        if(statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
+            return statusFromResponse;
         }
     } else {
-        status = Status::FAILED;
         LOG(ERROR, "No stream exists");
+        return Status::FAILED;
     }
-    return status;
+    return statusFromRequest;
 }
 
 Status AudioSession::getVolume(StreamVolume &volume) {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (stream_) {
         std::promise<bool> p;
-        status = stream_->getVolume(
-            volume.dir,  [&p, &status, &volume, this](StreamVolume vol, ErrorCode error) {
+        statusFromRequest = stream_->getVolume(volume.dir,
+            [&p, &statusFromResponse, &volume, this](StreamVolume vol, ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
-                p.set_value(true);
+                statusFromResponse = telux::common::Status::SUCCESS;
                 volume = vol;
+                p.set_value(true);
             } else {
-                status = Status::FAILED;
+                statusFromResponse = telux::common::Status::FAILED;
                 p.set_value(false);
             }
         });
-        if(status == Status::SUCCESS) {
+        if(statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
+            return statusFromResponse;
         }
     } else {
-        status = Status::FAILED;
         LOG(ERROR, "No stream exists");
+        return Status::FAILED;
     }
-    return status;
+    return statusFromRequest;
 }
 
 Status AudioSession::setMute(StreamMute mute) {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (stream_) {
         std::promise<bool> p;
-        status = stream_->setMute(mute, [&p, &status, this](ErrorCode error) {
+        statusFromRequest = stream_->setMute(mute, [&p, &statusFromResponse, this](ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
+                statusFromResponse = telux::common::Status::SUCCESS;
                 p.set_value(true);
             } else {
+                statusFromResponse = telux::common::Status::FAILED;
                 p.set_value(false);
-                status = Status::FAILED;
             }
         });
-        if(status == Status::SUCCESS) {
+        if(statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
+            return statusFromResponse;
         }
     } else {
-        status = Status::FAILED;
         LOG(ERROR, "No stream exists");
+        return Status::FAILED;
     }
-    return status;
+    return statusFromRequest;
 }
 
 Status AudioSession::getMute(StreamMute &muteStatus) {
-    Status status = Status::FAILED;
+    Status statusFromRequest = Status::FAILED;
+    telux::common::Status statusFromResponse;
+
     if (stream_) {
         std::promise<bool> p;
-        status = stream_->getMute(muteStatus.dir,
-        [&p, &status, &muteStatus, this](StreamMute mute, ErrorCode error) {
+        statusFromRequest = stream_->getMute(muteStatus.dir,
+            [&p, &statusFromResponse, &muteStatus, this](StreamMute mute, ErrorCode error) {
             if (error == ErrorCode::SUCCESS) {
-                p.set_value(true);
+                statusFromResponse = telux::common::Status::SUCCESS;
                 muteStatus = mute;
+                p.set_value(true);
             } else {
-                status = Status::FAILED;
+                statusFromResponse = telux::common::Status::FAILED;
                 p.set_value(false);
             }
         });
-        if(status == Status::SUCCESS) {
+        if(statusFromRequest == Status::SUCCESS) {
             p.get_future().wait();
+            return statusFromResponse;
         }
     } else {
-        status = Status::FAILED;
         LOG(ERROR, "No stream exists");
+        return Status::FAILED;
     }
-    return status;
+    return statusFromRequest;
 }

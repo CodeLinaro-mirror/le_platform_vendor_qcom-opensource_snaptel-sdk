@@ -106,13 +106,22 @@ int main(int argc, char **argv) {
     std::cout << "error code: " <<
         static_cast<int>(telux::sec::ResultParser::getCAErrorCode(results[0])) << std::endl;
 
+    if (telux::sec::ResultParser::getCAErrorCode(results[0]) !=
+            telux::common::ErrorCode::SUCCESS) {
+        std::cout << "verification failed" << std::endl;
+        return -1;
+    } else {
+        std::cout << "verification passed" << std::endl;
+    }
+
     data = telux::sec::ResultParser::getData(results[0]);
     for (uint32_t x=0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
-        printf("%02x ", data[x] & 0xffU);
-        if (x & !(x % 32)) {
+        printf("%02x", data[x] & 0xffU);
+        if ((x == 31) || (x == 63)) {
             printf("\n");
         }
     }
+    printf("\n");
 
     /* Step - 7 */
     cryptAccelMgr = nullptr;

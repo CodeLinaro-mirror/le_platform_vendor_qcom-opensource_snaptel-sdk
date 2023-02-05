@@ -122,8 +122,8 @@ int main(int argc, char **argv) {
 
     data = resultData.data();
     for (uint32_t x=0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
-        printf("%02x ", data[x] & 0xffU);
-        if (x & !(x % 32)) {
+        printf("%02x", data[x] & 0xffU);
+        if ((x == 31) || (x == 63)) {
             printf("\n");
         }
     }

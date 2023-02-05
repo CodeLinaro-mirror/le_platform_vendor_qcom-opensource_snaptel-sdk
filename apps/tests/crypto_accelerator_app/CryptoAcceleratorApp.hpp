@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -55,17 +55,12 @@ class CryptoAcceleratorApp : public ConsoleApp {
         std::vector<uint8_t>& usrEntry);
     void getChoiceNumberFromUsr(const std::string choicesToDisplay,
         const uint32_t minVal, const uint32_t maxVal, uint32_t& selection);
+
     void getUniqueIdFromUser(uint32_t& uniqueId);
     void getCurveFromUser(telux::sec::ECCCurve& curve);
     void getModeFromUser(telux::sec::Mode& mode);
     void getPriorityFromUser(telux::sec::RequestPriority& priority);
-    void getDigestFromUser(telux::sec::DataDigest& digest);
-    void getPublicKeyFromUser(telux::sec::ECCPoint& publicKey);
-    void getSignatureFromUser(telux::sec::Signature& signature);
     void getTimeoutFromUser(uint32_t& timeout);
-    void getMultiplicandPointFromUser(telux::sec::ECCPoint& multiplicandPoint);
-    void getAddendPointFromUser(telux::sec::ECCPoint& addendPoint);
-    void getScalarFromUser(telux::sec::Scalar& scalar);
 };
 
 #endif // CRYPTOACCELERATORAPP_HPP

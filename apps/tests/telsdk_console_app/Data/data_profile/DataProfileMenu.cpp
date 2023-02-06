@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -232,7 +232,8 @@ void DataProfileMenu::getProfileParamsFromUser() {
     int techPref;
     std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
     std::cin >> techPref;
-    Utils::validateInput(techPref);
+    Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
+        static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
 
     std::cin.get();
     std::string profileName;
@@ -258,11 +259,17 @@ void DataProfileMenu::getProfileParamsFromUser() {
                  "\n3-PAP_CHAP\n";
     std::cin >> authType;
     Utils::validateInput(authType);
+    Utils::validateInput(authType, {static_cast<int>(telux::data::AuthProtocolType::AUTH_NONE),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_CHAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP_CHAP)});
 
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
 
     params_.profileName = profileName;
     params_.techPref = static_cast<telux::data::TechPreference>(techPref);
@@ -423,7 +430,8 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     int techPref;
     std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
     std::cin >> techPref;
-    Utils::validateInput(techPref);
+    Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
+        static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
 
     std::cin.get();
     std::string profileName;
@@ -446,12 +454,17 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP"
                  "\n2-CHAP \n3-PAP_CHAP\n";
     std::cin >> authType;
-    Utils::validateInput(authType);
+    Utils::validateInput(authType, {static_cast<int>(telux::data::AuthProtocolType::AUTH_NONE),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_CHAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP_CHAP)});
 
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPV6, 10-IPV4V6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
 
     params_.profileName = profileName;
     params_.techPref = static_cast<telux::data::TechPreference>(techPref);

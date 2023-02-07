@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -138,6 +138,17 @@ private:
  */
 class ISmsManager {
 public:
+
+   /**
+    * This status indicates whether the ISmsManager object is in a usable state.
+    *
+    * @returns @ref telux::common::ServiceStatus
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
+
    /**
     * Send SMS to destination address. Only support UCS2 format, GSM 7 bit default alphabet
     * and does not support National language shift tables.

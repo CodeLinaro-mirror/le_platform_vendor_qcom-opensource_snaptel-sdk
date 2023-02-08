@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -46,9 +46,11 @@ struct VerificationRequest {
     telux::sec::Mode mode;
     telux::sec::RequestPriority priority;
     telux::sec::ECCCurve curve;
-    telux::sec::DataDigest digest;
-    telux::sec::ECCPoint publicKey;
-    telux::sec::Signature signature;
+    std::vector<uint8_t> digest;
+    std::vector<uint8_t> publicKeyX;
+    std::vector<uint8_t> publicKeyY;
+    std::vector<uint8_t> signatureR;
+    std::vector<uint8_t> signatureS;
 };
 
 /*
@@ -60,25 +62,27 @@ struct CalculationRequest {
     telux::sec::Mode mode;
     telux::sec::RequestPriority priority;
     telux::sec::ECCCurve curve;
-    telux::sec::ECCPoint multiplicandPoint;
-    telux::sec::ECCPoint addendPoint;
-    telux::sec::Scalar scalar;
+    std::vector<uint8_t> scalar;
+    std::vector<uint8_t> multiplicandPointX;
+    std::vector<uint8_t> multiplicandPointY;
+    std::vector<uint8_t> addendPointX;
+    std::vector<uint8_t> addendPointY;
 };
 
 class CommandProcessor {
  public:
-    void verifyDigest(const VerificationRequest request);
+    void verifyDigest(VerificationRequest request);
 
-    void calculatePoint(const CalculationRequest request);
+    void calculatePoint(CalculationRequest request);
 
  private:
-    void verifyDigestSync(const VerificationRequest request);
-    void verifyDigestAsyncPoll(const VerificationRequest request);
-    void verifyDigestAsyncListener(const VerificationRequest request);
+    void verifyDigestSync(VerificationRequest request);
+    void verifyDigestAsyncPoll(VerificationRequest request);
+    void verifyDigestAsyncListener(VerificationRequest request);
 
-    void calculatePointSync(const CalculationRequest request);
-    void calculatePointAsyncPoll(const CalculationRequest request);
-    void calculatePointAsyncListener(const CalculationRequest request);
+    void calculatePointSync(CalculationRequest request);
+    void calculatePointAsyncPoll(CalculationRequest request);
+    void calculatePointAsyncListener(CalculationRequest request);
 };
 
 #endif  // COMMANDPROCESSOR_HPP

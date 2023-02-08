@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -193,92 +193,11 @@ void CryptoAcceleratorApp::getPriorityFromUser(telux::sec::RequestPriority& prio
     }
 }
 
-void CryptoAcceleratorApp::getDigestFromUser(telux::sec::DataDigest& digest) {
-
-    std::vector<uint8_t> usrEntry;
-
-    getHexStringAsByteArrayFromUsr("Enter digest to verify (hex string): ", usrEntry);
-
-    digest.digest = usrEntry.data();
-    digest.digestLength = usrEntry.size();
-}
-
-void CryptoAcceleratorApp::getPublicKeyFromUser(telux::sec::ECCPoint& publicKey) {
-
-    std::vector<uint8_t> usrEntryX;
-    std::vector<uint8_t> usrEntryY;
-
-    getHexStringAsByteArrayFromUsr("Enter public key x-coordinate (hex string): ", usrEntryX);
-    getHexStringAsByteArrayFromUsr("Enter public key y-coordinate (hex string): ", usrEntryY);
-
-    publicKey.x = usrEntryX.data();
-    publicKey.xLength = usrEntryX.size();
-
-    publicKey.y = usrEntryY.data();
-    publicKey.yLength = usrEntryY.size();
-}
-
-void CryptoAcceleratorApp::getSignatureFromUser(telux::sec::Signature& signature) {
-
-    std::vector<uint8_t> usrEntryR;
-    std::vector<uint8_t> usrEntryS;
-
-    getHexStringAsByteArrayFromUsr("Enter signature r-component (hex string): ", usrEntryR);
-    getHexStringAsByteArrayFromUsr("Enter signature s-component (hex string): ", usrEntryS);
-
-    signature.rSignature = usrEntryR.data();
-    signature.sSignature = usrEntryS.data();
-
-    signature.rsLength = usrEntryR.size();
-}
-
 void CryptoAcceleratorApp::getTimeoutFromUser(uint32_t& timeout) {
 
     getChoiceNumberFromUsr(
         "Enter timeout (0 - indefinite or 1 to 2147483647 milliseconds): ",
         0, 2147483647, timeout);
-}
-
-void CryptoAcceleratorApp::getMultiplicandPointFromUser(telux::sec::ECCPoint& multiplicandPoint) {
-
-    std::vector<uint8_t> usrEntryX;
-    std::vector<uint8_t> usrEntryY;
-
-    getHexStringAsByteArrayFromUsr(
-        "Enter multiplicand point x-coordinate (hex string): ", usrEntryX);
-    getHexStringAsByteArrayFromUsr(
-        "Enter multiplicand point y-coordinate (hex string): ", usrEntryY);
-
-    multiplicandPoint.x = usrEntryX.data();
-    multiplicandPoint.xLength = usrEntryX.size();
-
-    multiplicandPoint.y = usrEntryY.data();
-    multiplicandPoint.yLength = usrEntryY.size();
-}
-
-void CryptoAcceleratorApp::getAddendPointFromUser(telux::sec::ECCPoint& addendPoint) {
-
-    std::vector<uint8_t> usrEntryX;
-    std::vector<uint8_t> usrEntryY;
-
-    getHexStringAsByteArrayFromUsr("Enter addend point x-coordinate (hex string): ", usrEntryX);
-    getHexStringAsByteArrayFromUsr("Enter addend point y-coordinate (hex string): ", usrEntryY);
-
-    addendPoint.x = usrEntryX.data();
-    addendPoint.xLength = usrEntryX.size();
-
-    addendPoint.y = usrEntryY.data();
-    addendPoint.yLength = usrEntryY.size();
-}
-
-void CryptoAcceleratorApp::getScalarFromUser(telux::sec::Scalar& scalar) {
-
-    std::vector<uint8_t> usrEntry;
-
-    getHexStringAsByteArrayFromUsr("Enter scalar (hex string): ", usrEntry);
-
-    scalar.scalar = usrEntry.data();
-    scalar.scalarLength = usrEntry.size();
 }
 
 /*
@@ -293,9 +212,18 @@ void CryptoAcceleratorApp::verify() {
     getCurveFromUser(request.curve);
     getPriorityFromUser(request.priority);
 
-    getDigestFromUser(request.digest);
-    getPublicKeyFromUser(request.publicKey);
-    getSignatureFromUser(request.signature);
+    getHexStringAsByteArrayFromUsr(
+        "Enter digest to verify (as hex string): ", request.digest);
+
+    getHexStringAsByteArrayFromUsr(
+        "Enter public key x-coordinate (as hex string): ", request.publicKeyX);
+    getHexStringAsByteArrayFromUsr(
+        "Enter public key y-coordinate (as hex string): ", request.publicKeyY);
+
+    getHexStringAsByteArrayFromUsr(
+        "Enter signature r-component (as hex string): ", request.signatureR);
+    getHexStringAsByteArrayFromUsr(
+        "Enter signature s-component (as hex string): ", request.signatureS);
 
     if (request.mode == telux::sec::Mode::MODE_ASYNC_POLL) {
         getTimeoutFromUser(request.timeout);
@@ -318,9 +246,18 @@ void CryptoAcceleratorApp::calculate() {
     getCurveFromUser(request.curve);
     getPriorityFromUser(request.priority);
 
-    getMultiplicandPointFromUser(request.multiplicandPoint);
-    getAddendPointFromUser(request.addendPoint);
-    getScalarFromUser(request.scalar);
+    getHexStringAsByteArrayFromUsr(
+      "Enter scalar (as hex string): ", request.scalar);
+
+    getHexStringAsByteArrayFromUsr(
+      "Enter multiplicand point x-coordinate (as hex string): ", request.multiplicandPointX);
+    getHexStringAsByteArrayFromUsr(
+      "Enter multiplicand point y-coordinate (as hex string): ", request.multiplicandPointY);
+
+    getHexStringAsByteArrayFromUsr(
+      "Enter addend point x-coordinate (as hex string): ", request.addendPointX);
+    getHexStringAsByteArrayFromUsr(
+      "Enter addend point y-coordinate (as hex string): ", request.addendPointY);
 
     if (request.mode == telux::sec::Mode::MODE_ASYNC_POLL) {
         getTimeoutFromUser(request.timeout);

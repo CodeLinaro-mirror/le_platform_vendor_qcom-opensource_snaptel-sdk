@@ -59,7 +59,11 @@ Please note that only Rx direction is supported currently.
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
+    /*For StreamType::VOICE_CALL, sink and source device are required to be passed.
+      First device should be sink (speaker) and then source (mic) should be passed
+      for stream creation.*/
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+    config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_MIC);
 
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~

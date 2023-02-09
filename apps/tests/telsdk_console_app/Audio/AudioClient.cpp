@@ -80,7 +80,8 @@
 #define FILE_NAME "telsdk_app.conf"
 #define DEFAULT_SAMPLE_RATE 16000
 #define DEFAULT_CHANNEL_MASK 1
-#define DEFAULT_DEVICE 1
+#define DEFAULT_DEVICE_SPEAKER 1
+#define DEFAULT_DEVICE_MIC 257
 #define DEFAULT_AUDIO_FORMAT 1
 #define DEFAULT_ECNR_MODE 0
 
@@ -224,9 +225,12 @@ void AudioClient::loadConfFileData() {
     try {
         input = parser.getValue("SAMPLE_RATE");
         config_.sampleRate = static_cast<uint32_t>(std::stoi(input));
-        input = parser.getValue("DEVICE_TYPE");
+        input = parser.getValue("DEVICE_TYPE_SPEAKER");
         DeviceType device = static_cast<DeviceType>(std::stoi(input));
         config_.deviceTypes.clear();
+        config_.deviceTypes.emplace_back(device);
+        input = parser.getValue("DEVICE_TYPE_MIC");
+        device = static_cast<DeviceType>(std::stoi(input));
         config_.deviceTypes.emplace_back(device);
         input = parser.getValue("CHANNEL_MASK");
         command = std::stoi(input);
@@ -257,12 +261,14 @@ void AudioClient::loadConfFileData() {
         std::cout << "Using default parameters" << std::endl;
         config_.sampleRate = DEFAULT_SAMPLE_RATE;
         config_.deviceTypes.clear();
-        config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE));
+        config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE_SPEAKER));
+        config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE_MIC));
         config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
         config_.ecnrMode = static_cast<EcnrMode>(DEFAULT_ECNR_MODE);
     }
     std::cout << "The sample rate is " << config_.sampleRate << std::endl;
-    std::cout << "The device is " << static_cast<int>(config_.deviceTypes[0]) << std::endl;
+    std::cout << "The devices are " << static_cast<int>(config_.deviceTypes[0]) << " and " <<
+    static_cast<int>(config_.deviceTypes[1])<< std::endl;
     std::cout << "Channel mask is " << static_cast<int>(config_.channelTypeMask) << std::endl;
     std::cout << "ECNR Mode is " << static_cast<int>(config_.ecnrMode) << std::endl;
     return;

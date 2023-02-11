@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef TRANSCODEMENU_HPP
 #define TRANSCODEMENU_HPP
 
@@ -49,7 +56,6 @@ public:
     void tearDown(std::vector<std::string> userInput);
 
 private:
-    void finishTranscoding();
     void startTranscoding(std::vector<std::string> userInput);
     void createTranscoder();
     void read();
@@ -70,6 +76,7 @@ private:
     FILE * readFile_;
     FILE * writeFile_;
     std::mutex mutex_;
+    std::mutex CreateTranscoderMutex_;
     std::condition_variable cv_;
     std::string readFilePath_, writeFilePath_;
     std::vector<std::thread> runningThreads_;

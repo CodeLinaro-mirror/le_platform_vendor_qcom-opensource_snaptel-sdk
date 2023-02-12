@@ -50,7 +50,6 @@ private:
     void initConsole();
     void cleanup();
     void setSystemReady();
-    void closeAllStreams();
     void voiceMenu(std::vector<std::string> userInput);
     void playMenu(std::vector<std::string> userInput);
     void captureMenu(std::vector<std::string> userInput);

@@ -37,6 +37,8 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/l2tp/L2tpMenu.cpp
    Data/serving_system/ServingSystemMenu.cpp
    Data/serving_system/ServingSystemListener.cpp
+   Data/data_settings/DataSettingsMenu.cpp
+   Data/data_settings/DataSettingsListener.cpp
 
    Phone/MyServingSystemHandler.cpp
    Phone/ServingSystemMenu.cpp

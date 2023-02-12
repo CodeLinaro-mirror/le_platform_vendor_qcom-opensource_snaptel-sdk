@@ -62,8 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
 /**
  * Audio Client class provides functionality in SDK to create Audio Stream,
  * start/stop Audio on the created Stream and delete the Stream.
@@ -93,6 +91,7 @@ AudioClient::~AudioClient() {
 }
 
 void AudioClient::cleanup() {
+    std::lock_guard<std::mutex> lock(cleanupMtx_);
     stream_ = nullptr;
     audioVoiceStream_ = nullptr;
     audioPlayStream_ = nullptr;
@@ -518,18 +517,20 @@ void AudioClient::getStreamDevice(StreamType streamType) {
     std::promise<bool> p;
     std::vector<telux::audio::DeviceType> devices_;
 
+    cleanupMtx_.lock();
     if(stream_) {
         telux::common::Status status = stream_->getDevice(
             [&p, &devices_, this](std::vector<telux::audio::DeviceType> devices,
                      telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 devices_ = devices;
+                p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to get stream device" << std::endl;
+                p.set_value(false);
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to get device sent" << std::endl;
         } else {
@@ -539,11 +540,13 @@ void AudioClient::getStreamDevice(StreamType streamType) {
         if (p.get_future().get()) {
             for (auto deviceType : devices_) {
                 std::string deviceName;
-                std::cout << "Device Type"  << (static_cast<uint32_t>(deviceType)) << std::endl;
+                std::cout << "Device type: "  << (static_cast<uint32_t>(deviceType)) << std::endl;
+                std::cout.flush();
             }
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
@@ -553,16 +556,18 @@ void AudioClient::setStreamDevice(StreamType streamType) {
     std::vector<telux::audio::DeviceType> devices;
     takeUserDeviceInput(devices, streamType);
 
+    cleanupMtx_.lock();
     if(stream_) {
         telux::common::Status status = stream_->setDevice(devices,
            [&p,this](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to set stream device" << std::endl;
+                p.set_value(false);
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to set device sent" << std::endl;
         } else {
@@ -573,6 +578,7 @@ void AudioClient::setStreamDevice(StreamType streamType) {
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
@@ -582,6 +588,7 @@ void AudioClient::setVolume(StreamType streamType) {
     telux::audio::StreamVolume streamVol;
     takeUserVolumeInput(streamVol);
 
+    cleanupMtx_.lock();
     if(stream_) {
         telux::common::Status status = stream_->setVolume(streamVol,
               [&p,this](telux::common::ErrorCode error) {
@@ -592,6 +599,7 @@ void AudioClient::setVolume(StreamType streamType) {
                 std::cout << "Failed to set stream volume" << std::endl;
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to set volume sent" << std::endl;
         } else {
@@ -602,6 +610,7 @@ void AudioClient::setVolume(StreamType streamType) {
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
@@ -612,18 +621,19 @@ void AudioClient::getVolume(StreamType streamType) {
     telux::audio::StreamDirection dir;
     takeUserDirectionInput(dir);
 
+    cleanupMtx_.lock();
     if(stream_) {
         telux::common::Status status = stream_->getVolume(
         dir,  [&p,&vol,this](telux::audio::StreamVolume volume, telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 vol = volume;
+                p.set_value(true);
             } else {
                 p.set_value(false);
                 std::cout << "Failed to set stream device" << std::endl;
             }
         });
-
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to get volume sent" << std::endl;
         } else {
@@ -632,11 +642,13 @@ void AudioClient::getVolume(StreamType streamType) {
 
         if (p.get_future().get()) {
             for (auto channelVolume : vol.volume) {
-                std::cout << "volume: "<< channelVolume.vol << std::endl;
+                std::cout << "Volume: "<< channelVolume.vol << std::endl;
+                std::cout.flush();
             }
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
@@ -667,8 +679,8 @@ void AudioClient::setMute(StreamType streamType) {
         }
     }
 
+    cleanupMtx_.lock();
     if(stream_) {
-
         if(muteStatus == 0) {
             mute.enable = false;
         } else if (muteStatus == 1) {
@@ -683,17 +695,23 @@ void AudioClient::setMute(StreamType streamType) {
                 std::cout << "Failed to set mute" << std::endl;
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to set mute sent " << std::endl;
         } else {
             std::cout << "Request to set mute failed" << std::endl;
         }
         if (p.get_future().get()) {
-            std::cout << "set mute succeeded." << std::endl;
+            if (mute.enable) {
+                std::cout << "Stream Muted" << std::endl;
+            } else {
+                std::cout << "Stream Unmuted" << std::endl;
+            }
         }
 
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }
 
@@ -705,18 +723,20 @@ void AudioClient::getMute(StreamType streamType) {
     std::string input;
     takeUserDirectionInput(dir);
 
+    cleanupMtx_.lock();
     if (stream_) {
         telux::common::Status status = stream_->getMute(
                dir,  [&p,&mute_,this](telux::audio::StreamMute mute,
                telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                p.set_value(true);
                 mute_ = mute;
+                p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to get mute" << std::endl;
+                p.set_value(false);
             }
         });
+        cleanupMtx_.unlock();
         if(status == telux::common::Status::SUCCESS) {
             std::cout << "Request to get mute sent" << std::endl;
         } else {
@@ -729,9 +749,11 @@ void AudioClient::getMute(StreamType streamType) {
             } else {
                 muteStatus = "Unmuted";
             }
-            std::cout << "Mute Status: " << muteStatus << std::endl;
+            std::cout << "Mute status: " << muteStatus << std::endl;
+            std::cout.flush();
         }
     } else {
         std::cout << " No stream running for this type " << std::endl;
+        cleanupMtx_.unlock();
     }
 }

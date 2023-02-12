@@ -288,6 +288,9 @@ void DataMenu::init() {
     std::shared_ptr<ConsoleAppCommand> servingSystemMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("32", "Serving_System_Menu",
             {}, std::bind(&DataMenu::servingSystemMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> dataSettingsMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("33", "Data_Settings_Menu",
+            {}, std::bind(&DataMenu::dataSettingsMenu, this, std::placeholders::_1)));
 
     std::shared_ptr<ConsoleAppCommand> reqProfile
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("100", "request_profile_list", {},
@@ -320,8 +323,9 @@ void DataMenu::init() {
         setFirewall, addFirewallEntry, requestFirewallEntries, removeFirewallEntry, enableDmz,
         disableDmz, requestDmzEntry, createVlan, removeVlan, queryVlanInfo, bindToBackhaul,
         unbindFromBackhaul, queryVlanToBackhaulBindings, enableSocks, bridgeMenuCommand,
-        l2tpMenuCommand, servingSystemMenuCommand, reqProfile, createProfileMenu, deleteProfileMenu,
-        modifyProfileMenu, queryProfileMenu, requestProfileByIdMenu};
+        l2tpMenuCommand, servingSystemMenuCommand, dataSettingsMenuCommand, reqProfile,
+        createProfileMenu, deleteProfileMenu, modifyProfileMenu, queryProfileMenu,
+        requestProfileByIdMenu};
 
     addCommands(commandsList);
 
@@ -1025,7 +1029,6 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     Utils::validateInput(operationType);
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     telux::data::net::FirewallConfig firewallConfig  = {};
-    firewallConfig.bhInfo.backhaul = telux::data::BackhaulType::WLAN;
     firewallMgr = getFirewallManagerInstance(opType);
 
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(firewallConfig.bhInfo);
@@ -1080,7 +1083,6 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     int profileId;
     telux::data::BackhaulInfo backhaulConfig;
-    backhaulConfig.backhaul = telux::data::BackhaulType::WLAN;
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(backhaulConfig);
 
     firewallMgr = getFirewallManagerInstance(opType);
@@ -1476,7 +1478,12 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
 
     if (proto == 253) {
         bhFirewallEntryTcpUdp.fwEntry = fwEntryTcpUdp;
-        retStat = firewallMgr->addFirewallEntry(bhFirewallEntryTcpUdp, respCb);
+        if(isMultiBackhauls) {
+            retStat = firewallMgr->addFirewallEntry(bhFirewallEntryTcpUdp, respCb);
+        } else {
+            retStat = firewallMgr->addFirewallEntry(
+                bhFirewallEntryTcpUdp.bhInfo.profileId, fwEntryTcpUdp, respCb);
+        }
         Utils::printStatus(retStat);
     }
 }
@@ -1676,7 +1683,6 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
 
     telux::data::BackhaulInfo bhInfo;
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
-    bhInfo.backhaul = telux::data::BackhaulType::WLAN;
 
     firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';
@@ -1717,7 +1723,6 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
 
     telux::data::BackhaulInfo bhInfo;
     bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
-    bhInfo.backhaul = telux::data::BackhaulType::WLAN;
 
     firewallMgr = getFirewallManagerInstance(opType);
     char delimiter = '\n';
@@ -2027,6 +2032,14 @@ void DataMenu::servingSystemMenu(std::vector<std::string> userInput) {
     DataServingSystemMenu dataServingSystemMenu("Serving System Menu", "serving_system> ");
     if(dataServingSystemMenu.init()) {
         dataServingSystemMenu.mainLoop();
+    }
+    ConsoleApp::displayMenu();
+}
+
+void DataMenu::dataSettingsMenu(std::vector<std::string> inputCommand) {
+    DataSettingsMenu dataSettingsMenu("Data Settings Menu", "data_settings> ");
+    if(dataSettingsMenu.init()) {
+        dataSettingsMenu.mainLoop();
     }
     ConsoleApp::displayMenu();
 }

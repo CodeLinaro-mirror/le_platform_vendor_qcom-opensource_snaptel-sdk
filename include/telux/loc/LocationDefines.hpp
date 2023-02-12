@@ -238,21 +238,40 @@ enum class SVInfoAvailability {
 };
 
 /**
- * Specifies which position technology was used.
+ * Specifies which position technology was used to generate location
+ * information in the @ref ILocationInfoEx.
  */
 enum GnssPositionTechType {
+  /** Technology used to generate location info
+   *  is unknown.*/
   GNSS_DEFAULT = 0,
+  /** Satellites-based technology was used to generate
+   *  location info.*/
   GNSS_SATELLITE = (1 << 0),
+  /** Cell towers were used to generate location info.*/
   GNSS_CELLID = (1 << 1),
+  /** Wi-Fi access points were used to generate location info.*/
   GNSS_WIFI = (1 << 2),
+  /** Sensors were used to generate location info.*/
   GNSS_SENSORS = (1 << 3),
+  /**  Reference location was used to generate location info.*/
   GNSS_REFERENCE_LOCATION = (1 << 4),
+  /** Coarse position injected into the location engine was used to
+   *  generate location info.*/
   GNSS_INJECTED_COARSE_POSITION= (1 << 5),
+  /** AFLT was used to generate location info.*/
   GNSS_AFLT = (1 << 6),
+  /** GNSS and network-provided measurements were used to generate
+   *  location info.*/
   GNSS_HYBRID = (1 << 7),
+  /** Precise position engine was used to generate location info.*/
   GNSS_PPE = (1 << 8),
+  /** Location was calculated using Vehicular data. */
   GNSS_VEHICLE = (1 << 9),
-  GNSS_VISUAL = (1 << 10)
+  /** Location was calculated using Visual data. */
+  GNSS_VISUAL = (1 << 10),
+  /** Location was calculated using Propagation logic, which uses cached measurements. */
+  GNSS_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from GnssPositionTechType */
@@ -598,6 +617,8 @@ enum LocationTechnologyType {
   LOC_VEH = (1 << 9),
   /** Location was calculated using Visual data. */
   LOC_VIS = (1 << 10),
+  /** Location was calculated using Propagation logic, which uses cached measurements. */
+  LOC_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from LocationTechnologyType */

@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <chrono>
 #include <iostream>
@@ -40,18 +75,11 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
    audioClient_(audioClient) {
     pipeLineEmpty_ = true;
     ready_ = false;
-
+    playInProgress_ = false;
 }
 
 PlayMenu::~PlayMenu() {
-    audioClient_ = nullptr;
-    playStatus_ = false;
-
-    for(std::thread &th : runningThreads_) {
-        if(th.joinable()){
-            th.join();
-        }
-    }
+    cleanup();
 }
 
 void PlayMenu::init() {
@@ -127,7 +155,6 @@ void PlayMenu::setSystemReady() {
 
 
 void PlayMenu::closeFile() {
-    fflush(file_);
     fclose(file_);
 }
 
@@ -219,9 +246,15 @@ void PlayMenu::setMute(std::vector<std::string> userInput) {
 
 void PlayMenu::startPlay(std::vector<std::string> userInput) {
     if(audioPlayStream_) {
-        audioClient_->getPlayConfig(filePath_, playFormat_);
-        std::thread playThread(&PlayMenu::play, this);
-        runningThreads_.emplace_back(std::move(playThread));
+        // Check if a file is already being played.
+        if(!playInProgress_) {
+            audioClient_->getPlayConfig(filePath_, playFormat_);
+            std::thread playThread(&PlayMenu::play, this);
+            runningThreads_.emplace_back(std::move(playThread));
+            playInProgress_ = true;
+        } else {
+            std::cout << "File Play in progress please wait" << std::endl;
+        }
     } else {
         std::cout << "No running Play session please create one" << std::endl;
     }
@@ -374,6 +407,8 @@ void PlayMenu::play() {
         std::cout << "Play Stopped" << std::endl;
     }
     playStatus_ = false;
+    //After the play is finished, marking the status to false.
+    playInProgress_ = false;
 }
 
 void PlayMenu::onReadyForWrite() {

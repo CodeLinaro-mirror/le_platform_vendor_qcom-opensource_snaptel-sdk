@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  ​​​​​Changes from Qualcomm Innovation Center are provided under the following license:
+
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       DataFactory.hpp
  *
@@ -48,6 +55,7 @@
 #include <telux/data/ServingSystemManager.hpp>
 #include <telux/data/DataFilterManager.hpp>
 #include <telux/data/IpFilter.hpp>
+#include <telux/data/DataSettingsManager.hpp>
 
 #include <telux/data/net/FirewallManager.hpp>
 #include <telux/data/net/NatManager.hpp>
@@ -221,6 +229,17 @@ class DataFactory {
      */
     std::shared_ptr<telux::data::net::IL2tpManager> getL2tpManager();
 
+    /**
+     * Gets the data settings manager instance.
+     *
+     * @param [in] oprType          Required operation type @ref telux::data::OperationType
+     *
+     * @returns IDataSettingsManager instance
+     *
+     */
+    virtual std::shared_ptr<telux::data::IDataSettingsManager> getDataSettingsManager(
+        telux::data::OperationType oprType);
+
  private:
     // mutex to protect member variables
     std::mutex dataMutex_;
@@ -237,6 +256,8 @@ class DataFactory {
         socksManagerMap_;
     std::shared_ptr<telux::data::net::IBridgeManager> bridgeManager_;
     std::shared_ptr<telux::data::net::IL2tpManager>  l2tpManager_;
+    std::map<telux::data::OperationType, std::shared_ptr<telux::data::IDataSettingsManager>>
+        dataSettingsManagerMap_;
 
     DataFactory();
     ~DataFactory();

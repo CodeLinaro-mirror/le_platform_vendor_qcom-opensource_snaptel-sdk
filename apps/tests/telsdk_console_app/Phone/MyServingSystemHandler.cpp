@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <iostream>
 
 #include "MyServingSystemHandler.hpp"
@@ -162,4 +198,33 @@ void MyServingSystemListener::onDcStatusChanged(telux::tel::DcStatus dcStatus) {
                       << MyServingSystemHelper::getEndcAvailability(dcStatus.endcAvailability);
    PRINT_NOTIFICATION << "\nDCNR Restriction: \n"
                       << MyServingSystemHelper::getDcnrRestriction(dcStatus.dcnrRestriction);
+}
+
+void NetworkTimeResponseCallback::networkTimeResponse(telux::tel::NetworkTimeInfo info,
+      telux::common::ErrorCode error) {
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "\n requestNetworkTime is successful.\n Network Time: \n";
+      MyServingSystemHelper::logNetworkInfo(info);
+   } else {
+      PRINT_CB << "\n requestNetworkTime failed, ErrorCode: " << static_cast<int>(error)
+               << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+   }
+}
+
+void MyServingSystemListener::onNetworkTimeChanged(telux::tel::NetworkTimeInfo info) {
+   PRINT_NOTIFICATION << " Network Time information is changed. \n Network Time: \n";
+   MyServingSystemHelper::logNetworkInfo(info);
+}
+
+void MyServingSystemHelper::logNetworkInfo(telux::tel::NetworkTimeInfo info) {
+   std::cout << " Year: " << info.year << "\n"
+      << " Month: " << static_cast<int>(info.month) << "\n"
+      << " Day: " << static_cast<int>(info.day) << "\n"
+      << " Hour: " << static_cast<int>(info.hour) << "\n"
+      << " Minute: " << static_cast<int>(info.minute) << "\n"
+      << " Second: " << static_cast<int>(info.second) << "\n"
+      << " DayOfWeek: " << static_cast<int>(info.dayOfWeek) << "\n"
+      << " TimeZone: " << static_cast<int>(info.timeZone) << "\n"
+      << " DayLight Saving Adj: " << static_cast<int>(info.dstAdj) << "\n \n"
+      << "NITZ Time: " << info.nitzTime << std::endl;
 }

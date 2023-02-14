@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * SmsMenu provides menu options to invoke SMS functions such as send SMS,
  * receive SMS etc.
@@ -38,64 +74,51 @@
 #include <vector>
 
 #include <telux/tel/PhoneFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
+
+#define MIN_SIM_SLOT_COUNT 1
+#define MAX_SIM_SLOT_COUNT 2
 
 #include "SmsMenu.hpp"
 
 SmsMenu::SmsMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
-   //  Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   phoneManager_ = phoneFactory.getPhoneManager();
 
-   //  Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager_->isSubsystemReady();
+    int noOfSlots = MIN_SIM_SLOT_COUNT;
+    if(telux::common::DeviceConfig::isMultiSimSupported()) {
+        noOfSlots = MAX_SIM_SLOT_COUNT;
+    }
+    mySmsCmdCb_ = std::make_shared<MySmsCommandCallback>();
+    mySmscAddrCb_ = std::make_shared<MySmscAddressCallback>();
+    mySmsDeliveryCb_ = std::make_shared<MySmsDeliveryCallback>();
+    smsListener_ = std::make_shared<MySmsListener>();
 
-   //  If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
-      std::future<bool> f = phoneManager_->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
-   }
-
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-      exit(0);
-   }
-   if(subSystemStatus) {
-      mySmsCmdCb_ = std::make_shared<MySmsCommandCallback>();
-      mySmscAddrCb_ = std::make_shared<MySmscAddressCallback>();
-      mySmsDeliveryCb_ = std::make_shared<MySmsDeliveryCallback>();
-      smsListener_ = std::make_shared<MySmsListener>();
-
-      std::vector<int> phoneIds;
-      telux::common::Status status = phoneManager_->getPhoneIds(phoneIds);
-      if (status == telux::common::Status::SUCCESS) {
-          for (auto index = 1; index <= phoneIds.size(); index++) {
-              auto smsMgr = phoneFactory.getSmsManager(index);
-              if (smsMgr) {
-                  // add listeners for incoming SMS notification
-                  telux::common::Status status = smsMgr->registerListener(smsListener_);
-                  if(status != telux::common::Status::SUCCESS) {
-                     std::cout << "Unable to register Listener" << std::endl;
-                  }
-                  smsManagers_.emplace_back(smsMgr);
-              } else {
-                  std::cout << " SMS Manager is NULL,"
-                            <<" so cannot register a listener to receive incoming SMS"
-                            << std::endl;
-              }
-          }
+    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    for (auto index = 1; index <= noOfSlots; index++) {
+      std::promise<telux::common::ServiceStatus> prom;
+      auto smsMgr = phoneFactory.getSmsManager(index, [&](telux::common::ServiceStatus status) {
+          prom.set_value(status);
+      });
+      if (!smsMgr) {
+          std::cout << "ERROR - Failed to get SMS Manager instance \n";
+          exit(1);
       }
-   }
+
+      std::cout << " Waiting for SMS Manager to be ready \n";
+      telux::common::ServiceStatus smsMgrStatus = prom.get_future().get();
+      if (smsMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+          std::cout << "SMS Manager is ready \n";
+          auto status = smsMgr->registerListener(smsListener_);
+          if(status != telux::common::Status::SUCCESS) {
+              std::cout << "ERROR - Failed to register listener \n";
+              exit(1);
+          }
+          smsManagers_.emplace_back(smsMgr);
+      } else {
+          std::cout << "ERROR - Unable to initialize SMS Manager \n";
+          exit(1);
+      }
+    }
 }
 
 SmsMenu::~SmsMenu() {
@@ -122,11 +145,20 @@ void SmsMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "4", "Calculate_message_attributes", {},
          std::bind(&SmsMenu::calculateMessageAttributes, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> sendEnhancedSmsCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "5", "Send_Enhanced_SMS", {}, std::bind(&SmsMenu::sendEnhancedSms, this,
+         std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> sendRawSmsCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "6", "Send_Raw_SMS", {}, std::bind(&SmsMenu::sendRawSms, this,
+         std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("5", "Select_sim_slot", {},
+      ConsoleAppCommand("7", "Select_sim_slot", {},
                         std::bind(&SmsMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
-      = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand};
+      = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand,
+         sendEnhancedSmsCommand, sendRawSmsCommand};
 
    if (smsManagers_.size() > 1) {
        commandsListSmsSubMenu.emplace_back(selectSimSlotCommand);
@@ -150,23 +182,111 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
    std::cout << "Enter message: ";
    std::getline(std::cin, message, delimiter);
 
-   std::string deliveryAck;
-   bool isDeliveryAck = false;
+   std::string deliveryReportNeeded;
    do {
       std::cout << "Do you need delivery status (y/n): ";
-      std::getline(std::cin, deliveryAck, delimiter);
-      std::transform(deliveryAck.begin(), deliveryAck.end(), deliveryAck.begin(), ::tolower);
-   } while((deliveryAck != "y") && (deliveryAck != "n"));
+      std::getline(std::cin, deliveryReportNeeded, delimiter);
+      std::transform(deliveryReportNeeded.begin(), deliveryReportNeeded.end(),
+         deliveryReportNeeded.begin(), ::tolower);
+   } while((deliveryReportNeeded != "y") && (deliveryReportNeeded != "n"));
 
    telux::common::Status status = telux::common::Status::FAILED;
-   if(deliveryAck == "y") {
-      status = smsManager->sendSms(message, receiverAddress, mySmsCmdCb_, mySmsDeliveryCb_);
+   if(deliveryReportNeeded == "y") {
+        status = smsManager->sendSms(message, receiverAddress, mySmsCmdCb_, mySmsDeliveryCb_);
    } else {
       status = smsManager->sendSms(message, receiverAddress, mySmsCmdCb_);
    }
 
    if(status == telux::common::Status::SUCCESS) {
       std::cout << "Send SMS request successful\n";
+   } else if (status == telux::common::Status::INVALIDPARAM) {
+      std::cout << "Entered SMS text is not in UTF-8 encoded format.\n";
+   } else {
+      std::cout << "Send SMS request failed\n";
+   }
+}
+
+void SmsMenu::sendEnhancedSms(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   char delimiter = '\n';
+
+   std::string receiverAddress;
+   std::cout << "Enter phone number: ";
+   std::getline(std::cin, receiverAddress, delimiter);
+
+   std::string message;
+   std::cout << "Enter message: ";
+   std::getline(std::cin, message, delimiter);
+
+   std::string deliveryReportNeeded;
+   bool isDeliveryReportNeeded = false;
+   do {
+      std::cout << "Do you need delivery status (y/n): ";
+      std::getline(std::cin, deliveryReportNeeded, delimiter);
+      std::transform(deliveryReportNeeded.begin(), deliveryReportNeeded.end(),
+         deliveryReportNeeded.begin(), ::tolower);
+   } while((deliveryReportNeeded != "y") && (deliveryReportNeeded != "n"));
+
+   telux::common::Status status = telux::common::Status::FAILED;
+   if(deliveryReportNeeded == "y") {
+      isDeliveryReportNeeded = true;
+   } else {
+      isDeliveryReportNeeded = false;
+   }
+
+   std::string smscAddress;
+   std::cout << "Enter SMSC number: ";
+   std::getline(std::cin, smscAddress, delimiter);
+
+   status = smsManager->sendSms(message, receiverAddress, isDeliveryReportNeeded,
+      MySmsCommandCallback::sendSmsResponse, smscAddress);
+
+   if(status == telux::common::Status::SUCCESS) {
+      std::cout << "Send SMS request successful\n";
+   } else if (status == telux::common::Status::INVALIDPARAM) {
+      std::cout << "Please use Putty with character-set as UTF-8 to provide the input\n";
+   } else {
+      std::cout << "Send SMS request failed\n";
+   }
+}
+
+void SmsMenu::sendRawSms(std::vector<std::string> userInput) {
+
+   auto smsManager = smsManagers_[slot_ - 1];
+   char delimiter = '\n';
+   std::string needMorePdu;
+   std::vector<telux::tel::PduBuffer> rawPdus;
+
+   do {
+      std::string message;
+      std::cout << "Enter raw pdu: ";
+      std::getline(std::cin, message, delimiter);
+      if (message.empty()) {
+          std::cout << " Raw PDU input is empty\n";
+          return;
+      }
+
+      std::vector<uint8_t> buffer(message.begin(), message.end());
+      rawPdus.emplace_back(buffer);
+
+      std::cout << "Do you want to enter more raw Pdu (y/n): ";
+      std::getline(std::cin, needMorePdu, delimiter);
+      std::transform(needMorePdu.begin(), needMorePdu.end(),
+         needMorePdu.begin(), ::tolower);
+   } while(needMorePdu == "y");
+
+   if (needMorePdu != "n") {
+      std::cout << "Invalid input provided \n";
+      return;
+   }
+
+   telux::common::Status status = smsManager->sendRawSms(rawPdus,
+      MySmsCommandCallback::sendSmsResponse);
+
+   if(status == telux::common::Status::SUCCESS) {
+      std::cout << "Send SMS request successful\n";
+   } else if(status == telux::common::Status::INVALIDPARAM) {
+      std::cout << "Send SMS request failed - Invalid input(s)\n";
    } else {
       std::cout << "Send SMS request failed\n";
    }
@@ -197,6 +317,24 @@ void SmsMenu::setSmscAddr(std::vector<std::string> userInput) {
    }
 }
 
+std::string SmsMenu::smsEncodingTypeToString(telux::tel::SmsEncoding format) {
+   std::string smsFormat = "";
+   switch(format) {
+      case telux::tel::SmsEncoding::GSM7:
+         smsFormat = "GSM7";
+         break;
+      case telux::tel::SmsEncoding::UCS2:
+         smsFormat = "UCS2";
+         break;
+      case telux::tel::SmsEncoding::GSM8:
+         smsFormat = "GSM8";
+         break;
+      default:
+         smsFormat = "UNKNOWN";
+   }
+   return smsFormat;
+}
+
 void SmsMenu::calculateMessageAttributes(std::vector<std::string> userInput) {
    auto smsManager = smsManagers_[slot_ - 1];
    std::string smsMessage;
@@ -207,7 +345,7 @@ void SmsMenu::calculateMessageAttributes(std::vector<std::string> userInput) {
 
    auto msgAttributes = smsManager->calculateMessageAttributes(smsMessage);
    std::cout
-      << "Message Attributes \n encoding: " << (int)msgAttributes.encoding
+      << "Message Attributes \n encoding: " << smsEncodingTypeToString(msgAttributes.encoding)
       << "\n numberOfSegments: " << msgAttributes.numberOfSegments
       << "\n segmentSize: " << msgAttributes.segmentSize
       << "\n numberOfCharsLeftInLastSegment: " << msgAttributes.numberOfCharsLeftInLastSegment

@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include "iostream"
 #include "MyCellInfoHandler.hpp"
 #include "Utils.hpp"
@@ -62,8 +98,17 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "GSM isRegistered: " << gsmCellInfo->isRegistered() << std::endl;
             PRINT_CB << "GSM mcc: " << gsmCellInfo->getCellIdentity().getMcc() << std::endl;
             PRINT_CB << "GSM mnc: " << gsmCellInfo->getCellIdentity().getMnc() << std::endl;
-            PRINT_CB << "GSM lac: " << gsmCellInfo->getCellIdentity().getLac() << std::endl;
-            PRINT_CB << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity() << std::endl;
+            if(gsmCellInfo->getCellIdentity().getLac() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "GSM lac: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "GSM lac: " << gsmCellInfo->getCellIdentity().getLac() << std::endl;
+            }
+            if(gsmCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "GSM cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity()
+                    << std::endl;
+            }
             PRINT_CB << "GSM arfcn: " << gsmCellInfo->getCellIdentity().getArfcn() << std::endl;
             // GSM signal strength
             if(gsmCellInfo->getSignalStrengthInfo().getGsmSignalStrength()
@@ -152,11 +197,21 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "LTE isRegistered: " << lteCellInfo->isRegistered() << std::endl;
             PRINT_CB << "LTE mcc: " << lteCellInfo->getCellIdentity().getMcc() << std::endl;
             PRINT_CB << "LTE mnc: " << lteCellInfo->getCellIdentity().getMnc() << std::endl;
-            PRINT_CB << "LTE cid: " << lteCellInfo->getCellIdentity().getIdentity() << std::endl;
+            if(lteCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "LTE cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "LTE cid: " << lteCellInfo->getCellIdentity().getIdentity()
+                    << std::endl;
+            }
             PRINT_CB << "LTE pid: " << lteCellInfo->getCellIdentity().getPhysicalCellId()
                      << std::endl;
-            PRINT_CB << "LTE tac: " << lteCellInfo->getCellIdentity().getTrackingAreaCode()
+            if(lteCellInfo->getCellIdentity().getTrackingAreaCode()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+               PRINT_CB << "LTE tac: " << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_CB << "LTE tac: " << lteCellInfo->getCellIdentity().getTrackingAreaCode()
                      << std::endl;
+            }
             PRINT_CB << "LTE arfcn: " << lteCellInfo->getCellIdentity().getEarfcn() << std::endl;
             // LTE Signal Strength
 
@@ -228,9 +283,18 @@ void MyCellInfoCallback::cellInfoListResponse(
             PRINT_CB << "WCDMA isRegistered: " << wcdmaCellInfo->isRegistered() << std::endl;
             PRINT_CB << "WCDMA mcc: " << wcdmaCellInfo->getCellIdentity().getMcc() << std::endl;
             PRINT_CB << "WCDMA mnc: " << wcdmaCellInfo->getCellIdentity().getMnc() << std::endl;
-            PRINT_CB << "WCDMA lac: " << wcdmaCellInfo->getCellIdentity().getLac() << std::endl;
-            PRINT_CB << "WCDMA cid: " << wcdmaCellInfo->getCellIdentity().getIdentity()
+            if(wcdmaCellInfo->getCellIdentity().getLac() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "WCDMA lac: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "WCDMA lac: " << wcdmaCellInfo->getCellIdentity().getLac()
+                    << std::endl;
+            }
+            if(wcdmaCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "WCDMA cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "WCDMA cid: " << wcdmaCellInfo->getCellIdentity().getIdentity()
                      << std::endl;
+            }
             PRINT_CB << "WCDMA psc: " << wcdmaCellInfo->getCellIdentity().getPrimaryScramblingCode()
                      << std::endl;
             PRINT_CB << "WCDMA arfcn: " << wcdmaCellInfo->getCellIdentity().getUarfcn()
@@ -292,11 +356,21 @@ void MyCellInfoCallback::cellInfoListResponse(
                 << std::endl;
             PRINT_CB << "NR5G mnc: " << nr5gCellInfo->getCellIdentity().getMobileNetworkCode()
                 << std::endl;
-            PRINT_CB << "NR5G cid: " << nr5gCellInfo->getCellIdentity().getIdentity() << std::endl;
+            if(nr5gCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "NR5G cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "NR5G cid: " << nr5gCellInfo->getCellIdentity().getIdentity()
+                    << std::endl;
+            }
             PRINT_CB << "NR5G pid: " << nr5gCellInfo->getCellIdentity().getPhysicalCellId()
                      << std::endl;
-            PRINT_CB << "NR5G tac: " << nr5gCellInfo->getCellIdentity().getTrackingAreaCode()
+            if(nr5gCellInfo->getCellIdentity().getTrackingAreaCode()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_CB << "NR5G tac: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_CB << "NR5G tac: " << nr5gCellInfo->getCellIdentity().getTrackingAreaCode()
                      << std::endl;
+            }
             PRINT_CB << "NR5G arfcn: " << nr5gCellInfo->getCellIdentity().getArfcn() << std::endl;
             // NR5G Signal Strength
 

@@ -56,8 +56,9 @@ private:
     std::shared_ptr<telux::tel::ISmsManager> smsManager_;
 
     bool loadConfig();
-    void triggerEvent(TcuActivityState event);
-    TcuActivityState validateTrigger(std::string text);
+    void triggerEvent(TcuActivityState event, std::string machineName);
+    bool validateTrigger(std::string text, TcuActivityState& tcuActivityState,
+        std::string& machineName);
 
 public:
     SMSTrigger(std::shared_ptr<EventManager> eventManager);

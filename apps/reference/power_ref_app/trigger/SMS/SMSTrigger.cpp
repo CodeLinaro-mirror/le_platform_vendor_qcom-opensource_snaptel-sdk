@@ -113,9 +113,10 @@ void SMSTrigger::onIncomingSms(int phoneId,
    LOG(DEBUG, __FUNCTION__, " Complete Message :", "\n", text);
 
    std::async(std::launch::async, [this, text] {
-      TcuActivityState newState = validateTrigger(text);
-      if(newState != TcuActivityState::UNKNOWN) {
-         this->triggerEvent(newState);
+      TcuActivityState tcuActivityState = TcuActivityState::UNKNOWN;
+      std::string machineName = ALL_MACHINES;
+      if(validateTrigger(text, tcuActivityState, machineName)) {
+         this->triggerEvent(tcuActivityState, machineName);
       }
    });
 }
@@ -128,10 +129,11 @@ void SMSTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
    LOG(DEBUG, __FUNCTION__, " ", event->toString());
 }
 
-void SMSTrigger::triggerEvent(TcuActivityState eventState) {
+void SMSTrigger::triggerEvent(TcuActivityState eventState, std::string machineName) {
    LOG(DEBUG, __FUNCTION__);
 
-   std::shared_ptr<Event> event = std::make_shared<Event>(eventState, TriggerType::SMS_TRIGGER);
+   std::shared_ptr<Event> event = std::make_shared<Event>(eventState, machineName,
+      TriggerType::SMS_TRIGGER);
    if (event) {
       if (eventManager_) {
          eventManager_->pushEvent(event);
@@ -143,18 +145,28 @@ void SMSTrigger::triggerEvent(TcuActivityState eventState) {
    }
 }
 
-TcuActivityState SMSTrigger::validateTrigger(std::string text) {
-   LOG(DEBUG, __FUNCTION__);
-   // to avoid \n in string which might lead not matching trigger text
-   text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
+bool SMSTrigger::validateTrigger(std::string text, TcuActivityState& tcuActivityState,
+   std::string& machineName) {
    LOG(DEBUG, __FUNCTION__, " ", text);
+   // to avoid \n and \ in a string which might lead to not matching trigger text
+   text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
+   text.erase(std::remove(text.begin(), text.end(), '\\'), text.cend());
+   size_t deliminatorPosition = 0;
+   if(( deliminatorPosition = text.find(MACHINE_NAME_DELIMINATOR)) != std::string::npos ) {
+      machineName = text.substr(deliminatorPosition + sizeof(MACHINE_NAME_DELIMINATOR),
+         text.length());
+      text = text.substr(0, deliminatorPosition);
+   }
+
    if (triggerText_.find(text) == triggerText_.end()) {
       LOG(ERROR, __FUNCTION__, " invalid trigger text, text = ", text);
    } else {
-      LOG(INFO, __FUNCTION__, " valid trigger text, text = ", text);
-      return triggerText_[text];
+      LOG(INFO, __FUNCTION__, " valid trigger text, text = ", text,
+         "\n , machine name = ", machineName);
+      tcuActivityState = triggerText_[text];
+      return true;
    }
-   return TcuActivityState::UNKNOWN;
+   return false;
 }
 
 bool SMSTrigger::loadConfig() {

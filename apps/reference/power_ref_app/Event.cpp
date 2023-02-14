@@ -42,9 +42,10 @@ uint64_t Event::nextId;
  * @param event          Triggered tcu activity state
  * @param triggerType    Trigger type to identify who initiated it
  */
-Event::Event(TcuActivityState triggeredState,
+Event::Event(TcuActivityState triggeredState, std::string machineName,
              TriggerType triggerType) : id_(++nextId), triggeredState_(triggeredState),
-                                        triggerType_(triggerType), status_(EventStatus::INITIALIZED)
+                                        machineName_(machineName), triggerType_(triggerType),
+                                        status_(EventStatus::INITIALIZED)
 {
     LOG(DEBUG, __FUNCTION__, toString());
     timeStamps_.insert({EventStatus::INITIALIZED,
@@ -64,6 +65,10 @@ TcuActivityState Event::getTriggeredState() {
     return triggeredState_;
 }
 
+std::string Event::getMachineName() {
+    return machineName_;
+}
+
 TriggerType Event::getTriggerType() {
     return triggerType_;
 }
@@ -72,6 +77,7 @@ string Event::toString() {
     string eventString = "trigger id = " + to_string(id_) +
                          "  triggered by " + RefAppUtils::triggerTypeToString(triggerType_) +
                          "  trigger status = " + RefAppUtils::eventStatusToString(status_) +
+                         "  machine Name = " + machineName_ +
                          "  TCU activity triggered state = " +
                          RefAppUtils::tcuActivityStateToString(triggeredState_);
     return eventString;

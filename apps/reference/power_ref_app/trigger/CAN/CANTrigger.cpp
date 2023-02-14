@@ -107,7 +107,28 @@ void CANTrigger::triggerEvent(CwFrame * pf, void* userData, int ifNo) {
         // ignore identifier extension (IDE) bit of CAN frame ID
         LOG(DEBUG, __FUNCTION__, " compare with trigger id = ", trigger.first);
         if (trigger.first<<1 ==  pf->getId()<<1) {
-            eventPtr = std::make_shared<Event>(trigger.second.first, TriggerType::CAN_TRIGGER);
+            std::string machineName = "";
+            int dataLength = pf->getDataLen();
+            if (dataLength > 0) {
+                uint8_t *pdata = (uint8_t*) malloc(dataLength+1);
+                if (pdata != NULL) {
+                    pf->getData(pdata, dataLength);
+                    pdata[dataLength] = '\0';
+                    machineName = std::string((char const*)pdata);
+                    free(pdata);
+                } else {
+                    LOG(ERROR, __FUNCTION__, " memory allocation failed to fetch CAN frame ");
+                }
+            }
+
+            LOG(DEBUG, __FUNCTION__, " machineName ", machineName, " ,machineName.length() ",
+                machineName.length());
+
+            if (machineName.empty()) {
+                machineName = ALL_MACHINES;
+            }
+            eventPtr = std::make_shared<Event>(trigger.second.first, machineName,
+                TriggerType::CAN_TRIGGER);
             break;
         }
     }

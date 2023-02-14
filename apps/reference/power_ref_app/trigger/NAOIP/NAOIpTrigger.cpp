@@ -164,10 +164,11 @@ void NAOIpTrigger::onEventProcessed(shared_ptr<Event> event, bool success) {
     }
 }
 
-void NAOIpTrigger::triggerEvent(TcuActivityState eventState) {
+void NAOIpTrigger::triggerEvent(TcuActivityState eventState, std::string machineName) {
     LOG(DEBUG, __FUNCTION__);
 
-    std::shared_ptr<Event> event = std::make_shared<Event>(eventState, TriggerType::NAOIP_TRIGGER);
+    std::shared_ptr<Event> event = std::make_shared<Event>(eventState, machineName,
+        TriggerType::NAOIP_TRIGGER);
     if ( event ) {
         if(eventManager_) {
             eventManager_->pushEvent(event);
@@ -180,19 +181,26 @@ void NAOIpTrigger::triggerEvent(TcuActivityState eventState) {
 
 }
 
-TcuActivityState NAOIpTrigger::validateTrigger(char *buffer, int length) {
+bool NAOIpTrigger::validateTrigger(char *buffer, int length,
+    TcuActivityState& tcuActivityState, std::string& machineName) {
     LOG(DEBUG, __FUNCTION__);
     string text(buffer, length);
-    // to avoid \n in string which might lead not matching trigger text
+    // to avoid \n in a string which might lead to not matching trigger text
     text.erase(std::remove(text.begin(), text.end(), '\n'), text.cend());
     LOG(DEBUG, __FUNCTION__, text);
+    size_t deliminatorPosition = 0;
+    if(( deliminatorPosition = text.find(MACHINE_NAME_DELIMINATOR)) != std::string::npos ) {
+        machineName = text.substr(deliminatorPosition + sizeof(MACHINE_NAME_DELIMINATOR),
+            text.length());
+        text = text.substr(0, deliminatorPosition);
+    }
     if (triggerText_.find(text) == triggerText_.end()) {
         LOG(ERROR, __FUNCTION__, " invalid trigger text, text = ", text);
     } else {
         LOG(INFO, __FUNCTION__, " valid trigger text, text = ", text);
-        return triggerText_[text];
+        tcuActivityState = triggerText_[text];
     }
-    return TcuActivityState::UNKNOWN;
+    return false;
 }
 
 void NAOIpTrigger::listenNewTriggerClient(int triggerSocket) {
@@ -203,9 +211,10 @@ void NAOIpTrigger::listenNewTriggerClient(int triggerSocket) {
         do {
             int length = read(triggerSocket, buffer, BUFFER_SIZE);
             LOG(DEBUG, __FUNCTION__, " buffer = ", buffer, "\nlength = ", length);
-            TcuActivityState triggerState = validateTrigger(buffer, length);
-            if (triggerState != TcuActivityState::UNKNOWN) {
-                triggerEvent(triggerState);
+            TcuActivityState triggerState = TcuActivityState::UNKNOWN;
+            std::string machineName = ALL_MACHINES;
+            if (validateTrigger(buffer, length, triggerState, machineName)) {
+                triggerEvent(triggerState, machineName);
             } else {
                 LOG(ERROR, __FUNCTION__, " trigger not match ");
             }

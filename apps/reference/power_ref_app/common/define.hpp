@@ -41,6 +41,7 @@
 #include <iostream>
 
 #define DAEMON_NAME           "telux_power_refd"
+#define WAKE_LOCK             "temp_telux_power_refd"
 
 /** concerned node with regard to power state */
 #define WAKELOCK_PATH         "/sys/power/wake_lock"
@@ -53,6 +54,8 @@
 #define TRIGGER_SUSPEND       "TRIGGER_SUSPEND"
 #define TRIGGER_RESUME        "TRIGGER_RESUME"
 #define TRIGGER_SHUTDOWN      "TRIGGER_SHUTDOWN"
+
+#define MACHINE_NAME_DELIMINATOR            ':'
 
 /**
  * Represents the inputs/triggers that the daemon listens to, for initiating TcuActivity state
@@ -69,11 +72,12 @@ enum TriggerType
 
 enum EventStatus
 {
-  INITIALIZED = 1,                    /** trigger is initialised */
+  INITIALIZED = 1,                    /** trigger is initialized */
   IN_QUEUE,                           /** trigger is added to the queue */
   IN_PROGRESS_TCU_ACTIVITY,           /** trigger passed to TCU activity manager */
   REJECTED_INVALID_STATE_TRANSITION,  /** trigger rejected due to invalid state transition */
-  REJECTED_EVENT_OVERRIDDEN,          /** trigger is overriden */
+  REJECTED_INVALID_MACHINE_NAME,      /** trigger rejected due to invalid machine name */
+  REJECTED_EVENT_OVERRIDDEN,          /** trigger is overridden */
   FAILED_TCU_ACTIVITY,                /** TCU activity state transition failed */
   FAILED_TCU_ACTIVITY_TIMEOUT,        /** TCU activity state transition failed due to timeout */
   SUCCEED                             /** TCU activity state transition succeeded */

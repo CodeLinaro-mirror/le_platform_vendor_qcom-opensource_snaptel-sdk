@@ -66,7 +66,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -653,10 +653,18 @@ void MyPhoneHelper::printCellInfoDetails(
                 << gsmCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
             PRINT_NOTIFICATION << "GSM mnc: "
                 << gsmCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
-            PRINT_NOTIFICATION << "GSM lac: " << gsmCellInfo->getCellIdentity().getLac()
+            if(gsmCellInfo->getCellIdentity().getLac() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "GSM lac: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "GSM lac: " << gsmCellInfo->getCellIdentity().getLac()
                                << std::endl;
-            PRINT_NOTIFICATION << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity()
+            }
+            if(gsmCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "GSM cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "GSM cid: " << gsmCellInfo->getCellIdentity().getIdentity()
                                << std::endl;
+            }
             PRINT_NOTIFICATION << "GSM arfcn: " << gsmCellInfo->getCellIdentity().getArfcn()
                                << std::endl;
             // GSM signal strength
@@ -701,12 +709,22 @@ void MyPhoneHelper::printCellInfoDetails(
                 << lteCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
             PRINT_NOTIFICATION << "LTE mnc: "
                 << lteCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
-            PRINT_NOTIFICATION << "LTE cid: " << lteCellInfo->getCellIdentity().getIdentity()
+            if(lteCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "LTE cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+               PRINT_NOTIFICATION << "LTE cid: " << lteCellInfo->getCellIdentity().getIdentity()
                                << std::endl;
+            }
             PRINT_NOTIFICATION << "LTE pid: " << lteCellInfo->getCellIdentity().getPhysicalCellId()
                                << std::endl;
-            PRINT_NOTIFICATION
-                << "LTE tac: " << lteCellInfo->getCellIdentity().getTrackingAreaCode() << std::endl;
+            if(lteCellInfo->getCellIdentity().getTrackingAreaCode()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "LTE tac: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION
+                    << "LTE tac: " << lteCellInfo->getCellIdentity().getTrackingAreaCode()
+                    << std::endl;
+            }
             PRINT_NOTIFICATION << "LTE arfcn: " << lteCellInfo->getCellIdentity().getEarfcn()
                                << std::endl;
             // LTE Signal Strength
@@ -762,10 +780,18 @@ void MyPhoneHelper::printCellInfoDetails(
                 << wcdmaCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
             PRINT_NOTIFICATION << "WCDMA mnc: "
                 << wcdmaCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
-            PRINT_NOTIFICATION << "WCDMA lac: " << wcdmaCellInfo->getCellIdentity().getLac()
+            if(wcdmaCellInfo->getCellIdentity().getLac() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "WCDMA lac: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "WCDMA lac: " << wcdmaCellInfo->getCellIdentity().getLac()
                                << std::endl;
-            PRINT_NOTIFICATION << "WCDMA cid: " << wcdmaCellInfo->getCellIdentity().getIdentity()
-                               << std::endl;
+            }
+            if(wcdmaCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "WCDMA cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "WCDMA cid: "
+                    << wcdmaCellInfo->getCellIdentity().getIdentity() << std::endl;
+            }
             PRINT_NOTIFICATION
                 << "WCDMA psc: " << wcdmaCellInfo->getCellIdentity().getPrimaryScramblingCode()
                 << std::endl;
@@ -807,12 +833,21 @@ void MyPhoneHelper::printCellInfoDetails(
                 << nr5gCellInfo->getCellIdentity().getMobileCountryCode() << std::endl;
             PRINT_NOTIFICATION << "NR5G mnc: "
                 << nr5gCellInfo->getCellIdentity().getMobileNetworkCode() << std::endl;
-            PRINT_NOTIFICATION << "NR5G cid: " << nr5gCellInfo->getCellIdentity().getIdentity()
+            if(nr5gCellInfo->getCellIdentity().getIdentity() == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "NR5G cid: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "NR5G cid: " << nr5gCellInfo->getCellIdentity().getIdentity()
                 << std::endl;
+            }
             PRINT_NOTIFICATION << "NR5G pid: "
                 << nr5gCellInfo->getCellIdentity().getPhysicalCellId() << std::endl;
-            PRINT_NOTIFICATION << "NR5G tac: "
-                << nr5gCellInfo->getCellIdentity().getTrackingAreaCode() << std::endl;
+            if(nr5gCellInfo->getCellIdentity().getTrackingAreaCode()
+                == INVALID_SIGNAL_STRENGTH_VALUE) {
+                PRINT_NOTIFICATION << "NR5G tac: " << "UNAVAILABLE" << std::endl;
+            } else {
+                PRINT_NOTIFICATION << "NR5G tac: "
+                    << nr5gCellInfo->getCellIdentity().getTrackingAreaCode() << std::endl;
+            }
             PRINT_NOTIFICATION << "NR5G arfcn: "
                 << nr5gCellInfo->getCellIdentity().getArfcn() << std::endl;
             // NR5G Signal Strength

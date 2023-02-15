@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -182,14 +182,18 @@ void SmsMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "12", "Set_Tag", {}, std::bind(&SmsMenu::setTag, this,
          std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestStorageDetailsCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "13", "Request_Storage_Details", {}, std::bind(&SmsMenu::requestStorageDetails, this,
+         std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("13", "Select_sim_slot", {},
+      ConsoleAppCommand("14", "Select_sim_slot", {},
                         std::bind(&SmsMenu::selectSimSlot, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSmsSubMenu
       = {sendSmsCommand, getSmscAddrCommand, setSmscAddrCommand, getMsgEncodingSizeCommand,
          sendEnhancedSmsCommand, sendRawSmsCommand, sendSmsMessageListCommand,
          sendReadMessageCommand, deleteMessageCommand, requestPreferredStorageCommand,
-         setPreferredStorageCommand, setTagCommand};
+         setPreferredStorageCommand, setTagCommand, requestStorageDetailsCommand};
 
    if (smsManagers_.size() > 1) {
        commandsListSmsSubMenu.emplace_back(selectSimSlotCommand);
@@ -200,6 +204,20 @@ void SmsMenu::init() {
    std::cout << "Device is listening for any incoming messages" << std::endl;
 }
 
+bool SmsMenu::isDialable (char ch) {
+   return ('0' <= ch && ch <= '9') || ch == '*' || ch == '#' || ch == '+';
+}
+
+bool SmsMenu::isValidPhoneNumber(std::string address) {
+   int count = 0;
+   for (char& ch : address) {
+      if (!isDialable(ch)) {
+         return false;
+      }
+   }
+   return true;
+}
+
 // SMS Requests
 void SmsMenu::sendSms(std::vector<std::string> userInput) {
    auto smsManager = smsManagers_[slot_ - 1];
@@ -208,6 +226,11 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
    std::string receiverAddress;
    std::cout << "Enter phone number: ";
    std::getline(std::cin, receiverAddress, delimiter);
+
+   if (!isValidPhoneNumber(receiverAddress)) {
+      std::cout << "Invalid Receiver Address \n";
+      return;
+   }
 
    std::string message;
    std::cout << "Enter message: ";
@@ -244,6 +267,11 @@ void SmsMenu::sendEnhancedSms(std::vector<std::string> userInput) {
    std::string receiverAddress;
    std::cout << "Enter phone number: ";
    std::getline(std::cin, receiverAddress, delimiter);
+
+   if (!isValidPhoneNumber(receiverAddress)) {
+      std::cout << "Invalid Receiver Address \n";
+      return;
+   }
 
    std::string message;
    std::cout << "Enter message: ";
@@ -563,5 +591,15 @@ void SmsMenu::setTag(std::vector<std::string> userInput) {
       std::cout << "Set tag request succeeded" << std::endl;
    } else {
       std::cout << "Set tag request failed" << std::endl;
+   }
+}
+
+void SmsMenu::requestStorageDetails(std::vector<std::string> userInput) {
+   auto smsManager = smsManagers_[slot_ - 1];
+   auto ret = smsManager->requestStorageDetails(SmsStorageCallback::reqStorageDetailsResponse);
+   if(ret == telux::common::Status::SUCCESS) {
+      std::cout << "Request for SIM storage details succeeded" << std::endl;
+   } else {
+      std::cout << "Request for SIM storage details failed" << std::endl;
    }
 }

@@ -112,8 +112,10 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) 
         }
     } else if (state == TcuActivityState::RESUME) {
         // disable MLC feature
-        for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
-            disableFeature(*it);
+        for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); it++) {
+            if(enabledFeatures_.find(*it) != enabledFeatures_.end()) {
+                disableFeature(*it);
+            }
         }
     }
 }
@@ -335,24 +337,26 @@ void SensorFeatureControlMenu::enableFeature(std::string name) {
     std::cout << "Enable sensor feature request successful for " << name << std::endl;
 }
 
-void SensorFeatureControlMenu::disableFeature(std::string name) {
+std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(std::string name) {
     telux::common::Status status = sensorFeatureManager_->disableFeature(name);
+    std::set<std::string>::iterator itr = enabledFeatures_.find(name);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << "disableFeature failed: " << std::endl;
         Utils::printStatus(status);
-        return;
+        if(itr != enabledFeatures_.end()) {
+            itr++;
+        }
+    } else {
+        std::cout << "Disable sensor feature request successful for " << name << std::endl;
+        itr = enabledFeatures_.erase(itr);
     }
-    enabledFeatures_.erase(name);
-    std::cout << "Disable sensor feature request successful for " << name << std::endl;
+    return itr;
 }
 
 void SensorFeatureControlMenu::cleanup() {
     sensorFeatureEventListener_ = nullptr;
-    for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ++it) {
-        disableFeature(*it);
-    }
-    for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
-        disableFeature(*it);
+    for (auto it = enabledFeatures_.begin(); it != enabledFeatures_.end(); ) {
+        it = disableFeature(*it);
     }
     sensorFeatureManager_ = nullptr;
     tcuActivityMgr_ = nullptr;

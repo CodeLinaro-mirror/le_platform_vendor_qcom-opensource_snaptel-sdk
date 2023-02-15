@@ -43,6 +43,8 @@
 #ifndef TELUX_WLAN_APINTERFACE_HPP
 #define TELUX_WLAN_APINTERFACE_HPP
 
+#include <memory>
+
 #include <telux/common/CommonDefines.hpp>
 #include <telux/wlan/WlanDefines.hpp>
 
@@ -51,7 +53,7 @@ namespace wlan {
 
 class IApListener;
 
-/** @addtogroup telematics_wlan
+/** @addtogroup telematics_wlan_ap
  * @{ */
 
 #define INVALID_AP_ID    0
@@ -270,7 +272,7 @@ public:
     virtual ~IApListener() {}
 };
 
-/** @} */ /* end_addtogroup telematics_wlan */
+/** @} */ /* end_addtogroup telematics_wlan_ap */
 }
 }
 #endif

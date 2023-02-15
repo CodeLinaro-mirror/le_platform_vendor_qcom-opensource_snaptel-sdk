@@ -92,6 +92,7 @@
 #include <telux/tel/HttpTransactionManager.hpp>
 #include <telux/tel/ImsServingSystemManager.hpp>
 #include <telux/tel/SuppServicesManager.hpp>
+#include <telux/tel/EcallManager.hpp>
 
 namespace telux {
 
@@ -255,6 +256,23 @@ class PhoneFactory {
     */
    virtual std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
        telux::common::InitResponseCb  callback = nullptr) = 0;
+
+   /*
+    * Get Ecall Manager instance to change eCall related configuration
+    *
+    * In a system where access control is enabled for SDK APIs, the client needs to have necessary
+    * permission to successfully execute this API.
+    *
+    * @param [in] callback  Optional client callback to get the initialization status of
+    *                       IEcallManager
+    *                       @ref telux::common::InitResponseCb
+    *
+    * @returns Pointer of IEcallManager object or nullptr in case of failure.
+    *
+    * @deprecated This API is not being supported
+    */
+   virtual std::shared_ptr<IEcallManager> getEcallManager(
+       telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get HttpTransactionManager instance to handle HTTP related requests

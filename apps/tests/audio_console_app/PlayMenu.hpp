@@ -76,6 +76,7 @@ private:
     std::condition_variable cv_;
     std::vector<std::thread> runningThreads_;
     std::atomic<bool> playStatus_;
+    std::atomic<bool> playInProgress_;
     AudioFormat playFormat_;
     std::atomic<bool> pipeLineEmpty_;
     FILE * file_;

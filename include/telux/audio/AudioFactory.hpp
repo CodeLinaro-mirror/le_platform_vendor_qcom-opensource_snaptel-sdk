@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,11 +62,9 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
- * @file       AudioFactory.hpp
- *
- * @brief      AudioFactory is the central factory to create all audio instances
+ * @file  AudioFactory.hpp
+ * @brief Factory to created IAudioManager instance.
  */
 
 #ifndef AUDIOFACTORY_HPP
@@ -75,27 +73,28 @@
 #include <telux/audio/AudioManager.hpp>
 
 namespace telux {
-
 namespace audio {
+
 /** @addtogroup telematics_audio
  * @{ */
 
 /**
- * @brief   AudioFactory allows creation of audio manager.
+ *  Allows the creation of an IAudioManager instance.
  */
 class AudioFactory {
-public:
+ public:
    /**
-    * Get Audio Factory instance.
+    * Gets the AudioFactory instance.
     */
    static AudioFactory &getInstance();
 
    /**
-    * Get instance of audio manager.
+    * Gets the IAudioManager instance.
     *
-    * @param[in] callback     Optional callback to get the response of AudioManager initialization.
+    * @param [in] callback Optional, callback to know the status of the
+    *                      AudioManager initialization
     *
-    * @returns IAudioManager pointer.
+    * @returns IAudioManager instance
     */
    virtual std::shared_ptr<IAudioManager> getAudioManager(
         telux::common::InitResponseCb callback = nullptr) = 0;
@@ -106,14 +105,14 @@ protected:
    virtual ~AudioFactory();
 #endif
 
-private:
+ private:
    AudioFactory(const AudioFactory &) = delete;
    AudioFactory &operator=(const AudioFactory &) = delete;
 };
 
 /** @} */ /* end_addtogroup telematics_audio */
-}  // End of namespace audio
 
+}  // End of namespace audio
 }  // End of namespace telux
 
 #endif  // AUDIOFACTORY_HPP

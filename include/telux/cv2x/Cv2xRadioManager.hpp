@@ -109,6 +109,17 @@ public:
     virtual void onStatusChanged(Cv2xStatusEx status) {}
 
     /**
+     * Called when CV2X SLSS Rx is enabled and any of below events has occurred:
+     *  - A new SLSS synce reference UE is detected, lost, or selected as the timing source,
+     *    report the present sync reference UEs.
+     *  - UE timing source switches from SLSS to GNSS, report 0 sync reference UE.
+     *  - SLSS Rx is disabled, report 0 sync reference UE.
+     *  - Cv2x is stopped, report 0 sync reference UE.
+     * @param [in] info - CV2X SLSS Rx information.
+     */
+    virtual void onSlssRxInfoChanged(const SlssRxInfo& slssInfo) {}
+
+    /**
      * Destructor for ICv2xListener
      */
     virtual ~ICv2xListener() {}
@@ -172,6 +183,17 @@ using RequestCv2xStatusCallbackEx = std::function<void (Cv2xStatusEx status,
 using UpdateConfigurationCallback =
     std::function<void (telux::common::ErrorCode error)>;
 
+/**
+ * This function is called as a response to @ref ICv2xRadioManager::getCv2xSlssRxInfo
+ *
+ * @param [out] info     - Cv2x SLSS Rx Information
+ * @param [out] error    - SUCCESS if Cv2x SLSS Rx Information was successully retrieved
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
+ */
+using GetSlssRxInfoCallback = std::function<void (const SlssRxInfo& info,
+                                                  telux::common::ErrorCode error)>;
+
 
 /** @addtogroup telematics_cv2x_cpp
  * @{ */
@@ -229,6 +251,9 @@ public:
     /**
      * Put modem into CV2X mode.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_OPS
+     * permission to successfully invoke this API.
+     *
      * @param [in] cb      - Callback that is invoked when Cv2x mode is started
      *
      * @returns SUCCESS on success. Error status otherwise.
@@ -237,6 +262,9 @@ public:
 
     /**
      * Take modem outo of CV2X mode
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] cb      - Callback that is invoked when Cv2x mode is stopped
      *
@@ -284,6 +312,9 @@ public:
      * Requires CV2X TX/RX radio status be Inactive. If CV2X radio status is
      * Active or Suspended, call @ref stopCv2x before updateConfiguration.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] configFilePath - Path to config file.
      * @param [in] cb             - Callback that is invoked when the send is complete.
      *                              This may be null.
@@ -297,6 +328,9 @@ public:
      * Set RF peak cv2x transmit power.
      * This affects the power for all existing flows and for any flow created int the future
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] txPower - Desired global Cv2x peak tx power in dbm
      * @param [in] cb      - Callback that is invoked when Cv2x peak tx power is set
      *
@@ -307,6 +341,9 @@ public:
     /**
      * Request to install remote UE src L2 filters.
      * This affects receiving of the UEs' packets in specified period with specified PPPP
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
      *
      * @param [in] filterList - remote UE src L2 Id, filter duration and PPPP list, max size 50
      * @param [in] cb         - Callback that is invoked when the request is sent
@@ -320,6 +357,9 @@ public:
      * Remove the previously installed filters matching src L2 address list.
      * Hence forth this would allow reception of packets from specified UE's
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] l2IdList - remote UE src L2 Id list, max size 50
      * @param [in] cb       - Callback that is invoked when the request is sent
      *
@@ -327,6 +367,18 @@ public:
      */
     virtual telux::common::Status removeL2Filters(const std::vector<uint32_t> &l2IdList,
         common::ResponseCallback cb) = 0;
+
+    /**
+     * Get CV2X SLSS Rx information from modem.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_INFO
+     * permission to successfully invoke this API.
+     *
+     * @param [in] cb   - Callback that is invoked when Cv2x SLSS Rx information is retrieved.
+     *
+     * @returns SUCCESS on success. Error status otherwise.
+     */
+    virtual telux::common::Status getSlssRxInfo(GetSlssRxInfoCallback cb) = 0;
 
     virtual ~ICv2xRadioManager() {}
 };

@@ -140,3 +140,22 @@ void ServingSystemListener::onRoamingStatusChanged(telux::data::RoamingStatus st
    }
    std::cout << std::endl;
 }
+
+void ServingSystemListener::onNrIconTypeChanged(telux::data::NrIconType type) {
+   std::cout << std::endl << std::endl;
+   PRINT_NOTIFICATION << "NR icon type Notification on SlotId " << slotId_ << std::endl;
+   std::cout << std::endl;
+
+   std::cout << "NR icon Type: ";
+   switch(type)  {
+      case telux::data::NrIconType::BASIC:
+         std::cout << "Basic" << std::endl;
+      break;
+      case telux::data::NrIconType::UWB:
+         std::cout << "Ultrawide Band" << std::endl;
+      break;
+      default:
+         std::cout << "Unknown" << std::endl;
+      break;
+   }
+}

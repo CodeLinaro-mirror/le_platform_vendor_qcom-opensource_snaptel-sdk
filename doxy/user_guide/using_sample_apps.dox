@@ -23,6 +23,8 @@ $ make_call_app /data/make_call_app.conf
 - @subpage thermal
 - @subpage sensor
 - @subpage platform
-- @subpage security
+- @subpage crypto
+- @subpage crypto_accelerator
+- @subpage wlan
 
 */

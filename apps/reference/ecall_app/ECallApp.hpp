@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -140,6 +141,32 @@ class ECallApp : public ConsoleApp {
     void requestECallHlapTimerStatus();
 
     /**
+     * Request to stop T10 eCall High Level Application Protocol(HLAP) timer, which causes the
+     * ecall-only modem to de-register from the network.
+     */
+    void stopT10Timer();
+
+    /**
+     * Request to set the value of eCall High Level Application Protocol(HLAP) timer.
+     */
+    void setHlapTimer();
+
+    /**
+     * Request to get the value of eCall High Level Application Protocol(HLAP) timer.
+     */
+    void getHlapTimer();
+
+    /**
+     * Get various configuration parameters related to eCall
+     */
+    void getECallConfig();
+
+    /**
+     * Set various configuration parameters related to eCall
+     */
+    void setECallConfig();
+
+    /**
      * Function to get eCall category from the user-interface
      */
     int getEcallCategory(telux::tel::ECallCategory &emergencyCategory);
@@ -147,7 +174,15 @@ class ECallApp : public ConsoleApp {
     /**
      * Function to configure MSD transmission at call connect
      */
-    telux::common::Status getMsdTransmissionConfig(bool &transmitMsd);
+    telux::common::Status getMsdTransmissionConfig(bool &transmitMsd, std::vector<uint8_t> &msdPdu);
+
+    telux::common::Status getIntegerInput(uint32_t &value, std::string prompt,
+        std::vector<uint32_t> validValues);
+
+    /**
+     * Utility function to get user input for MSD PDU
+     */
+    std::vector<uint8_t> getMsdPduInput();
 
     // Member variable to keep the eCall manager object alive until the application quits.
     std::shared_ptr<ECallManager> eCallMgr_;

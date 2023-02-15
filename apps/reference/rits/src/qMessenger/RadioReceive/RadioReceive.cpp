@@ -305,7 +305,7 @@ uint32_t RadioReceive::receive(const char* buf, int len,
         sourceMacAddr[5] = from.sin6_addr.s6_addr[15];
         gRxCount++;
         if(rVerbosity){
-            cout << "#" << gRxCount << " Source MAC: ";
+            cout << "#" << std::dec << gRxCount << " Source MAC: ";
             for (int i = 0; i < CV2X_MAC_ADDR_LEN; i++) {
                 cout << std::hex << static_cast<int>(sourceMacAddr[i]) << " ";
             }
@@ -349,7 +349,7 @@ uint8_t RadioReceive::closeFlow(){
 
     }
 
-    if(rVerbosity) printf("Attempting to close wra-related flows\n");
+    if(rVerbosity) printf("Attempting to close wra-related subscriptions\n");
     clearGlobalIPInfo();
 
     if (this->gRxSub) {
@@ -371,7 +371,7 @@ uint8_t RadioReceive::closeFlow(){
         }
         this->resetCallbackPromise();
         this->gRxSub = nullptr;
-        cout << "Rx flow closed.\n";
+        cout << "Rx subscription closed.\n";
         return resp;
     }
     return 0;

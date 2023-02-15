@@ -159,6 +159,9 @@ public:
      * configuration expires and then changes to active after the system fallbacks to a lower
      * priority V2X configuration or changes to inactive if no V2X configuration is available.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] configFilePath - Path to config file. This is the fully qualified
      *                              file path including the name of the file.
      * @param [in] cb             - Callback that is invoked when the send is complete.
@@ -172,6 +175,9 @@ public:
      * by configFilePath. And if the v2x configuration retrieval request succeed,
      * the file specified by configFilePath will be created and filled with the
      * configuration contents. Otherwise, no file will be created.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
      *
      * @param [in] configFilePath - Path to config file. This is the fully qualified
      *                              file path including the name of the file.

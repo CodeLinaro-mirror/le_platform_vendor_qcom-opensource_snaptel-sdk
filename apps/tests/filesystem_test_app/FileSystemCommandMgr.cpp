@@ -32,7 +32,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * The file hosts the implementation of FileSystemCommandMgr class, whose responsibility is to
  * instantiate and interact with the file system manager
@@ -80,6 +79,11 @@ int FileSystemCommandMgr::init() {
 
 void FileSystemCommandMgr::registerForUpdates() {
     // Registering a listener for EFS operation updates
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     telux::common::Status status = fsMgr_->registerListener(fsListener_);
     if ((status == telux::common::Status::SUCCESS) || (status == telux::common::Status::ALREADY)) {
         std::cout << APP_NAME << " Registered for File System events" << std::endl;
@@ -91,6 +95,11 @@ void FileSystemCommandMgr::registerForUpdates() {
 
 void FileSystemCommandMgr::deregisterFromUpdates() {
     // De-registering a listener from EFS operation updates
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     telux::common::Status status = fsMgr_->deregisterListener(fsListener_);
     if ((status == telux::common::Status::SUCCESS) || (status == telux::common::Status::NOSUCH)) {
         std::cout << APP_NAME << " Deregistered file system listener successfully" << std::endl;
@@ -103,6 +112,11 @@ void FileSystemCommandMgr::deregisterFromUpdates() {
 
 void FileSystemCommandMgr::startEfsBackup() {
     std::cout << APP_NAME << ": Sending request to start EFS backup" << std::endl;
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     telux::common::Status status = fsMgr_->startEfsBackup();
     if (status == telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << " Backup request successful" << std::endl;
@@ -114,6 +128,11 @@ void FileSystemCommandMgr::startEfsBackup() {
 
 void FileSystemCommandMgr::prepareForEcall() {
     std::cout << APP_NAME << ": Sending request for prepare eCall" << std::endl;
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     telux::common::Status status = fsMgr_->prepareForEcall();
     if (status == telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << ": request for prepare eCall successful" << std::endl;
@@ -125,6 +144,11 @@ void FileSystemCommandMgr::prepareForEcall() {
 
 void FileSystemCommandMgr::eCallCompleted() {
     std::cout << APP_NAME << ": Sending request for eCall completion" << std::endl;
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     telux::common::Status status = fsMgr_->eCallCompleted();
     if (status == telux::common::Status::SUCCESS) {
         std::cout << APP_NAME << ": request for eCall completion successful" << std::endl;
@@ -136,9 +160,13 @@ void FileSystemCommandMgr::eCallCompleted() {
 
 void FileSystemCommandMgr::prepareForOtaStart() {
     std::cout << APP_NAME << ": Sending request for prepare ota start" << std::endl;
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     telux::platform::OtaOperation otaOperation = OtaOperation::START;
     std::promise<telux::common::ErrorCode> p;
-
     telux::common::Status status = fsMgr_->prepareForOta(
         otaOperation, [&p, this](telux::common::ErrorCode error) { p.set_value(error); });
     if (status == telux::common::Status::SUCCESS) {
@@ -157,6 +185,11 @@ void FileSystemCommandMgr::otaCompleted() {
     std::promise<telux::common::ErrorCode> p;
     int cid = -1;
 
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     do {
         FileSystemCommandMgr::getInput("Select an ota-update status(1-Success/2-Failure): ", cid);
         if (cid == 1) {
@@ -167,7 +200,6 @@ void FileSystemCommandMgr::otaCompleted() {
             std::cout << " Invalid input:  " << cid << ", please re-enter" << std::endl;
         }
     } while ((cid != 1) && (cid != 2));
-
     std::cout << APP_NAME << ": Sending request for ota completion" << std::endl;
 
     telux::common::Status status = fsMgr_->otaCompleted(
@@ -185,9 +217,13 @@ void FileSystemCommandMgr::otaCompleted() {
 
 void FileSystemCommandMgr::prepareForOtaResume() {
     std::cout << APP_NAME << ": Sending request for prepare ota resume" << std::endl;
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     telux::platform::OtaOperation otaOperation = OtaOperation::RESUME;
     std::promise<telux::common::ErrorCode> p;
-
     telux::common::Status status = fsMgr_->prepareForOta(
         otaOperation, [&p, this](telux::common::ErrorCode error) { p.set_value(error); });
     if (status == telux::common::Status::SUCCESS) {
@@ -203,8 +239,12 @@ void FileSystemCommandMgr::prepareForOtaResume() {
 
 void FileSystemCommandMgr::startAbSync() {
     std::cout << APP_NAME << ": Sending request for start absync" << std::endl;
+    if (!fsMgr_) {
+        std::cout << APP_NAME << "*** ERROR - Invalid instance of filesystem manager !"
+                  << std::endl;
+        return;
+    }
     std::promise<telux::common::ErrorCode> p;
-
     telux::common::Status status
         = fsMgr_->startAbSync([&p, this](telux::common::ErrorCode error) { p.set_value(error); });
     if (status == telux::common::Status::SUCCESS) {

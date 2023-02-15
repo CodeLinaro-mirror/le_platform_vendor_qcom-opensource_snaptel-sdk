@@ -63,7 +63,6 @@
  */
 
 #include <iostream>
-#include <sys/time.h>
 #include "AerolinkSecurity.hpp"
 
 /* STATIC VARIABLES */
@@ -79,8 +78,8 @@ static      volatile uint32_t verifyCallbackCalled;
 
 /* Logging Related Variables */
 static      struct timeval currTime;
-static      time_t prevTimeStamp, prevBatchTimeStamp, startTime;
-static      double avgRate, minBatchTime, avgBatchTime, maxBatchTime;
+static      double prevTimeStamp, prevBatchTimeStamp;
+static      double startTime, avgRate, minBatchTime, avgBatchTime, maxBatchTime;
 static      uint32_t verifLatency = 0; // added into vector of verif latencies
 static      uint32_t verifMsgIdx = 0;   // verif latency queue element to update next
 static      uint32_t latencyListSize = 10000; // by default 10k?
@@ -100,6 +99,15 @@ static      sem_t idChangeSem;
 static AEROLINK_RESULT completeChangeId_status;
 static bool retChangeId_status; // tells thread if callback has completed
 
+/* LOGGING FUNCTIONS */
+// Function to set the verbosity of these security related functions
+// 0   -> Quiet
+// 1-4 -> Statistics and Errors
+// > 4 -> Verbose Mode
+void AerolinkSecurity::setSecVerbosity(uint8_t verbosity){
+    secVerbosity = verbosity;
+}
+
 void AerolinkSecurity::printBytes(char *label, uint8_t buffer[], uint32_t length)
 {
     uint32_t i = 0;
@@ -111,15 +119,6 @@ void AerolinkSecurity::printBytes(char *label, uint8_t buffer[], uint32_t length
     }
 
     printf("\n");
-}
-
-/* LOGGING FUNCTIONS */
-// Function to set the verbosity of these security related functions
-// 0   -> Quiet
-// 1-4 -> Statistics and Errors
-// > 4 -> Verbose Mode
-void AerolinkSecurity::setSecVerbosity(uint8_t verbosity){
-    secVerbosity = verbosity;
 }
 
 void AerolinkSecurity::setStartTime(double start){
@@ -143,8 +142,8 @@ void printSignStats(std::thread::id thrId){
 /* Function to print out running verification stats */
 void printVerifStats(std::thread::id thrId){
     gettimeofday(&currTime, NULL);
-    time_t currTimeStamp =
-            (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+    double currTimeStamp =
+            (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
 
     if(verifFail % 2500 == 0 && verifFail > 0){
         if(secVerbosity > 4)
@@ -196,13 +195,13 @@ void printVerifStats(std::thread::id thrId){
         // get latest time stamp because print statements cause delay
         gettimeofday(&currTime, NULL);
         prevBatchTimeStamp =
-                    (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+                    (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
 
     }
     // get latest time stamp because print statements cause delay
     gettimeofday(&currTime, NULL);
     prevTimeStamp =
-                    (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+                    (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
 }
 
 /* CERT CHANGE FUNCTIONS */
@@ -329,7 +328,7 @@ int AerolinkSecurity::init(void) {
     sem_init(&smgListSem, 0, 1);
     sem_init(&idChangeSem, 0, 1);
     gettimeofday(&currTime, NULL);
-    startTime = (time_t)currTime.tv_sec*1000 + (time_t)currTime.tv_usec/1000;
+    startTime = currTime.tv_sec*1000.0 + currTime.tv_usec/1000;
     prevBatchTimeStamp = startTime;
 
     const char *aerolinkLibVersion = securityServices_getVersion();
@@ -805,11 +804,10 @@ int AerolinkSecurity::syncVerify(
             fprintf(stderr,"Unable to set generation location (%s)\n", ws_errid(result));
         return -1;
     }
-     
+
     if(secVerbosity > 7) {
         fprintf(stdout, "Now checking relevance of signed message\n");
     }
-
     // smp_checkRelevance
     result = smp_checkRelevance(*smp);
     if (result != WS_SUCCESS)
@@ -833,12 +831,12 @@ int AerolinkSecurity::syncVerify(
     // smp_verifySignatures
     //startLatencyTime
     gettimeofday(&currTime, NULL);
-    time_t startLatencyTime =
-            (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+    double startLatencyTime =
+            (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
     result = smp_verifySignatures(*smp);
     gettimeofday(&currTime, NULL);
-    time_t endLatencyTime =
-            (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+    double endLatencyTime =
+            (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -1059,6 +1057,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         }
         return -1;
     }
+
     // Get corresponding smp for this thread
     SecuredMessageGeneratorC* smg;
     smg = getThrSmg(thrId);
@@ -1090,16 +1089,23 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
 
     // Set signing permissions.
     uint32_t  ieeePsidValue = 0x20;
-    uint8_t   ieeeSsp [32] = {0};
+    uint8_t   ieeeSsp [31] = {0};
     uint32_t  ieeeSspLength = 0;
-    uint8_t   ieeeSspMask [32] = {0};
+    uint8_t   ieeeSspMask [31] = {0};
     uint32_t  ieeeSspMaskLength = 0;
-    uint32_t  psidValue = opt.psidValue;
-    uint8_t   sspValue [32] = {0};
+    uint32_t  psidValue = 0;
+    uint8_t   sspValue [31] = {0};
     uint32_t  sspLength = 0;
-    uint8_t   sspMaskValue[32] = {0};
+    uint8_t   sspMaskValue[31] = {0};
     uint32_t  sspMaskLength = 0;
     const AerolinkEncryptionKey* pubEncryptKey = NULL;
+
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now setting the provider service id and permissions\n");
+        fprintf(stdout, "User provided psid is: %02x\n", opt.psidValue);
+        fprintf(stdout, "User provided ssp length is %d\n", opt.sspLength);
+        fprintf(stdout, "User provided ssp mask length is %d\n", opt.sspMaskLength);
+    }
 
     if(opt.enableEnc && keyGenMethod_ == ASYMMETRIC_KEY_GEN ){
         pubEncryptKey = &encryptionKey;
@@ -1110,13 +1116,6 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
     if(opt.sspLength > 31 && secVerbosity > 0){
         fprintf(stderr, "User provided spp length exceeds limits (31)\n");
         fprintf(stderr, "Using default value.\n");
-    }
-
-    if(secVerbosity > 7) {
-        fprintf(stdout, "Now setting the provider service id and permissions\n");  
-        fprintf(stdout, "User provided psid is: %02x\n", opt.psidValue);
-        fprintf(stdout, "User provided ssp length is %d\n", opt.sspLength);
-        fprintf(stdout, "User provided ssp mask length is %d\n", opt.sspMaskLength);
     }
 
     if (opt.sspLength > 0 && opt.sspLength <= 31)
@@ -1145,8 +1144,9 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         memcpy(sspMaskValue, ieeeSspMask, ieeeSspMaskLength);
     }
 
-   if(secVerbosity > 7){
-        fprintf(stdout,"\nSigning permissions: psid = 0x%02x\n", psidValue);
+    if(secVerbosity > 7){
+        fprintf(stdout, "\nSetting the signing permissions\n");
+        fprintf(stdout, "Signing permissions: psid = 0x%02x\n", psidValue);
         if(sspLength>0){
             printf("SSP Length: %d\n", sspLength);
             printf("SSP = ");
@@ -1168,16 +1168,15 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         }
     }
 
-
     SigningPermissions permissions;
     setPermissions(&permissions, psidValue, (sspLength > 0) ? sspValue : NULL,
                     (sspMaskLength > 0) ? sspMaskValue : NULL, sspLength);
-    time_t startLatencyTime;
-    time_t endLatencyTime;
+    double startLatencyTime = 0.0;
+    double endLatencyTime = 0.0;
     if(!opt.enableAsync){
         //synchronous signing
         gettimeofday(&currTime, NULL);
-        startLatencyTime = (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+        startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
         result = smg_sign(*smg,
             permissions,
             STO_AUTO,
@@ -1191,7 +1190,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
             signedSpdu,
             &Slen);
         gettimeofday(&currTime, NULL);
-        endLatencyTime = (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+        endLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
         // Check if the sign function successfully ran
         if (result != WS_SUCCESS) {
                 fprintf(stderr, "Failed to sign the message, error=%d(%s)\n",
@@ -1204,7 +1203,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
     }else{
         // optionally, can keep this in SecurityService class
         gettimeofday(&currTime, NULL);
-        startLatencyTime = (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+        startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
         result = smg_signAsync(*smg,
             permissions,
             STO_AUTO,
@@ -1220,7 +1219,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
             nullptr,
             signCallback);
         gettimeofday(&currTime, NULL);
-        endLatencyTime = (time_t)currTime.tv_sec * 1000 + (time_t)currTime.tv_usec/1000;
+        endLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
         // Now wait for the last signing to finish
         if (result != WS_SUCCESS) {
                 fprintf(stderr, "Failed to sign the message, error=%d(%s)\n",

@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_POWER_REF_DAEMON telux_power_refd)
 
+pkg_check_modules(CAN_WRAPPER_LIB libcanwrapper)
+if (CAN_WRAPPER_LIB_FOUND)
+    add_definitions(-DCAN_TRIGGER_SUPPORTED)
+endif (CAN_WRAPPER_LIB_FOUND)
+
 set(TARGET_POWER_REF_DAEMON_SOURCES
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     common/ConfigParser.cpp
@@ -17,6 +22,10 @@ set(TARGET_POWER_REF_DAEMON_SOURCES
     trigger/SMS/SMSTrigger.cpp
 )
 
+if (CAN_WRAPPER_LIB_FOUND)
+    list(APPEND TARGET_POWER_REF_DAEMON_SOURCES trigger/CAN/CANTrigger.cpp )
+endif (CAN_WRAPPER_LIB_FOUND)
+
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${telematics-apps_SOURCE_DIR}/common/utils
@@ -28,6 +37,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 add_executable (${TARGET_POWER_REF_DAEMON} ${TARGET_POWER_REF_DAEMON_SOURCES})
 target_link_libraries(${TARGET_POWER_REF_DAEMON} telux_common telux_tel telux_power telux_connect
     telux_data curl pthread)
+
+if (CAN_WRAPPER_LIB_FOUND)
+    target_link_libraries(${TARGET_POWER_REF_DAEMON} canwrapper)
+endif (CAN_WRAPPER_LIB_FOUND)
 
 # install to target
 install ( TARGETS ${TARGET_POWER_REF_DAEMON}

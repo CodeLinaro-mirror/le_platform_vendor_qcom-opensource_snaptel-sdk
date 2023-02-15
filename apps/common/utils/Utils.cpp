@@ -26,10 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
+
+ /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -61,6 +62,7 @@
  *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /**
  * @file       Utils.cpp
  *
@@ -72,6 +74,8 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <iomanip>
+#include <sstream>
 
 #include "Utils.hpp"
 
@@ -95,6 +99,17 @@ void Utils::validateNumericString(std::string &input) {
          invalidChar = false;
       }
    } while(invalidChar);
+}
+
+bool Utils::validateDigitString(std::string &input) {
+   bool validChar = true;
+   for(size_t index = 0; index < input.size(); index++) {
+      if(!isdigit(input[index])) {
+         validChar = false;
+         break;
+      }
+    }
+    return validChar;
 }
 
 int Utils::getValidSlotId() {
@@ -439,7 +454,21 @@ void Utils::printStatus(telux::common::Status status) {
 uint64_t Utils::getCurrentTimestamp(void) {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    return (uint64_t)ts.tv_sec * 1000000LL + (uint64_t)ts.tv_nsec / 1000;
+    return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+}
+
+const std::string Utils::getCurrentTimeString(void) {
+    std::stringstream ss;
+    std::tm tmSnapshot;
+    std::time_t now = std::time(nullptr);
+
+    if (NULL == localtime_r(&now, &tmSnapshot)) {
+        std::cout << "localtime_r error" << std::endl;
+        return std::string();
+    }
+    // convert current time to format of hour:minute:second
+    ss << std::put_time(&tmSnapshot, "%H:%M:%S");
+    return ss.str();
 }
 
 int Utils::validateV2xSpsInterval(uint16_t interval) {
@@ -457,4 +486,33 @@ uint64_t Utils::getNanosecondsSinceBoot() {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
+}
+
+std::vector<uint8_t> Utils::convertHexToBytes(std::string hexData) {
+   std::vector<uint8_t> output;
+   size_t i = 0, len = 0;
+   uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
+
+   len = hexData.length();
+   for(i = 0; i < len; i = i + 2) {
+      if(hexData[i] >= '0' && hexData[i] <= '9') {
+         rawData1 = (hexData[i] - 48) * 16;
+      } else if(hexData[i] >= 'A' && hexData[i] <= 'F') {
+         rawData1 = (hexData[i] - 55) * 16;
+      } else if(hexData[i] >= 'a' && hexData[i] <= 'f') {
+         rawData1 = (hexData[i] - 87) * 16;
+      }
+
+      if(hexData[i + 1] >= '0' && hexData[i + 1] <= '9') {
+         rawData2 = hexData[i + 1] - 48;
+      } else if(hexData[i + 1] >= 'A' && hexData[i + 1] <= 'F') {
+         rawData2 = hexData[i + 1] - 55;
+      } else if(hexData[i + 1] >= 'a' && hexData[i + 1] <= 'f') {
+         rawData2 = hexData[i + 1] - 87;
+      }
+
+      rawData = rawData1 + rawData2;
+      output.emplace_back(rawData);
+   }
+   return output;
 }

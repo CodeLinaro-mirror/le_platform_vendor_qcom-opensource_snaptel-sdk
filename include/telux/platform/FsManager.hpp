@@ -32,7 +32,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file       FsManager.hpp
  * @brief      FsManager provides APIs related to File System(FS) management such as notifying
@@ -93,6 +92,9 @@ class IFsManager {
      * Request to trigger an EFS backup. If the request is successful, the status of EFS backup
      * is notified via @ref telux::platform::IFsListener::OnEfsBackupEvent.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_PLATFORM_FS_OPS_CTRL
+     * permission to invoke this API successfully.
+     *
      * @returns The status of the request - @ref telux::common::Status
      *
      */
@@ -105,6 +107,9 @@ class IFsManager {
      * this API before it initiates an eCall. This allows the filesystem manager to prepare
      * the system to restrict any resource intensive operations like filesystem scrubbing
      * during the eCall.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to invoke this API successfully.
      *
      * @note - The client would need to periodically invoke this API to ensure that the timer
      *         gets reset so that operations do not get re-enabled.
@@ -122,6 +127,10 @@ class IFsManager {
      * @ref telux::common::Status::NOTREADY,indicating that the sub-system is not ready,
      * the client should retry.
      *
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+     * permission to invoke this API successfully.
+     *
      * @returns - @ref telux::common::Status
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
@@ -133,6 +142,9 @@ class IFsManager {
      * This API should be invoked to allow the filesystem manager to perform operations
      * like prepare the filesystem for an OTA. In addition to this preparation, any
      * on-going operations like scrubbing is stopped.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_PLATFORM_OTA_MGMT
+     * permission to invoke this API successfully.
      *
      * @param [in] otaOperation  - @ref telux::platform::OtaOperation.
      *
@@ -154,6 +166,9 @@ class IFsManager {
      * manager to perform post OTA verifications and re-enable operations that were
      * disabled for performing the OTA, like scrubbing.
      *
+     * On platforms with Access control enabled, Caller needs to have TELUX_PLATFORM_OTA_MGMT
+     * permission to invoke this API successfully.
+     *
      * @param [in] operationStatus  - @ref telux::platform::OperationStatus
      * The status of the OTA operation that the client attempted.
      *
@@ -173,6 +188,9 @@ class IFsManager {
     /**
      * This API should be invoked when the client decides to mirror the active partition
      * to the inactive partition.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_PLATFORM_OTA_MGMT
+     * permission to invoke this API successfully.
      *
      * @param [out] responseCb   - @ref telux::common::ResponseCallback
      * The callback method to be invoked when the mirroring operation is completed and

@@ -65,10 +65,12 @@ public:
 class GetSuppSvcResponseCallback {
 public:
     static void getCallWaitingPrefResp(telux::tel::SuppServicesStatus suppSvcStatus,
-        telux::tel::SuppSvcProvisionStatus provisionStatus,
         telux::tel::FailureCause failureCause, telux::common::ErrorCode error);
 
     static void getForwardingPrefResp(std::vector<telux::tel::ForwardInfo> forwardInfoList,
+        telux::tel::FailureCause failureCause, telux::common::ErrorCode error);
+
+    static void getOirStatusResp(telux::tel::SuppServicesStatus activeStatus ,
         telux::tel::SuppSvcProvisionStatus provisionStatus, telux::tel::FailureCause failureCause,
         telux::common::ErrorCode error);
 };

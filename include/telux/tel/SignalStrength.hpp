@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file       SignalStrength.hpp
  * @brief      SignalStrength is a container class for obtaining the LTE, GSM, WCDMA, TDSCDMA and
@@ -99,6 +135,8 @@ public:
     *
     * @returns Pointer to CDMA signal strength instance that can be used to get
     * cdma/evdo dbm, signal level values.
+    *
+    * @deprecated As of version 1.53.0 this API is no longer supported.
     */
    std::shared_ptr<CdmaSignalStrengthInfo> getCdmaSignalStrength();
 
@@ -116,6 +154,7 @@ public:
     * @returns Pointer to TDSWCDMA signal strength instance that can be used to get
     * TDSCDMA RSCP value.
     *
+    * @deprecated As of version 1.53.0 this API is no longer supported.
     */
    std::shared_ptr<TdscdmaSignalStrengthInfo> getTdscdmaSignalStrength();
 
@@ -194,6 +233,8 @@ public:
     * @deprecated This API not being supported
     *
     * @returns LteCqI.
+    *
+    * @deprecated As of version 1.54.0 this API is no longer supported.
     */
    const int getLteChannelQualityIndicator() const;
 
@@ -279,6 +320,8 @@ private:
 /**
  * CDMA signal strength provides methods to get details of CDMA and EVDO like signal strength
  * in dBm and signal level.
+ *
+ * @deprecated As of version 1.53.0 this API is no longer supported.
  */
 class CdmaSignalStrengthInfo {
 public:
@@ -387,6 +430,8 @@ private:
 
 /**
  * Tdscdma signal strength provides methods to get received signal code power.
+ *
+ * @deprecated As of version 1.53.0 this API is no longer supported.
  */
 class TdscdmaSignalStrengthInfo {
 public:

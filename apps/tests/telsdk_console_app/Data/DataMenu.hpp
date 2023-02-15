@@ -145,6 +145,7 @@ class DataMenu : public IDataFilterListener, public ConsoleApp {
     std::shared_ptr<FirewallMenu> firewallMenu_;
     std::shared_ptr<VlanMenu> vlanMenu_;
     std::shared_ptr<SocksMenu> socksMenu_;
+    std::shared_ptr<DataFilterMenu> dataFilterMenu_;
     std::shared_ptr<DataSettingsMenu> settingsMenu_;
 };
 #endif

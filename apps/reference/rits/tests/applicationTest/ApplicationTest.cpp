@@ -62,7 +62,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
  /**
   * @file: ApplicationTest.cpp
   *
@@ -86,6 +85,7 @@
 #include "safetyapp_util.h"
 #include "bsm_utils.h"
 #include "../../../../common/utils/Utils.hpp"
+#include "../../../../common/utils/SignalHandler.hpp"
 #include <telux/common/Version.hpp>
 
 using std::thread;
@@ -97,6 +97,9 @@ using std::mutex;
 using std::shared_ptr;
 using std::make_shared;
 
+#define IP_ADDR_RETRY_INTERVAL_MS (100) // interval for re-getting V2X IP address
+#define IP_ADDR_RETRY_TIMES (2) // maximum retries for getting V2X IP address
+
 // Global variables
 shared_ptr<ApplicationBase> application = nullptr;
 vector<thread> threads;
@@ -105,6 +108,8 @@ string csvFileName;
 sem_t cnt_sem;
 auto rxsuccess = 0;
 auto rxfail = 0;
+std::mutex gTerminateMtx;
+std::condition_variable gTerminateCv;
 bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
@@ -113,21 +118,25 @@ bool haltRx = false;
 std::mutex cv2xStatusMtx;
 bool simMode = false;
 
+// catch specified signals and gracefully shut down program
+void signalHandler(int signum) {
+    fprintf(stderr, "Interrupt signal (%d) received.\n", signum);
+    if(signum == SIGSEGV || signum == SIGABRT){
+        if(application->ldm != nullptr)
+            application->ldm->stopGb();
+        fprintf(stderr, "Attempting to close all flows and subscriptions\n");
+        application->closeAllRadio();
+    }
+    std::unique_lock<std::mutex> lk(gTerminateMtx);
+    stopThread = true;
+    gTerminateCv.notify_all();
+}
+
+// allow the main thread to wait on the threads to join
 void joinThreads() {
     for (int i = 0; i < threads.size(); i++)
     {
         threads[i].join();
-    }
-}
-
-void signalHandler(int signum) {
-    fprintf(stderr, "Interrupt signal (%d) received.\n", signum);
-    stopThread = true;
-    if(signum == SIGSEGV || signum == SIGABRT){
-        if(application->ldm != nullptr)
-          application->ldm->stopGb();
-        fprintf(stderr, "Attempting to close all flows and subscriptions\n");
-        application->closeAllRadio();
     }
 }
 
@@ -209,9 +218,10 @@ void receive(MessageType msgType, int index) {
             if (application->configuration.driverVerbosity) {
                 if (rxsuccess % 50 == 0 && rxsuccess > 0){
                     gettimeofday(&currTime, NULL);
-                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                        " Decode/Rx Success #: " << rxsuccess <<
-                        " Decode/Rx Fail #: " << rxfail << std::endl;
+                    cout << "Dur(s): " << std::dec
+                        << (currTime.tv_sec-startTime) <<
+                        " Decode/Rx Success #: " << std::dec << rxsuccess <<
+                        " Decode/Rx Fail #: " << std::dec << rxfail << std::endl;
                 }
             }
         } else {
@@ -279,9 +289,9 @@ void ldmRx(void) {
             if (application->configuration.driverVerbosity) {
                 if (rxsuccess % 50 == 0 && rxsuccess > 0){
                     gettimeofday(&currTime, NULL);
-                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                        " Decode/Rx Success #: " << rxsuccess <<
-                        " Decode/Rx Fail #: " << rxfail << std::endl;
+                    cout << "Dur(s): " << std::dec << (currTime.tv_sec-startTime) <<
+                        " Decode/Rx Success #: " << std::dec << rxsuccess <<
+                        " Decode/Rx Fail #: " << std::dec << rxfail << std::endl;
                 }
             }
         } else {
@@ -322,7 +332,7 @@ int start_tx_timer(uint32_t interval_ms) {
 
     /* Start the timer */
     its.it_value.tv_sec = interval_ms / 1000;
-    its.it_value.tv_nsec = interval_ms % 1000;
+    its.it_value.tv_nsec = (interval_ms%1000) * 1000000;
     its.it_interval = its.it_value;
 
     if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
@@ -341,18 +351,26 @@ void onSrcL2AddrUpdate(uint32_t addr) {
         }
 
         // update local V2X-IP rmnet addr in a new thread
-        std::thread ([application] () {
+        std::thread([]() {
             int i = 0;
             while (!stopThread and application) {
                 if (0 == application->updateCachedV2xIpIfaceAddr()) {
                     break;
                 }
-                // if update failed, try it again in 20ms
-                if (++i > 1) {
+                // if update failed, try again in 100ms and break out after 2 retries
+                if (++i > IP_ADDR_RETRY_TIMES) {
                     break;
                 }
                 cerr << "Try to update V2X-IP rmnet addr later!" << endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                std::unique_lock<std::mutex> lck(gTerminateMtx);
+                if (gTerminateCv.wait_for(lck,
+                                          std::chrono::milliseconds(IP_ADDR_RETRY_INTERVAL_MS),
+                                          []{return stopThread == true;})) {
+                    if (application->configuration.driverVerbosity > 3) {
+                        cout << "Abort updating cached IP addr due to exiting" << endl;
+                    }
+                    break;
+                }
             }
         }).detach();
     }
@@ -511,7 +529,7 @@ void transmit(MessageType msgType) {
             txfail++;
         }
 
-        s = read(tx_timer_fd, &exp, sizeof(uint64_t));
+        s = read(tx_timer_fd, &exp, sizeof(exp));
         if (s == sizeof(uint64_t) && exp > 1) {
             timer_misses += (exp-1);
             cout << "TX timer overruns: Total missed: " << timer_misses << endl;
@@ -876,10 +894,7 @@ int setup(const bool tx, const bool rx,
     const string  rxSimIp, const  uint16_t txSimPort,
     const uint16_t rxSimPort, char* configFile)
 {
-    std::signal(SIGHUP, signalHandler);
-    std::signal(SIGINT, signalHandler);
-    std::signal(SIGTERM, signalHandler);
-    std::signal(SIGSEGV, signalHandler);
+
     if (help)
     {
         printUse();
@@ -887,9 +902,11 @@ int setup(const bool tx, const bool rx,
     }
 
     auto sdkVersion = telux::common::Version::getSdkVersion();
+    std::string sdkReleaseName = telux::common::Version::getReleaseName();
     std::cout << "Telematics SDK v" << std::to_string(sdkVersion.major) << "."
                           << std::to_string(sdkVersion.minor) << "."
-                          << std::to_string(sdkVersion.patch) << std::endl;
+                          << std::to_string(sdkVersion.patch) << std::endl <<
+                          "Release name: " << sdkReleaseName << std::endl;
 
     MessageType msgType = MessageType::BSM;
     if (bsm || wsa) {
@@ -1141,6 +1158,15 @@ int main(int argc, char** argv) {
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;
     }
+
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGHUP);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGTERM);
+    SignalHandlerCb cb = (SignalHandlerCb)signalHandler;
+    SignalHandler::registerSignalHandler(sigset, cb);
+
     string txSimIp, rxSimIp;
     uint16_t txSimPort = 0, rxSimPort = 0;
     bool tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded, txSim, rxSim;
@@ -1207,5 +1233,6 @@ int main(int argc, char** argv) {
     printf("Attempting to close all flows\n");
     if(!rxSim && !txSim)
         application->closeAllRadio();
+
     return 0;
 }

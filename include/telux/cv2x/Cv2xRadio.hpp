@@ -338,6 +338,9 @@ public:
      *                       using nullptr by default. Subscribe wildcard if
      *                       this parameter is set to nullptr.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
+     *
      * @returns SUCCESS on success. Error status otherwise.
      *
      * @dependencies The interface must be pre-initialized with init().
@@ -356,6 +359,10 @@ public:
      * The meta data consist of RF RSSI (received signal strength indicator) status, 32-bit SCI
      * Format 1 (3GPP TS 36.213, section 14.1), packet delay estimation, L2 destination ID,
      * and the resource blocks used for the packet's transmission: subframe, subchannel index.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_INFO
+     * permission to successfully invoke this API.
+     *
      *
      * @param [in] ipType  - IP traffic type (IP or NON-IP)
      * @param [in] enable  - enable the rx meta data if set to true, otherwise disable
@@ -379,6 +386,9 @@ public:
      * will be created with the same IP type and serviceId. A Tx socket will
      * be created and initialized for the SPS flow. A Tx socket will be created
      * and initialized for the event flow if the optional event flow is specified.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] ipType            - IP traffic type (IP or NON-IP)
      * @param [in] serviceId         - ID used for transmissions that will be
@@ -415,6 +425,9 @@ public:
      * Creates an event flow. An associated Tx socket will be created and
      * initialized.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
+     *
      * @param [in] ipType         - IP traffic type (IP or NON-IP)
      * @param [in] serviceId      - ID used for transmissions that will be
      *                              mapped to an L2 destination address.
@@ -443,6 +456,9 @@ public:
     /**
      * Creates an event flow. An associated Tx socket will be created and
      * initialized.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] ipType         - IP traffic type (IP or NON-IP)
      * @param [in] serviceId      - ID used for transmissions that will be
@@ -489,6 +505,9 @@ public:
      * SPS bandwidth contracts and sockets). This function works on both SPS and event
      * flows.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
+     *
      * @param [in] txFlow  - Tx (SPS or event) flow to close.
      * @param [in] cb      - Callback that is invoked when Tx flow close is complete.
      *                       This may be null.
@@ -531,6 +550,9 @@ public:
     /**
      * Request to change TX Event Flow reservation parameters.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
+     *
      * @param [in] txFlow       - Tx Event flow
      * @param [in] flowInfo     - Desired Event flow parameters
      * @param [in] cb           - Callback that is invoked upon parameter
@@ -568,6 +590,9 @@ public:
     /**
      * Requests modem to change L2 info.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param  [in] cb          - Callback that will be invoked and returns status.
      *                            Must not be null.
      *
@@ -578,6 +603,9 @@ public:
     /**
      * Send request to modem to update the list of malicious UE source IDs and
      * trusted UE source IDs with corresponding confidence information.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to invoke this API successf
      *
      * @param  [in] infoList    - Trusted and malicious UE information list
      * @param  [in] cb          - Callback that will be invoked and returns status.
@@ -616,6 +644,9 @@ public:
      * connections received from this listening socket using accept(), and then use the
      * accepted sockets returned from accept() for send() or recv().
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
+     *
      * @param [in] eventInfo    - Information for the Event flow.
      * @param [in] sockInfo     - Information for the TCP socket.
      * @param [in] cb           - Callback function that is invoked when socket
@@ -639,6 +670,9 @@ public:
     /**
      * Closes the CV2X TCP socket and frees resources associated with it (such as
      * registered event Tx flow and subscribed Rx service ID and created TCP socket).
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] sock   - CV2X TCP socket to close.
      * @param [in] cb     - Callback that is invoked when CV2X TCP socket close is complete.
@@ -691,6 +725,9 @@ public:
      * Specifies its own global prefix via this method, and creates/composes WSA/WRA
      * advertising the IP configs.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] ipv6Addr   - CV2X global IP address.
      * @param [in] cb     - Callback that is invoked when set the global IP address complete.
      *                      This may be null.
@@ -714,6 +751,9 @@ public:
      * Specifies its own global prefix via @ref setGlobalIPInfo, and creates/composes WSA/WRA
      * advertising the IP configs;
      * Now set routing information of its own via this method.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
      *
      * @param [in] destL2Addr   - CV2X destination L2 address for unicast routing purpose.
      * @param [in] cb     - Callback that is invoked when set global IP unicast routing

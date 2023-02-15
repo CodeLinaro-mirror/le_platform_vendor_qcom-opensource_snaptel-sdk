@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -90,8 +90,8 @@ DataMenu::~DataMenu() {
 }
 
 bool DataMenu::initializeSDK() {
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+    startTime = std::chrono::steady_clock::now();
 
     // Instantiate Data Connection Managers
     dataConnectionMenu_ = std::make_shared<DataConnectionMenu>("Data Connection Manager Menu",
@@ -105,7 +105,7 @@ bool DataMenu::initializeSDK() {
 
     // Check if the SDK is able to initialize data subsystems
     if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
-        endTime = std::chrono::system_clock::now();
+        endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                   << std::endl;
@@ -187,13 +187,17 @@ void DataMenu::dataConnectionMenu(std::vector<std::string> userInput) {
     ConsoleApp::displayMenu();
 }
 
-void DataMenu::openDataFilterMenu(std::vector<std::string> userInput) {
-    DataFilterMenu dataFilterMenu("Data Filter Menu", "data_filter> ");
-    dataFilterMenu.init();
-    dataFilterMenu.mainLoop();
+void DataMenu::openDataFilterMenu(std::vector<std::string> userInput)
+{
+    dataFilterMenu_ = std::make_shared<DataFilterMenu>("Data Filter Menu", "data_filter> ");
+
+    if (dataFilterMenu_->init())
+    {
+        dataFilterMenu_->mainLoop();
+    }
+    dataFilterMenu_ = nullptr;
     ConsoleApp::displayMenu();
 }
-
 
 void DataMenu::commandCallback(ErrorCode errorCode) {
     if (errorCode == telux::common::ErrorCode::SUCCESS) {

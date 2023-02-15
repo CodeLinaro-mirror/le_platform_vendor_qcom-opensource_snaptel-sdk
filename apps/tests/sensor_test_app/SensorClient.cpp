@@ -210,41 +210,43 @@ void SensorClient::onConfigurationUpdate(SensorConfiguration configuration) {
         << configuration.batchCount << "]" << std::endl;
 }
 
-void SensorClient::configure(SensorConfiguration config) {
+telux::common::Status SensorClient::configure(SensorConfiguration config) {
     telux::common::Status status = sensor_->configure(config);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << tag_ << "sensor configuration failed: ";
         Utils::printStatus(status);
-        return;
+    } else {
+        std::cout << tag_ << "Sensor configuration successful" << std::endl;
     }
-    std::cout << tag_ << "Sensor configuration successful" << std::endl;
+    return status;
 }
 
-void SensorClient::activate() {
+telux::common::Status SensorClient::activate() {
     telux::common::Status status = sensor_->activate();
     if (status != telux::common::Status::SUCCESS) {
         std::cout << tag_ << "sensor activation failed: ";
         Utils::printStatus(status);
-        return;
+    } else {
+        {
+            std::lock_guard<std::mutex> lck(qMutex_);
+            activated_ = true;
+            cv_.notify_one();
+        }
+        std::cout << tag_ << "Sensor activation successful" << std::endl;
     }
-
-    {
-        std::lock_guard<std::mutex> lck(qMutex_);
-        activated_ = true;
-        cv_.notify_one();
-    }
-    std::cout << tag_ << "Sensor activation successful" << std::endl;
+    return status;
 }
 
-void SensorClient::deactivate() {
+telux::common::Status SensorClient::deactivate() {
     telux::common::Status status = sensor_->deactivate();
     if (status != telux::common::Status::SUCCESS) {
         std::cout << tag_ << "sensor deactivation failed: ";
         Utils::printStatus(status);
-        return;
+    } else {
+        activated_ = false;
+        std::cout << tag_ << "Sensor deactivation successful" << std::endl;
     }
-    activated_ = false;
-    std::cout << tag_ << "Sensor deactivation successful" << std::endl;
+    return status;
 }
 
 void SensorClient::enableLowPowerMode() {
@@ -267,7 +269,7 @@ void SensorClient::disableLowPowerMode() {
     std::cout << tag_ << "Low power mode disable request successful" << std::endl;
 }
 
-void SensorClient::selfTest(SelfTestType selfTestType) {
+telux::common::Status SensorClient::selfTest(SelfTestType selfTestType) {
     static uint64_t requestID = 0;
     ++requestID;
     uint64_t thisRequestID = requestID;
@@ -282,8 +284,9 @@ void SensorClient::selfTest(SelfTestType selfTestType) {
     if (status != telux::common::Status::SUCCESS) {
         std::cout << tag_ << "self test request with ID " << requestID << " failed: ";
         Utils::printStatus(status);
-        return;
+    } else {
+        std::cout << tag_ << "Self test request with requestID " << requestID
+            << " successful, waiting for callback" << std::endl;
     }
-    std::cout << tag_ << "Self test request with requestID " << requestID
-              << " successful, waiting for callback" << std::endl;
+    return status;
 }

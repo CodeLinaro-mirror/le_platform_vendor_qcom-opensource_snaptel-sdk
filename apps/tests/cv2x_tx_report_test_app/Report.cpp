@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file: Report.cpp
  *
@@ -57,26 +93,30 @@ static const char gTxReportHeader[] = "UTC(us),port,sfn,tx_type,"
                                       "rb_number,start_rb,mcs,"
                                       "segment_number,segment_type";
 
-static const char gTxTypeNames[2][5] = {"new", "reTx"};
-
-static const char gTxStatusNames[3][5] = {"NA", "good", "bad"};
-
-static const char gSegmentTypeNames[4][2] = {"F", "L", "M", "N"};
-
 static constexpr uint32_t SFN_LIMIIT = 10240u; // valid SFN value is 0~10239
 
 static constexpr uint32_t SPS_TIMING_CHANGE_NUM = 5u; // threshold for pkt jitter detection
 
-Cv2xTxStatusReportListener::Cv2xTxStatusReportListener(string fileName) {
+Cv2xTxStatusReportListener::Cv2xTxStatusReportListener(string fileName, uint16_t port, int & ret) {
+    ret = EXIT_SUCCESS;
+    port_ = port;
     // create csv file if specified valid file name
     if (not fileName.empty()) {
         file_ = fopen(fileName.c_str(), "w");
         if (not file_) {
-            cerr << "Failed to open log file %s" << fileName << endl;
+            cerr << "Failed to open log file " << fileName;
+            cerr << ", store to " << DEFAULT_LOG_FILE << " instead!" << endl;
+            file_ = fopen(DEFAULT_LOG_FILE, "w");
+            if (not file_) {
+                cerr << "Failed to open log file " << DEFAULT_LOG_FILE << endl;
+                ret = EXIT_FAILURE;
+            }
         } else {
             //print header to file
             fprintf(file_, "%s\n", gTxReportHeader);
         }
+    } else {
+        ret = EXIT_FAILURE;
     }
 }
 
@@ -86,15 +126,25 @@ Cv2xTxStatusReportListener::~Cv2xTxStatusReportListener() {
         file_ = nullptr;
     }
     cout << "newTx report count:" << newTxCount_;
-    cout << ", reTx report count:" << reTxCount_ << endl;
+    cout << ", reTx report count:" << reTxCount_;
+
+    // only print SLSS counts when listener is associated with port 0,
+    // listener with other port cannot receive SLSS reports
+    if (0 == port_) {
+        cout << ", slss Tx report count:" << slssTxCount_ << endl;
+    } else {
+        cout << endl;
+    }
 }
 
 string Cv2xTxStatusReportListener::txType2String(TxType in) {
     string out;
     if (in == TxType::NEW_TX) {
         out = "newTx";
-    } else {
+    } else if (in == TxType::RE_TX) {
         out = "reTx";
+    } else {
+        out = "slss";
     }
 
     return out;
@@ -165,8 +215,10 @@ void Cv2xTxStatusReportListener::checkPerPktStatus(const TxStatusReport & info) 
             cout << " at ota:" << info.otaTiming;
             cout << ", segNum:" << +info.segNum << endl;
         }
-    } else {
+    } else if (info.txType == TxType::RE_TX) {
         reTxCount_++;
+    } else {
+        slssTxCount_++;
     }
 }
 

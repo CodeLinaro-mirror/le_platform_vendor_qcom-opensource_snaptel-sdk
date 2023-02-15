@@ -51,7 +51,7 @@ bool NAOIpTrigger::init() {
     bool returnValue = false;
 
     do {
-        if (!loadTriggerText()) {
+        if (!loadConfig()) {
             break;
         }
         weak_ptr<NAOIpTrigger> weakFromThis = shared_from_this();
@@ -59,7 +59,6 @@ bool NAOIpTrigger::init() {
             LOG(ERROR, __FUNCTION__, "  event manager is not available ");
             break;
         }
-        eventManager_->registerListener(weakFromThis, TriggerType::NAOIP_TRIGGER);
         dataController_ = std::make_shared<DataFilterController>();
         if (dataController_ ) {
             for (size_t i = 0; i < RETRY_INIT_SDK; i++) {
@@ -85,6 +84,8 @@ bool NAOIpTrigger::init() {
                 );
 
                 if (returnValue) {
+                    //Listen to all triggers to be able to add and remove data filters.
+                    eventManager_->registerListener(weakFromThis, TriggerType::UNKNOWN);
                     break;
                 } else {
                     //telsdk initialisation failed wait for some time and retry
@@ -293,7 +294,10 @@ void NAOIpTrigger::startServer() {
                         newClient.clientDisconnected = clientDisconnectedPromise.get_future();
                         clientsSocketInfo_.push_back(std::move(newClient));
                     } else {
-                        close(clientSocket);
+                        if (close(clientSocket) == -1) {
+                            LOG(ERROR, __FUNCTION__,
+                                "close failed errno = ", string(strerror(errno)));
+                        }
                         LOG(ERROR, __FUNCTION__, " max client limit reached ");
                     }
                 }
@@ -312,7 +316,9 @@ void NAOIpTrigger::cleanOldDisconnectedClientThreads() {
     for (auto it = clientsSocketInfo_.begin(); it != clientsSocketInfo_.end(); it++) {
         if ((*it).clientDisconnected.wait_for(std::chrono::milliseconds(0)) ==
             std::future_status::ready) {
-            close((*it).socketFd);
+            if (close((*it).socketFd) == -1) {
+                LOG(ERROR, __FUNCTION__, "close failed errno = ", string(strerror(errno)));
+            }
             (*it).runningOnThread.join();
             clientsSocketInfo_.erase(it--);
         }
@@ -374,7 +380,7 @@ void NAOIpTrigger::stopServer() {
     LOG(DEBUG, __FUNCTION__," exit");
 }
 
-bool NAOIpTrigger::loadTriggerText() {
+bool NAOIpTrigger::loadConfig() {
     LOG(DEBUG, __FUNCTION__);
     std::string triggerTxtSuspend, triggerTxtResume, triggerTxtShutdown;
     triggerTxtSuspend = config_->getValue("NAOIP_TRIGGER", TRIGGER_SUSPEND);

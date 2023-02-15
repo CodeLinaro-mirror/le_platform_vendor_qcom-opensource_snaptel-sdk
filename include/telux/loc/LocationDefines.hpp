@@ -319,7 +319,9 @@ enum GnssPositionTechType {
   /** Location was calculated using Vehicular data. */
   GNSS_VEHICLE = (1 << 9),
   /** Location was calculated using Visual data. */
-  GNSS_VISUAL = (1 << 10)
+  GNSS_VISUAL = (1 << 10),
+  /** Location was calculated using Propagation logic, which uses cached measurements. */
+  GNSS_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from GnssPositionTechType */
@@ -782,6 +784,8 @@ enum LocationTechnologyType {
   LOC_VEH = (1 << 9),
   /** Location was calculated using Visual data. */
   LOC_VIS = (1 << 10),
+  /** Location was calculated using Propagation logic, which uses cached measurements. */
+  LOC_PROPAGATED = (1 << 11),
 };
 
 /*Bit mask containing bits from LocationTechnologyType */
@@ -1555,6 +1559,24 @@ enum NmeaSentenceType {
 /** Specifies NmeaSentenceType mask */
 using NmeaSentenceConfig = uint32_t;
 
+/** Specify the Geodetic datum for NMEA sentence types that are generated. */
+enum class GeodeticDatumType {
+    /** No type*/
+    GEODETIC_TYPE_NONE = -1,
+    /** Geodetic datum type to indicate the use of World Geodetic System 1984 (WGS84) system */
+    GEODETIC_TYPE_WGS_84 = 0,
+    /** Geodetic datum type to indicate the use of PZ90/GLONASS system */
+    GEODETIC_TYPE_PZ_90 = 1,
+};
+
+/** Specify the Nmea Config Parameters */
+struct NmeaConfig {
+    /** Specify the sentences to be configured. */
+    NmeaSentenceConfig sentenceConfig;
+    /** Specify the datum type to be configured. */
+    GeodeticDatumType datumType;
+};
+
 /** Specify the valid mask for robust location configuration
  *  used by the GNSS standard position engine (SPE). */
 enum RobustLocationConfigType {
@@ -1835,6 +1857,21 @@ struct XtraConfig {
      * ntp.exampleserver.com:123.
      */
     std::vector<std::string> ntpServerURLs;
+    /**
+     * Enable or disable XTRA integrity download.
+     *
+     * true: enable XTRA integrity download.
+     * false: disable XTRA integrity download.
+     */
+    bool isIntegrityDownloadEnabled;
+    /**
+     *  Download interval for xtra integrity, only applicable
+     *  if XTRA integrity download is enabled.
+     *
+     *  If 0 is specified, the download timeout value will use
+     *  device default value.
+     */
+    uint32_t integrityDownloadIntervalMinute;
     /** Level of debug log messages that will be logged. */
     DebugLogLevel daemonDebugLogLevel;
 };

@@ -63,6 +63,7 @@ enum TriggerType
   NAOIP_TRIGGER = 1,
   SMS_TRIGGER,
   GPIO_TRIGGER,
+  CAN_TRIGGER,
   UNKNOWN
 };
 

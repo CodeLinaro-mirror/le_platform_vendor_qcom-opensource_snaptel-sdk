@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -31,7 +31,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 extern "C" {
 #include "unistd.h"
@@ -84,6 +83,10 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::setWwanConnectivityConfig, this, std::placeholders::_1)) ,
             std::make_pair("Request_Backhaul_Connectivity",
             std::bind(&DataSettingsMenu::requestWwanConnectivityConfig, this, std::placeholders::_1)),
+            std::make_pair("Set_MACsec_State",
+            std::bind(&DataSettingsMenu::setMacSecState, this, std::placeholders::_1)),
+            std::make_pair("Request_MACsec_State",
+            std::bind(&DataSettingsMenu::requestMacSecState, this, std::placeholders::_1)),
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -160,7 +163,11 @@ void DataSettingsMenu::setBackhaulPref(std::vector<std::string> inputCommand) {
             << " (0-ETH, 1-USB, 2-WLAN, 3-WWAN, 4-BLE): ";
             std::cin >> backhaul;
             std::cout << endl;
-            Utils::validateInput(backhaul);
+            Utils::validateInput(backhaul, {static_cast<int>(BackhaulType::ETH),
+                static_cast<int>(BackhaulType::USB),
+                static_cast<int>(BackhaulType::WLAN),
+                static_cast<int>(BackhaulType::WWAN),
+                static_cast<int>(BackhaulType::BLE)});
             if((backhaul < 0) || (backhaul >= static_cast<int>(BackhaulType::MAX_SUPPORTED))) {
                 std::cout << "Invalid backhaul... Please try again" << std::endl;
                 inputIsValid = false;
@@ -444,6 +451,83 @@ void DataSettingsMenu::requestWwanConnectivityConfig(std::vector<std::string> in
 
     retStat = dataSettingsManagerMap_[opType]->requestWwanConnectivityConfig(
         static_cast<SlotId>(slotId), respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::setMacSecState(std::vector<std::string> inputCommand)
+{
+    telux::common::Status retStat;
+    int operationType;
+
+    std::cout << "Trigger MACsec state change \n";
+
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    bool enable = false;
+    int userInput = 0;
+    std::cout << "Enter MACsec state (0-Disable, 1-Enable): ";
+    std::cin >> userInput;
+    DataUtils::validateInput(userInput, {0, 1});
+
+    enable = (userInput) ? true : false;
+
+    auto respCb = [](telux::common::ErrorCode error)
+    {
+        std::cout << std::endl
+                  << std::endl;
+        std::cout << "CALLBACK: "
+                  << "setMacSecState Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->setMacSecState(enable, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestMacSecState(std::vector<std::string> inputCommand)
+{
+    telux::common::Status retStat;
+    int operationType;
+
+    std::cout << "Request MACsec state \n";
+
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    auto respCb = [](bool enable, telux::common::ErrorCode error)
+    {
+        std::cout << std::endl
+                  << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestMacSecState Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << std::endl;
+            std::cout << "Current MACsec state is " << ((enable)? "Enabled ":"Disabled")
+                          << std::endl;
+        }
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->requestMacSecState(respCb);
     Utils::printStatus(retStat);
 }
 

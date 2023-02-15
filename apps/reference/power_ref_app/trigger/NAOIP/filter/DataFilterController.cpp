@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -181,7 +181,7 @@ bool DataFilterController::initializeSDK(std::function<void(bool isActive)> defa
 
 bool DataFilterController::sendSetDataRestrictMode(DataRestrictMode mode) {
     LOG(DEBUG, __FUNCTION__);
-    std::promise<telux::common::ErrorCode> prom{};
+    std::promise<telux::common::ErrorCode> prom;
 
     if (!isDataFilterMgrReady_) {
         LOG(ERROR, __FUNCTION__, " Data restrict filter feature is not supported.");
@@ -524,7 +524,7 @@ bool DataFilterController::removeAllFilter() {
 
 int DataFilterController::getDefaultProfile() {
     LOG(DEBUG, __FUNCTION__);
-    std::promise<telux::common::ErrorCode> prom{};
+    std::promise<telux::common::ErrorCode> prom;
     int profileId = DEFAULT_PROFILE;
 
     do {
@@ -560,7 +560,7 @@ int DataFilterController::getDefaultProfile() {
 bool DataFilterController::isDefaultDataCallUp() {
     LOG(DEBUG, __FUNCTION__);
     telux::common::Status retStat = telux::common::Status::SUCCESS;
-    std::promise<telux::common::ErrorCode> prom{};
+    std::promise<telux::common::ErrorCode> prom;
     bool isDefaultDataCall = false;
     int defaultProfileId = getDefaultProfile();
 

@@ -76,8 +76,6 @@ using std::string;
 using std::map;
 using std::pair;
 
-#define ABUF_LEN            2048
-#define ABUF_HEADROOM       256
 
 // thread function to periodically change ID and cert
 void ApplicationBase::changeIdTimer(unsigned int interval)
@@ -188,8 +186,11 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType){
     }
 
     // set up kinematics listener
-    kinematicsReceive = std::make_shared<KinematicsReceive>
+    if(configuration.enableLocationFixes){
+        kinematicsReceive = std::make_shared<KinematicsReceive>
                  (this->configuration.locationInterval);
+    }
+
     if(configuration.enableL2Filtering) {
         cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
     }
@@ -249,8 +250,11 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
         return;
     }
 
-    kinematicsReceive = std::make_shared<KinematicsReceive>
-                        (this->configuration.locationInterval);
+    if(configuration.enableLocationFixes){
+        kinematicsReceive = std::make_shared<KinematicsReceive>
+                (this->configuration.locationInterval);
+    }
+
     if(configuration.enableL2Filtering) {
         cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
     }
@@ -551,8 +555,36 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         stream.clear();
     }
 
+
+    if (configs.end() != configs.find("ReceiveSubIds")){
+        stream.str(configs["ReceiveSubIds"]);
+        for (uint32_t i = 0; i < stoi(configs["ReceiveSubIds"], nullptr, 10); i++)
+        {
+            string rxSubId;
+            getline(stream, rxSubId, ',');
+            if (rxSubId.empty()) {
+                break;
+            }
+            this->configuration.receiveSubIds.push_back(stoi(rxSubId, nullptr, 10));
+        }
+        stream.str("");
+        stream.clear();
+    }
+
+    // if empty, add rx sub id
+    if(this->configuration.receiveSubIds.empty()){
+        this->configuration.receiveSubIds.push_back(DEFAULT_BSM_PSID);
+    }
+
     if (configs.end() != configs.find("LocationInterval")) {
         this->configuration.locationInterval = stoi(configs["LocationInterval"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("enableLocationFixes")) {
+        if (configs["enableLocationFixes"].find("true") != std::string::npos)
+            this->configuration.enableLocationFixes = true;
+        else
+            this->configuration.enableLocationFixes = false;
     }
 
     if (configs.end() != configs.find("WraServiceID")) {
@@ -705,6 +737,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         else
             this->configuration.enableSecurity = false;
     }
+
     if (configuration.enableSecurity == true) {
         if (configs.find("SecurityContextName") != configs.end()) {
             configuration.securityContextName = configs["SecurityContextName"];
@@ -712,16 +745,81 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if (configs.find("SecurityCountryCode") != configs.end()) {
             configuration.securityCountryCode = stoi(configs["SecurityCountryCode"], 0, 16);
         }
+        if(configs.find("enableSsp") != configs.end()){
+            if (configs["enableSsp"].find("true") != std::string::npos){
+                this->configuration.enableSsp = true;
+            }else{
+                this->configuration.enableSsp = false;
+                this->configuration.sspLength = 0;
+            }
+        }
         if (configs.find("sspValue") != configs.end()) {
-        } else {
-            configuration.sspLength = 0;
+            printf("ssp value is: ");
+            char* end;
+            uint8_t num = (uint8_t)std::count(configs["sspValue"].begin(),
+                            configs["sspValue"].end(), ':');
+            if(configs["sspValue"].back() != ':'){
+                num++;
+            }
+            this->configuration.sspLength = num;
+            stream.str(configs["sspValue"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string s;
+                getline(stream, s, ':');
+                if (s.empty()) {
+                    break;
+                }
+                this->configuration.sspValueVect.push_back(s);
+                this->configuration.ssp[i] =
+                        (uint8_t)strtol(
+                            this->configuration.sspValueVect.at(i).c_str(), &end,16);
+                printf("%02x:",this->configuration.ssp[i]);
+            }
+            stream.str("");
+            stream.clear();
+            printf("\n");
         }
-        if (configs.find("SavariWorkaround") != configs.end()) {
-            if (configs["SavariWorkaround"].find("true") != std::string::npos)
-                set_savari_workaround(1);
-            else
-                set_savari_workaround(0);
+
+        if(configs.find("enableSspMask") != configs.end()){
+            if (configs["enableSspMask"].find("true") != std::string::npos){
+                this->configuration.enableSspMask = true;
+            }else{
+                this->configuration.enableSspMask = false;
+                this->configuration.sspMaskLength = 0;
+            }
         }
+        if(configs.find("sspMask") != configs.end() &&
+                this->configuration.enableSsp == true &&
+                this->configuration.enableSspMask == true){
+            printf("ssp mask value is: ");
+            char* end;
+            uint8_t num = (uint8_t)std::count(configs["sspMask"].begin(),
+                            configs["sspMask"].end(), ':');
+            printf("Number of colons is: %d\n", num);
+            if(configs["sspMask"].back() != ':'){
+                num++;
+            }
+            this->configuration.sspMaskLength = num;
+            stream.str(configs["sspMask"]);
+            for (uint32_t i = 0; i < num; i++)
+            {
+                string s;
+                getline(stream, s, ':');
+                if (s.empty()) {
+                    break;
+                }
+                this->configuration.sspMaskVect.push_back(s);
+                this->configuration.sspMask[i] =
+                        (uint8_t)strtol(
+                            this->configuration.sspMaskVect.at(i).c_str(), &end,16);
+                printf("%02x:",this->configuration.sspMask[i]);
+            }
+            stream.str("");
+            stream.clear();
+            printf("\n");
+        }
+
         if(configs.find("enableAsync") != configs.end()) {
             istringstream is4(configs["enableAsync"]);
             is4 >> boolalpha >> configuration.enableAsync;
@@ -755,7 +853,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         } else{
             std::cout << "Signing statistic logging is off" << std::endl;
         }
-
 
         /* Verification-related statistics */
         if(configs.find("enableVerifStatLog") != configs.end()){
@@ -1034,15 +1131,15 @@ void ApplicationBase::setup(MessageType msgType) {
             RadioReceive rx(TrafficCategory::SAFETY_TYPE,
                             TrafficIpType::TRAFFIC_NON_IP, port,
                             std::make_shared<std::vector<uint32_t>>
-                             (this->configuration.spsServiceIDs));
+                             (this->configuration.receiveSubIds));
             // save Rx instance only if create Rx flow succeeded
             if (rx.gRxSub) {
                 this->radioReceives.push_back(std::move(rx));
             } else {
                 cerr << "ApplicationBase::setup error in creating non-wildcard Rx!"
-                        << " with spsServiceIds: ";
-                for(int j = 0; j < configuration.spsServiceIDs.size(); j++){
-                    cerr << "" << this->configuration.spsServiceIDs[i]<< ", ";
+                        << " with receiveSubIds: ";
+                for(int j = 0; j < configuration.receiveSubIds.size(); j++){
+                    cerr << "" << this->configuration.receiveSubIds[i]<< ", ";
                 }
                 cerr << "" << endl;
                 return;
@@ -1159,11 +1256,17 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
         uint8_t signedSpdu[512];
         uint32_t signedSpduLen = 512;
         sopt.psidValue = this->configuration.psid;
-        if (this->configuration.sspLength)
-            memcpy(sopt.sspValue, this->configuration.ssp,
-            this->configuration.sspLength);
-        sopt.sspLength = this->configuration.sspLength;
-        sopt.sspMaskLength = this->configuration.sspMaskLength;
+        if (this->configuration.sspLength){
+             memcpy(sopt.sspValue, this->configuration.ssp,
+                this->configuration.sspLength);
+             if(this->configuration.enableSspMask && this->configuration.sspMaskLength){
+                memcpy(sopt.sspMaskValue, this->configuration.sspMask,
+                    this->configuration.sspMaskLength);
+             }
+            sopt.sspLength = this->configuration.sspLength;
+            sopt.sspMaskLength = this->configuration.sspMaskLength;
+        }
+
         sopt.enableAsync = this->configuration.enableAsync;
         sopt.secVerbosity = this->configuration.secVerbosity;
         if(kinematicsReceive){
@@ -1370,7 +1473,11 @@ int ApplicationBase::getSysV2xIpIfaceAddr(string& ipAddr) {
         return -1;
     }
 
-    getifaddrs(&ifap);
+    if (-1 == getifaddrs(&ifap)) {
+        cerr << "Failed to get ifaddr!" << endl;
+        return -1;
+    }
+
     ifa = ifap;
     while (ifa && ifa->ifa_name) {
         if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET6) {
@@ -1420,7 +1527,6 @@ int ApplicationBase::updateCachedV2xIpIfaceAddr() {
         }
     }
 
-    cerr << "Failed to update V2X IP iface address!" << endl;
     return -1;
 }
 

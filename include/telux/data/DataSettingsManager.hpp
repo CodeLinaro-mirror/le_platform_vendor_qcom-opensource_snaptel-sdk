@@ -158,6 +158,18 @@ using RequestBandInterferenceConfigResponseCb = std::function<void(bool isEnable
     std::shared_ptr<BandInterferenceConfig> config, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to requestMacSecState API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] enabled          True: MacSec is enabled, False: Macsec is disabled.
+ * @param [in] error            Return code for whether the operation succeeded or failed.
+ */
+using RequestMacSecSateResponseCb = std::function<void(bool enabled,
+    telux::common::ErrorCode error)>;
+
+/**
  * This function is called with the response to requestWwanConnectivityConfig API.
  *
  * The callback can be invoked from multiple different threads.
@@ -333,6 +345,38 @@ public:
      */
     virtual telux::common::Status requestWwanConnectivityConfig(SlotId slotId,
         requestWwanConnectivityConfigResponseCb callback) = 0;
+
+    /**
+     * This API allows the client to set the MACsec state.
+     *
+     * - If client enables the MACsec, post that the packets over the ethernet link
+     *   will be encrypted.
+     * - If client disables the MACsec, post that the packets over the ethernet link
+     *   will not be encrypted.
+     *
+     * @param [in] enable          True: enable the MACsec, False: disable the MACsec.
+     * @param [in] callback        callback to get response for setMacSecState.
+     *
+     * @returns Status of setMacSecState i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setMacSecState(bool enable,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Request the current MacSec state.
+     *
+     * @param [in] callback    callback to get response for requestMacSecState.
+     *
+     * @returns Status of requestMacSecState i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status requestMacSecState(RequestMacSecSateResponseCb callback) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service

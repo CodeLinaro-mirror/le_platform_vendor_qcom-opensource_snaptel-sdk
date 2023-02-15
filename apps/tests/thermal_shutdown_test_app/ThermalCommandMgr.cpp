@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -67,7 +67,7 @@
 #include <sstream>
 
 #include "ThermalCommandMgr.hpp"
-#include "../telsdk_console_app/Utils.hpp"
+#include "Utils.hpp"
 #include "ThermalShutdownMgrTestApp.hpp"
 
 ThermalCommandMgr::ThermalCommandMgr() {

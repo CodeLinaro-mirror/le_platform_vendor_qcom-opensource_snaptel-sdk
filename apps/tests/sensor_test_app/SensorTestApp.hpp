@@ -33,9 +33,20 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <cstring>
+#include <utility>
+#include <thread>
+#include <future>
+#include <chrono>
+
+
 #include "SensorControlMenu.hpp"
 #include "SensorFeatureControlMenu.hpp"
 #include "SensorUtils.hpp"
+
+#include <telux/sensor/SensorDefines.hpp>
+#include <telux/sensor/SensorClient.hpp>
+#include <telux/sensor/SensorFactory.hpp>
 
 #include "ConsoleApp.hpp"
 
@@ -47,6 +58,8 @@ class SensorTestApp : public ConsoleApp {
     ~SensorTestApp();
     telux::common::ServiceStatus init();
     void parseArgs(int argc, char **argv);
+    void nonInteractiveLaunch();
+    std::vector<std::pair<std::string, telux::sensor::SensorConfiguration>> sensorList_;
 
  private:
     void initConsole();
@@ -55,7 +68,9 @@ class SensorTestApp : public ConsoleApp {
     telux::common::ServiceStatus initSensorFeatureManager();
     void sensorControlMenu(std::vector<std::string> userInput);
     void sensorFeatureControlMenu(std::vector<std::string> userInput);
+    void updateSensorConfig(std::string str, telux::sensor::SensorConfiguration &sensorConfig);
 
+    std::vector<std::shared_ptr<SensorClient>> sensorClientList_;
     // Instance of all menu created are stored to maintain parallel running streams
     std::shared_ptr<SensorControlMenu> sensorControlMenu_;
     std::shared_ptr<SensorFeatureControlMenu> sensorFeatureControlMenu_;

@@ -293,7 +293,8 @@ class ECallManager : public LocationListener,
     bool locFixReceived_;
     std::condition_variable locUpdateCV_;
     /** Variables to store audio settings for eCall voice conversation */
-    DeviceType audioDevice_;
+    std::vector<DeviceType> audioDevices_ {DeviceType::DEVICE_TYPE_SPEAKER,
+                     DeviceType::DEVICE_TYPE_MIC};
     uint32_t voiceSampleRate_;
     AudioFormat voiceFormat_;
     ChannelTypeMask voiceChannels_;

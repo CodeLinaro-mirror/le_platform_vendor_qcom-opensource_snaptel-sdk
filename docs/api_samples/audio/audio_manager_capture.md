@@ -124,7 +124,7 @@ This sample application demonstrates how to use audio APIs for recording audio.
         std::cout << "deleteStream() succeeded." << std::endl;
         audioCaptureStream.reset();
     }
-    
+
     // Delete the audio stream
     Status  status = audioManager->deleteStream(
                std::dynamic_pointer_cast<IAudioStream>(audioCaptureStream), deleteStreamCallback);

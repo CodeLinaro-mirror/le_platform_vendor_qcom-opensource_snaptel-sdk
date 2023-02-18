@@ -88,7 +88,6 @@ ECallManager::ECallManager()
    , phoneId_(-1)
    , locUpdateIntervalMs_(DEFAULT_LOCATION_FIX_INTERVAL_MS)
    , locFixReceived_(false)
-   , audioDevice_(DeviceType::DEVICE_TYPE_SPEAKER)
    , voiceSampleRate_(16000)
    , voiceFormat_(AudioFormat::PCM_16BIT_SIGNED)
    , voiceChannels_(ChannelType::LEFT | ChannelType::RIGHT)
@@ -464,7 +463,7 @@ void ECallManager::setup(int phoneId) {
                   << std::endl;
     } else {
         audioClient_->startVoiceSession(
-            phoneId, audioDevice_, voiceSampleRate_, voiceFormat_, voiceChannels_, ecnrMode_);
+            phoneId, audioDevices_, voiceSampleRate_, voiceFormat_, voiceChannels_, ecnrMode_);
     }
     // Get the location updates. This application doesn't update the MSD automatically when a TPS
     // eCall over IMS is triggered or when user provides MSD in raw PDU format(contains location
@@ -592,10 +591,20 @@ void ECallManager::parseAppConfig() {
     // Get the configured output audio device
     param = appSettings->getValue("AUDIO_OUTPUT_DEVICE_TYPE");
     if (!param.empty()) {
-        auto deviceValue = atoi(param.c_str());
-        audioDevice_ = static_cast<DeviceType>(deviceValue);
+        std::stringstream ss(param);
+        int i = -1;
+        audioDevices_.clear();
+        std::cout << CLIENT_NAME << "Using audio devices: ";
+        while(ss >> i) {
+            audioDevices_.emplace_back(static_cast<DeviceType>(i));
+            std::cout << i << "  ";
+            if(ss.peek() == ',') {
+                ss.ignore();
+            }
+        }
+        std::cout << std::endl;
     } else {
-        std::cout << CLIENT_NAME << "Using default audio output device" << std::endl;
+        std::cout << CLIENT_NAME << "Using default audio devices" << std::endl;
     }
     // Get the configured audio sample rate
     param = appSettings->getValue("VOICE_SAMPLE_RATE");

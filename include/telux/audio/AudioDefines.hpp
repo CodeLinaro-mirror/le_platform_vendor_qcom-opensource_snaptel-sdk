@@ -398,7 +398,12 @@ struct StreamConfig {
     ChannelTypeMask channelTypeMask;
     /** Refer to @ref AudioFormat */
     AudioFormat format;
-    /** Defines the list of audio devices @ref DeviceType to use for this stream */
+    /** Defines the list of audio devices @ref DeviceType to use for this stream.
+     *  For StreamType::PLAY and StreamType::TONE_GENERATOR, a single sink device should be
+     *  specified. For StreamType::CAPTURE, a single source device should be specified. For
+     *  StreamType::VOICE_CALL and StreamType::LOOPBACK, both sink and source should be specified
+     *  with sink as the first device and source as the second.
+     */
     std::vector<DeviceType> deviceTypes;
     /** For an in-call audio usecase, this represents the voice path direction @ref Direction */
     std::vector<Direction> voicePaths;

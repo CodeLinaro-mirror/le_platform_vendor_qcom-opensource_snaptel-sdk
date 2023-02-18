@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -155,7 +155,7 @@ void AudioClient::onServiceStatusChange(ServiceStatus status) {
         std::cout << "Audio subsystem is AVAILABLE" << std::endl;
         // In case of an SSR, automatically start audio session post SSR
         if(keepVoiceSessionActive_) {
-            startVoiceSession(streamConfig_.modemSubId, streamConfig_.deviceTypes[0],
+            startVoiceSession(streamConfig_.modemSubId, streamConfig_.deviceTypes,
                 streamConfig_.sampleRate, streamConfig_.format, streamConfig_.channelTypeMask,
                 streamConfig_.ecnrMode);
         }
@@ -200,7 +200,7 @@ void AudioClient::setVoiceState(bool state) {
 }
 
 // Function to start an active voice session
-telux::common::Status AudioClient::startVoiceSession(int phoneId, DeviceType deviceType,
+telux::common::Status AudioClient::startVoiceSession(int phoneId, std::vector<DeviceType> devices,
     uint32_t sampleRate, AudioFormat voiceFormat, ChannelTypeMask channels, EcnrMode ecnrMode) {
     keepVoiceSessionActive_ = true;
     if(isVoiceEnabled()) {
@@ -223,7 +223,7 @@ telux::common::Status AudioClient::startVoiceSession(int phoneId, DeviceType dev
         streamConfig_.format = voiceFormat;
         streamConfig_.channelTypeMask = channels;
         streamConfig_.deviceTypes.clear();
-        streamConfig_.deviceTypes.emplace_back(deviceType);
+        streamConfig_.deviceTypes = devices;
         streamConfig_.ecnrMode = ecnrMode;
         auto status = audioMgr_->createStream(streamConfig_,
             std::bind(&AudioClient::createStreamCallback, this, std::placeholders::_1,

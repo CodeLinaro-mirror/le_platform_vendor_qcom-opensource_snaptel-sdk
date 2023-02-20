@@ -103,9 +103,9 @@ private:
     void stopServer();
     void listenNewTriggerClient(int triggerSocket);
     void cleanOldDisconnectedClientThreads();
-    TcuActivityState validateTrigger(char* buffer, int length);
+    bool validateTrigger(char* buffer, int length, TcuActivityState& tcuActivityState, std::string& machineName);
     bool loadConfig();
-    void triggerEvent(TcuActivityState event);
+    void triggerEvent(TcuActivityState event, std::string machineName);
     bool enableFilter();
     bool disableFilter();
 

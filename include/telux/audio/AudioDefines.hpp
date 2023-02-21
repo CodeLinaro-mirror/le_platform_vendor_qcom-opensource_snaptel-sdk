@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,12 +62,10 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
- * @file    AudioDefines.hpp
- *
- * @brief   AudioDefines contains enumerations and variables used for
- *          audio subsystems.
+ * @file  AudioDefines.hpp
+ * @brief Defines various enumerations and data types used with telsdk
+ *        audio APIs.
  */
 
 #ifndef AUDIODEFINES_HPP
@@ -80,57 +78,154 @@
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
-
 namespace audio {
 
-/** Duration to play DTMF tone for infinite time */
+/** Specifies that the DTMF tone should be played indefinitely */
 const uint16_t INFINITE_DTMF_DURATION = 0xFFFF;
 
-/* Duration to play tone for infinite time */
+/** Specifies that the audio tone should be played indefinitely */
 const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
 
 /** @addtogroup telematics_audio_manager
  * @{ */
 
 /**
- * Represent type of device like SPEAKER, MIC, etc.
+ * Represents an audio device. Each device is mapped to its corresponding
+ * platform specific audio device type. Below table provides default
+ * mapping of devices on a QTI's reference platform.
+ *
+ * Applicable for SA515M, SA415M, SA410M, SA2150P based software products:
+ * @table{3,{\raggedright}p{1.62in},{\raggedright}p{1.63in},{\raggedright}p{1.63in}}
+ * @trfirsthdg
+ * @thmultcol{1,|c|} Telsdk device type @thmultcolend @thmultcol{1,c|} Direction @thmultcolend
+ *  @thmultcollast{1,c|} Mapped HAL device @thmultcollastend
+ * @trfirsthdgend
+ * @trhdg
+ * @thdg{1,|c|, Telsdk device type} @thdg{1,c|,Direction} @thdglast{1,c|,Mapped HAL device}
+ * @trhdgend
+ * @tr @td DEVICE_TYPE_NONE @tdend @td N/A @tdend
+ *  @tdlast AUDIO_DEVICE_NONE @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER @tdend @td RX @tdend
+ *  @tdlast AUDIO_DEVICE_OUT_SPEAKER @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER_2 @tdend @td RX @tdend
+ *  @tdlast AUDIO_DEVICE_OUT_EARPIECE @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER_3 @tdend @td RX @tdend
+ *  @tdlast AUDIO_DEVICE_OUT_WIRED_HEADSET @tdlastend @trend
+ * @tr @td DEVICE_TYPE_BT_SCO_SPEAKER @tdend @td RX @tdend
+ *  @tdlast AUDIO_DEVICE_NONE @tdlastend @trend
+ * @tr @td DEVICE_TYPE_PROXY_SPEAKER @tdend @td RX @tdend
+ *  @tdlast AUDIO_DEVICE_OUT_PROXY @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC @tdend @td TX @tdend
+ *  @tdlast AUDIO_DEVICE_IN_BACK_MIC @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC_2 @tdend @td TX @tdend
+ *  @tdlast AUDIO_DEVICE_IN_BUILTIN_MIC @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC_3 @tdend @td TX @tdend
+ *  @tdlast AUDIO_DEVICE_IN_WIRED_HEADSET @tdlastend @trend
+ * @tr @td DEVICE_TYPE_BT_SCO_MIC @tdend @td TX @tdend
+ *  @tdlast AUDIO_DEVICE_NONE @tdlastend @trend
+ * @tr @td DEVICE_TYPE_PROXY_MIC @tdend @td TX @tdend
+ *  @tdlast AUDIO_DEVICE_IN_PROXY @tdlastend @trend
+ * @tableend
+ *
+ * Applicable for SA525M based software products:
+ * @table{3,{\raggedright}p{1.62in},{\raggedright}p{1.63in},{\raggedright}p{1.63in}}
+ * @trfirsthdg
+ * @thmultcol{1,|c|} Telsdk device type @thmultcolend @thmultcol{1,c|} Direction @thmultcolend
+ *  @thmultcollast{1,c|} Mapped PAL device @thmultcollastend
+ * @trfirsthdgend
+ * @trhdg
+ * @thdg{1,|c|, Telsdk device type} @thdg{1,c|,Direction} @thdglast{1,c|,Mapped HAL device}
+ * @trhdgend
+ * @tr @td DEVICE_TYPE_NONE @tdend @td N/A @tdend
+ *  @tdlast PAL_DEVICE_NONE @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER @tdend @td RX @tdend
+ *  @tdlast PAL_DEVICE_OUT_SPEAKER @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER_2 @tdend @td RX @tdend
+ *  @tdlast PAL_DEVICE_OUT_HANDSET @tdlastend @trend
+ * @tr @td DEVICE_TYPE_SPEAKER_3 @tdend @td RX @tdend
+ *  @tdlast PAL_DEVICE_OUT_WIRED_HEADSET @tdlastend @trend
+ * @tr @td DEVICE_TYPE_BT_SCO_SPEAKER @tdend @td RX @tdend
+ *  @tdlast PAL_DEVICE_OUT_BLUETOOTH_SCO @tdlastend @trend
+ * @tr @td DEVICE_TYPE_PROXY_SPEAKER @tdend @td RX @tdend
+ *  @tdlast PAL_DEVICE_OUT_PROXY @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC @tdend @td TX @tdend
+ *  @tdlast PAL_DEVICE_IN_SPEAKER_MIC @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC_2 @tdend @td TX @tdend
+ *  @tdlast PAL_DEVICE_IN_HANDSET_MIC @tdlastend @trend
+ * @tr @td DEVICE_TYPE_MIC_3 @tdend @td TX @tdend
+ *  @tdlast PAL_DEVICE_IN_WIRED_HEADSET @tdlastend @trend
+ * @tr @td DEVICE_TYPE_BT_SCO_MIC @tdend @td TX @tdend
+ *  @tdlast PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET @tdlastend @trend
+ * @tr @td DEVICE_TYPE_PROXY_MIC @tdend @td TX @tdend
+ *  @tdlast PAL_DEVICE_IN_PROXY @tdlastend @trend
+ * @tableend
  */
 enum DeviceType {
+    /** Default device (invalid) */
     DEVICE_TYPE_NONE = -1,
-    /* output devices */
+    /** Sink device as per above mapping */
     DEVICE_TYPE_SPEAKER = 1,
-    /* input devices */
+    /** Sink device as per above mapping */
+    DEVICE_TYPE_SPEAKER_2 = 2,
+    /** Sink device as per above mapping */
+    DEVICE_TYPE_SPEAKER_3 = 3,
+    /** Bluetooth sink device for voice call */
+    DEVICE_TYPE_BT_SCO_SPEAKER = 4,
+    /** Virtual sink device as per above mapping */
+    DEVICE_TYPE_PROXY_SPEAKER = 5,
+    /** Source device as per above mapping */
     DEVICE_TYPE_MIC = 257,
+    /** Source device as per above mapping */
+    DEVICE_TYPE_MIC_2 = 258,
+    /** Source device as per above mapping */
+    DEVICE_TYPE_MIC_3 = 259,
+    /** Bluetooth source device for voice call */
+    DEVICE_TYPE_BT_SCO_MIC = 260,
+    /** Virtual mic connected over ethernet */
+    DEVICE_TYPE_PROXY_MIC = 261,
 };
 
 /**
- * Represent Device Direction RX (Sink), Tx (Source)
+ *  Defines the direction of an audio device.
  */
 enum class DeviceDirection {
+    /** Default direction (invalid) */
     NONE = -1,
+    /** Audio will go out of the device, for example through a speaker (sink) */
     RX = 1,
+    /** Audio will come into the device, for example through a mic (source) */
     TX = 2,
 };
 
 /**
- * Represent Stream Type
+ *  Defines the type of the audio stream and the type's purpose.
  */
 enum class StreamType {
+    /** Default type (invalid) */
     NONE = -1,
-    VOICE_CALL = 1, /**< Voice Call, Provides Audio Session for an active Voice */
-    PLAY = 2, /**< Plaback, Provides Audio Playback Session */
-    CAPTURE = 3, /**< Capture, Provides Audio Capture/Record Session */
-    LOOPBACK = 4, /**< Loopback, Provides loopback between source and sink devices */
-    TONE_GENERATOR = 5, /**< Tone Generator, Generates tone on sink device */
+    /** Used for audio over a cellular network */
+    VOICE_CALL = 1,
+    /** Used for playing audio, for example playing music and notifications */
+    PLAY = 2,
+    /** Used for capturing audio, for example recording sound using a mic  */
+    CAPTURE = 3,
+    /** Used for generating audio from a @ref DeviceDirection::RX device, which
+     *  is intended to be captured back by a @ref DeviceDirection::TX device */
+    LOOPBACK = 4,
+    /** Used for single tone and DTMF tone generation */
+    TONE_GENERATOR = 5,
 };
 
 /**
- * Represent Stream Direction
+ *  Defines the direction of an audio stream.
  */
 enum class StreamDirection {
+    /** Default direction (invalid) */
     NONE = -1,
-    RX = 1, /**< Represents Session Directed towards Sink Device */
-    TX = 2, /**< Represents Session Directed from Source Device*/
+    /** Specifies that the audio data will flow towards a sink device */
+    RX = 1,
+    /** Specifies that the audio data originates from a source device */
+    TX = 2,
 };
 
 
@@ -140,64 +235,91 @@ enum class StreamDirection {
  * @{ */
 
 /**
- * Represent Voice Direction RX (Sink), Tx (Source)
+ *  Used for an in-call audio usecase. Represents the direction of the
+ *  audio data flow.
  */
 enum class Direction {
+    /** Defines that playback should occur on a voice downlink
+     *  path (cellular network to a device) */
     RX = 1,
+    /** Defines that playback should occur on voice uplink
+     *  path (device to a cellular network) */
     TX = 2,
 };
 
 /**
- * Represent Stream's types of Channel
+ *  Adds positional perspective to the audio data in a given audio frame.
+ *  For example, in a 2-speaker audio system, ChannelType::LEFT may represent
+ *  audio played on speaker-1 while ChannelType::RIGHT represents audio played
+ *  on speaker-2.
  */
 enum ChannelType {
-    LEFT = (1 << 0), /**< Represents left channel   */
-    RIGHT = (1 << 1), /**< Represents right channel */
+    /** Specifies the left channel */
+    LEFT = (1 << 0),
+    /** Specifies the right channel */
+    RIGHT = (1 << 1),
 };
 
 /**
- * Represent Stream's consolidated lists of Channel presence
+ *  Describes the arrangment of audio samples in a given audio frame through
+ *  @ref ChannelType.
  */
 using ChannelTypeMask = int;
 
 /**
- * Specifies Stream data format
+ *  Specifies how audio data is represented (for example, endianness and
+ *  number of bits) for storage or exchanging among various audio software
+ *  and hardware layers.
  */
 enum class AudioFormat {
-    UNKNOWN = -1,         /**< Unknown format */
-    PCM_16BIT_SIGNED = 1, /**< 16 bit signed PCM format */
-    AMRNB = 20,           /**< AMRNB format */
-    AMRWB,                /**< AMRWB format */
-    AMRWB_PLUS,           /**< AMRWB+ format */
+    /** Default format (invalid) */
+    UNKNOWN = -1,
+    /** PCM signed 16 bits */
+    PCM_16BIT_SIGNED = 1,
+    /** Adaptive multirate narrow band format */
+    AMRNB = 20,
+    /** Adaptive multirate wide band format */
+    AMRWB,
+    /** Extended adaptive multirate wide band format */
+    AMRWB_PLUS,
 };
 
 /**
- * Represents the possible lower frequencies(in Hz) in a standard DTMF tone
+ *  When generating a DTMF tone, defines the value of the low frequency component.
  */
 enum class DtmfLowFreq {
+    /** 697 Hz */
     FREQ_697 = 697,
+    /** 770 Hz */
     FREQ_770 = 770,
+    /** 852 Hz */
     FREQ_852 = 852,
+    /** 941 Hz */
     FREQ_941 = 941
 };
 
 /**
- * Represents the possible higher frequencies(in Hz) in a standard DTMF tone
+ *  When generating a DTMF tone, defines the value of the high frequency component.
  */
 enum class DtmfHighFreq {
+    /** 1209 Hz */
     FREQ_1209 = 1209,
+    /** 1336 Hz */
     FREQ_1336 = 1336,
+    /** 1477 Hz */
     FREQ_1477 = 1477,
+    /** 1633 Hz */
     FREQ_1633 = 1633
 };
 
 /**
- * Represents type of stop for compressed audio format playback. Audio playback can be stopped in
- * two ways force stop and after playing all buffers in the pipeline.
+ *  Defines the behavior for how a compressed audio format playback should be finished.
  */
 enum class StopType {
-    FORCE_STOP,    /**< Stop Playing Immediately and clear buffer pipeline */
-    STOP_AFTER_PLAY,    /**< Stop Play once after all buffers in pipeline are played */
+    /** Stop playing immediately and discard all pending audio samples */
+    FORCE_STOP,
+    /** Stop playing after all samples in the pipeline have been played */
+    STOP_AFTER_PLAY,
 };
 
 /** @} */ /* end_addtogroup telematics_audio_stream */
@@ -206,77 +328,103 @@ enum class StopType {
  * @{ */
 
 /**
- * Representative of type of frame structure.
- * Typical transport interface or file storage.
+ *  Defines the properties of the audio data for compressed playback and transcoding.
  */
 enum class AmrwbpFrameFormat {
-    UNKNOWN = -1,        /**< Unknown format */
+    /** Default format (invalid) */
+    UNKNOWN = -1,
+    /** Unsupported */
     TRANSPORT_INTERFACE_FORMAT,
+    /** Specifies that the audio content from AMR* format file has been
+     *  parsed and only actual audio content is sent for playback */
     FILE_STORAGE_FORMAT,
 };
 
 /**
- * Enable/Disable ECNR(Echo Cancellation and Noise Reduction) on the audio stream. When enabling
- * this the audio stream should be associated with devices that are capable of doing ECNR. It is
- * only applicable to @ref StreamType::VOICE_CALL.
+ *  On a voice call stream, enables or disables echo cancellation and noise reduction (ECNR).
+ *  Used with an audio device capable of supporting ECNR.
  */
 enum class EcnrMode {
-    DISABLE = 0,    /**< To disable the ECNR mode*/
-    ENABLE = 1,   /**< To enable the ECNR mode. Applicable only to @ref StreamType::VOICE_CALL */
+    /** Disables ECNR */
+    DISABLE = 0,
+    /** Enables ECNR */
+    ENABLE = 1,
 };
 
 /**
- * Represents state of Audio calibration initialization in system. API gives status that tells
- * whether the calibration initialized by audio sub system.
+ *  Represents the state of the platform calibration for audio.
  */
 enum class CalibrationInitStatus {
-    UNKNOWN = -1,      /**< calibration initialization status is unknown*/
-    INIT_SUCCESS = 0,  /**< calibration initialized successfully*/
-    INIT_FAILED = 1,   /**< calibration initialization failed*/
+    /** Default state */
+    UNKNOWN = -1,
+    /** Platform calibrated successfully */
+    INIT_SUCCESS = 0,
+    /** Platform calibration failed */
+    INIT_FAILED = 1,
 };
 
 /**
- *  Frame format common parameters
+ *  Represents the base class for compressed audio formats.
  */
 struct FormatParams {
 
 };
 
 /**
- *  Frame format codec specific parameters
+ *  Specifies the details of the adaptive multirate wide band format frame.
  */
 struct AmrwbpParams : FormatParams {
-    uint32_t bitWidth; /**< Bitwidth of Stream, Typical Values <16/24>. */
+    /** Bit width of the stream, typically 16 or 24 */
+    uint32_t bitWidth;
+    /** Refer to @ref AmrwbpFrameFormat */
     AmrwbpFrameFormat frameFormat;
 };
 
 /**
- *  Common Stream configuration parameters
+ *  Defines the parameters when creating an audio stream.
  */
 struct StreamConfig {
+    /** Refer to @ref StreamType */
     StreamType type;
-    int modemSubId = 1; /**<  @deprecated Represents modem Subscription ID, Default set to 1.
-                                Applicable only for Voice Call */
-    SlotId slotId = INVALID_SLOT_ID; /**< Represents slotId, applicable for voice call only */
-    uint32_t sampleRate; /**< Sample Rate of Stream, Typical Values <8k/16k/32k/48k> */
+    /** @deprecated represents modem subscription ID (default set to 1).
+     *  Use the @ref StreamConfig::slotId field instead of this */
+    int modemSubId = 1;
+    /** SlotId -- specifies the slot ID where the UICC card is inserted.
+     *  Used in conjuction with StreamType::VOICE_CALL only */
+    SlotId slotId = INVALID_SLOT_ID;
+    /** Sample rate in Hz, typical values 8k/16k/32k/48k */
+    uint32_t sampleRate;
+    /** Refer to @ref ChannelTypeMask */
     ChannelTypeMask channelTypeMask;
+    /** Refer to @ref AudioFormat */
     AudioFormat format;
+    /** Defines the list of audio devices @ref DeviceType to use for this stream.
+     *  For StreamType::PLAY and StreamType::TONE_GENERATOR, a single sink device should be
+     *  specified. For StreamType::CAPTURE, a single source device should be specified. For
+     *  StreamType::VOICE_CALL and StreamType::LOOPBACK, both sink and source should be specified
+     *  with sink as the first device and source as the second.
+     */
     std::vector<DeviceType> deviceTypes;
-    std::vector<Direction> voicePaths; /**< Represent voice path direction for in call audio.
-                                            TX for Uplink and RX for Downlink.> */
+    /** For an in-call audio usecase, this represents the voice path direction @ref Direction */
+    std::vector<Direction> voicePaths;
+    /** Refer to @ref FormatParams */
     FormatParams *formatParams;
-    EcnrMode ecnrMode = EcnrMode::DISABLE; /**< Represents ECNR mode for stream. It is applicable
-                                                only to @ref StreamType::VOICE_CALL */
+    /** Refer to @ref EcnrMode */
+    EcnrMode ecnrMode = EcnrMode::DISABLE;
 };
 
 /**
- *  Represents information about the audio format.
+ *  Specifies the parameters when setting up streams for transcoding.
  */
 struct FormatInfo {
-    uint32_t sampleRate; /**< Sample Rate of audio, Typical Values <8k/16k/32k/48k> */
-    ChannelTypeMask mask; /**< parameter for configuration of channel type */
-    AudioFormat format;  /**< Represents audio format */
-    FormatParams *params; /**< Represents codec specific parameters, like Frame Format */
+    /** Sample rate in Hz, typical values 8k/16k/32k/48k */
+    uint32_t sampleRate;
+    /** Refer to @ref ChannelTypeMask */
+    ChannelTypeMask mask;
+    /** Refer to @ref AudioFormat */
+    AudioFormat format;
+    /** Refer to @ref FormatParams */
+    FormatParams *params;
 };
 
 /** @} */ /* end_addtogroup telematics_audio_manager */
@@ -285,52 +433,50 @@ struct FormatInfo {
  * @{ */
 
 /**
- *  Stream Channel Volume parameters
+ *  Defines the volume levels for a given audio channel.
  */
 struct ChannelVolume {
+    /** @ref ChannelType to which the volume level is associated */
     ChannelType channelType;
-    float vol; /**< Volume range in float <0 to 1.0>.
-                        0 represents min volume, 1 represents max volume */
+    /** Volume level -- minimum 0.0 and maximum 1.0 */
+    float vol;
 };
 
 /**
- *  Stream Channel Volume parameters consolidating entire Stream
+ *  Defines the volume levels for the audio device.
  */
 struct StreamVolume {
+    /** List of the volume levels per channel, specified by @ref ChannelVolume */
     std::vector<ChannelVolume> volume;
+    /** @ref StreamDirection associated with the device */
     StreamDirection dir;
 };
 
 /**
- *  Stream Mute parameters
+ *  Specifies the mute state of the audio device.
  */
 struct StreamMute {
-    bool enable; /**< enable or disable mute on stream */
+    /** True if the device is muted, False if the device is unmuted */
+    bool enable;
+    /** @ref StreamDirection associated with the device */
     StreamDirection dir;
 };
 
 /**
- *  Stream Data Buffer
- */
-struct StreamBuffer {
-    std::vector<uint8_t> buffer; /**< Buffer with Size encapsulated */
-    size_t offset; /**< Actual Buffer Content starting position */
-    int64_t timestamp; /**< For future use */
-};
-
-/**
- *  DTMF tone parameters
+ *  Defines the characteristics of the DTMF tone.
  */
 struct DtmfTone {
-    DtmfLowFreq lowFreq;    /**< Lower frequency associated with DTMF tone */
-    DtmfHighFreq highFreq;  /**< Higher frequency associated with DTMF tone */
-    StreamDirection direction; /**< Direction associated with DTMF tone */
+    /** Lower frequency associated with the DTMF tone */
+    DtmfLowFreq lowFreq;
+    /** Higher frequency associated with the DTMF tone */
+    DtmfHighFreq highFreq;
+    /** @ref StreamDirection associated with the stream */
+    StreamDirection direction;
 };
 
 /** @} */ /* end_addtogroup telematics_audio_stream */
 
 }  // End of namespace audio
-
 }  // End of namespace telux
 
 #endif  // AUDIODEFINES_HPP

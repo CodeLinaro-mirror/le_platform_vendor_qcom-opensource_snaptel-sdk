@@ -89,12 +89,12 @@ class SensorClient : public ISensorEventListener,
     void printInfo();
     virtual void onEvent(std::shared_ptr<std::vector<SensorEvent>> events) override;
     virtual void onConfigurationUpdate(SensorConfiguration configuration) override;
-    void configure(SensorConfiguration config);
-    void activate();
-    void deactivate();
+    telux::common::Status configure(SensorConfiguration config);
+    telux::common::Status activate();
+    telux::common::Status deactivate();
     void enableLowPowerMode();
     void disableLowPowerMode();
-    void selfTest(SelfTestType selfTestType);
+    telux::common::Status selfTest(SelfTestType selfTestType);
     std::shared_ptr<ISensorClient> getSensorClient() const {
         return sensor_;
     }

@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -63,26 +63,16 @@
  */
 
 /**
- * @file    AudioManager.hpp
- *
- * @brief   Audio Manager is a primary interface for audio operations. It provides
- *          APIs to manage Voice, Audio and Sound Cards.
+ * @file  AudioManager.hpp
+ * @brief Defines the APIs to create and manage streams.
  */
 
 #ifndef AUDIOMANAGER_HPP
 #define AUDIOMANAGER_HPP
 
-#include <future>
-#include <memory>
-#include <vector>
-
-#include <telux/common/CommonDefines.hpp>
-#include <telux/audio/AudioDefines.hpp>
-#include <telux/audio/AudioListener.hpp>
 #include <telux/audio/AudioTranscoder.hpp>
 
 namespace telux {
-
 namespace audio {
 
 class IAudioDevice;
@@ -95,73 +85,80 @@ class IAudioCaptureStream;
  * @{ */
 
 /**
- * @brief   Stream Buffer manages the buffer to be used for read and write operations on Audio
- *          Streams. For write operations, applications should request a stream buffer, populate
- *          it with the data and then pass it to the write operation and set the dataSize that is
- *          to be written to the stream. Similarly for read operations,the application should
- *          request a stream buffer and use that in the read operation.
- *          At the end of the read, the stream buffer will contain the data read. Once an operation
- *          (read/write) has completed, the stream buffer could be reused for a subsequent
- *          read/write operation, provided reset() API called on stream buffer between
- *          subsequent calls.
- *
+ *  Represents the buffer containing the audio data for playback when used with
+ *  the @ref StreamType::PLAY stream. Represents the audio data received when used
+ *  with the @ref StreamType::CAPTURE stream.
  */
 class IAudioBuffer {
-public:
+ public:
    /**
-    * Returns the minimum size (in bytes) of data that caller needs to read/write
-    * before calling a read/write operation on the stream.
+    * For the @ref StreamType::PLAY stream, specifies the minimum number of bytes that
+    * must be sent for playback. For the @ref StreamType::CAPTURE stream, specifies
+    * the minimum number of bytes that can be read.
     *
-    * @returns    minimum size
+    * @returns Minimum size (in bytes)
     */
    virtual size_t getMinSize() = 0;
 
    /**
-    * Returns the maximum size (in bytes) that the buffer can hold.
+    * For the @ref StreamType::PLAY stream, specifies the maximum number of bytes that
+    * can be sent for playback. For the @ref StreamType::CAPTURE stream, specifies
+    * the maximum number of bytes that can be read.
     *
-    * @returns    maximum size
+    * @returns Maximum size (in bytes)
     */
    virtual size_t getMaxSize() = 0;
 
    /**
-    * Gets the raw buffer that IStreamBuffer manages. Application should write in between(include)
-    * of  getMinSize() to getMaxSize() number of bytes in this buffer. Application is not
-    * responsible to free the raw buffer. It will be free'ed when the IStreamBuffer is destroyed.
+    * Gives the managed raw buffer. It is freed when IAudioBuffer is destructed. For
+    * the @ref StreamType::PLAY stream, the actual audio samples should be copied into
+    * this raw buffer for playback. For the @ref StreamType::CAPTURE stream, the actual
+    * audio contents are obtained from this buffer.
     *
-    * @returns    raw buffer
+    * @returns Managed raw buffer
     */
    virtual uint8_t *getRawBuffer() = 0;
 
    /**
-    * Gets the size (in bytes) of valid data present in the buffer.
+    * For the @ref StreamType::CAPTURE stream, specifies how many bytes were read.
+    * Not used for the @ref StreamType::PLAY stream.
     *
-    *
-    * @returns size of valid data in the buffer
+    * @returns Size of the valid data bytes in the raw buffer
     */
    virtual uint32_t getDataSize() = 0;
 
    /**
-    * Sets the size (in bytes) of valid data present in the buffer.
+    * For the @ref StreamType::PLAY stream, specifies how many bytes should be played.
+    * Not used for the @ref StreamType::CAPTURE stream.
     *
-    *
-    * @param size  size of valid data in the buffer
+    * @returns Size of the valid data bytes in the raw buffer
     */
    virtual void setDataSize(uint32_t size) = 0;
 
    /**
-    * Reset all state and data of the buffer. This is to be called when reusing the same buffer
-    * for multiple operations.
+    * Clears the contents of the managed raw buffer.
     *
-    * @returns status   Status of the operation
+    * @returns @ref telux::common::Status::SUCCESS if the buffer is cleared successfully,
+    *          otherwise, an appropriate error code
     */
    virtual telux::common::Status reset() = 0;
 
+    /**
+     * Destructor of the IAudioBuffer.
+     */
    virtual ~IAudioBuffer() {};
 };
 
+/**
+ *  Implements the @ref IAudioBuffer interface to give contexual meaning to its methods
+ *  based on the @ref StreamType type associated with the stream, with which this
+ *  buffer will be used.
+ */
 class IStreamBuffer : virtual public IAudioBuffer {
-public:
-
+ public:
+    /**
+     * Destructor of the IStreamBuffer.
+     */
     virtual ~IStreamBuffer() {};
 };
 
@@ -171,253 +168,254 @@ public:
  * @{ */
 
 /**
- * This function is called with the response to getDevices API.
+ * Invoked to pass the list of the supported audio devices. Used in conjunction
+ * with IAudioManager::getDevices().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] devices  List of the @ref IAudioDevice devices
  *
- * @param [in] devices  Devices list.
- * @param [in] error    Return code which indicates whether the operation
- *                      succeeded or not.
- *                      @ref ErrorCode
+ * @param [in] error    @ref telux::common::ErrorCode::SUCCESS if the list is
+ *                      fetched successfully, otherwise, an appropriate error code
  */
-using GetDevicesResponseCb = std::function<void(std::vector<std::shared_ptr<IAudioDevice>> devices,
-                                                telux::common::ErrorCode error)>;
+using GetDevicesResponseCb = std::function<void(std::vector<
+        std::shared_ptr<IAudioDevice>> devices, telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to getStreamTypes API.
+ * Invoked to pass the list of the supported audio stream types. Used in conjunction
+ * with IAudioManager::getStreamTypes().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] streamTypes List of the @ref StreamType types
  *
- * @param [in] streamTypes  Stream type list.
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] error       @ref telux::common::ErrorCode::SUCCESS if the list is
+ *                         fetched successfully, otherwise, an appropriate error code
  */
-using GetStreamTypesResponseCb
-   = std::function<void(std::vector<StreamType> streamTypes, telux::common::ErrorCode error)>;
+using GetStreamTypesResponseCb = std::function<void(std::vector<StreamType> streamTypes,
+        telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to createStream API.
+ * Invoked to pass the instance of the audio stream created. Used in conjunction with
+ * IAudioManager::createStream().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * Passed stream should be type casted before using it, according to the StreamType::*
+ * type that was requested while creating it.
  *
- * @param [in] stream  Interface pointer of Stream created.
- *                     VOICE_CALL - Provides IAudioVoiceStream pointer
- *                     PLAY - Provides IAudioPlayStream pointer
- *                     CAPTURE - Provides IAudioCaptureStream pointer
- * @param [in] error   Return code which indicates whether the operation
- *                     succeeded or not.
- *                     @ref ErrorCode
+ * For @ref StreamType::VOICE_CALL type cast to IAudioManager::IAudioVoiceStream.
+ * For @ref StreamType::CAPTURE type cast to IAudioManager::IAudioCaptureStream.
+ * For @ref StreamType::PLAY cast to IAudioManager::IAudioPlayStream.
+ * For @ref StreamType::LOOPBACK cast to IAudioManager::IAudioLoopbackStream.
+ * For @ref StreamType::TONE_GENERATOR cast to IAudioManager::IAudioToneGeneratorStream.
+ *
+ * @param [in] stream  Audio stream created or nullptr if creation failed
+ *
+ * @param [in] error   @ref telux::common::ErrorCode::SUCCESS if the stream is
+ *                     created successfully, otherwise, an appropriate error code
  */
-using CreateStreamResponseCb
-   = std::function<void(std::shared_ptr<IAudioStream> &stream, telux::common::ErrorCode error)>;
+using CreateStreamResponseCb = std::function<void(std::shared_ptr<IAudioStream> &stream,
+        telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to createTranscoder API.
+ * Invoked to pass the instance of the @ref ITranscoder created. Used in conjunction
+ * with IAudioManager::createTranscoder().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] transcoder ITranscoder instance or nullptr if transcoder can't be setup
  *
- * @param [in] transcoder  Interface pointer of transcoder.
- *
- * @param [in] error       Return code which indicates whether the operation succeeded or not.
- *                         @ref ErrorCode
- *
+ * @param [in] error      @ref telux::common::ErrorCode::SUCCESS if the transcoder is
+ *                        set up successfully, otherwise, an appropriate error code
  */
-using CreateTranscoderResponseCb = std::function<void(
-        std::shared_ptr<ITranscoder> &transcoder, telux::common::ErrorCode error)>;
+using CreateTranscoderResponseCb = std::function<void(std::shared_ptr<ITranscoder> &transcoder,
+        telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to deleteStream API.
+ * Invoked to confirm if the stream is deleted or not. Used in conjunction with
+ * IAudioManager::deleteStream().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @param [in] error  Return code which indicates whether the operation
- *                    succeeded or not.
- *                    @ref ErrorCode
+ * @param [in] error   @ref telux::common::ErrorCode::SUCCESS if the stream is
+ *                     deleted, otherwise, an appropriate error code
  */
 using DeleteStreamResponseCb = std::function<void(telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to getCalibrationInitStatus API.
+ * Invoked to pass the audio calibration database (ACDB) initialization status. Used in
+ * conjunction with IAudioManager::getCalibrationInitStatus().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] calInitStatus @ref CalibrationInitStatus::INIT_SUCCESS if the ACDB is
+ *                           initialized successfully, CalibrationInitStatus::INIT_FAILED
+ *                           if initialization failed
  *
- * @param [in] calInitStatus  State of calibration initialization.
- * @param [in] error          Return code which indicates whether the operation
- *                            succeeded or not.
- *                            @ref ErrorCode
+ * @param [in] error         @ref telux::common::ErrorCode::SUCCESS if the status is
+ *                           is fetched successfully, otherwise, an appropriate error code
  */
-using GetCalInitStatusResponseCb
-   = std::function<void(CalibrationInitStatus calInitStatus, telux::common::ErrorCode error)>;
+using GetCalInitStatusResponseCb = std::function<void(CalibrationInitStatus calInitStatus,
+        telux::common::ErrorCode error)>;
 
 /**
- * @brief   Audio Manager is a primary interface for audio operations. It provide
- *          APIs to manage Streams ( like voice, play, record etc) and sound cards.
+ *  Provides the APIs to discover the supported audio devices, create streams, and subscribe
+ *  for audio service status updates.
  */
 class IAudioManager {
-public:
+ public:
    /**
-    * Checks the status of audio subsystems and returns the result.
+    * Checks if the audio service is ready for use.
     *
-    * @returns    If true that means AudioManager is ready for performing audio operations.
+    * @returns True if the audio service is ready for use, otherwise, False
     *
-    * @deprecated Use getServiceStatus API
+    * @deprecated Use @ref getServiceStatus()
     */
    virtual bool isSubsystemReady() = 0;
 
    /**
-    * This status indicates whether the object is in a usable state or not.
+    * Gets the audio service status.
     *
-    * @returns SERVICE_AVAILABLE    -  if audio manager is ready to use.
-    *          SERVICE_UNAVAILABLE  -  if audio manager is temporarily unavailable to use.
-    *          SERVICE_FAILED       -  if audio manager encountered an irrecoverable failure and
-    *                                  can not be used.
+    * @returns @ref telux::common::ServiceStatus::SERVICE_AVAILABLE if the audio
+    *          service is ready for use,
+    *          @ref telux::common::ServiceStatus::SERVICE_UNAVAILABLE if the audio
+    *          service is temporarily unavailable (possibly undergoing initialization),
+    *          @ref telux::common::ServiceStatus::SERVICE_FAILED if the audio
+    *          service needs re-initialization
     */
    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
-    * Wait for Audio subsystem to be ready.
+    * Suggests when the audio service is ready.
     *
-    * @returns    A future that caller can wait on to be notified when audio
-    *             subsystem is ready.
+    * @returns Future to block on until the service status is updated to read
     *
-    * @deprecated Use InitResponseCb callback in factory API getAudioManager.
+    * @deprecated Use @ref telux::common::InitResponseCb in @ref AudioFactory::getAudioManager()
     */
    virtual std::future<bool> onSubsystemReady() = 0;
 
    /**
-    * Get the list of supported audio devices, which are currently supported in the audio subsystem
+    * Gets the list of the supported audio devices.
     *
-    * @param [in] callback    callback pointer to get the response of getDevices.
+    * @param [in] callback Mandatory, callback that will receive the list
     *
-    * @returns Status of request i.e. success or suitable status code.
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status getDevices(GetDevicesResponseCb callback = nullptr) = 0;
 
    /**
-    * Get the list of supported audio streams types, which are currently supported in the audio
-    * subsystem
+    * Gets the list of the supported stream types.
     *
-    * @param [in] callback    callback pointer to get the response of getStreamTypes.
+    * @param [in] callback Mandatory, callback that will receive the list
     *
-    * @returns Status of request i.e. success or suitable status code.
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status getStreamTypes(GetStreamTypesResponseCb callback = nullptr) = 0;
 
    /**
-    * Creates the stream for audio operation
+    * Creates an audio stream with the parameters provided.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_AUDIO_VOICE or
-    * TELUX_AUDIO_PLAY or TELUX_AUDIO_CAPTURE or TELUX_AUDIO_FACTORY_TEST permission to invoke this
-    * API successfully.
+    * On platforms with access control enabled, the caller must have TELUX_AUDIO_VOICE,
+    * TELUX_AUDIO_PLAY, TELUX_AUDIO_CAPTURE, or TELUX_AUDIO_FACTORY_TEST permission
+    * to invoke this method successfully.
     *
-    * @param [in] streamConfig    stream configuration.
-    * @param [in] callback        callback pointer to get the response of createStream.
+    * @param [in] streamConfig Parameters of the stream
     *
-    * @returns Status of request i.e. success or suitable status code.
+    * @param [in] callback     Mandatory, invoked to pass the stream created
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status createStream(StreamConfig streamConfig,
-                                              CreateStreamResponseCb callback = nullptr)
-      = 0;
+        CreateStreamResponseCb callback = nullptr) = 0;
 
    /**
-    * Creates an instance of transcoder that can be used for transcoding operations. The supported
-    * transcoding is real time transcoding, which takes the playback time of file for completing the
-    * opearation.
-    * Each instance returned can be used for single transcoding operation. The instance can not
-    * be used for multiple transcoding operation.
+    * Set up the transcoder with the given parameters.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_AUDIO_TRANSCODE
-    * permission to invoke this API successfully.
+    * Transcoder instance is obtained in @ref CreateTranscoderResponseCb. It can be
+    * used only for a single transcoding operation.
     *
-    * @param [in] input      configuration of input buffers that needs to be transcoded.
-    * @param [in] output     configuration of transcoded output buffers.
-    * @param [in] callback   callback pointer to get the response of createTranscoder.
+    * On platforms with access control enabled, the caller must have TELUX_AUDIO_TRANSCODE
+    * permission to invoke this method successfully.
     *
-    * @returns Status of request i.e. success or suitable status code.
+    * @param [in] input     Details of the input to transcode
+    * @param [in] output    Details of the transcoded output required
+    * @param [in] callback  Invoked to pass the transcoder instance
     *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
     virtual telux::common::Status createTranscoder(FormatInfo input, FormatInfo output,
-            CreateTranscoderResponseCb callback) = 0;
+        CreateTranscoderResponseCb callback) = 0;
 
    /**
-    * Deletes the specified stream which was created before
+    * Deletes the stream created with @ref createStream(). It closes the stream and releases
+    * all resources allocated for this stream.
     *
-    * On platforms with Access control enabled, Caller needs to have TELUX_AUDIO_VOICE or
-    * TELUX_AUDIO_PLAY or TELUX_AUDIO_CAPTURE or TELUX_AUDIO_FACTORY_TEST permission to invoke this
-    * API successfully.
+    * On platforms with access control enabled, the caller must have TELUX_AUDIO_VOICE,
+    * TELUX_AUDIO_PLAY, TELUX_AUDIO_CAPTURE, or TELUX_AUDIO_FACTORY_TEST permission to
+    * invoke this method successfully.
     *
-    * @param [in] stream      reference to stream to be deleted.
-    * @param [in] callback    callback pointer to get the response of deleteStream.
+    * @param [in] stream    Stream to delete
+    * @param [in] callback  Optional, invoked to pass the result of the stream deletion
     *
-    * @returns Status of request i.e. success or suitable status code.
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status deleteStream(std::shared_ptr<IAudioStream> stream,
-                                              DeleteStreamResponseCb callback = nullptr)
-      = 0;
+        DeleteStreamResponseCb callback = nullptr) = 0;
 
    /**
-    * Register a listener to get notified when service status changes.
+    * Registers the given listener to get notified when the audio service status changes.
+    * The method @ref IAudioListener::onServiceStatusChange() is invoked to notify of the new status.
     *
-    * @param [in] listener     Pointer of IServiceListener object that processes the notification
+    * @param [in] listener Invoked to pass the new service status
     *
-    * @returns Status of registerListener i.e success or suitable status code.
-    *
+    * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+    *          otherwise, an appropriate error code
     */
    virtual telux::common::Status registerListener(std::weak_ptr<IAudioListener> listener) = 0;
 
    /**
-    * Remove a previously registered listener.
+    * Unregisters the given listener registered previously with @ref registerListener().
     *
-    * @param [in] listener Previously registered IServiceListener that needs to be removed
+    * @param [in] listener Listener to unregister
     *
-    * @returns Status of deRegisterListener, success or suitable status code
-    *
+    * @returns @ref telux::common::Status::SUCCESS if the listener is unregistered,
+    *          otherwise, an appropriate error code
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IAudioListener> listener) = 0;
 
    /**
-    * Get calibration status. Returns whether audio subsystem was able to successfully initialize
-    * calibration in system. Calibration init status is available after the initialization
-    * of the audio subsystem or after re-intialization of audio subsytem in case of sub system
-    * restart is triggered.
+    * Gets the current initialization status of the audio calibration database (ACDB).
+    * This status is obtained in the @ref GetCalInitStatusResponseCb callback.
     *
-    *  @param [in] callback    callback pointer to get the response of getCalibrationInitStatus.
+    * @param [in] callback Invoked to pass the initialization status
     *
-    * @returns @ref Status of getCalibrationInitStatus, success or suitable status code.
-    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status getCalibrationInitStatus(GetCalInitStatusResponseCb callback) = 0;
 
+    /**
+     * Destructor of the IAudioManager.
+     */
    virtual ~IAudioManager() {};
 };
 
 /**
- * @brief   Audio device and it's characteristics like Direction (Sink or Source), type
+ *  Represents an audio device. Used in conjunction with @ref GetDevicesResponseCb.
  */
 class IAudioDevice {
-public:
+ public:
    /**
-    * Get the type of Device (i.e SPEAKER, MIC etc)
+    * Gets the type of the audio device.
     *
-    * @returns    DeviceType
+    * @returns Type of the audio device
     */
    virtual DeviceType getType() = 0;
 
    /**
-    * Provide direction of device whether is Sink for audio data ( RX i.e. speaker, etc)
-    * or Source for audio data ( TX i.e. mic, etc)
+    * Gets the direction of the audio device.
     *
-    * @returns    DeviceDirection
+    * @returns Direction of the audio device
     */
    virtual DeviceDirection getDirection() = 0;
 
+    /**
+     * Destructor of the IAudioDevice.
+     */
    virtual ~IAudioDevice() {};
 
  };
@@ -428,414 +426,486 @@ public:
  * @{ */
 
 /**
- * This function is called with the response to stream getDevice API.
+ * Invoked to pass the list of the audio devices associated with the stream. Used in
+ * conjunction with @ref IAudioStream::getDevice().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] devices List of the devices
  *
- * @param [in] devices   Devices list.
- * @param [in] error     Return code which indicates whether the operation
- *                       succeeded or not.
- *                       @ref ErrorCode
+ * @param [in] error  @ref telux::common::ErrorCode::SUCCESS if the device list is
+ *                    is sent successfully, otherwise, an appropriate error code
  */
-using GetStreamDeviceResponseCb
-   = std::function<void(std::vector<DeviceType> devices, telux::common::ErrorCode error)>;
+using GetStreamDeviceResponseCb = std::function<void(std::vector<DeviceType> devices,
+        telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to stream getVolume API.
+ * Invoked to pass the current volume level of the audio device. Used in conjunction
+ * with @ref IAudioStream::getVolume().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] volume Details of the volume
  *
- * @param [in] volume   stream volume details.
- * @param [in] error    Return code which indicates whether the operation
- *                      succeeded or not.
- *                      @ref ErrorCode
+ * @param [in] error  @ref telux::common::ErrorCode::SUCCESS if the volume level
+ *                    is read successfully, otherwise, an appropriate error code
  */
-using GetStreamVolumeResponseCb
-   = std::function<void(StreamVolume volume, telux::common::ErrorCode error)>;
+using GetStreamVolumeResponseCb = std::function<void(StreamVolume volume,
+        telux::common::ErrorCode error)>;
 
 /**
- * This function is called with the response to stream getMute API.
+ * Invoked to pass the current mute state of the stream. Used in conjunction with
+ * IAudioStream::getMute().
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * @param [in] mute   Details about the mute state
  *
- * @param [in] mute   stream mute details.
- * @param [in] error  Return code which indicates whether the operation
- *                    succeeded or not.
- *                    @ref ErrorCode
+ * @param [in] error  @ref telux::common::ErrorCode::SUCCESS if the mute state
+ *                    is read successfully, otherwise, an appropriate error code
  */
-using GetStreamMuteResponseCb
-   = std::function<void(StreamMute mute, telux::common::ErrorCode error)>;
+using GetStreamMuteResponseCb = std::function<void(StreamMute mute,
+        telux::common::ErrorCode error)>;
 
 /**
- * @brief   IAudioStream represents single audio stream with base properties
+ *  Base class for all audio stream types. Contains the common properties and methods.
  */
 class IAudioStream {
-public:
+ public:
    /**
-    * Get the stream type like VOICE, PLAY, CAPTURE
+    * Gets the @ref StreamType associated with the stream.
     *
-    * @returns    StreamType
+    * @returns Type of the stream
     */
    virtual StreamType getType() = 0;
 
    /**
-    * Set Device for audio stream. For @ref VOICE_CALL, @ref IAudioVoiceStream::startAudio API is required to be called
-    * on audio stream object for this API to take effect.
+    * Associates the given audio device with the stream.
     *
-    * @param [in] devices     Devices list.
-    * @param [in] callback    callback to get the response of setDevice.
+    * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
+    * @ref StreamType::CAPTURE only.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * For @ref StreamType::VOICE_CALL, the stream must be started using
+    * @ref IAudioVoiceStream::startAudio() to make the device effective.
+    *
+    * @param [in] devices List of the audio devices to use with the stream
+    *
+    * @param [in] callback Invoked to confirm if the device is associated
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status setDevice(std::vector<DeviceType> devices,
-                                           telux::common::ResponseCallback callback = nullptr)
-      = 0;
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Get Device for audio stream
+    * Gets the list of the audio devices associated with the stream.
     *
-    * @param [in] callback    callback to get the response of getDevice
+    * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
+    * @ref StreamType::CAPTURE only.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @param [in] callback Invoked to pass the associated device
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status getDevice(GetStreamDeviceResponseCb callback = nullptr) = 0;
 
    /**
-    * Set Volume of audio stream. Application needs to provide direction of the stream. Currently
-    * TX direction of @ref VOICE_CALL is not supported.
+    * Sets the volume level of the audio device.
     *
-    * @param [in] volume     volume setting per channel for direction.
-    * @param [in] callback   callback to get the response of setVolume.
+    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::TX.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
+    * @ref StreamType::CAPTURE only.
+    *
+    * @param [in] volume   Specifies the volume level and the stream's direction
+    *
+    * @param [in] callback Invoked to confirm if the volume level is set
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status setVolume(StreamVolume volume,
-                                           telux::common::ResponseCallback callback = nullptr)
-      = 0;
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Get Volume of audio stream. Application needs to provide direction of the stream. Currently
-    * TX direction of @ref VOICE_CALL is not supported.
+    * Gets the current volume level of the audio device.
     *
-    * @param [in] dir         Stream Direction to query volume details.
-    * @param [in] callback    callback to get the response of getVolume.
+    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::TX.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
+    * @ref StreamType::CAPTURE only.
+    *
+    * @param [in] dir      Direction of the stream associated with the device
+    *
+    * @param [in] callback Invoked to pass the volume read
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status getVolume(StreamDirection dir,
-                                           GetStreamVolumeResponseCb callback = nullptr)
-      = 0;
+        GetStreamVolumeResponseCb callback = nullptr) = 0;
 
    /**
-    * Request to mute/unmute audio stream. For @ref VOICE_CALL, @ref IAudioVoiceStream::startAudio
-    * API is required to be called on audio stream object for this API to take effect.
+    * Mute or unmute the stream as specified by the @ref StreamMute provided.
     *
-    * @param [in] mute        mute setting for direction.
-    * @param [in] callback    callback to know the status of the request.
+    * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
+    * @ref StreamType::CAPTURE only.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * For @ref StreamType::VOICE_CALL, the stream must be started using
+    * @ref IAudioVoiceStream::startAudio() before setting the mute state.
+    *
+    * For @ref StreamType::PLAY and @ref StreamType::CAPTURE, direction of the stream
+    * is ignored (all channels will be muted/unmuted).
+    *
+    * @param [in] mute     Defines the stream is to be muted or unmuted
+    *
+    * @param [in] callback Invoked to confirm if the stream is muted/unmuted
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status setMute(StreamMute mute,
-                                         telux::common::ResponseCallback callback = nullptr)
-      = 0;
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Get the mute status of the audio stream
+    * Gets the current mute state of the audio stream.
     *
-    * @param [in] dir         Stream Direction to query mute details.
-    * @param [in] callback    callback to get the response of getMute.
+    * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
+    * @ref StreamType::CAPTURE only.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * For @ref StreamType::VOICE_CALL, the stream must be started using
+    * @ref IAudioVoiceStream::startAudio() before reading the mute state.
+    *
+    * @param [in] dir      Direction of the stream
+    *
+    * @param [in] callback Invoked to pass the mute state
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status getMute(StreamDirection dir,
-                                         GetStreamMuteResponseCb callback = nullptr) = 0;
+        GetStreamMuteResponseCb callback = nullptr) = 0;
 
+    /**
+     * Destructor of the IAudioStream.
+     */
    virtual ~IAudioStream() {};
 };
 
 /**
- * @brief   IAudioVoiceStream represents single voice stream
+ *  Represents the stream created with the @ref StreamType::VOICE_CALL type. Provides
+ *  methods to establish a voice call on a cellular network, and play and detect DTMF tones.
  */
 class IAudioVoiceStream : virtual public IAudioStream {
-public:
-
+ public:
    /**
-    * Starts audio stream
+    * Starts a voice call stream.
     *
-    * @param [in] callback    callback to get the response of startAudio.
+    * @param [in] callback Optional, invoked to confirm if the stream has started
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
-   virtual telux::common::Status startAudio(telux::common::ResponseCallback callback = nullptr) = 0;
+   virtual telux::common::Status startAudio(
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Stops audio stream
+    * Stops a voice call stream.
     *
-    * @param [in] callback    callback to get the response of stopAudio.
+    * @param [in] callback Optional, invoked to confirm if the stream has stopped
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
-   virtual telux::common::Status stopAudio(telux::common::ResponseCallback callback = nullptr) = 0;
+   virtual telux::common::Status stopAudio(
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Plays in-band DTMF tone on the active voice stream. This API supports DTMF tone playback on
-    * local device on the RX path, for playing DTMF on the TX path so that it is heard on far end
-    * use @ref telux::tel::ICall::startDtmfTone API.
+    * Generates a DTMF tone on a local device (on RX path) associated with the active
+    * voice call stream.
     *
-    * @param [in] dtmfTone     DTMF tone properties
-    * @param [in] duration     Duration (in milliseconds) for which the tone needs to be played. The
-    *                          constant infiniteDtmfDuration(=0xFFFF) represents infinite duration.
-    * @param [in] gain         DTMF tone gain
-    * @param [in] callback     callback to get the response of playDtmfTone.
+    * @param [in] dtmfTone  Specifies the tone's properties
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @param [in] duration Duration (in milliseconds) for which the tone is played.
+    *                      Set it to @ref INFINITE_TONE_DURATION to play indefinitely
+    *
+    * @param [in] gain      Volume level of the tone, valid value range is 0 to 4000
+    *
+    * @param [in] callback  Optional, invoked to confirm if the tone play has started
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
-   virtual telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint16_t duration, uint16_t gain,
-                    telux::common::ResponseCallback callback = nullptr) = 0;
+   virtual telux::common::Status playDtmfTone(DtmfTone dtmfTone, uint16_t duration,
+        uint16_t gain, telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Stops the DTMF tone which is being played (i.e duration not expired) on the active voice
-    * stream
+    * If @ref IAudioVoiceStream::playDtmfTone() was called with the duration set to
+    * @ref INFINITE_DTMF_DURATION, then this method stops playing the DTMF tone.
     *
-    * @param [in] direction   Direction associated with the DTMF tone
-    * @param [in] callback    callback to get the response of stopDtmfTone.
+    * @param [in] direction Direction of the stream
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @param [in] callback  Optional, invoked to confirm if the tone play has stopped
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status stopDtmfTone(StreamDirection direction,
-                    telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Register a listener to get notified when a DTMF tone is detected in the active voice stream
+    * Registers the given listener to get notified whenever a DTMF tone is detected on a
+    * voice call stream. Used in conjunction with @ref IVoiceListener::onDtmfToneDetection().
     *
-    * @param [in] listener     Pointer of IVoiceListener object that processes the notification
-    * @param [in] callback     callback to get the response of registerListener
+    * @param [in] listener Receives the DTMF tone detected event
     *
-    * @returns Status of registerListener i.e success or suitable status code.
+    * @param [in] callback Invoked to confirm if the registration is successful
+    *
+    * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+    *          otherwise, an appropriate error code
     */
    virtual telux::common::Status registerListener(std::weak_ptr<IVoiceListener> listener,
-                    telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Remove a previously registered listener.
+    * Unregisters the given listener registered with @ref IAudioVoiceStream::registerListener().
     *
-    * @param [in] listener Previously registered IVoiceListener that needs to be removed
+    * @param [in] listener Listener to unregister
     *
-    * @returns Status of deRegisterListener, success or suitable status code
+    * @returns @ref telux::common::Status::SUCCESS if the listener is unregistered,
+    *          otherwise, an appropriate error code
     */
    virtual telux::common::Status deRegisterListener(std::weak_ptr<IVoiceListener> listener) = 0;
 
+    /**
+     * Destructor of the IAudioVoiceStream.
+     */
    virtual ~IAudioVoiceStream() {};
 };
 
 /**
- * This function is called with the response to IAudioPlayStream::write().
+ * Used in conjunction with @ref IAudioPlayStream::write(). Invoked to pass the audio data
+ * length (in bytes) played from the given buffer.
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * Application can clear the contents of the buffer by calling @ref IAudioBuffer::reset()
+ * before reusing it for the subsequent write operation.
  *
- * @param [in] buffer       Buffer that was used for the write operation. Application could call
- *                          IStreamBuffer::reset() and reuse this buffer for subsequent write
- *                          operations on the same stream.
+ * @param [in] buffer Buffer passed in the call to @ref IAudioPlayStream::write()
  *
- * @param [in] bytesWritten Return how many bytes are written to the stream.
- *
- * @param [in] error        Return code which indicates whether the operation
- *                          succeeded or not.
- *                          @ref ErrorCode
+ * @param [in] error  @ref telux::common::ErrorCode::SUCCESS if the playback was successful,
+ *                    otherwise, an appropriate error code
  */
-using WriteResponseCb
-    = std::function<void(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytesWritten,
-                                                            telux::common::ErrorCode error)>;
+using WriteResponseCb =
+        std::function<void(std::shared_ptr<IStreamBuffer> buffer,
+        uint32_t bytesWritten, telux::common::ErrorCode error)>;
 
 /**
- * @brief   IAudioPlayStream represents single audio playback stream
+ *  Represents the stream created with the @ref StreamType::PLAY type. Provides the methods to
+ *  play the audio.
  */
 class IAudioPlayStream : virtual public IAudioStream {
-public:
-
+ public:
    /**
-    * Get an Audio StreamBuffer to be used for playback operations
+    * Gets an audio buffer containing the audio samples to play.
     *
-    * @returns            an Audio Buffer or a nullptr in case of error
+    * @returns @ref IStreamBuffer instance or nullptr if memory allocation fails
     */
     virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
 
    /**
-    * Write Samples/Frames to audio stream. First write starts playback operation.
+    * Sends the audio data for playback. First write starts the playback operation.
     *
-    * Write in case of compressed audio format maintains a pipeline, if the callback returns with
-    * same number of bytes written as requested and no error occured, user can send next buffer.
-    * If the number of bytes returned are not equal to the requested write size, then need to resend
-    * the buffer again from the leftover offset after waiting for the
-    * IPlayListener::onReadyForWrite() event. Once the last buffer is sent and the playback
-    * operation is complete, delete the playback stream to avoid receiving silent packets on RX path.
+    * For uncompressed playback (for example, @ref AudioFormat::PCM_16BIT_SIGNED),
+    * the next buffer can be sent the moment telux::common::ErrorCode::SUCCESS is
+    * received by @ref WriteResponseCb.
     *
-    * @param [in] buffer       stream buffer for write.
-    * @param [in] callback     callback to get the response of write.
+    * For compressed playback (for example, AudioFormat::AMR*), the next buffer
+    * should be sent only after both; (a) telux::common::ErrorCode::SUCCESS is received
+    * by @ref WriteResponseCb (indicating that the current buffer has been pushed in the pipeline
+    * for playback) and (b) IPlayListener::onReadyForWrite() has been invoked (indicating that
+    * the pipeline can accommodate the next buffer).
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @param [in] buffer   Contains the audio data to play
+    *
+    * @param [in] callback Optional, invoked to confirm if the data is played successfully
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
     virtual telux::common::Status write(std::shared_ptr<IStreamBuffer> buffer,
-                    WriteResponseCb callback = nullptr) = 0;
+        WriteResponseCb callback = nullptr) = 0;
 
    /**
-     * This API is to be used to stop playback. It is applicable only for compressed
-     * audio format playback.
-     *
-     * @param [in] callback      callback to get the response of stopAudio.
-     * @param [in] stopType      it specifies type of stop for stopping audio playback.
-     *
-     * @returns Status of the request i.e. success or suitable status code.
-     *
-     */
+    * Finishes the ongoing compressed playback in a way specified by the @ref StopType provided.
+    *
+    * @param [in] callback Invoked to confirm if the playback has finished
+    *
+    * @param [in] stopType Defines how to finish playback
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
+    */
     virtual telux::common::Status stopAudio(StopType stopType,
-                    telux::common::ResponseCallback callback = nullptr) = 0;
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Register a listener to get notified for events of Play Stream
+    * Registers the given listener to receive events; (a) pipeline is ready to accept the next
+    * buffer for compressed playback (b) compressed playback has stopped. Events are
+    * received by the listener implementing the @ref IPlayListener interface.
     *
-    * @param [in] listener     Pointer of IPlayListener object that processes the notification
-    *        [in] callback     callback to get the response of registerListener
+    * @param [in] listener Receives the playstream events
     *
-    * @returns Status of registerListener i.e success or suitable status code.
-    *
+    * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
+    *          otherwise, an appropriate error code
     */
     virtual telux::common::Status registerListener(std::weak_ptr<IPlayListener> listener) = 0;
 
    /**
-    * Remove a previously registered listener.
+    * Unregisters the given listener registered with @ref IAudioPlayStream::registerListener().
     *
-    * @param [in] listener Previously registered IPlayListener that needs to be removed
+    * @param [in] listener Listener to unregister
     *
-    * @returns Status of deRegisterListener, success or suitable status code
-    *
+    * @returns @ref telux::common::Status::SUCCESS if the listener is unregistered,
+    *          otherwise, an appropriate error code
     */
     virtual telux::common::Status deRegisterListener(std::weak_ptr<IPlayListener> listener) = 0;
 
+    /**
+     * Destructor of the IAudioPlayStream.
+     */
     virtual ~IAudioPlayStream() {};
 };
 
-
 /**
- * This function is called with the response to IAudioCaptureStream::read().
+ * Used in conjunction with @ref IAudioCaptureStream::read(). Invoked to pass the captured
+ * audio samples. The IAudioBuffer::getDataSize() gives the length of the data (in bytes).
  *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
+ * After the samples have been processed by the application, it can clear the contents of the
+ * buffer by calling @ref IAudioBuffer::reset().
  *
- * @param [in] buffer Buffer that was used to capture the data from the read operation.
- *                    Applications could call IStreamBuffer::reset() and reuse this buffer for
- *                    subsequent read operations on the same stream. Also buffer.getDataSize()
- *                    will represent the number of bytes read.
+ * @param [in] buffer Buffer passed in the call to @ref IAudioCaptureStream::read()
  *
- * @param [in] error  Return code which indicates whether the operation
- *                    succeeded or not.
- *                    @ref ErrorCode
+ * @param [in] error  @ref telux::common::ErrorCode::SUCCESS if the capture was successful,
+ *                    otherwise, an appropriate error code
  */
-using ReadResponseCb
-    = std::function<void(std::shared_ptr<IStreamBuffer> buffer,
-                                        telux::common::ErrorCode error)>;
+using ReadResponseCb =
+        std::function<void(std::shared_ptr<IStreamBuffer> buffer,
+        telux::common::ErrorCode error)>;
 
 /**
- * @brief   IAudioCaptureStream represents single audio capture stream
+ *  Represents the stream created with the @ref StreamType::CAPTURE type. Provides
+ *  the methods to read the captured audio.
  */
 class IAudioCaptureStream : virtual public IAudioStream {
-public:
-
+ public:
    /**
-    * Get an Audio Stream Buffer to be used for capture operations
+    * Gets an audio buffer that will contain the audio data read.
     *
-    * @returns            an Audio Buffer or nullptr in case of failure
+    * @returns @ref IStreamBuffer instance or nullptr if memory allocation fails
     */
    virtual std::shared_ptr<IStreamBuffer> getStreamBuffer() = 0;
 
    /**
-    * Read Samples from audio stream. First read starts capture operation.
+    * Read the audio data from the source device associated with this stream. Data captured
+    * will be received by the @ref ReadResponseCb callback.
     *
-    * @param [in] buffer       stream buffer for read.
-    * @param [in] bytesToRead  specifying how many bytes to be read from stream.
-    * @param [in] callback     callback to get the response of read.
+    * First read call starts the capture operation.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @param [in] buffer       Buffer in which data should be read
+    *
+    * @param [in] bytesToRead  Length of the data (in bytes) to read
+    *
+    * @param [in] callback     Receives the captured data
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
-   virtual telux::common::Status read(std::shared_ptr<IStreamBuffer> buffer, uint32_t bytesToRead,
-                                      ReadResponseCb callback = nullptr) = 0;
+   virtual telux::common::Status read(std::shared_ptr<IStreamBuffer> buffer,
+      uint32_t bytesToRead, ReadResponseCb callback = nullptr) = 0;
 
+    /**
+     * Destructor of the IAudioCaptureStream.
+     */
    virtual ~IAudioCaptureStream() {};
 };
 
 /**
- * @brief   IAudioLoopbackStream represents audio loopback stream
+ *  Represents the stream created with the @ref StreamType::LOOPBACK type. Provides
+ *  the methods to start and stop the audio loopback operation.
  */
 class IAudioLoopbackStream : virtual public IAudioStream {
-public:
+ public:
+  /**
+    * Starts looping back the audio between the source and sink devices associated with this
+    * stream.
+    *
+    * @param [in] callback  Invoked to confirm if the loopback has started
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
+    */
+   virtual telux::common::Status startLoopback(
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
   /**
-    * Start loopback between source and sink devices
+    * Starts looping back the audio between the source and sink devices associated with this
+    * stream.
     *
-    * @param [in] callback     callback to get the response of start loopback.
+    * @param [in] callback  Optional, invoked to confirm if the loopback has stopped
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
-   virtual telux::common::Status
-            startLoopback(telux::common::ResponseCallback callback = nullptr) = 0;
+   virtual telux::common::Status stopLoopback(
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
-   /**
-    * Stop loopback between source and sink devices
-    *
-    * @param [in] callback     callback to get the response of stop loopback.
-    *
-    * @returns Status of the request i.e. success or suitable status code.
-    */
-   virtual telux::common::Status
-            stopLoopback(telux::common::ResponseCallback callback = nullptr) = 0;
-
+    /**
+     * Destructor of the IAudioLoopbackStream.
+     */
    virtual ~IAudioLoopbackStream() {};
 };
 
 /**
- * @brief   IAudioToneGeneratorStream represents tone generator stream
+ *  Represents the stream created with the @ref StreamType::TONE_GENERATOR type. Provides
+ *  the methods to play an audio tone.
  */
 class IAudioToneGeneratorStream : virtual public IAudioStream {
-public:
-
+ public:
   /**
-    * Play a tone on sink devices. As the duartion expires, the generated tone
-    * terminates automatically.
+    * Plays an audio tone with the given parameters.
     *
-    * @param  [in] freq         Accepts the composition of frequencies (in Hz) to be played
-    *                           such as single tone or dual tone. Any additional
-    *                           frequencies provided will be ignored.
-    * @param  [in] duration     Duration (in milliseconds) for which the tone needs to be played.
-    *                           The constant infiniteToneDuration(=0xFFFF) represents infinte
-    *                           duration.
-    * @param  [in] gain         Tone Gain.
-    * @param  [in] callback     callback to get the response of play tone.
+    * @param [in] freq      Frequency of the tone. For single tone, freq[0] should be provided.
+    *                       For dual tone, both freq[0] and freq[1] should be provided.
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @param [in] duration  Duration (in milliseconds) for which the tone is played. Set it
+    *                       to @ref INFINITE_TONE_DURATION to play indefinitely
+    *
+    * @param [in] gain      Defines the volume level of the tone, valid value range is 0 to 4000
+    *
+    * @param [in] callback  Optional, invoked to confirm if the tone play started
+    *
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status playTone(std::vector<uint16_t> freq, uint16_t duration,
                uint16_t gain, telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
-    * Stops the tone which is being played (i.e duration not expired) on the active Tone generator
-    * stream.
+    * If the @ref IAudioToneGeneratorStream::playTone() was called with the
+    * @ref INFINITE_TONE_DURATION duration, then this method stops playing the tone.
     *
-    * @param [in] callback     callback to get the response of stop tone.
+    * @param [in] callback  Optional, invoked to confirm if the tone play has stopped
     *
-    * @returns Status of the request i.e. success or suitable status code.
+    * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
+    *                 successfully, otherwise, an appropriate error code
     */
    virtual telux::common::Status stopTone(telux::common::ResponseCallback callback = nullptr) = 0;
 
+    /**
+     * Destructor of the IAudioToneGeneratorStream.
+     */
    virtual ~IAudioToneGeneratorStream() {};
 };
 
 /** @} */ /* end_addtogroup telematics_audio_stream */
-}  // End of namespace audio
 
+}  // End of namespace audio
 }  // End of namespace telux
 
 #endif  // end of AUDIOMANAGER_HPP

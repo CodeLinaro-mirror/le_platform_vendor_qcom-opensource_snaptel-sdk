@@ -92,7 +92,7 @@ struct StaConfig {
     StaBridgeMode       bridgeMode;       /**< Station configuration as Router/bridge */
 };
 
-/** @addtogroup telematics_wlan
+/** @addtogroup telematics_wlan_station
  * @{ */
 
 /**
@@ -238,7 +238,7 @@ public:
     virtual ~IStaListener() {}
 };
 
-/** @} */ /* end_addtogroup telematics */
+/** @} */ /* end_addtogroup telematics_wlan_station */
 }
 }
 #endif

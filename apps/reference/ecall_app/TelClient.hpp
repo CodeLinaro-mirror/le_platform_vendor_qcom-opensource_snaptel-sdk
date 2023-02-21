@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021, 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -79,6 +79,8 @@ struct ECallInfo {
     bool transmitMsd;          /**< Set to true if MSD needs to be transmitted*/
     ECallMsdData msdData;      /**< If the transmitMsd is true, msdData will holds all the details
                                     required to construct an MSD */
+    std::vector<uint8_t> msdPdu;/**< If the transmitMsd is true, msdData will holds all the details
+                                    required to construct an MSD */
     bool isCustomNumber;       /**< Set to true if client is dialing*/
     std::string dialNumber;    /**< If isCustomNumber is true, dialNumber holds the number */
     ECallCategory category;    /**< ECall Category ie., automatic or normal */
@@ -127,7 +129,9 @@ class TelClient : public ICallListener,
      * This is typically invoked when an eCall is triggered.
      *
      * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
-     * @param [in] msdData      MSD data to be used
+     * @param [in] msdPdu       Encoded MSD PDU
+     * @param [in] msdData      MSD data to be used. This will be used only when the msdPdu passed
+     *                          is empty. Either msdPdu or msdData is expected to be provided.
      * @param [in] category     ECallCategory
      * @param [in] variant      ECallVariant
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
@@ -136,8 +140,9 @@ class TelClient : public ICallListener,
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
-    telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-        ECallVariant variant, bool transmitMsd, std::shared_ptr<CallStatusListener> callListener);
+    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
+        ECallCategory category, ECallVariant variant, bool transmitMsd,
+        std::shared_ptr<CallStatusListener> callListener);
 
     /**
      * This function sends MSD for TPS eCall over IMS
@@ -149,7 +154,9 @@ class TelClient : public ICallListener,
      * This is typically invoked when a TPS eCall is triggered.
      *
      * @param [in] phoneId      Represents phone corresponding to which eCall operation is performed
-     * @param [in] msdData      MSD data to be used
+     * @param [in] msdPdu       Encoded MSD PDU
+     * @param [in] msdData      MSD data to be used. This will be used only when the msdPdu passed
+     *                          is empty. Either msdPdu or msdData is expected to be provided.
      * @param [in] category     ECallCategory
      * @param [in] dialNumber   phone number to be dialed
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
@@ -158,8 +165,8 @@ class TelClient : public ICallListener,
      * @returns Status of startECall i.e success or suitable status code.
      *
      */
-    telux::common::Status startECall(int phoneId, ECallMsdData msdData, ECallCategory category,
-        const std::string dialNumber, bool transmitMsd,
+    telux::common::Status startECall(int phoneId, std::vector<uint8_t> msdPdu, ECallMsdData msdData,
+        ECallCategory category, const std::string dialNumber, bool transmitMsd,
         std::shared_ptr<CallStatusListener> callListener);
     /**
      * This function starts a voice eCall procedure to the specified phone number over IMS.
@@ -239,6 +246,60 @@ class TelClient : public ICallListener,
     telux::common::Status requestECallHlapTimerStatus(int phoneId);
 
     /**
+     * This function requests to stop T10 eCall High Level Application Protocol(HLAP) timer
+     *
+     * @param [in] phoneId  Represents phone corresponding to which the operation will be performed
+     *
+     * @returns Status of stopT10Timer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status stopT10Timer(int phoneId);
+
+    /**
+     * This function requests to set the value of eCall High Level Application Protocol(HLAP)
+     * timer
+     *
+     * @param [in] phoneId       Represents phone corresponding to which the operation will be
+     *                           performed
+     * @param [in] type          @ref HlapTimerType
+     * @param [in] timeDuration  Represents the time duration.
+     *
+     *
+     * @returns Status of setHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setHlapTimer(int phoneId, HlapTimerType type, uint32_t timeDuration);
+
+    /**
+     * This function requests to get the value of eCall High Level Application Protocol(HLAP)
+     * timer
+     *
+     * @param [in] phoneId  Represents phone corresponding to which the operation will be performed
+     * @param [in] type     @ref HlapTimerType
+     * @returns Status of getHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status getHlapTimer(int phoneId, HlapTimerType type);
+
+    /**
+     * Get various configuration parameters related to eCall
+     *
+     * @returns Status of getECallConfig i.e success or suitable status code.
+     *
+     */
+    telux::common::Status getECallConfig();
+
+    /**
+     * Set various configuration parameters related to eCall
+     *
+     * @param [in] config configuration to be written
+     *
+     * @returns Status of setECallConfig i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setECallConfig(EcallConfig config);
+
+    /**
      * This function provides the eCall progress state.
      *
      * @returns True if an eCall is in progress, otherwise false.
@@ -265,6 +326,9 @@ class TelClient : public ICallListener,
         telux::common::ErrorCode error, std::shared_ptr<telux::tel::ICall>) override;
     void hlapTimerStatusResponse(
         telux::common::ErrorCode error, int phoneId, ECallHlapTimerStatus timersStatus);
+    void stopT10TimerResponse(telux::common::ErrorCode error);
+    void setHlapTimerResponse(telux::common::ErrorCode error);
+    void getHlapTimerResponse(telux::common::ErrorCode error, uint32_t timeDuration);
     void onServiceStatusChange(ServiceStatus status) override;
 
     TelClient();

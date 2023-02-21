@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -75,6 +75,7 @@
 #include <memory>
 
 #include <telux/power/TcuActivityManager.hpp>
+#include <telux/power/TcuActivityDefines.hpp>
 
 namespace telux {
 namespace power {
@@ -95,14 +96,41 @@ public:
     /**
      * API to get the TCU-activity Manager instance
      *
+     * @param [in] config           TCU-activity Manager configuration
+     * @param [in] callback         Optional callback pointer to get the response of the manager
+     *                              initialization.
+     *
+     * @returns Pointer of ITcuActivityManager object.
+     *
+     * @note    This API is recommended for systems with Hypervisor and as well as non-hypervisor
+     *          based systems.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to
+     *             change and could break backwards compatibility.
+     */
+    virtual std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
+        ClientInstanceConfig config, telux::common::InitResponseCb callback = nullptr) = 0;
+
+    /**
+     * API to get the TCU-activity Manager instance
+     *
      * @param [in] clientType Type of the client that is going to access ITcuActivityManager APIs
      *                        @ref ClientType
      * @param [in] procType   Required processor type on which the operations will be performed
      *                        @ref telux::common::ProcType
+     *                        @ref telux::common::ProcType::REMOTE_PROC is not supported
      * @param [in] callback   Optional callback pointer to get the response of the manager
      *                        initialization.
      *
-     * @returns Pointer of ITcuActivityManager object.
+     * @returns     Pointer of ITcuActivityManager object.
+     *
+     * @note        This API cannot be used on systems with Hypervisor and Virtual machines.
+     *              The alternative API @ref PowerFactory::getTcuActivityManager(
+     *              ClientInstanceConfig config,telux::common::InitResponseCb callback)
+     *              should be used.
+     *
+     * @deprecated  Use @ref PowerFactory::getTcuActivityManager(ClientInstanceConfig config,
+     *              telux::common::InitResponseCb callback) API instead
      */
     virtual std::shared_ptr<ITcuActivityManager> getTcuActivityManager(
         ClientType clientType = ClientType::SLAVE,

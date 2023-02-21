@@ -227,24 +227,6 @@ void MyPhoneListener::onSignalStrengthChanged(
                  << std::endl;
         }
 
-        if(signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "
-                 << signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-                 << std::endl;
-        }
-
-        if(signalStrength->getLteSignalStrength()->getTimingAdvance()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "LTE Timing Advance: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "LTE Timing Advance: "
-                 << signalStrength->getLteSignalStrength()->getTimingAdvance()
-                 << std::endl;
-        }
-
         PRINT_NOTIFICATION << "LTE Signal Level: "
             << MyPhoneHelper::signalLevelToString(
             signalStrength->getLteSignalStrength()->getLevel()) << std::endl;
@@ -759,25 +741,6 @@ void MyPhoneHelper::printCellInfoDetails(
                PRINT_NOTIFICATION << "LTE Reference Signal Receive Quality(in dB): "
                    << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalReceiveQuality()
                    << std::endl;
-            }
-
-            if(lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "LTE Reference Signal SNR(in dB): "<< "UNAVAILABLE"
-               << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "LTE Reference Signal SNR(in dB): "
-                    << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr() * 0.1
-                    << std::endl;
-            }
-
-            if(lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "
-                    << lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
-                    << std::endl;
             }
 
             if(lteCellInfo->getSignalStrengthInfo().getTimingAdvance() ==

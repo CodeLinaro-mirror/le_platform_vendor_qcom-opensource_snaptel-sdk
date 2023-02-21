@@ -71,8 +71,9 @@ extern "C" {
 #include <iostream>
 
 #include <telux/data/DataFactory.hpp>
+#include <telux/common/DeviceConfig.hpp>
 
-#include <Utils.hpp>
+#include "../../../../common/utils/Utils.hpp"
 
 #include "DataFilterMenu.hpp"
 #include "../DataResponseCallback.hpp"
@@ -84,100 +85,34 @@ using namespace telux::data::net;
 
 DataFilterMenu::DataFilterMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
-    subSystemStatusUpdated_ = false;
 }
 
 DataFilterMenu::~DataFilterMenu() {
 
-    if (dataConnectionManager_) {
-        dataConnectionManager_->deregisterListener(dataListener_);
-        dataConnectionManager_ = nullptr;
+    for (auto& conMgr : dataConnManagerMap_) {
+        conMgr.second->deregisterListener(dataListener_[conMgr.first]);
+    }
+    dataConnManagerMap_.clear();
+    dataListener_.clear();
+
+    for (auto& filterMgr : dataFilterManagerMap_) {
+        filterMgr.second->deregisterListener(dataFilterListener_[filterMgr.first]);
+    }
+    dataFilterManagerMap_.clear();
+    dataFilterListener_.clear();
+
     }
 
-    if (dataFilterMgr_) {
-        dataFilterMgr_->deregisterListener(dataFilterListener_);
-        dataFilterMgr_ = nullptr;
+bool DataFilterMenu::init() {
+
+    bool dfmSubSystemStatus = initDataFilterManagerAndListener(DEFAULT_SLOT_ID);
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        dfmSubSystemStatus |= initDataFilterManagerAndListener(SLOT_ID_2);
     }
 
-    if (dataListener_) {
-        dataListener_ = nullptr;
+    if (!dfmSubSystemStatus) {
+        std::cout << "Data Filter initialize failed " << std::endl;
     }
-
-    if (dataFilterListener_) {
-        dataFilterListener_ = nullptr;
-    }
-}
-
-bool DataFilterMenu::initializeSDK() {
-    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
-    subSystemStatusUpdated_ = false;
-    SlotId slotId = DEFAULT_SLOT_ID;
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
-    std::promise<telux::common::ServiceStatus> dcmProm;
-
-    // Get the DataFactory instances.
-    auto &dataFactory = telux::data::DataFactory::getInstance();
-
-    dataConnectionManager_ = dataFactory.getDataConnectionManager(slotId,
-        [&dcmProm](telux::common::ServiceStatus status) { dcmProm.set_value(status); });
-
-    if (!dataConnectionManager_) {
-        std::cout << "Failed to get DataManager object" << std::endl;
-        return false;
-    }
-
-    if (dataConnectionManager_) {
-        std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
-            DEFAULT_SLOT_ID << ", Please wait ..." << endl;
-        subSystemStatus = dcmProm.get_future().get();
-
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Connection Manager on slot "<< slotId << " is ready"
-                << std::endl;
-            dataListener_ = std::make_shared<DataListener>(slotId);
-            dataConnectionManager_->registerListener(dataListener_);
-        } else {
-            std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready"
-                << std::endl;
-            return false;
-        }
-    }
-    subSystemStatusUpdated_ = false;
-    std::promise<telux::common::ServiceStatus> dfsProm;
-    // Get data filter manager object
-    dataFilterMgr_ = dataFactory.getDataFilterManager(DEFAULT_SLOT_ID,
-        [&dfsProm](telux::common::ServiceStatus status) { dfsProm.set_value(status); });
-    if (dataFilterMgr_ == nullptr) {
-        std::cout << "WARNING: Data Filter feature is not supported." << std::endl;
-        return false;
-    }
-
-    if (dataFilterMgr_) {
-        subSystemStatus = dataFilterMgr_->getServiceStatus();
-        std::cout << "\n\nInitializing Data filter manager subsystem on slot " <<
-            DEFAULT_SLOT_ID << ", Please wait ..." << endl;
-        subSystemStatus = dfsProm.get_future().get();
-
-        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\nData Filter Manager on slot "<< slotId << " is ready" << std::endl;
-            dataFilterListener_ = std::make_shared<MyDataFilterListener>();
-            telux::common::Status status = dataFilterMgr_->registerListener(dataFilterListener_);
-            if (status != telux::common::Status::SUCCESS) {
-                std::cout << "Unable to register data filter manager listener" << std::endl;
-            }
-        } else {
-            std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready"
-                << std::endl;
-            return false;
-        }
-        responseCb = std::bind(&DataFilterMenu::commandCallback, this, std::placeholders::_1);
-    }
-    return true;
-}
-
-void DataFilterMenu::init() {
-
     DataRestrictMode enableMode, disableMode;
     enableMode.filterAutoExit = DataRestrictModeType::DISABLE;
     enableMode.filterMode = DataRestrictModeType::ENABLE;
@@ -203,16 +138,98 @@ void DataFilterMenu::init() {
 
     std::shared_ptr<ConsoleAppCommand> removeAllFilterCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5",
-            "remove_all_data_restrict_filter", {}, std::bind(&DataFilterMenu::removeAllFilter, this)));
+            "remove_all_data_restrict_filter", {},
+                std::bind(&DataFilterMenu::removeAllFilter, this)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {enableModeCommand,
         disableModeCommand, getFilterModeCommand, addFilterCommand, removeAllFilterCommand};
 
     addCommands(commandsList);
+    ConsoleApp::displayMenu();
+    std::cout << "Data Filter init " << dfmSubSystemStatus << std::endl;
+    return dfmSubSystemStatus;
+}
 
-    if (DataFilterMenu::initializeSDK()) {
-        ConsoleApp::displayMenu();
+bool DataFilterMenu::initDataFilterManagerAndListener(SlotId slotId)
+{
+    telux::common::ServiceStatus subSystemStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    bool retValue = false;
+    std::promise<telux::common::ServiceStatus> promDcm{};
+
+    // Get the DataFactory instances.
+    auto &dataFactory = telux::data::DataFactory::getInstance();
+    auto dataConnManager = dataFactory.getDataConnectionManager(slotId,
+        [&promDcm](telux::common::ServiceStatus status) { promDcm.set_value(status); });
+
+    if (!dataConnManager)
+    {
+        std::cout << "Failed to get DataManager object" << std::endl;
+        return false;
     }
+
+    std::cout << "\n\nInitializing Data connection manager subsystem on slot " <<
+        slotId << ", Please wait ..." << endl;
+    subSystemStatus = promDcm.get_future().get();
+
+    if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is ready"
+            << std::endl;
+        retValue = true;
+    } else {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready"
+            << std::endl;
+        return false;
+    }
+
+    if (dataConnManagerMap_.find(slotId) == dataConnManagerMap_.end()) {
+        dataConnManagerMap_.emplace(slotId, dataConnManager);
+        dataListener_.emplace(slotId, std::make_shared<DataListener>(slotId));
+        telux::common::Status status =
+            dataConnManagerMap_[slotId]->registerListener(dataListener_[slotId]);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Unable to register data connection manager listener on slot " <<
+            slotId << std::endl;
+        }
+    }
+
+    std::promise<telux::common::ServiceStatus> promDfm{};
+    // Get data filter manager object
+    auto dataFilterMgr = dataFactory.getDataFilterManager(slotId,
+        [&promDfm](telux::common::ServiceStatus status) { promDfm.set_value(status); });
+    if (dataFilterMgr == nullptr) {
+        std::cout << "WARNING: Data Filter feature is not supported." << std::endl;
+        return false;
+    }
+
+    if (dataFilterMgr) {
+        std::cout << "\n\nInitializing Data filter manager subsystem on slot " <<
+            slotId << ", Please wait ..." << endl;
+        subSystemStatus = promDfm.get_future().get();
+
+        if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nData Filter Manager on slot "<< slotId << " is ready" << std::endl;
+            retValue = true;
+        } else {
+            std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready" << std::endl;
+            return false;
+        }
+
+        //If this is newly created Manager
+        if (dataFilterManagerMap_.find(slotId) == dataFilterManagerMap_.end()) {
+            dataFilterManagerMap_.emplace(slotId, dataFilterMgr);
+            dataFilterListener_.emplace(slotId, std::make_shared<MyDataFilterListener>());
+            auto responseCb = std::bind(&DataFilterMenu::commandCallback, this,
+                std::placeholders::_1);
+            responseCbMap_.emplace(slotId, responseCb);
+            telux::common::Status status =
+                dataFilterManagerMap_[slotId]->registerListener(dataFilterListener_[slotId]);
+            if (status != telux::common::Status::SUCCESS) {
+                std::cout << "Unable to register data filter manager listener on slot " <<
+                slotId << std::endl;
+            }
+        }
+    }
+    return retValue;
 }
 
 void DataFilterMenu::commandCallback(ErrorCode errorCode) {
@@ -225,8 +242,12 @@ void DataFilterMenu::commandCallback(ErrorCode errorCode) {
 
 void DataFilterMenu::sendSetDataRestrictMode(DataRestrictMode mode) {
 
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataFilterManagerMap_.find(static_cast<SlotId>(slotId)) == dataFilterManagerMap_.end()) {
+        std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
     }
 
@@ -273,9 +294,11 @@ void DataFilterMenu::sendSetDataRestrictMode(DataRestrictMode mode) {
     telux::common::Status status = telux::common::Status::FAILED;
 
     if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-        status = dataFilterMgr_->setDataRestrictMode(mode, responseCb);
+        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->setDataRestrictMode(mode,
+            responseCbMap_[static_cast<SlotId>(slotId)]);
     } else {
-        status = dataFilterMgr_->setDataRestrictMode(mode, responseCb, profileId, ipFamType);
+        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->setDataRestrictMode(mode,
+            responseCbMap_[static_cast<SlotId>(slotId)], profileId, ipFamType);
     }
 
     if (status != telux::common::Status::SUCCESS) {
@@ -285,15 +308,20 @@ void DataFilterMenu::sendSetDataRestrictMode(DataRestrictMode mode) {
 
 void DataFilterMenu::getFilterMode() {
 
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataFilterManagerMap_.find(static_cast<SlotId>(slotId)) == dataFilterManagerMap_.end()) {
+        std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
     }
 
     std::cout << " Sending command to get Data Filter" << std::endl;
 
     // pass empty interface name as string.
-    telux::common::Status status = dataFilterMgr_->requestDataRestrictMode(
+    telux::common::Status status =
+        dataFilterManagerMap_[static_cast<SlotId>(slotId)]->requestDataRestrictMode(
         "", &DataFilterModeResponseCb::requestDataRestrictModeResponse);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
@@ -356,8 +384,12 @@ int DataFilterMenu::getPortInfo(DataConfigParser cfgParser,
 
 void DataFilterMenu::addFilter() {
 
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataFilterManagerMap_.find(static_cast<SlotId>(slotId)) == dataFilterManagerMap_.end()) {
+        std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
     }
 
@@ -513,10 +545,11 @@ void DataFilterMenu::addFilter() {
         telux::common::Status status = telux::common::Status::FAILED;
 
         if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-            status = dataFilterMgr_->addDataRestrictFilter(dataFilter, responseCb);
+            status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->addDataRestrictFilter(
+                dataFilter, responseCbMap_[static_cast<SlotId>(slotId)]);
         } else {
-            status = dataFilterMgr_->addDataRestrictFilter(
-                dataFilter, responseCb, profileId, ipFamType);
+            status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->addDataRestrictFilter(
+                dataFilter, responseCbMap_[static_cast<SlotId>(slotId)], profileId, ipFamType);
         }
         if (status != telux::common::Status::SUCCESS) {
             std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
@@ -526,8 +559,12 @@ void DataFilterMenu::addFilter() {
 
 void DataFilterMenu::removeAllFilter() {
 
-    if (dataFilterMgr_ == NULL) {
-        std::cout << "Data restrict filter feature is not supported." << std::endl;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataFilterManagerMap_.find(static_cast<SlotId>(slotId)) == dataFilterManagerMap_.end()) {
+        std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
     }
     std::cout << "\nRemove data filters" << std::endl;
@@ -569,9 +606,11 @@ void DataFilterMenu::removeAllFilter() {
 
     telux::common::Status status = telux::common::Status::FAILED;
     if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-        status = dataFilterMgr_->removeAllDataRestrictFilters(responseCb);
+        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->removeAllDataRestrictFilters(
+                responseCbMap_[static_cast<SlotId>(slotId)]);
     } else {
-        status = dataFilterMgr_->removeAllDataRestrictFilters(responseCb, profileId, ipFamType);
+        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->removeAllDataRestrictFilters(
+                responseCbMap_[static_cast<SlotId>(slotId)], profileId, ipFamType);
     }
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to send remove Data Filter command" << std::endl;

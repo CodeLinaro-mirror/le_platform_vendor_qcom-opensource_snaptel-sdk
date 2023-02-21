@@ -36,4 +36,3 @@ project (telux)
 # adding header file install
 # ---------------------------------------------
 install( DIRECTORY telux/ DESTINATION include/telux)
-

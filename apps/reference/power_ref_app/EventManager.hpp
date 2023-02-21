@@ -92,8 +92,10 @@ private:
    void notifyAndEraseEventProcessed(TriggerType triggerType, TcuActivityState triggeredState,
                                      bool success, EventStatus status);
 
-
+   // wake lock node control
    void writeToSystemNode(char *nodepath, char *value, int length);
+   void holdWakeLock();
+   void releaseWakeLock();
 
 public:
    ~EventManager();
@@ -101,24 +103,22 @@ public:
    bool init();
 
    // interact with TcuActivityManager
-   void onTcuActivityStateUpdate(TcuActivityState state) override;
-   void onSlaveAckStatusUpdate(telux::common::Status status) override;
+   void onTcuActivityStateUpdate(TcuActivityState state, std::string machineName) override;
+   void onSlaveAckStatusUpdate(const telux::common::Status status,
+      const std::string machineName, const std::vector<ClientInfo> unresponsiveClients,
+      const std::vector<ClientInfo> nackResponseClients) override;
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
 
    // event management
    void pushEvent(shared_ptr<Event> event);
-   // remove and notify 0th event and other event in queue triggered for same TCU state
-   void executeEvent(EventStatus status);
+   // remove and notify 0th event and another event in queue triggered for the same TCU state
+   void processedEventHandler(EventStatus status);
 
    // Event listener
    void registerListener(weak_ptr<IEventListener> eventListener,
                          TriggerType triggerType = TriggerType::UNKNOWN);
    void updateEventStatus(shared_ptr<Event> event, bool processed, bool succeed,
                           EventStatus status);
-
-   // wake lock and momentary wakeup
-   void holdWakeLock();
-   void releaseWakeLock();
 };
 
 #endif

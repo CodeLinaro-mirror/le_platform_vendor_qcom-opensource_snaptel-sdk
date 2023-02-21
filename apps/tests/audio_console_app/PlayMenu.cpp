@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,6 +76,7 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
    audioClient_(audioClient) {
     pipeLineEmpty_ = true;
     ready_ = false;
+    playInProgress_ = false;
 
 }
 
@@ -247,9 +248,15 @@ void PlayMenu::setMute(std::vector<std::string> userInput) {
 
 void PlayMenu::startPlay(std::vector<std::string> userInput) {
     if(audioPlayStream_) {
-        audioClient_->getPlayConfig(filePath_, playFormat_);
-        std::thread playThread(&PlayMenu::play, this);
-        runningThreads_.emplace_back(std::move(playThread));
+        // Check if a file is already being played.
+        if(!playInProgress_) {
+            audioClient_->getPlayConfig(filePath_, playFormat_);
+            std::thread playThread(&PlayMenu::play, this);
+            runningThreads_.emplace_back(std::move(playThread));
+            playInProgress_ = true;
+        } else {
+            std::cout << "File Play in progress please wait" << std::endl;
+        }
     } else {
         std::cout << "No running Play session please create one" << std::endl;
     }
@@ -346,6 +353,12 @@ void PlayMenu::play() {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
             numBytes = fread(streamBuffer->getRawBuffer(),1,size,file_);
+            if (numBytes == 0 && feof(file_)) {
+                streamBuffer->reset();
+                freeBuffers_.push(streamBuffer);
+                playStatus_ = true;
+                break;
+            }
             if(numBytes != size && !feof(file_)) {
                 std::cout << "Unable to read specified bytes, bytes read: " << numBytes<< std::endl;
                 streamBuffer->reset();
@@ -405,6 +418,8 @@ void PlayMenu::play() {
         std::cout << "Play Stopped" << std::endl;
     }
     playStatus_ = false;
+    //After the play is finished, marking the status to false.
+    playInProgress_ = false;
 }
 
 void PlayMenu::onReadyForWrite() {

@@ -86,6 +86,9 @@ class SensorControlMenu : public ConsoleApp {
     telux::common::ServiceStatus init(bool shouldInitConsole);
     void cleanup();
     void parseArgs(int argc, char **argv);
+    std::shared_ptr<ISensorManager> getSensorManager() {
+        return sensorManager_;
+    }
 
  private:
     void initConsole();

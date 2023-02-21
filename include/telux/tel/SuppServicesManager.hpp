@@ -433,6 +433,67 @@ using SetSuppSvcPrefCallback
     = std::function<void(telux::common::ErrorCode error, FailureCause failureCause)>;
 
 /**
+ * This function is called with the response to requestCallWaitingPrefEx API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] suppSvcStatus    -  Call waiting status @ref telux::tel::SuppServicesStatus
+ * @param [in] failureCause     -  Failure cause populated only in case of errors
+ *                                 @ref telux::tel::FailureCause.
+ * @param [in] error            -  Return code which indicates whether the operation
+ *                                 succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+using GetCallWaitingPrefExCb
+    = std::function<void(SuppServicesStatus suppSvcStatus, FailureCause failureCause,
+        telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestForwardingPrefEx API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] forwardInfoList     - List of forward info @ref telux::tel::ForwardInfo.
+ *                                   Multiple info are received when different service class are
+ *                                   forwarded to different numbers.
+ * @param [in] failureCause        - Returns failure cause in case the request fails.
+ * @param [in] error               - Return code which indicates whether the operation
+ *                                   succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+using GetForwardingPrefExCb
+    = std::function<void(std::vector<ForwardInfo> forwardInfoList, FailureCause failureCause,
+        telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to the requestOirPref API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] suppSvcStatus       - OIR status @ref telux::tel::SuppServicesStatus
+ * @param [in] provisionStatus     - Provision status @ref telux::tel::SuppSvcProvisionStatus.
+ * @param [in] failureCause        - Returns failure cause in case the request fails.
+ * @param [in] error               - Return code which indicates whether the operation
+ *                                   succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+using GetOirPrefCb
+    = std::function<void(SuppServicesStatus suppSvcStatus, SuppSvcProvisionStatus
+        provisionStatus, FailureCause failureCause, telux::common::ErrorCode error)>;
+
+
+// Deprecated Callbacks
+
+/**
  * This function is called with the response to requestCallWaitingPref API.
  *
  * The callback can be invoked from multiple different threads.
@@ -445,8 +506,8 @@ using SetSuppSvcPrefCallback
  * @param [in] error            -  Return code which indicates whether the operation
  *                                 succeeded or not @ref telux::common::ErrorCode
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
+ * @deprecated Use GetCallWaitingPrefExCb callback.
+ *
  */
 using GetCallWaitingPrefCb
     = std::function<void(SuppServicesStatus suppSvcStatus, SuppSvcProvisionStatus provisionStatus,
@@ -466,30 +527,11 @@ using GetCallWaitingPrefCb
  * @param [in] error               - Return code which indicates whether the operation
  *                                   succeeded or not @ref telux::common::ErrorCode
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
+ * @deprecated Use GetForwardingPrefExCb callback.
+ *
  */
 using GetForwardingPrefCb
     = std::function<void(std::vector<ForwardInfo> forwardInfoList, SuppSvcProvisionStatus
-        provisionStatus, FailureCause failureCause, telux::common::ErrorCode error)>;
-
-/**
- * This function is called with the response to the requestOirPref API.
- *
- * The callback can be invoked from multiple different threads.
- * The implementation should be thread safe.
- *
- * @param [in] suppSvcStatus       - OIR status @ref telux::tel::SuppServicesStatus
- * @param [in] provisionStatus     - Provision status @ref telux::tel::SuppSvcProvisionStatus.
- * @param [in] failureCause        - Returns failure cause in case the request fails.
- * @param [in] error               - Return code which indicates whether the operation
- *                                   succeeded or not @ref telux::common::ErrorCode
- *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
- */
-using GetOirPrefCb
-    = std::function<void(SuppServicesStatus suppSvcStatus, SuppSvcProvisionStatus
         provisionStatus, FailureCause failureCause, telux::common::ErrorCode error)>;
 
 /**
@@ -532,14 +574,17 @@ public:
     /**
      * This API queries the preference for call waiting.
      *
-     * @param [in] callback  -  Callback function to get the response of requestCallWaitingPref.
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUPP_SERVICES
+     * permissions to invoke this API successfully.
      *
+     * @param [in] callback  -  Callback function to get the response of call waiting
+     *                          preference.
      * @returns Status of requestCallWaitingPref i.e. success or suitable error code.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual telux::common::Status requestCallWaitingPref(GetCallWaitingPrefCb callback) = 0;
+    virtual telux::common::Status requestCallWaitingPref(GetCallWaitingPrefExCb callback) = 0;
 
     /**
      * To set call forwarding preference.
@@ -561,10 +606,12 @@ public:
 
     /**
      * This API queries preference for call forwarding supplementary service. If active, returns
-     * for which service classes and call forwarding number it is active. It also returns the
-     * provision status of the supplemetary service.
+     * for which service classes and call forwarding number it is active.
      * There is an option to configure for which service class the request is made, if the option
      * is not configured it assumes that the request is made for all service classes.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_SUPP_SERVICES
+     * permissions to invoke this API successfully.
      *
      * @param [in] serviceClass -  Service class @ref telux::tel::ServiceClass.
      * @param [in] callback     -  Callback function to get the response of request call forwarding
@@ -576,7 +623,7 @@ public:
      *             could break backwards compatibility.
      */
     virtual telux::common::Status requestForwardingPref(ServiceClass serviceClass,
-        ForwardReason reason, GetForwardingPrefCb callback) = 0;
+        ForwardReason reason, GetForwardingPrefExCb callback) = 0;
 
     /**
      * Activate/Deactivate originating identification restriction preference on the device.
@@ -647,6 +694,43 @@ public:
      */
     virtual ~ISuppServicesManager() {
     }
+
+
+    // Deprecated APIs
+
+    /**
+     * This API queries the preference for call waiting.
+     *
+     * @param [in] callback  -  Callback function to get the response of requestCallWaitingPref.
+     *
+     * @returns Status of requestCallWaitingPref i.e. success or suitable error code.
+     *
+     * @deprecated This API is not being supported instead use requestCallWaitingPref(
+     *             GetCallWaitingPrefExCb) API.
+     *
+     */
+    virtual telux::common::Status requestCallWaitingPref(GetCallWaitingPrefCb callback) = 0;
+
+    /**
+     * This API queries preference for call forwarding supplementary service. If active, returns
+     * for which service classes and call forwarding number it is active. It also returns the
+     * provision status of the supplemetary service.
+     * There is an option to configure for which service class the request is made, if the option
+     * is not configured it assumes that the request is made for all service classes.
+     *
+     * @param [in] serviceClass -  Service class @ref telux::tel::ServiceClass.
+     * @param [in] callback     -  Callback function to get the response of request call forwarding
+     *                             preference.
+     *
+     * @returns Status of requestForwardingPref i.e. success or suitable error code.
+     *
+     * @deprecated This API is not being supported instead use requestForwardingPref(
+     *             ServiceClass serviceClass, ForwardReason reason,
+     *             GetForwardingPrefExCb callback) API.
+     *
+     */
+    virtual telux::common::Status requestForwardingPref(ServiceClass serviceClass,
+        ForwardReason reason, GetForwardingPrefCb callback) = 0;
 
 }; // end of ISuppServicesManager
 

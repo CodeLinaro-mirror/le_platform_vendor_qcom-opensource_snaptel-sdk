@@ -56,16 +56,18 @@ class Event : public enable_shared_from_this<Event>
 private:
     uint64_t id_;
     TcuActivityState triggeredState_;
+    std::string machineName_;
     map<EventStatus, time_t> timeStamps_;
     TriggerType triggerType_;
     EventStatus status_;
 
 public:
-    Event(TcuActivityState event, TriggerType triggerType);
+    Event(TcuActivityState event, std::string machineName, TriggerType triggerType);
     ~Event();
 
     uint64_t getId();
     TcuActivityState getTriggeredState();
+    std::string getMachineName();
     map<EventStatus, time_t> getTimeStamps();
 
     TriggerType getTriggerType();

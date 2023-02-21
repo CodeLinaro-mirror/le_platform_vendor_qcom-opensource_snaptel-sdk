@@ -157,6 +157,45 @@ Example:
 13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
 14. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 
+@subsection Tps_e_call_over_Ims TPS eCall over IMS call flow
+
+Private eCall:
+1. It is a normal VOLTE call(to a custom number) with MSD information.
+2. Application processor (AP) sends the MSD data at call connect and later AP gets an explicit indication,
+   upon which it can provide updated MSD(unlike standard eCall where AP updates MSD constantly)
+3. Device doesn't support fallback to CS. It is the AP's responsibility to retry over CS.
+4. AP can send the MSD information data in non standard format and PSAP should be able to
+   recognize it.
+
+@anchor fig_e_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{tps_ecall_over_ims_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{ECall call flow}
+  \label{fig_e_call}
+\end{figure}
+@endlatexonly
+
+@html_image{tps_ecall_over_ims_call_flow.png,ECall call flow,80,80,TPS eCall over IMS call flow}
+
+1. The application gets the CallManager object using PhoneFactory.
+2. The application receives the CallManager object in order to make eCall.
+3. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
+4. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
+5. The application dials a TPS emergency call over IMS(i.e normal VOLTE call) by using makeECall API, optionally specifying header and callback to get asynchronous response.
+6. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
+7. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
+8. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API.
+9. CallManager sends MSD update request recieved from network to the application by using OnTpsMsdUpdateRequest API.
+10. The application sends the MSD data to network using updateECallMsd API, optionally specifying callback to get asynchronous response.
+11. The application receives the status like SUCCESS, FAILED etc based on the execution of updateECallMsd API.
+12. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API for MSD sent at step 10.
+13. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
+14. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
+15. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+16. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 @subsection signal_strength Signal strength call flow
 
 @anchor fig_signal_strength
@@ -3370,9 +3409,9 @@ As a reference, auto-shutdown management in an eCall application is described in
 7. Thermal factory invokes the callback once initialization completes.
 8. Application can register a listener for getting notifications on Thermal auto-shutdown mode updates.
 9. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-10. Application recieves a notification that thermal auto-shutdown mode is disabled.
-11. Application recieves a notification that thermal auto-shutdown mode is going to enabled soon. The exact duration is also recieved as part of notification.
-12. Application recieves a notification that thermal auto-shutdown mode is enabled.
+10. Application receives a notification that thermal auto-shutdown mode is disabled.
+11. Application receives a notification that thermal auto-shutdown mode is going to enabled soon. The exact duration is also recieved as part of notification.
+12. Application receives a notification that thermal auto-shutdown mode is enabled.
 13. Application can remove listener.
 14. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
@@ -3432,18 +3471,18 @@ As a reference, auto-shutdown management in an eCall application is described in
 10. Application disables auto-shutdown using setAutoShutdownMode API, to prevent a possible thermal auto-shutdown during eCall.
 11. Application receives synchronous status which indicates if the request was sent successfully.
 12. Optionally, the response to setAutoShutdownMode request can be received by the application.
-13. Application recieves a notification that thermal auto-shutdown mode is disabled.
+13. Application receives a notification that thermal auto-shutdown mode is disabled.
 14. Application receives an imminent auto-shutdown enable notification and system will attempt to enable auto-shutdown after a certain period.
    This notification is received if application does not enable auto-shutdown due to an active eCall.
 15. If the eCall is still active, the application disables auto-shutdown before it gets enabled automatically.
 16. Application receives synchronous status which indicates if the request was sent successfully.
 17. Optionally, the response to setAutoShutdownMode request can be received by the application.
-18. Application recieves a notification that thermal auto-shutdown mode is disabled.
+18. Application receives a notification that thermal auto-shutdown mode is disabled.
     Steps 14 to 18 are repeated as long as the eCall is active.
 19. When the eCall is completed, the application immediately enables auto-shutdown using setAutoShutdownMode API.
 20. Application receives synchronous status which indicates if the request was sent successfully.
 21. Optionally, the response to setAutoShutdownMode request can be received by the application.
-22. Application recieves a notification that thermal auto-shutdown mode is enabled.
+22. Application receives a notification that thermal auto-shutdown mode is enabled.
 23. Application can remove listener.
 24. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
@@ -4008,13 +4047,13 @@ invoked by the sensor framework once the self test is completed.
 4. Once the self test is completed, the callback gets invoked indicating the result of the self
 test.
 
-@section crypto_call_flow Security
+@section crypto_call_flow Crypto
 
 The CryptoManager class provides APIs to generate, import, export and upgrade key based on various cryptographic algorithms. Data can be signed and verified using this key. Further data can be encrypted and decrypted with the key.
 
 @subsection crypto_gen_key_call_flow Call flow to generate and export key
 
-@anchor crypto_gen_key_call_flow
+@anchor fig_crypto_gen_key_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
@@ -4038,7 +4077,7 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 
 @subsection crypto_sign_call_flow Call flow to sign and verify data
 
-@anchor crypto_sign_call_flow
+@anchor fig_crypto_sign_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
@@ -4063,7 +4102,7 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 
 @subsection crypto_enc_call_flow Call flow to encrypt and decrypt data
 
-@anchor crypto_enc_call_flow
+@anchor fig_crypto_enc_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
@@ -4085,5 +4124,244 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 7. Application creates an instance of ICryptoParam using CryptoParamBuilder to define input parameters for how the decryption should occur.
 8. Application calls decryptData() API of ICryptoManager passing the key blob, encrypted data and input parameters.
 9. ICryptoManager returns decrypted data otherwise appropriate error code.
+
+@section crypto_accelerato_call_flow Crypto accelerator
+
+The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calculation based on elliptic-curve cryptography.
+
+@subsection ecc_verify_sync_call_flow Call flow for signature verification synchronous mode
+
+@anchor fig_ecc_verify_sync_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecc_verify_sync_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for signature verification synchronous mode}
+  \label{ecc_verify_sync_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecc_verify_sync_call_flow.png,Call flow for signature verification synchronous mode,80,80,Call flow for signature verification synchronous mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for verification.
+6. Application calls eccVerifyDigest() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if verification passed otherwise appropriate error code.
+
+@subsection ecc_verify_async_poll_call_flow Call flow for signature verification asynchronous poll mode
+
+@anchor fig_ecc_verify_async_poll_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecc_verify_async_poll_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for signature verification asynchronous poll mode}
+  \label{ecc_verify_async_poll_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecc_verify_async_poll_call_flow.png,Call flow for signature verification asynchronous poll mode,80,80,Call flow for signature verification asynchronous poll mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for verification.
+6. Application calls eccPostDigestForVerification() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for verification.
+8. Application calls getAsyncResults() API of ICryptoAcceleratorManager to get the results.
+9. ICryptoAcceleratorManager returns verification data obtained from crypto accelerator.
+10. Application calls various APIs of ResultParser to get exact verification result.
+
+@subsection ecc_verify_async_listener_call_flow Call flow for signature verification asynchronous listener mode
+
+@anchor fig_ecc_verify_async_listener_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecc_verify_async_listener_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for signature verification asynchronous listener mode}
+  \label{ecc_verify_async_listener_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecc_verify_async_listener_call_flow.png,Call flow for signature verification asynchronous listener mode,80,80,Call flow for signature verification asynchronous listener mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for verification.
+6. Application calls eccPostDigestForVerification() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for verification.
+8. Application receives result in method onVerificationResult() of class implementing ICryptoAcceleratorListener interface.
+
+@subsection ecqv_calc_sync_call_flow Call flow for ECQV calculation synchronous mode
+
+@anchor fig_ecqv_calc_sync_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecqv_calc_sync_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for ECQV calculation synchronous mode}
+  \label{ecqv_calc_sync_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecqv_calc_sync_call_flow.png,Call flow for ECQV calculation synchronous mode,80,80,Call flow for ECQV calculation synchronous mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for calculation.
+6. Application calls ecqvPointMultiplyAndAdd() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if calculation result otherwise appropriate error code.
+
+@subsection ecqv_calc_async_poll_call_flow Call flow for ECQV calculation asynchronous poll mode
+
+@anchor fig_ecqv_calc_async_poll_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecqv_calc_async_poll_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for ECQV calculation asynchronous poll mode}
+  \label{ecqv_calc_async_poll_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecqv_calc_async_poll_call_flow.png,Call flow for ECQV calculation asynchronous poll mode,80,80,Call flow for ECQV calculation asynchronous poll mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for calculation.
+6. Application calls ecqvPostDataForMultiplyAndAdd() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for calculation.
+8. Application calls getAsyncResults() API of ICryptoAcceleratorManager to get the results.
+9. ICryptoAcceleratorManager returns calculation data obtained from crypto accelerator.
+10. Application calls various APIs of ResultParser to get exact calculation result.
+
+@subsection ecqv_calc_async_listener_call_flow Call flow for ECQV calculation asynchronous listener mode
+
+@anchor fig_ecqv_calc_async_listener_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{ecqv_calc_async_listener_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow for ECQV calculation asynchronous listener mode}
+  \label{ecqv_calc_async_listener_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{ecqv_calc_async_listener_call_flow.png,Call flow for ECQV calculation asynchronous listener mode,80,80,Call flow for ECQV calculation asynchronous listener mode}
+
+1. Application request an instance of SecurityFactory.
+2. An instance of SecurityFactory is received by the application.
+3. From the SecurityFactory, application request an instance of ICryptoAcceleratorManager.
+4. An instance of ICryptoAcceleratorManager is received by the application.
+5. Application defines input parameters for calculation.
+6. Application calls ecqvPostDataForMultiplyAndAdd() API of ICryptoAcceleratorManager.
+7. ICryptoAcceleratorManager returns success if data is sent for calculation.
+8. Application receives result in method onCalculationResult() of class implementing ICryptoAcceleratorListener interface.
+
+@section wlan_call_flow WLAN
+@subsection wlan_modify_config_call_flow Call flow to modify WLAN configuration
+
+@anchor fig_wlan_modify_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Configuration Call Flow}
+  \label{fig_wlan_modify_config_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_config.png,Modify WLAN Configuration Call Flow,80,80,Modify WLAN Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from WLAN factory.
+2. WLAN factory returns a shared pointer to the IWlanDeviceManger object to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the status, i.e., SERVICE_AVAILABLE or SERVICE_UNAVAILABLE, to indicate if the subsystem is ready.
+   5. If the subsystem is not ready, the application can wait for the callback provided in Step 1 for subsystem initialization status.
+   6. Application provided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. When the subsystem is ready, application calls IWlanDeviceManager::getStatus to get WLAN enablement status.
+8. Application receives WLAN enablement status.
+   9. If WLAN is enabled, application calls IWlanDeviceManager::enable(false) to disable WLAN.
+   10. Application receives WLAN disablement response and waits for WLAN status indication.
+   11. Application receives WLAN status indication IWlanDeviceManager::onEnableChanged(false) to indicate WLAN is disabled.
+12. Application sets desired configuration using IWlanDeviceManager::setMode to set desired number of access points and stations to be enabled.
+13. Application receives response.
+14. Application calls IWlanDeviceManager::enable(true) to enable WLAN.
+15. Application receives WLAN enablement response and waits for WLAN status indication.
+16. Application receives WLAN status indication IWlanDeviceManager::onEnableChanged(true) to indicate WLAN is enbaled.
+
+@subsection wlan_modify_station_config_call_flow Call flow to modify WLAN station configuration
+
+@anchor fig_wlan_modify_station_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_station_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Station Configuration Call Flow}
+  \label{fig_wlan_modify_station_config_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_station_config.png,Modify WLAN Station Configuration Call Flow,80,80,Modify WLAN Station Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from WLAN factory.
+2. WLAN factory returns shared pointer to IWlandeviceManager to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
+   5. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+   6. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. On Readiness, requests IStaInterfaceManager object from WLAN factory.
+8. WLAN factory returns shared pointer to IStaInterfaceManager to the application.
+9. Application calls IStaInterfaceManager::setIpConfig to set desired IP configurations.
+10. Application receives response set IP configuration.
+11. Application calls IStaInterfaceManager::managerStaService to restart wpa_supplicant daemon.
+12. Application receives response to restart wpa_supplicant daemon and station configuration shall be active at this stage.
+
+@subsection wlan_modify_ap_config_call_flow Call flow to Modify WLAN Access Point Configuration
+
+@anchor fig_wlan_modify_ap_config_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wlan_modify_ap_config.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Modify WLAN Access Point Configuration Call Flow}
+  \label{fig_wlan_modify_config_ap_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{wlan_modify_ap_config.png,Modify WLAN Access Point Configuration Call Flow,80,80,Modify WLAN Access Point Configuration Call Flow}
+
+1. Application requests IWlanDeviceManager object from WLAN factory.
+2. WLAN factory returns shared pointer to IWlandeviceManager to the application.
+3. Application can use IWlanDeviceManager::getServiceStatus to determine if the system is ready.
+4. The application receives the Status i.e. either SERVICE_AVAILABLE or SERVICE_UNAVALABLE to indicate whether sub-system is ready or not.
+   5. If subsystem is not ready, then the application could wait for callback provided in step 1 for subsystem initialization status.
+   6. Application pprovided callback is invoked with subsystem status (SERVICE_AVAILABLE/SERVICE_FAILED).
+7. On Readiness, requests IApInterfaceManager object from WLAN factory.
+8. WLAN factory returns shared pointer to IApInterfaceManager to the application.
+9. Application calls IApInterfaceManager::setConfig to set desired IP configurations.
+10. Application receives response set configuration.
+11. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
+12. Application receives response to restart hostapd daemon and access point configuration shall be active at this stage.
 
 */

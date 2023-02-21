@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -89,16 +89,23 @@ public:
     PowerMgmtTestApp();
     ~PowerMgmtTestApp();
 
-    int start(ClientType clientType, ProcType procType);
-    void onTcuActivityStateUpdate(TcuActivityState state) override;
-    void onSlaveAckStatusUpdate(telux::common::Status status) override;
+    int start(ClientInstanceConfig config);
+    void onTcuActivityStateUpdate(TcuActivityState state, std::string machineName) override;
+    void onSlaveAckStatusUpdate(const telux::common::Status status,
+        const std::string machineName, const std::vector<ClientInfo> unresponsiveClients,
+        const std::vector<ClientInfo> nackResponseClients) override;
     void onServiceStatusChange(ServiceStatus status) override;
+    void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent)  override;
 
     void registerForUpdates();
     void deregisterForUpdates();
     TcuActivityState getTcuActivityState();
     void sendActivityStateCommand(TcuActivityState state);
+    void sendActivityStateCommandEx(std::string machineName, TcuActivityState state);
     void setModemActivityState();
+    std::vector<std::string> getAllMachineNames();
+    void getMachineName();
+    bool userInputMachineName(std::string &machineName);
 
     void consoleinit();
 private:

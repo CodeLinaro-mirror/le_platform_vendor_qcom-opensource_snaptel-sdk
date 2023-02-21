@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -146,6 +146,10 @@ typedef int v2x_radio_handle_t;
 /** Maximum number of V2X Rx pools that is supported.
     Used in @ref v2x_radio_status_ex_t */
 #define V2X_MAX_RX_POOL_NUM (4)
+
+/** Maximum number of detected SLSS sync reference UEs.
+    Used in @ref v2x_slss_rx_info_t */
+#define V2X_MAX_SLSS_SYNC_REF_UE_NUM (16)
 
 /**
     Describes whether the radio chip modem should attempt or support concurrent
@@ -580,7 +584,7 @@ typedef struct {
     /**< Specifies one of the 3GPP levels of priority for the traffic that is
          pre-reserved on the SPS flow.
 
-         Use v2x_radio_query_parameters() to get the exact number of
+         Use v2x_radio_query_capabilities() to get the exact number of
          supported priority levels. */
 
     int period_interval_ms;
@@ -826,6 +830,60 @@ typedef enum {
 } v2x_auto_retransmit_policy_t;
 
 /**
+    Defines possible values for SLSS sync pattern.
+    Used in @ref v2x_slss_sync_ref_ue_info_t
+ */
+typedef enum {
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_1,   /**< UE transmits SLSS in subframes indicated by
+                                               the syncOffsetIndicator1 specified in V2X
+                                               configuration. */
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_2,   /**< UE transmits SLSS in subframes indicated by
+                                               the syncOffsetIndicator2 specified in V2X
+                                               configuration. */
+    V2X_SLSS_SYNC_PATTERN_OFFSET_IND_3,   /**< UE transmits SLSS in subframes indicated by
+                                               the syncOffsetIndicator3 specified in V2X
+                                               configuration. */
+    V2X_SLSS_SYNC_PATTERN_ODD_RESERVED,   /**< UE transmits SLSS in odd-numbered reserved
+                                               subframes. */
+    V2X_SLSS_SYNC_PATTERN_EVEN_RESERVED,  /**< UE transmits SLSS in even-numbered reserved
+                                               subframes. */
+    V2X_SLSS_SYNC_PATTERN_UNKNOWN,        /**< Unkown SLSS sync pattern. */
+} v2x_slss_sync_pattern_t;
+
+/**
+ * Encapsulates parameters of an SLSS sync reference UE.
+ * Used in @ref v2x_slss_rx_info_t.
+ */
+typedef struct {
+    uint16_t slss_id;
+    /**< The SLSS ID of the sync reference UE that is defined in 3GPP TS 36.331
+         chapter 6.3.8. */
+    bool in_coverage;
+    /**< Indicates whether or not the UE is in coverage of GNSS that is defined in
+         3GPP TS 36.331 chapter 6.5.2. */
+    v2x_slss_sync_pattern_t pattern;
+    /**< Indicates the SLSS sync pattern of the UE that is defined in 3GPP TS 36.331
+         chapter 6.3.8. */
+    uint8_t rsrp;
+    /**< SLSS RSRP value of the UE in dBm is ((float)rsrp - 256)/2. */
+    bool selected;
+    /**< Indicates whether or not the sync reference UE has been selected
+         as the timing source. */
+} v2x_slss_sync_ref_ue_info_t;
+
+/**
+ * Encapsulates parameters of CV2X SLSS Rx Information.
+ *
+ * Used in @ref v2x_get_slss_rx_info and @ref v2x_slss_rx_info_listener.
+ */
+typedef struct {
+    uint32_t num_ue;
+    /**< The number of SLSS sync reference UEs in array ueInfo. */
+    v2x_slss_sync_ref_ue_info_t ue_info[V2X_MAX_SLSS_SYNC_REF_UE_NUM];
+    /**< Array of detected SLSS sync reference UEs. */
+} v2x_slss_rx_info_t;
+
+/**
     Advanced parameters that can be specified for Tx SPS and event-driven
     flows.
  */
@@ -986,6 +1044,7 @@ typedef enum {
 typedef enum {
     V2X_NEW_TX,        /**< New Tx of the V2X transport block. */
     V2X_RE_TX,         /**< Re-Tx of the V2X transport block. */
+    V2X_SLSS_TX,       /**< Tx of SLSS. */
 } v2x_tx_type_t;
 
 /**
@@ -1056,6 +1115,22 @@ typedef void (*v2x_tx_status_report_listener)(const v2x_tx_status_report_t info)
 typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* status);
 
 /**
+    Called when CV2X SLSS Rx is enabled and any of below events has occurred:
+    - A new SLSS synce reference UE is detected, lost, or selected as the timing source,
+      report the present sync reference UEs.
+    - UE timing source switches from SLSS to GNSS, report 0 sync reference UE.
+    - SLSS Rx is disabled, report 0 sync reference UE.
+    - Cv2x is stopped, report 0 sync reference UE.
+
+    @datatypes
+    #v2x_slss_rx_info_t
+
+    @param[out] info     Pointer to V2X SLSS Rx information.
+    @newpage
+*/
+typedef void (*v2x_slss_rx_listener)(const v2x_slss_rx_info_t* info);
+
+/**
     Method used to query the platform SDK for its version number, build
     information, and build date.
 
@@ -1065,7 +1140,26 @@ typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* statu
 extern v2x_api_ver_t v2x_radio_api_version();
 
 /**
-    Gets the capabilities of a specific Radio interface attached to the system.
+    Gets the capabilities of CV2X radio.
+
+    @datatypes
+    #v2x_iface_capabilities_t
+
+    @param[out] caps       Pointer to the v2x_iface_capabilities_t structure,
+                           which contains the capabilities of this specific
+                           interface.
+
+    @return
+    #V2X_STATUS_SUCCESS -- The radio is ready for data-plane sockets to be
+    created and bound.
+    @par
+    Error code -- If there is a problem (see #v2x_status_enum_type).
+ */
+extern v2x_status_enum_type v2x_radio_query_capabilities(v2x_iface_capabilities_t *caps);
+/** @} *//* end_addtogroup telematics_cv2x_c_radio */
+
+/** @ingroup v2x_deprecated_radio
+    Deprecated. Gets the capabilities of a specific Radio interface attached to the system.
 
     @datatypes
     #v2x_iface_capabilities_t
@@ -1088,7 +1182,6 @@ extern v2x_api_ver_t v2x_radio_api_version();
     Error code -- If there is a problem (see #v2x_status_enum_type).
  */
 extern v2x_status_enum_type v2x_radio_query_parameters(const char *iface_name, v2x_iface_capabilities_t *caps);
-/** @} *//* end_addtogroup telematics_cv2x_c_radio */
 
 /** @ingroup v2x_deprecated_radio
     Deprecated. Pass #traffic_ip_type_t on radio init.
@@ -1199,6 +1292,9 @@ extern v2x_status_enum_type v2x_radio_deinit(v2x_radio_handle_t handle);
     Opens a new V2X radio receive socket, and initializes the given sockaddr
     buffer. The socket is also bound as an AF_INET6 UDP type socket.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @datatypes
     #v2x_radio_handle_t
 
@@ -1235,6 +1331,9 @@ extern int v2x_radio_rx_sock_create_and_bind(v2x_radio_handle_t handle, int *soc
     Opens a new V2X radio receive socket with specific service IDs for subscription,
     and initializes the given sockaddr buffer. The socket is also bound as an
     AF_INET6 UDP type socket.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
 
     @datatypes
     #v2x_radio_handle_t
@@ -1317,6 +1416,9 @@ extern int v2x_radio_rx_sock_create_and_bind_v2(v2x_radio_handle_t handle,
     v2x_radio_rx_sock_create_and_bind_v2() in that you can use the
     port_num parameter to specify the port number for the receive path.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @datatypes
     #v2x_radio_handle_t
 
@@ -1397,6 +1499,9 @@ extern int v2x_radio_rx_sock_create_and_bind_v3(v2x_radio_handle_t handle,
      section 14.1), packet delay estimation, L2 destination ID, and the resource blocks used for
      the packet's transmission: subframe, subchannel index.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_INFO
+    permission to successfully invoke this API.
+
      @datatypes
      #v2x_radio_handle_t
 
@@ -1429,6 +1534,9 @@ extern int v2x_radio_enable_rx_meta_data(v2x_radio_handle_t handle,
     v2x_radio_tx_sps_sock_create_and_bind_v2()/v2x_radio_tx_event_sock_create_and_bind_v2
     in the transmit direction and function v2x_radio_rx_sock_create_and_bind_v3()
     in the receiving direction.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
 
     @datatypes
     #v2x_radio_handle_t
@@ -1526,6 +1634,9 @@ extern int v2x_radio_sock_create_and_bind(
     Creates and binds a socket with a bandwidth-reserved (SPS) Tx flow with the
     requested ID, priority, periodicity, and size on a specified source port
     number. The socket is created as an IPv6 UDP socket.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
 
     @datatypes
     #v2x_radio_handle_t \n
@@ -1627,6 +1738,9 @@ extern int v2x_radio_tx_sps_sock_create_and_bind(v2x_radio_handle_t handle,
     Only SPS transmissions are to be implemented for the socket, which is created
     as an IPv6 UDP socket.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @datatypes
     #v2x_radio_handle_t \n
     #v2x_tx_bandwidth_reservation_t \n
@@ -1709,6 +1823,9 @@ extern int v2x_radio_tx_sps_only_create(v2x_radio_handle_t handle,
     @param[in]  updated_reservation  Pointer to a bandwidth reservation with
                                      new reservation information.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @detdesc
     This function will not update reservation priority.
     Can be used as follows:
@@ -1754,6 +1871,9 @@ extern void v2x_radio_tx_flush(char *interface);
 /**
     Opens and binds an event-driven socket (one with no bandwidth reservation).
     The socket is bound as an AF_INET6 UDP type socket.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
 
     @param[in]  interface        Pointer to the operating system name to use.
                                  This interface is an RmNet interface (HLOS).
@@ -1858,6 +1978,9 @@ v2x_event_t v2x_radio_get_status(void);
     Closes a specified socket file descriptor and deregisters any modem
     resources associated with it (such as reserved SPS bandwidth contracts).
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @param[in] sock_fd  Socket file descriptor.
 
     @detdesc
@@ -1916,6 +2039,9 @@ extern v2x_event_t cv2x_status_poll(uint64_t *status_age_useconds);
     Triggers the modem to change its source L2 address by randomly generating
     a new address.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
+
     @datatypes
     #v2x_radio_handle_t
 
@@ -1940,6 +2066,9 @@ extern int v2x_radio_trigger_l2_update(
 
 /**
     Updates the list of malicious and trusted IDs tracked by the modem.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
 
     @datatypes
     #trusted_ue_info_t
@@ -1971,6 +2100,9 @@ int v2x_radio_update_trusted_ue_list(unsigned int malicious_list_len,
     v2x_radio_tx_sps_sock_create_and_bind() in that you can use the
     sps_flow_info parameter to specify transmission resource information about
     the Tx flow.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
 
     @datatypes
     #v2x_radio_handle_t \n
@@ -2077,6 +2209,9 @@ extern int v2x_radio_tx_sps_sock_create_and_bind_v2(
     v2x_radio_tx_sps_only_create() in that you can use the sps_flow_info
     parameter to specify transmission resource information about the Tx flow.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @datatypes
     #v2x_radio_handle_t \n
     #v2x_tx_sps_flow_info_t \n
@@ -2150,6 +2285,9 @@ int v2x_radio_tx_sps_only_create_v2(v2x_radio_handle_t handle,
     v2x_radio_tx_reservation_change() in that you can use the updated_flow_info
     parameter to specify transmission resource information about the Tx flow.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @datatypes
     v2x_tx_sps_flow_info_t
 
@@ -2194,6 +2332,9 @@ extern v2x_status_enum_type v2x_radio_tx_reservation_change_v2(
     v2x_radio_tx_event_sock_create_and_bind() in that you can use the
     event_flow_info parameter to specify transmission resource information
     about the Tx flow.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
 
     @datatypes
     v2x_tx_flow_info_t
@@ -2240,6 +2381,9 @@ extern int v2x_radio_tx_event_sock_create_and_bind_v2(
 /**
     Adjusts the flow parameters for an existing Tx event socket.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
+
     @datatypes
     #v2x_tx_flow_info_t
 
@@ -2278,6 +2422,9 @@ extern v2x_status_enum_type v2x_radio_tx_event_flow_info_change(
     This call is a blocking call. When it returns, V2X mode has been started,
     assuming there is no error.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_OPS
+    permission to successfully invoke this API.
+
     @return
     #V2X_STATUS_SUCCESS.
     @par
@@ -2298,6 +2445,9 @@ extern v2x_status_enum_type start_v2x_mode();
 
     This call is a blocking call. When it returns, V2X mode has been stopped,
     assuming there is no error.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_OPS
+    permission to successfully invoke this API.
 
     @return
     #V2X_STATUS_SUCCESS.
@@ -2415,6 +2565,9 @@ int v2x_radio_init_v3(v2x_concurrency_sel_t mode,
     Opens and binds an event-driven socket (one with no bandwidth reservation).
     The socket is bound as an AF_INET6 UDP type socket.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     This %v2x_radio_tx_event_sock_create_and_bind_v3() method differs from
     v2x_radio_tx_event_sock_create_and_bind_v2() in that you can use the traffic_ip_type_t
     parameter to specify traffic ip type instead of requiring the interface name.
@@ -2489,6 +2642,10 @@ v2x_status_enum_type get_iface_name(traffic_ip_type_t ip_type, char * iface_name
     Additionally, this API also registers a Tx event flow and subscribes Rx with specified
     service ID to enable TCP control and data packets in both transmitting and receiving
     directions.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_FLOW_OPS
+    permission to successfully invoke this API.
+
     @par
     If the created socket is expected to work as TCP client mode, the caller must establish
     a connection to the address specifed using function connect(), and then use the socket
@@ -2546,6 +2703,9 @@ extern int v2x_radio_tcp_sock_create_and_bind(
     Set RF peak cv2x transmit power.
     This affects the power for all existing flows and for any flow created int the future.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
+
     Precondition -- v2x mode enabled.
 
     @param [in] txPower   Desired global Cv2x peak tx power in dbm
@@ -2558,6 +2718,9 @@ v2x_status_enum_type v2x_set_peak_tx_power(int8_t txPower);
     Set src L2 ID list for filtering.
     This affects/disables receiving packets from the src L2 IDs in the list.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
+
     @param [in] list_len   number of rc L2 IDs, max value 50
     @param [in] list_array array that stores the src L2 IDs, durations and pppp values for filter
 
@@ -2568,6 +2731,9 @@ v2x_status_enum_type v2x_set_l2_filters(uint32_t list_len, src_l2_filter_info* l
 /**
     Remove specific src L2 ID list for filtering.
     This affects/enables receiving packets from the src L2 IDs in the list.
+
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
 
     @param [in] list_len   number of rc L2 IDs, max value 50
     @param [in] l2_id_list array that stores the src L2 IDs
@@ -2632,6 +2798,9 @@ v2x_status_enum_type v2x_deregister_tx_status_report_listener(uint16_t port);
 /**
     Set CV2X global IP address for the IP interface.
 
+    On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+    permission to successfully invoke this API.
+
     @param [in] prefix_len CV2X global IP address prefix length in bits, range [64, 128]
     @param [in] ipv6_addr  CV2X global IP address.
 
@@ -2678,6 +2847,49 @@ v2x_status_enum_type v2x_get_ext_radio_status(v2x_radio_status_ex_t* status);
  */
 v2x_status_enum_type v2x_register_ext_radio_status_listener(
     v2x_ext_radio_status_listener callback);
+
+/**
+    Get the current V2X SLSS Rx information.
+
+    @param [out] slss_info     Pointer to structure v2x_slss_rx_info_t, which
+                               contains V2X SLSS Rx information on success.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_get_slss_rx_info(v2x_slss_rx_info_t* slss_info);
+
+/**
+    Registers a listener for CV2X SLSS Rx information.
+
+    @datatypes
+    v2x_slss_rx_info_listener
+
+    @param[in] callback        Callback function of @ref v2x_slss_rx_listener
+                               structure that is called on SLSS Rx information change.\n
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+ */
+v2x_status_enum_type v2x_register_slss_rx_listener(v2x_slss_rx_listener callback);
+
+/**
+    Deregisters a listener for CV2X SLSS Rx information.
+
+    @datatypes
+    v2x_slss_rx_info_listener
+
+    @param[in] callback        Previously registered @ref v2x_slss_rx_listener that
+                               is to be deregistered.\n
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+ */
+v2x_status_enum_type v2x_deregister_slss_rx_listener(v2x_slss_rx_listener callback);
+
 
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 

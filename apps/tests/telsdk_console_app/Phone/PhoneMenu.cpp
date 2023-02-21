@@ -149,14 +149,6 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
          std::cout << "Failed to registerListener" << std::endl;
       }
 
-      callManager_ = telux::tel::PhoneFactory::getInstance().getCallManager();
-      callListener_ = std::make_shared<MyCallListener>();
-
-      status = callManager_->registerListener(callListener_);
-      if(status != telux::common::Status::SUCCESS) {
-         std::cout << "Failed to register Call Manager listener" << std::endl;
-      }
-
       mySignalStrengthCb_ = std::make_shared<MySignalStrengthCallback>();
       myVoiceSrvStateCb_ = std::make_shared<MyVoiceServiceStateCallback>();
       myCellularCapabilityCb_ = std::make_shared<MyCellularCapabilityCallback>();
@@ -221,24 +213,16 @@ void PhoneMenu::init() {
          "12", "Request_eCall_operating_mode", {},
          std::bind(&PhoneMenu::requestECallOperatingMode, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> requestEcbmCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Get_ECBM", {},
-         std::bind(&PhoneMenu::requestEcbm, this, std::placeholders::_1)));
-
-   std::shared_ptr<ConsoleAppCommand> exitEcbmCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Exit_ECBM", {},
-         std::bind(&PhoneMenu::exitEcbm, this, std::placeholders::_1)));
-
    std::shared_ptr<ConsoleAppCommand> requestOperatorNameCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("15", "Get_operator_name", {},
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Get_operator_name", {},
          std::bind(&PhoneMenu::requestOperatorName, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> suppServicesMenuCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("16", "Supp_Services_Menu", {},
+      ConsoleAppCommand("14", "Supp_Services_Menu", {},
                         std::bind(&PhoneMenu::suppServicesMenu, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("17", "Select_sim_slot", {},
+      ConsoleAppCommand("15", "Select_sim_slot", {},
                         std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
 
 
@@ -255,8 +239,6 @@ void PhoneMenu::init() {
          servingSystemMenuCommand,
          setECallOperatingModeCommand,
          requestECallOperatingModeCommand,
-         requestEcbmCommand,
-         exitEcbmCommand,
          requestOperatorNameCommand,
          suppServicesMenuCommand};
 
@@ -421,12 +403,14 @@ void PhoneMenu::servingSystemMenu(std::vector<std::string> userInput) {
    ServingSystemMenu servingSystemMenu("Serving System Menu", "ServingSystem> ");
    servingSystemMenu.init();
    servingSystemMenu.mainLoop();
+   ConsoleApp::displayMenu();
 }
 
 void PhoneMenu::networkMenu(std::vector<std::string> userInput) {
    NetworkMenu networkMenu("Network Menu", "Network> ");
    networkMenu.init();
    networkMenu.mainLoop();
+   ConsoleApp::displayMenu();
 }
 
 void PhoneMenu::setECallOperatingMode(std::vector<std::string> userInput) {
@@ -496,38 +480,6 @@ void PhoneMenu::selectSimSlot(std::vector<std::string> userInput) {
    }
 }
 
-void PhoneMenu::requestEcbm(std::vector<std::string> userInput) {
-    if(callManager_) {
-        Status status = callManager_->requestEcbm(slot_,
-            MyEcbmCallback::onRequestEcbmResponseCallback);
-
-        if (status == Status::SUCCESS) {
-            std::cout << "Request for ECBM successful \n";
-        } else {
-            std::cout << "ERROR - Failed to request ECBM,"
-                      << "Status:" << static_cast<int>(status) << "\n";
-            Utils::printStatus(status);
-        }
-    } else {
-        std::cout << "ERROR - CallManager is null \n";
-    }
-}
-
-void PhoneMenu::exitEcbm(std::vector<std::string> userInput) {
-    if(callManager_) {
-        Status status = callManager_->exitEcbm(slot_, MyEcbmCallback::onResponseCallback);
-        if (status == Status::SUCCESS) {
-            std::cout << "Request for ECBM exit successful \n";
-        } else {
-            std::cout << "ERROR - Failed to request for ECBM exit,"
-                      << "Status:" << static_cast<int>(status) << "\n";
-            Utils::printStatus(status);
-        }
-    } else {
-        std::cout << "ERROR - CallManager is null \n";
-    }
-}
-
 void PhoneMenu::requestOperatorName(std::vector<std::string> userInput) {
    auto phone = phones_[slot_ - 1];
    if(phone) {
@@ -548,4 +500,5 @@ void PhoneMenu::suppServicesMenu(std::vector<std::string> userInput) {
    SuppServicesMenu suppServicesMenu("Supp Services Menu", "SuppServices> ");
    suppServicesMenu.init();
    suppServicesMenu.mainLoop();
+   ConsoleApp::displayMenu();
 }

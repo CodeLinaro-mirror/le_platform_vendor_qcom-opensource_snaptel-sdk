@@ -24,6 +24,7 @@ SYSR_INCLUDE_DIR(telux)
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/utils
 )
 
 # set global variables

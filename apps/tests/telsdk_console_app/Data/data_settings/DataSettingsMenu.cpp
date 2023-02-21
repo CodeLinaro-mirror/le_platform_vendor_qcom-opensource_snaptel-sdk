@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -31,7 +31,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 extern "C" {
 #include "unistd.h"
@@ -160,7 +159,11 @@ void DataSettingsMenu::setBackhaulPref(std::vector<std::string> inputCommand) {
             << " (0-ETH, 1-USB, 2-WLAN, 3-WWAN, 4-BLE): ";
             std::cin >> backhaul;
             std::cout << endl;
-            Utils::validateInput(backhaul);
+            Utils::validateInput(backhaul, {static_cast<int>(BackhaulType::ETH),
+                static_cast<int>(BackhaulType::USB),
+                static_cast<int>(BackhaulType::WLAN),
+                static_cast<int>(BackhaulType::WWAN),
+                static_cast<int>(BackhaulType::BLE)});
             if((backhaul < 0) || (backhaul >= static_cast<int>(BackhaulType::MAX_SUPPORTED))) {
                 std::cout << "Invalid backhaul... Please try again" << std::endl;
                 inputIsValid = false;

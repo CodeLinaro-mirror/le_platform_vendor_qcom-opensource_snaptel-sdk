@@ -58,7 +58,17 @@ void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call
                 << " Phone Number: " << call->getRemotePartyNumber() << std::endl;
    }
 }
+bool CallManagerReadyStatus = false;
 
+//Callback to check CallManager readiness
+void initResponseCb(telux::common::ServiceStatus status) {
+   if(status == SERVICE_AVAILABLE) {
+      CallManagerReadyStatus = true;
+      std::cout <<" Call Manager is ready" << std::endl;
+   } else {
+      std::cout <<" Call Manager is not ready" << std::endl;
+   }
+}
 /**
  * Main routine
  */
@@ -66,43 +76,23 @@ int main(int, char **) {
 
    // ### 1. Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
 
-   // ### 2. Check if telephony subsystem is ready
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
+   // ### 2. Instantiate call manager
+   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager(&initResponseCb);
 
-   // #### 2.1 If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemsStatus = f.get();
-   }
-
-   // Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
-      return 1;
-   }
-
-   // ### 4. Instantiate Phone and call manager
-   auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
-
-   // ### 5. Get unique id of the phone
+   // ### 3. Get unique id of the phone
    int phoneId = DEFAULT_PHONE_ID;
 
-   // ### 6. Instantiate dial callback instance - this is optional
+   // ### 4. Instantiate dial callback instance - this is optional
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
 
-   // ### 7. Create details required to make custom number eCall over IMS like dialnumber,
+   // ### 5. Create details required to make custom number eCall over IMS like dialnumber,
    // ###    msd data, Optional SIP headers.
 
    // Input Dialnumber
    std::string dialNumber = "";
+   std::string contentTypeHeader;
+   std::string acceptInfoHeader;
    std::cout << "Enter phone number: ";
    std::getline(std::cin, dialNumber, delimiter);
    if (dialNumber.empty()) {
@@ -122,7 +112,7 @@ int main(int, char **) {
     if (!temp.empty()) {
         contentTypeHeader = temp;
     } else {
-        std::cout << "No input, proceeding with contentType: " << std::endl;
+        std::cout << "No input, proceeding with default contentType: " << std::endl;
     }
     temp = "";
     std::cout << "Enter Custom SIP Header for acceptInfo (uses default for no input): ";
@@ -130,27 +120,29 @@ int main(int, char **) {
     if (!temp.empty()) {
         acceptInfoHeader = temp;
     } else {
-        std::cout << "No input, proceeding with contentType: " << std::endl;
+        std::cout << "No input, proceeding with default acceptInfo: " << std::endl;
     }
-    if ((contentType == "") && (acceptInfo == "")) {          //Default SIP headers
-        header.contentType = telux::tel::CONTENT_HEADER;
-        header.acceptInfo = "";
-    } else if ((contentType == "") && (acceptInfo != "")) {   //Default SIP header for contentType
-        header.contentType = telux::tel::CONTENT_HEADER;
-        header.acceptInfo = acceptInfo;
+    if (contentTypeHeader != "") {
+        header.contentType = contentType;
     } else {
-        header.contentType = contentType;                    //Custom SIP headers
+        header.contentType = telux::tel::CONTENT_HEADER;
+    }
+    if (acceptInfoHeader != "") {
         header.acceptInfo = acceptInfo;
+    } else  {
+        header.acceptInfo = "";
     }
 
-   // ### 8. Send a eCall request
-   if(callManager) {
-      auto makeCallStatus
-         = callManager->makeECall(phoneId, dialNumber, rawData, header, dialCb);
-      std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
-   }
+   // ### 6. Send a eCall request only when Call Manager is ready.
+   if(CallManagerReadyStatus == true) {
+      if(callManager) {
+         auto makeCallStatus
+            = callManager->makeECall(phoneId, dialNumber, rawData, header, dialCb);
+         std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
+       }
+    }
 
-   // ### 9. Exit logic is specific to an application
+   // ### 7. Exit logic is specific to an application
    std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);

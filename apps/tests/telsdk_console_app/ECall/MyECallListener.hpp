@@ -43,7 +43,7 @@ class MyECallListener : public telux::tel::ICallListener {
    void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) override;
    void onEmergencyNetworkScanFail(int phoneId) override;
-
+   void onEcbmChange(telux::tel::EcbMode mode) override;
    /**
     * Get current time
     */
@@ -69,4 +69,18 @@ class MyECallListener : public telux::tel::ICallListener {
    int getCallsOnSlot(SlotId slotId);
 };
 
+class MyEcbmCallback {
+public:
+   static void onRequestEcbmResponseCallback(telux::tel::EcbMode ecbMode,
+       telux::common::ErrorCode error);
+   static void onResponseCallback(telux::common::ErrorCode error);
+};
+class MyCallCommandCallback : public telux::common::ICommandResponseCallback {
+public:
+   MyCallCommandCallback(std::string commandName);
+   void commandResponse(telux::common::ErrorCode error) override;
+
+private:
+   std::string commandName_;
+};
 #endif  // MYCALLLISTENER_HPP

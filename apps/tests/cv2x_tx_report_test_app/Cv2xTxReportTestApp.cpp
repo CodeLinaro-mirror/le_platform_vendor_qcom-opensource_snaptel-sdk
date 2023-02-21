@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2022 - 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file: Cv2xTxReportTestApp.cpp
@@ -75,7 +110,6 @@ using telux::cv2x::EventFlowInfo;
 #define DEFAULT_LENGTH (200)
 #define DEFAULT_INTERVAL (100)
 #define DEFAULT_SERVICE_ID (1)
-#define DEFAULT_LOG_FILE ("/var/log/tx_report.csv")
 
 // Set this value to true if user inputs "cv2x_tx_test_report_app -c".
 // No interactive commands are required in this mode, this APP will
@@ -86,39 +120,44 @@ Cv2xStatusListener::Cv2xStatusListener(Cv2xStatus status) {
     cv2xStatus_ = status;
 }
 
-bool Cv2xStatusListener::isCv2xActive() {
+Cv2xStatus Cv2xStatusListener::getCv2xStatus() {
     lock_guard<mutex> lock(mtx_);
-    if (cv2xStatus_.txStatus == Cv2xStatusType::ACTIVE and
-        cv2xStatus_.rxStatus == Cv2xStatusType::ACTIVE) {
-        return true;
-    }
-    return false;
+    return cv2xStatus_;
 }
 
 void Cv2xStatusListener::onStatusChanged(Cv2xStatus status) {
-    lock_guard<mutex> lock(mtx_);
-    if (status.rxStatus != cv2xStatus_.rxStatus
-        or status.txStatus != cv2xStatus_.txStatus) {
-        cout << "cv2x status changed, Tx: " << static_cast<int>(status.txStatus);
-        cout << ", Rx: " << static_cast<int>(status.rxStatus) << endl;
-        cv2xStatus_ = status;
+    bool stateUpdated = false;
+    {
+        lock_guard<mutex> lock(mtx_);
+        if (status.rxStatus != cv2xStatus_.rxStatus
+            or status.txStatus != cv2xStatus_.txStatus) {
+            cout << "cv2x status changed, Tx: " << static_cast<int>(status.txStatus);
+            cout << ", Rx: " << static_cast<int>(status.rxStatus) << endl;
+            cv2xStatus_ = status;
+            stateUpdated = true;
+        }
+    }
 
-        if (status.rxStatus == Cv2xStatusType::ACTIVE and
-            status.txStatus == Cv2xStatusType::ACTIVE) {
+    if (stateUpdated) {
+        if ((status.rxStatus == Cv2xStatusType::ACTIVE and
+            status.txStatus == Cv2xStatusType::ACTIVE)) {
+            // notifiy client that is waiting for Tx active
             cv_.notify_all();
+        } else if (status.rxStatus == Cv2xStatusType::INACTIVE or
+            status.txStatus == Cv2xStatusType::INACTIVE) {
+            // cv2x transition to inactive, deinit and exit from the app
+            std::thread ([&] () {
+                Cv2xTxStatusReportApp::getInstance().deinit();
+            }).detach();
         }
     }
 }
 
 void Cv2xStatusListener::waitCv2xActive() {
     std::unique_lock<mutex> cvLock(mtx_);
-    if (Cv2xStatusType::INACTIVE == cv2xStatus_.rxStatus or
-        Cv2xStatusType::INACTIVE == cv2xStatus_.txStatus) {
-        cerr << "Tx/Rx inactive, exit." << endl;
-        Cv2xTxStatusReportApp::getInstance().deinit();
-    } else if (Cv2xStatusType::ACTIVE != cv2xStatus_.rxStatus or
-               Cv2xStatusType::ACTIVE != cv2xStatus_.txStatus) {
-        cout << "wait for Cv2x status active." << endl;
+    if (Cv2xStatusType::ACTIVE != cv2xStatus_.txStatus or
+        Cv2xStatusType::ACTIVE != cv2xStatus_.rxStatus) {
+        cout << "wait for Cv2x Tx status active." << endl;
         cv_.wait(cvLock);
     }
 }
@@ -159,15 +198,6 @@ int Cv2xTxStatusReportApp::init() {
         return EXIT_FAILURE;
     }
 
-    // Wait for cv2x radio to complete initialization
-    radio_ = cv2xRadioManager_->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
-    if (not radio_->isReady()) {
-        if (Status::SUCCESS != radio_->onReady().get()) {
-            cerr << "Cv2x Radio initialization failed!" << endl;
-            return EXIT_FAILURE;
-        }
-    }
-
     // get initial CV2X status
     promise<Cv2xStatus> prom;
     auto res = cv2xRadioManager_->requestCv2xStatus([&prom](Cv2xStatus status, ErrorCode code)
@@ -180,17 +210,27 @@ int Cv2xTxStatusReportApp::init() {
     };
     Cv2xStatus status = prom.get_future().get();
 
+    // ensure cv2x has started successfully before running the test
+    if (Cv2xStatusType::INACTIVE == status.txStatus
+        or Cv2xStatusType::UNKNOWN == status.txStatus) {
+        cerr << "CV2X Tx status inactive or unknown!" << endl;
+        return EXIT_FAILURE;
+    }
+
     // register listener for CV2X status change
     cv2xStatusListener_ = make_shared<Cv2xStatusListener>(status);
-    if (Status::SUCCESS != radio_->registerListener(cv2xStatusListener_)) {
+    if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
         cerr << "Register CV2X status listener failed!" << endl;
         return EXIT_FAILURE;
     }
 
-    // ensure cv2x active before running the test
-    if (not cv2xStatusListener_->isCv2xActive()) {
-        cerr << "CV2X status not Active!" << endl;
-        return EXIT_FAILURE;
+    // Wait for cv2x radio to complete initialization
+    radio_ = cv2xRadioManager_->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
+    if (not radio_->isReady()) {
+        if (Status::SUCCESS != radio_->onReady().get()) {
+            cerr << "Cv2x Radio initialization failed!" << endl;
+            return EXIT_FAILURE;
+        }
     }
 
     return EXIT_SUCCESS;
@@ -225,20 +265,23 @@ void Cv2xTxStatusReportApp::consoleInit() {
 }
 
 int Cv2xTxStatusReportApp::deinit() {
+    lock_guard<mutex> lock(operationMtx_);
+    exiting_ = true;
+
     cout << "Exiting..." << endl;
+
+    // deregister listeners
+    if (cv2xRadioManager_) {
+        if (cv2xStatusListener_) {
+            cv2xRadioManager_->deregisterListener(cv2xStatusListener_);
+        }
+
+        deleteTxReportListener();
+    }
 
     // stop Tx pkts if started
     if (txThreadValid_) {
         stopTxPkts();
-    }
-
-    // deregister listeners
-    if (radio_) {
-        if (cv2xStatusListener_) {
-            radio_->deregisterListener(cv2xStatusListener_);
-        }
-
-        deleteTxReportListener();
     }
 
     exit(0);
@@ -412,7 +455,6 @@ int Cv2xTxStatusReportApp::deregisterTxFlow() {
         auto status = radio_->closeTxFlow(txFlow_, closeTxFlowCallback);
         if (Status::SUCCESS != status or
             ErrorCode::SUCCESS != p.get_future().get()) {
-            cerr << "Failed to deregister Tx flow!" << endl;
             ret = EXIT_FAILURE;
         }
         txFlowValid_ = false;
@@ -515,19 +557,16 @@ void Cv2xTxStatusReportApp::startTxPkts() {
     }
 
     txThread_ = std::async(std::launch::async, [this]() {
-        while (1) {
-            // check if user has stopped Tx pkts
-            if (not txFlowValid_) {
-                cout << "Tx flow has been deregistered" << endl;
-                break;
-            }
-
+        while (txFlowValid_) {
             // check CV2X status before Tx
-            if (cv2xStatusListener_->isCv2xActive()) {
+            auto txStatus = cv2xStatusListener_->getCv2xStatus().txStatus;
+            if (Cv2xStatusType::ACTIVE == txStatus) {
                 if (fillTxBuffer(buf_, options_.length) or
                     sampleTx(txFlow_->getSock(), buf_, options_.length)) {
                     break;
                 }
+            } else if (Cv2xStatusType::INACTIVE == txStatus) {
+                break;
             } else {
                 cv2xStatusListener_->waitCv2xActive();
                 continue;
@@ -560,8 +599,15 @@ void Cv2xTxStatusReportApp::stopTxPkts() {
 }
 
 int Cv2xTxStatusReportApp::createTxReportListener() {
+    int ret = EXIT_FAILURE;
+    txReportListener_ = make_shared<Cv2xTxStatusReportListener>(options_.file,
+                                                                options_.port,
+                                                                ret);
+    if (EXIT_SUCCESS != ret) {
+        return ret;
+    }
+
     promise<ErrorCode> p;
-    txReportListener_ = make_shared<Cv2xTxStatusReportListener>(options_.file);
     auto status = radio_->registerTxStatusReportListener(
         options_.port,
         txReportListener_,
@@ -580,7 +626,6 @@ int Cv2xTxStatusReportApp::createTxReportListener() {
 
 int Cv2xTxStatusReportApp::deleteTxReportListener() {
     if (not txReportListener_) {
-        cerr << "Tx status report listener not exist" << endl;
         return EXIT_FAILURE;
     }
 
@@ -619,6 +664,11 @@ void Cv2xTxStatusReportApp::startTxAndListenToReportCommand() {
         return;
     }
 
+    lock_guard<mutex> lock(operationMtx_);
+    if (exiting_) {
+        return;
+    }
+
     // create listener with same port number as the Tx flow src port
     if (EXIT_SUCCESS != createTxReportListener()) {
         return;
@@ -638,6 +688,11 @@ void Cv2xTxStatusReportApp::startTxAndListenToReportCommand() {
 }
 
 void Cv2xTxStatusReportApp::stopTxAndListenToReportCommand() {
+    lock_guard<mutex> lock(operationMtx_);
+    if (exiting_) {
+        return;
+    }
+
     if (not txThreadValid_) {
         cerr << "Tx not started!" << endl;
         return;
@@ -677,6 +732,11 @@ void Cv2xTxStatusReportApp::startListenToReportCommand() {
         file = DEFAULT_LOG_FILE;
     }
 
+    lock_guard<mutex> lock(operationMtx_);
+    if (exiting_) {
+        return;
+    }
+
     // register listener for CV2X Tx status report with port number 0, which means listen to
     // reports associated with all port number
     options_.file = file;
@@ -687,6 +747,11 @@ void Cv2xTxStatusReportApp::startListenToReportCommand() {
 }
 
 void Cv2xTxStatusReportApp::stopListenToReportCommand() {
+    lock_guard<mutex> lock(operationMtx_);
+    if (exiting_) {
+        return;
+    }
+
     deleteTxReportListener();
     return;
 }

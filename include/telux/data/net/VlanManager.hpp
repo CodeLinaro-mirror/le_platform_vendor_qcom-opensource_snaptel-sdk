@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /**
  * @file       VlanManager.hpp
@@ -176,12 +211,26 @@ class IVlanManager {
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
     /**
-     * Bind a Vlan with a particular profile ID and slot ID. When a WWAN network interface is
-     * brought up using IDataConnectionManager::startDataCall on that profile ID and slot ID,
-     * that interface will be accessible from this Vlan
+     * Bind a VLAN with a particular profile id and slot id. When a WWAN network interface is
+     * brought up using IDataConnectionManager::startDataCall on that profile id and slot id,
+     * that interface will be accessible from this VLAN
+     * The behavior of this API is dependent on platform/system configuration.
+     * If the platform is configured to allow multiple VLANs to be bound to the same
+     * profile id - slot id pair then:
+     *   - Binding multiple VLANs to any profile id - slot id pair can be achieved by calling this
+     *     API with each VLAN id. Each VLAN will be associated with it's own bridge.
+     *   - Reboot is not triggered with any bind operation.
+     * If the platform is not configured to allow multiple VLANs to be bound to the same
+     * profile id - slot id pair then:
+     *   - Binding VLAN to default profile id and slot id will associate it with bridge0 and
+     *     trigger automatic reboot.
+     *   - Binding VLAN to any other profile id and slot id will associate it with own bridge.
+     *   - Multiple VLAN binding attempt to any profile id or slot id will result in error
+     *     telux::common::ErrorCode::INVALID_OPERATION
+     * This setting will be persistent across multiple boots.
      *
      * @param [in] profileId    profile id for vlan association
-     * @param [in] vlanId       sets vlan id
+     * @param [in] vlanId       VLAN ID to be bound to the data call brought up on the profile id
      * @param [out] callback    callback to get the response of associateWithProfileId API
      * @param [in] slotId       Specify slot id which has the sim that contains profile id.
      *

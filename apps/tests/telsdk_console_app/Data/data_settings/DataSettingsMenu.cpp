@@ -83,6 +83,10 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::setWwanConnectivityConfig, this, std::placeholders::_1)) ,
             std::make_pair("Request_Backhaul_Connectivity",
             std::bind(&DataSettingsMenu::requestWwanConnectivityConfig, this, std::placeholders::_1)),
+            std::make_pair("Request_DDS_Switch",
+            std::bind(&DataSettingsMenu::requestDdsSwitch, this, std::placeholders::_1)),
+            std::make_pair("Request_Current_DDS",
+            std::bind(&DataSettingsMenu::requestCurrentDds, this, std::placeholders::_1)),
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -361,6 +365,97 @@ void DataSettingsMenu::requestBandInterferenceConfig(std::vector<std::string> in
         }
     };
     retStat = dataSettingsManagerMap_[opType]->requestBandInterferenceConfig(respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestDdsSwitch(std::vector<std::string> inputCommand)
+{
+    telux::common::Status retStat;
+    int operationType;
+
+    std::cout << "Trigger DDS Switch \n";
+
+#ifdef TELUX_FOR_EXTERNAL_AP
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported())
+    {
+        slotId = Utils::getValidSlotId();
+    }
+
+    int switchType = 0;
+    std::cout << "Enter switch Type (0-Perm_Switch, 1-Temp_Switch): ";
+    std::cin >> switchType;
+    DataUtils::validateInput(switchType, {0, 1});
+
+    DdsInfo requestInfo;
+
+    requestInfo.slotId = static_cast<SlotId>(slotId);
+    requestInfo.type = static_cast<DdsType>(switchType);
+
+    auto respCb = [](telux::common::ErrorCode error)
+    {
+        std::cout << std::endl
+                  << std::endl;
+
+        std::cout << "CALLBACK: "
+                  << "requestDdsSwitch Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->requestDdsSwitch(requestInfo, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::requestCurrentDds(std::vector<std::string> inputCommand)
+{
+    telux::common::Status retStat;
+    int operationType;
+
+    std::cout << "Request current DDS info \n";
+
+#ifdef TELUX_FOR_EXTERNAL_AP
+    telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
+#else
+    telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
+#endif
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    auto respCb = [](DdsInfo currentState, telux::common::ErrorCode error)
+    {
+        std::cout << std::endl
+                  << std::endl;
+
+        std::cout << "CALLBACK: "
+                  << "requestCurrentDds Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+        if (error == telux::common::ErrorCode::SUCCESS) {
+            std::cout << "Slot_Id: " << currentState.slotId << std::endl;
+            std::string type = (currentState.type == DdsType::PERMANENT) ?
+                "Permamnent" : "Temporary";
+            std::cout << "Switch Type: " << type << std::endl;
+        }
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->requestCurrentDds(respCb);
     Utils::printStatus(retStat);
 }
 

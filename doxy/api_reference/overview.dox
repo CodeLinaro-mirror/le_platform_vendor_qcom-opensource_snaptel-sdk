@@ -173,6 +173,7 @@ CallManager, Phone and PhoneManager APIs of Telematics SDK provides call related
 CallManager and PhoneManager also provides additional functionality such as
    - Allowing conference, and switch between waiting or holding call and active call
    - Emergency Call (dial 112)
+   - Third Party Service (TPS) Emergency Call (dial custom number)
    - Notifications about call state change
 
 @subsection sms SMS

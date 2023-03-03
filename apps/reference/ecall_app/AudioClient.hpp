@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -87,7 +87,7 @@ public:
      *
      * @param [in] phoneId         Represents phone corresponding to which the operation will be
      *                             performed
-     * @param [in] deviceType      Output device type to be used
+     * @param [in] devices         Audio sink and source devices to be used
      * @param [in] sampleRate      Audio sample Rate of voice stream
      * @param [in] voiceFormat     Audio stream data format
      * @param [in] channels        Channels to be used
@@ -96,8 +96,8 @@ public:
      * @returns Status of startVoiceSession i.e success or suitable status code.
      *
      */
-    telux::common::Status startVoiceSession(int phoneId, DeviceType deviceType, uint32_t sampleRate,
-        AudioFormat voiceFormat, ChannelTypeMask channels, EcnrMode ecnrMode);
+    telux::common::Status startVoiceSession(int phoneId, std::vector<DeviceType> devices,
+        uint32_t sampleRate, AudioFormat voiceFormat, ChannelTypeMask channels, EcnrMode ecnrMode);
 
     /**
      * This function stops the voice session.

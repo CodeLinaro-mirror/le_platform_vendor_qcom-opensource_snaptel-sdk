@@ -1,4 +1,4 @@
-Security {#security}
+Crypto {#crypto}
 ====================
 
 * @subpage hmac_sym_key_sign_vrfy

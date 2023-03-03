@@ -63,7 +63,10 @@ This sample application demonstrates how to use audio APIs for switching audio d
     config.sampleRate = 16000;
     config.format = AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
+    // For StreamType::VOICE_CALL, sink and source device are required to be passed.
+    // First device requires to sink (speaker) then source (mic) should be passed.
     config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+    config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_MIC);
 
     status = audioManager->createStream(config, createStreamCallback);
    ~~~~~~
@@ -103,7 +106,10 @@ This sample application demonstrates how to use audio APIs for switching audio d
 
     // Switch to new device for the given audio stream
     std::vector<DeviceType> devices;
-    devices.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+    /*For StreamType::VOICE_CALL, sink and source device are required to be passed.
+      First device should be sink (speaker) and then source (mic) should be passed for stream creation.*/
+    config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_SPEAKER);
+    config.deviceTypes.emplace_back(DeviceType::DEVICE_TYPE_MIC);
     status = audioVoiceStream->setDevice(devices, setStreamDeviceCallback);
    ~~~~~~
 

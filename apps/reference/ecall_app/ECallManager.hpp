@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021, 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -91,11 +91,15 @@ class ECallManager : public LocationListener,
      * @param [in] category     ECallCategory
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] variant      ECallVariant
+     * @param [in] msdPdu       MSD PDU that will be transmitted at call connect. If this is empty,
+     *                          either the MSD as per configuration file or the default MSD will
+     *                          be used.
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
     telux::common::Status triggerECall(
-        int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd);
+        int phoneId, ECallCategory category, ECallVariant variant, bool transmitMsd,
+        std::vector<uint8_t> msdPdu);
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number
@@ -104,11 +108,15 @@ class ECallManager : public LocationListener,
      * @param [in] category     ECallCategory
      * @param [in] transmitMsd  Configures MSD transmission at MO call connect
      * @param [in] dialNumber   phone number to be dialed
+     * @param [in] msdPdu       MSD PDU that will be transmitted at call connect. If this is empty,
+     *                          either the MSD as per configuration file or the default MSD will
+     *                          be used.
      *
      * @returns Status of triggerECall i.e success or suitable status code.
      */
     telux::common::Status triggerECall(
-        int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd);
+        int phoneId, ECallCategory category, const std::string dialNumber, bool transmitMsd,
+        std::vector<uint8_t> msdPdu);
 
     /**
      * This function triggers a voice eCall procedure to the specified phone number over IMS
@@ -167,6 +175,60 @@ class ECallManager : public LocationListener,
      */
     telux::common::Status requestHlapTimerStatus(int phoneId);
 
+    /**
+     * This function requests to stop T10 eCall High Level Application Protocol(HLAP) timer
+     *
+     * @param [in] phoneId   Represents phone corresponding to which eCall operation is performed
+     *
+     * @returns Status of stopT10Timer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status stopT10Timer(int phoneId);
+
+    /**
+     * This function requests to set the value of eCall High Level Application Protocol(HLAP)
+     * timer
+     *
+     * @param [in] phoneId       Represents phone corresponding to which eCall operation is
+     *                           performed
+     * @param [in] type          @ref HlapTimerType
+     * @param [in] timeDuration  Represents the time duration.
+     *
+     * @returns Status of setHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setHlapTimer(int phoneId, HlapTimerType type, uint32_t timeDuration);
+
+    /**
+     * This function requests to get the value of eCall High Level Application Protocol(HLAP)
+     * timer
+     *
+     * @param [in] phoneId   Represents phone corresponding to which eCall operation is performed
+     * @param [in] type      @ref HlapTimerType
+     *
+     * @returns Status of getHlapTimer i.e success or suitable status code.
+     *
+     */
+    telux::common::Status getHlapTimer(int phoneId, HlapTimerType type);
+
+    /**
+     * Get various configuration parameters related to eCall
+     *
+     * @returns Status of getECallConfig i.e success or suitable status code.
+     *
+     */
+    telux::common::Status getECallConfig();
+
+    /**
+     * Set various configuration parameters related to eCall
+     *
+     * @param [in] config configuration to be written
+     *
+     * @returns Status of setECallConfig i.e success or suitable status code.
+     *
+     */
+    telux::common::Status setECallConfig(EcallConfig config);
+
     void onLocationUpdate(ECallLocationInfo locInfo) override;
     void onCallDisconnect() override;
     void onCallConnect(int phoneId) override;
@@ -213,11 +275,6 @@ class ECallManager : public LocationListener,
      */
     void parseAppConfig();
 
-    /**
-     * Convert the hexadecimal string to bytes
-     */
-    std::vector<uint8_t> convertHexToBytes(std::string msdData);
-
     /** Member variables to hold Manager objects of various Telematics-SDK components */
     std::shared_ptr<TelClient> telClient_;
     std::shared_ptr<LocationClient> locClient_;
@@ -226,15 +283,18 @@ class ECallManager : public LocationListener,
 
     /** Represents the phone corresponding to the eCall session */
     int phoneId_;
-    /** Local copy of MSD that will be used in transmission */
+    /** Local copy of MSD data structure that will be used in transmission */
     ECallMsdData msdData_;
+    /** Local copy of MSD raw PDU that will be used in transmission */
+    std::vector<uint8_t> msdPdu_ {};
     /** Interval for which the location-fix updates needs to be received */
     uint32_t locUpdateIntervalMs_;
     std::mutex mutex_;
     bool locFixReceived_;
     std::condition_variable locUpdateCV_;
     /** Variables to store audio settings for eCall voice conversation */
-    DeviceType audioDevice_;
+    std::vector<DeviceType> audioDevices_ {DeviceType::DEVICE_TYPE_SPEAKER,
+                     DeviceType::DEVICE_TYPE_MIC};
     uint32_t voiceSampleRate_;
     AudioFormat voiceFormat_;
     ChannelTypeMask voiceChannels_;

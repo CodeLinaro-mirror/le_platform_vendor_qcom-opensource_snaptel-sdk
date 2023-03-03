@@ -99,6 +99,7 @@ endif (AUDIO_ENABLED)
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${telematics-apps_SOURCE_DIR}/common
+    ${telematics-apps_SOURCE_DIR}/common/utils
 )
 
 # set global variables

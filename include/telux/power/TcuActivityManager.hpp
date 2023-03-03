@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -75,6 +75,7 @@
 
 #include <future>
 #include <memory>
+#include <vector>
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/power/TcuActivityListener.hpp>
@@ -98,29 +99,6 @@ namespace power {
  */
 class ITcuActivityManager {
 public:
-    /**
-     * Checks the status of TCU-activity services and if the other APIs are ready for use,
-     * and returns the result.
-     *
-     * @returns  True if the services are ready otherwise false.
-     *
-     * @deprecated Use ITcuActivityManager::getServiceStatus() API.
-     *             @ref telux::power::ITcuActivityManager::getServiceStatus
-     */
-    virtual bool isReady() = 0;
-
-    /**
-     * Wait for TCU-activity services to be ready.
-     *
-     * @returns  A future that caller can wait on to be notified when TCU-activity services
-     *           are ready.
-     *
-     * @deprecated Use InitResponseCb in PowerFactory::getTcuActivityManager instead, to get
-     *             get notified about subsystem readiness
-     *             @ref telux::power::PowerFactory::getTcuActivityManager
-     */
-    virtual std::future<bool> onReady() = 0;
-
    /**
     * This status indicates whether the ITcuActivityManager object is in a usable state.
     *
@@ -169,26 +147,66 @@ public:
                         std::weak_ptr<telux::common::IServiceStatusListener> listener) = 0;
 
     /**
-     * Initiate a TCU-activity state transition.
-     * If SDK is configured to change modem activity state automatically when TCU activity state is
-     * changed, this API initiates relevant operation internally.
+     * This API allows the caller to get the machine name where the client is running. It is
+     * intended to identify local machine name on a platform where multiple machines are available
+     * in the power framework.
      *
-     * This API needs to be used cautiously, as it could change the power-state of the system and
-     * may affect other processes.
+     * @param [out] machineName     the machine name where the process is running
+     *
+     * @returns Status of getMachineName, success or suitable status code.
+     */
+    virtual telux::common::Status getMachineName(std::string& machineName) = 0;
+
+    /**
+     * This API enumerates all the machines in the system that are available and ready to be managed
+     * by the power framework.
      *
      * This API is meant for clients that have instantiated the ITcuActivityManager instance using
-     * ClientType::MASTER
+     * @ref ClientType::MASTER. If the platform has multiple machines available, knowing their names
+     * will be useful if the master is interested in modifying the activity state of any available
+     * machine independently using @ref setActivityState.
+     *
+     * @param [out] machineNames     list of machine names that are available for power management.
+     *
+     * @returns Status of getAllMachineNames, success or suitable status code.
+     */
+    virtual telux::common::Status getAllMachineNames(std::vector<std::string>& machineNames) = 0;
+
+    /**
+     * Initiate a TCU-activity state transition.
+     *
+     * This API also initiates the relevant operation internally if the platform is configured to
+     * change modem activity state automatically when TCU activity state is updated.
+     *
+     * This API needs to be used cautiously, as it could change the power-state of the system and
+     * may affect other processes. For example, if a master sets the SUSPEND state, all SLAVE
+     * processes will suspend their activity, allowing the system to suspend.
+     *
+     * This API can only be invoked by clients that have instantiated the ITcuActivityManager
+     * instance using @ref ClientType::MASTER.
+     *
+     * Based on the final acknowledgements from all the slaves
+     * @ref ITcuActivityListener::onSlaveAckStatusUpdate,
+     *  1.  If the acknowledgement status is SUCCESS, then the framework attempts to state
+     *      transition(SUSPEND/SHUTDOWN) immediately on the relevant machines.
+     *  2.  If the acknowledgement status is not SUCCESS, then the framework waits for a configured
+     *      timeout before attempting the state transition(SUSPEND/SHUTDOWN) on the relevant
+     *      machines.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
      * permission to invoke this API successfully.
      *
-     * @param [in] state    TCU-activity state that the System is intended to enter
-     * @param [in] callback Optional callback to get the response for the TCU-activity state
-     *                      transition command
+     * @param [in] state            TCU-activity state that the System is intended to enter
+     * @param [in] machineName      Optional field if the state transition is intended for the
+     *                              specific machine only. If not specified, then the state applies
+     *                              to the whole system.
+     * @param [in] callback         Optional callback to get the response for the TCU-activity state
+     *                              transition command
      *
      * @returns Status of setActivityState i.e. success or suitable status code.
      */
     virtual telux::common::Status setActivityState( TcuActivityState state,
+                        std::string machineName = ALL_MACHINES,
                         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
@@ -200,25 +218,34 @@ public:
 
     /**
      * API to send the acknowledgement, after processing a TCU-activity state notification.
-     * This indicates that the client is prepared for state transition.Only one acknowledgement is
-     * expected from a single client process(may have multiple listeners).
+     * This indicates that the client is prepared for state transition. Only one acknowledgement is
+     * expected from a single client process, although it may have multiple listeners.
      *
-     * @param [in] ack Acknowledgement for a TCU-activity state notification.
+     * All slave clients that received a state change notification via
+     * @ref TcuActivityListener::onTcuActivityStateUpdate must acknowledge using this API.
+     *
+     * @param [in] ack      Acknowledgement for a TCU-activity state notification
+     *                      @ref StateChangeResponse.
+     * @param [in] state    Represents the TCU activity state transition corresponding to which the
+     *                      acknowledge is being sent.
      *
      * @returns Status of sendActivityStateAck i.e. success or suitable status code.
      */
-    virtual telux::common::Status sendActivityStateAck(TcuActivityStateAck ack) = 0;
+    virtual telux::common::Status sendActivityStateAck( StateChangeResponse ack,
+                        TcuActivityState state) = 0;
 
     /**
-     * Send a request to modem to change its activity state.
-     * If SDK is configured to automatically change modem activity state when the system is
-     * suspended/resumed using @ref ITcuActivityManager::setActivityState API, do not send a
-     * duplicate request using this API.
+     * This API allows one to explicitly control the modem state change.
      *
-     * This API needs to be used cautiously, as it could affect WWAN functionalities
+     * The platform could be configured to automatically manage the modem state when
+     * @ref setTcuActivityState is called. For example when suspend is called the implementation
+     * will set the modem also to suspend. In that case, this API need not be invoked when setting
+     * the Tcu state.
+     *
+     * This API needs to be used cautiously, as it could affect WWAN functionalities.
      *
      * This API is meant for clients that have instantiated the ITcuActivityManager instance using
-     * ClientType::MASTER
+     * @ref ClientType::MASTER
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
      * permission to invoke this API successfully.
@@ -235,6 +262,75 @@ public:
      *             could break backwards compatibility.
      */
     virtual telux::common::Status setModemActivityState(TcuActivityState state) = 0;
+
+    /**
+     * Checks the status of TCU-activity services and if the other APIs are ready for use,
+     * and returns the result.
+     *
+     * @returns  True if the services are ready otherwise false.
+     *
+     * @deprecated Use ITcuActivityManager::getServiceStatus() API.
+     *             @ref telux::power::ITcuActivityManager::getServiceStatus
+     */
+    virtual bool isReady() = 0;
+
+    /**
+     * Wait for TCU-activity services to be ready.
+     *
+     * @returns  A future that caller can wait on to be notified when TCU-activity services
+     *           are ready.
+     *
+     * @deprecated Use InitResponseCb in PowerFactory::getTcuActivityManager instead, to get
+     *             get notified about subsystem readiness
+     *             @ref telux::power::PowerFactory::getTcuActivityManager
+     */
+    virtual std::future<bool> onReady() = 0;
+
+    /**
+     * Initiate a TCU-activity state transition.
+     * If platform is configured to change modem activity state automatically when TCU activity
+     * state is changed, this API initiates relevant operation internally.
+     *
+     * This API needs to be used cautiously, as it could change the power-state of the system and
+     * may affect other processes.
+     *
+     * This API should only be invoked by a client that have instantiated the ITcuActivityManager
+     * instance using ClientType::MASTER
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
+     * permission to invoke this API successfully.
+     *
+     * @param [in] state        TCU-activity state that the System is intended to enter
+     * @param [in] callback     Optional callback to get the response for the TCU-activity state
+     *                          transition command
+     *
+     * @returns Status of setActivityState i.e. success or suitable status code.
+     *
+     *
+     * @note    This API should not be used on systems with Hypervisor and Virtual machines. The
+     *          alternative API @ref setActivityState( TcuActivityState state,
+     *          std::string machineName = "",telux::common::ResponseCallback callback = nullptr)
+     *          should be used.
+     *
+     * @deprecated  Use @ref setActivityState(TcuActivityState state, std::string machineName,
+     *              telux::common::ResponseCallback) API instead
+     */
+    virtual telux::common::Status setActivityState( TcuActivityState state,
+                        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * API to send the acknowledgement, after processing a TCU-activity state notification.
+     * This indicates that the client is prepared for state transition. Only one acknowledgement is
+     * expected from a single client process(may have multiple listeners).
+     *
+     * @param [in] ack Acknowledgement for a TCU-activity state notification.
+     *
+     * @returns Status of sendActivityStateAck i.e. success or suitable status code.
+     *
+     * @deprecated  Use @ref sendActivityStateAck( TcuActivityState state,
+                    StateChangeResponse ack) API instead
+     */
+    virtual telux::common::Status sendActivityStateAck(TcuActivityStateAck ack) = 0;
 
     /**
      * Destructor of ITcuActivityManager

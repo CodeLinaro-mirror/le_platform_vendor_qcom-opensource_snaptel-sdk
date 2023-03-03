@@ -141,6 +141,21 @@ using EcbmStatusCallback
     = std::function<void(telux::tel::EcbMode ecbMode, telux::common::ErrorCode error)>;
 
 /**
+ * This function is called with the response to request for the HLAP timer configuration.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [out] error         @ref ErrorCode
+ * @param [out] timeDuration  Represents the time duration for the HLAP timer.
+ *
+ * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+ *           break backwards compatibility.
+ */
+using ECallHlapTimerCallback
+   = std::function<void(telux::common::ErrorCode error, uint32_t timeDuration)>;
+
+/**
  * @brief Call Manager is the primary interface for call related operations
  *        Allows to conference calls, swap calls, make normal voice call and
  *        emergency call, send and update MSD pdu.
@@ -303,7 +318,7 @@ public:
    virtual telux::common::Status makeECall(int phoneId, const std::string dialNumber,
       const std::vector<uint8_t> &msdPdu,
       CustomSipHeader header = {telux::tel::CONTENT_HEADER,""},
-      std::shared_ptr<IMakeCallCallback> callback = nullptr) = 0;
+      MakeCallCallback callback = nullptr) = 0;
    /**
     * Initiate an automotive eCall with raw MSD pdu.
     * Regular voice calls will be blocked by device while eCall is in progress.
@@ -660,6 +675,105 @@ public:
     */
    virtual telux::common::Status exitEcbm(int phoneId, common::ResponseCallback callback = nullptr)
       = 0;
+
+   /**
+    * Deregister from the network after an eCall when the modem is in eCall-only mode.
+    * This is typically done after the T9 eCall HLAP timer has expired to stop the T10 eCall HLAP
+    * timer and deregister from the serving network.
+    *
+    * To invoke this API on platforms with access control enabled, the caller needs to have
+    * TELUX_TEL_ECALL_MGMT permission.
+    *
+    * @param [in] phoneId   Represents the phone corresponding to which the network deregistration
+    *                       will be performed.
+    * @param [in] callback  Callback function to get the response of the request. The response is
+    *                       sent after the operation is complete.
+    *
+    * @returns Status of requestNetworkDeregistration request, i.e., success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+    virtual telux::common::Status requestNetworkDeregistration(int phoneId,
+        common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Set the value of an eCall HLAP timer.
+    * Only the T10 Timer is supported currently.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
+    * @param [in] phoneId      Represents the phone corresponding to which the value of T10 eCall
+    *                          HLAP timer updated will be performed.
+    * @param [in] type         @ref HlapTimerType
+    * @param [in] timeDuration Represents the time duration for the HLAP timer.
+    *                          T10 timer is in units of minutes, and the supported range is from
+    *                          60 to 720.
+    * @param [in] callback     Callback function to get the response of the request. The response is
+    *                          sent after the operation is complete.
+    *
+    * @returns Status of updateEcallHlapTimer i.e., success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status updateEcallHlapTimer(int phoneId, HlapTimerType type,
+       uint32_t timeDuration, common::ResponseCallback callback = nullptr) = 0;
+
+   /**
+    * Get the value of an eCall HLAP timer.
+    * Only the T10 Timer is supported currently.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
+    * to invoke this API successfully.
+    *
+    * @param [in] phoneId      Represents the phone corresponding to which the value of eCall HLAP
+    *                          timer query will be performed.
+    * @param [in] type         @ref HlapTimerType
+    * @param [in] callback     Callback function to get the response of the request. The response is
+    *                          sent after the operation is complete.
+    *
+    * @returns Status of requestEcallHlapTimer i.e., success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    */
+   virtual telux::common::Status requestEcallHlapTimer(int phoneId, HlapTimerType type,
+       ECallHlapTimerCallback callback) = 0;
+
+   /**
+    * Set the configuration related to emergency call.
+    * The configuration is persistent and takes effect when the next emergency call is dialed.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * permissionto invoke this API successfully.
+    *
+    * @param [in] config   eCall configuration to be set
+    *                      @ref EcallConfig
+    *
+    * @returns Status of setECallConfig i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status setECallConfig(EcallConfig config) = 0;
+
+   /**
+    * Get the configuration related to emergency call.
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
+    * permissionto invoke this API successfully.
+    *
+    * @param [out] config   Parameter to hold the fetched eCall configuration
+    *                       @ref EcallConfig
+    *
+    * @returns Status of getECallConfig i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change
+    *          and could break backwards compatibility.
+    */
+   virtual telux::common::Status getECallConfig(EcallConfig &config) = 0;
 
    /**
     * Add a listener to listen for incoming call, call info change and eCall MSD

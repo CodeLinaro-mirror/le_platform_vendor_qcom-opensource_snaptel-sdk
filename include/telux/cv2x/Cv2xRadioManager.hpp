@@ -188,8 +188,8 @@ using UpdateConfigurationCallback =
  *
  * @param [out] info     - Cv2x SLSS Rx Information
  * @param [out] error    - SUCCESS if Cv2x SLSS Rx Information was successully retrieved
- *                       - @ref SUCCESS
- *                       - @ref GENERIC_FAILURE
+ *                       - SUCCESS
+ *                       - GENERIC_FAILURE
  */
 using GetSlssRxInfoCallback = std::function<void (const SlssRxInfo& info,
                                                   telux::common::ErrorCode error)>;
@@ -251,6 +251,9 @@ public:
     /**
      * Put modem into CV2X mode.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_OPS
+     * permission to successfully invoke this API.
+     *
      * @param [in] cb      - Callback that is invoked when Cv2x mode is started
      *
      * @returns SUCCESS on success. Error status otherwise.
@@ -259,6 +262,9 @@ public:
 
     /**
      * Take modem outo of CV2X mode
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_OPS
+     * permission to successfully invoke this API.
      *
      * @param [in] cb      - Callback that is invoked when Cv2x mode is stopped
      *
@@ -306,6 +312,9 @@ public:
      * Requires CV2X TX/RX radio status be Inactive. If CV2X radio status is
      * Active or Suspended, call @ref stopCv2x before updateConfiguration.
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] configFilePath - Path to config file.
      * @param [in] cb             - Callback that is invoked when the send is complete.
      *                              This may be null.
@@ -319,6 +328,9 @@ public:
      * Set RF peak cv2x transmit power.
      * This affects the power for all existing flows and for any flow created int the future
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] txPower - Desired global Cv2x peak tx power in dbm
      * @param [in] cb      - Callback that is invoked when Cv2x peak tx power is set
      *
@@ -329,6 +341,9 @@ public:
     /**
      * Request to install remote UE src L2 filters.
      * This affects receiving of the UEs' packets in specified period with specified PPPP
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
      *
      * @param [in] filterList - remote UE src L2 Id, filter duration and PPPP list, max size 50
      * @param [in] cb         - Callback that is invoked when the request is sent
@@ -342,6 +357,9 @@ public:
      * Remove the previously installed filters matching src L2 address list.
      * Hence forth this would allow reception of packets from specified UE's
      *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_CONFIG
+     * permission to successfully invoke this API.
+     *
      * @param [in] l2IdList - remote UE src L2 Id list, max size 50
      * @param [in] cb       - Callback that is invoked when the request is sent
      *
@@ -352,6 +370,9 @@ public:
 
     /**
      * Get CV2X SLSS Rx information from modem.
+     *
+     * On platforms with access control enabled, the caller needs to have TELUX_CV2X_INFO
+     * permission to successfully invoke this API.
      *
      * @param [in] cb   - Callback that is invoked when Cv2x SLSS Rx information is retrieved.
      *

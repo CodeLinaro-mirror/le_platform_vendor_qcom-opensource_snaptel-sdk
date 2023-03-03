@@ -67,4 +67,5 @@ that illustrate the use of various TelSDK APIs, it includes samples of
   * [How to perform an ECALL operation](platform/ecall_operation.md)
   * [How to perform an OTA operation](platform/ota_operation.md)
   * [How to trigger sensor self test](sensor/sensor_self_test.md)
+  * [How to make a Third Party Service (TPS) emergency call over IMS](phone/make_tps_eCall_over_Ims.md)
   * [How to configure and enable WLAN](wlan/wlan_config.md)

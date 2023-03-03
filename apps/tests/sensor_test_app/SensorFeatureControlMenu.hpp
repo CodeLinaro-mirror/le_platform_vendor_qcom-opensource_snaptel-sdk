@@ -103,7 +103,7 @@ class SensorFeatureControlMenu : public ITcuActivityListener,
     void listActiveFeatures(std::vector<std::string> userInput);
     void cleanupReinit(std::vector<std::string> userInput);
     void enableFeature(std::string name);
-    void disableFeature(std::string name);
+    std::set<std::string>::iterator disableFeature(std::string name);
     void initTcuPowerMgr();
     void enableSensorFeatureFifo(std::vector<std::string> userInput);
     void skipSensorFeatureOnSuspend(std::vector<std::string> userInput);

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -80,12 +80,13 @@
 #define FILE_NAME "telsdk_app.conf"
 #define DEFAULT_SAMPLE_RATE 16000
 #define DEFAULT_CHANNEL_MASK 1
-#define DEFAULT_DEVICE 1
+#define DEFAULT_DEVICE_SPEAKER 1
+#define DEFAULT_DEVICE_MIC 257
 #define DEFAULT_AUDIO_FORMAT 1
 #define DEFAULT_ECNR_MODE 0
 
 AudioClient::AudioClient()
-    : audioMgr_(nullptr) {
+    : audioMgr_(nullptr), ready_(false) {
 }
 
 AudioClient::~AudioClient() {
@@ -106,27 +107,38 @@ Status AudioClient::init() {
     // Get the AudioFactory and AudioManager instances.
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+
     //  Get the AudioFactory and AudioManager instances.
     auto &audioFactory = AudioFactory::getInstance();
-    audioMgr_ = audioFactory.getAudioManager();
 
-    //  Check if audio subsystem is ready
-    if (audioMgr_) {
-        ready_ = audioMgr_->isSubsystemReady();
-    } else {
-        std::cout << "Invalid Audio Manager" << std::endl;
+    audioMgr_ = audioFactory.getAudioManager([&prom](
+            telux::common::ServiceStatus status) {
+        if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            prom.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
+        } else {
+            prom.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
+        }
+    });
+
+    if (!audioMgr_) {
+        ready_ = false;
+        std::cout << "Failed to get AudioManager object" << std::endl;
         return Status::FAILED;
     }
+
+    //  Check if audio subsystem is ready
+    ServiceStatus managerStatus = audioMgr_->getServiceStatus();
+
     //  If audio subsystem is not ready, wait for it to be ready
-    if (!ready_) {
+    if (managerStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "\nAudio subsystem is not ready, Please wait ..." << std::endl;
-        std::future<bool> f = audioMgr_->onSubsystemReady();
-        // If we want to wait unconditionally for audio subsystem to be ready
-        ready_ = f.get();
+        managerStatus = prom.get_future().get();
     }
 
     //  Exit the application, if SDK is unable to initialize audio subsystems
-    if (ready_) {
+    if (managerStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        ready_ = true;
         endTime = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Audio Subsystems to ready : " << elapsedTime.count() << "s"
@@ -134,6 +146,7 @@ Status AudioClient::init() {
         setActiveSession(DEFAULT_SLOT_ID);
         loadConfFileData();
     } else {
+        ready_ = false;
         std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
         return Status::FAILED;
     }
@@ -212,9 +225,12 @@ void AudioClient::loadConfFileData() {
     try {
         input = parser.getValue("SAMPLE_RATE");
         config_.sampleRate = static_cast<uint32_t>(std::stoi(input));
-        input = parser.getValue("DEVICE_TYPE");
+        input = parser.getValue("DEVICE_TYPE_SPEAKER");
         DeviceType device = static_cast<DeviceType>(std::stoi(input));
         config_.deviceTypes.clear();
+        config_.deviceTypes.emplace_back(device);
+        input = parser.getValue("DEVICE_TYPE_MIC");
+        device = static_cast<DeviceType>(std::stoi(input));
         config_.deviceTypes.emplace_back(device);
         input = parser.getValue("CHANNEL_MASK");
         command = std::stoi(input);
@@ -245,12 +261,14 @@ void AudioClient::loadConfFileData() {
         std::cout << "Using default parameters" << std::endl;
         config_.sampleRate = DEFAULT_SAMPLE_RATE;
         config_.deviceTypes.clear();
-        config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE));
+        config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE_SPEAKER));
+        config_.deviceTypes.emplace_back(static_cast<DeviceType>(DEFAULT_DEVICE_MIC));
         config_.channelTypeMask = static_cast<ChannelTypeMask>(DEFAULT_CHANNEL_MASK);
         config_.ecnrMode = static_cast<EcnrMode>(DEFAULT_ECNR_MODE);
     }
     std::cout << "The sample rate is " << config_.sampleRate << std::endl;
-    std::cout << "The device is " << static_cast<int>(config_.deviceTypes[0]) << std::endl;
+    std::cout << "The devices are " << static_cast<int>(config_.deviceTypes[0]) << " and " <<
+    static_cast<int>(config_.deviceTypes[1])<< std::endl;
     std::cout << "Channel mask is " << static_cast<int>(config_.channelTypeMask) << std::endl;
     std::cout << "ECNR Mode is " << static_cast<int>(config_.ecnrMode) << std::endl;
     return;

@@ -461,7 +461,15 @@ enum class ErrorCode {
    CANNOT_ATTEST_IDS = 5062,         /**< Can not attest IDs */
    UNIMPLEMENTED = 5063,             /**< Unimplemented */
    VER_MISMATCH = 5064,              /**< Version mismatch */
-   SOTER_ERR = 5065                  /**< Soter error */
+   SOTER_ERR = 5065,                 /**< Soter error */
+   DMA_ERR = 5066,                   /**< HSDMA error */
+   DIV_ERR = 5067,                   /**< Divided by error */
+   OVERFLOW_UNDERFLOW = 5068,        /**< Arithmetic overflow or underflow */
+   RNG_UNSEEDED = 5069,              /**< Read from unseeded ring */
+   MEM_ERR = 5070,                   /**< Memory read */
+   MODULUS_ERR = 5071,               /**< Modulus error */
+   DECODING_ERR = 5072,              /**< Decode error */
+   INVALID_LENGTH = 5073,            /**< Invalid length of data */
 };
 
 /**

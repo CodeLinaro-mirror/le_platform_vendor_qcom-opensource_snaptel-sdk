@@ -411,7 +411,9 @@ void DataQosTestApp::getTft(std::vector<std::string> inputCommand) {
       int ipFamilyType;
       std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
       std::cin >> ipFamilyType;
-      Utils::validateInput(ipFamilyType);
+      Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+          static_cast<int>(telux::data::IpFamilyType::IPV6),
+          static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
       telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
 
       bool dataCallFound = false;

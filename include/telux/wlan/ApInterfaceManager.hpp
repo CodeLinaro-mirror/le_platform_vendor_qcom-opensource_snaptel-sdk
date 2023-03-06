@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -93,6 +93,14 @@ struct ApConfig {
 };
 
 /**
+ * Wlan Client Device Indication Info
+ */
+struct DeviceIndInfo {
+    Id           id;                   /**<  AP id device is connected to                      */
+    std::string  macAddress;           /**<  MAC Address of Wi-Fi device                       */
+};
+
+/**
  * Wlan Client Device Info
  */
 struct DeviceInfo {
@@ -101,16 +109,6 @@ struct DeviceInfo {
     std::string  ipv4Address;          /**<  IPv4 Address of Wi-Fi device                      */
     std::string  ipv6Address;          /**<  IPv6 Address of Wi-Fi device                      */
     std::string  macAddress;           /**<  MAC Address of Wi-Fi device                       */
-};
-
-/**
- * Wlan Client Device Statistics
- */
-struct DeviceStats {
-    Id           id;                   /**<  AP id device is connected to */
-    std::string  macAddress;           /**<  MAC Address of Wi-Fi device  */
-    uint64_t     bytesTx;              /**< Number of bytes transmitted   */
-    uint64_t     bytesRx;              /**< Number of bytes received      */
 };
 
 /** @addtogroup telematics_wlan_ap
@@ -183,24 +181,6 @@ class IApInterfaceManager {
     virtual telux::common::ErrorCode getConnectedDevices(std::vector<DeviceInfo>& clientsInfo) = 0;
 
     /**
-     * Request statistics for all devices connected to all access points.
-     * Each entry in returned list will contains transmitted and recieved bytes for a device
-     * as defined in @ref telux::common::DeviceStats
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_AP_DEVICES
-     * permission to invoke this API successfully.
-     *
-     * @param [in] clientStats    List of connected clients statistics @ref telux::wlan::DeviceStats
-     *
-     * @returns operation error code (if any). @ref telux::common::ErrorCode
-     *
-     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
-     *           break backwards compatibility.
-     */
-    virtual telux::common::ErrorCode getConnectedDevicesStats(
-        std::vector<DeviceStats>& clientsStats) = 0;
-
-    /**
      * Execute an operation on hostapd service. Provides ability for client to either stop/start or
      * restart hostapd service for selected access point. Restarting hostapd service is required
      * for any changes made to hosapd.conf file and changes made by
@@ -257,10 +237,10 @@ public:
      * This function is called when AP device status has changed
      *
      * @param [in] event       Event detected on device @ref telux::wlan::ApDeviceConnectionEvent
-     * @param [in] info        Info about devices @ref telux::wlan::DeviceInfo
+     * @param [in] info        Info about devices @ref telux::wlan::DeviceIndInfo
      */
     virtual void onApDeviceStatusChanged(ApDeviceConnectionEvent event,
-        std::vector<DeviceInfo> info) {}
+        std::vector<DeviceIndInfo> info) {}
 
     /**
      * This function is called when AP switch to different operation band

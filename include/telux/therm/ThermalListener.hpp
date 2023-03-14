@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -44,6 +44,8 @@
 #ifndef THERMAL_LISTENER_HPP
 #define THERMAL_LISTENER_HPP
 
+#include <memory>
+#include <vector>
 #include <telux/common/CommonDefines.hpp>
 
 namespace telux {
@@ -51,6 +53,10 @@ namespace therm {
 
 /** @addtogroup telematics_therm_management
  * @{ */
+
+class ITripPoint;
+class ICoolingDevice;
+enum class TripEvent;
 
 /**
  * @brief Listener class for getting notifications when thermal service status changes.
@@ -64,6 +70,31 @@ class IThermalListener : public telux::common::IServiceStatusListener {
      * Destructor of IThermalListener
      */
     virtual ~IThermalListener() {
+    }
+
+    /**
+     * This function is called at the time of cooling device level update.
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_THERM_DATA_READ permission to receive this event.
+     *
+     * @param [in] coolingDevice - vector of cooling device for which the level has been
+     *                             updated.
+     */
+    virtual void onCoolingDeviceLevelChange(std::shared_ptr<ICoolingDevice> coolingDevice) {
+    }
+
+    /**
+     * This function is called at the time of trip event occurs.
+     * On platforms with Access control enabled, the client needs to have
+     * TELUX_THERM_DATA_READ permission to receive this event.
+     *
+     * @param [in] tripInfo  - Vector of the trip point for which trip event has been occured.
+     * @param [in] tripEvent - Indicates trip event.
+     *                       - NONE
+     *                       - CROSSED_UNDER
+     *                       - CROSSED_OVER
+     */
+    virtual void onTripEvent(std::shared_ptr<ITripPoint> tripPoint, TripEvent tripEvent) {
     }
 };
 

@@ -392,7 +392,16 @@ struct StreamConfig {
     /** SlotId -- specifies the slot ID where the UICC card is inserted.
      *  Used in conjuction with StreamType::VOICE_CALL only */
     SlotId slotId = INVALID_SLOT_ID;
-    /** Sample rate in Hz, typical values 8k/16k/32k/48k */
+    /** Sample rate in Hz. Typical values:
+     *
+     *  - 8k
+     *  - 16k
+     *  - 32k
+     *  - 48k
+     *
+     *  For voice stream and compressed playback, the sample rate is ignored. For Bluetooth use
+     *  cases, the supported values are 8k and 16k.
+     */
     uint32_t sampleRate;
     /** Refer to @ref ChannelTypeMask */
     ChannelTypeMask channelTypeMask;
@@ -436,7 +445,7 @@ struct FormatInfo {
  *  Defines the volume levels for a given audio channel.
  */
 struct ChannelVolume {
-    /** @ref ChannelType to which the volume level is associated */
+    /** @ref ChannelType to which the volume level is associated. */
     ChannelType channelType;
     /** Volume level -- minimum 0.0 and maximum 1.0 */
     float vol;

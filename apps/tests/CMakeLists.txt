@@ -14,6 +14,7 @@ if(NOT BUILD_FOR_SIMULATION)
     #add_subdirectory( crypto_console_app )
     add_subdirectory( crypto_accelerator_app )
     add_subdirectory( imei_test_app )
+    add_subdirectory( param_configurator )
 
     pkg_check_modules(PWR_MGR_QMI_LIB powermanagerqmi)
     if (PWR_MGR_QMI_LIB_FOUND)

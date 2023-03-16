@@ -664,7 +664,7 @@ telux::common::Status TelClient::getECallConfig() {
         return telux::common::Status::FAILED;
     }
     telux::tel::EcallConfig config = {};
-    auto status = callMgr_->getConfig(config);
+    auto status = callMgr_->getECallConfig(config);
     if(status == telux::common::Status::SUCCESS) {
         TelClientUtils::printEcallConfig(config);
     } else {
@@ -697,7 +697,7 @@ telux::common::Status TelClient::setECallConfig(EcallConfig config) {
             << std::endl;
         return telux::common::Status::FAILED;
     }
-    auto status = callMgr_->setConfig(config);
+    auto status = callMgr_->setECallConfig(config);
     if(status != telux::common::Status::SUCCESS) {
         std::cout << CLIENT_NAME << "Failed to set eCall configuration" << std::endl;
         return telux::common::Status::FAILED;

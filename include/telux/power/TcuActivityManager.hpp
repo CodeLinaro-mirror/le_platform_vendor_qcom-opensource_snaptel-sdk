@@ -196,17 +196,17 @@ public:
      * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
      * permission to invoke this API successfully.
      *
-     * @param [in] state            TCU-activity state that the system is intended to enter
-     * @param [in] machineName      Optional field used when the state transition is intended only
-     *                              for a specific machine; otherwise the state transition applies
-     *                              to the whole system.
+     * @param [in] state            TCU-activity state that the System is intended to enter
+     * @param [in] machineName      Machine name if the state transition is intended for the
+     *                              specific machine only. If assigned to ALL_MACHINES, then the
+     *                              state applies to the whole system.
      * @param [in] callback         Optional callback to get the response for the TCU-activity state
      *                              transition command
      *
      * @returns Status of setActivityState i.e. success or suitable status code.
      */
     virtual telux::common::Status setActivityState( TcuActivityState state,
-                        std::string machineName = ALL_MACHINES,
+                        std::string machineName,
                         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**

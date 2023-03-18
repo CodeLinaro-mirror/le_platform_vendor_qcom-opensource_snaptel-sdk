@@ -236,11 +236,12 @@ bool DataFilterController::getFilterMode() {
     telux::common::Status status = dataFilterMgr_->requestDataRestrictMode(
         "", [&prom, &drMode](DataRestrictMode mode, telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
-                LOG(DEBUG, __FUNCTION__, "requestDataRestrictMode Response is successful ",
-                " DataRestrictMode ", RefAppUtils::dataRestrictModeTypeToString(mode.filterMode));
+                LOG(DEBUG, __FUNCTION__, " requestDataRestrictMode Response is successful ");
+                LOG(DEBUG, __FUNCTION__, " DataRestrictMode ", RefAppUtils::dataRestrictModeTypeToString(mode.filterMode));
             } else {
-                LOG(ERROR, __FUNCTION__, "requestDataRestrictMode Response failed, errorCode: ",
-                    ", description: ", RefAppUtils::getErrorCodeAsString(error));
+                LOG(ERROR, __FUNCTION__, " requestDataRestrictMode Response failed");
+                LOG(ERROR, __FUNCTION__,
+                   " description: ", RefAppUtils::getErrorCodeAsString(error));
             }
             drMode = mode;
             prom.set_value(error);

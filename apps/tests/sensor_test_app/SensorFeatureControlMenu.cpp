@@ -97,6 +97,7 @@ class SensorFeatureEventListener : public telux::sensor::ISensorFeatureEventList
 };
 
 void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) {
+#ifdef TELSDK_FEATURE_POWER_ENABLED
     std::cout << std::endl;
     SensorUtils::printTcuActivityState(state);
     if (state == TcuActivityState::SUSPEND) {
@@ -118,9 +119,11 @@ void SensorFeatureControlMenu::onTcuActivityStateUpdate(TcuActivityState state) 
             }
         }
     }
+#endif
 }
 
 void SensorFeatureControlMenu::initTcuPowerMgr() {
+#ifdef TELSDK_FEATURE_POWER_ENABLED
 #ifdef TELUX_FOR_EXTERNAL_AP
     std::cout << " Connecting to REMOTE TCU Activity Manager " << std::endl;
     telux::common::ProcType procType = telux::common::ProcType::REMOTE_PROC;
@@ -157,6 +160,9 @@ void SensorFeatureControlMenu::initTcuPowerMgr() {
     } else {
         std::cout << " Registered Listener for TCU-activity state updates" << std::endl;
     }
+#else
+    std::cout << " Power manager is not initialized" << std::endl;
+#endif // TELSDK_FEATURE_POWER_ENABLED
 }
 
 SensorFeatureControlMenu::SensorFeatureControlMenu(
@@ -266,13 +272,19 @@ void SensorFeatureControlMenu::initConsole() {
 }
 
 void SensorFeatureControlMenu::enableSensorFeatureFifo(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_POWER_ENABLED
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
     enabledFeaturesFifo_.emplace(name);
     std::cout << "Enable sensor feature fifo request queued for " << name << std::endl;
+#else
+    std::cout
+        << "Enabling sensor feature on suspend not possible since power feature is not enabled";
+#endif  // TELSDK_FEATURE_POWER_ENABLED
 }
 
 void SensorFeatureControlMenu::skipSensorFeatureOnSuspend(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_POWER_ENABLED
     std::string name;
     SensorUtils::getInput("Enter feature name: ", name);
     if (enabledFeaturesFifo_.erase(name) == 0) {  // No element was erased
@@ -280,10 +292,15 @@ void SensorFeatureControlMenu::skipSensorFeatureOnSuspend(std::vector<std::strin
     } else {
         std::cout << "Sensor feature fifo request removed for " << name << std::endl;
     }
+#else
+    std::cout
+        << "Enabling sensor feature on suspend not possible since power feature is not enabled";
+#endif  // TELSDK_FEATURE_POWER_ENABLED
 }
 
 void SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend(
     std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_POWER_ENABLED
     if (enabledFeaturesFifo_.empty()) {
         std::cout << "No features have been queued to be enabled on suspend" << std::endl;
         return;
@@ -292,6 +309,10 @@ void SensorFeatureControlMenu::listSensorFeaturesQueuedOnSuspend(
     for (auto it = enabledFeaturesFifo_.begin(); it != enabledFeaturesFifo_.end(); ++it) {
         std::cout << "\t" << (*it) << std::endl;
     }
+#else
+    std::cout
+        << "Enabling sensor feature on suspend not possible since power feature is not enabled";
+#endif  // TELSDK_FEATURE_POWER_ENABLED
 }
 
 void SensorFeatureControlMenu::listSensorFeatures(std::vector<std::string> userInput) {

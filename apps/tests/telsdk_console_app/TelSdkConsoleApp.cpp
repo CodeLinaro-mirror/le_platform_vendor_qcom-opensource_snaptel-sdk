@@ -154,99 +154,143 @@ void TelSdkConsoleApp::init() {
 }
 
 void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     PhoneMenu phoneMenu("Phone Menu", "phone> ");
     phoneMenu.init();
     phoneMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::callMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     CallMenu callMenu("Dialer Menu", "dialer> ");
     callMenu.init();
     callMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::eCallMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     ECallMenu eCallMenu("eCall Menu", "eCall> ");
     eCallMenu.init();
     eCallMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::simCardMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     SimCardServicesMenu simCardServicesMenu("SIM Card Services Menu", "card_services> ");
     simCardServicesMenu.init();
     simCardServicesMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::smsMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     SmsMenu smsMenu("SMS Menu", "sms> ");
     smsMenu.init();
     smsMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_DATA_ENABLED
     DataMenu dataMenu("Data Menu", "data> ");
     dataMenu.init();
     dataMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Data is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     MultiSimMenu multiSimMenu("MultiSim Menu", "multisim> ");
     multiSimMenu.init();
     multiSimMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     CellbroadcastMenu cbMenu("Cellbroadcast Menu", "cb> ");
     cbMenu.init();
     cbMenu.mainLoop();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::rspMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     RemoteSimProfileMenu rspMenu("Sim Profile Management Menu", "sim_profile_management> ");
     rspMenu.init();
     rspMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     ImsSettingsMenu imsSettingsMenu("IMS Settings Menu", "ims_settings> ");
     imsSettingsMenu.init();
     imsSettingsMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) {
+#ifdef TELSDK_FEATURE_TEL_ENABLED
     ImsServingSystemMenu imsaMenu("IMS Serving System Menu", "ims_serving_system> ");
     imsaMenu.init();
     imsaMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
+#else
+    std::cout << "Telephony is unsupported" << std::endl;
+#endif
 }
 
 void TelSdkConsoleApp::displayMenu() {
     ConsoleApp::displayMenu();
 }
 
+#ifdef TELSDK_FEATURE_TEL_ENABLED
 void TelSdkConsoleApp::onModemAvailable() {
 // Do not perform requestOperatingMode in CV2X machine
 // since operating mode cannot be changed
-#ifndef FEATURE_CV2X_ONLY
     std::cout << "\n\nChecking telephony subsystem, Please wait!!!..." << std::endl;
     std::shared_ptr<ModemStatus> modemStatus = std::make_shared<ModemStatus>();
     modemStatus->printOperatingMode();
-#endif
 }
+#endif
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {

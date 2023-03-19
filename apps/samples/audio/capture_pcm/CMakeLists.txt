@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_CAPTURE_APP capture_app)
+set(TARGET_CAPTURE_PCM capture_pcm)
 
-set(CAPTURE_APP_SOURCES
-    CaptureApp.cpp
+set(CAPTURE_PCM_SOURCES
+    CapturePCM.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
@@ -20,10 +20,10 @@ include_directories(BEFORE
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_executable (${TARGET_CAPTURE_APP} ${CAPTURE_APP_SOURCES})
-target_link_libraries(${TARGET_CAPTURE_APP} telux_audio)
+add_executable (${TARGET_CAPTURE_PCM} ${CAPTURE_PCM_SOURCES})
+target_link_libraries(${TARGET_CAPTURE_PCM} telux_audio)
 
 # install to target
-install ( TARGETS ${TARGET_CAPTURE_APP}
+install ( TARGETS ${TARGET_CAPTURE_PCM}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )

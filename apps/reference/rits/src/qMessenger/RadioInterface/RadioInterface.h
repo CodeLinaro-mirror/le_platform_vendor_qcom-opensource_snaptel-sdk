@@ -37,7 +37,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -100,6 +100,8 @@ using telux::cv2x::TrafficCategory;
 using telux::cv2x::TrafficIpType;
 using telux::cv2x::ICv2xRadioListener;
 
+class Cv2xStatusListener;
+
 typedef void (*v2x_src_l2_addr_update)(uint32_t newAddr);
 
 enum class RadioType {
@@ -127,6 +129,9 @@ private:
      */
     shared_ptr<ICv2xRadioListener> radioListener_ = nullptr;
 
+    //variable to store cv2x status listener
+    std::shared_ptr<Cv2xStatusListener> cv2xStatusListener_;
+
     /**
      * Method that the SDK uses for callbacks.
      * @param status a Cv2xStatus.
@@ -135,6 +140,10 @@ private:
      */
     void cv2xStatusCallback(Cv2xStatusEx status, ErrorCode error);
     void updateSrcL2InfoCallback(ErrorCode error);
+
+protected:
+
+    bool enableCsvLog_ = false;
 
 public:
 
@@ -217,5 +226,19 @@ public:
     * @return bool
     */
     bool updateSrcL2();
+
+    /**
+    * Method to get latest cv2x channel busy ratio value.
+    * @return uint8_t, 255 means invalid
+    */
+    virtual uint8_t getCBRValue();
+
+    /**
+    * Method to get latest radio Tx message monotonic time.
+    * @return uint64_t, 0 indicate this radio interface has not trasmitted any message yet
+    */
+    virtual uint64_t latestTxRxTimeMonotonic();
+
+    virtual void enableCsvLog(bool enable);
 };
 

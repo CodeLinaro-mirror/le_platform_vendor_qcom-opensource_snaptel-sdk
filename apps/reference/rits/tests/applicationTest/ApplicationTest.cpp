@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -585,7 +585,10 @@ void txRecorded(string file) {
                         auto len = encode_singleline_fromCSV((char *)line.data(), mc->abuf.data,
                                 line.length());
                         abuf_put(&mc->abuf, len);
-                        application->eventTransmits[iEvent].transmit(mc->abuf.data, len);
+                        // event priority is set per packet using traffic class
+                        application->eventTransmits[iEvent].transmit(
+                            mc->abuf.data, len,
+                            application->configuration.eventPriority);
                     }
                     if (application->configuration.spsPorts.size()) {
                         if (getline(configFile, line)) {
@@ -594,7 +597,10 @@ void txRecorded(string file) {
                             auto len = encode_singleline_fromCSV((char*)line.data(),mc->abuf.data,
                                     line.length());
                             abuf_put(&mc->abuf, len);
-                            application->spsTransmits[iSps].transmit(mc->abuf.data, len);
+                            // SPS priority is set when creating the flow
+                            application->spsTransmits[iSps].transmit(
+                                mc->abuf.data, len,
+                                Priority::PRIORITY_UNKNOWN);
                         }
                     }
                 }
@@ -631,7 +637,8 @@ void simTxRecorded(string file)
                     auto len = encode_singleline_fromCSV((char*)line.data(), mc->abuf.data,
                             line.length());
                     abuf_put(&mc->abuf, len);
-                    application->simTransmit->transmit(mc->abuf.data, len);
+                    application->simTransmit->transmit(mc->abuf.data, len,
+                                                       Priority::PRIORITY_UNKNOWN);
                     timer = timestamp_now();
                 }else{
                     return;
@@ -923,12 +930,12 @@ int setup(const bool tx, const bool rx,
         }
         if (txSim)
             application = make_shared<SaeApplication>(txSimIp, txSimPort, string(""), 0,
-                                                      configFile, msgType);
+                                                      configFile, msgType, csv);
         else if (rxSim)
             application = make_shared<SaeApplication>(string(""), 0, rxSimIp, rxSimPort,
-                                                      configFile, msgType);
+                                                      configFile, msgType, csv);
         else
-            application = make_shared<SaeApplication>(configFile, msgType);
+            application = make_shared<SaeApplication>(configFile, msgType, csv);
 
     } else {
 #ifdef ETSI
@@ -988,6 +995,10 @@ int setup(const bool tx, const bool rx,
     if(application->configuration.driverVerbosity > 4)
         printf("Number of threads after tx is: %d\n", (int)threads.size());
 
+    if (csv) {
+        application->openMinLogFile(csvFileName);
+    }
+
     if (rx && !rxSim)
     {
         if (application->radioReceives.empty()) {
@@ -995,16 +1006,6 @@ int setup(const bool tx, const bool rx,
             return -1;
         }
 
-        if (csv) {
-            application->writeToCsvFile = true;
-            application->csvfp = fopen(csvFileName.c_str(), "w+");
-            if (!application->csvfp) {
-                cerr << "Failed to open file " << csvFileName << " for writing" << endl;
-                application->writeToCsvFile = false;
-            } else {
-                std::cout << "Writing BSM to csv: " << csvFileName << std::endl;
-            }
-        }
         // l2 filter and throttle manager timer thread
         if (isL2SrcFilteringEnabled())
             rvL2SrcFiltering(application);

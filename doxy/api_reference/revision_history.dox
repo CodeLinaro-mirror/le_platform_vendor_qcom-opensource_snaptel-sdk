@@ -86,7 +86,7 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
-@tr @tdmulrow{1,AG} @tdmulrowend @td Mar 2023 @tdend @tdlast Added documentation for thermal notifications  @tdlastend @trend
+@tr @tdmulrow{1,AG} @tdmulrowend @td Mar 2023 @tdend @tdlast Added documentation for thermal notifications @tdlastend @trend
 @tr @tdmulrow{1,AF} @tdmulrowend @td Dec 2022 @tdend @tdlast Added documentation for crypto accelerator @tdlastend @trendcline
 @tr @tdmulrowempty @td Nov 2022 @tdend @tdlast Added support for Third Party Service (TPS) eCall over IMS @tdlastend @trend
 @tr @tdmulrow{1,AE} @tdmulrowend @td Nov 2022 @tdend @tdlast Updated documentation for SDK release V1.54.0 changes @tdlastend @trend

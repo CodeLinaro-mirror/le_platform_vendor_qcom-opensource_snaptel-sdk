@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 
@@ -34,8 +40,6 @@
 
 using namespace telux::tel;
 using namespace telux::common;
-
-// ### 7. Initialize the Minimum Set of Data(MSD) data as shown
 
 // Define macros to populate eCallMsdData
 #define MSD_VERSION 2
@@ -71,23 +75,24 @@ using namespace telux::common;
 #define OPTIONAL_DATA_PRESENT 1
 #define OPTIONALS_OPTIONAL_DATA_TYPE 1
 
+std::shared_ptr<ICall> dialedCall = nullptr;
+
 // ##### 6.1. implement IMakeCallCallback interface to receive response for the dial request -
 // optional
 class DialCallback : public IMakeCallCallback {
 public:
-   void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
+    void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
+       std::cout << "DialCallback::makeCallResponse" << std::endl;
+       std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
+       if(call) {
+          std::cout << "makeCallResponse::onCallInfoChange: "
+                    << " Call Index: " << (int)call->getCallIndex()
+                    << " Call Direction: " << (int)call->getCallDirection()
+                    << " Phone Number: " << call->getRemotePartyNumber() << std::endl;
+          dialedCall = call;
+       }
+    }
 };
-
-void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
-   std::cout << "DialCallback::makeCallResponse" << std::endl;
-   std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
-   if(call) {
-      std::cout << "makeCallResponse::onCallInfoChange: "
-                << " Call Index: " << (int)call->getCallIndex()
-                << " Call Direction: " << (int)call->getCallDirection()
-                << " Phone Number: " << call->getRemotePartyNumber() << std::endl;
-   }
-}
 
 /**
  * Main routine
@@ -96,43 +101,32 @@ int main(int, char **) {
 
    // ### 1. Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-
-   // ### 2. Check if telephony subsystem is ready
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-
-   // #### 2.1 If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemsStatus = f.get();
-   }
-
-   // Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   auto callManager = phoneFactory.getCallManager([&](telux::common::ServiceStatus status) {
+            cbProm.set_value(status);});
+   if(callManager == nullptr) {
+      std::cout << " *** ERROR - Unable to get Call Manager instance" << std::endl;
       return 1;
    }
 
-   // ### 4. Instantiate Phone and call manager
-   auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
+   // ### 2. Wait for the Call Manager subsystem to be ready.
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status == SERVICE_AVAILABLE) {
+      std::cout << "Call Manager subsystem is ready" << std::endl;
+   } else {
+      std::cout << " *** ERROR - Unable to initialize Call Manager subsystem" << std::endl;
+      return 1;
+   }
 
-   // ### 5. Get unique id of the phone
-   int phoneId = DEFAULT_PHONE_ID;
-
-   // ### 6. Instantiate dial callback instance - this is optional
+   // ### 3. Instantiate dial callback instance - this is optional
    std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
 
-   // ### 8. Create details required to make emergency call(eCall) like eCallMsdData,
+   // ### 4. Create details required to make emergency call(eCall) like eCallMsdData,
    // emergencyCategory and eCallVariant
    int emergencyCategory = 64;
    ECallMsdData eCallMsdData;
    int eCallVariant = 1;
+   int phoneId = DEFAULT_PHONE_ID;
    // Populate eCallMsdData with valid information
    eCallMsdData.optionals.recentVehicleLocationN1Present = RECENT_LOCATION_N1_PRESENT;
    eCallMsdData.optionals.recentVehicleLocationN2Present = RECENT_LOCATION_N2_PRESENT;
@@ -165,14 +159,18 @@ int main(int, char **) {
    eCallMsdData.recentVehicleLocationN2.longitudeDelta = RECENT_N2_LONGITUDE_DELTA;
    eCallMsdData.numberOfPassengers = NUMBER_OF_PASSENGERS;
 
-   // ### 9. Send a eCall request
-   if(callManager) {
-      auto makeCallStatus
-         = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant, dialCb);
-      std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
+   // ### 5. Send an eCall request
+   auto makeCallStatus
+      = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory, eCallVariant, dialCb);
+   std::cout << "Dial ECall Status:" << (int)makeCallStatus << std::endl;
+
+   // ### 6. Wait for the call state to become active and hang-up the call after conversation
+   sleep(10);
+   if(dialedCall) {
+      dialedCall->hangup();
    }
 
-   // ### 10. Exit logic is specific to an application
+   // ### 7. Exit logic is specific to an application
    std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);

@@ -76,6 +76,7 @@
 #define TCUACTIVITYLISTENER_HPP
 
 #include <memory>
+#include <vector>
 
 #include <telux/power/TcuActivityDefines.hpp>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,20 +32,33 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRYPTOACCELERATORAPP_HPP
-#define CRYPTOACCELERATORAPP_HPP
+#include <queue>
+#include <condition_variable>
 
-#include <telux/sec/CryptoAcceleratorManager.hpp>
+#include <telux/audio/AudioManager.hpp>
 
-#include "common/console_app_framework/ConsoleApp.hpp"
+class InCallPlaybackPCM {
 
-class CryptoAcceleratorApp : public ConsoleApp {
  public:
-    CryptoAcceleratorApp(std::string appName, std::string cursor);
-    ~CryptoAcceleratorApp();
+    telux::common::Status init();
+    telux::common::Status createVoiceStream();
+    telux::common::Status deleteVoiceStream();
+    telux::common::Status startVoiceStream();
+    telux::common::Status stopVoiceStream();
+    telux::common::Status createIncallPlayStream();
+    telux::common::Status deleteIncallPlayStream();
+    void play();
+    void writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        uint32_t bytesWritten, telux::common::ErrorCode error);
 
-    void init(void);
-    void cryptoOperationMenu(telux::sec::Mode mode);
+    char *fileToPlayPath_;
+
+ private:
+    std::shared_ptr<telux::audio::IAudioManager> audioManager_;
+    std::shared_ptr<telux::audio::IAudioVoiceStream> audioVoiceStream_;
+    std::shared_ptr<telux::audio::IAudioPlayStream> audioPlayStream_;
+    FILE *fileToPlay_;
+    std::mutex playMutex_;
+    std::condition_variable cv_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
 };
-
-#endif // CRYPTOACCELERATORAPP_HPP

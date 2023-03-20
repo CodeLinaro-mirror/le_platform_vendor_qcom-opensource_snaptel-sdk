@@ -25,9 +25,9 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-/*
+ *
  * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
  * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -244,7 +244,7 @@ typedef struct {
     uint32_t psid;
 
     uint8_t *chan_load_ptr;
-    uint8_t chan_load_len;
+    uint32_t chan_load_len;
     char *payload;      /* payload pointer after wsmp header */
     int payload_len;    /* payload length after wsmp header */
 

@@ -228,7 +228,6 @@ enum class StreamDirection {
     TX = 2,
 };
 
-
 /** @} */ /* end_addtogroup telematics_audio_manager */
 
 /** @addtogroup telematics_audio_stream
@@ -374,7 +373,7 @@ struct FormatParams {
  *  Specifies the details of the adaptive multirate wide band format frame.
  */
 struct AmrwbpParams : FormatParams {
-    /** Bit width of the stream, typically 16 or 24 */
+    /** Bit width of the stream (16 or 24) */
     uint32_t bitWidth;
     /** Refer to @ref AmrwbpFrameFormat */
     AmrwbpFrameFormat frameFormat;
@@ -426,7 +425,9 @@ struct StreamConfig {
  *  Specifies the parameters when setting up streams for transcoding.
  */
 struct FormatInfo {
-    /** Sample rate in Hz, typical values 8k/16k/32k/48k */
+    /** Sample rate in Hz, typical values 8k/16k/32k/48k
+     * Sample rate is a dummy paramter for voice stream and compressed playback.
+     */
     uint32_t sampleRate;
     /** Refer to @ref ChannelTypeMask */
     ChannelTypeMask mask;

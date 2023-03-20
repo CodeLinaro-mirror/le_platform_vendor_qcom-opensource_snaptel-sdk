@@ -111,7 +111,7 @@ public:
         ClientInstanceConfig config, telux::common::InitResponseCb callback = nullptr) = 0;
 
     /**
-     * API to get the TCU-activity Manager instance
+     * Gets the TCU-activity manager instance.
      *
      * @param [in] clientType Type of the client that is going to access ITcuActivityManager APIs
      *                        @ref ClientType

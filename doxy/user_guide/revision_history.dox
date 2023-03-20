@@ -88,9 +88,10 @@ when       who     what, where, why
 @trhdgend
 @tr @tdmulrow{1,AG} @tdmulrowend
 @td Mar 2023 @tdend @tdlast
-\- Added support for Thermal notifications(Trip update, Cdev level change)
+\- Added support for thermal notifications(Trip update, Cdev level change)
 <br>\- Added sample apps for thermal notifications
 @tdlastend @trend
+\- Updated documentation for API reference and user guide for V1.56.0 @tdlastend @trend
 @tr @tdmulrow{1,AF} @tdmulrowend
 @td Dec 2022 @tdend @tdlast
 \- Added support for Third party service (TPS) eCall over IMS

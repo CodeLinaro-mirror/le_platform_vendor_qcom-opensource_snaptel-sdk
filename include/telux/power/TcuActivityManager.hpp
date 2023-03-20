@@ -196,7 +196,7 @@ public:
      * On platforms with Access control enabled, Caller needs to have TELUX_POWER_CONTROL_STATE
      * permission to invoke this API successfully.
      *
-     * @param [in] state            TCU-activity state that the System is intended to enter
+     * @param [in] state            TCU-activity state that the system is intended to enter
      * @param [in] machineName      Machine name if the state transition is intended for the
      *                              specific machine only. If assigned to ALL_MACHINES, then the
      *                              state applies to the whole system.

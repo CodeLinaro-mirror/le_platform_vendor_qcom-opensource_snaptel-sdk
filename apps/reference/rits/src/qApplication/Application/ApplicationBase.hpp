@@ -30,7 +30,7 @@
 /*
  *Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -102,7 +102,9 @@
 #define MIN_PACKET_LEN      20
 #define MAX_PACKET_LEN      8192
 #define DEFAULT_BSM_PSID    32
+#define MAX_PADDING_LEN     1000
 
+using telux::cv2x::Priority;
 using namespace std;
 enum class TransmitType {
     SPS,
@@ -115,6 +117,11 @@ enum class MessageType {
     DENM,
     SPAT,
     WSA
+};
+
+enum class TxRxType {
+    TX,
+    RX
 };
 
 struct Config{
@@ -230,6 +237,9 @@ struct Config{
     uint8_t l2IdTimeThreshold = 5;
     string wsaInfoFile;
     uint32_t wsaInterval = 1000; // WSA Tx interval, 1s by default
+    uint32_t padding = 0; // length of dummy data added to BSM, unit in Bytes
+    Priority spsPriority = Priority::PRIORITY_5; // priority setting for sps flow
+    Priority eventPriority = Priority::PRIORITY_2; // priority setting for event
 };
 
 class ApplicationBase
@@ -256,6 +266,8 @@ public:
     std::map<std::thread::id, std::vector<SignStats>> thrSignLatencies;
     std::map<std::thread::id, std::vector<MisbehaviorStats>> thrMisbehaviorLatencies;
 
+    virtual ~ApplicationBase();
+
     /* Method to update the local stored V2X IP rmnet addr */
     int updateCachedV2xIpIfaceAddr();
 
@@ -279,7 +291,7 @@ public:
     * @param fileConfiguration a char* that contains the file path of the
     * @param msgType application message type .
     */
-    ApplicationBase(char* fileConfiguration, MessageType msgType);
+    ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
 
     /**
     * Constructs Application with all the specifications of a
@@ -293,7 +305,7 @@ public:
     * @param fileConfiguration a char* that contains the file path of the
     */
     ApplicationBase(const string txIpv4, const uint16_t txPort,
-        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration);
+        const string rxIpv4, const uint16_t rxPort, char* fileConfiguration, bool enableCsvLog = false);
 
     /**
     * send  send V2X message.
@@ -369,6 +381,8 @@ public:
     void setup(MessageType msgType);
     void setupLdm();
 
+    bool openMinLogFile(const std::string& fullPathName);
+
     /**
      * Function that calculates incoming RX rate(the number of received packets per second) and
      * updates verifcation load to TM
@@ -435,10 +449,6 @@ public:
     */
     Ldm* ldm = nullptr;
 
-    FILE *csvfp;
-
-    bool writeToCsvFile = false;
-
     /**
      * @brief Function that filters RV based on the filter rate produced by Throttle Manager.
      * @param rate
@@ -466,6 +476,10 @@ protected:
     bool isRxSim = false;
     MessageType MsgType;
     uint8_t msgCount;
+    uint64_t locTimeMs_ = 0;
+    float locPositionDop_ = 0.0;
+    uint16_t locNumSvUsed_ = 0;
+    bool enableCsvLog_ = false;
 
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
@@ -501,6 +515,8 @@ protected:
      */
     unique_ptr<SecurityService> SecService;
 
+   virtual void writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
+       bool isTx, TransmitType txType, bool validPkt);
 
 private:
     unordered_map <uint32_t,rv_specs> l2RvMap;
@@ -510,6 +526,9 @@ private:
     std::mutex v2xIpAddrMtx_;
     string v2xIpAddr_;
 
+    static FILE *csvfp;
+    static std::mutex csvMutex;
+
     /* method to retrieve V2X IP rmnet address from the system */
     int getSysV2xIpIfaceAddr(string& ipAddr);
 
@@ -518,5 +537,6 @@ private:
     static uint16_t delimiterPos(string line, vector<string> delimiters);
     int loadConfiguration(char* file);
     void saveConfiguration(map<string, string> configs);
+    uint32_t vehiclesInRange();
 };
 #endif

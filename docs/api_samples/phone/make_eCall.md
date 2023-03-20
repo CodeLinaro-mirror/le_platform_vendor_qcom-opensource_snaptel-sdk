@@ -3,67 +3,54 @@ Make eCall {#make_eCall}
 
 This sample application demonstrates how to make an emergency (E112) voice call.
 
-### 1. Get the PhoneFactory and PhoneManager instances.
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   ~~~~~~
-
-### 2. Check if telephony subsystem is ready
-
-   ~~~~~~{.cpp}
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-   ~~~~~~
-
-### 2.1 If telephony subsystem is not ready, wait for it to be ready
-
-Telephony subsystems is to make sure that device is ready for services like Phone, SMS
-and others. if subsystems were not ready, wait for unconditionally.
-
-   ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << Call Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << Call Manager subsystem initialization failed << std::endl;
+      }
+      cbProm.set_value(status);
    }
    ~~~~~~
 
-### 3. Instantiate Phone and call manager
+### 2. Get the PhoneFactory and Call Manager instance
 
    ~~~~~~{.cpp}
-   auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto callManager = phoneFactory.getCallManager(initResponseCb);
+   if(callManager == NULL) {
+      std::cout << " Failed to get Call Manager instance" << std::endl;
+      return -1;
+   }
    ~~~~~~
 
-
-### 5. Initialize phoneId with default value
+### 3. Wait for Call Manager subsystem to be ready
 
    ~~~~~~{.cpp}
-   int phoneId = DEFAULT_PHONE_ID;
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Call Manager subsystem << std::endl;
+      return -1;
+   }
    ~~~~~~
 
-### 6. Optionally, instantiate dial call instance
-
-   ~~~~~~{.cpp}
-   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();
-   ~~~~~~
-
-
-##### 6.1. Optionally, implement IMakeCallCallback interface to receive response for the dial request
+### 4. Optionally, implement IMakeCallCallback interface to receive response for the dial request
 
    ~~~~~~{.cpp}
    class DialCallback : public IMakeCallCallback {
    public:
-      void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
+      void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
+         // will be invoked with response of makeCall operation
+      }
    };
-
-   void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
-      // will be invoked with response of makeECall operation
-   }
+   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();
    ~~~~~~
 
-
-### 7. Initialize the data required for eCall such as eCallMsdData,emergencyCategory and eCallVariant
+### 5. Initialize the data required for eCall such as eCallMsdData,emergencyCategory and eCallVariant
 
    ~~~~~~{.cpp}
    ECallCategory emergencyCategory = ECallCategory::VOICE_EMER_CAT_AUTO_ECALL;
@@ -73,6 +60,7 @@ and others. if subsystems were not ready, wait for unconditionally.
    // such as Latitude, Longitude etc.
    // Parameter values mentioned here are for illustrative purposes only.
    ECallMsdData eCallMsdData;
+   eCallMsdData.msdData.msdVersion = 2;
    eCallMsdData.msdData.messageIdentifier = 1; // Each MSD message should bear a unique id
    eCallMsdData.optionals.recentVehicleLocationN1Present = true;
    eCallMsdData.optionals.recentVehicleLocationN2Present = true;
@@ -105,6 +93,7 @@ and others. if subsystems were not ready, wait for unconditionally.
 ### 8. Send a eCall request
 
    ~~~~~~{.cpp}
+   int phoneId = 1;
    if(callManager) {
       auto makeCallStatus = callManager->makeECall(phoneId, eCallMsdData, emergencyCategory,
                                                    eCallVariant, dialCb);

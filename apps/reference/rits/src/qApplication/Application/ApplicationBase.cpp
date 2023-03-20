@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,6 +76,8 @@ using std::string;
 using std::map;
 using std::pair;
 
+FILE* ApplicationBase::csvfp;
+std::mutex ApplicationBase::csvMutex;
 
 // thread function to periodically change ID and cert
 void ApplicationBase::changeIdTimer(unsigned int interval)
@@ -117,6 +119,11 @@ void ApplicationBase::updateL2RvMap(uint32_t l2SrcId, rv_specs* rvSpec) {
 
     lock_guard<mutex> lk(l2MapMtx);
     this->l2RvMap[l2SrcId] = *rvSpec;
+}
+
+uint32_t ApplicationBase::vehiclesInRange() {
+    lock_guard<mutex> lk(l2MapMtx);
+    return this->l2RvMap.size();
 }
 
 void ApplicationBase::setL2RvFilteringList(int rate) {
@@ -179,7 +186,8 @@ void ApplicationBase::setL2RvFilteringList(int rate) {
     }
 }
 
-ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType){
+ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType, bool enableCsvLog){
+    enableCsvLog_ = enableCsvLog;
     // set parameters according to config file
     if (this->loadConfiguration(fileConfiguration)) {
         return;
@@ -245,7 +253,8 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType){
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             const string rxIpv4, const uint16_t rxPort,
-            char* fileConfiguration) {
+            char* fileConfiguration, bool enableCsvLog) {
+    enableCsvLog_ = enableCsvLog;
     if (this->loadConfiguration(fileConfiguration)) {
         return;
     }
@@ -1023,6 +1032,23 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
        istringstream is8(configs["wildcardRx"]);
        is8 >> boolalpha >> configuration.wildcardRx;
     }
+
+    if (configs.end() != configs.find("Padding")) {
+        this->configuration.padding = stoi(configs["Padding"], nullptr, 10);
+        this->configuration.padding = (this->configuration.padding > MAX_PADDING_LEN) ?
+                                       MAX_PADDING_LEN : this->configuration.padding;
+    }
+
+    if (configs.end() != configs.find("SpsPriority")) {
+        this->configuration.spsPriority = static_cast<Priority>(
+            stoi(configs["SpsPriority"], nullptr, 10));
+    }
+
+    if (configs.end() != configs.find("EventPriority")) {
+        this->configuration.eventPriority = static_cast<Priority>(
+            stoi(configs["EventPriority"], nullptr, 10));
+    }
+
     this->configuration.isValid = true;
 
 }
@@ -1082,8 +1108,12 @@ void ApplicationBase::setup(MessageType msgType) {
     }
     spsInfo.periodicityMs = adjustSpsPeriodicity(spsInfo.periodicityMs);
 
+    // set sps priority to user specified value
+    spsInfo.priority = this->configuration.spsPriority;
+
     if(appVerbosity > 3) {
         cout << "SPS period set to " << spsInfo.periodicityMs << "ms" << endl;
+        cout << "SPS priority set to " << static_cast<uint32_t>(spsInfo.priority) << endl;
     }
 
     for (auto port : this->configuration.spsPorts)
@@ -1215,12 +1245,17 @@ int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
     int ret = -1;
     // ethernet
     if (this->isTxSim) {
-        ret = simTransmit->transmit(mc->abuf.data, bufLen);
+        ret = simTransmit->transmit(mc->abuf.data, bufLen,
+                                    this->configuration.eventPriority);
     }else{ // radio
         if (txType == TransmitType::SPS) {
-            ret =  this->spsTransmits[index].transmit(mc->abuf.data, bufLen);
+            // SPS priority is set when creating the flow
+            ret =  this->spsTransmits[index].transmit(mc->abuf.data, bufLen,
+                                                      Priority::PRIORITY_UNKNOWN);
         } else if (txType == TransmitType::EVENT) {
-            ret =this->eventTransmits[index].transmit(mc->abuf.data, bufLen);
+            // event priority is set per packet using traffic class
+            ret =this->eventTransmits[index].transmit(mc->abuf.data, bufLen,
+                                                      this->configuration.eventPriority);
         }
     }
     return ret;
@@ -1230,6 +1265,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     const auto i = index;
     auto encLength = 0;
     std::shared_ptr<msg_contents> mc = nullptr;
+    bool validMessage = false;
 
     if (this->isTxSim) {
         mc = txSimMsg;
@@ -1240,13 +1276,27 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     } else {
         return -1;
     }
-    abuf_reset(&mc->abuf, ABUF_HEADROOM);
+
+    // reserve headroom in abuf if padding is specified
+    abuf_reset(&mc->abuf, ABUF_HEADROOM + this->configuration.padding);
     fillMsg(mc);
     encLength = encode_msg(mc.get());
     if (this->configuration.enableSecurity) {
         encLength = encodeAndSignMsg(mc);
     }
     int ret = this->transmit(index, mc, encLength, txType);
+    if (encLength > 0 && ret > 0) {
+        validMessage = true;
+    }
+    if (kinematicsReceive) {
+        auto locationInfo = kinematicsReceive->getLocation();
+        if (locationInfo) {
+            locTimeMs_ = locationInfo->getTimeStamp();
+            locPositionDop_ = locationInfo->getPositionDop();
+            locNumSvUsed_ = locationInfo->getNumSvUsed();
+        }
+    }
+    writeMinLog(mc, index, true, txType, validMessage);
     return encLength;
 }
 
@@ -1545,4 +1595,88 @@ int ApplicationBase::getV2xIpIfaceAddr(string& addr) {
         cout << "Get V2X IP address " << addr << endl;
     }
     return 0;
+}
+
+bool ApplicationBase::openMinLogFile(const std::string& fullPathName) {
+    bool res = false;
+    if (not enableCsvLog_) {
+        return res;
+    }
+    {
+        lock_guard<std::mutex> lock(csvMutex);
+        if ((nullptr == csvfp) && !fullPathName.empty()) {
+            csvfp = fopen(fullPathName.c_str(), "w+");
+            if (!csvfp) {
+                cerr << "Failed to open log file " << fullPathName << std::endl;
+            } else {
+                std::cout << "Open min log " << fullPathName << " success!" << std::endl;
+                res = true;
+                write_bsm_header(csvfp);
+            }
+        }
+    }
+    if (res) {
+        for(int index = 0 ; index < spsTransmits.size(); index++) {
+            this->spsTransmits[index].enableCsvLog(enableCsvLog_);
+        }
+        for(int index = 0 ; index < eventTransmits.size(); index++) {
+            this->eventTransmits[index].enableCsvLog(enableCsvLog_);
+        }
+        for(int index = 0 ; index < radioReceives.size(); index++) {
+            this->radioReceives[index].enableCsvLog(enableCsvLog_);
+        }
+    }
+
+    return res;
+}
+
+void ApplicationBase::writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
+    bool isTx, TransmitType txType, bool validPkt) {
+    uint64_t periodicityMs = 0;
+    int res = -1;
+    uint64_t monotonicTime;
+    struct timespec ts;
+    uint64_t timestamp_now_ms = 0;
+    uint8_t cbr;
+    uint32_t RVsInRange;
+
+    lock_guard<std::mutex> lock(csvMutex);
+    if (not csvfp) {
+        return;
+    }
+
+    auto sp = mc.lock();
+    if (sp) {
+        RVsInRange = vehiclesInRange();
+
+        if (isTx) {
+            if (txType == TransmitType::SPS) {
+                spsTransmits[index].getTxInterval(periodicityMs);
+                cbr = spsTransmits[index].getCBRValue();
+                monotonicTime = spsTransmits[index].latestTxRxTimeMonotonic();
+            } else {
+                cbr = eventTransmits[index].getCBRValue();
+                monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
+            }
+        } else {
+            timestamp_now_ms = timestamp_now();
+
+            monotonicTime = radioReceives[index].latestTxRxTimeMonotonic();
+            cbr = radioReceives[index].getCBRValue();
+        }
+        writeToCsv(sp.get(),csvfp, isTx, periodicityMs, validPkt,
+            RVsInRange, monotonicTime, timestamp_now_ms, locPositionDop_,
+            locNumSvUsed_, locTimeMs_, cbr);
+    }
+}
+
+ApplicationBase::~ApplicationBase() {
+    std::cout << "ApplicationBase destructing" << std::endl;
+    {
+        lock_guard<std::mutex> lock(csvMutex);
+        if (nullptr != csvfp) {
+            fclose(csvfp);
+            csvfp = nullptr;
+        }
+    }
 }

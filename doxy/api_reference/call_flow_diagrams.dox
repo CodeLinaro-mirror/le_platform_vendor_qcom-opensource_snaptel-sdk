@@ -112,20 +112,19 @@ Example:
 
 @html_image{dial_call_flow.png,Dial call flow,80,80,Dial call flow}
 
-1. The application gets the PhoneManager object using PhoneFactory.
-2. The application receives the PhoneManager object in order to get Phone.
-3. The application gets the Phone object for given phone identifier using PhoneManager.
-4. PhoneManager returns Phone object to application. In case phone identifier is not specified, it returns default phone.
-5. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE and ENDED.
-6. The application receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CallManager.
-7. The application dials a number by using makeCall API, optionally specifying callback to get asynchronous response.
-8. The application receives the status like SUCCESS, INVALIDPARAM and FAILED etc based on the execution of makeCall API.
-9. Optionally, the application gets asynchronous response for makeCall using makeCallResponseCallback.
-10. The application receives callback on call info change like DIALING/ALERTING/ACTIVE when other party accepts the call.
-11. The application sends hangup command to hangup the call, optionally specifying callback to get asynchronous response.
-12. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
-13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
-14. The application receives callback on call info change i.e Call Ended from CallManager.
+1. Application requests an instance of Call Manager object using PhoneFactory, providing the initialization callback.
+2. Application receives a Call Manager instance.
+3. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+4. If the subsystem is initialized successfully, application registers a listener for call info change notifications like DIALING, ALERTING, ACTIVE and ENDED.
+5. Application receives the status(SUCCESS or suitable failure) based on registration of listener to CallManager.
+6. Application dials a number by using makeCall API, optionally specifying callback to get asynchronous response.
+7. Application receives the status(SUCCESS or suitable failure) based on the execution of makeCall API.
+8. Optionally, the application gets asynchronous response for makeCall operation status, through makeCallResponse callback.
+9. Application receives the listener notifications on call status change like DIALING/ALERTING/ACTIVE when other party accepts the call.
+10. Application sends hangup command to hangup the call, optionally specifying callback to get asynchronous response.
+11. Application receives the status(SUCCESS or suitable failure) based on the execution of hangup API.
+12. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+13. Application receives the listener notification for the call end notification.
 
 @subsection e_call ECall call flow
 
@@ -142,20 +141,24 @@ Example:
 
 @html_image{ecall_call_flow.png,ECall call flow,80,80,ECall call flow}
 
-1. The application gets the PhoneManager object using PhoneFactory.
-2. The application receives the PhoneManager object in order to get Phone.
-3. The application gets the Phone object optionally specifying phone identifier using PhoneManager.
-4. PhoneManager returns Phone object to application, returns default phone in case phone identifier is not specified.
-5. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
-6. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
-7. The application dials an emergency call by using makeECall API, optionally specifying callback to get asynchronous response.
-8. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
-9. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
-10. CallManager sends ecall msd transmission status to the application by using onECallMsdTransmissionStatus API.
-11. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
-12. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
-13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
-14. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
+1. Application requests an instance of Call Manager object using PhoneFactory, providing the initialization callback.
+2. Application receives a Call Manager instance.
+3. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+4. If the subsystem is initialized successfully, application registers a listener for call info change notifications like DIALING, ALERTING, ACTIVE and ENDED.
+5. Application receives the status(SUCCESS or suitable failure) based on registration of listener to CallManager.
+6. Application dials an emergency call by using makeECall API, optionally specifying callback to get asynchronous response.
+7. Application receives the status(SUCCESS or suitable failure) based on the execution of makeECall API.
+8. Optionally, the application gets asynchronous response for makeECall operation status, through makeCallResponse callback.
+9. Application receives the listener notifications on call status change like DIALING/ALERTING/ACTIVE when other party accepts the call.
+10. Application receives the listener notifications related to MSD transmission status updates.
+11. Application receives the listener notifications related to eCall HLAP timer status updates.
+12. Optionally, the application can update the MSD using updateECallMsd API, whenever there is an update to MSD.
+13. Application receives the status(SUCCESS or suitable failure) based on the execution of updateECallMsd API.
+14. Optionally, the application gets asynchronous response for updateECallMsd operation status.
+15. Application sends hangup command to hangup the call, optionally specifying callback to get asynchronous response.
+16. Application receives the status(SUCCESS or suitable failure) based on the execution of hangup API.
+17. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+18. Application receives the listener notification for the call end notification.
 
 @subsection Tps_e_call_over_Ims TPS eCall over IMS call flow
 

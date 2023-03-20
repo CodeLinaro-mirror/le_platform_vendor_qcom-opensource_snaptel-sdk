@@ -120,7 +120,7 @@ const char* get_wall_time(char* result)
 
     time(&now);
     time_info = localtime(&now);
-    strncpy(result, asctime(time_info), 100);
+    g_strlcpy(result, asctime(time_info), 100);
     /*If it is end with  \n character, find and remove it*/
     token = strchr(result, '\n');
     if (token) {

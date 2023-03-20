@@ -35,8 +35,6 @@
 #ifndef COMMANDPROCESSOR_HPP
 #define COMMANDPROCESSOR_HPP
 
-#include <future>
-
 #include <telux/sec/SecurityFactory.hpp>
 
 /*
@@ -45,6 +43,7 @@
 struct VerificationRequest {
     uint32_t uniqueId;
     uint32_t timeout;
+    telux::sec::Mode mode;
     telux::sec::RequestPriority priority;
     telux::sec::ECCCurve curve;
     std::vector<uint8_t> digest;
@@ -60,6 +59,7 @@ struct VerificationRequest {
 struct CalculationRequest {
     uint32_t uniqueId;
     uint32_t timeout;
+    telux::sec::Mode mode;
     telux::sec::RequestPriority priority;
     telux::sec::ECCCurve curve;
     std::vector<uint8_t> scalar;
@@ -69,44 +69,13 @@ struct CalculationRequest {
     std::vector<uint8_t> addendPointY;
 };
 
-/*
- *  Listener class for receiving signature verification, point calculation result
- *  and SSR events.
- */
-class ResultAndSSRListener : public telux::sec::ICryptoAcceleratorListener {
-
- public:
-    void onVerificationResult(uint32_t uniqueId, telux::common::ErrorCode ec,
-        std::vector<uint8_t> resultData) override;
-
-    void onCalculationResult(uint32_t uniqueId, telux::common::ErrorCode ec,
-        std::vector<uint8_t> resultData) override;
-
-    void onServiceStatusChange(telux::common::ServiceStatus newStatus) override;
-
-    void setResultSynchronizer(std::promise<void> barrier);
-
- private:
-    std::promise<void> barrier_;
-};
-
-/*
- *  Does actual crypto operations using crypto acceleraot APIs.
- */
 class CommandProcessor {
-
  public:
-    telux::common::ErrorCode init(telux::sec::Mode mode);
-
     void verifyDigest(VerificationRequest request);
 
     void calculatePoint(CalculationRequest request);
 
  private:
-    telux::sec::Mode mode_;
-    std::shared_ptr<ResultAndSSRListener> resultAndSSRListener_;
-    std::shared_ptr<telux::sec::ICryptoAcceleratorManager> cryptAccelMgr_;
-
     void verifyDigestSync(VerificationRequest request);
     void verifyDigestAsyncPoll(VerificationRequest request);
     void verifyDigestAsyncListener(VerificationRequest request);

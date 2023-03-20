@@ -35,9 +35,9 @@
 #ifndef CRYPTOACCELERATORAPP_HPP
 #define CRYPTOACCELERATORAPP_HPP
 
-#include <telux/sec/CryptoAcceleratorManager.hpp>
-
 #include "common/console_app_framework/ConsoleApp.hpp"
+
+#include "CommandProcessor.hpp"
 
 class CryptoAcceleratorApp : public ConsoleApp {
  public:
@@ -45,7 +45,22 @@ class CryptoAcceleratorApp : public ConsoleApp {
     ~CryptoAcceleratorApp();
 
     void init(void);
-    void cryptoOperationMenu(telux::sec::Mode mode);
+    void verify(void);
+    void calculate(void);
+
+ private:
+    std::shared_ptr<CommandProcessor> cmdProcessor_;
+
+    void getHexStringAsByteArrayFromUsr(const std::string choiceToDisplay,
+        std::vector<uint8_t>& usrEntry);
+    void getChoiceNumberFromUsr(const std::string choicesToDisplay,
+        const uint32_t minVal, const uint32_t maxVal, uint32_t& selection);
+
+    void getUniqueIdFromUser(uint32_t& uniqueId);
+    void getCurveFromUser(telux::sec::ECCCurve& curve);
+    void getModeFromUser(telux::sec::Mode& mode);
+    void getPriorityFromUser(telux::sec::RequestPriority& priority);
+    void getTimeoutFromUser(uint32_t& timeout);
 };
 
 #endif // CRYPTOACCELERATORAPP_HPP

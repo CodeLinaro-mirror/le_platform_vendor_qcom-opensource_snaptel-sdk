@@ -192,7 +192,7 @@ struct OperationResult {
 /**
  * Receives ECC signature verification and ECQV calculation result.
  */
-class ICryptoAcceleratorListener : public telux::common::IServiceStatusListener {
+class ICryptoAcceleratorListener {
  public:
     /**
      * Invoked to provide an ECC signature verification result.
@@ -351,16 +351,13 @@ class ICryptoAcceleratorManager {
      *
      * Caller should allocate sufficient memory pointed by 'results'.
      *
-     * @param[in,out] results       Buffer that will contain the results
+     * @param[in,out] results            Buffer that will contain the results
      *
-     * @param[in] numResultsToRead  Number of the results to read
+     * @param[in] numResultsToRead       Number of the results to read
      *
-     * @param[in] timeout           Time to wait (in milliseconds) for the result(s).
-     *                              Specifying a negative value means an infinite timeout.
-     *                              Zero value means return immediately (there may or may
-     *                              not be any results read).
+     * @param[in] timeout                Time to wait (in milliseconds) for the result(s)
      *
-     * @param[out] numResultsRead   Number of results actually read
+     * @param[out] numResultsRead        Number of results actually read
      *
      * @returns @ref telux::common::ErrorCode::SUCCESS, if the result(s) are obtained
      *          successfully, otherwise an appropriate error code

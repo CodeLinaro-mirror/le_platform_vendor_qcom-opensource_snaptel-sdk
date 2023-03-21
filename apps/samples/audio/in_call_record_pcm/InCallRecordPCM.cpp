@@ -42,7 +42,7 @@
  *  5. Start the voice call stream.
  *  6. Create a capture stream (IAudioCaptureStream).
  *  7. Start reading audio samples from capture stream.
- *  8. When we want to stop recording, delete the capture stream.
+ *  8. When the recording is complete, delete the capture stream.
  *  9. Stop voice call stream.
  * 10. Delete voice call stream.
  *
@@ -98,6 +98,7 @@ telux::common::Status InCallRecordPCM::init() {
             std::cout << "audio service unavailable" << std::endl;
             return telux::common::Status::FAILED;
         }
+        std::cout << "audio service ready" << std::endl;
     }
 
     return telux::common::Status::SUCCESS;
@@ -110,16 +111,16 @@ telux::common::Status InCallRecordPCM::createVoiceStream() {
 
     std::promise<bool> p{};
     telux::common::Status status;
-    telux::audio::StreamConfig config;
+    telux::audio::StreamConfig sc;
 
-    config.type = telux::audio::StreamType::VOICE_CALL;
-    config.slotId = DEFAULT_SLOT_ID;
-    config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
-    config.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.type = telux::audio::StreamType::VOICE_CALL;
+    sc.slotId = DEFAULT_SLOT_ID;
+    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
 
-    status = audioManager_->createStream(config, [&p, this] (
+    status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
             telux::common::ErrorCode error) {
         if (error == telux::common::ErrorCode::SUCCESS) {
@@ -240,18 +241,19 @@ telux::common::Status InCallRecordPCM::createIncallRecordStream() {
 
     std::promise<bool> p{};
     telux::common::Status status;
-    telux::audio::StreamConfig config;
+    telux::audio::StreamConfig sc;
 
-    config.type = telux::audio::StreamType::CAPTURE;
-    config.slotId = DEFAULT_SLOT_ID;
-    config.sampleRate = 48000;
-    config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    config.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.type = telux::audio::StreamType::CAPTURE;
+    sc.slotId = DEFAULT_SLOT_ID;
+    sc.sampleRate = 48000;
+    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
 
     /* Direction::RX indicates voice downlink */
-    config.voicePaths.emplace_back(telux::audio::Direction::RX);
+    sc.voicePaths.emplace_back(telux::audio::Direction::RX);
 
-    status = audioManager_->createStream(config, [&p, this] (
+    status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
             telux::common::ErrorCode error) {
         if (error == telux::common::ErrorCode::SUCCESS) {
@@ -320,8 +322,8 @@ void InCallRecordPCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer
         bytesRead = buffer->getDataSize();
         bytesWrittenToFile = fwrite(buffer->getRawBuffer(), 1, bytesRead, fileToSaveRecording_);
         if (bytesWrittenToFile != bytesRead) {
-            std::cout << "can't write to file " << "written to file "
-            << bytesWrittenToFile << "bytes read " << bytesRead << std::endl;
+            std::cout << "can't write to file, " << "written "
+            << bytesWrittenToFile << ", read " << bytesRead << std::endl;
         }
     }
 
@@ -341,9 +343,9 @@ void InCallRecordPCM::record() {
     std::unique_lock<std::mutex> lock(captureMutex_);
 
     try {
-        recordingInterval_ = (std::stoul(recordingTimeLength_)) * 1000;
+        recordingDurationMs_ = (std::stoul(recordingDuration_)) * 1000;
     } catch (const std::exception& e) {
-        std::cout << "can't interpret time " << recordingTimeLength_ << std::endl;
+        std::cout << "can't interpret time " << recordingDuration_ << std::endl;
         return;
     }
 
@@ -360,6 +362,7 @@ void InCallRecordPCM::record() {
             fclose(fileToSaveRecording_);
             return;
         }
+
         freeBuffers_.push(streamBuffer);
 
         bytesToRead = streamBuffer->getMinSize();
@@ -372,6 +375,8 @@ void InCallRecordPCM::record() {
 
     auto readCb = std::bind(&InCallRecordPCM::readCompletion, this,
         std::placeholders::_1, std::placeholders::_2);
+
+    std::cout << "recording started" << std::endl;
 
     auto startTime = std::chrono::steady_clock::now();
 
@@ -391,15 +396,19 @@ void InCallRecordPCM::record() {
 
         auto currentTime = std::chrono::steady_clock::now();
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        currentTime - startTime).count();
-        if (diff >= recordingInterval_) {
+            currentTime - startTime).count();
+
+        if (diff >= recordingDurationMs_) {
+            /* Let all initiated read complete, buffers saved to file */
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
             break;
         }
     }
 
     fflush(fileToSaveRecording_);
     fclose(fileToSaveRecording_);
-    std::cout << "audio recorded!" << std::endl;
+
+    std::cout << "recording finished" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -408,8 +417,8 @@ int main(int argc, char **argv) {
     std::shared_ptr<InCallRecordPCM> app;
 
     if (argc < 3) {
-        std::cout << "need recording time and file to save recording" << std::endl;
-        return -EIO;
+        std::cout << "need recording time and file path" << std::endl;
+        return -EINVAL;
     }
 
     app = std::make_shared<InCallRecordPCM>();
@@ -418,7 +427,7 @@ int main(int argc, char **argv) {
         return -EIO;
     }
 
-    app->recordingTimeLength_ = argv[1];
+    app->recordingDuration_ = argv[1];
     app->fileToSaveRecordingPath_ = argv[2];
 
     status = app->createVoiceStream();

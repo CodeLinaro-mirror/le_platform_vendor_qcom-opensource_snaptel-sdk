@@ -97,6 +97,7 @@ telux::common::Status InCallPlaybackPCM::init() {
             std::cout << "audio service unavailable" << std::endl;
             return telux::common::Status::FAILED;
         }
+        std::cout << "audio service ready" << std::endl;
     }
 
     return telux::common::Status::SUCCESS;
@@ -109,16 +110,16 @@ telux::common::Status InCallPlaybackPCM::createVoiceStream() {
 
     std::promise<bool> p{};
     telux::common::Status status;
-    telux::audio::StreamConfig config;
+    telux::audio::StreamConfig sc;
 
-    config.type = telux::audio::StreamType::VOICE_CALL;
-    config.slotId = DEFAULT_SLOT_ID;
-    config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
-    config.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.type = telux::audio::StreamType::VOICE_CALL;
+    sc.slotId = DEFAULT_SLOT_ID;
+    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
 
-    status = audioManager_->createStream(config, [&p, this] (
+    status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
             telux::common::ErrorCode error) {
         if (error == telux::common::ErrorCode::SUCCESS) {
@@ -239,18 +240,19 @@ telux::common::Status InCallPlaybackPCM::createIncallPlayStream() {
 
     std::promise<bool> p{};
     telux::common::Status status;
-    telux::audio::StreamConfig config;
+    telux::audio::StreamConfig sc;
 
-    config.type = telux::audio::StreamType::PLAY;
-    config.slotId = DEFAULT_SLOT_ID;
-    config.sampleRate = 48000;
-    config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    config.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.type = telux::audio::StreamType::PLAY;
+    sc.slotId = DEFAULT_SLOT_ID;
+    sc.sampleRate = 48000;
+    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
     /* Direction::TX indicates voice uplink playback */
-    config.voicePaths.emplace_back(telux::audio::Direction::TX);
+    sc.voicePaths.emplace_back(telux::audio::Direction::TX);
 
-    status = audioManager_->createStream(config, [&p, this] (
+    status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
             telux::common::ErrorCode error) {
         if (error == telux::common::ErrorCode::SUCCESS) {
@@ -313,8 +315,6 @@ void InCallPlaybackPCM::writeCompletion(std::shared_ptr<telux::audio::IStreamBuf
 
     long offset;
 
-    std::cout << "bytes played: " << bytesWritten << std::endl;
-
     if ((error != telux::common::ErrorCode::SUCCESS) ||
             (buffer->getDataSize() != bytesWritten)) {
         offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
@@ -363,6 +363,8 @@ void InCallPlaybackPCM::play() {
     auto writeCb = std::bind(&InCallPlaybackPCM::writeCompletion, this,
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
+    std::cout << "playback started" << std::endl;
+
     while(1) {
         streamBuffer = freeBuffers_.front();
         freeBuffers_.pop();
@@ -390,7 +392,7 @@ void InCallPlaybackPCM::play() {
     }
 
     fclose(fileToPlay_);
-    std::cout << "file played!" << std::endl;
+    std::cout << "playback finished" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -399,8 +401,8 @@ int main(int argc, char **argv) {
     std::shared_ptr<InCallPlaybackPCM> app;
 
     if (argc < 2) {
-        std::cout << "need pcm audio file absolute path" << std::endl;
-        return -EIO;
+        std::cout << "need audio file absolute path" << std::endl;
+        return -EINVAL;
     }
 
     app = std::make_shared<InCallPlaybackPCM>();

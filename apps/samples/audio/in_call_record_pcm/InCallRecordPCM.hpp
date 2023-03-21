@@ -51,14 +51,14 @@ class InCallRecordPCM {
     void readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error);
 
-    char *recordingTimeLength_;
+    char *recordingDuration_;
     char *fileToSaveRecordingPath_;
 
  private:
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
     std::shared_ptr<telux::audio::IAudioVoiceStream> audioVoiceStream_;
     std::shared_ptr<telux::audio::IAudioCaptureStream> audioCaptureStream_;
-    uint32_t recordingInterval_;
+    uint32_t recordingDurationMs_;
     FILE *fileToSaveRecording_;
     std::mutex captureMutex_;
     std::condition_variable cv_;

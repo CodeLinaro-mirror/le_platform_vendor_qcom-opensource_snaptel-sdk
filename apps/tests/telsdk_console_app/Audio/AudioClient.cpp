@@ -103,7 +103,7 @@ bool AudioClient::isReady() {
 
 // Initialize the audio subsystem
 Status AudioClient::init() {
-#ifdef AUDIO_SUPPORTED
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     // Get the AudioFactory and AudioManager instances.
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
@@ -158,7 +158,7 @@ Status AudioClient::init() {
 
 // Function to start an audio on voice call
 void AudioClient::startVoiceSession(SlotId slotId) {
-#ifdef AUDIO_SUPPORTED
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     if (!audioMgr_) {
         std::cout << "Invalid Audio Manager" << std::endl;
         return;
@@ -186,7 +186,7 @@ void AudioClient::startVoiceSession(SlotId slotId) {
 
 // Function to stop an active voice session
 void AudioClient::stopVoiceSession(SlotId slotId) {
-#ifdef AUDIO_SUPPORTED
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     setActiveSession(slotId);
     auto status = activeSession_->stopAudio();
     if (status == Status::SUCCESS) {
@@ -204,7 +204,7 @@ void AudioClient::stopVoiceSession(SlotId slotId) {
 }
 
 void AudioClient::setActiveSession(SlotId slotId) {
-#ifdef AUDIO_SUPPORTED
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     std::lock_guard<std::mutex> lk(mutex_);
     if (!voiceSessions_.count(slotId)) {
         auto session = std::make_shared<VoiceSession>();
@@ -275,7 +275,7 @@ void AudioClient::loadConfFileData() {
 }
 
 void AudioClient::setMuteStatus(SlotId slotId, bool muteStatus) {
-#ifdef AUDIO_SUPPORTED
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     setActiveSession(slotId);
     std::string operationName = "";
     if (muteStatus) {
@@ -304,7 +304,7 @@ void AudioClient::setMuteStatus(SlotId slotId, bool muteStatus) {
 }
 
 void AudioClient::queryInputType() {
-#ifdef AUDIO_SUPPORTED
+#ifdef TELSDK_FEATURE_AUDIO_ENABLED
     std::string inputSelection;
     char delimiter = '\n';
     int consoleFlag = 0;

@@ -34,10 +34,10 @@ endif()
 add_library(codec ${SOURCE_FILES})
 if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
     add_library(v2xcodec SHARED  ${CMAKE_CURRENT_SOURCE_DIR}/src/v2x_codec.c)
-    target_link_libraries(v2xcodec codec asn1c_codec)
+    target_link_libraries(v2xcodec codec asn1c_codec glib-2.0)
 else()
     add_library(v2xcodec SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/v2x_codec.c)
-    target_link_libraries(v2xcodec codec)
+    target_link_libraries(v2xcodec codec glib-2.0)
 endif()
 
 set_property(TARGET v2xcodec PROPERTY PUBLIC_HEADER

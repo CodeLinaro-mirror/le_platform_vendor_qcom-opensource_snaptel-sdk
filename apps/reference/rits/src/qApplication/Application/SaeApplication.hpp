@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -77,10 +77,10 @@
 
 class SaeApplication : public ApplicationBase {
 public:
-    SaeApplication(char *fileConfiguration, MessageType msgType);
+    SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false);
     SaeApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort,
-        char* fileConfiguration, MessageType msgType);
+        char* fileConfiguration, MessageType msgType, bool enableCsvLog = false);
     ~SaeApplication();
 
     /**
@@ -266,5 +266,4 @@ private:
     int convertIpv6Addr2Str(char* buf, int bufLen, string& addr);
 
     std::mutex wramutex;
-    std::mutex csvMutex;
 };

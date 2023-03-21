@@ -185,6 +185,7 @@
 -Wl,--defsym=_ZN5telux3tel11CallManager18updateCurrentCallsEv=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager19updateLastFailCauseEi=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager20notifyCallInfoChangeESt10shared_ptrINS0_5ICallEE=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
+-Wl,--defsym=_ZN5telux3tel11CallManager20setRequestStatusFlagEj=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager20updateEcallHlapTimerEiNS0_13HlapTimerTypeEjSt8functionIFvNS_6common9ErrorCodeEEE=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager21handleStopDftResponseEiSt10shared_ptrINS_6common16ICommandCallbackEE=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager21onServiceStatusChangeENS_6common13ServiceStatusE=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
@@ -195,6 +196,7 @@
 -Wl,--defsym=_ZN5telux3tel11CallManager22handleSwapCallResponseEiSt10shared_ptrINS_6common16ICommandCallbackEE=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager22initiateUpdateECallMsdERKSt6vectorIhSaIhEEiib=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager22onECallHlapTimerStatusEP41voice_ecall_hlap_timer_status_ind_msg_v02i=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
+-Wl,--defsym=_ZN5telux3tel11CallManager22resetRequestStatusFlagEj=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager23handleQueryEcbmResponseEiPSt6vectorIiSaIiEESt10shared_ptrINS_6common16ICommandCallbackEE=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager24convertTimerEventFromIndE32ecall_hlap_timer_status_enum_v02=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel
 -Wl,--defsym=_ZN5telux3tel11CallManager24handleServiceStateChangeENS_6common13ServiceStatusE=so_stub_for_/local/mnt/workspace/jenkins/workspace/TELSDK_STUB_GEN_CI/telsdk/build/install/lib/libtelux_tel

@@ -94,16 +94,15 @@ public:
     static PowerFactory &getInstance();
 
     /**
-     * API to get the TCU-activity Manager instance
+     * Gets the TCU-activity manager instance.
      *
-     * @param [in] config           TCU-activity Manager configuration
+     * @param [in] config           TCU-activity manager configuration
      * @param [in] callback         Optional callback pointer to get the response of the manager
      *                              initialization.
      *
-     * @returns Pointer of ITcuActivityManager object.
+     * @returns Pointer to ITcuActivityManager object.
      *
-     * @note    This API is recommended for systems with Hypervisor and as well as non-hypervisor
-     *          based systems.
+     * @note    This API is recommended for both hypervisor and non-hypervisor based systems.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
      *             change and could break backwards compatibility.
@@ -112,7 +111,7 @@ public:
         ClientInstanceConfig config, telux::common::InitResponseCb callback = nullptr) = 0;
 
     /**
-     * API to get the TCU-activity Manager instance
+     * Gets the TCU-activity manager instance.
      *
      * @param [in] clientType Type of the client that is going to access ITcuActivityManager APIs
      *                        @ref ClientType
@@ -124,7 +123,7 @@ public:
      *
      * @returns     Pointer of ITcuActivityManager object.
      *
-     * @note        This API cannot be used on systems with Hypervisor and Virtual machines.
+     * @note        This API cannot be used on virtual machines or on systems with hypervisor.
      *              The alternative API @ref PowerFactory::getTcuActivityManager(
      *              ClientInstanceConfig config,telux::common::InitResponseCb callback)
      *              should be used.

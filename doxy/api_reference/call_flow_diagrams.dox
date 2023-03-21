@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -112,20 +112,19 @@ Example:
 
 @html_image{dial_call_flow.png,Dial call flow,80,80,Dial call flow}
 
-1. The application gets the PhoneManager object using PhoneFactory.
-2. The application receives the PhoneManager object in order to get Phone.
-3. The application gets the Phone object for given phone identifier using PhoneManager.
-4. PhoneManager returns Phone object to application. In case phone identifier is not specified, it returns default phone.
-5. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE and ENDED.
-6. The application receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CallManager.
-7. The application dials a number by using makeCall API, optionally specifying callback to get asynchronous response.
-8. The application receives the status like SUCCESS, INVALIDPARAM and FAILED etc based on the execution of makeCall API.
-9. Optionally, the application gets asynchronous response for makeCall using makeCallResponseCallback.
-10. The application receives callback on call info change like DIALING/ALERTING/ACTIVE when other party accepts the call.
-11. The application sends hangup command to hangup the call, optionally specifying callback to get asynchronous response.
-12. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
-13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
-14. The application receives callback on call info change i.e Call Ended from CallManager.
+1. Application requests an instance of Call Manager object using PhoneFactory, providing the initialization callback.
+2. Application receives a Call Manager instance.
+3. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+4. If the subsystem is initialized successfully, application registers a listener for call info change notifications like DIALING, ALERTING, ACTIVE and ENDED.
+5. Application receives the status(SUCCESS or suitable failure) based on registration of listener to CallManager.
+6. Application dials a number by using makeCall API, optionally specifying callback to get asynchronous response.
+7. Application receives the status(SUCCESS or suitable failure) based on the execution of makeCall API.
+8. Optionally, the application gets asynchronous response for makeCall operation status, through makeCallResponse callback.
+9. Application receives the listener notifications on call status change like DIALING/ALERTING/ACTIVE when other party accepts the call.
+10. Application sends hangup command to hangup the call, optionally specifying callback to get asynchronous response.
+11. Application receives the status(SUCCESS or suitable failure) based on the execution of hangup API.
+12. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+13. Application receives the listener notification for the call end notification.
 
 @subsection e_call ECall call flow
 
@@ -142,20 +141,24 @@ Example:
 
 @html_image{ecall_call_flow.png,ECall call flow,80,80,ECall call flow}
 
-1. The application gets the PhoneManager object using PhoneFactory.
-2. The application receives the PhoneManager object in order to get Phone.
-3. The application gets the Phone object optionally specifying phone identifier using PhoneManager.
-4. PhoneManager returns Phone object to application, returns default phone in case phone identifier is not specified.
-5. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
-6. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
-7. The application dials an emergency call by using makeECall API, optionally specifying callback to get asynchronous response.
-8. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
-9. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
-10. CallManager sends ecall msd transmission status to the application by using onECallMsdTransmissionStatus API.
-11. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
-12. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
-13. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
-14. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
+1. Application requests an instance of Call Manager object using PhoneFactory, providing the initialization callback.
+2. Application receives a Call Manager instance.
+3. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+4. If the subsystem is initialized successfully, application registers a listener for call info change notifications like DIALING, ALERTING, ACTIVE and ENDED.
+5. Application receives the status(SUCCESS or suitable failure) based on registration of listener to CallManager.
+6. Application dials an emergency call by using makeECall API, optionally specifying callback to get asynchronous response.
+7. Application receives the status(SUCCESS or suitable failure) based on the execution of makeECall API.
+8. Optionally, the application gets asynchronous response for makeECall operation status, through makeCallResponse callback.
+9. Application receives the listener notifications on call status change like DIALING/ALERTING/ACTIVE when other party accepts the call.
+10. Application receives the listener notifications related to MSD transmission status updates.
+11. Application receives the listener notifications related to eCall HLAP timer status updates.
+12. Optionally, the application can update the MSD using updateECallMsd API, whenever there is an update to MSD.
+13. Application receives the status(SUCCESS or suitable failure) based on the execution of updateECallMsd API.
+14. Optionally, the application gets asynchronous response for updateECallMsd operation status.
+15. Application sends hangup command to hangup the call, optionally specifying callback to get asynchronous response.
+16. Application receives the status(SUCCESS or suitable failure) based on the execution of hangup API.
+17. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+18. Application receives the listener notification for the call end notification.
 
 @subsection Tps_e_call_over_Ims TPS eCall over IMS call flow
 
@@ -3339,23 +3342,25 @@ Application must perform C-V2X radio initialization before calling any methods o
 4. Application receives synchronous status which indicates if the getCalibrationInitStatus request was sent successfully.
 5. Application is notified with CalibrationInitStatus and suitable error code via the application supplied callback.
 
-@section thermal_manager_call_flow Thermal manager call flow
+@section thermal_manager_callflow Thermal
+
+@subsection thermal_manager_api_callflow Thermal Manager API call flow
 
 Thermal manager provides APIs to get list of thermal zones and cooling devices. It also contains APIs
 to get a particular thermal zone and a particular cooling device details with the given Id.
 
-@anchor fig_thermal_manager_call_flow
+@anchor fig_thermal_manager_api_callflow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{thermal_manager_call_flow.png}
+  \includegraphics[scale=0.5]{thermal_manager_api_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Thermal manager call flow}
-  \label{fig_thermal_manager_call_flow}
+  \caption{Thermal manager API call flow}
+  \label{fig_thermal_manager_api_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{thermal_manager_call_flow.png,Thermal manager call flow,80,80,Thermal manager call flow}
+@html_image{thermal_manager_api_call_flow.png,Thermal manager API call flow,80,80,Thermal manager API call flow}
 
 1. Application requests for an instance of thermal factory.
 2. Thermal factory instance is received by the application.
@@ -3373,19 +3378,59 @@ to get a particular thermal zone and a particular cooling device details with th
 14. Application requests for a particular cooling device details by passing the cooling device Id.
 15. Thermal Manager sends cooling device details with the given Id to the application.
 
-@section thermal_shutdown_manager_call_flow Thermal shutdown management
+@subsection thermal_manager_listener_call_flow Call flow to register/remove listener for Thermal manager notifications.
 
-Thermal shutdown manager provides APIs to set/get auto thermal shutdown modes. It also has listener interface for notifications.
-Application will get the Thermal-shutdown manager object from thermal factory. The application can register a listener for
-updates in thermal auto shutdown modes and its management service status. Also there is provision to set the desired
+Thermal listeners provide a set of listeners on which the app is notified when certain
+events occur. It also allows an application to register some or all types of notifications.
+
+@anchor fig_thermal_manager_listener_callflow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{thermal_manager_notifications_callflow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to register/remove listener for Thermal manager notifications}
+  \label{fig_thermal_manager_listener_callflow}
+\end{figure}
+@endlatexonly
+
+@html_image{thermal_manager_notifications_callflow.png,Call flow to register/remove listener for Thermal manager notifications,80,80,Register/Remove listener for Thermal manager notifications call flow}
+
+The thermal sub-system should have been initialized successfully with SERVICE_AVAILABLE as a
+pre-requisite for any thermal notifications and a valid ThermalManager object is available.
+1. Application should create a thermal listening object.
+2. Application can register a listener for specific or all type of notifications by providing
+a different mask value. The default value of mask is 0xFFFF which indicates for all type of
+notifications. The SSR notification is registered by default, whether it provides mask values
+or not.
+3. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+4. Application is notified when service status changes.
+5. Application registered for this notification will be notified when a trip event occurs for
+any thermal zone.
+6. Application registered for this notification will be notified when a cooling device changes
+its states.
+7. Application can de-register a listener for specific or all type of notifications by providing
+a different mask value. The default value of mask is 0xFFFF which indicates for all type of
+notifications including SSR. The SSR notification will not be deregistered if the request
+provided a mask value.
+8. Status of de-register listener i.e. either SUCCESS or FAILED will be returned to the application.
+
+@subsection thermal_shutdown_manager_call_flow Thermal shutdown management
+
+Thermal shutdown manager provides APIs to set/get auto thermal shutdown modes. It also has
+listener interface for notifications. Application will get the Thermal-shutdown manager object
+from thermal factory. The application can register a listener for updates in thermal auto
+shutdown modes and its management service status. Also there is provision to set the desired
 thermal auto-shutdown mode.
 
-When application is notifed of service being unavailable, the thermal auto-shutdown mode updates are inactive. After service
-becomes available, the existing listener registrations will be maintained.
+When application is notifed of service being unavailable, the thermal auto-shutdown mode updates
+are inactive. After service becomes available, the existing listener registrations will be
+maintained.
 
-As a reference, auto-shutdown management in an eCall application is described in the below sections.
+As a reference, auto-shutdown management in an eCall application is described in the below
+sections.
 
-@subsection thermal_shutdown_manager_listener_call_flow Call flow to register/remove listener for Thermal auto-shutdown mode updates.
+@subsubsection thermal_shutdown_manager_listener_call_flow Call flow to register/remove listener for Thermal auto-shutdown mode updates.
 
 @anchor fig_thermal_shutdown_manager_listener_callflow
 @latexonly
@@ -3398,7 +3443,7 @@ As a reference, auto-shutdown management in an eCall application is described in
 \end{figure}
 @endlatexonly
 
-@html_image{thermal_shutdown_manager_listener_callflow.png,Call flow to register/remove listener for Thermal shutdown manager,80,80,Register/Remove listener for Thermal shutdown manager call flow}
+@html_image{thermal_shutdown_mode_notification_callflow.png,Call flow to register/remove listener for Thermal shutdown manager,80,80,Register/Remove listener for Thermal shutdown manager call flow}
 
 1. Application requests for an instance of thermal factory.
 2. Thermal factory instance is received by the application.
@@ -3415,7 +3460,7 @@ As a reference, auto-shutdown management in an eCall application is described in
 13. Application can remove listener.
 14. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
-@subsection thermal_shutdown_manager_commands_callflow Call flow to set/get the Thermal auto-shutdown mode
+@subsubsection thermal_shutdown_manager_commands_callflow Call flow to set/get the Thermal auto-shutdown mode
 
 @anchor fig_thermal_shutdown_manager_commands_callflow
 @latexonly
@@ -3444,7 +3489,7 @@ As a reference, auto-shutdown management in an eCall application is described in
 12. Application receives synchronous status which indicates if the request was sent successfully.
 13. Optionally, the response to setAutoShutdownMode request can be received by the application.
 
-@subsection thermal_shutdown_manager_eCall_app_call_flow Call flow to manage thermal auto-shutdown from an eCall application.
+@subsubsection thermal_shutdown_manager_eCall_app_call_flow Call flow to manage thermal auto-shutdown from an eCall application.
 
 @anchor fig_thermal_shutdown_manager_eCall_app_callflow
 @latexonly

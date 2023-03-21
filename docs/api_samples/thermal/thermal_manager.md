@@ -1,4 +1,4 @@
-Get thermal zones and cooling devices {#thermal_manager}
+Get thermal zones, cooling devices and thermal notifications {#thermal_manager}
 =======================================================
 
 This sample app demonstrates how to get thermal zones and cooling devices.
@@ -40,7 +40,72 @@ This sample app demonstrates how to get thermal zones and cooling devices.
    }
    ~~~~~~
 
-### 5. Send get thermal zones request using thermal manager object
+### 5. Create the listener object
+
+   ~~~~~~{.cpp}
+   std::shared_ptr<ThermalListener> thermalListener
+      = std::make_shared<ThermalListener>();
+   ~~~~~~
+
+### 6. To register only trip update notification
+       Note: likewise it can be registered for only cooling device changes notification.
+
+   ~~~~~~{.cpp}
+   thermalMgr->registerListener(thermalListener, 1 << TNT_TRIP_UPDATE);
+   ~~~~~~
+
+### 7. Receive service status notification
+
+   ~~~~~~{.cpp}
+   virtual void onServiceStatusChange(ServiceStatus serviceStatus) override {
+      PRINT_NOTIFICATION << "Thermal service status: ";
+      std::string status;
+      switch (serviceStatus) {
+         case ServiceStatus::SERVICE_AVAILABLE: {
+            status = "Available";
+            break;
+         }
+         case ServiceStatus::SERVICE_UNAVAILABLE: {
+            status = "Unavailable";
+            break;
+         }
+         case ServiceStatus::SERVICE_FAILED: {
+            status = "Failed";
+            break;
+         }
+         default: {
+            status = "Unknown";
+            break;
+         }
+      }
+      std::cout << status << std::endl;
+   }
+   ~~~~~~
+
+### 8. Receive notification when trip event occurs
+       Note: Receives notification only if it is registered in step 5.
+
+   ~~~~~~{.cpp}
+   virtual void onTripEvent(std::shared_ptr<ITripPoint> tripPoint, TripEvent tripEvent) override {
+      if (tripPoint) {
+         PRINT_NOTIFICATION << ": TRIP UPDATE EVENT" << std::endl;
+         printTripPointHeader();
+         printTripPointInfo(tripPoint, tripEvent);
+         return;
+      }
+      PRINT_NOTIFICATION << ": Invalid trip point" << std::endl;
+   }
+   ~~~~~~
+
+### 9. To de-register only trip update notification
+       Note: likewise it can be de-registered for only cooling device changes notification.
+             The SSR notification will not de-registered by default except mask: 0xFFFF.
+
+   ~~~~~~{.cpp}
+   thermalMgr->registerListener(thermalListener, 1 << TNT_TRIP_UPDATE);
+   ~~~~~~
+
+### 10. Send get thermal zones request using thermal manager object
 
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<telux::therm::IThermalZone>> zoneInfo
@@ -57,7 +122,7 @@ This sample app demonstrates how to get thermal zones and cooling devices.
    }
    ~~~~~~
 
-### 6. Send get cooling devices request using thermal manager instance
+### 11. Send get cooling devices request using thermal manager instance
 
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<telux::therm::ICoolingDevice>> coolingDevice
@@ -74,4 +139,29 @@ This sample app demonstrates how to get thermal zones and cooling devices.
    } else {
       std::cout << "No cooling devices found!" << std::endl;
    }
+   ~~~~~~
+
+### 12. Send request to get thermal zone for specific id using thermal manager object
+
+   ~~~~~~{.cpp}
+   int thermalZoneId = THERMAL_ZONE_ID;
+   std::cout << "Thermal zone info by Id: " << thermalZoneId << std::endl;
+   std::shared_ptr<telux::therm::IThermalZone> tzInfo = thermalMgr->getThermalZone(thermalZoneId);
+   if (tzInfo != nullptr) {
+      printThermalZoneHeader();
+      printZoneInfo(tzInfo);
+      printBindingInfo(tzInfo);
+   }
+   ~~~~~~
+
+### 13. Cleanup when we don't need to listen to anything and when exit the application.
+       Note: Here the APP is de-registering all notifications. However, the client can choose
+             to de-register specific as well. For example, to deregister only trip update
+             notifications, the client may provide mask: 0x0001 or mask: 0x0002 to deregister only
+             the notification for change in cdev level.
+
+   ~~~~~~{.cpp}
+   thermalMgr->deregisterListener(thermalListener);
+   thermalListener = nullptr;
+   thermalMgr = nullptr;
    ~~~~~~

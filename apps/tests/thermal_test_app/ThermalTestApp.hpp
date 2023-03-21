@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,6 +76,12 @@
 
 #include "console_app_framework/ConsoleApp.hpp"
 
+enum InitWithProc {
+    LOCAL,
+    REMOTE,
+    BOTH,
+};
+
 class ThermalListener;
 
 class ThermalTestApp : public ConsoleApp {
@@ -94,17 +100,31 @@ class ThermalTestApp : public ConsoleApp {
     void getThermalZoneById(std::vector<std::string> userInput);
     void getCoolingDeviceById(std::vector<std::string> userInput);
 
+    void controlRegistration(std::vector<std::string> userInput);
+
     void signalHandler(int signum);
-    void cleanup();
 
  private:
+    bool initThermalManager(telux::common::ProcType procType);
+    telux::common::Status manageIndication(
+        bool registerInd, telux::therm::ThermalNotificationMask mask = 0xFFFF);
+    telux::common::ProcType getProcType();
+    int readAndValidate(std::string msg, int minRange, int maxRange);
+
+    void handleAllUnSolicitedEvents(bool isRegister);
+    void handleTripUpdateEvent(bool isRegister);
+    void handleCdevLevelUpdateEvent(bool isRegister);
+
+    void cleanup();
+
     std::map<telux::common::ProcType, std::shared_ptr<telux::therm::IThermalManager>>
         thermalManagerMap_;
-    void printThermalZoneHeader();
-    void printCoolingDeviceHeader();
-    bool initThermalManager(telux::common::ProcType procType);
     std::map<telux::common::ProcType, std::shared_ptr<ThermalListener>> thermalListenerMap_;
-    int readAndValidateProcType();
+    InitWithProc initWithProc_;
+
+    using memberFun = void (ThermalTestApp::*)(bool);
+    memberFun memberFunArr[3] = {&ThermalTestApp::handleAllUnSolicitedEvents,
+        &ThermalTestApp::handleTripUpdateEvent, &ThermalTestApp::handleCdevLevelUpdateEvent};
 
     template <typename T>
     static void getInput(std::string prompt, T &input) {

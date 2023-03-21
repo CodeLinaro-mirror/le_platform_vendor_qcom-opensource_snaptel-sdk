@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -755,6 +755,8 @@ enum class InterfaceType {
     ECM = 3,     /**< Ethernet Control Model (ECM) */
     RNDIS = 4,   /**< Remote Network Driver Interface Specification (RNDIS) */
     MHI = 5,     /**< Modem Host Interface (MHI) */
+    VMTAP0 = 6,  /**< Virtual interface for VM 1 */
+    VMTAP1 = 7,  /**< Virtual interface for VM 2 */
 };
 
 /**

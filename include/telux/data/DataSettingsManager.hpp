@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -113,6 +113,31 @@ enum class BandPriority {
 };
 
 /**
+ * Possible DDS switch types.
+ */
+enum class DdsType
+{
+    PERMANENT = 0, /** Permanently switch the DDS Sim Slot. Intended to be used when client
+                       wants to stop doing data activities on the current DDS Sim slot and start
+                       doing data activities on the other Sim slot, on a DSDS device.
+                       Permanent switch is persistent across reboots. */
+    TEMPORARY = 1, /** Temporarily switch the DDS Sim Slot. This is only to be used when there
+                       is a voice call on the non-DDS Sim, and client wants to perform data activity
+                       temporarily on that non-DDS Sim, for the duration of the call. After the
+                       call ends, clients should do a permanent switch back to the original DDS Sim.
+                       Temporary switch is non-persistent across reboots. */
+};
+
+/**
+ * Specifies the DDS switch info.
+ */
+struct DdsInfo
+{
+    DdsType type;   /** Specifies DDS switch type */
+    SlotId slotId;  /** Specifies which slot is the DDS */
+};
+
+/**
  * N79 5G/Wlan 5GHz interference avoidance configuration
  */
 struct BandInterferenceConfig {
@@ -169,6 +194,21 @@ using RequestBandInterferenceConfigResponseCb = std::function<void(bool isEnable
  */
 using requestWwanConnectivityConfigResponseCb = std::function<void(SlotId slotId,
     bool isAllowed, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to requestCurrentDds API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] currentState  Provides the current DDS status @ref telux::data::DdsInfo.
+ * @param [in] error         Return code for whether the operation succeeded or failed.
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change
+ *          and could break backwards compatibility.
+ */
+using RequestCurrentDdsResponseCb = std::function<void(DdsInfo currentState,
+    telux::common::ErrorCode error)>;
 
 /**
  * @brief Data Settings Manager class provides APIs related to the data subsystem settings.
@@ -290,6 +330,47 @@ public:
         RequestBandInterferenceConfigResponseCb callback) = 0;
 
     /**
+     * This API allows the client to perform the DDS switch. Client has the option
+     * to either select permanent or temporary switch.
+     *
+     * @param [in] request          Client has to provide the request
+     *                              @ref telux::data::DdsInfo.
+     *
+     * @param [in] callback         Callback to get response for requestDdsSwitch.
+     *                              Possible ErrorCode in @ref telux::common::ResponseCallback:
+     *                              - If the DDS switch is performed succesfully
+     *                                @ref telux::common::ErrorCode::SUCCESS
+     *                              - If the DDS switch request is rejected
+     *                                @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
+     *                                Few scenarios in which switch request will be rejected:
+     *                                    1. Slot1 is permanent DDS and client still triggers
+     *                                       permanent DDS switch on slot 1.
+     *                                    2. During an MT/MO voice call if client triggers
+     *                                       permanent DDS switch.
+     *                              - If the DDS switch is allowed but due to some reason DDS
+     *                                switch failed @ref telux::common::ErrorCode::GENERIC_FAILURE
+     *
+     * @returns Status of requestDdsSwitch i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestDdsSwitch(DdsInfo request,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Request the current DDS slot info
+     *
+     * @param [in] callback      Callback to get response for requestCurrentDds.
+     *
+     * @returns Status of requestCurrentDds i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status requestCurrentDds(RequestCurrentDdsResponseCb callback) = 0;
+
+    /**
      * Allow/Disallow WWAN connectivity.
      * Controls whether system should allow/disallow WWAN connectivity to cellular network.
      * Default setting is allow WWAN connectivity to cellular network.
@@ -384,6 +465,15 @@ class IDataSettingsListener {
      *
      */
     virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {}
+
+    /**
+     * This function is called whenever the DDS switch occurs.
+     *
+     * @param [in] currentState      Provides the current DDS status.
+     *                               - Slot Id on which DDS switch occured.
+     *                               - DDS switch type @ref telux::data::DdsType.
+     */
+    virtual void onDdsChange(DdsInfo currentState) {}
 
     /**
      * Destructor for IDataSettingsListener

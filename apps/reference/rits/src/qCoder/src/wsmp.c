@@ -29,7 +29,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -67,7 +67,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @brief library for dissecting/encoding WSMP 2016 frames and dealing with
  * variabl lengh P-encoded PSID
  *
- * Things specifically realted to the formating/decoding of a IEEE 1609 WSMP
+ * Things specifically related to the formating/decoding of a IEEE 1609 WSMP
  * frame are included here.
  *
  * @note WSA formatting is presently not supported.
@@ -325,8 +325,7 @@ static int encode_wsm2016(wsmp_data_t *wbp, abuf_t *wsm_payload)
             if (wbp->weid_opts.inc_load_ext) {
                 asn_ncat_bits(wbp->abp, WAVE_ELEM_ID_LOAD, 8);
                 asn_put_encoded_len(wbp->abp, wbp->chan_load_len); // Variable length WEID!,
-                                           // A SEQUENCE of bytes!
-                asn_ncat(wbp->abp, wbp->chan_load_ptr, 8 * wbp->chan_load_len);
+                asn_ncat(wbp->abp, wbp->chan_load_ptr, wbp->chan_load_len);
             }
 
         } // end of adding 0..4 optional WSIE
@@ -401,25 +400,14 @@ static int encode_wsm2016(wsmp_data_t *wbp, abuf_t *wsm_payload)
                 printf("This wont work for building a good WSM\n");
             }
 
-            // Copy Payload into tail of the WSM we have started
-            //abuf_merge(wbp->abp, wsm_payload );
+            // Copy WSMP header into front of the payload and return the merged buffer len
             abuf_merge_second(wbp->abp, wsm_payload);
-            //wsm_payload = wbp->abp;
-
+            result = abuf_byte_len(wsm_payload);
         } else {
             if (gVerbosity) {
                 printf(" No WSMP Payload nor payload length added \n");
             }
         }
-#if 0
-        if (gVerbosity > 7) {
-            printf("WSMP HEADER: ");
-            abuf_dump(wbp->abp);
-            printf("WSMP FRAME: ");
-            abuf_dump(wsm_payload);
-        }
-#endif
-        result = abuf_byte_len(wbp->abp);
     }
 err:
     return result;
@@ -493,16 +481,20 @@ static int wsmp_decode_wave_element_extension(abuf_t *bp, wsmp_data_t *wsmpp, in
             continue;
 
         case WAVE_ELEM_ID_LOAD: /* "Channel Load" As per IEEE1609 8.3.4.5 */
+            // element ID
+            abuf_pull(bp, 1);
 
-            // Can't use the older, simple WSMP_EXT_FIELD_SIZE macro
-            // because of variable length octet stream
-            //
-            abuf_pull(bp, sizeof(uint8_t));
+            // variable length
             wsmpp->chan_load_len = parse_asn_variable_length_enc((unsigned char **)&bp->data,
-                &bits_left);
+                                                                 &bits_left);
             wsmpp->chan_load_ptr = bp->data;
-            //print_buffer(wsmpp->chan_load_ptr, wsmpp->chan_load_len);
-            abuf_pull(bp, WSMP_EXT_FIELD_SIZE(ext_field));
+
+            // element payload
+            abuf_pull(bp, wsmpp->chan_load_len);
+
+            if (gVerbosity > 1) {
+                printf("optional load WEID found, len=%d\n", wsmpp->chan_load_len);
+            }
             continue;
 
         case WAVE_ELEM_ID_DATA:

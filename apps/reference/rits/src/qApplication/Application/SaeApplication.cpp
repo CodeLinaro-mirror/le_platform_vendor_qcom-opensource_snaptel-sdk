@@ -486,11 +486,13 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
         }
     }
     // set the hv kinematics
-    shared_ptr<ILocationInfoEx> locationInfo =
-                                kinematicsReceive->getLocation();
-    sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
-    sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
-    sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+    shared_ptr<ILocationInfoEx> locationInfo;
+    if(configuration.enableLocationFixes){
+        locationInfo = kinematicsReceive->getLocation();
+        sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+        sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+        sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+    }
 
     // prepare verification statistics logging
     if (configuration.enableVerifStatLog) {
@@ -1016,6 +1018,9 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 }
 
 void SaeApplication::fillBsmLocation(bsm_value_t *bsm) {
+    if(!configuration.enableLocationFixes){
+        return;
+    }
     shared_ptr<ILocationInfoEx> locationInfo = kinematicsReceive->getLocation();
     //ref_app code with the new telSDK Location
     bsm->Latitude = (locationInfo->getLatitude() * 10000000);

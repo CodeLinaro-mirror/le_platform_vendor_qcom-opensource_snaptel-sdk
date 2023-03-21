@@ -757,77 +757,71 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         if(configs.find("enableSsp") != configs.end()){
             if (configs["enableSsp"].find("true") != std::string::npos){
                 this->configuration.enableSsp = true;
+                if (configs.find("sspValue") != configs.end()) {
+                    char* end;
+                    uint8_t num = (uint8_t)std::count(configs["sspValue"].begin(),
+                                    configs["sspValue"].end(), ':');
+                    if(configs["sspValue"].back() != ':'){
+                        num++;
+                    }
+                    this->configuration.sspLength = num;
+                    stream.str(configs["sspValue"]);
+                    for (uint32_t i = 0; i < num; i++)
+                    {
+                        string s;
+                        getline(stream, s, ':');
+                        if (s.empty()) {
+                            break;
+                        }
+                        this->configuration.sspValueVect.push_back(s);
+                        this->configuration.ssp[i] =
+                                (uint8_t)strtol(
+                                    this->configuration.sspValueVect.at(i).c_str(), &end,16);
+                    }
+                    stream.str("");
+                    stream.clear();
+                }
             }else{
                 this->configuration.enableSsp = false;
                 this->configuration.sspLength = 0;
             }
         }
-        if (configs.find("sspValue") != configs.end()) {
-            printf("ssp value is: ");
-            char* end;
-            uint8_t num = (uint8_t)std::count(configs["sspValue"].begin(),
-                            configs["sspValue"].end(), ':');
-            if(configs["sspValue"].back() != ':'){
-                num++;
-            }
-            this->configuration.sspLength = num;
-            stream.str(configs["sspValue"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
-                string s;
-                getline(stream, s, ':');
-                if (s.empty()) {
-                    break;
-                }
-                this->configuration.sspValueVect.push_back(s);
-                this->configuration.ssp[i] =
-                        (uint8_t)strtol(
-                            this->configuration.sspValueVect.at(i).c_str(), &end,16);
-                printf("%02x:",this->configuration.ssp[i]);
-            }
-            stream.str("");
-            stream.clear();
-            printf("\n");
-        }
 
         if(configs.find("enableSspMask") != configs.end()){
             if (configs["enableSspMask"].find("true") != std::string::npos){
                 this->configuration.enableSspMask = true;
+                if(configs.find("sspMask") != configs.end() &&
+                        this->configuration.enableSsp == true &&
+                        this->configuration.enableSspMask == true){
+                    char* end;
+                    uint8_t num = (uint8_t)std::count(configs["sspMask"].begin(),
+                                    configs["sspMask"].end(), ':');
+                    if(configs["sspMask"].back() != ':'){
+                        num++;
+                    }
+                    this->configuration.sspMaskLength = num;
+                    stream.str(configs["sspMask"]);
+                    for (uint32_t i = 0; i < num; i++)
+                    {
+                        string s;
+                        getline(stream, s, ':');
+                        if (s.empty()) {
+                            break;
+                        }
+                        this->configuration.sspMaskVect.push_back(s);
+                        this->configuration.sspMask[i] =
+                                (uint8_t)strtol(
+                                    this->configuration.sspMaskVect.at(i).c_str(), &end,16);
+                    }
+                    stream.str("");
+                    stream.clear();
+                }
             }else{
                 this->configuration.enableSspMask = false;
                 this->configuration.sspMaskLength = 0;
             }
         }
-        if(configs.find("sspMask") != configs.end() &&
-                this->configuration.enableSsp == true &&
-                this->configuration.enableSspMask == true){
-            printf("ssp mask value is: ");
-            char* end;
-            uint8_t num = (uint8_t)std::count(configs["sspMask"].begin(),
-                            configs["sspMask"].end(), ':');
-            printf("Number of colons is: %d\n", num);
-            if(configs["sspMask"].back() != ':'){
-                num++;
-            }
-            this->configuration.sspMaskLength = num;
-            stream.str(configs["sspMask"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
-                string s;
-                getline(stream, s, ':');
-                if (s.empty()) {
-                    break;
-                }
-                this->configuration.sspMaskVect.push_back(s);
-                this->configuration.sspMask[i] =
-                        (uint8_t)strtol(
-                            this->configuration.sspMaskVect.at(i).c_str(), &end,16);
-                printf("%02x:",this->configuration.sspMask[i]);
-            }
-            stream.str("");
-            stream.clear();
-            printf("\n");
-        }
+
 
         if(configs.find("enableAsync") != configs.end()) {
             istringstream is4(configs["enableAsync"]);
@@ -1326,12 +1320,15 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
             sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
             sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
         }
+
         std::thread::id tid = std::this_thread::get_id();
-        if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
-            sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
-        }else{
-            signStatIdx[tid] = 0;
-            sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+        if(configuration.enableSignStatLog){
+            if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
+                sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+            }else{
+                signStatIdx[tid] = 0;
+                sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+            }
         }
         auto encLength = 0;
         if (mc->abuf.tail_bits_left != 8)
@@ -1345,10 +1342,11 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
                     encLength, signedSpdu, signedSpduLen) < 0) {
             return -1;
         }
-        // successful verification, increment the sign stat idx
-        signStatIdx[tid]++;
-        signStatIdx[tid]%=thrSignLatencies[tid].size();
-
+        if(configuration.enableSignStatLog){
+            // successful signing, increment the sign stat idx
+            signStatIdx[tid]++;
+            signStatIdx[tid]%=thrSignLatencies[tid].size();
+        }
         abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
         asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
         // transmit packet

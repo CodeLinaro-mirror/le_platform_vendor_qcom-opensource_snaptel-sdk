@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -347,8 +347,12 @@ std::set<std::string>::iterator SensorFeatureControlMenu::disableFeature(std::st
             itr++;
         }
     } else {
-        std::cout << "Disable sensor feature request successful for " << name << std::endl;
-        itr = enabledFeatures_.erase(itr);
+        if(itr != enabledFeatures_.end()) {
+            std::cout << "Disable sensor feature request successful for " << name << std::endl;
+            itr = enabledFeatures_.erase(itr);
+        } else {
+            std::cout << "Disable sensor feature request failed for " << name << std::endl;
+        }
     }
     return itr;
 }

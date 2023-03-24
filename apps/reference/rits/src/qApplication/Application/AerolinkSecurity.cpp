@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -284,6 +284,23 @@ int AerolinkSecurity::idChange (){
     return result;
 }
 
+int AerolinkSecurity::lockIdChange() {
+    AEROLINK_RESULT result;
+    result = securityServices_idChangeLock();
+    if (result != WS_SUCCESS)
+        return -1;
+
+    return result == WS_SUCCESS ? 0 : -1;
+}
+
+int AerolinkSecurity::unlockIdChange() {
+    AEROLINK_RESULT result;
+    result = securityServices_idChangeUnlock();
+    if (result != WS_SUCCESS)
+        return -1;
+
+    return result == WS_SUCCESS ? 0 : -1;
+}
 
 /* INITIALIZATION/DEINITIALIZATION FUNCTIONS */
 
@@ -1040,10 +1057,25 @@ void AerolinkSecurity::signCallback(
 
 // Sign and return signed message
 int AerolinkSecurity::SignMsg(const SecurityOpt opt,
-                             const uint8_t *msg, uint32_t msgLen,
-                             uint8_t *signedSpdu, uint32_t &signedSpduLen) {
+                              const uint8_t *msg, uint32_t msgLen,
+                              uint8_t *signedSpdu, uint32_t &signedSpduLen,
+                              SecurityService::SignType t) {
     setSecVerbosity(opt.secVerbosity);
     AEROLINK_RESULT result;
+
+    SignerTypeOverride type = STO_AUTO;
+    switch (t) {
+    case SecurityService::SignType::ST_AUTO:
+       type = STO_AUTO;
+       break;
+    case SecurityService::SignType::ST_DIGEST:
+       type = STO_DIGEST;
+       break;
+    default:
+    case SecurityService::SignType::ST_CERTIFICATE:
+       type = STO_CERTIFICATE;
+       break;
+    }
 
     // Add new smg (if none exists) for this thread
     std::thread::id thrId = std::this_thread::get_id();
@@ -1179,7 +1211,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
         result = smg_sign(*smg,
             permissions,
-            STO_AUTO,
+            type,
             0,
             msg,
             msgLen,
@@ -1206,7 +1238,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
         startLatencyTime = (currTime.tv_sec * 1000.0) + (currTime.tv_usec/1000.0);
         result = smg_signAsync(*smg,
             permissions,
-            STO_AUTO,
+            type,
             0,
             msg,
             msgLen,

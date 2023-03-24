@@ -71,6 +71,7 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 #include "ApplicationBase.hpp"
+#include "VehicleReceive.h"
 using std::cout;
 using std::string;
 using std::map;
@@ -249,7 +250,14 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType, b
     }
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
- }
+    cb =
+        [this](bool emergent,
+               const current_dynamic_vehicle_state_t* const vehicle_state = nullptr) {
+            vehicleEventReport(emergent, vehicle_state);
+    };
+
+     VehRec.enableVehicleReceive(cb);
+}
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             const string rxIpv4, const uint16_t rxPort,
@@ -311,6 +319,127 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     }
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
+
+    cb =
+        [this](bool emergent,
+               const current_dynamic_vehicle_state_t* const vehicle_state) {
+            vehicleEventReport(emergent, vehicle_state);
+    };
+
+     VehRec.enableVehicleReceive(cb);
+}
+
+ApplicationBase::~ApplicationBase() {
+     VehRec.disableVehicleReceive();
+     closeAllRadio();
+     {
+         std::unique_lock<std::mutex> loc(stateMtx);
+         exitApp = true;
+         stateCv.notify_all();
+     }
+     sem_destroy(&rx_sem);
+     sem_destroy(&log_sem);
+     std::cout << "ApplicationBase destructing" << std::endl;
+     {
+        lock_guard<std::mutex> lock(csvMutex);
+        if (nullptr != csvfp) {
+            fclose(csvfp);
+            csvfp = nullptr;
+        }
+     }
+}
+
+void ApplicationBase::vehicleEventReport(bool emergent,
+    const current_dynamic_vehicle_state_t* const vehicle_state) {
+    bool notify = false;
+    if (emergent) {
+        notify = true;
+        {
+            std::unique_lock<std::mutex> loc(stateMtx);
+            criticalState = true;
+            newEvent = true;
+        }
+        printf("critical events !!!\n");
+        //TODO: use vehicle_state to construct critical BSM messages
+    } else {
+        if (criticalState) {
+            notify = true;
+            std::unique_lock<std::mutex> loc(stateMtx);
+            criticalState = false;
+            newEvent = false;
+        }
+    }
+
+    if (notify) {
+        // Wonder if should lockIDChange first, then do notify ???
+        // if do lockIdChange first, might introduce some latency of sending event BSM
+        // if notify first, low probability that ID would change when sending the event
+        stateCv.notify_all();
+        if (criticalState) {
+
+           if (this->configuration.enableSecurity == true) {
+               if (SecService->lockIdChange()) {
+                   printf("Fail to lock ID change\n");
+               }
+           }
+        } else {
+            // unblock id change
+           if (this->configuration.enableSecurity == true) {
+               if (SecService->unlockIdChange()) {
+                   printf("Fail to lock ID change\n");
+               }
+           }
+        }
+    }
+}
+void ApplicationBase::prepareForExit() {
+    std::unique_lock<std::mutex> loc(stateMtx);
+    exitApp = true;
+    stateCv.notify_all();
+}
+
+bool ApplicationBase::pendingTillEmergency() {
+    bool ret = true;
+    std::unique_lock<std::mutex> loc(stateMtx);
+    stateCv.wait(loc,
+                 [this, &ret] {
+                     if (true == newEvent) {
+                         ret = true;
+                         // reset the event flag
+                         newEvent = false;
+                         return true;
+                     }
+                     if (exitApp) {
+                         ret = false;
+                         return true;
+                     }
+                     return false;
+                 });
+
+    return ret;
+}
+
+bool ApplicationBase::pendingTillNoEmergency() {
+    bool ret = true;
+    if (criticalState) {
+        std::unique_lock<std::mutex> loc(stateMtx);
+        stateCv.wait(loc,
+                     [this, &ret] {
+                         if (false == criticalState) {
+                             ret = true;
+                             return true;
+                         }
+
+                         if (exitApp) {
+                             ret = false;
+                             return true;
+                         }
+
+                         return false;
+                     });
+    }
+
+    return true;
 }
 
 //Calculates received packets per second for Throttle Manager
@@ -1276,7 +1405,11 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     fillMsg(mc);
     encLength = encode_msg(mc.get());
     if (this->configuration.enableSecurity) {
-        encLength = encodeAndSignMsg(mc);
+        encLength =
+            encodeAndSignMsg(mc,
+                             txType == TransmitType::EVENT ?
+                             SecurityService::SignType::ST_CERTIFICATE :
+                             SecurityService::SignType::ST_AUTO);
     }
     int ret = this->transmit(index, mc, encLength, txType);
     if (encLength > 0 && ret > 0) {
@@ -1294,7 +1427,8 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     return encLength;
 }
 
-int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
+int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
+                                      SecurityService::SignType type) {
         // The message need to be signed/encrypted after layer 3
         SecurityOpt sopt;
         uint8_t signedSpdu[512];
@@ -1310,7 +1444,6 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
             sopt.sspLength = this->configuration.sspLength;
             sopt.sspMaskLength = this->configuration.sspMaskLength;
         }
-
         sopt.enableAsync = this->configuration.enableAsync;
         sopt.secVerbosity = this->configuration.secVerbosity;
         if(kinematicsReceive){
@@ -1339,7 +1472,7 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc){
         // Aerolink handles IEEE1609.2 header insertion, but this requires us to
         // make buffer copy of the header and the payload.
         if (SecService->SignMsg(sopt, (uint8_t*)mc->abuf.data,
-                    encLength, signedSpdu, signedSpduLen) < 0) {
+                                encLength, signedSpdu, signedSpduLen, type) < 0) {
             return -1;
         }
         if(configuration.enableSignStatLog){
@@ -1665,16 +1798,5 @@ void ApplicationBase::writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t 
         writeToCsv(sp.get(),csvfp, isTx, periodicityMs, validPkt,
             RVsInRange, monotonicTime, timestamp_now_ms, locPositionDop_,
             locNumSvUsed_, locTimeMs_, cbr);
-    }
-}
-
-ApplicationBase::~ApplicationBase() {
-    std::cout << "ApplicationBase destructing" << std::endl;
-    {
-        lock_guard<std::mutex> lock(csvMutex);
-        if (nullptr != csvfp) {
-            fclose(csvfp);
-            csvfp = nullptr;
-        }
     }
 }

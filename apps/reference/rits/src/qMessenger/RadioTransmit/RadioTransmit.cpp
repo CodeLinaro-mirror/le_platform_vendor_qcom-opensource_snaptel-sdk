@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -90,7 +90,11 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
                 port, withEventFlow, eventFlowPort, respCallback)){
         if(ErrorCode::SUCCESS == gCallbackPromise.get_future().get()){
             cout<<"Sps flow created succesfully sid=" << serviceId << endl;
-            //return static_cast<uint8_t>(Status::SUCCESS);
+
+            spsFlowInfo = std::make_shared<SpsFlowInfo>();
+            if (spsFlowInfo) {
+                memcpy(spsFlowInfo.get(), &spsInfo, sizeof(SpsFlowInfo));
+            }
         }
         else{
             cout<<"Sps Flow creation fails, future.get\n";
@@ -193,7 +197,9 @@ void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress, 
     //this->destSock.sin6_flowinfo missing...
 }
 
-uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
+uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {
+    struct timespec ts;
+
     if (isSim)
     {
         int  bytes_sent;
@@ -218,43 +224,49 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen) {
 
     struct msghdr message = { 0 };
     struct iovec iov[1] = { 0 };
-    struct cmsghdr* cmsghp = NULL;
-    char control[CMSG_SPACE(sizeof(int))];
 
-    //IPV6_TCLASS internal configuration
     iov[0].iov_base = (char*)buf;
     iov[0].iov_len = bufLen;
     message.msg_name = &this->destSock;
     message.msg_namelen = sizeof(this->destSock);
     message.msg_iov = iov;
     message.msg_iovlen = 1;
-    message.msg_control = control;
-    message.msg_controllen = sizeof(control);
 
-    cmsghp = CMSG_FIRSTHDR(&message);
-    cmsghp->cmsg_level = IPPROTO_IPV6;
-    cmsghp->cmsg_type = IPV6_TCLASS;
-    cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
-
-    //auto bytes_sent = sendmsg(sock, &message, 0);
-    auto bytes_sent = send(sock, buf, bufLen, 0);
-    if(bytes_sent == bufLen){
-//        resp = static_cast<uint8_t>(Status::SUCCESS);
-        resp = bytes_sent;
-#if 0
-        printf("RadioTransmit::transmit\n");
-        for (int i = 0; i < bufLen; i++) {
-            printf("%02x ", *(buf + i));
-
-        }
-        printf("\n");
-#endif
-    }else{
-        cerr << "Error Sending Data.\n";
-//        resp = static_cast<uint8_t>(Status::FAILED);
-        resp = -1;
+    if (Priority::PRIORITY_UNKNOWN > priority) {
+        // map pppp to traffic class if the priority is valid
+        // note that pppp is only used for one-shot transmission
+        struct cmsghdr* cmsghp = NULL;
+        char control[CMSG_SPACE(sizeof(int))];
+        message.msg_control = control;
+        message.msg_controllen = sizeof(control);
+        cmsghp = CMSG_FIRSTHDR(&message);
+        cmsghp->cmsg_level = IPPROTO_IPV6;
+        cmsghp->cmsg_type = IPV6_TCLASS;
+        cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
+        *((int *)CMSG_DATA(cmsghp)) = static_cast<int>(priority) + 1;
     }
 
+    auto bytes_sent = sendmsg(sock, &message, 0);
+    if(bytes_sent == bufLen){
+        resp = bytes_sent;
+    }else{
+        cerr << "Error Sending Data.\n";
+        resp = -1;
+    }
+    if (resp && enableCsvLog_) {
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        auto nowMonotonicTime = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
+        if (spsFlowInfo) {
+            /*calculate sps tx interval only if it is SPS flow*/
+            if (lastTxMonotonicTime_ > 0) {
+                actualSPSTxIntervalMs_ = nowMonotonicTime - lastTxMonotonicTime_;
+            } else {
+                /*Fist time tx message*/
+                actualSPSTxIntervalMs_ = spsFlowInfo->periodicityMs;
+            }
+        }
+        lastTxMonotonicTime_ = nowMonotonicTime;
+    }
     return resp;
 }
 
@@ -297,6 +309,9 @@ uint8_t RadioTransmit::updateSpsFlow(const SpsFlowInfo spsInfo) {
     if(Status::SUCCESS == cv2xRadio->changeSpsFlowInfo(this->flow, spsInfo, respCallback)){
         if(ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
             resp = static_cast<uint8_t>(Status::SUCCESS);
+            if (spsFlowInfo) {
+                memcpy(spsFlowInfo.get(), &spsInfo, sizeof(SpsFlowInfo));
+            }
         }else{
             resp =  static_cast<uint8_t>(Status::FAILED);
         }
@@ -338,6 +353,9 @@ uint8_t RadioTransmit::closeFlow() {
         if(Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)){
             if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
                 resp = static_cast<uint8_t>(Status::SUCCESS);
+                if (spsFlowInfo) {
+                    memset(spsFlowInfo.get(), 0, sizeof(SpsFlowInfo));
+                }
             }
             else{
                 resp = static_cast<uint8_t>(Status::FAILED);
@@ -354,5 +372,16 @@ uint8_t RadioTransmit::closeFlow() {
     return 0;
 }
 
+int RadioTransmit::getTxInterval(uint64_t& periodicityMs) {
+    int res = -1;
+    if (enableCsvLog_ && spsFlowInfo) {
+        periodicityMs = actualSPSTxIntervalMs_;
+        res = 1;
+    }
+    return res;
+}
 
+uint64_t RadioTransmit::latestTxRxTimeMonotonic() {
+    return lastTxMonotonicTime_;
+}
 

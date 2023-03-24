@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -316,17 +316,20 @@ int EtsiApplication::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, i
     // family ID
     if (this->isTxSim) {
         auto cb = std::bind(&RadioTransmit::transmit, simTransmit.get(),
-                       std::placeholders::_1, std::placeholders::_2);
+                            std::placeholders::_1, std::placeholders::_2,
+                            Priority::PRIORITY_UNKNOWN);
         ret = GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
         return ret;
     }
     if (txType == TransmitType::SPS) {
+        // SPS priority is set when creating the flow
         auto cb = std::bind(&RadioTransmit::transmit, &this->spsTransmits[index],
-                std::placeholders::_1, std::placeholders::_2);
+                std::placeholders::_1, std::placeholders::_2, Priority::PRIORITY_UNKNOWN);
         ret = GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
     } else if (txType == TransmitType::EVENT) {
+        // event priority is set per packet using traffic class
         auto cb = std::bind(&RadioTransmit::transmit, &this->eventTransmits[index],
-                std::placeholders::_1, std::placeholders::_2);
+                std::placeholders::_1, std::placeholders::_2, this->configuration.eventPriority);
         ret = GnRouter->Transmit(mc, static_cast<size_t>(bufLen), gd, cb);
     }
     return ret;
@@ -397,8 +400,10 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
             std::cerr << "Unsupported transport type" << std::endl;
             return -1;
         }
-        decode_msg(mc.get());
-        mc->decoded = true;
+        if (decode_msg(mc.get()) >= 0) {
+            mc->decoded = true;
+        }
+        ApplicationBase::writeMinLog(mc, index, false, TransmitType::EVENT, mc->decoded);
     }
     return ret;
 }

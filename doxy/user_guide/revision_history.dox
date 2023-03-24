@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -86,6 +86,12 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AG} @tdmulrowend
+@td Mar 2023 @tdend @tdlast
+\- Added support for thermal notifications(Trip update, Cdev level change)
+<br>\- Added sample apps for thermal notifications
+@tdlastend @trend
+\- Updated documentation for API reference and user guide for V1.56.0 @tdlastend @trend
 @tr @tdmulrow{1,AF} @tdmulrowend
 @td Dec 2022 @tdend @tdlast
 \- Added support for Third party service (TPS) eCall over IMS

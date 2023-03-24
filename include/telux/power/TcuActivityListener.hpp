@@ -76,6 +76,7 @@
 #define TCUACTIVITYLISTENER_HPP
 
 #include <memory>
+#include <vector>
 
 #include <telux/power/TcuActivityDefines.hpp>
 
@@ -106,10 +107,9 @@ public:
      * @ref ITcuActivityManager::sendActivityStateAck.
      *
      * @param [in] state            TCU-activity state that the machine is about to enter
-     * @param [in] machineName      It represents a machine name that is undergoing a state
-     *                              transition. It will be assigned to @ref ALL_MACHINES for
-     *                              global state change and @ref LOCAL_MACHINE for local state
-     *                              change.
+     * @param [in] machineName      Machine name that is undergoing the state change. Assigned
+     *                              @ref ALL_MACHINES for a global state change and
+     *                              @ref LOCAL_MACHINE for a local state change.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to
      *             change and could break backward compatibility.
@@ -118,33 +118,31 @@ public:
     }
 
     /**
-     * This function is called to inform the master with the consolidated acknowledgement from all
-     * the slave clients for the state change triggered previously by MASTER client.
+     * Informs the master with the consolidated acknowledgement from all slave clients for the state
+     * change previously triggered by the master client.
      *
      * This API will be invoked only for the MASTER client.
      *
-     * On platforms with Access control enabled, the client needs to have TELUX_POWER_CONTROL_STATE
+     * On platforms with access control enabled, the client needs to have TELUX_POWER_CONTROL_STATE
      * permission for this listener API to be invoked.
      *
      * @param [in] status                   This is the status of acknowledgements corresponding to
-     *                                      particular request. If any slave doesn't acknowledge
+     *                                      a particular request. If any slave doesn't acknowledge
      *                                      within the configured timeout, then Status::EXPIRED
-     *                                      would be reported.
-     * @param [in] machineName              It represents a machine name that is undergoing a state
-     *                                      transition. It will be assigned to @ref ALL_MACHINES
-     *                                      for a global state change.
-     * @param [in] unresponsiveClients      This is a list of client names and respective machine
-     *                                      name who has not responded via
-     *                                      @ref sendActivityStateAck for state transitions of
-     *                                      suspend or shutdown triggered by the master via
-     *                                      @ref ITcuActivityManager::setActivityState.
-     * @param [in] nackResponseClients      This is a list of client names and respective machine
-     *                                      name who responded with
-     *                                      @ref TcuActivityStateChangeResponse::NACK for state
+     *                                      is reported.
+     * @param [in] machineName              Machine name that is undergoing the state change.
+     *                                      Assigned @ref ALL_MACHINES for a global state change and
+     *                                      @ref LOCAL_MACHINE for a local state change.
+     * @param [in] unresponsiveClients      List of client and respective machine names that have
+     *                                      not responded via @ref sendActivityStateAck for state
+     *                                      transitions of suspend or shutdown triggered by the
+     *                                      master via @ref ITcuActivityManager::setActivityState.
+     * @param [in] nackResponseClients      List of client and respective machine name who responded
+     *                                      with @ref TcuActivityStateChangeResponse::NACK for state
      *                                      transitions of suspend or shutdown triggered by the
      *                                      master via @ref ITcuActivityManager::setActivityState.
      *
-     * @note This API is recommended for systems with Hypervisor and non-Hypervisor-based systems.
+     * @note    This API is recommended for systems with and without hypervisor.
      */
     virtual void onSlaveAckStatusUpdate(const telux::common::Status status,
         const std::string machineName, const std::vector<ClientInfo> unresponsiveClients,
@@ -156,15 +154,15 @@ public:
      * management.
      *
      * User can use @ref ITcuActivityManager::getAllMachineNames() to get all updated available
-     * machine.
+     * machines.
      * It will be useful for the master client if they are interested in setting the
      * TCUActivityState of a specific machine @ref ITcuActivityManager::setActivityState().
      *
      * This API is meant for clients that have instantiated the ITcuActivityManager instance using
      * @ref ClientType::MASTER
      *
-     * @param [in]  machineName             name of the machine
-     * @param [in]  machineEvent            machine event @ref MachineEvent
+     * @param [in]  machineName             Name of the machine
+     * @param [in]  machineEvent            Machine event ( @ref MachineEvent)
      */
     virtual void onMachineUpdate(const std::string machineName, const MachineEvent machineEvent) {
     }
@@ -180,9 +178,9 @@ public:
      * On platforms with Access control enabled, the client needs to have TELUX_POWER_CONTROL_STATE
      * permission for this listener API to be invoked.
      *
-     * @param [in]  status                   status of the SLAVE clients' acknowledgements
+     * @param [in]  status                  Status of the SLAVE clients' acknowledgements
      *
-     * @note        This API should not be used on systems with Hypervisor and Virtual machines.
+     * @note        This API should not be used on virtual machines or on systems with hypervisor.
      *              The alternative API @ref onSlaveAckStatusUpdate(telux::common::Status status,
      *              std::string machineName, std::vector<std::string> unresponsiveClients,
      *              std::vector<std::string> nackResponseClients) should be used.

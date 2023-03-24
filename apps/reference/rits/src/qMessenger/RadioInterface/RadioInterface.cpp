@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -161,9 +161,10 @@ public:
         {
             std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
 
-            if (status.rxStatus != cv2xStatus_.rxStatus or
-                status.txStatus != cv2xStatus_.txStatus) {
-                if (radioVerbosity) {
+             if (0 != memcmp(&status, &cv2xStatus_, sizeof(telux::cv2x::Cv2xStatus))) {
+                if (radioVerbosity &&
+                    (status.rxStatus != cv2xStatus_.rxStatus or
+                    status.txStatus != cv2xStatus_.txStatus)) {
                     cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
                     cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
                 }
@@ -188,8 +189,6 @@ private:
     int radioVerbosity = 0;
 };
 
-//Global variable to store cv2x status listener
-std::shared_ptr<Cv2xStatusListener> cv2xStatusListener_;
 
 void RadioInterface::set_radio_verbosity(int value) {
     if(value)
@@ -394,4 +393,24 @@ int RadioInterface::getV2xIfaceName(TrafficIpType type, string& ifName) {
         cout << "Get V2X-Iface Name:" << ifName << endl;
     }
     return 0;
+}
+
+uint8_t RadioInterface::getCBRValue() {
+    uint8_t cbr = 255;
+    telux::cv2x::Cv2xStatus status;
+    if (cv2xStatusListener_) {
+        status = cv2xStatusListener_->getCurrentStatus();
+        if (status.cbrValueValid) {
+            cbr = status.cbrValue;
+        }
+    }
+    return cbr;
+}
+
+uint64_t RadioInterface::latestTxRxTimeMonotonic() {
+    return 0;
+}
+
+void RadioInterface::enableCsvLog(bool enable) {
+    enableCsvLog_ = enable;
 }

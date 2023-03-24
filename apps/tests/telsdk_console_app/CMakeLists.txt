@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_TELSDK_CONSOLE_APP telsdk_console_app)
 
-set(TELSDK_CONSOLE_APP_SOURCES
+
+if (TELSDK_FEATURE_TEL)
+
+set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Phone/PhoneMenu.cpp
    Phone/MyPhoneListener.cpp
    Phone/MySubscriptionListener.cpp
@@ -10,7 +13,6 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Phone/MyCellInfoHandler.cpp
    Phone/SuppServicesMenu.cpp
    Phone/SuppServicesHandler.cpp
-
    Call/CallMenu.cpp
    Call/MyCallListener.cpp
    Call/conference/ConferenceMenu.cpp
@@ -28,6 +30,39 @@ set(TELSDK_CONSOLE_APP_SOURCES
    ECall/ECallMenu.cpp
    ECall/MsdSettings.cpp
    ECall/MyECallListener.cpp
+
+   Phone/MyServingSystemHandler.cpp
+   Phone/ServingSystemMenu.cpp
+
+   Phone/MyNetworkSelectionHandler.cpp
+   Phone/NetworkMenu.cpp
+
+   MultiSim/MyMultiSimHandler.cpp
+   MultiSim/MyMultiSimListener.cpp
+   MultiSim/MultiSimMenu.cpp
+
+   Rsp/RspListener.cpp
+   Rsp/MyRspHandler.cpp
+   Rsp/RspMenu.cpp
+
+   Cellbroadcast/CellbroadcastMenu.cpp
+   Cellbroadcast/CellbroadcastListener.cpp
+   Cellbroadcast/CellbroadcastHandler.cpp
+
+   ImsSettings/MyImsSettingsHandler.cpp
+   ImsSettings/ImsSettingsListener.cpp
+   ImsSettings/ImsSettingsMenu.cpp
+
+   ImsServingSystem/ImsServingSystemMenu.cpp
+   ImsServingSystem/MyImsServSysListener.cpp
+
+   ModemStatus.cpp
+)
+endif (TELSDK_FEATURE_TEL)
+
+if (TELSDK_FEATURE_DATA)
+
+set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
 
    Data/DataMenu.cpp
    Data/DataResponseCallback.cpp
@@ -48,53 +83,26 @@ set(TELSDK_CONSOLE_APP_SOURCES
    Data/vlan/VlanMenu.cpp
    Data/socks/SocksMenu.cpp
    Data/data_settings/DataSettingsMenu.cpp
+)
+endif (TELSDK_FEATURE_DATA)
 
-   Phone/MyServingSystemHandler.cpp
-   Phone/ServingSystemMenu.cpp
+if (TELSDK_FEATURE_AUDIO)
+    set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
+    ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
+    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
+    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
+    )
+endif (TELSDK_FEATURE_AUDIO)
 
-   Phone/MyNetworkSelectionHandler.cpp
-   Phone/NetworkMenu.cpp
-
-   MultiSim/MyMultiSimHandler.cpp
-   MultiSim/MyMultiSimListener.cpp
-   MultiSim/MultiSimMenu.cpp
-
-   Rsp/RspListener.cpp
-   Rsp/MyRspHandler.cpp
-   Rsp/RspMenu.cpp
-
-   TelSdkConsoleApp.cpp
-
-   ModemStatus.cpp
-
+set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
    Audio/AudioClient.cpp
-   Cellbroadcast/CellbroadcastMenu.cpp
-   Cellbroadcast/CellbroadcastListener.cpp
-   Cellbroadcast/CellbroadcastHandler.cpp
-
-   ImsSettings/MyImsSettingsHandler.cpp
-   ImsSettings/ImsSettingsListener.cpp
-   ImsSettings/ImsSettingsMenu.cpp
-
-   ImsServingSystem/ImsServingSystemMenu.cpp
-   ImsServingSystem/MyImsServSysListener.cpp
-
+   TelSdkConsoleApp.cpp
    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
    ${telematics-apps_SOURCE_DIR}/common/utils/SignalHandler.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp
    ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleApp.cpp
    ${telematics-apps_SOURCE_DIR}/common/ConfigParser.cpp
 )
-
-# To disable audio from telsdk_console_app please disable flag AUDIO_ENABLED
-if (AUDIO_ENABLED)
-    add_definitions(-DAUDIO_SUPPORTED)
-    set(TELSDK_CONSOLE_APP_SOURCES ${TELSDK_CONSOLE_APP_SOURCES}
-    ${telematics-apps_SOURCE_DIR}/common/Audio/VoiceSession.cpp
-    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioSession.cpp
-    ${telematics-apps_SOURCE_DIR}/common/Audio/AudioHelper.cpp
-    )
-endif (AUDIO_ENABLED)
 
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -107,12 +115,20 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_executable (${TARGET_TELSDK_CONSOLE_APP} ${TELSDK_CONSOLE_APP_SOURCES})
 
-if (AUDIO_ENABLED)
-target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common telux_audio
-    pthread)
-else (!AUDIO_ENABLED)
-target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} telux_tel telux_data telux_common pthread)
-endif (AUDIO_ENABLED)
+
+set (REQUIRED_LIBS telux_common pthread)
+
+if (TELSDK_FEATURE_TEL)
+set (REQUIRED_LIBS ${REQUIRED_LIBS} telux_tel)
+endif (TELSDK_FEATURE_TEL)
+if (TELSDK_FEATURE_DATA)
+set (REQUIRED_LIBS ${REQUIRED_LIBS} telux_data)
+endif (TELSDK_FEATURE_DATA)
+if (TELSDK_FEATURE_AUDIO)
+set (REQUIRED_LIBS ${REQUIRED_LIBS} telux_audio)
+endif (TELSDK_FEATURE_AUDIO)
+
+target_link_libraries(${TARGET_TELSDK_CONSOLE_APP} ${REQUIRED_LIBS})
 
 # install to target
 install ( TARGETS ${TARGET_TELSDK_CONSOLE_APP}

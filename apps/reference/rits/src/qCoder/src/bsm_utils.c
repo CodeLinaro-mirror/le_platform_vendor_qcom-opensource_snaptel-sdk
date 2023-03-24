@@ -26,6 +26,43 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /**
  * @file bsm_utils.c
  * @purpose some BSM utilities.
@@ -33,6 +70,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
 #include "v2x_msg.h"
 #include "v2x_codec.h"
 
@@ -40,6 +79,90 @@ static char *event_str[] = {"No", "Yes"};
 static char *brake_str0[] = {"Unavailable", "Off", "On", "Reserved"};
 static char *brake_str1[] = {"Unavailable", "Off", "On", ""};
 static char *brake_str2[] = {"Unavailable", "Off", "On", "Engaged"};
+
+typedef struct min_log_info_t {
+    uint64_t timestamp_in_message;
+    unsigned int MsgCount;      // Ranges from 1 - 127 in cyclic fashion.
+    unsigned int id;            // 32 bit identifier
+    unsigned int secMark_ms;    // No of milliseconds in a minute
+
+    double lat;   // in degrees
+    double lon;  // in degrees
+    double ele; // in meters
+    double semimajoracc; // in meters
+    double semiminoracc; // in meters
+    double orien; // in degrees
+    double speed; // in kmph
+    double heading; // in degrees
+    double steer;    // in degrees
+    double lonaccl; // in m/sec2
+    double lataccl; // in m/sec2
+    double vertaccl; // in G steps
+    double yaw; // in deg/sec
+
+    j2735_BrakeBoostApplied_e brake_boost_applied : 2;
+    j2735_StabilityControlStatus_e stability_control_status : 2;
+    j2735_AntiLockBrakeStatus_e antilock_brake_status : 2;
+    j2735_TractionControlStatus_e traction_control_status : 2;
+
+    vehicleeventflags_ut events;
+} min_log_info;
+
+const char* get_wall_time(char* result)
+{
+    time_t now;
+    struct tm * time_info;
+    char *token;
+
+    if (!result) {
+        return NULL;
+    }
+
+    time(&now);
+    time_info = localtime(&now);
+    g_strlcpy(result, asctime(time_info), 100);
+    /*If it is end with  \n character, find and remove it*/
+    token = strchr(result, '\n');
+    if (token) {
+        token[0] = '\0';
+    }
+    return result;
+}
+
+double get_CPU_percentage(uint64_t monotonicTime)
+{
+    static uint64_t last_monotonicTime = 0;
+    static double percent = 0.0;
+    FILE* file;
+    static uint64_t lastTotalUser = 0, lastTotalNice = 0, lastTotalSys = 0, lastTotalIdle = 0;
+    uint64_t totalUser, totalNice, totalSys, totalIdle;
+    uint64_t total;
+
+    /*calculating this cost resource, do not perform the calcluation if within 3 secs*/
+    if (monotonicTime - last_monotonicTime >= 3000000) {
+        file = fopen("/proc/stat", "r");
+        fscanf(file, "cpu %llu %llu %llu %llu", &totalUser, &totalNice, &totalSys, &totalIdle);
+        fclose(file);
+
+        if (!(totalUser < lastTotalUser || totalNice < lastTotalNice ||
+            totalSys < lastTotalSys || totalIdle < lastTotalIdle))
+        {
+            total = (totalUser - lastTotalUser) + (totalNice - lastTotalNice) +
+                (totalSys - lastTotalSys);
+            percent = total;
+            total += (totalIdle - lastTotalIdle);
+            percent /= total;
+            percent *= 100.0;
+        }
+
+        lastTotalUser = totalUser;
+        lastTotalNice = totalNice;
+        lastTotalSys = totalSys;
+        lastTotalIdle = totalIdle;
+        last_monotonicTime = monotonicTime;
+    }
+    return percent;
+}
 
 // Fills the bsm with all unvailable codes.
 void bsm_init(bsm_value_t *bsm)
@@ -159,223 +282,163 @@ void print_summary_RV(msg_contents *mc)
         print_bsm_summary_RV(mc);
 }
 //Function to write bsm contents to a csv file
-void write_bsm_to_csv(msg_contents *mc, FILE *myfp)
+void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodicityMs,
+    bool validPkt, uint32_t RVsInRange, uint64_t monotonicTime, uint64_t realworldTimeNow,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr)
 {
     //Writing Core Data
     int i = 1;
     bsm_value_t *bs = mc->j2735_msg;
-    fprintf(myfp, ",%"PRIu64",,,,,,,,0,%d,,0,,,", bs->timestamp_ms, mc->payload_len);
+    min_log_info loggings;
+    int tracking_error = 0;
+    char wall_time[100];
 
-    double lat =  bs->Latitude / 10000000.0;   // in degrees
-    double lon = bs->Longitude / 10000000.0;  // in degrees
-    double ele =  bs->Elevation / 10.0; // in meters
-    double semimajoracc =  bs->SemiMajorAxisAccuracy / 20.0; // in meters
-    double semiminoracc =  bs->SemiMinorAxisAccuracy / 20.0; // in meters
-    double orien =  bs->SemiMajorAxisOrientation * 0.0054932479; // in degrees
-    double speed = (bs->Speed / 50.0) * 3.6; // in kmph
-    double heading = bs->Heading_degrees * 0.0125; // in degrees
-    double steer =  bs->SteeringWheelAngle * 1.5;    // in degrees
-    double lonaccl =  bs->AccelLon_cm_per_sec_squared / 100.0; // in m/sec2
-    double lataccl = bs->AccelLat_cm_per_sec_squared / 100.0; // in m/sec2
-    double vertaccl = bs->AccelVert_two_centi_gs / 50.0; // in G steps
-    double yaw = bs->AccelYaw_centi_degrees_per_sec / 100.0; // in deg/sec
+    get_wall_time(wall_time);
 
-    fprintf(myfp, "20,%d,%04x,%s,%d,%f,%f,%f,%f,%f,%f,%s,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,",
-        bs->MsgCount,
-        bs->id, "", bs->secMark_ms, lat, lon, ele, semimajoracc,
-        semiminoracc, orien, "", speed, heading,
-        steer, lonaccl,
-        lataccl, vertaccl, yaw,
-        bs->brakes.bits.antilock_brake_status, bs->brakes.bits.brake_boost_applied,
-        bs->brakes.bits.stability_control_status,
-        bs->brakes.bits.traction_control_status, bs->VehicleWidth_cm, bs->VehicleLength_cm);
-
-    //Writing part-2 extensions
-
-    // Event Flags
-    if (bs->events.bits.eventHazardLights) {
-        fprintf(myfp, "1,");
+    if (isTx) {
+        if (bs->timestamp_ms < gnssTime) {
+            /*If timestamp from GNSS is earlier than timestamp in tx message*/
+            tracking_error = 1;
+        } else if (bs->timestamp_ms - gnssTime >= 100) {
+            /*if we are sending outdated location info, take it as tracking error*/
+            tracking_error = 2;
+        }
     } else {
-        fprintf(myfp, ",");
-    }
-
-    if (bs->events.bits.eventABSactivated) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    if (bs->events.bits.eventTractionControlLoss) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    if (bs->events.bits.eventStabilityControlactivated) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    if (bs->events.bits.eventHardBraking) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    if (bs->events.bits.eventWipersChanged) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    if (bs->events.bits.eventAirBagDeployment) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    // Path History
-
-    fprintf(myfp, "%d,", bs->ph.qty_crumbs);
-
-    for (i = 1; i <= MAX_PATH_HISTORY_POINTS_QTY; i++) {
-        if (i <= bs->ph.qty_crumbs) {
-            fprintf(myfp, "%d,%d,%d,%d,", bs->ph.ph_crumb[i - 1].latOffset,
-                bs->ph.ph_crumb[i - 1].lonOffset, bs->ph.ph_crumb[i - 1].eleOffset,
-                bs->ph.ph_crumb[i - 1].timeOffset_ms);
-
-            fprintf(myfp, "%" PRIu32 ",",
-                (uint32_t)(bs->ph.ph_crumb[i - 1].heading_microdegrees / 1000.0));
-        } else {
-            fprintf(myfp, ",,,,,");
+        /*Rx scenario*/
+        if (realworldTimeNow - bs->timestamp_ms >= 100) {
+            /* if receives messge with timestamp too late, take it as trakcing error*/
+            tracking_error = 3;
+        } else if (bs->timestamp_ms < realworldTimeNow) {
+            /*If received RV's timestamp is earlier than HV' now timestamp, take it as error*/
+            tracking_error = 4;
         }
     }
 
-    // Path Prediction
+    loggings.timestamp_in_message = bs->timestamp_ms;
+    loggings.MsgCount = bs->MsgCount;
+    loggings.id = bs->id;
+    loggings.secMark_ms = bs->secMark_ms;
 
-    fprintf(myfp, "%f,%" PRIu8 ",",
-        bs->pp.radius / 10.0,
-        (uint8_t)(bs->pp.confidence / 2.0));
+    fprintf(myfp, "%s,%"PRIu64",%"PRIu64",%s,%d,%.2f,", wall_time, loggings.timestamp_in_message,
+        monotonicTime, isTx ? "Tx" : "Rx", cbr, get_CPU_percentage(monotonicTime));
 
-    //Exterior Lights
+    loggings.lat =  bs->Latitude / 10000000.0;   // in degrees
+    loggings.lon = bs->Longitude / 10000000.0;  // in degrees
+    loggings.ele =  bs->Elevation / 10.0; // in meters
+    loggings.semimajoracc =  bs->SemiMajorAxisAccuracy / 20.0; // in meters
+    loggings.semiminoracc =  bs->SemiMinorAxisAccuracy / 20.0; // in meters
+    loggings.orien =  bs->SemiMajorAxisOrientation * 0.0054932479; // in degrees
+    loggings.speed = (bs->Speed / 50.0) * 3.6; // in kmph
+    loggings.heading = bs->Heading_degrees * 0.0125; // in degrees
+    loggings.steer =  bs->SteeringWheelAngle * 1.5;    // in degrees
+    loggings.lonaccl =  bs->AccelLon_cm_per_sec_squared / 100.0; // in m/sec2
+    loggings.lataccl = bs->AccelLat_cm_per_sec_squared / 100.0; // in m/sec2
+    loggings.vertaccl = bs->AccelVert_two_centi_gs / 50.0; // in G steps
+    loggings.yaw = bs->AccelYaw_centi_degrees_per_sec / 100.0; // in deg/sec
 
-    if (bs->lights_in_use.bits.lowBeamHeadlightsOn) {
+    loggings.antilock_brake_status = bs->brakes.bits.antilock_brake_status;
+    loggings.brake_boost_applied = bs->brakes.bits.brake_boost_applied;
+    loggings.stability_control_status = bs->brakes.bits.stability_control_status;
+    loggings.traction_control_status = bs->brakes.bits.traction_control_status;
+
+    memcpy(&loggings.events, &bs->events, sizeof(vehicleeventflags_ut));
+
+    fprintf(myfp, "%d,%04x,%d,%f,%f,%f,%f,%f,%f,%s,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,",
+        loggings.MsgCount,
+        loggings.id, loggings.secMark_ms, loggings.lat, loggings.lon, loggings.ele, loggings.semimajoracc,
+        loggings.semiminoracc, loggings.orien, "", loggings.speed, loggings.heading,
+        loggings.steer, loggings.lonaccl,
+        loggings.lataccl, loggings.vertaccl, loggings.yaw,
+        loggings.antilock_brake_status, loggings.brake_boost_applied,
+        loggings.stability_control_status, loggings.traction_control_status);
+
+    //Writing part-2 extensions
+    fprintf(myfp, "%d,%d,%d,",
+        tracking_error, RVsInRange, validPkt);
+
+    if (isTx) {
+        fprintf(myfp,"%f %d,%"PRIu64",", locPositionDop, locNumSvUsed, gnssTime);
+    } else {
+        fprintf(myfp,",,");
+    }
+
+    if (periodicityMs != 0) {
+        fprintf(myfp,"%"PRIu64",", periodicityMs);
+    } else {
+        fprintf(myfp,",");
+    }
+
+    // Event Flags
+    if (loggings.events.bits.eventHazardLights) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (bs->lights_in_use.bits.highBeamHeadlightsOn) {
+    if (loggings.events.bits.eventABSactivated) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (bs->lights_in_use.bits.leftTurnSignalOn) {
+    if (loggings.events.bits.eventTractionControlLoss) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (bs->lights_in_use.bits.rightTurnSignalOn) {
+    if (loggings.events.bits.eventStabilityControlactivated) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (bs->lights_in_use.bits.hazardSignalOn) {
+    if (loggings.events.bits.eventHardBraking) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (bs->lights_in_use.bits.automaticLightControlOn) {
+    if (loggings.events.bits.eventWipersChanged) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (bs->lights_in_use.bits.daytimeRunningLightsOn) {
+    if (loggings.events.bits.eventAirBagDeployment) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (bs->lights_in_use.bits.fogLightOn) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    if (bs->lights_in_use.bits.parkingLightsOn) {
-        fprintf(myfp, "1,");
-    } else {
-        fprintf(myfp, ",");
-    }
-
-    fprintf(myfp, "%d,", bs->statusFront);
-    fprintf(myfp, "%d,", bs->rateFront);
-    fprintf(myfp, "%d,", bs->statusRear);
-
-    fprintf(myfp, ",");  // Throttle POS
-
-    fprintf(myfp, "%f,%f,%f,%d,", bs->veh.height_cm / 100.0,
-        bs->veh.front_bumper_height_cm / 100.0, bs->veh.rear_bumper_height_cm / 100.0,
-        bs->veh.mass_kg); // all in meters and mass in kg
-
-    fprintf(myfp, ",");
-
-    fprintf(myfp, ",,,,,,,,,\n");
-
+    fprintf(myfp, "\n");
 }
 
 // Writes bsm header to the csv file pointed by fp.
 void write_bsm_header(FILE *fp)
 {
-    fprintf(fp, "TimeStamp,TimeStamp_ms,LogRecType,CPU_Util,CCH_Busy,SCH_Busy,ChannelNumber,");
-    fprintf(fp, "Raw_Busy,RSS,DataRate,WSMLength,PLCPLength,TxPwrLevel,SafetySupp,TXInterval,");
-    fprintf(fp, "msgID,msgCnt,TempId,GPGSAMode,secMark,lat,long,elev,semi_major_dev,");
+    fprintf(fp, "WallTime,TimeStamp_ms,monotonicTime,TxRxType,CBR,CPU_busy_percent,");
+    fprintf(fp, "msgCnt,TempId,secMark,lat,long,elev,semi_major_dev,");
     fprintf(fp, "semi_minor_dev,semi_major_orient,PRNDL,speed,heading,angle,longAccel,latAccel,");
-    fprintf(fp, "vertAccel,yawRate,ABSAct,BrkAct,StbCtrlAct,TrcCtrlAct,VehicleWidth,");
-    fprintf(fp, "VehicleLength,eventHazardLights,eventABSactivated,eventTractionControlLoss,");
-    fprintf(fp, "eventStabilityControlactivated,eventHardBraking,eventFrontWipers,");
-    fprintf(fp, "eventAirBagDeployment,PHCount,latOffset_1,longOffset_1,elevationOffset_1,");
-    fprintf(fp, "timeOffset_1,heading_1,latOffset_2,longOffset_2,elevationOffset_2,timeOffset_2,");
-    fprintf(fp, "heading_2,latOffset_3,longOffset_3,elevationOffset_3,timeOffset_3,heading_3,");
-    fprintf(fp, "latOffset_4,longOffset_4,elevationOffset_4,timeOffset_4,heading_4,latOffset_5,");
-    fprintf(fp, "longOffset_5,elevationOffset_5,timeOffset_5,heading_5,latOffset_6,");
-    fprintf(fp, "longOffset_6,elevationOffset_6,timeOffset_6,heading_6,latOffset_7,");
-    fprintf(fp, "longOffset_7,elevationOffset_7,timeOffset_7,heading_7,latOffset_8,");
-    fprintf(fp, "longOffset_8,elevationOffset_8,timeOffset_8,heading_8,latOffset_9,");
-    fprintf(fp, "longOffset_9,elevationOffset_9,timeOffset_9,heading_9,latOffset_10,");
-    fprintf(fp, "longOffset_10,elevationOffset_10,timeOffset_10,heading_10,latOffset_11,");
-    fprintf(fp, "longOffset_11,elevationOffset_11,timeOffset_11,heading_11,latOffset_12,");
-    fprintf(fp, "longOffset_12,elevationOffset_12,timeOffset_12,heading_12,latOffset_13,");
-    fprintf(fp, "longOffset_13,elevationOffset_13,timeOffset_13,heading_13,latOffset_14,");
-    fprintf(fp, "longOffset_14,elevationOffset_14,timeOffset_14,heading_14,latOffset_15,");
-    fprintf(fp, "longOffset_15,elevationOffset_15,timeOffset_15,heading_15,latOffset_16,");
-    fprintf(fp, "longOffset_16,elevationOffset_16,timeOffset_16,heading_16,latOffset_17,");
-    fprintf(fp, "longOffset_17,elevationOffset_17,timeOffset_17,heading_17,latOffset_18,");
-    fprintf(fp, "longOffset_18,elevationOffset_18,timeOffset_18,heading_18,latOffset_19,");
-    fprintf(fp, "longOffset_19,elevationOffset_19,timeOffset_19,heading_19,latOffset_20,");
-    fprintf(fp, "longOffset_20,elevationOffset_20,timeOffset_20,heading_20,latOffset_21,");
-    fprintf(fp, "longOffset_21,elevationOffset_21,timeOffset_21,heading_21,latOffset_22,");
-    fprintf(fp, "longOffset_22,elevationOffset_22,timeOffset_22,heading_22,latOffset_23,");
-    fprintf(fp, "longOffset_23,elevationOffset_23,timeOffset_23,heading_23,radiusOfCurve,");
-    fprintf(fp, "Confidence,LowBeamStatus,HighBeamStatus,LftTurnSig,RtTurnSig,HzdLgts,");
-    fprintf(fp, "AutoLghtCntrlOn,DtimeRunLghtsOn,FogLghtsOn,PkgLghtsOn,WiperSwFnt,WiperRtFnt,");
-    fprintf(fp, "WiperSwRear,ThrottlePos,VehHght,BmprHghtFnt,BmprHghtRear,VehMass,VehType,");
-    fprintf(fp, "RadioMAC,CertPoolGenCtr,NumValCertsRemain,CertChgCtr,CertType,MsgGenTime_us,");
-    fprintf(fp, "MsgGenTimeConf,SecSignStatus,SecVerStatus,CertDigest\n");
+    fprintf(fp, "vertAccel,yawRate,ABSAct,BrkAct,StbCtrlAct,TrcCtrlAct,");
+    fprintf(fp, "Tracking_Error,vehicleDensityInRange,validMessage,GpsDOP Satellites,GPS-Time,max_ITT");
+    fprintf(fp, "eventHazardLights,eventABSactivated,eventTractionControlLoss,");
+    fprintf(fp, "eventStabilityControlactivated,eventHardBraking,eventFrontWipers,eventAirBagDeployment,");
+#if 0
+    fprintf(fp, "LowBeamStatus,HighBeamStatus,LftTurnSig,RtTurnSig,HzdLgts,");
+    fprintf(fp, "AutoLghtCntrlOn,DtimeRunLghtsOn,FogLghtsOn,PkgLghtsOn,WiperSwFnt,WiperRtFnt,WiperSwRear,");
+#endif
+    fprintf(fp, "\n");
 }
 
 // public api to write to a csv file.
-void writeToCsv(msg_contents *mc, FILE *fp)
+void writeToCsv(msg_contents *mc, FILE *fp, bool isTx, uint64_t periodicityMs,
+    bool validPkt, uint32_t RVsInRange, uint64_t monotonicTime, uint64_t realworldTime,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr)
 {
-
     if (mc->msgId == J2735_MSGID_BASIC_SAFETY) {
-        write_bsm_to_csv(mc, fp);
+        write_bsm_to_csv(mc, fp, isTx, periodicityMs, validPkt, RVsInRange, monotonicTime,
+            realworldTime, locPositionDop, locNumSvUsed, gnssTime, cbr);
     }
 }
 // Writing to XML. This file could be opened in any browser.

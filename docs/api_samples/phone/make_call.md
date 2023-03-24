@@ -3,68 +3,59 @@ Make a voice call {#make_call}
 
 This sample application demonstrates how to make a voice call.
 
-### 1. Get the PhoneFactory and PhoneManager instances
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   ~~~~~~
-
-### 2. Check if telephony subsystem is ready
-
-   ~~~~~~{.cpp}
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-   ~~~~~~
-
-### 2.1 If telephony subsystem is not ready, wait for it to be ready
-
-Telephony subsystems is to make sure that device is ready for services like Phone, SMS
-and others. if subsystems were not ready, wait for unconditionally.
-
-   ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << Call Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << Call Manager subsystem initialization failed << std::endl;
+      }
+      cbProm.set_value(status);
    }
    ~~~~~~
 
-### 3. Instantiate Phone and call manager
+### 2. Get the PhoneFactory and Call Manager instance
 
    ~~~~~~{.cpp}
-   auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto callManager = phoneFactory.getCallManager(initResponseCb);
+   if(callManager == NULL) {
+      std::cout << " Failed to get Call Manager instance" << std::endl;
+      return -1;
+   }
    ~~~~~~
 
-### 4. Initialize phoneId with default value
+### 3. Wait for Call Manager subsystem to be ready
 
    ~~~~~~{.cpp}
-   int phoneId = DEFAULT_PHONE_ID;
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Call Manager subsystem << std::endl;
+      return -1;
+   }
    ~~~~~~
 
-### 5. Optionally, instantiate dial call instance
-
-   ~~~~~~{.cpp}
-   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();
-   ~~~~~~
-
-### 5.1 Implement IMakeCallCallback interface to receive response for the dial request optional
+### 4. Optionally, implement IMakeCallCallback interface to receive response for the dial request
 
    ~~~~~~{.cpp}
    class DialCallback : public IMakeCallCallback {
    public:
-      void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
+      void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
+         // will be invoked with response of makeCall operation
+      }
    };
-
-   void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
-      // will be invoked with response of makeCall operation
-   }
+   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback> ();
    ~~~~~~
 
-### 6. Send a dial request
+### 5. Send a dial request
 
    ~~~~~~{.cpp}
    if(callManager) {
       std::string phoneNumber("+18989531755");
+      int phoneId = 1;
       auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
       std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
    }

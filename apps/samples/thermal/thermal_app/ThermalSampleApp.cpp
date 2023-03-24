@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -75,10 +75,62 @@
 
 #include <telux/therm/ThermalFactory.hpp>
 #include <telux/therm/ThermalManager.hpp>
+#include <telux/therm/ThermalListener.hpp>
 
 #define PRINT_NOTIFICATION std::cout << std::endl << "\033[1;35mNOTIFICATION: \033[0m" << std::endl
-
 const int THERMAL_ZONE_ID = 1;
+
+class ThermalListener : public IThermalListener {
+    public:
+        // [7] Receive service status notification
+        virtual void onServiceStatusChange(ServiceStatus serviceStatus) override {
+            PRINT_NOTIFICATION << "Thermal service status: ";
+            std::string status;
+            switch (serviceStatus) {
+                case ServiceStatus::SERVICE_AVAILABLE: {
+                    status = "Available";
+                    break;
+                }
+                case ServiceStatus::SERVICE_UNAVAILABLE: {
+                    status = "Unavailable";
+                    break;
+                }
+                case ServiceStatus::SERVICE_FAILED: {
+                    status = "Failed";
+                    break;
+                }
+                default: {
+                    status = "Unknown";
+                    break;
+                }
+            }
+            std::cout << status << std::endl;
+        }
+
+        // [8] Receive notification when trip update occurs
+        //     Receives notification only if it is registered in step 5
+        virtual void onTripEvent(std::shared_ptr<ITripPoint> tripPoint, TripEvent tripEvent) override {
+            if (tripPoint) {
+                PRINT_NOTIFICATION << ": TRIP UPDATE EVENT" << std::endl;
+                printTripPointHeader();
+                printTripPointInfo(tripPoint, tripEvent);
+                return;
+            }
+            PRINT_NOTIFICATION << ": Invalid trip point" << std::endl;
+        }
+
+        // Receive notification when cooling device level changes
+        // Receives notification only if it is registered in step 5
+        virtual void onCoolingDeviceLevelChange(std::shared_ptr<ICoolingDevice> coolingDevice) override {
+            if (coolingDevice) {
+                PRINT_NOTIFICATION << ": COOLING DEV LEVEL EVENT" << std::endl;
+                printCoolingDeviceHeader();
+                printDeviceInfo(coolingDevice);
+                return;
+            }
+            PRINT_NOTIFICATION << ": Invalid cooling device" << std::endl;
+        }
+};
 
 std::string convertTripTypeToStr(telux::therm::TripType type) {
     std::string tripType;
@@ -110,6 +162,10 @@ std::string convertTripTypeToStr(telux::therm::TripType type) {
 
 std::string tripPointToString(
     std::shared_ptr<telux::therm::ITripPoint> &tripInfo, std::string &tripTempPoints) {
+    if (!tripInfo) {
+        std::cout << "Invalid trip point" << std::endl;
+        return std::string();
+    }
     std::string trip = convertTripTypeToStr(tripInfo->getType());
     if (trip == "CRITICAL")
         tripTempPoints
@@ -155,6 +211,7 @@ void printBindingInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo) {
                 for (auto k = 0; k < noOfBoundTripPoints; k++) {
                     thresholdPoints = tripPointToString(
                         boundCoolingDeviceList[j].bindingInfo[k], thresholdPoints);
+                    if (!thresholdPoints.size()) { return; }
                 }
                 std::cout << std::left << std::setw(7) << " " << std::setw(3)
                           << boundCoolingDeviceList[j].coolingDeviceId << std::setw(15) << " "
@@ -170,11 +227,17 @@ void printBindingInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo) {
 
 void printZoneInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo) {
     std::vector<std::shared_ptr<telux::therm::ITripPoint>> tripInfo;
+    if (!tzInfo) {
+        std::cout << "Invalid thermal zone" << std::endl;
+        return;
+    }
+
     tripInfo = tzInfo->getTripPoints();
     std::string tripPoints;
     if (tripInfo.size() > 0) {
         for (size_t i = 0; i < tripInfo.size(); ++i) {
             tripPoints = tripPointToString(tripInfo[i], tripPoints);
+            if (!tripPoints.size()) { return; }
         }
     }
 
@@ -187,10 +250,28 @@ void printZoneInfo(std::shared_ptr<telux::therm::IThermalZone> &tzInfo) {
 }
 
 void printDeviceInfo(std::shared_ptr<telux::therm::ICoolingDevice> &cdevInfo) {
+    if (!cdevInfo) {
+        std::cout << "Invalid cooling device" << std::endl;
+        return;
+    }
     std::cout << std::left << std::setw(5) << " " << std::setw(3) << cdevInfo->getId()
               << std::setw(7) << " " << std::setw(20) << cdevInfo->getDescription() << std::setw(7)
               << " " << std::setw(5) << cdevInfo->getMaxCoolingLevel() << std::setw(15) << " "
               << std::setw(5) << cdevInfo->getCurrentCoolingLevel() << std::endl;
+}
+
+void printTripPointInfo(std::shared_ptr<telux::therm::ITripPoint> &tripPointInfo,
+        TripEvent event) {
+    std::string tripPoints;
+    std::string trip = convertTripTypeToStr(tripPointInfo->getType());
+    tripPoints += tripPointToString(tripPointInfo, trip);
+    std::cout
+        << std::left << std::setw(3) << " " << std::setw(2) << tripPointInfo->getTZoneId()
+        << std::setw(10) << " " << std::setw(2) << tripPointInfo->getTripId() << std::setw(10)
+        << " " << std::setw(6) << tripPointInfo->getThresholdTemp() << std::setw(13) << " "
+        << std::setw(10) << tripPointInfo->getHysteresis() << std::setw(9) << " " << std::setw(2)
+        << ((event == TripEvent::CROSSED_UNDER) ? "CROSSED_UNDER" : "CROSSED_OVER ") << std::setw(5)
+        << " " << std::setw(2) << tripPoints << std::endl;
 }
 
 void printThermalZoneHeader() {
@@ -221,20 +302,38 @@ void printCoolingDeviceHeader() {
               << std::endl;
 }
 
+void printTripPointHeader() {
+    std::cout << "*** Trip point ***" << std::endl;
+    std::cout << std::setw(2)
+              << "+---------------------------------------------------------------------------"
+                 "--------------------+"
+              << std::endl;
+    std::cout << std::setw(3) << "| Tzone Id | " << std::setw(10) << "Trip Id | " << std::setw(15)
+              << "  Threshold Temp  |"
+              << " " << std::setw(8) << "  Hysteresis Temp  |"
+              << " " << std::setw(8) << "  Trip Event  |"
+              << " " << std::setw(10) << "  Trip Point  |" << std::endl;
+    std::cout << std::setw(2)
+              << "+---------------------------------------------------------------------------"
+                 "--------------------+"
+              << std::endl;
+}
+
 int main(int argc, char **argv) {
     std::cout << "********* thermal zone info *********" << std::endl;
 
-    // Get thermal factory instance
+    // [1] Get thermal factory instance
     auto &thermalFactory = telux::therm::ThermalFactory::getInstance();
 
-    // Prepare initialization callback
+    // [2] Prepare initialization callback that is invoked when the thermal sub-system
+    //     initialization is complete
     std::promise<telux::common::ServiceStatus> p;
     auto initCb = [&p](telux::common::ServiceStatus status) {
         std::cout << "Received service status: " << static_cast<int>(status) << std::endl;
         p.set_value(status);
     };
 
-    // Get thermal manager object
+    // [3] Get thermal manager object
     std::shared_ptr<telux::therm::IThermalManager> thermalMgr
         = thermalFactory.getThermalManager(initCb);
     if (!thermalMgr) {
@@ -242,14 +341,27 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Wait for the initialization callback and check the service status
+    // [4] Wait for the initialization callback and check the service status
     telux::common::ServiceStatus serviceStatus = p.get_future().get();
     if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         std::cout << "Thermal manager initialization failed" << std::endl;
         return -2;
     }
 
-    // Send get thermal zones request using thermal manager object
+    // [5] Create the listener object
+    std::shared_ptr<ThermalListener> thermalListener
+        = std::make_shared<ThermalListener>();
+
+    // [6] To register only trip update notification, likewise it can be registered
+    //     for only cooling device state changes notification.
+    thermalMgr->registerListener(thermalListener, 1 << TNT_TRIP_UPDATE);
+
+    // [9] To de-register only trip update notification, likewise it can be de-registered
+    //     for only cooling device state changes notification. The SSR notification will not
+    //     de-registered by default except mask: 0xFFFF.
+    thermalMgr->deregisterListener(thermalListener, 1 << TNT_TRIP_UPDATE);
+
+    // [10] Send get thermal zones request using thermal manager object
     std::vector<std::shared_ptr<telux::therm::IThermalZone>> zoneInfo
         = thermalMgr->getThermalZones();
     if (zoneInfo.size() > 0) {
@@ -257,9 +369,11 @@ int main(int argc, char **argv) {
         for (size_t index = 0; index < zoneInfo.size(); index++) {
             printZoneInfo(zoneInfo[index]);
         }
+    } else {
+        std::cout << "No thermal zones found!" << std::endl;
     }
 
-    // Send get cooling devices request using thermal manager object
+    // [11] Send get cooling devices request using thermal manager object
     std::vector<std::shared_ptr<telux::therm::ICoolingDevice>> coolingDevice
         = thermalMgr->getCoolingDevices();
     if (coolingDevice.size() > 0) {
@@ -272,6 +386,7 @@ int main(int argc, char **argv) {
         std::cout << "No cooling devices found!" << std::endl;
     }
 
+    // [12] Send request to get thermal zone for specific id using thermal manager object
     int thermalZoneId = THERMAL_ZONE_ID;
     std::cout << "Thermal zone info by Id: " << thermalZoneId << std::endl;
     std::shared_ptr<telux::therm::IThermalZone> tzInfo = thermalMgr->getThermalZone(thermalZoneId);
@@ -282,5 +397,14 @@ int main(int argc, char **argv) {
     }
     std::cout << "\n\nPress ENTER to exit \n\n";
     std::cin.ignore();
+
+    // [13] Cleanup when we don't need to listen to anything and when exit the application.
+    //      Here the APP is de-registering all notifications. However, the client can choose
+    //      to de-register specific as well. For example, to deregister only trip update
+    //      notifications, the client may provide mask: 0x0001 or mask: 0x0002 to deregister only
+    //      the notification for change in cdev level.
+    thermalMgr->deregisterListener(thermalListener);
+    thermalListener = nullptr;
+    thermalMgr = nullptr;
     return 0;
 }

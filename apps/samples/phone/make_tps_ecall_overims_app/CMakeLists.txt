@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_ECALL_APP make_ecall_app)
+set(TARGET_ECALL_APP make_tps_ecall_overims_app)
 
 set(ECALL_APP_SOURCES
     MakeTpsEcallOverIms.cpp

@@ -110,7 +110,7 @@ void SMSTrigger::onIncomingSms(int phoneId,
          LOG(DEBUG, __FUNCTION__, tmpLog);
       }
    }
-   LOG(DEBUG, __FUNCTION__, " Complete Message :", "\n", text);
+   LOG(DEBUG, __FUNCTION__, " Complete Message :", text);
 
    std::async(std::launch::async, [this, text] {
       TcuActivityState tcuActivityState = TcuActivityState::UNKNOWN;

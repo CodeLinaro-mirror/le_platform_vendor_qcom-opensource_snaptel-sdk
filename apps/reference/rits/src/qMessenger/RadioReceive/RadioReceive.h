@@ -30,7 +30,7 @@
 /*
  *Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *Redistribution and use in source and binary forms, with or without
  *modification, are permitted (subject to the limitations in the
@@ -107,6 +107,7 @@ private:
     bool enableUdp = false;
     string ipv4_src;
     std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
+    uint64_t lastRxMonotonicTime_ = 0;
 
 protected:
 
@@ -175,5 +176,6 @@ public:
     */
     uint8_t closeFlow();
 
+    uint64_t latestTxRxTimeMonotonic() override;
 };
 

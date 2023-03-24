@@ -106,7 +106,7 @@ enum class TcuActivityState {
  * @ref TcuActivityState::RESUME.
  */
 enum class StateChangeResponse {
-    ACK,    /**< processed TCU-activity state change */
+    ACK,    /**< Processed TCU-activity state change */
     NACK    /**< Not prepared/ready for TCU-activity state change */
 };
 
@@ -127,8 +127,8 @@ enum class ClientType {
 
 /**
  * Defines the type of event with respect to machine availability.
- * This only represents the availability of the machine to manage its activity state. Not just
- * the enablement of the general machine by itself.
+ * This only represents the availability of the machine to manage its activity state and not whether
+ * the machine itself is enabled.
  *
  * @ref ITcuActivityListener::onMachineUpdate() can be used to listen to changes in machine
  * availability.

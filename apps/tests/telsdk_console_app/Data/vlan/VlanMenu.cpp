@@ -180,13 +180,16 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
         return;
     }
     int ifaceType;
-    std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI): ";
+    std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI, ";
+    std::cout << "6-VMTAP0, 7-VMTAP1): ";
     std::cin >> ifaceType;
     Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
         static_cast<int>(telux::data::InterfaceType::ETH),
         static_cast<int>(telux::data::InterfaceType::ECM),
         static_cast<int>(telux::data::InterfaceType::RNDIS),
-        static_cast<int>(telux::data::InterfaceType::MHI)});
+        static_cast<int>(telux::data::InterfaceType::MHI),
+        static_cast<int>(telux::data::InterfaceType::VMTAP0),
+        static_cast<int>(telux::data::InterfaceType::VMTAP1)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
 
     int vlanId;

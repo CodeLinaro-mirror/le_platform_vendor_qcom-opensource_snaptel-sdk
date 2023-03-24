@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <memory>
 
@@ -38,94 +44,64 @@
 
 using namespace telux::tel;
 using namespace telux::common;
+std::shared_ptr<ICall> dialedCall = nullptr;
 
-// ##### 5.1 implement IMakeCallCallback interface to receive response for the
-// dial request -
-// optional
+// ##### 5.1 Implement IMakeCallCallback interface to receive response for the dial request
+// - optional
 class DialCallback : public IMakeCallCallback {
 public:
-   void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) override;
+    void makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
+       std::cout << "DialCallback::makeCallResponse" << std::endl;
+       std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
+       if(call) {
+          std::cout << "makeCallResponse RemotePartyNumber : " << call->getRemotePartyNumber()
+                    << std::endl;
+          std::cout << "makeCallResponse getCallIndex : " << call->getCallIndex() << std::endl;
+          dialedCall = call;
+       }
+    }
 };
-
-void DialCallback::makeCallResponse(ErrorCode error, std::shared_ptr<ICall> call) {
-   std::cout << "DialCallback::makeCallResponse" << std::endl;
-   std::cout << "makeCallResponse ErrorCode: " << int(error) << std::endl;
-   if(call) {
-      std::cout << "makeCallResponse RemotePartyNumber : " << call->getRemotePartyNumber()
-                << std::endl;
-      std::cout << "makeCallResponse getCallIndex : " << call->getCallIndex() << std::endl;
-   }
-}
 
 /**
  * Main routine
  */
 int main(int argc, char *argv[]) {
 
-   // ### 1. Get the PhoneFactory and PhoneManager instances.
+   // ### 1. Get the PhoneFactory and CallManager instances.
    auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-
-   // ### 2. Check if telephony subsystem is ready
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-
-   // #### 2.1 If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemsStatus = f.get();
-   }
-
-   // Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemsStatus) {
-      std::cout << " *** Sub Systems Ready *** " << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   auto callManager = phoneFactory.getCallManager([&](telux::common::ServiceStatus status) {
+            cbProm.set_value(status);});
+   if(callManager == nullptr) {
+      std::cout << " *** ERROR - Unable to get Call Manager instance" << std::endl;
       return 1;
    }
 
-   // ### 3. Instantiate Phone and call manager
-   auto phone = phoneManager->getPhone();
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
-
-   // ### 4. Get unique id of the phone
-   int phoneId = DEFAULT_PHONE_ID;
-
-   // ### 5. Instantiate dial callback instance - this is optional
-   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
-
-   // ### 6. Send a dial request
-   if(callManager) {
-      std::string configFile;
-      std::string phoneNumber;
-      std::shared_ptr<ConfigParser> configParser;
-
-      // [6.1] User can send a dial request by taking receiver's phone number from the user
-      // created config file. If user did not provide any config file then it will take
-      // parameters from default config file(i.e. SampleAppConfig.conf) which is located
-      // under(/usr/data) whereapplication is running.
-      if(argc == 2) {
-         configFile = argv[1];
-         configParser = std::make_shared<ConfigParser>(configFile);
-      } else {
-         configParser = std::make_shared<ConfigParser>();
-      }
-      phoneNumber = configParser->getValue(std::string("DIAL_NUMBER"));
-
-      // [6.3] If default config file is also not found then it will take default
-      // receiver's phone number and text message which is defined in the sample application.
-      if(phoneNumber.empty()) {
-         phoneNumber = DEFAULT_PHONE_NUMBER;
-         std::cout << "Using default phoneNumber:" << phoneNumber << std::endl;
-      }
-
-      auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
-      std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
+   // ### 2. Wait for the Call Manager subsystem to be ready.
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status == SERVICE_AVAILABLE) {
+      std::cout << "Call Manager subsystem is ready" << std::endl;
+   } else {
+      std::cout << " *** ERROR - Unable to initialize Call Manager subsystem" << std::endl;
+      return 1;
    }
 
-   // ### 7. Exit logic is specific to an application
+   // ### 3. Instantiate dial callback instance - this is optional
+   std::shared_ptr<DialCallback> dialCb = std::make_shared<DialCallback>();
+
+   // ### 4. Send a dial request
+   int phoneId = 1;
+   std::string phoneNumber = DEFAULT_PHONE_NUMBER;
+   auto makeCallStatus = callManager->makeCall(phoneId, phoneNumber, dialCb);
+   std::cout << "Dial Call Status:" << (int)makeCallStatus << std::endl;
+
+   // ### 5. Wait for the call state to become active and hang-up the call after conversation
+   sleep(10);
+   if(dialedCall) {
+      dialedCall->hangup();
+   }
+
+   // ### 6. Exit logic is specific to an application
    std::cout << "Press enter to exit" << std::endl;
    std::string input;
    std::getline(std::cin, input);

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -94,8 +94,8 @@ thread_local int signSuccess = 0;
 thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
 thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
 
-SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
-    ApplicationBase(fileConfiguration, msgType) {
+SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
+    ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
     if (not configuration.isValid) {
         return;
     }
@@ -124,8 +124,8 @@ SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType):
 
 SaeApplication::SaeApplication(const string txIpv4, const uint16_t txPort,
         const string rxIpv4, const uint16_t rxPort,
-        char* fileConfiguration, MessageType msgType) :
-        ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration) {
+        char* fileConfiguration, MessageType msgType, bool enableCsvLog) :
+        ApplicationBase(txIpv4, txPort, rxIpv4, rxPort, fileConfiguration, enableCsvLog) {
     if (not configuration.isValid) {
         return;
     }
@@ -395,11 +395,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     } else {
         decFail++;
     }
-    if (writeToCsvFile && (ret != -1)) {
-        csvMutex.lock();
-        writeToCsv(threadMc.get(),csvfp);
-        csvMutex.unlock();
-    }
+    ApplicationBase::writeMinLog(threadMc, index, false, TransmitType::EVENT,
+        (ret >= 0) ? true : false);
+
     return ret;
 }
 
@@ -488,11 +486,13 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
         }
     }
     // set the hv kinematics
-    shared_ptr<ILocationInfoEx> locationInfo =
-                                kinematicsReceive->getLocation();
-    sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
-    sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
-    sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+    shared_ptr<ILocationInfoEx> locationInfo;
+    if(configuration.enableLocationFixes){
+        locationInfo = kinematicsReceive->getLocation();
+        sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+        sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+        sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+    }
 
     // prepare verification statistics logging
     if (configuration.enableVerifStatLog) {
@@ -634,6 +634,12 @@ void SaeApplication::initMsg(std::shared_ptr<msg_contents> mc, bool isRx) {
 void SaeApplication::freeMsg(std::shared_ptr<msg_contents> mc) {
     if (mc->wsmp) {
         auto wsmp = (wsmp_data_t*)mc->wsmp;
+
+        if (wsmp->chan_load_ptr) {
+            free(wsmp->chan_load_ptr);
+            wsmp->chan_load_ptr = nullptr;
+        }
+
         abuf_free(wsmp->abp);
         free(mc->wsmp);
         mc->wsmp = nullptr;
@@ -683,8 +689,24 @@ void SaeApplication::fillWsmp(wsmp_data_t *wsmp) {
     } else {
         wsmp->psid = PSID_BSM; // default 0x20
     }
-    wsmp->chan_load_ptr = nullptr;
-    wsmp->chan_load_len = 0;
+
+    // The content of channel load is not standardized yet, use this IE for padding
+    if (MsgType == MessageType::BSM and this->configuration.padding > 0) {
+        if (!wsmp->chan_load_ptr) {
+            wsmp->chan_load_ptr = (uint8_t *)malloc(this->configuration.padding);
+            if (!wsmp->chan_load_ptr) {
+                cerr << "alloc padding failed!" << endl;
+            } else {
+                wsmp->weid_opts.inc_load_ext = 1;
+                wsmp->chan_load_len = this->configuration.padding;
+                // fill 0xFF for padding
+                memset(wsmp->chan_load_ptr, 0xFF, wsmp->chan_load_len);
+            }
+        }
+    } else {
+        wsmp->chan_load_ptr = nullptr;
+        wsmp->chan_load_len = 0;
+    }
 }
 
 int SaeApplication::parseIPv6Addr(const string& str, char *buf, int& bufLen) {
@@ -996,6 +1018,9 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 }
 
 void SaeApplication::fillBsmLocation(bsm_value_t *bsm) {
+    if(!configuration.enableLocationFixes){
+        return;
+    }
     shared_ptr<ILocationInfoEx> locationInfo = kinematicsReceive->getLocation();
     //ref_app code with the new telSDK Location
     bsm->Latitude = (locationInfo->getLatitude() * 10000000);
@@ -1195,7 +1220,8 @@ void SaeApplication::sendTuncBsm(uint8_t index, TransmitType txType) {
         memcpy(mc->abuf.tail, &tunc, sizeof(float));
         abuf_put(&mc->abuf, sizeof(float));
         encLength += sizeof(float);
-        this->spsTransmits[i].transmit(mc->abuf.data, encLength);
+        // SPS priority is set when creating the flow
+        this->spsTransmits[i].transmit(mc->abuf.data, encLength, Priority::PRIORITY_UNKNOWN);
         break;
     case TransmitType::EVENT:
         mc = this->eventContents[i];
@@ -1207,7 +1233,8 @@ void SaeApplication::sendTuncBsm(uint8_t index, TransmitType txType) {
         memcpy(mc->abuf.tail, &tunc, sizeof(float));
         abuf_put(&mc->abuf, sizeof(float));
         encLength += sizeof(float);
-        this->eventTransmits[i].transmit(mc->abuf.data, encLength);
+        // event priority is set per packet using traffic class
+        this->eventTransmits[i].transmit(mc->abuf.data, encLength, configuration.eventPriority);
         break;
     default:
         break;

@@ -199,6 +199,7 @@ bool NAOIpTrigger::validateTrigger(char *buffer, int length,
     } else {
         LOG(INFO, __FUNCTION__, " valid trigger text, text = ", text);
         tcuActivityState = triggerText_[text];
+        return true;
     }
     return false;
 }

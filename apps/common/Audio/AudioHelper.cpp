@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       AudioHelper.cpp
  *
@@ -178,7 +184,6 @@ void AudioHelper::getUserCreateStreamInput(StreamConfig &config)
     if (config.type != StreamType::VOICE_CALL) {
         getUserSlotIdInput(config.slotId);
     }
-    getUserSampleRateInput(config.sampleRate);
     getUserChannelInput(config.channelTypeMask);
     getUserDeviceInput(config.deviceTypes);
 }

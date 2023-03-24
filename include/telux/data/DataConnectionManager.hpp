@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -712,6 +712,7 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *
      * @param [in] state   New state of hardware Acceleration service (Active/Inactive)
      *
+     * @note  This is global state
      */
     virtual void onHwAccelerationChanged(const ServiceState state){};
 

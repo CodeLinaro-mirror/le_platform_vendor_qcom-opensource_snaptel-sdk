@@ -236,8 +236,14 @@ RadioReceive::RadioReceive(RadioOpt radioOpt, const string ipv4_dst,
 uint32_t RadioReceive::receive(const char* buf, int len) {
     uint8_t sourceMac[CV2X_MAC_ADDR_LEN];
     int cv2x_mac_addr_len = CV2X_MAC_ADDR_LEN;
+    struct timespec ts;
+    uint32_t res = receive(buf, len, sourceMac, cv2x_mac_addr_len);
 
-    return receive(buf, len, sourceMac, cv2x_mac_addr_len);
+    if (0 <= res && enableCsvLog_) {
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        lastRxMonotonicTime_ = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
+    }
+    return res;
 }
 
 uint32_t RadioReceive::receive(const char* buf, int len,
@@ -534,4 +540,8 @@ int RadioReceive::setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &
 int RadioReceive::onWraTimedout(void)
 {
     return clearGlobalIPInfo();
+}
+
+uint64_t RadioReceive::latestTxRxTimeMonotonic() {
+    return lastRxMonotonicTime_;
 }

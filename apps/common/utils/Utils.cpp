@@ -464,7 +464,7 @@ const std::string Utils::getCurrentTimeString(void) {
 
     if (NULL == localtime_r(&now, &tmSnapshot)) {
         std::cout << "localtime_r error" << std::endl;
-        return NULL;
+        return std::string();
     }
     // convert current time to format of hour:minute:second
     ss << std::put_time(&tmSnapshot, "%H:%M:%S");

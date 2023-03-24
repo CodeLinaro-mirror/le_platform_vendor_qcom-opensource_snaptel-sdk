@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -73,6 +73,7 @@
 #ifndef THERMALMANAGER_HPP
 #define THERMALMANAGER_HPP
 
+#include <bitset>
 #include <vector>
 #include <string>
 #include <memory>
@@ -109,6 +110,33 @@ enum class TripType {
 };
 
 /**
+ * Defines the event of trip.
+ */
+enum class TripEvent {
+    NONE = -1,     /**< Trip event is none */
+    CROSSED_UNDER, /**< This event will be triggered when the temperature decreases and crosses
+                        below the configured trip minus hysteresis temp. This event will not be
+                        triggered again, if the temperature remains below the trip temperature.
+                        For Example: Below scenario considered as CROSSED_UNDER.
+                        Prev temp: 270000 milli degree Celsius,
+                        Trip temp: 25000 milli degree Celsius, Hyst: 5000 milli degree Celsius,
+                        Curr Temp: 19000 milli degree Celsius,
+                        Below scenario will not generate CROSSED_UNDER event again.
+                        Prev temp: 190000 milli degree Celsius,
+                        Trip temp: 25000 milli degree Celsius, Hyst: 5000 milli degree Celsius,
+                        Curr Temp: 18000 milli degree Celsius / 22000 milli degree Celsius*/
+    CROSSED_OVER   /**< This event will be triggered when the temperature increases and crosses
+                        over the configured trip temperature. This event will not be triggered
+                        again, if the temperature remains over the trip temperature.
+                        For Example: Below scenario considered as CROSSED_OVER.
+                        Prev temp: 24000 milli degree Celsius,
+                        Trip temp: 25000 milli degree Celsius, Curr Temp: 26000 milli degree Celsius,
+                        Below scenario will not generate CROSSED_OVER event again.
+                        Prev temp: 26000 milli degree Celsius, Trip temp: 25000 milli degree Celsius,
+                        Curr Temp: 27000 milli degree Celsius*/
+};
+
+/**
  * Defines the trip points to which cooling device is bound.
  */
 struct BoundCoolingDevice {
@@ -116,6 +144,21 @@ struct BoundCoolingDevice {
     std::vector<std::shared_ptr<ITripPoint>> bindingInfo; /**< List of trippoints bound to the
                                                                 cooling device */
 };
+
+/**
+ * Defines some of the notifications supported by IThermalListener which can be dynamically
+ * disabled/enabled.
+ */
+enum ThermalNotificationType {
+    TNT_TRIP_UPDATE,       /* Enables onTripEvent() notification*/
+    TNT_CDEV_LEVEL_UPDATE, /* Enables onCoolingDeviceLevelUpdate() notification*/
+    TNT_MAX_TYPE,
+};
+
+/**
+ * Bit mask that denotes a set of notifications defined in ThermalNotificationType
+ */
+using ThermalNotificationMask = std::bitset<16>;
 
 /**
  * @brief   IThermalManager provides interface to get thermal zone and cooling device information.
@@ -136,25 +179,56 @@ class IThermalManager {
      * Registers the listener for Thermal Manager indications.
      *
      * @param [in] listener      - pointer to implemented listener.
+     * @param [in] mask          - Bit mask representing a set of notifications that needs
+     *                             to be registered - @ref ThermalNotificationType
+     *                             Notifications under IThermalListener that are not listed
+     *                             in @ref ThermalNotificationType would always be registered
+     *                             by default when this API is invoked. In the absence of this
+     *                             optional parameter, all the notifications will be registered.
+     *                             Bits that are not set in the mask are ignored and do not have
+     *                             any effect on registration or deregistration. To deregister,
+     *                             the API @ref deregisterListener should be used.
+     *                             For Example: API invoked with mask: 0x0001 enables onTripEvent
+     *                             notification, next invocation with mask: 0x0002 enables
+     *                             onCoolingDeviceLevelUpdate notification and previous
+     *                             registration for onTripEvent remains intact.
      *
      * @returns status of the registration request.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual telux::common::Status registerListener(std::weak_ptr<IThermalListener> listener) = 0;
+    virtual telux::common::Status registerListener(
+        std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask = 0xFFFF)
+        = 0;
 
     /**
      * Deregisters the previously registered listener.
      *
      * @param [in] listener      - pointer to registered listener that needs to be removed.
+     * @param [in] mask          - Bit mask that denotes a set of notifications that needs to be
+     *                             de-registered - @ref ThermalNotificationType
+     *                             Notifications under IThermalListener that are not listed in
+     *                             @ref ThermalNotificationType would not be de-registered by
+     *                             default. If the client does not specifies mask or sets all
+     *                             the bits, this API de-registers all the notifications.
+     *                             Bits that are not set in the mask are ignored and do not
+     *                             have any effect on registration or deregistration,To register,
+     *                             the API @ref registerListener should be used.
+     *                             For Example: API invoked with mask: 0x0001 disables onTripEvent
+     *                             notification, next invocation with mask: 0x0002 disables
+     *                             onCoolingDeviceLevelUpdate notification.
+     *                             mask: 0x0000 is invalid options and API invoked with mask
+     *                             0x0000 will be ignored.
      *
      * @returns status of the deregistration request.
      *
      * @note Eval: This is a new API and is being evaluated. It is subject to change and
      *             could break backwards compatibility.
      */
-    virtual telux::common::Status deregisterListener(std::weak_ptr<IThermalListener> listener) = 0;
+    virtual telux::common::Status deregisterListener(
+        std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask = 0xFFFF)
+        = 0;
 
     /**
      * Retrieves the list of thermal zone info like type, temperature and trip points.
@@ -226,6 +300,20 @@ class ITripPoint {
      * @returns Hysteresis value
      */
     virtual int getHysteresis() const = 0;
+
+    /**
+     * Retrieves the identifier for trip point.
+     *
+     * @returns Identifier for trip point
+     */
+    virtual int getTripId() const = 0;
+
+    /**
+     * Retrieves associated tzone id for a trip point.
+     *
+     * @returns Identifier for thermal zone
+     */
+    virtual int getTZoneId() const = 0;
 
     /**
      * Operator for compare two trip points

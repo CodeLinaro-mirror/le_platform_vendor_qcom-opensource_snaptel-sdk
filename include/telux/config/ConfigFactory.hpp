@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,6 +76,7 @@
 #include <mutex>
 
 #include <telux/config/ModemConfigManager.hpp>
+#include <telux/config/ConfigManager.hpp>
 
 namespace telux {
 
@@ -105,6 +106,20 @@ public:
      * @returns pointer of IModemConfigManager object.
      */
     virtual std::shared_ptr<IModemConfigManager> getModemConfigManager(
+        telux::common::InitResponseCb callback = nullptr) = 0;
+
+    /**
+     * Get instance of the Config manager
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_CONFIG_APPS_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param[in] callback     Optional callback to get the response of Config Manager
+     *                         initialization.
+     *
+     * @returns pointer of IConfigManager object.
+     */
+    virtual std::shared_ptr<IConfigManager> getConfigManager(
         telux::common::InitResponseCb callback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP

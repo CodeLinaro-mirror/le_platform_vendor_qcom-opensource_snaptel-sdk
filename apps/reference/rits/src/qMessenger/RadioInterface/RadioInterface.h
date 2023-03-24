@@ -27,12 +27,6 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /**
-  * @file: RadioInterface.h
-  *
-  * @brief: Simple application that queries C-V2X Status, interacts with
-  *         telSDK and prints information to stdout
-  */
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
@@ -69,6 +63,13 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+ /**
+  * @file: RadioInterface.h
+  *
+  * @brief: Simple application that queries C-V2X Status, interacts with
+  *         telSDK and prints information to stdout
+  */
 
 #pragma once
 
@@ -220,6 +221,8 @@ public:
      */
     void waitForCv2xToActivate(bool &haltRx);
     bool restartFlow;
+
+    telux::cv2x::Cv2xStatus getCurrentStatus();
 
     /**
     * Method that requests src L2 address update.

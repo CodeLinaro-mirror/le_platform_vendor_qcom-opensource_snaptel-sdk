@@ -6,6 +6,7 @@ set(LIBQMESSENGER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/./RadioReceive/RadioReceive.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./RadioTransmit/RadioTransmit.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./ThrottleManager/ThrottleManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/./VehicleReceive/VehicleReceive.cpp
 )
 
 if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
@@ -16,7 +17,7 @@ if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
 endif()
 add_library(qmessenger ${LIBQMESSENGER_SOURCES})
 
-target_link_libraries(qmessenger ${GLIB_LIBRARIES} telux_cv2x telux_loc v2xcodec)
+target_link_libraries(qmessenger ${GLIB_LIBRARIES} telux_cv2x telux_loc v2xcodec v2x_veh)
 
 install(TARGETS qmessenger
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

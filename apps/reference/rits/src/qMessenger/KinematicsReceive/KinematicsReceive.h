@@ -87,7 +87,7 @@ public:
 
 
     /**
-    * Constructor that creates a RadioReceive Object
+    * Constructor that creates a KinematicsReceive Object
     * @param interval - Minimum time interval between two consecutive
     * reports in milliseconds. It can be interval or more.
     */

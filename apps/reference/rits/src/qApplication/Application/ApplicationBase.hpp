@@ -77,6 +77,8 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <mutex>
+#include <condition_variable>
 #include <map>
 #include <csignal>
 #include <stdio.h>
@@ -88,6 +90,7 @@
 #include "KinematicsReceive.h"
 #include "RadioReceive.h"
 #include "RadioTransmit.h"
+#include "VehicleReceive.h"
 #include "Ldm.h"
 #include "ThrottleManager.h"
 #include "safetyapp_util.h"
@@ -318,7 +321,8 @@ public:
     /**
      * Function which encodes and signs message when security is enabled.
      */
-    int encodeAndSignMsg(std::shared_ptr<msg_contents> mc);
+    int encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
+                         SecurityService::SignType type = SecurityService::SignType::ST_AUTO);
 
     /**
      * receive process received contents.
@@ -380,6 +384,9 @@ public:
     void printTxStats();
     void setup(MessageType msgType);
     void setupLdm();
+    virtual bool pendingTillEmergency();
+    virtual bool pendingTillNoEmergency();
+    virtual void prepareForExit();
 
     bool openMinLogFile(const std::string& fullPathName);
 
@@ -504,6 +511,8 @@ protected:
     virtual int transmit(uint8_t index, std::shared_ptr<msg_contents>mc,
                             int16_t bufLen, TransmitType txType);
 
+    virtual void vehicleEventReport(bool emergent,
+        const current_dynamic_vehicle_state_t* const vehicle_state = nullptr);
     /**
      * Object that holds all data and meta data of the LocationSDK
      * and allows incoming fixes from such service.
@@ -517,10 +526,20 @@ protected:
 
    virtual void writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
        bool isTx, TransmitType txType, bool validPkt);
+    /**
+     * Vehicle Receive object.
+     */
+    VehicleReceive VehRec;
 
 private:
+    bool exitApp = false;
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
+    VehicleReceive::VehicleEventsCallback cb;
+    std::mutex stateMtx;
+    std::condition_variable stateCv;
+    std::atomic<bool> criticalState{false};
+    std::atomic<bool> newEvent{false};
 
     /* For local stored v2x IP rmnet address */
     std::mutex v2xIpAddrMtx_;

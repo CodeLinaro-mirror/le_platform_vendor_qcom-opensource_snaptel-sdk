@@ -286,8 +286,12 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
     return status;
 }
 
+telux::cv2x::Cv2xStatus RadioInterface::getCurrentStatus() {
+    return cv2xStatusListener_->getCurrentStatus();
+}
+
 void RadioInterface::waitForCv2xToActivate(bool &haltRx) {
-        restartFlow = cv2xStatusListener_->waitForCv2xStatus(Cv2xStatusType::ACTIVE, haltRx);
+    restartFlow = cv2xStatusListener_->waitForCv2xStatus(Cv2xStatusType::ACTIVE, haltRx);
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {

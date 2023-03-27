@@ -217,9 +217,10 @@ public:
     virtual TcuActivityState getActivityState() = 0;
 
     /**
-     * Sends the acknowledgement after processing after processing a TCU-activity state notification.
-     * This indicates that the client is prepared for state transition. Only one acknowledgement is
-     * expected from a single client process, although it may have multiple listeners.
+     * Sends the acknowledgement after processing a TCU-activity state notification. This indicates
+     * that the client is prepared for the state transition.
+     * Only one acknowledgement should be sent per @ref ClientType::SLAVE instance of
+     * @ref ITcuActivityManager, even if multiple listeners are registered with that instance.
      *
      * All slave clients that received a state change notification via
      * @ref TcuActivityListener::onTcuActivityStateUpdate must acknowledge using this API.
@@ -238,8 +239,8 @@ public:
      * Explicitly sets the modem state change.
      *
      * The platform could be configured to automatically manage the modem state when
-     * @ref setTcuActivityState is called. For example when suspend is called the implementation
-     * will also set the modem to suspend. In that case, this API need not be invoked when setting
+     * @ref setTcuActivityState is called. For example, when suspend is called, the implementation
+     * will also set the modem to suspend. In that case, this API need not be invoked after setting
      * the TCU state.
      *
      * This API needs to be used cautiously, as it could affect WWAN functionalities.

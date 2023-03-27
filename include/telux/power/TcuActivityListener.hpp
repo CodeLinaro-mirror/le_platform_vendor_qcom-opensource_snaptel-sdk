@@ -97,9 +97,9 @@ class ITcuActivityListener {
 public:
     /**
      * This function is called when the TCU activity state of the machine(that the client is
-     * registered for) is going to change. When the master
-     * triggers the state change of the machine using  @ref ITcuActivityManager::setActivityState,
-     * the slave clients interested in that machine will receive this indication.
+     * registered for) is going to change. When the master triggers state change of a machine
+     * using  @ref ITcuActivityManager::setActivityState, the slave clients interested in that
+     * machine will receive this notification. This notification will not be received by the Master.
      * State change of @ref ALL_MACHINES via @ref ITcuActivityManager::setActivityState could lead
      * to an individual machine's state change, resulting in a notification to clients of all
      * machines.

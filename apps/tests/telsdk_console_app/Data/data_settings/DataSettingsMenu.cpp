@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -80,17 +80,18 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType oprType = static_cast<telux::data::OperationType>(operationType);
 
     std::cout << "Do you want to switch All WWAN Backhauls (0-No, 1-Yes): ";
     std::cin >> switchAll;
-    Utils::validateInput(switchAll);
+    Utils::validateInput(switchAll, {0, 1});
     bool applyToAll = (switchAll == 0)? false:true;
 
     std::cout << "Enter Backhaul Type to switch from (0-Wlan, 1-WWAN): ";
     std::cin >> backhaul;
-    Utils::validateInput(backhaul);
+    Utils::validateInput(backhaul, {0, 1});
     std::cout << std::endl;
     if(backhaul) {
         source.backhaul = telux::data::BackhaulType::WWAN;
@@ -107,7 +108,7 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
 
     std::cout << "Enter Backhaul Type to switch to (0-Wlan, 1-WWAN): ";
     std::cin >> backhaul;
-    Utils::validateInput(backhaul);
+    Utils::validateInput(backhaul, {0, 1});
     std::cout << std::endl;
     if(backhaul) {
         dest.backhaul = telux::data::BackhaulType::WWAN;

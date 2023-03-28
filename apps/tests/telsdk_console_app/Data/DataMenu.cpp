@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -352,12 +352,15 @@ void DataMenu::startDataCall(std::vector<std::string> inputCommand) {
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
 
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
 
     std::string interfaceName = "";
     int userChoice;
@@ -387,7 +390,8 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
     int operationType;
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     std::cout << std::endl;
 
@@ -418,7 +422,9 @@ void DataMenu::stopDataCall(std::vector<std::string> inputCommand) {
         int ipFamilyType;
         std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
         std::cin >> ipFamilyType;
-        Utils::validateInput(ipFamilyType);
+        Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+            static_cast<int>(telux::data::IpFamilyType::IPV6),
+            static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
         telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
         retStat = dataConnectionManager_->stopDataCall(profileId, ipFamType,
             MyDataCallResponseCallback::stopDataCallResponseCallBack, opType);
@@ -474,7 +480,8 @@ void DataMenu::requestDataCallList() {
         int operationType;
         std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
         std::cin >> operationType;
-        Utils::validateInput(operationType);
+        Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+            static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
 
         telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
         retStat = dataConnectionManager_->requestDataCallList(
@@ -490,7 +497,8 @@ void DataMenu::setDefaultProfile() {
         int operationType;
         std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
         std::cin >> operationType;
-        Utils::validateInput(operationType);
+        Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+            static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
         telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
         int profileId;
@@ -533,7 +541,8 @@ void DataMenu::getProfileParamsFromUser() {
     int techPref;
     std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
     std::cin >> techPref;
-    Utils::validateInput(techPref);
+    Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
+        static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
 
     std::cin.get();
     std::string profileName;
@@ -556,12 +565,17 @@ void DataMenu::getProfileParamsFromUser() {
     std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP \n2-CHAP"
                  "\n3-PAP_CHAP\n";
     std::cin >> authType;
-    Utils::validateInput(authType);
+    Utils::validateInput(authType, {static_cast<int>(telux::data::AuthProtocolType::AUTH_NONE),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_CHAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP_CHAP)});
 
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
 
     params_.profileName = profileName;
     params_.techPref = static_cast<telux::data::TechPreference>(techPref);
@@ -671,7 +685,8 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
     int techPref;
     std::cout << "Enter Tech Preference (0-3GPP, 1-3GPP2): ";
     std::cin >> techPref;
-    Utils::validateInput(techPref);
+    Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
+        static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
 
     std::cin.get();
     std::string profileName;
@@ -694,12 +709,17 @@ void DataMenu::queryProfile(std::vector<std::string> inputCommand) {
     std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP"
                  "\n2-CHAP \n3-PAP_CHAP\n";
     std::cin >> authType;
-    Utils::validateInput(authType);
+    Utils::validateInput(authType, {static_cast<int>(telux::data::AuthProtocolType::AUTH_NONE),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_CHAP),
+        static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP_CHAP)});
 
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPV6, 10-IPV4V6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
 
     params_.profileName = profileName;
     params_.techPref = static_cast<telux::data::TechPreference>(techPref);
@@ -753,7 +773,9 @@ void DataMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Add Static NAT entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     int profileId;
@@ -822,7 +844,9 @@ void DataMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::cout << "Remove Static NAT entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     int profileId;
     std::cout << "Enter Profile Id: ";
@@ -890,7 +914,9 @@ void DataMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
     std::cout << "List Static NAT entries\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     int profileId;
     std::cout << "Enter Profile Id: ";
@@ -1026,7 +1052,9 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     std::cout << "Set Firewall\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     telux::data::net::FirewallConfig firewallConfig  = {};
     firewallMgr = getFirewallManagerInstance(opType);
@@ -1036,7 +1064,7 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     int enableFwFlag;
     std::cout << "Enter Enable Firewall (1 - On, 0 - Off): ";
     std::cin >> enableFwFlag;
-    Utils::validateInput(enableFwFlag);
+    Utils::validateInput(enableFwFlag, {0, 1});
     if (enableFwFlag) {
         firewallConfig.enable = true;
     } else {
@@ -1046,7 +1074,7 @@ void DataMenu::setFirewall(std::vector<std::string> inputCommand) {
     int allowPacketsFlag;
     std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
     std::cin >> allowPacketsFlag;
-    Utils::validateInput(allowPacketsFlag);
+    Utils::validateInput(allowPacketsFlag,  {0, 1});
     if (allowPacketsFlag) {
         firewallConfig.allowPackets = true;
     } else {
@@ -1079,7 +1107,9 @@ void DataMenu::requestFirewallStatus(std::vector<std::string> inputCommand) {
     std::cout << "request Firewall Status\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType,
+        {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
     int profileId;
     telux::data::BackhaulInfo backhaulConfig;
@@ -1136,7 +1166,7 @@ void DataMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
     int option;
     std::cout << "Do you want to enter IPV4 source address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {0, 1});
     if (option == 1) {
         std::cin.get();
         std::cout << "Enter IPv4 Source address: ";
@@ -1151,7 +1181,7 @@ void DataMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
 
     std::cout << "Do you want to enter IPV4 TOS value and TOS mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {0, 1});
     if (option == 1) {
         std::cin.get();
         std::cout << "Enter Type of service value [0 to 255]: ";
@@ -1197,7 +1227,7 @@ void DataMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     int option;
     std::cout << "Do you want to enter IPV6 source address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {0, 1});
     if (option == 1) {
         std::cin.get();
         std::cout << "Enter IPv6 Source address: ";
@@ -1210,7 +1240,7 @@ void DataMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
 
     std::cout << "Do you want to enter IPv6 destination address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {0, 1});
     if (option == 1) {
         std::cin.get();
         std::cout << "Enter IPv6 Destination address: ";
@@ -1223,7 +1253,7 @@ void DataMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
 
     std::cout << "Do you want to enter IPV6 Traffic Class value and mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {0, 1});
     if (option == 1) {
         std::cout << "Enter IPv6 Traffic class value: ";
         std::cin >> trfVal;
@@ -1242,7 +1272,7 @@ void DataMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     int natEnabled;
     std::cout << "Enter IPv6 nat enabled (1-Enable, 0-Disabled): ";
     std::cin >> natEnabled;
-    Utils::validateInput(natEnabled);
+    Utils::validateInput(natEnabled, {0, 1});
 
     IPv6Info info;
     info.srcAddr = srcAddr;
@@ -1396,7 +1426,8 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     std::cout << "add Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     FirewallEntryInfo bhFirewallEntry = {};
@@ -1408,13 +1439,14 @@ void DataMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     int fwDirection;
     std::cout << "Enter Firewall Direction (1-Uplink, 2-Downlink): ";
     std::cin >> fwDirection;
-    Utils::validateInput(fwDirection);
+    Utils::validateInput(fwDirection, {1, 2});
     telux::data::Direction fwDir = static_cast<telux::data::Direction>(fwDirection);
 
     int ipFamilyType;
     std::cout << "Enter Ip Family (4-IPv4, 6-IPv6): ";
     std::cin >> ipFamilyType;
-    Utils::validateInput(ipFamilyType);
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6)});
     telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
 
     char delimiter = '\n';
@@ -1497,7 +1529,8 @@ void DataMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {
     std::cout << "request Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     firewallMgr = getFirewallManagerInstance(opType);
@@ -1641,7 +1674,8 @@ void DataMenu::removeFirewallEntry(std::vector<std::string> inputCommand) {
     std::cout << "remove Firewall Entry\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
@@ -1678,7 +1712,8 @@ void DataMenu::enableDmz(std::vector<std::string> inputCommand) {
     std::cout << "Add DMZ\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
@@ -1718,7 +1753,8 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
     std::cout << "Remove DMZ\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
@@ -1730,7 +1766,8 @@ void DataMenu::disableDmz(std::vector<std::string> inputCommand) {
     std::cin.get();
     std::cout << "Enter IP Type (4-IPv4, 6-IPv6): ";
     std::cin >> ipType;
-    Utils::validateInput(ipType);
+    Utils::validateInput(ipType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6)});
     if(ipType == 6) {
         std::cout << "Error: Only IPv4 type is supported" << std::endl;
         return;
@@ -1765,7 +1802,8 @@ void DataMenu::requestDmzEntry(std::vector<std::string> inputCommand) {
     std::cout << "request Dmz Entries\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     telux::data::BackhaulInfo bhInfo;
@@ -1827,7 +1865,8 @@ void DataMenu::createVlan(std::vector<std::string> inputCommand) {
     std::cout << "Create VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -1843,7 +1882,11 @@ void DataMenu::createVlan(std::vector<std::string> inputCommand) {
     int ifaceType;
     std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI): ";
     std::cin >> ifaceType;
-    Utils::validateInput(ifaceType);
+    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+        static_cast<int>(telux::data::InterfaceType::ETH),
+        static_cast<int>(telux::data::InterfaceType::ECM),
+        static_cast<int>(telux::data::InterfaceType::RNDIS),
+        static_cast<int>(telux::data::InterfaceType::MHI)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
 
     int vlanId;
@@ -1888,7 +1931,8 @@ void DataMenu::removeVlan(std::vector<std::string> inputCommand) {
     std::cout << "Remove VLAN \n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -1904,7 +1948,11 @@ void DataMenu::removeVlan(std::vector<std::string> inputCommand) {
     int ifaceType;
     std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI): ";
     std::cin >> ifaceType;
-    Utils::validateInput(ifaceType);
+    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+        static_cast<int>(telux::data::InterfaceType::ETH),
+        static_cast<int>(telux::data::InterfaceType::ECM),
+        static_cast<int>(telux::data::InterfaceType::RNDIS),
+        static_cast<int>(telux::data::InterfaceType::MHI)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
 
     int vlanId;
@@ -1933,7 +1981,8 @@ void DataMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
     std::cout << "Query VLAN info\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -1977,7 +2026,8 @@ void DataMenu::enableSocks(std::vector<std::string> inputCommand) {
     std::cout << "Enable/Disable Socks Proxy\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     std::cout << "Enter Enablement Type (0-Disable, 1-Enable): ";
@@ -2053,7 +2103,8 @@ void DataMenu::bindToBackhaul(std::vector<std::string> inputCommand) {
     std::cout << "Bind to backhaul\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -2100,7 +2151,8 @@ void DataMenu::unbindFromBackhaul(std::vector<std::string> inputCommand) {
     std::cout << "Unbind from backhaul\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -2148,7 +2200,8 @@ void DataMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
     std::cout << "Query VLAN To Backhaul Bindings\n";
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
-    Utils::validateInput(operationType);
+    Utils::validateInput(operationType, {static_cast<int>(telux::data::OperationType::DATA_LOCAL),
+        static_cast<int>(telux::data::OperationType::DATA_REMOTE)});
     telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
 
     auto &dataFactory = telux::data::DataFactory::getInstance();
@@ -2171,7 +2224,7 @@ void DataMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
     if(isMultiBackhauls) {
         std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
         std::cin >> backhaul;
-        Utils::validateInput(backhaul);
+        Utils::validateInput(backhaul, {0, 1});
         std::cout << std::endl;
         if(backhaul) {
             backhaulType = telux::data::BackhaulType::WWAN;

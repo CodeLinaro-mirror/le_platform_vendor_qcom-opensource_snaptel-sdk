@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -307,7 +307,10 @@ lane_types classify_lane(msg_contents *host, msg_contents *remote)
     bsm_value_t *remote_bsm = (bsm_value_t *)remote->j2735_msg;
     int qty_crumbs_hv = host_bsm->ph.qty_crumbs - 1;
     int qty_crumbs_rv = remote_bsm->ph.qty_crumbs - 1;
-    double lat_h_t1, lon_h_t1, lat_r_t1, lon_r_t1;
+    double lat_h_t1 = 0;
+    double lon_h_t1 = 0;
+    double lat_r_t1 = 0;
+    double lon_r_t1 = 0;
     if (qty_crumbs_hv >= 0 && qty_crumbs_rv >= 0) {
         lat_h_t1 = host_bsm->Latitude - (host_bsm->ph.ph_crumb[qty_crumbs_hv]).latOffset;
         lon_h_t1 = host_bsm->Longitude - (host_bsm->ph.ph_crumb[qty_crumbs_hv]).lonOffset;

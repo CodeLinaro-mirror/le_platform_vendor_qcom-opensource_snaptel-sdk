@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -119,6 +119,24 @@ struct ImsRegistrationInfo {
 };
 
 /**
+ * Defines the cellular service status parameters.
+ */
+enum class CellularServiceStatus {
+    UNKNOWN = -1,             /**< Unknown service status */
+    NO_SERVICE = 0,           /**< Unavailable service status */
+    LIMITED_SERVICE = 1,      /**< Emergency service status */
+    FULL_SERVICE = 2,         /**< Available service status */
+};
+
+/**
+ * Represents the status for supporting various services over IMS.
+ */
+struct ImsServiceInfo {
+    CellularServiceStatus sms;    /**< SMS service status over IMS */
+    CellularServiceStatus voice;  /**< Voice service status over IMS */
+};
+
+/**
  * This function is called in the response to requestRegistrationInfo API.
  *
  * The callback can be invoked from multiple different threads.
@@ -132,6 +150,23 @@ struct ImsRegistrationInfo {
  */
 using ImsRegistrationInfoCb
    = std::function<void(ImsRegistrationInfo status, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in response to the requestServiceInfo API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] service        Indicates the IMS service information
+ *                            @ref telux::tel::ImsServiceInfo.
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not @ref telux::common::ErrorCode.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+using ImsServiceInfoCb
+   = std::function<void(ImsServiceInfo service, telux::common::ErrorCode error)>;
 
 
 /**
@@ -162,6 +197,20 @@ public:
     */
     virtual telux::common::Status
         requestRegistrationInfo(ImsRegistrationInfoCb callback) = 0;
+
+   /**
+    * Request IMS service information, such as SMS and voice service status over IMS.
+    *
+    * @param [in] callback     Callback pointer to get the response of
+    *                          requestServiceInfo.
+    *
+    * @returns Status of requestServiceInfo i.e., success or suitable status code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+    virtual telux::common::Status
+        requestServiceInfo(ImsServiceInfoCb callback) = 0;
 
    /**
     * Add a listener to listen for specific events in the IMS Serving System subsystem.
@@ -216,6 +265,18 @@ public:
     *
     */
     virtual void onImsRegStatusChange(ImsRegistrationInfo status) {
+    }
+
+   /**
+    * This function is called whenever any IMS service information is changed.
+    *
+    * @param [in] service        Indicates which IMS service information has changed.
+    *                            @ref telux::tel::ImsServiceInfo.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+    virtual void onImsServiceInfoChange(ImsServiceInfo service) {
     }
 
     virtual ~IImsServingSystemListener() {

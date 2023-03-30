@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -91,6 +91,23 @@ void MyImsServSysCallback::imsRegStateResponse(SlotId slotId,
     }
 }
 
+// Implementation of IMS Service Status callback
+void MyImsServSysCallback::imsServiceStatusResponse(SlotId slotId,
+    telux::tel::ImsServiceInfo service, telux::common::ErrorCode error) {
+    std::cout << "IMS service status response received on slotId "
+            << static_cast<int>(slotId) << std::endl;
+    if(error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "SMS Service Status over IMS: "
+            << MyImsServSysListener::convertServiceStatustoString(service.sms)
+            << ", Voice Service Status over IMS: "
+            << MyImsServSysListener::convertServiceStatustoString(service.voice)
+            << std::endl;
+    } else {
+        PRINT_CB << "requestServiceInfo failed, errorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
 MyImsServSysListener::MyImsServSysListener(SlotId slotId)
    : slotId_(slotId) {
 }
@@ -103,6 +120,16 @@ void MyImsServSysListener::onImsRegStatusChange(telux::tel::ImsRegistrationInfo 
                 << ", radio technology: " << MyPhoneHelper::radioTechToString(status.rat)
                 << ", error code: " << status.errorCode
                 << ", error description: " << status.errorString << std::endl;
+}
+
+void MyImsServSysListener::onImsServiceInfoChange(telux::tel::ImsServiceInfo service) {
+    PRINT_NOTIFICATION << "onImsServiceInfoChange, SlotId: " << static_cast<int>(slotId_)
+        << std::endl;
+    PRINT_NOTIFICATION << "SMS Service Status over IMS: "
+                << convertServiceStatustoString(service.sms)
+                << ", Voice Service Status over IMS: "
+                << convertServiceStatustoString(service.voice)
+                << std::endl;
 }
 
 std::string MyImsServSysListener::convertRegStatustoString(telux::tel::RegistrationStatus state) {
@@ -127,6 +154,28 @@ std::string MyImsServSysListener::convertRegStatustoString(telux::tel::Registrat
     }
 
     return stateString;
+}
+
+std::string MyImsServSysListener::convertServiceStatustoString(
+    telux::tel::CellularServiceStatus status) {
+    std::string statusString;
+
+    switch(status) {
+        case telux::tel::CellularServiceStatus::NO_SERVICE:
+            statusString = "NO_SERVICE";
+            break;
+        case telux::tel::CellularServiceStatus::LIMITED_SERVICE:
+            statusString = "LIMITED_SERVICE";
+            break;
+        case telux::tel::CellularServiceStatus::FULL_SERVICE:
+            statusString = "FULL_SERVICE";
+            break;
+        default:
+            statusString = "Unknown service status";
+            break;
+    }
+
+    return statusString;
 }
 
 void MyImsServSysListener::onServiceStatusChange(telux::common::ServiceStatus status) {

@@ -43,6 +43,7 @@ CaptureMenu::CaptureMenu(std::string appName, std::string cursor,
    audioClient_(audioClient) {
        captureStatus_ = false;
        ready_ = false;
+       readFail_ = false;
 }
 
 CaptureMenu::~CaptureMenu() {
@@ -286,20 +287,37 @@ void CaptureMenu::record() {
             if(status != telux::common::Status::SUCCESS) {
                 std::cout << "read() failed with error" << static_cast<unsigned int>(status)
                 <<std::endl;
+                streamBuffer->reset();
+                freeBuffers_.push(streamBuffer);
+                readFail_ = true;
+                goto exit;
             }
         } else {
             cv_.wait(lock);
+            if(readFail_) {
+                goto exit;
+            }
         }
     }
-    int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
+
+    exit:
+    if(readFail_) {
+        while(freeBuffers_.size() != TOTAL_BUFFERS) {
+            cv_.wait(lock);
+        }
+        std::cout << "File Recording Failed" <<std::endl;
+    } else {
+        int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
                         (sampleRate*numChannels*BITS_PER_SAMPLE);
-    waitTime = waitTime+100;
-    while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
-        cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
+        waitTime = waitTime+100;
+        while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
+            cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
+        }
+        std::cout << "File Recorded SuccessFully" <<std::endl;
     }
+
     fflush(file_);
     fclose(file_);
-    std::cout << "File Recorded SuccessFully" <<std::endl;
     captureStatus_ = false;
 }
 
@@ -310,6 +328,7 @@ void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buff
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "read() returned with error " << static_cast<unsigned int>(error)
             << std::endl;
+        readFail_ = true;
     } else {
         uint32_t size = buffer->getDataSize();
         bytesWrittenToFile = fwrite(buffer->getRawBuffer(),1,size,file_);

@@ -189,10 +189,13 @@ enum DeviceType {
  *  Defines the direction of an audio device.
  */
 enum class DeviceDirection {
+
     /** Default direction (invalid) */
     NONE = -1,
+
     /** Audio will go out of the device, for example through a speaker (sink) */
     RX = 1,
+
     /** Audio will come into the device, for example through a mic (source) */
     TX = 2,
 };
@@ -201,17 +204,23 @@ enum class DeviceDirection {
  *  Defines the type of the audio stream and the type's purpose.
  */
 enum class StreamType {
+
     /** Default type (invalid) */
     NONE = -1,
+
     /** Used for audio over a cellular network */
     VOICE_CALL = 1,
+
     /** Used for playing audio, for example playing music and notifications */
     PLAY = 2,
+
     /** Used for capturing audio, for example recording sound using a mic  */
     CAPTURE = 3,
+
     /** Used for generating audio from a @ref DeviceDirection::RX device, which
      *  is intended to be captured back by a @ref DeviceDirection::TX device */
     LOOPBACK = 4,
+
     /** Used for single tone and DTMF tone generation */
     TONE_GENERATOR = 5,
 };
@@ -220,10 +229,13 @@ enum class StreamType {
  *  Defines the direction of an audio stream.
  */
 enum class StreamDirection {
+
     /** Default direction (invalid) */
     NONE = -1,
+
     /** Specifies that the audio data will flow towards a sink device */
     RX = 1,
+
     /** Specifies that the audio data originates from a source device */
     TX = 2,
 };
@@ -238,9 +250,11 @@ enum class StreamDirection {
  *  audio data flow.
  */
 enum class Direction {
+
     /** Defines that playback should occur on a voice downlink
      *  path (cellular network to a device) */
     RX = 1,
+
     /** Defines that playback should occur on voice uplink
      *  path (device to a cellular network) */
     TX = 2,
@@ -253,8 +267,10 @@ enum class Direction {
  *  on speaker-2.
  */
 enum ChannelType {
+
     /** Specifies the left channel */
     LEFT = (1 << 0),
+
     /** Specifies the right channel */
     RIGHT = (1 << 1),
 };
@@ -271,14 +287,19 @@ using ChannelTypeMask = int;
  *  and hardware layers.
  */
 enum class AudioFormat {
+
     /** Default format (invalid) */
     UNKNOWN = -1,
+
     /** PCM signed 16 bits */
     PCM_16BIT_SIGNED = 1,
+
     /** Adaptive multirate narrow band format */
     AMRNB = 20,
+
     /** Adaptive multirate wide band format */
     AMRWB,
+
     /** Extended adaptive multirate wide band format */
     AMRWB_PLUS,
 };
@@ -315,8 +336,10 @@ enum class DtmfHighFreq {
  *  Defines the behavior for how a compressed audio format playback should be finished.
  */
 enum class StopType {
+
     /** Stop playing immediately and discard all pending audio samples */
     FORCE_STOP,
+
     /** Stop playing after all samples in the pipeline have been played */
     STOP_AFTER_PLAY,
 };
@@ -330,10 +353,13 @@ enum class StopType {
  *  Defines the properties of the audio data for compressed playback and transcoding.
  */
 enum class AmrwbpFrameFormat {
+
     /** Default format (invalid) */
     UNKNOWN = -1,
+
     /** Unsupported */
     TRANSPORT_INTERFACE_FORMAT,
+
     /** Specifies that the audio content from AMR* format file has been
      *  parsed and only actual audio content is sent for playback */
     FILE_STORAGE_FORMAT,
@@ -344,8 +370,10 @@ enum class AmrwbpFrameFormat {
  *  Used with an audio device capable of supporting ECNR.
  */
 enum class EcnrMode {
+
     /** Disables ECNR */
     DISABLE = 0,
+
     /** Enables ECNR */
     ENABLE = 1,
 };
@@ -354,10 +382,13 @@ enum class EcnrMode {
  *  Represents the state of the platform calibration for audio.
  */
 enum class CalibrationInitStatus {
+
     /** Default state */
     UNKNOWN = -1,
+
     /** Platform calibrated successfully */
     INIT_SUCCESS = 0,
+
     /** Platform calibration failed */
     INIT_FAILED = 1,
 };
@@ -373,8 +404,10 @@ struct FormatParams {
  *  Specifies the details of the adaptive multirate wide band format frame.
  */
 struct AmrwbpParams : FormatParams {
+
     /** Bit width of the stream (16 or 24) */
     uint32_t bitWidth;
+
     /** Refer to @ref AmrwbpFrameFormat */
     AmrwbpFrameFormat frameFormat;
 };
@@ -383,14 +416,18 @@ struct AmrwbpParams : FormatParams {
  *  Defines the parameters when creating an audio stream.
  */
 struct StreamConfig {
+
     /** Refer to @ref StreamType */
     StreamType type;
+
     /** @deprecated represents modem subscription ID (default set to 1).
      *  Use the @ref StreamConfig::slotId field instead of this */
     int modemSubId = 1;
+
     /** SlotId -- specifies the slot ID where the UICC card is inserted.
      *  Used in conjuction with StreamType::VOICE_CALL only */
     SlotId slotId = INVALID_SLOT_ID;
+
     /** Sample rate in Hz. Typical values:
      *
      *  - 8k
@@ -398,25 +435,30 @@ struct StreamConfig {
      *  - 32k
      *  - 48k
      *
-     *  For voice stream and compressed playback, the sample rate is ignored. For Bluetooth use
-     *  cases, the supported values are 8k and 16k.
+     *  For Bluetooth use-cases, supported values are 8k and 16k. Not used for
+     *  for voice call, compressed playback and tone generation.
      */
     uint32_t sampleRate;
+
     /** Refer to @ref ChannelTypeMask */
     ChannelTypeMask channelTypeMask;
+
     /** Refer to @ref AudioFormat */
     AudioFormat format;
+
     /** Defines the list of audio devices @ref DeviceType to use for this stream.
      *  For StreamType::PLAY and StreamType::TONE_GENERATOR, a single sink device should be
      *  specified. For StreamType::CAPTURE, a single source device should be specified. For
      *  StreamType::VOICE_CALL and StreamType::LOOPBACK, both sink and source should be specified
-     *  with sink as the first device and source as the second.
-     */
+     *  with sink as the first device and source as the second. */
     std::vector<DeviceType> deviceTypes;
+
     /** For an in-call audio usecase, this represents the voice path direction @ref Direction */
     std::vector<Direction> voicePaths;
+
     /** Refer to @ref FormatParams */
     FormatParams *formatParams;
+
     /** Refer to @ref EcnrMode */
     EcnrMode ecnrMode = EcnrMode::DISABLE;
 };
@@ -425,14 +467,17 @@ struct StreamConfig {
  *  Specifies the parameters when setting up streams for transcoding.
  */
 struct FormatInfo {
+
     /** Sample rate in Hz, typical values 8k/16k/32k/48k
-     * Sample rate is a dummy paramter for voice stream and compressed playback.
-     */
+     *  Sample rate is a dummy paramter for voice stream and compressed playback */
     uint32_t sampleRate;
+
     /** Refer to @ref ChannelTypeMask */
     ChannelTypeMask mask;
+
     /** Refer to @ref AudioFormat */
     AudioFormat format;
+
     /** Refer to @ref FormatParams */
     FormatParams *params;
 };
@@ -446,8 +491,10 @@ struct FormatInfo {
  *  Defines the volume levels for a given audio channel.
  */
 struct ChannelVolume {
+
     /** @ref ChannelType to which the volume level is associated. */
     ChannelType channelType;
+
     /** Volume level -- minimum 0.0 and maximum 1.0 */
     float vol;
 };
@@ -456,8 +503,10 @@ struct ChannelVolume {
  *  Defines the volume levels for the audio device.
  */
 struct StreamVolume {
+
     /** List of the volume levels per channel, specified by @ref ChannelVolume */
     std::vector<ChannelVolume> volume;
+
     /** @ref StreamDirection associated with the device */
     StreamDirection dir;
 };
@@ -466,8 +515,10 @@ struct StreamVolume {
  *  Specifies the mute state of the audio device.
  */
 struct StreamMute {
+
     /** True if the device is muted, False if the device is unmuted */
     bool enable;
+
     /** @ref StreamDirection associated with the device */
     StreamDirection dir;
 };
@@ -476,10 +527,13 @@ struct StreamMute {
  *  Defines the characteristics of the DTMF tone.
  */
 struct DtmfTone {
+
     /** Lower frequency associated with the DTMF tone */
     DtmfLowFreq lowFreq;
+
     /** Higher frequency associated with the DTMF tone */
     DtmfHighFreq highFreq;
+
     /** @ref StreamDirection associated with the stream */
     StreamDirection direction;
 };

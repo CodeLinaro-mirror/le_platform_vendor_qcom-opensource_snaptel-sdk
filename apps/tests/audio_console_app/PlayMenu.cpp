@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -392,6 +392,7 @@ void PlayMenu::play() {
                 (playFormat_ == AudioFormat::AMRWB) ||
                 (playFormat_ == AudioFormat::AMRNB)){
             std::promise<bool> p;
+            std::unique_lock<std::mutex> lck(playStopMutex_);
 
             auto status = audioPlayStream_->stopAudio(
                 StopType::STOP_AFTER_PLAY, [&p](telux::common::ErrorCode error) {
@@ -410,6 +411,7 @@ void PlayMenu::play() {
             if (p.get_future().get()) {
                     std::cout << "Pending buffers played successfully" << std::endl;
             }
+            playStopcv_.wait(lck);
         }
     }
     if(playStatus_) {
@@ -432,6 +434,7 @@ void PlayMenu::onReadyForWrite() {
 
 void PlayMenu::onPlayStopped() {
     closeFile();
+    playStopcv_.notify_all();
     std::cout << "Playback Stopped after playing pending buffers" << std::endl;
 }
 

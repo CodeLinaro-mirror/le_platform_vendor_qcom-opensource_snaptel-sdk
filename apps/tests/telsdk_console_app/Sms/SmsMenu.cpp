@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -169,6 +169,20 @@ void SmsMenu::init() {
    std::cout << "Device is listening for any incoming messages" << std::endl;
 }
 
+bool SmsMenu::isDialable (char ch) {
+   return ('0' <= ch && ch <= '9') || ch == '*' || ch == '#' || ch == '+';
+}
+
+bool SmsMenu::isValidPhoneNumber(std::string address) {
+   int count = 0;
+   for (char& ch : address) {
+      if (!isDialable(ch)) {
+         return false;
+      }
+   }
+   return true;
+}
+
 // SMS Requests
 void SmsMenu::sendSms(std::vector<std::string> userInput) {
    auto smsManager = smsManagers_[slot_ - 1];
@@ -177,6 +191,11 @@ void SmsMenu::sendSms(std::vector<std::string> userInput) {
    std::string receiverAddress;
    std::cout << "Enter phone number: ";
    std::getline(std::cin, receiverAddress, delimiter);
+
+   if (!isValidPhoneNumber(receiverAddress)) {
+      std::cout << "Invalid Receiver Address \n";
+      return;
+   }
 
    std::string message;
    std::cout << "Enter message: ";
@@ -213,6 +232,11 @@ void SmsMenu::sendEnhancedSms(std::vector<std::string> userInput) {
    std::string receiverAddress;
    std::cout << "Enter phone number: ";
    std::getline(std::cin, receiverAddress, delimiter);
+
+   if (!isValidPhoneNumber(receiverAddress)) {
+      std::cout << "Invalid Receiver Address \n";
+      return;
+   }
 
    std::string message;
    std::cout << "Enter message: ";

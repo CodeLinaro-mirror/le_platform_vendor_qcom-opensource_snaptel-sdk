@@ -26,6 +26,41 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
  /**
   * @file: ApplicationTest.cpp
@@ -111,7 +146,7 @@ static void receive(MessageType msgType) {
         application->initVerifLogging();
 
     // will need to make this compatible for multiple rx ports
-    int ret;
+    int ret = -1;
     while (!stopThread)
     {
         // call application's receive() function to process the packet across
@@ -500,7 +535,7 @@ static void simLdmRx(void) {
             const auto ldmIndex = application->ldm->getFreeBsm();
             application->receive(0, recCount, ldmIndex);
             auto msg = &application->ldm->bsmContents[ldmIndex];
-            if (csv) {
+            if (csv && fp) {
                 write_to_csv(msg, fp);
             }
             count += 1;
@@ -581,35 +616,47 @@ static void simTransmit(MessageType msgType) {
 }
 
 void printUse() {
-    cout << "Usage: qits [options] <Config File Relative Path>\n\n\n";
-    cout << "Example: qits -t -l -s \\home\\root\\ObeConfig.conf\n";
-    cout << "Example above will run: transmit mode, ldm receive mode and the safety apps.\n\n";
-    cout << "Example: qits -r -b \\home\\root\\ObeConfig.conf\n";
-    cout << "Example above will run: receive mode with basic safety messages.\n\n";
-    cout << "At least one option is needed and Config File is always required.\n";
+    cout << "Usage: qits [options] <Config File Path>\n";
+    cout << "  At least one option is needed and Config File Path is always required.\n";
     cout << "Options:\n";
-    cout << "-h Prints help options.\n";
-    cout << "-t Transmits Cv2x data. Runs by default with -b. See -b.\n";
-    cout << "-r Receives Cv2x data. Runs by defaullt with -b. See -b.\n";
-    cout << "-s Safety Apps Mode; Adds -l if not specified. Runs by default with -b.\n";
-    cout << "-p <Pre-Recorded File Path>  Transmists from pre-recorded file.\n";
-    cout << "-T Tunnel Transmit.\n";
-    cout << "-x Tunnel Receive. It automatically calls -l. See: -l.\n";
-    cout << "-l LDM mode; Adds -r if nothing specified. Use it with -r or -j.\n";
-    cout << "-b Transmits and Receives BSMS.\n";
-#ifdef ETSI
-    cout << "-c Transmits and Receives CAMs.\n";
-    cout << "-d Transmits and Receives DENMs.\n";
-#endif
-    cout << "-D Dump raw received packet.\n";
-    cout << "-v Don't print received remote vehicle summary(for performance measurement).\n";
-    cout << "-i <other_device_ip_address> <port>  Simulating CV2x with kinematics";
-    cout << " and can interfaces. Transmit only.\n";
-    cout << "           note: You may enable UDP if desired via the config file\n";
-    cout << "-j <other_device_ip_address> <port>  Simulates CV2x and sends packets via TCP ";
+    cout << "  General options: \n";
+    cout << "  -h Prints help options.\n";
+    cout << "  -D Dump raw received packet.\n";
+    cout << "  -v Don't print received remote vehicle summary(for performance measurement).\n";
+    cout << "  Modes:\n";
+    cout << "  -t Transmits Cv2x data. Runs by default with -b. See -b.\n";
+    cout << "  -r Receives Cv2x data. Runs by defaullt with -b. See -b.\n";
+    cout << "  -i <other_device_ip_address> <port> Simulates CV2X and sends packets via TCP ";
     cout << "instead of OTA.\n";
     cout << "           note: You may enable UDP if desired via the config file\n";
-    cout << "-o <CSV file path> write received BSM into CSV file.\n";
+    cout << "  -j <other_device_ip_address> <port> Simulates CV2X and receives packets via TCP ";
+    cout << "instead of OTA.\n";
+    cout << "           note: You may enable UDP if desired via the config file\n";
+    cout << "  -b SAE WSMP BSMS.\n";
+#ifdef ETSI
+    cout << "  -c ETSI CAMs.\n";
+    cout << "  -d ETSI DENMs.\n";
+#endif
+    cout << "  Incomplete Modes\n";
+    cout << "  -l LDM mode; Adds -r if nothing specified. Use it with -r or -j.\n";
+    cout << "  -s Safety Apps Mode; Adds -l if not specified. Runs by default with -b.\n";
+    cout << "  -p <Pre-Recorded File Path> Transmits from pre-recorded file.\n";
+    cout << "  -T Tunnel Transmit.\n";
+    cout << "  -x Tunnel Receive. It automatically calls -l. See: -l.\n";
+    cout << "  -o <CSV file path> write received BSM into CSV file.\n\n";
+    cout << "Examples (assuming path to ObeConfig.conf is /etc/ObeConfig.conf):\n";
+    cout << "  Example: qits -t /etc/ObeConfig.conf\n";
+    cout << "  Example above will transmit BSMs (the default packet type)\n\n";
+    cout << "  Example: qits -r -b /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: receive mode with basic safety messages.\n\n";
+    cout << "  Example: qits -t -r -b /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: transmit and receive mode with basic safety messages.\n\n";
+    cout << "  Example: qits -t -l -s /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: transmit mode, ldm receive mode and the safety apps.\n\n";
+    cout << "  Example: qits -i 127.0.0.1 9000 /etc/ObeConfig.conf\n";
+    cout << "  Example above will run: simulation transmit mode (TCP/UDP),\n";
+    cout << "    sending BSMs over port 9000 to ip address 127.0.0.1\n\n";
+    cout << "  Note: options -i and -j require SourceIpv4Address to be set\n";
 }
 
 void configFileCheck(string& configFile)

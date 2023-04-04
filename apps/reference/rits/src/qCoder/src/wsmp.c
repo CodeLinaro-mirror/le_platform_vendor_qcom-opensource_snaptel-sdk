@@ -681,6 +681,18 @@ static int  wsmp_decode_header(msg_contents *mc)
     // after the extension fields comes the payload.   For WSMP, it'll be a
     // element ID, length, followed by payload
 
+    if( NULL == bp ) {
+        printf(" bp is NULL \n ");
+        retcode = -1;
+        goto exit;
+    }
+
+    if( NULL == bp->data ) {
+        printf(" data is NULL \n ");
+        retcode = -1;
+        goto exit;
+    }
+
     next_weid = *(uint8_t *)bp->data;
 
     // If earlier/obsolete version, optional WEID's come now.
@@ -699,7 +711,6 @@ static int  wsmp_decode_header(msg_contents *mc)
             }
 
             wsmp_data_hdr_p = (struct wave_element_field *)bp->data;
-
             if (wsmp_data_hdr_p) {
 
                 //dbp->payload_len = ntohs(wsmp_data_hdr_p->data_len.two_octet);

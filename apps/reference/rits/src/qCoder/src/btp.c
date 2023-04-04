@@ -115,10 +115,18 @@ int btp_decode(msg_contents *mc ) {
     //GeoNetwork.
     if (btp->pkt_type == BTP_PACKET_TYPE_A) {
         struct _btp_hdr_A *h = (struct _btp_hdr_A *)abuf_pull(&mc->abuf, sizeof(struct _btp_hdr_A));
+        if (NULL == h) {
+            printf(" abuf_pull is NULL pointer\n ");
+            return -1;
+        }
         btp->d_port = ntohs(h->d_port);
         btp->s_port = ntohs(h->s_port);
     } else {
         struct _btp_hdr_B *h = (struct _btp_hdr_B *)abuf_pull(&mc->abuf, sizeof(struct _btp_hdr_B));
+        if (NULL == h) {
+            printf(" abuf_pull is NULL pointer\n ");
+            return -1;
+        }
         btp->d_port = ntohs(h->d_port);
         btp->dp_info = ntohs(h->dp_info);
     }

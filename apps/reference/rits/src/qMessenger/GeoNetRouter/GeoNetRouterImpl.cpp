@@ -1242,7 +1242,7 @@ namespace gn {
      ****************************************************************************/
     int GeoNetRouterImpl::TransmitGUC(uint8_t *Buffer, size_t BufLen, const GnData_t &data,
             txcb_t txcb) {
-        int RetValue;
+        int RetValue = 0;
         gn_guc_hdr_t *h;
         std::shared_ptr<LocTableEntry> LocTe;
         uint8_t NextAddr[GN_MID_LEN];

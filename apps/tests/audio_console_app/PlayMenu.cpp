@@ -383,7 +383,7 @@ void PlayMenu::play() {
                 (playFormat_ == AudioFormat::AMRWB) ||
                 (playFormat_ == AudioFormat::AMRNB)){
             std::promise<bool> p;
-            std::unique_lock<std::mutex> lck(playMutex_);
+            std::unique_lock<std::mutex> lck(playStopMutex_);
 
             auto status = audioPlayStream_->stopAudio(
                 StopType::STOP_AFTER_PLAY, [&p](telux::common::ErrorCode error) {

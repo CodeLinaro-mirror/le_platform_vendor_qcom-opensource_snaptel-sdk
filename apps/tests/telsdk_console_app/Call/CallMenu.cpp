@@ -129,8 +129,8 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
     if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
        std::cout << "CallManager subsystem is not ready "
                   << ", Please wait " << std::endl;
-       callMgrsubSystemStatus = prom.get_future().get();
     }
+    callMgrsubSystemStatus = prom.get_future().get();
    if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
       myDialCallCmdCb_ = std::make_shared<MyDialCallback>();
       myHangupCb_ = std::make_shared<MyCallCommandCallback>("Hang");

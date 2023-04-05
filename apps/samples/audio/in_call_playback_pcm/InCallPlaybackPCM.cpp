@@ -53,6 +53,7 @@
  * Voice call must be active (answered) between local end and far end.
  */
 
+#include <errno.h>
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -65,7 +66,7 @@
 /*
  * Initialize application and get an audio service.
  */
-telux::common::Status InCallPlaybackPCM::init() {
+int InCallPlaybackPCM::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -85,7 +86,7 @@ telux::common::Status InCallPlaybackPCM::init() {
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
-        return telux::common::Status::FAILED;
+        return -ENOMEM;
     }
 
     /* Step - 3 */
@@ -95,22 +96,23 @@ telux::common::Status InCallPlaybackPCM::init() {
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "audio service unavailable" << std::endl;
-            return telux::common::Status::FAILED;
+            return -EIO;
         }
         std::cout << "audio service ready" << std::endl;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 4, create a voice call stream.
  */
-telux::common::Status InCallPlaybackPCM::createVoiceStream() {
+int InCallPlaybackPCM::createVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
-    telux::audio::StreamConfig sc;
+    telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::VOICE_CALL;
     sc.slotId = DEFAULT_SLOT_ID;
@@ -121,126 +123,120 @@ telux::common::Status InCallPlaybackPCM::createVoiceStream() {
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+            telux::common::ErrorCode result) {
+        if (result == telux::common::ErrorCode::SUCCESS) {
             audioVoiceStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioVoiceStream>(audioStream);
-            p.set_value(true);
-        } else {
-            p.set_value(false);
         }
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request create voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't create voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed create voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 10, delete voice call stream.
  */
-telux::common::Status InCallPlaybackPCM::deleteVoiceStream() {
+int InCallPlaybackPCM::deleteVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
     status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+            telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request delete voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't delete voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 5, start voice call stream.
  */
-telux::common::Status InCallPlaybackPCM::startVoiceStream() {
+int InCallPlaybackPCM::startVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
-    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request start voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request start voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't start voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed start voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  * Step - 9, stop voice call stream.
  */
-telux::common::Status InCallPlaybackPCM::stopVoiceStream() {
+int InCallPlaybackPCM::stopVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
-    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request stop voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request stop voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't stop voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed stop voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  * Step - 6, create a incall-playback stream.
  * Audio device is not specified. Voice uplink is specified.
  */
-telux::common::Status InCallPlaybackPCM::createIncallPlayStream() {
+int InCallPlaybackPCM::createIncallPlayStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
-    telux::audio::StreamConfig sc;
+    telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::PLAY;
     sc.slotId = DEFAULT_SLOT_ID;
@@ -254,74 +250,73 @@ telux::common::Status InCallPlaybackPCM::createIncallPlayStream() {
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+            telux::common::ErrorCode result) {
+        if (result == telux::common::ErrorCode::SUCCESS) {
             audioPlayStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioPlayStream>(audioStream);
-            p.set_value(true);
-        } else {
-            p.set_value(false);
         }
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create incall-playback stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request create playback stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't create incall-playback stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed create playback stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 8, delete playback stream.
  */
-telux::common::Status InCallPlaybackPCM::deleteIncallPlayStream() {
+int InCallPlaybackPCM::deleteIncallPlayStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
     status = audioManager_-> deleteStream(audioPlayStream_, [&p, this] (
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+            telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete incall-playback stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request delete playback stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't delete incall-playback stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete playback stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
 void InCallPlaybackPCM::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error) {
+        uint32_t bytesWritten, telux::common::ErrorCode result) {
 
     long offset;
 
-    if ((error != telux::common::ErrorCode::SUCCESS) ||
+    if ((result != telux::common::ErrorCode::SUCCESS) ||
             (buffer->getDataSize() != bytesWritten)) {
+        /* It is an application owner's decision, what to do if an error occurs
+         * in writing; resend buffer for playback or terminate the playback.
+         * In this example we are resending. */
         offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
         fseek(fileToPlay_, offset, SEEK_CUR);
     }
 
-    buffer->reset();
     freeBuffers_.push(buffer);
     cv_.notify_all();
 }
@@ -335,6 +330,7 @@ void InCallPlaybackPCM::play() {
     uint32_t numBytes = 0;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
+
     std::unique_lock<std::mutex> lock(playMutex_);
 
     fileToPlay_ = std::fopen(fileToPlayPath_, "r");
@@ -397,7 +393,7 @@ void InCallPlaybackPCM::play() {
 
 int main(int argc, char **argv) {
 
-    telux::common::Status status;
+    int ret;
     std::shared_ptr<InCallPlaybackPCM> app;
 
     if (argc < 2) {
@@ -405,45 +401,57 @@ int main(int argc, char **argv) {
         return -EINVAL;
     }
 
-    app = std::make_shared<InCallPlaybackPCM>();
-    status = app->init();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    try {
+        app = std::make_shared<InCallPlaybackPCM>();
+    } catch (const std::exception& e) {
+        std::cout << "can't allocate InCallPlaybackPCM" << std::endl;
+        return -ENOMEM;
+    }
+
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
     }
 
     app->fileToPlayPath_ = argv[1];
 
-    status = app->createVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->createVoiceStream();
+    if (ret < 0) {
+        return ret;
     }
 
-    status = app->startVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->startVoiceStream();
+    if (ret < 0) {
+        app->deleteVoiceStream();
+        return ret;
     }
 
-    status = app->createIncallPlayStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->createIncallPlayStream();
+    if (ret < 0) {
+        app->stopVoiceStream();
+        app->deleteVoiceStream();
+        return ret;
     }
 
     std::thread playWorker(&InCallPlaybackPCM::play, &(*app));
     playWorker.join();
 
-    status = app->deleteIncallPlayStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->deleteIncallPlayStream();
+    if (ret < 0) {
+        app->stopVoiceStream();
+        app->deleteVoiceStream();
+        return ret;
     }
 
-    status = app->stopVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->stopVoiceStream();
+    if (ret < 0) {
+        app->deleteVoiceStream();
+        return ret;
     }
 
-    status = app->deleteVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->deleteVoiceStream();
+    if (ret < 0) {
+        return ret;
     }
 
     return 0;

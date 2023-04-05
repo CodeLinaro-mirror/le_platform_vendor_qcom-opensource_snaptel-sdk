@@ -48,6 +48,7 @@
  * Contents of /data/musicfile.pcm file are played on the speaker.
  */
 
+#include <errno.h>
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -60,7 +61,7 @@
 /*
  * Initialize application and get an audio service.
  */
-telux::common::Status PlaybackPCM::init() {
+int PlaybackPCM::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -80,7 +81,7 @@ telux::common::Status PlaybackPCM::init() {
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
-        return telux::common::Status::FAILED;
+        return -ENOMEM;
     }
 
     /* Step - 3 */
@@ -90,22 +91,23 @@ telux::common::Status PlaybackPCM::init() {
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "audio service unavailable" << std::endl;
-            return telux::common::Status::FAILED;
+            return -EIO;
         }
         std::cout << "audio service ready" << std::endl;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  * Step - 4, create a playback stream.
  */
-telux::common::Status PlaybackPCM::createPlayStream() {
+int PlaybackPCM::createPlayStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
-    telux::audio::StreamConfig sc;
+    telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::PLAY;
     sc.slotId = DEFAULT_SLOT_ID;
@@ -116,57 +118,54 @@ telux::common::Status PlaybackPCM::createPlayStream() {
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+            telux::common::ErrorCode result) {
+        if (result == telux::common::ErrorCode::SUCCESS) {
             audioPlayStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioPlayStream>(audioStream);
-            p.set_value(true);
-        } else {
-            p.set_value(false);
         }
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create playback stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request create stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't create playback stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed create stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 6, delete playback stream.
  */
-telux::common::Status PlaybackPCM::deletePlayStream() {
+int PlaybackPCM::deletePlayStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
     status = audioManager_-> deleteStream(audioPlayStream_, [&p, this] (
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+            telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete playback stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request delete stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't delete playback stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
@@ -183,7 +182,6 @@ void PlaybackPCM::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> b
         fseek(fileToPlay_, offset, SEEK_CUR);
     }
 
-    buffer->reset();
     freeBuffers_.push(buffer);
     cv_.notify_all();
 }
@@ -197,6 +195,7 @@ void PlaybackPCM::play() {
     uint32_t numBytes = 0;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
+
     std::unique_lock<std::mutex> lock(playMutex_);
 
     fileToPlay_ = std::fopen(fileToPlayPath_, "r");
@@ -259,7 +258,7 @@ void PlaybackPCM::play() {
 
 int main(int argc, char **argv) {
 
-    telux::common::Status status;
+    int ret;
     std::shared_ptr<PlaybackPCM> app;
 
     if (argc < 2) {
@@ -267,25 +266,31 @@ int main(int argc, char **argv) {
         return -EINVAL;
     }
 
-    app = std::make_shared<PlaybackPCM>();
-    status = app->init();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    try {
+        app = std::make_shared<PlaybackPCM>();
+    } catch (const std::exception& e) {
+        std::cout << "can't allocate PlaybackPCM" << std::endl;
+        return -ENOMEM;
     }
 
     app->fileToPlayPath_ = argv[1];
 
-    status = app->createPlayStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = app->createPlayStream();
+    if (ret < 0) {
+        return ret;
     }
 
     std::thread playWorker(&PlaybackPCM::play, &(*app));
     playWorker.join();
 
-    status = app->deletePlayStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->deletePlayStream();
+    if (ret < 0) {
+        return ret;
     }
 
     return 0;

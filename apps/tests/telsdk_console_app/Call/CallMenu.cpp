@@ -106,13 +106,13 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
       std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
       exit(0);
    }
-   std::promise<ServiceStatus> prom;
+   std::promise<telux::common::ServiceStatus> prom;
    //  Get the PhoneFactory and CallManager instances.
-   callManager_ = phoneFactory.getCallManager([&](ServiceStatus status) {
-   if(status == ServiceStatus::SERVICE_AVAILABLE) {
-      prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+   callManager_ = phoneFactory.getCallManager([&](telux::common::ServiceStatus status) {
+   if(status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      prom.set_value(telux::common::ServiceStatus::SERVICE_AVAILABLE);
    } else {
-      prom.set_value(ServiceStatus::SERVICE_FAILED);
+      prom.set_value(telux::common::ServiceStatus::SERVICE_FAILED);
    }
    });
    if(!callManager_) {
@@ -120,13 +120,13 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
       exit(1);
     }
 
-    ServiceStatus callMgrsubSystemStatus = callManager_->getServiceStatus();
-    if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
+    telux::common::ServiceStatus callMgrsubSystemStatus = callManager_->getServiceStatus();
+    if(callMgrsubSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
        std::cout << "CallManager subsystem is not ready "
                   << ", Please wait " << std::endl;
-       callMgrsubSystemStatus = prom.get_future().get();
     }
-   if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
+    callMgrsubSystemStatus = prom.get_future().get();
+   if(callMgrsubSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       myDialCallCmdCb_ = std::make_shared<MyDialCallback>();
       myHangupCb_ = std::make_shared<MyCallCommandCallback>("Hang");
       myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");

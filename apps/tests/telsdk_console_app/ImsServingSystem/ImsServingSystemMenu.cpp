@@ -96,8 +96,8 @@ void ImsServingSystemMenu::init() {
             if (imsServSysMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
                 std::cout << "IMS Serving System subsystem is not ready on slotId " << i
                     << ", Please wait " << std::endl;
-                imsServSysMgrStatus = prom.get_future().get();
             }
+            imsServSysMgrStatus = prom.get_future().get();
             if (imsServSysMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
                 std::cout << "IMS Serving System subsystem is ready on slotId " << i << std::endl;
                 auto listener = std::make_shared<MyImsServSysListener>(static_cast<SlotId>(i));

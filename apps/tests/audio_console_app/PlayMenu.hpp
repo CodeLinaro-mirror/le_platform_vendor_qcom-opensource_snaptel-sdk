@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -111,6 +111,8 @@ private:
     std::condition_variable cv_;
     std::vector<std::thread> runningThreads_;
     std::atomic<bool> playStatus_;
+    std::mutex playStopMutex_;
+    std::condition_variable playStopcv_;
     std::atomic<bool> playInProgress_;
     AudioFormat playFormat_;
     std::atomic<bool> pipeLineEmpty_;

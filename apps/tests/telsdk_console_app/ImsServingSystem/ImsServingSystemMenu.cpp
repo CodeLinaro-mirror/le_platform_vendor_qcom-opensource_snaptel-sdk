@@ -28,39 +28,8 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
  *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -95,7 +64,7 @@ ImsServingSystemMenu::~ImsServingSystemMenu() {
     imsServSysListeners_.clear();
 }
 
-void ImsServingSystemMenu::init() {
+bool ImsServingSystemMenu::init() {
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotCount_= MULTI_SIM_NUM_SLOTS;
     }
@@ -118,7 +87,7 @@ void ImsServingSystemMenu::init() {
             });
             if (!imsServingSystemMgr) {
                 std::cout << "ERROR - Failed to get IMS Serving System instance \n";
-                exit(1);
+                return false;
             }
 
             ServiceStatus imsServSysMgrStatus = imsServingSystemMgr->getServiceStatus();
@@ -134,13 +103,13 @@ void ImsServingSystemMenu::init() {
                 imsServSysListeners_.emplace(static_cast<SlotId>(i), listener);
                 if(status != Status::SUCCESS) {
                     std::cout << "ERROR - Failed to register listener \n";
-                    exit(1);
+                    return false;
                 }
 
             } else {
                 std::cout << "ERROR - Unable to initialize IMS Serving System subsystem on slotId "
                     << i << std::endl;
-                exit(1);
+                return false;
             }
             imsServingSystemMgrs_.emplace(static_cast<SlotId>(i), imsServingSystemMgr);
         }
@@ -159,6 +128,7 @@ void ImsServingSystemMenu::init() {
 
     addCommands(commandsListImsServSysMenu);
     ConsoleApp::displayMenu();
+    return true;
 }
 
 void ImsServingSystemMenu::requestImsRegStatus(std::vector<std::string> userInput) {

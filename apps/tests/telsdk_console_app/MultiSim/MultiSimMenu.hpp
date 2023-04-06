@@ -26,6 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ /*
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef MULTISIMMENU_HPP
 #define MULTISIMMENU_HPP
@@ -45,7 +49,7 @@ public:
     /**
      * Initialize commands and SDK
      */
-    void init();
+    bool init();
 
     MultiSimMenu(std::string appName, std::string cursor);
 

@@ -26,6 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ /*
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * ImsSettingsMenu provides menu options to invoke IMS service configuration parameters
@@ -64,7 +68,7 @@ ImsSettingsMenu::~ImsSettingsMenu() {
 
 }
 
-void ImsSettingsMenu::init() {
+bool ImsSettingsMenu::init() {
     if (imsSettingsMgr_ == nullptr) {
         std::promise<ServiceStatus> prom;
         //  Get the PhoneFactory and ImsSettingsManager instances.
@@ -78,7 +82,7 @@ void ImsSettingsMenu::init() {
         });
         if (!imsSettingsMgr_) {
             std::cout << "ERROR - Failed to get IMS settings instance \n";
-            exit(1);
+            return false;
         }
 
         ServiceStatus immsMgrStatus = imsSettingsMgr_->getServiceStatus();
@@ -92,12 +96,12 @@ void ImsSettingsMenu::init() {
             Status status = imsSettingsMgr_->registerListener(imsSettingsListener_);
             if(status != Status::SUCCESS) {
                 std::cout << "ERROR - Failed to register listener \n";
-                exit(1);
+                return false;
             }
 
         } else {
             std::cout << "ERROR - Unable to initialize IMS Settings subsystem \n";
-            exit(1);
+            return false;
         }
     } else {
         std::cout << "IMS settings manager is already initialized \n";
@@ -116,6 +120,7 @@ void ImsSettingsMenu::init() {
 
     addCommands(commandsListImsSettingsMenu);
     ConsoleApp::displayMenu();
+    return true;
 }
 
 void ImsSettingsMenu::requestImsServiceConfig(std::vector<std::string> userInput) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -42,7 +42,7 @@ class SuppServicesMenu : public ConsoleApp {
 public:
    SuppServicesMenu(std::string appName, std::string cursor);
    ~SuppServicesMenu();
-   void init();
+   bool init();
 
 private:
    void setCallWaitingPref(std::vector<std::string> userInput);

@@ -172,6 +172,7 @@ void VoiceMenu::createStream(std::vector<std::string> userInput) {
                 } else if(status == Status::ALREADY) {
                     std::cout << "Stream exist please delete first" << std::endl;
                 } else {
+                    deleteActiveSession(slotId_);
                     std::cout << "Stream creation failed on slotId : " << slotId_ << std::endl;
                 }
             } else {

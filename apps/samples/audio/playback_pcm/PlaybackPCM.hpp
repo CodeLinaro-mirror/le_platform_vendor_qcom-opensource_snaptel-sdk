@@ -40,9 +40,9 @@
 class PlaybackPCM {
 
  public:
-    telux::common::Status init();
-    telux::common::Status createPlayStream();
-    telux::common::Status deletePlayStream();
+    int init();
+    int createPlayStream();
+    int deletePlayStream();
     void play();
     void writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error);

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -210,6 +210,29 @@ public:
    virtual telux::common::Status setOperatingMode(OperatingMode operatingMode,
                                                   telux::common::ResponseCallback callback
                                                   = nullptr)
+      = 0;
+
+   /**
+    * Reset the WWAN stack on the modem without impacting the CV2x stack.
+    * This does a soft-reset of some of the subsystems on the modem. Some subsystems like data
+    * services is not impacted by this trigger, so it is recommended to stop any WWAN data calls
+    * using @ref telux::data::IDataConnectionManager::stopDataCall before invoking this API. This
+    * API will be rejected when under the scenarios of voice call, emergency call, emergency SMS,
+    * and emergency call back mode.
+    *
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_PHONE_MGMT permission
+    * to invoke this API successfully.
+    *
+    * @param [in] callback      Optional callback pointer to get the response
+    *                           of WWAN reset request.
+    *
+    * @returns Status of resetWwan i.e. success or suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status resetWwan(telux::common::ResponseCallback callback = nullptr)
       = 0;
 
    /**

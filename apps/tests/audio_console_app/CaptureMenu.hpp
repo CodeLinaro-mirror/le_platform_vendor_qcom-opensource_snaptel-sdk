@@ -68,6 +68,7 @@ private:
     std::vector<std::thread> runningThreads_;
     std::atomic<bool> captureStatus_;
     std::atomic<bool> ready_;
+    std::atomic<bool> readFail_;
 };
 
 #endif // CAPTUREMENU_HPP

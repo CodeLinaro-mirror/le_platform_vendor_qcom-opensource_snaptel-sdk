@@ -40,13 +40,13 @@
 class InCallPlaybackPCM {
 
  public:
-    telux::common::Status init();
-    telux::common::Status createVoiceStream();
-    telux::common::Status deleteVoiceStream();
-    telux::common::Status startVoiceStream();
-    telux::common::Status stopVoiceStream();
-    telux::common::Status createIncallPlayStream();
-    telux::common::Status deleteIncallPlayStream();
+    int init();
+    int createVoiceStream();
+    int deleteVoiceStream();
+    int startVoiceStream();
+    int stopVoiceStream();
+    int createIncallPlayStream();
+    int deleteIncallPlayStream();
     void play();
     void writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error);

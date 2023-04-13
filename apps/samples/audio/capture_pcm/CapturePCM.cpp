@@ -49,6 +49,7 @@
  *  in /data/captured.pcm.
  */
 
+#include <errno.h>
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -61,7 +62,7 @@
 /*
  * Initialize application and get an audio service.
  */
-telux::common::Status CapturePCM::init() {
+int CapturePCM::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -81,7 +82,7 @@ telux::common::Status CapturePCM::init() {
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
-        return telux::common::Status::FAILED;
+        return -ENOMEM;
     }
 
     /* Step - 3 */
@@ -91,22 +92,23 @@ telux::common::Status CapturePCM::init() {
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "audio service unavailable" << std::endl;
-            return telux::common::Status::FAILED;
+            return -EIO;
         }
         std::cout << "audio service ready" << std::endl;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  * Step - 4, create a capture stream.
  */
-telux::common::Status CapturePCM::createCaptureStream() {
+int CapturePCM::createCaptureStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
-    telux::audio::StreamConfig sc;
+    telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::CAPTURE;
     sc.slotId = DEFAULT_SLOT_ID;
@@ -117,57 +119,54 @@ telux::common::Status CapturePCM::createCaptureStream() {
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+            telux::common::ErrorCode result) {
+        if (result == telux::common::ErrorCode::SUCCESS) {
             audioCaptureStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioCaptureStream>(audioStream);
-            p.set_value(true);
-        } else {
-            p.set_value(false);
         }
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create capture stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request create stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't create capture stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed create stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 6, delete capture stream.
  */
-telux::common::Status CapturePCM::deleteCaptureStream() {
+int CapturePCM::deleteCaptureStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
     status = audioManager_-> deleteStream(audioCaptureStream_, [&p, this] (
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+            telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete capture stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request delete stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't delete capture stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
@@ -189,7 +188,6 @@ void CapturePCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buf
         }
     }
 
-    buffer->reset();
     freeBuffers_.push(buffer);
     cv_.notify_all();
 }
@@ -202,6 +200,7 @@ void CapturePCM::capture() {
     uint32_t bytesToRead = 0;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
+
     std::unique_lock<std::mutex> lock(captureMutex_);
 
     try {
@@ -275,7 +274,7 @@ void CapturePCM::capture() {
 
 int main(int argc, char **argv) {
 
-    telux::common::Status status;
+    int ret;
     std::shared_ptr<CapturePCM> app;
 
     if (argc < 3) {
@@ -283,26 +282,32 @@ int main(int argc, char **argv) {
         return -EINVAL;
     }
 
-    app = std::make_shared<CapturePCM>();
-    status = app->init();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    try {
+        app = std::make_shared<CapturePCM>();
+    } catch (const std::exception& e) {
+        std::cout << "can't allocate CapturePCM" << std::endl;
+        return -ENOMEM;
+    }
+
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
     }
 
     app->captureDuration_ = argv[1];
     app->fileToSaveSamplesPath_ = argv[2];
 
-    status = app->createCaptureStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->createCaptureStream();
+    if (ret < 0) {
+        return ret;
     }
 
     std::thread captureWorker(&CapturePCM::capture, &(*app));
     captureWorker.join();
 
-    status = app->deleteCaptureStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->deleteCaptureStream();
+    if (ret < 0) {
+        return ret;
     }
 
     return 0;

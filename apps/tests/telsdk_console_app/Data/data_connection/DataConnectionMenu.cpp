@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 extern "C" {
 #include "unistd.h"
 }
@@ -84,9 +91,14 @@ bool DataConnectionMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "6", "set_default_profile", {}, std::bind(
             &DataConnectionMenu::setDefaultProfile, this)));
+    std::shared_ptr<ConsoleAppCommand> requestThrottledAPNInfo
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "7", "request_throttled_apn_info", {}, std::bind(
+            &DataConnectionMenu::requestThrottledApnsInfo, this)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
-        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile};
+        reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
+        requestThrottledAPNInfo};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -340,5 +352,15 @@ void DataConnectionMenu::setDefaultProfile() {
 
     retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->setDefaultProfile(
         opType, profileId, respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataConnectionMenu::requestThrottledApnsInfo() {
+    std::cout << "\nRequest Throttled APN Info" << std::endl;
+    telux::common::Status retStat;
+    int slotId = DEFAULT_SLOT_ID;
+
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->requestThrottledApnInfo(
+        MyDataCallResponseCallback::requestThrottledApnInfoCb);
     Utils::printStatus(retStat);
 }

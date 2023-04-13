@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       DataConnectionManager.hpp
  *
@@ -63,6 +70,19 @@ class IDataCall;
 struct IpFamilyInfo {
     DataCallStatus status;
     IpAddrInfo addr;
+};
+
+/**
+ * Throttle information for the corresponding APN
+ */
+struct APNThrottleInfo {
+    std::string apn;                            /**< APN name */
+    std::vector<int> profileIds;                /**< Profile IDs with the same APN */
+    uint32_t ipv4Time;                          /**< Remaining IPv4 throttled time in milliseconds*/
+    uint32_t ipv6Time;                          /**< Remaining IPv6 throttled time in milliseconds*/
+    bool isBlocked;                             /**< Is APN blocked on all plmns */
+    std::string mcc;                            /**< Mobile Country Code */
+    std::string mnc;                            /**< Mobile Network Code */
 };
 
 /**
@@ -105,6 +125,20 @@ using StatisticsResponseCb
  */
 using DataCallListResponseCb = std::function<void(
     const std::vector<std::shared_ptr<IDataCall>> &dataCallList, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestThrottledApnInfo API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] throttleInfoList         List of APNThrottleInfo
+ * @param [in] error                    Return code for whether the operation
+ *                                      succeeded or failed
+ */
+using ThrottleInfoCb = std::function<void(
+    const std::vector<APNThrottleInfo> &throttleInfoList,
+    telux::common::ErrorCode error)>;
 
 /** @addtogroup telematics_data
  * @{ */
@@ -254,6 +288,23 @@ class IDataConnectionManager {
      */
     virtual telux::common::Status requestDataCallList(OperationType type,
         DataCallListResponseCb callback) = 0;
+
+    /**
+     * Request information about APNs that are throttled by the network
+     * Any attempt to start a data call will fail if the respective APN is throttled.
+     *
+     * The provided callback will be invoked with information about all the APNs that are throttled.
+     * It also specifies the time for which the APN is being throttled. Clients should wait until
+     * that timer expires before attempting a data call on that APN. Otherwise, the data call will
+     * be rejected. Any update in the throttled state will be informed via
+     * @ref IDataConnectionListener::onThrottledApnInfoChanged.
+     *
+     * @param [out] callback         Callback with a list of APN throttle information
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    virtual telux::common::Status requestThrottledApnInfo(ThrottleInfoCb callback) = 0;
 
     /**
      * Destructor for IDataConnectionManager
@@ -411,6 +462,18 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
      *
      */
     virtual void onDataCallInfoChanged(const std::shared_ptr<IDataCall> &dataCall){};
+
+    /**
+     * This function is called when the throttled state changes, such as when a new APN is throttled
+     * or an existing throttled APN is no longer throttled after the timeout.
+     * APNs that are not throttled anymore will not appear in the list of throttled APNs.
+     *
+     * @param [out] throttleInfoList   List of all APN throttle information.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change and could
+     *          break backward compatibility.
+     */
+    virtual void onThrottledApnInfoChanged(const std::vector<APNThrottleInfo> &throttleInfoList){};
 
     /**
      * Destructor for IDataConnectionListener

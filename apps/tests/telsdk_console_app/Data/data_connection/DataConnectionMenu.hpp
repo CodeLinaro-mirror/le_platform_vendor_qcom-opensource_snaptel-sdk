@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * This is a Data Connection Manager Sample Application using Telematics SDK.
  * It is used to demonstrate APIs to start/stop data call, get list of data calls, reset data call
@@ -68,6 +75,7 @@ public:
     void requestDataCallStatistics(std::vector<std::string> inputCommand);
     void resetDataCallStatistics(std::vector<std::string> inputCommand);
     void requestDataCallList();
+    void requestThrottledApnsInfo();
     void setDefaultProfile();
 
     DataConnectionMenu(std::string appName, std::string cursor);

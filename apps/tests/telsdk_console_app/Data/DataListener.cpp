@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 #include <iostream>
 
 #include "DataListener.hpp"
@@ -64,6 +70,26 @@ void DataListener::onServiceStatusChange(telux::common::ServiceStatus status) {
          break;
    }
 }
+
+void DataListener::onThrottledApnInfoChanged(
+   const std::vector<telux::data::APNThrottleInfo> &throttleInfoList) {
+   PRINT_NOTIFICATION << "onThrottledApnInfoChanged \n";
+   std::cout << " Number of throttled APN: " << throttleInfoList.size() << std::endl;
+   int index = 0;
+   for (auto throttleInfo: throttleInfoList) {
+         std::cout << " index = " << ++index << std::endl << " Profile IDs = ";
+         for (int profileId: throttleInfo.profileIds) {
+            std::cout << profileId << ", ";
+         }
+         std::cout << std::endl << " APN: " << throttleInfo.apn << std::endl
+                   << " ipv4Time (msec): " << throttleInfo.ipv4Time << std::endl
+                   << " ipv6Time (msec): " << throttleInfo.ipv6Time << std::endl
+                   << " isBlocked: " << (throttleInfo.isBlocked ? "True" : "False") << std::endl
+                   << " mcc: " << throttleInfo.mcc << std::endl
+                   << " mnc: " << throttleInfo.mnc << std::endl << std::endl;
+      }
+}
+
 std::shared_ptr<telux::data::IDataCall> DataListener::getDataCall(int slotId, int profileId) {
    std::lock_guard<std::mutex> lk(mtx_);
    std::shared_ptr<telux::data::IDataCall> dataCall = nullptr;

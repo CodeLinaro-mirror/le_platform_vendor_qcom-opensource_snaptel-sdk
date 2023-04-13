@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <iostream>
 #include <iomanip>
 
@@ -201,6 +208,33 @@ void MyDataCallResponseCallback::dataCallListResponseCb(
    } else {
       PRINT_CB << "requestDataCallList() failed,  errorCode: " << static_cast<int>(error)
                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+   }
+}
+
+void MyDataCallResponseCallback::requestThrottledApnInfoCb(
+   const std::vector<telux::data::APNThrottleInfo> &throttleInfoList,
+   telux::common::ErrorCode error) {
+   std::cout << std::endl << std::endl;
+   if(error == telux::common::ErrorCode::SUCCESS) {
+      PRINT_CB << "requestThrottledApnInfo Response is successful \n";
+      std::cout << " Number of throttled APN: " << throttleInfoList.size() << std::endl;
+      int index = 0;
+      for (auto throttleInfo: throttleInfoList) {
+         std::cout << " index = " << ++index << std::endl << " Profile IDs = ";
+         for (int profileId: throttleInfo.profileIds) {
+            std::cout << profileId << ", ";
+         }
+         std::cout << std::endl << " APN: " << throttleInfo.apn << std::endl
+                   << " ipv4Time (msec): " << throttleInfo.ipv4Time << std::endl
+                   << " ipv6Time (msec): " << throttleInfo.ipv6Time << std::endl
+                   << " isBlocked: " << (throttleInfo.isBlocked ? "True" : "False") << std::endl
+                   << " mcc: " << throttleInfo.mcc << std::endl
+                   << " mnc: " << throttleInfo.mnc << std::endl << std::endl;
+      }
+   } else {
+      PRINT_CB
+         << "requestThrottledApnInfo Response failed, errorCode: " << static_cast<int>(error)
+         << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
    }
 }
 

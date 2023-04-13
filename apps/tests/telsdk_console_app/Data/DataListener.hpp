@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef DATALISTENER_HPP
 #define DATALISTENER_HPP
 
@@ -40,6 +47,9 @@ class DataListener : public telux::data::IDataConnectionListener {
 public:
    void onDataCallInfoChanged(const std::shared_ptr<telux::data::IDataCall> &dataCall) override;
    void onServiceStatusChange(telux::common::ServiceStatus status) override;
+   void onThrottledApnInfoChanged(
+        const std::vector<telux::data::APNThrottleInfo> &throttleInfoList) override;
+
    std::shared_ptr<telux::data::IDataCall> getDataCall(int slotId, int profileId);
    void initDataCallListResponseCb(
        const std::vector<std::shared_ptr<telux::data::IDataCall>> &dataCallList,

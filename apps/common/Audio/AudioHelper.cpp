@@ -184,6 +184,7 @@ void AudioHelper::getUserCreateStreamInput(StreamConfig &config)
     if (config.type != StreamType::VOICE_CALL) {
         getUserSlotIdInput(config.slotId);
     }
+    getUserSampleRateInput(config.sampleRate);
     getUserChannelInput(config.channelTypeMask);
     getUserDeviceInput(config.deviceTypes);
 }

@@ -116,7 +116,6 @@ public:
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "ERROR: Invalid input, please re-enter." << std::endl;
             std::cin >> input;
-            valid = isInputValid(input, list);
          }
       } while (!valid);
    }

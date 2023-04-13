@@ -148,11 +148,15 @@ bool DataConnectionMenu::init() {
     std::shared_ptr<ConsoleAppCommand> stopDataCall_V1
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "stop_data_call_v1", {},
             std::bind(&DataConnectionMenu::stopDataCall_V1, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> requestThrottledAPNInfo
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "14", "request_throttled_apn_info", {}, std::bind(
+            &DataConnectionMenu::requestThrottledApnsInfo, this)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
         reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
         getDefaultProfile, reqDataCallBitRate, setRoamingMode, requestRoamingMode,
-        requestTrafficFlowTemplate, startDataCall_V1, stopDataCall_V1};
+        requestTrafficFlowTemplate, startDataCall_V1, stopDataCall_V1, requestThrottledAPNInfo};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -836,4 +840,14 @@ void DataConnectionMenu::requestTrafficFlowTemplate(std::vector<std::string> inp
                      "request TFT info on that data call."
                   << std::endl;
     };
+}
+
+void DataConnectionMenu::requestThrottledApnsInfo() {
+    std::cout << "\nRequest Throttled APN Info" << std::endl;
+    telux::common::Status retStat;
+    int slotId = DEFAULT_SLOT_ID;
+
+    retStat = dataConnectionManagerMap_[static_cast<SlotId>(slotId)]->requestThrottledApnInfo(
+        MyDataCallResponseCallback::requestThrottledApnInfoCb);
+    Utils::printStatus(retStat);
 }

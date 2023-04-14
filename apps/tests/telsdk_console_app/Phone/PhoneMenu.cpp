@@ -191,8 +191,12 @@ bool PhoneMenu::init() {
       ConsoleAppCommand("14", "Supp_Services_Menu", {},
                         std::bind(&PhoneMenu::suppServicesMenu, this, std::placeholders::_1)));
 
+   std::shared_ptr<ConsoleAppCommand> resetWwanCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("15", "Reset_Wwan", {},
+                        std::bind(&PhoneMenu::resetWwan, this, std::placeholders::_1)));
+
    std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("15", "Select_sim_slot", {},
+      ConsoleAppCommand("16", "Select_sim_slot", {},
                         std::bind(&PhoneMenu::selectSimSlot, this, std::placeholders::_1)));
 
 
@@ -210,7 +214,8 @@ bool PhoneMenu::init() {
          setECallOperatingModeCommand,
          requestECallOperatingModeCommand,
          requestOperatorNameCommand,
-         suppServicesMenuCommand};
+         suppServicesMenuCommand,
+         resetWwanCommand};
 
    if (phones_.size() > 1) {
        commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
@@ -475,4 +480,19 @@ void PhoneMenu::suppServicesMenu(std::vector<std::string> userInput) {
       suppServicesMenu.mainLoop();
    }
    ConsoleApp::displayMenu();
+}
+
+void PhoneMenu::resetWwan(std::vector<std::string> userInput) {
+   if(phoneManager_) {
+        auto status = phoneManager_->resetWwan(MyResetWwanCallback::resetWwanResponse);
+        if (status == Status::SUCCESS) {
+            std::cout << "Reset WWAN sent successfully\n";
+        } else {
+            std::cout << "ERROR - Failed to reset WWAN,"
+                      << "Status:" << static_cast<int>(status) << "\n";
+            Utils::printStatus(status);
+        }
+   } else {
+        std::cout << "No phoneManager found\n";
+   }
 }

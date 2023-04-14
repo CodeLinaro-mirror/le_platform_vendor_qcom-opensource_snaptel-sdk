@@ -72,6 +72,7 @@ private:
    void selectSimSlot(std::vector<std::string> userInput);
    void requestOperatorName(std::vector<std::string> userInput);
    void suppServicesMenu(std::vector<std::string> userInput);
+   void resetWwan(std::vector<std::string> userInput);
 
    std::string getRadioStateAsString(telux::tel::RadioState radioState);
    std::string getServiceStateAsString(telux::tel::ServiceState serviceState);

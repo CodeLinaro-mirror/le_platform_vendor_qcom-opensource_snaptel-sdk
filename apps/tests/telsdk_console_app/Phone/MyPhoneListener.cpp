@@ -971,3 +971,14 @@ void MyOperatorNameCallback::requestOperatorNameCb(std::string operatorLongName,
           << Utils::getErrorCodeAsString(error) << "\n";
    }
 }
+
+void MyResetWwanCallback::resetWwanResponse(telux::common::ErrorCode error) {
+
+    std::cout << "\n";
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "reset WWAN request executed successfully" << std::endl;
+    } else {
+        PRINT_CB << "Request reset WWAN failed, errorCode: "
+                 << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}

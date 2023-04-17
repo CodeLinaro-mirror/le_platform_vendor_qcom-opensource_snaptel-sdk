@@ -448,7 +448,8 @@ void ECallManager::onLocationUpdate(ECallLocationInfo locInfo) {
     msdData_.vehicleLocation.positionLongitude = locInfo.longitude;
     msdData_.timestamp = locInfo.timestamp;
     msdData_.vehicleDirection = locInfo.direction;
-    if(telClient_->isECallInProgress()) {
+    if (telClient_->isECallInProgress()) {
+        telClient_->setECallMsd(msdData_);
         updateMSD(phoneId_);
     } else {
         setLocationReceived(true);
@@ -469,6 +470,9 @@ void ECallManager::parseAppConfig() {
         std::string filePath = appSettings->getValue("MSD_FILE_PATH");
         msdSettings.init(param, filePath);
         msdData_ = msdSettings.getMsd();
+        if (telClient_) {
+            telClient_->setECallMsd(msdData_);
+        }
     } else {
         std::cout << CLIENT_NAME << "MSD data file not found! " << std::endl;
     }

@@ -31,7 +31,7 @@
  *
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -446,7 +446,8 @@ void ECallManager::onLocationUpdate(ECallLocationInfo locInfo) {
     msdData_.vehicleLocation.positionLongitude = locInfo.longitude;
     msdData_.timestamp = locInfo.timestamp;
     msdData_.vehicleDirection = locInfo.direction;
-    if(telClient_->isECallInProgress()) {
+    if (telClient_->isECallInProgress()) {
+        telClient_->setECallMsd(msdData_);
         updateMSD(phoneId_);
     } else {
         setLocationReceived(true);
@@ -467,6 +468,9 @@ void ECallManager::parseAppConfig() {
         std::string filePath = appSettings->getValue("MSD_FILE_PATH");
         msdSettings.init(param, filePath);
         msdData_ = msdSettings.getMsd();
+        if (telClient_) {
+            telClient_->setECallMsd(msdData_);
+        }
     } else {
         std::cout << CLIENT_NAME << "MSD data file not found! " << std::endl;
     }

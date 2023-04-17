@@ -176,6 +176,12 @@ telux::tel::CallDirection TelClient::getECallDirection(){
     }
 }
 
+//Updates locally cached MSD recieved after location update
+void TelClient::setECallMsd(ECallMsdData& msdData) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    msdData_ = msdData;
+}
+
 // Callback invoked when an incoming call is received
 void TelClient::onIncomingCall(std::shared_ptr<ICall> call) {
     std::cout << CLIENT_NAME << std::endl << "Received an incoming call" << std::endl;
@@ -243,6 +249,24 @@ void TelClient::onECallMsdTransmissionStatus(
                       << TelClientUtils::eCallMsdTransmissionStatusToString(msdTransmissionStatus)
                       << std::endl;
     eCallDataMap_[phoneId].msdTransmissionStatus = msdTransmissionStatus;
+}
+
+// Callback to notify request from PSAP for MSD update
+void TelClient::OnMsdUpdateRequest(int phoneId) {
+    std::cout << CLIENT_NAME << "Request to send the MSD received from PSAP for SlotId "
+        << phoneId << std::endl;
+    ECallMsdData msdData;
+    if(isECallInProgress()) {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            msdData = msdData_;
+        }
+        auto status = updateECallMSD(phoneId, msdData);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << CLIENT_NAME << "Failed to update MSD " << std::endl;
+            return;
+        }
+    }
 }
 
 // Callback to notify eCall HLAP timers status

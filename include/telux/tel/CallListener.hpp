@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file       CallListener.hpp
  * @brief      Interface for Call listener object. Client needs to implement this interface
@@ -106,6 +112,27 @@ public:
     */
    virtual void onECallMsdTransmissionStatus(
       int phoneId, telux::tel::ECallMsdTransmissionStatus msdTransmissionStatus) {
+   }
+
+   /**
+    * This function is called when an updated MSD is requested by the PSAP during a standard
+    * or NG eCall.
+    *
+    * Client is expected to update the MSD using @ref telux::tel::ICallManager::updateECallMsd
+    * upon receiving this notification. Modem updates its internal cache and responds to PSAP
+    * with the new MSD.
+    * In situations where the client fails to update the MSD, modem will time out and send the
+    * outdated MSD from its cache.
+    *
+    * On platforms with access control enabled, the caller needs to have TELUX_TEL_ECALL_MGMT
+    * permisson to receive this notification
+    *
+    * @param [in] phoneId - Unique ID of the phone on which this MSD update request is received
+    *
+    * @note  Eval: This is a new API and is being evaluated. It is subject to
+    *        change and could break backwards compatibility.
+    */
+   virtual void OnMsdUpdateRequest(int phoneId){
    }
 
    /**

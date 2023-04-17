@@ -230,11 +230,20 @@ public:
      */
     telux::tel::CallDirection getECallDirection();
 
+    /**
+     * This function caches latest MSD recieved after location update.
+     *
+     * @param [in] MSD data
+     *
+     */
+    void setECallMsd(ECallMsdData& msdData_);
+
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
     void onECallMsdTransmissionStatus(int phoneId,
                     ECallMsdTransmissionStatus msdTransmissionStatus) override;
+    void OnMsdUpdateRequest(int phoneId) override;
     void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) override;
     void makeCallResponse(telux::common::ErrorCode error,
                                     std::shared_ptr<telux::tel::ICall>) override;
@@ -285,6 +294,7 @@ private:
 
     //Map to hold the ongoing eCall Info w.r.t phoneId
     std::map<int, ECallInfo> eCallDataMap_;
+    ECallMsdData msdData_;
 
     class EcallScanFailHandler :  public ICallListener,
                                   public std::enable_shared_from_this<EcallScanFailHandler> {

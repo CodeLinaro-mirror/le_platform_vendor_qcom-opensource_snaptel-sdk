@@ -647,13 +647,13 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
         fwEntry = dataFactory.getNewFirewallEntry(proto, fwDir, ipFamType);
     }
 
-    std::shared_ptr<IIpFilter> ipFilter = fwEntry->getIProtocolFilter();
-    std::shared_ptr<IIpFilter> ipFilterTcpUdp = nullptr;
-    if (proto == 253) {
-        ipFilterTcpUdp = fwEntryTcpUdp->getIProtocolFilter();
-    }
-
     if (fwEntry) {
+        std::shared_ptr<IIpFilter> ipFilter = fwEntry->getIProtocolFilter();
+        std::shared_ptr<IIpFilter> ipFilterTcpUdp = nullptr;
+        if (proto == 253) {
+            ipFilterTcpUdp = fwEntryTcpUdp->getIProtocolFilter();
+        }
+
         if (ipFamilyType == 4) {
             getIPV4ParamsFromUser(proto,ipFilter, ipFilterTcpUdp);
         }
@@ -663,6 +663,7 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
         getProtocolParams(proto,ipFilter, ipFilterTcpUdp);
     } else {
         std::cout << "\nERROR: unable to get firewall entry instance\n";
+        return;
     }
 
     auto respCb = [](telux::common::ErrorCode error) {

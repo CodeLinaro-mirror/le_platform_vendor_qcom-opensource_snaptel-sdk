@@ -26,40 +26,9 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ /*
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /**
  * @file       TelSdkConsoleApp.cpp
@@ -157,8 +126,9 @@ void TelSdkConsoleApp::phoneMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     PhoneMenu phoneMenu("Phone Menu", "phone> ");
-    phoneMenu.init();
-    phoneMenu.mainLoop();
+    if (phoneMenu.init()) {
+       phoneMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -169,8 +139,9 @@ void TelSdkConsoleApp::callMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     CallMenu callMenu("Dialer Menu", "dialer> ");
-    callMenu.init();
-    callMenu.mainLoop();
+    if (callMenu.init()) {
+       callMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -181,8 +152,9 @@ void TelSdkConsoleApp::eCallMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     ECallMenu eCallMenu("eCall Menu", "eCall> ");
-    eCallMenu.init();
-    eCallMenu.mainLoop();
+    if (eCallMenu.init()) {
+       eCallMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -193,8 +165,9 @@ void TelSdkConsoleApp::simCardMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     SimCardServicesMenu simCardServicesMenu("SIM Card Services Menu", "card_services> ");
-    simCardServicesMenu.init();
-    simCardServicesMenu.mainLoop();
+    if (simCardServicesMenu.init()) {
+       simCardServicesMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -205,8 +178,9 @@ void TelSdkConsoleApp::smsMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     TelSdkConsoleApp::onModemAvailable();
     SmsMenu smsMenu("SMS Menu", "sms> ");
-    smsMenu.init();
-    smsMenu.mainLoop();
+    if (smsMenu.init()) {
+       smsMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -227,8 +201,9 @@ void TelSdkConsoleApp::dataMenu(std::vector<std::string> userInput) {
 void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     MultiSimMenu multiSimMenu("MultiSim Menu", "multisim> ");
-    multiSimMenu.init();
-    multiSimMenu.mainLoop();
+    if (multiSimMenu.init()) {
+       multiSimMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -238,8 +213,9 @@ void TelSdkConsoleApp::multiSimMenu(std::vector<std::string> userInput) {
 void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     CellbroadcastMenu cbMenu("Cellbroadcast Menu", "cb> ");
-    cbMenu.init();
-    cbMenu.mainLoop();
+    if (cbMenu.init()) {
+       cbMenu.mainLoop();
+    }
 #else
     std::cout << "Telephony is unsupported" << std::endl;
 #endif
@@ -248,8 +224,9 @@ void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
 void TelSdkConsoleApp::rspMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     RemoteSimProfileMenu rspMenu("Sim Profile Management Menu", "sim_profile_management> ");
-    rspMenu.init();
-    rspMenu.mainLoop();
+    if (rspMenu.init()) {
+       rspMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -259,8 +236,9 @@ void TelSdkConsoleApp::rspMenu(std::vector<std::string> userInput) {
 void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     ImsSettingsMenu imsSettingsMenu("IMS Settings Menu", "ims_settings> ");
-    imsSettingsMenu.init();
-    imsSettingsMenu.mainLoop();
+    if (imsSettingsMenu.init()) {
+       imsSettingsMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
@@ -270,8 +248,9 @@ void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
 void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) {
 #ifdef TELSDK_FEATURE_TEL_ENABLED
     ImsServingSystemMenu imsaMenu("IMS Serving System Menu", "ims_serving_system> ");
-    imsaMenu.init();
-    imsaMenu.mainLoop();
+    if (imsaMenu.init()) {
+       imsaMenu.mainLoop();
+    }
     TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;

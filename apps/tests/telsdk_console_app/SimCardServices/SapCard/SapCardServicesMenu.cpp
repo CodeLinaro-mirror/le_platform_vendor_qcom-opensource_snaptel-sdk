@@ -76,6 +76,16 @@
 
 SapCardServicesMenu::SapCardServicesMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
+}
+
+SapCardServicesMenu::~SapCardServicesMenu() {
+   mySapCmdResponseCb_ = nullptr;
+   myTransmitApduResponseCb_ = nullptr;
+   mySapCardReaderCb_ = nullptr;
+   myAtrCb_ = nullptr;
+}
+
+bool SapCardServicesMenu::init() {
    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
    startTime = std::chrono::steady_clock::now();
    //  Get the PhoneFactory and PhoneManager instances.
@@ -102,7 +112,7 @@ SapCardServicesMenu::SapCardServicesMenu(std::string appName, std::string cursor
                    << std::endl;
       } else {
          std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-         exit(0);
+         return false;
       }
 
        if(subSystemStatus) {
@@ -120,22 +130,12 @@ SapCardServicesMenu::SapCardServicesMenu(std::string appName, std::string cursor
    } else {
        std::cout << "ERROR - PhoneManager is NULL, failed to initialize SapCardServicesMenu"
                  << std::endl;
-       exit(1);
+       return false;
    }
    mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
    myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
    mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();
    myAtrCb_ = std::make_shared<MyAtrResponseCallback>();
-}
-
-SapCardServicesMenu::~SapCardServicesMenu() {
-   mySapCmdResponseCb_ = nullptr;
-   myTransmitApduResponseCb_ = nullptr;
-   mySapCardReaderCb_ = nullptr;
-   myAtrCb_ = nullptr;
-}
-
-void SapCardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> openSapConnectionCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Open_sap_connection", {},
@@ -187,6 +187,7 @@ void SapCardServicesMenu::init() {
 
    addCommands(commandsListSapManagerSubMenu);
    ConsoleApp::displayMenu();
+   return true;
 }
 
 void SapCardServicesMenu::logSapState(telux::tel::SapState sapState) {

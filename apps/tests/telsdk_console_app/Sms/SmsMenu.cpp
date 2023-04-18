@@ -27,40 +27,9 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
+ /*
  *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -88,8 +57,20 @@
 
 SmsMenu::SmsMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
+}
 
-    int noOfSlots = MIN_SIM_SLOT_COUNT;
+SmsMenu::~SmsMenu() {
+   for (auto index = 0; index < smsManagers_.size(); index++) {
+       smsManagers_[index]->removeListener(smsListener_);
+   }
+   mySmsCmdCb_ = nullptr;
+   mySmscAddrCb_ = nullptr;
+   smsListener_ = nullptr;
+   mySmsDeliveryCb_ = nullptr;
+}
+
+bool SmsMenu::init() {
+   int noOfSlots = MIN_SIM_SLOT_COUNT;
     if(telux::common::DeviceConfig::isMultiSimSupported()) {
         noOfSlots = MAX_SIM_SLOT_COUNT;
     }
@@ -106,7 +87,7 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor)
       });
       if (!smsMgr) {
           std::cout << "ERROR - Failed to get SMS Manager instance \n";
-          exit(1);
+          return false;
       }
 
       std::cout << " Waiting for SMS Manager to be ready \n";
@@ -116,27 +97,14 @@ SmsMenu::SmsMenu(std::string appName, std::string cursor)
           auto status = smsMgr->registerListener(smsListener_);
           if(status != telux::common::Status::SUCCESS) {
               std::cout << "ERROR - Failed to register listener \n";
-              exit(1);
+              return false;
           }
           smsManagers_.emplace_back(smsMgr);
       } else {
           std::cout << "ERROR - Unable to initialize SMS Manager \n";
-          exit(1);
+          return false;
       }
     }
-}
-
-SmsMenu::~SmsMenu() {
-   for (auto index = 0; index < smsManagers_.size(); index++) {
-       smsManagers_[index]->removeListener(smsListener_);
-   }
-   mySmsCmdCb_ = nullptr;
-   mySmscAddrCb_ = nullptr;
-   smsListener_ = nullptr;
-   mySmsDeliveryCb_ = nullptr;
-}
-
-void SmsMenu::init() {
    std::shared_ptr<ConsoleAppCommand> sendSmsCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Send_SMS", {}, std::bind(&SmsMenu::sendSms, this, std::placeholders::_1)));
@@ -202,6 +170,7 @@ void SmsMenu::init() {
    addCommands(commandsListSmsSubMenu);
    ConsoleApp::displayMenu();
    std::cout << "Device is listening for any incoming messages" << std::endl;
+   return true;
 }
 
 bool SmsMenu::isDialable (char ch) {

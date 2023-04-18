@@ -2391,11 +2391,8 @@ This call flow diagram describes the sequence of steps for initializing the ICv2
 10. C-V2X radio manager creates ICv2xRadio object and calls method init().
 11. C-V2X radio starts initialization asynchronously.
 12. C-V2X radio manager returns ICv2xRadio object to application.
-13. Application queries C-V2X radio's readiness state using isReady() method.
-14. C-V2X radio returns a bool indicating whether it is ready to be used.
-15. If C-V2X radio is not ready, the application calls onReady() method.
-16. C-V2X radio returns a future object.
-17. Application calls future's get() method and blocks until C-V2X radio has completed its initialization steps. The return value of get() indicates the status of the initialization (either SUCCESS or FAILED).
+13. C-V2X radio manager is asynchronously notified of the readiness status of the C-V2X radio via the initialization callback.
+14. C-V2X radio manager calls application-supplied callback to notify the readiness status of C-V2X radio (either SERVICE_AVAILABLE or SERVICE_FAILED).
 
 @anchor fig_cv2x_radio_initialization_callflow_c
 @latexonly

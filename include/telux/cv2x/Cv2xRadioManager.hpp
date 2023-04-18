@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -242,11 +242,13 @@ public:
      *
      * @param [in] category - Specifies the category of the client application.
      *                        This field is currently unused.
+     * @param[in] cb - Optional callback to get Cv2xRadio initialization status
      *
      * @returns Reference to Cv2xRadio interface that corresponds to the Cv2x Traffic
      *          Category specified.
      */
-    virtual std::shared_ptr<ICv2xRadio> getCv2xRadio(TrafficCategory category) = 0;
+    virtual std::shared_ptr<ICv2xRadio> getCv2xRadio(TrafficCategory category,
+        telux::common::InitResponseCb cb = nullptr) = 0;
 
     /**
      * Put modem into CV2X mode.

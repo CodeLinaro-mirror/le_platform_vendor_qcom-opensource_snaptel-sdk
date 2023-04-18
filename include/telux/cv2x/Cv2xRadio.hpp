@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -277,36 +277,11 @@ class ICv2xRadio {
 public:
 
     /**
-     * Get the capabilities of this Cv2xRadio.
-     *
-     * @returns Cv2xRadioCapabilities - Contains capabilities of this Cv2xRadio.
-     *
-     * @deprecated Use requestCapabilities() API
-     */
-    virtual Cv2xRadioCapabilities getCapabilities() const = 0;
-
-    /**
-     * Returns true if the radio interface was successfully initialized.
-     *
-     * @returns True if ready. False otherwise.
-     */
-    virtual bool isReady() const = 0;
-
-    /**
      * Returns true if the radio interface has completed initialization.
      *
      * @returns True if initialized. False otherwise.
      */
     virtual bool isInitialized() const = 0;
-
-    /**
-     * Returns a future that indicated if the radio interface is ready or if
-     * radio failed to initialize.
-     *
-     * @returns SUCCESS if Cv2xRadio initialization was successful. Otherwise it
-     *          returns an Error Code.
-     */
-    virtual std::future<telux::common::Status> onReady() = 0;
 
     /**
      * Registers a listener for this Cv2xRadio.
@@ -351,6 +326,18 @@ public:
         uint16_t port,
         CreateRxSubscriptionCallback cb,
         std::shared_ptr<std::vector<uint32_t>> idList = nullptr) = 0;
+
+    /**
+     * This status indicates whether the Cv2xRadio is in a usable state.
+     *
+     * @returns SERVICE_AVAILABLE    -  If cv2x radio is ready for service.
+     *          SERVICE_UNAVAILABLE  -  If cv2x radio is temporarily unavailable.
+     *          SERVICE_FAILED       -  If cv2x radio encountered an irrecoverable failure.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.
+     */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
      * Enable or disable (depends on the parameter "bool enable") the received
@@ -764,6 +751,35 @@ public:
     virtual telux::common::Status setGlobalIPUnicastRoutingInfo(
         const GlobalIPUnicastRoutingInfo &destL2Addr, common::ResponseCallback cb) = 0;
 
+    /**
+     * Get the capabilities of this Cv2xRadio.
+     *
+     * @returns Cv2xRadioCapabilities - Contains capabilities of this Cv2xRadio.
+     *
+     * @deprecated Use requestCapabilities() API
+     */
+    virtual Cv2xRadioCapabilities getCapabilities() const = 0;
+
+    /**
+     * Returns true if the radio interface was successfully initialized.
+     *
+     * @returns True if ready. False otherwise.
+     *
+     * @deprecated use getServiceStatus instead
+     */
+    virtual bool isReady() const = 0;
+
+    /**
+     * Returns a future that indicated if the radio interface is ready or if
+     * radio failed to initialize.
+     *
+     * @returns SUCCESS if Cv2xRadio initialization was successful. Otherwise it
+     *          returns an Error Code.
+     *
+     * @deprecated the readiness can be notified via the callback passed to
+     *          ICv2xRadioManager::getCv2xRadio.
+     */
+    virtual std::future<telux::common::Status> onReady() = 0;
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

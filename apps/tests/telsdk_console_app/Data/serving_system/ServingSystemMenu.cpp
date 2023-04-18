@@ -29,8 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
-
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -117,9 +116,12 @@ bool DataServingSystemMenu::init() {
         std::shared_ptr<ConsoleAppCommand> requestNrIconType =
             std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "request_nr_icon_type", {},
             std::bind(&DataServingSystemMenu::requestNrIconType, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> makeDormant =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "make_dormant", {},
+            std::bind(&DataServingSystemMenu::makeDormant, this, std::placeholders::_1)));
 
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            getDrbStatus, requestServiceStatus, requestRoamingStatus, requestNrIconType};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {getDrbStatus,
+            requestServiceStatus, requestRoamingStatus, requestNrIconType, makeDormant};
         addCommands(commandsList);
     }
 
@@ -337,3 +339,20 @@ void DataServingSystemMenu::requestNrIconType(std::vector<std::string> inputComm
         dataServingSystemManagers_[static_cast<SlotId>(slotId)]->requestNrIconType(respCb);
     Utils::printStatus(retStat);
 }
+
+void DataServingSystemMenu::makeDormant(std::vector<std::string> inputCommand) {
+    std::cout << "Make Dormant\n";
+    int slotId = DEFAULT_SLOT_ID;
+    auto respCb = [](telux::common::ErrorCode errCode) {
+        std::cout << std::endl << std::endl;
+        std::cout << "Callback: "
+                  << "makeDormant Response "
+                  <<((errCode == telux::common::ErrorCode::SUCCESS)? "is Successful":"failed")
+                  << ". ErrorCode = " << static_cast<int>(errCode)
+                  << ", Descrition: " << Utils::getErrorCodeAsString(errCode) << std::endl;
+    };
+    telux::common::Status status =
+        dataServingSystemManagers_[static_cast<SlotId>(slotId)]->makeDormant(respCb);
+    Utils::printStatus(status);
+}
+

@@ -29,8 +29,7 @@
 
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
-
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -253,6 +252,34 @@ public:
      *         and could break backwards compatibility.
      */
     virtual telux::common::Status requestNrIconType(RequestNrIconTypeResponseCb callback) = 0;
+
+    /**
+     * Request modem switch to dormant state: Certain network operations can only be performed when
+     * modem is in dormant state. This API provides an ability for clients to request modem to
+     * immediately transition to dormant state for such scenarios.
+     *
+     * Clients must ensure no data calls are in process of bring up/tear down and there is no
+     * traffic on any active data calls when this API is called.
+     *
+     * @param [in] callback              optional callback to get the response of makeDormancy
+     *
+     * @returns
+     * telux::common::ErrorCode::SUCCESS if request is honored by network.
+     * telux::common::ErrorCode::INVALID_STATE is returned if:
+     *  - There is no active data calls
+     *  - Any Data calls is going through bring up/tear down
+     *  - There is data traffic on any active data calls
+     * If API fails, application is responsible for re-attempting operation at later time once the
+     * above conditions are met.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SERVICE_MGMT
+     * permission to invoke this API successfully.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status makeDormant(
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * Register a listener for specific updates from serving system.

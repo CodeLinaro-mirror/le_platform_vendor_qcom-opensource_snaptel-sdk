@@ -86,6 +86,9 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AH} @tdmulrowend
+@td April 2023 @tdend @tdlast
+\- Updated documentation for API reference and user guide for V1.57.0 @tdlastend @trend
 @tr @tdmulrow{1,AG} @tdmulrowend
 @td Mar 2023 @tdend @tdlast
 \- Added support for thermal notifications(Trip update, Cdev level change)

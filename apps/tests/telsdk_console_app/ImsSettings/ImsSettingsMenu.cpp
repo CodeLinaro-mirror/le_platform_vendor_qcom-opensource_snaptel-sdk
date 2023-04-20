@@ -159,7 +159,7 @@ void ImsSettingsMenu::setImsServiceConfig(std::vector<std::string> userInput) {
       int configType = INVALID_CONFIG_TYPE;
       bool enable = false;
       std::cout  << "Available IMS Service configurations \n 1 - VOIMS \n 2 - IMS Service \n "
-                 << "q - exit \n ";
+                 << "3 - SMS \n q - exit \n ";
       while(true) {
          std::cout << "\nSelect the configuration type: ";
          std::getline(std::cin, configSelection, delimiter);
@@ -198,6 +198,11 @@ void ImsSettingsMenu::setImsServiceConfig(std::vector<std::string> userInput) {
                  config.configValidityMask.set(
                      telux::tel::ImsServiceConfigType::IMSSETTINGS_IMS_SERVICE);
                  config.imsServiceEnabled = enable;
+                 break;
+             case telux::tel::ImsServiceConfigType::IMSSETTINGS_SMS:
+                 config.configValidityMask.set(
+                     telux::tel::ImsServiceConfigType::IMSSETTINGS_SMS);
+                 config.smsEnabled = enable;
                  break;
              default:
                  std::cout << "Invalid configuration selection \n";

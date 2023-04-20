@@ -54,6 +54,7 @@
  *  between local and far end.
  */
 
+#include <errno.h>
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -66,7 +67,7 @@
 /*
  * Initialize application and get an audio service.
  */
-telux::common::Status InCallRecordPCM::init() {
+int InCallRecordPCM::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -86,7 +87,7 @@ telux::common::Status InCallRecordPCM::init() {
 
     if (!audioManager_) {
         std::cout << "Can't get IAudioManager" << std::endl;
-        return telux::common::Status::FAILED;
+        return -ENOMEM;
     }
 
     /* Step - 3 */
@@ -96,22 +97,23 @@ telux::common::Status InCallRecordPCM::init() {
         serviceStatus = p.get_future().get();
         if (serviceStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "audio service unavailable" << std::endl;
-            return telux::common::Status::FAILED;
+            return -EIO;
         }
         std::cout << "audio service ready" << std::endl;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 4, create a voice call stream.
  */
-telux::common::Status InCallRecordPCM::createVoiceStream() {
+int InCallRecordPCM::createVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
-    telux::audio::StreamConfig sc;
+    telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::VOICE_CALL;
     sc.slotId = DEFAULT_SLOT_ID;
@@ -122,126 +124,120 @@ telux::common::Status InCallRecordPCM::createVoiceStream() {
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+            telux::common::ErrorCode result) {
+        if (result == telux::common::ErrorCode::SUCCESS) {
             audioVoiceStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioVoiceStream>(audioStream);
-            p.set_value(true);
-        } else {
-            p.set_value(false);
         }
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request create voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't create voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed create voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 10, delete voice call stream.
  */
-telux::common::Status InCallRecordPCM::deleteVoiceStream() {
+int InCallRecordPCM::deleteVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
     status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+            telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request delete voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't delete voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 5, start voice call stream.
  */
-telux::common::Status InCallRecordPCM::startVoiceStream() {
+int InCallRecordPCM::startVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
-    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request start voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request start voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't start voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed start voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  * Step - 9, stop voice call stream.
  */
-telux::common::Status InCallRecordPCM::stopVoiceStream() {
+int InCallRecordPCM::stopVoiceStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
-    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request stop voice call stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request stop voice stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't stop voice call stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed stop voice stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  * Step - 6, create a incall-record stream.
  * Audio device is not specified. Voice downlink is specified.
  */
-telux::common::Status InCallRecordPCM::createIncallRecordStream() {
+int InCallRecordPCM::createIncallRecordStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
+    telux::audio::StreamConfig sc{};
     telux::common::Status status;
-    telux::audio::StreamConfig sc;
+    telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::CAPTURE;
     sc.slotId = DEFAULT_SLOT_ID;
@@ -255,57 +251,54 @@ telux::common::Status InCallRecordPCM::createIncallRecordStream() {
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
+            telux::common::ErrorCode result) {
+        if (result == telux::common::ErrorCode::SUCCESS) {
             audioCaptureStream_ = std::dynamic_pointer_cast<
                 telux::audio::IAudioCaptureStream>(audioStream);
-            p.set_value(true);
-        } else {
-            p.set_value(false);
         }
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create incall-record stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request create capture stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't create incall-record stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed create capture stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
  *  Step - 8, delete capture stream.
  */
-telux::common::Status InCallRecordPCM::deleteIncallRecordStream() {
+int InCallRecordPCM::deleteIncallRecordStream() {
 
-    std::promise<bool> p{};
+    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
+    telux::common::ErrorCode ec;
 
     status = audioManager_-> deleteStream(audioCaptureStream_, [&p, this] (
-            telux::common::ErrorCode error) {
-        if (error == telux::common::ErrorCode::SUCCESS) {
-            p.set_value(true);
-        } else {
-            p.set_value(false);
-        }
+            telux::common::ErrorCode result) {
+        p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete incall-record stream"  << std::endl;
-        return telux::common::Status::FAILED;
+        std::cout << "can't request delete capture stream"  << std::endl;
+        return -EIO;
     }
 
-    if (!(p.get_future().get())) {
-        std::cout<< "can't delete incall-record stream" << std::endl;
-        return telux::common::Status::FAILED;
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed delete capture stream, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
     }
 
-    return telux::common::Status::SUCCESS;
+    return 0;
 }
 
 /*
@@ -327,7 +320,6 @@ void InCallRecordPCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer
         }
     }
 
-    buffer->reset();
     freeBuffers_.push(buffer);
     cv_.notify_all();
 }
@@ -413,7 +405,7 @@ void InCallRecordPCM::record() {
 
 int main(int argc, char **argv) {
 
-    telux::common::Status status;
+    int ret;
     std::shared_ptr<InCallRecordPCM> app;
 
     if (argc < 3) {
@@ -421,45 +413,57 @@ int main(int argc, char **argv) {
         return -EINVAL;
     }
 
-    app = std::make_shared<InCallRecordPCM>();
-    status = app->init();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    try {
+        app = std::make_shared<InCallRecordPCM>();
+    } catch (const std::exception& e) {
+        std::cout << "can't allocate InCallRecordPCM" << std::endl;
+        return -ENOMEM;
     }
 
     app->recordingDuration_ = argv[1];
     app->fileToSaveRecordingPath_ = argv[2];
 
-    status = app->createVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->init();
+    if (ret < 0) {
+        return ret;
     }
 
-    status = app->startVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
-        return -EIO;
+    ret = app->createVoiceStream();
+    if (ret < 0) {
+        return ret;
     }
 
-    status = app->createIncallRecordStream();
-    if (status != telux::common::Status::SUCCESS) {
+    ret = app->startVoiceStream();
+    if (ret < 0) {
+        app->deleteVoiceStream();
+        return ret;
+    }
+
+    ret = app->createIncallRecordStream();
+    if (ret < 0) {
+        app->stopVoiceStream();
+        app->deleteVoiceStream();
         return -EIO;
     }
 
     std::thread recordWorker(&InCallRecordPCM::record, &(*app));
     recordWorker.join();
 
-    status = app->deleteIncallRecordStream();
-    if (status != telux::common::Status::SUCCESS) {
+    ret = app->deleteIncallRecordStream();
+    if (ret < 0) {
+        app->stopVoiceStream();
+        app->deleteVoiceStream();
         return -EIO;
     }
 
-    status = app->stopVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
+    ret = app->stopVoiceStream();
+    if (ret < 0) {
+        app->deleteVoiceStream();
         return -EIO;
     }
 
-    status = app->deleteVoiceStream();
-    if (status != telux::common::Status::SUCCESS) {
+    ret = app->deleteVoiceStream();
+    if (ret < 0) {
         return -EIO;
     }
 

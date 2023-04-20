@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,29 +32,28 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SUPP_SERVICES_MENU_HPP
-#define SUPP_SERVICES_MENU_HPP
+#include <queue>
+#include <condition_variable>
 
-#include <telux/tel/SuppServicesManager.hpp>
-#include "console_app_framework/ConsoleApp.hpp"
+#include <telux/audio/AudioManager.hpp>
 
-class SuppServicesMenu : public ConsoleApp {
-public:
-   SuppServicesMenu(std::string appName, std::string cursor);
-   ~SuppServicesMenu();
-   bool init();
+class BTHFGRingtone {
 
-private:
-   void setCallWaitingPref(std::vector<std::string> userInput);
-   void getCallWaitingPref(std::vector<std::string> userInput);
-   void setCallForwardingPref(std::vector<std::string> userInput);
-   void getCallForwardingPref(std::vector<std::string> userInput);
-   void setOirPref(std::vector<std::string> userInput);
-   void getOirPref(std::vector<std::string> userInput);
-   void selectSimSlot(std::vector<std::string> userInput);
+ public:
+    int init();
+    int createPlayStream();
+    int deletePlayStream();
+    void play();
+    void writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        uint32_t bytesWritten, telux::common::ErrorCode error);
 
-   SlotId slot_ = DEFAULT_SLOT_ID;
-   std::vector<std::shared_ptr<telux::tel::ISuppServicesManager>> suppServicesManagers_;
+    char *fileToPlayPath_;
+
+ private:
+    std::shared_ptr<telux::audio::IAudioManager> audioManager_;
+    std::shared_ptr<telux::audio::IAudioPlayStream> audioPlayStream_;
+    FILE *fileToPlay_;
+    std::mutex playMutex_;
+    std::condition_variable cv_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
 };
-
-#endif  // SUPP_SERVICES_MENU_HPP

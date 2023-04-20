@@ -33,24 +33,20 @@
  */
 
 /*
- *  Steps to play audio samples during an active voice call are:
+ *  Steps to play an inband ringtone on a Bluetooth device are:
  *
  *  1. Get a AudioFactory instance.
  *  2. Get a IAudioManager instance from AudioFactory.
  *  3. Wait for the audio service to become available.
- *  4. Create a voice call stream (IAudioVoiceStream).
- *  5. Start voice call stream.
- *  6. Create a playback stream (IAudioPlayStream).
- *  7. Start writing audio samples on the playback stream.
- *  8. When the playback is over, delete the playback stream.
- *  9. Stop voice call stream.
- * 10. Delete voice call stream.
+ *  4. Create a playback stream (IAudioPlayStream).
+ *  5. Start writing audio samples on the playback stream.
+ *  6. When the playback is over, delete the playback stream.
  *
  * Usage:
- * # in_call_playback_pcm /data/musicfile.pcm
+ * # bt_hfg_inband_ringtone /data/ringtone.pcm
  *
- * Contents of /data/musicfile.pcm file played on the device is heard on the far end.
- * Voice call must be active (answered) between local end and far end.
+ * Contents of /data/ringtone.pcm raw PCM file are played on the Bluetooth
+ * headset connect to the device.
  */
 
 #include <errno.h>
@@ -61,12 +57,12 @@
 
 #include <telux/audio/AudioFactory.hpp>
 
-#include "InCallPlaybackPCM.hpp"
+#include "BTHFGRingtone.hpp"
 
 /*
  * Initialize application and get an audio service.
  */
-int InCallPlaybackPCM::init() {
+int BTHFGRingtone::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -105,133 +101,9 @@ int InCallPlaybackPCM::init() {
 }
 
 /*
- *  Step - 4, create a voice call stream.
+ * Step - 4, create a playback stream.
  */
-int InCallPlaybackPCM::createVoiceStream() {
-
-    std::promise<telux::common::ErrorCode> p{};
-    telux::audio::StreamConfig sc{};
-    telux::common::Status status;
-    telux::common::ErrorCode ec;
-
-    sc.type = telux::audio::StreamType::VOICE_CALL;
-    sc.slotId = DEFAULT_SLOT_ID;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
-
-    status = audioManager_->createStream(sc, [&p, this] (
-            std::shared_ptr<telux::audio::IAudioStream> &audioStream,
-            telux::common::ErrorCode result) {
-        if (result == telux::common::ErrorCode::SUCCESS) {
-            audioVoiceStream_ = std::dynamic_pointer_cast<
-                telux::audio::IAudioVoiceStream>(audioStream);
-        }
-        p.set_value(result);
-    });
-
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create voice stream"  << std::endl;
-        return -EIO;
-    }
-
-    ec = p.get_future().get();
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed create voice stream, err " << static_cast<int>(ec) << std::endl;
-        return -EIO;
-    }
-
-    return 0;
-}
-
-/*
- *  Step - 10, delete voice call stream.
- */
-int InCallPlaybackPCM::deleteVoiceStream() {
-
-    std::promise<telux::common::ErrorCode> p{};
-    telux::common::Status status;
-    telux::common::ErrorCode ec;
-
-    status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
-            telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
-
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete voice stream"  << std::endl;
-        return -EIO;
-    }
-
-    ec = p.get_future().get();
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed delete voice stream, err " << static_cast<int>(ec) << std::endl;
-        return -EIO;
-    }
-
-    return 0;
-}
-
-/*
- *  Step - 5, start voice call stream.
- */
-int InCallPlaybackPCM::startVoiceStream() {
-
-    std::promise<telux::common::ErrorCode> p{};
-    telux::common::Status status;
-    telux::common::ErrorCode ec;
-
-    status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
-
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request start voice stream"  << std::endl;
-        return -EIO;
-    }
-
-    ec = p.get_future().get();
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed start voice stream, err " << static_cast<int>(ec) << std::endl;
-        return -EIO;
-    }
-
-    return 0;
-}
-
-/*
- * Step - 9, stop voice call stream.
- */
-int InCallPlaybackPCM::stopVoiceStream() {
-
-    std::promise<telux::common::ErrorCode> p{};
-    telux::common::Status status;
-    telux::common::ErrorCode ec;
-
-    status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode result) {
-        p.set_value(result);
-    });
-
-    if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request stop voice stream"  << std::endl;
-        return -EIO;
-    }
-
-    ec = p.get_future().get();
-    if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed stop voice stream, err " << static_cast<int>(ec) << std::endl;
-        return -EIO;
-    }
-
-    return 0;
-}
-
-/*
- * Step - 6, create a incall-playback stream.
- * Audio device is not specified. Voice uplink is specified.
- */
-int InCallPlaybackPCM::createIncallPlayStream() {
+int BTHFGRingtone::createPlayStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::audio::StreamConfig sc{};
@@ -239,14 +111,10 @@ int InCallPlaybackPCM::createIncallPlayStream() {
     telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::PLAY;
-    sc.slotId = DEFAULT_SLOT_ID;
-    sc.sampleRate = 48000;
+    sc.sampleRate = 8000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-
-    /* Direction::TX indicates voice uplink playback */
-    sc.voicePaths.emplace_back(telux::audio::Direction::TX);
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_BT_SCO_SPEAKER);
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
@@ -259,13 +127,13 @@ int InCallPlaybackPCM::createIncallPlayStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create playback stream"  << std::endl;
+        std::cout << "can't request create stream"  << std::endl;
         return -EIO;
     }
 
     ec = p.get_future().get();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed create playback stream, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "failed create stream, err " << static_cast<int>(ec) << std::endl;
         return -EIO;
     }
 
@@ -273,9 +141,9 @@ int InCallPlaybackPCM::createIncallPlayStream() {
 }
 
 /*
- *  Step - 8, delete playback stream.
+ *  Step - 6, delete playback stream.
  */
-int InCallPlaybackPCM::deleteIncallPlayStream() {
+int BTHFGRingtone::deletePlayStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
@@ -287,13 +155,13 @@ int InCallPlaybackPCM::deleteIncallPlayStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete playback stream"  << std::endl;
+        std::cout << "can't request delete stream"  << std::endl;
         return -EIO;
     }
 
     ec = p.get_future().get();
     if (ec != telux::common::ErrorCode::SUCCESS) {
-        std::cout << "failed delete playback stream, err " << static_cast<int>(ec) << std::endl;
+        std::cout << "failed delete stream, err " << static_cast<int>(ec) << std::endl;
         return -EIO;
     }
 
@@ -303,16 +171,13 @@ int InCallPlaybackPCM::deleteIncallPlayStream() {
 /*
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
-void InCallPlaybackPCM::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode result) {
+void BTHFGRingtone::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     long offset;
 
-    if ((result != telux::common::ErrorCode::SUCCESS) ||
+    if ((error != telux::common::ErrorCode::SUCCESS) ||
             (buffer->getDataSize() != bytesWritten)) {
-        /* It is an application owner's decision, what to do if an error occurs
-         * in writing; resend buffer for playback or terminate the playback.
-         * In this example we are resending. */
         offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
         fseek(fileToPlay_, offset, SEEK_CUR);
     }
@@ -322,15 +187,14 @@ void InCallPlaybackPCM::writeCompletion(std::shared_ptr<telux::audio::IStreamBuf
 }
 
 /*
- *  Step - 7, write samples on the playback stream.
+ *  Step - 5, write samples on the playback stream.
  */
-void InCallPlaybackPCM::play() {
+void BTHFGRingtone::play() {
 
     uint32_t size = 0;
     uint32_t numBytes = 0;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
-
     std::unique_lock<std::mutex> lock(playMutex_);
 
     fileToPlay_ = std::fopen(fileToPlayPath_, "r");
@@ -356,7 +220,7 @@ void InCallPlaybackPCM::play() {
         streamBuffer->setDataSize(size);
     }
 
-    auto writeCb = std::bind(&InCallPlaybackPCM::writeCompletion, this,
+    auto writeCb = std::bind(&BTHFGRingtone::writeComplete, this,
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
     std::cout << "playback started" << std::endl;
@@ -394,7 +258,7 @@ void InCallPlaybackPCM::play() {
 int main(int argc, char **argv) {
 
     int ret;
-    std::shared_ptr<InCallPlaybackPCM> app;
+    std::shared_ptr<BTHFGRingtone> app;
 
     if (argc < 2) {
         std::cout << "need audio file absolute path" << std::endl;
@@ -402,54 +266,28 @@ int main(int argc, char **argv) {
     }
 
     try {
-        app = std::make_shared<InCallPlaybackPCM>();
+        app = std::make_shared<BTHFGRingtone>();
     } catch (const std::exception& e) {
-        std::cout << "can't allocate InCallPlaybackPCM" << std::endl;
+        std::cout << "can't allocate BTHFGRingtone" << std::endl;
         return -ENOMEM;
     }
+
+    app->fileToPlayPath_ = argv[1];
 
     ret = app->init();
     if (ret < 0) {
         return ret;
     }
 
-    app->fileToPlayPath_ = argv[1];
-
-    ret = app->createVoiceStream();
+    ret = app->createPlayStream();
     if (ret < 0) {
         return ret;
     }
 
-    ret = app->startVoiceStream();
-    if (ret < 0) {
-        app->deleteVoiceStream();
-        return ret;
-    }
-
-    ret = app->createIncallPlayStream();
-    if (ret < 0) {
-        app->stopVoiceStream();
-        app->deleteVoiceStream();
-        return ret;
-    }
-
-    std::thread playWorker(&InCallPlaybackPCM::play, &(*app));
+    std::thread playWorker(&BTHFGRingtone::play, &(*app));
     playWorker.join();
 
-    ret = app->deleteIncallPlayStream();
-    if (ret < 0) {
-        app->stopVoiceStream();
-        app->deleteVoiceStream();
-        return ret;
-    }
-
-    ret = app->stopVoiceStream();
-    if (ret < 0) {
-        app->deleteVoiceStream();
-        return ret;
-    }
-
-    ret = app->deleteVoiceStream();
+    ret = app->deletePlayStream();
     if (ret < 0) {
         return ret;
     }

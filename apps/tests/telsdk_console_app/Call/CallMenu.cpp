@@ -31,35 +31,7 @@
  *
  *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -83,77 +55,6 @@
 
 CallMenu::CallMenu(std::string appName, std::string cursor)
     : ConsoleApp(appName, cursor) {
-   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
-   startTime = std::chrono::steady_clock::now();
-   // Get the PhoneFactory and PhoneManager instances.
-   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   phoneManager_ = phoneFactory.getPhoneManager();
-
-   // Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager_->isSubsystemReady();
-
-   // If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "\nTelephony subsystem is not ready, Please wait" << std::endl;
-      std::future<bool> f = phoneManager_->onSubsystemReady();
-      // Wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
-   }
-
-   // Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::steady_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s"
-                << std::endl;
-      phoneManager_->getPhoneIds(phoneIds_);
-   } else {
-      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-      exit(0);
-   }
-   std::promise<ServiceStatus> prom;
-   //  Get the PhoneFactory and CallManager instances.
-   callManager_ = phoneFactory.getCallManager([&](ServiceStatus status) {
-   if(status == ServiceStatus::SERVICE_AVAILABLE) {
-      prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
-   } else {
-      prom.set_value(ServiceStatus::SERVICE_FAILED);
-   }
-   });
-   if(!callManager_) {
-      std::cout << "ERROR - Failed to get CallManager instance \n";
-      exit(1);
-    }
-
-    ServiceStatus callMgrsubSystemStatus = callManager_->getServiceStatus();
-    if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
-       std::cout << "CallManager subsystem is not ready "
-                  << ", Please wait " << std::endl;
-       callMgrsubSystemStatus = prom.get_future().get();
-    }
-   if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
-      myDialCallCmdCb_ = std::make_shared<MyDialCallback>();
-      myHangupCb_ = std::make_shared<MyCallCommandCallback>("Hang");
-      myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");
-      myResumeCb_ = std::make_shared<MyCallCommandCallback>("Resume");
-      myAnswerCb_ = std::make_shared<MyCallCommandCallback>("Answer");
-      myRejectCb_ = std::make_shared<MyCallCommandCallback>("Reject");
-      myConferenceCb_ = std::make_shared<MyCallCommandCallback>("Conference");
-      mySwapCb_ = std::make_shared<MyCallCommandCallback>("Swap");
-      myPlayTonesCb_ = std::make_shared<MyCallCommandCallback>("Play Tone");
-      myStartToneCb_ = std::make_shared<MyCallCommandCallback>("Start Tone");
-      myStopToneCb_ = std::make_shared<MyCallCommandCallback>("Stop Tone");
-      callListener_ = std::make_shared<MyCallListener>();
-      // registering listener
-      telux::common::Status status = callManager_->registerListener(callListener_);
-      if(status != telux::common::Status::SUCCESS) {
-         std::cout << "Unable to register Call Manager listener" << std::endl;
-         exit(1);
-      }
-    } else {
-       std::cout << "Unable to initialise CallManager subsystem " << std::endl;
-       exit(1);
-    }
 }
 
 CallMenu::~CallMenu() {
@@ -171,7 +72,78 @@ CallMenu::~CallMenu() {
    myStopToneCb_ = nullptr;
 }
 
-void CallMenu::init() {
+bool CallMenu::init() {
+   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+   startTime = std::chrono::steady_clock::now();
+   // Get the PhoneFactory and PhoneManager instances.
+   auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+   phoneManager_ = phoneFactory.getPhoneManager();
+
+   // Check if telephony subsystem is ready
+   bool subSystemStatus = phoneManager_->isSubsystemReady();
+
+   // If telephony subsystem is not ready, wait for it to be ready
+   if(!subSystemStatus) {
+      std::cout << "\nTelephony subsystem is not ready, Please wait" << std::endl;
+      std::future<bool> f = phoneManager_->onSubsystemReady();
+      // Wait unconditionally for telephony subsystem to be ready
+      subSystemStatus = f.get();
+   }
+
+   // return from the function, if SDK is unable to initialize telephony subsystems
+   if(subSystemStatus) {
+      endTime = std::chrono::steady_clock::now();
+      std::chrono::duration<double> elapsedTime = endTime - startTime;
+      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s"
+                << std::endl;
+      phoneManager_->getPhoneIds(phoneIds_);
+   } else {
+      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+      return false;
+   }
+   std::promise<ServiceStatus> prom;
+   //  Get the PhoneFactory and CallManager instances.
+   callManager_ = phoneFactory.getCallManager([&](ServiceStatus status) {
+   if(status == ServiceStatus::SERVICE_AVAILABLE) {
+      prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+   } else {
+      prom.set_value(ServiceStatus::SERVICE_FAILED);
+   }
+   });
+   if(!callManager_) {
+      std::cout << "ERROR - Failed to get CallManager instance \n";
+      return false;
+    }
+
+    ServiceStatus callMgrsubSystemStatus = callManager_->getServiceStatus();
+    if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "CallManager subsystem is not ready "
+                  << ", Please wait " << std::endl;
+    }
+    callMgrsubSystemStatus = prom.get_future().get();
+   if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
+      myDialCallCmdCb_ = std::make_shared<MyDialCallback>();
+      myHangupCb_ = std::make_shared<MyCallCommandCallback>("Hang");
+      myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");
+      myResumeCb_ = std::make_shared<MyCallCommandCallback>("Resume");
+      myAnswerCb_ = std::make_shared<MyCallCommandCallback>("Answer");
+      myRejectCb_ = std::make_shared<MyCallCommandCallback>("Reject");
+      myConferenceCb_ = std::make_shared<MyCallCommandCallback>("Conference");
+      mySwapCb_ = std::make_shared<MyCallCommandCallback>("Swap");
+      myPlayTonesCb_ = std::make_shared<MyCallCommandCallback>("Play Tone");
+      myStartToneCb_ = std::make_shared<MyCallCommandCallback>("Start Tone");
+      myStopToneCb_ = std::make_shared<MyCallCommandCallback>("Stop Tone");
+      callListener_ = std::make_shared<MyCallListener>();
+      // registering listener
+      telux::common::Status status = callManager_->registerListener(callListener_);
+      if(status != telux::common::Status::SUCCESS) {
+         std::cout << "Unable to register Call Manager listener" << std::endl;
+         return false;
+      }
+    } else {
+       std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+       return false;
+    }
    std::shared_ptr<ConsoleAppCommand> dialCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Dial", {"number"}, std::bind(&CallMenu::dial, this, std::placeholders::_1)));
@@ -238,6 +210,7 @@ void CallMenu::init() {
          hangupForegroundResumeBackgroundCommand};
    addCommands(commandsListCallSubMenu);
    ConsoleApp::displayMenu();
+   return true;
 }
 
 void CallMenu::dial(std::vector<std::string> userInput) {

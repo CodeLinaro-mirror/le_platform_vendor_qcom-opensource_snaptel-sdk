@@ -40,9 +40,9 @@
 class CapturePCM {
 
  public:
-    telux::common::Status init();
-    telux::common::Status createCaptureStream();
-    telux::common::Status deleteCaptureStream();
+    int init();
+    int createCaptureStream();
+    int deleteCaptureStream();
     void capture();
     void readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error);

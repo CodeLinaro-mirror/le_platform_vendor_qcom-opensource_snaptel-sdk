@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * ImsServingSystemMenu provides menu options to invoke IMS Serving System APIs
@@ -59,7 +65,7 @@ ImsServingSystemMenu::~ImsServingSystemMenu() {
     imsServSysListeners_.clear();
 }
 
-void ImsServingSystemMenu::init() {
+bool ImsServingSystemMenu::init() {
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotCount_= MULTI_SIM_NUM_SLOTS;
     }
@@ -82,15 +88,15 @@ void ImsServingSystemMenu::init() {
             });
             if (!imsServingSystemMgr) {
                 std::cout << "ERROR - Failed to get IMS Serving System instance \n";
-                exit(1);
+                return false;
             }
 
             ServiceStatus imsServSysMgrStatus = imsServingSystemMgr->getServiceStatus();
             if (imsServSysMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
                 std::cout << "IMS Serving System subsystem is not ready on slotId " << i
                     << ", Please wait " << std::endl;
-                imsServSysMgrStatus = prom.get_future().get();
             }
+            imsServSysMgrStatus = prom.get_future().get();
             if (imsServSysMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
                 std::cout << "IMS Serving System subsystem is ready on slotId " << i << std::endl;
                 auto listener = std::make_shared<MyImsServSysListener>(static_cast<SlotId>(i));
@@ -98,13 +104,13 @@ void ImsServingSystemMenu::init() {
                 imsServSysListeners_.emplace(static_cast<SlotId>(i), listener);
                 if(status != Status::SUCCESS) {
                     std::cout << "ERROR - Failed to register listener \n";
-                    exit(1);
+                    return false;
                 }
 
             } else {
                 std::cout << "ERROR - Unable to initialize IMS Serving System subsystem on slotId "
                     << i << std::endl;
-                exit(1);
+                return false;
             }
             imsServingSystemMgrs_.emplace(static_cast<SlotId>(i), imsServingSystemMgr);
         }
@@ -113,12 +119,17 @@ void ImsServingSystemMenu::init() {
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Get_Registration_Status",
         {}, std::bind(&ImsServingSystemMenu::requestImsRegStatus, this,
         std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> queryServiceStatusOverImsCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Get_Service_Status",
+        {}, std::bind(&ImsServingSystemMenu::requestServiceStatusOverIms, this,
+        std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListImsServSysMenu
-        = { queryImsRegStateCommand };
+        = { queryImsRegStateCommand, queryServiceStatusOverImsCommand };
 
     addCommands(commandsListImsServSysMenu);
     ConsoleApp::displayMenu();
+    return true;
 }
 
 void ImsServingSystemMenu::requestImsRegStatus(std::vector<std::string> userInput) {
@@ -136,6 +147,30 @@ void ImsServingSystemMenu::requestImsRegStatus(std::vector<std::string> userInpu
             std::cout << "IMS registration status request sent successfully " << std::endl;
         } else {
             std::cout << "ERROR - Failed to send registration status request,"
+                    << "Status:" << static_cast<int>(status) << std::endl;
+            Utils::printStatus(status);
+        }
+    } else {
+        std::cout << "ERROR - ImsServingSystemManger on slot " << slotId
+            << " is null" << std::endl;
+    }
+}
+
+void ImsServingSystemMenu::requestServiceStatusOverIms(std::vector<std::string> userInput) {
+    SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+    if (slotCount_ > DEFAULT_NUM_SLOTS) {
+        slotId = static_cast<SlotId>(Utils::getValidSlotId());
+    }
+
+    if (imsServingSystemMgrs_[slotId]) {
+        auto response = [this, slotId](telux::tel::ImsServiceInfo service, ErrorCode error) {
+            MyImsServSysCallback::imsServiceStatusResponse(slotId, service, error);
+        };
+        Status status = imsServingSystemMgrs_[slotId]->requestServiceInfo(response);
+        if (status == Status::SUCCESS) {
+            std::cout << "IMS service status request sent successfully " << std::endl;
+        } else {
+            std::cout << "ERROR - Failed to send service status request,"
                     << "Status:" << static_cast<int>(status) << std::endl;
             Utils::printStatus(status);
         }

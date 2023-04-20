@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * The reference application to demonstrate Cellbroadcast features
@@ -67,7 +73,7 @@ CellbroadcastMenu::~CellbroadcastMenu() {
     }
 }
 
-void CellbroadcastMenu::init() {
+bool CellbroadcastMenu::init() {
 
     //  Get the PhoneFactory and PhoneManager instances.
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
@@ -90,12 +96,12 @@ void CellbroadcastMenu::init() {
                 std::future<bool> f = cbMgr->onSubsystemReady();
                 // If we want to wait unconditionally for cellbroadcast subsystem to be ready
                 subSystemStatus = f.get();
-                //  Exit the application, if SDK is unable to initialize cell broadcast subsystem
-                //  for any of the slot
+                //  Return from the function, if SDK is unable to initialize cell broadcast
+                //  subsystem for any of the slot
                 if(!subSystemStatus) {
                     std::cout << "ERROR - Unable to initialize subSystem on slot " << index <<
                         std::endl;
-                    exit(0);
+                    return false;
                 }
             }
 
@@ -109,7 +115,7 @@ void CellbroadcastMenu::init() {
             std::cout << " Cellbroadcast Manager is NULL,"
                 <<" so cannot register a listener to receive incoming SMS"
                 << std::endl;
-            exit(0);
+            return false;
         }
     }
 
@@ -143,6 +149,7 @@ void CellbroadcastMenu::init() {
     addCommands(commandsListCbMenu);
     ConsoleApp::displayMenu();
     std::cout << "Device is listening for any incoming cell broadcast messages" << std::endl;
+    return true;
 }
 
 void CellbroadcastMenu::requestMessageFilters(std::vector<std::string> userInput) {

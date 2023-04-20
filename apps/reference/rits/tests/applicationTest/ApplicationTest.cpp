@@ -26,6 +26,7 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
@@ -121,12 +122,14 @@ bool simMode = false;
 // catch specified signals and gracefully shut down program
 void signalHandler(int signum) {
     fprintf(stderr, "Interrupt signal (%d) received.\n", signum);
-    if(signum == SIGSEGV || signum == SIGABRT){
+    if (signum == SIGSEGV || signum == SIGABRT) {
         if(application->ldm != nullptr)
             application->ldm->stopGb();
         fprintf(stderr, "Attempting to close all flows and subscriptions\n");
         application->closeAllRadio();
     }
+
+    application->prepareForExit();
     std::unique_lock<std::mutex> lk(gTerminateMtx);
     stopThread = true;
     gTerminateCv.notify_all();
@@ -437,6 +440,22 @@ int prepareWsaTx() {
     return 0;
 }
 
+void transmitEventMsg() {
+    if(application->configuration.enableSignStatLog)
+        application->initSignLogging();
+    while (!stopThread) {
+        if (application->pendingTillEmergency() &&
+            //TODO: need provide a proper way to sync the tx/rx threads
+            application->eventTransmits[0].getCurrentStatus().txStatus == Cv2xStatusType::ACTIVE) {
+
+            int ret = application->send(0, TransmitType::EVENT);
+            if (ret <= 0) {
+                cerr << "Fail to send event messages." << endl;
+            }
+        }
+    }
+}
+
 /**
  * transmit thread function
  * @param[in] msgType, type of message we are transmitting, so far only BSM and
@@ -492,41 +511,45 @@ void transmit(MessageType msgType) {
 
     // main transmitting code
     while (!stopThread){
-        if(!simMode){
-            //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
-            //Check CV2X TX Status when TX is enabled.
-            application->spsTransmits[0].waitForCv2xToActivate(haltRx);
-            if (application->spsTransmits[0].restartFlow) {
-                application->closeAllRadio();
-                application->setup(msgType);
-                close(tx_timer_fd);
-                tx_timer_fd = start_tx_timer(txInterval);
-                {
-                    std::lock_guard<std::mutex> lk(cv2xStatusMtx);
-                    haltRx = false;
-                }
-                cv.notify_all();
-                // need to re-set the WSA Tx after the radio instance is re-created
-                if (MessageType::WSA == msgType
-                    and prepareWsaTx() < 0) {
-                    cerr << "Failed to prepare WSA Tx" << endl;;
-                    break;
-                }
-            }
-        }
-        ret = application->send(0, TransmitType::SPS);
-        if(ret > 0){
-            txsuccess++;
-            if (application->configuration.driverVerbosity) {
-                if (txsuccess % 50 == 0 && txsuccess > 0){
-                    gettimeofday(&currTime, NULL);
-                    cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
-                        " Encode/Tx Success #: " << txsuccess <<
-                        " Encode/Tx Fail #: " << txfail << std::endl;
+        if (application->pendingTillNoEmergency()) {
+
+            if(!simMode){
+                //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
+                //Check CV2X TX Status when TX is enabled.
+                // [TODO] The multiple tx/rx threads should be synced in a proper way to avoid crash
+                application->spsTransmits[0].waitForCv2xToActivate(haltRx);
+                if (application->spsTransmits[0].restartFlow) {
+                    application->closeAllRadio();
+                    application->setup(msgType);
+                    close(tx_timer_fd);
+                    tx_timer_fd = start_tx_timer(txInterval);
+                    {
+                        std::lock_guard<std::mutex> lk(cv2xStatusMtx);
+                        haltRx = false;
+                    }
+                    cv.notify_all();
+                    // need to re-set the WSA Tx after the radio instance is re-created
+                    if (MessageType::WSA == msgType
+                        and prepareWsaTx() < 0) {
+                        cerr << "Failed to prepare WSA Tx" << endl;;
+                        break;
+                    }
                 }
             }
-        } else {
-            txfail++;
+            ret = application->send(0, TransmitType::SPS);
+            if(ret > 0){
+                txsuccess++;
+                if (application->configuration.driverVerbosity) {
+                    if (txsuccess % 50 == 0 && txsuccess > 0){
+                        gettimeofday(&currTime, NULL);
+                        cout << "Dur(s): " << (currTime.tv_sec-startTime) <<
+                            " Encode/Tx Success #: " << txsuccess <<
+                            " Encode/Tx Fail #: " << txfail << std::endl;
+                    }
+                }
+            } else {
+                txfail++;
+            }
         }
 
         s = read(tx_timer_fd, &exp, sizeof(exp));
@@ -916,6 +939,7 @@ int setup(const bool tx, const bool rx,
                           "Release name: " << sdkReleaseName << std::endl;
 
     MessageType msgType = MessageType::BSM;
+
     if (bsm || wsa) {
         msgType = bsm? MessageType::BSM : MessageType::WSA;
         printf("Will be creating application for: ");
@@ -976,7 +1000,7 @@ int setup(const bool tx, const bool rx,
 
     if ((tx || application->configuration.enableTxAlways) && !txSim && !rxSim)
     {
-        if (application->spsTransmits.empty()) {
+        if (application->spsTransmits.empty() || application->eventTransmits.empty()) {
             cerr << "Tx flow not created, please check configuration" << endl;
             return -1;
         }
@@ -989,6 +1013,7 @@ int setup(const bool tx, const bool rx,
             threads.push_back(thread(tunnelModeTx));
         } else {
             threads.push_back(thread(transmit, msgType));
+            threads.push_back(thread(transmitEventMsg));
         }
     }
 
@@ -1079,9 +1104,8 @@ int setup(const bool tx, const bool rx,
             threads.push_back(thread(simTxRecorded, string(preRecordedFile)));
         }
         else {
-            threads.push_back(thread(transmit, msgType));
+          threads.push_back(thread(transmit, msgType));
         }
-
     }
     if(application->configuration.driverVerbosity > 4)
         printf("Number of threads after simtransmit is: %d\n", (int)threads.size());

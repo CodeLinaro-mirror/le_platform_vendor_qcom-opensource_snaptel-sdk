@@ -33,27 +33,68 @@
  */
 
 #include <queue>
+#include <atomic>
 #include <condition_variable>
 
 #include <telux/audio/AudioManager.hpp>
 
-class PlaybackPCM {
+class BTHFVoiceCall {
 
  public:
     int init();
-    int createPlayStream();
-    int deletePlayStream();
-    void play();
-    void writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+    int allocateBuffers();
+
+    int createBTPlayStream();
+    int deleteBTPlayStream();
+
+    int createBTCaptureStream();
+    int deleteBTCaptureStream();
+
+    int createCodecPlayStream();
+    int deleteCodecPlayStream();
+
+    int createCodecCaptureStream();
+    int deleteCodecCaptureStream();
+
+    void readCompleteCodec(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        telux::common::ErrorCode error);
+
+    void writeCompleteCodec(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error);
 
-    char *fileToPlayPath_;
+    void readCompleteBluetooth(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        telux::common::ErrorCode error);
+
+    void writeCompleteBluetooth(
+        std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+        uint32_t bytesWritten, telux::common::ErrorCode error);
+
+    void readFromBluetoothWriteOnCodec();
+    void readFromCodecWriteOnBluetooth();
+
+    bool keepRunning_ = false;
 
  private:
+    uint32_t btReadSize_;
+    uint32_t codecReadSize_;
+    std::atomic_int32_t codecWritePossible_;
+    std::atomic_int32_t bluetoothWritePossible_;
+    std::mutex btReadMutex_;
+    std::mutex codecReadMutex_;
+    std::condition_variable btReadWaiterCv_;
+    std::condition_variable codecReadWaiterCv_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> readyForCodecWriteBuffers_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> readyForBluetoothWriteBuffers_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> btReadBuffers_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> btWriteBuffers_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> codecReadBuffers_;
+    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> codecWriteBuffers_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
-    std::shared_ptr<telux::audio::IAudioPlayStream> audioPlayStream_;
-    FILE *fileToPlay_;
-    std::mutex playMutex_;
-    std::condition_variable cv_;
-    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
+    std::shared_ptr<telux::audio::IAudioPlayStream> btPlayStream_;
+    std::shared_ptr<telux::audio::IAudioCaptureStream> btCaptureStream_;
+    std::shared_ptr<telux::audio::IAudioPlayStream> codecPlayStream_;
+    std::shared_ptr<telux::audio::IAudioCaptureStream> codecCaptureStream_;
 };

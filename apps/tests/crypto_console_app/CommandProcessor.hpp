@@ -49,6 +49,7 @@ struct Request {
     telux::sec::PaddingTypes padding;
     telux::sec::BlockModeTypes blockMode;
     telux::sec::CryptoOperationTypes operation;
+    std::shared_ptr<telux::sec::EncryptedData> encData;
     std::vector<uint8_t> textA;
     std::vector<uint8_t> textB;
     std::vector<uint8_t> textC;

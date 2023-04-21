@@ -184,14 +184,16 @@ SaeApplication::~SaeApplication() {
 
 void SaeApplication::printRxStats() {
     sem_wait(&this->log_sem);
-    std::thread::id tid = std::this_thread::get_id();
-    printf("Thread (%04x) rx fails is: %d\n", tid, rxFail);
-    printf("Thread (%04x) decode fails is: %d\n", tid, decFail);
-    printf("Thread (%04x) rx successes is: %d\n", tid, rxSuccess);
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
+    printf("Thread (%08x) rx fails is: %d\n", tid, rxFail);
+    printf("Thread (%08x) decode fails is: %d\n", tid, decFail);
+    printf("Thread (%08x) rx successes is: %d\n", tid, rxSuccess);
     if (verifFail)
-        printf("Thread (%04x) verif fails is: %d\n", tid, verifFail);
+        printf("Thread (%08x) verif fails is: %d\n", tid, verifFail);
     if (verifSuccess)
-        printf("Thread (%04x) verif success is: %d\n", tid, verifSuccess);
+        printf("Thread (%08x) verif success is: %d\n", tid, verifSuccess);
     totalRxSuccess+=rxSuccess;
     sem_post(&this->log_sem);
 }
@@ -199,13 +201,15 @@ void SaeApplication::printRxStats() {
 void SaeApplication::printTxStats() {
     printf("Printing tx stats\n");
     sem_wait(&this->log_sem);
-    std::thread::id tid = std::this_thread::get_id();
-    printf("Thread (%04x) tx fails is: %d\n", tid, txFail);
-    printf("Thread (%04x) tx successes is: %d\n", tid, txSuccess);
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
+    printf("Thread (%08x) tx fails is: %d\n", tid, txFail);
+    printf("Thread (%08x) tx successes is: %d\n", tid, txSuccess);
     if (signFail)
-        printf("Thread (%04x) sign fails is: %d\n", tid, signFail);
+        printf("Thread (%08x) sign fails is: %d\n", tid, signFail);
     if (signSuccess)
-        printf("Thread (%04x) sign success is: %d\n", tid, signSuccess);
+        printf("Thread (%08x) sign success is: %d\n", tid, signSuccess);
     totalTxSuccess+=txSuccess;
     sem_post(&this->log_sem);
 }
@@ -217,6 +221,10 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     wsmp_data_t *wsmpp;
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
     int macAddrLen = CV2X_MAC_ADDR_LEN;
+    /* Congestion Control Parameters */
+    CongestionControlData congestionControlData_;
+    bsm_value_t* rvBsm;
+    uint32_t l2SrcAddr = 0;
 
     // make sure that the threadMc is initialized
     if (threadMc == nullptr) {
@@ -283,11 +291,11 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 
     // Decode packet as WSMP Packet and IEEE 1609.2 Header
     ret = decode_msg(threadMc.get());
+    l2SrcAddr = radioReceives[0].msgL2SrcAdrr;
+    if (appVerbosity >= 5) {
+        std::cout << "L2 ID is " << l2SrcAddr << std::endl;
+    }
     if (configuration.enableL2Filtering) {
-        uint32_t l2SrcAddr = radioReceives[0].msgL2SrcAdrr;
-        if (appVerbosity >= 5) {
-            std::cout << "L2 ID is " << l2SrcAddr << std::endl;
-        }
         auto remote_bsm = reinterpret_cast<bsm_value_t *>(threadMc->j2735_msg);
         if (hostMc == nullptr) {
             try {
@@ -388,6 +396,35 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         sem_wait(&this->log_sem);
         totalRxSuccessPerSecond++;
         sem_post(&this->log_sem);
+
+        /*    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
+            unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
+            unsigned int id;            // 32 bit identifier
+            unsigned int secMark_ms;    // No of milliseconds in a minute
+            signed int   Latitude;      // Degrees * 10^7
+            signed int   Longitude;     // Degrees * 10^7
+            signed int   Elevation;     // Meters * 10
+
+            unsigned int SemiMajorAxisAccuracy;         // val * 20
+            unsigned int SemiMinorAxisAccuracy;         // val * 20
+            unsigned int SemiMajorAxisOrientation;      // val/0.0054932479
+
+            j2735_transmission_state_e TransmissionState;   // P,R,N,D,L (park etc..)
+            unsigned int Speed;                     // value (in kmph) * 250/18
+            unsigned int Heading_degrees;           // value (in degrees) / 0.0125
+            signed int   SteeringWheelAngle;        // value (in degree) / 1.5
+            signed int   AccelLon_cm_per_sec_squared;       // value (in m/sec2) / 0.01
+        */
+        if(this->configuration.enableCongCtrl){
+            /* If congestion control is enabled, we will pass the contents
+                of the decoded/verified BSM to the cong ctrl library */
+            rvBsm = (bsm_value_t*)threadMc.get()->j2735_msg;
+
+            unsigned int rvTmpId =  rvBsm->id;
+            congestionControlManager->addCongestionControlData(rvTmpId, rvBsm->Latitude/10000000,
+                rvBsm->Longitude / 10000000, rvBsm->Heading_degrees, rvBsm->Speed, rvBsm->timestamp_ms,
+                rvBsm->MsgCount);
+        }
         if (appVerbosity > 2 && MsgType == MessageType::BSM) {
             printf("Decoded BSM Summary: \n");
             print_summary_RV(threadMc.get());
@@ -395,7 +432,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     } else {
         decFail++;
     }
-    ApplicationBase::writeMinLog(threadMc, index, false, TransmitType::EVENT,
+    ApplicationBase::writeLog(threadMc, index, l2SrcAddr, false, TransmitType::EVENT,
         (ret >= 0) ? true : false);
 
     return ret;
@@ -487,7 +524,7 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
     }
     // set the hv kinematics
     shared_ptr<ILocationInfoEx> locationInfo;
-    if(configuration.enableLocationFixes){
+    if(configuration.enableLocationFixes && kinematicsReceive){
         locationInfo = kinematicsReceive->getLocation();
         sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
         sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
@@ -929,9 +966,8 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     memset(bsm, 0, sizeof(bsm_value_t));
     srand(timestamp_now());
     fillBsmCan(bsm);
-    if(kinematicsReceive){
-        fillBsmLocation(bsm);
-    }
+    fillBsmLocation(bsm);
+
     bsm->timestamp_ms = timestamp_now();
     bsm->VehicleLength_cm = configuration.vehicleLength;
     bsm->VehicleWidth_cm = configuration.vehicleWidth;
@@ -946,7 +982,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     // needs to be randomized along with l2 address and msg id and pseudonym cert
 
     // check if msg count has been randomized and we haven't updated this yet
-    // if so, keep adding and modding 127
+    // if so, keep adding and modding 128
     if (!this->configuration.lcmName.empty() &&
         this->configuration.idChangeInterval) {
         idChangeEnabled = true;
@@ -957,7 +993,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     }
         // for synchronization between Application and Aerolink sides
     if (!initialized) {
-        bsm->MsgCount = (rand() % 127);
+        bsm->MsgCount = (rand() % 128);
         bsm->id = rand();
         initialized = true;
 
@@ -967,7 +1003,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     }
     else if (idChangeData.idChanged) {
         // randomize msg count
-        bsm->MsgCount = (rand() % 127);
+        bsm->MsgCount = (rand() % 128);
         // update the temp id
         bsm->id = (uint32_t)idChangeData.tempId[0] << 24 |
         (uint32_t)idChangeData.tempId[1] << 16 |
@@ -980,7 +1016,7 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
         this->tempId = bsm->id;
     }
     else{
-        bsm->MsgCount = (msgCount + 1) % 127;
+        bsm->MsgCount = (msgCount + 1) % 128;
         bsm->id = tempId;
     }
     if (idChangeEnabled) {
@@ -1018,10 +1054,16 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 }
 
 void SaeApplication::fillBsmLocation(bsm_value_t *bsm) {
-    if(!configuration.enableLocationFixes){
+    if(!configuration.enableLocationFixes || !kinematicsReceive ||
+        !appLocListener_){
         return;
     }
-    shared_ptr<ILocationInfoEx> locationInfo = kinematicsReceive->getLocation();
+    //shared_ptr<ILocationInfoEx> locationInfo = kinematicsReceive->getLocation();
+    shared_ptr<ILocationInfoEx> locationInfo = appLocListener_->getLocation();
+    if(!locationInfo){
+        std::cout << "Invalid location info\n";
+        return;
+    }
     //ref_app code with the new telSDK Location
     bsm->Latitude = (locationInfo->getLatitude() * 10000000);
     bsm->Longitude = (locationInfo->getLongitude() * 10000000);

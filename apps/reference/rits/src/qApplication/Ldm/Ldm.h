@@ -88,7 +88,7 @@
 #include <telux/cv2x/Cv2xRadio.hpp>
 
 #define DIRTY_DATA 15001
-#define NO_DATA 15000
+#define INVALID_DATA 15000
 
 using std::list;
 using std::map;

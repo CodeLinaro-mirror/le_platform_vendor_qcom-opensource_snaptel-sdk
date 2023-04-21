@@ -60,4 +60,3 @@ if(WITH_SYSTEMD)
     install(FILES scripts/qits@.service
             DESTINATION ${CMAKE_INSTALL_PREFIX}/../lib/systemd/system)
 endif()
-

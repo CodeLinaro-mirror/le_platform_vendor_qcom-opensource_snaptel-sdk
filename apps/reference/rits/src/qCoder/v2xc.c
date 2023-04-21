@@ -107,7 +107,6 @@ int main(int argc, char **argv)
 
     if (pkt_type == PKT_TYPE_BSM) {
         decode_as_j2735(&mc);
-        print_summary_RV(&mc);
     }
 
     return 0;

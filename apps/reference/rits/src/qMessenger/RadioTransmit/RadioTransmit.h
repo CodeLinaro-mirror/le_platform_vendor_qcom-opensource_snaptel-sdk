@@ -61,7 +61,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
  /**
   * @file: RadioTransmit.h
   *
@@ -108,6 +107,8 @@ private:
     shared_ptr<ICv2xTxFlow> eventFlow,
     ErrorCode spsError,
     ErrorCode eventError);
+    Priority spsPriority;
+    uint32_t spsResSize;
 
     struct sockaddr_in6 destSock;
     int simSock = -1;
@@ -120,6 +121,7 @@ private:
     std::shared_ptr<SpsFlowInfo> spsFlowInfo = nullptr;
     uint64_t lastTxMonotonicTime_ = 0;
     uint64_t actualSPSTxIntervalMs_ = 0;
+    string flowType;
 
     /**
     * Function that acts as a callback of the SDK's Event Flow creation.
@@ -211,7 +213,8 @@ public:
     */
     uint8_t updateSpsFlow(const SpsFlowInfo spsInfo);
 
-
+    Priority getSpsPriority();
+    uint32_t getSpsResSize();
     /**
     * Method that closes flow.
     * @return result value 0 on success and 1 on fail.

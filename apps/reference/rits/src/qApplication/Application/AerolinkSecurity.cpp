@@ -87,7 +87,7 @@ static      int verifSuccess, prevVerifSuccess, verifFail;
 static      int signSuccess, prevSignSuccess, signFail;
 static      int queuedVerifs = 0;
 static      int secVerbosity = 0;
-
+static      uint16_t secCountryCode_ = 0;
 /* Semaphores */
 static      sem_t smpListSem;
 static      sem_t smgListSem;
@@ -125,6 +125,16 @@ void AerolinkSecurity::setStartTime(double start){
     prevBatchTimeStamp = startTime;
 }
 
+int AerolinkSecurity::setSecCurrLocation(Kinematics* hvKine){
+    int result = securityServices_setCurrentLocation(
+                 hvKine->latitude, hvKine->longitude,
+                 hvKine->elevation, secCountryCode_);
+     if(result != WS_SUCCESS){
+         std::cerr << "Location not updated successfully\n";
+     }
+    return result;
+}
+
 /* Function to print out running signing stats */
 void printSignStats(std::thread::id thrId){
     time_t t;
@@ -133,7 +143,10 @@ void printSignStats(std::thread::id thrId){
     t = currTime.tv_sec;
     info = localtime(&t);
     if(signSuccess % 10 == 0 && signSuccess > 0){
-        fprintf(stdout, "ThreadID: 0x%08x; ", thrId);
+        std::stringstream ss;
+        ss << thrId;
+        int tid = (int)std::stoul(ss.str());
+        fprintf(stdout, "ThreadID: 0x%08x; ", tid);
         fprintf(stdout, " %s : SignSuccess: %d; SignFail: %d\n",
                     asctime (info), signSuccess, signFail);
     }
@@ -173,9 +186,11 @@ void printVerifStats(std::thread::id thrId){
 
              // running avg rate:
             avgRate = 2500.0/avgBatchTime;
-
+            std::stringstream ss;
+            ss << thrId;
+            int tid = (int)std::stoul(ss.str());
             // logging for batch verif stats
-            fprintf(stdout, "ThreadID: 0x%08x; ", thrId);
+            fprintf(stdout, "ThreadID: 0x%08x; ", tid);
             fprintf(stdout, "TotalSuccessfulVerifs: %d;\n", verifSuccess);
             fprintf(stdout, "BatchVerifRate: %fk VHz; ", rate);
             fprintf(stdout, "AvgBatchVerifRate: %fk VHz; \n", avgRate);
@@ -312,6 +327,7 @@ AerolinkSecurity * AerolinkSecurity::Instance(std::string ctxName,
     if(pInstance == nullptr){
         AerolinkSecurity::pInstance =
             new AerolinkSecurity(ctxName, countryCode);
+        secCountryCode_ = countryCode;
     }
     return AerolinkSecurity::pInstance;
 }
@@ -322,6 +338,7 @@ AerolinkSecurity * AerolinkSecurity::Instance(std::string ctxName,
     if(pInstance == nullptr){
         AerolinkSecurity::pInstance =
             new AerolinkSecurity(ctxName, countryCode, keyGenMethod);
+        secCountryCode_ = countryCode;
     }
     return AerolinkSecurity::pInstance;
 }
@@ -333,6 +350,7 @@ AerolinkSecurity * AerolinkSecurity::Instance(std::string ctxName,
     if(pInstance == nullptr){
         AerolinkSecurity::pInstance =
             new AerolinkSecurity(ctxName, countryCode, lcmName, idChangeData);
+        secCountryCode_ = countryCode;
     }
     return AerolinkSecurity::pInstance;
 }
@@ -359,6 +377,7 @@ int AerolinkSecurity::init(void) {
             fprintf(stderr, "SecurityServices initialization failed (%s)\n",
                 ws_errid(result));
     }
+
     /*
      * Adjust the time for the expiration of signatures and certificates
      */
@@ -516,7 +535,7 @@ int AerolinkSecurity::createNewSmp(SecuredMessageParserC* smpPtr){
     result = smp_new(secContext_, smpPtr);
     if (result != WS_SUCCESS){
         if(secVerbosity > 4)
-            fprintf(stderr,"Unable to create secure message parser (0x%08x)\n",
+            fprintf(stderr,"Unable to create secure message parser (%s)\n",
                      ws_errid(result));
         return -1;
     }
@@ -529,7 +548,7 @@ int AerolinkSecurity::createNewSmg(SecuredMessageGeneratorC* smgPtr){
     result = smg_new(secContext_, smgPtr);
     if (result != WS_SUCCESS) {
         if(secVerbosity > 7)
-            fprintf(stderr,"Unable to create secure message generator (0x%08x)\n",
+            fprintf(stderr,"Unable to create secure message generator (%s)\n",
                      ws_errid(result));
         return -1;
     }
@@ -541,10 +560,6 @@ SecuredMessageParserC* AerolinkSecurity::getThrSmp(std::thread::id thrId){
     std::map<std::thread::id, SecuredMessageParserC>::iterator iter =
                 threadSmps.find(thrId);
     if(iter == threadSmps.end()){
-        if(secVerbosity > 7)
-          fprintf(stderr,
-                    "Unable to find secure message parser for thread (0x%08x)\n",
-                thrId);
         return NULL;
     }
     return &iter->second;
@@ -555,10 +570,6 @@ SecuredMessageGeneratorC* AerolinkSecurity::getThrSmg(std::thread::id thrId){
     std::map<std::thread::id, SecuredMessageGeneratorC>::iterator iter =
                 threadSmgs.find(thrId);
     if(iter == threadSmgs.end()){
-        if(secVerbosity > 7)
-            fprintf(stderr,
-                    "Unable to find secure message generator for thread (0x%08x)\n",
-                thrId);
         return NULL;
     }
     return &iter->second;
@@ -569,9 +580,6 @@ sem_t* AerolinkSecurity::getThrSmpSem(std::thread::id thrId){
     std::map<std::thread::id, sem_t>::iterator iter =
                 verifSmpSems.find(thrId);
     if(iter == verifSmpSems.end()){
-        if(secVerbosity > 7)
-            fprintf(stderr,"Unable to find SMP semaphore for thread (0x%08x)\n",
-                thrId);
         return nullptr;
     }
     return &iter->second;
@@ -582,22 +590,16 @@ sem_t* AerolinkSecurity::getThrSmgSem(std::thread::id thrId){
     std::map<std::thread::id, sem_t>::iterator iter =
                 signSmgSems.find(thrId);
     if(iter == signSmgSems.end()){
-        if(secVerbosity > 7)
-            fprintf(stderr,"Unable to find SMG semaphore for thread (0x%08x)\n",
-                thrId);
         return nullptr;
     }
     return &iter->second;
 }
-
 
 // Function to add new unique SMP corresponding to a thread
 bool AerolinkSecurity::addNewThrSmp(std::thread::id thrId){
 
     // First check if it already exists, so that we do not create mem leak
     if(getThrSmp(thrId) != nullptr){
-        if(secVerbosity > 7)
-            fprintf(stderr,"Unable to add smp for this thread\n");
         return false;
     }
     sem_wait(&smpListSem);
@@ -745,8 +747,7 @@ int AerolinkSecurity::ExtractMsg(const SecurityOpt opt,
     smp = getThrSmp(thrId);
     if(smp == nullptr){
         if(secVerbosity > 4)
-            fprintf(stderr,"Unable to retreive smp for this thread %d\n",
-              std::this_thread::get_id());
+            fprintf(stderr,"Unable to retreive smp for this thread\n");
         return -1;
     }
 
@@ -798,8 +799,7 @@ int AerolinkSecurity::syncVerify(
     smp = getThrSmp(thrId);
     if(smp == nullptr){
         if(secVerbosity > 4)
-            fprintf(stderr,"Unable to retreive smp for this thread %d\n",
-              std::this_thread::get_id());
+            fprintf(stderr,"Unable to retreive SMP for this thread\n");
         return -1;
     }
 
@@ -906,8 +906,7 @@ int AerolinkSecurity::asyncVerify(
     smp = getThrSmp(thrId);
     if(smp == nullptr){
         if(secVerbosity > 4)
-        fprintf(stderr,"Unable to retrieve SMP for this thread 0x%08x\n",
-              std::this_thread::get_id());
+        fprintf(stderr,"Unable to retrieve SMP for this thread\n");
         return -1;
     }
 
@@ -989,7 +988,7 @@ void AerolinkSecurity:: mbdCheck(Kinematics* rvBsmInfo, MisbehaviorStats* misbeh
                 fprintf(stderr, "Error in checking misbehavior\n");
         }else{
             if(secVerbosity > 4){
-                fprintf(stdout, "Detected Misbehavior Class is 0x%08x\n",
+                fprintf(stdout, "Detected Misbehavior Class is %lu\n",
                 misbehaviorResultPtr->detectedMisbehavior);
             }
         }
@@ -1096,8 +1095,7 @@ int AerolinkSecurity::SignMsg(const SecurityOpt opt,
     if(smg == nullptr){
         if(secVerbosity > 7)
             fprintf(stderr,
-                "Unable to retreive smg for this thread %d\n",
-                std::this_thread::get_id());
+                "Unable to retreive smg for this thread\n");
         return -1;
     }
 

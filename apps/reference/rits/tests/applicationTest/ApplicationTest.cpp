@@ -132,6 +132,10 @@ void signalHandler(int signum) {
     application->prepareForExit();
     std::unique_lock<std::mutex> lk(gTerminateMtx);
     stopThread = true;
+/*     if(application->configuration.enableCongCtrl){
+        std::cout << "Deinitializing congestion control library\n";
+        application->congestionControlManager->deinit();
+    } */
     gTerminateCv.notify_all();
 }
 
@@ -500,15 +504,21 @@ void transmit(MessageType msgType) {
             break;
     }
 
-    int tx_timer_fd = start_tx_timer(txInterval);
-    if (tx_timer_fd == -1) {
-        cerr << "Failed to start Tx timer" << endl;
-        return;
+    /* Logic here changes if congestion control is enabled */
+
+    // default timer
+    int tx_timer_fd = 0;
+    if(!application->configuration.enableCongCtrl){
+        tx_timer_fd = start_tx_timer(txInterval);
+        if (tx_timer_fd == -1) {
+            cerr << "Failed to start Tx timer" << endl;
+            return;
+        }
     }
+
     struct timeval currTime;
     gettimeofday(&currTime, NULL);
     time_t startTime = currTime.tv_sec;
-
     // main transmitting code
     while (!stopThread){
         if (application->pendingTillNoEmergency()) {
@@ -551,11 +561,15 @@ void transmit(MessageType msgType) {
                 txfail++;
             }
         }
-
-        s = read(tx_timer_fd, &exp, sizeof(exp));
-        if (s == sizeof(uint64_t) && exp > 1) {
-            timer_misses += (exp-1);
-            cout << "TX timer overruns: Total missed: " << timer_misses << endl;
+        // default
+        if(!application->configuration.enableCongCtrl){
+            s = read(tx_timer_fd, &exp, sizeof(exp));
+            if (s == sizeof(uint64_t) && exp > 1) {
+                timer_misses += (exp-1);
+                if(application->configuration.driverVerbosity){
+                    cout << "TX timer overruns: Total missed: " << timer_misses << endl;
+                }
+            }
         }
     }
     printf("Sending thread stopped\n");
@@ -1021,7 +1035,9 @@ int setup(const bool tx, const bool rx,
         printf("Number of threads after tx is: %d\n", (int)threads.size());
 
     if (csv) {
-        application->openMinLogFile(csvFileName);
+        application->openLogFile(csvFileName);
+        // TODO add option for only bsm related log
+        // application->openBsmMinLogFile(csvFileName);
     }
 
     if (rx && !rxSim)
@@ -1172,6 +1188,14 @@ int setup(const bool tx, const bool rx,
             return -1;
         }
         threads.push_back(thread(runApps));
+    }
+
+    /* Will start it here because to prevent desynchronization between the transmit thread and congestion control startup */
+    /* Start congestion control threads */
+    if(application->configuration.enableCongCtrl){
+        if(application->congestionControlManager){
+            application->congestionControlManager->startCongestionControl();
+        }
     }
 
     return 0;

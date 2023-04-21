@@ -77,11 +77,13 @@ VehicleReceive::~VehicleReceive(){
 
 bool VehicleReceive::enableVehicleReceive(VehicleEventsCallback cb) {
     evtCallback = cb;
+
     handle = v2x_vehicle_register_listener(VehicleReceive::onVehicleDataChanges, this);
     if (handle == V2X_VDATA_HANDLE_BAD) {
         cout<<"Error creating listener on Vehicle Receive.\n";
         return false;
     }
+
     return true;
 }
 

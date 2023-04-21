@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -432,8 +432,8 @@ Status AudioClient::createStream(StreamType streamType) {
                 myAudioStream = audioStream;
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "failed to Create a stream" <<std::endl;
+                p.set_value(false);
             }
         });
     if(audioStatus == Status::SUCCESS) {
@@ -480,10 +480,10 @@ Status AudioClient::deleteStream(StreamType streamType) {
     telux::common::Status deleteStreamStatus = audioManager_-> deleteStream(
     stream_, [&p,this](telux::common::ErrorCode error) {
         if (error == telux::common::ErrorCode::SUCCESS) {
-        p.set_value(true);
+            p.set_value(true);
         } else {
-        p.set_value(false);
-        std::cout << "Failed to delete a stream" << std::endl;
+            std::cout << "Failed to delete a stream" << std::endl;
+            p.set_value(false);
         }
     });
     if(deleteStreamStatus == Status::SUCCESS) {
@@ -595,8 +595,8 @@ void AudioClient::setVolume(StreamType streamType) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to set stream volume" << std::endl;
+                p.set_value(false);
             }
         });
         cleanupMtx_.unlock();
@@ -629,8 +629,8 @@ void AudioClient::getVolume(StreamType streamType) {
                 vol = volume;
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to set stream device" << std::endl;
+                p.set_value(false);
             }
         });
         cleanupMtx_.unlock();
@@ -691,8 +691,8 @@ void AudioClient::setMute(StreamType streamType) {
             if (error == telux::common::ErrorCode::SUCCESS) {
                 p.set_value(true);
             } else {
-                p.set_value(false);
                 std::cout << "Failed to set mute" << std::endl;
+                p.set_value(false);
             }
         });
         cleanupMtx_.unlock();

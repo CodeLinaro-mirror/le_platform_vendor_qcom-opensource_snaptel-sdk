@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -111,8 +111,10 @@ class CryptoParamBuilder {
         If both are specified then given curve is used and also key size is validated. */
     CryptoParamBuilder setCurve(int32_t curve);
 
-    /** When generating the AES key, set this to true. And when performing AES crypto
-        operations define initialization vector using iv field in this structure. */
+    /** When generating the AES key, if callerNonce is set to true, it specifies that an
+        explicit nonce will be supplied by the caller during encryption and decryption using
+        @ref setInitVector(). If the callerNonce is set to false (or not set), platform will
+        generate the nonce during encryption. This nonce should be passed during decryption. */
     CryptoParamBuilder setCallerNonce(bool callerNonce);
 
     /** When generating the RSA key, specifies the value of the public exponent for an

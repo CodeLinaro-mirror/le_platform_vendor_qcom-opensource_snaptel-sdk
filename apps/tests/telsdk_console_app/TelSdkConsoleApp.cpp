@@ -270,7 +270,9 @@ void TelSdkConsoleApp::onModemAvailable() {
 // since operating mode cannot be changed
     std::cout << "\n\nChecking telephony subsystem, Please wait!!!..." << std::endl;
     std::shared_ptr<ModemStatus> modemStatus = std::make_shared<ModemStatus>();
-    modemStatus->printOperatingMode();
+    if (modemStatus->init()) {
+       modemStatus->printOperatingMode();
+    }
 }
 #endif
 

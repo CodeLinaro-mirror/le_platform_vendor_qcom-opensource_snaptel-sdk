@@ -109,6 +109,8 @@ public:
     *
     * @returns If true PhoneManager is ready for service (i.e Phone, Sms and
     * Card).
+    * @deprecated Use IPhoneManager::getServiceStatus() API.
+    *
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -117,8 +119,23 @@ public:
     *
     * @returns A future that caller can wait on to be notified when telephony
     * subsystem is ready.
+    * @deprecated Use InitResponseCb in PhoneFactory::getPhoneManager instead, to
+    *             get notified about subsystem readiness.
+    *
     */
    virtual std::future<bool> onSubsystemReady() = 0;
+   /**
+    * This status indicates whether the IServingSystemManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    - If Serving System manager is ready for service.
+    *          SERVICE_UNAVAILABLE  - If Serving System manager is temporarily unavailable.
+    *          SERVICE_FAILED       - If Serving System manager encountered an irrecoverable
+    *                                 failure.
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    *
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
     * Retrieves a list of Phone Ids. Each id is unique per phone.
@@ -127,6 +144,7 @@ public:
     * @param [out] phoneIds   List of phone ids
     *
     * @returns Status of getPhoneIds i.e. success or suitable error code.
+    *
     */
    virtual telux::common::Status getPhoneIds(std::vector<int> &phoneIds) = 0;
 

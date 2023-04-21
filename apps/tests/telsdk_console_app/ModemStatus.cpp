@@ -72,31 +72,39 @@
 #include "Utils.hpp"
 
 ModemStatus::ModemStatus() {
-   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
-   startTime = std::chrono::steady_clock::now();
-   //  Get the PhoneFactory and PhoneManager instances.
-   phoneManager_ = telux::tel::PhoneFactory::getInstance().getPhoneManager();
-   //  Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager_->isSubsystemReady();
+}
 
-   //  If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "\n\nTelephony subsystem is not ready, Please wait!!!..." << std::endl;
-      std::future<bool> f = phoneManager_->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
+bool ModemStatus::init() {
+   if ( phoneManager_ == nullptr ) {
+      std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+      startTime = std::chrono::steady_clock::now();
+      std::promise< telux::common::ServiceStatus > prom;
+      //  Get the PhoneFactory and PhoneManager instances.
+      phoneManager_ =  telux::tel::PhoneFactory::getInstance().getPhoneManager(
+                       [&]( telux::common::ServiceStatus status) {
+         prom.set_value(status);
+      });
+      if (!phoneManager_) {
+         std::cout << "ERROR - Failed to get Phone Manager \n";
+         return false;
+      }
+      telux::common::ServiceStatus phoneMgrStatus = phoneManager_->getServiceStatus();
+      if (phoneMgrStatus !=  telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+         std::cout << "Phone Manager subsystem is not ready, Please wait \n";
+      }
+      phoneMgrStatus = prom.get_future().get();
+      if ( phoneMgrStatus ==  telux::common::ServiceStatus::SERVICE_AVAILABLE ) {
+         endTime = std::chrono::steady_clock::now();
+         std::chrono::duration<double> elapsedTime = endTime - startTime;
+         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                   << std::endl;
+      } else {
+          //  Return from application, if SDK is unable to initialize telephony subsystems
+         std::cout << "*** ERROR - Unable to initialize telephony subsystem " << std::endl;
+         return false;
+      }
    }
-
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::steady_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
-   } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
-      exit(0);
-   }
+   return true;
 }
 
 void ModemStatus::printOperatingMode() {

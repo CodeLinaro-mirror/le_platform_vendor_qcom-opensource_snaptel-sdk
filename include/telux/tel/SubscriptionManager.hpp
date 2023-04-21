@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       SubscriptionManager.hpp
@@ -65,6 +71,8 @@ public:
     * Checks the status of SubscriptionManager and returns the result.
     *
     * @returns If true then SubscriptionManager is ready for service.
+    * @deprecated Use ISubscriptionManager::getServiceStatus() API.
+    *
     */
    virtual bool isSubsystemReady() = 0;
 
@@ -73,8 +81,23 @@ public:
     *
     * @returns A future that caller can wait on to be notified when
     *          SubscriptionManager is ready.
+    * @deprecated Use InitResponseCb in PhoneFactory::getSubscriptionManager instead, to
+    *             get notified about subsystem readiness.
+    *
     */
    virtual std::future<bool> onSubsystemReady() = 0;
+
+   /**
+    * This status indicates whether the ISubscriptionManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    - If Subscription manager is ready for service.
+    *          SERVICE_UNAVAILABLE  - If Subscription manager is temporarily unavailable.
+    *          SERVICE_FAILED       - If Subscription manager encountered an irrecoverable failure.
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    *
+    */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
     * Get Subscription details of the SIM in the given SIM slot.

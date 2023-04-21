@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       ModemStatus.hpp
@@ -39,6 +45,7 @@
 #include <future>
 #include <memory>
 
+#include <telux/common/CommonDefines.hpp>
 #include <telux/tel/PhoneManager.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
@@ -48,6 +55,8 @@ class ModemStatus : public telux::tel::IOperatingModeCallback,
                     public std::enable_shared_from_this<ModemStatus> {
 public:
    ModemStatus();
+
+   bool init();
 
    // Provides current operating mode status
    void printOperatingMode();

@@ -67,79 +67,90 @@ bool NetworkMenu::init() {
 
    //  Get the PhoneFactory and NetworkManger instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
    networkListener_ = std::make_shared<MyNetworkSelectionListener>();
-
    std::vector<int> phoneIds;
-   if (phoneManager) {
-       telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
-       if (status == telux::common::Status::SUCCESS) {
-          for (auto index = 1; index <= phoneIds.size(); index++) {
-             std::promise<telux::common::ServiceStatus> prom;
-             auto networkManager = phoneFactory.getNetworkSelectionManager(
-                index, [&](telux::common::ServiceStatus status) {
-                   prom.set_value(status);
-             });
-             if (!networkManager) {
-                std::cout << "ERROR - Failed to get Network Selection Manager instance \n";
-                return false;
-             }
-             std::cout << "Waiting for Network Selection Manager to be ready on slotId " << index
-                   << "\n";
-             telux::common::ServiceStatus networkSelMgrStatus = prom.get_future().get();
-             if (networkSelMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-                std::cout << "Network Selection Manager is ready on slotId " << index << "\n";
-                networkManagers_.emplace_back(networkManager);
-             } else {
-                std::cout << "ERROR - Unable to initialize,"
-                   << " network selection manager subsystem on slotId "
-                      << index << std::endl;
-                return false;
-             }
-          }
-       }
-       for (auto index = 0; index < networkManagers_.size(); index++) {
-          auto status = networkManagers_[index]->registerListener(networkListener_);
-          if (status != telux::common::Status::SUCCESS) {
-             std::cout << "Failed to registerListener for network Manager" << std::endl;
-             return false;
-          }
-       }
+   std::promise<telux::common::ServiceStatus> prom;
+   auto phoneManager = phoneFactory.getPhoneManager([&](telux::common::ServiceStatus status) {
+      prom.set_value(status);
+   });
+   if (!phoneManager) {
+      std::cout << "ERROR - Failed to get Phone Manager \n";
+      return false;
+   }
+   telux::common::ServiceStatus phoneMgrStatus = phoneManager->getServiceStatus();
+   if (phoneMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "Phone Manager subsystem is not ready, Please wait \n";
+   }
+   phoneMgrStatus = prom.get_future().get();
+   if ( phoneMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE ) {
+      telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
+      if (status == telux::common::Status::SUCCESS) {
+         for (auto index = 1; index <= phoneIds.size(); index++) {
+            std::promise<telux::common::ServiceStatus> prom;
+            auto networkManager = phoneFactory.getNetworkSelectionManager( index,
+                  [&](telux::common::ServiceStatus status) {
+               prom.set_value(status);
+            });
+            if (!networkManager) {
+               std::cout << "ERROR - Failed to get Network Selection Manager instance \n";
+               return false;
+            }
+            std::cout << "Waiting for Network Selection Manager to be ready on slotId " << index
+                      << "\n";
+            telux::common::ServiceStatus networkSelMgrStatus = prom.get_future().get();
+            if (networkSelMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+               std::cout << "Network Selection Manager is ready on slotId " << index << "\n";
+               networkManagers_.emplace_back(networkManager);
+            } else {
+               std::cout << "ERROR - Unable to initialize,"
+                         << " network selection manager subsystem on slotId "
+                         << index << std::endl;
+               return false;
+            }
+         }
+      }
+      for (auto index = 0; index < networkManagers_.size(); index++) {
+         auto status = networkManagers_[index]->registerListener(networkListener_);
+         if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Failed to registerListener for network Manager" << std::endl;
+            return false;
+         }
+      }
 
-       std::shared_ptr<ConsoleAppCommand> getNetworkSelectionModeCommand
-          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "1", "get_selection_mode", {},
-             std::bind(&NetworkMenu::getNetworkSelectionMode, this, std::placeholders::_1)));
-       std::shared_ptr<ConsoleAppCommand> setNetworkSelectionModeCommand
-          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "2", "set_selection_mode", {},
-             std::bind(&NetworkMenu::setNetworkSelectionMode, this, std::placeholders::_1)));
-       std::shared_ptr<ConsoleAppCommand> getPreferredNetworksCommand
-          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "3", "get_preferred_networks", {},
-             std::bind(&NetworkMenu::getPreferredNetworks, this, std::placeholders::_1)));
-       std::shared_ptr<ConsoleAppCommand> setPreferredNetworksCommand
-          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "4", "set_preferred_networks", {},
-             std::bind(&NetworkMenu::setPreferredNetworks, this, std::placeholders::_1)));
-       std::shared_ptr<ConsoleAppCommand> performNetworkScanCommand
-          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "5", "perform_network_scan", {},
-             std::bind(&NetworkMenu::performNetworkScan, this, std::placeholders::_1)));
-       std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
-          = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-             "6", "select_sim_slot", {},
-             std::bind(&NetworkMenu::selectSimSlot, this, std::placeholders::_1)));
-       std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
-          = {getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
-             getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
+      std::shared_ptr<ConsoleAppCommand> getNetworkSelectionModeCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "1", "get_selection_mode", {},
+      std::bind(&NetworkMenu::getNetworkSelectionMode, this, std::placeholders::_1)));
+      std::shared_ptr<ConsoleAppCommand> setNetworkSelectionModeCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "2", "set_selection_mode", {},
+      std::bind(&NetworkMenu::setNetworkSelectionMode, this, std::placeholders::_1)));
+      std::shared_ptr<ConsoleAppCommand> getPreferredNetworksCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "3", "get_preferred_networks", {},
+      std::bind(&NetworkMenu::getPreferredNetworks, this, std::placeholders::_1)));
+      std::shared_ptr<ConsoleAppCommand> setPreferredNetworksCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "4", "set_preferred_networks", {},
+      std::bind(&NetworkMenu::setPreferredNetworks, this, std::placeholders::_1)));
+      std::shared_ptr<ConsoleAppCommand> performNetworkScanCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "5", "perform_network_scan", {},
+      std::bind(&NetworkMenu::performNetworkScan, this, std::placeholders::_1)));
+      std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
+         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "6", "select_sim_slot", {},
+      std::bind(&NetworkMenu::selectSimSlot, this, std::placeholders::_1)));
+      std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListNetworkSubMenu
+         = {getNetworkSelectionModeCommand, setNetworkSelectionModeCommand,
+      getPreferredNetworksCommand, setPreferredNetworksCommand, performNetworkScanCommand};
 
-       if (networkManagers_.size() > 1) {
-           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
-       }
+      if (networkManagers_.size() > 1) {
+         commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
+      }
 
-       addCommands(commandsListNetworkSubMenu);
-       ConsoleApp::displayMenu();
+      addCommands(commandsListNetworkSubMenu);
+      ConsoleApp::displayMenu();
    } else {
       std::cout << "Phone Manager is NULL, failed to initialize NetworkMenu" << std::endl;
       return false;

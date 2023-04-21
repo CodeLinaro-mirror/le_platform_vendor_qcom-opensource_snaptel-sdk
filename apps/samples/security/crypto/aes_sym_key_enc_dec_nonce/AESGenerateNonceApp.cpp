@@ -35,8 +35,8 @@
 /**
  * Sample application to demonstrate how to:
  * 1. Generate AES symmetric key
- * 2. Encrypt given data using this key
- * 3. Decrypt given data using this key
+ * 2. Encrypt given data using this key and generate nonce
+ * 3. Decrypt given data using this key and generated nonce
  */
 
 #include <iostream>
@@ -62,7 +62,6 @@ int generateAESKey(std::shared_ptr<telux::sec::ICryptoManager> cryptMgr,
                         telux::sec::BlockMode::BLOCK_MODE_CTR)
             .setPadding(telux::sec::Padding::PADDING_PKCS7 |
                         telux::sec::Padding::PADDING_NONE)
-            .setCallerNonce(true)
             .build();
 
     ec = cryptMgr->generateKey(cp, kb);
@@ -83,14 +82,10 @@ int encryptDataWithAESKey(std::shared_ptr<telux::sec::ICryptoManager> cryptMgr,
     std::shared_ptr<telux::sec::ICryptoParam> cp;
     telux::common::ErrorCode ec;
 
-    // Specify initialization vector
-    std::vector<uint8_t> initVector((128/8), 0x01);
-
     cp = telux::sec::CryptoParamBuilder()
             .setAlgorithm(telux::sec::Algorithm::ALGORITHM_AES)
             .setBlockMode(telux::sec::BlockMode::BLOCK_MODE_CBC)
             .setPadding(telux::sec::Padding::PADDING_PKCS7)
-            .setInitVector(initVector)
             .build();
 
     ec = cryptMgr->encryptData(cp, kb, pt, ed);
@@ -105,23 +100,20 @@ int encryptDataWithAESKey(std::shared_ptr<telux::sec::ICryptoManager> cryptMgr,
 
 int decryptDataWithAESKey(std::shared_ptr<telux::sec::ICryptoManager> cryptMgr,
             std::vector<uint8_t> kb,
-            std::vector<uint8_t> et,
+            std::shared_ptr<telux::sec::EncryptedData> ed,
             std::vector<uint8_t> &dt) {
 
     std::shared_ptr<telux::sec::ICryptoParam> cp;
     telux::common::ErrorCode ec;
 
-    // Specify initialization vector
-    std::vector<uint8_t> initVector((128/8), 0x01);
-
     cp = telux::sec::CryptoParamBuilder()
             .setAlgorithm(telux::sec::Algorithm::ALGORITHM_AES)
             .setBlockMode(telux::sec::BlockMode::BLOCK_MODE_CBC)
             .setPadding(telux::sec::Padding::PADDING_PKCS7)
-            .setInitVector(initVector)
+            .setInitVector(ed->nonce)
             .build();
 
-    ec = cryptMgr->decryptData(cp, kb, et, dt);
+    ec = cryptMgr->decryptData(cp, kb, ed->encryptedText, dt);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "Can't decrypt data, err: " <<
                 static_cast<int>(ec) << std::endl;
@@ -168,7 +160,7 @@ int main(int argc, char **argv) {
     }
 
     // Decrypt data
-    ret = decryptDataWithAESKey(cryptMgr, kb, ed->encryptedText, dt);
+    ret = decryptDataWithAESKey(cryptMgr, kb, ed, dt);
     if (ret) {
         return ret;
     }

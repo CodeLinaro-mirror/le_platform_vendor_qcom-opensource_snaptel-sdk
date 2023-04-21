@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -42,6 +42,7 @@
 #ifndef TELUX_SEC_CRYPTODEFINES_HPP
 #define TELUX_SEC_CRYPTODEFINES_HPP
 
+#include <vector>
 #include <cstdint>
 #include <memory>
 
@@ -172,6 +173,14 @@ enum KeyFormat {
 class ICryptoParam {
   public:
     virtual ~ ICryptoParam() {};
+};
+
+/**
+ * Represents encrypted data and optional nonce.
+ */
+struct EncryptedData {
+    std::vector<uint8_t> encryptedText; /**< Encrypted text */
+    std::vector<uint8_t> nonce; /**< Generated NONCE */
 };
 
 /** @} */ /* end_addtogroup telematics_sec_mgmt */

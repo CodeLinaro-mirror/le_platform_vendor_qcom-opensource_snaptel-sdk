@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -179,7 +179,9 @@ class ICryptoManager {
     * @param [in] cryptoParam Input parameters to encryption algorithm
     * @param [in] keyBlob Key blob to be used for encryption
     * @param [in] plainText Data to be encrypted
-    * @param [out] encryptedText Encrypted data
+    * @param [out] encryptedData Encrypted data and nonce, if
+    *              @ref CryptoParamBuilder::setCallerNonce() was not set when
+    *              creating keys for encryption/decryption).
     *
     * @returns @ref telux::common::ErrorCode as appropriate.
     *
@@ -190,7 +192,7 @@ class ICryptoManager {
                     std::shared_ptr<ICryptoParam> cryptoParam,
                     std::vector<uint8_t> const &keyBlob,
                     std::vector<uint8_t> const &plainText,
-                    std::vector<uint8_t> &encryptedText) = 0;
+                    std::shared_ptr<EncryptedData> &encryptedData) = 0;
 
    /**
     * Decrypts data as per the given inputs to the decryption algorithm.

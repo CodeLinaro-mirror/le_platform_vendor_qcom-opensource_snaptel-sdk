@@ -71,16 +71,36 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
 #include "v2x_msg.h"
 #include "v2x_codec.h"
 
+#define STR_MAX_LEN 50
 static char *event_str[] = {"No", "Yes"};
 static char *brake_str0[] = {"Unavailable", "Off", "On", "Reserved"};
 static char *brake_str1[] = {"Unavailable", "Off", "On", ""};
 static char *brake_str2[] = {"Unavailable", "Off", "On", "Engaged"};
 
-typedef struct min_log_info_t {
+typedef struct bsm_log_info_t {
+    char timestamp[STR_MAX_LEN];
+    uint64_t timestamp_ms;
+    uint64_t time_mono;
+    char logRecType[STR_MAX_LEN];
+    char l2Id[STR_MAX_LEN];
+    uint64_t cbrPerc;
+    double cpuUtil;
+    uint64_t txInterval; // this may need to be set from congestion control algo
+    //uint64_t msgCnt;
+    //int tempId;
+    uint64_t gpgsaMode;
+    // int secmark;
+    // lat
+    // lon
+    double semiMajorDev;
+    // speed
+    // heading
+    // longaccel
+    // lataccel
+
     uint64_t timestamp_in_message;
     unsigned int MsgCount;      // Ranges from 1 - 127 in cyclic fashion.
     unsigned int id;            // 32 bit identifier
@@ -106,7 +126,7 @@ typedef struct min_log_info_t {
     j2735_TractionControlStatus_e traction_control_status : 2;
 
     vehicleeventflags_ut events;
-} min_log_info;
+} bsm_log_info;
 
 const char* get_wall_time(char* result)
 {
@@ -134,36 +154,16 @@ double get_CPU_percentage(uint64_t monotonicTime)
     static uint64_t last_monotonicTime = 0;
     static double percent = 0.0;
     FILE* file;
-    static uint64_t lastTotalUser = 0, lastTotalNice = 0, lastTotalSys = 0, lastTotalIdle = 0;
-    uint64_t totalUser, totalNice, totalSys, totalIdle;
-    uint64_t total;
 
     /*calculating this cost resource, do not perform the calcluation if within 3 secs*/
     if (monotonicTime - last_monotonicTime >= 3000000) {
-        file = fopen("/proc/stat", "r");
+        file = fopen("/proc/loadavg", "r");
         if(!file){
             printf("%s file pointer may be null",__FUNCTION__);
             return percent;
         }
-
-        fscanf(file, "cpu %llu %llu %llu %llu", &totalUser, &totalNice, &totalSys, &totalIdle);
+        fscanf(file, "%lf", &percent);
         fclose(file);
-
-        if (!(totalUser < lastTotalUser || totalNice < lastTotalNice ||
-            totalSys < lastTotalSys || totalIdle < lastTotalIdle))
-        {
-            total = (totalUser - lastTotalUser) + (totalNice - lastTotalNice) +
-                (totalSys - lastTotalSys);
-            percent = total;
-            total += (totalIdle - lastTotalIdle);
-            percent /= total;
-            percent *= 100.0;
-        }
-
-        lastTotalUser = totalUser;
-        lastTotalNice = totalNice;
-        lastTotalSys = totalSys;
-        lastTotalIdle = totalIdle;
         last_monotonicTime = monotonicTime;
     }
     return percent;
@@ -286,6 +286,68 @@ void print_summary_RV(msg_contents *mc)
     if (mc->msgId == J2735_MSGID_BASIC_SAFETY)
         print_bsm_summary_RV(mc);
 }
+
+void writeGeneralLog(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodicityMs,
+    bool validPkt, uint32_t RVsInRange, const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr, uint64_t txInterval,
+    uint32_t l2SrcAddr){
+    if(!mc->j2735_msg){
+        printf("Null j2735 msg\n");
+        return;
+    }
+    char wall_time[100];
+    get_wall_time(wall_time);
+    bsm_value_t *bs = mc->j2735_msg;
+    bsm_log_info loggings;
+    loggings.timestamp[0] = '\0';
+    loggings.timestamp_in_message = bs->timestamp_ms;
+    loggings.MsgCount = bs->MsgCount;
+    loggings.id = bs->id;
+    loggings.l2Id[0] = '\0';
+    loggings.logRecType[0] = '\0';
+    loggings.txInterval = txInterval;
+    loggings.secMark_ms = bs->secMark_ms;
+    loggings.time_mono = monotonicTime;
+    loggings.gpgsaMode = 0;
+    loggings.lat =  bs->Latitude / 10000000.0;   // in degrees
+    loggings.lon = bs->Longitude / 10000000.0;  // in degrees
+    loggings.ele =  bs->Elevation / 10.0; // in meters
+    loggings.semimajoracc =  bs->SemiMajorAxisAccuracy / 20.0; // in meters
+    loggings.semiminoracc =  bs->SemiMinorAxisAccuracy / 20.0; // in meters
+    loggings.orien =  bs->SemiMajorAxisOrientation * 0.0054932479; // in degrees
+    loggings.speed = (bs->Speed / 50.0) * 3.6; // in kmph
+    loggings.heading = bs->Heading_degrees * 0.0125; // in degrees
+    loggings.steer =  bs->SteeringWheelAngle * 1.5;    // in degrees
+    loggings.lonaccl =  bs->AccelLon_cm_per_sec_squared / 100.0; // in m/sec2
+    loggings.lataccl = bs->AccelLat_cm_per_sec_squared / 100.0; // in m/sec2
+    loggings.vertaccl = bs->AccelVert_two_centi_gs / 50.0; // in G steps
+    loggings.yaw = bs->AccelYaw_centi_degrees_per_sec / 100.0; // in deg/sec
+
+    loggings.antilock_brake_status = bs->brakes.bits.antilock_brake_status;
+    loggings.brake_boost_applied = bs->brakes.bits.brake_boost_applied;
+    loggings.stability_control_status = bs->brakes.bits.stability_control_status;
+    loggings.traction_control_status = bs->brakes.bits.traction_control_status;
+
+    memcpy(&loggings.events, &bs->events, sizeof(vehicleeventflags_ut));
+
+    if(isTx){
+        fprintf(myfp,
+        "%s,%"PRIu64",%"PRIu64",%s,,%"PRIu8",%lf,%"PRIu64",%d,%d,,%d,%f,%f,%f,%f,%f,%f,%f,",
+            timeStamp, realworldTimeNow, loggings.time_mono,
+            "Tx", cbr, get_CPU_percentage(monotonicTime),
+            loggings.txInterval, loggings.MsgCount, loggings.id,
+            loggings.secMark_ms, loggings.lat, loggings.lon, loggings.semiMajorDev, loggings.speed,
+            loggings.heading, loggings.lonaccl, loggings.lataccl);
+    }else{
+        fprintf(myfp,
+        "%s,%"PRIu64",%"PRIu64",%s,%08x,,,,%d,%d,,%d,%f,%f,%f,%f,%f,%f,%f,",
+            timeStamp, realworldTimeNow, loggings.time_mono,
+            "Rx", l2SrcAddr, loggings.MsgCount, loggings.id,
+            loggings.secMark_ms, loggings.lat, loggings.lon, loggings.semiMajorDev, loggings.speed,
+            loggings.heading, loggings.lonaccl, loggings.lataccl);
+    }
+}
+
 //Function to write bsm contents to a csv file
 void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodicityMs,
     bool validPkt, uint32_t RVsInRange, uint64_t monotonicTime, uint64_t realworldTimeNow,
@@ -294,7 +356,7 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
     //Writing Core Data
     int i = 1;
     bsm_value_t *bs = mc->j2735_msg;
-    min_log_info loggings;
+    bsm_log_info loggings;
     int tracking_error = 0;
     char wall_time[100];
 
@@ -446,6 +508,7 @@ void writeToCsv(msg_contents *mc, FILE *fp, bool isTx, uint64_t periodicityMs,
             realworldTime, locPositionDop, locNumSvUsed, gnssTime, cbr);
     }
 }
+
 // Writing to XML. This file could be opened in any browser.
 void write_to_xml(msg_contents *mc, FILE *fp)
 {

@@ -313,13 +313,16 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
         std::cout << "Fail to get cv2xRadioMgr" << std::endl;
         return false;
     }
-    std::unique_lock<std::mutex> lck(mtx);
-    cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-    /* Check that V2X radio is initialized */
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xRadioManagerStatus) {
-        std::cout << "V2X cv2xRadioMgr initialization failed" << std::endl;
-        return false;
+
+    {
+        std::unique_lock<std::mutex> lck(mtx);
+        cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+        /* Check that V2X radio is initialized */
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+            cv2xRadioManagerStatus) {
+            std::cout << "V2X cv2xRadioMgr initialization failed" << std::endl;
+            return false;
+        }
     }
     // Get C-V2X status and make sure requested radio(Tx or Rx) is enabled
     if (statusCheck(type) != Cv2xStatusType::ACTIVE) {
@@ -333,13 +336,30 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
         return false;
     }
 
+    // Get handle to Cv2xRadio
+    bool cv2x_radio_status_updated = false;
+    telux::common::ServiceStatus cv2xRadioStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+
+    auto cb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2x_radio_status_updated = true;
+        cv2xRadioStatus = status;
+        cv.notify_all();
+    };
+
     // Wait for radio to complete initialization
     cv2xRadio = cv2xRadioManager->getCv2xRadio(category);
-    if (not cv2xRadio->isReady()) {
-        if (Status::SUCCESS == cv2xRadio->onReady().get()) {
-            cout << "C-V2X Radio is ready" << endl;
-        }
-        else {
+    if (not cv2xRadio) {
+        cerr << "C-V2X Radio creation failed." << endl;
+        return false;
+    }
+
+    {
+        std::unique_lock<std::mutex> lc(mtx);
+        cv.wait(lc, [&cv2x_radio_status_updated]() { return cv2x_radio_status_updated; });
+
+        if (cv2xRadioStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             cerr << "C-V2X Radio initialization failed." << endl;
             return false;
         }

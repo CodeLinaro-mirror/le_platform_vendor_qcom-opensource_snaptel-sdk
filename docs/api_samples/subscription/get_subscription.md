@@ -3,26 +3,42 @@ Get network subscription information {#get_subscription}
 
 This sample application demonstrates how to get modem network subscription information.
 
-##### 1. Get the PhoneFactory and SubscriptionManager instances
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-   std::shared_ptr<ISubscriptionManager> subscriptionMgr = phoneFactory.getSubscriptionManager();
-   ~~~~~~
-
-##### 2. Wait for the Subscription subsystem to ready
-
-   ~~~~~~{.cpp}
-   if(!subscriptionMgr->isSubsystemReady()) {
-      auto subSystemStatus = subscriptionMgr->onSubsystemReady().get();
-      if(!subSystemStatus){
-         // if Subscription subsystem fails, then exit the application.
-         exit(1);
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << Subscription Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << Subscription Manager subsystem initialization failed << std::endl;
       }
+      cbProm.set_value(status);
    }
    ~~~~~~
 
-##### 3. Get the Subscription information
+### 2. Get the PhoneFactory and SubscriptionManager instance
+
+   ~~~~~~{.cpp}
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto subscriptionMgr = phoneFactory.getSubscriptionManager(initResponseCb);
+   if(subscriptionMgr == NULL) {
+      std::cout << " Failed to get Subscription Manager instance" << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 3. Wait for Subscription subsystem subsystem to be ready
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Subscription Manager subsystem << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 4. Get the Subscription information
 
    ~~~~~~{.cpp}
    std::shared_ptr<ISubscription> subscription = subscriptionMgr->getSubscription();

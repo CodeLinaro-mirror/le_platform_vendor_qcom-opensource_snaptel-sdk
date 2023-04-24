@@ -3,43 +3,45 @@ Using SAP APIs {#sap_api_and_listener}
 
 This sample application demonstrates how to use SAP APIs to transmit APDU and listen to SAP events.
 
-### 1. Get the PhoneFactory and PhoneManager instances
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   ~~~~~~
-
-### 2. Wait for the telephony subsystem initialization
-
-   ~~~~~~{.cpp}
-   bool subSystemsStatus = cardManager->isSubsystemReady();
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready, wait for it to be ready " << std::endl;
-      std::future<bool> f = cardManager->onSubsystemReady();
-      auto status = f.wait_for(std::chrono::seconds(5));
-      if(status == std::future_status::ready) {
-         subSystemsStatus = true;
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(status == SERVICE_AVAILABLE) {
+         std::cout << Phone Manager subsystem is ready << std::endl;
+      } else if(status == SERVICE_FAILED) {
+         std::cout << Phone Manager subsystem initialization failed << std::endl;
       }
+      cbProm.set_value(status);
    }
    ~~~~~~
 
-### 3. Get default SAP Card Manager instance
+### 2. Get the PhoneFactory instance and SapCardManager instance
 
    ~~~~~~{.cpp}
-   std::promise<telux::common::ServiceStatus> prom;
-   auto sapCardMgr = phoneFactory.getSapCardManager(
-       DEFAULT_SLOT_ID,[&](telux::common::ServiceStatus status) {
-       prom.set_value(status);
+    auto &phoneFactory = PhoneFactory::getInstance();
+
+    std::promise<telux::common::ServiceStatus> prom;
+    auto sapCardMgr = phoneFactory.getSapCardManager(
+        DEFAULT_SLOT_ID, [&](telux::common::ServiceStatus status) {
+        prom.set_value(status);
     });
+
     if (!sapCardMgr) {
        std::cout << "ERROR - Failed to get SapCardManager instance" << std::endl;
        return;
     }
+    ~~~~~~
+
+### 3. Wait for the SapCardManager subsystem initialization
+
+    ~~~~~~{.cpp}
     telux::common::ServiceStatus sapCardMgrStatus = sapCardMgr->getServiceStatus();
     if (sapCardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
        std::cout << "SapCardManager subsystem is not ready , Please wait" << std::endl;
     }
+
     sapCardMgrStatus = prom.get_future().get();
     if (sapCardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
        std::cout << "SapCardManager subsystem is ready" << std::endl;

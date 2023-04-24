@@ -65,10 +65,10 @@
 /**
 @page sequence_diagrams Call Flow Diagrams
 
-@section app_initialization Application Initialization
+@section app_initialization Application initialization call flow
 
-TelSDK initializes various sub-systems during start-up. It marks each sub-system as ready once the initialization procedures are completed for that sub-system. The application has to wait until the corresponding sub-system is ready on which it needs to make API requests. TelSDK provides APIs to check whether sub-system is ready or not.
-
+Telematics-SDK initializes various sub-systems during start-up. It marks each sub-system's service status as SERVICE_AVAILABLE once the initialization procedures are completed for that sub-system. The application should pass callback function when requesting for manager object. This callback is invoked by underlying library which provides subsystem initialisation status.
+The application has to wait until the corresponding sub-system callback is invoked. Application should make API requests when service status is SERVICE_AVAILABLE. Telematics-SDK provides APIs to fetch sub-system status.
 
 Example:
 
@@ -78,22 +78,20 @@ Example:
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.7]{initialization_call_flow.png}
+  \includegraphics[scale=0.7]{phone_initialization_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Phone manager initialization}
   \label{fig_phone_manager}
 \end{figure}
 @endlatexonly
 
-@html_image{initialization_call_flow.png,Phone manager initialization,50,50,Phone manager initialization}
+@html_image{phone_initialization_call_flow.png,Phone manager initialization,80,80,Phone manager initialization}
 
 
-1. Application can use IPhoneManager::isSubsystemReady to determine if the system is ready.
-2. The application receives the status i.e. either true or false whether sub-system is ready or not.
-3. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-4. PhoneManager notifies the application when the subsystem is ready through the std::future object.
-5. The application waits until the asynchronous operation i.e onSubsystemReady completes.
-6. PhoneManager updates the application once sub-system initialization completes.
+1. Application uses PhoneFactory to call getPhoneManager by providing application callback function as parameter.
+2. The application recieves IPhoneManager.
+3. Application requests for serviceStatus from IPhoneManager.
+4. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
 
 @section namespace_tel Telephony
 
@@ -332,21 +330,17 @@ Private eCall:
 
 @html_image{sms_call_flow.png,SMS call flow,80,80,SMS call flow}
 
-1. Application gets PhoneManager object using PhoneFactory.
-2. PhoneFactory returns the PhoneManager object to application in order to get list of phone identifiers.
-3. The application retrieves the list of phone identifier on the device using PhoneManager object.
-4. Application receives the status i.e. either SUCCESS or FAILED based on the execution of getPhoneIds API in PhoneManager.
-5. Application registers the listener for incoming SMS with IPhoneManager.
-6. The application receives the status i.e. either SUCCESS or INVALIDPARAM based on successful registration of the listener.
-7. The application gets SmsManager object corresponding to specific phone identifier.
-8. PhoneFactory returns the SmsManager object to application in order to perform operations like send SMS and get SMSC address.
-9. The application sends SMS to the receiver address and optionally gets asynchronous response using CommandResponseCallback.
-10. Application receives the status i.e. either SUCCESS or FAILED based on execution of sendSms API in SmsManager.
-11. Optionally, the response for send SMS is received by the application.
-12. Application gets notified for incoming SMS.
-13. The application requests for SmscAddress and optionally gets asynchronous response using ISmscAddressCallback.
-14. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestSmscAddress API in SmsManager.
-15. Optionally, the application receives the SMSC address on success or gets error on failure in the command response callback.
+1. Application requests to check multi sim configuration on device.
+2. Application receives the result.
+3. The application updates the list of phone identifier based on device configuration and gets SmsManager object corresponding to specific phone identifier.
+4. PhoneFactory returns the SmsManager object to application in order to perform operations like send SMS and get SMSC address.
+5. The application sends SMS to the receiver address and optionally gets asynchronous response using CommandResponseCallback.
+6. Application receives the status i.e. either SUCCESS or FAILED based on execution of sendSms API in SmsManager.
+7. Optionally, the response for send SMS is received by the application.
+8. Application gets notified for incoming SMS.
+9. The application requests for SmscAddress and optionally gets asynchronous response using ISmscAddressCallback.
+10. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestSmscAddress API in SmsManager.
+11. Optionally, the application receives the SMSC address on success or gets error on failure in the command response callback.
 
 @subsection cellbroadcast_call_flow CellBroadcast Call Flow
 
@@ -404,12 +398,16 @@ Private eCall:
 4. PhoneManager returns IPhone object to the application.
 5. Application registers the listener to get notifications for radio and service state change.
 6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
-7. The application request the Phone to get radio state.
-8. The application receives the radio state like RADIO_STATE_ON, OFF or UNAVAILABLE.
-9. Application receives a notification when there is a change in radio state.
-10. The application request the Phone to get service state.
-11. The application receives the service state like IN_SERVICE, OUT_OF_SERVICE, EMERGENCY_ONLY or RADIO_OFF.
-12. Application receives a notification when there is a change in service state.
+7. The application request the PhoneManager to get operatingMode of device.
+8. The application receives the status i.e. either SUCCESS or FAILED.
+9. The application receives the callback of the request with the information of current operating mode of device.
+10. The application request the PhoneManager to set operatingMode of device.
+11. The application receives the status i.e. either SUCCESS or FAILED.
+12. Application receives a notification when there is a change in operatingMode.
+13. The application request the PhoneManager to get voice service state.
+14. The application receives the status i.e. either SUCCESS or FAILED.
+15. The application receives the voice service state, radio technology information etc.
+16. Application receives a notification when there is a change in voice service state.
 
 @subsection network_selection_call_flow Network Selection Manager call flow
 

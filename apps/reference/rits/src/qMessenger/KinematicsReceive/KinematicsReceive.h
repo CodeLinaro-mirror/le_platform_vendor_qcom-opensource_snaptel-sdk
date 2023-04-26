@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+ /*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
  /**
   * @file: KinematicsReceive.h
   *
@@ -54,6 +59,7 @@ using std::mutex;
 using telux::loc::ILocationInfoEx;
 using telux::loc::ILocationListener;
 using telux::loc::LocationFactory;
+using telux::loc::ILocationManager;
 using telux::common::ErrorCode;
 using std::lock_guard;
 
@@ -64,6 +70,7 @@ private:
    static shared_ptr<KinematicsReceive> instance;
    static mutex sync;
    uint16_t interval = 100;
+   std::shared_ptr<ILocationManager> locationManager_;
 
    /**
    * Object that holds all location information.

@@ -129,7 +129,11 @@ public:
      * @param [in] status                   This is the status of acknowledgements corresponding to
      *                                      a particular request. If any slave doesn't acknowledge
      *                                      within the configured timeout, then Status::EXPIRED
-     *                                      is reported.
+     *                                      is reported. If any slave sends a negative
+     *                                      acknowledgement, then  Status::NOTREADY is reported. If
+     *                                      both types of acknowledgement errors exist, then the
+     *                                      status code corresponding to most number of clients is
+     *                                      reported.
      * @param [in] machineName              Machine name that is undergoing the state change.
      *                                      Assigned @ref ALL_MACHINES for a global state change and
      *                                      @ref LOCAL_MACHINE for a local state change.

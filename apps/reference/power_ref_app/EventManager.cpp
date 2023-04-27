@@ -227,16 +227,15 @@ void EventManager::pushEvent(shared_ptr<Event> event) {
             LOG(DEBUG, __FUNCTION__, " currentState = ",
                 RefAppUtils::tcuActivityStateToString(currentState), " triggered state = ",
                 RefAppUtils::tcuActivityStateToString(newState));
-            // check existing state of device to avoid invalid state transition
+            // check the existing state of the device to avoid an invalid state transition
             if (currentState == newState) {
                 LOG(ERROR, __FUNCTION__, " REJECTED_INVALID_STATE_TRANSITION ");
                 updateEventStatus(event, false, false,
                                         EventStatus::REJECTED_INVALID_STATE_TRANSITION);
             } else {
-                // hold wake lock to avoid device getting to suspend before processing resume
-                if (newState == TcuActivityState::RESUME) {
-                    holdWakeLock();
-                }
+                // hold wake lock to avoid the device getting suspended before processing a new
+                // event
+                holdWakeLock();
                 LOG(DEBUG, __FUNCTION__, " setActivityState ");
                 eventQueue_.push_back(event);
                 setActivityState(event);

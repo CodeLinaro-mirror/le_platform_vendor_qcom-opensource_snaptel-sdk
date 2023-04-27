@@ -109,7 +109,9 @@ using FirewallStatusCb
     = std::function<void(bool enable, bool allowPackets, telux::common::ErrorCode error)>;
 
 /**
- * This function is called as a response to @ref requestFirewallEntries()
+ * This function is called as a response to
+ * @ref IFirewallManager::requestFirewallEntries() and
+ * @ref IFirewallManager::requestHwAccelerationFirewallEntries()
  *
  * @param [in] entries           list of firewall entries
  * @param [in] error       -     Return code which indicates whether the operation
@@ -129,6 +131,18 @@ using FirewallEntriesCb = std::function<void(
  */
 using DmzEntriesCb
     = std::function<void(std::vector<std::string> dmzEntries, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref addHwAccelerationFirewallEntry()
+ *
+ * @param [in] handle         handle of the firewall entry. It can be used to remove firewall entry
+ *                            @ref IFirewallManager::removeFirewallEntry.
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not. @ref telux::common::ErrorCode
+ *
+ */
+using AddFirewallEntryCb
+    = std::function<void(const uint32_t handle, telux::common::ErrorCode error)>;
 
 /**
  *@brief    FirewallManager is a primary interface that filters and controls the network
@@ -220,6 +234,50 @@ class IFirewallManager {
         SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
+     * Add Hardware Acceleration Rule
+     * Adds a firewall rule which will direct all traffic that matches the rule to bypass hardware
+     * acceleration, and take the software path.
+     *
+     * These rules are per PDN. If the same rule applies to more than one PDN then this API needs to
+     * be invoked per PDN by specifying the corresponding profile ID of the PDN.
+     * @ref setFirewall is not required for hw acceleration firewall rules to have an effect, which
+     * means that as soon as the rule is added successfully, packets matching the firewall rule will
+     * not be hw accelerated.
+     * Irrespective of whether firewall rules are set via @ref addFirewallEntry and the type of
+     * firewall set (blacklist/whitelist) via @ref setFirewall, any packet matching rule added by
+     * @ref addHwAccelerationFirewallEntry will not be hw accelerated and this packet will be routed
+     * by the S/w stack.
+     * On successful execution, a firewall handle will be provided in the callback which can be
+     * used to remove the firewall entry @ref removeFirewallEntry().
+     *
+     * @param [in] profileId        Profile identifier on which firewall rule will be added.
+     * @param [in] entry            Firewall entry based on protocol type
+     * @param [in] callback         optional callback to get the response
+     *                              @ref addHwAccelerationFirewallEntry
+     * @param [in] slotId           Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of addHwAccelerationFirewallEntry i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status addHwAccelerationFirewallEntry(int profileId,
+        std::shared_ptr<IFirewallEntry> entry, AddFirewallEntryCb callback = nullptr,
+        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Request Hardware Acceleration rules
+     * Returns a list of hardware acceleration firewall entries.
+     *
+     * @param [in] profileId       Profile identifier on which firewall entries are retrieved
+     * @param [in] callback        callback to get the response requestHwAccelerationFirewallEntries
+     * @param [in] slotId          Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of requestHwAccelerationFirewallEntries i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status requestHwAccelerationFirewallEntries(int profileId,
+        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
      * Request Firewall rules
      *
      * @param [in] profileId         Profile identifier on which firewall entries are retrieved.
@@ -241,7 +299,9 @@ class IFirewallManager {
      * @param[in] profileId         Profile identifier on which firewall entry will be removed.
      * @param[in] handle            handle of Firewall entry to be removed. To retrieve the handle,
      *                              first use requestFirewallEntries() to get the list of entries
-     *                              added in the system. And then use IFirewallEntry::getHandle()
+     *                              added in the system. And then use IFirewallEntry::getHandle().
+     *                              Handle is also returned when hardware acceleration rule is added
+     *                              using @ref addHwAccelerationFirewallEntry
      * @param[in] callback          callback to get the response removeFirewallEntry
      * @param[in] slotId            Specify slot id which has the sim that contains profile id
      *

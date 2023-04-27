@@ -82,6 +82,7 @@ public:
 private:
    int phoneId_;
    std::vector<int> phoneIds_;
+   std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
 
    bool initalizeSDK();
 

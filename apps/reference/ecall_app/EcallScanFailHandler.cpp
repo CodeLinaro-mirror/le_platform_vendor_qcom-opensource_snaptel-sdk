@@ -114,28 +114,24 @@ telux::common::Status TelClient::EcallScanFailHandler::init() {
       return telux::common::Status::FAILED;
    }
 
+   std::promise<telux::common::ServiceStatus> prom;
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   multiSimMgr_ = phoneFactory.getMultiSimManager();
-   if (multiSimMgr_) {
-      //  Check if MultiSim subsystem is ready
-      bool subSystemStatus = multiSimMgr_->isSubsystemReady();
-
-      //  If MultiSim subsystem is not ready, wait for it to be ready
-      if (!subSystemStatus) {
-         std::cout << CLIENT_NAME <<
-            "MultiSim subsystem is not ready, waiting for it to be ready..\n";
-         std::future<bool> f = multiSimMgr_->onSubsystemReady();
-         subSystemStatus = f.get();
-      }
-
-      if (subSystemStatus) {
-         std::cout << CLIENT_NAME << "MultiSim subsystem is ready\n";
-      } else {
-         std::cout << CLIENT_NAME << "Unable to initialize MultiSim subSystem\n";
-         return telux::common::Status::FAILED;
-      }
+   multiSimMgr_ = phoneFactory.getMultiSimManager([&](telux::common::ServiceStatus status) {
+      prom.set_value(status);
+   });
+   if (!multiSimMgr_) {
+      std::cout << CLIENT_NAME << "ERROR - MultiSimManger is null \n";
+      return telux::common::Status::FAILED;
+   }
+   telux::common::ServiceStatus multiSimMgrStatus = multiSimMgr_->getServiceStatus();
+   if (multiSimMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << CLIENT_NAME << "MultiSimManger subsystem is not ready, Please wait \n";
+   }
+   multiSimMgrStatus = prom.get_future().get();
+   if (multiSimMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE ) {
+      std::cout << CLIENT_NAME << "MultiSim subsystem is ready\n";
    } else {
-      std::cout << CLIENT_NAME << "ERROR - Failed to get multisim manager instance\n";
+      std::cout << CLIENT_NAME << "Unable to initialise MultiSimManger subsystem " << std::endl;
       return telux::common::Status::FAILED;
    }
    return telux::common::Status::SUCCESS;

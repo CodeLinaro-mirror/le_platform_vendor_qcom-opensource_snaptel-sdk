@@ -63,21 +63,37 @@ using telux::loc::ILocationManager;
 using telux::common::ErrorCode;
 using std::lock_guard;
 
+class KinematicsReceive;
 
-class KinematicsReceive : public std::enable_shared_from_this<KinematicsReceive>,
-public ILocationListener {
+class locListener : public ILocationListener {
+public:
+    /**
+    * Method that gets the most up to date location.
+    * @return a shared pointer of IlocationInfoEx structure that holds
+    * all location data.
+    * @see ILocationInfoEx in Snaptel SDK.
+    */
+    shared_ptr<ILocationInfoEx> getLocation();
+    void close();
+
+private:
+    void onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) override;
+    /**
+    * Object that holds all location information.
+    */
+   shared_ptr<ILocationInfoEx> locationInfo_ = nullptr;
+   mutex locInfoMtx_;
+   std::condition_variable locInfoCv_;;
+   bool exit_ = false;
+};
+
+class KinematicsReceive : public std::enable_shared_from_this<KinematicsReceive> {
 private:
    static shared_ptr<KinematicsReceive> instance;
    static mutex sync;
    uint16_t interval = 100;
-   std::shared_ptr<ILocationManager> locationManager_;
-
-   /**
-   * Object that holds all location information.
-    */
-   shared_ptr<ILocationInfoEx> locationInfo = nullptr;
-
-   void onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo);
+   std::shared_ptr<ILocationManager> locationManager_ = nullptr;
+   std::shared_ptr<locListener> locListener_ = nullptr;
 
    void startDetailsCallback(ErrorCode eventError);
 

@@ -1,3 +1,4 @@
 add_subdirectory(crypto)
 add_subdirectory(crypto_accelerator)
 add_subdirectory(cellular_connection_security)
+add_subdirectory(crypto_accelerator_control)

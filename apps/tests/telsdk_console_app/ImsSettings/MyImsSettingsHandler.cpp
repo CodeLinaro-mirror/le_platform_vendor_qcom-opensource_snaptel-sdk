@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <iostream>
 #include "MyImsSettingsHandler.hpp"
@@ -55,6 +61,14 @@ void MyImsSettingsCallback::onRequestImsServiceConfig(SlotId slotId,
                PRINT_CB << "IMS service is enabled \n";
            } else {
                PRINT_CB << "IMS service is disabled \n";
+           }
+        }
+        //For SMS over IMS configuration
+        if (config.configValidityMask[telux::tel::ImsServiceConfigType::IMSSETTINGS_SMS]) {
+           if (config.smsEnabled) {
+               PRINT_CB << "SMS over IMS is enabled \n";
+           } else {
+               PRINT_CB << "SMS over IMS is disabled \n";
            }
         }
     }

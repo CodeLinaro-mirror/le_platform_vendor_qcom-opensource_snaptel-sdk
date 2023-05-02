@@ -166,10 +166,19 @@ bool FirewallMenu::init() {
         std::shared_ptr<ConsoleAppCommand> requestDmzEntry =
             std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "request_dmz_entry", {},
             std::bind(&FirewallMenu::requestDmzEntry, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> addHwAccelerationFirewallEntry =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9",
+            "add_hardware_acceleration_firewall_entry", {},std::bind(
+            &FirewallMenu::addHwAccelerationFirewallEntry, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> requestHwAccelerationFirewallEntries =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10",
+            "request_hardware_acceleration_firewall_entries", {},std::bind(
+            &FirewallMenu::requestHwAccelerationFirewallEntries, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {setFirewall,
             requestFirewallStatus, addFirewallEntry, removeFirewallEntry, requestFirewallEntries,
-            enableDmz, disableDmz, requestDmzEntry};
+            enableDmz, disableDmz, requestDmzEntry, addHwAccelerationFirewallEntry,
+            requestHwAccelerationFirewallEntries};
 
         addCommands(commandsList);
     }
@@ -600,18 +609,8 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
     }
 }
 
-void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
-    telux::common::Status retStat;
-    std::cout << "add Firewall Entry\n";
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
-
+std::vector<std::shared_ptr<IFirewallEntry>> FirewallMenu::configureNewFirewallEntry() {
+    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries;
     int fwDirection;
     std::cout << "Enter Firewall Direction (1-Uplink, 2-Downlink): ";
     std::cin >> fwDirection;
@@ -643,8 +642,11 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     if (proto == 253) {
         fwEntry = dataFactory.getNewFirewallEntry(6, fwDir, ipFamType);
         fwEntryTcpUdp = dataFactory.getNewFirewallEntry(17, fwDir, ipFamType);
+        fwEntries.emplace_back(fwEntry);
+        fwEntries.emplace_back(fwEntryTcpUdp);
     } else {
         fwEntry = dataFactory.getNewFirewallEntry(proto, fwDir, ipFamType);
+        fwEntries.emplace_back(fwEntry);
     }
 
     if (fwEntry) {
@@ -663,8 +665,62 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
         getProtocolParams(proto,ipFilter, ipFilterTcpUdp);
     } else {
         std::cout << "\nERROR: unable to get firewall entry instance\n";
-        return;
     }
+    return fwEntries;
+}
+
+void FirewallMenu::addHwAccelerationFirewallEntry(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    std::cout << "Add hardware acceleration firewall entry \n";
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported())
+    {
+        slotId = Utils::getValidSlotId();
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries = configureNewFirewallEntry();
+
+    auto respCb = [](const uint32_t handle, telux::common::ErrorCode error)
+    {
+        std::cout << std::endl
+                  << std::endl;
+        std::cout << "CALLBACK: "
+                  << "addHwAccelerationFirewallEntry Response";
+        if (error == telux::common::ErrorCode::SUCCESS)
+            std::cout << " is successful. Handle of the firewall entry = " << handle << std::endl;
+        else
+            std::cout << " failed. ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+
+    };
+
+    for (uint8_t i = 0; i < fwEntries.size(); i++)
+    {
+        retStat = firewallManager_->addHwAccelerationFirewallEntry(
+            profileId, fwEntries[i], respCb, static_cast<SlotId>(slotId));
+        Utils::printStatus(retStat);
+    }
+}
+
+void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    std::cout << "add Firewall Entry\n";
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported())
+    {
+        slotId = Utils::getValidSlotId();
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries = configureNewFirewallEntry();
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -675,15 +731,47 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = firewallManager_->addFirewallEntry(
-        profileId, fwEntry, respCb, static_cast<SlotId>(slotId));
-    Utils::printStatus(retStat);
-
-    if (proto == 253) {
+    for (uint8_t i = 0; i < fwEntries.size(); i++)
+    {
         retStat = firewallManager_->addFirewallEntry(
-        profileId, fwEntryTcpUdp, respCb, static_cast<SlotId>(slotId));
+            profileId, fwEntries[i], respCb, static_cast<SlotId>(slotId));
         Utils::printStatus(retStat);
     }
+}
+
+void FirewallMenu::requestHwAccelerationFirewallEntries(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+
+    std::cout << "request hardware acceleration firewall entry\n";
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported())
+    {
+        slotId = Utils::getValidSlotId();
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    auto respCb = [this](
+                      std::vector<shared_ptr<IFirewallEntry>> entries,
+                      telux::common::ErrorCode error)
+    {
+        std::cout << std::endl
+                  << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestHwAccelerationFirewallEntries Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+        std::cout << "Found " << entries.size() << " entries\n";
+        this->fwEntries_ = entries;
+        this->displayFirewallEntry();
+    };
+
+    retStat = firewallManager_->requestHwAccelerationFirewallEntries(profileId, respCb, static_cast<SlotId>(slotId));
+    Utils::printStatus(retStat);
 }
 
 void FirewallMenu::requestFirewallEntries(std::vector<std::string> inputCommand) {

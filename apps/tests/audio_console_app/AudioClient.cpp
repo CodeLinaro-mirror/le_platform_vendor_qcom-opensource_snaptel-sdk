@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -60,15 +60,6 @@
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-
-
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -372,7 +363,8 @@ void AudioClient::takeUserCreateStreamInput(telux::audio::StreamConfig &config)
         fclose(file);
     }
     takeUserDeviceInput(config.deviceTypes, config.type);
-    if (config.type == telux::audio::StreamType::PLAY) {
+    if ((config.type == telux::audio::StreamType::PLAY) ||
+        (config.type == telux::audio::StreamType::CAPTURE)) {
       takeUserVoicePathInput(config.voicePaths);
     }
 }

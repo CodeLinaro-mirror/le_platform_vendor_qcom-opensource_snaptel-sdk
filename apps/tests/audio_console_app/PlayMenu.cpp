@@ -77,6 +77,7 @@ PlayMenu::PlayMenu(std::string appName, std::string cursor,
     pipeLineEmpty_ = true;
     ready_ = false;
     playInProgress_ = false;
+    writeFail_ = false;
 }
 
 PlayMenu::~PlayMenu() {
@@ -294,13 +295,21 @@ void PlayMenu::stopPlay(std::vector<std::string> userInput) {
 
 void PlayMenu::writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer, uint32_t bytes,
                 telux::common::ErrorCode error) {
-    if (error != telux::common::ErrorCode::SUCCESS || buffer->getDataSize() != bytes) {
-        pipeLineEmpty_ = false;
+    if (error != telux::common::ErrorCode::SUCCESS){
+        if (playFormat_ == AudioFormat::AMRNB || playFormat_ == AudioFormat::AMRWB ||
+            playFormat_ == AudioFormat::AMRWB_PLUS) {
+            pipeLineEmpty_ = false;
+        }
+        writeFail_ = true;
+    }
+
+    if(buffer->getDataSize() != bytes){
         std::cout <<
             "Bytes Requested " << buffer->getDataSize() << " Bytes Written " << bytes << std::endl;
         // We are seeking back so that left over buffer can be resent again.
         long offset = -1 * (static_cast<long>((buffer->getDataSize() - bytes)));
         fseek(file_, offset, SEEK_CUR);
+
     }
 
     buffer->reset();
@@ -355,6 +364,7 @@ void PlayMenu::play() {
                 streamBuffer->reset();
                 freeBuffers_.push(streamBuffer);
                 playStatus_ = false;
+                writeFail_ = true;
                 break;
             }
             streamBuffer->setDataSize(numBytes);
@@ -365,12 +375,20 @@ void PlayMenu::play() {
                 if(status != telux::common::Status::SUCCESS) {
                     std::cout << "write() failed with error" << static_cast<unsigned int>(status)
                     <<std::endl;
+                    streamBuffer->reset();
+                    freeBuffers_.push(streamBuffer);
+                    playStatus_ = false;
+                    writeFail_ = true;
+                    break;
                 }
             } else {
                 std::cout << "Audio Service UNAVAILABLE" << std::endl;
             }
         } else {
             cv_.wait(lock);
+            if(writeFail_) {
+                break;
+            }
         }
     }
     if (ready_) {
@@ -405,11 +423,16 @@ void PlayMenu::play() {
             playStopcv_.wait(lck);
         }
     }
-    if(playStatus_) {
-        std::cout << "File played SuccessFully" <<std::endl;
+    if(writeFail_) {
+        std::cout << "Play Failed" << std::endl;
     } else {
-        std::cout << "Play Stopped" << std::endl;
+        if(playStatus_) {
+            std::cout << "File played SuccessFully" <<std::endl;
+        } else {
+            std::cout << "Play Stopped" << std::endl;
+        }
     }
+
     playStatus_ = false;
     //After the play is finished, marking the status to false.
     playInProgress_ = false;

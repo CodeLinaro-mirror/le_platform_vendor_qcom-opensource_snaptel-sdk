@@ -508,7 +508,7 @@ class IAudioStream {
    /**
     * Sets the volume level of the audio device.
     *
-    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::TX.
+    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::RX.
     *
     * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
     * @ref StreamType::CAPTURE only.
@@ -526,7 +526,7 @@ class IAudioStream {
    /**
     * Gets the current volume level of the audio device.
     *
-    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::TX.
+    * For @ref StreamType::VOICE_CALL, direction must be @ref StreamDirection::RX.
     *
     * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
     * @ref StreamType::CAPTURE only.

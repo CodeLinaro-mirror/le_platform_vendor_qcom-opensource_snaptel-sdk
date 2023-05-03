@@ -3534,11 +3534,30 @@ sections.
 
 @section tcuactivity_management_call_flow TCU Activity Management
 
-Application will get appropriate TCU-activity manager object from power factory. A Master/Slave client can register a listener for updates on TCU-activity state and its management service status. A Master client application can also set the system to a desired activity state.
-When the application is notified about the service being unavailable, the TCU-activity state notifications will be inactive. After the service becomes available, the existing listener registrations will be maintained.
+ * An application can get the appropriate TCU-activity manager (i.e. slave or master) object from the power factory.
+ * The TCU-activity manager configured as the master is responsible for triggering state transitions.
+ * TCU-activity manager configured as a slave is responsible for listening to state change indications and acknowledging when it performs necessary tasks and prepares for the state transition.
+ * A machine in this power management framework represents an application processor subsystem or a host/guest virtual machine on hypervisor based platforms.
+ *
+ * - Only one master is allowed in the system, and currently we only support allowing the master on the primary/host machine and not on the guest virtual machine.
+ * - It is expected that all processes interested in a TCU-activity state change should register as slaves.
+ * - When the master changes the TCU-activate state, slaves connected to the impacted machine are notified.
+ * - Master can trigger the TCU-activity state change of a specific machine or all machines at once.
+ * - If the slave wants to differentiate between a state change indication that is the result of a trigger for all machines or a trigger for its specific machines, it can be detected using the machine name provided in the listener API.
+ * - When the master triggers an all machines TCU-activity state change, only the machines that are not in the desired state will undergo the state transition, and the slaves to those machines will be notified.
+ * - In the case of 
+ *   - suspend or shutdown trigger: 
+ *      - After becoming ready for state change, all slave clients should acknowledge back.
+ *      - The master client will get notification about the consolidated acknowledgement status of all slave clients.
+ *      - On getting a successful consolidated acknowledgement from all the slaves for the suspend trigger, the power framework allows the respective machine to suspend. On getting a successful consolidated acknowledgement from all the slaves for the shutdown trigger, the power framework triggers the respective machine shutdown without waiting further.
+ *      - If the slave client sends a NACK to indicate that it is not ready for state transition or fails to acknowledge before the configured time, then the master will get to know via a consolidated acknowledgement / slave acknowledgement status notification.
+ *      - In such failed cases, if the master wants to stop the state transition considering the information in the consolidated acknowledgement, then the master is allowed to trigger a new TCU-activity state change, or else the state transition will proceed after the configured timeout.
+ *   - resume trigger:
+ *      - Power framework will prevent the respective machine from going into suspend.
+ *      - No acknowledgement will be required from slave clients and the master will not be getting consolidated acknowledgement / slave acknowledgement as machine will be already resumed. 
+ *
+ * When the application is notified about the service being unavailable, the TCU-activity state notifications will be inactive. After the service becomes available, the existing listener registrations will be maintained.
 
-The framework can work in ACTIVE or PASSIVE mode, based on the configuration of TCU-activity management service. In ACTIVE mode, the management service leads the system into desired activity state after receiving the acknowledgements from all the clients or after the configured timeout.
-However, in PASSIVE mode, the framework just notifies the clients about the state transition and conveys their acknowledgement status back to the Master application that triggered the transition.
 
 @subsection tcuactivity_manager_listener_callflow Call flow to register/remove listener for TCU-activity manager
 
@@ -3546,7 +3565,7 @@ However, in PASSIVE mode, the framework just notifies the clients about the stat
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{tcuactivity_manager_listener_callflow.png}
+  \includegraphics[width=\textwidth]{tcuactivity_manager_listener_callflow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
   \caption{Call flow to register/remove listener for TCU-activity manager}
   \label{fig_tcuactivity_manager_listener_callflow}
@@ -3555,72 +3574,44 @@ However, in PASSIVE mode, the framework just notifies the clients about the stat
 
 @html_image{tcuactivity_manager_listener_callflow.png,Call flow to register/remove listener for TCU-activity manager,80,80,Register/Remove listener for TCU-activity manager call flow}
 
-1. Application requests power factory for TCU-activity manager object, with clientType as SLAVE.
+1. Application requests power factory for TCU-activity manager object, with clientType as slave. slave clients set up to listen to their LOCAL_MACHINE. Also, it is recommended to give a unique name to each slave client so that client can be identified later in case of failure.
 2. Power factory returns ITcuActivityManager object using which application will register or remove a listener.
-3. Application can register a listener for getting notifications on TCU-activity state updates.
-4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-5. Application will get TCU-activity state notifications like SUSPEND, RESUME and SHUTDOWN.
-6. Application will send one(despite multiple listeners) acknowledgement, after processing(save any required information) SUSPEND/SHUTDOWN notifications. This indicates the readiness of application for state-transition. However the TCU-activity management service doesn't wait for acknowledgement indefinitely, before performing the state transition.
-7. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
-8. Application can remove listener.
-9. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
+3. Wait for the TCU-activity management services to be ready.
+4. Application can register a listener for getting notifications on TCU-activity state updates on the machine. Some of the listener APIs are designed for slave clients and others for master clients. Listener APIs intended for the master client will not be sent to the slave client, and listner APIs intended for the slave client will not be sent for the master client.
+5. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+6. Application will get TCU-activity state notifications like suspend, resume and shutdown.
+7. Application will send one acknowledgement, after processing(save any required information) suspend/shutdown notifications. This indicates the readiness of application for state-transition. However the TCU-activity management service doesn't wait for acknowledgement indefinitely, before performing the state transition. In the acknowledgement, slave can specify the machine name received in the notification in the previous step.
+8. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
+9. Application can remove listener.
+10. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
-@subsection tcuactivity_manager_commands_callflow_active_mode Call flow to set the TCU-activity state in ACTIVE mode
+@subsection tcuactivity_manager_commands_callflow Call flow to set the TCU-activity state
 
-@anchor fig_tcuactivity_manager_commands_callflow_active_mode
+@anchor fig_tcuactivity_manager_commands_callflow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{tcuactivity_manager_commands_callflow_active_mode.png}
+  \includegraphics[width=\textwidth]{tcuactivity_manager_commands_callflow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Call flow to set the TCU-activity state in ACTIVE mode}
-  \label{fig_tcuactivity_manager_commands_callflow_active_mode}
+  \caption{Call flow to set the TCU-activity state}
+  \label{fig_tcuactivity_manager_commands_callflow}
 \end{figure}
 @endlatexonly
 
-@html_image{tcuactivity_manager_commands_callflow_active_mode.png,Call flow to set the TCU-activity state in ACTIVE mode,80,80,Call flow to set the TCU-activity state in ACTIVE mode}
+@html_image{tcuactivity_manager_commands_callflow.png,Call flow to set the TCU-activity state,80,80,Call flow to set the TCU-activity state}
 
-1. Application requests power factory for TCU-activity manager object, with clientType as MASTER.
+1. Application requests power factory for TCU-activity manager object, with clientType as master.
 2. Power factory returns ITcuActivityManager object using which application will set the TCU-activity state.
-3. Application can register a listener for getting notifications on TCU-activity state.
-4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
-5. Application can set the TCU-activity state to SUSPEND, RESUME or SHUTDOWN.
-6. Application receives synchronous status which indicates if the request was sent successfully.
-7. Optionally, the response to setActivityState request can be received by the application.
-8. Application waits for TCU-activity state update to confirm the state change.
-9. Application will send one(despite multiple listeners) acknowledgement, after processing(save any required information) SUSPEND/SHUTDOWN notifications. This indicates the readiness of application for state-transition. However the TCU-activity management service doesn't wait for acknowledgement indefinitely, before performing the state transition.
-10. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
+3. Wait for the TCU-activity management services to be ready.
+4. Application can register a listener for getting notifications on TCU-activity state.
+5. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
+6. Get a list of available machine names in the power framework if the user is interested in the state transition of a specific machine.
+7. Application can set the TCU-activity state to suspend, resume or shutdown.
+8. Application receives synchronous status which indicates if the request was sent successfully.
+9. Optionally, the response to setActivityState request can be received by the application.
+10. The application waits for consolidated acknowledgement status and analyzes the response. If status is not SUCCESS and the master expects to stop state transition considering the provided information, then call setActivityState and revert state, or else state transition will proceed after the configured timeout in /etc/power_state.conf.
 11. Application can remove listener.
 12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
-
-@subsection tcuactivity_manager_commands_callflow_passive_mode Call flow to set the TCU-activity state in PASSIVE mode
-
-@anchor fig_tcuactivity_manager_commands_callflow_passive_mode
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{tcuactivity_manager_commands_callflow_passive_mode.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Call flow to set the TCU-activity state in PASSIVE mode}
-  \label{fig_tcuactivity_manager_commands_callflow_passive_mode}
-\end{figure}
-@endlatexonly
-
-@html_image{tcuactivity_manager_commands_callflow_passive_mode.png,Call flow to set the TCU-activity state in PASSIVE mode,80,80,Call flow to set the TCU-activity state in PASSIVE mode}
-
-1. Application requests power factory for TCU-activity manager object, with clientType as MASTER.
-2. Power factory returns ITcuActivityManager object using which application will set the TCU-activity state.
-3. Application can register a listener for getting notifications on TCU-activity state.
-4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application
-5. Application can set the TCU-activity state to SUSPEND, RESUME or SHUTDOWN.
-6. Application receives synchronous status which indicates if the request was sent successfully.
-7. Optionally, the response to setActivityState request can be received by the application.
-8. Application waits for TCU-activity state update to confirm the state change.
-9. Application will send one(despite multiple listeners) acknowledgement, after processing(save any required information) SUSPEND/SHUTDOWN notifications. This indicates the readiness of application for state-transition. However the TCU-activity management service doesn't wait for acknowledgement indefinitely, before performing the state transition.
-10. Application receives synchronous status which indicates if the acknowledgement was sent successfully.
-11. Application waits for the acknowledgement status of all the clients, for the state transition in the system
-12. Application can remove listener.
-13. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
 @section remote_sim_call_flow Remote SIM call flow
 

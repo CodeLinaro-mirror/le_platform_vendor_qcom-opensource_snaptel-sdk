@@ -474,9 +474,11 @@ Thermal Shutdown Management APIs provide funtionality such as
 @subsection power TCU Activity Management
 
 TCU-activity Manager APIs in Telematics SDK provides TCU-activity state related operations such as
+   - Set the activity state of the machines in TCU
+   - Get notifications about the imminent activity state changes on a machine in TCU
+   - Set the modem activity state
+   - Get all machine names
    - Query the current TCU-activity state
-   - Get notifications about the TCU-activity state changes
-   - Set the system to a desired activity state
 
 @subsection remote_sim Remote SIM
 Remote SIM APIs in the Telematics SDK allow a device to use the WWAN capabilities of a SIM on another device.

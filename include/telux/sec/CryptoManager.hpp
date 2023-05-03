@@ -67,6 +67,9 @@ class ICryptoManager {
     * Generates key and provides it in the form of corresponding key blob. The
     * key's secret is encrypted in this key blob.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_KEY_OPS
+    * permission to invoke this API successfully.
+    *
     * @param [in] cryptoParam Specifications of the key
     * @param [out] keyBlob Key blob representing the key
     *
@@ -81,6 +84,9 @@ class ICryptoManager {
 
    /**
     * Creates key blob from the given key data.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_KEY_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] cryptoParam Specifications of the key
     * @param [in] keyFmt @ref KeyFormat Format in which key should be imported
@@ -101,6 +107,9 @@ class ICryptoManager {
    /**
     * Generates equivalent key data from the given key blob.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_KEY_OPS
+    * permission to invoke this API successfully.
+    *
     * @param [in] keyFmt @ref KeyFormat Format in which key should be exported
     * @param [in] keyBlob Key blob representing the key to be exported
     * @param [out] keyData Key's data generated from the given key blob
@@ -118,6 +127,9 @@ class ICryptoManager {
    /**
     * Upgrade the given key if it has expired for example due to system
     * software upgrade.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_KEY_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] cryptoParam Input parameters specifically unique data should
     *             be set if it was used when creating the key originally.
@@ -137,6 +149,9 @@ class ICryptoManager {
    /**
     * Generates signature to verify integrity of the given data.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_SIGN_OPS
+    * permission to invoke this API successfully.
+    *
     * @param [in] cryptoParam Input parameters to signature generator algorithm
     * @param [in] keyBlob Key blob to sign given data
     * @param [in] plainText Data to be signed
@@ -155,6 +170,9 @@ class ICryptoManager {
 
    /**
     * Verifies integrity of the given data through its signature.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_SIGN_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] cryptoParam Input parameters to signature validator algorithm
     * @param [in] keyBlob Key blob to verify this data
@@ -176,6 +194,9 @@ class ICryptoManager {
    /**
     * Encrypts data as per the given inputs to the encryption algorithm.
     *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_ENCRYPTION_OPS
+    * permission to invoke this API successfully.
+    *
     * @param [in] cryptoParam Input parameters to encryption algorithm
     * @param [in] keyBlob Key blob to be used for encryption
     * @param [in] plainText Data to be encrypted
@@ -196,6 +217,9 @@ class ICryptoManager {
 
    /**
     * Decrypts data as per the given inputs to the decryption algorithm.
+    *
+    * On platforms with access control enabled, caller needs to have TELUX_SEC_ENCRYPTION_OPS
+    * permission to invoke this API successfully.
     *
     * @param [in] cryptoParam Input parameters to decryption algorithm
     * @param [in] keyBlob Key blob to be used for decryption

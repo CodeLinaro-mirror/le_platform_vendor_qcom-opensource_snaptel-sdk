@@ -89,13 +89,57 @@ namespace power {
 /**
  * @brief   ITcuActivityManager provides interface to register and de-register listeners to get
  *          TCU-activity state updates. And also API to initiate TCU-activity state transition.
- *          The system can be configured to be operated in ACTIVE or PASSIVE mode with respect to
- *          TcuActivity management.
- *          In ACTIVE mode, the TCU-activity management service leads the system into desired
- *          activity state after receiving the acknowledgements from all the clients or after the
- *          configured timeout. In PASSIVE mode, the management service just notifies the clients
- *          about the state transition and conveys their acknowledgement status back to the Master
- *          application that triggered the state transition.
+ *
+ * An application can get the appropriate TCU-activity manager (i.e. @ref ClientType::SLAVE or
+ * @ref ClientType::MASTER) object from the power factory. The TCU-activity manager configured as
+ * the @ref ClientType::MASTER is responsible for triggering state transitions. TCU-activity manager
+ * configured as a @ref ClientType::SLAVE is responsible for listening to state change indications
+ * and acknowledging when it performs necessary tasks and prepares for the state transition. A
+ * machine in this power management framework represents an application processor subsystem or a
+ * host/guest virtual machine on hypervisor based platforms.
+ *
+ * - Only one @ref ClientType::MASTER is allowed in the system, and currently we only support
+ *   allowing the @ref ClientType::MASTER on the primary/host machine and not on the guest virtual
+ *   machine.
+ * - It is expected that all processes interested in a TCU-activity state change should register as
+ *   @ref ClientType::SLAVE.
+ * - When the @ref ClientType::MASTER changes the TCU-activate state, @ref ClientType::SLAVEs
+ *   connected to the impacted machine are notified.
+ * - @ref ClientType::MASTER can trigger the TCU-activity state change of a specific machine or all
+ *   machines at once.
+ * - If the @ref ClientType::SLAVE wants to differentiate between a state change indication that is
+ *   the result of a trigger for all machines or a trigger for its specific machines, it can be
+ *   detected using the machine name provided in the listener API.
+ * - When the @ref ClientType::MASTER triggers an all machines TCU-activity state change, only the
+ *   machines that are not in the desired state will undergo the state transition, and the
+ *   @ref ClientType::SLAVEs to those machines will be notified.
+ * - In the case of 
+ *   - @ref TcuActivityState::SUSPEND or @ref TcuActivityState::SHUTDOWN trigger: 
+ *      - After becoming ready for state change, all @ref ClientType::SLAVE should acknowledge back.
+ *      - The @ref ClientType::MASTER will get notification about the consolidated acknowledgement
+ *        status of all @ref ClientType::SLAVEs.
+ *      - On getting a successful consolidated acknowledgement from all the @ref ClientType::SLAVE
+ *        for the suspend trigger, the power framework allows the respective machine to suspend. On
+ *        getting a successful consolidated acknowledgement from all the @ref ClientType::SLAVEs for
+ *        the shutdown trigger, the power framework triggers the respective machine shutdown without
+ *        waiting further.
+ *      - If the @ref ClientType::SLAVE sends a NACK to indicate that it is not ready for state
+ *        transition or fails to acknowledge before the configured time, then the
+ *        @ref ClientType::MASTER will get to know via a consolidated/slave acknowledgement status
+ *        notification.
+ *      - In such failed cases, if the @ref ClientType::MASTER wants to stop the state transition
+ *        considering the information in the consolidated acknowledgement, then the
+ *        @ref ClientType::MASTER is allowed to trigger a new TCU-activity state change, or else the
+ *        state transition will proceed after the configured timeout.
+ *   - @ref TcuActivityState::RESUME trigger:
+ *      - Power framework will prevent the respective machine from going into suspend.
+ *      - No acknowledgement will be required from @ref ClientType::SLAVE and the
+ *        @ref ClientType::MASTER will not be getting consolidated/slave acknowledgement as machine
+ *        will be already resumed. 
+ *
+ * When the application is notified about the service being unavailable, the TCU-activity state
+ * notifications will be inactive. After the service becomes available, the existing listener
+ * registrations will be maintained.
  */
 class ITcuActivityManager {
 public:

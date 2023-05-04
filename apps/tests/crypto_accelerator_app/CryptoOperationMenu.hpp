@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,20 +32,43 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRYPTOACCELERATORAPP_HPP
-#define CRYPTOACCELERATORAPP_HPP
-
-#include <telux/sec/CryptoAcceleratorManager.hpp>
+#ifndef CRYPTOOPERATIONMENU_HPP
+#define CRYPTOOPERATIONMENU_HPP
 
 #include "common/console_app_framework/ConsoleApp.hpp"
 
-class CryptoAcceleratorApp : public ConsoleApp {
- public:
-    CryptoAcceleratorApp(std::string appName, std::string cursor);
-    ~CryptoAcceleratorApp();
+#include "CommandProcessor.hpp"
 
-    void init(void);
-    void cryptoOperationMenu(telux::sec::Mode mode);
+class CryptoOperationMenu : public ConsoleApp {
+
+ public:
+    CryptoOperationMenu(std::string appName, std::string cursor);
+    ~CryptoOperationMenu();
+
+    telux::common::ErrorCode init(telux::sec::Mode mode);
+
+    void getHexStringAsByteArrayFromUsr(
+        const std::string choiceToDisplay, std::vector<uint8_t>& usrEntry);
+
+    void getChoiceNumberFromUsr(
+        const std::string choicesToDisplay, const uint32_t minVal,
+        const uint32_t maxVal, uint32_t& selection);
+
+    void getUniqueIdFromUser(uint32_t& uniqueId);
+
+    void getCurveFromUser(telux::sec::ECCCurve& curve);
+
+    void getPriorityFromUser(telux::sec::RequestPriority& priority);
+
+    void getTimeoutFromUser(uint32_t& timeout);
+
+    void verify(void);
+
+    void calculate(void);
+
+ private:
+    std::shared_ptr<CommandProcessor> cmdProcessor_;
+    telux::sec::Mode mode_;
 };
 
-#endif // CRYPTOACCELERATORAPP_HPP
+#endif // CRYPTOOPERATIONMENU_HPP

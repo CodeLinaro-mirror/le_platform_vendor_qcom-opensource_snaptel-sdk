@@ -77,8 +77,14 @@ extern "C" {
 
 #include "DataFilterMenu.hpp"
 #include "../DataResponseCallback.hpp"
+
+#define PROTO_ICMP 1
+#define PROTO_IGMP 2
 #define PROTO_TCP 6
 #define PROTO_UDP 17
+#define PROTO_ESP 50
+#define PROTO_ICMP6 58
+#define PROTO_RESERVED 255
 
 using namespace std;
 using namespace telux::data::net;
@@ -330,13 +336,21 @@ void DataFilterMenu::getFilterMode() {
 
 IpProtocol DataFilterMenu::getTypeOfFilter(
     DataConfigParser instance, std::map<std::string, std::string> filter) {
-    IpProtocol type = PROTO_UDP;
+    IpProtocol type = PROTO_RESERVED;
     if (instance.getValue(filter, "FILTER_PROTOCOL_TYPE") != "") {
         std::string protoType = instance.getValue(filter, "FILTER_PROTOCOL_TYPE");
         if (strcmp(protoType.c_str(), "UDP") == 0) {
             type = PROTO_UDP;
         } else if (strcmp(protoType.c_str(), "TCP") == 0) {
             type = PROTO_TCP;
+        } else if (strcmp(protoType.c_str(), "ICMP") == 0) {
+            type = PROTO_ICMP;
+        } else if (strcmp(protoType.c_str(), "IGMP") == 0) {
+            type = PROTO_IGMP;
+        } else if (strcmp(protoType.c_str(), "ESP") == 0) {
+            type = PROTO_ESP;
+        } else if (strcmp(protoType.c_str(), "ICMP6") == 0) {
+            type = PROTO_ICMP6;
         }
         std::cout << "Set TCP Port and Range combination" << std::endl;
     }

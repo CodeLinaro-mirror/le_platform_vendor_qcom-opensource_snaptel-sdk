@@ -399,23 +399,22 @@ Status Cv2xTelux::startV2xRadio() {
 
 Status Cv2xTelux::stopV2xRadio() {
     std::promise<ErrorCode> prom;
-    cv2xRadioMgr_->stopCv2x([&prom](ErrorCode code) {
+    auto res = cv2xRadioMgr_->stopCv2x([&prom](ErrorCode code) {
         if (code == ErrorCode::SUCCESS) {
             LOGI("Stopped V2X radio\n");
             bootkpilog("cv2x-daemon: V2X mode stopped");
         } else {
-            LOGE("Failed to stop the V2X radio\n");
+            LOGE("Failed to stop the V2X radio %d\n", static_cast<int>(code));
         }
         prom.set_value(code);
     });
 
-    auto res = prom.get_future().get();
-
-    if (res != ErrorCode::SUCCESS) {
-        return Status::FAILED;
+    if (res == Status::SUCCESS &&
+        ErrorCode::SUCCESS == prom.get_future().get()) {
+        return Status::SUCCESS;
     }
-
-    return Status::SUCCESS;
+    LOGE("stopCv2x error %d\n", static_cast<int>(res));
+    return Status::FAILED;
 }
 
 Status Cv2xTelux::registerListeners() {

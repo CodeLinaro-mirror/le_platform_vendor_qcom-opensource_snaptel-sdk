@@ -199,6 +199,7 @@ Status Cv2xDaemon::handleSystemStateChange() {
             break;
         case TcuActivityState::SHUTDOWN:
             LOGI("System shutting down\n");
+            stopV2xMode();
             sysStateMgr_->sendActivityStateAck(
                              TcuActivityStateAck::SHUTDOWN_ACK);
             break;

@@ -145,12 +145,11 @@ telux::common::Status ECallManager::triggerECall(
         std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
         return telux::common::Status::FAILED;
     }
-    phoneId_ = phoneId;
     msdPdu_.clear();
     if(!msdPdu.empty()) {
         msdPdu_ = msdPdu;
     }
-    setup(phoneId_);
+    setup(phoneId);
     if (transmitMsd && msdPdu_.empty() && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
@@ -185,12 +184,11 @@ telux::common::Status ECallManager::triggerECall(
         std::cout << CLIENT_NAME << "An ECall is in progress already " << std::endl;
         return telux::common::Status::FAILED;
     }
-    phoneId_ = phoneId;
     msdPdu_.clear();
     if(!msdPdu.empty()) {
         msdPdu_ = msdPdu;
     }
-    setup(phoneId_);
+    setup(phoneId);
     if (transmitMsd && msdPdu_.empty() && !isLocationReceived()) {
         std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
@@ -237,9 +235,8 @@ telux::common::Status ECallManager::triggerECall(
             65, 89, 164, 56, 119, 207, 131, 54, 210, 63, 65, 104, 16, 24, 8, 32, 19, 198, 68, 0, 0,
             8, 20};
     }
-    phoneId_ = phoneId;
     isTpsEcallOverImsTriggered = true;
-    setup(phoneId_);
+    setup(phoneId);
     auto status = telClient_->startECall(
         phoneId, rawData, dialNumber, contentType, acceptInfo, shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
@@ -307,7 +304,6 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
             return telux::common::Status::FAILED;
         }
     }
-    phoneId_ = phoneId;
     setup(phoneId);
     auto status = telClient_->answer(phoneId_, shared_from_this());
     if (status != telux::common::Status::SUCCESS) {
@@ -503,6 +499,7 @@ telux::common::Status ECallManager::getHlapTimer(int phoneId, HlapTimerType type
  * that are required for an eCall
  */
 void ECallManager::setup(int phoneId) {
+    phoneId_ = phoneId;
     // Start voice session
     if (!audioClient_) {
         std::cout << CLIENT_NAME << "Invalid Audio Client, cannot establish voice conversation"

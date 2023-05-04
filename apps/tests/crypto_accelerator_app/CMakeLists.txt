@@ -19,6 +19,7 @@ include_directories(BEFORE
 
 set(CRYPTO_ACCEL_CONSOLE_APP_SRCS
     CryptoAcceleratorApp.cpp
+    CryptoOperationMenu.cpp
     CommandProcessor.cpp
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ${telematics-apps_SOURCE_DIR}/common/console_app_framework/ConsoleAppCommand.cpp

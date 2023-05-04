@@ -185,7 +185,6 @@ telux::common::Status ECallManager::answerCall(int phoneId) {
             return telux::common::Status::FAILED;
         }
     }
-    phoneId_ = phoneId;
     setup(phoneId);
     auto status = telClient_->answer(phoneId_, shared_from_this());
     if(status != telux::common::Status::SUCCESS) {
@@ -297,6 +296,7 @@ telux::common::Status ECallManager::getEncodedOptionalAdditionalDataContent() {
  * that are required for an eCall
  */
 void ECallManager::setup(int phoneId) {
+    phoneId_ = phoneId;
     // Start voice session
     if(!audioClient_) {
         std::cout << CLIENT_NAME << "Invalid Audio Client, cannot establish voice conversation"

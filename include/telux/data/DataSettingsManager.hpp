@@ -117,19 +117,19 @@ enum class BandPriority {
  */
 enum class DdsType
 {
-    PERMANENT = 0, /** Permanently switch the DDS Sim Slot. Intended to be used when client
-                       wants to stop doing data activities on the current DDS Sim slot and start
-                       doing data activities on the other Sim slot, on a DSDS device.
-                       Permanent switch is persistent across reboots. */
-    TEMPORARY = 1, /** Temporarily switch the DDS Sim Slot. This is only to be used when there
-                       is a voice call on the non-DDS Sim, and client wants to perform data activity
-                       temporarily on that non-DDS Sim, for the duration of the call. After the
-                       call ends, clients should do a permanent switch back to the original DDS Sim.
-                       Temporary switch is non-persistent across reboots. */
+    PERMANENT = 0, /** Permanently switch the DDS SIM Slot. Intended to be used when the client
+                       wants to stop data activities on the current DDS SIM slot and start
+                       doing data activities on the other SIM slot, on a Dual SIM Dual Standby
+                       (DSDS) device. Permanent switch is persistent across reboots. */
+    TEMPORARY = 1, /** Temporarily switch the DDS SIM Slot. This is only to be used when there
+                       is a voice call on the non-DDS SIM slot and the client wants to temporarily
+                       perform data activity on that non-DDS SIM slot, for the duration of the
+                       call. After the call ends, clients should do a permanent switch back to the
+                       original DDS SIM. Temporary switch is not persistent across reboots. */
 };
 
 /**
- * Specifies the DDS switch info.
+ * Specifies the DDS switch information.
  */
 struct DdsInfo
 {
@@ -181,6 +181,18 @@ using RequestBackhaulPrefResponseCb = std::function<void(
  */
 using RequestBandInterferenceConfigResponseCb = std::function<void(bool isEnabled,
     std::shared_ptr<BandInterferenceConfig> config, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestMacSecState API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] enabled          True: MacSec is enabled, False: MacSec is disabled.
+ * @param [in] error            Return code for whether the operation succeeded or failed.
+ */
+using RequestMacSecSateResponseCb = std::function<void(bool enabled,
+    telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to requestWwanConnectivityConfig API.
@@ -330,7 +342,7 @@ public:
         RequestBandInterferenceConfigResponseCb callback) = 0;
 
     /**
-     * This API allows the client to perform the DDS switch. Client has the option
+     * Allows the client to perform the DDS switch. Client has the option
      * to either select permanent or temporary switch.
      *
      * @param [in] request          Client has to provide the request
@@ -342,15 +354,16 @@ public:
      *                                @ref telux::common::ErrorCode::SUCCESS
      *                              - If the DDS switch request is rejected
      *                                @ref telux::common::ErrorCode::OPERATION_NOT_ALLOWED
-     *                                Few scenarios in which switch request will be rejected:
-     *                                    1. Slot1 is permanent DDS and client still triggers
-     *                                       permanent DDS switch on slot 1.
-     *                                    2. During an MT/MO voice call if client triggers
-     *                                       permanent DDS switch.
+     *                                The following scenarios are example of when a switch
+     *                                request will be rejected:
+     *                                    1. Slot1 is permanent DDS and the client attempts to
+     *                                       trigger a permanent DDS switch on slot 1.
+     *                                    2. During an MT/MO voice call and the client attempts
+     *                                       to trigger a permanent DDS switch.
      *                              - If the DDS switch is allowed but due to some reason DDS
      *                                switch failed @ref telux::common::ErrorCode::GENERIC_FAILURE
      *
-     * @returns Status of requestDdsSwitch i.e. success or suitable status code.
+     * @returns Status of requestDdsSwitch, i.e., success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
@@ -359,11 +372,11 @@ public:
         telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Request the current DDS slot info
+     * Request the current DDS slot information
      *
      * @param [in] callback      Callback to get response for requestCurrentDds.
      *
-     * @returns Status of requestCurrentDds i.e. success or suitable status code.
+     * @returns Status of requestCurrentDds, i.e., success or suitable status code.
      *
      * @note    Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
@@ -414,6 +427,38 @@ public:
      */
     virtual telux::common::Status requestWwanConnectivityConfig(SlotId slotId,
         requestWwanConnectivityConfigResponseCb callback) = 0;
+
+    /**
+     * Allows the client to set the MacSec state.
+     *
+     * - If client enables the MacSec, post that the packets over the ethernet link
+     *   will be encrypted.
+     * - If client disables the MacSec, post that the packets over the ethernet link
+     *   will not be encrypted.
+     *
+     * @param [in] enable          True: enable the MacSec, False: disable the MacSec.
+     * @param [in] callback        Callback to get the setMacSecState response.
+     *
+     * @returns Status of setMacSecState, i.e., success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status setMacSecState(bool enable,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Requests the current MacSec state.
+     *
+     * @param [in] callback    callback to get response for requestMacSecState.
+     *
+     * @returns Status of requestMacSecState, i.e., success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status requestMacSecState(RequestMacSecSateResponseCb callback) = 0;
 
     /**
      * Register Data Settings Manager as listener for Data Service heath events like data service
@@ -467,10 +512,10 @@ class IDataSettingsListener {
     virtual void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) {}
 
     /**
-     * This function is called whenever the DDS switch occurs.
+     * Provides the current DDS state and is called whenever a DDS switch occurs.
      *
      * @param [in] currentState      Provides the current DDS status.
-     *                               - Slot Id on which DDS switch occured.
+     *                               - Slot ID on which the DDS switch occured.
      *                               - DDS switch type @ref telux::data::DdsType.
      */
     virtual void onDdsChange(DdsInfo currentState) {}

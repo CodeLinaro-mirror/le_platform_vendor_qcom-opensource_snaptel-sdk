@@ -1,8 +1,7 @@
 Get TCU power state updates {#get_tcu_activity_state_notifications}
 ==========================================================================
 
-This sample app demonstrates how to register for TCU-activity power state notifications, for performing any tasks before the power state transition.
-These are valid in both ACTIVE and PASSIVE modes.
+This sample application demonstrates how to register for TCU-activity state notifications on the local machine, for performing any tasks before the state transition.
 
 ### 1. Implement ITcuActivityListener and IServiceStatusListener interface
 
@@ -10,39 +9,41 @@ These are valid in both ACTIVE and PASSIVE modes.
    class MyTcuActivityStateListener : public ITcuActivityListener,
                                       public IServiceStatusListener {
    public:
-       void onTcuActivityStateUpdate(TcuActivityState state) override;
+       void onTcuActivityStateUpdate(TcuActivityState state, std::string machineName) override;
        void onServiceStatusChange(ServiceStatus status) override;
    };
    ~~~~~~
 
-### 2. Get an instance of PowerFactory
+### 2. Get an instance of PowerFactory, and then obtain a TCU-activity manager instance with clientType as SLAVE and machine name as LOCAL_MACHINE
 
    ~~~~~~{.cpp}
    auto &powerFactory = PowerFactory::getInstance();
+   std::promise<telux::common::ServiceStatus> prom = std::promise<telux::common::ServiceStatus>();
+   ClientInstanceConfig config;
+   config.clientType = ClientType::SLAVE;
+   config.clientName = "client_name_" + std::to_string(getpid());
+   config.machineName =  LOCAL_MACHINE;
+   auto tcuActivityManager = powerFactory.getTcuActivityManager(config,
+                                 [&](telux::common::ServiceStatus status) {
+                                    std::cout << " Init Callback called " << std::endl;
+                                    prom.set_value(status);
+                                 });
    ~~~~~~
 
-### 3. Get TCU-activity manager instance with clientType as SLAVE
+### 3. Wait for the TCU-activity management services to be initialized and ready
 
    ~~~~~~{.cpp}
-   auto tcuActivityManager = powerFactory.getTcuActivityManager(ClientType::SLAVE);
-   ~~~~~~
-
-### 4. Wait for the TCU-activity management services to be initialized and ready
-
-   ~~~~~~{.cpp}
-   bool isReady = tcuActivityManager->isReady();
-   if(!isReady) {
-      std::cout << "TCU-activity management service is not ready" << std::endl;
-      std::cout << "Waiting uncondotionally for it to be ready " << std::endl;
-      std::future<bool> f = tcuActivityManager->onReady();
-      isReady = f.get();
+   if (tcuActivityStateMgr_ == nullptr) {
+      std::cout << " ERROR - Failed to get manager instance" << std::endl;
    }
+   std::cout << "  Waiting for TCU Activity Manager to be ready" << std::endl;
+   telux::common::ServiceStatus serviceStatus = prom.get_future().get();
    ~~~~~~
 
-### 5. Exit the application, if SDK is unable to initialize TCU-activity management service
+### 4. Exit the application, if SDK is unable to initialize TCU-activity management service
 
    ~~~~~~{.cpp}
-   if(isReady) {
+   if (serviceStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       std::cout << " *** TCU-activity management service is Ready *** " << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize TCU-activity management service" << std::endl;
@@ -50,35 +51,31 @@ These are valid in both ACTIVE and PASSIVE modes.
    }
    ~~~~~~
 
-### 6. Instantiate MyTcuActivityStateListener
+### 5. Instantiate MyTcuActivityStateListener and register for updates on TCU-activity state and its management service status
 
    ~~~~~~{.cpp}
    auto myTcuStateListener = std::make_shared<MyTcuActivityStateListener>();
-   ~~~~~~
-
-### 7. Register for updates on TCU-activity state and its management service status
-
-   ~~~~~~{.cpp}
    tcuActivityManager->registerListener(myTcuStateListener);
    tcuActivityManager->registerServiceStateListener(myTcuStateListener);
    ~~~~~~
 
-### 8. Wait for the TCU-activity state updates
+### 6. When the TCU activity state of the local machine is about to change, the below listener callback is invoked with the new activity state
 
    ~~~~~~{.cpp}
-   void MyTcuActivityStateListener::onTcuActivityStateUpdate(TcuActivityState state) {
+   void MyTcuActivityStateListener::onTcuActivityStateUpdate(TcuActivityState tcuState, std::string machineName) {
         std::cout << std::endl << "********* TCU-activity state update *********" << std::endl;
         // Avoid long blocking calls when handling notifications
+        // Perform necessary tasks and prepare for the state transition
    }
    ~~~~~~
 
-### 9. On SUSPEND/SHUTDOWN notification, save any required information and send one(despite multiple listeners) acknowledgement
+### 7. After successfully processing the SUSPEND/SHUTDOWN notification, send an acknowledgement to convey the readiness of the application for the state transition
 
    ~~~~~~{.cpp}
-   tcuActivityManager->sendActivityStateAck(TcuActivityStateAck);
+   tcuActivityManager->sendActivityStateAck(StateChangeResponse::ACK, tcuState);
    ~~~~~~
 
-### 10. Implement onServiceStatusChange callback to know when TCU-activity management service goes down
+### 8. Implement onServiceStatusChange callback to know when TCU-activity management service goes down
 
    ~~~~~~{.cpp}
    // When the TCU-activity management service goes down, this API is invoked

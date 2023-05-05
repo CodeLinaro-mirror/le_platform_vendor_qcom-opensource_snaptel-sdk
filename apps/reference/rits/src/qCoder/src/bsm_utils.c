@@ -141,6 +141,11 @@ double get_CPU_percentage(uint64_t monotonicTime)
     /*calculating this cost resource, do not perform the calcluation if within 3 secs*/
     if (monotonicTime - last_monotonicTime >= 3000000) {
         file = fopen("/proc/stat", "r");
+        if(!file){
+            printf("%s file pointer may be null",__FUNCTION__);
+            return percent;
+        }
+
         fscanf(file, "cpu %llu %llu %llu %llu", &totalUser, &totalNice, &totalSys, &totalIdle);
         fclose(file);
 

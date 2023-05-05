@@ -60,7 +60,7 @@ class SecurityFactory {
     static SecurityFactory &getInstance();
 
     /**
-     * Provides a CryptoManager instance that can be used to perform key management
+     * Instantiates a CryptoManager instance that can be used to perform key management
      * and cryptographic operations.
      *
      * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoManager is created

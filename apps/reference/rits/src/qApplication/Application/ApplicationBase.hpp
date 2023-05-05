@@ -97,6 +97,7 @@
 #include "Ldm.h"
 #include "ThrottleManager.h"
 #include "safetyapp_util.h"
+#include "qMonitor.hpp"
 #ifdef AEROLINK
 #include "AerolinkSecurity.hpp"
 #else
@@ -179,6 +180,7 @@ struct Config{
     uint32_t age = 0;
     uint32_t uncertainty3D = 0;
     uint32_t distance3D = 0;
+    bool qMonEnabled = false;
     uint32_t packetError = 0;
     /** Simulation config */
     bool enableUdp = false;
@@ -348,6 +350,8 @@ public:
     int prevArrivalRate=0;
     int prevFilterRate= 0;
     int filterRate=0;
+    QMonitor* qMon = nullptr;
+    QMonitor::Configuration* qMonConfig = nullptr;
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;

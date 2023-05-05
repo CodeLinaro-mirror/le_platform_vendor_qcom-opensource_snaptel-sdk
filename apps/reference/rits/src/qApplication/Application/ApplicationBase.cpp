@@ -378,7 +378,13 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
             vehicleEventReport(emergent, vehicle_state);
     };
 
-     VehRec.enableVehicleReceive(cb);
+    VehRec.enableVehicleReceive(cb);
+
+    if (configuration.qMonEnabled) // Add to config
+    {
+        //cout << "New qMon added\n";
+        qMon = new QMonitor(*qMonConfig);
+    }
 }
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
@@ -453,10 +459,24 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             vehicleEventReport(emergent, vehicle_state);
     };
 
-     VehRec.enableVehicleReceive(cb);
+    VehRec.enableVehicleReceive(cb);
+    if (configuration.qMonEnabled) // Add to config
+    {
+        //cout << "New qMon added\n";
+        qMon = new QMonitor(*qMonConfig);
+    }
 }
 
 ApplicationBase::~ApplicationBase() {
+    if (qMon) {
+        delete qMon;
+        std::cout << "Closed qMon\n";
+    }
+    if (qMonConfig) {
+        delete qMonConfig;
+        std::cout << "Closed qMonConfig\n";
+    }
+
      closeAllRadio();
      {
          std::unique_lock<std::mutex> loc(stateMtx);
@@ -1204,6 +1224,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     /*app debug */
     if (configs.find("appVerbosity") != configs.end()) {
         setAppVerbosity(stoi(configs["appVerbosity"]));
+        //qMon
     }
 
     /* ldm debug */
@@ -1319,6 +1340,16 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
     this->configuration.isValid = true;
 
+    // qMonitor Configuration
+    if (configs.find("qMonEnabled") != configs.end())
+    {
+        //cout<< "qMon Config found!\n";
+        istringstream is(configs["qMonEnabled"]);
+        is >> boolalpha >> this->configuration.qMonEnabled;
+        qMonConfig = new QMonitor::Configuration();
+    }
+    // Add qMonConfig elements here after this line.
+    // e.g. qMonConfig->sockDomain = AF_INET; // etc etc...
 
     /*
       check if congestion control is enabled and begin setting the cong ctrl config parameters
@@ -1646,6 +1677,10 @@ void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
 // radio tx function.
 int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
     int16_t bufLen, TransmitType txType) {
+    std::thread::id tid = std::this_thread::get_id();
+    if(MsgType ==  MessageType::BSM) {
+        qMon->tData[tid].txBSMs++;
+    }
     // If positive, should be the # of bytes sent
     // Else, something went wrong
     int ret = -1;

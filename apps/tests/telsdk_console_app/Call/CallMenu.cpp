@@ -401,6 +401,9 @@ void CallMenu::swap(std::vector<std::string> userInput) {
 void CallMenu::getCalls(std::vector<std::string> userInput) {
    std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
       = callManager_->getInProgressCalls();
+   if(inProgressCalls.size() == 0) {
+       std::cout << "No calls detected in the system" << std::endl;
+   }
    for(auto callIterator = std::begin(inProgressCalls); callIterator != std::end(inProgressCalls);
        ++callIterator) {
       std::cout << " Call State: "

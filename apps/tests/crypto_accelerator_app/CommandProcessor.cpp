@@ -34,77 +34,94 @@
 
 #include <iostream>
 #include <cstdio>
-#include <future>
 
 #include "CommandProcessor.hpp"
 
-/*
- * Listener class for receiving signature verification and point calculation result.
- */
-class ResultListener : public telux::sec::ICryptoAcceleratorListener {
+void ResultAndSSRListener::onVerificationResult(uint32_t uniqueId,
+        telux::common::ErrorCode ec, std::vector<uint8_t> resultData) {
 
- public:
-    ResultListener(std::promise<void> barrier) {
-        barrier_ = std::move(barrier);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "verification failed, err: " << static_cast<int>(ec) <<
+            " uniqueId: " << uniqueId << std::endl;
+    } else {
+        std::cout << "verification passed, uniqueId: " << uniqueId << std::endl;
     }
 
-    void onVerificationResult(uint32_t uniqueId, telux::common::ErrorCode ec,
-        std::vector<uint8_t> resultData) {
-
-        if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout <<
-                "verification failed, err: " << static_cast<int>(ec) <<
-                " uniqueId: " << uniqueId << std::endl;
-        } else {
-            std::cout << "verification passed, uniqueId: " << uniqueId << std::endl;
-        }
-
-        if (resultData.size()) {
-            std::cout << "verification result: " << std::endl;
-            uint8_t *data = resultData.data();
-            for (uint32_t x = 0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
-                printf("%02x", data[x] & 0xffU);
-                if (x & !(x % 32)) {
-                    printf("\n");
-                }
+    if (resultData.size()) {
+        std::cout << "verification result: " << std::endl;
+        uint8_t *data = resultData.data();
+        for (uint32_t x = 0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
+            printf("%02x", data[x] & 0xffU);
+            if (x & !(x % 32)) {
+                printf("\n");
             }
-            printf("\n");
-            fflush(stdout);
         }
-
-        barrier_.set_value();
+        printf("\n");
+        fflush(stdout);
     }
 
-    void onCalculationResult(uint32_t uniqueId, telux::common::ErrorCode ec,
-        std::vector<uint8_t> resultData) {
+    barrier_.set_value();
+}
 
-        if (ec != telux::common::ErrorCode::SUCCESS) {
-            std::cout <<
-                "calculation failed, err: " << static_cast<int>(ec) <<
-                " uniqueId: " << uniqueId << std::endl;
-        } else {
-            std::cout << "calculation done, uniqueId: " << uniqueId << std::endl;
-        }
+void ResultAndSSRListener::onCalculationResult(uint32_t uniqueId,
+        telux::common::ErrorCode ec, std::vector<uint8_t> resultData) {
 
-        if (resultData.size()) {
-            std::cout << "calculation result: " << std::endl;
-            uint8_t *data = resultData.data();
-            for (uint32_t x = 0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
-                printf("%02x", data[x] & 0xffU);
-                if (x & !(x % 32)) {
-                    printf("\n");
-                }
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "calculation failed, err: " << static_cast<int>(ec) <<
+            " uniqueId: " << uniqueId << std::endl;
+    } else {
+        std::cout << "calculation done, uniqueId: " << uniqueId << std::endl;
+    }
+
+    if (resultData.size()) {
+        std::cout << "calculation result: " << std::endl;
+        uint8_t *data = resultData.data();
+        for (uint32_t x = 0; x < telux::sec::CA_RESULT_DATA_LENGTH; x++) {
+            printf("%02x", data[x] & 0xffU);
+            if (x & !(x % 32)) {
+                printf("\n");
             }
-            printf("\n");
-            fflush(stdout);
         }
-
-        barrier_.set_value();
+        printf("\n");
+        fflush(stdout);
     }
 
- private:
-    std::promise<void> barrier_;
-};
+    barrier_.set_value();
+}
+
+void ResultAndSSRListener::onServiceStatusChange(telux::common::ServiceStatus newStatus) {
+
+    std::cout << "New status: " << static_cast<int>(newStatus) << std::endl;
+}
+
+void ResultAndSSRListener::setResultSynchronizer(std::promise<void> barrier) {
+
+    barrier_ = std::move(barrier);
+}
+
+telux::common::ErrorCode CommandProcessor::init(telux::sec::Mode mode) {
+
+    telux::common::ErrorCode ec;
+
+    mode_ = mode;
+    auto &secFact = telux::sec::SecurityFactory::getInstance();
+
+    try {
+        resultAndSSRListener_ = std::make_shared<ResultAndSSRListener>();
+    } catch (const std::exception& e) {
+        std::cout << "can't create ResultAndSSRListener" << std::endl;
+        return telux::common::ErrorCode::NO_MEMORY;
+    }
+
+    cryptAccelMgr_ = secFact.getCryptoAcceleratorManager(ec, mode_, resultAndSSRListener_);
+    if (!cryptAccelMgr_) {
+        std::cout <<
+         "can't get ICryptoAcceleratorManager, err: " << static_cast<int>(ec) << std::endl;
+        return ec;
+    }
+
+    return telux::common::ErrorCode::SUCCESS;
+}
 
 void CommandProcessor::verifyDigestSync(VerificationRequest request) {
 
@@ -114,16 +131,6 @@ void CommandProcessor::verifyDigestSync(VerificationRequest request) {
     telux::sec::DataDigest digest{};
     telux::sec::ECCPoint publicKey{};
     telux::sec::Signature signature{};
-    std::shared_ptr<telux::sec::ICryptoAcceleratorManager> cryptAccelMgr;
-
-    auto &secFact = telux::sec::SecurityFactory::getInstance();
-
-    cryptAccelMgr = secFact.getCryptoAcceleratorManager(ec, telux::sec::Mode::MODE_SYNC);
-    if (!cryptAccelMgr) {
-        std::cout <<
-         "can't get ICryptoAcceleratorManager, err: " << static_cast<int>(ec) << std::endl;
-        return;
-    }
 
     digest.digest = request.digest.data();
     digest.digestLength = request.digest.size();
@@ -137,7 +144,7 @@ void CommandProcessor::verifyDigestSync(VerificationRequest request) {
     signature.sSignature = request.signatureS.data();
     signature.rsLength = request.signatureR.size();
 
-    ec = cryptAccelMgr->eccVerifyDigest(digest, publicKey, signature,
+    ec = cryptAccelMgr_->eccVerifyDigest(digest, publicKey, signature,
             request.curve, request.uniqueId, request.priority, resultData);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "verification failed, err: " << static_cast<int>(ec) << std::endl;
@@ -157,8 +164,6 @@ void CommandProcessor::verifyDigestSync(VerificationRequest request) {
         }
         printf("\n");
     }
-
-    cryptAccelMgr.reset();
 }
 
 void CommandProcessor::verifyDigestAsyncPoll(VerificationRequest request) {
@@ -170,17 +175,7 @@ void CommandProcessor::verifyDigestAsyncPoll(VerificationRequest request) {
     telux::sec::ECCPoint publicKey{};
     telux::sec::Signature signature{};
     std::vector<telux::sec::OperationResult> results(1);
-    std::shared_ptr<telux::sec::ICryptoAcceleratorManager> cryptAccelMgr;
     int timeout = -1;
-
-    auto &secFact = telux::sec::SecurityFactory::getInstance();
-
-    cryptAccelMgr = secFact.getCryptoAcceleratorManager(ec, telux::sec::Mode::MODE_ASYNC_POLL);
-    if (!cryptAccelMgr) {
-        std::cout <<
-         "can't get ICryptoAcceleratorManager, err: " << static_cast<int>(ec) << std::endl;
-        return;
-    }
 
     digest.digest = request.digest.data();
     digest.digestLength = request.digest.size();
@@ -194,12 +189,11 @@ void CommandProcessor::verifyDigestAsyncPoll(VerificationRequest request) {
     signature.sSignature = request.signatureS.data();
     signature.rsLength = request.signatureR.size();
 
-    ec = cryptAccelMgr->eccPostDigestForVerification(digest, publicKey,
+    ec = cryptAccelMgr_->eccPostDigestForVerification(digest, publicKey,
             signature, request.curve, request.uniqueId, request.priority);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "request not sent, err: " << static_cast<int>(ec) << std::endl;
         fflush(stdout);
-        cryptAccelMgr.reset();
         return;
     }
 
@@ -207,10 +201,9 @@ void CommandProcessor::verifyDigestAsyncPoll(VerificationRequest request) {
         timeout = request.timeout;
     }
 
-    ec = cryptAccelMgr->getAsyncResults(results, 1, timeout, numResultsRead);
+    ec = cryptAccelMgr_->getAsyncResults(results, 1, timeout, numResultsRead);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "can't get result, " << static_cast<int>(ec) << std::endl;
-        cryptAccelMgr.reset();
         fflush(stdout);
         return;
     }
@@ -242,38 +235,21 @@ void CommandProcessor::verifyDigestAsyncPoll(VerificationRequest request) {
         }
         printf("\n");
     }
-
-    cryptAccelMgr.reset();
 }
 
 void CommandProcessor::verifyDigestAsyncListener(VerificationRequest request) {
 
+    telux::common::ErrorCode ec;
     telux::sec::DataDigest digest{};
     telux::sec::ECCPoint publicKey{};
     telux::sec::Signature signature{};
-    telux::common::ErrorCode ec;
-    std::shared_ptr<ResultListener> resultListener;
-    std::shared_ptr<telux::sec::ICryptoAcceleratorManager> cryptAccelMgr;
 
     std::promise<void> barrier;
-    std::future<void> barrierFuture = barrier.get_future();
+    std::future<void> barrierFuture;
 
-    try {
-        resultListener = std::make_shared<ResultListener>(std::move(barrier));
-    } catch (const std::exception& e) {
-        std::cout << "can't create ResultListener" << std::endl;
-        return;
-    }
-
-    auto &secFact = telux::sec::SecurityFactory::getInstance();
-
-    cryptAccelMgr = secFact.getCryptoAcceleratorManager(ec,
-        telux::sec::Mode::MODE_ASYNC_LISTENER, resultListener);
-    if (!cryptAccelMgr) {
-        std::cout <<
-         "can't get ICryptoAcceleratorManager, err: " << static_cast<int>(ec) << std::endl;
-        return;
-    }
+    barrier = std::promise<void>();
+    barrierFuture = barrier.get_future();
+    resultAndSSRListener_->setResultSynchronizer(std::move(barrier));
 
     digest.digest = request.digest.data();
     digest.digestLength = request.digest.size();
@@ -287,12 +263,11 @@ void CommandProcessor::verifyDigestAsyncListener(VerificationRequest request) {
     signature.sSignature = request.signatureS.data();
     signature.rsLength = request.signatureR.size();
 
-    ec = cryptAccelMgr->eccPostDigestForVerification(digest, publicKey,
+    ec = cryptAccelMgr_->eccPostDigestForVerification(digest, publicKey,
             signature, request.curve, request.uniqueId, request.priority);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "request not sent, err: " << static_cast<int>(ec) << std::endl;
         fflush(stdout);
-        cryptAccelMgr.reset();
         return;
     }
 
@@ -306,16 +281,6 @@ void CommandProcessor::calculatePointSync(CalculationRequest request) {
     telux::sec::ECCPoint multiplicandPoint{};
     telux::common::ErrorCode ec;
     std::vector<uint8_t> resultData;
-    std::shared_ptr<telux::sec::ICryptoAcceleratorManager> cryptAccelMgr;
-
-    auto &secFact = telux::sec::SecurityFactory::getInstance();
-
-    cryptAccelMgr = secFact.getCryptoAcceleratorManager(ec, telux::sec::Mode::MODE_SYNC);
-    if (!cryptAccelMgr) {
-        std::cout <<
-         "can't get ICryptoAcceleratorManager, err " << static_cast<int>(ec) << std::endl;
-        return;
-    }
 
     scalar.scalar = request.scalar.data();
     scalar.scalarLength = request.scalar.size();
@@ -330,7 +295,7 @@ void CommandProcessor::calculatePointSync(CalculationRequest request) {
     addendPoint.y = request.addendPointY.data();
     addendPoint.yLength = request.addendPointY.size();
 
-    ec = cryptAccelMgr->ecqvPointMultiplyAndAdd(multiplicandPoint,
+    ec = cryptAccelMgr_->ecqvPointMultiplyAndAdd(multiplicandPoint,
             addendPoint, scalar, request.curve, request.uniqueId,
             request.priority, resultData);
     if (ec != telux::common::ErrorCode::SUCCESS) {
@@ -350,8 +315,6 @@ void CommandProcessor::calculatePointSync(CalculationRequest request) {
         }
         printf("\n");
     }
-
-    cryptAccelMgr.reset();
 }
 
 void CommandProcessor::calculatePointAsyncPoll(CalculationRequest request) {
@@ -363,17 +326,7 @@ void CommandProcessor::calculatePointAsyncPoll(CalculationRequest request) {
     uint32_t numResultsRead = 0;
     telux::common::ErrorCode ec;
     std::vector<telux::sec::OperationResult> results(1);
-    std::shared_ptr<telux::sec::ICryptoAcceleratorManager> cryptAccelMgr;
     int timeout = -1;
-
-    auto &secFact = telux::sec::SecurityFactory::getInstance();
-
-    cryptAccelMgr = secFact.getCryptoAcceleratorManager(ec, telux::sec::Mode::MODE_ASYNC_POLL);
-    if (!cryptAccelMgr) {
-        std::cout <<
-         "can't get ICryptoAcceleratorManager, err: " << static_cast<int>(ec) << std::endl;
-        return;
-    }
 
     scalar.scalar = request.scalar.data();
     scalar.scalarLength = request.scalar.size();
@@ -388,13 +341,12 @@ void CommandProcessor::calculatePointAsyncPoll(CalculationRequest request) {
     addendPoint.y = request.addendPointY.data();
     addendPoint.yLength = request.addendPointY.size();
 
-    ec = cryptAccelMgr->ecqvPostDataForMultiplyAndAdd(multiplicandPoint,
+    ec = cryptAccelMgr_->ecqvPostDataForMultiplyAndAdd(multiplicandPoint,
             addendPoint, scalar, request.curve, request.uniqueId,
             request.priority);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "request not sent, " << static_cast<int>(ec) << std::endl;
         fflush(stdout);
-        cryptAccelMgr.reset();
         return;
     }
 
@@ -402,10 +354,9 @@ void CommandProcessor::calculatePointAsyncPoll(CalculationRequest request) {
         timeout = request.timeout;
     }
 
-    ec = cryptAccelMgr->getAsyncResults(results, 1, timeout, numResultsRead);
+    ec = cryptAccelMgr_->getAsyncResults(results, 1, timeout, numResultsRead);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "can't get result, err: " << static_cast<int>(ec) << std::endl;
-        cryptAccelMgr.reset();
         fflush(stdout);
         return;
     }
@@ -437,38 +388,21 @@ void CommandProcessor::calculatePointAsyncPoll(CalculationRequest request) {
         }
         printf("\n");
     }
-
-    cryptAccelMgr.reset();
 }
 
 void CommandProcessor::calculatePointAsyncListener(CalculationRequest request) {
 
+    telux::common::ErrorCode ec;
     telux::sec::Scalar scalar{};
     telux::sec::ECCPoint addendPoint{};
     telux::sec::ECCPoint multiplicandPoint{};
-    telux::common::ErrorCode ec;
-    std::shared_ptr<ResultListener> resultListener;
-    std::shared_ptr<telux::sec::ICryptoAcceleratorManager> cryptAccelMgr;
 
     std::promise<void> barrier;
-    std::future<void> barrierFuture = barrier.get_future();
+    std::future<void> barrierFuture;
 
-    try {
-        resultListener = std::make_shared<ResultListener>(std::move(barrier));
-    } catch (const std::exception& e) {
-        std::cout << "can't create ResultListener" << std::endl;
-        return;
-    }
-
-    auto &secFact = telux::sec::SecurityFactory::getInstance();
-
-    cryptAccelMgr = secFact.getCryptoAcceleratorManager(ec,
-        telux::sec::Mode::MODE_ASYNC_LISTENER, resultListener);
-    if (!cryptAccelMgr) {
-        std::cout <<
-         "can't get ICryptoAcceleratorManager, err: " << static_cast<int>(ec) << std::endl;
-        return;
-    }
+    barrier = std::promise<void>();
+    barrierFuture = barrier.get_future();
+    resultAndSSRListener_->setResultSynchronizer(std::move(barrier));
 
     scalar.scalar = request.scalar.data();
     scalar.scalarLength = request.scalar.size();
@@ -483,13 +417,12 @@ void CommandProcessor::calculatePointAsyncListener(CalculationRequest request) {
     addendPoint.y = request.addendPointY.data();
     addendPoint.yLength = request.addendPointY.size();
 
-    ec = cryptAccelMgr->ecqvPostDataForMultiplyAndAdd(multiplicandPoint,
+    ec = cryptAccelMgr_->ecqvPostDataForMultiplyAndAdd(multiplicandPoint,
             addendPoint, scalar, request.curve, request.uniqueId,
             request.priority);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "request not sent, err: " << static_cast<int>(ec) << std::endl;
         fflush(stdout);
-        cryptAccelMgr.reset();
         return;
     }
 
@@ -498,7 +431,7 @@ void CommandProcessor::calculatePointAsyncListener(CalculationRequest request) {
 
 void CommandProcessor::calculatePoint(CalculationRequest request) {
 
-    switch (request.mode) {
+    switch (mode_) {
         case telux::sec::Mode::MODE_SYNC:
             return calculatePointSync(request);
         case telux::sec::Mode::MODE_ASYNC_POLL:
@@ -506,13 +439,13 @@ void CommandProcessor::calculatePoint(CalculationRequest request) {
         case telux::sec::Mode::MODE_ASYNC_LISTENER:
             return calculatePointAsyncListener(request);
         default:
-            std::cout << "invalid mode " << static_cast<int>(request.mode) << std::endl;
+            std::cout << "invalid mode " << static_cast<int>(mode_) << std::endl;
     }
 }
 
 void CommandProcessor::verifyDigest(VerificationRequest request) {
 
-    switch (request.mode) {
+     switch (mode_) {
         case telux::sec::Mode::MODE_SYNC:
             return verifyDigestSync(request);
         case telux::sec::Mode::MODE_ASYNC_POLL:
@@ -520,6 +453,6 @@ void CommandProcessor::verifyDigest(VerificationRequest request) {
         case telux::sec::Mode::MODE_ASYNC_LISTENER:
             return verifyDigestAsyncListener(request);
         default:
-            std::cout << "invalid mode " << static_cast<int>(request.mode) << std::endl;
+            std::cout << "invalid mode " << static_cast<int>(mode_) << std::endl;
     }
 }

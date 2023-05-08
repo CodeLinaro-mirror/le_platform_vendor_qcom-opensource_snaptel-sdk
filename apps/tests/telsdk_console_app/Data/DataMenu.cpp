@@ -28,7 +28,7 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
+
  *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -121,8 +121,8 @@ DataMenu::~DataMenu() {
 }
 
 bool DataMenu::initializeSDK() {
-    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-    startTime = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
+    startTime = std::chrono::steady_clock::now();
     // Get the DataFactory instances.
     auto &dataFactory = telux::data::DataFactory::getInstance();
 
@@ -160,7 +160,7 @@ bool DataMenu::initializeSDK() {
 
     // Check if the SDK is able to initialize data subsystems
     if ((dcmSubSystemStatus) && (dpmSubSystemStatus)) {
-        endTime = std::chrono::system_clock::now();
+        endTime = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                   << std::endl;

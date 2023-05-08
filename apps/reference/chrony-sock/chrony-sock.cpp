@@ -28,10 +28,9 @@
  */
 
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -328,16 +327,24 @@ int main(int argc, char *argv[]) {
     std::shared_ptr<ILocationManager> locationManager;
 
     auto &locationFactory = LocationFactory::getInstance();
-    locationManager = locationFactory.getLocationManager();
 
-    bool subSystemsStatus = locationManager->isSubsystemReady();
-    if (!subSystemsStatus) {
-        LOGI("Location subsystem is not ready, wait for it to be ready\n");
-        std::future<bool> f = locationManager->onSubsystemReady();
-        subSystemsStatus = f.get();
+    bool locMgrStatusUpdated = false;
+    auto locMgrStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto statusCb = [&locMgrStatusUpdated,
+                     &locMgrStatus](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        locMgrStatusUpdated = true;
+        locMgrStatus = status;
+        cv.notify_all();
+    };
+
+    locationManager = locationFactory.getLocationManager(statusCb);
+    {
+        std::unique_lock<std::mutex> lck(mtx);
+        cv.wait(lck, [&locMgrStatusUpdated] { return locMgrStatusUpdated || gExit; });
     }
 
-    if (subSystemsStatus) {
+    if (locMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOGI("Location subsystem is ready\n");
     } else {
         LOGE("Unable to initialize the Location subsystem\n");

@@ -303,6 +303,10 @@ void PlayMenu::writeCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer
     }
 
     if(buffer->getDataSize() != bytes){
+        if (playFormat_ == AudioFormat::AMRNB || playFormat_ == AudioFormat::AMRWB ||
+            playFormat_ == AudioFormat::AMRWB_PLUS) {
+            pipeLineEmpty_ = false;
+        }
         std::cout <<
             "Bytes Requested " << buffer->getDataSize() << " Bytes Written " << bytes << std::endl;
         // We are seeking back so that left over buffer can be resent again.

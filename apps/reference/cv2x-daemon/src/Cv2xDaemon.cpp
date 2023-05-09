@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -335,8 +335,9 @@ Status Cv2xDaemon::deInit() {
             LOGE("Failed to stop v2x mode\n");
             return Status::FAILED;
         }
-
-        ret = cv2xTelux_->deinitV2xLibrary();
+        if (cv2xTelux_) {
+            ret = cv2xTelux_->deinitV2xLibrary();
+        }
         if (ret != Status::SUCCESS) {
             LOGE("Failed to de-initialize v2x library\n");
             return Status::FAILED;
@@ -351,8 +352,9 @@ void terminationHandler(int signum) {
     LOGE("Got signal %d, tearing down all services\n",signum );
 
     Cv2xDaemon::getInstance().deInit();
-
-    signal(signum, SIG_DFL);
+    if( SIG_DFL != NULL ){
+        signal(signum, SIG_DFL);
+    }
     raise(signum);
     exiting_ = true;
     Cv2xDaemon::getInstance().cv_.notify_all();

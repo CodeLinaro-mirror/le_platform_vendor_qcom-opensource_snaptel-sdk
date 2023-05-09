@@ -219,6 +219,7 @@ void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
     if (cbMenu.init()) {
        cbMenu.mainLoop();
     }
+    TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
 #endif

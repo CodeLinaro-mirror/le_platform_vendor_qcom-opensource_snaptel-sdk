@@ -110,7 +110,6 @@ int PlaybackPCM::createPlayStream() {
     telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::PLAY;
-    sc.slotId = DEFAULT_SLOT_ID;
     sc.sampleRate = 48000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
@@ -176,10 +175,15 @@ void PlaybackPCM::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> b
 
     long offset;
 
-    if ((error != telux::common::ErrorCode::SUCCESS) ||
-            (buffer->getDataSize() != bytesWritten)) {
+    if (error != telux::common::ErrorCode::SUCCESS) {
+        errorOccurred_ = true;
+        std::cout << "write failed, err " << static_cast<int>(error) << std::endl;
+    } else if (buffer->getDataSize() != bytesWritten) {
+        /* Whole buffer can't be played successfully */
         offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
         fseek(fileToPlay_, offset, SEEK_CUR);
+    } else {
+        /* success, send next buffer to play */
     }
 
     freeBuffers_.push(buffer);
@@ -198,12 +202,15 @@ void PlaybackPCM::play() {
 
     std::unique_lock<std::mutex> lock(playMutex_);
 
+    errorOccurred_ = false;
+
     fileToPlay_ = std::fopen(fileToPlayPath_, "r");
     if (!fileToPlay_) {
         std::cout << "can't open file " << fileToPlayPath_ << std::endl;
         return;
     }
 
+    /* Allocate two buffers */
     for (int x = 0; x < 2; x++) {
         streamBuffer = audioPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
@@ -234,7 +241,7 @@ void PlaybackPCM::play() {
         if (numBytes == 0 && feof(fileToPlay_)) {
             break;
         }
-        if(numBytes != size && !feof(fileToPlay_)) {
+        if (numBytes != size && !feof(fileToPlay_)) {
             std::cout << "can't read required bytes, read " << numBytes << std::endl;
             break;
         }
@@ -242,18 +249,28 @@ void PlaybackPCM::play() {
         streamBuffer->setDataSize(numBytes);
 
         status = audioPlayStream_->write(streamBuffer, writeCb);
-        if(status != telux::common::Status::SUCCESS) {
+        if (status != telux::common::Status::SUCCESS) {
             std::cout << "can't write, err " << static_cast<unsigned int>(status) << std::endl;
             break;
         }
 
-        if(freeBuffers_.empty()) {
+        if (freeBuffers_.empty()) {
             cv_.wait(lock);
+        }
+
+        if (errorOccurred_) {
+            /* error occurred during playback, terminate the thread */
+            break;
         }
     }
 
     fclose(fileToPlay_);
-    std::cout << "playback finished" << std::endl;
+
+    if (errorOccurred_) {
+        std::cout << "playback finished with error" << std::endl;
+    } else {
+        std::cout << "playback finished" << std::endl;
+    }
 }
 
 int main(int argc, char **argv) {

@@ -33,7 +33,7 @@
  */
 
 /*
- *  Steps to play an inband ringtone on a Bluetooth device are:
+ *  Steps to play AMR-WB+ audio samples on a audio sink device are:
  *
  *  1. Get a AudioFactory instance.
  *  2. Get a IAudioManager instance from AudioFactory.
@@ -43,10 +43,12 @@
  *  6. When the playback is over, delete the playback stream.
  *
  * Usage:
- * # bt_hfg_inband_ringtone /data/ringtone.pcm
+ * # playback_amrwb_plus /data/musicfile_wbplus.amr
  *
- * Contents of /data/ringtone.pcm raw PCM file are played on the Bluetooth
- * headset connect to the device.
+ * Contents of /data/musicfile_wbplus.amr file are played on the speaker.
+ *
+ * Note: the file musicfile_wbplus.amr should contain only actual audio data
+ * to play. The header should have been stripped from the file.
  */
 
 #include <errno.h>
@@ -57,12 +59,12 @@
 
 #include <telux/audio/AudioFactory.hpp>
 
-#include "BTHFGRingtone.hpp"
+#include "PlaybackAMRWBPlus.hpp"
 
 /*
  * Initialize application and get an audio service.
  */
-int BTHFGRingtone::init() {
+int PlaybackAMRWBPlus::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -103,18 +105,23 @@ int BTHFGRingtone::init() {
 /*
  * Step - 4, create a playback stream.
  */
-int BTHFGRingtone::createPlayStream() {
+int PlaybackAMRWBPlus::createPlayStream() {
 
-    std::promise<telux::common::ErrorCode> p{};
-    telux::audio::StreamConfig sc{};
-    telux::common::Status status;
     telux::common::ErrorCode ec;
+    telux::common::Status status;
+    telux::audio::StreamConfig sc{};
+    telux::audio::AmrwbpParams amrParams{};
+    std::promise<telux::common::ErrorCode> p{};
 
     sc.type = telux::audio::StreamType::PLAY;
-    sc.sampleRate = 8000;
-    sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    sc.sampleRate = 16000;
+    sc.format = telux::audio::AudioFormat::AMRWB_PLUS;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_BT_SCO_SPEAKER);
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+
+    amrParams.bitWidth = 16;
+    amrParams.frameFormat = telux::audio::AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
+    sc.formatParams = &amrParams;
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
@@ -127,7 +134,7 @@ int BTHFGRingtone::createPlayStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't create playback stream, err " << static_cast<int>(status) << std::endl;
+        std::cout << "can't request create stream"  << std::endl;
         return -EIO;
     }
 
@@ -137,25 +144,31 @@ int BTHFGRingtone::createPlayStream() {
         return -EIO;
     }
 
+    status = audioPlayStream_->registerListener(shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't register listener"  << std::endl;
+        return -EIO;
+    }
+
     return 0;
 }
 
 /*
  *  Step - 6, delete playback stream.
  */
-int BTHFGRingtone::deletePlayStream() {
+int PlaybackAMRWBPlus::deletePlayStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
 
-    status = audioManager_-> deleteStream(audioPlayStream_, [&p, this] (
+    status = audioManager_->deleteStream(audioPlayStream_, [&p, this] (
             telux::common::ErrorCode result) {
         p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't delete play stream, err " << static_cast<int>(status) << std::endl;
+        std::cout << "can't request delete stream" << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -171,39 +184,55 @@ int BTHFGRingtone::deletePlayStream() {
 /*
  *  Gets called to confirm how many bytes were actually written to the playback stream.
  */
-void BTHFGRingtone::writeComplete(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
+void PlaybackAMRWBPlus::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     long offset;
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         errorOccurred_ = true;
-        std::cout << "write failed, err " << static_cast<int>(error) << std::endl;
     } else if (buffer->getDataSize() != bytesWritten) {
-        /* Whole buffer can't be played successfully */
+        /* Application should wait for onReadyForWrite() invocation */
         offset = (-1) * (static_cast<long>((buffer->getDataSize() - bytesWritten)));
         fseek(fileToPlay_, offset, SEEK_CUR);
+        frameworkReadyForNextWrite_ = false;
     } else {
         /* success, send next buffer to play */
     }
 
     freeBuffers_.push(buffer);
-    cv_.notify_all();
+    writeWaitCv_.notify_all();
+}
+
+/*
+ *  Gets called to indicate, next buffer can be sent now for playback.
+ */
+void PlaybackAMRWBPlus::onReadyForWrite() {
+    frameworkReadyForNextWrite_ = true;
+    writeWaitCv_.notify_all();
+}
+
+void PlaybackAMRWBPlus::onPlayStopped() {
+    std::cout << "playback stopped" << std::endl;
+    playStopCv_.notify_all();
 }
 
 /*
  *  Step - 5, write samples on the playback stream.
  */
-void BTHFGRingtone::play() {
+void PlaybackAMRWBPlus::play() {
 
     uint32_t size = 0;
     uint32_t numBytes = 0;
+    telux::common::ErrorCode ec;
     telux::common::Status status;
+    std::promise<telux::common::ErrorCode> p{};
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
     std::unique_lock<std::mutex> lock(playMutex_);
 
     errorOccurred_ = false;
+    frameworkReadyForNextWrite_ = true;
 
     fileToPlay_ = std::fopen(fileToPlayPath_, "r");
     if (!fileToPlay_) {
@@ -211,6 +240,7 @@ void BTHFGRingtone::play() {
         return;
     }
 
+    /* Allocate two buffers */
     for (int x = 0; x < 2; x++) {
         streamBuffer = audioPlayStream_->getStreamBuffer();
         if (!streamBuffer) {
@@ -228,39 +258,41 @@ void BTHFGRingtone::play() {
         streamBuffer->setDataSize(size);
     }
 
-    auto writeCb = std::bind(&BTHFGRingtone::writeComplete, this,
+    auto writeCb = std::bind(&PlaybackAMRWBPlus::writeCompletion, this,
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
     std::cout << "playback started" << std::endl;
 
     while(1) {
-        streamBuffer = freeBuffers_.front();
-        freeBuffers_.pop();
+        if (frameworkReadyForNextWrite_ && !freeBuffers_.empty()) {
 
-        numBytes = fread(streamBuffer->getRawBuffer(), 1, size, fileToPlay_);
-        if (numBytes == 0 && feof(fileToPlay_)) {
-            break;
-        }
-        if(numBytes != size && !feof(fileToPlay_)) {
-            std::cout << "can't read required bytes, read " << numBytes << std::endl;
-            break;
-        }
+            streamBuffer = freeBuffers_.front();
+            freeBuffers_.pop();
 
-        streamBuffer->setDataSize(numBytes);
+            numBytes = fread(streamBuffer->getRawBuffer(), 1, size, fileToPlay_);
+            if (numBytes == 0 && feof(fileToPlay_)) {
+                break;
+            }
+            if (numBytes != size && !feof(fileToPlay_)) {
+                std::cout << "can't read required bytes, read " << numBytes << std::endl;
+                break;
+            }
 
-        status = audioPlayStream_->write(streamBuffer, writeCb);
-        if(status != telux::common::Status::SUCCESS) {
-            std::cout << "can't write, err " << static_cast<unsigned int>(status) << std::endl;
-            break;
-        }
+            streamBuffer->setDataSize(numBytes);
 
-        if(freeBuffers_.empty()) {
-            cv_.wait(lock);
-        }
+            status = audioPlayStream_->write(streamBuffer, writeCb);
+            if ( status != telux::common::Status::SUCCESS) {
+                std::cout << "can't write, err " << static_cast<int>(status) << std::endl;
+                break;
+            }
 
-        if (errorOccurred_) {
-            /* error occurred during playback, terminate the thread */
-            break;
+            if (errorOccurred_) {
+                /* error occurred during playback, terminate the thread */
+                std::cout << "error occurred" << std::endl;
+                break;
+            }
+        } else {
+            writeWaitCv_.wait(lock);
         }
     }
 
@@ -268,15 +300,34 @@ void BTHFGRingtone::play() {
 
     if (errorOccurred_) {
         std::cout << "playback finished with error" << std::endl;
-    } else {
-        std::cout << "playback finished" << std::endl;
+        return;
     }
+
+    /* wait till the very last buffer is played */
+    {
+      std::unique_lock<std::mutex> stopLock(playStopMutex_);
+
+      status = audioPlayStream_->stopAudio(telux::audio::StopType::STOP_AFTER_PLAY,
+              [&p] (telux::common::ErrorCode error) {
+          p.set_value(error);
+      });
+
+      ec = p.get_future().get();
+      if (ec != telux::common::ErrorCode::SUCCESS) {
+          std::cout << "can't finish playback, err " << static_cast<int>(ec) << std::endl;
+          return;
+      }
+
+      playStopCv_.wait(stopLock);
+    }
+
+    std::cout << "playback finished" << std::endl;
 }
 
 int main(int argc, char **argv) {
 
     int ret;
-    std::shared_ptr<BTHFGRingtone> app;
+    std::shared_ptr<PlaybackAMRWBPlus> app;
 
     if (argc < 2) {
         std::cout << "need audio file absolute path" << std::endl;
@@ -284,9 +335,9 @@ int main(int argc, char **argv) {
     }
 
     try {
-        app = std::make_shared<BTHFGRingtone>();
+        app = std::make_shared<PlaybackAMRWBPlus>();
     } catch (const std::exception& e) {
-        std::cout << "can't allocate BTHFGRingtone" << std::endl;
+        std::cout << "can't allocate PlaybackAMRWBPlus" << std::endl;
         return -ENOMEM;
     }
 
@@ -299,10 +350,11 @@ int main(int argc, char **argv) {
 
     ret = app->createPlayStream();
     if (ret < 0) {
+        app->deletePlayStream();
         return ret;
     }
 
-    std::thread playWorker(&BTHFGRingtone::play, &(*app));
+    std::thread playWorker(&PlaybackAMRWBPlus::play, &(*app));
     playWorker.join();
 
     ret = app->deletePlayStream();

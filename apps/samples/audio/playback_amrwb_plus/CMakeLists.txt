@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_COMPRESSED_FMT_PLAYBACK_APP compressed_fmt_playback_app)
+set(TARGET_PLAYBACK_AMRWBPLUS playback_amrwb_plus)
 
-set(COMPRESSED_FMT_PLAYBACK_APP_SOURCES
-    CompressedFmtPlaybackApp.cpp
+set(PLAYBACK_AMRWBPLUS_SOURCES
+    PlaybackAMRWBPlus.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
@@ -20,10 +20,10 @@ include_directories(BEFORE
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_executable (${TARGET_COMPRESSED_FMT_PLAYBACK_APP} ${COMPRESSED_FMT_PLAYBACK_APP_SOURCES})
-target_link_libraries(${TARGET_COMPRESSED_FMT_PLAYBACK_APP} telux_audio)
+add_executable (${TARGET_PLAYBACK_AMRWBPLUS} ${PLAYBACK_AMRWBPLUS_SOURCES})
+target_link_libraries(${TARGET_PLAYBACK_AMRWBPLUS} telux_audio)
 
 # install to target
-install ( TARGETS ${TARGET_COMPRESSED_FMT_PLAYBACK_APP}
+install ( TARGETS ${TARGET_PLAYBACK_AMRWBPLUS}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )

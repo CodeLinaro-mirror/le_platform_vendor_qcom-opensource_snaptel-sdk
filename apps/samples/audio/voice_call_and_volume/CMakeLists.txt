@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(TARGET_VOICE_SESSION_APP voice_session_app)
+set(TARGET_VOICECALL voice_call_volume)
 
-set(VOICE_SESSION_APP_SOURCES
-    VoiceSessionApp.cpp
+set(VOICECALL_SOURCES
+    VoiceCall.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
@@ -20,10 +20,10 @@ include_directories(BEFORE
 # set global variables
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 
-add_executable (${TARGET_VOICE_SESSION_APP} ${VOICE_SESSION_APP_SOURCES})
-target_link_libraries(${TARGET_VOICE_SESSION_APP} telux_audio)
+add_executable (${TARGET_VOICECALL} ${VOICECALL_SOURCES})
+target_link_libraries(${TARGET_VOICECALL} telux_audio)
 
 # install to target
-install ( TARGETS ${TARGET_VOICE_SESSION_APP}
+install ( TARGETS ${TARGET_VOICECALL}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR} )

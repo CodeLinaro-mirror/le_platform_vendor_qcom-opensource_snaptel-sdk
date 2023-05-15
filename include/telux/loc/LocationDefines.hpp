@@ -170,6 +170,10 @@ enum SbasCorrectionType {
                             SBAS RTK correction is used */
   SBAS_CORRECTION_PPP, /**< Bit mask to specify whether
                             SBAS PPP correction is used */
+  SBAS_CORRECTION_RTK_FIXED, /**< Bit mask to specify whether
+                            SBAS RTK fixed correction is used */
+  SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_, /**< Bit mask to specify
+                            only SBAS corrected SV is used */
   SBAS_COUNT  /**< Bitset */
 };
 

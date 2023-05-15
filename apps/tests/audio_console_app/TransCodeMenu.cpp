@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -61,6 +61,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 
 #include <chrono>
 #include <iostream>
@@ -97,10 +98,10 @@ TransCodeMenu::~TransCodeMenu() {
 
 void TransCodeMenu::init() {
     std::shared_ptr<ConsoleAppCommand> startTranscodingCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", " Start Transcoding",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", " Start transcoder",
          {}, std::bind(&TransCodeMenu::startTranscoding, this, std::placeholders::_1)));
     std::shared_ptr<ConsoleAppCommand> abortTranscodingCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", " Abort Transcoding",
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", " Stop transcoder",
          {}, std::bind(&TransCodeMenu::tearDown, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> transCodeMenuCommandList
@@ -114,6 +115,7 @@ void TransCodeMenu::init() {
 }
 
 void TransCodeMenu::cleanup() {
+    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
     ready_ = false;
     writeStatus_ = false;
     readStatus_ = false;
@@ -125,13 +127,7 @@ void TransCodeMenu::cleanup() {
     }
     transcoder_ = nullptr;
     pipeLineEmpty_ = true;
-}
-
-void TransCodeMenu::finishTranscoding() {
-    fclose(readFile_);
-    fflush(writeFile_);
-    fclose(writeFile_);
-    tearDown({});
+    runningThreads_.resize(0);
 }
 
 void TransCodeMenu::setSystemReady() {
@@ -140,6 +136,7 @@ void TransCodeMenu::setSystemReady() {
 
 void TransCodeMenu::createTranscoder() {
     std::promise<bool> p;
+
     std::cout << "Enter configuration for input samples" << std::endl;
     std::cout << "-------------------------------------" << std::endl;
     while (1) {
@@ -218,7 +215,6 @@ void TransCodeMenu::createTranscoder() {
     }
     delete inputParams;
     delete outputParams;
-    return;
 }
 
 void TransCodeMenu::writeCallback(std::shared_ptr<telux::audio::IAudioBuffer> buffer,
@@ -263,6 +259,7 @@ void TransCodeMenu::write() {
             writeBuffers_.push(audioBuffer);
         } else {
             std::cout << "Failed to get Buffers for Write operation " << std::endl;
+            fclose(writeFile_);
             return;
         }
     }
@@ -298,6 +295,7 @@ void TransCodeMenu::write() {
         }
     }
     writeStatus_ = false;
+    fclose(writeFile_);
 }
 
 void TransCodeMenu::read() {
@@ -358,9 +356,10 @@ void TransCodeMenu::read() {
     while (readBuffers_.size() != TOTAL_READ_BUFFERS && ready_) {
         cv_.wait_for(lock, std::chrono::milliseconds(waitTime));
     }
-    if (ready_) {
-        finishTranscoding();
-    }
+
+    fflush(readFile_);
+    fclose(readFile_);
+
     std::cout << "Transcoding Successful" <<std::endl;
 }
 
@@ -386,6 +385,13 @@ void TransCodeMenu::readCallback(std::shared_ptr<telux::audio::IAudioBuffer> buf
 }
 
 void TransCodeMenu::startTranscoding(std::vector<std::string> userInput) {
+    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
+
+    if (transcoder_) {
+        std::cout << "Transcoding in progress" << std::endl;
+        return;
+    }
+
     if (ready_) {
         createTranscoder();
         if (transcoder_) {
@@ -403,7 +409,18 @@ void TransCodeMenu::startTranscoding(std::vector<std::string> userInput) {
 }
 
 void TransCodeMenu::tearDown(std::vector<std::string> userInput) {
+    std::lock_guard<std::mutex> cLock(CreateTranscoderMutex_);
     if (transcoder_) {
+        writeStatus_ = false;
+        readStatus_ = false;
+        cv_.notify_all();
+        for (std::thread &th : runningThreads_) {
+            if (th.joinable()) {
+                th.join();
+            }
+        }
+        runningThreads_.resize(0);
+
         std::promise<bool> p;
         auto status = transcoder_->tearDown([&p](telux::common::ErrorCode error) {
             if (error == telux::common::ErrorCode::SUCCESS) {
@@ -422,7 +439,6 @@ void TransCodeMenu::tearDown(std::vector<std::string> userInput) {
             transcoder_ = nullptr;
             std::cout << "Tear Down successful" << std::endl;
         }
-        readStatus_ = false;
     } else {
         std::cout << "No transcoder Exists" << std::endl;
     }

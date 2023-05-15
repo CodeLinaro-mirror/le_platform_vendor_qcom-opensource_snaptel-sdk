@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 
 #include <iostream>
 #include <memory>
@@ -189,24 +194,6 @@ void MyPhoneListener::onSignalStrengthChanged(
         } else {
             PRINT_NOTIFICATION << "LTE Reference Signal SNR(in dB): "
                  << signalStrength->getLteSignalStrength()->getLteReferenceSignalSnr() * 0.1
-                 << std::endl;
-        }
-
-        if(signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "
-                 << signalStrength->getLteSignalStrength()->getLteChannelQualityIndicator()
-                 << std::endl;
-        }
-
-        if(signalStrength->getLteSignalStrength()->getTimingAdvance()
-            == INVALID_SIGNAL_STRENGTH_VALUE) {
-            PRINT_NOTIFICATION << "LTE Timing Advance: "<< "UNAVAILABLE" << std::endl;
-        } else {
-            PRINT_NOTIFICATION << "LTE Timing Advance: "
-                 << signalStrength->getLteSignalStrength()->getTimingAdvance()
                  << std::endl;
         }
 
@@ -531,11 +518,11 @@ void MyCellularCapabilityCallback::cellularCapabilityResponse(
                  << std::endl;
 
         for (auto &simRatCap : capabilityInfo.simRatCapabilities) {
+            PRINT_CB << "Sim RAT capabilities for Slot Id: " << simRatCap.slotId << "\n";
             PRINT_CB
                 << "RATCapabilitiesMask: " << ratCapabilitiesMaskToString(simRatCap.capabilities)
                 << std::endl;
         }
-
         PRINT_CB << "SIM Count : " << capabilityInfo.simCount << std::endl;
         PRINT_CB << "Max Active SIMs : " << capabilityInfo.maxActiveSims << std::endl;
     } else {
@@ -762,25 +749,6 @@ void MyPhoneHelper::printCellInfoDetails(
                PRINT_NOTIFICATION << "LTE Reference Signal Receive Quality(in dB): "
                    << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalReceiveQuality()
                    << std::endl;
-            }
-
-            if(lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "LTE Reference Signal SNR(in dB): "<< "UNAVAILABLE"
-               << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "LTE Reference Signal SNR(in dB): "
-                    << lteCellInfo->getSignalStrengthInfo().getLteReferenceSignalSnr() * 0.1
-                    << std::endl;
-            }
-
-            if(lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
-                == INVALID_SIGNAL_STRENGTH_VALUE) {
-               PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "<< "UNAVAILABLE" << std::endl;
-            } else {
-               PRINT_NOTIFICATION << "LTE Channel Quality Indicator: "
-                    << lteCellInfo->getSignalStrengthInfo().getLteChannelQualityIndicator()
-                    << std::endl;
             }
 
             if(lteCellInfo->getSignalStrengthInfo().getTimingAdvance() ==

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -26,41 +26,10 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/**
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -89,6 +58,8 @@
 #include <telux/tel/MultiSimManager.hpp>
 #include <telux/tel/SimProfileManager.hpp>
 #include <telux/tel/EcallManager.hpp>
+#include <telux/tel/ImsSettingsManager.hpp>
+#include <telux/tel/ImsServingSystemManager.hpp>
 
 namespace telux {
 
@@ -236,6 +207,32 @@ public:
     */
    std::shared_ptr<IEcallManager> getEcallManager(telux::common::InitResponseCb callback = nullptr);
 
+   /**
+    * Get Ims Settings Manager instance to handle IMS service enable configuation parameters like
+    * enable/disable voIMS.
+    *
+    * @param[in] callback   Optional callback pointer to get the response of the manager
+    *                       initialisation.
+    *
+    * @returns Pointer of IImsSettingsManager object.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   std::shared_ptr<IImsSettingsManager> getImsSettingsManager(
+       telux::common::InitResponseCb  callback = nullptr);
+
+   /**
+    * Get IMS Serving System Manager instance to query IMS registration status
+    *
+    * @returns Pointer of IImsServingSystemManager object or nullptr in case of failure.
+    *
+    * @note    Eval: This is a new API and is being evaluated.It is subject to change and
+    *          could break backwards compatibility.
+    */
+   std::shared_ptr<IImsServingSystemManager> getImsServingSystemManager(SlotId slotId,
+      telux::common::InitResponseCb callback = nullptr);
+
 private:
    std::shared_ptr<IPhoneManager> phoneManager_;
    std::shared_ptr<ICallManager> callManager_;
@@ -243,6 +240,8 @@ private:
    std::shared_ptr<ISubscriptionManager> subscriptionManager_;
    std::shared_ptr<IMultiSimManager> multiSimManager_;
    std::shared_ptr<ISimProfileManager> simProfileManager_;
+   std::shared_ptr<IImsSettingsManager> imsSettingsManager_;
+   std::map<SlotId, std::shared_ptr<IImsServingSystemManager>> imsServSysManagerMap_;
    std::map<int, std::shared_ptr<ISmsManager>> smsMap_;
    std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
    std::map<int, std::shared_ptr<IServingSystemManager>> servingSystemManagerMap_;
@@ -253,11 +252,18 @@ private:
    telux::common::ServiceStatus ecallMgrInitStatus_;
    std::vector<telux::common::InitResponseCb> ecallMgrCallbacks_;
 
-   void onEcallMgrInitResponse(telux::common::ServiceStatus status);
+   std::map<SlotId, std::vector<telux::common::InitResponseCb>> imsServSysCallbacks_;
+   telux::common::ServiceStatus imsServSysInitStatus_;
+   void initImsServSysManagerNotifier(telux::common::ServiceStatus status, SlotId slotId);
 
    std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
    std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
+   std::vector<telux::common::InitResponseCb> imssCallbacks_;
+   telux::common::ServiceStatus imssInitStatus_;
+
+   void onEcallMgrInitResponse(telux::common::ServiceStatus status);
    void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
+   void onImsSettingsManagerResponse(telux::common::ServiceStatus status);
 
    PhoneFactory();
    ~PhoneFactory();

@@ -26,6 +26,41 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted (subject to the limitations in the
+ *  disclaimer below) provided that the following conditions are met:
+ *
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *
+ *      * Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials provided
+ *        with the distribution.
+ *
+ *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *        contributors may be used to endorse or promote products derived
+ *        from this software without specific prior written permission.
+ *
+ *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /**
  * @file wsmp.c
  * @brief library for dissecting/encoding WSMP 2016 frames and dealing with
@@ -547,7 +582,13 @@ static int  wsmp_decode_header(msg_contents *mc)
      */
     if(gVerbosity > 4)
         printf("Pulling octet of WSMP version\n");
-    ver_octet = (*(uint8_t *)abuf_pull(bp, 1));
+        uint8_t *ptr_t = (uint8_t*) abuf_pull(bp, 1);
+        if (NULL == ptr_t) {
+            printf(" abuf_pull is NULL pointer\n ");
+            retcode = -1;
+            goto exit;
+        }
+    ver_octet = *ptr_t;
     wsmpp->protoVersion = ver_octet & 0x7;  // 3 least significant bits
 
     if (gVerbosity > 7) {
@@ -640,6 +681,18 @@ static int  wsmp_decode_header(msg_contents *mc)
     // after the extension fields comes the payload.   For WSMP, it'll be a
     // element ID, length, followed by payload
 
+    if( NULL == bp ) {
+        printf(" bp is NULL \n ");
+        retcode = -1;
+        goto exit;
+    }
+
+    if( NULL == bp->data ) {
+        printf(" data is NULL \n ");
+        retcode = -1;
+        goto exit;
+    }
+
     next_weid = *(uint8_t *)bp->data;
 
     // If earlier/obsolete version, optional WEID's come now.
@@ -658,7 +711,6 @@ static int  wsmp_decode_header(msg_contents *mc)
             }
 
             wsmp_data_hdr_p = (struct wave_element_field *)bp->data;
-
             if (wsmp_data_hdr_p) {
 
                 //dbp->payload_len = ntohs(wsmp_data_hdr_p->data_len.two_octet);
@@ -689,6 +741,11 @@ static int  wsmp_decode_header(msg_contents *mc)
                 printf("Getting TPID Octet\n");
         //wsmpp->tpid.octet = *(uint8_t *)abuf_pull(bp, sizeof(uint8_t));
         uint8_t* ptr = abuf_pull(bp, 1);
+        if (ptr == NULL) {
+            fprintf(stderr, "** WSMP TPID Parse error\n");
+            retcode = -1;
+            goto exit;
+        }
         wsmpp->tpid.octet = *ptr;
         /* now according to IEEE1609 2016, there could be an optional
            WEID Extension field (variable length) , before the WSMp payload length/data
@@ -724,8 +781,20 @@ static int  wsmp_decode_header(msg_contents *mc)
         if (PortsPresent) {
             if(gVerbosity > 2)
                 printf("Ports are present\n");
-            wsmpp->ports.src_port = ntohs(*(uint16_t *)abuf_pull(bp, sizeof(uint16_t)));
-            wsmpp->ports.dst_port = ntohs(*(uint16_t *)abuf_pull(bp, sizeof(uint16_t)));
+            uint16_t *ptr = (uint16_t *) abuf_pull(bp, sizeof(uint16_t));
+            if (NULL == ptr) {
+                printf("abuf_pull is NULL pointer\n");
+                retcode = -1;
+                goto exit;
+            }
+            wsmpp->ports.dst_port = ntohs(*ptr);
+            uint16_t *ptr_ = (uint16_t ) abuf_pull(bp, sizeof(uint16_t));
+            if (NULL == ptr_) {
+                printf("abuf_pull is NULL pointer\n");
+                retcode = -1;
+                goto exit;
+            }
+            wsmpp->ports.dst_port = ntohs(*ptr_);
 
             if (gVerbosity > 2) {
                 printf("TPID source port=%d, dest port=%d\n", wsmpp->ports.src_port,

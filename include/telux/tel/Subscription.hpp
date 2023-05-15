@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2018, 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -25,6 +25,10 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ /*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -71,6 +75,8 @@ public:
     * connected.
     *
     * @returns Mobile Country Code.
+    *
+    * @deprecated Use telux::tel::ISubscription::getMobileCountryCode() API instead
     */
    virtual int getMcc() = 0;
 
@@ -79,8 +85,30 @@ public:
     * connected.
     *
     * @returns Mobile Network Code.
+    *
+    * @deprecated Use telux::tel::ISubscription::getMobileNetworkCode() API instead
     */
    virtual int getMnc() = 0;
+
+   /**
+    * Retrieves the mobile country code(MCC) of the carrier to which the phone is connected.
+    *
+    * @returns mcc.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   virtual std::string getMobileCountryCode() = 0;
+
+   /**
+    * Retrieves the mobile network code(MNC) of the carrier to which the phone is connected.
+    *
+    * @returns mnc.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   virtual std::string getMobileNetworkCode() = 0;
 
    /**
     * Retrieves the phone number for the SIM subscription.
@@ -103,6 +131,32 @@ public:
     * @returns imsi.
     */
    virtual std::string getImsi() = 0;
+
+   /**
+    * Retrieves the GID1(group identifier level1) on the SIM.
+    * It represents identifier for particular SIM and ME associations. It can be used to
+    * identify a group of SIMs for a particular application.
+    * Defined in 3GPP Spec 131.102 section 4.2.10
+    *
+    * @returns GID1 content in hex format.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   virtual std::string getGID1() = 0;
+
+   /**
+    * Retrieves the GID2(group identifier level2) content on the SIM.
+    * It represents identifier for particular SIM and ME associations. It can be used to
+    * identify a group of SIMs for a particular application.
+    * Defined in 3GPP Spec 131.102 section 4.2.11
+    *
+    * @returns GID2 content in hex format.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibilty.
+    */
+   virtual std::string getGID2() = 0;
 
    virtual ~ISubscription(){};
 };

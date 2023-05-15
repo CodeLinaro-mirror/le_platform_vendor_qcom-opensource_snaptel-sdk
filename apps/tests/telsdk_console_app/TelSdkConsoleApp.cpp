@@ -29,7 +29,7 @@
 
 /**
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -61,7 +61,9 @@ extern "C" {
 #include "MultiSim/MultiSimMenu.hpp"
 #include "Rsp/RspMenu.hpp"
 #include "Cellbroadcast/CellbroadcastMenu.hpp"
+#include "ImsSettings/ImsSettingsMenu.hpp"
 #include "../../common/utils/Utils.hpp"
+#include "ImsServingSystem/ImsServingSystemMenu.hpp"
 
 #include "TelSdkConsoleApp.hpp"
 
@@ -104,9 +106,16 @@ void TelSdkConsoleApp::init() {
     std::shared_ptr<ConsoleAppCommand> cbMenuCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "CellBroadcast", {},
             std::bind(&TelSdkConsoleApp::cellbroadcastMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> imssMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "IMS_Settings", {},
+            std::bind(&TelSdkConsoleApp::imsSettingsMenu, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> imsaMenuCommand
+        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("11", "IMS_Serving_System", {},
+            std::bind(&TelSdkConsoleApp::imsServingSystemMenu, this, std::placeholders::_1)));
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
         = {phoneMenuCommand, callMenuCommand, eCallMenuCommand, smsMenuCommand, simCardMenuCommand,
-             dataMenuCommand, multiSimMenuCommand, rspMenuCommand, cbMenuCommand};
+             dataMenuCommand, multiSimMenuCommand, rspMenuCommand, cbMenuCommand, imssMenuCommand,
+             imsaMenuCommand};
 
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();
@@ -177,6 +186,19 @@ void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
     CellbroadcastMenu cbMenu("Cellbroadcast Menu", "cb> ");
     cbMenu.init();
     cbMenu.mainLoop();
+}
+
+void TelSdkConsoleApp::imsSettingsMenu(std::vector<std::string> userInput) {
+    ImsSettingsMenu imsSettingsMenu("IMS Settings Menu", "ims_settings> ");
+    imsSettingsMenu.init();
+    imsSettingsMenu.mainLoop();
+    TelSdkConsoleApp::displayMenu();
+}
+
+void TelSdkConsoleApp::imsServingSystemMenu(std::vector<std::string> userInput) {
+    ImsServingSystemMenu imsaMenu("IMS Serving System Menu", "ims_serving_system> ");
+    imsaMenu.init();
+    imsaMenu.mainLoop();
     TelSdkConsoleApp::displayMenu();
 }
 

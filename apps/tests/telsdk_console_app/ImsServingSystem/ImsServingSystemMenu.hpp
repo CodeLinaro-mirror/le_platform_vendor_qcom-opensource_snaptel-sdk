@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2021 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -26,56 +26,45 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/**
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
-
-/**
- * @file       TelSdkConsoleApp.hpp
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * @brief      This is entry class for console application for Telematics SDK,
- *             It allows one to interactively invoke most of the public APIs in the Telematics SDK.
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef TELSDKCONSOLEAPP_HPP
-#define TELSDKCONSOLEAPP_HPP
+#ifndef IMSSERVINGSYSTEMMENU_HPP
+#define IMSSERVINGSYSTEMMENU_HPP
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "ModemStatus.hpp"
+#include <telux/tel/ImsServingSystemManager.hpp>
 #include "console_app_framework/ConsoleApp.hpp"
+#include "MyImsServSysListener.hpp"
 
-class TelSdkConsoleApp : public ConsoleApp {
+#define DEFAULT_NUM_SLOTS 1
+#define MULTI_SIM_NUM_SLOTS 2
+
+class ImsServingSystemMenu : public ConsoleApp {
 public:
-   TelSdkConsoleApp(std::string appName, std::string cursor);
-   ~TelSdkConsoleApp();
+    /**
+     * Initialize commands and SDK
+     */
+    void init();
 
-   /**
-    * Used for creating a menus of high level features
-    */
-   void init();
+    ImsServingSystemMenu(std::string appName, std::string cursor);
+    ~ImsServingSystemMenu();
 
-   // Displays main menu
-   void displayMenu();
-
-   // Check Modem availability for Telephony
-    void onModemAvailable();
+    void requestImsRegStatus(std::vector<std::string> userInput);
+    void selectSimSlot(std::vector<std::string> userInput);
 
 private:
-   void phoneMenu(std::vector<std::string> userInput);
-   void callMenu(std::vector<std::string> userInput);
-   void eCallMenu(std::vector<std::string> userInput);
-   void smsMenu(std::vector<std::string> userInput);
-   void simCardMenu(std::vector<std::string> userInput);
-   void dataMenu(std::vector<std::string> userInput);
-   void multiSimMenu(std::vector<std::string> userInput);
-   void rspMenu(std::vector<std::string> userInput);
-   void cellbroadcastMenu(std::vector<std::string> userInput);
-   void imsSettingsMenu(std::vector<std::string> userInput);
-   void imsServingSystemMenu(std::vector<std::string> userInput);
+    // Member variable to keep the Listener object alive till application ends.
+    std::map<SlotId, std::shared_ptr<telux::tel::IImsServingSystemListener>> imsServSysListeners_;
+    std::map<SlotId, std::shared_ptr<telux::tel::IImsServingSystemManager>> imsServingSystemMgrs_;
+    int slot_ = DEFAULT_NUM_SLOTS;
 };
 
-#endif  // TELSDKCONSOLEAPP_HPP
+#endif  // IMSSERVINGSYSTEMMENU_HPP

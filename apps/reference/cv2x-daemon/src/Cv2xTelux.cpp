@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -399,23 +399,22 @@ Status Cv2xTelux::startV2xRadio() {
 
 Status Cv2xTelux::stopV2xRadio() {
     std::promise<ErrorCode> prom;
-    cv2xRadioMgr_->stopCv2x([&prom](ErrorCode code) {
+    auto res = cv2xRadioMgr_->stopCv2x([&prom](ErrorCode code) {
         if (code == ErrorCode::SUCCESS) {
             LOGI("Stopped V2X radio\n");
             bootkpilog("cv2x-daemon: V2X mode stopped");
         } else {
-            LOGE("Failed to stop the V2X radio\n");
+            LOGE("Failed to stop the V2X radio %d\n", static_cast<int>(code));
         }
         prom.set_value(code);
     });
 
-    auto res = prom.get_future().get();
-
-    if (res != ErrorCode::SUCCESS) {
-        return Status::FAILED;
+    if (res == Status::SUCCESS &&
+        ErrorCode::SUCCESS == prom.get_future().get()) {
+        return Status::SUCCESS;
     }
-
-    return Status::SUCCESS;
+    LOGE("stopCv2x error %d\n", static_cast<int>(res));
+    return Status::FAILED;
 }
 
 Status Cv2xTelux::registerListeners() {
@@ -449,7 +448,7 @@ Status Cv2xTelux::registerDataListeners() {
 Status Cv2xTelux::startDataCall(DataCallType callType, IpFamilyType ipFamilyType) {
     Status res = Status::SUCCESS;
     std::promise<bool> response;
-    std::string apnName;
+    std::string apnName = "";
 
     if (callType >= CV2X_DATA_CALL_MAX) {
         return Status::FAILED;
@@ -465,7 +464,7 @@ Status Cv2xTelux::startDataCall(DataCallType callType, IpFamilyType ipFamilyType
     }
     apnName = callInfo_[callType].apnName;
     std::string kpiStr = "cv2x-daemon: Start Data Call ";
-    kpiStr.append(apnName);
+    kpiStr.append("" + apnName);
     bootkpilog(kpiStr.c_str());
 
     res = dataConnectionMgr_->startDataCall(callInfo_[callType].profileIndex, ipFamilyType,
@@ -496,7 +495,6 @@ Status Cv2xTelux::startDataCall(DataCallType callType, IpFamilyType ipFamilyType
             callInfo_[callType].callStatus = DataCallStatus::NET_NO_NET;
         }
     }
-
     return res;
 }
 

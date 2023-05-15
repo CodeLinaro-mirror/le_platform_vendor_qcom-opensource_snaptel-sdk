@@ -30,7 +30,7 @@
 /*
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -77,7 +77,7 @@
 
 using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xRadio;
-using telux::cv2x::ICv2xRadioListener;
+using telux::cv2x::ICv2xListener;
 using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::ICv2xTxStatusReportListener;
 using telux::cv2x::Cv2xStatus;
@@ -91,12 +91,12 @@ struct Options {
     std::string file; // user specified csv file for saving Tx status reportfs
 };
 
-class Cv2xStatusListener : public ICv2xRadioListener {
+class Cv2xStatusListener : public ICv2xListener {
 public:
 
     Cv2xStatusListener(Cv2xStatus status);
 
-    bool isCv2xActive();
+    Cv2xStatus getCv2xStatus();
 
     void onStatusChanged(Cv2xStatus status) override;
 
@@ -167,5 +167,7 @@ private:
     char* buf_ = nullptr;
     std::future<void> txThread_;
     bool txThreadValid_ = false;
+    std::mutex operationMtx_;
+    bool exiting_ = false;
 };
 #endif  // CV2XTXREPORTTESTAPP_HPP

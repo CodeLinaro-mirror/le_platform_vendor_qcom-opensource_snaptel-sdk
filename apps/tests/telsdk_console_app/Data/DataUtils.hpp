@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -67,9 +67,16 @@
 
 #include <telux/data/DataFactory.hpp>
 #include <telux/data/DataConnectionManager.hpp>
+#include "../../../common/utils/Utils.hpp"
 
 class DataUtils {
 public:
+
+    template <typename T>
+    static void validateInput(T &input, std::initializer_list<T> list) {
+        return Utils::validateInput(input, list);
+    }
+
    static std::string callEndReasonTypeToString(telux::data::EndReasonType type);
    static int callEndReasonCode(telux::data::DataCallEndReason ceReason);
    static std::string techPreferenceToString(telux::data::TechPreference techPref);

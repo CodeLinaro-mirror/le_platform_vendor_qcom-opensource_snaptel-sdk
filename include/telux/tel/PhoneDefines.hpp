@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -25,6 +25,10 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ /*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -209,7 +213,7 @@ enum class RATCapability {
    GSM,
    WCDMA,
    LTE,
-   TDS,
+   TDS
 };
 /** @} */ /* end_addtogroup telematics_phone */
 
@@ -254,8 +258,10 @@ struct CellularCapabilityInfo {
                                                      numberofSims, it implies that any combination
                                                      of the SIMs can be active and the
                                                      remaining can be in standby. */
-   std::vector<SimRatCapability> simRatCapabilities; /**<An array of struct which contains
-                        mask of RAT capabilities and slotId corresponding to each SIM */
+   std::vector<SimRatCapability> simRatCapabilities; /**< A Sim inserted in a slot allows for
+                        certain rat capabilities. And the UE's HW allows for certain rat
+                        capabilities. This field lists the intersection of capabilities allowed by
+                        the Sim and the HW. The capabilities are indexed based on slotId. */
 };
 
 /**

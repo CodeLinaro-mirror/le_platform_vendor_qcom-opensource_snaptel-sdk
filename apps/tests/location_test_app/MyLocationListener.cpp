@@ -102,6 +102,13 @@ void MyLocationListener::printSbasCorrectionEx(
    if(correction[(telux::loc::SbasCorrectionType)telux::loc::SBAS_CORRECTION_PPP]) {
       std::cout << "SBAS PPP correction information is used" << std::endl;
    }
+   if(correction[(telux::loc::SbasCorrectionType)telux::loc::SBAS_CORRECTION_RTK_FIXED]) {
+      std::cout << "SBAS RTK fixed correction information is used" << std::endl;
+   }
+   if(correction[(telux::loc::SbasCorrectionType)
+       telux::loc::SBAS_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_]) {
+      std::cout << "SBAS PPP correction information is used" << std::endl;
+   }
 }
 
 void MyLocationListener::printLocationExValidity(

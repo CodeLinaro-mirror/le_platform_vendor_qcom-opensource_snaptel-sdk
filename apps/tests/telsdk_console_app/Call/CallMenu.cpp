@@ -1015,32 +1015,33 @@ void CallMenu::enableAudio(std::vector<std::string> userInput) {
 }
 
 bool CallMenu::queryAudioState() {
-    std::string audioSelection;
-    char delimiter = '\n';
-    int audioFlag = 0;
-    int consoleFlag = 0;
+   std::string audioSelection;
+   char delimiter = '\n';
+   int audioFlag = 0;
+   int consoleFlag = 0;
 
-    std::cout << "Enter 1 to enable audio for voice call else press 0 : ";
-    std::getline(std::cin, audioSelection, delimiter);
-    if (!audioSelection.empty()) {
-        try {
-        audioFlag = std::stoi(audioSelection);
-            if (audioFlag < 0 || audioFlag > 1) {
-                std::cout << "ERROR: Invalid selection" << std::endl;
-                return false;
-            }
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, enter a numerical value. INPUT: " << std::endl;
-            return false;
-        }
-    } else {
-        std::cout << "Empty input, enter correct choice" << std::endl;
-        return false;
-    }
-    if (audioFlag) {
-        return true;
-    }
-    return false;
+   std::cout << "Enable audio(if bluetooth is used, enter 0 below):" << std::endl;
+   std::cout << "Enter 1 to enable audio for voice call else press 0 : ";
+   std::getline(std::cin, audioSelection, delimiter);
+   if (!audioSelection.empty()) {
+      try {
+      audioFlag = std::stoi(audioSelection);
+         if (audioFlag < 0 || audioFlag > 1) {
+               std::cout << "ERROR: Invalid selection" << std::endl;
+               return false;
+         }
+      } catch (const std::exception &e) {
+         std::cout << "ERROR: invalid input, enter a numerical value. INPUT: " << std::endl;
+         return false;
+      }
+   } else {
+      std::cout << "Empty input, enter correct choice" << std::endl;
+      return false;
+   }
+   if (audioFlag) {
+      return true;
+   }
+   return false;
 }
 
 bool CallMenu::queryMuteState(bool muteStatus) {

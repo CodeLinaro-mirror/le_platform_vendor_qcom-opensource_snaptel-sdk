@@ -810,7 +810,8 @@ bool ECallMenu::queryAudioState() {
    int audioFlag = 0;
    int consoleFlag = 0;
 
-   std::cout << "Enter 1 to enable audio for voice call else press 0 : ";
+   std::cout << "Enable audio(if bluetooth is used, enter 0 below):" << std::endl;
+   std::cout << "Enter 1 to enable audio for voice call else press 0: ";
    std::getline(std::cin, audioSelection, delimiter);
    if (!audioSelection.empty()) {
       try {

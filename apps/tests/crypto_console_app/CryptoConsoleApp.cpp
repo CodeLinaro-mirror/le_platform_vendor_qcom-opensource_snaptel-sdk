@@ -740,19 +740,18 @@ void CryptoConsoleApp::generateKey() {
             getKeySizeFromUser(request.keySize);
             getPublicExponentFromUser(request.publicExponent);
             getDigestFromUser(request.digest, 2);
-            if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) {
-                getPaddingFromUser(request.padding, 3);
-            }
-            if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
-                    == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT) {
-                getPaddingFromUser(request.padding, 4);
-            }
             if (((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
                     == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) &&
                 ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
                     == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)) {
                 getPaddingFromUser(request.padding, 5);
+            } else if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_SIGN)
+                    == telux::sec::CryptoOperation::CRYPTO_OP_SIGN) {
+                getPaddingFromUser(request.padding, 3);
+            } else if ((request.operation & telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT)
+                    == telux::sec::CryptoOperation::CRYPTO_OP_ENCRYPT) {
+                getPaddingFromUser(request.padding, 4);
+            } else {
             }
             break;
         case telux::sec::Algorithm::ALGORITHM_EC:

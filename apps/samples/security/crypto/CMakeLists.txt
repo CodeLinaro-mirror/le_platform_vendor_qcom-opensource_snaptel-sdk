@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.9)
 
 if(NOT BUILD_FOR_SIMULATION)
     add_subdirectory( aes_sym_key_enc_dec )
+    add_subdirectory( aes_sym_key_enc_dec_nonce )
     add_subdirectory( ec_asym_key_sign_vrfy )
     add_subdirectory( hmac_sym_key_sign_vrfy )
     add_subdirectory( rsa_asym_key_sign_vrfy )

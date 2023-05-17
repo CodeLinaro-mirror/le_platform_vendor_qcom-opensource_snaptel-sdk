@@ -27,6 +27,11 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
  /**
   * @file: KinematicsReceive.cpp
   *
@@ -36,6 +41,8 @@
 #include "KinematicsReceive.h"
 #include <chrono>
 #include <ctime>
+
+using telux::common::ServiceStatus;
 
 shared_ptr<KinematicsReceive> KinematicsReceive::instance = nullptr;
 
@@ -81,31 +88,41 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
     }
     shared_ptr<ILocationListener> listener = nullptr;
     auto &locationFactory = LocationFactory::getInstance();
-    static auto locationManager = locationFactory.getLocationManager();
-    if (locationManager->onSubsystemReady().get()){
-        listener =
-                shared_ptr<ILocationListener>
-                    (KinematicsReceive::instance->shared_from_this());
+
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    locationManager_ = locationFactory.getLocationManager([&prom](ServiceStatus status) {
+          if (status == ServiceStatus::SERVICE_AVAILABLE) {
+                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+            } else {
+                prom.set_value(ServiceStatus::SERVICE_FAILED);
+            }
+        });
+    if (locationManager_ and prom.get_future().get() == ServiceStatus::SERVICE_AVAILABLE) {
+        listener = shared_ptr<ILocationListener>(KinematicsReceive::instance->shared_from_this());
         // Registering a listener to get location fixes
-        locationManager->registerListenerEx(listener);
+        locationManager_->registerListenerEx(listener);
         // Starting the reports for fixes
         printf("Creating callback for gnss fixes\n");
         auto respCallback = [&](ErrorCode error){
                             startDetailsCallback(error); };
-        locationManager->startDetailedReports(interval, respCallback);
-    }else{
+        locationManager_->startDetailedReports(interval, respCallback);
+    } else {
+        // release location manager if it's created but service unavailable
+        if (locationManager_) {
+            locationManager_ == nullptr;
+        }
         cout << "Error on Location Create.\n";
     }
     this->interval = interval;
 }
 
 void KinematicsReceive::close(){
-   auto &locationFactory = LocationFactory::getInstance();
-   auto locationManager = locationFactory.getLocationManager();
-   shared_ptr<ILocationListener> listener = nullptr;
-   listener = shared_ptr<ILocationListener>
-            (KinematicsReceive::instance->shared_from_this());
-   locationManager->deRegisterListenerEx(listener);
-   KinematicsReceive::instance->locationInfo = nullptr;
-   cout << "Location Listener closed.\n";
+    if (locationManager_) {
+       shared_ptr<ILocationListener> listener = shared_ptr<ILocationListener>
+                (KinematicsReceive::instance->shared_from_this());
+       locationManager_->deRegisterListenerEx(listener);
+    }
+
+    KinematicsReceive::instance->locationInfo = nullptr;
+    cout << "Location Listener closed.\n";
 }

@@ -118,6 +118,7 @@ private:
     std::atomic<bool> pipeLineEmpty_;
     FILE * file_;
     std::atomic<bool> ready_;
+    std::atomic<bool> writeFail_;
 };
 
 #endif // PLAYMENU_HPP

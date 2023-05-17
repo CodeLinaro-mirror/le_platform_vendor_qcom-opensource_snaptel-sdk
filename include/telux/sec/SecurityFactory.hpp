@@ -60,7 +60,7 @@ class SecurityFactory {
     static SecurityFactory &getInstance();
 
     /**
-     * Provides a CryptoManager instance that can be used to perform key management
+     * Instantiates a CryptoManager instance that can be used to perform key management
      * and cryptographic operations.
      *
      * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoManager is created
@@ -79,8 +79,22 @@ class SecurityFactory {
      * cryptographic operations requiring elliptic-curve cryptography (ECC)
      * verifications and calculations.
      *
-     * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoAcceleratorManager is created
-     *                successfully, otherwise, an appropriate error code
+     * @param[out] ec telux::common::ErrorCode::SUCCESS if ICryptoAcceleratorManager is
+     *                created successfully, otherwise, an appropriate error code
+     *
+     * Providing ICryptoAcceleratorListener instance is mandatory when using
+     * Mode::MODE_ASYNC_LISTENER. It is not required with modes, Mode::MODE_SYNC and
+     * Mode::MODE_ASYNC_POLL for cryptographic operations.
+     *
+     * To receive subsystem-restart (SSR) updates, application must provide
+     * ICryptoAcceleratorListener instance (irrespective of Mode::*) and implement
+     * method telux::common::IServiceStatusListener::onServiceStatusChange().
+     *
+     * Specifying mode (Mode::*) defines how an application will send request and
+     * receive cryptographic results.
+     *
+     * Passing listener determines whether an application is also interested in SSR
+     * updates in addition to cryptographic results or not.
      *
      * @param[in] mode Defines how users obtain verification and calculation results
      *

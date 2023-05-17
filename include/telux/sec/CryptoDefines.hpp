@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -32,7 +32,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /**
  * @file CryptoDefines.hpp
  *
@@ -42,6 +41,7 @@
 #ifndef TELUX_SEC_CRYPTODEFINES_HPP
 #define TELUX_SEC_CRYPTODEFINES_HPP
 
+#include <vector>
 #include <cstdint>
 #include <memory>
 
@@ -52,19 +52,19 @@ namespace sec {
  * @{ */
 
 /**
- * Specifies the operation for which the key can be used. A key
- * can be used for multiple type of operations.
+ * Specifies the operation for which the key can be used.
+ * A key can be used for multiple operation types.
  */
 enum CryptoOperation {
-    CRYPTO_OP_ENCRYPT = (1 << 1),  /**< Key will be used for encryption */
-    CRYPTO_OP_DECRYPT = (1 << 2),  /**< Key will be used for decryption */
-    CRYPTO_OP_SIGN    = (1 << 3),  /**< Key will be used for signing */
-    CRYPTO_OP_VERIFY  = (1 << 4)   /**< Key will be used for verification */
+    CRYPTO_OP_ENCRYPT = (1 << 1),  /**< Key will be used for encryption. */
+    CRYPTO_OP_DECRYPT = (1 << 2),  /**< Key will be used for decryption. */
+    CRYPTO_OP_SIGN    = (1 << 3),  /**< Key will be used for signing. */
+    CRYPTO_OP_VERIFY  = (1 << 4)   /**< Key will be used for verification. */
 };
 
 /**
- * This is a list of operation types consisting of entries from @ref CryptoOperation.
- * Multiple values can be OR'ed together. e.g. (CRYPTO_OP_ENCRYPT | CRYPTO_OP_DECRYPT).
+ * List of operation types consisting of entries from @ref CryptoOperation.
+ * Multiple values can be OR'ed together, for example, (CRYPTO_OP_ENCRYPT | CRYPTO_OP_DECRYPT).
  */
 using CryptoOperationTypes = int32_t;
 
@@ -75,12 +75,12 @@ enum BlockMode {
     BLOCK_MODE_ECB = (1 << 1),  /**< Electronic code block mode */
     BLOCK_MODE_CBC = (1 << 2),  /**< Cipher block chain mode */
     BLOCK_MODE_CTR = (1 << 3),  /**< Counter-based mode */
-    BLOCK_MODE_GCM = (1 << 4)   /**< Galois/Counter mode */
+    BLOCK_MODE_GCM = (1 << 4)   /**< Galois/counter mode */
 };
 
 /**
- * This is a list of block mode types consisting of entries from @ref BlockMode.
- * Multiple values can be OR'ed together. e.g. (BLOCK_MODE_ECB | BLOCK_MODE_CBC).
+ * List of block mode types consisting of entries from @ref BlockMode.
+ * Multiple values can be OR'ed together, for example, (BLOCK_MODE_ECB | BLOCK_MODE_CBC).
  */
 using BlockModeTypes = int32_t;
 
@@ -89,55 +89,55 @@ using BlockModeTypes = int32_t;
  * Only cryptographically-appropriate pairs are specified here.
  */
 enum Padding {
-    PADDING_NONE               = (1 << 1),  /**< No padding */
-    PADDING_RSA_OAEP           = (1 << 2),  /**< RSA optimal asymmetric encryption padding */
-    PADDING_RSA_PSS            = (1 << 3),  /**< RSA probabilistic signature scheme */
-    PADDING_RSA_PKCS1_1_5_ENC  = (1 << 4),  /**< RSA PKCS#1 v1.5 padding for encryption */
-    PADDING_RSA_PKCS1_1_5_SIGN = (1 << 5),  /**< RSA PKCS#1 v1.5 padding for signing */
-    PADDING_PKCS7              = (1 << 6)   /**< Public-key cryptography standard */
+    PADDING_NONE               = (1 << 1),  /**< No padding. */
+    PADDING_RSA_OAEP           = (1 << 2),  /**< RSA optimal asymmetric encryption padding. */
+    PADDING_RSA_PSS            = (1 << 3),  /**< RSA probabilistic signature scheme. */
+    PADDING_RSA_PKCS1_1_5_ENC  = (1 << 4),  /**< RSA PKCS#1 v1.5 padding for encryption. */
+    PADDING_RSA_PKCS1_1_5_SIGN = (1 << 5),  /**< RSA PKCS#1 v1.5 padding for signing. */
+    PADDING_PKCS7              = (1 << 6)   /**< Public-key cryptography standard. */
 };
 
 /**
- * This is a list of padding types to use consisting of entries from @ref Padding.
- * Multiple values can be OR'ed together. e.g. (PADDING_PKCS7 | PADDING_RSA_PSS).
+ * List of padding types to use consisting of entries from @ref Padding.
+ * Multiple values can be OR'ed together, for example, (PADDING_PKCS7 | PADDING_RSA_PSS).
  */
 using PaddingTypes = int32_t;
 
 /**
  * Specifies the digest algorithms that may be used with the key to perform signing
- * and verification operations using RSA, ECDSA and HMAC keys. The digest used during
- * signing/verification must match with the digest associated with the key when key
+ * and verification operations using RSA, ECDSA, and HMAC keys. The digest used during
+ * signing or verification must match the digest associated with the key when the key
  * was generated.
  */
 enum Digest {
-    DIGEST_NONE      = (1 << 1),  /**< No digest */
-    DIGEST_MD5       = (1 << 2),  /**< Message-digest algorithm */
+    DIGEST_NONE      = (1 << 1),  /**< No digest. */
+    DIGEST_MD5       = (1 << 2),  /**< Message-digest algorithm. */
     DIGEST_SHA1      = (1 << 3),  /**< Secure hash algorithm 1 */
-    DIGEST_SHA_2_224 = (1 << 4),  /**< Secure hash algorithm 2, digest 224 */
-    DIGEST_SHA_2_256 = (1 << 5),  /**< Secure hash algorithm 2, digest 256 */
-    DIGEST_SHA_2_384 = (1 << 6),  /**< Secure hash algorithm 2, digest 384 */
-    DIGEST_SHA_2_512 = (1 << 7)   /**< Secure hash algorithm 2, digest 512 */
+    DIGEST_SHA_2_224 = (1 << 4),  /**< Secure hash algorithm 2, digest 224. */
+    DIGEST_SHA_2_256 = (1 << 5),  /**< Secure hash algorithm 2, digest 256. */
+    DIGEST_SHA_2_384 = (1 << 6),  /**< Secure hash algorithm 2, digest 384. */
+    DIGEST_SHA_2_512 = (1 << 7)   /**< Secure hash algorithm 2, digest 512. */
 };
 
 /**
- * This is a list of digest types to use consisting of entries from @ref Digest.
- * Multiple values can be OR'ed together. e.g. (DIGEST_SHA_2_256 | DIGEST_SHA_2_512).
+ * List of digest types to use consisting of entries from @ref Digest.
+ * Multiple values can be OR'ed together, for example, (DIGEST_SHA_2_256 | DIGEST_SHA_2_512).
  */
 using DigestTypes = int32_t;
 
 /**
- * Algorithm for signing, verification, encryption and decryption operations.
+ * Algorithm for signing, verification, encryption, and decryption operations.
  */
 enum Algorithm {
-    ALGORITHM_UNKNOWN,  /**< Unspecified algorithm */
-    ALGORITHM_RSA,      /**< RSA (Rivest–Shamir–Adleman) algorithm */
-    ALGORITHM_EC,       /**< Elliptic-curve algorithm */
-    ALGORITHM_AES,      /**< Advanced encryption standard algorithm */
-    ALGORITHM_HMAC      /**< Hash-based message authentication code algorithm */
+    ALGORITHM_UNKNOWN,  /**< Unspecified algorithm. */
+    ALGORITHM_RSA,      /**< RSA (Rivest–Shamir–Adleman) algorithm. */
+    ALGORITHM_EC,       /**< Elliptic-curve algorithm. */
+    ALGORITHM_AES,      /**< Advanced encryption standard algorithm. */
+    ALGORITHM_HMAC      /**< Hash-based message authentication code algorithm. */
 };
 
 /**
- * This is one of the entry from @ref Algorithm to specify algorithm to use.
+ * Specifies the algorithm to use; valid values are listed in @ref Algorithm.
  */
 using AlgorithmTypes = int32_t;
 
@@ -145,14 +145,14 @@ using AlgorithmTypes = int32_t;
  * NIST curves used with ECDSA.
  */
 enum Curve {
-    CURVE_P_224, /**< NIST curve P-224 */
-    CURVE_P_256, /**< NIST curve P-256 */
-    CURVE_P_384, /**< NIST curve P-384 */
-    CURVE_P_521  /**< NIST curve P-521 */
+    CURVE_P_224, /**< NIST curve P-224. */
+    CURVE_P_256, /**< NIST curve P-256. */
+    CURVE_P_384, /**< NIST curve P-384. */
+    CURVE_P_521  /**< NIST curve P-521. */
 };
 
 /**
- * This is one of the entry from @ref Curve to specify curve to use.
+ * Specifies the curve to use; valid values are listed in @ref Curve.
  */
 using CurveTypes = int32_t;
 
@@ -160,9 +160,9 @@ using CurveTypes = int32_t;
  * Formats for key import and export.
  */
 enum KeyFormat {
-    KEY_FORMAT_X509,    /**< Public key export */
-    KEY_FORMAT_PKCS8,   /**< Asymmetric key pair import */
-    KEY_FORMAT_RAW      /**< Symmetric key import and export */
+    KEY_FORMAT_X509,    /**< Public key export. */
+    KEY_FORMAT_PKCS8,   /**< Asymmetric key pair import. */
+    KEY_FORMAT_RAW      /**< Symmetric key import and export. */
 };
 
 /**
@@ -172,6 +172,14 @@ enum KeyFormat {
 class ICryptoParam {
   public:
     virtual ~ ICryptoParam() {};
+};
+
+/**
+ * Represents encrypted data and optional nonce.
+ */
+struct EncryptedData {
+    std::vector<uint8_t> encryptedText; /**< Encrypted text. */
+    std::vector<uint8_t> nonce; /**< Generated nonce. */
 };
 
 /** @} */ /* end_addtogroup telematics_sec_mgmt */

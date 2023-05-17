@@ -326,7 +326,7 @@ void CommandProcessor::encryptData(Request request,
         }
     }
 
-    ec = cryptMgr_->encryptData(cp, request.textA, request.textB, request.textC);
+    ec = cryptMgr_->encryptData(cp, request.textA, request.textB, request.encData);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "can't encrypt, err " << static_cast<int>(ec) << std::endl;
         return;
@@ -334,7 +334,7 @@ void CommandProcessor::encryptData(Request request,
 
     if (encTxtFile) {
         std::cout << "Encrypted data." << std::endl;
-        ret = saveOnFileSystem(request.textC, encTxtFile);
+        ret = saveOnFileSystem(request.encData->encryptedText, encTxtFile);
         if (ret < 0) {
             return;
         }
@@ -343,7 +343,7 @@ void CommandProcessor::encryptData(Request request,
     }
 
     std::cout << "Encrypted data (displaying as hex string): " << std::endl;
-    byteArrayToHexString(request.textC);
+    byteArrayToHexString(request.encData->encryptedText);
 }
 
 void CommandProcessor::decryptData(Request request,

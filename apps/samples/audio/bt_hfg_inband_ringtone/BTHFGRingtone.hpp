@@ -50,6 +50,7 @@ class BTHFGRingtone {
     char *fileToPlayPath_;
 
  private:
+    bool errorOccurred_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
     std::shared_ptr<telux::audio::IAudioPlayStream> audioPlayStream_;
     FILE *fileToPlay_;

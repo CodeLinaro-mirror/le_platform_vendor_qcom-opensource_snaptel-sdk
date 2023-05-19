@@ -33,37 +33,37 @@
  */
 
 /*
- *  Steps to create a voice call stream for Bluetooth hands-free gateway (HFG) use-case are:
+ *  Steps to create a voice call audio path and set volume are:
  *
  *  1. Get a AudioFactory instance.
  *  2. Get a IAudioManager instance from AudioFactory.
  *  3. Wait for the audio service to become available.
- *  4. Create a voice call stream (IAudioVoiceStream) with Bluetooth devices.
- *  5. Start the voice call stream.
- *  6. Let the voices be exchanged with far end of cellular connection.
- *  7. To terminate the voice call, first, stop the voice call stream.
- *  8. Delete the voice call stream.
+ *  4. Create a voice call stream (IAudioVoiceStream).
+ *  5. Start voice call stream.
+ *  6. Set volume of the speaker.
+ *  7. When the use-case is complete, stop voice call stream.
+ *  8. Delete voice call stream.
  *
  * Usage:
- * # bt_hfg_voice_call
+ * # voice_call_volume
  *
- * Establishes audio routing between cellular modem and on-device Bluetooth chip.
+ * A voice call is established and volume of the speaker is set. For establishing
+ * RF path for voice call, Telephony APIs should be used.
  */
 
 #include <errno.h>
 #include <cstdio>
-#include <chrono>
-#include <thread>
 #include <iostream>
+#include <thread>
 
 #include <telux/audio/AudioFactory.hpp>
 
-#include "BTHFGVoiceCall.hpp"
+#include "VoiceCall.hpp"
 
 /*
  * Initialize application and get an audio service.
  */
-int BTHFGVoiceCall::init() {
+int VoiceCall::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -104,7 +104,7 @@ int BTHFGVoiceCall::init() {
 /*
  *  Step - 4, create a voice call stream.
  */
-int BTHFGVoiceCall::createVoiceStream() {
+int VoiceCall::createVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::audio::StreamConfig sc{};
@@ -114,10 +114,12 @@ int BTHFGVoiceCall::createVoiceStream() {
     sc.type = telux::audio::StreamType::VOICE_CALL;
     sc.slotId = DEFAULT_SLOT_ID;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_BT_SCO_SPEAKER);
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_BT_SCO_MIC);
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
-    sc.sampleRate = 8000;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+
+    /* For voice-call both sink and source device are required.
+     * First device should be sink (speaker) and second should be source (mic). */
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
@@ -146,7 +148,7 @@ int BTHFGVoiceCall::createVoiceStream() {
 /*
  *  Step - 8, delete voice call stream.
  */
-int BTHFGVoiceCall::deleteVoiceStream() {
+int VoiceCall::deleteVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
@@ -174,7 +176,7 @@ int BTHFGVoiceCall::deleteVoiceStream() {
 /*
  *  Step - 5, start voice call stream.
  */
-int BTHFGVoiceCall::startVoiceStream() {
+int VoiceCall::startVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
@@ -201,7 +203,7 @@ int BTHFGVoiceCall::startVoiceStream() {
 /*
  * Step - 7, stop voice call stream.
  */
-int BTHFGVoiceCall::stopVoiceStream() {
+int VoiceCall::stopVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
@@ -225,15 +227,53 @@ int BTHFGVoiceCall::stopVoiceStream() {
     return 0;
 }
 
+/*
+ *  Step - 6, set volume of the speaker.
+ */
+int VoiceCall::setSpeakerVolume() {
+
+    telux::common::ErrorCode ec;
+    telux::common::Status status;
+    telux::audio::ChannelVolume channelVolume{};
+    telux::audio::StreamVolume streamVol{};
+    std::promise<telux::common::ErrorCode> p{};
+
+    channelVolume.vol = 0.6;
+    channelVolume.channelType = telux::audio::ChannelType::LEFT;
+    streamVol.volume.emplace_back(channelVolume);
+
+    channelVolume.vol = 0.6;
+    channelVolume.channelType = telux::audio::ChannelType::RIGHT;
+    streamVol.volume.emplace_back(channelVolume);
+
+    status = audioVoiceStream_->setVolume(streamVol,
+            [&p] (telux::common::ErrorCode result) {
+        p.set_value(result);
+    });
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't set volume, err " << static_cast<int>(status) << std::endl;
+        return -EIO;
+    }
+
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed to set volume, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
+    }
+
+    return 0;
+}
+
 int main(int argc, char **argv) {
 
     int ret;
-    std::shared_ptr<BTHFGVoiceCall> app;
+    std::shared_ptr<VoiceCall> app;
 
     try {
-        app = std::make_shared<BTHFGVoiceCall>();
+        app = std::make_shared<VoiceCall>();
     } catch (const std::exception& e) {
-        std::cout << "can't allocate BTHFGVoiceCall" << std::endl;
+        std::cout << "can't allocate VoiceCall" << std::endl;
         return -ENOMEM;
     }
 
@@ -253,8 +293,16 @@ int main(int argc, char **argv) {
         return ret;
     }
 
-    /* Step - 6, example wait, 5 minutes to let voice be heard and sent */
-    std::this_thread::sleep_for(std::chrono::minutes(5));
+    ret = app->setSpeakerVolume();
+    if (ret < 0) {
+        app->stopVoiceStream();
+        app->deleteVoiceStream();
+        return ret;
+    }
+
+    /* Application's business logic goes here.
+     * We are sleeping just as an example */
+    std::this_thread::sleep_for(std::chrono::minutes(2));
 
     ret = app->stopVoiceStream();
     if (ret < 0) {

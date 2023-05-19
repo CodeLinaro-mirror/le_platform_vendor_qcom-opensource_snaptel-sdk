@@ -33,37 +33,35 @@
  */
 
 /*
- *  Steps to create a voice call stream for Bluetooth hands-free gateway (HFG) use-case are:
+ *  Steps to create a voice call stream and generate DTMF tone on
+ *  speaker are as follows:
  *
  *  1. Get a AudioFactory instance.
  *  2. Get a IAudioManager instance from AudioFactory.
  *  3. Wait for the audio service to become available.
- *  4. Create a voice call stream (IAudioVoiceStream) with Bluetooth devices.
- *  5. Start the voice call stream.
- *  6. Let the voices be exchanged with far end of cellular connection.
- *  7. To terminate the voice call, first, stop the voice call stream.
- *  8. Delete the voice call stream.
+ *  4. Create a voice call stream (IAudioVoiceStream).
+ *  5. Start voice call stream.
+ *  6. Configure parameters for DTMF tone and generate it.
+ *  7. When the use-case is complete, stop voice call stream.
+ *  8. Delete voice call stream.
  *
  * Usage:
- * # bt_hfg_voice_call
- *
- * Establishes audio routing between cellular modem and on-device Bluetooth chip.
+ * # generate_dtmf_tone
  */
 
 #include <errno.h>
 #include <cstdio>
-#include <chrono>
-#include <thread>
 #include <iostream>
+#include <thread>
 
 #include <telux/audio/AudioFactory.hpp>
 
-#include "BTHFGVoiceCall.hpp"
+#include "GenerateDTMF.hpp"
 
 /*
  * Initialize application and get an audio service.
  */
-int BTHFGVoiceCall::init() {
+int GenerateDTMF::init() {
 
     std::promise<telux::common::ServiceStatus> p{};
     telux::common::ServiceStatus serviceStatus;
@@ -104,7 +102,7 @@ int BTHFGVoiceCall::init() {
 /*
  *  Step - 4, create a voice call stream.
  */
-int BTHFGVoiceCall::createVoiceStream() {
+int GenerateDTMF::createVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::audio::StreamConfig sc{};
@@ -114,10 +112,12 @@ int BTHFGVoiceCall::createVoiceStream() {
     sc.type = telux::audio::StreamType::VOICE_CALL;
     sc.slotId = DEFAULT_SLOT_ID;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_BT_SCO_SPEAKER);
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_BT_SCO_MIC);
-    sc.channelTypeMask = telux::audio::ChannelType::LEFT;
-    sc.sampleRate = 8000;
+    sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
+
+    /* For voice-call both sink and source device are required.
+     * First device should be sink (speaker) and second should be source (mic). */
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
 
     status = audioManager_->createStream(sc, [&p, this] (
             std::shared_ptr<telux::audio::IAudioStream> &audioStream,
@@ -146,7 +146,7 @@ int BTHFGVoiceCall::createVoiceStream() {
 /*
  *  Step - 8, delete voice call stream.
  */
-int BTHFGVoiceCall::deleteVoiceStream() {
+int GenerateDTMF::deleteVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
@@ -174,7 +174,7 @@ int BTHFGVoiceCall::deleteVoiceStream() {
 /*
  *  Step - 5, start voice call stream.
  */
-int BTHFGVoiceCall::startVoiceStream() {
+int GenerateDTMF::startVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
@@ -201,7 +201,7 @@ int BTHFGVoiceCall::startVoiceStream() {
 /*
  * Step - 7, stop voice call stream.
  */
-int BTHFGVoiceCall::stopVoiceStream() {
+int GenerateDTMF::stopVoiceStream() {
 
     std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
@@ -225,15 +225,52 @@ int BTHFGVoiceCall::stopVoiceStream() {
     return 0;
 }
 
+/*
+ *  Step - 6, configure parameters for DTMF tone and generate it.
+ */
+int GenerateDTMF::generateDTMFTone() {
+
+    uint16_t toneGain;
+    uint16_t toneDuration;
+    telux::common::ErrorCode ec;
+    telux::common::Status status;
+    telux::audio::DtmfTone dtmfTone{};
+    std::promise<telux::common::ErrorCode> p{};
+
+    toneGain = 6000; /* 6000 as loudness */
+    toneDuration = 1000; /* 1000 milliseconds */
+    dtmfTone.direction = telux::audio::StreamDirection::RX;
+    dtmfTone.lowFreq = telux::audio::DtmfLowFreq::FREQ_697;
+    dtmfTone.highFreq = telux::audio::DtmfHighFreq::FREQ_1209;
+
+    status = audioVoiceStream_->playDtmfTone(dtmfTone, toneDuration, toneGain,
+            [&p] (telux::common::ErrorCode error) {
+        p.set_value(error);
+    });
+
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "can't generate tone, err " << static_cast<int>(status) << std::endl;
+        return -EIO;
+    }
+
+    ec = p.get_future().get();
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "failed to generate tone, err " << static_cast<int>(ec) << std::endl;
+        return -EIO;
+    }
+
+    return 0;
+}
+
 int main(int argc, char **argv) {
 
     int ret;
-    std::shared_ptr<BTHFGVoiceCall> app;
+    std::shared_ptr<GenerateDTMF> app;
 
     try {
-        app = std::make_shared<BTHFGVoiceCall>();
+        app = std::make_shared<GenerateDTMF>();
     } catch (const std::exception& e) {
-        std::cout << "can't allocate BTHFGVoiceCall" << std::endl;
+        std::cout << "can't allocate GenerateDTMF" << std::endl;
         return -ENOMEM;
     }
 
@@ -253,8 +290,16 @@ int main(int argc, char **argv) {
         return ret;
     }
 
-    /* Step - 6, example wait, 5 minutes to let voice be heard and sent */
-    std::this_thread::sleep_for(std::chrono::minutes(5));
+    ret = app->generateDTMFTone();
+    if (ret < 0) {
+        app->stopVoiceStream();
+        app->deleteVoiceStream();
+        return ret;
+    }
+
+    /* Application's business logic goes here.
+     * We are sleeping just as an example */
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
     ret = app->stopVoiceStream();
     if (ret < 0) {

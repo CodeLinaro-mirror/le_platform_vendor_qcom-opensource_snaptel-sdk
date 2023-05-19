@@ -110,10 +110,10 @@ int InCallRecordPCM::init() {
  */
 int InCallRecordPCM::createVoiceStream() {
 
-    std::promise<telux::common::ErrorCode> p{};
-    telux::audio::StreamConfig sc{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
+    telux::audio::StreamConfig sc{};
+    std::promise<telux::common::ErrorCode> p{};
 
     sc.type = telux::audio::StreamType::VOICE_CALL;
     sc.slotId = DEFAULT_SLOT_ID;
@@ -133,7 +133,7 @@ int InCallRecordPCM::createVoiceStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create voice stream"  << std::endl;
+        std::cout << "can't create voice stream, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -151,9 +151,9 @@ int InCallRecordPCM::createVoiceStream() {
  */
 int InCallRecordPCM::deleteVoiceStream() {
 
-    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
+    std::promise<telux::common::ErrorCode> p{};
 
     status = audioManager_-> deleteStream(audioVoiceStream_, [&p, this] (
             telux::common::ErrorCode result) {
@@ -161,7 +161,7 @@ int InCallRecordPCM::deleteVoiceStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete voice stream"  << std::endl;
+        std::cout << "can't delete voice stream, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -179,16 +179,16 @@ int InCallRecordPCM::deleteVoiceStream() {
  */
 int InCallRecordPCM::startVoiceStream() {
 
-    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
+    std::promise<telux::common::ErrorCode> p{};
 
     status = audioVoiceStream_->startAudio([&p] (telux::common::ErrorCode result) {
         p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request start voice stream"  << std::endl;
+        std::cout << "can't start voice stream, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -206,16 +206,16 @@ int InCallRecordPCM::startVoiceStream() {
  */
 int InCallRecordPCM::stopVoiceStream() {
 
-    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
+    std::promise<telux::common::ErrorCode> p{};
 
     status = audioVoiceStream_->stopAudio([&p] (telux::common::ErrorCode result) {
         p.set_value(result);
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request stop voice stream"  << std::endl;
+        std::cout << "can't stop voice stream, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -234,13 +234,12 @@ int InCallRecordPCM::stopVoiceStream() {
  */
 int InCallRecordPCM::createIncallRecordStream() {
 
-    std::promise<telux::common::ErrorCode> p{};
-    telux::audio::StreamConfig sc{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
+    telux::audio::StreamConfig sc{};
+    std::promise<telux::common::ErrorCode> p{};
 
     sc.type = telux::audio::StreamType::CAPTURE;
-    sc.slotId = DEFAULT_SLOT_ID;
     sc.sampleRate = 48000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
@@ -260,7 +259,7 @@ int InCallRecordPCM::createIncallRecordStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request create capture stream"  << std::endl;
+        std::cout << "can't create capture stream, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -278,9 +277,9 @@ int InCallRecordPCM::createIncallRecordStream() {
  */
 int InCallRecordPCM::deleteIncallRecordStream() {
 
-    std::promise<telux::common::ErrorCode> p{};
     telux::common::Status status;
     telux::common::ErrorCode ec;
+    std::promise<telux::common::ErrorCode> p{};
 
     status = audioManager_-> deleteStream(audioCaptureStream_, [&p, this] (
             telux::common::ErrorCode result) {
@@ -288,7 +287,7 @@ int InCallRecordPCM::deleteIncallRecordStream() {
     });
 
     if (status != telux::common::Status::SUCCESS) {
-        std::cout << "can't request delete capture stream"  << std::endl;
+        std::cout << "can't delete capture stream, err " << static_cast<int>(status) << std::endl;
         return -EIO;
     }
 
@@ -310,6 +309,7 @@ void InCallRecordPCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer
     uint32_t bytesRead, bytesWrittenToFile;
 
     if (error != telux::common::ErrorCode::SUCCESS) {
+        errorOccurred_ = true;
         std::cout << "read failed, err: " << static_cast<int>(error) << std::endl;
     } else {
         bytesRead = buffer->getDataSize();
@@ -332,7 +332,10 @@ void InCallRecordPCM::record() {
     uint32_t bytesToRead = 0;
     telux::common::Status status;
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
+
     std::unique_lock<std::mutex> lock(captureMutex_);
+
+    errorOccurred_ = false;
 
     try {
         recordingDurationMs_ = (std::stoul(recordingDuration_)) * 1000;
@@ -377,12 +380,12 @@ void InCallRecordPCM::record() {
         freeBuffers_.pop();
 
         status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
-        if(status != telux::common::Status::SUCCESS) {
+        if (status != telux::common::Status::SUCCESS) {
             std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
             break;
         }
 
-        if(freeBuffers_.empty()) {
+        if (freeBuffers_.empty()) {
             cv_.wait(lock);
         }
 
@@ -395,13 +398,23 @@ void InCallRecordPCM::record() {
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             break;
         }
+
+        if (errorOccurred_) {
+            /* error occurred during recording, terminate the thread */
+            break;
+        }
     }
 
     fflush(fileToSaveRecording_);
     fclose(fileToSaveRecording_);
 
-    std::cout << "recording finished" << std::endl;
+    if (errorOccurred_) {
+        std::cout << "recording finished with error" << std::endl;
+    } else {
+        std::cout << "recording finished" << std::endl;
+    }
 }
+
 
 int main(int argc, char **argv) {
 

@@ -32,29 +32,19 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <queue>
-#include <condition_variable>
-
 #include <telux/audio/AudioManager.hpp>
 
-class PlaybackPCM {
+class GenerateDTMF {
 
  public:
     int init();
-    int createPlayStream();
-    int deletePlayStream();
-    void play();
-    void writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
-        uint32_t bytesWritten, telux::common::ErrorCode error);
-
-    char *fileToPlayPath_;
+    int createVoiceStream();
+    int deleteVoiceStream();
+    int startVoiceStream();
+    int stopVoiceStream();
+    int generateDTMFTone();
 
  private:
-    bool errorOccurred_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
-    std::shared_ptr<telux::audio::IAudioPlayStream> audioPlayStream_;
-    FILE *fileToPlay_;
-    std::mutex playMutex_;
-    std::condition_variable cv_;
-    std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
+    std::shared_ptr<telux::audio::IAudioVoiceStream> audioVoiceStream_;
 };

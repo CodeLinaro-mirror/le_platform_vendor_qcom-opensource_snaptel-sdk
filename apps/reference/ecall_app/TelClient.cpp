@@ -138,39 +138,29 @@ telux::common::Status TelClient::init() {
     hangupCommandCallback_ = std::make_shared<HangupCommandCallback>();
     updateMsdCommandCallback_ = std::make_shared<UpdateMsdCommandCallback>();
 
-    // Get Phone Manager from PhoneFactory
+    // Get PhoneFactory
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    auto phoneManager = phoneFactory.getPhoneManager();
-    if (phoneManager) {
-        auto defaultPhone = phoneManager->getPhone();
-
-        //  Wait for the telephony subsystem to be ready
-        bool isReady = phoneManager->isSubsystemReady();
-        if (!isReady) {
-            std::cout << CLIENT_NAME
-                      << " Telephony subsystem is not ready, waiting for it to be ready.."
-                      << std::endl;
-            std::future<bool> f = phoneManager->onSubsystemReady();
-            isReady = f.get();
-            if (isReady) {
-                std::cout << CLIENT_NAME << "Telephony subsystem is ready" << std::endl;
-            } else {
-                std::cout << CLIENT_NAME << "Unable to initialize Telephony subSystem" << std::endl;
-                return telux::common::Status::FAILED;
-            }
-        } else {
-            std::cout << CLIENT_NAME << "Telephony subsystem is ready" << std::endl;
-        }
-    } else {
-        std::cout << CLIENT_NAME << " Phone Manager is NULL, failed to initialize subsystem"
-                  << std::endl;
-        return telux::common::Status::FAILED;
-    }
     // Get Call Manager from PhoneFactory
-    callMgr_ = phoneFactory.getCallManager();
+    std::promise<ServiceStatus> prom;
+    //  Get the PhoneFactory and CallManager instances
+    callMgr_ = phoneFactory.getCallManager([&](ServiceStatus status) {
+       prom.set_value(status);
+    });
     if (!callMgr_) {
-        std::cout << CLIENT_NAME << "Failed to get Call Manager" << std::endl;
-        return telux::common::Status::FAILED;
+       std::cout << CLIENT_NAME << "Failed to get Call Manager" << std::endl;
+       return telux::common::Status::FAILED;
+    }
+
+    ServiceStatus callMgrsubSystemStatus = callMgr_->getServiceStatus();
+    if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "CallManager subsystem is not ready " << ", Please wait " << std::endl;
+    }
+    callMgrsubSystemStatus = prom.get_future().get();
+    if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "CallManager subsystem is  ready " << std::endl;
+    } else {
+       std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+       return telux::common::Status::FAILED;
     }
     auto status = callMgr_->registerListener(shared_from_this());
     if (status != telux::common::Status::SUCCESS) {

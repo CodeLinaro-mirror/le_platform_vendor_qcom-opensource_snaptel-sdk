@@ -55,6 +55,7 @@ class InCallRecordPCM {
     char *fileToSaveRecordingPath_;
 
  private:
+    bool errorOccurred_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
     std::shared_ptr<telux::audio::IAudioVoiceStream> audioVoiceStream_;
     std::shared_ptr<telux::audio::IAudioCaptureStream> audioCaptureStream_;

@@ -111,7 +111,6 @@ int CapturePCM::createCaptureStream() {
     telux::common::ErrorCode ec;
 
     sc.type = telux::audio::StreamType::CAPTURE;
-    sc.slotId = DEFAULT_SLOT_ID;
     sc.sampleRate = 48000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
@@ -178,6 +177,7 @@ void CapturePCM::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buf
     uint32_t bytesRead, bytesWrittenToFile;
 
     if (error != telux::common::ErrorCode::SUCCESS) {
+        errorOccurred_ = true;
         std::cout << "read failed, err: " << static_cast<int>(error) << std::endl;
     } else {
         bytesRead = buffer->getDataSize();
@@ -202,6 +202,8 @@ void CapturePCM::capture() {
     std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer;
 
     std::unique_lock<std::mutex> lock(captureMutex_);
+
+    errorOccurred_ = false;
 
     try {
         captureDurationMs_ = (std::stoul(captureDuration_)) * 1000;
@@ -264,12 +266,21 @@ void CapturePCM::capture() {
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             break;
         }
+
+        if (errorOccurred_) {
+            /* error occurred during capture, terminate the thread */
+            break;
+        }
     }
 
     fflush(fileToSaveSamples_);
     fclose(fileToSaveSamples_);
 
-    std::cout << "capture finished" << std::endl;
+    if (errorOccurred_) {
+        std::cout << "capture finished with error" << std::endl;
+    } else {
+        std::cout << "capture finished" << std::endl;
+    }
 }
 
 int main(int argc, char **argv) {

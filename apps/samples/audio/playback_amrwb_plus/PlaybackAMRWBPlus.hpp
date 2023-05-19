@@ -36,8 +36,10 @@
 #include <condition_variable>
 
 #include <telux/audio/AudioManager.hpp>
+#include <telux/audio/AudioListener.hpp>
 
-class PlaybackPCM {
+class PlaybackAMRWBPlus : public telux::audio::IPlayListener,
+                        public std::enable_shared_from_this<PlaybackAMRWBPlus> {
 
  public:
     int init();
@@ -47,14 +49,20 @@ class PlaybackPCM {
     void writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error);
 
+    void onReadyForWrite() override;
+    void onPlayStopped() override;
+
     char *fileToPlayPath_;
 
  private:
     bool errorOccurred_;
+    bool frameworkReadyForNextWrite_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
     std::shared_ptr<telux::audio::IAudioPlayStream> audioPlayStream_;
     FILE *fileToPlay_;
     std::mutex playMutex_;
-    std::condition_variable cv_;
+    std::mutex playStopMutex_;
+    std::condition_variable writeWaitCv_;
+    std::condition_variable playStopCv_;
     std::queue<std::shared_ptr<telux::audio::IStreamBuffer>> freeBuffers_;
 };

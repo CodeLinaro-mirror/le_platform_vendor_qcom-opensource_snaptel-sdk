@@ -65,11 +65,22 @@ bool ServingSystemMenu::init() {
 
    //  Get the PhoneFactory and ServingSystemManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
+   std::promise<telux::common::ServiceStatus> prom;
+   auto phoneManager = phoneFactory.getPhoneManager([&](telux::common::ServiceStatus status) {
+       prom.set_value(status);
+   });
    servingSystemListener_ = std::make_shared<MyServingSystemListener>();
-
+   if (!phoneManager) {
+       std::cout << "ERROR - Failed to get Phone Manager \n";
+       return false;
+   }
    std::vector<int> phoneIds;
-   if (phoneManager) {
+   telux::common::ServiceStatus phoneMgrStatus = phoneManager->getServiceStatus();
+   if (phoneMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "Phone Manager subsystem is not ready, Please wait \n";
+   }
+   phoneMgrStatus = prom.get_future().get();
+   if (phoneMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
        telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
        if (status == telux::common::Status::SUCCESS) {
           for (auto index = 1; index <= phoneIds.size(); index++) {
@@ -152,14 +163,14 @@ bool ServingSystemMenu::init() {
              getSystemInfoCommand, getDcStatusCommand, reqNetworkTimeCommand, reqRFBandInfoCommand};
 
        if (servingSystemMgrs_.size() > 1) {
-           commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
+          commandsListNetworkSubMenu.emplace_back(selectSimSlotCommand);
        }
 
        addCommands(commandsListNetworkSubMenu);
        ConsoleApp::displayMenu();
    } else {
-     std::cout << " PhoneManager is NULL, failed to initialize ServingSystemMenu" << std::endl;
-     return false;
+       std::cout << " PhoneManager is NULL, failed to initialize ServingSystemMenu" << std::endl;
+       return false;
    }
    return true;
 }

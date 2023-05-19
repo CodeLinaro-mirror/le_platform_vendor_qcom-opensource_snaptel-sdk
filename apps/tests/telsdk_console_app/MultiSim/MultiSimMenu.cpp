@@ -69,63 +69,57 @@ bool MultiSimMenu::init() {
 
     std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
     startTime = std::chrono::system_clock::now();
+    std::promise<telux::common::ServiceStatus> prom;
     //  Get the PhoneFactory and MultiSimManager instances.
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    multiSimMgr_ = phoneFactory.getMultiSimManager();
-
-    if(multiSimMgr_) {
-        //  Check if MultiSim subsystem is ready
-        bool subSystemStatus = multiSimMgr_->isSubsystemReady();
-
-        //  If MultiSim subsystem is not ready, wait for it to be ready
-        if(!subSystemStatus) {
-            std::cout << "\n\nMultiSim subsystem is not ready, Please wait" << std::endl;
-            std::future<bool> f = multiSimMgr_->onSubsystemReady();
-            // If we want to wait unconditionally for MultiSim subsystem to be ready
-            subSystemStatus = f.get();
-        }
-
-        //  Return from the function, if SDK is unable to initialize MultiSim subsystem
-        if(subSystemStatus) {
-            endTime = std::chrono::system_clock::now();
-            std::chrono::duration<double> elapsedTime = endTime - startTime;
-            std::cout << "Elapsed Time for Subsystem to ready : " << elapsedTime.count() << "s\n"
-                      << std::endl;
-            multiSimListener_ = std::make_shared<MyMultiSimListener>();
-            telux::common::Status status = multiSimMgr_->registerListener(multiSimListener_);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "ERROR - Failed to register listener" << std::endl;
-            }
-        } else {
-            std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
-            return false;
-        }
-    } else {
-        std::cout << "ERROR - MultiSimManger is null" << std::endl;
+    multiSimMgr_ = phoneFactory.getMultiSimManager([&](telux::common::ServiceStatus status) {
+        prom.set_value(status);
+    });
+    if (!multiSimMgr_) {
+        std::cout << "ERROR - MultiSimManger is null \n";
+        return false;
     }
-
-    std::shared_ptr<ConsoleAppCommand> getSlotCountCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Get_slot_count", {},
+    telux::common::ServiceStatus multiSimMgrStatus = multiSimMgr_->getServiceStatus();
+    if (multiSimMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "MultiSimManger subsystem is not ready, Please wait \n";
+    }
+    multiSimMgrStatus = prom.get_future().get();
+    if (multiSimMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE ) {
+        endTime = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsedTime = endTime - startTime;
+        std::cout << "Elapsed Time for Subsystem to ready : " << elapsedTime.count() << "s\n"
+                  << std::endl;
+        multiSimListener_ = std::make_shared<MyMultiSimListener>();
+        telux::common::Status status = multiSimMgr_->registerListener(multiSimListener_);
+        if(status != telux::common::Status::SUCCESS) {
+            std::cout << "ERROR - Failed to register listener" << std::endl;
+        }
+        std::shared_ptr<ConsoleAppCommand> getSlotCountCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "Get_slot_count", {},
         std::bind(&MultiSimMenu::getSlotCount, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> requestHighCapabilityCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Request_high_capability", {},
-        std::bind(&MultiSimMenu::requestHighCapability, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> setHighCapabilityCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Set_high_capability", {},
+        std::shared_ptr<ConsoleAppCommand> requestHighCapabilityCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Request_high_capability",
+                {}, std::bind(&MultiSimMenu::requestHighCapability, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setHighCapabilityCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "Set_high_capability", {},
         std::bind(&MultiSimMenu::setHighCapability, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> setActiveSlotCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Switch_Active_slot", {},
+        std::shared_ptr<ConsoleAppCommand> setActiveSlotCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "Switch_Active_slot", {},
         std::bind(&MultiSimMenu::switchActiveSlot, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> getSlotsStatusCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Get_slots_status", {},
+        std::shared_ptr<ConsoleAppCommand> getSlotsStatusCommand
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "Get_slots_status", {},
         std::bind(&MultiSimMenu::requestsSlotStatus, this, std::placeholders::_1)));
 
-    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListMultiSimMenu
-        = { getSlotCountCommand, requestHighCapabilityCommand, setHighCapabilityCommand,
-            setActiveSlotCommand, getSlotsStatusCommand};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListMultiSimMenu
+            = { getSlotCountCommand, requestHighCapabilityCommand, setHighCapabilityCommand,
+                setActiveSlotCommand, getSlotsStatusCommand};
 
-    addCommands(commandsListMultiSimMenu);
-    ConsoleApp::displayMenu();
+        addCommands(commandsListMultiSimMenu);
+        ConsoleApp::displayMenu();
+    } else {
+        std::cout << "Unable to initialise MultiSimManger subsystem " << std::endl;
+        return false;
+    }
     return true;
 }
 

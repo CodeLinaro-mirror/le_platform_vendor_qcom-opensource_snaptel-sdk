@@ -51,6 +51,7 @@ class CapturePCM {
     char *fileToSaveSamplesPath_;
 
  private:
+    bool errorOccurred_;
     std::shared_ptr<telux::audio::IAudioManager> audioManager_;
     std::shared_ptr<telux::audio::IAudioCaptureStream> audioCaptureStream_;
     uint32_t captureDurationMs_;

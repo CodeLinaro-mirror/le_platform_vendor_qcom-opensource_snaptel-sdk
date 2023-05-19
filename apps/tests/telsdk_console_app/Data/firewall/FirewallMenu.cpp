@@ -609,8 +609,7 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
     }
 }
 
-std::vector<std::shared_ptr<IFirewallEntry>> FirewallMenu::configureNewFirewallEntry()
-{
+std::vector<std::shared_ptr<IFirewallEntry>> FirewallMenu::configureNewFirewallEntry() {
     std::vector<std::shared_ptr<IFirewallEntry>> fwEntries;
     int fwDirection;
     std::cout << "Enter Firewall Direction (1-Uplink, 2-Downlink): ";
@@ -650,13 +649,13 @@ std::vector<std::shared_ptr<IFirewallEntry>> FirewallMenu::configureNewFirewallE
         fwEntries.emplace_back(fwEntry);
     }
 
-    std::shared_ptr<IIpFilter> ipFilter = fwEntry->getIProtocolFilter();
-    std::shared_ptr<IIpFilter> ipFilterTcpUdp = nullptr;
-    if (proto == 253) {
-        ipFilterTcpUdp = fwEntryTcpUdp->getIProtocolFilter();
-    }
-
     if (fwEntry) {
+        std::shared_ptr<IIpFilter> ipFilter = fwEntry->getIProtocolFilter();
+        std::shared_ptr<IIpFilter> ipFilterTcpUdp = nullptr;
+        if (proto == 253) {
+            ipFilterTcpUdp = fwEntryTcpUdp->getIProtocolFilter();
+        }
+
         if (ipFamilyType == 4) {
             getIPV4ParamsFromUser(proto,ipFilter, ipFilterTcpUdp);
         }
@@ -670,8 +669,7 @@ std::vector<std::shared_ptr<IFirewallEntry>> FirewallMenu::configureNewFirewallE
     return fwEntries;
 }
 
-void FirewallMenu::addHwAccelerationFirewallEntry(std::vector<std::string> inputCommand)
-{
+void FirewallMenu::addHwAccelerationFirewallEntry(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     std::cout << "Add hardware acceleration firewall entry \n";
     int slotId = DEFAULT_SLOT_ID;
@@ -709,8 +707,7 @@ void FirewallMenu::addHwAccelerationFirewallEntry(std::vector<std::string> input
     }
 }
 
-void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand)
-{
+void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     std::cout << "add Firewall Entry\n";
     int slotId = DEFAULT_SLOT_ID;
@@ -742,8 +739,7 @@ void FirewallMenu::addFirewallEntry(std::vector<std::string> inputCommand)
     }
 }
 
-void FirewallMenu::requestHwAccelerationFirewallEntries(std::vector<std::string> inputCommand)
-{
+void FirewallMenu::requestHwAccelerationFirewallEntries(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
 
     std::cout << "request hardware acceleration firewall entry\n";

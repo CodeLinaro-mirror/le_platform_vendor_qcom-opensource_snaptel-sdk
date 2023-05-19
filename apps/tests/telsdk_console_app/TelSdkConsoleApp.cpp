@@ -219,6 +219,7 @@ void TelSdkConsoleApp::cellbroadcastMenu(std::vector<std::string> userInput) {
     if (cbMenu.init()) {
        cbMenu.mainLoop();
     }
+    TelSdkConsoleApp::displayMenu();
 #else
     std::cout << "Telephony is unsupported" << std::endl;
 #endif
@@ -270,7 +271,9 @@ void TelSdkConsoleApp::onModemAvailable() {
 // since operating mode cannot be changed
     std::cout << "\n\nChecking telephony subsystem, Please wait!!!..." << std::endl;
     std::shared_ptr<ModemStatus> modemStatus = std::make_shared<ModemStatus>();
-    modemStatus->printOperatingMode();
+    if (modemStatus->init()) {
+       modemStatus->printOperatingMode();
+    }
 }
 #endif
 

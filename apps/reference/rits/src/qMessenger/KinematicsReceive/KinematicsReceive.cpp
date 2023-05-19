@@ -48,10 +48,36 @@ shared_ptr<KinematicsReceive> KinematicsReceive::instance = nullptr;
 
 mutex KinematicsReceive::sync;
 
-void KinematicsReceive::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) {
-    lock_guard<mutex> lk(sync);
-    this->locationInfo = locationInfo;
+shared_ptr<ILocationInfoEx> locListener::getLocation() {
+    std::unique_lock<std::mutex> lck(locInfoMtx_);
+    /*if no locationInfo, wait at most 1 sec unless locationInfo update or exit occur*/
+    if (locationInfo_ == nullptr && (!exit_) &&
+        locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
+            return (locationInfo_!= nullptr || exit_ == true);
+        })) {
+        cout<<"wait interrupted. " << +exit_ << std::endl;
+    }
+    return locationInfo_;
+};
+
+void locListener::close() {
+    std::lock_guard<std::mutex> lock(locInfoMtx_);
+    exit_ = true;
+    locInfoCv_.notify_all();
 }
+
+void locListener::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) {
+    static bool locInfoAvailable = false;
+
+    lock_guard<mutex> lk(locInfoMtx_);
+    locationInfo_ = locationInfo;
+
+    if (not locInfoAvailable) {
+        locInfoAvailable = true;
+        locInfoCv_.notify_all();
+    }
+}
+
 
 void KinematicsReceive::startDetailsCallback(ErrorCode error){
     if (ErrorCode::SUCCESS != error) {
@@ -62,31 +88,25 @@ void KinematicsReceive::startDetailsCallback(ErrorCode error){
 KinematicsReceive::KinematicsReceive(){}
 
 shared_ptr<ILocationInfoEx> KinematicsReceive::getLocation(){
-    auto start = std::chrono::system_clock::now();
-    bool newListener = true;
     if(!KinematicsReceive::instance){
         KinematicsReceive(this->interval);
     }
-    while(!KinematicsReceive::instance->locationInfo){
-        auto end = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        if( newListener && elapsed_seconds.count() > 1){
-            cout<<"No location after 1 second. Handling listener.\n";
-            KinematicsReceive(this->interval);
-            newListener = false;
-        }
+
+    if (locListener_) {
+        return locListener_->getLocation();
     }
-    lock_guard<mutex> lk(sync);
-    auto end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    return KinematicsReceive::instance->locationInfo;
+    return nullptr;
 }
 
 KinematicsReceive::KinematicsReceive(uint16_t interval){
-    if(!KinematicsReceive::instance){
-        KinematicsReceive::instance = make_shared<KinematicsReceive>();
+    {
+        lock_guard<mutex> lk(sync);
+        if (!KinematicsReceive::instance) {
+            KinematicsReceive::instance = make_shared<KinematicsReceive>();
+        } else {
+            return;
+        }
     }
-    shared_ptr<ILocationListener> listener = nullptr;
     auto &locationFactory = LocationFactory::getInstance();
 
     std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
@@ -98,9 +118,9 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
             }
         });
     if (locationManager_ and prom.get_future().get() == ServiceStatus::SERVICE_AVAILABLE) {
-        listener = shared_ptr<ILocationListener>(KinematicsReceive::instance->shared_from_this());
+        locListener_ = make_shared<locListener>();
         // Registering a listener to get location fixes
-        locationManager_->registerListenerEx(listener);
+        locationManager_->registerListenerEx(locListener_);
         // Starting the reports for fixes
         printf("Creating callback for gnss fixes\n");
         auto respCallback = [&](ErrorCode error){
@@ -117,12 +137,12 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
 }
 
 void KinematicsReceive::close(){
-    if (locationManager_) {
-       shared_ptr<ILocationListener> listener = shared_ptr<ILocationListener>
-                (KinematicsReceive::instance->shared_from_this());
-       locationManager_->deRegisterListenerEx(listener);
-    }
+    if (locListener_) {
+        locListener_->close();
 
-    KinematicsReceive::instance->locationInfo = nullptr;
+        if (locationManager_) {
+            locationManager_->deRegisterListenerEx(locListener_);
+        }
+    }
     cout << "Location Listener closed.\n";
 }

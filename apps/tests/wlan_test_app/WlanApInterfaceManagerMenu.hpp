@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -61,13 +61,12 @@ class WlanApInterfaceManagerMenu : public ConsoleApp ,
     void setConfig(std::vector<std::string> userInput);
     void getConfig(std::vector<std::string> userInput);
     void getConnectedDevices(std::vector<std::string> userInput);
-    void getConnectedDevicesStats(std::vector<std::string> userInput);
     void getStatus(std::vector<std::string> userInput);
     void manageApService(std::vector<std::string> userInput);
 
     void onApBandChanged(telux::wlan::BandType radio) override;
     void onApDeviceStatusChanged(telux::wlan::ApDeviceConnectionEvent event,
-        std::vector<telux::wlan::DeviceInfo> info) override;
+        std::vector<telux::wlan::DeviceIndInfo> info) override;
  private:
     bool menuOptionsAdded_;
     std::shared_ptr<telux::wlan::IApInterfaceManager> wlanApInterfaceManager_ = nullptr;

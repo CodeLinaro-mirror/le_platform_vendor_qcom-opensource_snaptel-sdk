@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -172,7 +172,7 @@ class DataFactory {
      * @param [in] clientCallback   Optional callback to get the initialization status of
      *                              NAT manager @ref telux::common::InitResponseCb
      *
-     * @returns instance of INatManager
+     * @returns instance of INatManager or nullptr if NAT management is not supported
      *
      */
     virtual std::shared_ptr<telux::data::net::INatManager> getNatManager(
@@ -186,7 +186,7 @@ class DataFactory {
      * @param [in] clientCallback   Optional callback to get the initialization status of
      *                              Firewall manager @ref telux::common::InitResponseCb
      *
-     * @returns instance of IFirewallManager
+     * @returns instance of IFirewallManager or nullptr if Firewall management is not supported
      *
      */
     virtual std::shared_ptr<telux::data::net::IFirewallManager> getFirewallManager(
@@ -244,7 +244,7 @@ class DataFactory {
      * @param [in] clientCallback   Optional callback to get the initialization status of
      *                              Socks manager @ref telux::common::InitResponseCb
      *
-     * @returns instance of ISocksManager
+     * @returns instance of ISocksManager or nullptr if Socks management is not supported
      *
      */
     virtual std::shared_ptr<telux::data::net::ISocksManager> getSocksManager(

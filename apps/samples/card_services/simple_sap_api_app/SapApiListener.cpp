@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -202,21 +202,24 @@ bool waitForSapEvent(SapEvent sapEvent, int timeout = DEFAULT_TIMEOUT_IN_SECONDS
 // Main routine performs operations required to transmit Sap Apdu
 int main(int argc, char ** argv) {
    // [1] Get the PhoneFactory and PhoneManager instances.
+   std::promise<ServiceStatus> prom;
    auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-
-   // [2] Wait for the telephony subsystem initialization.
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-   startTime = std::chrono::system_clock::now();
-
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready, wait for it to be ready " << std::endl;
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   auto phoneManager = phoneFactory.getPhoneManager([&](ServiceStatus status) {
+      prom.set_value(status);
+   });
+   if (!phoneManager) {
+      std::cout << "ERROR - Failed to get Phone Manager \n";
+      return 1;
    }
-
-   if(subSystemsStatus) {
+   // [2] Get the telephony subsystem initialization.
+   ServiceStatus phoneMgrStatus = phoneManager->getServiceStatus();
+   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+   if (phoneMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+      startTime = std::chrono::system_clock::now();
+      std::cout << "Phone Manager subsystem is not ready, Please wait \n";
+   }
+   phoneMgrStatus = prom.get_future().get();
+   if (phoneMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
       endTime = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
@@ -246,8 +249,8 @@ int main(int argc, char ** argv) {
    // [6] request sap ATR and wait for complete
    sapCardMgr->requestAtr(myAtrCb);
    if(!waitForSapEvent(SapEvent::SAP_GET_ATR)) {
-      std::cout << "get SAP ATR  failed " << std::endl;
-      exit(1);
+     std::cout << "get SAP ATR  failed " << std::endl;
+     exit(1);
    }
 
    // [7] send sap apdu and wait for the request to complete

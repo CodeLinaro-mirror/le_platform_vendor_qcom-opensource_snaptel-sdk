@@ -73,54 +73,19 @@ CallMenu::~CallMenu() {
 }
 
 bool CallMenu::init() {
-   std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
-   startTime = std::chrono::steady_clock::now();
-   // Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   phoneManager_ = phoneFactory.getPhoneManager();
-
-   // Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager_->isSubsystemReady();
-
-   // If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "\nTelephony subsystem is not ready, Please wait" << std::endl;
-      std::future<bool> f = phoneManager_->onSubsystemReady();
-      // Wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
-   }
-
-   // return from the function, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
-      endTime = std::chrono::steady_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s"
-                << std::endl;
-      phoneManager_->getPhoneIds(phoneIds_);
-   } else {
-      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-      return false;
-   }
-   std::promise<ServiceStatus> prom;
+   std::promise<ServiceStatus> callMgrprom;
    //  Get the PhoneFactory and CallManager instances.
    callManager_ = phoneFactory.getCallManager([&](ServiceStatus status) {
-   if(status == ServiceStatus::SERVICE_AVAILABLE) {
-      prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
-   } else {
-      prom.set_value(ServiceStatus::SERVICE_FAILED);
-   }
+      callMgrprom.set_value(status);
    });
    if(!callManager_) {
       std::cout << "ERROR - Failed to get CallManager instance \n";
       return false;
-    }
+   }
+   std::cout << "CallManager subsystem is not ready " << ", Please wait " << std::endl;
+   ServiceStatus callMgrsubSystemStatus = callMgrprom.get_future().get();
 
-    ServiceStatus callMgrsubSystemStatus = callManager_->getServiceStatus();
-    if(callMgrsubSystemStatus != ServiceStatus::SERVICE_AVAILABLE) {
-       std::cout << "CallManager subsystem is not ready "
-                  << ", Please wait " << std::endl;
-    }
-    callMgrsubSystemStatus = prom.get_future().get();
    if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
       myDialCallCmdCb_ = std::make_shared<MyDialCallback>();
       myHangupCb_ = std::make_shared<MyCallCommandCallback>("Hang");
@@ -140,10 +105,10 @@ bool CallMenu::init() {
          std::cout << "Unable to register Call Manager listener" << std::endl;
          return false;
       }
-    } else {
-       std::cout << "Unable to initialise CallManager subsystem " << std::endl;
-       return false;
-    }
+   } else {
+      std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+      return false;
+   }
    std::shared_ptr<ConsoleAppCommand> dialCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Dial", {"number"}, std::bind(&CallMenu::dial, this, std::placeholders::_1)));
@@ -154,13 +119,13 @@ bool CallMenu::init() {
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "3", "Reject_call", {}, std::bind(&CallMenu::rejectCall, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> hangupWithCallIndexCommand
-      = std::make_shared<ConsoleAppCommand>(
-         ConsoleAppCommand("4", "Hangup", {"index"},
-                           std::bind(&CallMenu::hangupWithCallIndex, this, std::placeholders::_1)));
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+         "4", "Hangup", {"index"}, std::bind(&CallMenu::hangupWithCallIndex, this,
+            std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> hangupDialingOrAlertingCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Hangup", {},
-         std::bind(&CallMenu::hangupDialingOrAlerting, this, std::placeholders::_1)));
+         "5", "Hangup", {}, std::bind(&CallMenu::hangupDialingOrAlerting, this,
+            std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> holdCallCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "6", "Hold_call", {}, std::bind(&CallMenu::holdCall, this, std::placeholders::_1)));
@@ -169,28 +134,29 @@ bool CallMenu::init() {
          "7", "Resume_call", {}, std::bind(&CallMenu::resumeCall, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> conferenceCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("8", "Conference_Call_Menu", {},
-                        std::bind(&CallMenu::conferenceSubMenu, this, std::placeholders::_1)));
+         std::bind(&CallMenu::conferenceSubMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> swapCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("9", "Swap", {}, std::bind(&CallMenu::swap, this, std::placeholders::_1)));
+      ConsoleAppCommand("9", "Swap", {},
+         std::bind(&CallMenu::swap, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> getCallsCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("10", "Get_InProgress_Calls", {},
-                        std::bind(&CallMenu::getCalls, this, std::placeholders::_1)));
+         std::bind(&CallMenu::getCalls, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> playDtmfTonesCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("11", "Play_DTMF_tone", {"number * #"},
-                        std::bind(&CallMenu::playDtmfTone, this, std::placeholders::_1)));
+         std::bind(&CallMenu::playDtmfTone, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> startDtmfToneCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("12", "Start_DTMF_tone", {},
-                        std::bind(&CallMenu::startDtmfTone, this, std::placeholders::_1)));
+         std::bind(&CallMenu::startDtmfTone, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> stopDtmfToneCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("13", "Stop_DTMF_tone", {},
-                        std::bind(&CallMenu::stopDtmfTone, this, std::placeholders::_1)));
-    std::shared_ptr<ConsoleAppCommand> enableAudioCommand
-        = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Enable_Audio", {},
-            std::bind(&CallMenu::enableAudio, this, std::placeholders::_1)));
+         std::bind(&CallMenu::stopDtmfTone, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> enableAudioCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("14", "Enable_Audio", {},
+         std::bind(&CallMenu::enableAudio, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> hangupForegroundResumeBackgroundCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "15", "Hangup_foreground_call(s)_resume_background", {},
-         std::bind(&CallMenu::hangupForegroundResumeBackground, this, std::placeholders::_1)));
+            std::bind(&CallMenu::hangupForegroundResumeBackground, this, std::placeholders::_1)));
 
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCallSubMenu
       = {dialCommand,

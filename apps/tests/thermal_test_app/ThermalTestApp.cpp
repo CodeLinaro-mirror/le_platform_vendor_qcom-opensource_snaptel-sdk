@@ -297,7 +297,6 @@ void ThermalTestApp::getThermalZones(std::vector<std::string> userInput) {
 
 void ThermalTestApp::getThermalZoneById(std::vector<std::string> userInput) {
     int thermalZoneId = -1;
-    std::cout << "Enter thermal zone id: ";
     ThermalTestApp::getInput("Enter thermal zone id: ", thermalZoneId);
     telux::common::ProcType procType = getProcType();
     if (thermalManagerMap_.find(procType) == thermalManagerMap_.end()) {

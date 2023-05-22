@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -83,19 +83,13 @@ void WlanApInterfaceManagerMenu::showMenu() {
             "get_connected_devices", {},
             std::bind(&WlanApInterfaceManagerMenu::getConnectedDevices,
             this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> getConnectedDevicesStats
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
-            "get_connected_devices_stats", {},
-            std::bind(&WlanApInterfaceManagerMenu::getConnectedDevicesStats,
-            this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> manageApService
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "manage_service", {},
             std::bind(&WlanApInterfaceManagerMenu::manageApService,
             this, std::placeholders::_1)));
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            setConfig, getConfig, getStatus, getConnectedDevices,
-            getConnectedDevicesStats, manageApService};
+            setConfig, getConfig, getStatus, getConnectedDevices, manageApService};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -192,32 +186,6 @@ void WlanApInterfaceManagerMenu::getConnectedDevices(std::vector<std::string> us
     }
 }
 
-void WlanApInterfaceManagerMenu::getConnectedDevicesStats(
-    std::vector<std::string> userInput) {
-    std::vector<telux::wlan::DeviceStats> clientsStats;
-    std::cout << "Request Connected Devices Statistics" << std::endl;
-
-    telux::common::ErrorCode retCode =
-        wlanApInterfaceManager_->getConnectedDevicesStats(clientsStats);
-
-    std::cout << "\nRequest Connected Devices Statistics Response"
-              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-              << ". ErrorCode: " << static_cast<int>(retCode)
-              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
-    if(retCode == telux::common::ErrorCode::SUCCESS) {
-        if(clientsStats.size() > 0) {
-            for (auto &client : clientsStats) {
-                std::cout << "------------------------------------------" << std::endl;
-                std::cout << "Mac Addr: " << client.macAddress << std::endl;
-                std::cout << "Tx Bytes: " << client.bytesTx << std::endl;
-                std::cout << "Rx Bytes: " << client.bytesRx << std::endl;
-            }
-        } else {
-            std::cout << "No Active Devices" << std::endl;
-        }
-    }
-}
-
 void WlanApInterfaceManagerMenu::manageApService(std::vector<std::string> userInput) {
     std::cout << "Manage Ap Service" << std::endl;
 
@@ -255,24 +223,31 @@ void WlanApInterfaceManagerMenu::onApBandChanged(telux::wlan::BandType band) {
 }
 
 void WlanApInterfaceManagerMenu::onApDeviceStatusChanged(
-    telux::wlan::ApDeviceConnectionEvent event, std::vector<telux::wlan::DeviceInfo> info) {
-   PRINT_NOTIFICATION << " ** Wlan onApDeviceStatusChanged **\n";
-   std::cout << "Event: ";
-   switch(event) {
-       case telux::wlan::ApDeviceConnectionEvent::CONNECTED:
-           std::cout << "New Device is connected" << std::endl;
-           break;
-       case telux::wlan::ApDeviceConnectionEvent::DISCONNECTED:
-           std::cout << "Existing Device is disconnected" << std::endl;
-           break;
+    telux::wlan::ApDeviceConnectionEvent event, std::vector<telux::wlan::DeviceIndInfo> info) {
+    PRINT_NOTIFICATION << " ** Wlan onApDeviceStatusChanged **\n";
+    std::cout << "Event: ";
+    switch(event) {
+        case telux::wlan::ApDeviceConnectionEvent::CONNECTED:
+            std::cout << "New Device is connected" << std::endl;
+            break;
+        case telux::wlan::ApDeviceConnectionEvent::DISCONNECTED:
+            std::cout << "Existing Device is disconnected" << std::endl;
+            break;
         case telux::wlan::ApDeviceConnectionEvent::IPV4_UPDATED:
-           std::cout << "Existing Device IPv4 is Updated" << std::endl;
-           break;
+            std::cout << "Existing Device IPv4 is Updated" << std::endl;
+            break;
         case telux::wlan::ApDeviceConnectionEvent::IPV6_UPDATED:
-           std::cout << "Existing Device IPv6 is Updated" << std::endl;
-           break;
+            std::cout << "Existing Device IPv6 is Updated" << std::endl;
+            break;
         default:
-           break;
-   }
-   WlanUtils::printDeviceInfo(info);
+            break;
+    }
+    if(info.size() > 0) {
+        std::cout << "List of connected devices:" << std::endl;
+        for(auto& dev:info) {
+            std::cout << "----------------------------------------------" << std::endl;
+            std::cout << "Associated AP       : " << WlanUtils::getWlanId(dev.id) << std::endl;
+            std::cout << "Device MAC Address  : " << dev.macAddress << std::endl;
+        }
+    }
 }

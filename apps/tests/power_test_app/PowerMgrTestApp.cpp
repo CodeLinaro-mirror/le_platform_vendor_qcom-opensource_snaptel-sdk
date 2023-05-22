@@ -182,6 +182,8 @@ void PowerMgmtTestApp::onSlaveAckStatusUpdate(const telux::common::Status status
     } else if(status == telux::common::Status::EXPIRED) {
         std::cout << APP_NAME << " Timeout occurred while waiting for acknowledgements from slave"
                               << " applications" << std::endl;
+    } else if(status == telux::common::Status::NOTREADY) {
+        std::cout << APP_NAME << " Received NACK from slave applications" << std::endl;
     } else {
         std::cout << APP_NAME << " Failed to receive acknowledgements from slave applications"
                               << std::endl;
@@ -195,7 +197,7 @@ void PowerMgmtTestApp::onSlaveAckStatusUpdate(const telux::common::Status status
     }
 
     if(nackResponseClients.size() > 0) {
-        std::cout << " Number of clients responded with nack : "<< nackResponseClients.size()
+        std::cout << " Number of clients responded with NACK : "<< nackResponseClients.size()
             << std::endl;
         for (size_t i = 0; i < nackResponseClients.size(); i++) {
             std::cout << " client name : "<< nackResponseClients[i].first

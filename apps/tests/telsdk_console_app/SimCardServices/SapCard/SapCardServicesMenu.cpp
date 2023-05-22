@@ -88,101 +88,88 @@ SapCardServicesMenu::~SapCardServicesMenu() {
 bool SapCardServicesMenu::init() {
    std::chrono::time_point<std::chrono::steady_clock> startTime, endTime;
    startTime = std::chrono::steady_clock::now();
+   std::promise<telux::common::ServiceStatus> prom;
    //  Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-
-   if(phoneManager) {
-      //  Check if telephony subsystem is ready
-      bool subSystemStatus = phoneManager->isSubsystemReady();
-
-      //  If telephony subsystem is not ready, wait for it to be ready
-      if(!subSystemStatus) {
-         std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
-         std::future<bool> f = phoneManager->onSubsystemReady();
-         // If we want to wait unconditionally for telephony subsystem to be ready
-         subSystemStatus = f.get();
-      }
-
-      //  Exit the application, if SDK is unable to initialize telephony subsystems
-      if(subSystemStatus) {
-         endTime = std::chrono::steady_clock::now();
-         std::chrono::duration<double> elapsedTime = endTime - startTime;
-         std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                   << std::endl;
-      } else {
-         std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
-         return false;
-      }
-
-       if(subSystemStatus) {
-           std::vector<int> phoneIds;
-           telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
-           if (status == telux::common::Status::SUCCESS) {
-               for (auto index = 1; index <= phoneIds.size(); index++) {
-                   auto sapMgr = phoneFactory.getSapCardManager(index);
-                   if (sapMgr != nullptr) {
-                       sapManagers_.emplace_back(sapMgr);
-                   }
-               }
-           }
-       }
-   } else {
-       std::cout << "ERROR - PhoneManager is NULL, failed to initialize SapCardServicesMenu"
-                 << std::endl;
-       return false;
+   auto phoneManager = phoneFactory.getPhoneManager([&](telux::common::ServiceStatus status) {
+      prom.set_value(status);
+   });
+   if (!phoneManager) {
+      std::cout << "ERROR - PhoneManager is NULL, failed to initialize SapCardServicesMenu"
+                << std::endl;
+      return false;
    }
-   mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
-   myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
-   mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();
-   myAtrCb_ = std::make_shared<MyAtrResponseCallback>();
+   telux::common::ServiceStatus phoneMgrStatus = phoneManager->getServiceStatus();
+   if (phoneMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "Phone Manager subsystem is not ready, Please wait \n";
+   }
+   phoneMgrStatus = prom.get_future().get();
+   if (phoneMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      endTime = std::chrono::steady_clock::now();
+      std::chrono::duration<double> elapsedTime = endTime - startTime;
+      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+                << std::endl;
+      std::vector<int> phoneIds;
+      telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
+      if (status == telux::common::Status::SUCCESS) {
+         for (auto index = 1; index <= phoneIds.size(); index++) {
+            auto sapMgr = phoneFactory.getSapCardManager(index);
+            if (sapMgr != nullptr) {
+               sapManagers_.emplace_back(sapMgr);
+            }
+         }
+      mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
+      myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
+      mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();
+      myAtrCb_ = std::make_shared<MyAtrResponseCallback>();
+      }
+   } else {
+      std::cout << "Phone Manager is not available failed to initialize SapCardServicesMenu"
+                << std::endl;
+      return false;
+   }
    std::shared_ptr<ConsoleAppCommand> openSapConnectionCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "1", "Open_sap_connection", {},
-         std::bind(&SapCardServicesMenu::openSapConnection, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getSapAtrCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("2", "Get_sap_ATR", {},
-                        std::bind(&SapCardServicesMenu::getSapAtr, this, std::placeholders::_1)));
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "1", "Open_sap_connection", {},
+      std::bind(&SapCardServicesMenu::openSapConnection, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> getSapAtrCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "2", "Get_sap_ATR", {},
+      std::bind(&SapCardServicesMenu::getSapAtr, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestSapStateCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "3", "Request_sap_state", {},
-         std::bind(&SapCardServicesMenu::requestSapState, this, std::placeholders::_1)));
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "3", "Request_sap_state", {},
+      std::bind(&SapCardServicesMenu::requestSapState, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> transmitSapApduCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "4", "Transmit_sap_APDU", {},
-         std::bind(&SapCardServicesMenu::transmitSapApdu, this, std::placeholders::_1)));
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "4", "Transmit_sap_APDU", {},
+      std::bind(&SapCardServicesMenu::transmitSapApdu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> sapSimPowerOffCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "5", "Sap_sim_power_off", {},
-         std::bind(&SapCardServicesMenu::sapSimPowerOff, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> sapSimPowerOnCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("6", "Sap_sim_power_on", {}, std::bind(&SapCardServicesMenu::sapSimPowerOn,
-                                                               this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> sapSimResetCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("7", "Sap_sim_reset", {},
-                        std::bind(&SapCardServicesMenu::sapSimReset, this, std::placeholders::_1)));
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "5", "Sap_sim_power_off", {},
+      std::bind(&SapCardServicesMenu::sapSimPowerOff, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> sapSimPowerOnCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "6", "Sap_sim_power_on", {},
+      std::bind(&SapCardServicesMenu::sapSimPowerOn, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> sapSimResetCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "7", "Sap_sim_reset", {},
+        std::bind(&SapCardServicesMenu::sapSimReset, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> sapCardReaderStatusCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "8", "Sap_card_reader_status", {},
-         std::bind(&SapCardServicesMenu::sapCardReaderStatus, this, std::placeholders::_1)));
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "8", "Sap_card_reader_status", {},
+      std::bind(&SapCardServicesMenu::sapCardReaderStatus, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> closeSapConnectionCommand
-      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
-         "9", "Close_sap_connection", {},
-         std::bind(&SapCardServicesMenu::closeSapConnection, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getStateCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("10", "Get_sap_state", {},
-                        std::bind(&SapCardServicesMenu::getState, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("11", "Select_sim_slot", {}, std::bind(&SapCardServicesMenu::selectSimSlot,
-                                                               this, std::placeholders::_1)));
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "9", "Close_sap_connection", {},
+      std::bind(&SapCardServicesMenu::closeSapConnection, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> getStateCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "10", "Get_sap_state", {},
+      std::bind(&SapCardServicesMenu::getState, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> selectSimSlotCommand
+      = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "11", "Select_sim_slot", {},
+      std::bind(&SapCardServicesMenu::selectSimSlot, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListSapManagerSubMenu
-      = {openSapConnectionCommand, getSapAtrCommand,           requestSapStateCommand,
-         transmitSapApduCommand,   sapSimPowerOffCommand,      sapSimPowerOnCommand,
-         sapSimResetCommand,       sapCardReaderStatusCommand, closeSapConnectionCommand,
+      = {openSapConnectionCommand, getSapAtrCommand, requestSapStateCommand,
+         transmitSapApduCommand, sapSimPowerOffCommand, sapSimPowerOnCommand,
+         sapSimResetCommand, sapCardReaderStatusCommand, closeSapConnectionCommand,
          getStateCommand};
 
    if (sapManagers_.size() > 1) {
-       commandsListSapManagerSubMenu.emplace_back(selectSimSlotCommand);
+      commandsListSapManagerSubMenu.emplace_back(selectSimSlotCommand);
    }
 
    addCommands(commandsListSapManagerSubMenu);

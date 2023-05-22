@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -115,10 +115,16 @@ class PhoneFactory {
    /**
     * Get Phone Manager instance. Phone Manager is the main entry point into the
     * telephony subsystem.
+    * @param [in] callback  Optional callback pointer to get response of Phone Manager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Phone Manager object will no
+    *                       more be a valid object.
     *
     * @returns Pointer of IPhoneManager object.
     */
-   virtual std::shared_ptr<IPhoneManager> getPhoneManager() = 0;
+   virtual std::shared_ptr<IPhoneManager> getPhoneManager(
+      telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get SMS Manager instance for Phone ID. SMSManager used to send and receive
@@ -174,9 +180,17 @@ class PhoneFactory {
    /**
     * Get Subscription Manager instance to get device subscription details
     *
+    * @param [in] callback  Optional callback pointer to get response of Phone Manager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided SubscriptionManager object
+    *                       will no more be a valid object.
+    *
     * @returns Pointer of ISubscriptionManager object.
+    *
     */
-   virtual std::shared_ptr<ISubscriptionManager> getSubscriptionManager() = 0;
+   virtual std::shared_ptr<ISubscriptionManager> getSubscriptionManager(
+      telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get Serving System Manager instance to get and set preferred network type.
@@ -219,10 +233,16 @@ class PhoneFactory {
    /**
     * Get Multi SIM Manager instance to handle operations like high capabilty
     * switch.
-    *
+    * @param [in] callback  Optional callback pointer to get response of MultiSimManager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided MultiSimManager object will no
+    *                       more be a valid object.
     * @returns Pointer of IMultiSimManager object.
+    *
     */
-   virtual std::shared_ptr<IMultiSimManager> getMultiSimManager() = 0;
+   virtual std::shared_ptr<IMultiSimManager> getMultiSimManager(
+      telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get CellBroadcast Manager instance for Slot ID. CellBroadcast manager used to receive

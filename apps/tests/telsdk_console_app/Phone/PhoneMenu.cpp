@@ -66,66 +66,79 @@ PhoneMenu::~PhoneMenu() {
 }
 
 bool PhoneMenu::init() {
+   std::promise<ServiceStatus> phoneMgrprom;
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
    startTime = std::chrono::system_clock::now();
    //  Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   phoneManager_ = phoneFactory.getPhoneManager();
-
-   //  Check if telephony subsystem is ready
-   bool subSystemStatus = phoneManager_->isSubsystemReady();
-
-   //  If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "\n\nTelephony subsystem is not ready, Please wait" << std::endl;
-      std::future<bool> f = phoneManager_->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
+   phoneManager_ = phoneFactory.getPhoneManager([&](ServiceStatus status) {
+      phoneMgrprom.set_value(status);
+   });
+   if (!phoneManager_) {
+      std::cout << "ERROR - Failed to get PhoneManager instance \n";
+      return false;
    }
-
-   //  return from the function, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
+   ServiceStatus phoneMgrStatus = phoneManager_->getServiceStatus();
+   if (phoneMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "PhoneManager subsystem is not ready, Please wait \n";
+   }
+   phoneMgrStatus = phoneMgrprom.get_future().get();
+   if (phoneMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
       endTime = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "Elapsed Time for Subsystem to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
+               << std::endl;
+      std::cout << "PhoneManager subsystem is ready \n";
    } else {
       std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
       return false;
    }
 
-   if(subSystemStatus) {
+   if(phoneMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
       std::vector<int> phoneIds;
       telux::common::Status status = phoneManager_->getPhoneIds(phoneIds);
       if (status == telux::common::Status::SUCCESS) {
-          for (auto index = 1; index <= phoneIds.size(); index++) {
-              auto phone = phoneManager_->getPhone(index);
-              if (phone != nullptr) {
-                  phones_.emplace_back(phone);
-              }
-          }
-      }
-      // Turn on the radio if it's not available
-      for (auto index = 0; index < phones_.size(); index++) {
-         if(phones_[index]->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
-            phones_[index]->setRadioPower(true);
+         for (auto index = 1; index <= phoneIds.size(); index++) {
+            auto phone = phoneManager_->getPhone(index);
+            if (phone != nullptr) {
+               phones_.emplace_back(phone);
+            }
          }
       }
+   // Turn on the radio if it's not available
+   for (auto index = 0; index < phones_.size(); index++) {
+      if(phones_[index]->getRadioState() != telux::tel::RadioState::RADIO_STATE_ON) {
+         phones_[index]->setRadioPower(true);
+      }
+   }
 
-      phoneListener_ = std::make_shared<MyPhoneListener>();
-
-      subscriptionMgr_ = telux::tel::PhoneFactory::getInstance().getSubscriptionManager();
+   phoneListener_ = std::make_shared<MyPhoneListener>();
+   status = phoneManager_->registerListener(phoneListener_);
+   if(status != telux::common::Status::SUCCESS) {
+      std::cout << "Failed to registerListener" << std::endl;
+   }
+   } else {
+      std::cout << "ERROR - Unable to initialize PhoneManager subsystem \n";
+      return false;
+   }
+   std::promise<ServiceStatus> subscriptionMgrprom;
+   subscriptionMgr_ = telux::tel::PhoneFactory::getInstance().getSubscriptionManager(
+                    [&](ServiceStatus status) {
+      subscriptionMgrprom.set_value(status);
+   });
+   if (!subscriptionMgr_) {
+      std::cout << "ERROR - Failed to get SubscriptionManager instance \n";
+      return false;
+   }
+   ServiceStatus subscriptionMgrStatus = subscriptionMgr_->getServiceStatus();
+   if (subscriptionMgrStatus != ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "SubscriptionManager subsystem is not ready, Please wait \n";
+   }
+   subscriptionMgrStatus = subscriptionMgrprom.get_future().get();
+   if (subscriptionMgrStatus == ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "SubscriptionManager subsystem is ready \n";
       subscriptionListener_ = std::make_shared<MySubscriptionListener>();
-      if(!subscriptionMgr_->isSubsystemReady()) {
-         subscriptionMgr_->onSubsystemReady().get();
-      }
-
-      status = subscriptionMgr_->registerListener(subscriptionListener_);
-      if(status != telux::common::Status::SUCCESS) {
-         std::cout << "Failed to registerListener" << std::endl;
-      }
-
-      status = phoneManager_->registerListener(phoneListener_);
+      telux::common::Status status = subscriptionMgr_->registerListener(subscriptionListener_);
       if(status != telux::common::Status::SUCCESS) {
          std::cout << "Failed to registerListener" << std::endl;
       }
@@ -135,61 +148,65 @@ bool PhoneMenu::init() {
       myCellularCapabilityCb_ = std::make_shared<MyCellularCapabilityCallback>();
       myGetOperatingModeCb_ = std::make_shared<MyGetOperatingModeCallback>();
       mySetOperatingModeCb_ = std::make_shared<MySetOperatingModeCallback>();
+   } else {
+      std::cout << "ERROR - Unable to initialize SubscriptionManager subsystem \n";
+      return false;
    }
    std::shared_ptr<ConsoleAppCommand> getSignalStrengthCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Get_signal_strength", {},
-         std::bind(&PhoneMenu::requestSignalStrength, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::requestSignalStrength, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestVoiceServiceStateCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "2", "Request_voice_service_state", {},
-         std::bind(&PhoneMenu::requestVoiceServiceState, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::requestVoiceServiceState, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> requestCellularCapabilitiesCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "3", "Request_cellular_capabilities", {},
-         std::bind(&PhoneMenu::requestCellularCapabilities, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::requestCellularCapabilities, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> getSubscriptionCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("4", "Get_subscription", {},
-                        std::bind(&PhoneMenu::getSubscription, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> getOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("5", "Get_operating_mode", {},
-                        std::bind(&PhoneMenu::getOperatingMode, this, std::placeholders::_1)));
-   std::shared_ptr<ConsoleAppCommand> setOperatingModeCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("6", "Set_operating_mode", {},
-                        std::bind(&PhoneMenu::setOperatingMode, this, std::placeholders::_1)));
+      ConsoleAppCommand("4", "Get_subscription", {}, std::bind(&PhoneMenu::getSubscription, this,
+         std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> getOperatingModeCommand =
+      std::make_shared<ConsoleAppCommand>( ConsoleAppCommand("5", "Get_operating_mode", {},
+         std::bind(&PhoneMenu::getOperatingMode, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> setOperatingModeCommand =
+      std::make_shared<ConsoleAppCommand>( ConsoleAppCommand("6", "Set_operating_mode", {},
+         std::bind(&PhoneMenu::setOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestCellInfoListCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "7", "Request_cell_info_list", {},
-         std::bind(&PhoneMenu::requestCellInfoList, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::requestCellInfoList, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setCellInfoListRateCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "8", "Set_cell_info_list_rate", {},
-         std::bind(&PhoneMenu::setCellInfoListRate, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::setCellInfoListRate, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> networkMenuCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("9", "Network_Selection", {},
-                        std::bind(&PhoneMenu::networkMenu, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::networkMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> servingSystemMenuCommand
       = std::make_shared<ConsoleAppCommand>(
          ConsoleAppCommand("10", "Serving_System", {},
-                           std::bind(&PhoneMenu::servingSystemMenu, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::servingSystemMenu, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> setECallOperatingModeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "11", "Set_eCall_operating_mode", {},
-         std::bind(&PhoneMenu::setECallOperatingMode, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::setECallOperatingMode, this, std::placeholders::_1)));
    std::shared_ptr<ConsoleAppCommand> requestECallOperatingModeCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "12", "Request_eCall_operating_mode", {},
-         std::bind(&PhoneMenu::requestECallOperatingMode, this, std::placeholders::_1)));
+            std::bind(&PhoneMenu::requestECallOperatingMode, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> requestOperatorNameCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("13", "Get_operator_name", {},
          std::bind(&PhoneMenu::requestOperatorName, this, std::placeholders::_1)));
 
-   std::shared_ptr<ConsoleAppCommand> suppServicesMenuCommand = std::make_shared<ConsoleAppCommand>(
-      ConsoleAppCommand("14", "Supp_Services_Menu", {},
-                        std::bind(&PhoneMenu::suppServicesMenu, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> suppServicesMenuCommand =
+      std::make_shared<ConsoleAppCommand>(
+         ConsoleAppCommand("14", "Supp_Services_Menu", {},
+            std::bind(&PhoneMenu::suppServicesMenu, this, std::placeholders::_1)));
 
    std::shared_ptr<ConsoleAppCommand> resetWwanCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("15", "Reset_Wwan", {},
@@ -218,7 +235,7 @@ bool PhoneMenu::init() {
          resetWwanCommand};
 
    if (phones_.size() > 1) {
-       commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
+      commandsListPhoneSubMenu.emplace_back(selectSimSlotCommand);
    }
 
    addCommands(commandsListPhoneSubMenu);

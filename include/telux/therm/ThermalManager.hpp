@@ -118,11 +118,11 @@ enum class TripEvent {
                         below the configured trip minus hysteresis temp. This event will not be
                         triggered again, if the temperature remains below the trip temperature.
                         For Example: Below scenario considered as CROSSED_UNDER.
-                        Prev temp: 270000 milli degree Celsius,
+                        Prev temp: 27000 milli degree Celsius,
                         Trip temp: 25000 milli degree Celsius, Hyst: 5000 milli degree Celsius,
                         Curr Temp: 19000 milli degree Celsius,
                         Below scenario will not generate CROSSED_UNDER event again.
-                        Prev temp: 190000 milli degree Celsius,
+                        Prev temp: 19000 milli degree Celsius,
                         Trip temp: 25000 milli degree Celsius, Hyst: 5000 milli degree Celsius,
                         Curr Temp: 18000 milli degree Celsius / 22000 milli degree Celsius*/
     CROSSED_OVER   /**< This event will be triggered when the temperature increases and crosses

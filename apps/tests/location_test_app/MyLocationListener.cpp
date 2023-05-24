@@ -1024,6 +1024,10 @@ void MyLocationListener::printReportStatus(telux::loc::ReportStatus status) {
   }
 }
 
+void MyLocationListener::onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) {
+    LocationUtils::displayCapabilities(capabilityMask);
+}
+
 void MyLocationListener::printDgnssStationIds(std::vector<uint16_t> dgnssStationIds) {
     if(!dgnssStationIds.empty()) {
         std::cout << "Dgnss Station IDs : ";

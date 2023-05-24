@@ -140,8 +140,6 @@ private:
    void printAltitudeType(telux::loc::AltitudeType type);
    void printReportStatus(telux::loc::ReportStatus status);
    void printDgnssStationIds(std::vector<uint16_t> dgnssStationIds);
-   std::mutex mutex_;
-   std::condition_variable cv_;
 };
 
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {

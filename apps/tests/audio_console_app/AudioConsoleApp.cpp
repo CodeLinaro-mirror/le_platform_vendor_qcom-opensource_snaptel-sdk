@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -260,6 +260,9 @@ void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
                     std::cout << "Calibration Status Unknown" << std::endl;
                 }
                 p.set_value(true);
+            } else if(error == telux::common::ErrorCode::NOT_SUPPORTED) {
+                p.set_value(false);
+                std::cout << "API not supported" << std::endl;
             } else {
                 p.set_value(false);
                 std::cout << "failed to get cal init status" << std::endl;

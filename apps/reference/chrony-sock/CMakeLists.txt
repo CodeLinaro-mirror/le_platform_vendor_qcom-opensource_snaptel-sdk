@@ -23,7 +23,7 @@ add_executable(${APP_NAME} ${SOURCES})
 target_compile_options(${APP_NAME} PRIVATE ${TELUXCOMMON_CFLAGS}
                        ${TELUXLOC_CFLAGS} -std=c++11 -Wall -Werror)
 target_link_libraries(${APP_NAME} rt ${GLIB_LIBRARIES}
-                      ${TELUXCOMMON_LIBRARIES} ${TELUXLOC_LIBRARIES} pthread)
+                      ${TELUXCOMMON_LIBRARIES} ${TELUXLOC_LIBRARIES} pthread telux_cv2x)
 
 install(TARGETS ${APP_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

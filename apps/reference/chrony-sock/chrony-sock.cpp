@@ -53,13 +53,21 @@
 #include <time.h>
 #include <unistd.h>
 #include <glib.h>
+#include <atomic>
 
 #include <telux/loc/LocationDefines.hpp>
 #include <telux/loc/LocationFactory.hpp>
 #include <telux/loc/LocationManager.hpp>
 #include <telux/loc/LocationListener.hpp>
+#include <telux/cv2x/Cv2xFactory.hpp>
+#include <telux/cv2x/Cv2xRadioManager.hpp>
 
 #include "../../common/utils/SignalHandler.hpp"
+
+using telux::cv2x::Cv2xFactory;
+using telux::cv2x::ICv2xRadioManager;
+using telux::cv2x::ICv2xListener;
+using telux::cv2x::UtcTimeInfo;
 
 #define SOCK_NAME "/var/run/chrony.sock"
 #define SOCK_MAGIC 0x534f434b
@@ -90,16 +98,22 @@ struct TimeSample {
 static int chronyfd;
 static bool gTimeCapability = false;
 static bool gExit = false;
+static std::shared_ptr<ICv2xRadioManager> gCv2xRadioMgr = nullptr;
+static std::shared_ptr<ICv2xListener> gCv2xListener = nullptr;
+std::atomic<bool> gCv2xUtcValid{false};
 
 bool enableDebug = false;
 bool enableSyslog = false;
 bool enableWriteRtc = false;
+bool enableSlssUtc = false;
 
 // Used to get the Telux async result
 std::mutex mtx;
 std::condition_variable cv;
 bool cv_done = false;
 ErrorCode ec;
+
+static void sendUtcToChronyd(uint64_t utc);
 
 int system_call(const char *command)
 {
@@ -194,6 +208,12 @@ public:
     void onBasicLocationUpdate(
         const std::shared_ptr<ILocationInfoBase> &locationInfo) {
         uint64_t utc = locationInfo->getTimeStamp();
+
+        // ignore invalid utc
+        if (utc == 0) {
+            return;
+        }
+
         static bool firstFix = true;
 
         if (firstFix) {
@@ -201,34 +221,18 @@ public:
             firstFix = false;
         }
 
+        // CV2X UTC has higher priority if it's valid
+        if (gCv2xUtcValid) {
+            LOGD("GNSS report ignored with UTC = %" PRIu64 " due to CV2X UTC is valid\n", utc);
+            return;
+        }
         if (utc % 1000 == 0) {
            LOGD("GNSS report with UTC = %" PRIu64 "\n", utc);
         } else {
            LOGD("GNSS report ignored with UTC = %" PRIu64 "\n", utc);
            return;
         }
-
-        struct TimeSample sample = { 0 };
-        struct timeval gps_time, offset_time;
-
-        sample.magic = SOCK_MAGIC;
-        gettimeofday(&sample.tv, NULL);
-        gps_time.tv_sec = (time_t)(utc / 1000);
-        gps_time.tv_usec = (suseconds_t)(utc % 1000);
-        timersub(&gps_time, &sample.tv, &offset_time);
-        sample.offset = (double)offset_time.tv_sec +
-                        ((double)offset_time.tv_usec / 1000000);
-
-        ssize_t bytesSent = send(chronyfd, &sample, sizeof(sample), 0);
-        // Checking if the socket was closed
-        if (-1 == bytesSent) {
-            LOGE("Failed to send sample to chrony, error = %d\n", errno);
-            exit(errno);
-        } else if (sizeof(sample) != bytesSent) {
-            LOGE("Failed to send sample to chrony, bytesSent = %d\n",
-                 bytesSent);
-            exit(-EIO);
-        }
+        sendUtcToChronyd(utc);
     }
 
     void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override {
@@ -242,6 +246,47 @@ public:
         }
     }
 };
+
+class Cv2xUtcListener : public ICv2xListener {
+public:
+    void onUtcUpdateFromSlss(const UtcTimeInfo& utcInfo) {
+        bool utcValid = false;
+        if (0 != utcInfo.utcTime) {
+            utcValid = true;
+            uint64_t utc = utcInfo.utcTime;
+            LOGD("CV2X report with UTC = %" PRIu64 "\n", utc);
+            sendUtcToChronyd(utc);
+        }
+        if (gCv2xUtcValid != utcValid) {
+            LOGI("CV2X UTC valid:%d\n", utcValid);
+            gCv2xUtcValid = utcValid;
+        }
+    }
+};
+
+static void sendUtcToChronyd(uint64_t utc) {
+    struct TimeSample sample = { 0 };
+    struct timeval gps_time, offset_time;
+
+    sample.magic = SOCK_MAGIC;
+    gettimeofday(&sample.tv, NULL);
+    gps_time.tv_sec = (time_t)(utc / 1000);
+    gps_time.tv_usec = (suseconds_t)(utc % 1000);
+    timersub(&gps_time, &sample.tv, &offset_time);
+    sample.offset = (double)offset_time.tv_sec +
+                    ((double)offset_time.tv_usec / 1000000);
+
+    ssize_t bytesSent = send(chronyfd, &sample, sizeof(sample), 0);
+    // Checking if the socket was closed
+    if (-1 == bytesSent) {
+        LOGE("Failed to send sample to chrony, error = %d\n", errno);
+        exit(errno);
+    } else if (sizeof(sample) != bytesSent) {
+        LOGE("Failed to send sample to chrony, bytesSent = %d\n",
+             bytesSent);
+        exit(-EIO);
+    }
+}
 
 int setupSocket(int *fd) {
     struct sockaddr_un name;
@@ -275,7 +320,7 @@ void responseCallback(ErrorCode error) {
 void parseArguments(int& argc, char **argv) {
     int opt;
 
-    while ((opt = getopt(argc, argv, "dsrh")) != -1) {
+    while ((opt = getopt(argc, argv, "adsrh")) != -1) {
         switch (opt) {
         case 'd':
             enableDebug = true;
@@ -286,12 +331,58 @@ void parseArguments(int& argc, char **argv) {
         case 'r':
             enableWriteRtc = true;
             break;
+        case 'a':
+            enableSlssUtc = true;
+            break;
         case 'h':
         default:
             printUsage(argv[0]);
             exit(-EINVAL);
         }
     }
+}
+
+static int startCv2xUtcReport() {
+    bool statusUpdate = false;
+    telux::common::ServiceStatus cv2xRadioMgrStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto statusCb = [&](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        statusUpdate = true;
+        cv2xRadioMgrStatus = status;
+        cv.notify_all();
+    };
+
+    auto & cv2xFactory = Cv2xFactory::getInstance();
+    gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
+    if (!gCv2xRadioMgr) {
+        LOGE("Failed to get Cv2xRadioManager\n");
+        return -EINVAL;
+    }
+
+    {
+        std::unique_lock<std::mutex> lck(mtx);
+        cv.wait(lck, [&] { return (gExit || statusUpdate); });
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+            cv2xRadioMgrStatus) {
+            LOGE("CV2X Radio Manager initialization failed\n");
+            return -EINVAL;
+        }
+    }
+
+    try {
+        gCv2xListener = std::make_shared<Cv2xUtcListener>();
+    } catch (std::bad_alloc& e) {
+        LOGE("Error Cv2xUtcListener allocation\n");
+        return -EINVAL;
+    }
+
+    if (Status::SUCCESS != gCv2xRadioMgr->registerListener(gCv2xListener)) {
+        LOGE("Failed to register CV2X UTC listener\n");
+        gCv2xListener = nullptr;
+        return -EINVAL;
+    }
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -400,6 +491,15 @@ int main(int argc, char *argv[]) {
 
     LOGI("Started providing fixes to chronyd\n");
 
+    // start listening to CV2X UTC derived from SLSS if configured
+    if (enableSlssUtc) {
+        if (startCv2xUtcReport()) {
+            LOGE("Failed to start CV2X UTC report\n");
+        } else {
+            LOGI("Started CV2X UTC report\n");
+        }
+    }
+
     {
         std::unique_lock<std::mutex> lck(mtx);
         while (!gExit) {
@@ -408,6 +508,9 @@ int main(int argc, char *argv[]) {
     }
 
     locationManager->deRegisterListenerEx(myLocationListener);
+    if (gCv2xRadioMgr and gCv2xListener) {
+        gCv2xRadioMgr->deregisterListener(gCv2xListener);
+    }
 
     return 0;
 }

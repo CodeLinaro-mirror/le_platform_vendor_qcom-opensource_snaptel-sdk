@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -745,6 +745,9 @@ public:
    /**
     * Set the configuration related to emergency call.
     * The configuration is persistent and takes effect when the next emergency call is dialed.
+    *
+    * Minimum value of EcallConfig.t9Timer value should be 3600000. If a lesser value is provided,
+    * this API will still succeed but the actual value would be set to 3600000.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT
     * permissionto invoke this API successfully.

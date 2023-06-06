@@ -90,6 +90,7 @@ public:
    static telux::data::IpProtocol getProtcol(std::string protoStr);
    static std::string drbStatusToString(telux::data::DrbStatus stat);
    static std::string serviceRatToString(telux::data::NetworkRat rat);
+   static std::string vlanInterfaceToString(telux::data::InterfaceType interface);
 };
 
 #endif  // DATAUTILS_HPP

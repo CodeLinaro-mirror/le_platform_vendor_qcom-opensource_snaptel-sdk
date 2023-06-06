@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -316,4 +316,34 @@ std::string DataUtils::serviceRatToString(telux::data::NetworkRat rat) {
             break;
     }
     return ratStr;
+}
+
+std::string DataUtils::vlanInterfaceToString(telux::data::InterfaceType interface) {
+   std::string ifName = "UNKNOWN";
+   switch(interface) {
+      case telux::data::InterfaceType::WLAN:
+         ifName = "WLAN";
+         break;
+      case telux::data::InterfaceType::ETH:
+         ifName = "ETH";
+         break;
+      case telux::data::InterfaceType::ECM:
+         ifName = "ECM";
+         break;
+      case telux::data::InterfaceType::RNDIS:
+         ifName = "RNDIS";
+         break;
+      case telux::data::InterfaceType::MHI:
+         ifName = "MHI";
+         break;
+      case telux::data::InterfaceType::VMTAP0:
+         ifName = "VMTAP0";
+         break;
+      case telux::data::InterfaceType::VMTAP1:
+         ifName = "VMTAP1";
+         break;
+      default:
+         break;
+   }
+   return ifName;
 }

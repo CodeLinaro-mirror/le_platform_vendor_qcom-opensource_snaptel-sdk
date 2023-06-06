@@ -34,48 +34,26 @@
 
 
 /**
- * @file       Helper.hpp
+ * @file       SmsMessageHelper.hpp
  *
  * @brief
  *
  */
 
-#ifndef HELPER_HPP
-#define HELPER_HPP
+#ifndef SMS_MESSAGEHELPER_HPP
+#define SMS_MESSAGEHELPER_HPP
 
-#include <string>
-#include <future>
-#include <exception>
-#include <algorithm>
-#include <memory>
-#include <vector>
-#include "../../libs/common/Logger.hpp"
+#include "../common/Logger.hpp"
+#include "../common/CsvHandler.hpp"
 #include <telux/tel/SmsManager.hpp>
 
-class Helper  {
+ enum TelEventType {
+    UNKNOWN,
+    SMS_MEMORY_FULL,
+    SMS_INCOMING
+};
+class SmsHelper  {
 public:
-    static std::string convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex) {
-        std::stringstream ss;
-        for (std::size_t i = 0; i < bytes.size(); i++)
-        {
-            if(toHex) {
-                ss << std::hex << static_cast<int>(bytes[i]);
-            } else {
-                ss << static_cast<int>(bytes[i]) << " ";
-            }
-        }
-        return ss.str();
-    }
-    static std::vector<int> convertStringToVector(std::string input) {
-        std::stringstream iss( input );
-        int parsednum;
-        std::vector<int> myNumbers;
-        while ( iss >> parsednum ) {
-            myNumbers.push_back( parsednum );
-        }
-        return myNumbers;
-    }
-
     static telux::tel::SmsTagType getTagType(std::string tagType ) {
         if(tagType == "MT_READ") {
             return telux::tel::SmsTagType::MT_READ;
@@ -84,40 +62,6 @@ public:
         } else {
             return telux::tel::SmsTagType::UNKNOWN;
         }
-    }
-
-    static std::string tagTypeToString(telux::tel::SmsTagType type) {
-        switch(type) {
-            case telux::tel::SmsTagType::MT_READ:
-                return "MT_READ";
-            case telux::tel::SmsTagType::MT_NOT_READ:
-                return "MT_NOT_READ";
-            case telux::tel::SmsTagType::UNKNOWN:
-                return "UNKNOWN";
-        }
-        return "UNKNOWN";
-    }
-
-    static telux::tel::StorageType getstorageType(std::string storageType ) {
-        if(storageType == "SIM") {
-            return telux::tel::StorageType::SIM;
-        } else if (storageType == "NONE") {
-            return telux::tel::StorageType::NONE;
-        } else {
-            return telux::tel::StorageType::UNKNOWN;
-        }
-    }
-
-    static std::string storageTypeToString(telux::tel::StorageType type) {
-        switch(type) {
-            case telux::tel::StorageType::SIM:
-                return "SIM";
-            case telux::tel::StorageType::NONE:
-                return "NONE";
-            case telux::tel::StorageType::UNKNOWN:
-                return "UNKNOWN";
-        }
-        return "UNKNOWN";
     }
 
     static telux::tel::SmsEncoding getencodingMethod(std::string encoding ) {
@@ -132,20 +76,25 @@ public:
         }
     }
 
-    static std::string encodingToString(telux::tel::SmsEncoding encoding) {
-    switch(encoding) {
-        case telux::tel::SmsEncoding::GSM7:
-            return "GSM7";
-        case telux::tel::SmsEncoding::GSM8:
-            return "GSM8";
-        case telux::tel::SmsEncoding::UCS2:
-            return "UCS2";
-        case telux::tel::SmsEncoding::UNKNOWN:
-            return "UNKNOWN";
+    static std::string convertVectorToString(std::vector<std::uint8_t> bytes) {
+        std::stringstream ss;
+        for (std::size_t i = 0; i < bytes.size(); i++)
+        {
+            ss <<  static_cast<int>(bytes[i]);
+        }
+        return ss.str();
     }
-    return "UNKNOWN";
+
+    static std::vector<int> convertStringToVector(std::string input) {
+        std::stringstream iss( input );
+        int parsednum;
+        std::vector<int> myNumbers;
+        while ( iss >> parsednum ) {
+            myNumbers.push_back( parsednum );
+        }
+        return myNumbers;
     }
 };
 
 
-#endif // HELPER_HPP
+#endif // SMS_MESSAGEHELPER_HPP

@@ -50,6 +50,7 @@
 #include "CardManagerStub.hpp"
 #include "../common/Logger.hpp"
 #include "SubscriptionManagerStub.hpp"
+#include "SmsManagerStub.hpp"
 
 
 namespace telux {
@@ -99,16 +100,19 @@ class PhoneFactoryImplStub : public PhoneFactory {
  private:
     PhoneFactoryImplStub();
     ~PhoneFactoryImplStub();
-    std::map<int, std::weak_ptr<ISmsManager>> SmsManagerMap_;
+    std::map<int, std::shared_ptr<ISmsManager>> smsManagerMap_;
     std::shared_ptr<ICardManager> cardManager_;
     std::vector<telux::common::InitResponseCb> cardMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> subscriptionMgrCallbacks_;
     telux::common::ServiceStatus subscriptionMgrInitStatus_;
+    std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
     telux::common::ServiceStatus cardMgrInitStatus_;
+    std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
     std::recursive_mutex mutex_;
     void onCardManagerResponse(telux::common::ServiceStatus status);
     void onSubscriptionManagerResponse(telux::common::ServiceStatus status);
     std::shared_ptr<ISubscriptionManager> subscriptionManager_;
+    void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
 };
 
 }  // namespace tel

@@ -454,7 +454,7 @@ void DataSettingsMenu::requestCurrentDds(std::vector<std::string> inputCommand)
         if (error == telux::common::ErrorCode::SUCCESS) {
             std::cout << "Slot_Id: " << currentState.slotId << std::endl;
             std::string type = (currentState.type == DdsType::PERMANENT) ?
-                "Permamnent" : "Temporary";
+                "Permanent" : "Temporary";
             std::cout << "Switch Type: " << type << std::endl;
         }
     };

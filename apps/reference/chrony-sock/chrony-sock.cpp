@@ -59,15 +59,20 @@
 #include <telux/loc/LocationFactory.hpp>
 #include <telux/loc/LocationManager.hpp>
 #include <telux/loc/LocationListener.hpp>
+
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
 #include <telux/cv2x/Cv2xFactory.hpp>
 #include <telux/cv2x/Cv2xRadioManager.hpp>
+#endif
 
 #include "../../common/utils/SignalHandler.hpp"
 
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::ICv2xRadioManager;
 using telux::cv2x::ICv2xListener;
 using telux::cv2x::UtcTimeInfo;
+#endif
 
 #define SOCK_NAME "/var/run/chrony.sock"
 #define SOCK_MAGIC 0x534f434b
@@ -98,9 +103,11 @@ struct TimeSample {
 static int chronyfd;
 static bool gTimeCapability = false;
 static bool gExit = false;
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
 static std::shared_ptr<ICv2xRadioManager> gCv2xRadioMgr = nullptr;
 static std::shared_ptr<ICv2xListener> gCv2xListener = nullptr;
 std::atomic<bool> gCv2xUtcValid{false};
+#endif
 
 bool enableDebug = false;
 bool enableSyslog = false;
@@ -152,6 +159,9 @@ void printUsage(char *app_name) {
     printf("\t-d: Enable debug logs\n");
     printf("\t-s: Log to syslog instead of stdout\n");
     printf("\t-r: Enable updating the rtc file\n");
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
+    printf("\t-a: Enable listening utc from cv2x\n");
+#endif
 }
 
 static void writeRtcFile(int sig, siginfo_t *si, void *uc) {
@@ -221,11 +231,13 @@ public:
             firstFix = false;
         }
 
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
         // CV2X UTC has higher priority if it's valid
         if (gCv2xUtcValid) {
             LOGD("GNSS report ignored with UTC = %" PRIu64 " due to CV2X UTC is valid\n", utc);
             return;
         }
+#endif
         if (utc % 1000 == 0) {
            LOGD("GNSS report with UTC = %" PRIu64 "\n", utc);
         } else {
@@ -247,6 +259,7 @@ public:
     }
 };
 
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
 class Cv2xUtcListener : public ICv2xListener {
 public:
     void onUtcUpdateFromSlss(const UtcTimeInfo& utcInfo) {
@@ -263,6 +276,7 @@ public:
         }
     }
 };
+#endif
 
 static void sendUtcToChronyd(uint64_t utc) {
     struct TimeSample sample = { 0 };
@@ -331,9 +345,11 @@ void parseArguments(int& argc, char **argv) {
         case 'r':
             enableWriteRtc = true;
             break;
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
         case 'a':
             enableSlssUtc = true;
             break;
+#endif
         case 'h':
         default:
             printUsage(argv[0]);
@@ -342,6 +358,7 @@ void parseArguments(int& argc, char **argv) {
     }
 }
 
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
 static int startCv2xUtcReport() {
     bool statusUpdate = false;
     telux::common::ServiceStatus cv2xRadioMgrStatus =
@@ -384,6 +401,7 @@ static int startCv2xUtcReport() {
     }
     return 0;
 }
+#endif
 
 int main(int argc, char *argv[]) {
     sigset_t sigset;
@@ -491,6 +509,7 @@ int main(int argc, char *argv[]) {
 
     LOGI("Started providing fixes to chronyd\n");
 
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
     // start listening to CV2X UTC derived from SLSS if configured
     if (enableSlssUtc) {
         if (startCv2xUtcReport()) {
@@ -499,6 +518,7 @@ int main(int argc, char *argv[]) {
             LOGI("Started CV2X UTC report\n");
         }
     }
+#endif
 
     {
         std::unique_lock<std::mutex> lck(mtx);
@@ -508,9 +528,12 @@ int main(int argc, char *argv[]) {
     }
 
     locationManager->deRegisterListenerEx(myLocationListener);
+
+#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
     if (gCv2xRadioMgr and gCv2xListener) {
         gCv2xRadioMgr->deregisterListener(gCv2xListener);
     }
+#endif
 
     return 0;
 }

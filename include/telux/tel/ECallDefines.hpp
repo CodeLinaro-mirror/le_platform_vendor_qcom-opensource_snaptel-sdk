@@ -442,7 +442,8 @@ struct EcallConfig {
                                    GNSS information, in its internally generated MSD */
    uint32_t t2Timer;    /* T2 timer value in milliseconds, according to EN 16062:2015 standard */
    uint32_t t7Timer;    /* T7 timer value in milliseconds, according to EN 16062:2015 standard */
-   uint32_t t9Timer;    /* T9 timer value in milliseconds, according to EN 16062:2015 standard */
+   uint32_t t9Timer;    /* T9 timer value in milliseconds, according to EN 16062:2015 standard.
+                           Minimum value should be 3600000 */
    uint8_t msdVersion;  /* MSD version to be used by modem when it internally generates MSD for
                            transmission. Supported values are 1 and 2 only. This setting has no
                            relevance when an eCall is initiated using @ref ICallManager APIs, which

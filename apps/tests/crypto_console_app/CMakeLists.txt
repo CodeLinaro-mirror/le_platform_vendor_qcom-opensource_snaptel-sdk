@@ -29,7 +29,7 @@ add_executable(${TARGET_CRYPTO_CONSOLE_APP} ${TARGET_CRYPTO_CONSOLE_APP_SRCS})
 target_compile_options(${TARGET_CRYPTO_CONSOLE_APP} PRIVATE -std=c++11 -Wall -Werror)
 
 target_link_libraries(${TARGET_CRYPTO_CONSOLE_APP}
-    telux_crypt
+    telux_sec
     telux_common)
 
 install(TARGETS ${TARGET_CRYPTO_CONSOLE_APP}

@@ -85,6 +85,7 @@ extern "C" {
 #include "LoopbackMenu.hpp"
 #include "ToneMenu.hpp"
 #include "TransCodeMenu.hpp"
+#include "HpcmMenu.hpp"
 
 #include "AudioConsoleApp.hpp"
 #include "../../common/utils/Utils.hpp"
@@ -188,11 +189,14 @@ void AudioConsoleApp::initConsole() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Get Supported Devices", {},
         std::bind(&AudioConsoleApp::getSupportedDevices, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> hpcmMenuCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Hpcm", {},
+        std::bind(&AudioConsoleApp::hpcmMenu, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
     = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
-        toneMenuCommand, transCodeMenuCommand, getCalStatusCommand, getSupportedStreamsCommand,
-        getSupportedDevicesCommand };
+        toneMenuCommand, transCodeMenuCommand, getCalStatusCommand,
+        getSupportedStreamsCommand, getSupportedDevicesCommand , hpcmMenuCommand};
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ");
     voiceMenu_->init();
@@ -206,6 +210,8 @@ void AudioConsoleApp::initConsole() {
     toneMenu_->init();
     transCodeMenu_ = std::make_shared<TransCodeMenu>("TransCode menu", "transCode> ");
     transCodeMenu_->init();
+    hpcmMenu_ = std::make_shared<HpcmMenu>("Hpcm menu", "hpcm> ", audioManager_);
+    hpcmMenu_->init();
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -239,6 +245,11 @@ void AudioConsoleApp::toneMenu(std::vector<std::string> userInput) {
 void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
     transCodeMenu_->displayMenu();
     transCodeMenu_->mainLoop();
+}
+
+void AudioConsoleApp::hpcmMenu(std::vector<std::string> userInput) {
+    hpcmMenu_->displayMenu();
+    hpcmMenu_->mainLoop();
 }
 
 void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
@@ -360,6 +371,7 @@ void AudioConsoleApp::cleanup() {
     loopbackMenu_->cleanup();
     toneMenu_->cleanup();
     transCodeMenu_->cleanup();
+    hpcmMenu_->cleanup();
 }
 
 void AudioConsoleApp::setSystemReady() {
@@ -381,6 +393,9 @@ void AudioConsoleApp::setSystemReady() {
     }
     if (transCodeMenu_) {
         transCodeMenu_->setSystemReady();
+    }
+    if (hpcmMenu_) {
+        hpcmMenu_->setSystemReady();
     }
 }
 

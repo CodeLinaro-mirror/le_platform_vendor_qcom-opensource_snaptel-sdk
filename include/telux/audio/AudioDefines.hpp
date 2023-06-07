@@ -214,7 +214,7 @@ enum class StreamType {
     /** Used for playing audio, for example playing music and notifications */
     PLAY = 2,
 
-    /** Used for capturing audio, for example recording sound using a mic  */
+    /** Used for capturing audio, for example recording sound using a mic */
     CAPTURE = 3,
 
     /** Used for generating audio from a @ref DeviceDirection::RX device, which
@@ -246,17 +246,15 @@ enum class StreamDirection {
  * @{ */
 
 /**
- *  Used for an in-call audio usecase. Represents the direction of the
- *  audio data flow.
+ *  Used for an in-call playback/capture and HPCM usecases. Represents
+ *  the direction of the audio data flow.
  */
 enum class Direction {
 
-    /** Defines that playback should occur on a voice downlink
-     *  path (cellular network to a device) */
+    /** Indicates voice downlink path (cellular network to a device) */
     RX = 1,
 
-    /** Defines that playback should occur on voice uplink
-     *  path (device to a cellular network) */
+    /** Indicates voice uplink path (device to a cellular network) */
     TX = 2,
 };
 
@@ -413,54 +411,73 @@ struct AmrwbpParams : FormatParams {
 };
 
 /**
- *  Defines the parameters when creating an audio stream.
+ *  Defines the parameters when creating an audio stream. The required
+ *  parameters for a given use-case are as follows:
+ *
+ *  For regular voicecall:
+ *      type, slotId, channelTypeMask, format, deviceTypes
+ *  For hpcm-voicecall:
+ *      type, slotId, channelTypeMask, format, deviceTypes, enableHpcm
+ *  For ecall:
+ *      type, slotId, channelTypeMask, format, deviceTypes, ecnrMode
+ *
+ *  For playback:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes
+ *  For incall-playback and hpcm-playback:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths
+ *
+ *  For capture:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes
+ *  For incall-capture and hpcm-capture:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes, voicePaths
+ *
+ *  For loopback:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes
+ *
+ *  For tone-generation:
+ *      type, sampleRate, channelTypeMask, format, deviceTypes
  */
 struct StreamConfig {
 
-    /** Refer to @ref StreamType */
+    /** @ref StreamType - defines purpose of the stream */
     StreamType type;
 
-    /** @deprecated represents modem subscription ID (default set to 1).
-     *  Use the @ref StreamConfig::slotId field instead of this */
+    /** @deprecated, use the @ref StreamConfig::slotId field instead of this */
     int modemSubId = 1;
 
-    /** SlotId -- specifies the slot ID where the UICC card is inserted.
-     *  Used in conjuction with StreamType::VOICE_CALL only */
+    /** @ref SlotId - specifies the slot ID where the UICC card is inserted */
     SlotId slotId = INVALID_SLOT_ID;
 
-    /** Sample rate in Hz. Typical values:
-     *
-     *  - 8k
-     *  - 16k
-     *  - 32k
-     *  - 48k
-     *
-     *  For Bluetooth use-cases, supported values are 8k and 16k. Not used for
-     *  for voice call, compressed playback and tone generation.
-     */
+    /** Sample rate in Hz. Typical values are 8k, 16k, 32k and 48k.
+     *  For Bluetooth use-cases, supported values are 8k and 16k */
     uint32_t sampleRate;
 
-    /** Refer to @ref ChannelTypeMask */
+    /** @ref ChannelTypeMask - defines audio channels to use */
     ChannelTypeMask channelTypeMask;
 
-    /** Refer to @ref AudioFormat */
+    /** @ref AudioFormat - defines audio format */
     AudioFormat format;
 
     /** Defines the list of audio devices @ref DeviceType to use for this stream.
-     *  For StreamType::PLAY and StreamType::TONE_GENERATOR, a single sink device should be
-     *  specified. For StreamType::CAPTURE, a single source device should be specified. For
-     *  StreamType::VOICE_CALL and StreamType::LOOPBACK, both sink and source should be specified
-     *  with sink as the first device and source as the second. */
+     *  For StreamType::PLAY and StreamType::TONE_GENERATOR, a single sink device
+     *  should be specified. For StreamType::CAPTURE, a single source device should
+     *  be specified. For StreamType::VOICE_CALL and StreamType::LOOPBACK, both
+     *  sink and source should be specified with sink as the first device and
+     *  source as the second. */
     std::vector<DeviceType> deviceTypes;
 
-    /** For an in-call audio usecase, this represents the voice path direction @ref Direction */
+    /** For an in-call and hpcm audio usecase, this represents the voice path direction
+     *  @ref Direction */
     std::vector<Direction> voicePaths;
 
-    /** Refer to @ref FormatParams */
+    /** @ref FormatParams - defines compressed playback format */
     FormatParams *formatParams;
 
-    /** Refer to @ref EcnrMode */
+    /** @ref EcnrMode - true to enable ECNR on an ecall */
     EcnrMode ecnrMode = EcnrMode::DISABLE;
+
+    /** True - if voice call is used with HPCM, false otherwise */
+    bool enableHpcm = false;
 };
 
 /**

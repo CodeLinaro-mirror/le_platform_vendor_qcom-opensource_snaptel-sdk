@@ -235,7 +235,6 @@ void DataProfileMenu::getProfileParamsFromUser() {
     Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
         static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
 
-    std::cin.get();
     std::string profileName;
     std::cout << "Enter profileName : ";
     std::getline(std::cin, profileName, delimiter);
@@ -258,7 +257,6 @@ void DataProfileMenu::getProfileParamsFromUser() {
     std::cout << "Enter Authentication Protocol Type : \n0-None \n1-PAP \n2-CHAP"
                  "\n3-PAP_CHAP\n";
     std::cin >> authType;
-    Utils::validateInput(authType);
     Utils::validateInput(authType, {static_cast<int>(telux::data::AuthProtocolType::AUTH_NONE),
         static_cast<int>(telux::data::AuthProtocolType::AUTH_PAP),
         static_cast<int>(telux::data::AuthProtocolType::AUTH_CHAP),
@@ -433,7 +431,6 @@ void DataProfileMenu::queryProfile(std::vector<std::string> inputCommand) {
     Utils::validateInput(techPref, {static_cast<int>(telux::data::TechPreference::TP_3GPP),
         static_cast<int>(telux::data::TechPreference::TP_3GPP2)});
 
-    std::cin.get();
     std::string profileName;
     std::cout << "Enter profileName: ";
     std::getline(std::cin, profileName, delimiter);

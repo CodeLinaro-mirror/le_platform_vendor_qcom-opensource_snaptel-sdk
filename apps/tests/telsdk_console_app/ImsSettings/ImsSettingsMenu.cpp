@@ -150,7 +150,6 @@ void ImsSettingsMenu::setImsServiceConfig(std::vector<std::string> userInput) {
       SlotId slotId = SlotId::DEFAULT_SLOT_ID;
       if (DeviceConfig::isMultiSimSupported()) {
          slotId = static_cast<SlotId>(Utils::getValidSlotId());
-         std::cin.get();
       }
       telux::tel::ImsServiceConfig config{};
       std::string configSelection = "";

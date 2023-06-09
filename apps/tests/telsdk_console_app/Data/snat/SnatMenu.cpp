@@ -143,7 +143,6 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string privIpAddr;
-    std::cin.get();
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
@@ -158,7 +157,6 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     Utils::validateInput(globPort);
 
     std::string protoStr;
-    std::cin.get();
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 
@@ -198,7 +196,6 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string privIpAddr;
-    std::cin.get();
     std::cout << "Enter Private IP address: ";
     std::getline(std::cin, privIpAddr, delimiter);
 
@@ -213,7 +210,6 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     Utils::validateInput(globPort);
 
     std::string protoStr;
-    std::cin.get();
     std::cout << "Enter Protocol (TCP, UDP, ICMP, ESP): ";
     std::getline(std::cin, protoStr, delimiter);
 

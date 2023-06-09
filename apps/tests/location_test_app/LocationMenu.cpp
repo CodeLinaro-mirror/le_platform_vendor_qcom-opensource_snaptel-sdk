@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -66,6 +66,8 @@
 #include <chrono>
 #include <future>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <memory>
 #include <sstream>
 
@@ -78,6 +80,8 @@
 #include "LocationUtils.hpp"
 
 const int DEFAULT_UNKNOWN = 0;
+#define MERKLE_XML_PATH "/etc/OSNMA_MerkleTree.xml"
+
 using namespace telux::common;
 
 LocationMenu::LocationMenu(std::string appName, std::string cursor)
@@ -361,6 +365,16 @@ int LocationMenu::init() {
            "De-Register Configuration Listener", {}, std::bind(&LocationMenu::
                deRegisterConfigListener, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> injectMerkleTreeInformation =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("41",
+           "Inject Merkle Tree Information", {}, std::bind(&LocationMenu::
+               injectMerkleTreeInformation, this, std::placeholders::_1)));
+
+    std::shared_ptr<ConsoleAppCommand> configureOsnma =
+       std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("42",
+           "Configure OSNMA", {}, std::bind(&LocationMenu::
+               configureOsnma, this, std::placeholders::_1)));
+
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListGnssSubMenu
         = {startDetailedReportsCommand, startDetailedEngineReportsCommand, startBasicReportsCommand,
         stopReportsCommand, enableReportLogsCommand, enableDisableTunc, enableDisablePace,
@@ -373,7 +387,8 @@ int LocationMenu::init() {
         configureEngineState, provideConsentForTerrestrialPositioning,
         requestTerrestrialPositioning, cancelTerrestrialPositioning, configureNmeaSentence,
         configureAllNmeaSentence, configureEngineIntegrityRisk, getCapabilities,
-        configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener};
+        configureXtraParams, requestXtraStatus, registerConfigListener, deRegisterConfigListener,
+        injectMerkleTreeInformation, configureOsnma};
 
    addCommands(commandsListGnssSubMenu);
    ConsoleApp::displayMenu();
@@ -1814,6 +1829,58 @@ void LocationMenu::deRegisterConfigListener(std::vector<std::string> userInput) 
             std::cout << __FUNCTION__ << " De-Register Listener Failed" << std::endl;
         } else {
             std::cout << __FUNCTION__ << " De-Register Listener Success" << std::endl;
+        }
+    }
+}
+
+void LocationMenu::injectMerkleTreeInformation(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        std::ifstream configFileStream;
+        configFileStream.open(MERKLE_XML_PATH);
+        if(configFileStream.is_open()) {
+            std::string line;
+            std::string merkleTreeStr = "";
+            while(std::getline(configFileStream, line)) {
+                merkleTreeStr += line;
+            }
+            std::cout << "XML buffer size " << merkleTreeStr.size() << "\n";
+            std::cout << "XML Content-\n" << merkleTreeStr << "\n";
+
+            myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>
+                ("Inject Merkle Tree Information");
+            telux::common::Status status = locationConfigurator_->injectMerkleTreeInformation(
+                merkleTreeStr, std::bind(&MyLocationCommandCallback::commandResponse,
+                    myLocCmdResponseCb_, std::placeholders::_1));
+            if (status == telux::common::Status::FAILED) {
+                std::cout << "FAILED" << std::endl;
+            }
+            configFileStream.close();
+        } else {
+            std::cout << "Failed to open the file\n";
+        }
+    }
+}
+
+void LocationMenu::configureOsnma(std::vector<std::string> userInput) {
+    if(locationConfigurator_) {
+        char delimiter = '\n';
+        std::string option;
+        std::cout << "Enable Osnma feature (y/n): ";
+        std::getline(std::cin, option, delimiter);
+        bool enable = false;
+        if(option == "Y" || option == "y") {
+            enable = true;
+        } else {
+            enable = false;
+        }
+
+        myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
+            "Configure OSNMA");
+        telux::common::Status status = locationConfigurator_->configureOsnma(
+            enable, std::bind(&MyLocationCommandCallback::commandResponse,
+                myLocCmdResponseCb_, std::placeholders::_1));
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << __FUNCTION__ << " Command Failed" << std::endl;
         }
     }
 }

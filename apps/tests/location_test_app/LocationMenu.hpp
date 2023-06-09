@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -135,6 +135,8 @@ public:
    void requestXtraStatus(std::vector<std::string> userInput);
    void registerConfigListener(std::vector<std::string> userInput);
    void deRegisterConfigListener(std::vector<std::string> userInput);
+   void injectMerkleTreeInformation(std::vector<std::string> userInput);
+   void configureOsnma(std::vector<std::string> userInput);
    int enableReportLogsUtility();
    void enableReportLogs(std::vector<std::string> userInput);
    void enableBasicLocationReportLogs();

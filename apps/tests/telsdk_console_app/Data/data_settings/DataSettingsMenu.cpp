@@ -637,3 +637,15 @@ void DataSettingsMenu::onWwanConnectivityConfigChange(SlotId slotId, bool isConn
     }
     std::cout << std::endl << std::endl;
 }
+
+void DataSettingsMenu::onDdsChange(DdsInfo currentState) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " ** DDS sub has changed ** \n";
+
+    std::cout <<  "DDS Info : " << "Slot_Id: " << currentState.slotId << std::endl;
+        std::string type = (currentState.type == DdsType::PERMANENT) ?
+            "Permamnent" : "Temporary";
+        std::cout << "Switch Type: " << type << std::endl;
+
+    std::cout << std::endl << std::endl;
+}

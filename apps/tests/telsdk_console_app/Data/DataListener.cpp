@@ -230,4 +230,15 @@ void DataListener::logDataCallDetails(const std::shared_ptr<telux::data::IDataCa
              << '\n';
 }
 
-
+void DataListener::onTrafficFlowTemplateChange(
+    const std::shared_ptr<telux::data::IDataCall> &dataCall,
+    const std::vector<std::shared_ptr<telux::data::TftChangeInfo>> &tfts) {
+   for (auto tft:tfts) {
+      std::cout << " ----------------------------------------------------------\n";
+      std::cout << " ** TFT Details **\n";
+      std::cout << " Flow State: "
+         << DataUtils::flowStateEventToString(tft->stateChange) << std::endl;
+      DataUtils::logQosDetails(tft->tft);
+      std::cout << " ----------------------------------------------------------\n\n";
+   }
+}

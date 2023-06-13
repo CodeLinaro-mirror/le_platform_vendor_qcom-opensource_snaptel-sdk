@@ -27,39 +27,10 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  *
- *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <iostream>
@@ -373,4 +344,252 @@ bool DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo) {
       backhaulInfo.profileId = profileId;
       return false;
     }
+}
+
+std::string DataUtils::flowStateEventToString(telux::data::QosFlowStateChangeEvent state) {
+   switch(state) {
+      case telux::data::QosFlowStateChangeEvent::ACTIVATED:
+         return "ACTIVATED";
+      case telux::data::QosFlowStateChangeEvent::MODIFIED:
+         return "MODIFIED";
+      case telux::data::QosFlowStateChangeEvent::DELETED:
+         return "DELETED";
+      default: {
+         return "Unknown";
+      }
+   }
+}
+
+std::string DataUtils::trafficClassToString(telux::data::IpTrafficClassType tc) {
+   switch(tc) {
+      case telux::data::IpTrafficClassType::CONVERSATIONAL:
+         return "CONVERSATIONAL";
+      case telux::data::IpTrafficClassType::STREAMING:
+         return "STREAMING";
+      case telux::data::IpTrafficClassType::INTERACTIVE:
+         return "INTERACTIVE";
+      case telux::data::IpTrafficClassType::BACKGROUND:
+         return "BACKGROUND";
+      default: {
+         return "UNKNOWN";
+      }
+   }
+}
+
+void DataUtils::printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter) {
+
+   telux::data::IPv4Info ipv4Info_ = filter->getIPv4Info();
+   if(!ipv4Info_.srcAddr.empty()) {
+      std::cout << "\tIPv4 Src Address : " << ipv4Info_.srcAddr << std::endl;
+   }
+   if(!ipv4Info_.srcSubnetMask.empty()) {
+      std::cout << "\tIPv4 Src Subnet Mask : " << ipv4Info_.srcSubnetMask << std::endl;
+   }
+   if(!ipv4Info_.destAddr.empty()) {
+      std::cout << "\tIPv4 Dest Address : " << ipv4Info_.destAddr << std::endl;
+   }
+   if(!ipv4Info_.destSubnetMask.empty()) {
+      std::cout << "\tIPv4 Dest Subnet Mask : " << ipv4Info_.destSubnetMask << std::endl;
+   }
+   if(ipv4Info_.value > 0) {
+      std::cout << "\tIPv4 Type of service value : " << (int)ipv4Info_.value << std::endl;
+   }
+   if(ipv4Info_.mask > 0) {
+      std::cout << "\tIPv4 Type of service mask : " << (int)ipv4Info_.mask << std::endl;
+   }
+
+   telux::data::IPv6Info ipv6Info_ = filter->getIPv6Info();
+   if(!ipv6Info_.srcAddr.empty()) {
+      std::cout << "\tIPv6 Src Address : " << ipv6Info_.srcAddr << std::endl;
+   }
+   if(!ipv6Info_.destAddr.empty()) {
+      std::cout << "\tIPv6 Dest Address : " << ipv6Info_.destAddr << std::endl;
+   }
+   if(ipv6Info_.val > 0) {
+      std::cout << "\tIPv6 Traffic class value : " << (int)ipv6Info_.val << std::endl;
+   }
+   if(ipv6Info_.mask > 0) {
+      std::cout << "\tIPv6 Traffic class mask : " << (int)ipv6Info_.mask << std::endl;
+   }
+   if(ipv6Info_.flowLabel > 0) {
+      std::cout << "\tIPv6 Flow label : " << (int)ipv6Info_.flowLabel << std::endl;
+   }
+
+   telux::data::IpProtocol proto = filter->getIpProtocol();
+   switch (proto) {
+      case PROTO_TCP: {
+         auto tcpFilter = std::dynamic_pointer_cast<telux::data::ITcpFilter>(filter);
+         if (tcpFilter) {
+            telux::data::TcpInfo portInfo_ = tcpFilter->getTcpInfo();
+            if (portInfo_.src.port > 0) {
+               std::cout << "\tTCP Src Port: " << portInfo_.src.port << std::endl;
+            }
+            if (portInfo_.src.range > 0) {
+               std::cout << "\tTCP Src Range: " << portInfo_.src.range << std::endl;
+            }
+            if (portInfo_.dest.port > 0) {
+               std::cout << "\tTCP Dest Port: " << portInfo_.dest.port << std::endl;
+            }
+            if (portInfo_.dest.range > 0) {
+               std::cout << "\tTCP Dest Range: " << portInfo_.dest.range << std::endl;
+            }
+         }
+      } break;
+      case PROTO_UDP: {
+         auto udpFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(filter);
+         if (udpFilter) {
+            telux::data::UdpInfo portInfo_ = udpFilter->getUdpInfo();
+            if (portInfo_.src.port > 0) {
+               std::cout << "\tUDP Src Port: " << portInfo_.src.port << std::endl;
+            }
+            if (portInfo_.src.range > 0) {
+               std::cout << "\tUDP Src Range: " << portInfo_.src.range << std::endl;
+            }
+            if (portInfo_.dest.port > 0) {
+               std::cout << "\tUDP Dest Port: " << portInfo_.dest.port << std::endl;
+            }
+            if (portInfo_.dest.range > 0) {
+               std::cout << "\tUDP Dest Range: " << portInfo_.dest.range << std::endl;
+            }
+         }
+      } break;
+      case PROTO_TCP_UDP: {
+         auto tcpFilter = std::dynamic_pointer_cast<telux::data::ITcpFilter>(filter);
+         if (tcpFilter) {
+            telux::data::TcpInfo portInfo_ = tcpFilter->getTcpInfo();
+            if (portInfo_.src.port > 0) {
+               std::cout << "\tTCP Src Port: " << portInfo_.src.port << std::endl;
+            }
+            if (portInfo_.src.range > 0) {
+               std::cout << "\tTCP Src Range: " << portInfo_.src.range << std::endl;
+            }
+            if (portInfo_.dest.port > 0) {
+               std::cout << "\tTCP Dest Port: " << portInfo_.dest.port << std::endl;
+            }
+            if (portInfo_.dest.range > 0) {
+               std::cout << "\tTCP Dest Range: " << portInfo_.dest.range << std::endl;
+            }
+         }
+         auto udpFilter = std::dynamic_pointer_cast<telux::data::IUdpFilter>(filter);
+         if (udpFilter) {
+            telux::data::UdpInfo portInfo_ = udpFilter->getUdpInfo();
+            if (portInfo_.src.port > 0) {
+               std::cout << "\tUDP Src Port: " << portInfo_.src.port << std::endl;
+            }
+            if (portInfo_.src.range > 0) {
+               std::cout << "\tUDP Src Range: " << portInfo_.src.range << std::endl;
+            }
+            if (portInfo_.dest.port > 0) {
+               std::cout << "\tUDP Dest Port: " << portInfo_.dest.port << std::endl;
+            }
+            if (portInfo_.dest.range > 0) {
+               std::cout << "\tUDP Dest Range: " << portInfo_.dest.range << std::endl;
+            }
+         }
+      } break;
+      default: {
+         std::cout << " Invalid XPort Protocol" <<std::endl;
+      }
+   }
+}
+
+void DataUtils::logQosDetails(
+    std::shared_ptr<telux::data::TrafficFlowTemplate> &tft) {
+   std::cout << " QoS Identifier : " << tft->qosId << std::endl;
+
+   if (tft->mask.test(telux::data::QosFlowMaskType::MASK_FLOW_TX_GRANTED) &&
+       (tft->txGrantedFlow.mask.test(
+            telux::data::QosIPFlowMaskType::MASK_IP_FLOW_TRF_CLASS) ||
+        tft->txGrantedFlow.mask.test(
+            telux::data::QosIPFlowMaskType::MASK_IP_FLOW_DATA_RATE_MIN_MAX))) {
+      std::cout << " TX QOS FLow Granted: " << std::endl;
+
+      if (tft->txGrantedFlow.mask.test(
+              telux::data::QosIPFlowMaskType::MASK_IP_FLOW_TRF_CLASS)) {
+         std::cout << "\tIP FLow Traffic class: "
+                   << DataUtils::trafficClassToString(
+                          tft->txGrantedFlow.tfClass)
+                   << std::endl;
+      }
+      if (tft->txGrantedFlow.mask.test(
+              telux::data::QosIPFlowMaskType::MASK_IP_FLOW_DATA_RATE_MIN_MAX)) {
+         std::cout << "\tMaximum required data rate (bits per second): "
+                   << tft->txGrantedFlow.dataRate.maxRate << std::endl;
+         std::cout << "\tMinimum required data rate (bits per second): "
+                   << tft->txGrantedFlow.dataRate.minRate << std::endl;
+      }
+   }
+
+   if (tft->mask.test(telux::data::QosFlowMaskType::MASK_FLOW_RX_GRANTED) &&
+       (tft->rxGrantedFlow.mask.test(
+            telux::data::QosIPFlowMaskType::MASK_IP_FLOW_TRF_CLASS) ||
+        tft->rxGrantedFlow.mask.test(
+            telux::data::QosIPFlowMaskType::MASK_IP_FLOW_DATA_RATE_MIN_MAX))) {
+      std::cout << " RX QOS FLow Granted: " << std::endl;
+
+      if (tft->rxGrantedFlow.mask.test(
+              telux::data::QosIPFlowMaskType::MASK_IP_FLOW_TRF_CLASS)) {
+         std::cout << "\tIP FLow Traffic class: "
+                   << DataUtils::trafficClassToString(
+                          tft->rxGrantedFlow.tfClass)
+                   << std::endl;
+      }
+      if (tft->rxGrantedFlow.mask.test(
+              telux::data::QosIPFlowMaskType::MASK_IP_FLOW_DATA_RATE_MIN_MAX)) {
+         std::cout << "\tMaximum required data rate (bits per second): "
+                   << tft->rxGrantedFlow.dataRate.maxRate << std::endl;
+         std::cout << "\tMinimum required data rate (bits per second): "
+                   << tft->rxGrantedFlow.dataRate.minRate << std::endl;
+      }
+   }
+
+   if (tft->mask.test(telux::data::QosFlowMaskType::MASK_FLOW_TX_FILTERS)) {
+      for (uint32_t i = 0; i < tft->txFiltersLength; i++) {
+         for (auto filter : tft->txFilters[i].filter) {
+            telux::data::IpProtocol proto = filter->getIpProtocol();
+            std::string protocol = "TCP";
+            if (PROTO_UDP == proto) {
+               protocol = "UDP";
+            }
+            std::cout << " " << protocol << " TX Filter: " << (i + 1)
+                      << std::endl;
+            std::cout << "\tFilter ID: " << tft->txFilters[i].filterId
+                      << std::endl;
+            std::cout << "\tFilter Precedence: "
+                      << tft->txFilters[i].filterPrecedence << std::endl;
+            if (filter) {
+               std::cout << "\tIP Family: "
+                         << DataUtils::ipFamilyTypeToString(
+                                filter->getIpFamily())
+                         << std::endl;
+               DataUtils::printFilterDetails(filter);
+            }
+         }
+      }
+   }
+
+   if (tft->mask.test(telux::data::QosFlowMaskType::MASK_FLOW_RX_FILTERS)) {
+      for (uint32_t i = 0; i < tft->rxFiltersLength; i++) {
+         for (auto filter : tft->rxFilters[i].filter) {
+            telux::data::IpProtocol proto = filter->getIpProtocol();
+            std::string protocol = "TCP";
+            if (PROTO_UDP == proto) {
+               protocol = "UDP";
+            }
+            std::cout << " " << protocol << " RX Filter: " << (i + 1)
+                      << std::endl;
+            std::cout << "\tFilter ID: " << tft->rxFilters[i].filterId
+                      << std::endl;
+            std::cout << "\tFilter Precedence: "
+                      << tft->rxFilters[i].filterPrecedence << std::endl;
+            if (filter) {
+               std::cout << "\tIP Family: "
+                         << DataUtils::ipFamilyTypeToString(
+                                filter->getIpFamily())
+                         << std::endl;
+               DataUtils::printFilterDetails(filter);
+            }
+         }
+      }
+   }
 }

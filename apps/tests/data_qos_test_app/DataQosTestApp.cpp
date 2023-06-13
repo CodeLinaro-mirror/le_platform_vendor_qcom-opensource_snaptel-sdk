@@ -502,6 +502,14 @@ int main(int argc, char ** argv) {
       return -1;
    }
 
+   std::cout
+       << "\n#################################################\n"
+       << "Warning! This test application will be deprecated and no longer get "
+          "updates.\nIts functionality will be moved into telsdk_console_app "
+          "under Data - Data_Connection_Management_Menu.\n\n"
+       << " Limitations of current app include \n"
+       << "  * If dual sim is enabled does not support opertaion on second slot\n"
+       << "#################################################\n" << std::endl;
    std::vector<std::string> supplementaryGrps{"system"};
    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
    if (rc == -1) {

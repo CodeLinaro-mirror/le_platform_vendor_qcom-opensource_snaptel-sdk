@@ -76,6 +76,8 @@ class DataSettingsMenu : public ConsoleApp ,
     void setMacSecState(std::vector<std::string> inputCommand);
     void requestMacSecState(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
+    void onDdsChange(DdsInfo currentState) override;
+
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);
 

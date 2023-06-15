@@ -338,7 +338,7 @@ int EtsiApplication::transmit(uint8_t index, std::shared_ptr<msg_contents> mc, i
 int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
     std::shared_ptr<msg_contents> mc = nullptr;
     int ret;
-
+    uint64_t timestamp = 0;
     if (isRxSim) {
         mc = rxSimMsg;
     } else {
@@ -358,6 +358,7 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
     GnData_t &gd = *(static_cast<GnData_t *>(mc->gn));
 
     ret = radioReceives[0].receive(mc->abuf.data, ABUF_LEN-ABUF_HEADROOM);
+    timestamp = timestamp_now();
     // Make sure packet is successfully received
     if(ret < MIN_PACKET_LEN || ret > MAX_PACKET_LEN || mc == nullptr){
         if(appVerbosity > 4){
@@ -403,7 +404,8 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
         if (decode_msg(mc.get()) >= 0) {
             mc->decoded = true;
         }
-        ApplicationBase::writeLog(mc, index, 0, false, TransmitType::EVENT, mc->decoded);
+
+        ApplicationBase::writeLog(mc, index, 0, false, TransmitType::EVENT, mc->decoded, timestamp);
     }
     return ret;
 }

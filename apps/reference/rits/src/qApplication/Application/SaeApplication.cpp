@@ -225,7 +225,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     CongestionControlData congestionControlData_;
     bsm_value_t* rvBsm;
     uint32_t l2SrcAddr = 0;
-
+    uint64_t timestamp = 0;
     // make sure that the threadMc is initialized
     if (threadMc == nullptr) {
         if (ldm == nullptr) {
@@ -259,7 +259,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                             sourceMacAddr, macAddrLen);
         sem_post(&rx_sem);
     }
-
+    // actual moment that a packet has been received
+    timestamp = timestamp_now();
     // Make sure packet is successfully received
     if (ret < MIN_PACKET_LEN || ret > MAX_PACKET_LEN || threadMc == nullptr) {
         if (appVerbosity > 4) {
@@ -397,7 +398,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         totalRxSuccessPerSecond++;
         sem_post(&this->log_sem);
 
-        /*    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
+        /*  uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
             unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
             unsigned int id;            // 32 bit identifier
             unsigned int secMark_ms;    // No of milliseconds in a minute
@@ -415,7 +416,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             signed int   SteeringWheelAngle;        // value (in degree) / 1.5
             signed int   AccelLon_cm_per_sec_squared;       // value (in m/sec2) / 0.01
         */
-        if(this->configuration.enableCongCtrl){
+        if(this->configuration.enableCongCtrl && this->congCtrlInitialized){
             /* If congestion control is enabled, we will pass the contents
                 of the decoded/verified BSM to the cong ctrl library */
             rvBsm = (bsm_value_t*)threadMc.get()->j2735_msg;
@@ -432,8 +433,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     } else {
         decFail++;
     }
+
     ApplicationBase::writeLog(threadMc, index, l2SrcAddr, false, TransmitType::EVENT,
-        (ret >= 0) ? true : false);
+        (ret >= 0) ? true : false, timestamp);
 
     return ret;
 }

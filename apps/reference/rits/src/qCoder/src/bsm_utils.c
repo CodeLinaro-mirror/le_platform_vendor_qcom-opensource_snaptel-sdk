@@ -287,13 +287,17 @@ void print_summary_RV(msg_contents *mc)
         print_bsm_summary_RV(mc);
 }
 
-void writeGeneralLog(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodicityMs,
-    bool validPkt, uint32_t RVsInRange, const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
-    float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr, uint64_t txInterval,
-    uint32_t l2SrcAddr){
+void writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FILE *myfp,
+    bool isTx, uint64_t periodicityMs, bool validPkt, uint32_t RVsInRange,
+    const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
+    float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr,
+    uint64_t txInterval, uint32_t l2SrcAddr){
     if(!mc->j2735_msg){
         printf("Null j2735 msg\n");
         return;
+    }
+    if(!tmpLogStr){
+        printf("Invalid input buffer\n");
     }
     char wall_time[100];
     get_wall_time(wall_time);
@@ -322,7 +326,6 @@ void writeGeneralLog(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodici
     loggings.lataccl = bs->AccelLat_cm_per_sec_squared / 100.0; // in m/sec2
     loggings.vertaccl = bs->AccelVert_two_centi_gs / 50.0; // in G steps
     loggings.yaw = bs->AccelYaw_centi_degrees_per_sec / 100.0; // in deg/sec
-
     loggings.antilock_brake_status = bs->brakes.bits.antilock_brake_status;
     loggings.brake_boost_applied = bs->brakes.bits.brake_boost_applied;
     loggings.stability_control_status = bs->brakes.bits.stability_control_status;
@@ -331,19 +334,21 @@ void writeGeneralLog(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodici
     memcpy(&loggings.events, &bs->events, sizeof(vehicleeventflags_ut));
 
     if(isTx){
-        fprintf(myfp,
-        "%s,%"PRIu64",%"PRIu64",%s,,%"PRIu8",%lf,%"PRIu64",%d,%d,,%d,%f,%f,%f,%f,%f,%f,%f,",
+        snprintf(tmpLogStr, maxBufSize,
+        "%s,%"PRIu64",%"PRIu64",%s,,%"PRIu64",%lf,%"PRIu64",%d,%d,0,%d,%f,%f,%f,%f,%f,%f,%f,",
             timeStamp, realworldTimeNow, loggings.time_mono,
             "Tx", cbr, get_CPU_percentage(monotonicTime),
             loggings.txInterval, loggings.MsgCount, loggings.id,
-            loggings.secMark_ms, loggings.lat, loggings.lon, loggings.semiMajorDev, loggings.speed,
+            loggings.secMark_ms, loggings.lat, loggings.lon,
+            loggings.semiMajorDev, loggings.speed,
             loggings.heading, loggings.lonaccl, loggings.lataccl);
     }else{
-        fprintf(myfp,
-        "%s,%"PRIu64",%"PRIu64",%s,%08x,,,,%d,%d,,%d,%f,%f,%f,%f,%f,%f,%f,",
+        snprintf(tmpLogStr, maxBufSize,
+        "%s,%"PRIu64",%"PRIu64",%s,%08x,0,0,0,%d,%d,0,%d,%f,%f,%f,%f,%f,%f,%f,",
             timeStamp, realworldTimeNow, loggings.time_mono,
             "Rx", l2SrcAddr, loggings.MsgCount, loggings.id,
-            loggings.secMark_ms, loggings.lat, loggings.lon, loggings.semiMajorDev, loggings.speed,
+            loggings.secMark_ms, loggings.lat, loggings.lon,
+            loggings.semiMajorDev, loggings.speed,
             loggings.heading, loggings.lonaccl, loggings.lataccl);
     }
 }
@@ -386,8 +391,9 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
     loggings.id = bs->id;
     loggings.secMark_ms = bs->secMark_ms;
 
-    fprintf(myfp, "%s,%"PRIu64",%"PRIu64",%s,%d,%.2f,", wall_time, loggings.timestamp_in_message,
-        monotonicTime, isTx ? "Tx" : "Rx", cbr, get_CPU_percentage(monotonicTime));
+    fprintf(myfp, "%s,%"PRIu64",%"PRIu64",%s,%d,%.2f,", wall_time,
+        loggings.timestamp_in_message, monotonicTime, isTx ? "Tx" : "Rx",
+        cbr, get_CPU_percentage(monotonicTime));
 
     loggings.lat =  bs->Latitude / 10000000.0;   // in degrees
     loggings.lon = bs->Longitude / 10000000.0;  // in degrees
@@ -412,7 +418,8 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
 
     fprintf(myfp, "%d,%04x,%d,%f,%f,%f,%f,%f,%f,%s,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,",
         loggings.MsgCount,
-        loggings.id, loggings.secMark_ms, loggings.lat, loggings.lon, loggings.ele, loggings.semimajoracc,
+        loggings.id, loggings.secMark_ms, loggings.lat, loggings.lon,
+        loggings.ele, loggings.semimajoracc,
         loggings.semiminoracc, loggings.orien, "", loggings.speed, loggings.heading,
         loggings.steer, loggings.lonaccl,
         loggings.lataccl, loggings.vertaccl, loggings.yaw,

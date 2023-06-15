@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -1071,6 +1071,7 @@ struct SvBlackListInfo {
      * BDS SV id range: 201 to 237
      * GAL SV id range: 301 to 336
      * SBAS SV id range: 120 to 158 and 183 to 191
+     * NAVIC SV id range: 401 to 414
      */
     uint32_t              svId;
 };

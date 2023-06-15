@@ -209,7 +209,6 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     L2tpTunnelConfig l2tpTunnelConfig;
     char delimiter = '\n';
-    std::cin.get();
     std::cout << "Enter interface name to create L2TP tunnel on: ";
     std::getline(std::cin, l2tpTunnelConfig.locIface, delimiter);
 
@@ -227,13 +226,11 @@ void L2tpMenu::addTunnel(std::vector<std::string> inputCommand) {
     Utils::validateInput(tempInt);
     if (4 == tempInt) {
         l2tpTunnelConfig.ipType = telux::data::IpFamilyType::IPV4;
-        std::cin.get();
         std::cout << "Enter peer ipv4 address : ";
         std::getline(std::cin, l2tpTunnelConfig.peerIpv4Addr, delimiter);
     }
     else if (6 == tempInt) {
         l2tpTunnelConfig.ipType = telux::data::IpFamilyType::IPV6;
-        std::cin.get();
         std::cout << "Enter peer ipv6 address : ";
         std::getline(std::cin, l2tpTunnelConfig.peerIpv6Addr, delimiter);
     }

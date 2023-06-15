@@ -334,7 +334,6 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
     std::cin >> option;
     Utils::validateInput(option);
     if (option == 1) {
-        std::cin.get();
         std::cout << "Enter IPv4 Source address: ";
         std::getline(std::cin, srcAddr, delimiter);
         std::cout << "Enter IPv4 Source subnet mask: ";
@@ -345,7 +344,6 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
     std::cin >> option;
     Utils::validateInput(option);
     if (option == 1) {
-        std::cin.get();
         std::cout << "Enter IPv4 Destination address: ";
         std::getline(std::cin, destAddr, delimiter);
         std::cout << "Enter IPv4 Destination subnet mask: ";
@@ -356,7 +354,6 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
     std::cin >> option;
     Utils::validateInput(option);
     if (option == 1) {
-        std::cin.get();
         std::cout << "Enter Type of service value [0 to 255]: ";
         std::getline(std::cin, tosVal, delimiter);
         std::cout << "Enter Type of service mask [0 to 255]: ";
@@ -402,26 +399,22 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     std::cin >> option;
     Utils::validateInput(option);
     if (option == 1) {
-        std::cin.get();
         std::cout << "Enter IPv6 Source address: ";
         std::getline(std::cin, srcAddr, delimiter);
         std::cout << "Enter IPv6 Source prefix length: ";
         std::cin >> srcPrefixLen;
         Utils::validateInput(srcPrefixLen);
-        std::cin.get();
     }
 
     std::cout << "Do you want to enter IPv6 destination address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
     Utils::validateInput(option);
     if (option == 1) {
-        std::cin.get();
         std::cout << "Enter IPv6 Destination address: ";
         std::getline(std::cin, destAddr, delimiter);
         std::cout << "Enter IPv6 Destination prefix length: ";
         std::cin >> dstPrefixLen;
         Utils::validateInput(dstPrefixLen);
-        std::cin.get();
     }
 
     std::cout << "Do you want to enter IPV6 Traffic Class value and mask: [1-YES 0-NO]:";
@@ -476,7 +469,6 @@ void FirewallMenu::getProtocolParamsFromUser(std::string proto, std::string &src
     std::cin >> option;
     Utils::validateInput(option);
     if (option == 1) {
-        std::cin.get();
         std::cout << "Enter "<< proto <<" source port: ";
         std::getline(std::cin, srcPort, delimiter);
         std::cout << "Enter "<< proto <<" source range: ";
@@ -486,7 +478,6 @@ void FirewallMenu::getProtocolParamsFromUser(std::string proto, std::string &src
     std::cin >> option;
     Utils::validateInput(option);
     if (option == 1) {
-        std::cin.get();
         std::cout << "Enter "<< proto <<" destination port: ";
         std::getline(std::cin, destPort, delimiter);
         std::cout << "Enter "<< proto <<" destination range: ";
@@ -625,7 +616,6 @@ std::vector<std::shared_ptr<IFirewallEntry>> FirewallMenu::configureNewFirewallE
 
     char delimiter = '\n';
     std::string protoStr;
-    std::cin.get();
     if (ipFamilyType == 4) {
         std::cout << "Enter Protocol (TCP, UDP, TCP_UDP, ICMP, ESP): ";
     } else if (ipFamilyType == 6) {
@@ -935,7 +925,6 @@ void FirewallMenu::enableDmz(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     std::string ipAddr;
-    std::cin.get();
     std::cout << "Enter IP address: ";
     std::getline(std::cin, ipAddr, delimiter);
 
@@ -965,7 +954,6 @@ void FirewallMenu::disableDmz(std::vector<std::string> inputCommand) {
 
     char delimiter = '\n';
     int ipType;
-    std::cin.get();
     std::cout << "Enter IP Type (4-IPv4, 6-IPv6): ";
     std::cin >> ipType;
     Utils::validateInput(ipType, {static_cast<int>(telux::data::IpFamilyType::IPV4),

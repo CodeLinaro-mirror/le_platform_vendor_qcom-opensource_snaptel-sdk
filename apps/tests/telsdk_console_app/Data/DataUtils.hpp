@@ -71,6 +71,9 @@
 #include <telux/data/ServingSystemManager.hpp>
 #include "../../../common/utils/Utils.hpp"
 
+#define PROTO_TCP 6
+#define PROTO_UDP 17
+#define PROTO_TCP_UDP 253
 class DataUtils {
 public:
 
@@ -91,6 +94,10 @@ public:
    static std::string drbStatusToString(telux::data::DrbStatus stat);
    static std::string serviceRatToString(telux::data::NetworkRat rat);
    static std::string vlanInterfaceToString(telux::data::InterfaceType interface);
+   static std::string trafficClassToString(telux::data::IpTrafficClassType tc);
+   static std::string flowStateEventToString(telux::data::QosFlowStateChangeEvent state);
+   static void logQosDetails(std::shared_ptr<telux::data::TrafficFlowTemplate> &tft);
+   static void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
 };
 
 #endif  // DATAUTILS_HPP

@@ -48,7 +48,7 @@ shared_ptr<KinematicsReceive> KinematicsReceive::instance = nullptr;
 
 mutex KinematicsReceive::sync;
 
-shared_ptr<ILocationInfoEx> locListener::getLocation() {
+shared_ptr<ILocationInfoEx> LocListener::getLocation() {
     std::unique_lock<std::mutex> lck(locInfoMtx_);
     /*if no locationInfo, wait at most 1 sec unless locationInfo update or exit occur*/
     if (locationInfo_ == nullptr && (!exit_) &&
@@ -60,24 +60,28 @@ shared_ptr<ILocationInfoEx> locListener::getLocation() {
     return locationInfo_;
 };
 
-void locListener::close() {
+void LocListener::close() {
     std::lock_guard<std::mutex> lock(locInfoMtx_);
     exit_ = true;
     locInfoCv_.notify_all();
 }
 
-void locListener::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) {
-    static bool locInfoAvailable = false;
+void LocListener::setLocCbFn(void(*locCbFn_)(shared_ptr<ILocationInfoEx> &locationInfo)){
+    locCbFunction_ = locCbFn_;
+}
 
+void LocListener::onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) {
+    static bool locInfoAvailable = false;
     lock_guard<mutex> lk(locInfoMtx_);
     locationInfo_ = locationInfo;
-
+    if(locCbFunction_){
+        locCbFunction_(locationInfo_);
+    }
     if (not locInfoAvailable) {
         locInfoAvailable = true;
         locInfoCv_.notify_all();
     }
 }
-
 
 void KinematicsReceive::startDetailsCallback(ErrorCode error){
     if (ErrorCode::SUCCESS != error) {
@@ -118,7 +122,7 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
             }
         });
     if (locationManager_ and prom.get_future().get() == ServiceStatus::SERVICE_AVAILABLE) {
-        locListener_ = make_shared<locListener>();
+        locListener_ = make_shared<LocListener>();
         // Registering a listener to get location fixes
         locationManager_->registerListenerEx(locListener_);
         // Starting the reports for fixes
@@ -136,13 +140,60 @@ KinematicsReceive::KinematicsReceive(uint16_t interval){
     this->interval = interval;
 }
 
-void KinematicsReceive::close(){
-    if (locListener_) {
-        locListener_->close();
+KinematicsReceive::KinematicsReceive(std::vector<std::shared_ptr<ILocationListener>> locListeners, uint16_t interval){
+    {
+        lock_guard<mutex> lk(sync);
+        if (!KinematicsReceive::instance) {
+            KinematicsReceive::instance = make_shared<KinematicsReceive>();
+        } else {
+            return;
+        }
+    }
+    auto &locationFactory = LocationFactory::getInstance();
 
+    std::promise<ServiceStatus> prom = std::promise<ServiceStatus>();
+    locationManager_ = locationFactory.getLocationManager([&prom](ServiceStatus status) {
+          if (status == ServiceStatus::SERVICE_AVAILABLE) {
+                prom.set_value(ServiceStatus::SERVICE_AVAILABLE);
+            } else {
+                prom.set_value(ServiceStatus::SERVICE_FAILED);
+            }
+        });
+    if (locationManager_ and prom.get_future().get() == ServiceStatus::SERVICE_AVAILABLE) {
+        for (auto &locListener_ :locListeners) {
+            // Registering a listener to get location fixes
+            locationManager_->registerListenerEx(locListener_);
+            locListeners_.push_back(locListener_);
+        }
+        // Starting the reports for fixes
+        printf("Creating callback for gnss fixes\n");
+        auto respCallback = [&](ErrorCode error){
+                            startDetailsCallback(error); };
+        locationManager_->startDetailedReports(interval, respCallback);
+    } else {
+        // release location manager if it's created but service unavailable
         if (locationManager_) {
+            locationManager_ == nullptr;
+        }
+        cout << "Error on Location Create.\n";
+    }
+    this->interval = interval;
+}
+
+void KinematicsReceive::close(){
+    if (locationManager_) {
+        if (locListener_) {
+            locListener_->close();
             locationManager_->deRegisterListenerEx(locListener_);
         }
     }
-    cout << "Location Listener closed.\n";
+    if (locListener_ || locListeners_.size()) {
+        for (auto &listener : locListeners_) {
+            // Registering a listener to get location fixes
+            LocListener* locListener = dynamic_cast<LocListener*>(listener.get());
+            locListener->close();
+            locationManager_->deRegisterListenerEx(listener);
+        }
+    }
+    cout << "Location Listeners closed.\n";
 }

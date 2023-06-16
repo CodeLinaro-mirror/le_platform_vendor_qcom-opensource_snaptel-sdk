@@ -113,7 +113,7 @@ int Ldm::getIndex(const uint32_t id) {
         return this->bsmIdIndexMap[id];
     }
     else {
-        return NO_DATA;
+        return INVALID_DATA;
     }
 }
 
@@ -121,7 +121,7 @@ void Ldm::setIndex(const uint32_t rvId, const uint32_t freeSlotIndex,
         std::shared_ptr<msg_contents> mc) {
     const auto usedSlotIndex = this->getIndex(rvId);
     lock_guard<mutex> lk(this->idIndexMapMutex);
-    if (usedSlotIndex != NO_DATA && usedSlotIndex != DIRTY_DATA) {
+    if (usedSlotIndex != INVALID_DATA && usedSlotIndex != DIRTY_DATA) {
         lock_guard<mutex> lk2(this->freeSlotMutex);
         this->bsmFreeSlotIndices.push_back(usedSlotIndex);
         this->bsmIdIndexMap[rvId] = freeSlotIndex;
@@ -303,7 +303,7 @@ void Ldm::printLdmIdMap() {
     lock_guard<mutex> lk2(this->ldmContentsMutex);
     auto activeRvIds = 0;
     for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
-        if (element.second != NO_DATA && element.second != DIRTY_DATA)
+        if (element.second != INVALID_DATA && element.second != DIRTY_DATA)
         {
             cout << "Temp Id: " << dec << element.first <<
                 " has data in slot " << dec << element.second << endl;
@@ -328,7 +328,7 @@ list<shared_ptr<msg_contents>> Ldm::bsmSnapshot() {
     list<shared_ptr<msg_contents>> snap;
     auto i = 0;
     for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
-        if (element.second != NO_DATA && element.second != DIRTY_DATA)
+        if (element.second != INVALID_DATA && element.second != DIRTY_DATA)
         {
             snap.push_back(std::make_shared<msg_contents>());
             //snap[snap.size()-1] = std::move(bsmContents[element.second]);
@@ -344,7 +344,7 @@ list<shared_ptr<msg_contents>> Ldm::bsmTrustedSnapshot() {
     list<shared_ptr<msg_contents>> snap;
     auto i = 0;
     for (pair<uint32_t, uint32_t> element : this->bsmIdIndexMap) {
-        if (element.second != NO_DATA && element.second != DIRTY_DATA)
+        if (element.second != INVALID_DATA && element.second != DIRTY_DATA)
         {
             if (isTrusted(element.first)) {
                 snap.push_back(std::make_shared<msg_contents>());
@@ -392,7 +392,7 @@ bool Ldm::filterBsm(const uint32_t index) {
     if (hasBsm(id))
     {
         const auto i = this->bsmIdIndexMap[id]; //Careful with parallelism, you can use a lock to access here.
-        if (i != DIRTY_DATA && i != NO_DATA)
+        if (i != DIRTY_DATA && i != INVALID_DATA)
         {
             msg_contents* prevMsg = this->bsmContents[i].get();
             bsm_value_t *prev_bsm =

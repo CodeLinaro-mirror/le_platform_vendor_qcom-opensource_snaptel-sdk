@@ -80,11 +80,14 @@
 #include <mutex>
 #include <condition_variable>
 #include <map>
+#include <unistd.h>
 #include <csignal>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+#include <telux/cv2x/prop/CongestionControlManager.hpp>
+#include <telux/cv2x/prop/V2xPropFactory.hpp>
 #include "v2x_msg.h"
 #include "v2x_codec.h"
 #include "KinematicsReceive.h"
@@ -106,9 +109,11 @@
 #define MAX_PACKET_LEN      8192
 #define DEFAULT_BSM_PSID    32
 #define MAX_PADDING_LEN     1000
+#define MAX_TIMESTAMP_BUFFER_SIZE 80
 
 using telux::cv2x::Priority;
 using namespace std;
+using namespace telux::cv2x::prop;
 enum class TransmitType {
     SPS,
     EVENT
@@ -144,6 +149,8 @@ struct Config{
     vector<uint16_t> eventDestPorts;
     vector<string> eventDestAddrs;
     vector<string> eventDestNames;
+    //vector<uint32_t> spsReservationSizes;
+    uint32_t spsReservationSize;
     bool wildcardRx = false;
     bool enablePreRecorded = false;
     string preRecordedFile;
@@ -243,7 +250,88 @@ struct Config{
     uint32_t padding = 0; // length of dummy data added to BSM, unit in Bytes
     Priority spsPriority = Priority::PRIORITY_5; // priority setting for sps flow
     Priority eventPriority = Priority::PRIORITY_2; // priority setting for event
+    string congestionControlConfigFileName = "CongestionControlConfig.conf";
+    bool enableCongCtrl = false;
 };
+
+/* Congestion Control CongestionControl Data */
+struct CongCtrlConfig {
+    /*
+        SQUISH CONFIGURATION ITEMS
+    */
+    uint8_t congCtrlType = 1; // for now just SAE j3161/1
+    uint32_t enableCongCtrlLogging = 0;
+    /*
+        # j2945/1 ; j3161 ; SAE
+    */
+    uint32_t cbpMeasInterval = 100;
+    double cbpWeightFactor = 0.5;
+    /*
+        packet error rate related
+    */
+    uint32_t perInterval = 5000;
+    uint32_t perSubInterval = 100;
+    double perMax = 0.3;
+
+    // ITT related
+    uint32_t vMax_ITT = 600;
+    uint32_t vRescheduleTh = 25;
+    uint8_t cv2xMaxITTRounding = 0; // 0, 2
+    /*
+        channel quality indication related
+    */
+    double minChanQualInd = 0.0;
+    double maxChanQualInd = 0.3;
+    /*
+        density related
+    */
+    double vDensityWeightFactor = 0.05;
+    double vDensityCoefficient = 25; // lambda
+    uint32_t vDensityWindow = 1;
+    uint32_t vDensityMinPerRange = 100;
+    uint32_t vMaxSuccessiveFail = 3; //0, 10000
+    uint8_t UseStaticVDensity = 0;// 0,1 # Will cause vDensity to be used instead of calculated density
+    uint32_t vDensity = 10; //0, 100 # Only used if UseStaticDensity is set
+
+    /*
+        Tracking Error related
+    */
+    uint32_t txCtrlInterval = 100;
+    uint32_t hvTEMinTimeDiff = 0;
+    uint32_t hvTEMaxTimeDiff = 200;
+    uint32_t rvTEMinTimeDiff = 0;
+    uint32_t rvTEMaxTimeDiff = 3000;
+    uint8_t teErrSensitivity = 75;
+    double teMinThresh = 0.2;
+    double teMaxThresh = 0.5;
+    /*
+        Inter Transmit Time and Tx Decision related
+    */
+    uint32_t minItt = 100;
+    uint32_t maxItt = 600;
+    uint8_t txRand = 5;
+    uint32_t timeAccuracy = 1000;
+    uint8_t reschedThresh = 25;
+
+    /*
+        power related
+    */
+
+    uint8_t supraGain = 0.5;
+    uint8_t minChanUtil = 50;
+    uint8_t maxChanUtil = 80;
+    uint8_t minRadiPwr = 10;
+    uint8_t maxRadiPwr = 20;
+
+    /*
+        sps enhancements parameters
+    */
+    bool enableSpsEnhancements = false;
+    uint8_t spsEnhIntervalRound = 100; //#CV2XPeriodicityHz     = 100; 20, 1000
+    uint8_t spsEnhHysterPerc = 5; //#cv2xSPSHysterisis = 5;
+    uint8_t spsEnhDelayPerc = 20; //#cv2xMaxITTChangeFreq = 5;
+};
+
 
 class ApplicationBase
 {
@@ -387,19 +475,45 @@ public:
     virtual bool pendingTillEmergency();
     virtual bool pendingTillNoEmergency();
     virtual void prepareForExit();
-
-    bool openMinLogFile(const std::string& fullPathName);
-
+    std::shared_ptr<ICongestionControlListener> congCtrlListener;
+    bool openBsmLogFile(const std::string& fullPathName); // one dedicated to bsm
+    bool openLogFile(const std::string& fullPathName);
+    void writeLogHeader(FILE *fp);
     /**
      * Function that calculates incoming RX rate(the number of received packets per second) and
      * updates verifcation load to TM
      */
     void tmCommunication();
+    static void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo){
+        // callback will pass data to corresponding other components
+        #ifdef AEROLINK
+        if(securityEnabled){
+            Kinematics kine;
+            kine.latitude = locationInfo->getLatitude() * 10000000;
+            kine.longitude = locationInfo->getLongitude() * 10000000;
+            kine.elevation = locationInfo->getAltitude() * 10;
+            kine.speed = locationInfo->getSpeed() * 50;
+            int result = AerolinkSecurity::setSecCurrLocation(&kine);
+        }
+        #endif
+        if(congCtrlEnabled){
+            Position pos;
+            pos.posLat = (locationInfo->getLatitude() * 10000000);
+            pos.posLong = (locationInfo->getLongitude() * 10000000);
+            pos.heading = (locationInfo->getHeading() / 0.0125);
+            pos.elev = (locationInfo->getAltitude() * 10);
+            CCErrorCode res = ICongestionControlManager::updateHostVehicleData(
+                pos, 50 * locationInfo->getSpeed());
+        }
+
+    }
 
     /*********************************************************************************
      * data members.
      ********************************************************************************/
     Config configuration;
+    CongCtrlConfig congCtrlConfig;
+
     /**
     * Instance of RadioReceive for simulations. Only allocated for simulation options.
     */
@@ -471,11 +585,22 @@ public:
     void updateL2RvMap(uint32_t l2_id ,rv_specs* rvSpec);
 
     /**
+     * Update the relevant host vehicle data for SQUISH to perform its calculations
+     */
+    void updateCongCtrlHvData();
+
+    /**
      * Object that registers a listener to throttle manager
      * and allows to set load and get filter rate.
      */
     shared_ptr<Cv2xTmListener> cv2xTmListener;
 
+    // congestion variables that we'd want the driver program to access
+    static CongestionControlUserData congCtrlCbData;
+    static shared_ptr<ICongestionControlManager> congestionControlManager;
+    static bool cbSuccess;
+    static bool congCtrlEnabled;
+    static bool securityEnabled;
 protected:
     bool isTx = false;
     bool isRx = false;
@@ -483,11 +608,15 @@ protected:
     bool isRxSim = false;
     MessageType MsgType;
     uint8_t msgCount;
+    uint64_t txInterval;
+    uint64_t lastTxTime;
     uint64_t locTimeMs_ = 0;
     float locPositionDop_ = 0.0;
     uint16_t locNumSvUsed_ = 0;
     bool enableCsvLog_ = false;
-
+    // congestionControl cong ctrl
+    bool finishProgram;
+    sem_t programSem;
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
      * @param intervalMs user specified transmit interval in milliseconds
@@ -518,14 +647,16 @@ protected:
      * and allows incoming fixes from such service.
      */
     shared_ptr<KinematicsReceive> kinematicsReceive;
+    std::vector<shared_ptr<ILocationListener>> locListeners;
+    std::shared_ptr<LocListener> appLocListener_;
 
     /**
      * Security service object.
      */
     unique_ptr<SecurityService> SecService;
 
-   virtual void writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
-       bool isTx, TransmitType txType, bool validPkt);
+   virtual void writeLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
+       uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt);
     /**
      * Vehicle Receive object.
      */
@@ -533,6 +664,9 @@ protected:
 
 private:
     bool exitApp = false;
+    static CongestionControlData congestionControlOut;
+    CongestionControlCalculations qitsCongControlCalculations;
+    static sem_t congCtrlCbSem;
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
     VehicleReceive::VehicleEventsCallback cb;
@@ -540,7 +674,6 @@ private:
     std::condition_variable stateCv;
     std::atomic<bool> criticalState{false};
     std::atomic<bool> newEvent{false};
-
     /* For local stored v2x IP rmnet address */
     std::mutex v2xIpAddrMtx_;
     string v2xIpAddr_;
@@ -557,5 +690,16 @@ private:
     int loadConfiguration(char* file);
     void saveConfiguration(map<string, string> configs);
     uint32_t vehiclesInRange();
+
+    /* congestion control functions and variables */
+    void saveCongCtrlConfig (map<string, string> configs);
+    int loadCongCtrlConfig (const char* file);
+    void startCongCtrl();
+    static void congCtrlCb(CongestionControlUserData* congestionControlUserData, bool success);
+    // function to write congestion control data to file
+    void writeCongCtrlLog(FILE *myfp, shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt);
+    // function to write security related data to file
+    void writeSecurityLog(FILE *myfp);
+    //void writeCongCtrlLog(CongestionControlData* congestionControlData_);
 };
 #endif

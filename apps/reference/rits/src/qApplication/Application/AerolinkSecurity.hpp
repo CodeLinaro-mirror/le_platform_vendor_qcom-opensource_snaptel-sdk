@@ -78,9 +78,11 @@
 #include <map>
 #include <set>
 #include "viicsec.h"
+#include "MisbehaviorData.h"
 #include "SecurityService.hpp"
 #include "v2x_msg.h"
 #include "v2x_codec.h"
+#include "KinematicsReceive.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -91,6 +93,7 @@
 #include <thread>
 #include <iterator>
 #include <chrono>
+#include <sstream>
 
 static size_t chunksize = 10000;
 
@@ -116,8 +119,6 @@ class AerolinkSecurity : public SecurityService {
         AerolinkSecurity(const std::string ctxName, uint16_t countryCode,
                              char const* lcmName, IDChangeData& idChangeData):
             SecurityService(ctxName, countryCode), idChangeData_(&idChangeData){
-            //lcmName_ = (char*)malloc(sizeof(lcmName) + 1);
-            //memcpy(lcmName_, lcmName, sizeof(lcmName));
             if(strlen(lcmName) > 50){
                 throw std::runtime_error
                     ("Lcm Name Too Long (> 50 chars). AerolinkSecurity Init Failed\n");
@@ -144,7 +145,7 @@ class AerolinkSecurity : public SecurityService {
                     uint8_t *signedSpdu, uint32_t &signedSpduLen,
                     SecurityService::SignType type = SecurityService::SignType::ST_AUTO);
         int VerifyMsg(const SecurityOpt opt);
-
+        static int setSecCurrLocation(Kinematics* hvKine);
         int idChange() override;
         int lockIdChange() override;
         int unlockIdChange() override;

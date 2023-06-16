@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file: Cv2xRxApp.cpp
  *
@@ -48,6 +55,7 @@ using std::promise;
 using std::shared_ptr;
 using std::make_shared;
 using telux::common::Status;
+using telux::common::ServiceStatus;
 using telux::common::ErrorCode;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::Cv2xStatus;
@@ -166,12 +174,15 @@ int Cv2xRxApp::init() {
         cerr << "failed to get Cv2xRadioManager!" << endl;
         return EXIT_FAILURE;
     }
-    std::unique_lock<std::mutex> lck(mtx);
-    cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-        cv2xRadioManagerStatus) {
-        cerr << "C-V2X Radio Manager initialization failed!" << endl;
-        return EXIT_FAILURE;
+
+    {
+        std::unique_lock<std::mutex> lck(mtx);
+        cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+            cv2xRadioManagerStatus) {
+            cerr << "C-V2X Radio Manager initialization failed!" << endl;
+            return EXIT_FAILURE;
+        }
     }
 
     // Get C-V2X status and make sure Rx is enabled
@@ -197,15 +208,33 @@ int Cv2xRxApp::init() {
     }
 
     // Get handle to Cv2xRadio
-    cv2xRadio_ = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
+    bool cv2x_radio_status_updated = false;
+    telux::common::ServiceStatus cv2xRadioStatus =
+        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 
-    // Wait for radio to complete initialization
-    if (not cv2xRadio_->isReady()) {
-        if (Status::SUCCESS == cv2xRadio_->onReady().get()) {
-            cout << "C-V2X Radio is ready" << endl;
-        } else {
+    auto cb = [&](ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        cv2x_radio_status_updated = true;
+        cv2xRadioStatus = status;
+        cv.notify_all();
+    };
+
+    cv2xRadio_ = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
+
+    if (not cv2xRadio_) {
+        cerr << "C-V2X Radio creation failed." << endl;
+        return EXIT_FAILURE;
+    }
+
+    {
+        std::unique_lock<std::mutex> lc(mtx);
+        cv.wait(lc, [&cv2x_radio_status_updated]() { return cv2x_radio_status_updated; });
+
+        if (cv2xRadioStatus != ServiceStatus::SERVICE_AVAILABLE) {
             cerr << "C-V2X Radio initialization failed." << endl;
             return EXIT_FAILURE;
+        } else {
+            cout << "C-V2X Radio is ready" << endl;
         }
     }
 

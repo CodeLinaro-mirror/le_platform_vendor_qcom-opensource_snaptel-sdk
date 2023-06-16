@@ -42,17 +42,59 @@ This sample app demonstrates how to use the C-V2X Radio Manager API to send C-V2
    ~~~~~~
 Note: We can also use Lambda functions instead of defining global scope callbacks.
 
-### 2. Get a handle to the ICv2xRadioManager instance
+### 2. Implement initialization callback and get the Cv2xRadioManager instance
+
+Optionally initialization callback can be provided with get manager instance.
+CV2X factory will call callback when manager initialization is complete.
+
+### 2.1 Create a InitResponseCb lambda function
 
    ~~~~~~{.cpp}
-   // Get handle to Cv2xRadioManager
+   bool cv2xRadioManagerStatusUpdated = false;
+   telux::common::ServiceStatus cv2xRadioManagerStatus =
+       telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+   std::condition_variable cv;
+   std::mutex mtx;
+   auto statusCb = [&](telux::common::ServiceStatus status) {
+       std::lock_guard<std::mutex> lock(mtx);
+       cv2xRadioManagerStatusUpdated = true;
+       cv2xRadioManagerStatus = status;
+       cv.notify_all();
+   };
+   ~~~~~~
+
+### 2.2 Get a handle to the ICv2xRadioManager instance
+
+   ~~~~~~{.cpp}
    auto & cv2xFactory = Cv2xFactory::getInstance();
-   auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager();
+   auto cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
+   ~~~~~~
+
+### 2.3 Wait for C-V2X Radio Manager readiness
+
+   ~~~~~~{.cpp}
+   std::unique_lock<std::mutex> lck(mtx);
+   cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+   ~~~~~~
+
+### 2.4 Check C-V2X Radio Manager initialization state
+
+If cv2xRadioManager initialization failed, new initialization attempt can be accomplished by
+calling step 2.2. If initialization succeed, proceed to step 3.
+
+   ~~~~~~{.cpp}
+   if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      // Go to step 3
+   }
+   else {
+      // Go to step 2.2 for another initialization attempt
+   }
    ~~~~~~
 
 ### 3. Request the C-V2X status
 
 We want to verify that the C-V2X TX status is ACTIVE before we try to send data.
+
    ~~~~~~{.cpp}
    // Get C-V2X status and make sure Tx is enabled
    assert(Status::SUCCESS == cv2xRadioManager->requestCv2xStatus(cv2xStatusCallback));
@@ -67,27 +109,54 @@ We want to verify that the C-V2X TX status is ACTIVE before we try to send data.
    }
    ~~~~~~
 
-### 4. Get handle to C-V2X Radio
+### 4. Implement initialization callback and get the ICv2xRadio instance
+
+Optionally initialization callback can be provided with get C-V2X Radio instance.
+CV2X Radio Manager will call callback when C-V2X Radio initialization is complete.
+
+### 4.1 Create a InitResponseCb lambda function
 
    ~~~~~~{.cpp}
-   auto cv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
+   bool cv2x_radio_status_updated = false;
+   telux::common::ServiceStatus cv2xRadioStatus =
+       telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+
+   auto cb = [&](ServiceStatus status) {
+       std::lock_guard<std::mutex> lock(mtx);
+       cv2x_radio_status_updated = true;
+       cv2xRadioStatus = status;
+       cv.notify_all();
+   };
    ~~~~~~
 
-### 5. Wait for C-V2X Radio to be ready
+### 4.2 Get a handle to the ICv2xRadio instance
 
    ~~~~~~{.cpp}
-   if (not cv2xRadio->isReady()) {
-       if (Status::SUCCESS == cv2xRadio->onReady().get()) {
-           cout << "C-V2X Radio is ready" << endl;
-       }
-       else {
-           cerr << "C-V2X Radio initialization failed." << endl;
-           return EXIT_FAILURE;
-       }
+   auto cv2xRadio = cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE, cb);
+   ~~~~~~
+
+### 4.3 Wait for C-V2X Radio readiness
+
+   ~~~~~~{.cpp}
+   std::unique_lock<std::mutex> lck(mtx);
+   cv.wait(lck, [&] { return cv2x_radio_status_updated; });
+   ~~~~~~
+
+### 4.4 Check C-V2X Radio initialization state
+
+If cv2xRadio initialization failed, new initialization attempt can be accomplished by
+calling step 4.2. If initialization succeed, proceed to step 5.
+
+   ~~~~~~{.cpp}
+   if (cv2xRadioStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      // Go to step 5
+   }
+   else {
+      // Go to step 4.2 for another initialization attempt
    }
    ~~~~~~
 
-### 6. Create TX SPS flow and send data using TX socket
+### 5. Create TX SPS flow and send data using TX socket
 
    ~~~~~~{.cpp}
    // Set SPS parameters
@@ -117,7 +186,7 @@ We want to verify that the C-V2X TX status is ACTIVE before we try to send data.
     }
    ~~~~~~
 
-### 7. Close TX SPS flow
+### 6. Close TX SPS flow
 
    ~~~~~~{.cpp}
    // Deregister SPS flow

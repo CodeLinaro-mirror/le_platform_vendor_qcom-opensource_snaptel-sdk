@@ -1,4 +1,10 @@
 /*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/*
  *  Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -88,21 +94,27 @@ using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
 using telux::cv2x::ICv2xRadioManager;
 
-#define CV2X_TX_POWER_MAX (23)
+//per 3GPP TS 36.311
+#define CV2X_TX_POWER_MAX (31)
 #define CV2X_TX_POWER_MIN (-40)
 
 int main(int argc, char *argv[]) {
     cout << "Running Sample C-V2X Set Tx-power app" << endl;
     int txPower = CV2X_TX_POWER_MAX;
     telux::common::Status ret;
+    bool inputInRange = false;
 
-    cout << "Enter desired global cv2x Tx peak power:";
-    cin >> txPower;
-    Utils::validateInput(txPower);
-    if (txPower > CV2X_TX_POWER_MAX || txPower < CV2X_TX_POWER_MIN) {
-        cout << "Illegal tx power value " << txPower << " input, abort!" << endl;
-        return EXIT_FAILURE;
-    }
+    do {
+        cout << "Enter desired global cv2x Tx peak power:";
+        cin >> txPower;
+        Utils::validateInput(txPower);
+        if (txPower > CV2X_TX_POWER_MAX || txPower < CV2X_TX_POWER_MIN) {
+            cout << txPower << " is out of range. ";
+            cout << "Supported range " << CV2X_TX_POWER_MIN << " - " << CV2X_TX_POWER_MAX << endl;
+        } else {
+            inputInRange = true;
+        }
+    } while (not inputInRange);
 
     cout << "Desired tx power " << txPower << endl;
     std::vector<std::string> groups{"system", "diag", "radio"};

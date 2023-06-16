@@ -1687,7 +1687,6 @@ void LocationMenu::populateXtraConfigParams(telux::loc::XtraConfig &configParams
     Utils::validateInput(downloadRetryAttempts);
     configParams.downloadRetryAttempts = downloadRetryAttempts;
 
-    std::cin.get();
     std::string caPath;
     std::cout << "Enter Xtra CA Path : ";
     std::getline(std::cin, caPath, delimiter);
@@ -1800,7 +1799,6 @@ void LocationMenu::registerConfigListener(std::vector<std::string> userInput) {
             std::cin >> listenerIndication;
             Utils::validateInput(listenerIndication);
             indicationsList.set(listenerIndication);
-            std::cin.get();
             std::string option;
             std::cout << "Do you want to insert more (y/n) : ";
             std::getline(std::cin, option, delimiter);
@@ -1830,7 +1828,6 @@ void LocationMenu::deRegisterConfigListener(std::vector<std::string> userInput) 
             std::cin >> listenerIndication;
             Utils::validateInput(listenerIndication);
             indicationsList.set(listenerIndication);
-            std::cin.get();
             std::string option;
             std::cout << "Do you want to insert more (y/n) : ";
             std::getline(std::cin, option, delimiter);

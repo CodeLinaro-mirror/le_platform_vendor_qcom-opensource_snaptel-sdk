@@ -349,7 +349,7 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     };
 
     // Wait for radio to complete initialization
-    cv2xRadio = cv2xRadioManager->getCv2xRadio(category);
+    cv2xRadio = cv2xRadioManager->getCv2xRadio(category, cb);
     if (not cv2xRadio) {
         cerr << "C-V2X Radio creation failed." << endl;
         return false;

@@ -140,7 +140,9 @@ void PlayMenu::init() {
 
 void PlayMenu::cleanup() {
     ready_ = false;
+    playInProgress_ = false;
     playStatus_ = false;
+    playStopcv_.notify_all();
     cv_.notify_all();
     for (std::thread &th : runningThreads_) {
         if(th.joinable()){
@@ -149,6 +151,7 @@ void PlayMenu::cleanup() {
     }
     pipeLineEmpty_ = true;
     audioPlayStream_ = nullptr;
+    writeFail_ = false;
 }
 
 void PlayMenu::setSystemReady() {

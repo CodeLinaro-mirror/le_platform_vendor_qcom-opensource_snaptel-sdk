@@ -94,6 +94,9 @@ AudioClient::~AudioClient() {
 
 void AudioClient::cleanup() {
     std::lock_guard<std::mutex> lock(cleanupMtx_);
+    sampleRate_ = 0;
+    channelType_ = 0;
+    filePath_ = "";
     stream_ = nullptr;
     audioVoiceStream_ = nullptr;
     audioPlayStream_ = nullptr;

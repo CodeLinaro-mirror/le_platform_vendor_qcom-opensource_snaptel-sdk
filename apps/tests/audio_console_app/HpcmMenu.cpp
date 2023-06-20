@@ -40,11 +40,12 @@
 
 HpcmMenu::HpcmMenu(std::string appName, std::string cursor,
                                             std::shared_ptr<IAudioManager> audioManager)
-    : ConsoleApp(appName, cursor), slotId_(DEFAULT_SLOT_ID), ready_(false),  exitHpcm_(false),
+    : ConsoleApp(appName, cursor), slotId_(DEFAULT_SLOT_ID), ready_(false),  exitHpcm_(true),
       audioManager_(audioManager) {
 }
 
 HpcmMenu::~HpcmMenu() {
+    cleanup();
 }
 
 void HpcmMenu::init() {
@@ -83,250 +84,302 @@ void HpcmMenu::cleanup() {
     audioPlayStream_ = nullptr;
     voiceSessions_.clear();
     activeSession_ = nullptr;
-
+    audioManager_ = nullptr;
 }
 
-Status HpcmMenu::createAllStreams() {
+Status HpcmMenu::createVoiceStream(StreamConfig &config) {
     telux::common::Status status = telux::common::Status::FAILED;
-    if (ready_) {
-        std::cout <<"------------------------------------------------" << std::endl;
-        std::cout << "Enter configuration for HPCM Stream" << std::endl;
-        std::cout << "Supported sampling rates are 8kHz/16kHz." << std::endl;
-        std::cout <<"------------------------------------------------" << std::endl;
-
-        if (createActiveSession(slotId_) == Status::SUCCESS) {
-            StreamConfig config;
-            std::vector<telux::audio::Direction> direction{};
-            config.slotId = SLOT_ID_1;
-            config.type = StreamType::VOICE_CALL;
-            config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
-            config.channelTypeMask = ChannelType::LEFT;
-            config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-            config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
-            config.enableHpcm = true;
-            getUserSampleRateInput(config.sampleRate);
-            takeUserVoicePathInput(direction);
-            mutex_.lock();
-            //Create Voice stream for HPCM usecases
-            if(activeSession_) {
-                status = activeSession_->createStream(config);
-                mutex_.unlock();
-                if (status == Status::SUCCESS) {
-                    std::cout << "Voice stream created on slotId : " << slotId_ << std::endl;
-                } else {
-                    deleteActiveSession(slotId_);
-                    std::cout << "Voice stream creation failed on slotId : " << slotId_
-                              << std::endl;
-                    return Status::FAILED;
-                }
-            } else {
-                std::cout << "Audio Service UNAVAILABLE" << std::endl;
-                mutex_.unlock();
-                return Status::FAILED;
-            }
-
-            config.voicePaths = direction;
-            //Create HPCM play stream
-            config.type = StreamType::PLAY;
-            config.deviceTypes.clear();
-            config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
-            status = createStream(config);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "HPCM play stream creation failed " << std::endl;
-                return Status::FAILED;
-            }
-
-            //Create HPCM capture stream
-            config.type = StreamType::CAPTURE;
-            config.deviceTypes.clear();
-            config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
-            status = createStream(config);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "HPCM capture stream creation failed " << std::endl;
-                return Status::FAILED;
-            }
-        }
-    } else {
-        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    std::cout <<"------------------------------------------------" << std::endl;
+    std::cout << "Enter configuration for HPCM Stream" << std::endl;
+    std::cout << "Supported sampling rates are 8kHz/16kHz." << std::endl;
+    std::cout <<"------------------------------------------------" << std::endl;
+    std::vector<telux::audio::Direction> direction{};
+    config.slotId = SLOT_ID_1;
+    config.type = StreamType::VOICE_CALL;
+    config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
+    config.channelTypeMask = ChannelType::LEFT;
+    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
+    config.enableHpcm = true;
+    getUserSampleRateInput(config.sampleRate);
+    takeUserVoicePathInput(direction);
+    std::lock_guard<std::mutex> lock(mutex_);
+    //Create Voice stream for HPCM usecases
+    if (!activeSession_) {
+        std::cout << "No running voice session for slotId : " << slotId_
+            << ", please create one" << std::endl;
         return Status::FAILED;
     }
-    return Status::SUCCESS;
+    status = activeSession_->createStream(config);
+
+    if (status != Status::SUCCESS) {
+        deleteActiveSession(slotId_);
+        std::cout << "Voice stream creation failed on slotId : " << slotId_
+            << std::endl;
+        return status;
+    }
+
+    config.voicePaths = direction;
+    std::cout << "Voice stream created on slotId : " << slotId_ << std::endl;
+    return status;
 }
 
-Status HpcmMenu::deleteAllStream() {
+Status HpcmMenu::deleteVoiceStream() {
     telux::common::Status status = telux::common::Status::FAILED;
-    if (ready_) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!activeSession_) {
+        std::cout << "No running voice session for slotId : " << slotId_
+            << ", please create one" << std::endl;
+        return Status::FAILED;
+    }
 
-        exitHpcm_ = true;
+    status = activeSession_->deleteStream();
+    if (status != Status::SUCCESS) {
+        std::cout << "Voice stream deletion failed on slotId : " << slotId_ << std::endl;
+        return status;
+    }
+    deleteActiveSession(slotId_);
+    readErrorOccurred_ = false;
+    writeErrorOccurred_ = false;
+    std::cout << "Voice stream deleted on slotId : " << slotId_ << std::endl;
+    return status;
+}
 
-        for(std::thread &th : runningThreads_) {
-            if(th.joinable()){
-                th.join();
-            }
-        }
-
-        //Delete HPCM play stream
-        telux::common::Status deleteStreamStatus;
-        std::promise<bool> promisePlay;
-        if(audioPlayStream_){
-            deleteStreamStatus = audioManager_-> deleteStream(
-            audioPlayStream_, [&promisePlay,this](telux::common::ErrorCode error) {
-                if (error == telux::common::ErrorCode::SUCCESS) {
-                promisePlay.set_value(true);
-                } else {
-                promisePlay.set_value(false);
-                std::cout << "Failed to delete HPCM play stream" << std::endl;
-                }
-            });
-            if(deleteStreamStatus == Status::SUCCESS) {
-            std::cout << "request to delete HPCM play stream sent" << std::endl;
-            } else {
-                std::cout << "Request to delete HPCM play stream failed"  << std::endl;
-                return Status::FAILED;
-            }
-            if (promisePlay.get_future().get()) {
-                audioPlayStream_= nullptr;
-                std::cout << "Audio HPCM play stream is Deleted" << std::endl;
-            }else {
-                std::cout << "Failed to delete stream" << std::endl;
-                return Status::FAILED;
-            }
-        }
-        //Delete HPCM capture stream
-        if(audioCaptureStream_){
-            std::promise<bool> promiseCapture;
-            deleteStreamStatus = audioManager_-> deleteStream(
-            audioCaptureStream_, [&promiseCapture,this](telux::common::ErrorCode error) {
-                if (error == telux::common::ErrorCode::SUCCESS) {
-                promiseCapture.set_value(true);
-                } else {
-                promiseCapture.set_value(false);
-                std::cout << "Failed to delete HPCM capture stream" << std::endl;
-                }
-            });
-
-            if(deleteStreamStatus == Status::SUCCESS) {
-            std::cout << "request to delete HPCM play stream sent" << std::endl;
-            } else {
-                std::cout << "Request to delete HPCM play stream failed"  << std::endl;
-                return Status::FAILED;
-            }
-
-            if (promiseCapture.get_future().get()) {
-                audioCaptureStream_= nullptr;
-                std::cout << "Audio HPCM capture stream is Deleted" << std::endl;
-            }else {
-                std::cout << "Failed to delete stream" << std::endl;
-                return Status::FAILED;
-            }
-        }
-
-        if (setActiveSession(slotId_) == Status::SUCCESS) {
-            mutex_.lock();
-            if(activeSession_) {
-
-                status = activeSession_->deleteStream();
-                mutex_.unlock();
-                if (status == Status::SUCCESS) {
-                    deleteActiveSession(slotId_);
-                    std::cout << "Voice stream deleted on slotId : " << slotId_ << std::endl;
-                } else {
-                    std::cout << "Voice stream deletion failed on slotId : " << slotId_ << std::endl;
-                    return Status::FAILED;
-                }
-
-            } else {
-                std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
-                mutex_.unlock();
-                return Status::FAILED;
-            }
-        } else {
+Status HpcmMenu::startVoiceStream() {
+    telux::common::Status status = telux::common::Status::FAILED;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!activeSession_) {
             std::cout << "No running voice session for slotId : " << slotId_
                       << ", please create one" << std::endl;
             return Status::FAILED;
         }
-    } else {
-        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        status = activeSession_->startAudio();
+        if (status != Status::SUCCESS) {
+            std::cout << "Failed to start audio on slotId : " << slotId_ << std::endl;
+            return status;
+        }
+        std::cout << "Audio started on slotId : " << slotId_ << std::endl;
+    }
+
+    if (!audioCaptureStream_) {
+        std::cout << "Invalid audio capture stream for slotId : " << slotId_
+            << std::endl;
         return Status::FAILED;
     }
 
-    return Status::SUCCESS;
+    if (!audioPlayStream_) {
+        std::cout << "Invalid audio play stream for slotId : " << slotId_
+            << std::endl;
+        return Status::FAILED;
+    }
+    std::thread recordThread(&HpcmMenu::record, this);
+    runningThreads_.emplace_back(std::move(recordThread));
+
+    std::thread playThread(&HpcmMenu::play, this);
+    runningThreads_.emplace_back(std::move(playThread));
+    exitHpcm_ = false;
+    return status;
 }
 
+Status HpcmMenu::stopVoiceStream() {
+    telux::common::Status status = telux::common::Status::FAILED;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!activeSession_) {
+        std::cout << "No running voice session for slotId : " << slotId_
+            << ", please create one" << std::endl;
+        return Status::FAILED;
+    }
+    status = activeSession_->stopAudio();
+    if (status != Status::SUCCESS) {
+        std::cout << "Failed to stop audio on slotId : " << slotId_ << std::endl;
+        return status;
+    }
+    std::cout << "Audio stopped on slotId : " << slotId_ << std::endl;
+    exitHpcm_ = true;
+    captureCv_.notify_all();
+    bufferReadyCv_.notify_all();
+    return status;
+}
+
+Status HpcmMenu::createHpcmRecordStream(StreamConfig &config) {
+    telux::common::Status status = telux::common::Status::FAILED;
+    //Create HPCM capture stream
+    config.type = StreamType::CAPTURE;
+    config.deviceTypes.clear();
+    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
+    status = createStream(config);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "HPCM capture stream creation failed " << std::endl;
+    }
+    return status;
+}
+
+Status HpcmMenu::deleteHpcmRecordStream() {
+    //Delete HPCM capture stream
+    if (!audioCaptureStream_){
+        std::cout << "Invalid capture stream" << std::endl;
+        return Status::FAILED;
+    }
+
+    std::promise<bool> promiseCapture;
+    telux::common::Status status = telux::common::Status::FAILED;
+    status = audioManager_-> deleteStream(
+            audioCaptureStream_, [&promiseCapture,this](telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                promiseCapture.set_value(true);
+            } else {
+                promiseCapture.set_value(false);
+            std::cout << "Failed to delete HPCM capture stream" << std::endl;
+            }});
+
+    if (status != Status::SUCCESS) {
+        std::cout << "Request to delete HPCM capture stream failed"  << std::endl;
+        return status;
+    }
+    std::cout << "Request to delete HPCM capture stream sent" << std::endl;
+
+    if (promiseCapture.get_future().get()) {
+        audioCaptureStream_= nullptr;
+        std::cout << "Audio HPCM capture stream is Deleted" << std::endl;
+        return status;
+    }
+    std::cout << "Failed to delete HPCM capture stream" << std::endl;
+    return Status::FAILED;
+}
+
+Status HpcmMenu::createHpcmPlayStream(StreamConfig &config) {
+    telux::common::Status status = telux::common::Status::FAILED;
+    //Create HPCM play stream
+    config.type = StreamType::PLAY;
+    config.deviceTypes.clear();
+    config.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
+    status = createStream(config);
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "HPCM play stream creation failed " << std::endl;
+    }
+    return status;
+}
+
+Status HpcmMenu::deleteHpcmPlayStream() {
+    //Delete HPCM play stream
+    if (!audioPlayStream_){
+        std::cout << "Invalid play stream" << std::endl;
+        return Status::FAILED;
+    }
+
+    std::promise<bool> promisePlay;
+    telux::common::Status status = telux::common::Status::FAILED;
+    status = audioManager_-> deleteStream(
+            audioPlayStream_, [&promisePlay,this](telux::common::ErrorCode error) {
+            if (error == telux::common::ErrorCode::SUCCESS) {
+                promisePlay.set_value(true);
+            } else {
+                promisePlay.set_value(false);
+                std::cout << "Failed to delete HPCM play stream" << std::endl;
+            }});
+
+    if (status != Status::SUCCESS) {
+        std::cout << "Request to delete HPCM play stream failed"  << std::endl;
+        return status;
+    }
+    std::cout << "Request to delete HPCM play stream sent" << std::endl;
+
+    if (promisePlay.get_future().get()) {
+        audioPlayStream_= nullptr;
+        std::cout << "Audio HPCM play stream is Deleted" << std::endl;
+        /* Let the play thread know about play stream deleted/stopped */
+        return status;
+    }
+    std::cout << "Failed to delete HPCM play stream" << std::endl;
+    return Status::FAILED;
+}
 
 void HpcmMenu::startHpcmAudio(std::vector<std::string> userInput) {
-    if (ready_) {
-        Status status = createAllStreams();
-        if(status != Status::SUCCESS) {
-            return;
-        }
-        if (setActiveSession(slotId_) == Status::SUCCESS) {
-            mutex_.lock();
-            if(activeSession_) {
-                status = activeSession_->startAudio();
-                mutex_.unlock();
-                if (status == Status::SUCCESS) {
-                    std::cout << "Audio started on slotId : " << slotId_ << std::endl;
-                } else {
-                    std::cout << "Failed to start audio on slotId : " << slotId_ << std::endl;
-                    return;
-                }
+    StreamConfig config;
+    std::vector<telux::audio::Direction> direction{};
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (!ready_) {
+        std::cout << "HPCM is not initialized" << std::endl;
+        return;
+    }
 
-                if(audioCaptureStream_) {
-                    std::thread recordThread(&HpcmMenu::record, this);
-                    runningThreads_.emplace_back(std::move(recordThread));
-                }
+    if (!exitHpcm_) {
+        std::cout << "HPCM is already started" << std::endl;
+        return;
+    }
 
-                if(audioPlayStream_) {
-                    std::thread playThread(&HpcmMenu::play, this);
-                    runningThreads_.emplace_back(std::move(playThread));
-                }
+    if (readErrorOccurred_ || writeErrorOccurred_) {
+        std::cout << "Please stop the HPCM first because of the previous error"
+                  << std::endl;
+        return;
+    }
 
-            } else {
-                std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
-                mutex_.unlock();
-            }
-        } else {
-            std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
-        }
-    } else {
-        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    if (createActiveSession(slotId_) != Status::SUCCESS) {
+        std::cout << "No running voice session for slotId : " << slotId_
+            << ", please create one" << std::endl;
+        return;
+    }
+
+    status = createVoiceStream(config);
+    if (status != Status::SUCCESS) {
+        return;
+    }
+
+    status = createHpcmRecordStream(config);
+    if (status != Status::SUCCESS) {
+        return;
+    }
+
+    status = createHpcmPlayStream(config);
+    if (status != Status::SUCCESS) {
+        return;
+    }
+
+    status = startVoiceStream();
+    if (status != Status::SUCCESS) {
+        return;
     }
 }
 
 void HpcmMenu::stopHpcmAudio(std::vector<std::string> userInput) {
-    if (ready_) {
-        if (setActiveSession(slotId_) == Status::SUCCESS) {
-            mutex_.lock();
-            if(activeSession_) {
-                Status status = activeSession_->stopAudio();
-                mutex_.unlock();
-                if (status == Status::SUCCESS) {
-                    std::cout << "Audio stopped on slotId : " << slotId_ << std::endl;
-                } else {
-                    std::cout << "Failed to stop audio on slotId : " << slotId_ << std::endl;
-                    return;
-                }
-
-                exitHpcm_ = true;
-
-            } else {
-                std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
-                mutex_.unlock();
-            }
-        } else {
-            std::cout << "No running voice session for slotId : " << slotId_
-                      << ", please create one" << std::endl;
-        }
-    } else {
-        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (!ready_) {
+        std::cout << "HPCM is not initialized" << std::endl;
+        return;
     }
 
-    deleteAllStream();
+    if (exitHpcm_) {
+        std::cout << "HPCM is already stopped" << std::endl;
+        return;
+    }
+
+    if (setActiveSession(slotId_) != Status::SUCCESS) {
+        std::cout << "No running voice session for slotId : " << slotId_
+            << ", please create one" << std::endl;
+        return;
+    }
+
+    status = deleteHpcmRecordStream();
+    if (status != Status::SUCCESS) {
+        return;
+    }
+
+    status = deleteHpcmPlayStream();
+    if (status != Status::SUCCESS) {
+        return;
+    }
+
+    status = stopVoiceStream();
+    if (status != Status::SUCCESS) {
+        return;
+    }
+
+    /* Before deleting voice stream, capture and play stream must delete */
+    status = deleteVoiceStream();
+    if (status != Status::SUCCESS) {
+        return;
+    }
 }
 
 Status HpcmMenu::createActiveSession(SlotId slotId) {
@@ -344,7 +397,6 @@ Status HpcmMenu::createActiveSession(SlotId slotId) {
 }
 
 void HpcmMenu::deleteActiveSession(SlotId slotId) {
-    std::lock_guard<std::mutex> lk(mutex_);
     voiceSessions_.erase(slotId);
     activeSession_ = nullptr;
     std::cout << "Voice session deleted on slotId : " << slotId_ << std::endl;
@@ -380,7 +432,6 @@ void HpcmMenu::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffe
         memcpy(streamBuffer->getRawBuffer(), buffer->getRawBuffer(), bytesRead);
         freePlayBuffers_.push(streamBuffer);
         bufferReadyCv_.notify_all();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     buffer->reset();
     freeCaptureBuffers_.push(buffer);
@@ -421,13 +472,15 @@ void HpcmMenu::record() {
 
     while(1) {
         streamBuffer = freeCaptureBuffers_.front();
-        freeCaptureBuffers_.pop();
+        if (!freeCaptureBuffers_.empty()) { freeCaptureBuffers_.pop(); }
 
-        status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
-        if(status != telux::common::Status::SUCCESS) {
-            std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
-            readErrorOccurred_ = true;
-            break;
+        if (streamBuffer) {
+            status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
+            if(status != telux::common::Status::SUCCESS) {
+                std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
+                readErrorOccurred_ = true;
+                break;
+            }
         }
 
         if(freeCaptureBuffers_.empty()) {
@@ -457,13 +510,13 @@ void HpcmMenu::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buff
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     std::cout << "bytes played: " << bytesWritten << std::endl;
+    if (!buffer) { std::cout << "Invalid buffer" << std::endl;  return; }
 
     if ((error != telux::common::ErrorCode::SUCCESS) ||
             (buffer->getDataSize() != bytesWritten)) {
         std::cout << "error in writting" << std::endl;
         writeErrorOccurred_ = true;
     }
-    buffer->reset();
 }
 
 /*
@@ -487,13 +540,15 @@ void HpcmMenu::play() {
         bufferReadyCv_.wait(lck);
 
         streamBuffer = freePlayBuffers_.front();
-        freePlayBuffers_.pop();
+        if (!freePlayBuffers_.empty()) { freePlayBuffers_.pop(); }
 
-        status = audioPlayStream_->write(streamBuffer, writeCb);
-        if(status != telux::common::Status::SUCCESS) {
-            std::cout << "can't write, err "<< static_cast<unsigned int>(status) << std::endl;
-            writeErrorOccurred_ = true;
-            break;
+        if (streamBuffer) {
+            status = audioPlayStream_->write(streamBuffer, writeCb);
+            if(status != telux::common::Status::SUCCESS) {
+                std::cout << "can't write, err "<< static_cast<unsigned int>(status) << std::endl;
+                writeErrorOccurred_ = true;
+                break;
+            }
         }
 
         if(exitHpcm_ || readErrorOccurred_){
@@ -503,6 +558,8 @@ void HpcmMenu::play() {
 
     if (writeErrorOccurred_) {
         std::cout << "Playback finished with error" << std::endl;
+    } else if(readErrorOccurred_) {
+        std::cout << "Capture finished with error, unable to play " << std::endl;
     } else {
         std::cout << "Playback finished" << std::endl;
     }

@@ -55,8 +55,14 @@ class HpcmMenu : public ConsoleApp,
     void cleanup();
 
  private:
-    Status createAllStreams();
-    Status deleteAllStream();
+    Status createVoiceStream(StreamConfig &config);
+    Status createHpcmRecordStream(StreamConfig &config);
+    Status createHpcmPlayStream(StreamConfig &config);
+    Status startVoiceStream();
+    Status deleteHpcmRecordStream();
+    Status deleteHpcmPlayStream();
+    Status stopVoiceStream();
+    Status deleteVoiceStream();
     void startHpcmAudio(std::vector<std::string> userInput);
     void stopHpcmAudio(std::vector<std::string> userInput);
     void deleteActiveSession(SlotId slotId);

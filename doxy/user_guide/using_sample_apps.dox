@@ -25,6 +25,7 @@ $ make_call_app /data/make_call_app.conf
 - @subpage platform
 - @subpage crypto
 - @subpage crypto_accelerator
+- @subpage cellular_connection_security
 - @subpage wlan
 
 */

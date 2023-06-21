@@ -55,4 +55,8 @@ if (TELSDK_FEATURE_AUDIO)
     add_subdirectory( audio_loopback_app )
 endif (TELSDK_FEATURE_AUDIO)
 
+if (TELSDK_FEATURE_CONNECTION_SECURITY)
+    add_subdirectory( cellular_connection_security_app )
+endif (TELSDK_FEATURE_CONNECTION_SECURITY)
+
 endif(NOT BUILD_FOR_SIMULATION)

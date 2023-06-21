@@ -86,6 +86,9 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AK} @tdmulrowend
+@td Jun 2023 @tdend @tdlast
+\- Updated documentation for API reference and user guide for V1.59.0 @tdlastend @trend
 @tr @tdmulrow{1,AJ} @tdmulrowend
 @td May 2023 @tdend @tdlast
 \- Updated documentation for API reference and user guide for V1.58.0 @tdlastend @trend

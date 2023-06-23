@@ -118,6 +118,8 @@ public:
             std::cin >> input;
          }
       } while (!valid);
+      std::cin.clear();
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
    }
 
    // Validate the input and in case of invalid input request
@@ -139,6 +141,8 @@ public:
             std::cin >> input;
          }
       } while(!valid);
+      std::cin.clear();
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
    }
 
    // Validate input string(Ex: 1, 2, 3) which should contain

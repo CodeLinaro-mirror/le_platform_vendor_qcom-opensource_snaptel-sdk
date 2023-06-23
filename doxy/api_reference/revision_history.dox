@@ -86,6 +86,7 @@ when       who     what, where, why
 @trhdg
 @thdg{1,|c|,Revision} @thdg{1,c|,Date} @thdglast{1,c|,Description}
 @trhdgend
+@tr @tdmulrow{1,AK} @tdmulrowend @td Jun 2023 @tdend @tdlast Updated documentation for SDK release V1.59.0 changes @tdlastend @trend
 @tr @tdmulrow{1,AJ} @tdmulrowend @td May 2023 @tdend @tdlast Updated documentation for SDK release V1.58.0 changes @tdlastend @trend
 @tr @tdmulrow{1,AH} @tdmulrowend @td Apr 2023 @tdend @tdlast Updated documentation for SDK release V1.57.0 changes @tdlastend @trend
 @tr @tdmulrow{1,AG} @tdmulrowend @td Mar 2023 @tdend @tdlast Added documentation for thermal notifications @tdlastend @trend

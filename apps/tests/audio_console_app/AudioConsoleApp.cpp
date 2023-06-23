@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -85,6 +85,7 @@ extern "C" {
 #include "LoopbackMenu.hpp"
 #include "ToneMenu.hpp"
 #include "TransCodeMenu.hpp"
+#include "HpcmMenu.hpp"
 
 #include "AudioConsoleApp.hpp"
 #include "../../common/utils/Utils.hpp"
@@ -188,11 +189,14 @@ void AudioConsoleApp::initConsole() {
     = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("9", "Get Supported Devices", {},
         std::bind(&AudioConsoleApp::getSupportedDevices, this, std::placeholders::_1)));
 
+    std::shared_ptr<ConsoleAppCommand> hpcmMenuCommand
+    = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "Hpcm", {},
+        std::bind(&AudioConsoleApp::hpcmMenu, this, std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainMenuCommands
     = {voiceMenuCommand, playMenuCommand, captureMenuCommand, loopbackMenuCommand,
-        toneMenuCommand, transCodeMenuCommand, getCalStatusCommand, getSupportedStreamsCommand,
-        getSupportedDevicesCommand };
+        toneMenuCommand, transCodeMenuCommand, getCalStatusCommand,
+        getSupportedStreamsCommand, getSupportedDevicesCommand , hpcmMenuCommand};
 
     voiceMenu_ = std::make_shared<VoiceMenu>("Voice Menu", "voice> ");
     voiceMenu_->init();
@@ -206,6 +210,8 @@ void AudioConsoleApp::initConsole() {
     toneMenu_->init();
     transCodeMenu_ = std::make_shared<TransCodeMenu>("TransCode menu", "transCode> ");
     transCodeMenu_->init();
+    hpcmMenu_ = std::make_shared<HpcmMenu>("Hpcm menu", "hpcm> ", audioManager_);
+    hpcmMenu_->init();
 
     ConsoleApp::addCommands(mainMenuCommands);
     ConsoleApp::displayMenu();
@@ -241,6 +247,11 @@ void AudioConsoleApp::transCodeMenu(std::vector<std::string> userInput) {
     transCodeMenu_->mainLoop();
 }
 
+void AudioConsoleApp::hpcmMenu(std::vector<std::string> userInput) {
+    hpcmMenu_->displayMenu();
+    hpcmMenu_->mainLoop();
+}
+
 void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
     if (!ready_) {
         std::cout << "Audio Service UNAVAILABLE" << std::endl;
@@ -260,6 +271,9 @@ void AudioConsoleApp::getCalStatus(std::vector<std::string> userInput) {
                     std::cout << "Calibration Status Unknown" << std::endl;
                 }
                 p.set_value(true);
+            } else if(error == telux::common::ErrorCode::NOT_SUPPORTED) {
+                p.set_value(false);
+                std::cout << "API not supported" << std::endl;
             } else {
                 p.set_value(false);
                 std::cout << "failed to get cal init status" << std::endl;
@@ -357,6 +371,7 @@ void AudioConsoleApp::cleanup() {
     loopbackMenu_->cleanup();
     toneMenu_->cleanup();
     transCodeMenu_->cleanup();
+    hpcmMenu_->cleanup();
 }
 
 void AudioConsoleApp::setSystemReady() {
@@ -378,6 +393,9 @@ void AudioConsoleApp::setSystemReady() {
     }
     if (transCodeMenu_) {
         transCodeMenu_->setSystemReady();
+    }
+    if (hpcmMenu_) {
+        hpcmMenu_->setSystemReady();
     }
 }
 

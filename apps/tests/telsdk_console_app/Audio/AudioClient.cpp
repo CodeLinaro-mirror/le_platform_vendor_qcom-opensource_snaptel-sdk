@@ -325,14 +325,15 @@ void AudioClient::queryInputType() {
         std::cout << "Empty input, enter correct choice" << std::endl;
         return;
     }
-    if (!consoleFlag) {
-        AudioHelper::getUserSampleRateInput(config_.sampleRate);
-        AudioHelper::getUserChannelInput(config_.channelTypeMask);
-        config_.deviceTypes.clear();
-        AudioHelper::getUserDeviceInput(config_.deviceTypes);
-        AudioHelper::getUserEcnrModeInput(config_.ecnrMode);
+    if (consoleFlag) {
+        loadConfFileData();
+        return;
     }
-    return;
+    AudioHelper::getUserSampleRateInput(config_.sampleRate);
+    AudioHelper::getUserChannelInput(config_.channelTypeMask);
+    config_.deviceTypes.clear();
+    AudioHelper::getUserDeviceInput(config_.deviceTypes);
+    AudioHelper::getUserEcnrModeInput(config_.ecnrMode);
 #else
     return;
 #endif

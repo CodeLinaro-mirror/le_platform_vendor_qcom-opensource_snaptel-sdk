@@ -71,6 +71,8 @@
   */
 
 #include "RadioTransmit.h"
+#include "utils.h"
+#include <cerrno>
 
 RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory category,
                 const TrafficIpType trafficType, const uint16_t port, const uint32_t serviceId,
@@ -80,6 +82,8 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
         cout << "Radio Checks on Sps Transmit Event Fail\n";
         //return static_cast<uint8_t>(Status::FAILED);
     }
+    this->category = category;
+    this->flowType = "spsFlow";
     auto cv2xRadio = cv2xRadioManager->getCv2xRadio(category);
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txSpsFlow,
                             std::shared_ptr<ICv2xTxFlow> txEventFlow,
@@ -94,6 +98,8 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
             spsFlowInfo = std::make_shared<SpsFlowInfo>();
             if (spsFlowInfo) {
                 memcpy(spsFlowInfo.get(), &spsInfo, sizeof(SpsFlowInfo));
+                this->spsPriority = spsInfo.priority;
+                this->spsResSize = spsInfo.nbytesReserved;
             }
         }
         else{
@@ -117,12 +123,15 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
         //return static_cast<uint8_t>(Status::FAILED);;
     }
     this->category = category;
+    this->flowType = "eventFlow";
     auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(category);
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txEventFlow,
                             ErrorCode eventError){
                                 eventFlowCallbackOnCreate(txEventFlow,eventError);
                             };
-    if(Status::SUCCESS == cv2xRadio->createTxEventFlow(trafficType, serviceId, eventInfo,
+    this->resetCallbackPromise();
+    EventFlowInfo testEventInfo;
+    if(Status::SUCCESS == cv2xRadio->createTxEventFlow(trafficType, serviceId, testEventInfo,
                 port, respCallback)){
         if(ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
             cout<<"Event Flow created succesfully\n";
@@ -142,6 +151,7 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
 RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port) {
     cout << "Now simulating transmission of messages..."<< endl;
     isSim = true;
+    this->flowType = "simFlow";
     this->enableUdp = radioOpt.enableUdp;
     this->ipv4_src = radioOpt.ipv4_src;
     this->clientAddress = {0};
@@ -199,7 +209,6 @@ void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress, 
 
 uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {
     struct timespec ts;
-
     if (isSim)
     {
         int  bytes_sent;
@@ -216,6 +225,7 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
     auto resp = -1;
     //cout << "Sending data in Flow: len=" << bufLen << endl;
     auto sock = this->flow->getSock();
+    //cout << "Sending data on flow socket("<< sock << ")\n";
 
     if (sock == -1) {
         cout << "Error on transmit, with socket value -1\n";
@@ -224,6 +234,8 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
 
     struct msghdr message = { 0 };
     struct iovec iov[1] = { 0 };
+    struct cmsghdr* cmsghp = NULL;
+    char control[CMSG_SPACE(sizeof(int))];
 
     iov[0].iov_base = (char*)buf;
     iov[0].iov_len = bufLen;
@@ -232,11 +244,13 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
     message.msg_iov = iov;
     message.msg_iovlen = 1;
 
+    //cout << "Provided priority is: " << static_cast<uint32_t>(priority) << "\n";
+    //cout << "Provided buflen is: " << bufLen << "\n";
+
     if (Priority::PRIORITY_UNKNOWN > priority) {
         // map pppp to traffic class if the priority is valid
         // note that pppp is only used for one-shot transmission
-        struct cmsghdr* cmsghp = NULL;
-        char control[CMSG_SPACE(sizeof(int))];
+        //cout << "Updating traffic class \n";
         message.msg_control = control;
         message.msg_controllen = sizeof(control);
         cmsghp = CMSG_FIRSTHDR(&message);
@@ -244,6 +258,9 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
         cmsghp->cmsg_type = IPV6_TCLASS;
         cmsghp->cmsg_len = CMSG_LEN(sizeof(int));
         *((int *)CMSG_DATA(cmsghp)) = static_cast<int>(priority) + 1;
+        //int msg_prior = static_cast<int>(priority) + 1;
+        //int msg_prior = 3;
+        //memcpy(CMSG_DATA(cmsghp), &msg_prior, sizeof(int));
     }
 
     auto bytes_sent = sendmsg(sock, &message, 0);
@@ -251,6 +268,10 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
         resp = bytes_sent;
     }else{
         cerr << "Error Sending Data.\n";
+        cerr << "Error is: " << strerror(errno) << "\n";
+        cout << "Data that should have been sent is: \n";
+        print_buffer((uint8_t*)buf, bufLen);
+        cout << "\n";
         resp = -1;
     }
     if (resp && enableCsvLog_) {
@@ -365,7 +386,12 @@ uint8_t RadioTransmit::closeFlow() {
         }
         this->resetCallbackPromise();
         this->flow = nullptr;
-        cout << "Tx flow closed.\n";
+        cout << "Closing flow of type: " << flowType << "\n";
+        if(resp != static_cast<uint8_t>(Status::FAILED)){
+            cout << "Tx flow closed.\n";
+        }else{
+            cout << "Tx flow not closed correctly.\n";
+        }
         return resp;
     }
 
@@ -380,6 +406,15 @@ int RadioTransmit::getTxInterval(uint64_t& periodicityMs) {
     }
     return res;
 }
+
+Priority RadioTransmit::getSpsPriority(){
+    return this->spsPriority;
+}
+
+uint32_t RadioTransmit::getSpsResSize(){
+    return this->spsResSize;
+}
+
 
 uint64_t RadioTransmit::latestTxRxTimeMonotonic() {
     return lastTxMonotonicTime_;

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -730,6 +730,20 @@ struct GlobalIPUnicastRoutingInfo
 {
     /**< Array that stores CV2X L2 MAC address at the last 3 bytes in big endian order. */
     uint8_t destMacAddr[CV2X_MAC_ADDR_LEN];
+};
+
+/**
+ * Encapsulates UTC time information.
+ *
+ * Used in @ref ICv2xListener.
+ */
+struct UtcTimeInfo {
+    /**< UTC time since Jan. 1, 1970. Units: Milliseconds.
+         Value 0 means invalid. */
+    uint64_t utcTime;
+    /**< UTC time uncertainty. Units: Milliseconds.
+         Value 0 means invalid. */
+    uint32_t tunc;
 };
 
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */

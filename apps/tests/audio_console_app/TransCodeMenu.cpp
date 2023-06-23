@@ -172,20 +172,16 @@ void TransCodeMenu::createTranscoder() {
     AmrwbpParams* outputParams = new AmrwbpParams();
     if (inputParams && outputParams) {
         if (inputConfig_.format == AudioFormat::AMRWB_PLUS) {
-        inputParams->bitWidth = 16;
         inputParams->frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
-        inputConfig_.params = inputParams;
-        } else {
-        inputConfig_.params = nullptr;
         }
+        inputParams->bitWidth = 16;
+        inputConfig_.params = inputParams;
 
         if (outputConfig_.format == AudioFormat::AMRWB_PLUS) {
-            outputParams->bitWidth = 16;
             outputParams->frameFormat = AmrwbpFrameFormat::FILE_STORAGE_FORMAT;
-            outputConfig_.params = outputParams;
-        } else {
-            outputConfig_.params = nullptr;
         }
+        outputParams->bitWidth = 16;
+        outputConfig_.params = outputParams;
 
         audioManager_->createTranscoder(inputConfig_, outputConfig_,
             [&p,this](std::shared_ptr<telux::audio::ITranscoder> &transcoder,

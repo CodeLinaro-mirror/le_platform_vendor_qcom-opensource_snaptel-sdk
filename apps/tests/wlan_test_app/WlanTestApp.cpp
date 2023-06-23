@@ -118,6 +118,12 @@ void WlanTestApp::wlanStaInterfaceManagerMenu(std::vector<std::string> inputComm
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Wlan Test App: Adding supplementary groups failed!" << std::endl;
+    }
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string appName = "Wlan Test App v" + std::to_string(sdkVersion.major) + "."
                           + std::to_string(sdkVersion.minor) + "."

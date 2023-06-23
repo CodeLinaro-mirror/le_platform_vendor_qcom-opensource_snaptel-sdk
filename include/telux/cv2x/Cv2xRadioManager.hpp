@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -115,9 +115,20 @@ public:
      *  - UE timing source switches from SLSS to GNSS, report 0 sync reference UE.
      *  - SLSS Rx is disabled, report 0 sync reference UE.
      *  - Cv2x is stopped, report 0 sync reference UE.
-     * @param [in] info - CV2X SLSS Rx information.
+     * @param [in] slssInfo - CV2X SLSS Rx information.
      */
     virtual void onSlssRxInfoChanged(const SlssRxInfo& slssInfo) {}
+
+    /**
+     * Called every one second for notifying UTC time when UE is synchronized to SLSS.
+     * Coarse UTC time has to be injected at least once by calling
+     * ICv2xRadioManager::injectCoarseUtcTime() after UE is synchronized to SLSS.
+     * The UTC time is valid only when the time source is SLSS, it is invalid
+     * when UE switches to other time sources.
+     *
+     * @param [in] utcInfo - UTC time information.
+     */
+    virtual void onUtcUpdateFromSlss(const UtcTimeInfo& utcInfo) {}
 
     /**
      * Destructor for ICv2xListener
@@ -242,11 +253,13 @@ public:
      *
      * @param [in] category - Specifies the category of the client application.
      *                        This field is currently unused.
+     * @param[in] cb - Optional callback to get Cv2xRadio initialization status
      *
      * @returns Reference to Cv2xRadio interface that corresponds to the Cv2x Traffic
      *          Category specified.
      */
-    virtual std::shared_ptr<ICv2xRadio> getCv2xRadio(TrafficCategory category) = 0;
+    virtual std::shared_ptr<ICv2xRadio> getCv2xRadio(TrafficCategory category,
+        telux::common::InitResponseCb cb = nullptr) = 0;
 
     /**
      * Put modem into CV2X mode.
@@ -379,6 +392,29 @@ public:
      * @returns SUCCESS on success. Error status otherwise.
      */
     virtual telux::common::Status getSlssRxInfo(GetSlssRxInfoCallback cb) = 0;
+
+    /**
+     * Inject coarse UTC time when UE is synchronized to SLSS.
+     *
+     * GNSS fix is not available when UE is synchronized to SLSS. To get
+     * accurate UTC time in this case, user can register a listener by
+     * invoking @ref ICv2xRadioManager::registerListener and then inject
+     * coarse UTC time derrived from received application messages using this
+     * API. The age of injected UTC time could be nearly 10 seconds at most.
+     * After that, accurate UTC time will be notified to user periodically
+     * through the registered listener.
+     *
+     * On platforms with access control enabled, the caller needs to have
+     * TELUX_CV2X_CONFIG permission to successfully invoke this API.
+     *
+     * @param [in] utc   - UTC time since Jan. 1, 1970. Units: Milliseconds.
+     * @param [in] cb    - Callback that is invoked when UTC inject complete.
+     *                     This may be null.
+     *
+     * @returns SUCCESS if no error occurred.
+     */
+    virtual telux::common::Status injectCoarseUtcTime(
+        uint64_t utc, common::ResponseCallback cb) = 0;
 
     virtual ~ICv2xRadioManager() {}
 };

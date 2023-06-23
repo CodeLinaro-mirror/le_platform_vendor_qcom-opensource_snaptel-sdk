@@ -75,6 +75,7 @@ extern "C" {
 #include "../../../../common/utils/Utils.hpp"
 
 #include "VlanMenu.hpp"
+#include "../DataUtils.hpp"
 
 using namespace std;
 
@@ -265,14 +266,16 @@ void VlanMenu::removeVlan(std::vector<std::string> inputCommand) {
     }
 
     int ifaceType;
-    std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI): ";
+    std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI, ";
+    std::cout << "6-VMTAP0, 7-VMTAP1): ";
     std::cin >> ifaceType;
-    Utils::validateInput(ifaceType,
-        {static_cast<int>(telux::data::InterfaceType::WLAN),
+    Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
         static_cast<int>(telux::data::InterfaceType::ETH),
         static_cast<int>(telux::data::InterfaceType::ECM),
         static_cast<int>(telux::data::InterfaceType::RNDIS),
-        static_cast<int>(telux::data::InterfaceType::MHI)});
+        static_cast<int>(telux::data::InterfaceType::MHI),
+        static_cast<int>(telux::data::InterfaceType::VMTAP0),
+        static_cast<int>(telux::data::InterfaceType::VMTAP1)});
     telux::data::InterfaceType infType = static_cast<telux::data::InterfaceType>(ifaceType);
 
     int vlanId;
@@ -320,7 +323,8 @@ void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
             std::cout << "No VLAN Entries Configured" << "\n";
         } else {
             for (auto c : configs) {
-                std::cout << "iface: " << (int)c.iface << ", vlanId: " << c.vlanId
+                std::cout << "iface: " << DataUtils::vlanInterfaceToString(c.iface)
+                          << ", vlanId: " << c.vlanId
                           << ", Priority: " << static_cast<int>(c.priority)
                           << ", accelerated: " << (int)c.isAccelerated << "\n";
             }

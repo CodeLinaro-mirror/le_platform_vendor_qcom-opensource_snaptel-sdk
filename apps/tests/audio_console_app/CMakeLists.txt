@@ -11,6 +11,7 @@ set(AUDIO_CONSOLE_APP_SOURCES
     LoopbackMenu.cpp
     ToneMenu.cpp
     TransCodeMenu.cpp
+    HpcmMenu.cpp
     ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp

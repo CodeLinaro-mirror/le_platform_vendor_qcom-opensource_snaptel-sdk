@@ -46,6 +46,7 @@ endif (TELSDK_FEATURE_POWER)
         add_subdirectory( cv2x_l2_id_filter_app)
         add_subdirectory( cv2x_tx_report_test_app)
         add_subdirectory( cv2x_slss_rx_app)
+        add_subdirectory( cv2x_slss_utc_app)
     endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 
 
@@ -53,5 +54,9 @@ if (TELSDK_FEATURE_AUDIO)
     add_subdirectory( audio_console_app )
     add_subdirectory( audio_loopback_app )
 endif (TELSDK_FEATURE_AUDIO)
+
+if (TELSDK_FEATURE_CONNECTION_SECURITY)
+    add_subdirectory( cellular_connection_security_app )
+endif (TELSDK_FEATURE_CONNECTION_SECURITY)
 
 endif(NOT BUILD_FOR_SIMULATION)

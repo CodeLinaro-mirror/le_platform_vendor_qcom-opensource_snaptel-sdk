@@ -73,6 +73,7 @@ extern "C" {
 #include <telux/data/DataFactory.hpp>
 #include <telux/common/DeviceConfig.hpp>
 #include "../../../../common/utils/Utils.hpp"
+#include "../DataUtils.hpp"
 
 #include "DataConnectionMenu.hpp"
 
@@ -135,10 +136,16 @@ bool DataConnectionMenu::init() {
     std::shared_ptr<ConsoleAppCommand> requestRoamingMode
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("10", "request_roaming_mode",
             {}, std::bind(&DataConnectionMenu::requestRoamingMode, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> requestTrafficFlowTemplate =
+        std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
+            "11", "request_traffic_flow_template", {},
+            std::bind(&DataConnectionMenu::requestTrafficFlowTemplate, this,
+                      std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {startDataCall, stopDataCall,
         reqDataCallStats, resetDataCallStats, reqDataCallList, setDefaultProfile,
-        getDefaultProfile, reqDataCallBitRate, setRoamingMode, requestRoamingMode};
+        getDefaultProfile, reqDataCallBitRate, setRoamingMode, requestRoamingMode,
+        requestTrafficFlowTemplate};
 
     addCommands(commandsList);
     return dcmSubSystemStatus;
@@ -698,4 +705,66 @@ bool DataConnectionMenu::initalizeDPM(SlotId slotId) {
         std::cout << "Data Profile Manager failed to initialize" << std::endl;
     }
     return retValue;
+}
+
+void DataConnectionMenu::requestTrafficFlowTemplate(std::vector<std::string> inputCommand) {
+    std::cout << "\nRequest traffic flow template" << std::endl;
+    telux::common::Status retStat = telux::common::Status::SUCCESS;
+    int slotId = DEFAULT_SLOT_ID;
+    if (telux::common::DeviceConfig::isMultiSimSupported()) {
+        slotId = Utils::getValidSlotId();
+    }
+    if (dataConnectionManagerMap_.find(static_cast<SlotId>(slotId)) ==
+                                        dataConnectionManagerMap_.end()) {
+        std::cout << "\nData Connection Manager on slot "<< slotId << " is not ready" << std::endl;
+        return;
+    }
+    int profileId;
+    std::cout << "Enter Profile Id: ";
+    std::cin >> profileId;
+    Utils::validateInput(profileId);
+
+    int ipFamilyType;
+    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
+    std::cin >> ipFamilyType;
+    Utils::validateInput(ipFamilyType, {static_cast<int>(telux::data::IpFamilyType::IPV4),
+        static_cast<int>(telux::data::IpFamilyType::IPV6),
+        static_cast<int>(telux::data::IpFamilyType::IPV4V6)});
+    telux::data::IpFamilyType ipFamType = static_cast<telux::data::IpFamilyType>(ipFamilyType);
+
+    auto dataCall = dataListeners_[static_cast<SlotId>(slotId)]->getDataCall(
+        static_cast<SlotId>(slotId), profileId);
+    if (dataCall) {
+        // Callback
+        auto respCb = [](const std::vector<std::shared_ptr<TrafficFlowTemplate>> &tfts,
+            telux::common::ErrorCode error) {
+            std::cout << "\n onTFTResponse" << std::endl;
+
+            if (error == telux::common::ErrorCode::SUCCESS) {
+               for (auto tft : tfts) {
+                  std::cout << " ----------------------------------------------"
+                               "------------\n";
+                  std::cout << " ** TFT Details **\n";
+                  std::cout << " Flow State: "
+                            << DataUtils::flowStateEventToString(
+                                   QosFlowStateChangeEvent::ACTIVATED)
+                            << std::endl;
+                  DataUtils::logQosDetails(tft);
+                  std::cout << " ----------------------------------------------"
+                               "------------\n\n";
+               }
+            } else {
+               std::cout << "ErrorCode: " << static_cast<int>(error)
+                         << ", description: "
+                         << Utils::getErrorCodeAsString(error) << std::endl;
+            }
+        };
+
+        dataCall->requestTrafficFlowTemplate(ipFamType, respCb);
+        Utils::printStatus(retStat);
+    } else {
+        std::cout << "No data call is active. Please start a data call to "
+                     "request TFT info on that data call."
+                  << std::endl;
+    };
 }

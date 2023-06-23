@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -293,8 +293,8 @@ public:
 /**
  * This API blacklists some constellations or subset of SVs from the constellation from being used
  * by the GNSS standard position engine (SPE).
- * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO and SBAS. For other
- * constellations NOTSUPPORTED status will be returned.
+ * Supported constellations for this API are GLONASS, QZSS, BEIDOU, GALILEO, SBAS and NAVIC.
+ * For other constellations NOTSUPPORTED status will be returned.
  * For SBAS, SVs are not used in positioning by the GNSS standard position engine (SPE) by
  * default. Blacklisting SBAS SV only blocks SBAS data demodulation and will not disable SBAS
  * cross-correlation detection algorithms as they are necessary for optimal GNSS standard
@@ -778,6 +778,50 @@ public:
 
   virtual telux::common::Status deRegisterListener(LocConfigIndications indicationList,
     std::weak_ptr<ILocationConfigListener> listener) = 0;
+
+/**
+ * To support the Galileo OSNMA feature, this API is used to inject the Merkle Tree information
+ * via a XML configuration file. The XML configuration contains the Merkle root, Merkle nodes
+ * and information for upto 2 public keys.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
+ * @param [in] merkleTreeInfo - The XML content to be injected.
+ *                              For injecting the Merkle information, clients need to
+ *                              pass the XML content in the form of a std::string.
+ *
+ * @param [in] callback - Optional callback to receive the result of the injection.
+ *
+ * @returns Status of the injection i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status injectMerkleTreeInformation(std::string merkleTreeInfo,
+    telux::common::ResponseCallback callback = nullptr) = 0;
+
+/**
+ * This API is used to enable/disable the OSNMA Feature in the Modem.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
+ * @param [in] enable - Enable/Disable the OSNMA Feature in the modem.
+ *
+ * @param [in] callback - Optional callback to receive the result of the enablement/disablement.
+ *
+ * @returns Status of the enablement/disablement i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  virtual telux::common::Status configureOsnma(bool enable,
+    telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
  * Destructor of ILocationConfigurator

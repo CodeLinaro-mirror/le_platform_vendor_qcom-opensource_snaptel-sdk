@@ -454,7 +454,7 @@ void DataSettingsMenu::requestCurrentDds(std::vector<std::string> inputCommand)
         if (error == telux::common::ErrorCode::SUCCESS) {
             std::cout << "Slot_Id: " << currentState.slotId << std::endl;
             std::string type = (currentState.type == DdsType::PERMANENT) ?
-                "Permamnent" : "Temporary";
+                "Permanent" : "Temporary";
             std::cout << "Switch Type: " << type << std::endl;
         }
     };
@@ -635,5 +635,17 @@ void DataSettingsMenu::onWwanConnectivityConfigChange(SlotId slotId, bool isConn
     } else {
         std::cout << "Disallowed";
     }
+    std::cout << std::endl << std::endl;
+}
+
+void DataSettingsMenu::onDdsChange(DdsInfo currentState) {
+    std::cout << "\n\n";
+    PRINT_NOTIFICATION << " ** DDS sub has changed ** \n";
+
+    std::cout <<  "DDS Info : " << "Slot_Id: " << currentState.slotId << std::endl;
+        std::string type = (currentState.type == DdsType::PERMANENT) ?
+            "Permamnent" : "Temporary";
+        std::cout << "Switch Type: " << type << std::endl;
+
     std::cout << std::endl << std::endl;
 }

@@ -50,6 +50,7 @@
 #include <telux/loc/LocationManager.hpp>
 #include <telux/loc/LocationListener.hpp>
 #include <mutex>
+#include <vector>
 
 
 using std::cout;
@@ -64,8 +65,7 @@ using telux::common::ErrorCode;
 using std::lock_guard;
 
 class KinematicsReceive;
-
-class locListener : public ILocationListener {
+class LocListener : public ILocationListener {
 public:
     /**
     * Method that gets the most up to date location.
@@ -75,6 +75,7 @@ public:
     */
     shared_ptr<ILocationInfoEx> getLocation();
     void close();
+    void setLocCbFn(void(*locCbFn_)(shared_ptr<ILocationInfoEx> &locationInfo));
 
 private:
     void onDetailedLocationUpdate(const shared_ptr<ILocationInfoEx> &locationInfo) override;
@@ -83,8 +84,9 @@ private:
     */
    shared_ptr<ILocationInfoEx> locationInfo_ = nullptr;
    mutex locInfoMtx_;
-   std::condition_variable locInfoCv_;;
+   std::condition_variable locInfoCv_;
    bool exit_ = false;
+   void(* locCbFunction_)(shared_ptr<ILocationInfoEx> &locationInfo); // pointer to data to pass to aerolink upon update
 };
 
 class KinematicsReceive : public std::enable_shared_from_this<KinematicsReceive> {
@@ -93,10 +95,8 @@ private:
    static mutex sync;
    uint16_t interval = 100;
    std::shared_ptr<ILocationManager> locationManager_ = nullptr;
-   std::shared_ptr<locListener> locListener_ = nullptr;
-
+   std::shared_ptr<LocListener> locListener_ = nullptr;
    void startDetailsCallback(ErrorCode eventError);
-
 
 protected:
 
@@ -117,6 +117,15 @@ public:
    KinematicsReceive(uint16_t interval);
 
 
+   // external listeners that want the data right away
+   // we want them to get the updated location info data from onGnssLocationCb
+   // we can add these listeners with a set function
+   // perhaps it could just be a list of valid pointers to memory addresses that listeners use
+   // eg applicationBase, aerolink, squish
+    KinematicsReceive(std::vector<std::shared_ptr<ILocationListener>> locListeners,
+                                                            uint16_t interval);
+
+
    /**
     * Method that gets the most up to date location.
     * @return a shared pointer of IlocationInfoEx structure that holds
@@ -124,7 +133,7 @@ public:
     * @see ILocationInfoEx in Snaptel SDK.
     */
    shared_ptr<ILocationInfoEx> getLocation();
-
+   std::vector<std::shared_ptr<ILocationListener>> locListeners_;
 
     /**
     * Destructor that closes listener to Location SDK. This method closes

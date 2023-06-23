@@ -76,9 +76,114 @@ using std::cout;
 using std::string;
 using std::map;
 using std::pair;
-
+using namespace telux::cv2x::prop;
+using telux::cv2x::prop::V2xPropFactory;
+using telux::cv2x::prop::CongestionControlUtility;
+// Congestion Control related variables
+CongestionControlData ApplicationBase::congestionControlOut;
+sem_t ApplicationBase::congCtrlCbSem;
+CongestionControlUserData ApplicationBase::congCtrlCbData;
+bool ApplicationBase::cbSuccess;
+shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::congestionControlManager;
 FILE* ApplicationBase::csvfp;
 std::mutex ApplicationBase::csvMutex;
+bool ApplicationBase::securityEnabled;
+bool ApplicationBase::congCtrlEnabled;
+std::string getCurrentTimestamp()
+{
+    using std::chrono::system_clock;
+    auto currentTime = std::chrono::system_clock::now();
+    char buffer[MAX_TIMESTAMP_BUFFER_SIZE];
+    auto sinceEpoch = currentTime.time_since_epoch().count() / 1000000;
+    auto millis = sinceEpoch % 1000;
+    std::time_t tt = system_clock::to_time_t ( currentTime );
+    auto timeinfo = localtime (&tt);
+    int ret = strftime (buffer,80,"%F-%H:%M:%S.",timeinfo);
+    snprintf(&buffer[ret], MAX_TIMESTAMP_BUFFER_SIZE, "%03d", (int)millis);
+    return std::string(buffer);
+}
+
+void ApplicationBase::writeSecurityLog(FILE *myfp){
+    // can pass mbd, signing, and verif stats here and other settings
+    //std::vector<SignStats> stats = thrSignLatencies[std::this_thread::get_id()];
+    //std::vector<VerifStats> stats = thrVerifLatencies[std::this_thread::get_id()];
+}
+
+/* Log Format:
+ * TimeStamp    TimeStamp_ms    Time_monotonic
+ * LogRecType   L2 ID    CBR Percent    CPU_Util
+ * TXInterval   msgCnt  TempId  GPGSAMode
+ * secMark  lat long    semi_major_dev  speed
+ * heading  longAccel   latAccel    Tracking_Error
+ * vehicleDensityInRange    ChannelQualityIndication
+ * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
+ */
+void ApplicationBase::writeCongCtrlLog(FILE *myfp,
+    shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt) {
+    if (!congestionControlCalculations) {
+        std::cerr << "Invalid congestionControl output struct provided\n";
+        return;
+    }
+    if (congestionControlCalculations->trackingError) {
+            fprintf(myfp, "%f,", congestionControlCalculations->trackingError);
+    }
+    else {
+        fprintf(myfp, ",");
+    }
+    fprintf(myfp, "%f,", congestionControlCalculations->smoothDens);
+
+    if (congestionControlCalculations->channData) {
+        fprintf(myfp, "%f,", congestionControlCalculations->channData->channQualInd);
+    }
+    else {
+        fprintf(myfp, ",");
+    }
+    fprintf(myfp, ","); // valid packet not used for TX
+    fprintf(myfp, "%lu,", congestionControlCalculations->maxITT);
+
+    //sps enhancement data
+    if (congestionControlCalculations->spsEnhanceData) {
+        //fprintf(myfp, "%f,", congestionControlCalculations->spsEnhanceData->gpsTime);
+        //fprintf(myfp, "%d,", congestionControlCalculations->spsEnhanceData->events);
+        //fprintf(myfp, "%lu,", congestionControlCalculations->spsEnhanceData->congestionControlRandTime);
+        fprintf(myfp, "%f,", 0.0);
+        fprintf(myfp, "%d,", 0);
+        fprintf(myfp, "%lu,",(long unsigned int)0);
+        fprintf(myfp, "%d,", this->congCtrlConfig.spsEnhHysterPerc);
+    }
+    else {
+       fprintf(myfp, "0.0,0,0,%d", this->congCtrlConfig.spsEnhHysterPerc);
+    }
+}
+
+class QitsCongCtrlListener :public ICongestionControlListener {
+    public:
+        void onCongestionControlDataReady (
+            std::shared_ptr<CongestionControlUserData> congestionControlUserData,
+                bool success) override {
+            // once the user data is updated, the thread in qits
+            // can now schedule a transmission
+            // cast void pointer
+            RadioTransmit* spsTransmit_ = (RadioTransmit*)congestionControlUserData->spsTransmit;
+            // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
+            if(spsTransmit_ && congestionControlUserData->spsEnhancementsEnabled){
+                // create a new sps flow with the rounded max ITT that congestionControl calculates
+                SpsFlowInfo spsInfo;
+                // congestionControl rounds it already to valid values for sps periodicity
+                spsInfo.periodicityMs = (congestionControlUserData->congestionControlCalculations->maxITT);
+
+                // set sps priority to same value
+                spsInfo.priority = spsTransmit_->getSpsPriority();
+
+                // set sps size to same value
+                spsInfo.nbytesReserved = spsTransmit_->getSpsResSize();
+
+                spsTransmit_->updateSpsFlow(spsInfo);
+            }
+            sem_post(congestionControlUserData->congestionControlSem);
+        }
+};
+
 
 // thread function to periodically change ID and cert
 void ApplicationBase::changeIdTimer(unsigned int interval)
@@ -196,8 +301,12 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType, b
 
     // set up kinematics listener
     if(configuration.enableLocationFixes){
+        std::cout << "Enabling location fixes\n";
+        appLocListener_ = make_shared<LocListener>();
+        appLocListener_->setLocCbFn(&ApplicationBase::locCbFn);
+        locListeners.push_back(appLocListener_);
         kinematicsReceive = std::make_shared<KinematicsReceive>
-                 (this->configuration.locationInterval);
+                (locListeners, this->configuration.locationInterval);
     }
 
     if(configuration.enableL2Filtering) {
@@ -268,8 +377,12 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     }
 
     if(configuration.enableLocationFixes){
+        std::cout << "Enabling location fixes\n";
+        appLocListener_ = make_shared<LocListener>();
+        appLocListener_->setLocCbFn(&ApplicationBase::locCbFn);
+        locListeners.push_back(appLocListener_);
         kinematicsReceive = std::make_shared<KinematicsReceive>
-                (this->configuration.locationInterval);
+                (locListeners, this->configuration.locationInterval);
     }
 
     if(configuration.enableL2Filtering) {
@@ -317,6 +430,7 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
                     configuration.securityCountryCode));
 #endif
     }
+
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
 
@@ -330,7 +444,6 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
 }
 
 ApplicationBase::~ApplicationBase() {
-     VehRec.disableVehicleReceive();
      closeAllRadio();
      {
          std::unique_lock<std::mutex> loc(stateMtx);
@@ -359,7 +472,6 @@ void ApplicationBase::vehicleEventReport(bool emergent,
             criticalState = true;
             newEvent = true;
         }
-        printf("critical events !!!\n");
         //TODO: use vehicle_state to construct critical BSM messages
     } else {
         if (criticalState) {
@@ -381,6 +493,10 @@ void ApplicationBase::vehicleEventReport(bool emergent,
                if (SecService->lockIdChange()) {
                    printf("Fail to lock ID change\n");
                }
+           }
+           // if congestion control enabled, notify the congestion control library
+           if(this->configuration.enableCongCtrl && congestionControlManager != NULL){
+               congestionControlManager->notifyCriticalEvent();
            }
         } else {
             // unblock id change
@@ -877,6 +993,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
 
     if (configuration.enableSecurity == true) {
+        ApplicationBase::securityEnabled = true;
         if (configs.find("SecurityContextName") != configs.end()) {
             configuration.securityContextName = configs["SecurityContextName"];
         }
@@ -1030,7 +1147,35 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
                 printf("Only accepting signed messages\n");
             }
         }
+        /* Misbehavior-related statistics */
+        if(configs.find("enableMbd") != configs.end()){
+            istringstream is1(configs["enableMbd"]);
+            is1 >> boolalpha >> configuration.enableMbd;
+            if(configuration.enableMbd) {
+                if(configs.find("enableMbdStatLog") != configs.end()){
+                    istringstream is8(configs["enableMbdStatLog"]);
+                    is8 >> boolalpha >> configuration.enableMbdStatLog;
+                    if(configuration.enableMbdStatLog){
+                        if(configs.find("mbdStatLogListSize") != configs.end()){
+                            this->configuration.mbdStatLogListSize =
+                                (uint32_t)stoi(configs["mbdStatLogListSize"]);
+                        }
+                        if(configs.find("mbdStatLogFile") != configs.end()){
+                            this->configuration.mbdStatLogFile = configs["mbdStatLogFile"];
+                        }
+                        std::cout << "Misbehavior statistic logging is ON" << std::endl;
+                        std::cout << "Statistics for last " << configuration.mbdStatLogListSize <<
+                            " misbehavior will be reported by each thread" << std::endl;
+                        std::cout << "Upon closure, statistics will be dumped to logfile: " <<
+                            configuration.mbdStatLogFile << std::endl;
+                    } else{
+                        std::cout << "Misbehavior statistic logging is off" << std::endl;
+                    }
+                }
+            }
+        }
     }
+
     /* codec debug */
     if (configs.find("codecVerbosity") != configs.end()) {
         this->configuration.codecVerbosity =
@@ -1094,34 +1239,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         ipstream3 >> boolalpha >> configuration.l2IdTimeThreshold;
     }
 
-    /* Misbehavior-related statistics */
-    if(configs.find("enableMbd") != configs.end()){
-        istringstream is1(configs["enableMbd"]);
-        is1 >> boolalpha >> configuration.enableMbd;
-        if(configuration.enableMbd) {
-            if(configs.find("enableMbdStatLog") != configs.end()){
-                istringstream is8(configs["enableMbdStatLog"]);
-                is8 >> boolalpha >> configuration.enableMbdStatLog;
-                if(configuration.enableMbdStatLog){
-                    if(configs.find("mbdStatLogListSize") != configs.end()){
-                        this->configuration.mbdStatLogListSize =
-                            (uint32_t)stoi(configs["mbdStatLogListSize"]);
-                    }
-                    if(configs.find("mbdStatLogFile") != configs.end()){
-                        this->configuration.mbdStatLogFile = configs["mbdStatLogFile"];
-                    }
-                    std::cout << "Misbehavior statistic logging is ON" << std::endl;
-                    std::cout << "Statistics for last " << configuration.mbdStatLogListSize <<
-                        " misbehavior will be reported by each thread" << std::endl;
-                    std::cout << "Upon closure, statistics will be dumped to logfile: " <<
-                        configuration.mbdStatLogFile << std::endl;
-                } else{
-                    std::cout << "Misbehavior statistic logging is off" << std::endl;
-                }
-            }
-        }
-    }
-
     /* WSA */
     configuration.routerLifetime = 0;
     configuration.ipPrefixLength = 0;
@@ -1162,6 +1279,16 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
                                        MAX_PADDING_LEN : this->configuration.padding;
     }
 
+    if (configs.end() != configs.find("UnsignedBsmResSize")) {
+        this->configuration.spsReservationSize =
+                    (this->configuration.enableSecurity) ?
+                                    stoi(configs["SignedBsmResSize"], nullptr, 10)
+                                    : stoi(configs["UnsignedBsmResSize"], nullptr, 10);
+        if(this->configuration.padding >= 0) {
+            this->configuration.spsReservationSize += this->configuration.padding;
+        }
+    }
+
     if (configs.end() != configs.find("SpsPriority")) {
         this->configuration.spsPriority = static_cast<Priority>(
             stoi(configs["SpsPriority"], nullptr, 10));
@@ -1174,6 +1301,189 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
     this->configuration.isValid = true;
 
+
+    /*
+      check if congestion control is enabled and begin setting the cong ctrl config parameters
+    */
+    if (configs.end() != configs.find("enableCongCtrl")) {
+        istringstream is(configs["enableCongCtrl"]);
+        is >> boolalpha >> this->configuration.enableCongCtrl;
+        if(this->configuration.enableCongCtrl == true){
+            ApplicationBase::congCtrlEnabled = true;
+            auto &v2xPropFactory = V2xPropFactory::getInstance();
+            congestionControlManager = v2xPropFactory.getCongestionControlManager();
+            saveCongCtrlConfig(configs);
+            sem_init(&congCtrlCbSem, 0, 0);
+            congCtrlListener = std::make_shared<QitsCongCtrlListener>();
+                congestionControlManager->registerListener(congCtrlListener);
+        }
+    }
+}
+
+void ApplicationBase::saveCongCtrlConfig(map<string, string> configs){
+    std::cout << "Proceeding to find and save cong ctrl config parameters\n";
+
+    if(configs.find("congCtrlType") != configs.end()){
+        congCtrlConfig.congCtrlType = stoi(configs["congCtrlType"]);
+        congestionControlManager->updateCongestionControlType((CongestionControlType)congCtrlConfig.congCtrlType);
+    }
+    if(configs.find("enableCongCtrlLogging") != configs.end()){
+        congCtrlConfig.enableCongCtrlLogging = stoi(configs["enableCongCtrlLogging"]);
+        CongestionControlUtility::setLoggingLevel(congCtrlConfig.enableCongCtrlLogging);
+    }
+    if(configs.find("cbpMeasInterval") != configs.end()){
+        congCtrlConfig.cbpMeasInterval = stoi(configs["cbpMeasInterval"]);
+    }
+    if(configs.find("cbpWeightFactor") != configs.end()){
+        congCtrlConfig.cbpWeightFactor = stod(configs["cbpWeightFactor"]);
+    }
+
+    congestionControlManager->updateCbpConfig(congCtrlConfig.cbpWeightFactor,
+        congCtrlConfig.cbpMeasInterval);
+
+    if(configs.find("perInterval") != configs.end()){
+        congCtrlConfig.perInterval = stoi(configs["perInterval"]);
+    }
+    if(configs.find("perSubInterval") != configs.end()){
+        congCtrlConfig.perSubInterval = stoi(configs["perSubInterval"]);
+    }
+    if(configs.find("perMax") != configs.end()){
+        congCtrlConfig.perMax = stod(configs["perMax"]);
+    }
+
+    congestionControlManager->updatePERConfig(congCtrlConfig.perMax, congCtrlConfig.perInterval,
+        congCtrlConfig.perSubInterval);
+
+    std::cout << "Reading max itt\n";
+    if(configs.find("vMax_ITT") != configs.end()){
+        congCtrlConfig.vMax_ITT = stoi(configs["vMax_ITT"]);
+    }
+    if(configs.find("vRescheduleTh") != configs.end()){
+        congCtrlConfig.vRescheduleTh = stoi(configs["vRescheduleTh"]);
+    }
+    if(configs.find("cv2xMaxITTRounding") != configs.end()){
+        congCtrlConfig.cv2xMaxITTRounding = stoi(configs["cv2xMaxITTRounding"]);
+    }
+
+    std::cout << "reading min cqi params\n";
+    if(configs.find("minChanQualInd") != configs.end()){
+        congCtrlConfig.minChanQualInd = stod(configs["minChanQualInd"]);
+    }
+    if(configs.find("maxChanQualInd") != configs.end()){
+        congCtrlConfig.maxChanQualInd = stod(configs["maxChanQualInd"]);
+    }
+    if(configs.find("vDensityWeightFactor") != configs.end()){
+        congCtrlConfig.vDensityWeightFactor = stod(configs["vDensityWeightFactor"]);
+    }
+    if(configs.find("vDensityCoefficient") != configs.end()){
+        congCtrlConfig.vDensityCoefficient = stod(configs["vDensityCoefficient"]);
+    }
+    if(configs.find("vDensityWindow") != configs.end()){
+        congCtrlConfig.vDensityWindow = stoi(configs["vDensityWindow"]);
+    }
+    if(configs.find("vDensityMinPerRange") != configs.end()){
+        congCtrlConfig.vDensityMinPerRange = stoi(configs["vDensityMinPerRange"]);
+    }
+    std::cout << "Reading max successfive fail\n";
+    if(configs.find("vMaxSuccessiveFail") != configs.end()){
+        congCtrlConfig.vMaxSuccessiveFail = stoi(configs["vMaxSuccessiveFail"]);
+    }
+    if(configs.find("UseStaticVDensity") != configs.end()){
+        congCtrlConfig.UseStaticVDensity = stoi(configs["UseStaticVDensity"]);
+    }
+    if(configs.find("vDensity") != configs.end()){
+        congCtrlConfig.vDensity = stoi(configs["vDensity"]);
+    }
+
+    congestionControlManager->updateDensConfig(congCtrlConfig.vDensityCoefficient, congCtrlConfig.vDensityWeightFactor,
+        congCtrlConfig.vDensityMinPerRange);
+
+    if(configs.find("txCtrlInterval") != configs.end()){
+        congCtrlConfig.txCtrlInterval = stoi(configs["txCtrlInterval"]);
+    }
+    std::cout << "reading remote estimation params\n";
+    if(configs.find("hvTEMinTimeDiff") != configs.end()){
+        congCtrlConfig.hvTEMinTimeDiff = stoi(configs["hvTEMinTimeDiff"]);
+    }
+    if(configs.find("hvTEMaxTimeDiff") != configs.end()){
+        congCtrlConfig.hvTEMaxTimeDiff = stoi(configs["hvTEMaxTimeDiff"]);
+    }
+    if(configs.find("rvTEMinTimeDiff") != configs.end()){
+        congCtrlConfig.rvTEMinTimeDiff = stoi(configs["rvTEMinTimeDiff"]);
+    }
+    if(configs.find("rvTEMaxTimeDiff") != configs.end()){
+        congCtrlConfig.rvTEMaxTimeDiff = stoi(configs["rvTEMaxTimeDiff"]);
+    }
+    if(configs.find("teErrSensitivity") != configs.end()){
+        congCtrlConfig.teErrSensitivity = stoi(configs["teErrSensitivity"]);
+    }
+
+    congestionControlManager->updateTeConfig(congCtrlConfig.txCtrlInterval, congCtrlConfig.hvTEMinTimeDiff,
+        congCtrlConfig.hvTEMaxTimeDiff, congCtrlConfig.rvTEMinTimeDiff, congCtrlConfig.rvTEMaxTimeDiff,
+        congCtrlConfig.teMinThresh, congCtrlConfig.teMaxThresh, congCtrlConfig.teErrSensitivity);
+
+
+    if(configs.find("teMinThresh") != configs.end()){
+        congCtrlConfig.teMinThresh = stod(configs["teMinThresh"]);
+    }
+    if(configs.find("teMaxThresh") != configs.end()){
+        congCtrlConfig.teMaxThresh = stod(configs["teMaxThresh"]);
+    }
+    if(configs.find("minItt") != configs.end()){
+        congCtrlConfig.minItt = stoi(configs["minItt"]);
+    }
+    if(configs.find("maxItt") != configs.end()){
+        congCtrlConfig.maxItt = stoi(configs["maxItt"]);
+    }
+    if(configs.find("txRand") != configs.end()){
+        congCtrlConfig.txRand = stoi(configs["txRand"]);
+    }
+    if(configs.find("timeAccuracy") != configs.end()){
+        congCtrlConfig.timeAccuracy = stoi(configs["timeAccuracy"]);
+    }
+    if(configs.find("reschedThresh") != configs.end()){
+        congCtrlConfig.reschedThresh = stoi(configs["reschedThresh"]);
+    }
+
+    congestionControlManager->updateIttConfig(congCtrlConfig.reschedThresh, congCtrlConfig.timeAccuracy,
+        congCtrlConfig.minItt, congCtrlConfig.maxItt, congCtrlConfig.txRand);
+
+
+    if(configs.find("supraGain") != configs.end()){
+        congCtrlConfig.supraGain = stod(configs["supraGain"]);
+    }
+    if(configs.find("minChanUtil") != configs.end()){
+        congCtrlConfig.minChanUtil = stoi(configs["minChanUtil"]);
+    }
+    if(configs.find("maxChanUtil") != configs.end()){
+        congCtrlConfig.maxChanUtil = stoi(configs["maxChanUtil"]);
+    }
+    if(configs.find("minRadiPwr") != configs.end()){
+        congCtrlConfig.minRadiPwr = stoi(configs["minRadiPwr"]);
+    }
+    if(configs.find("maxRadiPwr") != configs.end()){
+        congCtrlConfig.maxRadiPwr = stoi(configs["maxRadiPwr"]);
+    }
+
+    if (configs.find("enableSpsEnhancements") != configs.end()) {
+        istringstream is(configs["enableSpsEnhancements"]);
+        is >> boolalpha >> congCtrlConfig.enableSpsEnhancements;
+        if (congCtrlConfig.enableSpsEnhancements) {
+            std::cout << "SPS Enhancements Enabled\n";
+        }
+        congestionControlManager->enableSpsEnhancements(congCtrlConfig.enableSpsEnhancements);
+        if (configs.find("spsEnhIntervalRound") != configs.end()) {
+            congCtrlConfig.spsEnhIntervalRound = stoi(configs["spsEnhIntervalRound"]);
+        }
+        if (configs.find("spsEnhHysterPerc") != configs.end()) {
+            congCtrlConfig.spsEnhHysterPerc = stoi(configs["spsEnhHysterPerc"]);
+        }
+        if (configs.find("spsEnhDelayPerc") != configs.end()) {
+            congCtrlConfig.spsEnhDelayPerc = stoi(configs["spsEnhDelayPerc"]);
+        }
+        congestionControlManager->updateSpsEnhanceConfig(congCtrlConfig.spsEnhIntervalRound, congCtrlConfig.spsEnhDelayPerc,
+            congCtrlConfig.spsEnhHysterPerc);
+    }
 }
 
 void ApplicationBase::simTxSetup(const string ipv4, const uint16_t port) {
@@ -1233,14 +1543,16 @@ void ApplicationBase::setup(MessageType msgType) {
 
     // set sps priority to user specified value
     spsInfo.priority = this->configuration.spsPriority;
-
+    spsInfo.nbytesReserved = this->configuration.spsReservationSize;
     if(appVerbosity > 3) {
         cout << "SPS period set to " << spsInfo.periodicityMs << "ms" << endl;
         cout << "SPS priority set to " << static_cast<uint32_t>(spsInfo.priority) << endl;
+        cout << "SPS reservation size set to " << spsInfo.nbytesReserved << endl;
     }
 
     for (auto port : this->configuration.spsPorts)
     {
+
         RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
                          port, this->configuration.spsServiceIDs[i], false, 0);
         // save Tx instance only if create Tx flow succeeded
@@ -1337,6 +1649,7 @@ void ApplicationBase::setup(MessageType msgType) {
         this->eventContents.push_back(mc);
         i += 1;
     }
+    lastTxTime = timestamp_now();
 }
 
 void ApplicationBase::setupLdm(){
@@ -1366,6 +1679,7 @@ int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
     // If positive, should be the # of bytes sent
     // Else, something went wrong
     int ret = -1;
+
     // ethernet
     if (this->isTxSim) {
         ret = simTransmit->transmit(mc->abuf.data, bufLen,
@@ -1381,6 +1695,7 @@ int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
                                                       this->configuration.eventPriority);
         }
     }
+
     return ret;
 }
 
@@ -1389,6 +1704,13 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     auto encLength = 0;
     std::shared_ptr<msg_contents> mc = nullptr;
     bool validMessage = false;
+
+
+    // if congestion control enabled, only send when congestionControl tells us to:
+    if(this->configuration.enableCongCtrl){
+        sem_wait (congestionControlManager->
+                    getCongestionControlUserData()->congestionControlSem);
+    }
 
     if (this->isTxSim) {
         mc = txSimMsg;
@@ -1411,79 +1733,92 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                              SecurityService::SignType::ST_CERTIFICATE :
                              SecurityService::SignType::ST_AUTO);
     }
+    // this will avoid any log writing if the log file was never opened
+    writeLog(mc, index, 0, true, txType, validMessage);
+    if(this->configuration.enableCongCtrl){
+        congestionControlManager->updateLastTxTime(timestamp_now());
+    }
+
     int ret = this->transmit(index, mc, encLength, txType);
+
     if (encLength > 0 && ret > 0) {
         validMessage = true;
+        if(csvfp) {
+            uint64_t currTime = timestamp_now();
+            txInterval = currTime - lastTxTime;
+            lastTxTime = currTime;
+        }
     }
-    if (kinematicsReceive) {
-        auto locationInfo = kinematicsReceive->getLocation();
+    if (kinematicsReceive && appLocListener_) {
+        auto locationInfo = appLocListener_->getLocation();
         if (locationInfo) {
             locTimeMs_ = locationInfo->getTimeStamp();
             locPositionDop_ = locationInfo->getPositionDop();
             locNumSvUsed_ = locationInfo->getNumSvUsed();
         }
     }
-    writeMinLog(mc, index, true, txType, validMessage);
+
+
     return encLength;
 }
 
 int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
                                       SecurityService::SignType type) {
-        // The message need to be signed/encrypted after layer 3
-        SecurityOpt sopt;
-        uint8_t signedSpdu[512];
-        uint32_t signedSpduLen = 512;
-        sopt.psidValue = this->configuration.psid;
-        if (this->configuration.sspLength){
-             memcpy(sopt.sspValue, this->configuration.ssp,
-                this->configuration.sspLength);
-             if(this->configuration.enableSspMask && this->configuration.sspMaskLength){
-                memcpy(sopt.sspMaskValue, this->configuration.sspMask,
-                    this->configuration.sspMaskLength);
-             }
-            sopt.sspLength = this->configuration.sspLength;
-            sopt.sspMaskLength = this->configuration.sspMaskLength;
-        }
-        sopt.enableAsync = this->configuration.enableAsync;
-        sopt.secVerbosity = this->configuration.secVerbosity;
-        if(kinematicsReceive){
-            shared_ptr<ILocationInfoEx> locationInfo =
-                                        kinematicsReceive->getLocation();
-            sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
-            sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
-            sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
-        }
+    // The message need to be signed/encrypted after layer 3
+    SecurityOpt sopt = {};
+    uint8_t signedSpdu[512];
+    uint32_t signedSpduLen = 512;
+    sopt.psidValue = this->configuration.psid;
+    if (this->configuration.sspLength){
+         memcpy(sopt.sspValue, this->configuration.ssp,
+            this->configuration.sspLength);
+         if(this->configuration.enableSspMask && this->configuration.sspMaskLength){
+            memcpy(sopt.sspMaskValue, this->configuration.sspMask,
+                this->configuration.sspMaskLength);
+         }
+        sopt.sspLength = this->configuration.sspLength;
+        sopt.sspMaskLength = this->configuration.sspMaskLength;
+    }
+    sopt.enableAsync = this->configuration.enableAsync;
+    sopt.secVerbosity = this->configuration.secVerbosity;
+    if(kinematicsReceive && appLocListener_){
+        shared_ptr<ILocationInfoEx> locationInfo =
+                                    appLocListener_->getLocation();
+        sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+        sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+        sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+    }
 
-        std::thread::id tid = std::this_thread::get_id();
-        if(configuration.enableSignStatLog){
-            if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
-                sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
-            }else{
-                signStatIdx[tid] = 0;
-                sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
-            }
+    std::thread::id tid = std::this_thread::get_id();
+    if(configuration.enableSignStatLog){
+        if (thrSignLatencies[tid].size() > signStatIdx[tid]) {
+            sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
+        }else{
+            signStatIdx[tid] = 0;
+            sopt.signStat = &thrSignLatencies[tid].at(signStatIdx[tid]);
         }
-        auto encLength = 0;
-        if (mc->abuf.tail_bits_left != 8)
-            encLength = mc->abuf.tail - mc->abuf.data + 1;
-        else
-            encLength = mc->abuf.tail - mc->abuf.data;
+    }
+    auto encLength = 0;
+    if (mc->abuf.tail_bits_left != 8)
+        encLength = mc->abuf.tail - mc->abuf.data + 1;
+    else
+        encLength = mc->abuf.tail - mc->abuf.data;
 
-        // Aerolink handles IEEE1609.2 header insertion, but this requires us to
-        // make buffer copy of the header and the payload.
-        if (SecService->SignMsg(sopt, (uint8_t*)mc->abuf.data,
-                                encLength, signedSpdu, signedSpduLen, type) < 0) {
-            return -1;
-        }
-        if(configuration.enableSignStatLog){
-            // successful signing, increment the sign stat idx
-            signStatIdx[tid]++;
-            signStatIdx[tid]%=thrSignLatencies[tid].size();
-        }
-        abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
-        asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
-        // transmit packet
-        return encode_msg_continue(mc.get());
+    // Aerolink handles IEEE1609.2 header insertion, but this requires us to
+    // make buffer copy of the header and the payload.
+    if (SecService->SignMsg(sopt, (uint8_t*)mc->abuf.data,
+                            encLength, signedSpdu, signedSpduLen, type) < 0) {
+        return -1;
+    }
+    if(configuration.enableSignStatLog){
+        // successful signing, increment the sign stat idx
+        signStatIdx[tid]++;
+        signStatIdx[tid]%=thrSignLatencies[tid].size();
+    }
+    abuf_purge(&mc->abuf, abuf_headroom(&mc->abuf));
+    asn_ncat(&mc->abuf, (char *)signedSpdu, signedSpduLen);
+    // transmit packet
+    return encode_msg_continue(mc.get());
 }
 
 int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen) {
@@ -1543,9 +1878,10 @@ void ApplicationBase::initVerifLogging() {
 void ApplicationBase::writeVerifLogging() {
     ofstream file;
     sem_wait(&this->log_sem);
-    std::thread::id thrId = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
     printf("Thread (%08x) is now dumping verification stats to %s\n",
-            thrId,configuration.verifStatLogFile.c_str());
+            std::stoi(ss.str()),configuration.verifStatLogFile.c_str());
     file.open(configuration.verifStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<VerifStats> stats = thrVerifLatencies[std::this_thread::get_id()];
@@ -1583,9 +1919,10 @@ void ApplicationBase::initSignLogging() {
 void ApplicationBase::writeSignLogging() {
     ofstream file;
     sem_wait(&this->log_sem);
-    std::thread::id thrId = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
     printf("Thread (%08x) is now dumping signing stats to %s\n",
-            thrId,configuration.signStatLogFile.c_str());
+            std::stoi(ss.str()),configuration.signStatLogFile.c_str());
     file.open(configuration.signStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<SignStats> stats = thrSignLatencies[std::this_thread::get_id()];
@@ -1623,9 +1960,10 @@ void ApplicationBase::initMisbehaviorLogging() {
 void ApplicationBase::writeMisbehaviorLogging() {
     ofstream file;
     sem_wait(&this->log_sem);
-    std::thread::id thrId = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
     printf("Thread (%08x) is now dumping misbehavior stats to %s\n",
-            thrId,configuration.mbdStatLogFile.c_str());
+            std::stoi(ss.str()),configuration.mbdStatLogFile.c_str());
     file.open(configuration.mbdStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
     std::vector<MisbehaviorStats> stats = thrMisbehaviorLatencies[std::this_thread::get_id()];
@@ -1708,6 +2046,7 @@ int ApplicationBase::updateCachedV2xIpIfaceAddr() {
         }
     }
 
+    cerr << "Failed to update V2X IP iface address!" << endl;
     return -1;
 }
 
@@ -1728,7 +2067,7 @@ int ApplicationBase::getV2xIpIfaceAddr(string& addr) {
     return 0;
 }
 
-bool ApplicationBase::openMinLogFile(const std::string& fullPathName) {
+bool ApplicationBase::openBsmLogFile(const std::string& fullPathName) {
     bool res = false;
     if (not enableCsvLog_) {
         return res;
@@ -1740,7 +2079,7 @@ bool ApplicationBase::openMinLogFile(const std::string& fullPathName) {
             if (!csvfp) {
                 cerr << "Failed to open log file " << fullPathName << std::endl;
             } else {
-                std::cout << "Open min log " << fullPathName << " success!" << std::endl;
+                std::cout << "Open log " << fullPathName << " success!" << std::endl;
                 res = true;
                 write_bsm_header(csvfp);
             }
@@ -1761,8 +2100,64 @@ bool ApplicationBase::openMinLogFile(const std::string& fullPathName) {
     return res;
 }
 
-void ApplicationBase::writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
-    bool isTx, TransmitType txType, bool validPkt) {
+    /* Log Format:
+     * TimeStamp    TimeStamp_ms    Time_monotonic
+     * LogRecType   L2 ID    CBR Percent    CPU_Util
+     * TXInterval   msgCnt  TempId  GPGSAMode
+     * secMark  lat long    semi_major_dev  speed
+     * heading  longAccel   latAccel    Tracking_Error
+     * vehicleDensityInRange    ChannelQualityIndication
+     * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
+     */
+void ApplicationBase::writeLogHeader(FILE *fp) {
+    // Writes log header to the csv file pointed by fp.
+    fprintf(fp, "TimeStamp,TimeStamp_ms,Time_monotonic,");
+    fprintf(fp, "LogRecType,L2 ID,CBR Percent,CPU_Util,");
+    fprintf(fp, "TXInterval,msgCnt,TempId,GPGSAMode,");
+    fprintf(fp, "secMark,lat,long,semi_major_dev,speed,");
+    fprintf(fp, "heading,longAccel,latAccel,Tracking_Error,");
+    fprintf(fp, "vehicleDensityInRange,ChannelQualityIndication,");
+    fprintf(fp, "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis");
+    // TODO add security headers here too
+    fprintf(fp, "\n");
+}
+
+bool ApplicationBase::openLogFile(const std::string& fullPathName) {
+    bool res = false;
+    if (not enableCsvLog_) {
+        return res;
+    }
+    {
+        lock_guard<std::mutex> lock(csvMutex);
+        if ((nullptr == csvfp) && !fullPathName.empty()) {
+            csvfp = fopen(fullPathName.c_str(), "w+");
+            if (!csvfp) {
+                cerr << "Failed to open log file " << fullPathName << std::endl;
+            } else {
+                std::cout << "Open log " << fullPathName << " success!" << std::endl;
+                res = true;
+                writeLogHeader(csvfp);
+            }
+        }
+    }
+    if (res) {
+        for(int index = 0 ; index < spsTransmits.size(); index++) {
+            this->spsTransmits[index].enableCsvLog(enableCsvLog_);
+        }
+        for(int index = 0 ; index < eventTransmits.size(); index++) {
+            this->eventTransmits[index].enableCsvLog(enableCsvLog_);
+        }
+        for(int index = 0 ; index < radioReceives.size(); index++) {
+            this->radioReceives[index].enableCsvLog(enableCsvLog_);
+        }
+    }
+
+    return res;
+}
+
+
+void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
+    uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt) {
     uint64_t periodicityMs = 0;
     int res = -1;
     uint64_t monotonicTime;
@@ -1779,6 +2174,7 @@ void ApplicationBase::writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t 
     auto sp = mc.lock();
     if (sp) {
         RVsInRange = vehiclesInRange();
+        timestamp_now_ms = timestamp_now();
 
         if (isTx) {
             if (txType == TransmitType::SPS) {
@@ -1790,13 +2186,49 @@ void ApplicationBase::writeMinLog(std::weak_ptr<msg_contents> mc, const uint8_t 
                 monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
             }
         } else {
-            timestamp_now_ms = timestamp_now();
 
             monotonicTime = radioReceives[index].latestTxRxTimeMonotonic();
             cbr = radioReceives[index].getCBRValue();
         }
-        writeToCsv(sp.get(),csvfp, isTx, periodicityMs, validPkt,
-            RVsInRange, monotonicTime, timestamp_now_ms, locPositionDop_,
-            locNumSvUsed_, locTimeMs_, cbr);
+
+        /* Log Format:
+         * TimeStamp    TimeStamp_ms    Time_monotonic
+         * LogRecType   L2 ID    CBR Percent    CPU_Util
+         * TXInterval   msgCnt  TempId  GPGSAMode
+         * secMark  lat long    semi_major_dev  speed
+         * heading  longAccel   latAccel    Tracking_Error
+         * vehicleDensityInRange    ChannelQualityIndication
+         * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
+         */
+
+        // write general data to log
+        writeGeneralLog(sp.get(), csvfp, isTx, periodicityMs, validPkt,
+            RVsInRange, getCurrentTimestamp().c_str(), monotonicTime, timestamp_now_ms, locPositionDop_,
+            locNumSvUsed_, locTimeMs_, cbr, txInterval, l2SrcAddr);
+
+        // if congestion control enabled, write cong ctrl data to log
+        // may need to write these regardless
+
+        if (this->configuration.enableCongCtrl && isTx) {
+            // writeCongCtrlLog(csvfp, congCtrlCbData.congestionControlCalculations, validPkt);
+            writeCongCtrlLog(csvfp,
+                congestionControlManager->
+                    getCongestionControlUserData()->congestionControlCalculations,
+                validPkt);
+        }else{
+            // make sure to write commas for the empty fields
+            fprintf(csvfp, "0.0,0.0,0.0,");
+            fprintf(csvfp, "%d,0.0,0.0,0,0.0,%d", validPkt ? 1 : 0,
+                this->congCtrlConfig.spsEnhHysterPerc);
+        }
+
+        /* Security related fields */
+        // if security enabled, write security stats to log
+        if (this->configuration.enableSecurity) {
+            writeSecurityLog(csvfp);
+        }else {
+            // make sure to write commas for the empty fields
+        }
+        fprintf(csvfp, "\n");
     }
 }

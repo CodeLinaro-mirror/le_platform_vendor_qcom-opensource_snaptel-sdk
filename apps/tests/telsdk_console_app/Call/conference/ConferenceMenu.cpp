@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -50,6 +50,34 @@ ConferenceMenu::~ConferenceMenu() {
 }
 
 bool ConferenceMenu::init() {
+
+auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
+    std::promise<ServiceStatus> callMgrprom;
+    //  Get the PhoneFactory and CallManager instances.
+    callManager_ = phoneFactory.getCallManager([&](ServiceStatus status) {
+       callMgrprom.set_value(status);
+    });
+    if(!callManager_) {
+       std::cout << "ERROR - Failed to get CallManager instance \n";
+       return false;
+    }
+    std::cout << "CallManager subsystem is not ready " << ", Please wait " << std::endl;
+    ServiceStatus callMgrsubSystemStatus = callMgrprom.get_future().get();
+
+    if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
+       myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");
+       myResumeCb_ = std::make_shared<MyCallCommandCallback>("Resume");
+       callListener_ = std::make_shared<MyCallListener>();
+       // registering listener
+       telux::common::Status status = callManager_->registerListener(callListener_);
+       if(status != telux::common::Status::SUCCESS) {
+          std::cout << "Unable to register Call Manager listener" << std::endl;
+          return false;
+       }
+    } else {
+       std::cout << "Unable to initialise CallManager subsystem " << std::endl;
+       return false;
+    }
     if (menuOptionsAdded_ == false) {
 
         menuOptionsAdded_ = true;

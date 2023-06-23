@@ -1131,6 +1131,31 @@ typedef void (*v2x_ext_radio_status_listener)(const v2x_radio_status_ex_t* statu
 typedef void (*v2x_slss_rx_listener)(const v2x_slss_rx_info_t* info);
 
 /**
+    Encapsulates UTC time information.
+    Used in @ref v2x_utc_info_listener
+ */
+typedef struct {
+    uint64_t utc_time;
+    /**< UTC time since Jan. 1, 1970. Units: Milliseconds.
+         Value 0 means invalid. */
+    uint32_t tunc;
+    /**< UTC time uncertainty. Units: Milliseconds.
+         Value 0 means invalid. */
+} v2x_utc_info_t;
+
+/**
+    Called periodically for notifying accurate UTC time when UE
+    is synchronized to SLSS.
+
+    @datatypes
+    #v2x_utc_info_t
+
+    @param[out] utc     Pointer to UTC information.
+    @newpage
+*/
+typedef void (*v2x_utc_info_listener)(const v2x_utc_info_t* utc);
+
+/**
     Method used to query the platform SDK for its version number, build
     information, and build date.
 
@@ -2890,6 +2915,69 @@ v2x_status_enum_type v2x_register_slss_rx_listener(v2x_slss_rx_listener callback
  */
 v2x_status_enum_type v2x_deregister_slss_rx_listener(v2x_slss_rx_listener callback);
 
+/**
+    Inject coarse UTC time when UE is synchronized to SLSS.
+
+    GNSS fix is not available when UE is synchronized to SLSS. To get
+    accurate UTC time in this case, user can register a listener by
+    invoking @ref v2x_register_utc_from_slss and then inject coarse UTC
+    time derrived from received application messages using this API.
+    The age of injected UTC time could be nearly 10 seconds at most.
+    After that, accurate UTC time will be notified to user periodically
+    through the registered listener.
+
+    On platforms with access control enabled, the caller needs to have
+    TELUX_CV2X_CONFIG permission to successfully invoke this API.
+
+    @param [in] utc     UTC time since Jan. 1, 1970. Units: Milliseconds.
+
+    @returns V2X_STATUS_SUCCESS on success. Error status otherwise.
+ */
+v2x_status_enum_type v2x_inject_coarse_utc_time(uint64_t utc);
+
+/**
+    Registers a listener for UTC time updates when UE is synchronized to SLSS.
+
+    Coarse UTC time has to be injected at least once by calling @ref
+    v2x_inject_coarse_utc_time after UE is synchronized to SLSS.
+    The UTC time is valid only when the time source is SLSS,
+    it is invalid when UE switches to other time sources.
+
+    On platforms with access control enabled, the caller needs to have
+    TELUX_CV2X_INFO permission to successfully invoke this API.
+
+    @datatypes
+    v2x_utc_info_listener
+
+    @param[in] callback        Callback function of @ref v2x_utc_info_listener
+                               structure that is called every one second.\n
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+ */
+v2x_status_enum_type v2x_register_utc_listener(v2x_utc_info_listener callback);
+
+/**
+    Deregisters a listener for UTC time updates when UE is synchronized to SLSS.
+
+
+    On platforms with access control enabled, the caller needs to have
+    TELUX_CV2X_INFO permission to successfully invoke this API.
+
+    @datatypes
+    v2x_slss_rx_info_listener
+
+    @param[in] callback        Previously registered @ref v2x_utc_info_listener that
+                               is to be deregistered.\n
+
+    @return
+    #V2X_STATUS_SUCCESS.
+    @par
+    #V2X_STATUS_FAIL -- If there is an error.
+ */
+v2x_status_enum_type v2x_deregister_utc_listener(v2x_utc_info_listener callback);
 
 /** @} *//* end_addtogroup telematics_cv2x_c_radio */
 

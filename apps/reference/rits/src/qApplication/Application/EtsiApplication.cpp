@@ -403,7 +403,7 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
         if (decode_msg(mc.get()) >= 0) {
             mc->decoded = true;
         }
-        ApplicationBase::writeMinLog(mc, index, false, TransmitType::EVENT, mc->decoded);
+        ApplicationBase::writeLog(mc, index, 0, false, TransmitType::EVENT, mc->decoded);
     }
     return ret;
 }

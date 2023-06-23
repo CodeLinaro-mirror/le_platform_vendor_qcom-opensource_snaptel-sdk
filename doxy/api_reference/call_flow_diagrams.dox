@@ -2391,11 +2391,8 @@ This call flow diagram describes the sequence of steps for initializing the ICv2
 10. C-V2X radio manager creates ICv2xRadio object and calls method init().
 11. C-V2X radio starts initialization asynchronously.
 12. C-V2X radio manager returns ICv2xRadio object to application.
-13. Application queries C-V2X radio's readiness state using isReady() method.
-14. C-V2X radio returns a bool indicating whether it is ready to be used.
-15. If C-V2X radio is not ready, the application calls onReady() method.
-16. C-V2X radio returns a future object.
-17. Application calls future's get() method and blocks until C-V2X radio has completed its initialization steps. The return value of get() indicates the status of the initialization (either SUCCESS or FAILED).
+13. C-V2X radio manager is asynchronously notified of the readiness status of the C-V2X radio via the initialization callback.
+14. C-V2X radio manager calls application-supplied callback to notify the readiness status of C-V2X radio (either SERVICE_AVAILABLE or SERVICE_FAILED).
 
 @anchor fig_cv2x_radio_initialization_callflow_c
 @latexonly
@@ -4310,6 +4307,34 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 6. Application calls ecqvPostDataForMultiplyAndAdd() API of ICryptoAcceleratorManager.
 7. ICryptoAcceleratorManager returns success if data is sent for calculation.
 8. Application receives result in method onCalculationResult() of class implementing ICryptoAcceleratorListener interface.
+
+@section cellular_connsec_listener Cellular connection security
+
+The ICellularSecurityManager provides support for detecting, monitoring and generating security
+threat scan report for cellular connections.
+
+@subsection cell_connsec_listener_call_flow Call flow to register listener and receive reports
+
+@anchor fig_cell_connsec_listener_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{cellular_consec_listener.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to register listener and receive reports}
+  \label{cellular_consec_listener}
+\end{figure}
+@endlatexonly
+
+@html_image{cellular_consec_listener.png,Call flow to register listener and receive reports,80,80,Call flow to register listener and receive reports}
+
+1. Application request an instance of ConnectionSecurityFactory.
+2. An instance of ConnectionSecurityFactory is received by the application.
+3. From the ConnectionSecurityFactory, application request an instance of ICellularSecurityManager.
+4. An instance of ICellularSecurityManager is received by the application.
+5. Application registers CellSecurityReportListener listener with ICellularSecurityManager.
+6. Application receives security reports in onScanReportAvailable() callback method in CellSecurityReportListener listener.
+7. When use-case is complete application deregisters CellSecurityReportListener listener.
 
 @section wlan_call_flow WLAN
 @subsection wlan_modify_config_call_flow Call flow to modify WLAN configuration

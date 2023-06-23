@@ -106,6 +106,7 @@ public:
     void resetDataCallStatistics(std::vector<std::string> inputCommand);
     void setRoamingMode(std::vector<std::string> inputCommand);
     void requestRoamingMode(std::vector<std::string> inputCommand);
+    void requestTrafficFlowTemplate(std::vector<std::string> inputCommand);
     void requestDataCallList();
     void setDefaultProfile();
     void getDefaultProfile();

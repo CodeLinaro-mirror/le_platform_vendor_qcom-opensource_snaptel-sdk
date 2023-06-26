@@ -621,6 +621,12 @@ bool AerolinkSecurity::addNewThrSmp(std::thread::id thrId){
             verifSmpSems.insert(std::make_pair(thrId, verifThrSem));
         if(ret_pair.second){
             verifThrSemPtr = getThrSmpSem(thrId);
+            if(verifThrSemPtr == nullptr){
+                if(secVerbosity > 7){
+                    fprintf(stderr,"Unable to create smp for this thread\n");
+                }
+                return false;
+            }
             sem_init(verifThrSemPtr, 0, 1);
         }
     }else{
@@ -658,6 +664,12 @@ bool AerolinkSecurity::addNewThrSmg(std::thread::id thrId){
             signSmgSems.insert(std::make_pair(thrId, signThrSem));
         if(ret_pair.second){
             signThrSemPtr = getThrSmgSem(thrId);
+            if(signThrSemPtr == nullptr){
+                if(secVerbosity > 7){
+                    fprintf(stderr,"Unable to create smg for this thread\n");
+                }
+                return false;
+            }
             sem_init(signThrSemPtr, 0, 1);
         }
     }else{
@@ -904,7 +916,7 @@ int AerolinkSecurity::asyncVerify(
     // Get corresponding smp for this thread
     SecuredMessageParserC* smp;
     smp = getThrSmp(thrId);
-    if(smp == nullptr){
+    if(smp == nullptr || thrVerifSemPtr == nullptr){
         if(secVerbosity > 4)
         fprintf(stderr,"Unable to retrieve SMP for this thread\n");
         return -1;

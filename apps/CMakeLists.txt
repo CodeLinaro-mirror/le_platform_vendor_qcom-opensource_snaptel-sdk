@@ -21,11 +21,12 @@ endif(TELSDK_FEATURE_LOC)
 add_subdirectory( tests/thermal_shutdown_test_app )
 add_subdirectory( tests/modem_configurator )
 
-pkg_check_modules(PWR_MGR_QMI_LIB powermanagerqmi)
-
-if (PWR_MGR_QMI_LIB_FOUND)
-    add_subdirectory( tests/power_test_app )
-endif (PWR_MGR_QMI_LIB_FOUND)
+if (TELSDK_FEATURE_POWER)
+    pkg_check_modules(PWR_MGR_QMI_LIB powermanagerqmi)
+    if (PWR_MGR_QMI_LIB_FOUND)
+        add_subdirectory( tests/power_test_app )
+    endif (PWR_MGR_QMI_LIB_FOUND)
+endif (TELSDK_FEATURE_POWER)
 
 # build only if we are not building in bitbake environment
 if(BUILD_ALL_REFERENCE)

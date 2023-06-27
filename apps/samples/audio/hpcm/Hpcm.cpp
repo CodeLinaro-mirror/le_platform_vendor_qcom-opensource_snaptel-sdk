@@ -63,7 +63,7 @@
 #include "Hpcm.hpp"
 
 Hpcm::Hpcm() {
-    exit_ = false;
+    exit_ = true;
 }
 
 /*
@@ -203,6 +203,7 @@ int Hpcm::startVoiceStream() {
         return -EIO;
     }
 
+    exit_ = false;
     return 0;
 }
 
@@ -230,6 +231,9 @@ int Hpcm::stopVoiceStream() {
         return -EIO;
     }
 
+    exit_ = true;
+    captureCv_.notify_all();
+    bufferReadyCv_.notify_all();
     return 0;
 }
 
@@ -449,13 +453,17 @@ void Hpcm::record() {
 
     while(1) {
         streamBuffer = freeCaptureBuffers_.front();
-        freeCaptureBuffers_.pop();
+        if (!freeCaptureBuffers_.empty()) {
+            freeCaptureBuffers_.pop();
+        }
 
-        status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
-        if(status != telux::common::Status::SUCCESS) {
-            std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
-            readErrorOccurred_ = true;
-            break;
+        if (streamBuffer) {
+            status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
+            if(status != telux::common::Status::SUCCESS) {
+                std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
+                readErrorOccurred_ = true;
+                break;
+            }
         }
 
         if(freeCaptureBuffers_.empty()) {
@@ -472,13 +480,12 @@ void Hpcm::record() {
             break;
         }
 
-        if (readErrorOccurred_) {
+        if (readErrorOccurred_ || exit_) {
             /* error occurred during recording, terminate the thread */
             break;
         }
     }
 
-    exit_ = true;
     if (readErrorOccurred_) {
         std::cout << "recording finished with error" << std::endl;
     } else {
@@ -496,13 +503,13 @@ void Hpcm::writeCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         uint32_t bytesWritten, telux::common::ErrorCode error) {
 
     std::cout << "bytes played: " << bytesWritten << std::endl;
+    if (!buffer) { std::cout << "Invalid buffer" << std::endl;  return; }
 
     if ((error != telux::common::ErrorCode::SUCCESS) ||
             (buffer->getDataSize() != bytesWritten)) {
         std::cout << "error in writting" << std::endl;
         writeErrorOccurred_ = true;
     }
-    buffer->reset();
 }
 
 /*
@@ -529,18 +536,24 @@ void Hpcm::play() {
         }
 
         streamBuffer = freePlayBuffers_.front();
-        freePlayBuffers_.pop();
+        if (!freePlayBuffers_.empty()) {
+            freePlayBuffers_.pop();
+        }
 
-        status = audioPlayStream_->write(streamBuffer, writeCb);
-        if(status != telux::common::Status::SUCCESS) {
-            std::cout << "can't write, err " << static_cast<unsigned int>(status) << std::endl;
-            writeErrorOccurred_ = true;
-            break;
+        if (streamBuffer) {
+            status = audioPlayStream_->write(streamBuffer, writeCb);
+            if(status != telux::common::Status::SUCCESS) {
+                std::cout << "can't write, err " << static_cast<unsigned int>(status) << std::endl;
+                writeErrorOccurred_ = true;
+                break;
+            }
         }
     }
 
     if (writeErrorOccurred_) {
         std::cout << "Playback finished with error" << std::endl;
+    } else if (readErrorOccured_) {
+        std::cout << "Capture finished with error, unable to play " << std::endl;
     } else {
         std::cout << "Playback finished" << std::endl;
     }

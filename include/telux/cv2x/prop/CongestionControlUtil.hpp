@@ -17,18 +17,25 @@ namespace telux {
         public:
 
         /**
-         * Return current time stamp in milliseconds
+         * Return current time stamp in seconds
          * @returns long long
          *
          */
         uint64_t timestamp_now(void);
 
         /**
-         * Return current time stamp in microseconds
+         * Return current time stamp in milliseconds
          * @returns long long
          *
          */
         uint64_t timestamp_now_ms(void);
+
+        /**
+         * Return current time stamp in nanoseconds
+         * @returns long long
+         *
+         */
+        uint64_t timestamp_now_ns(void);
 
         };
 

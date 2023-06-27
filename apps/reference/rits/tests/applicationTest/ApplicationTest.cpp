@@ -132,10 +132,11 @@ void signalHandler(int signum) {
     application->prepareForExit();
     std::unique_lock<std::mutex> lk(gTerminateMtx);
     stopThread = true;
-/*     if(application->configuration.enableCongCtrl){
+     if(application->configuration.enableCongCtrl &&
+            application->congestionControlManager){
         std::cout << "Deinitializing congestion control library\n";
-        application->congestionControlManager->deinit();
-    } */
+        application->congestionControlManager->stopCongestionControl();
+    }
     gTerminateCv.notify_all();
 }
 
@@ -484,11 +485,13 @@ void transmit(MessageType msgType) {
     switch (msgType){
         case MessageType::BSM:
             txInterval = application->configuration.transmitRate;
-            cerr << "Sending BSM messages with period " << txInterval << "ms" << endl;
+            if(!application->configuration.enableCongCtrl){
+                cout << "Sending BSM messages with period " << txInterval << "ms" << endl;
+            }
             break;
         case MessageType::WSA:
             txInterval = application->configuration.wsaInterval;
-            cerr << "Sending WSA messages with period " << txInterval << "ms" << endl;
+            cout << "Sending WSA messages with period " << txInterval << "ms" << endl;
             //sending WSA, transmit only, we are simulating RSU, so set the global IP prefix
             if (prepareWsaTx() < 0) {
                 cerr << "Failed to prepare WSA Tx" << endl;;
@@ -547,6 +550,7 @@ void transmit(MessageType msgType) {
                 }
             }
             ret = application->send(0, TransmitType::SPS);
+
             if(ret > 0){
                 txsuccess++;
                 if (application->configuration.driverVerbosity) {
@@ -1188,14 +1192,6 @@ int setup(const bool tx, const bool rx,
             return -1;
         }
         threads.push_back(thread(runApps));
-    }
-
-    /* Will start it here because to prevent desynchronization between the transmit thread and congestion control startup */
-    /* Start congestion control threads */
-    if(application->configuration.enableCongCtrl){
-        if(application->congestionControlManager){
-            application->congestionControlManager->startCongestionControl();
-        }
     }
 
     return 0;

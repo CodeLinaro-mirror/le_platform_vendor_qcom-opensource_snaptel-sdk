@@ -615,6 +615,10 @@ protected:
     uint16_t locNumSvUsed_ = 0;
     bool enableCsvLog_ = false;
     // congestionControl cong ctrl
+    static CongestionControlData congestionControlOut;
+    CongestionControlCalculations qitsCongControlCalculations;
+    static sem_t congCtrlCbSem;
+    bool congCtrlInitialized = false;
     bool finishProgram;
     sem_t programSem;
     /**
@@ -656,7 +660,7 @@ protected:
     unique_ptr<SecurityService> SecService;
 
    virtual void writeLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
-       uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt);
+       uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt, uint64_t timestamp);
     /**
      * Vehicle Receive object.
      */
@@ -664,9 +668,6 @@ protected:
 
 private:
     bool exitApp = false;
-    static CongestionControlData congestionControlOut;
-    CongestionControlCalculations qitsCongControlCalculations;
-    static sem_t congCtrlCbSem;
     unordered_map <uint32_t,rv_specs> l2RvMap;
     std::mutex l2MapMtx;
     VehicleReceive::VehicleEventsCallback cb;
@@ -697,9 +698,10 @@ private:
     void startCongCtrl();
     static void congCtrlCb(CongestionControlUserData* congestionControlUserData, bool success);
     // function to write congestion control data to file
-    void writeCongCtrlLog(FILE *myfp, shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt);
+    void writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
+        shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt);
     // function to write security related data to file
-    void writeSecurityLog(FILE *myfp);
+    void writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp);
     //void writeCongCtrlLog(CongestionControlData* congestionControlData_);
 };
 #endif

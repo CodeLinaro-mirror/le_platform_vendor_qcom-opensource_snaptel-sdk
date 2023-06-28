@@ -392,7 +392,7 @@ int Hpcm::deleteHpcmRecordStream() {
 void Hpcm::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         telux::common::ErrorCode error) {
     uint32_t bytesRead;
-    std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer = audioCaptureStream_->getStreamBuffer();
+    std::shared_ptr<telux::audio::IStreamBuffer> streamBuffer = audioPlayStream_->getStreamBuffer();
 
     if (error != telux::common::ErrorCode::SUCCESS) {
         std::cout << "read failed, err: " << static_cast<int>(error) << std::endl;
@@ -404,7 +404,6 @@ void Hpcm::readCompletion(std::shared_ptr<telux::audio::IStreamBuffer> buffer,
         memcpy(streamBuffer->getRawBuffer(), buffer->getRawBuffer(), bytesRead);
         freePlayBuffers_.push(streamBuffer);
         bufferReadyCv_.notify_all();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     buffer->reset();
     freeCaptureBuffers_.push(buffer);
@@ -486,6 +485,7 @@ void Hpcm::record() {
         }
     }
 
+    exit_ = true;
     if (readErrorOccurred_) {
         std::cout << "recording finished with error" << std::endl;
     } else {
@@ -552,7 +552,7 @@ void Hpcm::play() {
 
     if (writeErrorOccurred_) {
         std::cout << "Playback finished with error" << std::endl;
-    } else if (readErrorOccured_) {
+    } else if (readErrorOccurred_) {
         std::cout << "Capture finished with error, unable to play " << std::endl;
     } else {
         std::cout << "Playback finished" << std::endl;

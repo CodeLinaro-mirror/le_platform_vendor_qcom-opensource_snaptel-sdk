@@ -224,6 +224,7 @@ struct Config{
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
     bool enableLocationFixes = true;
+    bool enableVehicleDataCallbacks = true;
 
     /* config data for Ieee1609.3 Wsa */
     long routerLifetime;

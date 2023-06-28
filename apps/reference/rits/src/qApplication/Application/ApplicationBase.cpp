@@ -378,7 +378,9 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
             vehicleEventReport(emergent, vehicle_state);
     };
 
-    VehRec.enableVehicleReceive(cb);
+    if(configuration.enableVehicleDataCallbacks){
+        VehRec.enableVehicleReceive(cb);
+    }
 
     if (configuration.qMonEnabled) // Add to config
     {
@@ -459,7 +461,9 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             vehicleEventReport(emergent, vehicle_state);
     };
 
-    VehRec.enableVehicleReceive(cb);
+    if(configuration.enableVehicleDataCallbacks){
+        VehRec.enableVehicleReceive(cb);
+    }
     if (configuration.qMonEnabled) // Add to config
     {
         //cout << "New qMon added\n";
@@ -938,6 +942,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
     if (configs.end() != configs.find("TDistance")) {
         this->configuration.distance3D = stoi(configs["TDistance"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("enableVehicleDataCallbacks")) {
+        istringstream is(configs["enableVehicleDataCallbacks"]);
+        is >> boolalpha >> this->configuration.enableVehicleDataCallbacks;
     }
 
     if (configs.end() != configs.find("SourceIpv4Address")) {

@@ -122,6 +122,7 @@ private:
     uint64_t lastTxMonotonicTime_ = 0;
     uint64_t actualSPSTxIntervalMs_ = 0;
     string flowType;
+    TrafficIpType trafficType_ = TrafficIpType::TRAFFIC_NON_IP;
 
     /**
     * Function that acts as a callback of the SDK's Event Flow creation.
@@ -225,11 +226,9 @@ public:
     * Method that configures ipv6 destination sock for TCP/IP Simulations
     * @param port an uint16_t data holds the port.
     * @param destAddress a char* that holds the IP address of the destination
-    * in IPv4 version
-    * @parm iface a char* that holds the name of the sock address
-    * @see sockaddr_in6
+    *
     */
-    void configureIpv6(const uint16_t port, const char* destAddress, const char* iface);
+    void configureIpv6(const uint16_t port, const char* destAddress);
 
     int getTxInterval(uint64_t& periodicityMs);
     uint64_t latestTxRxTimeMonotonic() override;

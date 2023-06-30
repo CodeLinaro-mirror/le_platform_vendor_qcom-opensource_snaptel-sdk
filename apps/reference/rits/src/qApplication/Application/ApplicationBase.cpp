@@ -702,21 +702,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             stream.clear();
         }
 
-        if (configs.end() != configs.find("SpsDestNames")) {
-            stream.str(configs["SpsDestNames"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
-                string spsDestNames;
-                getline(stream, spsDestNames, ',');
-                if (spsDestNames.empty()) {
-                    break;
-                }
-                this->configuration.spsDestNames.push_back(spsDestNames);
-            }
-            stream.str("");
-            stream.clear();
-        }
-
         if (configs.end() != configs.find("SpsDestPorts")) {
             stream.str(configs["SpsDestPorts"]);
             for (uint32_t i = 0; i < num; i++)
@@ -775,21 +760,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
                     break;
                 }
                 this->configuration.eventDestAddrs.push_back(EventDestAddrs);
-            }
-            stream.str("");
-            stream.clear();
-        }
-
-        if (configs.end() != configs.find("EventDestNames")) {
-            stream.str(configs["EventDestNames"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
-                string EventDestNames;
-                getline(stream, EventDestNames, ',');
-                if (EventDestNames.empty()) {
-                    break;
-                }
-                this->configuration.eventDestNames.push_back(EventDestNames);
             }
             stream.str("");
             stream.clear();
@@ -1567,8 +1537,7 @@ void ApplicationBase::setup(MessageType msgType) {
         }
 
         this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
-                this->configuration.spsDestAddrs[i].c_str(),
-                this->configuration.spsDestNames[i].c_str());
+                this->configuration.spsDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
             this->spsTransmits[i].
@@ -1637,8 +1606,7 @@ void ApplicationBase::setup(MessageType msgType) {
             return;
         }
         this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
-                this->configuration.eventDestAddrs[i].c_str(),
-                this->configuration.eventDestNames[i].c_str());
+                this->configuration.eventDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
             this->eventTransmits[i].

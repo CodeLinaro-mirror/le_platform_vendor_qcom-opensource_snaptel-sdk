@@ -145,11 +145,9 @@ struct Config{
     vector<uint32_t> spsServiceIDs;
     vector<uint32_t> eventServiceIDs;
     vector<string> spsDestAddrs;
-    vector<string> spsDestNames;
     vector<uint16_t> spsDestPorts;
     vector<uint16_t> eventDestPorts;
     vector<string> eventDestAddrs;
-    vector<string> eventDestNames;
     //vector<uint32_t> spsReservationSizes;
     uint32_t spsReservationSize;
     bool wildcardRx = false;

@@ -49,6 +49,7 @@
 #include <telux/platform/DeviceInfoManager.hpp>
 #include <telux/platform/TimeManager.hpp>
 
+#include <telux/platform/hardware/AntennaManager.hpp>
 
 namespace telux {
 
@@ -92,15 +93,30 @@ class PlatformFactory {
         telux::common::InitResponseCb callback = nullptr) = 0;
 
     /**
-     * Get instance of time manager (ITimeManager). The time manager
+     * Gets a time manager (ITimeManger) instance. The time manager
      * supports registering for time reports.
      *
      * @param [in] callback      Optional callback to get the initialization status of
      *                           ITimeManager. @ref telux::common::InitResponseCb
      *
-     * @returns pointer of @ref ITimeManager object.
+     * @returns ITimeManager instance or nullptr if time management is not supported.
      */
     virtual std::shared_ptr<ITimeManager> getTimeManager(
+        telux::common::InitResponseCb callback = nullptr) = 0;
+
+    /**
+     * Gets an antenna manager (IAntennaManager) instance.
+     *
+     * @param [in] callback   Optional callback to get the initialization status of
+     *                        antenna manager @ref telux::common::InitResponseCb
+     *
+     * @returns IAntennaManager instance or nullptr if antenna management is not
+     * supported.
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject to change and
+     *             could break backwards compatibility.*
+     */
+    virtual std::shared_ptr<hardware::IAntennaManager> getAntennaManager(
         telux::common::InitResponseCb callback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP

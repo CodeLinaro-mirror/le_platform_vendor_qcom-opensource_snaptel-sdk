@@ -12,7 +12,5 @@ endif(BUILD_ALL_SAMPLES)
 
 if((MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X) AND (NOT BUILD_FOR_SIMULATION))
     add_subdirectory( cv2x_get_status_app )
-    if (TELUX_QTI_EXTERNAL_AP)
-        add_subdirectory(cv2x_tm_app)
-    endif(TELUX_QTI_EXTERNAL_AP)
+    add_subdirectory(cv2x_tm_app)
 endif((MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X) AND (NOT BUILD_FOR_SIMULATION))

@@ -104,11 +104,11 @@ struct DeviceIndInfo {
  * Wlan Client Device Info
  */
 struct DeviceInfo {
-    Id           id;                   /**<  AP id device is connected to                      */
-    std::string  name;                 /**<  User friendly string that identifies Wi-Fi device */
-    std::string  ipv4Address;          /**<  IPv4 Address of Wi-Fi device                      */
-    std::string  ipv6Address;          /**<  IPv6 Address of Wi-Fi device                      */
-    std::string  macAddress;           /**<  MAC Address of Wi-Fi device                       */
+    Id           id;                      /**< AP id device is connected to                      */
+    std::string  name;                    /**< User friendly string that identifies Wi-Fi device */
+    std::string  ipv4Address;             /**< IPv4 Address of Wi-Fi device                      */
+    std::vector<std::string> ipv6Address; /**< List of IPv6 Addresses of Wi-Fi device            */
+    std::string  macAddress;              /**< MAC Address of Wi-Fi device                       */
 };
 
 /** @addtogroup telematics_wlan_ap

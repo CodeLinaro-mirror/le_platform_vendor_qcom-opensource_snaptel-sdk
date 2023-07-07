@@ -41,9 +41,7 @@ Type=simple
 ExecStartPre=+/bin/chown locclient:locclient /var/run/chrony.sock
 ExecStart=/usr/bin/chrony-sock -s
 Restart=always
-SupplementaryGroups=system diag radio
-apabilityBoundingSet=CAP_NET_ADMIN
-AmbientCapabilities=CAP_NET_ADMIN
+SupplementaryGroups=system diag
 
 [Install]
 WantedBy=multi-user.target

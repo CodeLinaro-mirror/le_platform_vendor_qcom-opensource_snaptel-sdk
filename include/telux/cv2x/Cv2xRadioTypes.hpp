@@ -732,20 +732,6 @@ struct GlobalIPUnicastRoutingInfo
     uint8_t destMacAddr[CV2X_MAC_ADDR_LEN];
 };
 
-/**
- * Encapsulates UTC time information.
- *
- * Used in @ref ICv2xListener.
- */
-struct UtcTimeInfo {
-    /**< UTC time since Jan. 1, 1970. Units: Milliseconds.
-         Value 0 means invalid. */
-    uint64_t utcTime;
-    /**< UTC time uncertainty. Units: Milliseconds.
-         Value 0 means invalid. */
-    uint32_t tunc;
-};
-
 /** @} */ /* end_addtogroup telematics_cv2x_cpp */
 
 } // namespace cv2x

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -47,6 +47,8 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/platform/FsManager.hpp>
 #include <telux/platform/DeviceInfoManager.hpp>
+#include <telux/platform/TimeManager.hpp>
+
 
 namespace telux {
 
@@ -87,6 +89,18 @@ class PlatformFactory {
      * @returns pointer of @ref IDeviceInfoManager object.
      */
     virtual std::shared_ptr<IDeviceInfoManager> getDeviceInfoManager(
+        telux::common::InitResponseCb callback = nullptr) = 0;
+
+    /**
+     * Get instance of time manager (ITimeManager). The time manager
+     * supports registering for time reports.
+     *
+     * @param [in] callback      Optional callback to get the initialization status of
+     *                           ITimeManager. @ref telux::common::InitResponseCb
+     *
+     * @returns pointer of @ref ITimeManager object.
+     */
+    virtual std::shared_ptr<ITimeManager> getTimeManager(
         telux::common::InitResponseCb callback = nullptr) = 0;
 
 #ifndef TELUX_DOXY_SKIP

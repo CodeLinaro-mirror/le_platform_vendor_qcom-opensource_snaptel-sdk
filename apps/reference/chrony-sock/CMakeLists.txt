@@ -2,12 +2,8 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(APP_NAME chrony-sock)
 
-if (TELSDK_FEATURE_FOR_PVM_ONLY)
-    add_definitions(-DTELSDK_FEATURE_CV2X_UTC_ENABLED)
-endif ()
-
 pkg_check_modules(TELUXCOMMON REQUIRED telux-common)
-pkg_checK_modules(TELUXLOC REQUIRED telux-loc)
+pkg_checK_modules(TELUXPLATFORM REQUIRED telux-platform)
 
 # Glib for strlcpy and strlcat
 pkg_check_modules(GLIB REQUIRED glib-2.0)
@@ -25,14 +21,9 @@ set(SOURCES
 
 add_executable(${APP_NAME} ${SOURCES})
 target_compile_options(${APP_NAME} PRIVATE ${TELUXCOMMON_CFLAGS}
-                       ${TELUXLOC_CFLAGS} -std=c++11 -Wall -Werror)
+                       ${TELUXPLATFORM_CFLAGS} -std=c++11 -Wall -Werror)
 target_link_libraries(${APP_NAME} rt ${GLIB_LIBRARIES}
-                      ${TELUXCOMMON_LIBRARIES} ${TELUXLOC_LIBRARIES} pthread)
-
-if (TELSDK_FEATURE_FOR_PVM_ONLY)
-    target_link_libraries(${APP_NAME}
-                          telux_cv2x)
-endif ()
+                      ${TELUXCOMMON_LIBRARIES} ${TELUXPLATFORM_LIBRARIES} pthread)
 
 install(TARGETS ${APP_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

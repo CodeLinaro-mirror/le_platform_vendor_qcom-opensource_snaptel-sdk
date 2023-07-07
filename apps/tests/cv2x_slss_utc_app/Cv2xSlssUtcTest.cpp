@@ -46,9 +46,11 @@
 #include <signal.h>
 
 #include <telux/common/CommonDefines.hpp>
-#include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include <telux/cv2x/Cv2xFactory.hpp>
 #include <telux/cv2x/Cv2xRadioManager.hpp>
+#include <telux/platform/PlatformFactory.hpp>
+#include <telux/platform/TimeManager.hpp>
+#include <telux/platform/TimeListener.hpp>
 
 #include "../../common/utils/Utils.hpp"
 #include "../../common/utils/SignalHandler.hpp"
@@ -63,26 +65,28 @@ using std::shared_ptr;
 using telux::common::ErrorCode;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
-using telux::cv2x::ICv2xListener;
 using telux::cv2x::ICv2xRadioManager;
-using telux::cv2x::UtcTimeInfo;
+using telux::platform::PlatformFactory;
+using telux::platform::ITimeManager;
+using telux::platform::ITimeListener;
+using telux::platform::SupportedTimeType;
+using telux::platform::TimeTypeMask;
 
 static bool gExit = false;
 static std::mutex mtx;
 static std::condition_variable cv;
-static bool gInjectUtcValid = false;
 static uint64_t gInjectUtc = 0;
 static bool gEnableUtcReport = false;
 static shared_ptr<ICv2xRadioManager> gCv2xRadioMgr = nullptr;
-static shared_ptr<ICv2xListener> gCv2xListener = nullptr;
+static shared_ptr<ITimeManager> gTimeMgr = nullptr;
+static shared_ptr<ITimeListener> gTimeListener = nullptr;
 
-class UtcListener : public ICv2xListener {
+class UtcListener : public ITimeListener {
 public:
-    void onUtcUpdateFromSlss(const UtcTimeInfo& utcInfo) override {
+    void onCv2xUtcTimeUpdate(const uint64_t utcInMs) override {
         cout << "------sys time(ms):" << Utils::getCurrentTimestamp()/1000;
         cout << "------" << endl;
-        cout << "utcTime:" << utcInfo.utcTime << endl;
-        cout << "tunc:" << utcInfo.tunc << endl;
+        cout << "utcTime:" << utcInMs << endl;
     }
 };
 
@@ -114,7 +118,6 @@ static int parseOpts(int argc, char *argv[]) {
         switch (c) {
         case 'i':
             if (optarg) {
-                gInjectUtcValid = true;
                 gInjectUtc = atoll(optarg);
             }
             break;
@@ -187,24 +190,55 @@ static int injectUtc() {
 
 static int registerUtcReport() {
     try {
-        gCv2xListener = std::make_shared<UtcListener>();
+        gTimeListener = std::make_shared<UtcListener>();
     } catch (std::bad_alloc& e) {
         cerr << "Error CV2X UTC Listener allocation" << endl;
         return EXIT_FAILURE;
     }
 
-    if (Status::SUCCESS != gCv2xRadioMgr->registerListener(gCv2xListener)) {
-        cerr << "Failed to register CV2X UTC listener" << endl;
-        gCv2xListener = nullptr;
+    bool statusUpdated = false;
+    auto servicStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    TimeTypeMask capabilities;
+    auto statusCb = [&statusUpdated, &servicStatus](telux::common::ServiceStatus status) {
+        std::lock_guard<std::mutex> lock(mtx);
+        statusUpdated = true;
+        servicStatus = status;
+        cv.notify_all();
+    };
+    gTimeMgr = PlatformFactory::getInstance().getTimeManager(statusCb);
+    if (gTimeMgr) {
+        // wait for utc manager to be ready
+        std::unique_lock<std::mutex> lck(mtx);
+        cv.wait(lck, [&statusUpdated] { return (statusUpdated || gExit); });
+    }
+
+    if (gExit) {
+        return EXIT_FAILURE;
+    }
+
+    if (servicStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        cout << "Time manager is ready" << endl;
+    } else {
+        cerr << "Unable to initialize time manager" << endl;
+        return EXIT_FAILURE;
+    }
+
+    TimeTypeMask mask;
+    mask.set(SupportedTimeType::CV2X_UTC_TIME);
+    if (Status::SUCCESS != gTimeMgr->registerListener(gTimeListener, mask)) {
+        cerr << "Failed to register time listener" << endl;
+        gTimeListener = nullptr;
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
 static int deregisterUtcReport() {
-    if (gCv2xListener and
-        Status::SUCCESS != gCv2xRadioMgr->deregisterListener(gCv2xListener)) {
-        cerr << "Failed to deregister CV2X listener" << endl;
+    TimeTypeMask mask;
+    mask.set(SupportedTimeType::CV2X_UTC_TIME);
+    if (gTimeListener and
+        Status::SUCCESS != gTimeMgr->deregisterListener(gTimeListener, mask)) {
+        cerr << "Failed to deregister CV2X UTC listener" << endl;
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -213,20 +247,22 @@ static int deregisterUtcReport() {
 int main(int argc, char *argv[]) {
     cout << "Running CV2X SLSS UTC Test APP" << endl;
 
-    std::vector<std::string> groups{"system", "diag", "radio"};
+    std::vector<std::string> groups{"system", "diag", "radio", "locclient"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cout << "Adding supplementary group failed!" << endl;
     }
 
     installSignalHandler();
 
-    if (parseOpts(argc, argv) or initCv2x()){
+    if (parseOpts(argc, argv)){
         return EXIT_FAILURE;
     }
 
     int ret = EXIT_SUCCESS;
-    if (gInjectUtcValid) {
-        ret = injectUtc();
+    if (gInjectUtc > 0) {
+        if (initCv2x() or injectUtc()) {
+            ret = EXIT_FAILURE;
+        }
     }
 
     if (gEnableUtcReport) {

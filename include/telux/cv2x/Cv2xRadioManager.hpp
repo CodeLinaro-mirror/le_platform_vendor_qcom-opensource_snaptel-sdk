@@ -120,17 +120,6 @@ public:
     virtual void onSlssRxInfoChanged(const SlssRxInfo& slssInfo) {}
 
     /**
-     * Called every one second for notifying UTC time when UE is synchronized to SLSS.
-     * Coarse UTC time has to be injected at least once by calling
-     * ICv2xRadioManager::injectCoarseUtcTime() after UE is synchronized to SLSS.
-     * The UTC time is valid only when the time source is SLSS, it is invalid
-     * when UE switches to other time sources.
-     *
-     * @param [in] utcInfo - UTC time information.
-     */
-    virtual void onUtcUpdateFromSlss(const UtcTimeInfo& utcInfo) {}
-
-    /**
      * Destructor for ICv2xListener
      */
     virtual ~ICv2xListener() {}

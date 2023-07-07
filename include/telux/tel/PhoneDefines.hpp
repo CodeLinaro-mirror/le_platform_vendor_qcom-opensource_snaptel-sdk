@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * @file      PhoneDefines.hpp
  * @brief     PhoneDefines contains enumerations and variables used for
@@ -283,6 +289,52 @@ enum class OperatingMode {
 enum class EcbMode {
    NORMAL = 0, /**< Device is not in emergency callback mode(ECBM) */
    EMERGENCY,  /**< Device is in emergency callback mode(ECBM) */
+};
+
+/**
+ * Defines the radio SignalStrength types for delta or threshold.
+ */
+enum class RadioSignalStrengthType {
+   GSM_RSSI,     /**< GSM received signal strength indicator.*/
+   WCDMA_RSSI,   /**< WCDMA received signal strength indicator.*/
+   LTE_SNR,      /**< LTE signal-to-noise ratio.*/
+   LTE_RSRQ,     /**< LTE reference signal received quality.*/
+   LTE_RSRP,     /**< LTE reference signal received power.*/
+   NR5G_SNR,     /**< NR5G signal-to-noise ratio.*/
+   NR5G_RSRP,    /**< NR5G reference signal received power.*/
+   NR5G_RSRQ,    /**< NR5G reference signal received quality.*/
+};
+
+/**
+ * Defines the SignalStrength configuration parameters.
+ */
+enum class SignalStrengthConfigType {
+    DELTA = 1,       /**< Signal strength delta provided. */
+    THRESHOLD = 2,   /**< Signal strength threshold provided. */
+};
+
+/**
+ * Defines the SignalStrength threshold parameters.
+ */
+struct SignalStrengthThreshold {
+   int32_t lowerRangeThreshold;     /**< Lower threshold for the selected
+                                         radio technology. */
+   int32_t upperRangeThreshold;     /**< Upper threshold for the selected
+                                         radio technology. */
+};
+
+/**
+ * Defines the SignalStrength notification configuration parameters and their corresponding values.
+ */
+struct SignalStrengthConfig {
+   SignalStrengthConfigType configType;     /**< Signal strength configuration type. */
+   RadioSignalStrengthType ratSigType;      /**< Radio signal strength type. */
+
+   /** Signal strength data. */
+   union {
+      uint16_t delta;                       /**< Signal strength delta. */
+      SignalStrengthThreshold threshold;    /**< Signal strength threshold. */
+   };
 };
 
 /** @} */ /* end_addtogroup telematics_phone */

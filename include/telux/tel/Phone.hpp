@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -320,6 +320,53 @@ public:
     *
     */
    virtual telux::common::Status requestOperatorName(OperatorNameCallback callback) = 0;
+
+   /**
+    * Configures SignalStrength notification.
+    *
+    * This API configures SignalStrength notifications based on the RAT(s) delta
+    * or threshold provided for SignalStrength.
+    *
+    * - Delta (unsigned 2 bytes): The value should be a non-zero positive integer, in units
+    * of 0.1dBm. For example to set a delta of 10dBm, the delta value should be 100.
+    * A notification is sent when the difference between the current value and the last reported
+    * value crosses the specified delta.
+    *
+    * -Threshold (signed 4 bytes): For example to set threshold at -95dBm and -80dBm, the threshold
+    * list values are -950, -800, since the the list values are in units of 0.1 dBm.
+    * A notification is sent when the current signal strength crosses one of the registered
+    * thresholds.
+    *
+    * The threshold range list is as follows. See SignalStrength.hpp for more details.
+    * - GSM_RSSI  : -113 to -51 (in dBm)
+    * - WCDMA_RSSI: -113 to -51 (in dBm)
+    * - LTE_SNR   : -200 to 300 (in dB)
+    * - LTE_RSRQ  : -20 to -3   (in dB)
+    * - LTE_RSRP  : -140 to -44 (in dBm)
+    * - NR5G_SNR  : -200 to 300 (in dB)
+    * - NR5G_RSRP : -140 to -44 (in dBm)
+    * - NR5G_RSRQ : -20 to -3   (in dB)
+    *
+    * This configuration is a global setting. The signal strength setting does not persist through
+    * device reboot and needs to be configured again. Default signal strength values are set after
+    * a device reboot.
+    *
+    * On platforms with access control enabled, the caller needs to have the TELUX_TEL_PHONE_MGMT
+    * permission to successfully invoke this API.
+    *
+    * @param [in] signalStrengthConfig     Signal strength configuration.
+    * @param [in] callback                 Callback function to get the SignalStrength
+    *                                      configuration response.
+    *
+    *
+    * @returns Status of configureSignalStrength, i.e., success or the suitable error code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+   virtual telux::common::Status configureSignalStrength(
+        std::vector<SignalStrengthConfig> signalStrengthConfig, telux::common::ResponseCallback
+        callback = nullptr) = 0;
 
    virtual ~IPhone(){};
 };

@@ -50,7 +50,6 @@ endif (TELSDK_FEATURE_POWER)
         add_subdirectory( cv2x_mac_clone_attack_app)
     endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 
-
 if (TELSDK_FEATURE_AUDIO)
     add_subdirectory( audio_console_app )
     add_subdirectory( audio_loopback_app )

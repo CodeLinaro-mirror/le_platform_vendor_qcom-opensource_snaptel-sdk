@@ -337,10 +337,18 @@ std::string DataUtils::vlanInterfaceToString(telux::data::InterfaceType interfac
          ifName = "MHI";
          break;
       case telux::data::InterfaceType::VMTAP0:
+#ifdef TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED
          ifName = "VMTAP0";
+#else
+         ifName = "VMTAP-TELEVM";
+#endif
          break;
       case telux::data::InterfaceType::VMTAP1:
+#ifdef TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED
          ifName = "VMTAP1";
+#else
+         ifName = "VMTAP-FOTAVM";
+#endif
          break;
       default:
          break;

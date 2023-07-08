@@ -749,14 +749,14 @@ using IpProtocol = uint8_t;
  * Peripheral Interface type
  */
 enum class InterfaceType {
-    UNKNOWN = 0, /**< UNKNOWN interface */
-    WLAN = 1,    /**< Wireless Local Area Network (WLAN) */
-    ETH = 2,     /**< Ethernet (ETH)*/
-    ECM = 3,     /**< Ethernet Control Model (ECM) */
-    RNDIS = 4,   /**< Remote Network Driver Interface Specification (RNDIS) */
-    MHI = 5,     /**< Modem Host Interface (MHI) */
-    VMTAP0 = 6,  /**< Virtual interface for VM 1 */
-    VMTAP1 = 7,  /**< Virtual interface for VM 2 */
+    UNKNOWN = 0,    /**< UNKNOWN interface                                       */
+    WLAN = 1,       /**< Wireless Local Area Network (WLAN)                      */
+    ETH = 2,        /**< Ethernet (ETH)                                          */
+    ECM = 3,        /**< Ethernet Control Model (ECM)                            */
+    RNDIS = 4,      /**< Remote Network Driver Interface Specification (RNDIS)   */
+    MHI = 5,        /**< Modem Host Interface (MHI)                              */
+    VMTAP0 = 6,     /**< Represents Virtio interface available in a VM           */
+    VMTAP1 = 7,     /**< Represents Virtio interface available in a VM           */
 };
 
 /**

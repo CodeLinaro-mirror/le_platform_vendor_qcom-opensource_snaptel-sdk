@@ -203,6 +203,8 @@ class AerolinkSecurity : public SecurityService {
         char lcmName_[50];
         IDChangeData* idChangeData_;
         bool enableMisbehavior;
+        bool enableConsistency;
+        bool enableRelevance;
         std::shared_ptr<BsmData> misbehaviorAppDataPtr = nullptr;
         std::shared_ptr<MisbehaviorDetectedType> misbehaviorResultPtr = nullptr;
         void printBytes(char *label, uint8_t buffer[], uint32_t length);

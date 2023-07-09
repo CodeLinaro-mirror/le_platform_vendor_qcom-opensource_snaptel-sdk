@@ -179,6 +179,9 @@ void rvL2SrcFiltering(shared_ptr<ApplicationBase> application) {
  * @param[in] msgType type of the messsage we are processing.
  */
 void receive(MessageType msgType, int index) {
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
     auto count = 0;
     FILE *fp;
     struct timeval currTime;
@@ -220,7 +223,6 @@ void receive(MessageType msgType, int index) {
         // call application's receive() function to process the packet across
         // stack layers.
         ret = application->receive(index, MAX_PACKET_LEN);
-
         sem_wait(&cnt_sem);
         if(ret >= 0){
             rxsuccess++;
@@ -238,6 +240,10 @@ void receive(MessageType msgType, int index) {
         }
         sem_post(&cnt_sem);
     }
+    if (application->configuration.driverVerbosity) {
+        printf("Thread (%08x) closing\n", tid);
+    }
+
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
@@ -254,6 +260,9 @@ void receive(MessageType msgType, int index) {
 
     if(application->ldm != nullptr)
         application->ldm->stopGb();
+    if (application->configuration.driverVerbosity) {
+        printf("Thread (%08x) closed\n", tid);
+    }
 }
 /**
  * receive function for LDM functionality test.
@@ -308,6 +317,10 @@ void ldmRx(void) {
         }
         sem_post(&cnt_sem);
     }
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
+    printf("Thread (%08x) closing\n", tid);
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
     }
@@ -323,7 +336,7 @@ void ldmRx(void) {
 
     if(application->ldm != nullptr)
         application->ldm->stopGb();
-
+    printf("Thread (%08x) closed\n", tid);
 }
 /**
  * Initialize timer for transmit
@@ -447,19 +460,68 @@ int prepareWsaTx() {
 }
 
 void transmitEventMsg() {
-    if(application->configuration.enableSignStatLog)
-        application->initSignLogging();
+    // default timer
+    int tx_timer_fd = 0;
+    int timer_misses = 0;
+    uint64_t exp = 0;
+    ssize_t s;
+    int critEventCtr = 0;
+    uint64_t lastEventTxTime = 0;
+    uint64_t nextSchedTxTime = 0;
+    uint64_t currTimeTmp = 0;
+    uint64_t waitTime = 0;
+    struct itimerspec its = { 0 };
+    tx_timer_fd = timerfd_create(CLOCK_MONOTONIC, 0);
+    if(tx_timer_fd == -1){
+        cerr << "failed to start event timer \n";
+        return;
+    }
     while (!stopThread) {
+        //TODO: need provide a proper way to sync the tx/rx threads
         if (application->pendingTillEmergency() &&
-            //TODO: need provide a proper way to sync the tx/rx threads
-            application->eventTransmits[0].getCurrentStatus().txStatus == Cv2xStatusType::ACTIVE) {
+            application->eventTransmits[0].getCurrentStatus().txStatus ==
+                Cv2xStatusType::ACTIVE) {
 
+            if(nextSchedTxTime == 0){
+                lastEventTxTime = timestamp_now();
+                nextSchedTxTime = lastEventTxTime + 100;
+            }
             int ret = application->send(0, TransmitType::EVENT);
             if (ret <= 0) {
-                cerr << "Fail to send event messages." << endl;
+                cerr << "Failed to send critical event message." << endl;
             }
+            currTimeTmp = timestamp_now();
+            waitTime = nextSchedTxTime - currTimeTmp; //ms
+            if(nextSchedTxTime < currTimeTmp){
+                waitTime = 0;
+            }
+
+            its.it_value.tv_sec = 0;
+            its.it_value.tv_nsec = (waitTime * 1000000LL);
+            its.it_interval = its.it_value;
+            if(waitTime != 0){
+                if (s = timerfd_settime(tx_timer_fd, 0, &its, NULL) < 0) {
+                    std::cerr << "Error setting time\n";
+                    close(tx_timer_fd);
+                    return;
+                }
+            }
+            s = read(tx_timer_fd, &exp, sizeof(exp));
+            if (s == sizeof(uint64_t) && exp > 1) {
+                timer_misses += (exp-1);
+                if(application->configuration.driverVerbosity){
+                    cout << "Event TX timer overruns: Total missed: "
+                        << timer_misses << endl;
+                }
+            }
+            // schedule the next tx time based on the first event tx time
+            nextSchedTxTime = nextSchedTxTime + 100;
         }
     }
+    if (tx_timer_fd != -1) {
+        close(tx_timer_fd);
+    }
+    cout << "Closing event transmit thread\n";
 }
 
 /**
@@ -532,11 +594,13 @@ void transmit(MessageType msgType) {
                 //Check CV2X TX Status when TX is enabled.
                 // [TODO] The multiple tx/rx threads should be synced in a proper way to avoid crash
                 application->spsTransmits[0].waitForCv2xToActivate(haltRx);
-                if (application->spsTransmits[0].restartFlow) {
+                if (application->spsTransmits[0].restartFlow ) {
                     application->closeAllRadio();
                     application->setup(msgType);
-                    close(tx_timer_fd);
-                    tx_timer_fd = start_tx_timer(txInterval);
+                    if(!application->configuration.enableCongCtrl){
+                        close(tx_timer_fd);
+                        tx_timer_fd = start_tx_timer(txInterval);
+                    }
                     {
                         std::lock_guard<std::mutex> lk(cv2xStatusMtx);
                         haltRx = false;
@@ -956,7 +1020,7 @@ int setup(const bool tx, const bool rx,
                           << std::to_string(sdkVersion.minor) << "."
                           << std::to_string(sdkVersion.patch) << std::endl <<
                           "Release name: " << sdkReleaseName << std::endl;
-
+    sem_init(&cnt_sem, 0, 1);
     MessageType msgType = MessageType::BSM;
 
     if (bsm || wsa) {
@@ -1056,7 +1120,6 @@ int setup(const bool tx, const bool rx,
         if (isL2SrcFilteringEnabled())
             rvL2SrcFiltering(application);
 
-        sem_init(&cnt_sem, 0, 1);
         if (ldm)
         {
             if (cam || denm) {
@@ -1161,7 +1224,6 @@ int setup(const bool tx, const bool rx,
                 threads.push_back(thread(receive, MessageType::DENM, 0));
             }
             else {
-                sem_init(&cnt_sem, 0, 1);
                 // Multi-Threading Capability for RxSim
                 if (application->configuration.driverVerbosity) {
                     cout << "Number of Ethernet RX Threads: " <<

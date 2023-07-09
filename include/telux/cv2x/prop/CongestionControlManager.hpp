@@ -81,13 +81,13 @@ public:
      *      which manager will fill. Lets the user know they should immediately
      *      send a new message. If SPS enhancements are enabled, they may
      *      also need to perform SPS periodicity change.
-     * @param [in] success - tells the user about successful calculation
+     * @param [in] critEvent - tells the listener that there is a critical event
      * @note -  Eval: This is a new API and is being evaluated. It is subject to change
      *          and could break backwards compatibility.
      */
     virtual void onCongestionControlDataReady(
         std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-        bool success) {}
+        bool critEvent) {}
 
     /**
      * Destructor for ICongestionControlListener
@@ -354,6 +354,15 @@ public:
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
     virtual CCErrorCode notifyCriticalEvent() = 0;
+
+    /**
+     * Called when user needs to notify congestion control to disable critical event
+     *
+     * @note -  Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     * @returns CCErrorCode code meaning success or reason for error, if any
+     */
+    virtual CCErrorCode disableCriticalEvent() = 0;
 
     /**
      * Called whenever there is a packet received from new vehicle nearby

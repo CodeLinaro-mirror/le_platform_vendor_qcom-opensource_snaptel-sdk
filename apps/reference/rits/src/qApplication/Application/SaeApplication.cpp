@@ -183,6 +183,7 @@ SaeApplication::~SaeApplication() {
 }
 
 void SaeApplication::printRxStats() {
+    printf("Printing rx stats\n");
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
@@ -297,11 +298,12 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
 
     // Decode packet as WSMP Packet and IEEE 1609.2 Header
     ret = decode_msg(threadMc.get());
-    l2SrcAddr = radioReceives[0].msgL2SrcAdrr;
-    if (appVerbosity >= 5) {
-        std::cout << "L2 ID is " << l2SrcAddr << std::endl;
-    }
-    if (configuration.enableL2Filtering) {
+
+    if (configuration.enableL2Filtering && !isRxSim) {
+        l2SrcAddr = radioReceives[index].msgL2SrcAdrr;
+        if (appVerbosity >= 5) {
+            std::cout << "L2 ID is " << l2SrcAddr << std::endl;
+        }
         auto remote_bsm = reinterpret_cast<bsm_value_t *>(threadMc->j2735_msg);
         if (hostMc == nullptr) {
             try {
@@ -489,6 +491,8 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
             this->configuration.sspLength);
     sopt.sspLength = this->configuration.sspLength;
     sopt.enableAsync = this->configuration.enableAsync;
+    sopt.enableConsistency = this->configuration.enableConsistency;
+    sopt.enableRelevance = this->configuration.enableRelevance;
     sopt.enableEnc  = this->configuration.enableEncrypt;
     sopt.secVerbosity = this->configuration.secVerbosity;
     uint32_t dot2HdrLen;
@@ -533,7 +537,6 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
             return -1;
         }
     }
-
     // if a bsm is decoded properly, need to extract the lat/lon from the packet (if bsm)
     if (mc->j2735_msg != nullptr) {
         bsm_value_t* bsm = (bsm_value_t*)mc->j2735_msg;
@@ -555,13 +558,14 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
     }
     // set the hv kinematics
     shared_ptr<ILocationInfoEx> locationInfo;
-    if(configuration.enableLocationFixes && kinematicsReceive){
-        locationInfo = kinematicsReceive->getLocation();
-        sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
-        sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
-        sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+    if(configuration.enableLocationFixes && kinematicsReceive && appLocListener_){
+        auto locationInfo = appLocListener_->getLocation();
+        if (locationInfo) {
+            sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
+            sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
+            sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+        }
     }
-
     // prepare verification statistics logging
     if (configuration.enableVerifStatLog) {
         std::thread::id tid = std::this_thread::get_id();
@@ -592,7 +596,6 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
     } else {
         sopt.misbehaviorStat = nullptr;
     }
-
     // Verify packet signature ; providing lat/lon from the rx message
     ret = SecService->VerifyMsg(sopt);
     if (ret == -1) {
@@ -1093,7 +1096,6 @@ void SaeApplication::fillBsmLocation(bsm_value_t *bsm) {
         !appLocListener_){
         return;
     }
-    //shared_ptr<ILocationInfoEx> locationInfo = kinematicsReceive->getLocation();
     shared_ptr<ILocationInfoEx> locationInfo = appLocListener_->getLocation();
     if(!locationInfo){
         std::cout << "Invalid location info\n";

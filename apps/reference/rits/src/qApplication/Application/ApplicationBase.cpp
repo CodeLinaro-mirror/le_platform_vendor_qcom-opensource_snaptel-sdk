@@ -168,15 +168,22 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
 
 class QitsCongCtrlListener :public ICongestionControlListener {
 public:
-void onCongestionControlDataReady (
-    std::shared_ptr<CongestionControlUserData> congestionControlUserData,
-        bool success) override {
+static RadioTransmit* spsTransmit_;
+uint64_t lastPeriodicity = 100;
+// need to provide pointer to sps transmit
+// need to provide pointer to cong control user data
+/* void initSpsTransmitFlow(RadioTransmit* spsTransmit){
+    spsTransmit_ = spsTransmit;
+} */
+
+void updateSpsTransmitFlow(
+    std::shared_ptr<CongestionControlUserData> congestionControlUserData){
     // once the user data is updated, the thread in qits
     // can now schedule a transmission
     // cast void pointer
-    RadioTransmit* spsTransmit_ = (RadioTransmit*)congestionControlUserData->spsTransmit;
     // if sps enhancements enabled, we should make sure that the sps flow reservation is redone
-    if(spsTransmit_ && congestionControlUserData->spsEnhancementsEnabled){
+    if(spsTransmit_ != nullptr && congestionControlUserData->spsEnhancementsEnabled
+        && congestionControlUserData->congestionControlCalculations->maxITT != lastPeriodicity){
         // create a new sps flow with the rounded max ITT that congestionControl calculates
         SpsFlowInfo spsInfo;
         // congestionControl rounds it already to valid values for sps periodicity
@@ -189,12 +196,26 @@ void onCongestionControlDataReady (
         // set sps size to same value
         spsInfo.nbytesReserved = spsTransmit_->getSpsResSize();
 
-        spsTransmit_->updateSpsFlow(spsInfo);
+        uint8_t ret = spsTransmit_->updateSpsFlow(spsInfo);
+        if(ret == static_cast<uint8_t>(Status::FAILED)){
+            std::cerr << "sps transmit flow update failed\n";
+        }
+        lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
     }
-    sem_post(congestionControlUserData->congestionControlSem);
+}
+
+void onCongestionControlDataReady (
+    std::shared_ptr<CongestionControlUserData> congestionControlUserData,
+        bool critEvent) override {
+    QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
+    if(!critEvent){
+        sem_post(congestionControlUserData->congestionControlSem);
+    }
 }
 };
 
+
+RadioTransmit* QitsCongCtrlListener::spsTransmit_;
 
 // thread function to periodically change ID and cert
 void ApplicationBase::changeIdTimer(unsigned int interval)
@@ -384,7 +405,6 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
 
     if (configuration.qMonEnabled) // Add to config
     {
-        //cout << "New qMon added\n";
         qMon = new QMonitor(*qMonConfig);
     }
 }
@@ -466,7 +486,6 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     }
     if (configuration.qMonEnabled) // Add to config
     {
-        //cout << "New qMon added\n";
         qMon = new QMonitor(*qMonConfig);
     }
 }
@@ -516,6 +535,10 @@ void ApplicationBase::vehicleEventReport(bool emergent,
             std::unique_lock<std::mutex> loc(stateMtx);
             criticalState = false;
             newEvent = false;
+            // if congestion control enabled, notify the congestion control library
+            if(this->configuration.enableCongCtrl && congestionControlManager != NULL){
+               congestionControlManager->disableCriticalEvent();
+            }
         }
     }
 
@@ -531,17 +554,15 @@ void ApplicationBase::vehicleEventReport(bool emergent,
                    printf("Fail to lock ID change\n");
                }
            }
-           // if congestion control enabled, notify the congestion control library
-           if(this->configuration.enableCongCtrl && congestionControlManager != NULL){
-               congestionControlManager->notifyCriticalEvent();
-           }
+
         } else {
-            // unblock id change
+           // unblock id change
            if (this->configuration.enableSecurity == true) {
                if (SecService->unlockIdChange()) {
                    printf("Fail to lock ID change\n");
                }
            }
+
         }
     }
 }
@@ -554,21 +575,26 @@ void ApplicationBase::prepareForExit() {
 bool ApplicationBase::pendingTillEmergency() {
     bool ret = true;
     std::unique_lock<std::mutex> loc(stateMtx);
-    stateCv.wait(loc,
-                 [this, &ret] {
-                     if (true == newEvent) {
-                         ret = true;
-                         // reset the event flag
-                         newEvent = false;
-                         return true;
-                     }
-                     if (exitApp) {
-                         ret = false;
-                         return true;
-                     }
-                     return false;
-                 });
-
+    if (!criticalState) {
+        stateCv.wait(loc,
+                     [this, &ret] {
+                         if (true == newEvent) {
+                             ret = true;
+                             // reset the event flag
+                             newEvent = false;
+                             return true;
+                         }
+                         if (exitApp) {
+                             ret = false;
+                             return true;
+                         }
+                         return false;
+                     });
+        // if congestion control enabled, notify the congestion control library
+        if(this->configuration.enableCongCtrl && congestionControlManager != NULL){
+           congestionControlManager->notifyCriticalEvent();
+        }
+    }
     return ret;
 }
 
@@ -1088,9 +1114,15 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             istringstream is4(configs["enableAsync"]);
             is4 >> boolalpha >> configuration.enableAsync;
         }
-        if(configs.find("enableEncrypt") != configs.end()) {
-            istringstream is4(configs["enableEncrypt"]);
-            is4 >> boolalpha >> configuration.enableEncrypt;
+
+        if(configs.find("enableConsistency") != configs.end()) {
+            istringstream is4(configs["enableConsistency"]);
+            is4 >> boolalpha >> configuration.enableConsistency;
+        }
+
+        if(configs.find("enableRelevance") != configs.end()) {
+            istringstream is4(configs["enableRelevance"]);
+            is4 >> boolalpha >> configuration.enableRelevance;
         }
 
         /* Signing-related statistics */
@@ -1322,13 +1354,15 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     // qMonitor Configuration
     if (configs.find("qMonEnabled") != configs.end())
     {
-        //cout<< "qMon Config found!\n";
         istringstream is(configs["qMonEnabled"]);
         is >> boolalpha >> this->configuration.qMonEnabled;
         qMonConfig = new QMonitor::Configuration();
     }
     // Add qMonConfig elements here after this line.
     // e.g. qMonConfig->sockDomain = AF_INET; // etc etc...
+
+
+
 
     /*
       check if congestion control is enabled and begin setting the cong ctrl config parameters
@@ -1688,7 +1722,8 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     bool validMessage = false;
 
     // if congestion control enabled, only send when congestionControl tells us to:
-    if(this->configuration.enableCongCtrl && congCtrlInitialized){
+    if(this->configuration.enableCongCtrl && congCtrlInitialized
+        && !(criticalState && txType == TransmitType::EVENT)){
         sem_wait (congestionControlManager->
                     getCongestionControlUserData()->congestionControlSem);
     }
@@ -1715,9 +1750,8 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     }
     // this will avoid any log writing if the log file was never opened
     // save timestamp before sendto
-    uint64_t timestamp = timestamp_now();
-    lastTxTime = timestamp;
-    if(this->configuration.enableCongCtrl){
+    lastTxTime = timestamp_now();
+    if(this->configuration.enableCongCtrl && txType != TransmitType::EVENT){
         /* Will start it here because to prevent desynchronization
             between the transmit thread and congestion control startup */
         /* Start congestion control threads */
@@ -1747,43 +1781,47 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
             congestionControlManager->updateIttConfig(congCtrlConfig.reschedThresh,
             congCtrlConfig.timeAccuracy,
                 congCtrlConfig.minItt, congCtrlConfig.maxItt, congCtrlConfig.txRand);
-            if(congCtrlConfig.enableSpsEnhancements){
+            if(congCtrlConfig.enableSpsEnhancements && !this->isTxSim){
                 congestionControlManager->updateSpsEnhanceConfig
                     (congCtrlConfig.spsEnhIntervalRound, congCtrlConfig.spsEnhDelayPerc,
                     congCtrlConfig.spsEnhHysterPerc);
+                //QitsCongCtrlListener::initSpsTransmitFlow(&this->spsTransmits[index]);
+                QitsCongCtrlListener::spsTransmit_ = &this->spsTransmits[index];
             }
             if(CCErrorCode::SUCCESS !=
                     congestionControlManager->startCongestionControl()){
-                std::cout << "Congestion control manager failed start up\n";
-                exit(0);
+                std::cerr << "Congestion control manager failed start up\n";
+            }
+            sem_wait (congestionControlManager->
+                    getCongestionControlUserData()->congestionControlSem);
+            lastTxTime = timestamp_now();
+        }
+    }
+    int ret = 0;
+    if((criticalState && txType == TransmitType::EVENT) ||
+        (!criticalState && txType == TransmitType::SPS)){
+        ret = this->transmit(index, mc, encLength, txType);
+
+        // write the log here for this tx now. using tx timestamp made before sendto
+        writeLog(mc, index, 0, true, txType, validMessage, lastTxTime);
+
+        if (encLength > 0 && ret > 0) {
+            validMessage = true;
+            if(csvfp) {
+                uint64_t currTime = timestamp_now();
+                txInterval = currTime - lastTxTime;
+                lastTxTime = currTime;
+            }
+        }
+        if (kinematicsReceive && appLocListener_) {
+            auto locationInfo = appLocListener_->getLocation();
+            if (locationInfo) {
+                locTimeMs_ = locationInfo->getTimeStamp();
+                locPositionDop_ = locationInfo->getPositionDop();
+                locNumSvUsed_ = locationInfo->getNumSvUsed();
             }
         }
     }
-
-    int ret = this->transmit(index, mc, encLength, txType);
-
-    // write the log here for this tx now. using tx timestamp made before sendto
-    writeLog(mc, index, 0, true, txType, validMessage, timestamp);
-
-    if (encLength > 0 && ret > 0) {
-        validMessage = true;
-        if(csvfp) {
-            uint64_t currTime = timestamp_now();
-            txInterval = currTime - lastTxTime;
-            lastTxTime = currTime;
-        }
-    }
-    if (kinematicsReceive && appLocListener_) {
-        auto locationInfo = appLocListener_->getLocation();
-        if (locationInfo) {
-            locTimeMs_ = locationInfo->getTimeStamp();
-            locPositionDop_ = locationInfo->getPositionDop();
-            locNumSvUsed_ = locationInfo->getNumSvUsed();
-        }
-    }
-
-
-
     return (validMessage ? encLength : 0);
 }
 
@@ -1905,11 +1943,13 @@ void ApplicationBase::writeVerifLogging() {
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
-    printf("Thread (%08x) is now dumping verification stats to %s\n",
-            std::stoi(ss.str()),configuration.verifStatLogFile.c_str());
     file.open(configuration.verifStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
-    std::vector<VerifStats> stats = thrVerifLatencies[std::this_thread::get_id()];
+    std::vector<VerifStats> stats;
+    if (auto itr = thrVerifLatencies.find(std::this_thread::get_id());
+            itr != thrVerifLatencies.end()){
+        stats = itr->second;
+    }
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->timestamp != 0.0 && it->verifLatency != 0.0) {
             file << it->timestamp << ", " <<
@@ -1946,11 +1986,13 @@ void ApplicationBase::writeSignLogging() {
     sem_wait(&this->log_sem);
     std::stringstream ss;
     ss << std::this_thread::get_id();
-    printf("Thread (%08x) is now dumping signing stats to %s\n",
-            std::stoi(ss.str()),configuration.signStatLogFile.c_str());
     file.open(configuration.signStatLogFile.c_str(),
                 std::ofstream::out | std::ofstream::app);
-    std::vector<SignStats> stats = thrSignLatencies[std::this_thread::get_id()];
+    std::vector<SignStats> stats;
+    if (auto itr = thrSignLatencies.find(std::this_thread::get_id());
+            itr != thrSignLatencies.end()){
+        stats = itr->second;
+    }
     for (auto it = stats.begin(); it != stats.end(); ++it) {
         if (it->timestamp != 0.0 && it->signLatency != 0.0) {
             file << it->timestamp << ", " <<
@@ -2188,7 +2230,7 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     uint64_t monotonicTime;
     struct timespec ts;
     uint64_t timestamp_now_ms = 0;
-    uint8_t cbr;
+    uint8_t cbr = 0;
     uint32_t RVsInRange;
 
     if (not csvfp) {

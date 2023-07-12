@@ -75,9 +75,14 @@ private:
     std::shared_ptr<IAudioManager> audioManager_;
     FILE * readFile_;
     FILE * writeFile_;
-    std::mutex mutex_;
+    std::mutex readFileM_;
+    std::mutex writeFileM_;
+    std::mutex writeM_;
+    std::mutex readM_;
     std::mutex CreateTranscoderMutex_;
     std::condition_variable cv_;
+    std::condition_variable cvRead_;
+    std::condition_variable cvWrite_;
     std::string readFilePath_, writeFilePath_;
     std::vector<std::thread> runningThreads_;
     std::atomic<bool> writeStatus_;

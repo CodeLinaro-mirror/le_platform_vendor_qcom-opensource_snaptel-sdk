@@ -344,6 +344,41 @@ Private eCall:
 14. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestSmscAddress API in SmsManager.
 15. Optionally, the application receives the SMSC address on success or gets error on failure in the command response callback.
 
+@subsection cellbroadcast_call_flow CellBroadcast Call Flow
+
+@anchor fig_cellbroadcast_manager
+@latexonly
+\begin{figure}[H]
+   \centering
+   \includegraphics[scale=0.5]{cellbroadcast_call_flow.png}
+   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+   \caption{CellBroadcast call flow}
+   \label{fig_cellbroadcast_manager}
+\end{figure}
+@endlatexonly
+
+@html_image{cellbroadcast_call_flow.png,CellBroadcast call flow,80,80,CellBroadcast call flow}
+
+1. Application requests an instance of CellBroadcast Manager object using PhoneFactory, providing the initialization callback.
+2. Application receives a CellBroadcast Manager instance.
+3. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+4. If the subsystem is initialized successfully, application registers to ICellBroadcastListener for incoming Cell broadcast messages and message filter changes.
+5. The application receives the status i.e. either SUCCESS or INVALIDPARAM based on successful registration of the listener.
+6. Application gets notified for incoming CellBroadcast Message by ICellBroadcastListener.
+7. The application requests for message filters and gets response with RequestFiltersResponseCallback.
+8. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestMessageFilters API in CellBroadcastManager.
+9. The application gets asynchronous response for requestMessageFilters through RequestFiltersResponseCallback.
+10. Application can configure/update message filters by specifying message filters and gets response with optional callback.
+11. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of updateMessageFilters API in CellBroadcastManager.
+12. Optionally, the application gets asynchronous response for updateMessagefilters.
+13. Application gets notified for updated message filters for CellBroadcast Message.
+14. The application requests for activation status and gets response with RequestActivationStatusResponseCallback.
+15. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestActivationStatus API in CellBroadcastManager.
+16. The application gets asynchronous response for requestActivationStatus through RequestActivationStatusResponseCallback.
+17. Apllication can activate/deactivate configured broadcast messages by setActivationStatus.
+18. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of setActivationStatus API in CellBroadcastManager.
+19. Optionally, the application gets asynchronous response for setActivationStatus.
+
 @subsection radio_and_service_state Radio and Service state call flow
 
 @anchor fig_radio_and_service_state_call_flow
@@ -497,7 +532,7 @@ of the SIM.
 
 @html_image{rsp_add_delete_profile_call_flow.png,Download and deletion of profile call flow,80,80,Download and deletion of profile call flow}
 
-1. Application requests Phonefactory for SimProfileManager object.
+1. Application requests Phonefactory for SimProfileManager object with application callback.
 2. Phonefactory returns shared pointer to SimProfileManager object to application using which
    application performs profile related operations. Wait for subsystem to get ready.
 3. If subsystem is ready, create a listener of type ISimProfileListener which would receive
@@ -811,25 +846,11 @@ asynchronous response using CommandResponseCallback.
 
 @html_image{subscription_initialization_call_flow.png,Subscription initialization call flow,80,80,subscription initialization call flow}
 
-1. Application can use ISubscriptionManager::isSubsystemReady to determine if the SubscriptionManager is ready.
-2. The application receives the status i.e either true or false whether sub-system is ready or not.
-3. If it is not ready, then the application could use onSubsystemReady which returns std::future.
-4. SubscriptionManager notifies the application when the subsystem is ready through the std::future object.
-5. The application waits until the asynchronous operation i.e onSubsystemReady completes.
-6. SubscriptionManager uses ICardManager::isSubsystemReady to determine if the CardManager is ready.
-7. The SubscriptionManager receives the status i.e either true or false whether sub-system is ready or not.
-8. If it is not ready, then the SubscriptionManager could use onSubsystemReady which returns std::future.
-9. CardManager notifies the SubscriptionManager when the subsystem is ready through the std::future object.
-10. The SubscriptionManager waits until the asynchronous operation i.e onSubsystemReady completes.
-11. CardManager updates the SubscriptionManager once the card manager sub-system is ready
-12. SubscriptionManager uses ISubscription::isReady to determine if the Subscription is ready.
-13. The SubscriptionManager receives the status i.e either true or false whether sub-system is ready or not.
-14. If it is not ready, then the SubscriptionManager could use onSubsystemReady which returns std::future.
-15. Subscription notifies the SubscriptionManager when the subsystem is ready through the std::future object.
-16. The SubscriptionManager waits until the asynchronous operation i.e onSubsystemReady completes.
-17. Subscription updates the SubscriptionManager when the subscription is ready.
-18. SubscriptionManager updates the application once subscription manager initialization completes.
-
+1. Application requests an instance of SubscriptionManager using PhoneFactory by providing the initialization callback.
+2. Application receives a Subscription Manager instance.
+3. Application uses SubscriptionManager::getServiceStatus to determine if the Subscription Manager is ready.
+4. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+5. SubscriptionManager updates the application once subscription manager initialization completes.
 
 @subsubsection subscription_call Subscription call flow
 
@@ -3631,9 +3652,9 @@ bytes), APDU messages will begin to be sent/received.
 
 @html_image{remote_sim_call_flow.png,Remote SIM call flow,80,80,Remote SIM call flow}
 
-1. Application requests remote SIM manager object from phone factory, specifying a slot id.
+1. Application requests remote SIM manager object from phone factory, specifying a slot id and application callback.
 2. Phone factory returns IRemoteSimManager object.
-3. Application registers a listener to receive commands/messages from the modem to send to the SIM.
+3. If subsystem is ready, application registers a listener to receive commands/messages from the modem to send to the SIM.
 4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
 5. Application sends a connection available message indicating that a SIM is available for use.
 6. Status of send connection available i.e. either SUCCESS or FAILED will be returned to the application.

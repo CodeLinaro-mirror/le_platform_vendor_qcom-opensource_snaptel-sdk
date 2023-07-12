@@ -83,6 +83,7 @@ SapCardServicesMenu::~SapCardServicesMenu() {
    myTransmitApduResponseCb_ = nullptr;
    mySapCardReaderCb_ = nullptr;
    myAtrCb_ = nullptr;
+   sapManagers_.clear();
 }
 
 bool SapCardServicesMenu::init() {
@@ -105,29 +106,50 @@ bool SapCardServicesMenu::init() {
    }
    phoneMgrStatus = prom.get_future().get();
    if (phoneMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-      endTime = std::chrono::steady_clock::now();
-      std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
-                << std::endl;
       std::vector<int> phoneIds;
       telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
       if (status == telux::common::Status::SUCCESS) {
-         for (auto index = 1; index <= phoneIds.size(); index++) {
-            auto sapMgr = phoneFactory.getSapCardManager(index);
-            if (sapMgr != nullptr) {
-               sapManagers_.emplace_back(sapMgr);
+         for (auto index = 1; index <= phoneIds.size(); index ++) {
+            std::promise<telux::common::ServiceStatus> prom;
+            //  Get the PhoneFactory and SapCardManager instances.
+            auto sapCardMgr = phoneFactory.getSapCardManager(
+               index,[&](telux::common::ServiceStatus status) {
+               prom.set_value(status);
+            });
+            if (!sapCardMgr) {
+               std::cout << "ERROR - Failed to get SapCardManager instance \n";
+               return false;
             }
+
+            telux::common::ServiceStatus sapCardMgrStatus = sapCardMgr->getServiceStatus();
+            if (sapCardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+               std::cout << "SapCardManager subsystem is not ready on slotId " << index
+                   << ", Please wait " << std::endl;
+            }
+            sapCardMgrStatus = prom.get_future().get();
+            if (sapCardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+               endTime = std::chrono::steady_clock::now();
+               std::chrono::duration<double> elapsedTime = endTime - startTime;
+               std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count()
+                     << "s\n" << std::endl;
+               std::cout << "SapCardManager subsystem is ready on slotId " << index << std::endl;
+            } else {
+               std::cout << "ERROR - Unable to initialize SapCardManager subsystem on slotId "
+                     << index << std::endl;
+               return false;
+            }
+            sapManagers_.emplace_back(sapCardMgr);
          }
-      mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
-      myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
-      mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();
-      myAtrCb_ = std::make_shared<MyAtrResponseCallback>();
       }
    } else {
       std::cout << "Phone Manager is not available failed to initialize SapCardServicesMenu"
                 << std::endl;
       return false;
    }
+   mySapCmdResponseCb_ = std::make_shared<MySapCommandResponseCallback>();
+   myTransmitApduResponseCb_ = std::make_shared<MySapTransmitApduResponseCallback>();
+   mySapCardReaderCb_ = std::make_shared<MyCardReaderCallback>();
+   myAtrCb_ = std::make_shared<MyAtrResponseCallback>();
    std::shared_ptr<ConsoleAppCommand> openSapConnectionCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand( "1", "Open_sap_connection", {},
       std::bind(&SapCardServicesMenu::openSapConnection, this, std::placeholders::_1)));

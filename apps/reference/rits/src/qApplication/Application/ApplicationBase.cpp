@@ -464,6 +464,7 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     if(configuration.enableVehicleDataCallbacks){
         VehRec.enableVehicleReceive(cb);
     }
+
     if (configuration.qMonEnabled) // Add to config
     {
         //cout << "New qMon added\n";

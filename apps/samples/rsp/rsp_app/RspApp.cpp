@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -74,45 +74,49 @@ RemoteSimProfile &RemoteSimProfile::getInstance() {
     return instance;
 }
 
-void RemoteSimProfile::init() {
+bool RemoteSimProfile::init() {
 
-    //  1. Get the PhoneFactory and SIM profile manager instance.
+    //  1. Get the PhoneFactory, SIM profile and Card manager instance.
+    std::promise<telux::common::ServiceStatus> simProfileMgrprom;
+    std::promise<telux::common::ServiceStatus> cardMgrprom;
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    simProfileManager_ = phoneFactory.getSimProfileManager();
-    cardManager_ = phoneFactory.getCardManager();
+    simProfileManager_ = phoneFactory.
+        getSimProfileManager([&](telux::common::ServiceStatus status) {
+        simProfileMgrprom.set_value(status);
+    });
+    cardManager_ = phoneFactory.getCardManager([&](telux::common::ServiceStatus status) {
+        cardMgrprom.set_value(status);
+    );
 
     if (simProfileManager_) {
         // 2. Check if SIM profile subsystem is ready
-        bool subSystemStatus = simProfileManager_->isSubsystemReady();
+        telux::common::ServiceStatus subSystemStatus = simProfileManager_->getServiceStatus();
 
         //  2.1. If SIM profile manager subsystem is not ready, wait for it to be ready
-        if(!subSystemStatus) {
-            std::cout << "\nSIM profile manager subsystem is not ready" << std::endl;
-            std::cout << "wait unconditionally for it to be ready " << std::endl;
-            std::future<bool> f = simProfileManager_->onSubsystemReady();
-            subSystemStatus = f.get();
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\nSIM profile manager subsystem is not ready, Please wait." << std::endl;
         }
+        subSystemStatus = simProfileMgrprom.get_future().get();
 
-        if(!subSystemStatus) {
-            std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
-            exit(0);
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "ERROR - Unable to initialize SimProfile manager subsystem" << std::endl;
+            return false;
         }
 
         if (cardManager_) {
             // 3. Check if Card subsystem is ready
-            subSystemStatus = cardManager_->isSubsystemReady();
+            subSystemStatus = cardManager_->getServiceStatus();
 
             // 3.1  If Card subsystem is not ready, wait for it to be ready
-            if(!subSystemStatus) {
+            if(subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
                 std::cout << "Card subsystem is not ready, Please wait" << std::endl;
-                std::future<bool> f = cardManager_->onSubsystemReady();
-                // If we want to wait unconditionally for Card subsystem to be ready
-                subSystemStatus = f.get();
             }
+            // If we want to wait unconditionally for Card subsystem to be ready
+            subSystemStatus = cardMgrprom.get_future().get();
 
             //  4. Exit the application, if SDK is unable to initialize SIM profile manager
             //     and Card subsystem
-            if (subSystemStatus) {
+            if (subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
                 std::vector<int> slotIds;
                 telux::common::Status status = cardManager_->getSlotIds(slotIds);
                 if (status == telux::common::Status::SUCCESS) {
@@ -129,19 +133,19 @@ void RemoteSimProfile::init() {
                 status = simProfileManager_->registerListener(rspListener_);
                 if(status != telux::common::Status::SUCCESS) {
                     std::cout << "ERROR - Failed to register listener" << std::endl;
-                    exit(0);
+                    return false;
                 }
             } else {
                 std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
-                exit(0);
+                return false;
             }
         } else {
             std::cout << "ERROR - CardManager is null" << std::endl;
-            exit(0);
+            return false;
         }
     } else {
         std::cout << "ERROR - SimProfileManger is null" << std::endl;
-        exit(0);
+        return false;
     }
 }
 

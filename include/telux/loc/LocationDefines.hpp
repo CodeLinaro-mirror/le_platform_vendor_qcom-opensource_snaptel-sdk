@@ -128,8 +128,14 @@ enum class DgnssStatus{
    *  check failure, value range check failure, etc.; the injected
    *  data is dropped */
   MESSAGE_PARSE_ERROR                = 4,
-  /** Data source is not usable anymore */
-  DATA_SOURCE_NOT_USABLE             = 5,
+  /** Data source is usable */
+  DATA_SOURCE_USABLE                 = 5,
+  /** Data source is not usable, for example,
+   * the reference station is too far away to improve the potion accuracy */
+  DATA_SOURCE_NOT_USABLE             = 6,
+  /** The CDFW service askes the source client to stop
+   *  injecting the correction data */
+  CDFW_STOP_SOURCE_INJECT            = 7
 };
 
 /**

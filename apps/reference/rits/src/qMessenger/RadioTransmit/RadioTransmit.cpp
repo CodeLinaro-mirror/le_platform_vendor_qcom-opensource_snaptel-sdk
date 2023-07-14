@@ -84,6 +84,7 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
     }
     this->category = category;
     this->flowType = "spsFlow";
+    this->trafficType_ = trafficType;
     auto cv2xRadio = cv2xRadioManager->getCv2xRadio(category);
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txSpsFlow,
                             std::shared_ptr<ICv2xTxFlow> txEventFlow,
@@ -124,6 +125,7 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
     }
     this->category = category;
     this->flowType = "eventFlow";
+    this->trafficType_ = trafficType;
     auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(category);
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txEventFlow,
                             ErrorCode eventError){
@@ -199,12 +201,14 @@ RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, con
     }
 }
 
-void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress, const char* iface) {
+void RadioTransmit::configureIpv6(const uint16_t port, const char* destAddress) {
+    string ifName;
     this->destSock.sin6_family = AF_INET6;
     this->destSock.sin6_port = htons((uint16_t)port);
     inet_pton(AF_INET6, destAddress, (void*) &this->destSock.sin6_addr);
-    this->destSock.sin6_scope_id = if_nametoindex(iface);
-    //this->destSock.sin6_flowinfo missing...
+    if (0 == getV2xIfaceName(trafficType_, ifName) && (not ifName.empty())) {
+        this->destSock.sin6_scope_id = if_nametoindex(ifName.c_str());
+    }
 }
 
 uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority priority) {

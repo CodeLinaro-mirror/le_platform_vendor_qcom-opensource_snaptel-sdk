@@ -47,6 +47,7 @@ endif (TELSDK_FEATURE_POWER)
         add_subdirectory( cv2x_tx_report_test_app)
         add_subdirectory( cv2x_slss_rx_app)
         add_subdirectory( cv2x_slss_utc_app)
+        add_subdirectory( cv2x_mac_clone_attack_app)
     endif(MACHINE_HAS_CV2X_ONLY OR MACHINE_HAS_CV2X)
 
 

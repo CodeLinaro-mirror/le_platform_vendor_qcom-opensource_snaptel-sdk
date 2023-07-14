@@ -27,6 +27,12 @@ find_path(GLIB_INCLUDE_DIR NAMES glibconfig.h glib.h PATH_SUFFIXES glib-2.0)
 #Find sysroot path in environment CC
 string(REGEX MATCH "=.*" GLIB64_PATH $ENV{CC})
 
+pkg_check_modules(JSONC_LIB REQUIRED json-c)
+if (JSONC_LIB_FOUND)
+    include_directories(${JSONC_LIB_INCLUDE_DIRS})
+endif (JSONC_LIB_FOUND)
+
+
 include_directories(BEFORE
     ${PROJECT_SOURCE_DIR}/include
     #Including this libraries given a bug with glib
@@ -42,6 +48,7 @@ include_directories(BEFORE
     ${PROJECT_SOURCE_DIR}/src/qApplication/Ldm
     ${PROJECT_SOURCE_DIR}/src/qApplication/SafetyApps
     ${PROJECT_SOURCE_DIR}/src/qMessenger/ThrottleManager
+    ${PROJECT_SOURCE_DIR}/src/qApplication/Monitor
 )
 if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
     include_directories(${ASN1C_SKELETONS}
@@ -54,7 +61,7 @@ endif()
 add_subdirectory(src/qCoder/)
 add_subdirectory(src/qMessenger/)
 add_subdirectory(src/qApplication)
-add_subdirectory(tests/applicationTest)
+add_subdirectory(tests/)
 
 if(WITH_SYSTEMD)
     install(FILES scripts/qits@.service

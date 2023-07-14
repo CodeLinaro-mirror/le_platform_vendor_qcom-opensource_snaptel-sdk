@@ -42,6 +42,7 @@
 
 #include <telux/sec/CryptoManager.hpp>
 #include <telux/sec/CryptoAcceleratorManager.hpp>
+#include <telux/sec/CAControlManager.hpp>
 
 namespace telux {
 namespace sec {
@@ -111,6 +112,24 @@ class SecurityFactory {
       std::weak_ptr<ICryptoAcceleratorListener> cryptoAccelListener = std::weak_ptr<
       ICryptoAcceleratorListener>()
     ) = 0;
+
+    /**
+     * Provides an ICAControlManager instance that can be used to collect statistical
+     * information about usage of the crypto accelerator.
+     *
+     * On platforms with access control enabled, caller needs to have TELUX_SEC_CA_CONTROL_MGR
+     * permission to invoke this API successfully.
+     *
+     * @param[out] ec telux::common::ErrorCode::SUCCESS if the ICAControlManager is
+     *                created successfully, otherwise, an appropriate error code
+     *
+     * @returns ICAControlManager instance
+     *
+     * @note Eval: This is a new API and is being evaluated. It is subject
+     *             to change and could break backwards compatibility.
+     */
+    virtual std::shared_ptr<ICAControlManager> getCAControlManager(
+       telux::common::ErrorCode &ec) = 0;
 
 #ifndef TELUX_DOXY_SKIP
  protected:

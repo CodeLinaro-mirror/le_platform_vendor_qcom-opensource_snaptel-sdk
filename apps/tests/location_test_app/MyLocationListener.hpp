@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -131,6 +131,7 @@ private:
    void printFixAvailability(telux::loc::SVInfoAvailability availability);
    void printSvUsedInPosition(telux::loc::SvUsedInPosition svUsedInPosition);
    void printCalibrationStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
+   void printSolutionStatus(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineType(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printLocOutputEngineMask(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printMeasurementsClockValidity(telux::loc::GnssMeasurementsClockValidity flags);

@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
 * @file       Cv2xRadioListener.hpp
 *
@@ -101,6 +108,22 @@ public:
      * @param [in] capabilities - Capabilities of the CV2X radio .
      */
     virtual void onCapabilitiesChanged(const Cv2xRadioCapabilities & capabilities) {}
+
+
+    /**
+     * Called when a MAC address cloning attack is detected or cleared.
+     * MAC address collisions should be extremely rare. If they are happening
+     * frequently within a detetion period, it will be identified as a MAC address
+     * cloning attack and users will be notified through this API. This API is also
+     * invoked when the attack is cleared.
+     * The collision count threshold and the detection period for MAC address cloning
+     * attack detection are configurable by setting parameter cv2x.collision.threshold
+     * and cv2x.collision.window.size in the file /etc/tel.conf on device.
+     *
+     * @param [out] detected - True when a MAC address cloning attack is detected.
+     *                         False when a MAC address cloning attack is cleared.
+     */
+    virtual void onMacAddressCloneAttack(const bool detected) {}
 
     /**
      * Destructor for ICv2xRadioListener

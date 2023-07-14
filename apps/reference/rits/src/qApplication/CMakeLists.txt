@@ -5,12 +5,15 @@ endmacro()
 
 SYSR_INCLUDE_DIR(telux)
 
+
 set(LIBQAPPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/./Application/ApplicationBase.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Application/SaeApplication.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Application/NullSecurity.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./Ldm/Ldm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/./SafetyApps/safetyapp_util.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/./Monitor/qMonitor.cpp
+
 )
 if(DEFINED ENV{AEROLINK_PATH} OR DEFINED WITH_AEROLINK)
     set(LIBQAPPLICATION_SOURCES ${LIBQAPPLICATION_SOURCES}
@@ -25,7 +28,7 @@ endif()
 
 add_library(qapplication ${LIBQAPPLICATION_SOURCES})
 
-target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc telux-squish v2xcodec ${LIBAERO} rt pthread)
+target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc telux-squish v2xcodec ${LIBAERO} rt pthread json-c)
 
 install(TARGETS qapplication
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

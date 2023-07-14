@@ -378,7 +378,15 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
             vehicleEventReport(emergent, vehicle_state);
     };
 
-     VehRec.enableVehicleReceive(cb);
+    if(configuration.enableVehicleDataCallbacks){
+        VehRec.enableVehicleReceive(cb);
+    }
+
+    if (configuration.qMonEnabled) // Add to config
+    {
+        //cout << "New qMon added\n";
+        qMon = new QMonitor(*qMonConfig);
+    }
 }
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
@@ -453,10 +461,26 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
             vehicleEventReport(emergent, vehicle_state);
     };
 
-     VehRec.enableVehicleReceive(cb);
+    if(configuration.enableVehicleDataCallbacks){
+        VehRec.enableVehicleReceive(cb);
+    }
+    if (configuration.qMonEnabled) // Add to config
+    {
+        //cout << "New qMon added\n";
+        qMon = new QMonitor(*qMonConfig);
+    }
 }
 
 ApplicationBase::~ApplicationBase() {
+    if (qMon) {
+        delete qMon;
+        std::cout << "Closed qMon\n";
+    }
+    if (qMonConfig) {
+        delete qMonConfig;
+        std::cout << "Closed qMonConfig\n";
+    }
+
      closeAllRadio();
      {
          std::unique_lock<std::mutex> loc(stateMtx);
@@ -682,21 +706,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             stream.clear();
         }
 
-        if (configs.end() != configs.find("SpsDestNames")) {
-            stream.str(configs["SpsDestNames"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
-                string spsDestNames;
-                getline(stream, spsDestNames, ',');
-                if (spsDestNames.empty()) {
-                    break;
-                }
-                this->configuration.spsDestNames.push_back(spsDestNames);
-            }
-            stream.str("");
-            stream.clear();
-        }
-
         if (configs.end() != configs.find("SpsDestPorts")) {
             stream.str(configs["SpsDestPorts"]);
             for (uint32_t i = 0; i < num; i++)
@@ -755,21 +764,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
                     break;
                 }
                 this->configuration.eventDestAddrs.push_back(EventDestAddrs);
-            }
-            stream.str("");
-            stream.clear();
-        }
-
-        if (configs.end() != configs.find("EventDestNames")) {
-            stream.str(configs["EventDestNames"]);
-            for (uint32_t i = 0; i < num; i++)
-            {
-                string EventDestNames;
-                getline(stream, EventDestNames, ',');
-                if (EventDestNames.empty()) {
-                    break;
-                }
-                this->configuration.eventDestNames.push_back(EventDestNames);
             }
             stream.str("");
             stream.clear();
@@ -948,6 +942,11 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
     if (configs.end() != configs.find("TDistance")) {
         this->configuration.distance3D = stoi(configs["TDistance"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("enableVehicleDataCallbacks")) {
+        istringstream is(configs["enableVehicleDataCallbacks"]);
+        is >> boolalpha >> this->configuration.enableVehicleDataCallbacks;
     }
 
     if (configs.end() != configs.find("SourceIpv4Address")) {
@@ -1204,6 +1203,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     /*app debug */
     if (configs.find("appVerbosity") != configs.end()) {
         setAppVerbosity(stoi(configs["appVerbosity"]));
+        //qMon
     }
 
     /* ldm debug */
@@ -1319,6 +1319,16 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
 
     this->configuration.isValid = true;
 
+    // qMonitor Configuration
+    if (configs.find("qMonEnabled") != configs.end())
+    {
+        //cout<< "qMon Config found!\n";
+        istringstream is(configs["qMonEnabled"]);
+        is >> boolalpha >> this->configuration.qMonEnabled;
+        qMonConfig = new QMonitor::Configuration();
+    }
+    // Add qMonConfig elements here after this line.
+    // e.g. qMonConfig->sockDomain = AF_INET; // etc etc...
 
     /*
       check if congestion control is enabled and begin setting the cong ctrl config parameters
@@ -1536,8 +1546,7 @@ void ApplicationBase::setup(MessageType msgType) {
         }
 
         this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
-                this->configuration.spsDestAddrs[i].c_str(),
-                this->configuration.spsDestNames[i].c_str());
+                this->configuration.spsDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
             this->spsTransmits[i].
@@ -1606,8 +1615,7 @@ void ApplicationBase::setup(MessageType msgType) {
             return;
         }
         this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
-                this->configuration.eventDestAddrs[i].c_str(),
-                this->configuration.eventDestNames[i].c_str());
+                this->configuration.eventDestAddrs[i].c_str());
         /* radio debug */
         if (this->configuration.codecVerbosity) {
             this->eventTransmits[i].
@@ -1646,6 +1654,10 @@ void ApplicationBase::fillSecurity(ieee1609_2_data *secData) {
 // radio tx function.
 int ApplicationBase::transmit(uint8_t index, std::shared_ptr<msg_contents> mc,
     int16_t bufLen, TransmitType txType) {
+    std::thread::id tid = std::this_thread::get_id();
+    if(MsgType ==  MessageType::BSM) {
+        qMon->tData[tid].txBSMs++;
+    }
     // If positive, should be the # of bytes sent
     // Else, something went wrong
     int ret = -1;

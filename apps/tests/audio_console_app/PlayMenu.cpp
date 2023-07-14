@@ -140,7 +140,9 @@ void PlayMenu::init() {
 
 void PlayMenu::cleanup() {
     ready_ = false;
+    playInProgress_ = false;
     playStatus_ = false;
+    playStopcv_.notify_all();
     cv_.notify_all();
     for (std::thread &th : runningThreads_) {
         if(th.joinable()){
@@ -149,6 +151,7 @@ void PlayMenu::cleanup() {
     }
     pipeLineEmpty_ = true;
     audioPlayStream_ = nullptr;
+    writeFail_ = false;
 }
 
 void PlayMenu::setSystemReady() {
@@ -405,7 +408,6 @@ void PlayMenu::play() {
             while(freeBuffers_.size() != TOTAL_BUFFERS) {
                 cv_.wait(lock);
             }
-            closeFile();
         } else if ((playFormat_ == AudioFormat::AMRWB_PLUS) ||
                 (playFormat_ == AudioFormat::AMRWB) ||
                 (playFormat_ == AudioFormat::AMRNB)){
@@ -423,13 +425,13 @@ void PlayMenu::play() {
                 });
             if(status == telux::common::Status::SUCCESS){
                 std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Pending buffers played successfully" << std::endl;
+                }
+                playStopcv_.wait(lck);
             } else {
                 std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }
-            if (p.get_future().get()) {
-                    std::cout << "Pending buffers played successfully" << std::endl;
-            }
-            playStopcv_.wait(lck);
         }
     }
     if(writeFail_) {
@@ -445,6 +447,7 @@ void PlayMenu::play() {
     playStatus_ = false;
     //After the play is finished, marking the status to false.
     playInProgress_ = false;
+    closeFile();
 }
 
 void PlayMenu::onReadyForWrite() {
@@ -456,7 +459,6 @@ void PlayMenu::onReadyForWrite() {
 }
 
 void PlayMenu::onPlayStopped() {
-    closeFile();
     playStopcv_.notify_all();
     std::cout << "Playback Stopped after playing pending buffers" << std::endl;
 }

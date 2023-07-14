@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -246,6 +246,9 @@ void MyLocationListener::printLocationExValidity(
     }
     if((validityMask & telux::loc::HAS_ENU_VELOCITY_VRP_BASED)) {
       std::cout << "valid enu velocity vrp based" << std::endl;
+    }
+    if((validityMask & telux::loc::HAS_SOLUTION_STATUS)) {
+      std::cout << "valid DR solution status" << std::endl;
     }
     if((validityMask & telux::loc::HAS_ALTITUDE_TYPE)) {
       std::cout << "valid altitude type" << std::endl;
@@ -801,6 +804,99 @@ void MyLocationListener::printCalibrationStatus(
    if((calibrationStatus & telux::loc::DR_GYRO_CALIBRATION_NEEDED)) {
       std::cout << "Gyro calibration is needed" << std::endl;
    }
+   if((calibrationStatus & telux::loc::DR_TURN_CALIBRATION_LOW)) {
+      std::cout << "Lot more turns on level ground needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_TURN_CALIBRATION_MEDIUM)) {
+      std::cout << "Some more turns on level ground needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_TURN_CALIBRATION_HIGH)) {
+      std::cout << "Sufficient turns on level ground observed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_LINEAR_ACCEL_CALIBRATION_LOW)) {
+      std::cout << "Lot more accelerations in straight line needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_LINEAR_ACCEL_CALIBRATION_MEDIUM)) {
+      std::cout << "Some more accelerations in straight line needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_LINEAR_ACCEL_CALIBRATION_HIGH)) {
+      std::cout << "Sufficient acceleration events in straight line observed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_LINEAR_MOTION_CALIBRATION_LOW)) {
+      std::cout << "Lot more motion in straight line needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_LINEAR_MOTION_CALIBRATION_MEDIUM)) {
+      std::cout << "Some more motion in straight line needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_LINEAR_MOTION_CALIBRATION_HIGH)) {
+      std::cout << "Sufficient motion events in straight line observed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_STATIC_CALIBRATION_LOW)) {
+      std::cout << "Lot more stationary events on level ground needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_STATIC_CALIBRATION_MEDIUM)) {
+      std::cout << "Some more stationary events on level ground needed" << std::endl;
+   }
+   if((calibrationStatus & telux::loc::DR_STATIC_CALIBRATION_HIGH)) {
+      std::cout << "Sufficient stationary events on level ground observed" << std::endl;
+   }
+}
+
+void MyLocationListener::printSolutionStatus(
+   std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
+   telux::loc::DrSolutionStatus solutionStatus = locationInfo->getSolutionStatus();
+   std::cout << "Solution status : " << std::endl;
+   if((solutionStatus & telux::loc::VEHICLE_SENSOR_SPEED_INPUT_DETECTED)) {
+      std::cout << "Vehicle sensor speed input was detected by the DR position engine."<< std::endl;
+   }
+   if((solutionStatus & telux::loc::VEHICLE_SENSOR_SPEED_INPUT_USED)) {
+      std::cout << "Vehicle sensor speed input was used by the DR position engine. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_UNCALIBRATED)) {
+      std::cout << "DRE solution disengaged due to insufficient calibration. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_GNSS_QUALITY_INSUFFICIENT)) {
+      std::cout << "DRE solution disengaged due to bad GNSS quality. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_FERRY_DETECTED)) {
+      std::cout << "DRE solution disengaged as ferry condition detected. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::ERROR_6DOF_SENSOR_UNAVAILABLE)) {
+      std::cout << "DRE solution disengaged as 6DOF sensor inputs not available. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::ERROR_VEHICLE_SPEED_UNAVAILABLE)) {
+      std::cout << "DRE solution disengaged as vehicle speed inputs not available. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::ERROR_GNSS_EPH_UNAVAILABLE)) {
+      std::cout << "DRE solution disengaged as Ephemeris info not available. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::ERROR_GNSS_MEAS_UNAVAILABLE)) {
+      std::cout << "DRE solution disengaged as GNSS measurement info not available. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_INIT_POSITION_INVALID)) {
+      std::cout << "DRE solution disengaged due non-availability of stored position from"
+         "previous session. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_INIT_POSITION_UNRELIABLE)) {
+      std::cout << "DRE solution dis-engaged due to vehicle motion detected at session"
+         " start. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_POSITON_UNRELIABLE)) {
+      std::cout << "DRE solution dis-engaged due to unreliable position. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::ERROR_GENERIC)) {
+      std::cout << "DRE solution dis-engaged due to a generic error. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_SENSOR_TEMP_OUT_OF_RANGE)) {
+      std::cout << "DRE solution dis-engaged due to Sensor Temperature "
+         "being out of range. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_USER_DYNAMICS_INSUFFICIENT)) {
+      std::cout << "DRE solution dis-engaged due to insufficient user dynamics. "<< std::endl;
+   }
+   if((solutionStatus & telux::loc::WARNING_FACTORY_DATA_INCONSISTENT)) {
+      std::cout << "DRE solution dis-engaged due to inconsistent factory data. "<< std::endl;
+   }
 }
 
 void MyLocationListener::printLocOutputEngineType(
@@ -1204,6 +1300,7 @@ void MyLocationListener::onDetailedLocationUpdate(
    std::cout << "Calibration confidence percent : " <<
        unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
    printCalibrationStatus(locationInfo);
+   printSolutionStatus(locationInfo);
    printLocOutputEngineType(locationInfo);
    printLocOutputEngineMask(locationInfo);
    std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;
@@ -1327,6 +1424,7 @@ void MyLocationListener::onDetailedEngineLocationUpdate(
      std::cout << "Calibration confidence percent : " <<
        unsigned(locationInfo->getCalibrationConfidencePercent()) << std::endl;
      printCalibrationStatus(locationInfo);
+     printSolutionStatus(locationInfo);
      printLocOutputEngineType(locationInfo);
      printLocOutputEngineMask(locationInfo);
      std::cout << "Conformity index : " << locationInfo->getConformityIndex() << std::endl;

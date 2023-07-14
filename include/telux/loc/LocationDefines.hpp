@@ -903,7 +903,9 @@ enum LocationInfoExValidityType {
   /** valid protect level cross track*/
   HAS_PROTECT_LEVEL_CROSS_TRACK = (1ULL << 36),
   /** valid protect level vertical*/
-  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37)
+  HAS_PROTECT_LEVEL_VERTICAL = (1ULL << 37),
+  /** valid DR Solution status*/
+  HAS_SOLUTION_STATUS = (1ULL << 38)
 };
 
 /*Bit mask containing bits from LocationInfoExValidityType */
@@ -998,11 +1000,75 @@ enum DrCalibrationStatusType {
   DR_ODO_CALIBRATION_NEEDED   = (1<<3),
   /** Indicate that gyro calibration is needed. Need to take more
    *  turns on level ground.*/
-  DR_GYRO_CALIBRATION_NEEDED  = (1<<4)
+  DR_GYRO_CALIBRATION_NEEDED  = (1<<4),
+  /** Lot more turns on level ground needed */
+  DR_TURN_CALIBRATION_LOW     = (1<<5),
+  /** Some more turns on level ground needed */
+  DR_TURN_CALIBRATION_MEDIUM  = (1<<6),
+  /** Sufficient turns on level ground observed */
+  DR_TURN_CALIBRATION_HIGH    = (1<<7),
+  /** Lot more accelerations in straight line needed */
+  DR_LINEAR_ACCEL_CALIBRATION_LOW      = (1<<8),
+  /** Some more accelerations in straight line needed */
+  DR_LINEAR_ACCEL_CALIBRATION_MEDIUM   = (1<<9),
+  /** Sufficient acceleration events in straight line observed */
+  DR_LINEAR_ACCEL_CALIBRATION_HIGH     = (1<<10),
+  /** Lot more motion in straight line needed */
+  DR_LINEAR_MOTION_CALIBRATION_LOW     = (1<<11),
+  /** Some more motion in straight line needed */
+  DR_LINEAR_MOTION_CALIBRATION_MEDIUM  = (1<<12),
+  /** Sufficient motion events in straight line observed */
+  DR_LINEAR_MOTION_CALIBRATION_HIGH    = (1<<13),
+  /** Lot more stationary events on level ground needed */
+  DR_STATIC_CALIBRATION_LOW            = (1<<14),
+  /** Some more stationary events on level ground needed */
+  DR_STATIC_CALIBRATION_MEDIUM         = (1<<15),
+  /** Sufficient stationary events on level ground observed */
+  DR_STATIC_CALIBRATION_HIGH           = (1<<16)
 };
 
 /** Specifies DrCalibrationStatusType mask */
 using DrCalibrationStatus = uint32_t;
+
+/** Specify various status that contributes to the DR position
+ *  engine. */
+enum DrSolutionStatusType {
+    /** Vehicle sensor speed input was detected by the DR position engine. */
+    VEHICLE_SENSOR_SPEED_INPUT_DETECTED = (1<<0),
+    /** Vehicle sensor speed input was used by the DR position engine. */
+    VEHICLE_SENSOR_SPEED_INPUT_USED     = (1<<1),
+    /** DRE solution disengaged due to insufficient calibration */
+    WARNING_UNCALIBRATED                = (1<<2),
+    /** DRE solution disengaged due to bad GNSS quality */
+    WARNING_GNSS_QUALITY_INSUFFICIENT   = (1<<3),
+    /** DRE solution disengaged as ferry condition detected */
+    WARNING_FERRY_DETECTED              = (1<<4),
+    /** DRE solution disengaged as 6DOF sensor inputs not available */
+    ERROR_6DOF_SENSOR_UNAVAILABLE       = (1<<5),
+    /** DRE solution disengaged as vehicle speed inputs not available */
+    ERROR_VEHICLE_SPEED_UNAVAILABLE     = (1<<6),
+    /** DRE solution disengaged as Ephemeris info not available */
+    ERROR_GNSS_EPH_UNAVAILABLE          = (1<<7),
+    /** DRE solution disengaged as GNSS measurement info not available */
+    ERROR_GNSS_MEAS_UNAVAILABLE         = (1<<8),
+    /** DRE solution disengaged due non-availability of stored position from previous session */
+    WARNING_INIT_POSITION_INVALID       = (1<<9),
+    /** DRE solution dis-engaged due to vehicle motion detected at session start */
+    WARNING_INIT_POSITION_UNRELIABLE    = (1<<10),
+    /** DRE solution dis-engaged due to unreliable position */
+    WARNING_POSITON_UNRELIABLE          = (1<<11),
+    /** DRE solution dis-engaged due to a generic error */
+    ERROR_GENERIC                       = (1<<12),
+    /** DRE solution dis-engaged due to Sensor Temperature being out of range */
+    WARNING_SENSOR_TEMP_OUT_OF_RANGE    = (1<<13),
+    /** DRE solution dis-engaged due to insufficient user dynamics */
+    WARNING_USER_DYNAMICS_INSUFFICIENT  = (1<<14),
+    /** DRE solution dis-engaged due to inconsistent factory data */
+    WARNING_FACTORY_DATA_INCONSISTENT   = (1<<15)
+};
+
+/** Specifies DrSolutionStatus mask */
+using DrSolutionStatus = uint32_t;
 
 /** Specifies the set of engines whose position reports are requested via
  *  startDetailedEngineReports.*/
@@ -2337,6 +2403,14 @@ public:
  *
  */
   virtual DrCalibrationStatus getCalibrationStatus() = 0;
+
+/**
+ * DR solution status.
+ *
+ * @returns mask indicating the solution status with respect to the DR position engine.
+ *
+ */
+  virtual DrSolutionStatus getSolutionStatus() = 0;
 
 /**
  * Location engine type. When the type is set to LOC_ENGINE_SRC_FUSED, the fix is

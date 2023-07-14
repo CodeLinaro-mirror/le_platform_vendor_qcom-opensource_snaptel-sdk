@@ -97,6 +97,7 @@
 #include "Ldm.h"
 #include "ThrottleManager.h"
 #include "safetyapp_util.h"
+#include "qMonitor.hpp"
 #ifdef AEROLINK
 #include "AerolinkSecurity.hpp"
 #else
@@ -144,11 +145,9 @@ struct Config{
     vector<uint32_t> spsServiceIDs;
     vector<uint32_t> eventServiceIDs;
     vector<string> spsDestAddrs;
-    vector<string> spsDestNames;
     vector<uint16_t> spsDestPorts;
     vector<uint16_t> eventDestPorts;
     vector<string> eventDestAddrs;
-    vector<string> eventDestNames;
     //vector<uint32_t> spsReservationSizes;
     uint32_t spsReservationSize;
     bool wildcardRx = false;
@@ -179,6 +178,7 @@ struct Config{
     uint32_t age = 0;
     uint32_t uncertainty3D = 0;
     uint32_t distance3D = 0;
+    bool qMonEnabled = false;
     uint32_t packetError = 0;
     /** Simulation config */
     bool enableUdp = false;
@@ -224,6 +224,7 @@ struct Config{
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
     bool enableLocationFixes = true;
+    bool enableVehicleDataCallbacks = true;
 
     /* config data for Ieee1609.3 Wsa */
     long routerLifetime;
@@ -348,6 +349,8 @@ public:
     int prevArrivalRate=0;
     int prevFilterRate= 0;
     int filterRate=0;
+    QMonitor* qMon = nullptr;
+    QMonitor::Configuration* qMonConfig = nullptr;
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;

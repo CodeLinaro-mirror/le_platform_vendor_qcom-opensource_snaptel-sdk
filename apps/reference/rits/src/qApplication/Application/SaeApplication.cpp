@@ -226,6 +226,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     bsm_value_t* rvBsm;
     uint32_t l2SrcAddr = 0;
     uint64_t timestamp = 0;
+    std::thread::id tid = std::this_thread::get_id();
+
     // make sure that the threadMc is initialized
     if (threadMc == nullptr) {
         if (ldm == nullptr) {
@@ -277,7 +279,10 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             }
             // if ret is 0, then polling timed out
         }
-        if (ret != 0) rxFail++;
+        if (ret != 0) {
+            rxFail++;
+            //qMon->tData[tid].rxFails++;
+        }
         return -1;
     }
 
@@ -394,6 +399,10 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     }
     if (ret >= 0) {
         rxSuccess++;
+        if (qMon)
+        {
+            qMon->tData[tid].totalRx++;
+        }
         sem_wait(&this->log_sem);
         totalRxSuccessPerSecond++;
         sem_post(&this->log_sem);
@@ -426,12 +435,23 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 rvBsm->Longitude / 10000000, rvBsm->Heading_degrees, rvBsm->Speed, rvBsm->timestamp_ms,
                 rvBsm->MsgCount);
         }
-        if (appVerbosity > 2 && MsgType == MessageType::BSM) {
+        if (MsgType == MessageType::BSM) {
+            if (qMon)
+            {
+                qMon->tData[tid].rxBSMs++;
+            }
+            if (appVerbosity > 2)
+            {
             printf("Decoded BSM Summary: \n");
             print_summary_RV(threadMc.get());
+            }
         }
     } else {
         decFail++;
+        if (qMon)
+        {
+            qMon->tData[tid].decodeFails++;
+        }
     }
 
     ApplicationBase::writeLog(threadMc, index, l2SrcAddr, false, TransmitType::EVENT,
@@ -456,6 +476,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
 
 int SaeApplication::decodeAndVerify(msg_contents* mc) {
     int ret = -1;
+    std::thread::id tid = std::this_thread::get_id();
     wsmp_data_t *wsmpp;
     uint8_t sourceMacAddr[CV2X_MAC_ADDR_LEN];
     int macAddrLen = CV2X_MAC_ADDR_LEN;
@@ -481,6 +502,10 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
     if (ret == -1) {
         printf("Error in extracting security header from signed packet.\n");
         verifFail++;
+        if (qMon)
+        {
+            qMon->tData[tid].secFails++;
+        }
         return -1;
     }
 
@@ -501,6 +526,10 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
             if (appVerbosity > 3)
                 printf("Error in decoding unsigned packet - security enabled.\n");
             decFail++;
+            if (qMon)
+            {
+                qMon->tData[tid].decodeFails++;
+            }
             return -1;
         }
     }
@@ -568,6 +597,10 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
     ret = SecService->VerifyMsg(sopt);
     if (ret == -1) {
         verifFail++;
+        if (qMon)
+        {
+            qMon->tData[tid].secFails++;
+        }
         if (appVerbosity > 3)
             printf("Error in verifying secured packet.\n");
         ret = -1;
@@ -1208,6 +1241,7 @@ void SaeApplication::initRecordedBsm(bsm_value_t* bsm) {
 
 int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
                                 int16_t bufLen, TransmitType txType) {
+    std::thread::id tid = std::this_thread::get_id();
     int encLength = bufLen;
     int ret = -1;
     // let the transmit function handle the actual transmission
@@ -1219,10 +1253,16 @@ int SaeApplication::transmit(uint8_t index, std::shared_ptr<msg_contents>mc_,
             ret = ApplicationBase::transmit(index, mc_, encLength+1, txType);
         }
     }
-    if (ret > 0)
+    if (ret > 0){
         txSuccess++;
-    else
+        if (qMon)
+        {
+            qMon->tData[tid].totalTx++;
+        }
+    }
+    else{
         txFail++;
+    }
     return ret;
 }
 

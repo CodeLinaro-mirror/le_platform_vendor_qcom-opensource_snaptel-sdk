@@ -138,6 +138,7 @@ void signalHandler(int signum) {
         application->congestionControlManager->stopCongestionControl();
     }
     gTerminateCv.notify_all();
+    application->qMon->stop();
 }
 
 // allow the main thread to wait on the threads to join

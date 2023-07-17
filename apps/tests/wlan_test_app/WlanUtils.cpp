@@ -172,11 +172,13 @@ void WlanUtils::printDeviceInfo(std::vector<telux::wlan::DeviceInfo>& info) {
        std::cout << "List of connected devices:" << std::endl;
        for(auto& dev:info) {
            std::cout << "----------------------------------------------" << std::endl;
-           std::cout << "Associated AP       : " << WlanUtils::getWlanId(dev.id) << std::endl;
-           std::cout << "Device Name         : " << dev.name << std::endl;
-           std::cout << "Device IPv4 Address : " << dev.ipv4Address << std::endl;
-           std::cout << "Device IPv6 Address : " << dev.ipv6Address << std::endl;
-           std::cout << "Device MAC Address  : " << dev.macAddress << std::endl;
+           std::cout << "Associated AP          : " << WlanUtils::getWlanId(dev.id) << std::endl;
+           std::cout << "Device Name            : " << dev.name << std::endl;
+           std::cout << "Device IPv4 Address    : " << dev.ipv4Address << std::endl;
+           for(const auto& ipv6:dev.ipv6Address) {
+              std::cout << "Device IPv6 Address    : " << ipv6 << std::endl;
+           }
+           std::cout << "Device MAC Address     : " << dev.macAddress << std::endl;
        }
     } else {
         std::cout << "No Devices are currently connected to any AP" << std::endl;

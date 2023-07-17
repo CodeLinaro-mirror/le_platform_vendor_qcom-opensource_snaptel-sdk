@@ -3,28 +3,48 @@ Card service APIs to transmit APDU {#card_services_app}
 
 This sample application demonstrates how to use card service APIs to transmit APDU.
 
-### 1. Get the PhoneFactory and CardManager instances
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-   std::shared_ptr<ICardManager> cardManager = phoneFactory.getCardManager();
-   ~~~~~~
-
-### 2. Wait for the telephony subsystem initialization
-
-   ~~~~~~{.cpp}
-   bool subSystemsStatus = cardManager->isSubsystemReady();
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready, wait for it to be ready " << std::endl;
-      std::future<bool> f = cardManager->onSubsystemReady();
-      auto status = f.wait_for(std::chrono::seconds(5));
-      if(status == std::future_status::ready) {
-         subSystemsStatus = true;
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if (subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << Card Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << Card Manager subsystem initialization failed << std::endl;
       }
+      cbProm.set_value(status);
    }
    ~~~~~~
 
-### 3. Get number of slots, their IDs and card instance
+### 2. Get the PhoneFactory and CardManager instances
+
+   ~~~~~~{.cpp}
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto cardManager = phoneFactory.getCardManager(initResponseCb);
+   if (cardManager == NULL) {
+      std::cout << " Failed to get Card Manager instance" << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 3.Check if CardManager subsystem is ready
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cardManager.getServiceStatus();
+   ~~~~~~
+
+### 3.1 Wait for the CardManager subsystem initialization
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if (status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Card Manager subsystem << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 4. Get number of slots, their IDs and card instance
 
    ~~~~~~{.cpp}
    int slotCount;
@@ -42,7 +62,7 @@ This sample application demonstrates how to use card service APIs to transmit AP
    std::shared_ptr<ICard> cardImpl = cardManager->getCard(slotIds.front());
    ~~~~~~
 
-### 4. Get supported applications from the card
+### 5. Get supported applications from the card
 
    ~~~~~~{.cpp}
    std::vector<std::shared_ptr<ICardApp>> applications;
@@ -56,7 +76,7 @@ This sample application demonstrates how to use card service APIs to transmit AP
    ~~~~~~
 
 
-### 5. Instantiate optional IOpenLogicalChannelCallback, ICommandResponseCallback and ITransmitApduResponseCallback
+### 6. Instantiate optional IOpenLogicalChannelCallback, ICommandResponseCallback and ITransmitApduResponseCallback
 
    ~~~~~~{.cpp}
    auto myOpenLogicalCb = std::make_shared<MyOpenLogicalChannelCallback>();
@@ -64,7 +84,7 @@ This sample application demonstrates how to use card service APIs to transmit AP
    auto myTransmitApduResponseCb = std::make_shared<MyTransmitApduResponseCallback>();
    ~~~~~~
 
-###### 5.1 Implementation of ICardChannelCallback interface for receiving notifications on card event like open logical channel
+###### 6.1 Implementation of ICardChannelCallback interface for receiving notifications on card event like open logical channel
 
    ~~~~~~{.cpp}
    class MyOpenLogicalChannelCallback : public ICardChannelCallback {
@@ -86,7 +106,7 @@ This sample application demonstrates how to use card service APIs to transmit AP
    }
    ~~~~~~
 
-###### 5.2. Implementation of ICommandResponseCallback interface for receiving notifications on card event like close logical channel
+###### 6.2. Implementation of ICommandResponseCallback interface for receiving notifications on card event like close logical channel
 
    ~~~~~~{.cpp}
    class MyCloseLogicalChannelCallback : public ICommandResponseCallback {
@@ -105,7 +125,7 @@ This sample application demonstrates how to use card service APIs to transmit AP
    }
    ~~~~~~
 
-###### 5.3. Implementation of ICardCommandCallback interface for receiving notifications on card event like transmit APDU logical channel and transmit APDU basic channel
+###### 6.3. Implementation of ICardCommandCallback interface for receiving notifications on card event like transmit APDU logical channel and transmit APDU basic channel
 
    ~~~~~~{.cpp}
    class MyTransmitApduResponseCallback : public ICardCommandCallback {
@@ -125,7 +145,7 @@ This sample application demonstrates how to use card service APIs to transmit AP
    }
    ~~~~~~
 
-### 6. Open logical channel and wait for request to complete
+### 7. Open logical channel and wait for request to complete
 
    ~~~~~~{.cpp}
    std::string aid;
@@ -140,7 +160,7 @@ This sample application demonstrates how to use card service APIs to transmit AP
    std::cout << "Opening Logical Channel to Transmit the APDU..." << std::endl;
    ~~~~~~
 
-### 7. Transmit APDU on logical channel, wait for request to complete
+### 8. Transmit APDU on logical channel, wait for request to complete
 
    ~~~~~~{.cpp}
    cardImpl->transmitApduLogicalChannel(openChannel, CLA, INSTRUCTION, P1, P2, P3, DATA,
@@ -148,14 +168,14 @@ This sample application demonstrates how to use card service APIs to transmit AP
    std::cout << "Transmit APDU request made..." << std::endl;
    ~~~~~~
 
-### 8. Close the opened logical channel and wait for the completion
+### 9. Close the opened logical channel and wait for the completion
 
    ~~~~~~{.cpp}
    cardImpl->closeLogicalChannel(openChannel, myCloseLogicalCb);
    std::cout << "Close the Logical Channel..." << std::endl;
    ~~~~~~
 
-### 9. Transmit APDU on basic channel and wait for completion
+### 10. Transmit APDU on basic channel and wait for completion
 
    ~~~~~~{.cpp}
    cardImpl->transmitApduBasicChannel(CLA, INSTRUCTION, P1, P2, P3, DATA, myTransmitApduResponseCb);

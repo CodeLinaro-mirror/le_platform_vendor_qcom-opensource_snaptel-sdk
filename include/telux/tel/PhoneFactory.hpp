@@ -158,10 +158,16 @@ class PhoneFactory {
    /**
     * Get Card Manager instance to handle services such as transmitting APDU,
     * SIM IO and more.
+    * @param [in] callback  Optional callback pointer to get response of Card Manager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Phone Manager object will no
+    *                       more be a valid object.
     *
     * @returns Pointer of ICardManager object.
     */
-   virtual std::shared_ptr<ICardManager> getCardManager() = 0;
+   virtual std::shared_ptr<ICardManager> getCardManager(
+       telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get Sap Card Manager instance associated with the provided slot id. This
@@ -172,10 +178,13 @@ class PhoneFactory {
     * invoke this API successfully.
     *
     * @param [in] slotId    Unique identifier for the SIM slot
+    * @param[in] callback   Optional callback pointer to get the response of the manager
+    *                       initialisation.
     *
     * @returns Pointer of ISapCardManager object.
     */
-   virtual std::shared_ptr<ISapCardManager> getSapCardManager(int slotId = DEFAULT_SLOT_ID) = 0;
+   virtual std::shared_ptr<ISapCardManager> getSapCardManager(
+      int slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb callback = nullptr) = 0;
 
    /**
     * Get Subscription Manager instance to get device subscription details
@@ -225,10 +234,16 @@ class PhoneFactory {
     * to invoke this API successfully.
     *
     * @param [in] slotId    Unique identifier for the SIM slot
+    * @param [in] callback  Optional callback pointer to get response of RemoteSim Manager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Phone Manager object will no
+    *                       more be a valid object.
     *
     * @returns Pointer of IRemoteSimManager object.
     */
-   virtual std::shared_ptr<IRemoteSimManager> getRemoteSimManager(int slotId = DEFAULT_SLOT_ID) = 0;
+   virtual std::shared_ptr<IRemoteSimManager> getRemoteSimManager(int slotId = DEFAULT_SLOT_ID,
+       telux::common::InitResponseCb  callback = nullptr ) = 0;
 
    /**
     * Get Multi SIM Manager instance to handle operations like high capabilty
@@ -249,20 +264,31 @@ class PhoneFactory {
     * broacast messages and configure broadcast messages.
     *
     * @param [in] slotId   @ref telux::common::SlotId
+    * @param [in] callback  Optional callback pointer to get response of CellBroadcast Manager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Phone Manager object will no
+    *                       more be a valid object.
     *
     * @returns Pointer of ICellBroadcastManager object or nullptr in case of failure.
     */
    virtual std::shared_ptr<ICellBroadcastManager> getCellBroadcastManager(
-      SlotId slotId = DEFAULT_SLOT_ID) = 0;
+      SlotId slotId = DEFAULT_SLOT_ID, telux::common::InitResponseCb  callback = nullptr) = 0;
 
    /**
     * Get SimProfileManager. SimProfileManager is a primary interface for remote
     * eUICC(eSIM) provisioning and local profile assistance.
+    * @param [in] callback  Optional callback pointer to get response of SimProfile Manager
+    *                       initialization.
+    *                       It will be invoked when initialization is either succeeded or failed.
+    *                       In case of failure response, the provided Phone Manager object will no
+    *                       more be a valid object.
     *
     * @returns Pointer of ISimProfileManager object or nullptr in case of failure.
     *
     */
-   virtual std::shared_ptr<ISimProfileManager> getSimProfileManager() = 0;
+   virtual std::shared_ptr<ISimProfileManager> getSimProfileManager(
+       telux::common::InitResponseCb  callback = nullptr) = 0;
 
    /**
     * Get Ims Settings Manager instance to handle IMS service enable configuation parameters like

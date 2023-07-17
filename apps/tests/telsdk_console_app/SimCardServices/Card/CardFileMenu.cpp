@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -128,26 +128,41 @@ void CardFileHandlerResponseCallback::EfGetFileAttributesCb(telux::common::Error
 
 CardFileMenu::CardFileMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
+}
+
+CardFileMenu::~CardFileMenu() {
+    if (cardListener_) {
+        cardManager_->removeListener(cardListener_);
+        cardListener_ = nullptr;
+    }
+    if (cardManager_) {
+        cardManager_ = nullptr;
+    }
+}
+
+bool CardFileMenu::init() {
     //  Get the PhoneFactory and PhoneManager instances.
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    cardManager_ = phoneFactory.getCardManager();
-    //  Check if telephony subsystem is ready
-    bool subSystemStatus = cardManager_->isSubsystemReady();
-    //  If telephony subsystem is not ready, wait for it to be ready
-    if (!subSystemStatus) {
-        std::cout << "Card subsystem is not ready, Please wait" << " \n ";
-        std::future<bool> f = cardManager_->onSubsystemReady();
-        // If we want to wait unconditionally for telephony subsystem to be ready
-        subSystemStatus = f.get();
+    std::promise<telux::common::ServiceStatus> cardMgrprom;
+    cardManager_ = phoneFactory.getCardManager([&](telux::common::ServiceStatus status) {
+        cardMgrprom.set_value(status);
+    });
+
+    if (!cardManager_) {
+       std::cout << "Failed to get CardManager instance \n";
+       return false;
     }
-    //  Exit the application, if SDK is unable to initialize telephony subsystems
-    if (subSystemStatus) {
-        std::cout << " Subsystem is ready \n ";
-    } else {
-        std::cout << "ERROR - Unable to initialize subSystem" << " \n ";
-        exit(0);
+
+    //  Check if call manager subsystem is ready
+    telux::common::ServiceStatus cardMgrStatus = cardManager_->getServiceStatus();
+    //  If call manager subsystem is not ready, wait for it to be ready
+    if (cardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Card Manager subsystem is not ready, Please wait \n";
     }
-    if (subSystemStatus) {
+    cardMgrStatus = cardMgrprom.get_future().get();
+    //  If call manager subsystem is ready
+    if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "\nCard Manager subsystem is ready" << std::endl;
         std::vector<int> slotIds;
         telux::common::Status status = cardManager_->getSlotIds(slotIds);
         if (status == telux::common::Status::SUCCESS) {
@@ -164,20 +179,11 @@ CardFileMenu::CardFileMenu(std::string appName, std::string cursor)
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Unable to registerListener" << " \n ";
         }
+    } else {
+        std::cout << "ERROR - Unable to initialize Call Manager subSystem" << "\n";
+        return false;
     }
-}
 
-CardFileMenu::~CardFileMenu() {
-    if (cardListener_) {
-        cardManager_->removeListener(cardListener_);
-        cardListener_ = nullptr;
-    }
-    if (cardManager_) {
-        cardManager_ = nullptr;
-    }
-}
-
-void CardFileMenu::init() {
     std::shared_ptr<ConsoleAppCommand> getSupportedAppsCommand
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
             "1", "Get_Supported_Apps", {},
@@ -219,6 +225,7 @@ void CardFileMenu::init() {
     }
     addCommands(commandsListCardFileSubMenu);
     ConsoleApp::displayMenu();
+    return true;
 }
 
 std::string CardFileMenu::cardStateToString(telux::tel::CardState state) {

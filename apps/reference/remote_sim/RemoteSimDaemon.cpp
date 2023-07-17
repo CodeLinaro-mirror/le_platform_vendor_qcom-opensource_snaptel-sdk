@@ -26,7 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
  * @file    RemoteSimDaemon.cpp
  * @brief   This daemon interfaces with the modem to provide it with WWAN functionality
@@ -167,15 +172,12 @@ Status RemoteSimDaemon::readArguments(int argc, char **argv, int& slotId)
 
 Status RemoteSimDaemon::initDaemon()
 {
-    remoteSimMgr_ = PhoneFactory::getInstance().getRemoteSimManager(slotId_);
-    listener_ = std::make_shared<RemoteSimListener>();
-
-    if (remoteSimMgr_ != nullptr) {
-        if (remoteSimMgr_->registerListener(listener_) != Status::SUCCESS) {
-            LOGE("Listener registration failed!\n");
-            return Status::FAILED;
-        }
-    } else {
+    std::promise<telux::common::ServiceStatus> remoteSimMgrprom;
+    remoteSimMgr_ = PhoneFactory::getInstance().getRemoteSimManager(slotId_,
+        [&](telux::common::ServiceStatus status) {
+        remoteSimMgrprom.set_value(status);
+    });
+    if (remoteSimMgr_ == nullptr) {
         LOGE("Failed to create RemoteSimManager!\n");
         return Status::FAILED;
     }
@@ -187,16 +189,22 @@ Status RemoteSimDaemon::initDaemon()
 
     simConnection_.acceptClientConnection();
 
-    int timeoutSec = SUBSYSTEM_READY_TIMEOUT_SEC;
-    if (!(remoteSimMgr_->isSubsystemReady())) {
+    telux::common::ServiceStatus remoteSimMgrStatus = remoteSimMgr_->getServiceStatus();
+    if (remoteSimMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOGD("Remote SIM subsystem not ready yet, waiting...\n");
-        auto f = remoteSimMgr_->onSubsystemReady();
-        if (f.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
-            LOGE("Subsystem did not come up within %d seconds, exiting!\n", timeoutSec);
-            simConnection_.tearDownClientConnection();
-            return Status::FAILED;
-        }
+    }
+    remoteSimMgrStatus = remoteSimMgrprom.get_future().get();
+    listener_ = std::make_shared<RemoteSimListener>();
+    if (remoteSimMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOGD("Remote SIM subsystem is ready now.\n");
+        if (remoteSimMgr_->registerListener(listener_) != Status::SUCCESS) {
+           LOGE("Listener registration failed!\n");
+           return Status::FAILED;
+        }
+    } else {
+        LOGE("RemoteSim subsystem failed to initialize.\n");
+        simConnection_.tearDownClientConnection();
+        return Status::FAILED;
     }
 
     if (remoteSimMgr_->sendConnectionAvailable(eventCallback) != Status::SUCCESS) {

@@ -6,52 +6,87 @@ SIM profile management operations on the eUICC such as add profile, enable/disab
 profile, delete profile, query profile list, configure server address and perform
 memory reset.
 
-### 1. Get phone factory, SIM profile manager and Card manager instance
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
+### 1.1 Implement ResponseCallback interface to receive SimProfile Manager subsystem initialization status
+
+   ~~~~~~{.cpp}
+   std::promise<telux::common::ServiceStatus> cbSimProfileProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if (subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << SIM Profile subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << SIM Profile subsystem initialization failed << std::endl;
+      }
+      cbSimProfileProm.set_value(status);
+   }
+   ~~~~~~
+
+### 1.2 Implement ResponseCallback interface to receive Card Manager subsystem initialization status
+
+   ~~~~~~{.cpp}
+   std::promise<telux::common::ServiceStatus> cbCardProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if (subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << Card Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << Card Manager subsystem initialization failed << std::endl;
+      }
+      cbCardProm.set_value(status);
+   }
+   ~~~~~~
+
+### 2. Get phone factory, SIM profile manager and Card manager instance
 
    ~~~~~~{.cpp}
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   auto simProfileManager = phoneFactory.getSimProfileManager();
-   auto cardManager = phoneFactory.getCardManager();
-   ~~~~~~
-
-### 2. Check if SIM profile subsystem is ready
-
-   ~~~~~~{.cpp}
-   bool subSystemStatus = simProfileManager->isSubsystemReady();
-   ~~~~~~
-
-### 2.1 If SIM profile manager subsystem is not ready, wait for it to be ready
-
-   ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::cout << "SIM profile manager subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = simProfileManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   auto simProfileManager = phoneFactory.getSimProfileManager(cbSimProfileProm);
+   if (simProfileManager == NULL) {
+      std::cout << " Failed to get SIMProfile Manager instance" << std::endl;
+      return -1;
+   }
+   auto cardManager = phoneFactory.getCardManager(cbCardProm);
+   if (cardManager == NULL) {
+      std::cout << " Failed to get Card Manager instance" << std::endl;
+      return -1;
    }
    ~~~~~~
 
-### 3. Check if card subsystem is ready
+### 3. Check if SIM profile subsystem is ready
 
    ~~~~~~{.cpp}
-   bool subSystemStatus = cardManager->isSubsystemReady();
+   telux::common::ServiceStatus status = simProfileManager.getServiceStatus();
    ~~~~~~
 
-### 3.1 If card manager subsystem is not ready, wait for it to be ready
+### 3.1 If SIM profile manager subsystem is not ready, wait for it to be ready
 
    ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::cout << "Card manager subsystem is not ready" << std::endl;
-      std::cout << "wait unconditionally for it to be ready " << std::endl;
-      std::future<bool> f = cardManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   telux::common::ServiceStatus status = cbSimProfileProm.get_future().get();
+   if (status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize SIMProfile Manager subsystem << std::endl;
+      return -1;
    }
    ~~~~~~
 
-### 4. Exit the application, if SIM profile and card manager subsystem can not be initialized
+### 4. Check if card subsystem is ready
 
    ~~~~~~{.cpp}
-   if(subSystemsStatus) {
+   telux::common::ServiceStatus status = cardManager.getServiceStatus();
+   ~~~~~~
+
+### 4.1 If card manager subsystem is not ready, wait for it to be ready
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cbCardProm.get_future().get();
+   if (status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Card Manager subsystem << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 5. Return/Exit the application, if SIM profile and card manager subsystem can not be initialized
+
+   ~~~~~~{.cpp}
+   if((status == SERVICE_AVAILABLE) {
       std::cout << " *** SIM profile manager subsystem and Card manager ready *** " << std::endl;
    } else {
       std::cout << " *** ERROR - Unable to initialize SIM profile manager/Card manager subsystem"
@@ -59,14 +94,14 @@ memory reset.
    }
    ~~~~~~
 
-### 5. Instantiate and register RspListener
+### 6. Instantiate and register RspListener
 
    ~~~~~~{.cpp}
    std::shared_ptr<ISimProfileListener> listener = std::make_shared<RspListener>();
    simProfileManager.registerListener(listener);
    ~~~~~~
 
-###### 5.1 Implementation of ISimProfileListener interface for receiving Remote SIM provisioning notifications
+###### 6.1 Implementation of ISimProfileListener interface for receiving Remote SIM provisioning notifications
 
    ~~~~~~{.cpp}
    class RspListener : public telux::tel::ISimProfileListener {
@@ -87,7 +122,7 @@ memory reset.
        }
    ~~~~~~
 
-### 6. Request EID of the eUICC
+### 7. Request EID of the eUICC
 
    ~~~~~~{.cpp}
    auto respCb = [&](std::string eid, telux::common::ErrorCode errorCode)
@@ -106,7 +141,7 @@ memory reset.
    status = card->requestEid(respCb);
    ~~~~~~
 
-### 7. Add profile on the eUICC
+### 8. Add profile on the eUICC
 
    ~~~~~~{.cpp}
     auto respCb = [&](telux::common::ErrorCode errorCode) { addProfileCallback(errorCode); };
@@ -124,7 +159,7 @@ memory reset.
         confirmationCode, isUserConsentSupported, respCb);
    ~~~~~~
 
-###### 7.1 If user consent is required for downloading the profile, the registered listener of client will be notified by invoking onUserDisplayInfo API
+###### 8.1 If user consent is required for downloading the profile, the registered listener of client will be notified by invoking onUserDisplayInfo API
 
    Client is expected to invoke ISimProfileManager::provideUserConsent API in order to proceed
    further for downloading the profile.
@@ -136,7 +171,7 @@ memory reset.
         // installation of profile by calling ISimProfileManager::provideUserConsent
     }
    ~~~~~~
-###### 7.2 If confirmation code is required for downloading the profile, the registered listener of client will be notified by invoking onConfirmationCodeRequired API
+###### 8.2 If confirmation code is required for downloading the profile, the registered listener of client will be notified by invoking onConfirmationCodeRequired API
 
    Client is expected to invoke ISimProfileManager::provideConfirmationCode API in order to proceed
    further for downloading the profile.
@@ -148,7 +183,7 @@ memory reset.
     }
    ~~~~~~
 
-###### 7.3 When the download of profile completes or fails, the client is notified about download status
+###### 8.3 When the download of profile completes or fails, the client is notified about download status
 
    ~~~~~~{.cpp}
     void onDownloadStatus(SlotId slotId, telux::tel::DownloadStatus status,
@@ -158,7 +193,7 @@ memory reset.
     }
    ~~~~~~
 
-### 8. Delete profile on the eUICC
+### 9. Delete profile on the eUICC
 
    ~~~~~~{.cpp}
    auto respCb = [&](telux::common::ErrorCode errorCode) { deleteProfileCallback(errorCode); };
@@ -176,7 +211,7 @@ memory reset.
    status = simProfileManager->deleteProfile(SlotId::DEFAULT_SLOT_ID, profileId, respCb);
    ~~~~~~
 
-### 9. Request profile list on the eUICC
+### 10. Request profile list on the eUICC
 
    ~~~~~~{.cpp}
    auto respCb = [&](const std::vector<std::shared_ptr<telux::tel::SimProfile>> &profiles,
@@ -196,7 +231,7 @@ memory reset.
    status = simProfileManager->requestProfileList(SlotId::DEFAULT_SLOT_ID, respCb);
    ~~~~~~
 
-### 10. Enable/disable profile on the eUICC
+### 11. Enable/disable profile on the eUICC
 
    ~~~~~~{.cpp}
    auto respCb = [&](telux::common::ErrorCode errorCode) { setProfileCallback(errorCode); };
@@ -214,7 +249,7 @@ memory reset.
    status = simProfileManager->setProfile(SlotId::DEFAULT_SLOT_ID, profileId, enable, respCb);
    ~~~~~~
 
-### 11. Update Nickname of the profile
+### 12. Update Nickname of the profile
 
    ~~~~~~{.cpp}
    auto respCb = [&](telux::common::ErrorCode errorCode) { updateNicknameCallback(errorCode); };
@@ -233,7 +268,7 @@ memory reset.
    status = simProfileManager->updateNickName(SlotId::DEFAULT_SLOT_ID, profileId, nickname, respCb);
    ~~~~~~
 
-### 12. Set SMDP+ server address on the eUICC
+### 13. Set SMDP+ server address on the eUICC
 
    ~~~~~~{.cpp}
    auto respCb = [&](telux::common::ErrorCode errorCode) { setServerAddressCallback(errorCode); };
@@ -252,7 +287,7 @@ memory reset.
    status = simProfileManager->setServerAddress(SlotId::DEFAULT_SLOT_ID, smdpAddress, respCb);
    ~~~~~~
 
-### 13. Get SMDP+ and SMDS server address from the eUICC
+### 14. Get SMDP+ and SMDS server address from the eUICC
 
    ~~~~~~{.cpp}
    auto respCb = [&](std::string smdpAddress,
@@ -274,7 +309,7 @@ memory reset.
    status = simProfileManager->requestServerAddress(SlotId::DEFAULT_SLOT_ID, respCb);
    ~~~~~~
 
-### 14. Memory reset on the eUICC
+### 15. Memory reset on the eUICC
 
    ~~~~~~{.cpp}
    auto respCb = [&](telux::common::ErrorCode errorCode) { memoryResetCallback(errorCode); };

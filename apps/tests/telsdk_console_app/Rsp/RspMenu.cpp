@@ -70,25 +70,29 @@ RemoteSimProfileMenu::~RemoteSimProfileMenu() {
 
 bool RemoteSimProfileMenu::init() {
 
-    //  Get the PhoneFactory and SimProfileManager instances.
+    //  Get the PhoneFactory, SimProfileManager and CardManager instances.
+    std::promise<telux::common::ServiceStatus> simProfileMgrprom;
+    std::promise<telux::common::ServiceStatus> cardMgrprom;
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    simProfileManager_ = phoneFactory.getSimProfileManager();
+    simProfileManager_ = phoneFactory.
+        getSimProfileManager([&](telux::common::ServiceStatus status) {
+        simProfileMgrprom.set_value(status);
+    });
 
     //  Check if subsystem is ready
     if (simProfileManager_) {
         //  Check if SimProfile subsystem is ready
-        bool subSystemStatus = simProfileManager_->isSubsystemReady();
+        telux::common::ServiceStatus subSystemStatus = simProfileManager_->getServiceStatus();
 
         //  If subsystem is not ready, wait for it to be ready
-        if(!subSystemStatus) {
-            std::cout << "\n\nSimProfile subsystem is not ready, Please wait" << std::endl;
-            std::future<bool> f = simProfileManager_->onSubsystemReady();
-            // If we want to wait unconditionally for SimProfile subsystem to be ready
-            subSystemStatus = f.get();
+        if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "\n\nSimProfile subsystem is not ready, Please wait." << std::endl;
         }
 
+        subSystemStatus = simProfileMgrprom.get_future().get();
+
         //  return from the function, if SDK is unable to initialize SimProfile subsystem
-        if(subSystemStatus) {
+        if(subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             rspListener_ = std::make_shared<RspListener>();
             telux::common::Status status = simProfileManager_->registerListener(rspListener_);
             if(status != telux::common::Status::SUCCESS) {
@@ -96,7 +100,7 @@ bool RemoteSimProfileMenu::init() {
                 return false;
             }
         } else {
-            std::cout << "ERROR - Unable to initialize subsystem" << std::endl;
+            std::cout << "ERROR - Unable to initialize SimProfile Manager subsystem" << std::endl;
             return false;
         }
     } else {
@@ -104,20 +108,20 @@ bool RemoteSimProfileMenu::init() {
         return false;
     }
 
-    cardManager_ = phoneFactory.getCardManager();
+    cardManager_ = phoneFactory.getCardManager([&](telux::common::ServiceStatus status) {
+        cardMgrprom.set_value(status);
+    });
     if (cardManager_) {
         //  Check if Card subsystem is ready
-        bool subSystemStatus = cardManager_->isSubsystemReady();
+        telux::common::ServiceStatus cardSubSystemStatus = cardManager_->getServiceStatus();
 
         //  If Card subsystem is not ready, wait for it to be ready
-        if(!subSystemStatus) {
+        if (cardSubSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::cout << "Card subsystem is not ready, Please wait" << std::endl;
-            std::future<bool> f = cardManager_->onSubsystemReady();
-            // If we want to wait unconditionally for Card subsystem to be ready
-            subSystemStatus = f.get();
         }
+        cardSubSystemStatus = cardMgrprom.get_future().get();
 
-        if(subSystemStatus) {
+        if (cardSubSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
             std::vector<int> slotIds;
             telux::common::Status status = cardManager_->getSlotIds(slotIds);
             if (status == telux::common::Status::SUCCESS) {

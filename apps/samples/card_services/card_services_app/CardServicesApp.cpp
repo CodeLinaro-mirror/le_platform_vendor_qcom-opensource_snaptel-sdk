@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -203,30 +203,33 @@ bool waitForCardEvent(CardEvent cardEvent, int timeout = DEFAULT_TIMEOUT_IN_SECO
 // Main routine performs operations required to transmit Sap Apdu
 int main(int argc, char ** argv) {
    // [1] Get the PhoneFactory and CardManager instances.
-   auto &phoneFactory = PhoneFactory::getInstance();
-   std::shared_ptr<ICardManager> cardManager = phoneFactory.getCardManager();
+   std::promise<telux::common::ServiceStatus> cardMgrprom;
+   auto cardManager = PhoneFactory::getInstance().
+       getCardManager([&](telux::common::ServiceStatus status) {
+       cardMgrprom.set_value(status);
+   );
+
+   if (!cardManager) {
+       LOG(ERROR, __FUNCTION__, "Failed to get CardManager instance");
+       return 1;
+   }
 
    // [2] Wait for the telephony subsystem initialization.
-   bool subSystemsStatus = cardManager->isSubsystemReady();
+   telux::common::ServiceStatus cardMgrStatus = cardManager->getServiceStatus();
    std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
    startTime = std::chrono::system_clock::now();
 
-   if(!subSystemsStatus) {
-      std::cout << "Telephony subsystem is not ready, wait for it to be ready " << std::endl;
-      std::future<bool> f = cardManager->onSubsystemReady();
-      auto status = f.wait_for(std::chrono::seconds(5));
-      if(status == std::future_status::ready) {
-         subSystemsStatus = true;
-      }
+   if (cardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "Card manager subsystem is not ready, wait for it to be ready " << std::endl;
    }
-
-   if(subSystemsStatus) {
+   cardMgrStatus = cardMgrprom.get_future().get();
+   if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       endTime = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;
    } else {
-      std::cout << " *** ERROR - Unable to initialize telephony subsystem" << std::endl;
+      std::cout << " *** ERROR - Unable to initialize CardManager subsystem" << std::endl;
       return 1;
    }
 
@@ -272,7 +275,7 @@ int main(int argc, char ** argv) {
 
    if(!waitForCardEvent(CardEvent::OPEN_LOGICAL_CHANNEL)) {
       std::cout << "Opening Logical Channel failed " << std::endl;
-      exit(1);
+      return 1;
    }
 
    // [7] Transmit Apdu on Logical Channel, wait for request to complete
@@ -282,7 +285,7 @@ int main(int argc, char ** argv) {
 
    if(!waitForCardEvent(CardEvent::TRANSMIT_APDU_CHANNEL)) {
       std::cout << "Transmit APDU failed " << std::endl;
-      exit(1);
+      return 1;
    }
 
    // [8] Close the opened logical channel and wait for the completion
@@ -298,7 +301,7 @@ int main(int argc, char ** argv) {
 
    if(!waitForCardEvent(CardEvent::TRANSMIT_APDU_CHANNEL)) {
       std::cout << "Transmit APDU failed " << std::endl;
-      exit(1);
+      return 1;
    }
 
    return 0;

@@ -26,6 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file    CardControl.cpp
@@ -159,27 +165,48 @@ CardControl & CardControl::getInstance()
 
 Status CardControl::init()
 {
-    sapCardMgr_ = PhoneFactory::getInstance().getSapCardManager(DEFAULT_SLOT_ID);
+    std::promise<ServiceStatus> prom;
+    auto &phoneFactory = PhoneFactory::getInstance();
+    sapCardMgr_ = phoneFactory.getSapCardManager(
+        DEFAULT_SLOT_ID,[&](telux::common::ServiceStatus status) {
+        prom.set_value(status);
+    });
     if (!sapCardMgr_) {
-        LOGE("Failed to create SapCardManager!\n");
+        LOGE("ERROR - Failed to get SapCardManager instance \n");
+        return Status::FAILED;
+    }
+    telux::common::ServiceStatus sapCardMgrStatus = sapCardMgr_->getServiceStatus();
+    if (sapCardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOGD("SapCardManager subsystem is not ready , Please wait\n");
+    }
+    sapCardMgrStatus = prom.get_future().get();
+    if (sapCardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOGD("SapCardManager subsystem is ready\n");
+    } else {
+        LOGE("ERROR - Unable to initialize SapCardManager subsystem\n");
         return Status::FAILED;
     }
 
-    cardMgr_ = PhoneFactory::getInstance().getCardManager();
+    std::promise<telux::common::ServiceStatus> cardMgrprom;
+    cardMgr_ = PhoneFactory::getInstance().
+        getCardManager([&](telux::common::ServiceStatus status) {
+        cardMgrprom.set_value(status);
+    });
     if (!cardMgr_) {
         LOGE("Failed to create CardManager!\n");
         return Status::FAILED;
     }
 
-    int timeoutSec = SUBSYSTEM_READY_TIMEOUT_SEC;
-    if (!(cardMgr_->isSubsystemReady())) {
+    telux::common::ServiceStatus cardMgrStatus = cardMgr_->getServiceStatus();
+    if (cardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOGD("Card subsystem not ready yet, waiting...\n");
-        auto f = cardMgr_->onSubsystemReady();
-        if (f.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
-            LOGE("Subsystem did not come up within %d seconds, exiting!\n", timeoutSec);
-            return Status::FAILED;
-        }
+    }
+    cardMgrStatus = cardMgrprom.get_future().get();
+    if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOGD("Card subsystem is ready now.\n");
+    } else {
+        LOGD("Card subsystem failed to initialize.\n");
+        return Status::FAILED;
     }
 
     openConnCb_ = std::make_shared<OpenConnectionCallback>();

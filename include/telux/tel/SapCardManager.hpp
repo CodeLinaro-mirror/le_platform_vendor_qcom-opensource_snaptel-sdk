@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -157,6 +157,8 @@ public:
     * Checks the status of SIM access profile(SAP) subsystem and returns the result.
     *
     * @returns If true then SapCardManager is ready for service.
+    *
+    * @deprecated Use ISapCardManager::getServiceStatus() API.
     */
    virtual bool isReady() = 0;
 
@@ -164,9 +166,23 @@ public:
     * Wait for IM access profile(SAP) subsystem to be ready.
     *
     * @returns A future that caller can wait on to be notified
-    * when card manager is ready.
+    *          when card manager is ready.
+    *
+    * @deprecated Use InitResponseCb in PhoneFactory::getSapCardManager instead, to
+    *             get notified about subsystem readiness.
     */
    virtual std::future<bool> onReady() = 0;
+
+
+   /**
+    * This status indicates whether the ISapCardManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    -  If SAP card manager is ready for service.
+    *          SERVICE_UNAVAILABLE  -  If SAP card manager is temporarily unavailable.
+    *          SERVICE_FAILED       -  If SAP card manager encountered an irrecoverable
+    *                                  failure.
+    */
+   virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
    /**
     * Get SIM access profile (SAP) client connection state.

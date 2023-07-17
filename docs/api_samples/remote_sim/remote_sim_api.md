@@ -3,7 +3,21 @@ Using remote SIM manager APIs {#remote_sim_api}
 
 This sample application demonstrates how to use remote SIM manager APIs for remote SIM card operations.
 
-### 1. Get the PhoneFactory and RemoteSimManager instances
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
+
+   ~~~~~~{.cpp}
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if (subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << RemoteSim Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << RemoteSim Manager subsystem initialization failed << std::endl;
+      }
+      cbProm.set_value(status);
+   }
+   ~~~~~~
+
+### 2. Get the PhoneFactory and RemoteSimManager instances
 
    ~~~~~~{.cpp}
    #include <telux/tel/PhoneFactory.hpp>
@@ -12,18 +26,37 @@ This sample application demonstrates how to use remote SIM manager APIs for remo
    using namespace telux::tel;
 
    PhoneFactory &phoneFactory = PhoneFactory::getInstance();
-   std::shared_ptr<IRemoteSimManager> remoteSimMgr =
-       phoneFactory.getRemoteSimManager(DEFAULT_SLOT_ID);
+   auto remoteSimMgr =
+       phoneFactory.getRemoteSimManager(DEFAULT_SLOT_ID, initResponseCb);
+    if (remoteSimMgr == NULL) {
+      std::cout << " Failed to get RemoteSim Manager instance" << std::endl;
+      return -1;
+   }
    ~~~~~~
 
-### 2. Instantiate and register RemoteSimListener
+### 3.Check if telephony subsystem is ready
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = remoteSimMgr.getServiceStatus();
+   ~~~~~~
+
+### 3.1 Wait for the telephony subsystem initialization
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if (status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Card Manager subsystem << std::endl;
+      return -1;
+   }
+
+### 4. Instantiate and register RemoteSimListener
 
    ~~~~~~{.cpp}
    std::shared_ptr<IRemoteSimListener> listener = std::make_shared<RemoteSimListener>();
    remoteSimMgr.registerListener(listener);
    ~~~~~~
 
-###### 2.1 Implementation of IRemoteSimListener interface for receiving Remote SIM notifications
+###### 4.1 Implementation of IRemoteSimListener interface for receiving Remote SIM notifications
 
    ~~~~~~{.cpp}
    class RemoteSimListener : public IRemoteSimListener {
@@ -52,7 +85,7 @@ This sample application demonstrates how to use remote SIM manager APIs for remo
    };
    ~~~~~~
 
-###### 2.1 Implementation of event callback for asynchronous requests
+###### 4.2 Implementation of event callback for asynchronous requests
 
    ~~~~~~{.cpp}
    void eventCallback(ErrorCode errorCode) {
@@ -61,19 +94,7 @@ This sample application demonstrates how to use remote SIM manager APIs for remo
    }
    ~~~~~~
 
-### 3. Wait for Remote SIM subsystem initialization
-
-   ~~~~~~{.cpp}
-   int timeoutSec = 5;
-   if (!(remoteSimMgr->isSubsystemReady())) {
-       auto f = remoteSimMgr->onSubsystemReady();
-       if (f.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
-           std::cout << "Remote SIM subsystem did not initialize!" << std::endl;
-       }
-   }
-   ~~~~~~
-
-### 4. Send connection available event request
+### 5. Send connection available event request
 
    When the remote card is available and ready, make it available to the modem by sending a
    connection available request.
@@ -84,7 +105,7 @@ This sample application demonstrates how to use remote SIM manager APIs for remo
    }
    ~~~~~~
 
-### 5. Send card reset request after receiving onCardConnect() notification from listener
+### 6. Send card reset request after receiving onCardConnect() notification from listener
 
    You will receive an onCardConnect notification on the listener when the modem accepts the
    connection.
@@ -97,7 +118,7 @@ This sample application demonstrates how to use remote SIM manager APIs for remo
    }
    ~~~~~~
 
-### 6. Send response APDU after receiving onTransmitApdu() notification from listener
+### 7. Send response APDU after receiving onTransmitApdu() notification from listener
 
    ~~~~~~{.cpp}
    // After sending command APDU to SIM and receiving the response
@@ -107,7 +128,7 @@ This sample application demonstrates how to use remote SIM manager APIs for remo
    }
    ~~~~~~
 
-### 7. Send connection unavailable request before exiting
+### 8. Send connection unavailable request before exiting
 
    When the card becomes unavailable (or before you exit), tear down the connection with the modem.
 

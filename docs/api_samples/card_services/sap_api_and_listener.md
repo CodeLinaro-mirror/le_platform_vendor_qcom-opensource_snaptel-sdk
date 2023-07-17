@@ -27,7 +27,26 @@ This sample application demonstrates how to use SAP APIs to transmit APDU and li
 ### 3. Get default SAP Card Manager instance
 
    ~~~~~~{.cpp}
-   std::shared_ptr<ISapCardManager> sapCardMgr = phoneFactory.getSapCardManager();
+   std::promise<telux::common::ServiceStatus> prom;
+   auto sapCardMgr = phoneFactory.getSapCardManager(
+       DEFAULT_SLOT_ID,[&](telux::common::ServiceStatus status) {
+       prom.set_value(status);
+    });
+    if (!sapCardMgr) {
+       std::cout << "ERROR - Failed to get SapCardManager instance" << std::endl;
+       return;
+    }
+    telux::common::ServiceStatus sapCardMgrStatus = sapCardMgr->getServiceStatus();
+    if (sapCardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "SapCardManager subsystem is not ready , Please wait" << std::endl;
+    }
+    sapCardMgrStatus = prom.get_future().get();
+    if (sapCardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "SapCardManager subsystem is ready" << std::endl;
+    } else {
+       std::cout << "ERROR - Unable to initialize SapCardManager subsystem" << std::endl;
+       return;
+    }
    ~~~~~~
 
 ### 4. Instantiate ICommandResponseCallback, IAtrResponseCallback and ISapCardCommandCallback

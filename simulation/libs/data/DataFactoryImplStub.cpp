@@ -38,19 +38,19 @@ namespace telux {
 namespace data {
 
 DataFactoryImplStub::DataFactoryImplStub() {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 DataFactoryImplStub::~DataFactoryImplStub() {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 DataFactory::DataFactory() {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 DataFactory::~DataFactory() {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
 }
 
 DataFactory &DataFactoryImplStub::getInstance() {

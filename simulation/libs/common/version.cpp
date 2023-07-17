@@ -40,7 +40,7 @@ SdkVersion Version::getSdkVersion() {
     return (ver);
 }
 
-std::string getReleaseName() {
+std::string Version::getReleaseName() {
     std::string s1 = "Simulated Version";
     return (s1);
 }

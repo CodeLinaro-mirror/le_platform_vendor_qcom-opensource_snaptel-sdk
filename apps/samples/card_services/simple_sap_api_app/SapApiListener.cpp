@@ -230,7 +230,26 @@ int main(int argc, char ** argv) {
    }
 
    // [3] Get default Sap Card Manager instance
-   std::shared_ptr<ISapCardManager> sapCardMgr = phoneFactory.getSapCardManager();
+   std::promise<telux::common::ServiceStatus> sap_prom;
+   auto sapCardMgr = phoneFactory.getSapCardManager(
+      DEFAULT_SLOT_ID,[&](telux::common::ServiceStatus status) {
+      sap_prom.set_value(status);
+   });
+   if (!sapCardMgr) {
+      std::cout << "ERROR - Failed to get SapCardManager instance \n";
+      return 1;
+   }
+   telux::common::ServiceStatus sapCardMgrStatus = sapCardMgr->getServiceStatus();
+   if (sapCardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "SapCardManager subsystem is not ready , Please wait" << std::endl;
+   }
+   sapCardMgrStatus = sap_prom.get_future().get();
+   if (sapCardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "SapCardManager subsystem is ready" << std::endl;
+   } else {
+      std::cout << "ERROR - Unable to initialize SapCardManager subsystem" << std::endl;
+      return 1;
+   }
 
    // [4] Instantiate ICommandResponseCallback, IAtrResponseCallback and
    // ISapCardCommandCallback

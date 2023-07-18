@@ -298,6 +298,7 @@ void writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FIL
     }
     if(!tmpLogStr){
         printf("Invalid input buffer\n");
+        return;
     }
     char wall_time[100];
     get_wall_time(wall_time);

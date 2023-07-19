@@ -4357,6 +4357,34 @@ threat scan report for cellular connections.
 6. Application receives security reports in onScanReportAvailable() callback method in CellSecurityReportListener listener.
 7. When use-case is complete application deregisters CellSecurityReportListener listener.
 
+@section wifi_connsec_listener Wifi connection security
+
+The IWiFiSecurityManager provides support for detecting, monitoring and generating security
+threat report for WiFi connections.
+
+@subsection wifi_connsec_listener_call_flow Call flow to register listener and receive reports
+
+@anchor fig_wifi_connsec_listener_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wifi_consec_listener.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Call flow to register listener and receive reports}
+  \label{wifi_consec_listener}
+\end{figure}
+@endlatexonly
+
+@html_image{wifi_consec_listener.png,Call flow to register listener and receive reports,80,80,Call flow to register listener and receive reports}
+
+1. Application request an instance of ConnectionSecurityFactory.
+2. An instance of ConnectionSecurityFactory is received by the application.
+3. From the ConnectionSecurityFactory, application request an instance of IWiFiSecurityManager.
+4. An instance of IWiFiSecurityManager is received by the application.
+5. Application registers IWiFiReportListener listener with IWiFiSecurityManager.
+6. Application receives security reports in onReportAvailable() callback method in IWiFiReportListener listener.
+7. When use-case is complete application deregisters IWiFiReportListener listener.
+
 @section wlan_call_flow WLAN
 @subsection wlan_modify_config_call_flow Call flow to modify WLAN configuration
 

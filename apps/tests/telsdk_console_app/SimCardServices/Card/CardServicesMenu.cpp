@@ -137,55 +137,58 @@ bool CardServicesMenu::init() {
    startTime = std::chrono::steady_clock::now();
    //  Get the PhoneFactory and PhoneManager instances.
    auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-   cardManager_ = phoneFactory.getCardManager();
+   std::promise<telux::common::ServiceStatus> cardMgrprom;
+   cardManager_ = phoneFactory.getCardManager([&](telux::common::ServiceStatus status) {
+       cardMgrprom.set_value(status);
+   });
 
-   //  Check if telephony subsystem is ready
-   bool subSystemStatus = cardManager_->isSubsystemReady();
+   if (!cardManager_) {
+       std::cout <<  "Failed to get CardManager instance" << std::endl;
+       return false;
+   }
+   //  Check if Card Manager subsystem is ready
+   telux::common::ServiceStatus cardMgrStatus = cardManager_->getServiceStatus();
 
-   //  If telephony subsystem is not ready, wait for it to be ready
-   if(!subSystemStatus) {
-      std::cout << "Telephony subsystem is not ready, Please wait" << std::endl;
-      std::future<bool> f = cardManager_->onSubsystemReady();
-      // If we want to wait unconditionally for telephony subsystem to be ready
-      subSystemStatus = f.get();
+   //  If Card Manager subsystem is not ready, wait for it to be ready
+   if (cardMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "Card Manager subsystem is not ready, Please wait" << std::endl;
    }
 
-   //  Exit the application, if SDK is unable to initialize telephony subsystems
-   if(subSystemStatus) {
+   cardMgrStatus = cardMgrprom.get_future().get();
+   //  return the function, if SDK is unable to initialize telephony subsystems
+   if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       endTime = std::chrono::steady_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
       std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;
    } else {
-      std::cout << "ERROR - Unable to initialize subSystem" << std::endl;
+      std::cout << "ERROR - Unable to initialize Call Manager subSystem" << std::endl;
       return false;
    }
 
-   if(subSystemStatus) {
-      std::vector<int> slotIds;
-      telux::common::Status status = cardManager_->getSlotIds(slotIds);
-      if (status == telux::common::Status::SUCCESS) {
-          for (auto index = 1; index <= slotIds.size(); index++) {
-              auto card = cardManager_->getCard(index, &status);
-              if (card != nullptr) {
-                  cards_.emplace_back(card);
-              }
-          }
-      }
+   std::vector<int> slotIds;
+   telux::common::Status status = cardManager_->getSlotIds(slotIds);
+   if (status == telux::common::Status::SUCCESS) {
+       for (auto index = 1; index <= slotIds.size(); index++) {
+           auto card = cardManager_->getCard(index, &status);
+           if (card != nullptr) {
+              cards_.emplace_back(card);
+           }
+       }
+   }
 
-      // listener
-      cardListener_ = std::make_shared<MyCardListener>();
+   // listener
+   cardListener_ = std::make_shared<MyCardListener>();
 
-      // callbacks
-      myOpenLogicalChannelCb_ = std::make_shared<MyOpenLogicalChannelCallback>();
-      myTransmitApduCb_ = std::make_shared<MyTransmitApduResponseCallback>();
-      myCloseLogicalChannelCb_ = std::make_shared<MyCardCommandResponseCallback>();
+   // callbacks
+   myOpenLogicalChannelCb_ = std::make_shared<MyOpenLogicalChannelCallback>();
+   myTransmitApduCb_ = std::make_shared<MyTransmitApduResponseCallback>();
+   myCloseLogicalChannelCb_ = std::make_shared<MyCardCommandResponseCallback>();
 
-      // registering Listener
-      status = cardManager_->registerListener(cardListener_);
-      if(status != telux::common::Status::SUCCESS) {
-         std::cout << "Unable to registerListener" << std::endl;
-      }
+   // registering Listener
+   status = cardManager_->registerListener(cardListener_);
+   if (status != telux::common::Status::SUCCESS) {
+      std::cout << "Unable to registerListener" << std::endl;
    }
    std::shared_ptr<ConsoleAppCommand> getCardStateCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("1", "Get_card_state", {},
@@ -863,7 +866,8 @@ void CardServicesMenu::selectCardSlot(std::vector<std::string> userInput)
 
 void CardServicesMenu::cardFileMenu(std::vector<std::string> userInput) {
    CardFileMenu cardFileMenu("Card File Menu", "CardFile> ");
-   cardFileMenu.init();
-   cardFileMenu.mainLoop();
+   if (cardFileMenu.init()) {
+       cardFileMenu.mainLoop();
+   }
    ConsoleApp::displayMenu();
 }

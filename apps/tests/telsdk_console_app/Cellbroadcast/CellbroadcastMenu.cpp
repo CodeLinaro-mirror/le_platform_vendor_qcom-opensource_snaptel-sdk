@@ -83,44 +83,43 @@ bool CellbroadcastMenu::init() {
     }
 
     cbListener_ = std::make_shared<CellbroadcastListener>();
-    bool subSystemStatus = false;
     for (int index = DEFAULT_SLOT_ID; index <= noOfSlots; index++) {
-        auto cbMgr = phoneFactory.getCellBroadcastManager(static_cast<SlotId>(index));
-        if (cbMgr) {
-            //  Check if cellbroadcast subsystem is ready
-            subSystemStatus = cbMgr->isSubsystemReady();
-
-            //  If cellbroadcast subsystem is not ready, wait for it to be ready
-            if(!subSystemStatus) {
-                std::cout << "Cellbroadcast subsystem is not ready, Please wait" << std::endl;
-                std::future<bool> f = cbMgr->onSubsystemReady();
-                // If we want to wait unconditionally for cellbroadcast subsystem to be ready
-                subSystemStatus = f.get();
-                //  Return from the function, if SDK is unable to initialize cell broadcast
-                //  subsystem for any of the slot
-                if(!subSystemStatus) {
-                    std::cout << "ERROR - Unable to initialize subSystem on slot " << index <<
-                        std::endl;
-                    return false;
-                }
-            }
-
-            // add listeners for incoming SMS notification
-            telux::common::Status status = cbMgr->registerListener(cbListener_);
-            if(status != telux::common::Status::SUCCESS) {
-                std::cout << "Unable to register Listener" << std::endl;
-            }
-            cbManagers_.emplace_back(cbMgr);
-        } else {
-            std::cout << " Cellbroadcast Manager is NULL,"
-                <<" so cannot register a listener to receive incoming SMS"
-                << std::endl;
+        std::promise<telux::common::ServiceStatus> cbMgrprom;
+        auto cbMgr = phoneFactory.getCellBroadcastManager(static_cast<SlotId>(index),
+            [&](telux::common::ServiceStatus status) {
+             cbMgrprom.set_value(status);
+        });
+        if (cbMgr == nullptr) {
+            std::cout << "Failed to get CellBroadcast Manager" << std::endl;
             return false;
         }
+        //  Check if cellbroadcast subsystem is ready
+        telux::common::ServiceStatus cbMgrStatus = cbMgr->getServiceStatus();
+        if (cbMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+           std::cout <<
+               "CellBroadcast subsystem is not ready, wait for it to be ready on slotId "
+               << index << std::endl;
+        }
+        //  If cellbroadcast subsystem is not ready, wait for it to be ready
+        cbMgrStatus = cbMgrprom.get_future().get();
+        if (cbMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+           std::cout << "Cellbroadcast Subsystem is ready on slotId " << index << std::endl;
+           cbManagers_.emplace_back(cbMgr);
+       } else {
+           std::cout << " ERROR - Unable to intialize,"
+                << " Cellbroadcast Manager subsystem on slotId "
+                << index << std::endl;
+           return false;
+      }
     }
 
-    if(subSystemStatus) {
-        std::cout << "Cellbroadcast Subsystem is ready " << std::endl;
+    for (auto index = 0; index < cbManagers_.size(); index++) {
+        // add listeners for incoming SMS notification
+        auto status = cbManagers_[index]->registerListener(cbListener_);
+        if (status != telux::common::Status::SUCCESS) {
+            std::cout << "Unable to register Listener for slotId" << index << std::endl;
+            return false;
+        }
     }
 
     std::shared_ptr<ConsoleAppCommand> requestMessageFiltersCommand

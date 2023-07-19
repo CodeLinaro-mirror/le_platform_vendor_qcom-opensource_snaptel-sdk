@@ -54,25 +54,19 @@
 #include <unistd.h>
 #include <glib.h>
 #include <atomic>
+#include <mutex>
+#include <condition_variable>
 
-#include <telux/loc/LocationDefines.hpp>
-#include <telux/loc/LocationFactory.hpp>
-#include <telux/loc/LocationManager.hpp>
-#include <telux/loc/LocationListener.hpp>
-
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-#include <telux/cv2x/Cv2xFactory.hpp>
-#include <telux/cv2x/Cv2xRadioManager.hpp>
-#endif
+#include <telux/platform/PlatformFactory.hpp>
+#include <telux/platform/TimeManager.hpp>
+#include <telux/platform/TimeListener.hpp>
 
 #include "../../common/utils/SignalHandler.hpp"
 
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-using telux::cv2x::Cv2xFactory;
-using telux::cv2x::ICv2xRadioManager;
-using telux::cv2x::ICv2xListener;
-using telux::cv2x::UtcTimeInfo;
-#endif
+using telux::platform::PlatformFactory;
+using telux::platform::ITimeManager;
+using telux::platform::ITimeListener;
+
 
 #define SOCK_NAME "/var/run/chrony.sock"
 #define SOCK_MAGIC 0x534f434b
@@ -87,7 +81,7 @@ void chronylog(int level, const char *fmt, ...);
 #define LOGE(fmt, args...) \
     chronylog(LOG_ERR, "[E][%s:%d] " fmt, __func__, __LINE__, ## args)
 
-using namespace telux::loc;
+using namespace telux::platform;
 using namespace telux::common;
 
 // Chrony SOCK sample
@@ -101,13 +95,8 @@ struct TimeSample {
 };
 
 static int chronyfd;
-static bool gTimeCapability = false;
 static bool gExit = false;
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-static std::shared_ptr<ICv2xRadioManager> gCv2xRadioMgr = nullptr;
-static std::shared_ptr<ICv2xListener> gCv2xListener = nullptr;
 std::atomic<bool> gCv2xUtcValid{false};
-#endif
 
 bool enableDebug = false;
 bool enableSyslog = false;
@@ -117,8 +106,6 @@ bool enableSlssUtc = false;
 // Used to get the Telux async result
 std::mutex mtx;
 std::condition_variable cv;
-bool cv_done = false;
-ErrorCode ec;
 
 static void sendUtcToChronyd(uint64_t utc);
 
@@ -155,13 +142,11 @@ void chronylog(int level, const char *fmt, ...)
 }
 
 void printUsage(char *app_name) {
-    printf("Usage: %s -d -s -r\n", app_name);
+    printf("Usage: %s -d -s -r -a\n", app_name);
     printf("\t-d: Enable debug logs\n");
     printf("\t-s: Log to syslog instead of stdout\n");
     printf("\t-r: Enable updating the rtc file\n");
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
     printf("\t-a: Enable listening utc from cv2x\n");
-#endif
 }
 
 static void writeRtcFile(int sig, siginfo_t *si, void *uc) {
@@ -213,12 +198,9 @@ error:
     return -EINVAL;
 }
 
-class MyLocationListener : public ILocationListener {
+class MyTimeListener : public ITimeListener {
 public:
-    void onBasicLocationUpdate(
-        const std::shared_ptr<ILocationInfoBase> &locationInfo) {
-        uint64_t utc = locationInfo->getTimeStamp();
-
+    void onGnssUtcTimeUpdate(const uint64_t utc) {
         // ignore invalid utc
         if (utc == 0) {
             return;
@@ -231,13 +213,12 @@ public:
             firstFix = false;
         }
 
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-        // CV2X UTC has higher priority if it's valid
-        if (gCv2xUtcValid) {
+        // CV2X UTC has higher priority if it's available and user has enabled
+        if (enableSlssUtc and gCv2xUtcValid) {
             LOGD("GNSS report ignored with UTC = %" PRIu64 " due to CV2X UTC is valid\n", utc);
             return;
         }
-#endif
+
         if (utc % 1000 == 0) {
            LOGD("GNSS report with UTC = %" PRIu64 "\n", utc);
         } else {
@@ -247,26 +228,10 @@ public:
         sendUtcToChronyd(utc);
     }
 
-    void onCapabilitiesInfo(const telux::loc::LocCapability capabilityMask) override {
-        if (capabilityMask & telux::loc::TIME_BASED_TRACKING) {
-            std::unique_lock<std::mutex> lck(mtx);
-            LOGI("Time based tracking session is supported\n");
-            if (!gTimeCapability) {
-                gTimeCapability = true;
-                cv.notify_all();
-            }
-        }
-    }
-};
-
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-class Cv2xUtcListener : public ICv2xListener {
-public:
-    void onUtcUpdateFromSlss(const UtcTimeInfo& utcInfo) {
+    void onCv2xUtcTimeUpdate(const uint64_t utc) {
         bool utcValid = false;
-        if (0 != utcInfo.utcTime) {
+        if (0 != utc) {
             utcValid = true;
-            uint64_t utc = utcInfo.utcTime;
             LOGD("CV2X report with UTC = %" PRIu64 "\n", utc);
             sendUtcToChronyd(utc);
         }
@@ -276,7 +241,6 @@ public:
         }
     }
 };
-#endif
 
 static void sendUtcToChronyd(uint64_t utc) {
     struct TimeSample sample = { 0 };
@@ -324,13 +288,6 @@ int setupSocket(int *fd) {
     return 0;
 }
 
-// Response to async Telux calls
-void responseCallback(ErrorCode error) {
-    ec = error;
-    cv_done = true;
-    cv.notify_all();
-}
-
 void parseArguments(int& argc, char **argv) {
     int opt;
 
@@ -345,11 +302,9 @@ void parseArguments(int& argc, char **argv) {
         case 'r':
             enableWriteRtc = true;
             break;
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
         case 'a':
             enableSlssUtc = true;
             break;
-#endif
         case 'h':
         default:
             printUsage(argv[0]);
@@ -357,51 +312,6 @@ void parseArguments(int& argc, char **argv) {
         }
     }
 }
-
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-static int startCv2xUtcReport() {
-    bool statusUpdate = false;
-    telux::common::ServiceStatus cv2xRadioMgrStatus =
-        telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    auto statusCb = [&](telux::common::ServiceStatus status) {
-        std::lock_guard<std::mutex> lock(mtx);
-        statusUpdate = true;
-        cv2xRadioMgrStatus = status;
-        cv.notify_all();
-    };
-
-    auto & cv2xFactory = Cv2xFactory::getInstance();
-    gCv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
-    if (!gCv2xRadioMgr) {
-        LOGE("Failed to get Cv2xRadioManager\n");
-        return -EINVAL;
-    }
-
-    {
-        std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&] { return (gExit || statusUpdate); });
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioMgrStatus) {
-            LOGE("CV2X Radio Manager initialization failed\n");
-            return -EINVAL;
-        }
-    }
-
-    try {
-        gCv2xListener = std::make_shared<Cv2xUtcListener>();
-    } catch (std::bad_alloc& e) {
-        LOGE("Error Cv2xUtcListener allocation\n");
-        return -EINVAL;
-    }
-
-    if (Status::SUCCESS != gCv2xRadioMgr->registerListener(gCv2xListener)) {
-        LOGE("Failed to register CV2X UTC listener\n");
-        gCv2xListener = nullptr;
-        return -EINVAL;
-    }
-    return 0;
-}
-#endif
 
 int main(int argc, char *argv[]) {
     sigset_t sigset;
@@ -431,94 +341,52 @@ int main(int argc, char *argv[]) {
         installRtcTimer();
     }
 
-    // Initialize the TelSDK Location library
-    std::shared_ptr<ILocationListener> myLocationListener
-        = std::make_shared<MyLocationListener>();
-    std::shared_ptr<ILocationManager> locationManager;
+    // Initialize the TelSDK utc info manager
+    std::shared_ptr<ITimeListener> myTimeListener
+        = std::make_shared<MyTimeListener>();
+    std::shared_ptr<ITimeManager> timeManager;
 
-    auto &locationFactory = LocationFactory::getInstance();
+    auto &platformFactory = PlatformFactory::getInstance();
 
-    bool locMgrStatusUpdated = false;
-    auto locMgrStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
-    auto statusCb = [&locMgrStatusUpdated,
-                     &locMgrStatus](telux::common::ServiceStatus status) {
+    bool statusUpdated = false;
+    auto servicStatus = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    auto statusCb = [&statusUpdated, &servicStatus](telux::common::ServiceStatus status) {
         std::lock_guard<std::mutex> lock(mtx);
-        locMgrStatusUpdated = true;
-        locMgrStatus = status;
+        statusUpdated = true;
+        servicStatus = status;
         cv.notify_all();
     };
 
-    locationManager = locationFactory.getLocationManager(statusCb);
-    {
+    timeManager = platformFactory.getTimeManager(statusCb);
+    if (timeManager) {
+        // wait for utc manager to be ready
         std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&locMgrStatusUpdated] { return locMgrStatusUpdated || gExit; });
-    }
-
-    if (locMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        LOGI("Location subsystem is ready\n");
-    } else {
-        LOGE("Unable to initialize the Location subsystem\n");
-        return -EINVAL;
-    }
-
-    auto status = locationManager->registerListenerEx(myLocationListener);
-    if (status != Status::SUCCESS) {
-        LOGE("Failed to register location listener\n");
-        return -EINVAL;
-    }
-
-    auto capabilities = locationManager->getCapabilities();
-    if (not (capabilities & telux::loc::TIME_BASED_TRACKING)) {
-        LOGI("Wait for time based tracking capability\n");
-        std::unique_lock<std::mutex> lck(mtx);
-        while (!gTimeCapability && !gExit) {
-            cv.wait(lck);
-        }
-
-        if (gExit) {
-            return 0;
-        }
-    } else {
-        std::unique_lock<std::mutex> lck(mtx);
-        LOGI("Time based tracking capability is supported\n");
-        gTimeCapability = true;
-    }
-
-    status = locationManager->startBasicReports(0, 100, responseCallback);
-    if (status != Status::SUCCESS) {
-        LOGE("Failed to start basic location reports\n");
-        return -EINVAL;
-    }
-
-    {
-        // Wait for responseCallback to be called
-        std::unique_lock<std::mutex> lck(mtx);
-        while (!cv_done && !gExit) {
-            cv.wait(lck);
-        }
+        cv.wait(lck, [&statusUpdated] { return (statusUpdated || gExit); });
     }
 
     if (gExit) {
         return 0;
     }
 
-    if (ec != ErrorCode::SUCCESS) {
-        LOGE("Failed to start basic location reports\n");
+    if (servicStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        LOGI("Time manager is ready\n");
+    } else {
+        LOGE("Unable to initialize time manager\n");
+        return -EINVAL;
+    }
+
+    TimeTypeMask mask;
+    mask.set(SupportedTimeType::GNSS_UTC_TIME);
+    if (enableSlssUtc) {
+        mask.set(SupportedTimeType::CV2X_UTC_TIME);
+    }
+    auto status = timeManager->registerListener(myTimeListener, mask);
+    if (status != Status::SUCCESS) {
+        LOGE("Failed to register utc listener\n");
         return -EINVAL;
     }
 
     LOGI("Started providing fixes to chronyd\n");
-
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-    // start listening to CV2X UTC derived from SLSS if configured
-    if (enableSlssUtc) {
-        if (startCv2xUtcReport()) {
-            LOGE("Failed to start CV2X UTC report\n");
-        } else {
-            LOGI("Started CV2X UTC report\n");
-        }
-    }
-#endif
 
     {
         std::unique_lock<std::mutex> lck(mtx);
@@ -527,13 +395,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    locationManager->deRegisterListenerEx(myLocationListener);
-
-#ifdef TELSDK_FEATURE_CV2X_UTC_ENABLED
-    if (gCv2xRadioMgr and gCv2xListener) {
-        gCv2xRadioMgr->deregisterListener(gCv2xListener);
-    }
-#endif
+    timeManager->deregisterListener(myTimeListener, mask);
 
     return 0;
 }

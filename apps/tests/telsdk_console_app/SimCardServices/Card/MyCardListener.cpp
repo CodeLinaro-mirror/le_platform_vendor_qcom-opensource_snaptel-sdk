@@ -26,7 +26,12 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 #include <iostream>
 
 #include "MyCardListener.hpp"
@@ -107,16 +112,24 @@ void MyTransmitApduResponseCallback::onResponse(telux::tel::IccResult result,
 void MyCardListener::onCardInfoChanged(int slotId) {
    std::cout << std::endl << std::endl;
    PRINT_NOTIFICATION << "\tSlotId :" << slotId << std::endl;
-   auto cardMgr = telux::tel::PhoneFactory::getInstance().getCardManager();
+   std::promise<telux::common::ServiceStatus> cardMgrprom;
+   auto cardMgr = telux::tel::PhoneFactory::getInstance().
+       getCardManager([&](telux::common::ServiceStatus status) {
+       cardMgrprom.set_value(status);
+   });
+
+   if (!cardMgr) {
+       std::cout << "Failed to get CardManager instance \n";
+       return;
+   }
+   telux::common::ServiceStatus cardMgrStatus = cardMgr->getServiceStatus();
+   cardMgrStatus = cardMgrprom.get_future().get();
    // CardState cardState = cardMgr->getCardState(slotId);
-   if (cardMgr) {
+   if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
        telux::tel::CardState cardState;
        telux::common::Status status;
        auto card = cardMgr->getCard(slotId, &status);
-       if(status == telux::common::Status::NOTREADY) {
-           PRINT_NOTIFICATION << "\tCardManager is not ready" << std::endl;
-           return;
-       } else if(status != telux::common::Status::SUCCESS) {
+       if (status != telux::common::Status::SUCCESS) {
            PRINT_NOTIFICATION << "\tCouldn't get get Card details" << std::endl;
            return;
        }
@@ -140,7 +153,7 @@ void MyCardListener::onCardInfoChanged(int slotId) {
              break;
        }
    } else {
-       PRINT_NOTIFICATION << " Card Manager is NULL, failed to notify card state change"
-                          << std::endl;
-}
+       PRINT_NOTIFICATION <<
+           " Card Manager subsystem is not ready, failed to notify card state change" << std::endl;
+   }
 }

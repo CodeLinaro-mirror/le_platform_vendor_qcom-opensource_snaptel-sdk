@@ -838,23 +838,27 @@ int AerolinkSecurity::syncVerify(
         fprintf(stdout, "Now checking relevance of signed message\n");
     }
     // smp_checkRelevance
-    result = smp_checkRelevance(*smp);
-    if (result != WS_SUCCESS)
-    {
-        if(secVerbosity > 4)
-            fprintf(stderr,"Unable to check relevance (%s)\n", ws_errid(result));
-        return -1;
+    if(this->enableRelevance){
+        result = smp_checkRelevance(*smp);
+        if (result != WS_SUCCESS)
+        {
+            if(secVerbosity > 4)
+                fprintf(stderr,"Unable to check relevance (%s)\n", ws_errid(result));
+            return -1;
+        }
     }
 
     if(secVerbosity > 7) {
         fprintf(stdout, "Now checking consistency of signed message\n");
     }
     // smp_checkConsistency
-    result = smp_checkConsistency(*smp);
-    if(result != WS_SUCCESS){
-        if(secVerbosity > 4)
-            fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
-        return -1;
+    if(this->enableConsistency){
+        result = smp_checkConsistency(*smp);
+        if(result != WS_SUCCESS){
+            if(secVerbosity > 4)
+                fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
+            return -1;
+        }
     }
 
     // smp_verifySignatures
@@ -874,7 +878,6 @@ int AerolinkSecurity::syncVerify(
         verifFail++;
         return -1;
     }else{
-
         // add latency stats struct to the vector
         if(verifStat != nullptr){
             verifStat->timestamp = endLatencyTime-startTime;
@@ -1031,6 +1034,8 @@ void AerolinkSecurity::fillBsmDataForMbd(Kinematics* rvBsmData) {
 int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
     setSecVerbosity(opt.secVerbosity);
     this->enableMisbehavior = opt.enableMbd;
+    this->enableConsistency = opt.enableConsistency;
+    this->enableRelevance = opt.enableRelevance;
     int ret = 0;
     if(opt.enableAsync){
         // Asynchronous Verification

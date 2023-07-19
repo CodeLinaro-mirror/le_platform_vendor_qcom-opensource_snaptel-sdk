@@ -58,7 +58,7 @@ DataSubSystemStub::DataSubSystemStub() {
             initCbDelay_ = 2000;
         }
     } else {
-        Error(__func__, "Data SubSystem Stub Conf file not found");
+        LOG(ERROR, __FUNCTION__, "Data SubSystem Stub Conf file not found");
     }
 }
 

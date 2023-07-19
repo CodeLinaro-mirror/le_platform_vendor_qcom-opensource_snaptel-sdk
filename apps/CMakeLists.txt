@@ -7,6 +7,8 @@ include(GNUInstallDirs)
 # pkg-config module
 include(FindPkgConfig)
 
+set(ENV{PKG_CONFIG_PATH} "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig/:$ENV{PKG_CONFIG_PATH}")
+
 pkg_check_modules(TELUX_TEL_LIB telux-tel)
 pkg_check_modules(TELUX_CV2X_LIB telux-cv2x)
 pkg_check_modules(TELUX_V2X_RADIO_LIB v2x-radio)
@@ -111,6 +113,8 @@ endif (TELUX_FOR_EXTERNAL_AP)
 if(BUILD_FOR_SIMULATION)
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 endif(BUILD_FOR_SIMULATION)
+
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 # build subdirectories
 add_subdirectory( common/console_app_framework )

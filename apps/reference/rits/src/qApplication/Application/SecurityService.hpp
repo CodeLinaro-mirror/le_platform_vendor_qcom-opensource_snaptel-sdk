@@ -130,6 +130,8 @@ typedef struct SecurityOpt {
     uint32_t sspMaskLength = 0;
     bool enableEnc;
     bool enableMbd = false;
+    bool enableConsistency = true;
+    bool enableRelevance = true;
     uint8_t secVerbosity;
     VerifStats* verifStat;
     SignStats* signStat;

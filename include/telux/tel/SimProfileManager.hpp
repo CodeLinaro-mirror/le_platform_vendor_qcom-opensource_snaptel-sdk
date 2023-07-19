@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -138,6 +138,8 @@ class ISimProfileManager {
     /**
      * Checks if the eUICC subsystem is ready.
      *
+     * @deprecated Use ISimProfileManager::getServiceStatus() API.
+     *
      * @returns True if ISimProfileManager is ready for service, otherwise returns false.
      */
     virtual bool isSubsystemReady() = 0;
@@ -145,9 +147,26 @@ class ISimProfileManager {
     /**
      * Wait for eUICC subsystem to be ready.
      *
+     * @deprecated Use InitResponseCb in PhoneFactory::getSimProfileManager instead,
+     *             to get notified about subsystem readiness.
+     *
      * @returns A future that caller can wait on to be notified when card manager is ready.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
+
+    /**
+    * This status indicates whether the ISimProfileManager object is in a usable state.
+    *
+    * @returns SERVICE_AVAILABLE    - If SimProfile Manager is ready for service.
+    *          SERVICE_UNAVAILABLE  - If SimProfile Manager is temporarily unavailable.
+    *          SERVICE_FAILED       - If SimProfile Manager encountered an irrecoverable
+    *                                 failure.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    *
+    */
+    virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
     /**
      * Add new profile to eUICC card and download and install the profile on eUICC.

@@ -203,6 +203,8 @@ struct Config{
     vector<string> sspValueVect;
     vector<string> sspMaskVect;
     bool enableAsync = false;
+    bool enableConsistency = true;
+    bool enableRelevance = true;
     bool enableEncrypt = false;
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -44,7 +44,7 @@ class CardFileMenu : public ConsoleApp {
 public:
     CardFileMenu(std::string appName, std::string cursor);
     ~CardFileMenu();
-    void init();
+    bool init();
 
 private:
     void getSupportedApps(std::vector<std::string> userInput);

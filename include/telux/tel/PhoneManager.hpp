@@ -125,11 +125,11 @@ public:
     */
    virtual std::future<bool> onSubsystemReady() = 0;
    /**
-    * This status indicates whether the IServingSystemManager object is in a usable state.
+    * This status indicates whether the IPhoneManager object is in a usable state.
     *
-    * @returns SERVICE_AVAILABLE    - If Serving System manager is ready for service.
-    *          SERVICE_UNAVAILABLE  - If Serving System manager is temporarily unavailable.
-    *          SERVICE_FAILED       - If Serving System manager encountered an irrecoverable
+    * @returns SERVICE_AVAILABLE    - If Phone manager is ready for service.
+    *          SERVICE_UNAVAILABLE  - If Phone manager is temporarily unavailable.
+    *          SERVICE_FAILED       - If Phone manager encountered an irrecoverable
     *                                 failure.
     * @note Eval: This is a new API and is being evaluated. It is subject to change and
     *             could break backwards compatibility.

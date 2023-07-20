@@ -56,7 +56,7 @@
 #include "../../libs/common/Logger.hpp"
 
 #include "SimulationServer.hpp"
-
+#include "tel/CardManagerServerImpl.hpp"
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -215,9 +215,8 @@ void SimulationServer::startGrpcServer() {
     ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
 
-    //To be added when server code for vertical ready
-    //DataConnectionServerImpl service;
-    //builder.RegisterService(&service);
+    std::shared_ptr<CardManagerServerImpl> cardService = std::make_shared<CardManagerServerImpl>();
+    builder.RegisterService(cardService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

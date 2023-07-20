@@ -246,9 +246,32 @@ telux::common::ErrorCode CommonUtils::toErrorCode(telux::common::Status status) 
 void CommonUtils::getValues(Json::Value &values, std::string subsystem,
     std::string method, telux::common::Status &status,
     telux::common::ErrorCode &errorCode, uint32_t &cbDelay) {
+    bool alwaysSuccessNeeded = values[subsystem]["AlwaysSuccess"].asBool();
+    if(alwaysSuccessNeeded) {
+        status = mapStatus("SUCCESS");
+    } else {
         std::string statusStr = values[subsystem][method]["status"].asString();
         status = mapStatus(statusStr);
-        std::string errorStr = values[subsystem][method]["error"].asString();
-        errorCode = mapErrorCode(errorStr);
+    }
+    std::string errorStr = values[subsystem][method]["error"].asString();
+    errorCode = mapErrorCode(errorStr);
+    bool useDefaultCallbackDelay = values[subsystem]["UseDefaultCallbackDelay"].asBool();
+    if(useDefaultCallbackDelay) {
+        cbDelay = values[subsystem]["DefaultCallbackDelay"].asInt();
+    } else {
         cbDelay = values[subsystem][method]["callbackDelay"].asInt();
+    }
+}
+
+telux::common::ServiceStatus CommonUtils::mapServiceStatus(std::string status) {
+
+    if (status == "SERVICE_FAILED") {
+        return telux::common::ServiceStatus::SERVICE_FAILED;
+    } else if (status == "SERVICE_UNAVAILABLE") {
+        return telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    } else if (status == "SERVICE_AVAILABLE") {
+        return telux::common::ServiceStatus::SERVICE_AVAILABLE;
+    } else {
+        return telux::common::ServiceStatus::SERVICE_FAILED;
+    }
 }

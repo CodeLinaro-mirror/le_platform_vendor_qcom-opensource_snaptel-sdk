@@ -14,5 +14,12 @@
         ]
     },
     "data_profile": {
+    },
+    "tel_card": {
+        "cardInfo":[
+            "telsdk_event_injector -f tel_card -e cardInfoChanged <Slot_id> <Card_power>\n\n",
+            "Slot_id:      valid slot_ids are 1 & 2 only.",
+            "Card_power:   valid 1-Power ON, 0-Power OFF."
+        ]
     }
 }

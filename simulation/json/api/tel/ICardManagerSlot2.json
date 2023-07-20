@@ -1,0 +1,123 @@
+{
+    "ICardManager" :
+    {
+        "DefaultCallbackDelay" : 300,
+        "UseDefaultCallbackDelay" : false,
+        "AlwaysSuccess": false,
+        "ReadEFLinearFixed" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "ReadEFLinearFixedAll" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "ReadEFTransparent" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "WriteEFLinearFixed" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "WriteEFTransparent" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "RequestEFAttributes" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "UnlockCardByPin" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "QueryFdnLockState" :
+        {
+            "State" : false,
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 100
+        },
+        "QueryPin1LockState" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 300
+        },
+        "CloseLogicalChannel" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 0
+        },
+        "ChangeCardPassword" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        },
+        "OpenLogicalChannel" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 100
+        },
+        "SetCardLock" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 400
+        },
+        "SetCardPower" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 400
+        },
+        "TransmitApduBasicChannel" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 400
+        },
+        "TransmitApduLogicalChannel" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 400
+        },
+        "ExchangeSimIO" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 400
+        },
+        "RequestEid" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 400
+        },
+        "UnlockCardByPuk" :
+        {
+            "status" : "SUCCESS",
+            "error" : "SUCCESS",
+            "callbackDelay" : 200
+        }
+    }
+}

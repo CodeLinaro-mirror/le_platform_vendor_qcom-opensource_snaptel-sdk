@@ -90,6 +90,9 @@ public:
    static telux::data::IpProtocol getProtcol(std::string protoStr);
    static std::string drbStatusToString(telux::data::DrbStatus stat);
    static std::string serviceRatToString(telux::data::NetworkRat rat);
+   static std::string backhaulToString(telux::data::BackhaulType backhaul);
+   //Retuns true if multiple backhauls are supported
+   static bool populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo);
 };
 
 #endif  // DATAUTILS_HPP

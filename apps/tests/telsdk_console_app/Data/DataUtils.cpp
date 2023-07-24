@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -316,4 +316,61 @@ std::string DataUtils::serviceRatToString(telux::data::NetworkRat rat) {
             break;
     }
     return ratStr;
+}
+
+std::string DataUtils::backhaulToString(telux::data::BackhaulType backhaul) {
+   std::string retString = "UNKNOWN";
+   switch(backhaul) {
+      case telux::data::BackhaulType::ETH:
+         retString = "ETH";
+         break;
+      case telux::data::BackhaulType::USB:
+         retString = "USB";
+         break;
+      case telux::data::BackhaulType::WLAN:
+         retString = "WLAN";
+         break;
+      case telux::data::BackhaulType::WWAN:
+         retString = "WWAN";
+         break;
+      case telux::data::BackhaulType::BLE:
+         retString = "BLE";
+         break;
+      default:
+         break;
+   }
+   return retString;
+}
+
+//Retuns true if multiple backhauls are supported
+bool DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo) {
+    int isMultiBackhauls = 1;
+    std::cout << "Multiple Backhaul Supported? (0-No, 1-Yes): ";
+    std::cin >> isMultiBackhauls;
+    Utils::validateInput(isMultiBackhauls);
+    std::cout << std::endl;
+
+    int backhaul = 0, profileId = 0;
+    if(isMultiBackhauls) {
+      std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+      std::cin >> backhaul;
+      Utils::validateInput(backhaul);
+      std::cout << std::endl;
+      if(backhaul) {
+         backhaulInfo.backhaul = telux::data::BackhaulType::WWAN;
+         std::cout << "Enter Profile Id: ";
+         std::cin >> profileId;
+         Utils::validateInput(profileId);
+         backhaulInfo.profileId = profileId;
+      } else {
+         backhaulInfo.backhaul = telux::data::BackhaulType::WLAN;
+      }
+      return true;
+    } else {
+      std::cout << "Enter Profile Id: ";
+      std::cin >> profileId;
+      Utils::validateInput(profileId);
+      backhaulInfo.profileId = profileId;
+      return false;
+    }
 }

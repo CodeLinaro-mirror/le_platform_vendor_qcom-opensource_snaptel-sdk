@@ -92,19 +92,6 @@ namespace data {
 class IDataSettingsListener;
 
 /**
- * Specifies backhaul types
- */
-enum class BackhaulType {
-    ETH           = 0  ,    /** Ethernet Backhaul        */
-    USB           = 1  ,    /** USB Backhaul             */
-    WLAN          = 2  ,    /** WLAN Backhaul            */
-    WWAN          = 3  ,    /** WWAN Backhaul with default profile ID set by */
-                            /** @ref telux::data::IDataConnectionManager::setDefaultProfile  */
-    BLE           = 4  ,    /** Bluetooth Backhaul       */
-    MAX_SUPPORTED = 5  ,    /** Max Supported Backhauls  */
-};
-
-/**
  * Set priority between N79 5G and Wlan 5GHz Band
  */
 enum class BandPriority {

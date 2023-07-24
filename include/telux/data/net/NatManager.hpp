@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -104,6 +104,25 @@ struct NatConfig {
 };
 
 /**
+ * Static NAT Settings parameters
+ */
+struct NatSetting {
+    BackhaulInfo bhInfo;        /**< Backhaul Information to apply NAT settings on    */
+    NatConfig config   ;        /**< NAT Configuration                                */
+};
+
+/**
+ * This function is called as a response to @ref requestStaticNatEntries()
+ *
+ * @param [in] snatEntries    list of static Network Address Translation (NAT)
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not @ref telux::common::ErrorCode
+ *
+ */
+using StaticNatSettingEntriesCb = std::function<void(
+    const std::vector<NatSetting> &snatSettings, telux::common::ErrorCode error)>;
+
+/**
  * This function is called as a response to @ref requestStaticNatEntries()
  *
  * @param [in] snatEntries    list of static Network Address Translation (NAT)
@@ -151,6 +170,83 @@ class INatManager {
      * @deprecated Use InitResponseCb callback in factory API getNatManager.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
+
+    /**
+     * Adds a static Network Address Translation (NAT) entry for specific backhaul in the NAT table.
+     * These entries are persistent across object, connection and reboot lifetimes. To remove
+     * an entry it needs a explicit call to removeStaticNatEntry() API, it supports both
+     * IPv4 and IPv6
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] natSetting        Nat backhaul and configuration of static entry to be added.
+     * @param [in] callback          optional callback to get the response addStaticNatEntry
+     *
+     * @returns Status of addStaticNatEntry i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status addStaticNatEntry(const NatSetting natSetting,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Removes a static Network Address Translation (NAT) entry from specific backhaul in the NAT
+     * table. It supports both IPv4 and IPv6
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] natSetting        Nat backhaul and configuration of static entry to be removed.
+     * @param [in] callback          optional callback to get the response removeStaticNatEntry
+     *
+     * @returns Status of removeStaticNatEntry i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status removeStaticNatEntry(const NatSetting natSetting,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Request list of static nat entries available in the NAT table for specific backhaul
+     *
+     * @param [in] bhInfo                  Backhaul to which static entries will be retrieved.
+     * @param [in] snatSettingEntriesCb    Asynchronous callback to get the list of static
+     *                                     Network Address Translation (NAT) entries
+     *
+     * @returns Status of requestStaticNatEntries i.e. success or suitable status code.
+     *
+     */
+    virtual telux::common::Status requestStaticNatEntries(BackhaulInfo bhInfo,
+        StaticNatSettingEntriesCb snatSettingEntriesCb) = 0;
+
+    /**
+     * Register Nat Manager as listener for Data Service heath events like data service available
+     * or data service not available.
+     *
+     * @param [in] listener    pointer of INatListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<INatListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of INatListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<INatListener> listener) = 0;
+
+    /**
+     * Get the associated operation type for this instance.
+     *
+     * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
+     *
+     */
+    virtual telux::data::OperationType getOperationType() = 0;
 
     /**
      * Adds a static Network Address Translation (NAT) entry in the NAT table, these
@@ -203,36 +299,6 @@ class INatManager {
      */
     virtual telux::common::Status requestStaticNatEntries(int profileId,
         StaticNatEntriesCb snatEntriesCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
-
-    /**
-     * Register Nat Manager as listener for Data Service heath events like data service available
-     * or data service not available.
-     *
-     * @param [in] listener    pointer of INatListener object that processes the
-     * notification
-     *
-     * @returns Status of registerListener success or suitable status code
-     *
-     */
-    virtual telux::common::Status registerListener(std::weak_ptr<INatListener> listener) = 0;
-
-    /**
-     * Removes a previously added listener.
-     *
-     * @param [in] listener    pointer of INatListener object that needs to be removed
-     *
-     * @returns Status of deregisterListener success or suitable status code
-     *
-     */
-    virtual telux::common::Status deregisterListener(std::weak_ptr<INatListener> listener) = 0;
-
-    /**
-     * Get the associated operation type for this instance.
-     *
-     * @returns OperationType of getOperationType i.e. LOCAL or REMOTE.
-     *
-     */
-    virtual telux::data::OperationType getOperationType() = 0;
 
     /**
      * Destructor for INatManager

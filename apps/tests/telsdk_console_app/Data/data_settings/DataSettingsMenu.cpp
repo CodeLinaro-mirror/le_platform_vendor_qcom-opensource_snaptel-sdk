@@ -644,7 +644,7 @@ void DataSettingsMenu::onDdsChange(DdsInfo currentState) {
 
     std::cout <<  "DDS Info : " << "Slot_Id: " << currentState.slotId << std::endl;
         std::string type = (currentState.type == DdsType::PERMANENT) ?
-            "Permamnent" : "Temporary";
+            "Permanent" : "Temporary";
         std::cout << "Switch Type: " << type << std::endl;
 
     std::cout << std::endl << std::endl;

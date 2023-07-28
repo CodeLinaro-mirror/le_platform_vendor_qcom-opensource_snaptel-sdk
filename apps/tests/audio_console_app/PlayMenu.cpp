@@ -283,11 +283,11 @@ void PlayMenu::stopPlay(std::vector<std::string> userInput) {
                 });
             if(status == telux::common::Status::SUCCESS){
                 std::cout << "Request to force stop Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Force Stop successful" << std::endl;
+                }
             } else {
                 std::cout << "Request to force stop failed" << std::endl;
-            }
-            if (p.get_future().get()) {
-                    std::cout << "Force Stop successful" << std::endl;
             }
         }
     } else {
@@ -411,24 +411,25 @@ void PlayMenu::play() {
             std::promise<bool> p;
             std::unique_lock<std::mutex> lck(playStopMutex_);
 
-            auto status = audioPlayStream_->stopAudio(
-                StopType::STOP_AFTER_PLAY, [&p](telux::common::ErrorCode error) {
-                if (error == telux::common::ErrorCode::SUCCESS) {
-                    p.set_value(true);
-                } else {
-                    p.set_value(false);
-                    std::cout << "Failed to stop after playing buffers" << std::endl;
-                }
-                });
-            if(status == telux::common::Status::SUCCESS){
+            auto status = audioPlayStream_->stopAudio(StopType::STOP_AFTER_PLAY,
+                [&p](telux::common::ErrorCode error) {
+                    if (error == telux::common::ErrorCode::SUCCESS) {
+                        p.set_value(true);
+                    } else {
+                        p.set_value(false);
+                        std::cout << "Failed to stop after playing buffers" << std::endl;
+                    }
+            });
+
+            if(status == telux::common::Status::SUCCESS) {
                 std::cout << "Request to stop playback after pending buffers Sent" << std::endl;
+                if (p.get_future().get()) {
+                    std::cout << "Pending buffers played successfully" << std::endl;
+                    playStopcv_.wait(lck);
+                }
             } else {
                 std::cout << "Request to stop playback after pending buffers failed" << std::endl;
             }
-            if (p.get_future().get()) {
-                    std::cout << "Pending buffers played successfully" << std::endl;
-            }
-            playStopcv_.wait(lck);
         }
     }
     if(writeFail_) {

@@ -32,42 +32,66 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /**
- * @file       SimulationServer.hpp
+
+/**
+ * @file       SubscriptionStub.hpp
  *
- * @brief      Declares the SimulationServer class
+ * @brief      Implementation of ISubscription
  *
  */
 
-#ifndef SIMULATION_SERVER_HPP
-#define SIMULATION_SERVER_HPP
+#ifndef SUBSCRIPTION_STUB_HPP
+#define SUBSCRIPTION_STUB_HPP
 
-#include <string>
-#include <memory>
-#include <vector>
-#include "../../libs/common/AsyncTaskQueue.hpp"
+#include "../common/Logger.hpp"
+#include <telux/common/CommonDefines.hpp>
+#include <telux/tel/Subscription.hpp>
+#include <grpcpp/grpcpp.h>
+#include "../../protos/proto-src/tel.grpc.pb.h"
 
-#define APP_NAME "SimulationServer"
-#define BUFFER_SIZE 250
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
 
-class SimulationServer {
+using tel::PhoneService;
+
+namespace telux {
+namespace tel {
+
+class SubscriptionStub : public ISubscription {
 public:
-    SimulationServer();
-    ~SimulationServer();
-    telux::common::Status start();
-
+    SubscriptionStub(int slot);
+    ~SubscriptionStub();
+    std::string getCarrierName() override ;
+    std::string getIccId() override;
+    int getMcc() override;
+    int getMnc() override;
+    std::string getMobileCountryCode() override;
+    std::string getMobileNetworkCode() override;
+    std::string getPhoneNumber() override;
+    int getSlotId() override;
+    std::string getImsi() override;
+    std::string getGID1() override;
+    std::string getGID2() override;
+    void cleanup();
 private:
-    telux::common::Status readMessage(int socketFd,
-        std::vector<int> &clientSockets);
-    telux::common::Status writeMessage(char* buffer, int length,
-        const std::vector<int> &clientSockets);
-    std::string createServerAddress(std::string ipAddress,
-        std::string portNo);
-    void startGrpcServer();
-
-    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    bool exiting_ = false;
-    std::mutex exitingMutex_;
+    std::unique_ptr<::tel::PhoneService::Stub> stub_;
+    int slotId_;
+    int simSlotIndex_;
+    std::string carrierName_;
+    std::string countryISO_;
+    std::string iccId_;
+    int mcc_;
+    int mnc_;
+    std::string number_;
+    std::string imsi_;
+    std::string gid1_;
+    std::string gid2_;
+    telux::common::Status getSubscription(int slotId);
 };
 
-#endif // SIMULATION_SERVER_HPP
+} // end of namespace tel
+
+} // end of namespace telux
+
+#endif // SUBSCRIPTION_STUB_HPP

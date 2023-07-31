@@ -33,8 +33,6 @@
  */
 
 #include "PhoneFactoryImplStub.hpp"
-#include "CardManagerStub.hpp"
-#include "../common/Logger.hpp"
 
 namespace telux {
 namespace tel {
@@ -42,6 +40,7 @@ namespace tel {
 PhoneFactoryImplStub::PhoneFactoryImplStub() {
     LOG(DEBUG, __FUNCTION__);
     cardMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    subscriptionMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
 PhoneFactoryImplStub::~PhoneFactoryImplStub() {
@@ -50,6 +49,11 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
     if (cardManager_) {
         (std::static_pointer_cast<CardManagerStub>(cardManager_))->cleanup();
     }
+    // remove SubscriptionManagerStub
+    if (subscriptionManager_) {
+        (std::static_pointer_cast<SubscriptionManagerStub>(subscriptionManager_))->cleanup();
+    }
+    subscriptionMgrCallbacks_.clear();
     cardMgrCallbacks_.clear();
 }
 PhoneFactory::PhoneFactory() {
@@ -162,8 +166,76 @@ std::shared_ptr<ISapCardManager> PhoneFactoryImplStub::getSapCardManager(int slo
 }
 
 std::shared_ptr<ISubscriptionManager> PhoneFactoryImplStub::getSubscriptionManager(
-    telux::common::InitResponseCb Callback) {
-    return nullptr;
+    telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (subscriptionManager_ == nullptr) {
+       std::shared_ptr<SubscriptionManagerStub> subscriptionMgr = nullptr;
+       auto initCb = [this](telux::common::ServiceStatus status) {
+          LOG(DEBUG, __FUNCTION__, " Subscription initialization callback");
+          this->onSubscriptionManagerResponse(status);
+       };
+       try {
+          subscriptionMgr = std::make_shared<SubscriptionManagerStub>(initCb);
+       } catch (std::bad_alloc & e) {
+          LOG(ERROR, __FUNCTION__ , e.what());
+          return nullptr;
+       }
+       if (callback) {
+          subscriptionMgrCallbacks_.push_back(callback);
+       } else {
+          LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+       }
+       subscriptionManager_ = subscriptionMgr;
+    } else if (subscriptionMgrInitStatus_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+       LOG(DEBUG, __FUNCTION__, " Subscription manager is not yet initialized");
+       if (callback) {
+          subscriptionMgrCallbacks_.push_back(callback);
+       } else {
+          LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+       }
+    } else if (callback) {
+       LOG(DEBUG, __FUNCTION__, " Subscription manager is initialized, invoking app callback");
+       std::thread appCallback(callback, subscriptionMgrInitStatus_);
+       appCallback.detach();
+    } else {
+       LOG(ERROR, __FUNCTION__, " Subscription manager is initialized, app Callback is NULL");
+    }
+    return subscriptionManager_;
+}
+
+void PhoneFactoryImplStub::onSubscriptionManagerResponse(telux::common::ServiceStatus status) {
+    std::vector<telux::common::InitResponseCb> subscriptionCallbacks;
+    LOG(INFO, __FUNCTION__, " Subscription Manager initialization status: " ,
+      static_cast<int>(status));
+    {
+       std::lock_guard<std::recursive_mutex> lock(mutex_);
+       subscriptionMgrInitStatus_ = status;
+       bool reportServiceStatus = false;
+       switch(status) {
+          case telux::common::ServiceStatus::SERVICE_FAILED:
+             subscriptionManager_ = NULL;
+             reportServiceStatus = true;
+             break;
+          case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+             reportServiceStatus = true;
+             break;
+          default:
+             break;
+       }
+       if (!reportServiceStatus) {
+          return;
+       }
+       subscriptionCallbacks = subscriptionMgrCallbacks_;
+       subscriptionMgrCallbacks_.clear();
+    }
+    for (auto &callback : subscriptionCallbacks) {
+       if (callback) {
+          callback(status);
+       } else {
+          LOG(INFO, __FUNCTION__, " Callback is NULL");
+       }
+    }
 }
 
 std::shared_ptr<telux::tel::IServingSystemManager> PhoneFactoryImplStub::getServingSystemManager(

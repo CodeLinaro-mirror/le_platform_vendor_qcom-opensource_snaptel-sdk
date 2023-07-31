@@ -13,6 +13,7 @@ set(GRPCPP_EXECUTABLE gRPC::grpc++)
 set(TARGET_SIMULATION_SERVER_APP_SRC
     SimulationServer.cpp
     tel/CardManagerServerImpl.cpp
+    tel/SubscriptionManagerServerImpl.cpp
 )
 
 include_directories(BEFORE

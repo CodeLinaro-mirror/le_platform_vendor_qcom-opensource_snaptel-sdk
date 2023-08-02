@@ -1686,3 +1686,8 @@ void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus x
     std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
     LocationUtils::displayXtraStatus(xtraStatus);
 }
+
+void MyLocationConfigListener::onGnssSignalUpdate(const telux::loc::GnssSignal gnssSignalMask){
+    PRINT_NOTIFICATION << "\n********** GnssSignalMask Info **********" << std::endl;
+    LocationUtils::printGnssSignalType(gnssSignalMask);
+}

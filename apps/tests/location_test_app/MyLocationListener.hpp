@@ -149,6 +149,7 @@ private:
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {
   public:
     void onXtraStatusUpdate(const telux::loc::XtraStatus xtraStatus) override;
+    void onGnssSignalUpdate(const telux::loc::GnssSignal gnssSignalMask) override;
     ~MyLocationConfigListener() {}
 };
 

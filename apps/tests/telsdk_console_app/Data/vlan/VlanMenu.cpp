@@ -182,6 +182,7 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
     }
     int ifaceType;
 #ifdef TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED
+    if(opType == telux::data::OperationType::DATA_LOCAL) {
         std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI, ";
         std::cout << "6-VMTAP0): ";
         std::cin >> ifaceType;
@@ -191,6 +192,18 @@ void VlanMenu::createVlan(std::vector<std::string> inputCommand) {
             static_cast<int>(telux::data::InterfaceType::RNDIS),
             static_cast<int>(telux::data::InterfaceType::MHI),
             static_cast<int>(telux::data::InterfaceType::VMTAP0)});
+    } else {
+        std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI, ";
+        std::cout << "6-VMTAP-TELEVM, 7-VMTAP-FOTAVM): ";
+        std::cin >> ifaceType;
+        Utils::validateInput(ifaceType, {static_cast<int>(telux::data::InterfaceType::WLAN),
+            static_cast<int>(telux::data::InterfaceType::ETH),
+            static_cast<int>(telux::data::InterfaceType::ECM),
+            static_cast<int>(telux::data::InterfaceType::RNDIS),
+            static_cast<int>(telux::data::InterfaceType::MHI),
+            static_cast<int>(telux::data::InterfaceType::VMTAP0),
+            static_cast<int>(telux::data::InterfaceType::VMTAP1)});
+    }
 #else
         std::cout << "Enter Interface Type\n (1-WLAN, 2-ETH, 3-ECM, 4-RNDIS, 5-MHI, ";
         std::cout << "6-VMTAP-TELEVM, 7-VMTAP-FOTAVM): ";

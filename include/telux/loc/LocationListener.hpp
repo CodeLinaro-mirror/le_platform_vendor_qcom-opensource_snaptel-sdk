@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -253,6 +253,9 @@ public:
  * @brief ILocationConfigListener interface is used to receive notifications related to
  * configuration events.
  *
+ * Clients can register for updates via @ref ILocationConfigurator::registerListener
+ * by passing the list of indications present under @ref telux::loc::LocConfigIndicationsType.
+ *
  * The listener method can be invoked from multiple different threads.
  * Client needs to make sure that implementation is thread-safe.
  */
@@ -261,10 +264,28 @@ class ILocationConfigListener {
     /**
      * The API is invoked when there is any update in the Xtra assistance data.
      *
+     * Clients need to register for this indication
+     * via @ref LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS.
+     *
      * @param [in] xtraStatus - Xtra assistant data's current status, validity
      *                          and whether it is enabled.
      */
     virtual void onXtraStatusUpdate(const XtraStatus xtraStatus) {}
+
+    /**
+     * The API is invoked when there is any update in the Gnss Signal types supported by the modem.
+     *
+     * When @ref ILocationConfigurator::configureConstellations is invoked,
+     * the supported signals would be updated and notified via this listener API.
+     *
+     * Clients need to register for this indication
+     * via @ref LocConfigIndicationsType::LOC_CONF_IND_SIGNAL_UPDATE.
+     *
+     * @param [in] gnssSignalMask - Bitset to represent the Gnss signal types supported
+     *                              by the modem.
+     *
+     */
+    virtual void onGnssSignalUpdate(const GnssSignal gnssSignalMask) {}
 
     virtual ~ILocationConfigListener() {}
 };

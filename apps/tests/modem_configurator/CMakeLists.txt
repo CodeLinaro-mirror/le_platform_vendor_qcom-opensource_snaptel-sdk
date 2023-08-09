@@ -6,6 +6,7 @@ set(MODEM_CONFIGURATOR_SOURCES
     ModemConfigurator.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
+    ../../common/utils/Utils.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")

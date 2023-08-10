@@ -25,14 +25,32 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <memory>
 #include <telux/common/DeviceConfig.hpp>
+#include "SimulationConfigParser.hpp"
+
+#define PROPERTY_NAME_MULTISIM_CONFIG "MULTISIM_CONFIG"
+#define MULTISIM_CONFIG_VALUE_DSDA "dsda"
+#define MULTISIM_CONFIG_VALUE_DSDS "dsds"
 
 using namespace telux::common;
 
 
 bool DeviceConfig::isMultiSimSupported() {
-    return (false);
+    auto config = std::make_shared<SimulationConfigParser>();
+
+    std::string val = config->getValue(PROPERTY_NAME_MULTISIM_CONFIG);
+    if((val.compare(MULTISIM_CONFIG_VALUE_DSDA) == 0) ||
+        (val.compare(MULTISIM_CONFIG_VALUE_DSDS) == 0)) {
+        return true;
+    }
+
+    return false;
 }
 

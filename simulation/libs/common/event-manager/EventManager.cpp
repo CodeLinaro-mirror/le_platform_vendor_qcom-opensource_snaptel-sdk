@@ -47,7 +47,7 @@
 #include <unistd.h>
 
 #include "EventManager.hpp"
-#include "ConfigParser.hpp"
+#include "SimulationConfigParser.hpp"
 #include "Logger.hpp"
 
 #define UNSOLICITED_COMMON_EVENT "all"
@@ -196,8 +196,7 @@ void EventManager::makeConnection() {
 
 void EventManager::init() {
     LOG(DEBUG, __FUNCTION__);
-    config_ = std::make_shared<ConfigParser>(DEFAULT_STUB_CONFIG_FILE_NAME,
-        DEFAULT_STUB_CONFIG_FILE_PATH);
+    config_ = std::make_shared<SimulationConfigParser>();
     auto f = std::async(std::launch::async, [this]() {
         this->makeConnection();
     }).share();

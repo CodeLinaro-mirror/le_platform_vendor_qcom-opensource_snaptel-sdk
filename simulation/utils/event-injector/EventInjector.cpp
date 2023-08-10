@@ -47,7 +47,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <thread>
-#include "../../libs/common/ConfigParser.hpp"
+#include "../../libs/common/SimulationConfigParser.hpp"
+#include "../../libs/common/JsonParser.hpp"
 #include "../../libs/common/Logger.hpp"
 
 extern "C" {
@@ -59,6 +60,7 @@ extern "C" {
 #define LOCAL_HOST "127.0.0.1"
 #define DEFAULT_PORT 8080
 #define RETRY_TIMER 500
+#define EVENT_JSON "Events.json"
 
 constexpr bool isOptionalArgumentPresent(char * optarg, int optind, int argc, char** argv) {
     return (optarg == NULL && optind < argc && argv[optind] != NULL && argv[optind][0] != '-');
@@ -67,63 +69,35 @@ constexpr bool isOptionalArgumentPresent(char * optarg, int optind, int argc, ch
 const std::string FILTER_FLAG = "-f";
 const std::string EVENT_FLAG = "-e";
 
-/*Defining the EventHelper*/
-EventHelperMenu::EventHelperMenu() {
-    init();
-}
-
-EventHelperMenu::~EventHelperMenu() {}
-
-void EventHelperMenu::initDataHelp() {
-    eventMenu_["data_conn"] = {
-        {"conn_up",
-            {"event_injector -f data -e conn_up <profile_id> <slot_id> <IpFamilyType>\n"
-            ,"profile_id:   valid profile_ids are 1,2,3,etc."
-            ,"slot_id:      valid slot_ids are 1 & 2 only."
-            ,"IpFamilyType: valid IpFamiltype are IPV4,IPV6, IPV4V6"}},
-        {"conn_down",
-            {"event_injector -f data -e conn_down <profile_id> <slot_id> <IpFamilyType>\n"
-            ,"profile_id:   valid profile_ids are 1,2,3,etc."
-            ,"slot_id:      valid slot_ids are 1 & 2 only."
-            ,"IpFamilyType: valid IpFamiltype are IPV4,IPV6, IPV4V6"}}
-    };
-}
-
-void EventHelperMenu::init() {
-     initDataHelp();
-}
-
-void EventHelperMenu::printHelp(std::string subsystem, std::string event) {
+void EventInjector::printHelp(std::string subsystem, std::string event) {
     std::cout << "\n-------------------------------------------------" << std::endl;
 
     if((subsystem.empty()) && (event.empty())) {
         std::cout << "\nUse the following command to get namespace specific help" << std::endl;
-        std::cout << "\nUsage: event_injector -h <subsystem>" << std::endl;
+        std::cout << "\nUsage: telsdk_event_injector -h <subsystem>" << std::endl;
         std::cout << "\nSupported Subsystems : " << std::endl;
-        for (auto subsystem : eventMenu_)
+        for (const auto& subsystem : eventObj_.getMemberNames())
         {
-            std::cout << subsystem.first << std::endl;
+            std::cout << subsystem << std::endl;
         }
     } else if(event.empty()) {
         std::cout << "\nUse the following command to get event specific help" << std::endl;
-        std::cout << "\nUsage: event_injector -h <subsystem> <event>" << std::endl;
+        std::cout << "\nUsage: telsdk_event_injector -h <subsystem> <event>" << std::endl;
         std::cout << "\nSupported events : " << std::endl;
-        for(auto event : eventMenu_[subsystem])
+        for(const auto& event : eventObj_[subsystem].getMemberNames())
         {
-             std::cout << event.first << std::endl;
+             std::cout << event << std::endl;
         }
     } else {
         std::cout << "\nUse the following command to inject event" << std::endl;
         std::cout << "\nUsage: " << std::endl;
-        for(auto command : eventMenu_[subsystem][event])
+        for(const auto& command : eventObj_[subsystem][event])
         {
              std::cout << command << std::endl;
         }
     }
 }
 
-
-/* Defining the EventInjector app instance */
 EventInjector::EventInjector() {
 }
 
@@ -139,7 +113,7 @@ Status EventInjector::makeConnectionAndSendMessage(std::string filter, std::stri
 
     if ((clientSocket_ = socket(AF_INET,SOCK_STREAM,0)) < 0) {
         LOG(ERROR, "failed to create socket");
-        return Status::FAILURE;
+        return Status::FAILED;
     }
     LOG(INFO, "socket created::", clientSocket_);
     std::string portString = config_->getValue("PORT");
@@ -162,9 +136,13 @@ Status EventInjector::makeConnectionAndSendMessage(std::string filter, std::stri
 }
 
 Status EventInjector::init() {
-    helpMenu_ = std::make_shared<EventHelperMenu>();
-    config_ = std::make_shared<ConfigParser>(DEFAULT_STUB_CONFIG_FILE_NAME,
-        DEFAULT_STUB_CONFIG_FILE_PATH);
+    config_ = std::make_shared<SimulationConfigParser>();
+
+    telux::common::ErrorCode readError =
+        JsonParser::readFromJsonFile(eventObj_, EVENT_JSON);
+    if (readError != telux::common::ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed!");
+    }
 
     return Status::SUCCESS;
 }
@@ -193,12 +171,12 @@ Status EventInjector::parseAndHandleArguments(int argc, char **argv) {
                             optarg = argv[optind++];
                             std::string eventArg(optarg);
                             optarg = NULL; // resetting the optarg back to null.
-                            helpMenu_->printHelp(subsystemArg, eventArg);
+                            printHelp(subsystemArg, eventArg);
                         } else {
-                            helpMenu_->printHelp(subsystemArg);
+                            printHelp(subsystemArg);
                         }
                     } else {
-                        helpMenu_->printHelp();
+                        printHelp();
                     }
                 }
                 break;
@@ -222,7 +200,7 @@ Status EventInjector::parseAndHandleArguments(int argc, char **argv) {
                 break;
             default:
                 LOG(ERROR, __FUNCTION__, " Entered options is not valid!");
-                return Status::FAILURE;
+                return Status::FAILED;
         }
         if ((!filter.empty()) && (!event.empty())) {
             makeConnectionAndSendMessage(filter, event);

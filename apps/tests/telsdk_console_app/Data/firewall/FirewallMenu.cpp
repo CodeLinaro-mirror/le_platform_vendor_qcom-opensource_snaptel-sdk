@@ -326,13 +326,13 @@ void FirewallMenu::requestFirewallStatus(std::vector<std::string> inputCommand) 
 void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
     std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp) {
     std::string srcAddr = "", srcSubnetMask = "", destAddr = "", destSubnetMask = "";
-    std::string tosVal = "", tosMask = "";
+    int tosVal = 0, tosMask = 0;
     char delimiter = '\n';
 
     int option;
     std::cout << "Do you want to enter IPV4 source address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter IPv4 Source address: ";
         std::getline(std::cin, srcAddr, delimiter);
@@ -342,7 +342,7 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
 
     std::cout << "Do you want to enter IPV4 destination address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter IPv4 Destination address: ";
         std::getline(std::cin, destAddr, delimiter);
@@ -352,12 +352,29 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
 
     std::cout << "Do you want to enter IPV4 TOS value and TOS mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter Type of service value [0 to 255]: ";
-        std::getline(std::cin, tosVal, delimiter);
+        while (true) {
+            std::cin >> tosVal;
+            Utils::validateInput(tosVal);
+            if(tosVal > 255 || tosVal < 0) {
+                std::cout << "Invalid value expected value [0 to 255]:";
+                continue;
+            }
+            break;
+        }
+
         std::cout << "Enter Type of service mask [0 to 255]: ";
-        std::getline(std::cin, tosMask, delimiter);
+        while (true) {
+            std::cin >> tosMask;
+            Utils::validateInput(tosMask);
+            if(tosMask > 255 || tosMask < 0) {
+                std::cout << "Invalid value expected value [0 to 255]:";
+                continue;
+            }
+            break;
+        }
     }
 
     IPv4Info info;
@@ -365,16 +382,8 @@ void FirewallMenu::getIPV4ParamsFromUser(telux::data::IpProtocol proto,
     info.srcSubnetMask = srcSubnetMask;
     info.destAddr = destAddr;
     info.destSubnetMask = destSubnetMask;
-    if (tosVal.empty()) {
-        info.value = (uint8_t)0;
-    } else {
-        info.value = (uint8_t)atoi(tosVal.c_str());
-    }
-    if (tosMask.empty()) {
-        info.mask = (uint8_t)0;
-    } else {
-        info.mask = (uint8_t)atoi(tosMask.c_str());
-    }
+    info.value = (uint8_t)tosVal;
+    info.mask = (uint8_t)tosMask;
     info.nextProtoId = proto;
 
     if (proto == 253) {
@@ -397,7 +406,7 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     int option;
     std::cout << "Do you want to enter IPV6 source address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter IPv6 Source address: ";
         std::getline(std::cin, srcAddr, delimiter);
@@ -408,7 +417,7 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
 
     std::cout << "Do you want to enter IPv6 destination address and subnet mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter IPv6 Destination address: ";
         std::getline(std::cin, destAddr, delimiter);
@@ -419,7 +428,7 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
 
     std::cout << "Do you want to enter IPV6 Traffic Class value and mask: [1-YES 0-NO]:";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter IPv6 Traffic class value: ";
         std::cin >> trfVal;
@@ -461,27 +470,31 @@ void FirewallMenu::getIPV6ParamsFromUser(telux::data::IpProtocol proto,
     }
 }
 
-void FirewallMenu::getProtocolParamsFromUser(std::string proto, std::string &srcPort,
-    std::string &srcRange, std::string &destPort, std::string &destRange) {
+void FirewallMenu::getProtocolParamsFromUser(std::string proto, int &srcPort,
+    int &srcRange, int &destPort, int &destRange) {
     char delimiter = '\n';
     int option;
     std::cout << "Do you want to enter Source Port and Range [1-YES 0-NO]";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter "<< proto <<" source port: ";
-        std::getline(std::cin, srcPort, delimiter);
+        std::cin >> srcPort;
+        Utils::validateInput(srcPort);
         std::cout << "Enter "<< proto <<" source range: ";
-        std::getline(std::cin, srcRange, delimiter);
+        std::cin >> srcRange;
+        Utils::validateInput(srcRange);
     }
     std::cout << "Do you want to enter Destination Port and Range [1-YES 0-NO]";
     std::cin >> option;
-    Utils::validateInput(option);
+    Utils::validateInput(option, {1, 0});
     if (option == 1) {
         std::cout << "Enter "<< proto <<" destination port: ";
-        std::getline(std::cin, destPort, delimiter);
+        std::cin >> destPort;
+        Utils::validateInput(destPort);
         std::cout << "Enter "<< proto <<" destination range: ";
-        std::getline(std::cin, destRange, delimiter);
+        std::cin >> destRange;
+        Utils::validateInput(destRange);
     }
 }
 
@@ -491,14 +504,14 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
     case 6:  // TCP
     {
         TcpInfo tcpInfo;
-        std::string srcPort = "", srcRange = "";
-        std::string destPort = "", destRange = "";
+        int srcPort = 0, srcRange = 0;
+        int destPort = 0, destRange = (uint16_t)0;
 
         getProtocolParamsFromUser("TCP", srcPort, srcRange, destPort, destRange);
-        tcpInfo.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
-        tcpInfo.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
-        tcpInfo.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
-        tcpInfo.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
+        tcpInfo.src.port = static_cast<uint16_t>(srcPort);
+        tcpInfo.src.range = static_cast<uint16_t>(srcRange);
+        tcpInfo.dest.port = static_cast<uint16_t>(destPort);
+        tcpInfo.dest.range = static_cast<uint16_t>(destRange);
 
         auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
         if(tcpFilter) {
@@ -508,14 +521,14 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
     case 17:  // UDP
     {
         UdpInfo info;
-        std::string srcPort = "", srcRange = "";
-        std::string destPort = "", destRange = "";
+        int srcPort = 0, srcRange = 0;
+        int destPort = 0, destRange = 0;
 
         getProtocolParamsFromUser("UDP", srcPort, srcRange, destPort, destRange);
-        info.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
-        info.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
-        info.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
-        info.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
+        info.src.port = static_cast<uint16_t>(srcPort);
+        info.src.range = static_cast<uint16_t>(srcRange);
+        info.dest.port = static_cast<uint16_t>(destPort);
+        info.dest.range = static_cast<uint16_t>(destRange);
 
         auto udpFilter = std::dynamic_pointer_cast<IUdpFilter>(ipFilter);
         if(udpFilter) {
@@ -526,20 +539,19 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
     {
         TcpInfo tcpInfo;
         UdpInfo udpInfo;
-        std::string srcPort = "", srcRange = "";
-        std::string destPort = "", destRange = "";
+        int srcPort = 0, srcRange = 0;
+        int destPort = 0, destRange = 0;
 
         getProtocolParamsFromUser("", srcPort, srcRange, destPort, destRange);
-        tcpInfo.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
-        tcpInfo.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
-        tcpInfo.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
-        tcpInfo.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
+        tcpInfo.src.port = static_cast<uint16_t>(srcPort);
+        tcpInfo.src.range = static_cast<uint16_t>(srcRange);
+        tcpInfo.dest.port = static_cast<uint16_t>(destPort);
+        tcpInfo.dest.range = static_cast<uint16_t>(destRange);
 
-        udpInfo.src.port = srcPort.empty()?(uint16_t)0 : (uint16_t)atoi(srcPort.c_str());
-        udpInfo.src.range = srcRange.empty()? (uint16_t)0 : (uint16_t)atoi(srcRange.c_str());
-        udpInfo.dest.port = destPort.empty()?(uint16_t)0 : (uint16_t)atoi(destPort.c_str());
-        udpInfo.dest.range = destRange.empty()?(uint16_t)0 : (uint16_t)atoi(destRange.c_str());
-
+        udpInfo.src.port = static_cast<uint16_t>(srcPort);
+        udpInfo.src.range = static_cast<uint16_t>(srcRange);
+        udpInfo.dest.port = static_cast<uint16_t>(destPort);
+        udpInfo.dest.range = static_cast<uint16_t>(destRange);
         auto tcpFilter = std::dynamic_pointer_cast<ITcpFilter>(ipFilter);
         if(tcpFilter) {
             tcpFilter->setTcpInfo(tcpInfo);
@@ -559,9 +571,11 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
         std::string protoStr = (proto == PROTO_ICMP)?"ICMP":"ICMP6";
         std::cout << "Do you want to enter "<< protoStr <<" Type [1-YES 0-NO] ";
         std::cin >> option;
+        Utils::validateInput(option, {1, 0});
         if (option ==1) {
             std::cout << "enter the "<< protoStr <<" Type value: ";
             std::cin >> icmpType;
+            Utils::validateInput(icmpType);
         }
         option = 0;
         std::cout << "Do you want to enter "<< protoStr <<" Code [1-YES 0-NO] ";
@@ -569,6 +583,7 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
         if (option ==1) {
             std::cout << "enter the "<< protoStr <<" Code value: ";
             std::cin >> icmpCode;
+            Utils::validateInput(icmpCode);
         }
         IcmpInfo icmpInfo {};
         icmpInfo.type = static_cast<uint8_t>(icmpType);
@@ -584,9 +599,11 @@ void FirewallMenu::getProtocolParams(telux::data::IpProtocol proto,
         int option = 0;
         std::cout << "Do you want to enter ESP SPI [1-YES 0-NO] ";
         std::cin >> option;
+        Utils::validateInput(option, {1, 0});
         if (option ==1) {
             std::cout << "enter ESP SPI value: ";
             std::cin >> esp_spi;
+            Utils::validateInput(esp_spi);
         }
         EspInfo espInfo {};
         espInfo.spi = static_cast<uint32_t>(esp_spi);

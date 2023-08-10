@@ -28,6 +28,7 @@
  */
 
 /*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
  * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -187,13 +188,14 @@ void KinematicsReceive::close(){
             locationManager_->deRegisterListenerEx(locListener_);
         }
     }
-    if (locListener_ || locListeners_.size()) {
+    if(locListeners_.size()) {
         for (auto &listener : locListeners_) {
             // Registering a listener to get location fixes
             LocListener* locListener = dynamic_cast<LocListener*>(listener.get());
             locListener->close();
             locationManager_->deRegisterListenerEx(listener);
         }
+        cout << "Finished closing the location listeners\n";
     }
     cout << "Location Listeners closed.\n";
 }

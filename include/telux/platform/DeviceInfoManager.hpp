@@ -104,8 +104,8 @@ class IDeviceInfoManager {
        = 0;
 
     /**
-     * Get the platform version.
-     * Need obtain required permissions from telux_allow_version.
+     * Get the platform version. On Hypervisor based platforms, on guest VM, only current
+     * application processor image is available, other images version data cannot be obtained.
      *
      * @param [out] pv   - @ref telux::platform::PlatformVersion
      *

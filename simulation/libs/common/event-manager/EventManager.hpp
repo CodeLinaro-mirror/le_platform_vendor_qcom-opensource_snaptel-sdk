@@ -52,7 +52,7 @@
 #include "EventParserUtil.hpp"
 #include "../AsyncTaskQueue.hpp"
 
-class ConfigParser;
+class SimulationConfigParser;
 
 namespace telux {
 namespace common {
@@ -93,7 +93,7 @@ private:
     std::mutex exitingMutex_;
     std::unordered_map<std::string, std::vector<std::weak_ptr<IEventListener>>> listeners_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
-    std::shared_ptr<ConfigParser> config_;
+    std::shared_ptr<SimulationConfigParser> config_;
 };
 
 } // end of namespace common

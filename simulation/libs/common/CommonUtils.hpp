@@ -32,46 +32,20 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file       JsonParser.hpp
- *
- * @brief      This class provides utilities to parse a JSON file.
- *
- */
+#ifndef COMMONUTILS_HPP
+#define COMMONUTILS_HPP
 
-#ifndef JSON_PARSER_HPP
-#define JSON_PARSER_HPP
-
-#include <jsoncpp/json/json.h>
 #include <telux/common/CommonDefines.hpp>
 
-#include <mutex>
-
-class JsonParser {
+class CommonUtils {
 public:
-    /**
-    * @brief:   Reads the json file
-    * @param:   rootNode - where the parsed Json root object is stored.
-    * @param:   path     - relative path to the Json file.
-    *                      For ex: data json may be stored in
-    *                      /etc/telux/json/data/IDataConnectionManager.json, in this
-    *                      case path would be /data/IDataConnectionManager.json
-    */
-    static telux::common::ErrorCode readFromJsonFile(Json::Value &rootNode,
-        std::string path);
+    static telux::common::Status mapStatus(std::string status);
+    static telux::common::ErrorCode mapErrorCode(std::string errorCode);
+    static telux::common::ErrorCode toErrorCode(telux::common::Status status);
 
-    /**
-    * @brief:   write the json file
-    * @param:   rootNode - Json root object to be written.
-    * @param:   path     - relative path to the Json file.
-    *                      For ex: data json may be stored in
-    *                      /etc/telux/json/data/IDataConnectionManager.json, in this
-    *                      case path would be /data/IDataConnectionManager.json
-    */
-    static telux::common::ErrorCode writeToJsonFile(Json::Value rootNode,
-        std::string path);
-private:
-    static std::mutex fileMutex_;
+    static void getValues(Json::Value &values, std::string subsystem,
+        std::string method, telux::common::Status &status,
+        telux::common::ErrorCode &errorCode, uint32_t &cbDelay);
 };
 
-#endif // JSON_PARSER_HPP
+#endif //COMMONUTILS_HPP

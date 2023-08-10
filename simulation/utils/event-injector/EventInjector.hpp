@@ -46,32 +46,10 @@
 
 #include <string>
 #include <memory>
-#include <unordered_map>
-#include <map>
-#include <vector>
 
 #define APP_NAME "EventInjector"
 
-class ConfigParser;
-
-enum Status {
-    FAILURE = -1,
-    SUCCESS = 0,
-};
-
-class EventHelperMenu {
-public:
-    EventHelperMenu();
-    ~EventHelperMenu();
-
-    void printHelp(std::string subsystem = "", std::string event = "");
-private:
-    std::unordered_map<std::string, std::map<std::string,
-        std::vector<std::string>>> eventMenu_;
-
-    void init();
-    void initDataHelp();
-};
+class SimulationConfigParser;
 
 class EventInjector {
 public:
@@ -84,10 +62,11 @@ public:
 
     bool sendMessage_ = false;
 private:
+    void printHelp(std::string subsystem = "", std::string event = "");
     Status sendMessage(std::string filter, std::string event);
-    std::shared_ptr<EventHelperMenu> helpMenu_;
-    std::shared_ptr<ConfigParser> config_;
+    std::shared_ptr<SimulationConfigParser> config_;
     int clientSocket_;
+    Json::Value eventObj_;
 };
 
 #endif // EVENT_INJECTOR_HPP

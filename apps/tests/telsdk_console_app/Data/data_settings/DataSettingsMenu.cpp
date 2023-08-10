@@ -147,7 +147,7 @@ void DataSettingsMenu::setBackhaulPref(std::vector<std::string> inputCommand) {
     bool subSystemStatus = false;
 
     std::cout << "Set Backhaul Preference \n";
-#ifdef TELUX_FOR_EXTERNAL_AP
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
     telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
 #else
     telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
@@ -197,7 +197,7 @@ void DataSettingsMenu::requestBackhaulPref(std::vector<std::string> inputCommand
     bool subSystemStatus = false;
 
     std::cout << "Request Backhaul Preference \n";
-#ifdef TELUX_FOR_EXTERNAL_AP
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
     telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
 #else
     telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
@@ -251,7 +251,7 @@ void DataSettingsMenu::setBandInterferenceConfig(std::vector<std::string> inputC
     int userInput = 0;
 
     std::shared_ptr<BandInterferenceConfig> config = nullptr;
-#ifdef TELUX_FOR_EXTERNAL_AP
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
     telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
 #else
     telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
@@ -336,7 +336,7 @@ void DataSettingsMenu::requestBandInterferenceConfig(std::vector<std::string> in
     bool enable = true;
     int userInput = 0;
 
-#ifdef TELUX_FOR_EXTERNAL_AP
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
     telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
 #else
     telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
@@ -379,7 +379,7 @@ void DataSettingsMenu::requestDdsSwitch(std::vector<std::string> inputCommand)
 
     std::cout << "Trigger DDS Switch \n";
 
-#ifdef TELUX_FOR_EXTERNAL_AP
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
     telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
 #else
     telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;
@@ -429,7 +429,7 @@ void DataSettingsMenu::requestCurrentDds(std::vector<std::string> inputCommand)
 
     std::cout << "Request current DDS info \n";
 
-#ifdef TELUX_FOR_EXTERNAL_AP
+#if defined(TELUX_FOR_EXTERNAL_AP) || defined(TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED)
     telux::data::OperationType opType = telux::data::OperationType::DATA_REMOTE;
 #else
     telux::data::OperationType opType = telux::data::OperationType::DATA_LOCAL;

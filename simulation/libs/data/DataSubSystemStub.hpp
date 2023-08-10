@@ -41,7 +41,7 @@
 #include <telux/common/CommonDefines.hpp>
 #include <telux/data/DataDefines.hpp>
 #include "../common/Logger.hpp"
-#include "../common/ConfigParser.hpp"
+#include "../common/SimulationConfigParser.hpp"
 
 #define DEFAULT_DATA_STUB_CONFIG_FILE_PATH "."
 #define DEFAULT_DATA_STUB_CONFIG_FILE_NAME "DataStub.conf"
@@ -62,6 +62,6 @@ class DataSubSystemStub {
     telux::common::ServiceStatus status_;
     int initCbDelay_;
     bool isInitialized_;
-    std::shared_ptr<ConfigParser> settings_;
+    std::shared_ptr<SimulationConfigParser> settings_;
 };
 #endif

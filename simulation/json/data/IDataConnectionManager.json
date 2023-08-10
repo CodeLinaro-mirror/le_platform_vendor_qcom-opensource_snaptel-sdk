@@ -1,0 +1,54 @@
+{
+	"IDataConnectionManager": {
+		"IsSubsystemReady": true,
+		"IsSubsystemReadyDelay": 200,
+		"AlwaysSuccess" : true,
+		"DefaultCallbackDelay" : 300,
+		"UseDefaultCallbackDelay" : false,
+		"getDefaultProfile": {
+			"callbackDelay": 400,
+			"error": "SUCCESS",
+			"profileId": 1,
+			"slotId": 1,
+			"status": "SUCCESS"
+		},
+		"getSlotId": {
+			"callbackDelay": -1,
+			"error": "SUCCESS",
+			"slotId": 1,
+			"status": "SUCCESS"
+		},
+		"requestDataCallList": {
+			"callbackDelay": 400,
+			"error": "SUCCESS",
+			"status": "SUCCESS"
+		},
+		"requestRoamingMode": {
+			"callbackDelay": 400,
+			"error": "SUCCESS",
+			"isRoamingEnabled": false,
+			"profileId": 1,
+			"status": "SUCCESS"
+		},
+		"setDefaultProfile": {
+			"callbackDelay": 400,
+			"error": "SUCCESS",
+			"status": "SUCCESS"
+		},
+		"setRoamingMode": {
+			"callbackDelay": 400,
+			"error": "SUCCESS",
+			"status": "SUCCESS"
+		},
+		"startDataCall": {
+			"callbackDelay": 400,
+			"error": "SUCCESS",
+			"status": "SUCCESS"
+		},
+		"stopDataCall": {
+			"callbackDelay": 400,
+			"error": "SUCCESS",
+			"status": "SUCCESS"
+		}
+	}
+}

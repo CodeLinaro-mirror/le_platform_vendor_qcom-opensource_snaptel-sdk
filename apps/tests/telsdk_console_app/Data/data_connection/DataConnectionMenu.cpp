@@ -363,6 +363,7 @@ void DataConnectionMenu::resetDataCallStatistics(std::vector<std::string> inputC
     int profileId;
     std::cout << "Enter Profile Id: ";
     std::cin >> profileId;
+    Utils::validateInput(profileId);
 
     auto dataCall = dataListeners_[static_cast<SlotId>(slotId)]->getDataCall(
         static_cast<SlotId>(slotId), profileId);

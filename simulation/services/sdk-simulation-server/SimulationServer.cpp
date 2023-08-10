@@ -52,7 +52,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "../../libs/common/ConfigParser.hpp"
+#include "../../libs/common/SimulationConfigParser.hpp"
 #include "../../libs/common/Logger.hpp"
 
 #include "SimulationServer.hpp"
@@ -93,9 +93,8 @@ telux::common::Status SimulationServer::start() {
         }
     );
 
-    std::shared_ptr<ConfigParser> config =
-        std::make_shared<ConfigParser>(DEFAULT_STUB_CONFIG_FILE_NAME,
-        DEFAULT_STUB_CONFIG_FILE_PATH);
+    std::shared_ptr<SimulationConfigParser> config =
+        std::make_shared<SimulationConfigParser>();
 
     if ((serverSocket = socket(AF_INET,SOCK_STREAM,0)) < 0) {
         LOG(ERROR, "failed to create socket");

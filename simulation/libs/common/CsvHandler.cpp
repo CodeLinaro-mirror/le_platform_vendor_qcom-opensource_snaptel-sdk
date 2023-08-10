@@ -108,6 +108,7 @@ Status CsvHandler::readCsv(csvData &data) {
                     data[headers[row]].emplace_back(str);
                     std::getline(rowStream, val, ',');
                 }
+                row++;
             }
         }
     }

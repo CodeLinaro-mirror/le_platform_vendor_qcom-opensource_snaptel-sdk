@@ -36,7 +36,7 @@
 
 DataSubSystemStub::DataSubSystemStub() {
     isInitialized_ = false;
-    settings_ = std::make_shared<ConfigParser>(
+    settings_ = std::make_shared<SimulationConfigParser>(
                 DEFAULT_DATA_STUB_CONFIG_FILE_NAME, DEFAULT_DATA_STUB_CONFIG_FILE_PATH);
     if(settings_) {
         //Read subsystem manager's readiness status

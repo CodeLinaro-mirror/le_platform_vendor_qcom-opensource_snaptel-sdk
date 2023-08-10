@@ -158,6 +158,7 @@ struct Config{
     uint8_t ldmGbTimeThreshold= 5;
     uint16_t ldmSize = 1;
     uint16_t transmitRate = 100;
+    uint16_t spsPeriodicity = 100;
     uint16_t locationInterval = 100;
     unsigned int msgId = 0;
     uint16_t bsmJitter = 0;
@@ -227,7 +228,6 @@ struct Config{
     string signStatLogFile = "/tmp/sign_stats.log";
     bool enableLocationFixes = true;
     bool enableVehicleDataCallbacks = true;
-
     /* config data for Ieee1609.3 Wsa */
     long routerLifetime;
     string ipPrefix;
@@ -489,29 +489,6 @@ public:
      * updates verifcation load to TM
      */
     void tmCommunication();
-    static void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo){
-        // callback will pass data to corresponding other components
-        #ifdef AEROLINK
-        if(securityEnabled){
-            Kinematics kine;
-            kine.latitude = locationInfo->getLatitude() * 10000000;
-            kine.longitude = locationInfo->getLongitude() * 10000000;
-            kine.elevation = locationInfo->getAltitude() * 10;
-            kine.speed = locationInfo->getSpeed() * 50;
-            int result = AerolinkSecurity::setSecCurrLocation(&kine);
-        }
-        #endif
-        if(congCtrlEnabled){
-            Position pos;
-            pos.posLat = (locationInfo->getLatitude() * 10000000);
-            pos.posLong = (locationInfo->getLongitude() * 10000000);
-            pos.heading = (locationInfo->getHeading() / 0.0125);
-            pos.elev = (locationInfo->getAltitude() * 10);
-            CCErrorCode res = ICongestionControlManager::updateHostVehicleData(
-                pos, 50 * locationInfo->getSpeed());
-        }
-
-    }
 
     /*********************************************************************************
      * data members.
@@ -606,6 +583,7 @@ public:
     static bool cbSuccess;
     static bool congCtrlEnabled;
     static bool securityEnabled;
+
 protected:
     bool isTx = false;
     bool isRx = false;
@@ -626,6 +604,8 @@ protected:
     bool congCtrlInitialized = false;
     bool finishProgram;
     sem_t programSem;
+    current_dynamic_vehicle_state_t* currVehState;
+
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
      * @param intervalMs user specified transmit interval in milliseconds
@@ -665,12 +645,13 @@ protected:
     unique_ptr<SecurityService> SecService;
 
    virtual void writeLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
-       uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt, uint64_t timestamp);
+       uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt, uint64_t timestamp,
+       uint32_t psid);
     /**
      * Vehicle Receive object.
      */
     VehicleReceive VehRec;
-
+    std::atomic<bool> criticalState{false};
 private:
     bool exitApp = false;
     unordered_map <uint32_t,rv_specs> l2RvMap;
@@ -678,7 +659,6 @@ private:
     VehicleReceive::VehicleEventsCallback cb;
     std::mutex stateMtx;
     std::condition_variable stateCv;
-    std::atomic<bool> criticalState{false};
     std::atomic<bool> newEvent{false};
     /* For local stored v2x IP rmnet address */
     std::mutex v2xIpAddrMtx_;
@@ -704,9 +684,9 @@ private:
     static void congCtrlCb(CongestionControlUserData* congestionControlUserData, bool success);
     // function to write congestion control data to file
     void writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
-        shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt);
+    shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt,
+        uint16_t eventsData);
     // function to write security related data to file
     void writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp);
-    //void writeCongCtrlLog(CongestionControlData* congestionControlData_);
 };
 #endif

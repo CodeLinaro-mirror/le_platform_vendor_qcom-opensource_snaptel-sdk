@@ -50,8 +50,6 @@
 #define APP_NAME "SimulationServer"
 #define BUFFER_SIZE 100
 
-class ConfigParser;
-
 class SimulationServer {
 public:
     SimulationServer();

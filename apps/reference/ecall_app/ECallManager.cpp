@@ -587,6 +587,7 @@ void ECallManager::onLocationUpdate(ECallLocationInfo locInfo) {
     if (telClient_->isECallInProgress()) {
         if(!isTpsEcallOverImsTriggered) {
             updateMSD(phoneId_);
+            telClient_->setECallMsd(msdData_);
         }
     } else {
         setLocationReceived(true);
@@ -619,6 +620,9 @@ void ECallManager::parseAppConfig() {
         }
         msdSettings.init(param, filePath);
         msdData_ = msdSettings.getMsd();
+        if (telClient_) {
+           telClient_->setECallMsd(msdData_);
+        }
     } else {
         std::cout << CLIENT_NAME << "MSD data file not found! " << std::endl;
     }

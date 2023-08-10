@@ -89,11 +89,13 @@ TelClient::TelClient()
    , callMgr_(nullptr)
    , eCall_(nullptr)
    , eCallInprogress_(false)
-   , eCallScanFailHdlrInstance_(nullptr) {
+   , eCallScanFailHdlrInstance_(nullptr)
+   , isPrivateEcallTriggered(false) {
 }
 
 TelClient::~TelClient() {
     eCallInprogress_ = false;
+    isPrivateEcallTriggered = false;
     eCallDataMap_.clear();
 }
 
@@ -166,6 +168,9 @@ bool TelClient::isECallInProgress() {
 
 void TelClient::setECallProgressState(bool state) {
     std::unique_lock<std::mutex> lock(mutex_);
+    if (!state) {
+       isPrivateEcallTriggered = false;
+    }
     eCallInprogress_ = state;
 }
 
@@ -175,6 +180,12 @@ telux::tel::CallDirection TelClient::getECallDirection() {
     } else {
         return telux::tel::CallDirection::NONE;
     }
+}
+
+// Update locally cached MSD recieved after location update
+void TelClient::setECallMsd(ECallMsdData& msdData) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    msdData_ = msdData;
 }
 
 // Callback invoked when an incoming call is received
@@ -243,9 +254,28 @@ void TelClient::onECallMsdTransmissionStatus(
               << std::endl;
     eCallDataMap_[phoneId].msdTransmissionStatus = msdTransmissionStatus;
 }
+
 // Callback to notify request from PSAP for MSD update
-void TelClient::OnTpsMsdUpdateRequest(int phoneId) {
-    std::cout << "Request to send the MSD receieved from PSAP for SlotId " << phoneId << std::endl;
+void TelClient::OnMsdUpdateRequest(int phoneId) {
+    std::cout << CLIENT_NAME << "Request to send the MSD receieved from PSAP for SlotId "
+              << phoneId
+              << " for the ecall Type : "
+              << (isPrivateEcallTriggered ? "Private ecall" : "Standard or NG ecall")
+              << std::endl;
+    if (!isPrivateEcallTriggered) {
+       ECallMsdData msdData;
+       if (isECallInProgress()) {
+          {
+             std::lock_guard<std::mutex> lock(mutex_);
+             msdData = msdData_;
+          }
+          auto status = updateECallMSD(phoneId, msdData);
+          if (status != telux::common::Status::SUCCESS) {
+             std::cout << CLIENT_NAME << "Failed to update MSD " << std::endl;
+             return;
+          }
+       }
+    }
 }
 
 // Callback to notify eCall HLAP timers status
@@ -435,6 +465,7 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         return telux::common::Status::FAILED;
     }
     setECallProgressState(true);
+    isPrivateEcallTriggered = false;
     // Initiate an eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
@@ -484,6 +515,7 @@ telux::common::Status TelClient::startECall(int phoneId, std::vector<uint8_t> ms
         return telux::common::Status::FAILED;
     }
     setECallProgressState(true);
+    isPrivateEcallTriggered = false;
     // Initiate voice eCall
     telux::common::Status status = telux::common::Status::FAILED;
     if (transmitMsd) {
@@ -533,6 +565,7 @@ telux::common::Status TelClient::startECall(int phoneId, const std::vector<uint8
         return telux::common::Status::FAILED;
     }
     setECallProgressState(true);
+    isPrivateEcallTriggered = true;
     // Initiate voice eCall
     telux::common::Status status = telux::common::Status::FAILED;
     CustomSipHeader header;

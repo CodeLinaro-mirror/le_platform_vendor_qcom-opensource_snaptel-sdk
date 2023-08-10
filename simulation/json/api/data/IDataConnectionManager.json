@@ -8,14 +8,11 @@
 		"getDefaultProfile": {
 			"callbackDelay": 400,
 			"error": "SUCCESS",
-			"profileId": 1,
-			"slotId": 1,
 			"status": "SUCCESS"
 		},
 		"getSlotId": {
 			"callbackDelay": -1,
 			"error": "SUCCESS",
-			"slotId": 1,
 			"status": "SUCCESS"
 		},
 		"requestDataCallList": {
@@ -26,8 +23,6 @@
 		"requestRoamingMode": {
 			"callbackDelay": 400,
 			"error": "SUCCESS",
-			"isRoamingEnabled": false,
-			"profileId": 1,
 			"status": "SUCCESS"
 		},
 		"setDefaultProfile": {

@@ -10,7 +10,7 @@ link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 add_definitions(-DDEFAULT_SIM_CONFIG_FILE_NAME="tel.conf")
 add_definitions(-DDEFAULT_SIM_FILE_PREFIX="${CMAKE_INSTALL_PREFIX}")
 add_definitions(-DDEFAULT_SIM_CONFIG_FILE_PATH="/etc/telux/")
-add_definitions(-DDEFAULT_JSON_FILE_PATH="/etc/telux/json/")
+add_definitions(-DDEFAULT_JSON_FILE_PATH="/data/telux/json/")
 
 add_subdirectory( protos )
 add_subdirectory( utils/event-injector )

@@ -54,6 +54,7 @@
 
 #include "../../libs/common/SimulationConfigParser.hpp"
 #include "../../libs/common/Logger.hpp"
+#include "../../libs/common/event-manager/EventManager.hpp"
 
 #include "SimulationServer.hpp"
 
@@ -195,6 +196,11 @@ telux::common::Status SimulationServer::readMessage(int socketFd,
 telux::common::Status SimulationServer::writeMessage(char* buffer, int length,
     const std::vector<int> &clientSockets) {
     LOG(DEBUG, __FUNCTION__);
+
+    auto& eventMgr = EventManager::getInstance();
+    std::string message(buffer);
+    eventMgr.handleEventNotifications(message);
+
     for(auto socket: clientSockets)
     {
         write(socket,buffer,length);

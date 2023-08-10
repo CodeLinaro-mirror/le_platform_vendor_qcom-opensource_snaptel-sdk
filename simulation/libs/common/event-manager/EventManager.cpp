@@ -64,7 +64,6 @@ EventManager::EventManager() {
     LOG(DEBUG, __FUNCTION__);
     LOG(DEBUG, " Initializing the EventManager");
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    init();
 }
 
 EventManager::~EventManager() {
@@ -194,7 +193,7 @@ void EventManager::makeConnection() {
     }
 }
 
-void EventManager::init() {
+void EventManager::connectToSimulationServer() {
     LOG(DEBUG, __FUNCTION__);
     config_ = std::make_shared<SimulationConfigParser>();
     auto f = std::async(std::launch::async, [this]() {

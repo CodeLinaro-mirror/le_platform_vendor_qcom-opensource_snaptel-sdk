@@ -617,13 +617,13 @@ void ECallMenu::selectPhoneId(std::vector<std::string> userInput) {
    std::string slotSelection;
    char delimiter = '\n';
 
-   std::cout << "Enter the desired Phone ID / SIM slot: ";
+   std::cout << "Enter the desired Phone ID / SIM slot (1-Primary, 2-Secondary): ";
    std::getline(std::cin, slotSelection, delimiter);
 
    if (!slotSelection.empty()) {
       try {
          int phoneId = std::stoi(slotSelection);
-         if (phoneId > 2) {
+         if (phoneId > MAX_SLOT_ID  || phoneId < DEFAULT_SLOT_ID) {
             std::cout << "Invalid slot entered, using default slot" << std::endl;
             phoneId_ = DEFAULT_SLOT_ID;
          } else {

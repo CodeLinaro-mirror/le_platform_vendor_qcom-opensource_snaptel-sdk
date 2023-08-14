@@ -318,7 +318,8 @@ std::string DataUtils::serviceRatToString(telux::data::NetworkRat rat) {
     return ratStr;
 }
 
-std::string DataUtils::vlanInterfaceToString(telux::data::InterfaceType interface) {
+std::string DataUtils::vlanInterfaceToString(
+   telux::data::InterfaceType interface, telux::data::OperationType oprType) {
    std::string ifName = "UNKNOWN";
    switch(interface) {
       case telux::data::InterfaceType::WLAN:
@@ -338,14 +339,22 @@ std::string DataUtils::vlanInterfaceToString(telux::data::InterfaceType interfac
          break;
       case telux::data::InterfaceType::VMTAP0:
 #ifdef TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED
-         ifName = "VMTAP0";
+         if(oprType == telux::data::OperationType::DATA_LOCAL) {
+            ifName = "VMTAP0";
+         } else {
+            ifName = "VMTAP-TELEVM";
+         }
 #else
          ifName = "VMTAP-TELEVM";
 #endif
          break;
       case telux::data::InterfaceType::VMTAP1:
 #ifdef TELSDK_FEATURE_FOR_SECONDARY_VM_ENABLED
-         ifName = "VMTAP1";
+         if(oprType == telux::data::OperationType::DATA_LOCAL) {
+            ifName = "VMTAP1";
+         } else {
+            ifName = "VMTAP-FOTAVM";
+         }
 #else
          ifName = "VMTAP-FOTAVM";
 #endif

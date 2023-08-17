@@ -1516,6 +1516,17 @@ void MyLocationListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &n
    std::cout << " Nmea String : " << nmea << std::endl;
 }
 
+void MyLocationListener::onEngineNmeaInfo(telux::loc::LocationAggregationType engineType,
+    uint64_t timestamp, const std::string &nmea) {
+    if(!isEngineNmeaInfoFlagEnabled_) {
+        return;
+    }
+    PRINT_NOTIFICATION << "\n**************** Engine Nmea Information ***************" << std::endl;
+    LocationUtils::displayLocEngineType(engineType);
+    std::cout << " Timestamp : " << timestamp << std::endl;
+    std::cout << " Nmea String : " << nmea << std::endl;
+}
+
 void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
      GnssMeasurements &measurementInfo) {
    if(!isMeasurementsInfoFlagEnabled_) {
@@ -1662,6 +1673,10 @@ void MyLocationListener::setDataInfoFlag(bool enable) {
 
 void MyLocationListener::setNmeaInfoFlag(bool enable) {
    isNmeaInfoFlagEnabled_ = enable;
+}
+
+void MyLocationListener::setEngineNmeaInfoFlag(bool enable) {
+   isEngineNmeaInfoFlagEnabled_ = enable;
 }
 
 void MyLocationListener::setDetailedEngineLocReportFlag(bool enable) {

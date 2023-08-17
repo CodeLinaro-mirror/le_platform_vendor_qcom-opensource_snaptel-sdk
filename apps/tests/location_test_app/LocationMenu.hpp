@@ -148,6 +148,7 @@ public:
    void enableNmeaInfoLogs();
    void enableMeasurementsInfoLogs();
    void enableDisasterCrisisInfoLogs();
+   void enableEngineNmeaInfoLogs();
    void dgnssInject(std::vector<std::string> userInput);
    void bodyToSensorUtility(telux::loc::DREngineConfiguration& drConfig);
    void speedScaleUtility(telux::loc::DREngineConfiguration& drConfig);

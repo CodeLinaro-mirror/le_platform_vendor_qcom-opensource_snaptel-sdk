@@ -174,7 +174,13 @@ public:
   virtual void onGnssSignalInfo(const std::shared_ptr<IGnssSignalInfo> &info) {}
 
 /**
- * This function is called when device receives GNSS NMEA sentences.
+ * This function is called when device receives GNSS NMEA sentences from FUSED engine.
+ *
+ * To receive these updates, clients need to set the @ref telux::loc::GnssReportType::NMEA bit
+ * in the reportMask passed as a paramter to @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ *
+ * Also refer to @ref ILocationManager::startDetailedEngineReports to understand the usage further.
  *
  * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
  * for this listener API to be invoked.
@@ -183,6 +189,24 @@ public:
  * @param [in] nmea - Nmea sentence
  */
   virtual void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {}
+
+/**
+ * This function is called when device receives NMEA sentences from a specific engine.
+ *
+ * To receive these updates, clients need to set the @ref telux::loc::GnssReportType::ENGINE_NMEA
+ * bit in the reportMask passed as a paramter to @ref ILocationManager::startDetailedEngineReports.
+ *
+ * Also refer to @ref ILocationManager::startDetailedEngineReports to understand the usage further.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
+ * @param [in] engineType - Engine Type used in generating the NMEA sentence.
+ * @param [in] timestamp - Timestamp
+ * @param [in] nmea - Nmea sentence
+ */
+  virtual void onEngineNmeaInfo(LocationAggregationType engineType, uint64_t timestamp,
+    const std::string &nmea) {}
 
 /**
  * This function is called when device receives signal measurement information

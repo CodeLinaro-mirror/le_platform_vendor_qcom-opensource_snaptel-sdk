@@ -223,3 +223,17 @@ void LocationUtils::displayDisasterCrisisReportType(telux::loc::GnssDisasterCris
             break;
     }
 }
+
+void LocationUtils::displayLocEngineType(telux::loc::LocationAggregationType locEngineType) {
+    std::cout << "Location Engine Type: ";
+    switch(locEngineType) {
+        case telux::loc::LOC_OUTPUT_ENGINE_FUSED : std::cout << "FUSED engine " << std::endl;
+                                                   break;
+        case telux::loc::LOC_OUTPUT_ENGINE_SPE : std::cout << "SPE engine " << std::endl;
+                                                   break;
+        case telux::loc::LOC_OUTPUT_ENGINE_PPE : std::cout << "PPE engine " << std::endl;
+                                                   break;
+        case telux::loc::LOC_OUTPUT_ENGINE_VPE : std::cout << "VPE engine " << std::endl;
+                                                   break;
+    }
+}

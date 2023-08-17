@@ -15,6 +15,7 @@ copy $ROOTFS/include /usr/include
 copy $ROOTFS/bin /usr/bin
 copy $ROOTFS/lib /usr/lib
 copy $ROOTFS/etc /etc
+copy $ROOTFS/data /data
 copy $ROOTFS/share /usr/share
 
 RUN chmod +x /etc/init.d/telsdk_simulation_server

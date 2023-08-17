@@ -54,7 +54,7 @@ public:
     * @param:   rootNode - where the parsed Json root object is stored.
     * @param:   path     - relative path to the Json file.
     *                      For ex: data json may be stored in
-    *                      /etc/telux/json/data/IDataConnectionManager.json, in this
+    *                      /data/telux/json/data/IDataConnectionManager.json, in this
     *                      case path would be /data/IDataConnectionManager.json
     */
     static telux::common::ErrorCode readFromJsonFile(Json::Value &rootNode,
@@ -65,7 +65,7 @@ public:
     * @param:   rootNode - Json root object to be written.
     * @param:   path     - relative path to the Json file.
     *                      For ex: data json may be stored in
-    *                      /etc/telux/json/data/IDataConnectionManager.json, in this
+    *                      /data/telux/json/data/IDataConnectionManager.json, in this
     *                      case path would be /data/IDataConnectionManager.json
     */
     static telux::common::ErrorCode writeToJsonFile(Json::Value rootNode,

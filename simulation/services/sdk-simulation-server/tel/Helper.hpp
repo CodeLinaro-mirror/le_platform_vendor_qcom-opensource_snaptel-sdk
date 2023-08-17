@@ -32,21 +32,50 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMMONUTILS_HPP
-#define COMMONUTILS_HPP
 
-#include <telux/common/CommonDefines.hpp>
+/**
+ * @file       Helper.hpp
+ *
+ * @brief
+ *
+ */
 
-class CommonUtils {
+#ifndef HELPER_HPP
+#define HELPER_HPP
+
+#include <string>
+#include <future>
+#include <exception>
+#include <algorithm>
+#include <memory>
+#include <vector>
+#include "../../libs/common/Logger.hpp"
+
+class Helper  {
 public:
-    static telux::common::Status mapStatus(std::string status);
-    static telux::common::ErrorCode mapErrorCode(std::string errorCode);
-    static telux::common::ErrorCode toErrorCode(telux::common::Status status);
+    static std::string convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex) {
+        std::stringstream ss;
+        for (std::size_t i = 0; i < bytes.size(); i++)
+        {
+            if(toHex) {
+                ss << std::hex << static_cast<int>(bytes[i]);
+            } else {
+                ss << static_cast<int>(bytes[i]) << " ";
+            }
+        }
+        return ss.str();
+    }
+    static std::vector<int> convertStringToVector(std::string input) {
+        std::stringstream iss( input );
+        int parsednum;
+        std::vector<int> myNumbers;
+        while ( iss >> parsednum ) {
+            myNumbers.push_back( parsednum );
+        }
+        return myNumbers;
+    }
 
-    static void getValues(Json::Value &values, std::string subsystem,
-        std::string method, telux::common::Status &status,
-        telux::common::ErrorCode &errorCode, uint32_t &cbDelay);
-    static telux::common::ServiceStatus mapServiceStatus(std::string status);
 };
 
-#endif //COMMONUTILS_HPP
+
+#endif // HELPER_HPP

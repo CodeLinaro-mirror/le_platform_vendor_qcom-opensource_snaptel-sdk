@@ -73,52 +73,52 @@ Qimc::Qimc(const Configuration conf)
         std::cout << "Getting request from " << config.jsonReqPath << std::endl;
         req = json_object_from_file(config.jsonReqPath.c_str());
     }
-    else
+    else if (!config.periodicReport)
     {
-        std::cout << "Getting request from " << REQ_FILE << std::endl;
+        std::cout << "Getting request from default file" << REQ_FILE << std::endl;
         req = json_object_from_file(REQ_FILE);
     }
-    if (config.debugLevel > LOW_ALERT || config.printReq)
-    {
-        cout << json_object_to_json_string(req);
-    }
+
     if (connectServer())
     {
         ret = CLIENT_ERROR;
     }
-    else
-    {
-        if (json_object_object_get_ex(req, "close", &jsonTmp))
-        {
-            config.isClose = true; // For when continues request happens
-        }
-        res = sendReq(req);
-        if (config.debugLevel > LOW_ALERT || config.printReq)
-        {
-            cout << "Raw Response: " << json_object_to_json_string(res) << endl;
-        }
-        parseRes(res);
-        if (config.saveRes)
-        {
-            ret = 0;
-            if (config.isResPath)
+    else{
+
+        if(!config.periodicReport){
+            // a single shot command
+            if (json_object_object_get_ex(req, "close", &jsonTmp))
             {
-                json_object_to_file(config.jsonResPath.c_str(), res);
+                config.isClose = true; // For when continues request happens
             }
-            else
+            res = sendReq(req);
+            if (config.debugLevel > LOW_ALERT || config.printReq)
             {
-                json_object_to_file(RES_FILE, res);
+                cout << "Raw Response: " << json_object_to_json_string(res) << endl;
             }
-            if (ret == CLIENT_ERROR)
+            parseRes(res);
+            if (config.saveRes)
             {
-                cout << "Error writing response\n";
+                ret = 0;
+                if (config.isResPath)
+                {
+                    json_object_to_file(config.jsonResPath.c_str(), res);
+                }
+                else
+                {
+                    json_object_to_file(RES_FILE, res);
+                }
+                if (ret == CLIENT_ERROR)
+                {
+                    cout << "Error writing response\n";
+                }
             }
+            close(clientSock);
         }
     }
-    close(clientSock);
     return;
-    // res = sendReq(req); // Just for testing purposes...
 }
+
 
 /**
  * @brief Parses server response and prints it human readable
@@ -134,10 +134,8 @@ int Qimc::parseRes(json_object *res)
     // Parse Keys
     for (auto key : kStr)
     {
-        // std::cout << "Parsing Keys!!!" << std::endl;
         if (json_object_object_get_ex(res, key, &jsonTmp))
         {
-            //    std::cout << key << std::endl;
             parseKey(key, jsonTmp);
         }
     }
@@ -145,10 +143,8 @@ int Qimc::parseRes(json_object *res)
     // Print Values
     for (auto key : kStr)
     {
-        // std::cout << "Printing keys!!!" << std::endl;
         if (json_object_object_get_ex(res, key, &jsonTmp))
         {
-            //    std::cout << key << std::endl;
             printKey(key, jsonTmp);
         }
     }
@@ -240,13 +236,13 @@ int Qimc::printKey(const char *key, json_object *obj)
         switch (kMap.at(key))
         {
         case TOTAL_RX:
-            std::cout << key << ":\t\t" << resData.totalRx << std::endl;
+            //std::cout << key << ":\t\t" << resData.totalRx << std::endl;
             break;
         case TOTAL_TX:
-            std::cout << key << ":\t\t" << resData.totalTx << std::endl;
+            //std::cout << key << ":\t\t" << resData.totalTx << std::endl;
             break;
         case DECODE_FAILS:
-            std::cout << key << ":\t\t" << resData.decodeFails << std::endl;
+            //std::cout << key << ":\t\t" << resData.decodeFails << std::endl;
             break;
         // case SEC_FAILS:
         //     resData.securityFails = json_object_get_int64(obj);
@@ -261,13 +257,13 @@ int Qimc::printKey(const char *key, json_object *obj)
         //     resData.totalRSUs = json_object_get_int64(obj);
         //     break;
         case TX_BSMS:
-            std::cout << key << ":\t\t" << resData.txBSMs << std::endl;
+            //std::cout << key << ":\t\t" << resData.txBSMs << std::endl;
             break;
         // case TX_SIGNED_BSMS:
         //     resData.txSignedBSMs = json_object_get_int64(obj);
         //     break;
         case RX_BSMS:
-            std::cout << key << ":\t\t" << resData.rxBSMs << std::endl;
+            //std::cout << key << ":\t\t" << resData.rxBSMs << std::endl;
             break;
         // case RX_SIGNED_BSMS:
         //     resData.rxSignedBSMs = json_object_get_int64(obj);
@@ -277,9 +273,6 @@ int Qimc::printKey(const char *key, json_object *obj)
             nanoRemains = resData.timestamp - (secTime * BILLION);
             milliRemains = nanoRemains / MILLION;
             t = static_cast<time_t>(secTime);
-            std::cout << key << ":\t\t" << resData.timestamp << std::endl;
-            std::cout << "Data created at: " << ctime(&t)
-                      << " and " << milliRemains << " milliseconds (ms)." << endl;
             break;
         case JSON_VER:
             resData.jsonVersion = string(json_object_get_string(obj));
@@ -341,12 +334,6 @@ json_object *Qimc::sendReq(json_object *req)
     {
         // Transform buffer into json res
         res = json_tokener_parse(buffer);
-        if (config.debugLevel > LOW_ALERT || config.printRes)
-        {
-
-            std::cout << "Response: " << json_object_to_json_string(res)
-                      << std::endl;
-        }
     }
 
     return res;
@@ -445,6 +432,10 @@ Qimc::Configuration Qimc::loadArgs(int argc, const char **argv)
         case 'u':
             c.printReq = true;
             break;
+        case 'm':
+            c.periodicReport = true;
+            c.reportInterval = atoi(argv[++i]);
+            break;
         case 'h':
             printUsage();
             c.isHelp = true;
@@ -469,4 +460,13 @@ void Qimc::printUsage()
     std::cout << "-i <path> \t\tAbsolute request path e.g. /usr/home/req.json\n";
     std::cout << "-o \t\tSaves response to ./res.json, change path with -p \n";
     std::cout << "-r <path> \t\tAbsolute response path e.g. /usr/home/res.json\n";
+    std::cout << "-m <ms time interval) \t\tTime interval for periodic reports\n";
+}
+
+json_object* Qimc::sendAndGetResponse(json_object* reqPeriodic){
+        int ret = 0;
+        json_object *resPeriodic = nullptr;
+        resPeriodic = sendReq(reqPeriodic);
+        parseRes(resPeriodic);
+        return resPeriodic;
 }

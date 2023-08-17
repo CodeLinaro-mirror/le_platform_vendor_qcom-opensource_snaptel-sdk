@@ -1264,7 +1264,7 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
-    std::vector<std::string> groups{"system", "diag", "radio"};
+    std::vector<std::string> groups{"system", "diag", "radio", "locclient"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;

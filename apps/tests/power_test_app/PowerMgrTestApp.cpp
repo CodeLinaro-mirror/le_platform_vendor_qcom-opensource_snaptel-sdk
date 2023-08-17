@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019,2023 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -45,6 +45,7 @@ extern "C" {
 }
 
 #include "PowerMgrTestApp.hpp"
+#include "Utils.hpp"
 
 static bool listenerEnabled = false;
 static std::mutex mutex;
@@ -253,6 +254,13 @@ int main(int argc, char ** argv) {
         printHelp();
         return -1;
     }
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
+    }
+
     std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
     if( 0 != myPowerMgmtTest->start()) {
         std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"

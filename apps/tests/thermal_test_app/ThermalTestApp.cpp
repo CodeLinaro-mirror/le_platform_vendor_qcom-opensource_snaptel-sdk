@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019,2023 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -33,6 +33,7 @@
 
 #include <telux/common/Version.hpp>
 #include <telux/therm/ThermalFactory.hpp>
+#include "Utils.hpp"
 
 #include "ThermalHelper.hpp"
 #include "ThermalTestApp.hpp"
@@ -178,6 +179,12 @@ void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
 
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string appName = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."

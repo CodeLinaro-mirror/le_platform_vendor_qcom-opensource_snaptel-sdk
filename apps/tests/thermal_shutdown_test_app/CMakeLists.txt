@@ -7,7 +7,7 @@ set(THERM_SHUTDOWN_MGR_TEST_APP
     ThermalCommandCallback.cpp
     ThermalListener.cpp
     ThermalCommandMgr.cpp
-    ../telsdk_console_app/Utils.cpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
 )
@@ -22,6 +22,7 @@ SYSR_INCLUDE_DIR(telux)
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/console_app_framework
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/utils
 )
 
 # set global variables

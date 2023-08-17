@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019,2023 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -51,6 +51,7 @@ extern "C" {
 #include "Sms/SmsMenu.hpp"
 #include "Data/DataMenu.hpp"
 #include "SimCardServices/SimCardServicesMenu.hpp"
+#include "Utils.hpp"
 
 #include "TelSdkConsoleApp.hpp"
 
@@ -165,6 +166,12 @@ int main(int argc, char **argv) {
                           + std::to_string(sdkVersion.minor) + "."
                           + std::to_string(sdkVersion.patch);
     setupSignal();
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1) {
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
 
     TelSdkConsoleApp telsdkConsoleApp(appName, "tel_sdk> ");
 

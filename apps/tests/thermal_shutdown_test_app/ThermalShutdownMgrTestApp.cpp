@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019,2023 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -45,6 +45,7 @@ extern "C" {
 }
 
 #include "ThermalShutdownMgrTestApp.hpp"
+#include "Utils.hpp"
 
 void ThermalShutdownTestApp::printHelp() {
 
@@ -210,6 +211,13 @@ void ThermalShutdownTestApp::consoleinit() {
 int main(int argc, char ** argv) {
 
     Status ret = Status::FAILED;
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
+    }
+
     auto &ThermMgmtTest = ThermalShutdownTestApp::getInstance();
     if( 0 != ThermMgmtTest.init()) {
         std::cout << APP_NAME <<

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019,2023 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -31,7 +31,7 @@
 #include <sstream>
 
 #include "ThermalCommandMgr.hpp"
-#include "../telsdk_console_app/Utils.hpp"
+#include "Utils.hpp"
 #include "ThermalShutdownMgrTestApp.hpp"
 
 ThermalCommandMgr::ThermalCommandMgr() {

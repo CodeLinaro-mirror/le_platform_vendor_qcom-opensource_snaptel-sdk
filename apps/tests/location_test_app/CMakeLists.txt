@@ -6,8 +6,7 @@ set(LOCATION_TEST_APP_SOURCES
     LocationMenu.cpp
     MyLocationListener.cpp
     MyLocationCommandCallback.cpp
-    ../telsdk_console_app/Utils.cpp
-    ../telsdk_console_app/Utils.hpp
+    ${telematics-apps_SOURCE_DIR}/common/utils/Utils.cpp
     ../../common/console_app_framework/ConsoleAppCommand.cpp
     ../../common/console_app_framework/ConsoleApp.cpp
 )
@@ -22,6 +21,7 @@ SYSR_INCLUDE_DIR(telux)
 include_directories(BEFORE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/utils
 )
 
 # set global variables

@@ -73,7 +73,6 @@
      rpc GetServiceStatus(google.protobuf.Empty) returns (GetServiceStatusReply) {}
      rpc IsSubsystemReady(google.protobuf.Empty) returns (IsSubsystemReadyReply) {}
      rpc GetSubscription(GetSubscriptionRequest) returns (Subscription) {}
-     rpc SetSubscription(Subscription) returns (google.protobuf.Empty) {}
      rpc GetAllSubscription(google.protobuf.Empty) returns (GetAllSubscriptionsReply) {}
  }
 

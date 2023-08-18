@@ -58,6 +58,8 @@
 
 #include "SimulationServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
+#include "tel/SubscriptionManagerServerImpl.hpp"
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -223,6 +225,10 @@ void SimulationServer::startGrpcServer() {
 
     std::shared_ptr<CardManagerServerImpl> cardService = std::make_shared<CardManagerServerImpl>();
     builder.RegisterService(cardService.get());
+
+    std::shared_ptr<SubscriptionManagerServerImpl> subscriptionService =
+        std::make_shared<SubscriptionManagerServerImpl>();
+    builder.RegisterService(subscriptionService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

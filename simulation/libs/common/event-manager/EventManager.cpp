@@ -54,7 +54,7 @@
 #define LOCAL_HOST "127.0.0.1"
 #define DEFAULT_PORT 8080
 #define RETRY_TIMER 500
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 250
 
 namespace telux {
 namespace common {

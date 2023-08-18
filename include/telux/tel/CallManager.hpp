@@ -481,15 +481,9 @@ public:
       = 0;
 
    /**
-    * For Third Party Service(TPS) eCall over IMS technology:
-    * This API could be used to explicitly send MSD to PSAP in respnse to MSD pull request
+    * This API could be used to explicitly send MSD to PSAP in response to MSD pull request
     * from the PSAP.The modem will not automatically update MSD to the Public Safety Answering
-    * Point(PSAP) @ref- telux::tel::ICallListener::OnTpsMsdUpdateRequest.
-    *
-    * For all other types of eCall:
-    * This API will update the eCall MSD in modem's cache.The modem automatically transmits MSD
-    * from this cache whenever there is an MSD pull request from Public Safety Answering Point
-    * (PSAP).
+    * Point(PSAP) @ref- telux::tel::ICallListener::OnMsdUpdateRequest.
     *
     * On platforms with Access control enabled, Caller needs to have TELUX_TEL_ECALL_MGMT permission
     * to invoke this API successfully.

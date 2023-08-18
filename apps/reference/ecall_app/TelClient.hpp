@@ -315,12 +315,20 @@ class TelClient : public ICallListener,
      */
     telux::tel::CallDirection getECallDirection();
 
+    /**
+     * This function caches latest MSD recieved after location update.
+     *
+     * @param [in] MSD data
+     *
+     */
+    void setECallMsd(ECallMsdData& msdData_);
+
     void onIncomingCall(std::shared_ptr<ICall> call) override;
     void onCallInfoChange(std::shared_ptr<ICall> call) override;
     void onECallMsdTransmissionStatus(int phoneId, ErrorCode errorCode) override;
     void onECallMsdTransmissionStatus(
         int phoneId, ECallMsdTransmissionStatus msdTransmissionStatus) override;
-    void OnTpsMsdUpdateRequest(int phoneId) override;
+    void OnMsdUpdateRequest(int phoneId) override;
     void onECallHlapTimerEvent(int phoneId, ECallHlapTimerEvents timerEvents) override;
     void makeCallResponse(
         telux::common::ErrorCode error, std::shared_ptr<telux::tel::ICall>) override;
@@ -366,11 +374,13 @@ class TelClient : public ICallListener,
 
     /** Represents eCall status */
     bool eCallInprogress_;
+
     std::mutex mutex_;
     std::shared_ptr<CallStatusListener> callListener_;
 
     // Map to hold the ongoing eCall Info w.r.t phoneId
     std::map<int, ECallInfo> eCallDataMap_;
+    ECallMsdData msdData_;
 
     class EcallScanFailHandler : public ICallListener,
                                  public std::enable_shared_from_this<EcallScanFailHandler> {
@@ -408,6 +418,8 @@ class TelClient : public ICallListener,
     };
 
     std::shared_ptr<EcallScanFailHandler> eCallScanFailHdlrInstance_;
+    /** Represents whether ecall initiated is a private ecall. */
+    bool isPrivateEcallTriggered;
 };
 
 #endif  // TELCLIENT_HPP

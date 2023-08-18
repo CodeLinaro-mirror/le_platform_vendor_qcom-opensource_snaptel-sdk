@@ -74,6 +74,7 @@ class LocationUtils {
     static void displayXtraStatus(telux::loc::XtraStatus xtraStatus);
     static void displayDisasterCrisisReportType(telux::loc::GnssDisasterCrisisReport dcReportInfo);
     static void printGnssSignalType(telux::loc::GnssSignal signalTypeMask);
+    static void displayLocEngineType(telux::loc::LocationAggregationType locEngineType);
 };
 
 #endif  // LOCATIONUTILS_HPP

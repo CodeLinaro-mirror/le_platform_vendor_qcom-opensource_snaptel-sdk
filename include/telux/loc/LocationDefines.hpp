@@ -1639,9 +1639,15 @@ enum class GeodeticDatumType {
 /** Specify the Nmea Config Parameters */
 struct NmeaConfig {
     /** Specify the sentences to be configured. */
-    NmeaSentenceConfig sentenceConfig;
+    NmeaSentenceConfig sentenceConfig = NmeaSentenceType::ALL;
     /** Specify the datum type to be configured. */
-    GeodeticDatumType datumType;
+    GeodeticDatumType datumType = GeodeticDatumType::GEODETIC_TYPE_WGS_84;
+    /**
+     * Specify the Engine type for which Nmea sentences should be generated.
+     * Also refer to  @ref ILocationConfigurator::configureNmea and
+     * @ref ILocationManager::startDetailedEngineReports to understand the usage further.
+    */
+    LocReqEngine engineType = LocReqEngineType::LOC_REQ_ENGINE_FUSED_BIT;
 };
 
 /** Specify the valid mask for robust location configuration
@@ -1740,7 +1746,19 @@ enum GnssReportType {
     LOCATION          = (1 << 0),
     /** Satellite reports */
     SATELLITE_VEHICLE = (1 << 1),
-    /** Nmea reports */
+    /**
+     * To receive updates via @ref ILocationListener::onGnssNmeaInfo,
+     * clients need to set this bit in the reportMask parameter passed to
+     * @ref ILocationManager::startDetailedReports and
+     * @ref ILocationManager::startDetailedEngineReports.
+     *
+     * Clients should set NMEA if they only need sentences from FUSED engine
+     * Or set ENGINE NMEA if they need sentences from specific engine types.
+     * Clients should never set both.
+     *
+     * Also refer to @ref ILocationManager::startDetailedEngineReports
+     * to understand the usage further.
+     */
     NMEA              = (1 << 2),
     /** Data reports */
     DATA              = (1 << 3),
@@ -1751,7 +1769,20 @@ enum GnssReportType {
      *  Also there might be difference in accuracy of fields for the both the rates. */
     HIGH_RATE_MEASUREMENT    = (1 << 5),
     /*Disaster Crisis Reports*/
-    DISASTER_CRISIS   = (1 << 6)
+    DISASTER_CRISIS   = (1 << 6),
+    /**
+     * To receive updates via @ref ILocationListener::onEngineNmeaInfo,
+     * clients need to set this bit in the reportMask parameter passed to
+     * @ref ILocationManager::startDetailedEngineReports.
+     *
+     * Clients should set NMEA if they only need sentences from FUSED engine
+     * Or set ENGINE NMEA if they need sentences from specific engine types.
+     * Clients should never set both.
+     *
+     * Also refer to @ref ILocationManager::startDetailedEngineReports
+     * to understand the usage further.
+     */
+    ENGINE_NMEA       = (1 << 7)
 };
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */

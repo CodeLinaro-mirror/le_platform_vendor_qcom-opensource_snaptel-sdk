@@ -642,9 +642,23 @@ public:
       telux::common::ResponseCallback callback = nullptr) = 0;
 
 /**
- * This API is used to configure the NMEA sentences that the clients will receive via
- * @ref ILocationManager::startDetailedReports or
- * @ref ILocationManager::startDetailedEngineReports.
+ * This API is used to configure the NMEA sentences that the clients
+ * will receive via @ref ILocationListener class APIs.
+ * NMEA updates can be received by either:
+ * a) Setting the
+ * @ref telux::loc::GnssReportType::NMEA bit in the reportMask passed as a paramter to
+ * @ref ILocationManager::startDetailedReports OR @ref ILocationManager::startDetailedEngineReports
+ * and receive the sentences via @ref ILocationListener::onGnssNmeaInfo.
+ * b) Setting the
+ * @ref telux::loc::GnssReportType::ENGINE_NMEA bit in the reportMask passed as a paramter to
+ * @ref ILocationManager::startDetailedEngineReports
+ * and receive the sentences via @ref ILocationListener::onEngineNmeaInfo.
+ *
+ * Further, the engines from which NMEA sentences will be received depends
+ * on the configuration made through this API AND the engine types chosen when starting the
+ * position reports via @ref ILocationManager::startDetailedEngineReports.
+ * Fused engine is always considered as set even if the client does not explicitly specify it.
+ *
  * Without prior invocation to this API, all NMEA sentences supported in the system will get
  * generated and delivered to all the clients that register to receive NMEA sentences.
  * The NMEA sentence type configuration is common across all clients and updating it will affect
@@ -656,6 +670,9 @@ public:
  *
  * This API call is not incremental and the new NMEA configuration will completely overwrite the
  * previous call to this API.
+ *
+ * Also refer to @ref ILocationManager::startDetailedEngineReports
+ * to understand the types of NMEA updates to be received.
  *
  * @param [in] configParams - Configuration Parameters for Nmea on the device.
  *

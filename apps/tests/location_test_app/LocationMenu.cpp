@@ -531,7 +531,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
           std::vector<int> options;
           std::cout << " Enter the type of reports to enable : \n"
                        " (0 - Location\n 1 - SV\n 2 - NMEA\n 3 - DATA\n 4 - Measurement\n "
-                       "5 - NHzMeasurement\n 6 - DisasterCrisis) \n\n";
+                       "5 - NHzMeasurement\n 6 - DisasterCrisis\n 7 - EngineNMEA) \n\n";
           std::cout << " Enter your preference\n"
                        " (For example: enter 0,1 to choose Location & SV reports) : ";
           std::getline(std::cin,reportPreference,delimiter);
@@ -543,7 +543,7 @@ void LocationMenu::startDetailedEngineReports(std::vector<std::string> userInput
                   ss.ignore();
           }
           for(auto &option : options) {
-              if(option >= 0 && option <= 6) {
+              if(option >= 0 && option <= 7) {
                   try {
                       reportMask |= 1UL << option;
                   } catch(const std::exception &e) {
@@ -1150,33 +1150,53 @@ void LocationMenu::configureNmeaSentence(std::vector<std::string> userInput) {
 
         int nmeaDatumPref;
         std::cout << "\nEnter Nmea Datum Type to be used: \n"
-                        "-1 - NONE \n"
                         "0 - WGS_84 \n"
                         "1 - PZ-90 \n";
         std::cin >> nmeaDatumPref;
         Utils::validateInput(nmeaDatumPref);
+
+        std::string enginePreference;
+        LocReqEngine engineType = DEFAULT_UNKNOWN;
+        std::vector<int> engOptions;
+        std::cout << " Enter the type of engine reports : \n"
+                    " (0 - FUSED\n 1 - SPE\n 2 - PPE\n 3 - VPE) \n\n";
+        std::cout << " Enter your engine preference\n"
+                    " (For example: enter 0,1 to choose FUSED & SPE engine fixes) : ";
+        std::getline(std::cin,enginePreference,delimiter);
+        std::stringstream engss(enginePreference);
+        int itr;
+        while(engss >> itr) {
+            engOptions.push_back(itr);
+            if(engss.peek() == ',' || engss.peek() == ' ')
+            engss.ignore();
+        }
+        for(auto &opt : engOptions) {
+            if(opt >= 0 && opt <= 3) {
+                try {
+                    engineType |= 1UL << opt;
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                                << std::endl;
+                }
+            } else {
+                std::cout << "Engine preference should not be out of range" << std::endl;
+            }
+        }
+
         telux::common::Status status;
         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
             "Configure Nmea sentence types");
 
-        if(nmeaDatumPref == -1) {
-            //No Datum Type is needed.
-            status = locationConfigurator_->configureNmeaTypes(nmeaType,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                    std::placeholders::_1));
-        } else {
-            //Datum type is configured.
-            telux::loc::NmeaConfig nmeaConfigParams;
-            nmeaConfigParams.sentenceConfig = nmeaType;
-            if(nmeaDatumPref > 1) {
-                nmeaDatumPref = 0;
-            }
-            nmeaConfigParams.datumType =
-                static_cast<telux::loc::GeodeticDatumType>(nmeaDatumPref);
-            status = locationConfigurator_->configureNmea(nmeaConfigParams,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                    std::placeholders::_1));
+        telux::loc::NmeaConfig nmeaConfigParams;
+        nmeaConfigParams.sentenceConfig = nmeaType;
+        if(nmeaDatumPref > 1) {
+            nmeaDatumPref = 0;
         }
+        nmeaConfigParams.datumType = static_cast<telux::loc::GeodeticDatumType>(nmeaDatumPref);
+        nmeaConfigParams.engineType = engineType;
+        status = locationConfigurator_->configureNmea(nmeaConfigParams,
+            std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                std::placeholders::_1));
 
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Configure Nmea sentence types failed" << std::endl;
@@ -1190,33 +1210,54 @@ void LocationMenu::configureAllNmeaSentence(std::vector<std::string> userInput) 
 
         int nmeaDatumPref;
         std::cout << "\nEnter Nmea Datum Type to be used: \n"
-                        "-1 - NONE \n"
                         "0 - WGS_84 \n"
                         "1 - PZ-90 \n";
         std::cin >> nmeaDatumPref;
         Utils::validateInput(nmeaDatumPref);
+
+        char delimiter = '\n';
+        std::string enginePreference;
+        LocReqEngine engineType = DEFAULT_UNKNOWN;
+        std::vector<int> engOptions;
+        std::cout << " Enter the type of engine reports : \n"
+                    " (0 - FUSED\n 1 - SPE\n 2 - PPE\n 3 - VPE) \n\n";
+        std::cout << " Enter your engine preference\n"
+                    " (For example: enter 0,1 to choose FUSED & SPE engine fixes) : ";
+        std::getline(std::cin,enginePreference,delimiter);
+        std::stringstream engss(enginePreference);
+        int itr;
+        while(engss >> itr) {
+            engOptions.push_back(itr);
+            if(engss.peek() == ',' || engss.peek() == ' ')
+            engss.ignore();
+        }
+        for(auto &opt : engOptions) {
+            if(opt >= 0 && opt <= 3) {
+                try {
+                    engineType |= 1UL << opt;
+                } catch(const std::exception &e) {
+                    std::cout << "ERROR: invalid input, please enter numerical values " << opt
+                                << std::endl;
+                }
+            } else {
+                std::cout << "Engine preference should not be out of range" << std::endl;
+            }
+        }
+
         telux::common::Status status;
         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>(
             "Configure All Nmea sentence types");
 
-        if(nmeaDatumPref == -1) {
-            //No Datum Type is needed.
-            status = locationConfigurator_->configureNmeaTypes(nmeaType,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                    std::placeholders::_1));
-        } else {
-            //Datum type is configured.
-            telux::loc::NmeaConfig nmeaConfigParams;
-            nmeaConfigParams.sentenceConfig = nmeaType;
-            if(nmeaDatumPref > 1) {
-                nmeaDatumPref = 0;
-            }
-            nmeaConfigParams.datumType =
-                static_cast<telux::loc::GeodeticDatumType>(nmeaDatumPref);
-            status = locationConfigurator_->configureNmea(nmeaConfigParams,
-                std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
-                    std::placeholders::_1));
+        telux::loc::NmeaConfig nmeaConfigParams;
+        nmeaConfigParams.sentenceConfig = nmeaType;
+        if(nmeaDatumPref > 1) {
+            nmeaDatumPref = 0;
         }
+        nmeaConfigParams.datumType = static_cast<telux::loc::GeodeticDatumType>(nmeaDatumPref);
+        nmeaConfigParams.engineType = engineType;
+        status = locationConfigurator_->configureNmea(nmeaConfigParams,
+            std::bind(&MyLocationCommandCallback::commandResponse, myLocCmdResponseCb_,
+                std::placeholders::_1));
 
         if (status != telux::common::Status::SUCCESS) {
             std::cout << "Configure All Nmea sentence types failed" << std::endl;
@@ -1962,7 +2003,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
      std::cout << "  6 - Nmea_info_notifications" << std::endl;
      std::cout << "  7 - Measurements_info_notifications" << std::endl;
      std::cout << "  8 - Location_system_information " << std::endl;
-     std::cout << "  9 - Disaster_Crisis_info_notifications" << std::endl << std::endl << std::endl;
+     std::cout << "  9 - Disaster_Crisis_info_notifications" << std::endl;
+     std::cout << "  10 - Engine_NMEA_info_notifications" << std::endl << std::endl << std::endl;
      std::cout << "  ? / h - help" << std::endl;
      std::cout << "  q / 0 - exit" << std::endl << std::endl;
      std::cout << "------------------------------------------------" << std::endl << std::endl;
@@ -1990,6 +2032,8 @@ void LocationMenu::enableReportLogs(std::vector<std::string> userInput) {
          LocationMenu::enableLocationSystemInfoLogs();
      } else if(usrInput == "9") {
          LocationMenu::enableDisasterCrisisInfoLogs();
+     }  else if(usrInput == "10") {
+         LocationMenu::enableEngineNmeaInfoLogs();
      } else if(usrInput == "?" || usrInput == "h" || usrInput == "help") {
          continue;
      } else if(usrInput == "q" || usrInput == "0" || usrInput == "exit" || usrInput == "quit"
@@ -2051,6 +2095,15 @@ void LocationMenu::enableDisasterCrisisInfoLogs() {
     int opt = enableReportLogsUtility();
     if((opt == 0) || (opt == 1)) {
         posListener_->setDisasterCrisisInfoFlag(opt);
+    } else {
+        std::cout << "ERROR: invalid input, please enter 0 or 1\n";
+    }
+}
+
+void LocationMenu::enableEngineNmeaInfoLogs() {
+    int opt = enableReportLogsUtility();
+    if((opt == 0) || (opt == 1)) {
+        posListener_->setEngineNmeaInfoFlag(opt);
     } else {
         std::cout << "ERROR: invalid input, please enter 0 or 1\n";
     }

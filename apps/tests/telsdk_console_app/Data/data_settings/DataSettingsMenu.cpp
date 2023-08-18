@@ -91,6 +91,8 @@ bool DataSettingsMenu::init() {
             std::bind(&DataSettingsMenu::setMacSecState, this, std::placeholders::_1)),
             std::make_pair("Request_MACsec_State",
             std::bind(&DataSettingsMenu::requestMacSecState, this, std::placeholders::_1)),
+            std::make_pair("Switch_Backhaul",
+            std::bind(&DataSettingsMenu::switchBackHaul, this, std::placeholders::_1)),
         };
         std::vector<std::shared_ptr<ConsoleAppCommand>> settingsMenuCommandList;
         int commandId = 1;
@@ -623,6 +625,85 @@ void DataSettingsMenu::requestMacSecState(std::vector<std::string> inputCommand)
     };
 
     retStat = dataSettingsManagerMap_[opType]->requestMacSecState(respCb);
+    Utils::printStatus(retStat);
+}
+
+void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
+    telux::common::Status retStat;
+    int operationType;
+
+    std::cout << "Switch BackHaul / Route Backhaul Traffic\n";
+
+    std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
+    std::cin >> operationType;
+    DataUtils::validateInput(operationType, {0, 1});
+    telux::data::OperationType opType = static_cast<telux::data::OperationType>(operationType);
+
+    if (dataSettingsManagerMap_.find(opType) == dataSettingsManagerMap_.end()) {
+        std::cout << "Data Settings Manager is not ready" << std::endl;
+        return;
+    }
+
+    BackhaulInfo source{}, dest{};
+    int backhaul, switchAll, slotId = DEFAULT_SLOT_ID;
+
+    std::cout << "Do you want to switch All WWAN Backhauls (0-No, 1-Yes): ";
+    std::cin >> switchAll;
+    Utils::validateInput(switchAll, {0, 1});
+    bool applyToAll = (switchAll == 0)? false:true;
+
+    std::cout << "Enter Backhaul Type to switch from (0-Wlan, 1-WWAN): ";
+    std::cin >> backhaul;
+    Utils::validateInput(backhaul, {0, 1});
+    std::cout << std::endl;
+    if(backhaul) {
+        source.backhaul = telux::data::BackhaulType::WWAN;
+        if (!applyToAll) {
+            if (telux::common::DeviceConfig::isMultiSimSupported()) {
+                slotId = Utils::getValidSlotId();
+            }
+            int profileId;
+            std::cout << "Enter Profile Id: ";
+            std::cin >> profileId;
+            Utils::validateInput(profileId);
+            source.profileId = profileId;
+        }
+        source.slotId = static_cast<SlotId>(slotId);
+    } else {
+        source.backhaul = telux::data::BackhaulType::WLAN;
+    }
+
+    std::cout << "Enter Backhaul Type to switch to (0-Wlan, 1-WWAN): ";
+    std::cin >> backhaul;
+    Utils::validateInput(backhaul, {0, 1});
+    std::cout << std::endl;
+    if (backhaul) {
+        dest.backhaul = telux::data::BackhaulType::WWAN;
+        if(!applyToAll) {
+            if (telux::common::DeviceConfig::isMultiSimSupported()) {
+                slotId = Utils::getValidSlotId();
+            }
+            int profileId;
+            std::cout << "Enter Profile Id: ";
+            std::cin >> profileId;
+            Utils::validateInput(profileId);
+            dest.profileId = profileId;
+        }
+        dest.slotId = static_cast<SlotId>(slotId);
+    } else {
+        dest.backhaul = telux::data::BackhaulType::WLAN;
+    }
+    // Callback
+    auto respCb = [](telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "switchBackHaul Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    };
+
+    retStat = dataSettingsManagerMap_[opType]->switchBackHaul(source, dest, applyToAll, respCb);
     Utils::printStatus(retStat);
 }
 

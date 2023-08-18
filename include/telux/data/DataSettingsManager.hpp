@@ -447,6 +447,46 @@ public:
     virtual telux::common::Status requestMacSecState(RequestMacSecSateResponseCb callback) = 0;
 
     /**
+     * Switch backhaul to be used by traffic.
+     * Provides the ability to re-route clients traffic from one backhaul to another.
+     * Clients must call this API for each backhaul switch. For instance, if the default bridge
+     * (bridge0) and the on-demand bridge (bridges created by VLANs) need to be re-routed to WLAN,
+     * this API must be called twice for the default profile ID and the on-demand profile ID..
+     * If destination backhaul is WLAN (WLAN in Station Mode):
+     * - Traffic associated with the default and on-demand bridges will be re-routed to WLAN
+     *   backhaul.
+     * - Client traffic can only be re-routed to WLAN backhaul if the station is connected to an
+     *   external access point.
+     * - VLANs mapped to WWAN backhaul will be automatically mapped to WLAN backhaul.
+     * - Firewall and DMZ rules configured on WLAN backhaul (if configured before calling this API)
+     *   will be automatically activated.
+     * If destination backhaul is WWAN:
+     *  - Any VLAN profile ID mapping configured in the destination backhaul prior to calling this
+     *    API will be applied automatically.
+     *  - Any firewall or DMZ rule configured on WWAN backhaul before calling this API will be
+     *    activated automatically.
+     *
+     * @param [in] source         Backhaul @ref telux::data::BackhaulInfo to re-route traffic from
+     * @param [in] dest           Backhaul @ref telux::data::BackhaulType to re-route traffic to
+     * @param [in] applyToAll     Traffic on all source backhauls will be routed to dest backhauls
+     *                            if the source backhaul type is
+     *                            @ref telux::data::BackhaulType::WWAN, traffic on all WWAN
+     *                            backhauls (default and on-demand) will be routed to dest backhaul.
+     *                            if dest backhaul type is @ref telux::data::BackhaulType::WWAN
+     *                            traffic on source backhaul will be routed to WWAN backhauls
+     *                            (default and on-demand) based on vlan-backhaul binding set by
+     *                            telux::data::net::IVlanManager::bindToBackhaul
+     * @param [in] callback       Optional callback to get the response for switchBackHaul.
+     *
+     * @returns Status of switchBackHaul, i.e., success or applicable status code
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     */
+    virtual telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
+        bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
      * Register Data Settings Manager as listener for Data Service heath events like data service
      * available or data service not available.
      *

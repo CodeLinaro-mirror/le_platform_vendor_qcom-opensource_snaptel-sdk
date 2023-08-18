@@ -41,7 +41,7 @@ Type=simple
 ExecStartPre=+/bin/chown locclient:locclient /var/run/chrony.sock
 ExecStart=/usr/bin/chrony-sock -s
 Restart=always
-SupplementaryGroups=system diag
+SupplementaryGroups=system diag radio
 
 [Install]
 WantedBy=multi-user.target

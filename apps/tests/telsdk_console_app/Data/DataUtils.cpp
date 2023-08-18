@@ -66,6 +66,7 @@
 #include <iomanip>
 #include <algorithm>
 
+#include <telux/common/DeviceConfig.hpp>
 #include "DataUtils.hpp"
 
 std::string DataUtils::techPreferenceToString(telux::data::TechPreference techPref) {
@@ -610,5 +611,52 @@ void DataUtils::logQosDetails(
             }
          }
       }
+   }
+}
+
+std::string DataUtils::backhaulToString(telux::data::BackhaulType backhaul) {
+   std::string retString = "UNKNOWN";
+   switch(backhaul) {
+      case telux::data::BackhaulType::ETH:
+         retString = "ETH";
+         break;
+      case telux::data::BackhaulType::USB:
+         retString = "USB";
+         break;
+      case telux::data::BackhaulType::WLAN:
+         retString = "WLAN";
+         break;
+      case telux::data::BackhaulType::WWAN:
+         retString = "WWAN";
+         break;
+      case telux::data::BackhaulType::BLE:
+         retString = "BLE";
+         break;
+      default:
+         break;
+   }
+   return retString;
+}
+
+// Retuns true if multiple backhauls are supported
+void DataUtils::populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo) {
+   int backhaul = 0, profileId = 0;
+   std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+   std::cin >> backhaul;
+   Utils::validateInput(backhaul);
+   std::cout << std::endl;
+   if (backhaul) {
+      int slotId = DEFAULT_SLOT_ID;
+      if (telux::common::DeviceConfig::isMultiSimSupported()) {
+         slotId = Utils::getValidSlotId();
+      }
+      backhaulInfo.slotId = static_cast<SlotId>(slotId);
+      backhaulInfo.backhaul = telux::data::BackhaulType::WWAN;
+      std::cout << "Enter Profile Id: ";
+      std::cin >> profileId;
+      Utils::validateInput(profileId);
+      backhaulInfo.profileId = profileId;
+   } else {
+      backhaulInfo.backhaul = telux::data::BackhaulType::WLAN;
    }
 }

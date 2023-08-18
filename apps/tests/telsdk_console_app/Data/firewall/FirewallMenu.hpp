@@ -104,6 +104,6 @@ class FirewallMenu : public ConsoleApp,
     bool subSystemStatusUpdated_;
     std::condition_variable cv_;
     std::shared_ptr<telux::data::net::IFirewallManager> firewallManager_;
-    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;
+    std::vector<FirewallEntryInfo> fwEntries_;
 };
 #endif

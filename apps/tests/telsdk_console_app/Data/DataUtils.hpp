@@ -99,6 +99,8 @@ public:
    static std::string flowStateEventToString(telux::data::QosFlowStateChangeEvent state);
    static void logQosDetails(std::shared_ptr<telux::data::TrafficFlowTemplate> &tft);
    static void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
+   static void populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo);
+   static std::string backhaulToString(telux::data::BackhaulType backhaul);
 };
 
 #endif  // DATAUTILS_HPP

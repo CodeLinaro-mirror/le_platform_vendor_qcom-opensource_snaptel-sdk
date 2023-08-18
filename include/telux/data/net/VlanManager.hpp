@@ -94,6 +94,11 @@ namespace net {
 // Forward declarations
 class IVlanListener;
 
+struct VlanBindConfig {
+    int vlanId;                         /** VLAN ID to be bound to the specified backhaul     */
+    BackhaulInfo bhInfo;                /**< Configuration of Backhaul to bind VLAN to        */
+};
+
 /**
  * This function is called as a response to @ref createVlan()
  *
@@ -126,6 +131,20 @@ using QueryVlanResponseCb
  */
 using VlanMappingResponseCb = std::function<void(
     const std::list<std::pair<int, int>> &mapping, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref queryVlanToBackhaulBindings()
+ *
+ * @param [in] bindings        list of Vlan binding configurations
+ *                             @ref telux::data::net::VlanBindConfig
+ * @param [in] error           Return code which indicates whether the operation
+ *                             succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change.
+ */
+using VlanBindingsResponseCb = std::function<void(
+    const std::vector<VlanBindConfig> bindings, telux::common::ErrorCode error)>;
+
 
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).
@@ -225,64 +244,73 @@ class IVlanManager {
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
     /**
-     * Bind a VLAN with a particular profile id and slot id. When a WWAN network interface is
-     * brought up using IDataConnectionManager::startDataCall on that profile id and slot id,
-     * that interface will be accessible from this VLAN
+     * Bind a VLAN with a particular profile id. When a WWAN network interface is brought up using
+     * IDataConnectionManager::startDataCall on that profile id, that interface will be accessible
+     * from this VLAN
      * The behavior of this API is dependent on platform/system configuration.
      * If the platform is configured to allow multiple VLANs to be bound to the same
-     * profile id - slot id pair then:
-     *   - Binding multiple VLANs to any profile id - slot id pair can be achieved by calling this
+     * profile id then:
+     *   - Binding multiple VLANs to any profile id can be achieved by calling this
      *     API with each VLAN id. Each VLAN will be associated with it's own bridge.
      *   - Reboot is not triggered with any bind operation.
      * If the platform is not configured to allow multiple VLANs to be bound to the same
-     * profile id - slot id pair then:
-     *   - Binding VLAN to default profile id and slot id will associate it with bridge0 and
+     * profile id then:
+     *   - Binding VLAN to default profile id will associate it with bridge0 and
      *     trigger automatic reboot.
-     *   - Binding VLAN to any other profile id and slot id will associate it with own bridge.
-     *   - Multiple VLAN binding attempt to any profile id or slot id will result in error
+     *   - Binding VLAN to any other profile id will associate it with own bridge.
+     *   - Multiple VLAN binding attempt to any profile id will result in error
      *     telux::common::ErrorCode::INVALID_OPERATION
-     * This setting will be persistant across multiple boots.
+     * This setting will be persistent across multiple boots.
      *
-     * @param [in] profileId    profile id for VLAN association
-     * @param [in] vlanId       VLAN ID to be bound to the data call brought up on the profile id
-     * @param [out] callback    callback to get the response of associateWithProfileId API
-     * @param [in] slotId       Specify slot id which has the sim that contains profile id.
+     * @param [in] vlanBindConfig       Backhaul information and vlan id to bind it to.
+     *                                  @ref telux::data::net::VlanBindConfig
+     * @param [out] callback            Callback to get the response of bindToBackhaul API
      *
-     * @returns Immediate status of associateWithProfileId() request sent i.e. success or
+     * @returns Immediate status of bindToBackhaul() request sent i.e. success or
      * suitable status code.
      *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     *
      */
-    virtual telux::common::Status bindWithProfile(int profileId, int vlanId,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status bindToBackhaul(VlanBindConfig vlanBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Unbind VLAN id from given slot id and profile id
-     * This setting will be persistant across multiple boots.
+     * Unbind VLAN from particular backhaul. This API will stop vlan traffic flow to/from specified
+     * backhaul type.
+     * Slot ID and profile ID are relevant only for WWAN backhaul. For all other backhauls types,
+     * values are don't care.
      *
-     * @param [in] profileId    profile id for VLAN association
-     * @param [in] vlanId       VLAN ID to be unbound to the data call brought up on the profile id
-     * @param [in] callback     callback to get the response of associateWithProfileId API
-     * @param [in] slotId       Specify slot id which has the sim that contains profile id .
+     * @param [in] vlanBindConfig       Backhaul information and vlan id to unbind it from.
+     *                                  @ref telux::data::net::VlanBindConfig
+     * @param [in] callback             Callback to get the response of unbindFromBackhaul API
      *
-     * @returns Immediate status of disassociateFromProfileId() request sent i.e. success or
+     * @returns Immediate status of unbindFromBackhaul() request sent i.e. success or
      * suitable status code
      *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
      */
-    virtual telux::common::Status unbindFromProfile(int profileId, int vlanId,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status unbindFromBackhaul(VlanBindConfig vlanBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Query VLAN mapping of profile id and VLAN id on specified sim
+     * Query VLAN to backhaul binding configurations
      *
-     * @param [in] callback    callback to get the response of queryVlanMappingList API
-     * @param [in] slotId      Specify slot id which has the sim that contains profile id
-     *                         mapping to VLAN id.
+     * @param [in] backhaulType     Backhaul to query vlan binding for.
+     * @param [in] callback         callback to get the response of queryVlanToBackhaulBindings API
+     * @param [in] slotId           Specify slot id which has the sim that contains profile id
+     *                              mapping to VLAN id.
      *
-     * @returns Immediate status of queryVlanMappingList() request sent i.e. success or
+     * @returns Immediate status of queryVlanToBackhaulBindings() request sent i.e. success or
      * suitable status code
      *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
      */
-    virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback,
+    virtual telux::common::Status queryVlanToBackhaulBindings(
+        BackhaulType backhaulType, VlanBindingsResponseCb callback,
         SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
@@ -314,6 +342,70 @@ class IVlanManager {
      *
      */
     virtual telux::data::OperationType getOperationType() = 0;
+
+    /**
+     * Bind a VLAN with a particular profile id and slot id. When a WWAN network interface is
+     * brought up using IDataConnectionManager::startDataCall on that profile id and slot id,
+     * that interface will be accessible from this VLAN
+     * The behavior of this API is dependent on platform/system configuration.
+     * If the platform is configured to allow multiple VLANs to be bound to the same
+     * profile id - slot id pair then:
+     *   - Binding multiple VLANs to any profile id - slot id pair can be achieved by calling this
+     *     API with each VLAN id. Each VLAN will be associated with it's own bridge.
+     *   - Reboot is not triggered with any bind operation.
+     * If the platform is not configured to allow multiple VLANs to be bound to the same
+     * profile id - slot id pair then:
+     *   - Binding VLAN to default profile id and slot id will associate it with bridge0 and
+     *     trigger automatic reboot.
+     *   - Binding VLAN to any other profile id and slot id will associate it with own bridge.
+     *   - Multiple VLAN binding attempt to any profile id or slot id will result in error
+     *     telux::common::ErrorCode::INVALID_OPERATION
+     * This setting will be persistant across multiple boots.
+     *
+     * @param [in] profileId    profile id for VLAN association
+     * @param [in] vlanId       VLAN ID to be bound to the data call brought up on the profile id
+     * @param [out] callback    callback to get the response of associateWithProfileId API
+     * @param [in] slotId       Specify slot id which has the sim that contains profile id.
+     *
+     * @returns Immediate status of associateWithProfileId() request sent i.e. success or
+     * suitable status code.
+     *
+     * @deprecated Use bindToBackhaul() API below to bind VLAN to backhaul
+     */
+    virtual telux::common::Status bindWithProfile(int profileId, int vlanId,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Unbind VLAN id from given slot id and profile id
+     * This setting will be persistant across multiple boots.
+     *
+     * @param [in] profileId    profile id for VLAN association
+     * @param [in] vlanId       VLAN ID to be unbound to the data call brought up on the profile id
+     * @param [in] callback     callback to get the response of associateWithProfileId API
+     * @param [in] slotId       Specify slot id which has the sim that contains profile id .
+     *
+     * @returns Immediate status of disassociateFromProfileId() request sent i.e. success or
+     * suitable status code
+     *
+     * @deprecated Use unbindFromBackhaul() API below to unbind VLAN to backhaul
+     */
+    virtual telux::common::Status unbindFromProfile(int profileId, int vlanId,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Query VLAN mapping of profile id and VLAN id on specified sim
+     *
+     * @param [in] callback    callback to get the response of queryVlanMappingList API
+     * @param [in] slotId      Specify slot id which has the sim that contains profile id
+     *                         mapping to VLAN id.
+     *
+     * @returns Immediate status of queryVlanMappingList() request sent i.e. success or
+     * suitable status code
+     *
+     * @deprecated Use queryVlanToBackhaulBindings() API below to request VLAN to backhaul mapping
+     */
+    virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback,
+        SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Destructor for IVlanManager

@@ -76,6 +76,7 @@
 #include <vector>
 #include <bitset>
 
+#include <telux/common/CommonDefines.hpp>
 namespace telux {
 namespace data {
 
@@ -757,6 +758,30 @@ enum class InterfaceType {
     MHI = 5,        /**< Modem Host Interface (MHI)                              */
     VMTAP0 = 6,     /**< Represents Virtio interface available in a VM           */
     VMTAP1 = 7,     /**< Represents Virtio interface available in a VM           */
+};
+
+/**
+ * Specifies backhaul types
+ */
+enum class BackhaulType {
+    ETH           = 0  ,    /** Ethernet Backhaul        */
+    USB           = 1  ,    /** USB Backhaul             */
+    WLAN          = 2  ,    /** WLAN Backhaul            */
+    WWAN          = 3  ,    /** WWAN Backhaul with default profile ID set by */
+                            /** @ref telux::data::DataConnectionManager::setDefaultProfile  */
+    BLE           = 4  ,    /** Bluetooth Backhaul       */
+    MAX_SUPPORTED = 5  ,    /** Max Supported Backhauls  */
+};
+
+/**
+ * Encapsulate backhaul configuration parameters
+ */
+struct BackhaulInfo {
+    BackhaulType backhaul;              /** Backhaul type to apply configuration on.           */
+    SlotId slotId = DEFAULT_SLOT_ID;    /** Slot Id which has sim that contains profile id    */
+                                        /** Needed only for WWAN backhaul                     */
+    int profileId = -1;                 /** Profile id to apply configuration on              */
+                                        /** Needed only for WWAN backhaul                     */
 };
 
 /**

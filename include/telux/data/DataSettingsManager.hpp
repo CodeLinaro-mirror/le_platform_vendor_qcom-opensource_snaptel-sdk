@@ -35,7 +35,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -80,7 +80,6 @@
 #include <memory>
 
 #include <telux/data/DataDefines.hpp>
-#include <telux/common/CommonDefines.hpp>
 
 namespace telux {
 namespace data {
@@ -90,19 +89,6 @@ namespace data {
 
 // Forward declarations
 class IDataSettingsListener;
-
-/**
- * Specifies backhaul types
- */
-enum class BackhaulType {
-    ETH           = 0  ,    /** Ethernet Backhaul        */
-    USB           = 1  ,    /** USB Backhaul             */
-    WLAN          = 2  ,    /** WLAN Backhaul            */
-    WWAN          = 3  ,    /** WWAN Backhaul with default profile ID set by */
-                            /** @ref telux::data::IDataConnectionManager::setDefaultProfile  */
-    BLE           = 4  ,    /** Bluetooth Backhaul       */
-    MAX_SUPPORTED = 5  ,    /** Max Supported Backhauls  */
-};
 
 /**
  * Set priority between N79 5G and Wlan 5GHz Band

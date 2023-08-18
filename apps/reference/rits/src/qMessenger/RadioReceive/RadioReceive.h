@@ -82,7 +82,6 @@
 #include <net/if.h>
 #include <string>
 #include <poll.h>
-#include <telux/cv2x/Cv2xRadioTypes.hpp>
 
 using std::array;
 using std::make_shared;
@@ -96,9 +95,6 @@ class RadioReceive : public RadioInterface {
 private:
     TrafficCategory category;
     void rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCode error);
-    void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
-    void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
-    void commonStatusCallback(ErrorCode error);
     bool isSim = false;
     int simListenSock, simRxSock;
     struct sockaddr_in srcAddress;
@@ -106,7 +102,6 @@ private:
     uint16_t srcPort;
     bool enableUdp = false;
     string ipv4_src;
-    std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
     uint64_t lastRxMonotonicTime_ = 0;
 
 protected:
@@ -165,10 +160,7 @@ public:
             uint8_t *sourceMacAddr, int& macAddrLen);
 
     int onReceiveWra(const telux::cv2x::IPv6AddrType &ipv6Addr);
-    int onWraTimedout(void);
-    int setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr, const uint32_t serviceId);
-    int clearGlobalIPInfo(void);
-    int setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
+
     /**
     * Method that closes Receive Subscription and returns fail or success
     * @param buf a char pointer to store the data received.

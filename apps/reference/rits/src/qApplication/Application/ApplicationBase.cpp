@@ -1688,7 +1688,7 @@ void ApplicationBase::setup(MessageType msgType) {
         }
 
         /* radio debug */
-        if (this->configuration.codecVerbosity) {
+        if (this->configuration.codecVerbosity && radioReceives.size()) {
             this->radioReceives[i].
                 set_radio_verbosity(this->configuration.codecVerbosity);
         }

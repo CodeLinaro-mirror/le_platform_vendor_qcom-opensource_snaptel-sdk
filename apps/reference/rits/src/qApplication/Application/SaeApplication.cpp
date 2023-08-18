@@ -1475,7 +1475,11 @@ int SaeApplication::setGlobalIPv6Prefix(void)
         if (!parseIPv6Addr(configuration.ipPrefix, ipPrefix, prefixLen)) {
             IpPrefix.prefixLen = configuration.ipPrefixLength;
             memcpy(IpPrefix.ipv6Addr, ipPrefix, prefixLen);
-            ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
+            if(radioReceives.size()){
+                ret = radioReceives[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
+            }else if(this->spsTransmits.size()){
+                ret = this->spsTransmits[0].setGlobalIPInfo(IpPrefix, configuration.wraServiceId);
+            }
         }
         GlobalIpSessionActive = true;
     }
@@ -1485,6 +1489,12 @@ int SaeApplication::setGlobalIPv6Prefix(void)
 
 int SaeApplication::clearGlobalIPv6Prefix(void)
 {
+    int ret = 0;
     GlobalIpSessionActive = false;
-    return radioReceives[0].clearGlobalIPInfo();
+    if(radioReceives.size()){
+        ret = radioReceives[0].clearGlobalIPInfo();
+    }else if(this->spsTransmits.size()){
+        ret = this->spsTransmits[0].clearGlobalIPInfo();
+    }
+    return ret;
 }

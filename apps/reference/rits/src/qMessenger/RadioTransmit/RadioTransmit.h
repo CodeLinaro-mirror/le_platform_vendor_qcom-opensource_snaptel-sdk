@@ -80,6 +80,13 @@
 #include <net/if.h>
 #include <string>
 
+using std::array;
+using std::make_shared;
+using telux::cv2x::ICv2xRxSubscription;
+using telux::cv2x::ICv2xTxRxSocket;
+using telux::cv2x::SocketInfo;
+using telux::cv2x::EventFlowInfo;
+using telux::cv2x::L2FilterInfo;
 using telux::cv2x::ICv2xTxFlow;
 using telux::cv2x::Periodicity;
 using telux::cv2x::Priority;
@@ -89,10 +96,13 @@ using telux::cv2x::Priority;
 using std::vector;
 using std::string;
 
+
+
+
 class RadioTransmit: public RadioInterface{
 
 private:
-    TrafficCategory category;
+    // TrafficCategory category;
 
 
     /**
@@ -232,6 +242,8 @@ public:
 
     int getTxInterval(uint64_t& periodicityMs);
     uint64_t latestTxRxTimeMonotonic() override;
+
+
 };
 
 #endif

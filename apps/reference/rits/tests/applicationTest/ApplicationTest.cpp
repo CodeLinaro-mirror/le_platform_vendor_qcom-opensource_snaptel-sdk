@@ -1086,6 +1086,16 @@ int setup(const bool tx, const bool rx,
 
     if ((tx || application->configuration.enableTxAlways) && !txSim && !rxSim)
     {
+        if(!rx && application->radioReceives.size()){
+            // make sure to clean up the rx subscriptions since we will not use them
+            for (uint8_t i = 0; i < application->radioReceives.size(); i++)
+            {
+                application->radioReceives[i].closeFlow();
+            }
+            application->radioReceives.erase(application->radioReceives.begin(),
+                application->radioReceives.end());
+        }
+
         if (application->spsTransmits.empty() || application->eventTransmits.empty()) {
             cerr << "Tx flow not created, please check configuration" << endl;
             return -1;

@@ -79,8 +79,9 @@
 #include <cassert>
 #include <string.h>
 #include <stdio.h>
-#include <telux/cv2x/Cv2xRadio.hpp>
 #include <cstdint>
+#include <telux/cv2x/Cv2xRadio.hpp>
+#include <telux/cv2x/Cv2xRadioTypes.hpp>
 
 using std::cout;
 using std::cerr;
@@ -90,6 +91,8 @@ using std::map;
 using std::promise;
 using std::string;
 using std::thread;
+using std::array;
+using std::make_shared;
 using telux::common::ErrorCode;
 using telux::common::Status;
 using telux::cv2x::Cv2xFactory;
@@ -100,6 +103,11 @@ using telux::cv2x::Cv2xStatusType;
 using telux::cv2x::TrafficCategory;
 using telux::cv2x::TrafficIpType;
 using telux::cv2x::ICv2xRadioListener;
+using telux::cv2x::ICv2xRxSubscription;
+using telux::cv2x::ICv2xTxRxSocket;
+using telux::cv2x::SocketInfo;
+using telux::cv2x::EventFlowInfo;
+using telux::cv2x::L2FilterInfo;
 
 class Cv2xStatusListener;
 
@@ -142,8 +150,12 @@ private:
     void cv2xStatusCallback(Cv2xStatusEx status, ErrorCode error);
     void updateSrcL2InfoCallback(ErrorCode error);
 
+    void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
+    void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
+    void commonStatusCallback(ErrorCode error);
+    std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
 protected:
-
+    TrafficCategory category;
     bool enableCsvLog_ = false;
 
 public:
@@ -243,5 +255,12 @@ public:
     virtual uint64_t latestTxRxTimeMonotonic();
 
     virtual void enableCsvLog(bool enable);
+
+    int onWraTimedout(void);
+    int setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr, const uint32_t serviceId);
+    int clearGlobalIPInfo(void);
+    int setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
+
+
 };
 

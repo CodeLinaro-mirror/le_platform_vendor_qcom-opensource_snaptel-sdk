@@ -423,4 +423,3 @@ uint32_t RadioTransmit::getSpsResSize(){
 uint64_t RadioTransmit::latestTxRxTimeMonotonic() {
     return lastTxMonotonicTime_;
 }
-

@@ -15,6 +15,7 @@ set(TEL_STUB_SOURCES
     CardFileHandlerStub.cpp
     SubscriptionManagerStub.cpp
     SubscriptionStub.cpp
+    SmsManagerStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

@@ -14,6 +14,7 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     SimulationServer.cpp
     tel/CardManagerServerImpl.cpp
     tel/SubscriptionManagerServerImpl.cpp
+    tel/SmsManagerServerImpl.cpp
 )
 
 include_directories(BEFORE

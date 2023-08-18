@@ -1,0 +1,83 @@
+    {
+    "ISmsManager" :
+    {
+        "SmsDatabaseStorage" :
+        [
+            {
+                "messagePartInfo_numberOfSegments" : 1,
+                "messagePartInfo_refNumber" : 1,
+                "messagePartInfo_segmentNumber" : 1,
+                "smsMetaInfo_msgIndex" : 1,
+                "smsMetaInfo_tagType" : "MT_NOT_READ",
+                "encoding" : "GSM7",
+                "isMetaInfoValid" : true,
+                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
+                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
+                "receiver" : "9758435990",
+                "sender" : "9758435939",
+                "text" : "hello"
+            },
+            {
+                "messagePartInfo_numberOfSegments" : 1,
+                "messagePartInfo_refNumber" : 1,
+                "messagePartInfo_segmentNumber" : 1,
+                "smsMetaInfo_msgIndex" : 2,
+                "smsMetaInfo_tagType" : "MT_NOT_READ",
+                "encoding" : "GSM7",
+                "isMetaInfoValid" : true,
+                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
+                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
+                "receiver" : "9758435990",
+                "sender" : "9758435939",
+                "text" : "hi"
+            },
+            {
+                "messagePartInfo_numberOfSegments" : 1,
+                "messagePartInfo_refNumber" : 1,
+                "messagePartInfo_segmentNumber" : 1,
+                "smsMetaInfo_msgIndex" : 3,
+                "smsMetaInfo_tagType" : "MT_READ",
+                "encoding" : "GSM7",
+                "isMetaInfoValid" : true,
+                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
+                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
+                "receiver" : "9758435990",
+                "sender" : "9758435939",
+                "text" : "how are you ?"
+            },
+            {
+                "messagePartInfo_numberOfSegments" : 1,
+                "messagePartInfo_refNumber" : 1,
+                "messagePartInfo_segmentNumber" : 1,
+                "smsMetaInfo_msgIndex" : 4,
+                "smsMetaInfo_tagType" : "MT_READ",
+                "encoding" : "GSM7",
+                "isMetaInfoValid" : true,
+                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
+                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
+                "receiver" : "9758435990",
+                "sender" : "9758435939",
+                "text" : "???"
+            }
+        ],
+        "SetSmscAddress" :
+        {
+            "smscAddress" : "8989888222"
+        },
+        "RequestStorageDetails" :
+        {
+            "requestStorageDetailsCb_maxCount" : 10
+        },
+        "SetPreferredStorage" :
+        {
+            "StorageType" : "SIM"
+        },
+        "calculateMessageAttributes" :
+        {
+            "messageAttributes_encoding" : "GSM7",
+            "messageAttributes_numberOfSegments" : 1,
+            "messageAttributes_segmentSize" : 160,
+            "messageAttributes_numberOfCharsLeftInLastSegment" : 82
+        }
+    }
+}

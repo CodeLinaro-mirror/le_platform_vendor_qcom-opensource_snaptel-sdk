@@ -1,4 +1,4 @@
-    {
+{
     "ISmsManager" :
     {
         "SmsDatabaseStorage" :
@@ -11,11 +11,11 @@
                 "smsMetaInfo_tagType" : "MT_NOT_READ",
                 "encoding" : "GSM7",
                 "isMetaInfoValid" : true,
-                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
-                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
-                "receiver" : "9758435990",
-                "sender" : "9758435939",
-                "text" : "hello"
+                "pdu" : "07918185690700F0240B918189486537F300003280125013908A1CCD72999E769F41E939683E4697C97576990C0AD3413118BC0D",
+                "rawPdu" : "07918185690700F0240B918189486537F300003280125013908A1CCD72999E769F41E939683E4697C97576990C0AD3413118BC0D",
+                "receiver" : "123456789",
+                "sender" : "+18988456733",
+                "text" : "Meeting is scheduled at 10pm"
             },
             {
                 "messagePartInfo_numberOfSegments" : 1,
@@ -25,11 +25,11 @@
                 "smsMetaInfo_tagType" : "MT_NOT_READ",
                 "encoding" : "GSM7",
                 "isMetaInfoValid" : true,
-                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
-                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
-                "receiver" : "9758435990",
-                "sender" : "9758435939",
-                "text" : "hi"
+                "pdu" : "07918185690700F0240B918189486537F300003280126091338A0CC7F79B0C6ABEE5EEB4FB0C",
+                "rawPdu" : "07918185690700F0240B918189486537F300003280126091338A0CC7F79B0C6ABEE5EEB4FB0C",
+                "receiver" : "123456789",
+                "sender" : "+18988456733",
+                "text" : "Good Morning"
             },
             {
                 "messagePartInfo_numberOfSegments" : 1,
@@ -39,11 +39,11 @@
                 "smsMetaInfo_tagType" : "MT_READ",
                 "encoding" : "GSM7",
                 "isMetaInfoValid" : true,
-                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
-                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
-                "receiver" : "9758435990",
-                "sender" : "9758435939",
-                "text" : "how are you ?"
+                "pdu" : "07918185690700F0240B918189486537F300003280126022438A0CC7F79B0C2ADACBEEB4FB0C",
+                "rawPdu" : "07918185690700F0240B918189486537F300003280126022438A0CC7F79B0C2ADACBEEB4FB0C",
+                "receiver" : "123456789",
+                "sender" : "+18988456733",
+                "text" : "Good Evening"
             },
             {
                 "messagePartInfo_numberOfSegments" : 1,
@@ -53,24 +53,24 @@
                 "smsMetaInfo_tagType" : "MT_READ",
                 "encoding" : "GSM7",
                 "isMetaInfoValid" : true,
-                "pdu" : "71000A8198484620470000FF0C03250103787082C2E18303",
-                "rawPdu" : "71000A8198484620470000FF0C03250103787082C2E18300",
-                "receiver" : "9758435990",
-                "sender" : "9758435939",
-                "text" : "???"
+                "pdu" : "07918185690700F0240B918189486537F300003280126052318A0EC7F79B0C0A9AE965B9FBFD7603",
+                "rawPdu" : "07918185690700F0240B918189486537F300003280126052318A0EC7F79B0C0A9AE965B9FBFD7603",
+                "receiver" : "123456789",
+                "sender" : "+18988456733",
+                "text" : "Good Afternoon"
             }
         ],
-        "SetSmscAddress" :
+        "setSmscAddress" :
         {
             "smscAddress" : "8989888222"
         },
-        "RequestStorageDetails" :
+        "requestStorageDetails" :
         {
             "requestStorageDetailsCb_maxCount" : 10
         },
-        "SetPreferredStorage" :
+        "setPreferredStorage" :
         {
-            "StorageType" : "SIM"
+            "storageType" : "SIM"
         },
         "calculateMessageAttributes" :
         {

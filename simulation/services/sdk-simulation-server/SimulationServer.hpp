@@ -48,7 +48,7 @@
 #include "../../libs/common/AsyncTaskQueue.hpp"
 
 #define APP_NAME "SimulationServer"
-#define BUFFER_SIZE 250
+#define BUFFER_SIZE 600
 
 class SimulationServer {
 public:

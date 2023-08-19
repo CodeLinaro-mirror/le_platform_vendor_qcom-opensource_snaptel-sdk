@@ -182,7 +182,7 @@ grpc::Status CardManagerServerImpl::GetCardState(ServerContext* context,
     std::string jsonfilename = "";
     Json::Value rootObj;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
-    int state = rootObj["ICardManager"]["GetState"]["cardState"].asInt();
+    int state = rootObj["ICardManager"]["getState"]["cardState"].asInt();
     cardState = static_cast<telux::tel::CardState>(state);
     // Create response
     switch(cardState) {
@@ -229,7 +229,7 @@ grpc::Status CardManagerServerImpl::ReadEFLinearFixed(ServerContext* context,
     telux::common::Status status;
     tel::ErrorCode tmp;
     uint32_t cbDelay;
-     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "ReadEFLinearFixed", status,
+     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "readEFLinearFixed", status,
         error, cbDelay );
     int index;
     int i =0;
@@ -275,7 +275,7 @@ grpc::Status CardManagerServerImpl::ReadEFLinearFixed(ServerContext* context,
 
     // Create response
     tel::IccResult requestedRecord;
-    std::string apiname = "ReadEFLinearFixed";
+    std::string apiname = "readEFLinearFixed";
     response->set_error(static_cast<tel::ErrorCode>(error));
     response->set_delay(cbDelay);
     bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
@@ -333,7 +333,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
     std::string str1 = "";
     int i = 0;
     int index =0;
-    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "WriteEFLinearFixed", status,
+    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "writeEFLinearFixed", status,
         error, cbDelay );
     if(status == telux::common::Status::SUCCESS) {
         bool foundAppId = findAppId(rootObj, appid, index);
@@ -398,7 +398,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
         }
     }
     //Create response
-    std::string apiname = "WriteEFLinearFixed";
+    std::string apiname = "writeEFLinearFixed";
     bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
     response->set_iscallback(iscallback);
     response->set_error(static_cast<tel::ErrorCode>(error));
@@ -434,7 +434,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
 
     int slotId = request->slot_id();
     std::string jsonfilename = "";
-    std::string apiname = "ReadEFLinearFixedAll";
+    std::string apiname = "readEFLinearFixedAll";
     Json::Value rootObj;
     Json::Value jsonObjApiResponse;
     std::string jsonObjApiResponseFileName = "";
@@ -572,7 +572,7 @@ grpc::Status CardManagerServerImpl::ReadEFTransparent(ServerContext* context,
     telux::common::ErrorCode error;
     telux::common::Status status;
     uint32_t cbDelay;
-    std::string apiname = "ReadEFTransparent";
+    std::string apiname = "readEFTransparent";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
 
@@ -684,7 +684,7 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
 
     int slotId = request->slot_id();
     std::string jsonfilename = "";
-    std::string apiname = "WriteEFTransparent";
+    std::string apiname = "writeEFTransparent";
     Json::Value rootObj;
     std::string jsonObjApiResponseFileName = "";
     Json::Value jsonObjApiResponse;
@@ -843,7 +843,7 @@ grpc::Status CardManagerServerImpl::RequestEFAttributes(ServerContext* context,
     telux::tel::FileAttributes attributes;
     tel::ErrorCode tmp;
     telux::common::ErrorCode error;
-    std::string apiname = "RequestEFAttributes";
+    std::string apiname = "requestEFAttributes";
     uint32_t cbDelay;
     int index;
     int i = 0;
@@ -1020,32 +1020,32 @@ grpc::Status CardManagerServerImpl::OpenLogicalChannel(ServerContext* context,
     telux::tel::IccResult result;
     int channelId;
 
-    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "OpenLogicalChannel", status,
+    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "openLogicalChannel", status,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
-        bool isChannelOpen = rootObj["ICardManager"]["OpenLogicalChannel"]["isOpen"].asBool();
+        bool isChannelOpen = rootObj["ICardManager"]["openLogicalChannel"]["isOpen"].asBool();
         if (isChannelOpen) {
             LOG(DEBUG, __FUNCTION__, "already open");
             error = telux::common::ErrorCode::GENERIC_FAILURE;
         } else {
-            rootObj["ICardManager"]["OpenLogicalChannel"]["isOpen"] = true;
+            rootObj["ICardManager"]["openLogicalChannel"]["isOpen"] = true;
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[phoneid] = rootObj;
-            result.sw1 = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+            result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
                 ["onChannelResponseSw1"].asInt();
             LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw1);
-            result.sw2 = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+            result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
                 ["onChannelResponseSw2"].asInt();
             LOG(DEBUG, __FUNCTION__,"sw1 ", result.sw2);
-            result.payload = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+            result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
                 ["onChannelResponsePayload"].asString();
             LOG(DEBUG, __FUNCTION__,"payload ", result.payload);
-            std::string tmp = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+            std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
                 ["onChannelResponseData"].asString();
             std::vector<int> data = Helper::convertStringToVector(tmp);
             result.data = data;
-            channelId = rootObj["ICardManager"]["OpenLogicalChannel"]\
+            channelId = rootObj["ICardManager"]["openLogicalChannel"]\
                 ["onChannelResponseChannel"].asInt();
             LOG(DEBUG, __FUNCTION__,"channelId ", channelId);
         }
@@ -1054,7 +1054,7 @@ grpc::Status CardManagerServerImpl::OpenLogicalChannel(ServerContext* context,
     response->set_error(static_cast<tel::ErrorCode>(error));
     response->set_status(static_cast<tel::Status>(status));
     response->set_delay(cbDelay);
-    bool iscallback = isCallbackNeeded(jsonObjApiResponse, "OpenLogicalChannel");
+    bool iscallback = isCallbackNeeded(jsonObjApiResponse, "openLogicalChannel");
     response->set_iscallback(iscallback);
     tel::IccResult requestedRecord;
     requestedRecord.set_sw1(result.sw1);
@@ -1084,16 +1084,16 @@ grpc::Status CardManagerServerImpl::CloseLogicalChannel(ServerContext* context,
     telux::common::Status status;
     telux::common::ErrorCode error;
     uint32_t cbDelay;
-    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "CloseLogicalChannel", status,
+    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "closeLogicalChannel", status,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
-        int inputchannel = rootObj["ICardManager"]["OpenLogicalChannel"]\
+        int inputchannel = rootObj["ICardManager"]["openLogicalChannel"]\
             ["onChannelResponseChannel"].asInt();
         if (inputchannel == channel) {
-            bool isChannelOpen = rootObj["ICardManager"]["OpenLogicalChannel"]["isOpen"].asBool();
+            bool isChannelOpen = rootObj["ICardManager"]["openLogicalChannel"]["isOpen"].asBool();
             if (isChannelOpen) {
-                rootObj["ICardManager"]["OpenLogicalChannel"]["isOpen"] = false;
+                rootObj["ICardManager"]["openLogicalChannel"]["isOpen"] = false;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
             } else {
@@ -1109,7 +1109,7 @@ grpc::Status CardManagerServerImpl::CloseLogicalChannel(ServerContext* context,
     response->set_error(static_cast<tel::ErrorCode>(error));
     response->set_status(static_cast<tel::Status>(status));
     response->set_delay(cbDelay);
-    bool iscallback = isCallbackNeeded(jsonObjApiResponse, "CloseLogicalChannel");
+    bool iscallback = isCallbackNeeded(jsonObjApiResponse, "closeLogicalChannel");
     response->set_iscallback(iscallback);
 
     return grpc::Status::OK;
@@ -1135,29 +1135,29 @@ grpc::Status CardManagerServerImpl::TransmitAPDU(ServerContext* context,
     }
     std::string str1 = "";
     telux::tel::IccResult result;
-    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "TransmitApduLogicalChannel", status,
+    CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "transmitApduLogicalChannel", status,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
         str1 = Helper::convertVectorToString(data, false);
-        rootObj["ICardManager"]["TransmitApduLogicalChannel"]["onChannelResponseData"] = str1;
+        rootObj["ICardManager"]["transmitApduLogicalChannel"]["onChannelResponseData"] = str1;
         LOG(DEBUG, __FUNCTION__,"String is  ", str1);
         JsonParser::writeToJsonFile(rootObj, jsonfilename);
         jsonObjSystemStateSlot_[phoneId] = rootObj;
 
 
         str1 = Helper::convertVectorToString(data, true);
-        rootObj["ICardManager"]["TransmitApduLogicalChannel"]["onChannelResponsePayload"] = str1;
+        rootObj["ICardManager"]["transmitApduLogicalChannel"]["onChannelResponsePayload"] = str1;
         JsonParser::writeToJsonFile(rootObj, jsonfilename);
         jsonObjSystemStateSlot_[phoneId] = rootObj;
 
-        result.sw1 = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+        result.sw1 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
             ["onChannelResponseSw1"].asInt();
-        result.sw2 = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+        result.sw2 = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
             ["onChannelResponseSw2"].asInt();
-        result.payload = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+        result.payload = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
             ["onChannelResponsePayload"].asString();
-        std::string tmp = rootObj["ICardManager"]["TransmitApduLogicalChannel"]\
+        std::string tmp = rootObj["ICardManager"]["transmitApduLogicalChannel"]\
             ["onChannelResponseData"].asString();
         result.data = Helper::convertStringToVector(tmp);
     }
@@ -1168,7 +1168,7 @@ grpc::Status CardManagerServerImpl::TransmitAPDU(ServerContext* context,
     response->set_error(static_cast<tel::ErrorCode>(error));
     response->set_status(static_cast<tel::Status>(status));
     response->set_delay(cbDelay);
-    bool iscallback = isCallbackNeeded(jsonObjApiResponse, "TransmitApduLogicalChannel");
+    bool iscallback = isCallbackNeeded(jsonObjApiResponse, "transmitApduLogicalChannel");
     response->set_iscallback(iscallback);
     requestedRecord.set_sw1(result.sw1);
     requestedRecord.set_sw2(result.sw2);
@@ -1201,30 +1201,30 @@ grpc::Status CardManagerServerImpl::exchangeSimIO(ServerContext* context,
     telux::common::Status status;
     telux::common::ErrorCode error;
     uint32_t cbDelay;
-    std::string apiname = "ExchangeSimIO";
+    std::string apiname = "exchangeSimIO";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
     telux::tel::IccResult result;
 
     if(status == telux::common::Status::SUCCESS) {
         str1 = Helper::convertVectorToString(data, false);
-        rootObj["ICardManager"]["ExchangeSimIO"]["onChannelResponseData"] = str1;
+        rootObj["ICardManager"]["exchangeSimIO"]["onChannelResponseData"] = str1;
         LOG(DEBUG, __FUNCTION__,"String is  ", str1);
         JsonParser::writeToJsonFile(rootObj, jsonfilename);
         jsonObjSystemStateSlot_[phoneId] = rootObj;
 
         str1 = Helper::convertVectorToString(data, true);
-        rootObj["ICardManager"]["ExchangeSimIO"]["onChannelResponsePayload"] = str1;
+        rootObj["ICardManager"]["exchangeSimIO"]["onChannelResponsePayload"] = str1;
         JsonParser::writeToJsonFile(rootObj, jsonfilename);
         jsonObjSystemStateSlot_[phoneId] = rootObj;
 
-        result.sw1 = rootObj["ICardManager"]["ExchangeSimIO"]\
+        result.sw1 = rootObj["ICardManager"]["exchangeSimIO"]\
             ["onChannelResponseSw1"].asInt();
-        result.sw2 = rootObj["ICardManager"]["ExchangeSimIO"]\
+        result.sw2 = rootObj["ICardManager"]["exchangeSimIO"]\
             ["onChannelResponseSw2"].asInt();
-        result.payload = rootObj["ICardManager"]["ExchangeSimIO"]\
+        result.payload = rootObj["ICardManager"]["exchangeSimIO"]\
             ["onChannelResponsePayload"].asString();
-        std::string tmp = rootObj["ICardManager"]["ExchangeSimIO"]\
+        std::string tmp = rootObj["ICardManager"]["exchangeSimIO"]\
             ["onChannelResponseData"].asString();
         result.data = Helper::convertStringToVector(tmp);
     }
@@ -1267,29 +1267,29 @@ grpc::Status CardManagerServerImpl::TransmitBasicAPDU(ServerContext* context,
     telux::common::ErrorCode error;
     uint32_t cbDelay;
     telux::tel::IccResult result;
-    std::string apiname = "TransmitApduBasicChannel";
+    std::string apiname = "transmitApduBasicChannel";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
         str1 = Helper::convertVectorToString(data, false);
-        rootObj["ICardManager"]["TransmitApduBasicChannel"]["onChannelResponseData"] = str1;
+        rootObj["ICardManager"]["transmitApduBasicChannel"]["onChannelResponseData"] = str1;
         LOG(DEBUG, __FUNCTION__,"String is  ", str1);
         JsonParser::writeToJsonFile(rootObj, jsonfilename);
         jsonObjSystemStateSlot_[phoneId] = rootObj;
 
         str1 = Helper::convertVectorToString(data, true);
-        rootObj["ICardManager"]["TransmitApduBasicChannel"]["onChannelResponsePayload"] = str1;
+        rootObj["ICardManager"]["transmitApduBasicChannel"]["onChannelResponsePayload"] = str1;
         JsonParser::writeToJsonFile(rootObj, jsonfilename);
         jsonObjSystemStateSlot_[phoneId] = rootObj;
 
-        result.sw1 = rootObj["ICardManager"]["TransmitApduBasicChannel"]\
+        result.sw1 = rootObj["ICardManager"]["transmitApduBasicChannel"]\
             ["onChannelResponseSw1"].asInt();
-        result.sw2 = rootObj["ICardManager"]["TransmitApduBasicChannel"]\
+        result.sw2 = rootObj["ICardManager"]["transmitApduBasicChannel"]\
             ["onChannelResponseSw2"].asInt();
-        result.payload = rootObj["ICardManager"]["TransmitApduBasicChannel"]\
+        result.payload = rootObj["ICardManager"]["transmitApduBasicChannel"]\
             ["onChannelResponsePayload"].asString();
-        std::string tmp = rootObj["ICardManager"]["TransmitApduBasicChannel"]\
+        std::string tmp = rootObj["ICardManager"]["transmitApduBasicChannel"]\
             ["onChannelResponseData"].asString();
         result.data = Helper::convertStringToVector(tmp);
     }
@@ -1327,10 +1327,10 @@ grpc::Status CardManagerServerImpl::requestEid(ServerContext* context,
     Json::Value jsonObjApiResponse;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
     getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
-    std::string eid = rootObj["ICardManager"]["RequestEid"]["eid"].asString();
+    std::string eid = rootObj["ICardManager"]["requestEid"]["eid"].asString();
 
     //Create response
-    std::string apiname = "TransmitApduBasicChannel";
+    std::string apiname = "transmitApduBasicChannel";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         errorCodefromUser, cbDelay );
     tel::ErrorCode error = static_cast<tel::ErrorCode>(errorCodefromUser);
@@ -1353,21 +1353,21 @@ grpc::Status CardManagerServerImpl::updateSimStatus(ServerContext* context,
     std::string jsonfilename = "";
     Json::Value rootObj;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
-    int state = rootObj["ICardManager"]["GetState"]["cardState"].asInt();
+    int state = rootObj["ICardManager"]["getState"]["cardState"].asInt();
     response->set_card_state(static_cast<tel::CardState>(state));
 
-    int size = rootObj["ICardManager"]["GetApplications"].size();
+    int size = rootObj["ICardManager"]["getApplications"].size();
     for (int i = 0 ; i < size ; i++) {
         tel::CardApp *apps = response->add_card_apps();
         tel::AppType apptype = static_cast<tel::AppType>(rootObj["ICardManager"]\
-            ["GetApplications"][i]["appType"].asInt());
+            ["getApplications"][i]["appType"].asInt());
         LOG(DEBUG, __FUNCTION__,"apptype is  ", static_cast<int>(apptype));
         apps->set_app_type(apptype);
         tel::AppState appstate = static_cast<tel::AppState>(rootObj["ICardManager"]\
-            ["GetApplications"][i]["appState"].asInt());
+            ["getApplications"][i]["appState"].asInt());
         LOG(DEBUG, __FUNCTION__,"appstate is  ", static_cast<int>(appstate));
         apps->set_app_state(appstate);
-        std::string appid = rootObj["ICardManager"]["GetApplications"][i]["appId"].asString();
+        std::string appid = rootObj["ICardManager"]["getApplications"][i]["appId"].asString();
         LOG(DEBUG, __FUNCTION__,"appid is  ", appid);
         apps->set_app_id(appid);
     }
@@ -1395,32 +1395,32 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
     telux::common::Status status;
     telux::common::ErrorCode error;
     uint32_t cbDelay;
-    std::string apiname = "ChangeCardPassword";
+    std::string apiname = "changeCardPassword";
     CommonUtils::getValues(jsonObjApiResponse, "ICardManager", apiname, status,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
         if(locktype == ::tel::CardLockType::PIN1) {
             password = rootObj["ICardManager"]["Pin1password"].asString();
-            retrycount = rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin1"].asInt();
+            retrycount = rootObj["ICardManager"]["changeCardPassword"]["retryCountPin1"].asInt();
             if((oldPwd == password) && (retrycount != -1)) {
                 rootObj["ICardManager"]["Pin1password"] = newPwd;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
             } else {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin1"].asInt();
                 LOG(DEBUG, __FUNCTION__, "retrycount is ", retrycount);
                 if (retrycount < 0) {
                     LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
                     error = telux::common::ErrorCode::PIN_BLOCKED;
                     //Update the app state to puk for app
-                    int size = rootObj["ICardManager"]["GetApplications"].size();
+                    int size = rootObj["ICardManager"]["getApplications"].size();
                     for (int i = 0; i < size; i++) {
-                        std::string id = rootObj["ICardManager"]["GetApplications"]\
+                        std::string id = rootObj["ICardManager"]["getApplications"]\
                             [i]["appId"].asString();
                         if (id == appId) {
-                            rootObj["ICardManager"]["GetApplications"]\
+                            rootObj["ICardManager"]["getApplications"]\
                                 [i]["appState"] = 3; //puk state
                             JsonParser::writeToJsonFile(rootObj, jsonfilename);
                             jsonObjSystemStateSlot_[phoneId] = rootObj;
@@ -1437,7 +1437,7 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
                         LOG(DEBUG, __FUNCTION__, "retrycount is ", retrycount);
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
 
-                        rootObj["ICardManager"]["ChangeCardPassword"]\
+                        rootObj["ICardManager"]["changeCardPassword"]\
                             ["retryCountPin1"] = retrycount;
                         JsonParser::writeToJsonFile(rootObj, jsonfilename);
                         jsonObjSystemStateSlot_[phoneId] = rootObj;
@@ -1447,15 +1447,15 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
             }
         } else if (locktype == ::tel::CardLockType::PIN2) {
             password = rootObj["ICardManager"]["Pin2password"].asString();
-            retrycount = rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin2"].asInt();
+            retrycount = rootObj["ICardManager"]["changeCardPassword"]["retryCountPin2"].asInt();
             if(oldPwd == password && (retrycount != -1)) {
                 rootObj["ICardManager"]["Pin2password"] = newPwd;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin2"].asInt();
             } else {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin2"].asInt();
                 if (retrycount < 0) {
                     LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
@@ -1465,7 +1465,7 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
                         retrycount--;
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
                     }
-                    rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin2"] = retrycount;
+                    rootObj["ICardManager"]["changeCardPassword"]["retryCountPin2"] = retrycount;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                 }
@@ -1508,30 +1508,30 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
     uint32_t cbDelay;
     telux::common::Status status;
     telux::common::ErrorCode error;
-    std::string apiname = "UnlockCardByPin";
+    std::string apiname = "unlockCardByPin";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
         if(locktype == ::tel::CardLockType::PIN1) {
             password = rootObj["ICardManager"]["Pin1password"].asString();
-            retrycount = rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin1"].asInt();
+            retrycount = rootObj["ICardManager"]["changeCardPassword"]["retryCountPin1"].asInt();
             if((pwd == password) && (retrycount != -1)) {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin1"].asInt();
             } else {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin1"].asInt();
                 if (retrycount < 0) {
                     LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
                     error = telux::common::ErrorCode::PIN_BLOCKED;
                     //Update the app state to puk for app
-                    int size = rootObj["ICardManager"]["GetApplications"].size();
+                    int size = rootObj["ICardManager"]["getApplications"].size();
                     for (int i = 0; i < size; i++) {
-                        std::string id = rootObj["ICardManager"]["GetApplications"]\
+                        std::string id = rootObj["ICardManager"]["getApplications"]\
                             [i]["appId"].asString();
                         if (id == appId) {
-                            rootObj["ICardManager"]["GetApplications"][i]\
+                            rootObj["ICardManager"]["getApplications"][i]\
                                 ["appState"] = 3; //puk state
                             JsonParser::writeToJsonFile(rootObj, jsonfilename);
                             jsonObjSystemStateSlot_[phoneId] = rootObj;
@@ -1547,7 +1547,7 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
                         retrycount--;
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
                     }
-                    rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin1"] = retrycount;
+                    rootObj["ICardManager"]["changeCardPassword"]["retryCountPin1"] = retrycount;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                     IsCardInfoChanged = true;
@@ -1555,12 +1555,12 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
             }
         } else if (locktype == ::tel::CardLockType::PIN2) {
             password = rootObj["ICardManager"]["Pin2password"].asString();
-            retrycount = rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin2"].asInt();
+            retrycount = rootObj["ICardManager"]["changeCardPassword"]["retryCountPin2"].asInt();
             if(pwd == password && (retrycount != -1)) {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin2"].asInt();
             } else {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin2"].asInt();
                 if (retrycount < 0) {
                 LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
@@ -1570,7 +1570,7 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
                         retrycount--;
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
                     }
-                    rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin2"] = retrycount;
+                    rootObj["ICardManager"]["changeCardPassword"]["retryCountPin2"] = retrycount;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                 }
@@ -1613,7 +1613,7 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
     telux::common::ErrorCode error;
     telux::common::Status status;
     uint32_t cbDelay;
-    std::string apiname = "UnlockCardByPuk";
+    std::string apiname = "unlockCardByPuk";
     bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
@@ -1621,19 +1621,19 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
     if(status == telux::common::Status::SUCCESS) {
         if(locktype == ::tel::CardLockType::PUK1) {
             password = rootObj["ICardManager"]["Puk1password"].asString();
-            retrycount = rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin1"].asInt();
+            retrycount = rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin1"].asInt();
             if((puk == password) && (retrycount != -1)) {
                 rootObj["ICardManager"]["Pin1password"] = pwd;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
-                rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin1"] = 3;
+                rootObj["ICardManager"]["changeCardPassword"]["retryCountPin1"] = 3;
                 //Update the app state to puk for app
-                int size = rootObj["ICardManager"]["GetApplications"].size();
+                int size = rootObj["ICardManager"]["getApplications"].size();
                 for (int i = 0; i < size; i++) {
-                    std::string id = rootObj["ICardManager"]["GetApplications"][i]\
+                    std::string id = rootObj["ICardManager"]["getApplications"][i]\
                         ["appId"].asString();
                     if (id == appId) {
-                        rootObj["ICardManager"]["GetApplications"][i]\
+                        rootObj["ICardManager"]["getApplications"][i]\
                             ["appState"] = 5; //ready state
                         JsonParser::writeToJsonFile(rootObj, jsonfilename);
                         jsonObjSystemStateSlot_[phoneId] = rootObj;
@@ -1646,9 +1646,9 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
                 }
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
-                retrycount = rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin1"].asInt();
+                retrycount = rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin1"].asInt();
             } else {
-                retrycount = rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin1"].asInt();
+                retrycount = rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin1"].asInt();
                 if (retrycount < 0) {
                     LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
                     error = telux::common::ErrorCode::PIN_BLOCKED;
@@ -1658,7 +1658,7 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
                         retrycount--;
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
                     }
-                    rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin1"] = retrycount;
+                    rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin1"] = retrycount;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                     IsCardInfoChanged = true;
@@ -1666,17 +1666,17 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
             }
         } else if (locktype == ::tel::CardLockType::PUK2) {
             password = rootObj["ICardManager"]["Puk2password"].asString();
-            retrycount = rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin2"].asInt();
+            retrycount = rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin2"].asInt();
             if((puk == password) && (retrycount != -1)) {
                 rootObj["ICardManager"]["Pin2password"] = pwd;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
-                rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin2"] = 3;
+                rootObj["ICardManager"]["changeCardPassword"]["retryCountPin2"] = 3;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
-                retrycount = rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin2"].asInt();
+                retrycount = rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin2"].asInt();
             } else {
-                retrycount = rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin2"].asInt();
+                retrycount = rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin2"].asInt();
                 if (retrycount < 0) {
                     LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
                     error = telux::common::ErrorCode::PIN_BLOCKED;
@@ -1686,7 +1686,7 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
                         retrycount--;
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
                     }
-                    rootObj["ICardManager"]["UnlockCardByPuk"]["retryCountPin2"] = retrycount;
+                    rootObj["ICardManager"]["unlockCardByPuk"]["retryCountPin2"] = retrycount;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                     IsCardInfoChanged = true;
@@ -1728,33 +1728,33 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
     telux::common::ErrorCode error;
     telux::common::Status status;
     uint32_t cbDelay;
-    std::string apiname = "SetCardLock";
+    std::string apiname = "setCardLock";
     CommonUtils::getValues(jsonObjApiResponse, "ICardManager", apiname, status,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
         if(locktype == ::tel::CardLockType::PIN1) {
             password = rootObj["ICardManager"]["Pin1password"].asString();
-            retrycount = rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin1"].asInt();
+            retrycount = rootObj["ICardManager"]["changeCardPassword"]["retryCountPin1"].asInt();
             if((pwd == password) && (retrycount != -1)) {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin1"].asInt();
-                rootObj["ICardManager"]["SetCardLock"]["isPin1Available"] = enable;
+                rootObj["ICardManager"]["setCardLock"]["isPin1Available"] = enable;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
             } else {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin1"].asInt();
                 if (retrycount < 0) {
                     LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
                     error = telux::common::ErrorCode::PIN_BLOCKED;
                     //Update the app state to puk for app
-                    int size = rootObj["ICardManager"]["GetApplications"].size();
+                    int size = rootObj["ICardManager"]["getApplications"].size();
                     for (int i = 0; i < size; i++) {
-                        std::string id = rootObj["ICardManager"]["GetApplications"][i]\
+                        std::string id = rootObj["ICardManager"]["getApplications"][i]\
                             ["appId"].asString();
                         if (id == appId) {
-                            rootObj["ICardManager"]["GetApplications"]\
+                            rootObj["ICardManager"]["getApplications"]\
                                 [i]["appState"] = 3; //puk state
                             JsonParser::writeToJsonFile(rootObj, jsonfilename);
                             jsonObjSystemStateSlot_[phoneId] = rootObj;
@@ -1771,7 +1771,7 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
                         retrycount--;
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
                     }
-                    rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin1"] = retrycount;
+                    rootObj["ICardManager"]["changeCardPassword"]["retryCountPin1"] = retrycount;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                     IsCardInfoChanged = true;
@@ -1779,15 +1779,15 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
             }
         } else if (locktype == ::tel::CardLockType::FDN) {
             password = rootObj["ICardManager"]["Pin2password"].asString();
-            retrycount = rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin2"].asInt();
+            retrycount = rootObj["ICardManager"]["changeCardPassword"]["retryCountPin2"].asInt();
             if(pwd == password && (retrycount != -1)) {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin2"].asInt();
-                rootObj["ICardManager"]["SetCardLock"]["isPin2Available"] = enable;
+                rootObj["ICardManager"]["setCardLock"]["isPin2Available"] = enable;
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
             } else {
-                retrycount = rootObj["ICardManager"]["ChangeCardPassword"]\
+                retrycount = rootObj["ICardManager"]["changeCardPassword"]\
                     ["retryCountPin2"].asInt();
                 if (retrycount < 0) {
                     LOG(DEBUG, __FUNCTION__,"Sim Card is blocked");
@@ -1797,7 +1797,7 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
                         retrycount--;
                         error = telux::common::ErrorCode::PASSWORD_INCORRECT;
                     }
-                    rootObj["ICardManager"]["ChangeCardPassword"]["retryCountPin2"] = retrycount;
+                    rootObj["ICardManager"]["changeCardPassword"]["retryCountPin2"] = retrycount;
                     JsonParser::writeToJsonFile(rootObj, jsonfilename);
                     jsonObjSystemStateSlot_[phoneId] = rootObj;
                 }
@@ -1832,11 +1832,11 @@ grpc::Status CardManagerServerImpl::QueryPin1Lock(ServerContext* context,
     telux::common::Status status;
     telux::common::ErrorCode error;
     uint32_t cbDelay;
-    std::string apiname = "QueryPin1LockState";
+    std::string apiname = "queryPin1LockState";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
 
-    bool state = rootObj["ICardManager"]["SetCardLock"]["isPin1Available"].asBool();
+    bool state = rootObj["ICardManager"]["setCardLock"]["isPin1Available"].asBool();
     bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
 
     response->set_iscallback(iscallback);
@@ -1862,11 +1862,11 @@ grpc::Status CardManagerServerImpl::QueryFdnLock(ServerContext* context,
     telux::common::ErrorCode errorCodefromUser;
     uint32_t cbDelay;
 
-    std::string apiname = "QueryFdnLockState";
+    std::string apiname = "queryFdnLockState";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         errorCodefromUser, cbDelay );
-    bool state = rootObj["ICardManager"]["SetCardLock"]["fdnState"].asBool();
-    bool isAvailable = rootObj["ICardManager"]["SetCardLock"]["isPin2Available"].asBool();
+    bool state = rootObj["ICardManager"]["setCardLock"]["fdnState"].asBool();
+    bool isAvailable = rootObj["ICardManager"]["setCardLock"]["isPin2Available"].asBool();
     bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
     response->set_delay(cbDelay);
     response->set_iscallback(iscallback);
@@ -1884,7 +1884,13 @@ grpc::Status CardManagerServerImpl::CardPower(ServerContext* context,
     LOG(DEBUG, __FUNCTION__);
     int phoneId = request->phone_id();
     std::string jsonfilename = "";
-    std::string apiname = "SetCardPower";
+    std::string apiname;
+    bool powerup = request->powerup();
+    if(powerup) {
+        apiname = "cardPowerUp";
+    } else {
+        apiname = "cardPowerDown";
+    }
     Json::Value rootObj;
     std::string jsonObjApiResponseFileName = "";
     Json::Value jsonObjApiResponse;
@@ -1897,19 +1903,18 @@ grpc::Status CardManagerServerImpl::CardPower(ServerContext* context,
         error, cbDelay );
 
     if(status == telux::common::Status::SUCCESS) {
-        bool powerup = request->powerup();
-        bool currentstate = rootObj["ICardManager"]["SetCardPower"]["cardPowerState"].asBool();
+        bool currentstate = rootObj["ICardManager"]["setCardPower"]["cardPowerState"].asBool();
         if (currentstate != powerup) {
-            rootObj["ICardManager"]["SetCardPower"]["cardPowerState"] = powerup;
+            rootObj["ICardManager"]["setCardPower"]["cardPowerState"] = powerup;
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[phoneId] = rootObj;
             if(powerup) {
-                rootObj["ICardManager"]["GetState"]["cardState"] = 1;
+                rootObj["ICardManager"]["getState"]["cardState"] = 1;
                     //Update Card State to PRESENT
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
             } else {
-                rootObj["ICardManager"]["GetState"]["cardState"] = 0;
+                rootObj["ICardManager"]["getState"]["cardState"] = 0;
                     //Update Card State to ABSENT
                 JsonParser::writeToJsonFile(rootObj, jsonfilename);
                 jsonObjSystemStateSlot_[phoneId] = rootObj;
@@ -1986,7 +1991,7 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__, "The Slot id is: ", token);
     int slotId;
     std::string jsonfilename = "";
-    std::string apiname = "SetCardPower";
+    std::string apiname = "setCardPower";
     Json::Value rootObj;
     if(token == "") {
         LOG(INFO, __FUNCTION__, "The Slot id is not passed! Assuming default Slot Id");
@@ -2015,18 +2020,18 @@ void CardManagerServerImpl::handleCardInfoChanged(std::string eventParams) {
     getJsonForSystemData(slotId, jsonfilename, rootObj);
     bool cardpower = static_cast<bool>(input);
     LOG(DEBUG, __FUNCTION__, "The fetched card power state id is: ", cardpower);
-    bool currentstate = rootObj["ICardManager"]["SetCardPower"]["cardPowerState"].asBool();
+    bool currentstate = rootObj["ICardManager"]["setCardPower"]["cardPowerState"].asBool();
     if (currentstate != cardpower) {
-        rootObj["ICardManager"]["SetCardPower"]["cardPowerState"] = cardpower;
+        rootObj["ICardManager"]["setCardPower"]["cardPowerState"] = cardpower;
         JsonParser::writeToJsonFile(rootObj, jsonfilename);
         jsonObjSystemStateSlot_[slotId] = rootObj;
         if(cardpower) {
-            rootObj["ICardManager"]["GetState"]["cardState"] = 1;
+            rootObj["ICardManager"]["getState"]["cardState"] = 1;
                 //Update Card State to PRESENT
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[slotId] = rootObj;
         } else {
-            rootObj["ICardManager"]["GetState"]["cardState"] = 0;
+            rootObj["ICardManager"]["getState"]["cardState"] = 0;
                 //Update Card State to ABSENT
             JsonParser::writeToJsonFile(rootObj, jsonfilename);
             jsonObjSystemStateSlot_[slotId] = rootObj;

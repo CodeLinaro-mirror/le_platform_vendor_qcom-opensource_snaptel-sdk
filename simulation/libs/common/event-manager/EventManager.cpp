@@ -58,7 +58,7 @@
 #define DELIMETER ' '
 #define DEFAULT_PORT 8080
 #define RETRY_TIMER 500
-#define BUFFER_SIZE 250
+#define BUFFER_SIZE 600
 
 namespace telux {
 namespace common {

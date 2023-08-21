@@ -586,7 +586,9 @@ void ApplicationBase::vehicleEventReport(bool emergent,
         }
         // we'd need to fill local can data for non critical events too
         // so that we can fill the bsm
-        memcpy(this->currVehState, vehicle_state, sizeof(current_dynamic_vehicle_state_t));
+        if(this->currVehState != NULL && vehicle_state != NULL){
+            memcpy(this->currVehState, vehicle_state, sizeof(current_dynamic_vehicle_state_t));
+        }
         // also get static vehicle state; need to provide pointer to the callback function
     } else {
         if (criticalState) {

@@ -1757,6 +1757,10 @@ void LocationMenu::populateXtraConfigParams(telux::loc::XtraConfig &configParams
     }
     configParams.daemonDebugLogLevel =
         static_cast<telux::loc::DebugLogLevel>(daemonDebugLogLevel);
+    std::string ntsServer;
+    std::cout << "Enter NTS server url: ";
+    std::getline(std::cin, ntsServer, delimiter);
+    configParams.ntsServerURL = ntsServer;
 }
 
 void LocationMenu::configureXtraParameters(std::vector<std::string> userInput) {

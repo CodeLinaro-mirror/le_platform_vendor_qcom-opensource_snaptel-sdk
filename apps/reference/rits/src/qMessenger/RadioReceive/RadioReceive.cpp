@@ -329,6 +329,9 @@ int RadioReceive::setL2Filters(std::vector<L2FilterInfo> filterList){
         return -1;
     }
     cv2xRadioMgr->setL2Filters(filterList, [&p](ErrorCode error) {p.set_value(error);});
+    if(rVerbosity) {
+        std::cout << "Setting l2 filters for flooding attack addresses\n";
+    }
     if (ErrorCode::SUCCESS == p.get_future().get()) {
         if(rVerbosity) {
             std::cout << "success to setL2Filters" << std::endl ;

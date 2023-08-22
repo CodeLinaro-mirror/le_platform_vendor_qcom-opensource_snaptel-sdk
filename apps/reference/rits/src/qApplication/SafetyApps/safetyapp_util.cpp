@@ -76,7 +76,7 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include "safetyapp_util.h"
-
+#include <iostream>
 /** Maximum number of vehicles including the host that the LDM can support */
 double MAX_MAP_SIZE;
 
@@ -484,6 +484,14 @@ void print_rvspecs(rv_specs *rv)
     printf("Lane types : %d\n", rv->lt);
     printf("Rapid Decl : %d\n", rv->rapid_decl);
     printf("Stopped : %d\n", rv->stopped);
+    printf("msg cnt: %d\n" ,rv->hv_msgcnt);
+    printf("timestamp ms: %lu\n" ,rv->hv_timestamp_ms);
+    printf("last msg cnt: %d\n" ,rv->lastCnt);
+    printf("last timestamp ms: %lu\n" ,rv->lastTime);
+    printf("total rx cnt: %d\n" ,rv->totalCnt);
+    printf("last saved total rx cnt: %d\n" ,rv->lastTotalCnt);
+    printf("count difference (between last and current): %d\n" ,rv->cntDiff);
+    printf("estimated msg rate of this rv: %f\n", rv->msgRate);
 }
 
 /*******************************************************************************
@@ -571,9 +579,21 @@ void fill_RV_specs(msg_contents *host, msg_contents *remote, rv_specs *rvsp)
         rvsp->airbag = true;
     else
         rvsp->airbag = false;
-
+    //std::cout << "Updating this rvsp with new msg count and time contents\n";
+    rvsp->lastCnt = rvsp->hv_msgcnt;
+    // first time seeing this L2 address, then save the timestamp for msg rate calculation
+    if(rvsp->lastTime == 0){
+        rvsp->lastTime = rvsp->hv_timestamp_ms;
+    }
+    if(host_bsm->MsgCount < rvsp->lastCnt){ // assume it rolled over
+        rvsp->cntDiff = (host_bsm->MsgCount + 128) - rvsp->lastCnt;
+    }else{
+        rvsp->cntDiff = host_bsm->MsgCount - rvsp->lastCnt;
+    }
+    rvsp->totalCnt++;
     rvsp->hv_timestamp_ms = host_bsm->timestamp_ms;
     rvsp->hv_msgcnt = host_bsm->MsgCount;
+    // calculate msg / sec rate for this node here?
 }
 
 /*

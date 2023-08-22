@@ -228,7 +228,6 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     uint32_t l2SrcAddr = 0;
     uint64_t timestamp = 0;
     std::thread::id tid = std::this_thread::get_id();
-
     // make sure that the threadMc is initialized
     if (threadMc == nullptr) {
         if (ldm == nullptr) {
@@ -260,8 +259,24 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         sem_wait(&rx_sem);
         ret = radioReceives[index].receive(threadMc->abuf.data, bufLen-ABUF_HEADROOM,
                             sourceMacAddr, macAddrLen);
+
+        if(configuration.appVerbosity > 3){
+            rxCount++;
+            gettimeofday(&endRxIntervalTime, NULL);
+            time_t startTime = startRxIntervalTime.tv_sec;
+            if (rxCount > 0 ){
+                gettimeofday(&endRxIntervalTime, NULL);
+                if((endRxIntervalTime.tv_sec-startTime) == 1){
+                    cout << "Dur(ms): " << (endRxIntervalTime.tv_sec-startTime) ;
+                    cout << ", messages in duration and msg/sec is: " << rxCount << "\n";
+                    rxCount = 0;
+                    startRxIntervalTime = endRxIntervalTime;
+                }
+            }
+        }
         sem_post(&rx_sem);
     }
+
     // actual moment that a packet has been received
     timestamp = timestamp_now();
     // Make sure packet is successfully received
@@ -287,20 +302,26 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         return -1;
     }
 
+    l2SrcAddr = radioReceives[index].msgL2SrcAdrr;
+
     // needs to be done for data pointer to not override tail pointer
     threadMc->abuf.tail = threadMc->abuf.data+ret;
 
     if (appVerbosity > 7) {
-       printf("\n 2) Full rx packet with length %d\n", ret);
-       print_buffer((uint8_t*)threadMc->abuf.data, ret);
-       printf("\n");
+        struct timeval currTime;
+        gettimeofday(&currTime, NULL);
+        std::cout << "L2 ID is " << l2SrcAddr << std::endl;
+        std::cout << "RX Time is: " << currTime.tv_sec << "s and ";
+        std::cout << " " << currTime.tv_usec << " microsec\n";
+        printf("\n 2) Full rx packet with length %d\n", ret);
+        print_buffer((uint8_t*)threadMc->abuf.data, ret);
+        printf("\n");
     }
 
     // Decode packet as WSMP Packet and IEEE 1609.2 Header
     ret = decode_msg(threadMc.get());
 
     if (configuration.enableL2Filtering && !isRxSim) {
-        l2SrcAddr = radioReceives[index].msgL2SrcAdrr;
         if (appVerbosity >= 5) {
             std::cout << "L2 ID is " << l2SrcAddr << std::endl;
         }
@@ -339,7 +360,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
     if (this->configuration.enableSecurity) {
         // check if the message is signed/encrypted IEEE1609.2 content.
         if (ret == 1) { // message is secured
-            ret = decodeAndVerify(threadMc.get());
+            ret = decodeAndVerify(threadMc.get(), l2SrcAddr);
         } else if (ret >= 0) {
             // here we need to check option for processing both unsigned/signed packets
             if (!configuration.acceptAll) {
@@ -411,24 +432,6 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         totalRxSuccessPerSecond++;
         sem_post(&this->log_sem);
 
-        /*  uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
-            unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
-            unsigned int id;            // 32 bit identifier
-            unsigned int secMark_ms;    // No of milliseconds in a minute
-            signed int   Latitude;      // Degrees * 10^7
-            signed int   Longitude;     // Degrees * 10^7
-            signed int   Elevation;     // Meters * 10
-
-            unsigned int SemiMajorAxisAccuracy;         // val * 20
-            unsigned int SemiMinorAxisAccuracy;         // val * 20
-            unsigned int SemiMajorAxisOrientation;      // val/0.0054932479
-
-            j2735_transmission_state_e TransmissionState;   // P,R,N,D,L (park etc..)
-            unsigned int Speed;                     // value (in kmph) * 250/18
-            unsigned int Heading_degrees;           // value (in degrees) / 0.0125
-            signed int   SteeringWheelAngle;        // value (in degree) / 1.5
-            signed int   AccelLon_cm_per_sec_squared;       // value (in m/sec2) / 0.01
-        */
         if(threadMc.get()->wsmp){
             // check psid for bsm
             wsmpdata = (wsmp_data_t*)(threadMc.get()->wsmp);
@@ -487,7 +490,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
     return ret;
 }
 
-int SaeApplication::decodeAndVerify(msg_contents* mc) {
+int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
     int ret = -1;
     std::thread::id tid = std::this_thread::get_id();
     wsmp_data_t *wsmpp;
@@ -609,6 +612,10 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
     }
     // Verify packet signature ; providing lat/lon from the rx message
     ret = SecService->VerifyMsg(sopt);
+    // this will override the actual result for testing purposes
+    if(configuration.overrideVerifResult){
+        ret = configuration.overrideVerifValue;
+    }
     if (ret == -1) {
         verifFail++;
         if (qMon)
@@ -617,7 +624,46 @@ int SaeApplication::decodeAndVerify(msg_contents* mc) {
         }
         if (appVerbosity > 3)
             printf("Error in verifying secured packet.\n");
-        ret = -1;
+        // failure in security ; if flooding detect and mitigate enabled,
+        // add this l2 address to rv map
+        if (configuration.enableL2FloodingDetect && !isRxSim) {
+            if (configuration.floodDetectVerbosity >= 3) {
+                std::cout << "L2 ID is " << l2SrcAddr << std::endl;
+            }
+            auto remote_bsm = reinterpret_cast<bsm_value_t *>(threadMc->j2735_msg);
+            if (hostMc == nullptr) {
+                try {
+                    hostMc = std::make_shared<msg_contents>();
+                } catch (std::bad_alloc & e) {
+                    cerr << "Error: Create Host bsm failed!" << endl;
+                    return -1;
+                }
+            }
+            if (hostMc->abuf.head == NULL || hostMc->abuf.size == 0) {
+                abuf_alloc(&hostMc->abuf, ABUF_LEN, ABUF_HEADROOM);
+                initMsg(hostMc);
+            } else {
+                abuf_reset(&hostMc->abuf, ABUF_HEADROOM);
+            }
+
+            fillBsm(reinterpret_cast<bsm_value_t *>(hostMc->j2735_msg));
+            std::shared_ptr<rv_specs> rvsp;
+            if(l2RvMap.find(l2SrcAddr) == l2RvMap.end()){
+                try {
+                    rvsp = std::make_shared<rv_specs>();
+                } catch (std::bad_alloc & e) {
+                    cerr << "Error: Create rv specs failed!" << endl;
+                    return -1;
+                }
+            }else{
+                rvsp = std::make_shared<rv_specs>(l2RvMap.at(l2SrcAddr));
+            }
+            fill_RV_specs(hostMc.get(), threadMc.get(), rvsp.get());
+            if (configuration.floodDetectVerbosity > 5) {
+                print_rvspecs(rvsp.get());
+            }
+            this->updateL2RvMap(l2SrcAddr,rvsp.get());
+        }
     } else {
         verifSuccess++;
         // process WSA and other WSMP packets after verification

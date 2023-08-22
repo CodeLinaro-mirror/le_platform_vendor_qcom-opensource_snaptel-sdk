@@ -56,7 +56,7 @@ shared_ptr<ILocationInfoEx> LocListener::getLocation() {
         locInfoCv_.wait_for(lck, std::chrono::seconds(1),[this]{
             return (locationInfo_!= nullptr || exit_ == true);
         })) {
-        cout<<"wait interrupted. " << +exit_ << std::endl;
+        cout<<"request for location too fast. " << +exit_ << std::endl;
     }
     return locationInfo_;
 };

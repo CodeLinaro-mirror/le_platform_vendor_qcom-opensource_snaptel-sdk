@@ -209,14 +209,14 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
          break;
        case DgnssStatus::DATA_SOURCE_NOT_USABLE:
          std::cout << "RTCM data source is not usable" << std::endl;
-         // Demonstrate "source switching" requirement. If current source's data
+         // Demonstrate "source switching" requirement for v2x use case. If current source's data
          // is not usable anymore, another source is picked, but we must call releaseSource()
          // to release current source and createSource() to create a new one.
-         dgnssManager_->releaseSource();
-         if (dgnssManager_->createSource(DgnssDataFormat::DATA_FORMAT_RTCM_3) !=
-                telux::common::Status::SUCCESS) {
-            std::cout << "Failed to create RTCM source" << std::endl;
-         }
+         //dgnssManager_->releaseSource();
+         //if (dgnssManager_->createSource(DgnssDataFormat::DATA_FORMAT_RTCM_3) !=
+         //       telux::common::Status::SUCCESS) {
+         //   std::cout << "Failed to create RTCM source" << std::endl;
+         //}
          break;
       default:
          std::cout << "Unknown RTCM status" << std::endl;

@@ -582,11 +582,7 @@ bool DataFilterController::isDefaultDataCallUp() {
                     if (dataCall->getProfileId() == defaultProfileId &&
                         dataCall->getDataCallStatus() ==
                             telux::data::DataCallStatus::NET_CONNECTED) {
-                        //Note: Break will terminate the lambda function, not just the for loop,
-                        //so promise must be set here.
                         isDefaultDataCall = true;
-                        prom.set_value(error);
-                        break;
                     }
                 }
                 prom.set_value(error);

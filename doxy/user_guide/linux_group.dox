@@ -113,7 +113,16 @@ Certain APIs of the SDK require the caller to be part of one or more Linux group
 
 <b>Security</b>
 
-Does not require application to join any particular group.
+@table{3,{\raggedright}p{1.00in},{\raggedright}p{2.80in},{\raggedright}p{2.35in}}
+@trfirsthdg
+@thmultcol{1,|c|} Linux group @thmultcolend @thmultcol{1,c|} Usage @thmultcolend @thmultcollast{1,c|} Applicable software products @thmultcollastend
+@trfirsthdgend
+@trhdg
+@thdg{1,|c|,Linux group} @thdg{1,c|,Usage} @thdglast{1,c|,Applicable software products}
+@trhdgend
+
+@tr @td mvm @tdend @td Required for accessing crypto accelerator. @tdend @tdlast All software products @tdlastend @trend
+@tableend
 
 <b>Audio</b>
 

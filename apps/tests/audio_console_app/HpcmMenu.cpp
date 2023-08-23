@@ -94,7 +94,7 @@ Status HpcmMenu::createVoiceStream(StreamConfig &config) {
     std::cout << "Supported sampling rates are 8kHz/16kHz." << std::endl;
     std::cout <<"------------------------------------------------" << std::endl;
     std::vector<telux::audio::Direction> direction{};
-    config.slotId = SLOT_ID_1;
+    getUserSlotIdInput(config.slotId);
     config.type = StreamType::VOICE_CALL;
     config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;
@@ -607,6 +607,33 @@ void HpcmMenu::getUserSampleRateInput(uint32_t &sampleRate) {
         } else {
             std::cout << "Invalid Input" << std::endl;
         }
+    }
+}
+
+void HpcmMenu::getUserSlotIdInput(SlotId &slotId){
+    std::string userInput = "";
+    int slotIdInput = 0;
+    while(1) {
+        std::cout << "Enter the slotId : ";
+        if (std::getline(std::cin, userInput)) {
+            std::stringstream inputStream(userInput);
+            if (inputStream >> slotIdInput) {
+                if(slotIdInput == 1){
+                    slotId = SLOT_ID_1;
+                    break;
+                } else if(slotIdInput == 2){
+                    slotId = SLOT_ID_2;
+                    break;
+                } else {
+                    std::cout << "Invalid Input" << std::endl;
+                }
+            } else {
+                std::cout << "Invalid Input" << std::endl;
+            }
+        } else {
+            std::cout << "Invalid Input" << std::endl;
+        }
+
     }
 }
 

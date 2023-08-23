@@ -399,6 +399,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
                 break;
         }
     }
+    wsmp_data_t* wsmpdata;
+    uint32_t psid;
     if (ret >= 0) {
         rxSuccess++;
         if (qMon)
@@ -427,15 +429,24 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             signed int   SteeringWheelAngle;        // value (in degree) / 1.5
             signed int   AccelLon_cm_per_sec_squared;       // value (in m/sec2) / 0.01
         */
+        if(threadMc.get()->wsmp){
+            // check psid for bsm
+            wsmpdata = (wsmp_data_t*)(threadMc.get()->wsmp);
+            psid = wsmpdata->psid;
+        }
         if(this->configuration.enableCongCtrl && this->congCtrlInitialized){
             /* If congestion control is enabled, we will pass the contents
                 of the decoded/verified BSM to the cong ctrl library */
-            rvBsm = (bsm_value_t*)threadMc.get()->j2735_msg;
+            if(psid == PSID_BSM){
+                rvBsm = (bsm_value_t*)(threadMc.get()->j2735_msg);
 
-            unsigned int rvTmpId =  rvBsm->id;
-            congestionControlManager->addCongestionControlData(rvTmpId, rvBsm->Latitude/10000000,
-                rvBsm->Longitude / 10000000, rvBsm->Heading_degrees, rvBsm->Speed, rvBsm->timestamp_ms,
-                rvBsm->MsgCount);
+                unsigned int rvTmpId = rvBsm->id;
+                congestionControlManager->addCongestionControlData(
+                    rvTmpId,rvBsm->Latitude/10000000.0,
+                    rvBsm->Longitude / 10000000.0, rvBsm->Heading_degrees,
+                    rvBsm->Speed, rvBsm->timestamp_ms,
+                    rvBsm->MsgCount);
+            }
         }
         if (MsgType == MessageType::BSM) {
             if (qMon)
@@ -444,8 +455,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
             }
             if (appVerbosity > 2)
             {
-            printf("Decoded BSM Summary: \n");
-            print_summary_RV(threadMc.get());
+                printf("Decoded BSM Summary: \n");
+                print_summary_RV(threadMc.get());
             }
         }
     } else {
@@ -456,8 +467,8 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         }
     }
 
-    ApplicationBase::writeLog(threadMc, index, l2SrcAddr, false, TransmitType::EVENT,
-        (ret >= 0) ? true : false, timestamp);
+    ApplicationBase::writeLog(threadMc, index, l2SrcAddr, false, TransmitType::SPS,
+        (ret >= 0) ? true : false, timestamp, psid);
 
     return ret;
 }
@@ -1071,24 +1082,46 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
     //fill data with values that may not make sense, these data should come from vehicle
     //CAN network
 
+    // NEED TO FIX THIS!!
     bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
+
+    if(criticalState){
+        bsm->has_partII = (v2x_bool_t)1;
+    }
 
     bsm->has_safety_extension = (v2x_bool_t)1;
     bsm->vehsafeopts = (v2x_bool_t)(bsm->vehsafeopts | (1 << 3));
-    bsm->events.data = (v2x_bool_t)0;
+    bsm->events.data = 0;
 
-    bsm->SteeringWheelAngle = 0;
-    bsm->brakes.word = 0;
-    bsm->has_safety_extension = (v2x_bool_t)1;
-    bsm->vehsafeopts = bsm->vehsafeopts | (1 << 0);
-    bsm->lights_in_use.data = 0;
-
-    bsm->has_supplemental_extension = (v2x_bool_t)1;
-    bsm->suppvehopts |= (SUPPLEMENT_VEH_EXT_OPTION_WEATHER_PROBE);
-    bsm->weatheropts = bsm->weatheropts | (1 << 0);
-    bsm->statusFront = 0;
-
-    bsm->wiperopts = bsm->wiperopts | (1 << 1);
+    if(this->currVehState != NULL){
+        // for each flag, set the corresponding one in the bsm
+        bsm->events.bits.eventAirBagDeployment =
+            this->currVehState->events.bits.eventAirBagDeployment;
+        bsm->events.bits.eventDisabledVehicle =
+            this->currVehState->events.bits.eventDisabledVehicle;
+        bsm->events.bits.eventFlatTire =
+            this->currVehState->events.bits.eventFlatTire;
+        bsm->events.bits.eventWipersChanged =
+            this->currVehState->events.bits.eventWipersChanged;
+        bsm->events.bits.eventLightsChanged =
+            this->currVehState->events.bits.eventLightsChanged;
+        bsm->events.bits.eventHardBraking =
+            this->currVehState->events.bits.eventHardBraking;
+        bsm->events.bits.eventHazardousMaterials =
+            this->currVehState->events.bits.eventHazardousMaterials;
+        bsm->events.bits.eventStabilityControlactivated =
+            this->currVehState->events.bits.eventStabilityControlactivated;
+        bsm->events.bits.eventTractionControlLoss =
+            this->currVehState->events.bits.eventTractionControlLoss;
+        bsm->events.bits.eventABSactivated =
+            this->currVehState->events.bits.eventABSactivated;
+        bsm->events.bits.eventStopLineViolation =
+            this->currVehState->events.bits.eventStopLineViolation;
+        bsm->events.bits.eventHazardLights =
+            this->currVehState->events.bits.eventHazardLights;
+        bsm->events.bits.unused = 0;
+        bsm->events.bits.eventReserved1 = 0;
+    }
 }
 
 void SaeApplication::fillBsmLocation(bsm_value_t *bsm) {

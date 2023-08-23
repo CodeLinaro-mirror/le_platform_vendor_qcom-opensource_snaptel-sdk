@@ -33,31 +33,49 @@
  */
 
 #include <thread>
+#include <syslog.h>
 
 #include "Logger.hpp"
-#include "ConfigParser.hpp"
+#include "SimulationConfigParser.hpp"
 
 extern "C" {
+#include <stdio.h>
+#include <sys/stat.h>
 #include <limits.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 }
 
 #define DEFAULT_LOG_FILENAME "tel.log"
+#define DEFAULT_LOG_FILE_MAX_SIZE 5 * 1024 * 1024  // 5 MB
+#define STAT_FAILURE -1
+
+static constexpr uint8_t UMASK_BITS = 0002;
 
 using namespace std;
 
 Logger::Logger() {
-    config_ = std::make_shared<ConfigParser>(DEFAULT_STUB_CONFIG_FILE_NAME,
-        DEFAULT_STUB_CONFIG_FILE_PATH);
+    config_ = std::make_shared<SimulationConfigParser>();
 
     initLoggingType();
     initLoggingLevel();
     initProcessName();
     initProcessId();
+    initLogFileMaxSize();
 }
 
 void Logger::initProcessId() {
    processID_ = getpid();
+}
+
+void Logger::initLogFileMaxSize() {
+   std::string val = config_->getValue("MAX_LOG_FILE_SIZE");
+   logFileMaxSize_ = DEFAULT_LOG_FILE_MAX_SIZE;
+
+   if(!val.empty()) {
+      logFileMaxSize_ = stoi(val);
+   }
 }
 
 void Logger::initProcessName() {
@@ -70,6 +88,7 @@ void Logger::initProcessName() {
 
 void Logger::initLoggingType() {
     std::string loggerType = config_->getValue("LOGGER_TYPE");
+    mode_t mask = umask(UMASK_BITS);
 
     if (loggerType == "CONSOLE_LOG") {
         loggerType_ = LoggerType::CONSOLE_LOG;
@@ -77,30 +96,36 @@ void Logger::initLoggingType() {
         loggerType_ = LoggerType::FILE_LOG;
     } else if (loggerType == "CONSOLE_FILE_LOG") {
         loggerType_ = LoggerType::CONSOLE_FILE_LOG;
+    } else if (loggerType == "SYSLOG_LOG") {
+        loggerType_ = LoggerType::SYSLOG_LOG;
     } else {
         loggerType_ = LoggerType::FILE_LOG;
     }
 
     if(isFileLoggingEnabled()) {
-        string fullPath = "";
         std::string filePath = config_->getValue("LOG_FILE_PATH");
         std::string fileName = config_->getValue("LOG_FILE_NAME");
         if(!filePath.empty())
         {
-            fullPath += filePath;
+            logFileFullName_ += filePath;
         }
 
         if(!fileName.empty()) {
-            fullPath += fileName;
+            logFileFullName_ += fileName;
         } else {
-            fullPath += DEFAULT_LOG_FILENAME;
+            logFileFullName_ += DEFAULT_LOG_FILENAME;
         }
 
-        logFile_.open(fullPath, ios::out|ios::app);
+        logFile_.open(logFileFullName_, ios::out|ios::app);
         if(logFile_.rdstate() != std::ios_base::goodbit) {
-            std::cout << __FUNCTION__ << " open " << fullPath << "failed" << "\n";
+            std::cout << __FUNCTION__ << " open " << logFileFullName_ << "failed" << "\n";
             loggerType_ = LoggerType::CONSOLE_LOG;
         }
+        struct stat st;
+        if (stat(logFileFullName_.c_str(), &st) != STAT_FAILURE) {
+            inodeNumber_ = st.st_ino;
+        }
+        umask(mask);
     }
 }
 
@@ -192,16 +217,147 @@ void Logger::writeLogMessage(std::ostringstream &os, LogLevel logLevel,
 
     if(isConsoleLoggingEnabled() && getLoggerLevel() >= ERROR)
         logToConsole(outputStream);
+
+    if(isSyslogLoggingEnabled() && getLoggerLevel() >= ERROR)
+        logToSyslog(outputStream, logLevel);
+    }
+}
+
+ino_t Logger::reopenLogFile() {
+   struct stat st;
+   if (logFile_.is_open()) {
+      logFile_.close();
+   }
+   logFile_.clear();
+
+   logFile_.open(logFileFullName_, std::ios::app);
+   if (logFile_.rdstate() == std::ios_base::goodbit) {
+       stat(logFileFullName_.c_str(), &st);
+       return st.st_ino;
+   }
+   return 0;
+}
+
+int Logger::acquireLock(int &fileDescriptor) {
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_start = 0;
+    lock.l_whence = SEEK_SET;
+    lock.l_len = 0;
+
+    fileDescriptor = open(logFileFullName_.c_str(), O_RDWR, 0664);
+    if (fileDescriptor < 0) {
+        syslog(LOG_ERR, "%s File open fail", __FUNCTION__);
+        return -errno;
+    }
+    int ret = fcntl(fileDescriptor, F_SETLK, &lock);
+    if (ret < 0) {
+        close(fileDescriptor);
+        if(errno == EACCES || errno == EAGAIN) {
+            return -EAGAIN;
+        }
+        syslog(LOG_ERR, "%s Can't acquire lock", __FUNCTION__);
+        return -errno;
+    } else {
+        struct stat st;
+        if (stat(logFileFullName_.c_str(), &st) == STAT_FAILURE) {
+            close(fileDescriptor);
+            return -errno;
+        }
+        if (inodeNumber_ != st.st_ino) {
+            close(fileDescriptor);
+            syslog(LOG_DEBUG, "%s Likely new tel.log file has been created", __FUNCTION__);
+            // log file has been backup and recreated by another process
+            // which acquire the lock firstly
+            return -EAGAIN;
+        }
+    }
+    return 0;
+}
+
+bool Logger::backupLogFile() {
+    int ret, fileDescriptor;
+    ret = acquireLock(fileDescriptor);
+    if(ret < 0) {
+        if(ret == -EAGAIN) {
+            syslog(LOG_ERR, "%s File locked by another process", __FUNCTION__);
+        } else {
+            syslog(LOG_ERR, "%s File Lock Acquire failed", __FUNCTION__);
+        }
+        return false;
+    } else {
+        std::string backupFileName = logFileFullName_ + ".backup" ;
+        rename(logFileFullName_.c_str(), backupFileName.c_str());
+        std::ofstream logStream;
+        mode_t mask = umask(UMASK_BITS);
+        logStream.open(logFileFullName_.c_str(), std::ofstream::out | std::ofstream::trunc);
+        logStream.close();
+        umask(mask);
+        close(fileDescriptor);
+        return true;
     }
 }
 
 void Logger::logToFile(std::ostringstream & os) {
     lock_guard<mutex> guard(fileMutex_);
-    logFile_<< os.str() << endl;
+
+    bool logFileChanged = false;
+    struct stat st;
+    if (stat(logFileFullName_.c_str(), &st) == STAT_FAILURE) {
+        return;
+    }
+
+    if(!logFileChanged) {
+        if (st.st_size > logFileMaxSize_) {
+            logFileChanged = backupLogFile();
+        }
+        if (inodeNumber_ != st.st_ino) {
+            logFileChanged = true;
+        }
+    }
+    //Updating the iNode number after a successful backup.
+    if(logFileChanged) {
+        inodeNumber_ = reopenLogFile();
+    }
+
+    if(logFile_.rdstate() == std::ios_base::goodbit) {
+        // Write the log message into the file
+        logFile_ << os.str() << std::endl;
+    } else {
+        syslog(LOG_NOTICE, "%s", os.str().c_str());
+    }
 }
 
 void Logger::logToConsole(std::ostringstream & os) {
     std::cout << os.str() << "\n";
+}
+
+void Logger::logToSyslog(std::ostringstream & os, LogLevel logLevel) {
+   std::string logMessage = os.str();
+   switch(logLevel) {
+      /*
+       * Mapping of log levels in syslog
+       * Error logs are mapped to LOG_ERR.
+       * Warning logs are mapped to LOG_WARNING.
+       * Info logs are mapped to LOG_INFO.
+       * Debug logs are mapped to LOG_DEBUG.
+       */
+
+      case LogLevel::LEVEL_ERROR:
+         syslog(LOG_ERR, "%s", logMessage.c_str());
+         break;
+      case LogLevel::LEVEL_WARNING:
+         syslog(LOG_WARNING, "%s", logMessage.c_str());
+         break;
+      case LogLevel::LEVEL_INFO:
+         syslog(LOG_INFO, "%s", logMessage.c_str());
+         break;
+      case LogLevel::LEVEL_DEBUG:
+         syslog(LOG_DEBUG, "%s", logMessage.c_str());
+         break;
+      default:
+         break;
+   }
 }
 
 bool Logger::isFileLoggingEnabled() {
@@ -212,6 +368,12 @@ bool Logger::isFileLoggingEnabled() {
 
 bool Logger::isConsoleLoggingEnabled() {
     if(loggerType_ == LoggerType::CONSOLE_LOG || loggerType_ == LoggerType::CONSOLE_FILE_LOG)
+        return true;
+    return false;
+}
+
+bool Logger::isSyslogLoggingEnabled() {
+    if(loggerType_ == LoggerType::SYSLOG_LOG)
         return true;
     return false;
 }

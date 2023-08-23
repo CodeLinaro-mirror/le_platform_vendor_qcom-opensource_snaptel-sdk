@@ -93,11 +93,14 @@ public:
    static telux::data::IpProtocol getProtcol(std::string protoStr);
    static std::string drbStatusToString(telux::data::DrbStatus stat);
    static std::string serviceRatToString(telux::data::NetworkRat rat);
-   static std::string vlanInterfaceToString(telux::data::InterfaceType interface);
+   static std::string vlanInterfaceToString(
+    telux::data::InterfaceType interface, telux::data::OperationType oprType);
    static std::string trafficClassToString(telux::data::IpTrafficClassType tc);
    static std::string flowStateEventToString(telux::data::QosFlowStateChangeEvent state);
    static void logQosDetails(std::shared_ptr<telux::data::TrafficFlowTemplate> &tft);
    static void printFilterDetails(std::shared_ptr<telux::data::IIpFilter> filter);
+   static void populateBackhaulInfo(telux::data::BackhaulInfo& backhaulInfo);
+   static std::string backhaulToString(telux::data::BackhaulType backhaul);
 };
 
 #endif  // DATAUTILS_HPP

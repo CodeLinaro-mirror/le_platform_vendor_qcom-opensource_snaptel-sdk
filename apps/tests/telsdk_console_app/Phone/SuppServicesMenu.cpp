@@ -59,7 +59,6 @@
 #define INPUT_NOT_LOGGED_IN 23
 #define SLOT_COUNT_1 1
 #define SLOT_COUNT_2 2
-#define SERVICE_CLASS_VOICE 1
 #define MAX_INPUT_NO_REPLY 3
 #define MIN_NO_REPLY_TIMER 0
 #define MAX_NO_REPLY_TIMER 255
@@ -186,8 +185,8 @@ void SuppServicesMenu::getCallWaitingPref(std::vector<std::string> userInput) {
 void SuppServicesMenu::setCallForwardingPref(std::vector<std::string> userInput) {
     auto suppServicesManager = suppServicesManagers_[slot_ - 1];
     ForwardReq req;
+    ServiceClass serviceClass;
     int command = -1;
-    req.serviceClass = SERVICE_CLASS_VOICE;
     std::cout << "Enter reason for call forwarding: \n\
     1 - Unconditional\n\
     2 - Busy\n\
@@ -243,6 +242,8 @@ void SuppServicesMenu::setCallForwardingPref(std::vector<std::string> userInput)
             }
         }
         if (suppServicesManager) {
+            serviceClass.set(static_cast<uint8_t>(ServiceClassType::VOICE));
+            req.serviceClass = serviceClass;
             auto ret = suppServicesManager->setForwardingPref(req,
                 SetSuppSvcResponseCallback::setSuppSvcResp);
             if (ret == telux::common::Status::SUCCESS) {
@@ -258,7 +259,7 @@ void SuppServicesMenu::setCallForwardingPref(std::vector<std::string> userInput)
 
 void SuppServicesMenu::getCallForwardingPref(std::vector<std::string> userInput) {
     auto suppServicesManager = suppServicesManagers_[slot_ - 1];
-    ServiceClass serviceClass = SERVICE_CLASS_VOICE;
+    ServiceClass serviceClass;
     int command = -1;
     ForwardReason reason = ForwardReason::UNCONDITIONAL;
     std::cout << "Enter reason for call forwarding: \n\
@@ -278,6 +279,7 @@ void SuppServicesMenu::getCallForwardingPref(std::vector<std::string> userInput)
     }
 
     if (suppServicesManager) {
+        serviceClass.set(static_cast<uint8_t>(ServiceClassType::VOICE));
         auto ret = suppServicesManager->requestForwardingPref(
             serviceClass, reason,
             GetSuppSvcResponseCallback::getForwardingPrefResp);
@@ -295,13 +297,13 @@ void SuppServicesMenu::selectSimSlot(std::vector<std::string> userInput) {
    std::string slotSelection;
    char delimiter = '\n';
 
-   std::cout << "Enter the desired SIM slot: ";
+   std::cout << "Enter the desired SIM slot (1-Primary, 2-Secondary): ";
    std::getline(std::cin, slotSelection, delimiter);
 
    if (!slotSelection.empty()) {
       try {
          int slot = std::stoi(slotSelection);
-         if (slot > 2) {
+         if (slot > MAX_SLOT_ID  || slot < DEFAULT_SLOT_ID) {
             std::cout << "Invalid slot entered, using default slot" << std::endl;
             slot_ = DEFAULT_SLOT_ID;
          } else {
@@ -321,13 +323,14 @@ void SuppServicesMenu::selectSimSlot(std::vector<std::string> userInput) {
 void SuppServicesMenu::setOirPref(std::vector<std::string> userInput) {
     auto suppServicesManager = suppServicesManagers_[slot_ - 1];
     int command = -1;
-    ServiceClass serviceClass = SERVICE_CLASS_VOICE;
+    ServiceClass serviceClass;
 
     std::cout << "Enter originating identification restriction Pref(1-Enable, 2-Disable) : ";
     std::cin >> command;
     Utils::validateInput(command);
     if (command == 1 || command == 2 ) {
         if (suppServicesManager) {
+            serviceClass.set(static_cast<uint8_t>(ServiceClassType::VOICE));
             auto ret = suppServicesManager->setOirPref(serviceClass,
                 static_cast<SuppServicesStatus>(command),
                 SetSuppSvcResponseCallback::setSuppSvcResp);
@@ -344,9 +347,10 @@ void SuppServicesMenu::setOirPref(std::vector<std::string> userInput) {
 
 void SuppServicesMenu::getOirPref(std::vector<std::string> userInput) {
     auto suppServicesManager = suppServicesManagers_[slot_ - 1];
-    ServiceClass serviceClass = SERVICE_CLASS_VOICE;
+    ServiceClass serviceClass;
 
     if (suppServicesManager) {
+        serviceClass.set(static_cast<uint8_t>(ServiceClassType::VOICE));
         auto ret = suppServicesManager->requestOirPref(serviceClass,
             GetSuppSvcResponseCallback::getOirStatusResp);
         if (ret == telux::common::Status::SUCCESS) {

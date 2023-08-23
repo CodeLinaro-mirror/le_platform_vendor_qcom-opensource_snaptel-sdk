@@ -49,10 +49,27 @@
 
 class JsonParser {
 public:
+    /**
+    * @brief:   Reads the json file
+    * @param:   rootNode - where the parsed Json root object is stored.
+    * @param:   path     - relative path to the Json file.
+    *                      For ex: data json may be stored in
+    *                      /data/telux/json/data/IDataConnectionManager.json, in this
+    *                      case path would be /data/IDataConnectionManager.json
+    */
     static telux::common::ErrorCode readFromJsonFile(Json::Value &rootNode,
-        std::string filename);
+        std::string path);
+
+    /**
+    * @brief:   write the json file
+    * @param:   rootNode - Json root object to be written.
+    * @param:   path     - relative path to the Json file.
+    *                      For ex: data json may be stored in
+    *                      /data/telux/json/data/IDataConnectionManager.json, in this
+    *                      case path would be /data/IDataConnectionManager.json
+    */
     static telux::common::ErrorCode writeToJsonFile(Json::Value rootNode,
-        std::string fileName);
+        std::string path);
 private:
     static std::mutex fileMutex_;
 };

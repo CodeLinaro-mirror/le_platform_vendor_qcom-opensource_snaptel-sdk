@@ -45,23 +45,28 @@
 
 using namespace telux::common;
 
-class ConfigParser;
+class SimulationConfigParser;
 
 enum class LoggerType {
     CONSOLE_LOG = 1,
     FILE_LOG = 2,
-    CONSOLE_FILE_LOG =3,
+    CONSOLE_FILE_LOG = 3,
+    SYSLOG_LOG = 4,
 };
 
 class Logger {
 private:
     LoggerType loggerType_;
     LogLevel loggerLevel_;
-    int processID_;
+
     std::mutex fileMutex_;
     std::ofstream logFile_;
-    std::shared_ptr<ConfigParser> config_;
+    std::shared_ptr<SimulationConfigParser> config_;
     std::string processName_;
+    std::string logFileFullName_;
+    int processID_;
+    int logFileMaxSize_;
+    ino_t inodeNumber_ = 0;
 
     Logger();
     Logger(const Logger &) = delete;
@@ -70,6 +75,7 @@ private:
     std::string getCurrentTime();
     void logToFile(std::ostringstream & os);
     void logToConsole(std::ostringstream & os);
+    void logToSyslog(std::ostringstream & os, LogLevel logLevel);
 
     //Logging Type can only be changed from config file
     void initLoggingType();
@@ -78,6 +84,10 @@ private:
     void initLoggingLevel();
     void initProcessId();
     void initProcessName();
+    bool backupLogFile();
+    void initLogFileMaxSize();
+    int acquireLock(int &fileDescriptor);
+    ino_t reopenLogFile();
 
 public:
     static Logger& getInstance();
@@ -91,6 +101,7 @@ public:
 
     bool isConsoleLoggingEnabled();
     bool isFileLoggingEnabled();
+    bool isSyslogLoggingEnabled();
 };
 
 template <typename... MessageArgs>

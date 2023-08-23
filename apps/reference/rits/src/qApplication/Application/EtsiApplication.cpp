@@ -405,7 +405,8 @@ int EtsiApplication::receive(const uint8_t index, const uint16_t bufLen) {
             mc->decoded = true;
         }
 
-        ApplicationBase::writeLog(mc, index, 0, false, TransmitType::EVENT, mc->decoded, timestamp);
+        ApplicationBase::writeLog(mc, index, 0, false, TransmitType::EVENT, 
+            mc->decoded, timestamp, 0);
     }
     return ret;
 }

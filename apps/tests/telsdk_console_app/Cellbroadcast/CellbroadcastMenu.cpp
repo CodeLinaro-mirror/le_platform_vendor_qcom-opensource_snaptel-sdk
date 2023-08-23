@@ -287,13 +287,13 @@ void CellbroadcastMenu::selectSimSlot(std::vector<std::string> userInput) {
    std::string slotSelection;
    char delimiter = '\n';
 
-   std::cout << "Enter the desired SIM slot: ";
+   std::cout << "Enter the desired SIM slot (1-Primary, 2-Secondary): ";
    std::getline(std::cin, slotSelection, delimiter);
 
    if (!slotSelection.empty()) {
       try {
          int slot = std::stoi(slotSelection);
-         if (slot > MAX_SIM_SLOT_COUNT) {
+         if (slot > MAX_SIM_SLOT_COUNT || slot < MIN_SIM_SLOT_COUNT) {
             std::cout << "Invalid slot entered, using default slot" << std::endl;
             slot_ = DEFAULT_SLOT_ID;
          } else {

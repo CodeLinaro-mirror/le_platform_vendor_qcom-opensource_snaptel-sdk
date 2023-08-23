@@ -292,12 +292,18 @@ void writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FIL
     const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
     float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr,
     uint64_t txInterval, uint32_t l2SrcAddr){
+    if(!mc){
+        printf("Null message contents\n");
+        return;
+    }
+
     if(!mc->j2735_msg){
         printf("Null j2735 msg\n");
         return;
     }
     if(!tmpLogStr){
         printf("Invalid input buffer\n");
+        return;
     }
     char wall_time[100];
     get_wall_time(wall_time);
@@ -331,11 +337,9 @@ void writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FIL
     loggings.stability_control_status = bs->brakes.bits.stability_control_status;
     loggings.traction_control_status = bs->brakes.bits.traction_control_status;
 
-    memcpy(&loggings.events, &bs->events, sizeof(vehicleeventflags_ut));
-
     if(isTx){
         snprintf(tmpLogStr, maxBufSize,
-        "%s,%"PRIu64",%"PRIu64",%s,,%"PRIu64",%lf,%"PRIu64",%d,%d,0,%d,%f,%f,%f,%f,%f,%f,%f,",
+        "%s,%"PRIu64",%"PRIu64",%s,,%d,%lf,%"PRIu64",%d,%d,0,%d,%f,%f,%f,%f,%f,%f,%f,",
             timeStamp, realworldTimeNow, loggings.time_mono,
             "Tx", cbr, get_CPU_percentage(monotonicTime),
             loggings.txInterval, loggings.MsgCount, loggings.id,

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -174,7 +174,13 @@ public:
   virtual void onGnssSignalInfo(const std::shared_ptr<IGnssSignalInfo> &info) {}
 
 /**
- * This function is called when device receives GNSS NMEA sentences.
+ * This function is called when device receives GNSS NMEA sentences from FUSED engine.
+ *
+ * To receive these updates, clients need to set the @ref telux::loc::GnssReportType::NMEA bit
+ * in the reportMask passed as a paramter to @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ *
+ * Also refer to @ref ILocationManager::startDetailedEngineReports to understand the usage further.
  *
  * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
  * for this listener API to be invoked.
@@ -183,6 +189,24 @@ public:
  * @param [in] nmea - Nmea sentence
  */
   virtual void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {}
+
+/**
+ * This function is called when device receives NMEA sentences from a specific engine.
+ *
+ * To receive these updates, clients need to set the @ref telux::loc::GnssReportType::ENGINE_NMEA
+ * bit in the reportMask passed as a paramter to @ref ILocationManager::startDetailedEngineReports.
+ *
+ * Also refer to @ref ILocationManager::startDetailedEngineReports to understand the usage further.
+ *
+ * On platforms with Access control enabled, the client needs to have TELUX_LOC_DATA permission
+ * for this listener API to be invoked.
+ *
+ * @param [in] engineType - Engine Type used in generating the NMEA sentence.
+ * @param [in] timestamp - Timestamp
+ * @param [in] nmea - Nmea sentence
+ */
+  virtual void onEngineNmeaInfo(LocationAggregationType engineType, uint64_t timestamp,
+    const std::string &nmea) {}
 
 /**
  * This function is called when device receives signal measurement information
@@ -253,6 +277,9 @@ public:
  * @brief ILocationConfigListener interface is used to receive notifications related to
  * configuration events.
  *
+ * Clients can register for updates via @ref ILocationConfigurator::registerListener
+ * by passing the list of indications present under @ref telux::loc::LocConfigIndicationsType.
+ *
  * The listener method can be invoked from multiple different threads.
  * Client needs to make sure that implementation is thread-safe.
  */
@@ -261,10 +288,28 @@ class ILocationConfigListener {
     /**
      * The API is invoked when there is any update in the Xtra assistance data.
      *
+     * Clients need to register for this indication
+     * via @ref LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS.
+     *
      * @param [in] xtraStatus - Xtra assistant data's current status, validity
      *                          and whether it is enabled.
      */
     virtual void onXtraStatusUpdate(const XtraStatus xtraStatus) {}
+
+    /**
+     * The API is invoked when there is any update in the Gnss Signal types supported by the modem.
+     *
+     * When @ref ILocationConfigurator::configureConstellations is invoked,
+     * the supported signals would be updated and notified via this listener API.
+     *
+     * Clients need to register for this indication
+     * via @ref LocConfigIndicationsType::LOC_CONF_IND_SIGNAL_UPDATE.
+     *
+     * @param [in] gnssSignalMask - Bitset to represent the Gnss signal types supported
+     *                              by the modem.
+     *
+     */
+    virtual void onGnssSignalUpdate(const GnssSignal gnssSignalMask) {}
 
     virtual ~ILocationConfigListener() {}
 };

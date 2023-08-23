@@ -386,8 +386,34 @@ std::vector<gid_t> getGidByName(std::vector<std::string> names) {
     return groupIds;
 }
 
+size_t Utils::removeDuplicateGroups(std::vector<std::string> & grps) {
+    int numGroups = getgroups(0, NULL);
+    gid_t currentGids[numGroups]{};
+    if( getgroups(numGroups, currentGids) < 0 ) {
+        std::cout << "fail getgroups, abort" << std::endl;
+        return grps.size();
+    }
+    for (int i = 0; i < numGroups; i++) {
+        struct group *gr = getgrgid(currentGids[i]);
+        if (gr != NULL) {
+            std::string grName(gr->gr_name);
+            for (auto it = grps.begin(); it != grps.end();) {
+                if (*it == grName) {
+                    it = grps.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+    }
+    return grps.size();
+}
+
 int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
     int ret = 0;
+    if (removeDuplicateGroups(grps) == 0) {
+        return 0;
+    }
     std::vector<gid_t> groupIds = getGidByName(grps);
     int numGroups = getgroups(0, NULL);
     gid_t gid[numGroups]{};

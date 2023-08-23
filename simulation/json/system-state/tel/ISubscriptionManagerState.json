@@ -1,0 +1,30 @@
+{
+    "ISubscriptionManager" :
+    {
+        "IsSubsystemReady" : "SERVICE_AVAILABLE",
+        "IsSubsystemReadyDelay" : 300,
+        "Subscription" :
+        [
+            {
+                "carrierName" : "WirelessOne" ,
+                "phoneNumber" : "8984653739" ,
+                "iccId" : "89010020000011293999",
+                "mcc" : 310,
+                "mnc" : 11,
+                "imsi" : "310018984653739",
+                "gid1" : "ffffffffffffffff",
+                "gid2" : "ffffffffffffffff"
+            },
+            {
+                "carrierName" : "Airtel" ,
+                "phoneNumber" : "8984653739" ,
+                "iccId" : "89010020000011293999" ,
+                "mcc" : 310,
+                "mnc" : 11,
+                "imsi" : "310018984653739",
+                "gid1" : "ffffffffffffffff",
+                "gid2" : "ffffffffffffffff"
+            }
+        ]
+    }
+}

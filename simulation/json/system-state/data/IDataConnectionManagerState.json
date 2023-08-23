@@ -1,0 +1,15 @@
+{
+	"IDataConnectionManager": {
+		"getDefaultProfile": {
+			"profileId": 1,
+			"slotId": 1
+		},
+		"getSlotId": {
+			"slotId": 1
+		},
+		"requestRoamingMode": {
+			"isRoamingEnabled": false,
+			"profileId": 1
+		}
+	}
+}

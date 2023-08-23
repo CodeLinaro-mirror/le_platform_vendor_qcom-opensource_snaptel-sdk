@@ -312,13 +312,16 @@ void PlaybackAMRWBPlus::play() {
           p.set_value(error);
       });
 
-      ec = p.get_future().get();
-      if (ec != telux::common::ErrorCode::SUCCESS) {
-          std::cout << "can't finish playback, err " << static_cast<int>(ec) << std::endl;
-          return;
-      }
-
-      playStopCv_.wait(stopLock);
+      if(status == telux::common::Status::SUCCESS){
+            ec = p.get_future().get();
+            if (ec != telux::common::ErrorCode::SUCCESS) {
+                std::cout << "can't finish playback, err " << static_cast<int>(ec) << std::endl;
+                return;
+            }
+            playStopCv_.wait(stopLock);
+        } else {
+            std::cout << "can't stop playback" << std::endl;
+        }
     }
 
     std::cout << "playback finished" << std::endl;

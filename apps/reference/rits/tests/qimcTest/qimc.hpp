@@ -54,6 +54,11 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <json.h>
+#include <cstring>
+#include <sys/timerfd.h>
+#include <sys/time.h>
+#include <cstdio>
+#include <cstdlib>
 // Local Includes
 
 #include "qimc.hpp"
@@ -79,13 +84,14 @@ public:
     {
     public:
         struct sockaddr_in sAddress; // Server ADdress
-        bool saveRes, printRes, printReq, isResPath, isReqPath, isHelp, isClose;
+        bool saveRes, printRes, printReq, isResPath, isReqPath, isHelp, isClose, periodicReport;
         int sockDomain = AF_INET;
         int sockType = SOCK_STREAM;
         int sockProtocol = IPPROTO_TCP;
         string jsonReqPath, jsonResPath;
         Alert debugLevel = NO_ALERT;
         Alert logLevel = NO_ALERT;
+        uint32_t reportInterval = 100; // default is 100 ms
 
         Configuration(const char charAddr[] = DEFAULT_ADDRESS,
                       const int port = DEFAULT_PORT)
@@ -101,14 +107,14 @@ public:
         }
     };
     /**
-     * @brief Construct a new QMonitor object
+     * @brief Construct a new qimc object
      *
-     * @param conf object that holds several QMonitor attributes.
+     * @param conf object that holds several qimc attributes.
      */
     Qimc(const Configuration conf);
 
     /**
-     * @brief Destroy the QMonitor object
+     * @brief Destroy the qimc object
      *
      */
     ~Qimc();
@@ -122,6 +128,13 @@ public:
      */
     static Configuration loadArgs(int argc, const char **argv);
 
+    /**
+     * @brief send json request to qmonitor and get response
+     *
+     * @param json_object*, json command to send
+     * @return json_object*, json response.
+     */
+    json_object* sendAndGetResponse(json_object* command);
 private:
     Configuration config;
     json_object *req = nullptr;
@@ -136,7 +149,7 @@ private:
      * @param req json object with request
      * @return json_object* json response from request
      */
-    json_object *sendReq(json_object *req);
+     json_object *sendReq(json_object *req);
 
     /**
      * @brief Parses server response and prints it human readable
@@ -144,7 +157,7 @@ private:
      * @param res from server
      * @return int 0 if success, else fails
      */
-    int parseRes(json_object *res);
+     int parseRes(json_object *res);
 
     /**
      * @brief

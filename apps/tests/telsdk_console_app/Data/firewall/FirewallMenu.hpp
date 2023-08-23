@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * This is a Firewall Manager Sample Application using Telematics SDK.
  * It is used to demonstrate APIs to set Firewall and DMZ features
@@ -86,8 +92,8 @@ class FirewallMenu : public ConsoleApp,
     // get Transport Firewall params from user and set TCP/UDP Info
     void getProtocolParams(telux::data::IpProtocol proto,
         std::shared_ptr<IIpFilter> ipFilter, std::shared_ptr<IIpFilter> ipFilterTcpUdp);
-    void getProtocolParamsFromUser (std::string proto, std::string &srcPort,
-        std::string &srcRange, std::string &destPort, std::string &destRange);
+    void getProtocolParamsFromUser (std::string proto, int &srcPort,
+        int &srcRange, int &destPort, int &destRange);
     void parseProtoInfo(std::shared_ptr<IIpFilter> filter, telux::data::IpProtocol protocol,
         int &srcPort, int &destPort, int &srcPortRange, int &dstPortRange, std::string &protoStr);
     void displayFirewallEntry();
@@ -98,6 +104,6 @@ class FirewallMenu : public ConsoleApp,
     bool subSystemStatusUpdated_;
     std::condition_variable cv_;
     std::shared_ptr<telux::data::net::IFirewallManager> firewallManager_;
-    std::vector<std::shared_ptr<IFirewallEntry>> fwEntries_;
+    std::vector<FirewallEntryInfo> fwEntries_;
 };
 #endif

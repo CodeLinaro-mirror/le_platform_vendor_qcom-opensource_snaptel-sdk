@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -94,6 +94,73 @@ namespace net {
 // Forward declarations
 class IFirewallEntry;
 class IFirewallListener;
+
+/**
+ * Firewall configuration parameters
+ */
+struct FirewallConfig {
+    BackhaulInfo bhInfo;        /**< Backhaul Information to apply firewal settings on       */
+    bool   enable;              /**< True: Firewall enabled. False: Firewall disabled        */
+    bool   allowPackets;        /**< True: Packets that match rules will be allowed.         */
+                                /**< False: Packets that match rules will be dropped         */
+};
+
+/**
+ * DMZ configuration parameters
+ */
+struct DmzConfig {
+    BackhaulInfo bhInfo;        /**< Backhaul Information to apply firewal settings on       */
+    std::string ipAddr;         /**< IP address for which DMZ will be enabled                */
+};
+
+/**
+ * Firewall rules parameters
+ */
+struct FirewallEntryInfo {
+    std::shared_ptr<IFirewallEntry> fwEntry;
+                                 /**< Shared pointer to firewall rules for the backhaul       */
+    BackhaulInfo bhInfo;       /**< Backhaul Information to add firewal rules on       */
+};
+
+/**
+ * This function is called as a response to @ref requestFirewallConfig()
+ *
+ * @param [in] config            Firewall configuration status for specific backhaul
+ *                               @ref telux::data::FirewallConfig.
+ * @param [in] error             Return code which indicates whether the operation
+ *                               succeeded or not. @ref telux::common::ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+ *         break backwards compatibility.
+ *
+*/
+using FirewallConfigCb
+    = std::function<void(FirewallConfig status, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref requestFirewallEntries()
+ *
+ * @param [in] entries           Vector of firewall entries for specific backhaul
+ * @param [in] error             Return code which indicates whether the operation
+ *                               succeeded or not. @ref telux::common::ErrorCode
+ *
+ */
+using FirewallEntryInfoCb = std::function<void(
+    std::vector<FirewallEntryInfo> entry, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref requestDmzEntries()
+ *
+ * @param [in] dmzEntries     list of dmz entries configurations
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not. @ref telux::common::ErrorCode
+ *
+ * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+ *         break backwards compatibility.
+ */
+using DmzEntryInfoCb
+    = std::function<void(std::vector<DmzConfig> dmzEntries, telux::common::ErrorCode error)>;
+
 
 /**
  * This function is called as a response to @ref requestFirewallStatus()
@@ -181,57 +248,71 @@ class IFirewallManager {
      * @deprecated Use InitResponseCb callback in factory API getFirewallManager.
      */
     virtual std::future<bool> onSubsystemReady() = 0;
-
     /**
-     * Sets firewall configuration to enable or disable and update configuration to
-     * drop or accept the packets matching the rules.
+     * Sets firewall configuration to enable or disable firewall and update configuration to
+     * drop or accept the packets matching the rules on slot ID, profile ID and backhaul type.
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
      * permission to invoke this API successfully.
      *
-     * @param [in] profileId         Profile identifier on which firewall will be set.
-     * @param [in] enable            Indicates whether the firewall is enabled
-     * @param [in] allowPackets      Indicates whether to accept or drop packets
-     *                               matching the rules
-     * @param [in] callback          optional callback to get the response setFirewall
-     * @param [in] slotId            Specify slot id which has the sim that contains profile id
+     * @param [in] config            Firewall configuration @ref telux::data::FirewallConfig.
      *
-     * @returns Status of setFirewall i.e. success or suitable status code.
+     * @returns Status of setFirewallConfig i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      *
      */
-    virtual telux::common::Status setFirewall(int profileId, bool enable, bool allowPackets,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status setFirewallConfig(FirewallConfig fwConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Request status of firewall
+     * Request status of firewall settings on specific backhaul
      *
-     * @param [in] profileId         Profile identifier for which firewall status is requested.
-     * @param [in] callback          callback to get the response of requestFirewallStatus
-     * @param [in] slotId            Specify slot id which has the sim that contains profile id
+     * @param [in] bhInfo            Backhaul Information to request firewall status for.
+     * @param [in] callback          callback to get the response of requestFirewallConfig
      *
-     * @returns Status of requestFirewallStatus i.e. success or suitable status code.
+     * @returns Status of requestFirewallConfig i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      *
      */
-    virtual telux::common::Status requestFirewallStatus(int profileId,
-        FirewallStatusCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status requestFirewallConfig(BackhaulInfo bhInfo,
+        FirewallConfigCb callback) = 0;
 
     /**
-     * Adds the firewall rule
+     * Adds the firewall rule to specific backhaul
      *
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
      * permission to invoke this API successfully.
      *
-     * @param [in] profileId        Profile identifier on which firewall rule will be added.
-     * @param [in] entry            Firewall entry based on protocol type
+     * @param [in] entries          Firewall rules entries settings.
      * @param [in] callback         optional callback to get the response addFirewallEntry
-     * @param [in] slotId           Specify slot id which has the sim that contains profile id
      *
      * @returns Status of addFirewallEntry i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     *
      */
-    virtual telux::common::Status addFirewallEntry(int profileId,
-        std::shared_ptr<IFirewallEntry> entry, telux::common::ResponseCallback callback = nullptr,
-        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status addFirewallEntry(FirewallEntryInfo entry,
+        AddFirewallEntryCb callback = nullptr) = 0;
+
+    /**
+     * Request Firewall rules for specific backhaul
+     *
+     * @param [in] bhInfo          Backhaul Information to request firewall entries for.
+     * @param [in] callback          callback to get the response requestFirewallEntries.
+     *
+     * @returns Status of requestFirewallEntries i.e. success or suitable status code.
+     *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status requestFirewallEntries(BackhaulInfo bhInfo,
+        FirewallEntryInfoCb callback) = 0;
 
     /**
      * Add Hardware Acceleration Rule
@@ -250,113 +331,90 @@ class IFirewallManager {
      * On successful execution, a firewall handle will be provided in the callback which can be
      * used to remove the firewall entry @ref removeFirewallEntry().
      *
-     * @param [in] profileId        Profile identifier on which firewall rule will be added.
-     * @param [in] entry            Firewall entry based on protocol type
-     * @param [in] callback         optional callback to get the response
-     *                              @ref addHwAccelerationFirewallEntry
-     * @param [in] slotId           Specify slot id which has the sim that contains profile id
+     * @param [in] entries          Firewall rules entries settings.
+     * @param [in] callback         optional callback to get the response addFirewallEntry
      *
      * @returns Status of addHwAccelerationFirewallEntry i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      */
-    virtual telux::common::Status addHwAccelerationFirewallEntry(int profileId,
-        std::shared_ptr<IFirewallEntry> entry, AddFirewallEntryCb callback = nullptr,
-        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status addHwAccelerationFirewallEntry(FirewallEntryInfo entry,
+        AddFirewallEntryCb callback = nullptr) = 0;
 
     /**
      * Request Hardware Acceleration rules
      * Returns a list of hardware acceleration firewall entries.
      *
-     * @param [in] profileId       Profile identifier on which firewall entries are retrieved
-     * @param [in] callback        callback to get the response requestHwAccelerationFirewallEntries
-     * @param [in] slotId          Specify slot id which has the sim that contains profile id
+     * @param [in] bhInfo          Backhaul Information to request firewall entries for.
+     * @param [in] callback          callback to get the response requestFirewallEntries.
      *
      * @returns Status of requestHwAccelerationFirewallEntries i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestHwAccelerationFirewallEntries(int profileId,
-        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status requestHwAccelerationFirewallEntries(BackhaulInfo bhInfo,
+        FirewallEntryInfoCb callback) = 0;
 
     /**
-     * Request Firewall rules
+     * Remove firewall entry set on particular backhaul
      *
-     * @param [in] profileId         Profile identifier on which firewall entries are retrieved.
-     * @param [in] callback          callback to get the response requestFirewallEntries.
-     * @param [in] slotId            Specify slot id which has the sim that contains profile id
-     *
-     * @returns Status of requestFirewallEntries i.e. success or suitable status code.
-     *
-     */
-    virtual telux::common::Status requestFirewallEntries(int profileId,
-        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
-
-    /**
-     * Remove firewall entry
-     *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
-     * permission to invoke this API successfully.
-     *
-     * @param[in] profileId         Profile identifier on which firewall entry will be removed.
+     * @param [in] bhInfo           Backhaul information to remove firewall entries from.
      * @param[in] handle            handle of Firewall entry to be removed. To retrieve the handle,
      *                              first use requestFirewallEntries() to get the list of entries
-     *                              added in the system. And then use IFirewallEntry::getHandle().
-     *                              Handle is also returned when hardware acceleration rule is added
-     *                              using @ref addHwAccelerationFirewallEntry
+     *                              added in the system. And then use IFirewallEntry::getHandle()
      * @param[in] callback          callback to get the response removeFirewallEntry
-     * @param[in] slotId            Specify slot id which has the sim that contains profile id
      *
      * @returns Status of removeFirewallEntry i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      */
-    virtual telux::common::Status removeFirewallEntry(int profileId, uint32_t handle,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status removeFirewallEntry(BackhaulInfo bhInfo, uint32_t handle,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Enable demilitarized zone (DMZ)
+     * Enable demilitarized zone (DMZ) on particular backhaul
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
-     * permission to invoke this API successfully.
-     *
-     * @param [in] profileId     Profile identifier on which DMZ will be enabled.
-     * @param [in] ipAddr        IP address for which DMZ will be enabled
+     * @param [in] config        DMZ configuration to be enabled
      * @param [in] callback      optional callback to get the response addDmz
-     * @param [in] slotId        Specify slot id which has the sim that contains profile id
      *
      * @returns Status of enableDmz i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      */
-    virtual telux::common::Status enableDmz(int profileId, const std::string ipAddr,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status enableDmz(DmzConfig config,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Disable demilitarized zone (DMZ)
+     * Disable demilitarized zone (DMZ) on particular backhaul
      *
-     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
-     * permission to invoke this API successfully.
-     *
-     * @param [in] profileId     Profile identifier on which DMZ will be disabled.
+     * @param [in] bhInfo        Backhaul on which DMZ will be disabled.
      * @param [in] ipType        Specify IP type of the DMZ to be disabled
      * @param [in] callback      optional callback to get the response removeDmz
-     * @param [in] slotId        Specify slot id which has the sim that contains profile id
      *
      * @returns Status of disableDmz i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      */
-    virtual telux::common::Status disableDmz(int profileId, const telux::data::IpFamilyType ipType,
-        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status disableDmz(BackhaulInfo bhInfo, const IpFamilyType ipType,
+        telux::common::ResponseCallback callback = nullptr) = 0;
 
     /**
-     * Request DMZ entry that was previously set using enableDmz API
+     * Request DMZ entry on particulat backhaul that was previously set using enableDmz API
      *
-     * @param [in] profileId     Profile identifier on which DMZ entries are requested.
-     * @param [in] dmzCb         callback to get the response requestDmzEntry
-     * @param [in] slotId        Specify slot id which has the sim that contains profile id
+     * @param [in] bhInfo          Backhaul info on which DMZ entries are requested.
+     * @param [in] callback        callback to get the response requestDmzEntry
      *
      * @returns Status of requestDmzEntry i.e. success or suitable status code.
      *
+     * @note    Eval: This is a new API and is being evaluated. It is subject to change
+     *          and could break backwards compatibility.
      */
-    virtual telux::common::Status requestDmzEntry(int profileId,
-        DmzEntriesCb dmzCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+    virtual telux::common::Status requestDmzEntry(BackhaulInfo bhInfo, DmzEntryInfoCb callback) = 0;
 
     /**
      * Register Firewall Manager as listener for Data Service heath events like data service
@@ -387,6 +445,198 @@ class IFirewallManager {
      *
      */
     virtual telux::data::OperationType getOperationType() = 0;
+
+    /**
+     * Sets firewall configuration to enable or disable and update configuration to
+     * drop or accept the packets matching the rules.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] profileId         Profile identifier on which firewall will be set.
+     * @param [in] enable            Indicates whether the firewall is enabled
+     * @param [in] allowPackets      Indicates whether to accept or drop packets
+     *                               matching the rules
+     * @param [in] callback          optional callback to get the response setFirewall
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of setFirewall i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::setFirewallConfig API to set firewall on any backhaul
+     *
+     */
+    virtual telux::common::Status setFirewall(int profileId, bool enable, bool allowPackets,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Request status of firewall
+     *
+     * @param [in] profileId         Profile identifier for which firewall status is requested.
+     * @param [in] callback          callback to get the response of requestFirewallStatus
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of requestFirewallStatus i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::requestFirewallConfig API to request firewall status
+     *             on any backhaul
+     */
+    virtual telux::common::Status requestFirewallStatus(int profileId,
+        FirewallStatusCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Adds the firewall rule
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] profileId        Profile identifier on which firewall rule will be added.
+     * @param [in] entry            Firewall entry based on protocol type
+     * @param [in] callback         optional callback to get the response addFirewallEntry
+     * @param [in] slotId           Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of addFirewallEntry i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::addFirewallEntry API to add firewall rule on any backhaul
+     */
+    virtual telux::common::Status addFirewallEntry(int profileId,
+        std::shared_ptr<IFirewallEntry> entry, telux::common::ResponseCallback callback = nullptr,
+        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Add Hardware Acceleration Rule
+     * Adds a firewall rule which will direct all traffic that matches the rule to bypass hardware
+     * acceleration, and take the software path.
+     *
+     * These rules are per PDN. If the same rule applies to more than one PDN then this API needs to
+     * be invoked per PDN by specifying the corresponding profile ID of the PDN.
+     * @ref setFirewall is not required for hw acceleration firewall rules to have an effect, which
+     * means that as soon as the rule is added successfully, packets matching the firewall rule will
+     * not be hw accelerated.
+     * Irrespective of whether firewall rules are set via @ref addFirewallEntry and the type of
+     * firewall set (blacklist/whitelist) via @ref setFirewall, any packet matching rule added by
+     * @ref addHwAccelerationFirewallEntry will not be hw accelerated and this packet will be routed
+     * by the S/w stack.
+     * On successful execution, a firewall handle will be provided in the callback which can be
+     * used to remove the firewall entry @ref removeFirewallEntry().
+     *
+     * @param [in] profileId        Profile identifier on which firewall rule will be added.
+     * @param [in] entry            Firewall entry based on protocol type
+     * @param [in] callback         optional callback to get the response
+     *                              @ref addHwAccelerationFirewallEntry
+     * @param [in] slotId           Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of addHwAccelerationFirewallEntry i.e. success or suitable status code.
+     *
+     * @deprecated  Use @ref telux::data::addHwAccelerationFirewallEntry API to add hardware
+     *              acceleration firewall rule on any backhaul
+     */
+    virtual telux::common::Status addHwAccelerationFirewallEntry(int profileId,
+        std::shared_ptr<IFirewallEntry> entry, AddFirewallEntryCb callback = nullptr,
+        SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Request Hardware Acceleration rules
+     * Returns a list of hardware acceleration firewall entries.
+     *
+     * @param [in] profileId       Profile identifier on which firewall entries are retrieved
+     * @param [in] callback        callback to get the response requestHwAccelerationFirewallEntries
+     * @param [in] slotId          Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of requestHwAccelerationFirewallEntries i.e. success or suitable status code.
+     *
+     * @deprecated  Use @ref telux::data::requestHwAccelerationFirewallEntries API to request
+     *              hardware acceleration firewall rule on any backhaul
+     */
+    virtual telux::common::Status requestHwAccelerationFirewallEntries(int profileId,
+        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Request Firewall rules
+     *
+     * @param [in] profileId         Profile identifier on which firewall entries are retrieved.
+     * @param [in] callback          callback to get the response requestFirewallEntries.
+     * @param [in] slotId            Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of requestFirewallEntries i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::requestFirewallEntries API to request firewall rules on
+     *             any backhaul
+     */
+    virtual telux::common::Status requestFirewallEntries(int profileId,
+        FirewallEntriesCb callback, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Remove firewall entry
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param[in] profileId         Profile identifier on which firewall entry will be removed.
+     * @param[in] handle            handle of Firewall entry to be removed. To retrieve the handle,
+     *                              first use requestFirewallEntries() to get the list of entries
+     *                              added in the system. And then use IFirewallEntry::getHandle().
+     *                              Handle is also returned when hardware acceleration rule is added
+     *                              using @ref addHwAccelerationFirewallEntry
+     * @param[in] callback          callback to get the response removeFirewallEntry
+     * @param[in] slotId            Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of removeFirewallEntry i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::removeFirewallEntry API to remove firewall rule
+     *             from any backhaul
+     */
+    virtual telux::common::Status removeFirewallEntry(int profileId, uint32_t handle,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Enable demilitarized zone (DMZ)
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] profileId     Profile identifier on which DMZ will be enabled.
+     * @param [in] ipAddr        IP address for which DMZ will be enabled
+     * @param [in] callback      optional callback to get the response addDmz
+     * @param [in] slotId        Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of enableDmz i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::enableDmz API to enable DMZ on any backhaul
+     */
+    virtual telux::common::Status enableDmz(int profileId, const std::string ipAddr,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Disable demilitarized zone (DMZ)
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] profileId     Profile identifier on which DMZ will be disabled.
+     * @param [in] ipType        Specify IP type of the DMZ to be disabled
+     * @param [in] callback      optional callback to get the response removeDmz
+     * @param [in] slotId        Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of disableDmz i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::disableDmz API to Disable DMZ on any backhaul
+     */
+    virtual telux::common::Status disableDmz(int profileId, const telux::data::IpFamilyType ipType,
+        telux::common::ResponseCallback callback = nullptr, SlotId slotId = DEFAULT_SLOT_ID) = 0;
+
+    /**
+     * Request DMZ entry that was previously set using enableDmz API
+     *
+     * @param [in] profileId     Profile identifier on which DMZ entries are requested.
+     * @param [in] dmzCb         callback to get the response requestDmzEntry
+     * @param [in] slotId        Specify slot id which has the sim that contains profile id
+     *
+     * @returns Status of requestDmzEntry i.e. success or suitable status code.
+     *
+     * @deprecated Use @ref telux::data::requestDmzEntry API to request DMZ on any backhaul
+     */
+    virtual telux::common::Status requestDmzEntry(int profileId,
+        DmzEntriesCb dmzCb, SlotId slotId = DEFAULT_SLOT_ID) = 0;
 
     /**
      * Destructor for IFirewallManager

@@ -339,14 +339,11 @@ void NAOIpTrigger::cleanOldDisconnectedClientThreads() {
 void NAOIpTrigger::stopServer() {
     LOG(DEBUG, __FUNCTION__);
     try {
-
+        std::lock_guard<std::mutex> serverUpdate(serverUpdate_);
         disableFilter();
         if (dataController_) {
             dataController_->removeAllFilter();
         }
-
-        std::lock_guard<std::mutex> serverUpdate(serverUpdate_);
-
         if (!isServerRunning_) {
             LOG(ERROR, __FUNCTION__, " server already stoped ");
             return;

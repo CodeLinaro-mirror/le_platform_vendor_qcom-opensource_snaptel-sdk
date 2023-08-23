@@ -1516,6 +1516,17 @@ void MyLocationListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &n
    std::cout << " Nmea String : " << nmea << std::endl;
 }
 
+void MyLocationListener::onEngineNmeaInfo(telux::loc::LocationAggregationType engineType,
+    uint64_t timestamp, const std::string &nmea) {
+    if(!isEngineNmeaInfoFlagEnabled_) {
+        return;
+    }
+    PRINT_NOTIFICATION << "\n**************** Engine Nmea Information ***************" << std::endl;
+    LocationUtils::displayLocEngineType(engineType);
+    std::cout << " Timestamp : " << timestamp << std::endl;
+    std::cout << " Nmea String : " << nmea << std::endl;
+}
+
 void MyLocationListener::onGnssMeasurementsInfo(const telux::loc::
      GnssMeasurements &measurementInfo) {
    if(!isMeasurementsInfoFlagEnabled_) {
@@ -1664,6 +1675,10 @@ void MyLocationListener::setNmeaInfoFlag(bool enable) {
    isNmeaInfoFlagEnabled_ = enable;
 }
 
+void MyLocationListener::setEngineNmeaInfoFlag(bool enable) {
+   isEngineNmeaInfoFlagEnabled_ = enable;
+}
+
 void MyLocationListener::setDetailedEngineLocReportFlag(bool enable) {
    isDetailedEngineReportFlagEnabled_ = enable;
 }
@@ -1685,4 +1700,9 @@ void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus x
     std::cout << "Xtra Feature Enabled: " << xtraStatus.featureEnabled << "\n";
     std::cout << "Xtra Feature Validity: " << xtraStatus.xtraValidForHours << "\n";
     LocationUtils::displayXtraStatus(xtraStatus);
+}
+
+void MyLocationConfigListener::onGnssSignalUpdate(const telux::loc::GnssSignal gnssSignalMask){
+    PRINT_NOTIFICATION << "\n********** GnssSignalMask Info **********" << std::endl;
+    LocationUtils::printGnssSignalType(gnssSignalMask);
 }

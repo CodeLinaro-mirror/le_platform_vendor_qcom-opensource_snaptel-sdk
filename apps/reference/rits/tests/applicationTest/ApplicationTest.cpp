@@ -465,7 +465,7 @@ void transmitEventMsg() {
     int timer_misses = 0;
     uint64_t exp = 0;
     ssize_t s;
-    int critEventCtr = 0;
+    int critEventMsgCtr = 0;
     uint64_t lastEventTxTime = 0;
     uint64_t nextSchedTxTime = 0;
     uint64_t currTimeTmp = 0;
@@ -486,9 +486,12 @@ void transmitEventMsg() {
                 lastEventTxTime = timestamp_now();
                 nextSchedTxTime = lastEventTxTime + 100;
             }
+            // std::cout << "Sending event message!\n";
             int ret = application->send(0, TransmitType::EVENT);
             if (ret <= 0) {
                 cerr << "Failed to send critical event message." << endl;
+            }else{
+                critEventMsgCtr++;
             }
             currTimeTmp = timestamp_now();
             waitTime = nextSchedTxTime - currTimeTmp; //ms
@@ -1261,7 +1264,7 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
-    std::vector<std::string> groups{"system", "diag", "radio"};
+    std::vector<std::string> groups{"system", "diag", "radio", "locclient"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;

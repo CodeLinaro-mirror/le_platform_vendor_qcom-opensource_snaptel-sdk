@@ -83,6 +83,9 @@ public:
 
    void onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) override;
 
+   void onEngineNmeaInfo(telux::loc::LocationAggregationType engineType, uint64_t timestamp,
+      const std::string &nmea) override;
+
    void onDetailedEngineLocationUpdate(const std::vector<std::shared_ptr<telux::loc::ILocationInfoEx>>
        &locationEngineInfo) override;
 
@@ -103,6 +106,7 @@ public:
    void setMeasurementsInfoFlag(bool enable);
    void setDisasterCrisisInfoFlag(bool enable);
    void setLocSystemInfoFlag(bool enable);
+   void setEngineNmeaInfoFlag(bool enable);
 
    ~MyLocationListener() {
    }
@@ -114,6 +118,7 @@ private:
    bool isMeasurementsInfoFlagEnabled_ = false;
    bool isDisasterCrisisInfoFlagEnabled_ = false;
    bool isLocSysInfoFlagEnabled_ = false;
+   bool isEngineNmeaInfoFlagEnabled_ = false;
    void printSbasCorrectionEx(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
    void printHorizontalReliability(telux::loc::LocationReliability locReliability);
    void printLocationPositionTech(std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo);
@@ -149,6 +154,7 @@ private:
 class MyLocationConfigListener : public telux::loc::ILocationConfigListener {
   public:
     void onXtraStatusUpdate(const telux::loc::XtraStatus xtraStatus) override;
+    void onGnssSignalUpdate(const telux::loc::GnssSignal gnssSignalMask) override;
     ~MyLocationConfigListener() {}
 };
 

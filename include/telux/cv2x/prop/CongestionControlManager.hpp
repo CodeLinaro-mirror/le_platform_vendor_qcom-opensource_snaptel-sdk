@@ -310,9 +310,7 @@ public:
      *          and could break backwards compatibility.
      * @returns CCErrorCode code meaning success or reason for error, if any
      */
-    static CCErrorCode updateHostVehicleData(Position pos, double speed){
-        return CCErrorCode::GENERIC_FAILURE;
-    }
+    virtual CCErrorCode updateHostVehicleData(Position& pos, double speed) = 0;
 
     /**
      * Used whenever the user needs to update latest host vehicle information to manager

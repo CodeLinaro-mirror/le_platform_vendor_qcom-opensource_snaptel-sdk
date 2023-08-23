@@ -177,10 +177,10 @@ void AntennaTestApp::setAntConfig(std::vector<std::string> userInput) {
 void AntennaTestApp::getAntConfig(std::vector<std::string> userInput) {
     if(antMgr_) {
         std::promise<telux::common::ErrorCode> p;
-        int index;
+        int index = -1;
         auto status = antMgr_->getActiveAntenna(
             [&p, &index, this](int antIndex, telux::common::ErrorCode error)
-            { p.set_value(error); index = antIndex;});
+            { index = antIndex; p.set_value(error); });
         if (status == Status::SUCCESS) {
             std::cout << APP_NAME << "Get antenna config sent successfully\n";
             telux::common::ErrorCode error = p.get_future().get();

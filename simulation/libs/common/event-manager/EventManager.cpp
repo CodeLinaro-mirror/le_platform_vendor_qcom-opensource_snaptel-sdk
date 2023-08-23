@@ -47,14 +47,14 @@
 #include <unistd.h>
 
 #include "EventManager.hpp"
-#include "ConfigParser.hpp"
+#include "SimulationConfigParser.hpp"
 #include "Logger.hpp"
 
 #define UNSOLICITED_COMMON_EVENT "all"
 #define LOCAL_HOST "127.0.0.1"
 #define DEFAULT_PORT 8080
 #define RETRY_TIMER 500
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 250
 
 namespace telux {
 namespace common {
@@ -64,7 +64,6 @@ EventManager::EventManager() {
     LOG(DEBUG, __FUNCTION__);
     LOG(DEBUG, " Initializing the EventManager");
     taskQ_ = std::make_shared<AsyncTaskQueue<void>>();
-    init();
 }
 
 EventManager::~EventManager() {
@@ -194,10 +193,9 @@ void EventManager::makeConnection() {
     }
 }
 
-void EventManager::init() {
+void EventManager::connectToSimulationServer() {
     LOG(DEBUG, __FUNCTION__);
-    config_ = std::make_shared<ConfigParser>(DEFAULT_STUB_CONFIG_FILE_NAME,
-        DEFAULT_STUB_CONFIG_FILE_PATH);
+    config_ = std::make_shared<SimulationConfigParser>();
     auto f = std::async(std::launch::async, [this]() {
         this->makeConnection();
     }).share();

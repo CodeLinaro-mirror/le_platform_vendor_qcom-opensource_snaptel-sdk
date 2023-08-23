@@ -4,6 +4,7 @@
 #!/bin/bash
 # Additional checks to see if we are in the right directory to be done
 ROOTFS=$2
+export PATH=${PWD}/build/bin:${PATH}
 
 if [ "$ROOTFS" == "" ] ; then
    ROOTFS=$PWD/rootfs

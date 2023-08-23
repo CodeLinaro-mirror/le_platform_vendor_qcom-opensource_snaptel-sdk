@@ -214,9 +214,8 @@ void QMonitor::clientHandler(int clientSock)
 
     while (cData->handling)
     {
-        cout << "Count: " << count++ << " Client sock: " << clientSock << endl;
+        count++;
         ret = read(cData->sock, cData->buffer, cData->bufferSize);
-        std::cout << "Reading from client" << std::endl;
         info = "Error reading data from client " + to_string(clientSock);
         if (errorCheck(AlertInfo<int>{info.c_str(), ret, SOCK_ERROR}))
         {
@@ -273,7 +272,6 @@ void QMonitor::clientHandler(int clientSock)
             QMClientOptions *options = &cData->options;
             QMClientMetaOptions *metaOpts = &options->metaOptions;
             QMClientValOptions *valOpts = &options->valueOptions;
-            //cout << "Options after reset: " << valOpts->totalTx << valOpts->decodeFails << valOpts->totalRSUs << valOpts->rxBSMs << endl;
         }
     }
     close(clientSock);
@@ -369,7 +367,6 @@ int QMonitor::createResponse(int client, json_object *res)
         const int64_t nanoTime = (ts.tv_sec * BILLION) + ts.tv_nsec;
         json_object_object_add(res, kStr[TIMESTAMP],
                                json_object_new_int64(nanoTime));
-        std::cout << "Adding timestamp" << std::endl;
     }
     if (metaOpts->jsonVersion)
     {

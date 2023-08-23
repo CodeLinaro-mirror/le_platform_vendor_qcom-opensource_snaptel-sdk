@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -138,6 +138,79 @@ void LocationUtils::displayXtraStatus(telux::loc::XtraStatus xtraStatus) {
     }
 }
 
+void LocationUtils::printGnssSignalType(telux::loc::GnssSignal signalTypeMask) {
+   std::cout << "Gnss Signal Type :" << std::endl;
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L1CA) {
+     std::cout << "GPS L1CA signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L1C) {
+     std::cout << "GPS L1C signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L2) {
+     std::cout << "GPS L2 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GPS_L5) {
+     std::cout << "GPS L5 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GLONASS_G1) {
+     std::cout << "Glonass G1 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GLONASS_G2) {
+     std::cout << "Glonass G2 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GALILEO_E1) {
+     std::cout << "Galileo E1 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GALILEO_E5A) {
+     std::cout << "Galileo E5A signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::GALILIEO_E5B) {
+     std::cout << "Galileo E5B signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B1) {
+     std::cout << "Beidou B1 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2) {
+     std::cout << "Beidou B2 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L1CA) {
+     std::cout << "QZSS L1CA signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L1S) {
+     std::cout << "QZSS L1S signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L2) {
+     std::cout << "QZSS L2 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::QZSS_L5) {
+     std::cout << "QZSS L5 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::SBAS_L1) {
+     std::cout << "SBAS L1 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B1I) {
+     std::cout << "Beidou B1I signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B1C) {
+     std::cout << "Beidou B1C signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2I) {
+     std::cout << "Beidou B2I signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2AI) {
+     std::cout << "Beidou B2AI signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::NAVIC_L5) {
+     std::cout << "Navic L5 signal is present" << std::endl;
+   }
+   if (signalTypeMask & telux::loc::GnssSignalType::BEIDOU_B2AQ) {
+     std::cout << "Beidou B2AQ signal is present" << std::endl;
+   }
+   if (signalTypeMask == telux::loc::UNKNOWN_SIGNAL_MASK) {
+     std::cout << " No signal present" << std::endl;
+   }
+}
+
 void LocationUtils::displayDisasterCrisisReportType(telux::loc::GnssDisasterCrisisReport
     dcReportInfo) {
     std::cout << "Disaster Crisis Report type: ";
@@ -148,5 +221,19 @@ void LocationUtils::displayDisasterCrisisReportType(telux::loc::GnssDisasterCris
         case telux::loc::GnssReportDCType::QZSS_NON_JMA_DISASTER_PREVENTION_INFO :
             std::cout << "QZSS_NON_JMA_DISASTER_PREVENTION_INFO \n";
             break;
+    }
+}
+
+void LocationUtils::displayLocEngineType(telux::loc::LocationAggregationType locEngineType) {
+    std::cout << "Location Engine Type: ";
+    switch(locEngineType) {
+        case telux::loc::LOC_OUTPUT_ENGINE_FUSED : std::cout << "FUSED engine " << std::endl;
+                                                   break;
+        case telux::loc::LOC_OUTPUT_ENGINE_SPE : std::cout << "SPE engine " << std::endl;
+                                                   break;
+        case telux::loc::LOC_OUTPUT_ENGINE_PPE : std::cout << "PPE engine " << std::endl;
+                                                   break;
+        case telux::loc::LOC_OUTPUT_ENGINE_VPE : std::cout << "VPE engine " << std::endl;
+                                                   break;
     }
 }

@@ -73,6 +73,7 @@ int RemoteSimDaemon::runDaemon(int argc, char **argv)
     std::signal(SIGTERM, signalHandler);
 
     if (initDaemon() != Status::SUCCESS) {
+        RemoteSimDaemon::getInstance().deInit();
         return EXIT_FAILURE;
     }
 
@@ -181,14 +182,6 @@ Status RemoteSimDaemon::initDaemon()
         LOGE("Failed to create RemoteSimManager!\n");
         return Status::FAILED;
     }
-
-    if (simConnection_.setupDaemonSocket() != Status::SUCCESS) {
-        LOGE("Failed to setup server socket!\n");
-        return Status::FAILED;
-    }
-
-    simConnection_.acceptClientConnection();
-
     telux::common::ServiceStatus remoteSimMgrStatus = remoteSimMgr_->getServiceStatus();
     if (remoteSimMgrStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOGD("Remote SIM subsystem not ready yet, waiting...\n");
@@ -203,9 +196,14 @@ Status RemoteSimDaemon::initDaemon()
         }
     } else {
         LOGE("RemoteSim subsystem failed to initialize.\n");
-        simConnection_.tearDownClientConnection();
         return Status::FAILED;
     }
+
+    if (simConnection_.setupDaemonSocket() != Status::SUCCESS) {
+        LOGE("Failed to setup server socket!\n");
+        return Status::FAILED;
+    }
+    simConnection_.acceptClientConnection();
 
     if (remoteSimMgr_->sendConnectionAvailable(eventCallback) != Status::SUCCESS) {
         LOGE("Failed to send connection available event request to the modem!\n");
@@ -222,6 +220,10 @@ void RemoteSimDaemon::deInit()
 {
     notifyModemConnUnavailable();
     simConnection_.tearDownClientConnection();
+    if (remoteSimMgr_) {
+        remoteSimMgr_->deregisterListener(listener_);
+    }
+    remoteSimMgr_ = nullptr;
 }
 
 void RemoteSimDaemon::handleApduTransfer(uint8_t *buf, int bytes)

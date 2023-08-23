@@ -77,6 +77,7 @@ class HpcmMenu : public ConsoleApp,
     void takeUserVoicePathInput(std::vector<telux::audio::Direction> &direction);
     Status createStream(StreamConfig &streamConfig);
     void getUserSampleRateInput(uint32_t &sampleRate);
+    void getUserSlotIdInput(SlotId &slotId);
 
     SlotId slotId_;
     std::atomic<bool> ready_;

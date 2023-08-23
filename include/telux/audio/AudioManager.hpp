@@ -331,7 +331,7 @@ class IAudioManager {
     *
     * @param [in] input     Details of the input to transcode
     * @param [in] output    Details of the transcoded output required
-    * @param [in] callback  Invoked to pass the transcoder instance
+    * @param [in] callback  Mandatory, invoked to pass the transcoder instance
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -381,7 +381,7 @@ class IAudioManager {
     * Gets the current initialization status of the audio calibration database (ACDB).
     * This status is obtained in the @ref GetCalInitStatusResponseCb callback.
     *
-    * @param [in] callback Invoked to pass the initialization status
+    * @param [in] callback Mandatory, invoked to pass the initialization status
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -484,7 +484,7 @@ class IAudioStream {
     *
     * @param [in] devices List of the audio devices to use with the stream
     *
-    * @param [in] callback Invoked to confirm if the device is associated
+    * @param [in] callback Optional, invoked to confirm if the device is associated
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -498,7 +498,7 @@ class IAudioStream {
     * Applicable for @ref StreamType::VOICE_CALL, @ref StreamType::PLAY, and
     * @ref StreamType::CAPTURE only.
     *
-    * @param [in] callback Invoked to pass the associated device
+    * @param [in] callback Mandatory, invoked to pass the associated device
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -517,7 +517,7 @@ class IAudioStream {
     *
     * @param [in] volume   Specifies the volume level and the stream's direction
     *
-    * @param [in] callback Invoked to confirm if the volume level is set
+    * @param [in] callback Optional, invoked to confirm if the volume level is set
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -537,7 +537,7 @@ class IAudioStream {
     *
     * @param [in] dir      Direction of the stream associated with the device
     *
-    * @param [in] callback Invoked to pass the volume read
+    * @param [in] callback Mandatory, invoked to pass the volume read
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -558,7 +558,7 @@ class IAudioStream {
     *
     * @param [in] mute     Defines the stream is to be muted or unmuted
     *
-    * @param [in] callback Invoked to confirm if the stream is muted/unmuted
+    * @param [in] callback Optional, invoked to confirm if the stream is muted/unmuted
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -579,7 +579,7 @@ class IAudioStream {
     *
     * @param [in] dir      Direction of the stream
     *
-    * @param [in] callback Invoked to pass the mute state
+    * @param [in] callback Mandatory, invoked to pass the mute state
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -660,7 +660,7 @@ class IAudioVoiceStream : virtual public IAudioStream {
     *
     * @param [in] listener Receives the DTMF tone detected event
     *
-    * @param [in] callback Invoked to confirm if the registration is successful
+    * @param [in] callback Optional, invoked to confirm if the registration is successful
     *
     * @returns @ref telux::common::Status::SUCCESS if the listener is registered,
     *          otherwise, an appropriate error code
@@ -739,7 +739,7 @@ class IAudioPlayStream : virtual public IAudioStream {
    /**
     * Finishes the ongoing compressed playback in a way specified by the @ref StopType provided.
     *
-    * @param [in] callback Invoked to confirm if the playback has finished
+    * @param [in] callback Optional, invoked to confirm if the playback has finished
     *
     * @param [in] stopType Defines how to finish playback
     *
@@ -816,7 +816,7 @@ class IAudioCaptureStream : virtual public IAudioStream {
     *
     * @param [in] bytesToRead  Length of the data (in bytes) to read
     *
-    * @param [in] callback     Receives the captured data
+    * @param [in] callback     Mandatory, receives the captured data
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code
@@ -840,7 +840,7 @@ class IAudioLoopbackStream : virtual public IAudioStream {
     * Starts looping back the audio between the source and sink devices associated with this
     * stream.
     *
-    * @param [in] callback  Invoked to confirm if the loopback has started
+    * @param [in] callback Optional, invoked to confirm if the loopback has started
     *
     * @returns Status @ref telux::common::Status::SUCCESS if the request is initiated
     *                 successfully, otherwise, an appropriate error code

@@ -52,10 +52,14 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "../../libs/common/ConfigParser.hpp"
+#include "../../libs/common/SimulationConfigParser.hpp"
 #include "../../libs/common/Logger.hpp"
+#include "../../libs/common/event-manager/EventManager.hpp"
 
 #include "SimulationServer.hpp"
+#include "tel/CardManagerServerImpl.hpp"
+#include "tel/SubscriptionManagerServerImpl.hpp"
+#include "tel/SmsManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -93,9 +97,8 @@ telux::common::Status SimulationServer::start() {
         }
     );
 
-    std::shared_ptr<ConfigParser> config =
-        std::make_shared<ConfigParser>(DEFAULT_STUB_CONFIG_FILE_NAME,
-        DEFAULT_STUB_CONFIG_FILE_PATH);
+    std::shared_ptr<SimulationConfigParser> config =
+        std::make_shared<SimulationConfigParser>();
 
     if ((serverSocket = socket(AF_INET,SOCK_STREAM,0)) < 0) {
         LOG(ERROR, "failed to create socket");
@@ -196,6 +199,11 @@ telux::common::Status SimulationServer::readMessage(int socketFd,
 telux::common::Status SimulationServer::writeMessage(char* buffer, int length,
     const std::vector<int> &clientSockets) {
     LOG(DEBUG, __FUNCTION__);
+
+    auto& eventMgr = EventManager::getInstance();
+    std::string message(buffer);
+    eventMgr.handleEventNotifications(message);
+
     for(auto socket: clientSockets)
     {
         write(socket,buffer,length);
@@ -216,9 +224,15 @@ void SimulationServer::startGrpcServer() {
     ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
 
-    //To be added when server code for vertical ready
-    //DataConnectionServerImpl service;
-    //builder.RegisterService(&service);
+    std::shared_ptr<CardManagerServerImpl> cardService = std::make_shared<CardManagerServerImpl>();
+    builder.RegisterService(cardService.get());
+
+    std::shared_ptr<SubscriptionManagerServerImpl> subscriptionService =
+        std::make_shared<SubscriptionManagerServerImpl>();
+    builder.RegisterService(subscriptionService.get());
+
+    std::shared_ptr<SmsManagerServerImpl> smsService = std::make_shared<SmsManagerServerImpl>();
+    builder.RegisterService(smsService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

@@ -103,6 +103,34 @@ std::string getCurrentTimestamp()
     return std::string(buffer);
 }
 
+void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
+{
+    // callback will pass data to corresponding other components
+    #ifdef AEROLINK
+    if(ApplicationBase::securityEnabled){
+        Kinematics kine;
+        kine.latitude = locationInfo->getLatitude() * 10000000;
+        kine.longitude = locationInfo->getLongitude() * 10000000;
+        kine.elevation = locationInfo->getAltitude() * 10;
+        kine.speed = locationInfo->getSpeed() * 50;
+        // need to check that aerolink has been init?
+        int result = AerolinkSecurity::setSecCurrLocation(&kine);
+    }
+    #endif
+    if(ApplicationBase::congCtrlEnabled){
+        Position pos;
+        pos.posLat = (locationInfo->getLatitude());
+        pos.posLong = (locationInfo->getLongitude());
+        pos.heading = (locationInfo->getHeading());
+        pos.elev = (locationInfo->getAltitude());
+        auto &v2xPropFactory = V2xPropFactory::getInstance();
+        auto sp = v2xPropFactory.getCongestionControlManager();
+        CCErrorCode res = sp->updateHostVehicleData(
+            pos, locationInfo->getSpeed());
+    }
+
+}
+
 void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp){
     // can pass mbd, signing, and verif stats here and other settings
     //std::vector<SignStats> stats = thrSignLatencies[std::this_thread::get_id()];
@@ -119,7 +147,8 @@ void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FIL
  * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
  */
 void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
-    shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt) {
+    shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt,
+    uint16_t eventsData) {
     if (!congestionControlCalculations) {
         std::cerr << "Invalid congestionControl output struct provided\n";
         return;
@@ -138,7 +167,7 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
             congestionControlCalculations->trackingError);
     }
     else {
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, ",");
+        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "0.0,");
     }
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
         congestionControlCalculations->smoothDens);
@@ -149,20 +178,28 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
             congestionControlCalculations->channData->channQualInd);
     }
     else {
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, ",");
+        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "0.0,");
     }
-    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, ",");
+    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%d,",
+        validPkt  ? 1: 0);
     tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%lu,",
         congestionControlCalculations->maxITT);
 
+    // gps time, event, random time
+    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,",
+        0.0);
+
+    tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%u,", eventsData);
+
     //sps enhancement data
     if (congestionControlCalculations->spsEnhanceData) {
-        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%f,%d,%lu,%d,",
-            0.0, 0, (long unsigned int)0, this->congCtrlConfig.spsEnhHysterPerc);
+        // random time - todo
+        tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%lu,%d",
+            (long unsigned int)0, this->congCtrlConfig.spsEnhHysterPerc);
     }
     else {
-       tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr,  "0.0,0,0,%d",
-        this->congCtrlConfig.spsEnhHysterPerc);
+       tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr,  "%lu,%d",
+            (long unsigned int)0, this->congCtrlConfig.spsEnhHysterPerc);
     }
 }
 
@@ -172,10 +209,6 @@ static RadioTransmit* spsTransmit_;
 uint64_t lastPeriodicity = 100;
 // need to provide pointer to sps transmit
 // need to provide pointer to cong control user data
-/* void initSpsTransmitFlow(RadioTransmit* spsTransmit){
-    spsTransmit_ = spsTransmit;
-} */
-
 void updateSpsTransmitFlow(
     std::shared_ptr<CongestionControlUserData> congestionControlUserData){
     // once the user data is updated, the thread in qits
@@ -196,9 +229,15 @@ void updateSpsTransmitFlow(
         // set sps size to same value
         spsInfo.nbytesReserved = spsTransmit_->getSpsResSize();
 
+        // catch future error here
+        try{
         uint8_t ret = spsTransmit_->updateSpsFlow(spsInfo);
         if(ret == static_cast<uint8_t>(Status::FAILED)){
             std::cerr << "sps transmit flow update failed\n";
+        }}
+        catch(const std::future_error& e){
+            std::cout << "Caught future error when updating sps flow\n";
+            std::cout << "Error log is: " << e.what() << "\n";
         }
         lastPeriodicity = congestionControlUserData->congestionControlCalculations->maxITT;
     }
@@ -337,7 +376,7 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
     if(configuration.enableLocationFixes){
         std::cout << "Enabling location fixes\n";
         appLocListener_ = make_shared<LocListener>();
-        appLocListener_->setLocCbFn(&ApplicationBase::locCbFn);
+        appLocListener_->setLocCbFn(&locCbFn);
         locListeners.push_back(appLocListener_);
         kinematicsReceive = std::make_shared<KinematicsReceive>
                 (locListeners, this->configuration.locationInterval);
@@ -420,7 +459,7 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     if(configuration.enableLocationFixes){
         std::cout << "Enabling location fixes\n";
         appLocListener_ = make_shared<LocListener>();
-        appLocListener_->setLocCbFn(&ApplicationBase::locCbFn);
+        appLocListener_->setLocCbFn(&locCbFn);
         locListeners.push_back(appLocListener_);
         kinematicsReceive = std::make_shared<KinematicsReceive>
                 (locListeners, this->configuration.locationInterval);
@@ -501,11 +540,13 @@ ApplicationBase::~ApplicationBase() {
         std::cout << "Closed qMonConfig\n";
     }
 
-     closeAllRadio();
      {
          std::unique_lock<std::mutex> loc(stateMtx);
          exitApp = true;
          stateCv.notify_all();
+         if(nullptr != this->currVehState){
+             free(currVehState);
+         }
      }
      sem_destroy(&rx_sem);
      sem_destroy(&log_sem);
@@ -517,12 +558,20 @@ ApplicationBase::~ApplicationBase() {
             csvfp = nullptr;
         }
      }
+
+     closeAllRadio();
 }
 
 void ApplicationBase::vehicleEventReport(bool emergent,
     const current_dynamic_vehicle_state_t* const vehicle_state) {
     bool notify = false;
+
+    // need to check for the critical event before moving to emergent state.
+    // boolean should be just a success flag rather than emergent
     if (emergent) {
+        // check for emergency critical events here:
+        // hard braking, ABS, traction control,
+        // and stability control event
         notify = true;
         {
             std::unique_lock<std::mutex> loc(stateMtx);
@@ -530,6 +579,15 @@ void ApplicationBase::vehicleEventReport(bool emergent,
             newEvent = true;
         }
         //TODO: use vehicle_state to construct critical BSM messages
+        if(this->currVehState == NULL){
+            this->currVehState = (current_dynamic_vehicle_state_t*)
+                calloc(sizeof(current_dynamic_vehicle_state_t), 1);
+                // probably need to free it later
+        }
+        // we'd need to fill local can data for non critical events too
+        // so that we can fill the bsm
+        memcpy(this->currVehState, vehicle_state, sizeof(current_dynamic_vehicle_state_t));
+        // also get static vehicle state; need to provide pointer to the callback function
     } else {
         if (criticalState) {
             notify = true;
@@ -697,8 +755,12 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
         this->configuration.preRecordedFile = configs["PreRecordedFile"];
     }
 
-    if (configs.end() != configs.find("SpsTransmitRate")) {
-        this->configuration.transmitRate = stoi(configs["SpsTransmitRate"], nullptr, 10);
+    if (configs.end() != configs.find("TransmitRateInterval")) {
+        this->configuration.transmitRate = stoi(configs["TransmitRateInterval"], nullptr, 10);
+    }
+
+    if (configs.end() != configs.find("SpsPeriodicity")) {
+        this->configuration.spsPeriodicity = stoi(configs["SpsPeriodicity"], nullptr, 10);
     }
 
     stringstream stream;
@@ -1552,7 +1614,7 @@ void ApplicationBase::setup(MessageType msgType) {
     if (MessageType::WSA == msgType) {
         spsInfo.periodicityMs = this->configuration.wsaInterval;
     } else {
-        spsInfo.periodicityMs = this->configuration.transmitRate;
+        spsInfo.periodicityMs = this->configuration.spsPeriodicity;
     }
     spsInfo.periodicityMs = adjustSpsPeriodicity(spsInfo.periodicityMs);
 
@@ -1662,7 +1724,6 @@ void ApplicationBase::setup(MessageType msgType) {
         this->eventContents.push_back(mc);
         i += 1;
     }
-    lastTxTime = timestamp_now();
 }
 
 void ApplicationBase::setupLdm(){
@@ -1721,7 +1782,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     auto encLength = 0;
     std::shared_ptr<msg_contents> mc = nullptr;
     bool validMessage = false;
-
+    uint64_t currTime = 0;
     // if congestion control enabled, only send when congestionControl tells us to:
     if(this->configuration.enableCongCtrl && congCtrlInitialized
         && !(criticalState && txType == TransmitType::EVENT)){
@@ -1751,7 +1812,7 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
     }
     // this will avoid any log writing if the log file was never opened
     // save timestamp before sendto
-    lastTxTime = timestamp_now();
+    currTime = timestamp_now();
     if(this->configuration.enableCongCtrl && txType != TransmitType::EVENT){
         /* Will start it here because to prevent desynchronization
             between the transmit thread and congestion control startup */
@@ -1795,22 +1856,27 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
             }
             sem_wait (congestionControlManager->
                     getCongestionControlUserData()->congestionControlSem);
-            lastTxTime = timestamp_now();
+            currTime = timestamp_now();
         }
     }
     int ret = 0;
     if((criticalState && txType == TransmitType::EVENT) ||
         (!criticalState && txType == TransmitType::SPS)){
         ret = this->transmit(index, mc, encLength, txType);
-
-        // write the log here for this tx now. using tx timestamp made before sendto
-        writeLog(mc, index, 0, true, txType, validMessage, lastTxTime);
-
         if (encLength > 0 && ret > 0) {
             validMessage = true;
+        }
+        // write the log here for this tx now. using tx timestamp made before sendto
+        writeLog(mc, index, 0, true, txType, validMessage, currTime, PSID_BSM);
+
+        if (encLength > 0 && ret > 0) {
             if(csvfp) {
-                uint64_t currTime = timestamp_now();
+                currTime = timestamp_now();
+
                 txInterval = currTime - lastTxTime;
+                if(lastTxTime == 0){
+                    txInterval = 0;
+                }
                 lastTxTime = currTime;
             }
         }
@@ -1916,6 +1982,7 @@ void ApplicationBase::closeAllRadio() {
     {
         this->kinematicsReceive->close();
     }
+    std::cout << "Finished closing all flows\n";
 }
 
 /**
@@ -2225,7 +2292,8 @@ bool ApplicationBase::openLogFile(const std::string& fullPathName) {
 
 
 void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
-    uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt, uint64_t timestamp) {
+    uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt,
+    uint64_t timestamp, uint32_t psid) {
     uint64_t periodicityMs = 0;
     int res = -1;
     uint64_t monotonicTime;
@@ -2281,16 +2349,42 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
         // if congestion control enabled, write cong ctrl data to log
         memset(tmpLogStr, 0, sizeof(tmpLogStr));
         // may need to write these regardless
+
+        unsigned short eventsData = 0;
+        if(psid = PSID_BSM && sp.get()->j2735_msg && isTx && txType == TransmitType::EVENT){
+            bsm_value_t *bsm = (bsm_value_t*)(sp.get()->j2735_msg);
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventAirBagDeployment) << 12;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventDisabledVehicle) << 11;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventFlatTire) << 10;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventWipersChanged) << 9;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventLightsChanged) << 8;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventHardBraking) << 7;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardousMaterials) <<5;
+            eventsData |= (unsigned short)
+                (1 & bsm->events.bits.eventStabilityControlactivated) << 4;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventTractionControlLoss) << 3;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventABSactivated) << 2;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventStopLineViolation) <<1;
+            eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardLights) << 12;
+        }else{
+            eventsData = 0;
+        }
+
         if (this->configuration.enableCongCtrl && isTx) {
             // build the string in this function instead of immediately writing to file
             writeCongCtrlLog(tmpLogStr, 200, csvfp,
                 congestionControlManager->
                     getCongestionControlUserData()->congestionControlCalculations,
-                validPkt);
+                validPkt, eventsData);
         }else{
             // make sure to write commas for the empty fields
-            snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,0.0,0.0,0,0.0,%d",
-                validPkt ? 1 : 0, this->congCtrlConfig.spsEnhHysterPerc);
+
+            //uint16_t event_data = (uint16_t)bsm->events.data;
+            //tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%u,", eventsData);
+            snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d",
+                validPkt ? 1 : 0, this->configuration.enableCongCtrl ? congestionControlManager->
+                    getCongestionControlUserData()->congestionControlCalculations->maxITT : 0,
+                eventsData, this->congCtrlConfig.spsEnhHysterPerc);
         }
         curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
         //reset

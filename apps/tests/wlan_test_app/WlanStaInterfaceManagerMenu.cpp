@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -74,6 +74,10 @@ void WlanStaInterfaceManagerMenu::showMenu() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "set_bridge_mode", {},
             std::bind(&WlanStaInterfaceManagerMenu::setBridgeMode, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> enableHotspot2
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "enable_hotspot2_support", {},
+            std::bind(&WlanStaInterfaceManagerMenu::enableHotspot2, this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getConfig
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "get_config", {},
@@ -87,7 +91,7 @@ void WlanStaInterfaceManagerMenu::showMenu() {
             "manage_service", {},
             std::bind(&WlanStaInterfaceManagerMenu::manageStaService, this, std::placeholders::_1)));
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            setIpConfig, setBridgeMode, getConfig, getStatus, manageStaService};
+            setIpConfig, setBridgeMode, enableHotspot2, getConfig, getStatus, manageStaService};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -163,6 +167,27 @@ void WlanStaInterfaceManagerMenu::setBridgeMode(std::vector<std::string> userInp
               << ". ErrorCode: " << static_cast<int>(retCode)
               << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
 }
+
+void WlanStaInterfaceManagerMenu::enableHotspot2(std::vector<std::string> userInput) {
+
+    std::cout << "Enable Support For Hotspot 2.0" << std::endl;
+
+    int hotspotEnable;
+
+    std::cout << "Enable/Disable Hotspot 2.0 Support (1-enable, 0-disable): ";
+    std::cin >> hotspotEnable;
+    std::cout << std::endl;
+    WlanUtils::validateInput(hotspotEnable, {0, 1});
+
+    telux::common::ErrorCode retCode =
+        wlanStaInterfaceManager_->enableHotspot2(
+            telux::wlan::Id::PRIMARY, static_cast<bool>(hotspotEnable));
+    std::cout << "\nEnable Hotspot2 Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
 
 void WlanStaInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
     std::vector<telux::wlan::StaConfig> config;

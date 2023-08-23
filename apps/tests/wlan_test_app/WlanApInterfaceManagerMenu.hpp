@@ -59,6 +59,11 @@ class WlanApInterfaceManagerMenu : public ConsoleApp ,
     void showMenu();
 
     void setConfig(std::vector<std::string> userInput);
+    void setSecurityConfig(std::vector<std::string> userInput);
+    void setSsid(std::vector<std::string> userInput);
+    void setVisibility(std::vector<std::string> userInput);
+    void configureElementInfo(std::vector<std::string> userInput);
+    void setPassPhrase(std::vector<std::string> userInput);
     void getConfig(std::vector<std::string> userInput);
     void getConnectedDevices(std::vector<std::string> userInput);
     void getStatus(std::vector<std::string> userInput);
@@ -67,9 +72,11 @@ class WlanApInterfaceManagerMenu : public ConsoleApp ,
     void onApBandChanged(telux::wlan::BandType radio) override;
     void onApDeviceStatusChanged(telux::wlan::ApDeviceConnectionEvent event,
         std::vector<telux::wlan::DeviceIndInfo> info) override;
+    void onApConfigChanged(telux::wlan::Id apId) override;
  private:
     bool menuOptionsAdded_;
     std::shared_ptr<telux::wlan::IApInterfaceManager> wlanApInterfaceManager_ = nullptr;
-
+    void populateApConfigNet(telux::wlan::ApNetConfig& netConfig);
+    void populateApElementInfo(telux::wlan::ApElementInfoConfig& ElementInfoConfig);
 };
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -144,6 +144,19 @@ class IStaInterfaceManager {
      *         break backwards compatibility.
      */
     virtual telux::common::ErrorCode setBridgeMode(Id staId, StaBridgeMode bridgeMode) = 0;
+
+    /**
+     * Enable Hotspot 2.0 Support
+     *
+     * @param [in] staId                   Station Identifier @ref telux::wlan::Id
+     * @param [in] enable                  True: enable Hotspot support, False disable support
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode.
+     *
+     * @note   Eval: This is a new API and is being evaluated. It is subject to change and could
+     *         break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode enableHotspot2(Id staId, bool enable) = 0;
 
     /**
      * Request current station configurations: Returns configurations set by

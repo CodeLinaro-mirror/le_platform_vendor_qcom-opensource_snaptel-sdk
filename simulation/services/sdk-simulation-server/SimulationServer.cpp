@@ -72,10 +72,12 @@ using grpc::Status;
 
 /* Defining the SimulationServer app instance */
 SimulationServer::SimulationServer() {
+    LOG(DEBUG, __FUNCTION__);
     taskQ_ = std::make_shared<telux::common::AsyncTaskQueue<void>>();
 }
 
 SimulationServer::~SimulationServer(){
+    LOG(DEBUG, __FUNCTION__);
     {
         std::lock_guard<std::mutex> lock(exitingMutex_);
         exiting_ = true;
@@ -85,6 +87,7 @@ SimulationServer::~SimulationServer(){
 }
 
 telux::common::Status SimulationServer::start() {
+    LOG(DEBUG, __FUNCTION__);
     struct sockaddr_in address = {0};
     int socketFd;
     int addrlen = sizeof(address);
@@ -168,6 +171,7 @@ telux::common::Status SimulationServer::start() {
 
 telux::common::Status SimulationServer::readMessage(int socketFd,
     std::vector<int> &clientSockets) {
+    LOG(DEBUG, __FUNCTION__);
     char buffer[BUFFER_SIZE];
 
     while(true) {
@@ -195,13 +199,13 @@ telux::common::Status SimulationServer::readMessage(int socketFd,
     return telux::common::Status::SUCCESS;
 }
 
-
 telux::common::Status SimulationServer::writeMessage(char* buffer, int length,
     const std::vector<int> &clientSockets) {
     LOG(DEBUG, __FUNCTION__);
 
     auto& eventMgr = EventManager::getInstance();
     std::string message(buffer);
+
     eventMgr.handleEventNotifications(message);
 
     for(auto socket: clientSockets)
@@ -216,6 +220,7 @@ std::string SimulationServer::createServerAddress(std::string ipAddress, std::st
 }
 
 void SimulationServer::startGrpcServer() {
+    LOG(DEBUG, __FUNCTION__);
     std::string serverIpAddress = LOCAL_HOST;
     std::string serverAddress = createServerAddress(serverIpAddress, DEFUALT_GRPC_PORT);
     std::string server_address(serverAddress);

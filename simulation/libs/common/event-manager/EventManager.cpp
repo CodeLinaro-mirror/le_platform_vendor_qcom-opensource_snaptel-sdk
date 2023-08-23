@@ -50,8 +50,12 @@
 #include "SimulationConfigParser.hpp"
 #include "Logger.hpp"
 
+#include "../../libs/common/CommonUtils.hpp"
+
 #define UNSOLICITED_COMMON_EVENT "all"
+#define UPDATE_API_RESPONSE_EVENT "json_update"
 #define LOCAL_HOST "127.0.0.1"
+#define DELIMETER ' '
 #define DEFAULT_PORT 8080
 #define RETRY_TIMER 500
 #define BUFFER_SIZE 250
@@ -107,6 +111,9 @@ void EventManager::handleEventNotifications(std::string message) {
                 }
             }
         }
+    } else if (filter == UPDATE_API_RESPONSE_EVENT) {
+        LOG(DEBUG, __FUNCTION__, " json update event::", parsedMessage.event);
+        updateApiResponse(parsedMessage.event);
     } else {
         LOG(DEBUG, __FUNCTION__, " passing event::", parsedMessage.event);
         //passing the unsolicited event to the listener who subscribed for it
@@ -245,6 +252,46 @@ telux::common::Status EventManager::deregisterListener(
         retVal = telux::common::Status::SUCCESS;
     }
     return retVal;
+}
+
+void EventManager::updateApiResponse(std::string message) {
+    LOG(DEBUG, __FUNCTION__);
+    std::stringstream stream(message);
+
+    //skipping -e
+    std::string filter = "";
+    std::getline(stream, filter, DELIMETER);
+
+    //skipping modify action, would be probably used
+    //once we add more features to our json utility.
+    std::string action = "";
+    std::getline(stream, action, DELIMETER);
+
+    //reading path
+    std::string path = "";
+    std::getline(stream, path, DELIMETER);
+
+    //reading subsystem
+    std::string subsystem = "";
+    std::getline(stream, subsystem, DELIMETER);
+
+    //reading api
+    std::string api = "";
+    std::getline(stream, api, DELIMETER);
+
+    //reading attribute
+    std::string attribute = "";
+    std::getline(stream, attribute, DELIMETER);
+
+    //reading value
+    std::string value = "";
+    std::getline(stream, value, DELIMETER);
+
+    if (attribute == "callbackDelay") {
+        CommonUtils::updateJsonValue(path, subsystem, api, attribute, std::stoi(value));
+    } else {
+        CommonUtils::updateJsonValue(path, subsystem, api, attribute, value);
+    }
 }
 
 } // end of namespace common

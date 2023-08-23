@@ -1,19 +1,13 @@
 {
-    "data_conn": {
-        "conn_up": [
-            "event_injector -f data_conn -e conn_up <profile_id> <slot_id> <IpFamilyType>",
-            "profile_id:   valid profile_ids are 1,2,3,etc.",
-            "slot_id:      valid slot_ids are 1 & 2 only.",
-            "IpFamilyType: valid IpFamiltype are IPV4,IPV6, IPV4V6"
-        ],
-        "conn_down":[
-            "event_injector -f data_conn -e conn_down <profile_id> <slot_id> <IpFamilyType>",
-            "profile_id:   valid profile_ids are 1,2,3,etc.",
-            "slot_id:      valid slot_ids are 1 & 2 only.",
-            "IpFamilyType: valid IpFamiltype are IPV4,IPV6, IPV4V6"
+    "json_update": {
+        "modify":[
+            "telsdk_event_injector -f json_update -e modify <path> <subsystem> <api> <attribute> <val>",
+            "path:        path of the JSON to be updated.",
+            "subsystem:   subsystem for which API behavior needs to be modified.",
+            "api:         api for which a particular attribute has to be updated.",
+            "attribute:   attribute to be updated.",
+            "val:         value to be set."
         ]
-    },
-    "data_profile": {
     },
     "tel_sub": {
         "subscriptionInfo":[

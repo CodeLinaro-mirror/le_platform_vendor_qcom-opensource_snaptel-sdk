@@ -64,6 +64,7 @@ private:
     std::string createServerAddress(std::string ipAddress,
         std::string portNo);
     void startGrpcServer();
+    void updateJsonValue(std::string message);
 
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     bool exiting_ = false;

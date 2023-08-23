@@ -87,6 +87,7 @@ private:
     virtual ~EventManager();
 
     void makeConnection();
+    void updateApiResponse(std::string message);
 
     bool exiting_ = false;
     int clientSocket_;

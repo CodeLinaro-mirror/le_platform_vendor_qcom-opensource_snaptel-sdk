@@ -1,44 +1,43 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef COMMONUTILS_HPP
 #define COMMONUTILS_HPP
 
 #include <telux/common/CommonDefines.hpp>
+#include "JsonParser.hpp"
+#include "Logger.hpp"
+
+#define handleApiResponseForMethod(subSystem, manager)                                       \
+    telux::common::Status status = Status::FAILED;                                           \
+    telux::common::ErrorCode errorCode = ErrorCode::GENERIC_FAILURE;                         \
+    uint32_t cbDelay = 100;                                                                  \
+    Json::Value rootNode;                                                                    \
+    do {                                                                                     \
+        ErrorCode err                                                                        \
+            = JsonParser::readFromJsonFile(rootNode, "api/" subSystem "/" manager ".json");  \
+        if (err != ErrorCode::SUCCESS) {                                                     \
+            LOG(ERROR, "Unable to read file: " subSystem "/" manager);                       \
+            status = Status::FAILED;                                                         \
+            errorCode = ErrorCode::GENERIC_FAILURE;                                          \
+            break;                                                                           \
+        }                                                                                    \
+        CommonUtils::getValues(rootNode, manager, __FUNCTION__, status, errorCode, cbDelay); \
+    } while (0);                                                                             \
+    if (status != Status::SUCCESS) {                                                         \
+        LOG(ERROR, subSystem "/" manager "::", __FUNCTION__,                                 \
+            " failed: ", static_cast<int>(status));                                          \
+        return status;                                                                       \
+    }
+namespace telux {
+
+namespace common {
 
 class CommonUtils {
-public:
+ public:
     static telux::common::Status mapStatus(std::string status);
     static telux::common::ErrorCode mapErrorCode(std::string errorCode);
     static telux::common::ErrorCode toErrorCode(telux::common::Status status);
@@ -47,6 +46,30 @@ public:
         std::string method, telux::common::Status &status,
         telux::common::ErrorCode &errorCode, uint32_t &cbDelay);
     static telux::common::ServiceStatus mapServiceStatus(std::string status);
+    static std::string readSystemDataValue(
+        std::string subsystem, std::string defaultValue, std::vector<std::string> path);
+    static ErrorCode writeSystemDataValue(
+        std::string subsystem, std::string value, std::vector<std::string> path);
+
+    template<typename T>
+    static void updateJsonValue(const std::string& filePath, const std::string& subsystem,
+        const std::string& method, const std::string& attribute, T val) {
+        Json::Value rootObj;
+        ErrorCode error = JsonParser::readFromJsonFile(rootObj, filePath);
+        if (error != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! ");
+        }
+        rootObj[subsystem][method][attribute] = val;
+        JsonParser::writeToJsonFile(rootObj, filePath);
+    }
+
+ private:
+    static std::string readSystemDataValue(
+        Json::Value &jsonValue, std::string defaultValue, std::vector<std::string> &path);
+    static void writeSystemDataValue(
+        Json::Value &node, std::string value, std::vector<std::string> &path);
 };
 
-#endif //COMMONUTILS_HPP
+}  // namespace common
+}  // namespace telux
+#endif  // COMMONUTILS_HPP

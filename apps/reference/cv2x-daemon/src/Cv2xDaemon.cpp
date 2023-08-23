@@ -160,17 +160,10 @@ Status Cv2xDaemon::stopV2xMode() {
 
     LOGI("Stopping V2X mode\n");
 
-    ret = cv2xTelux_->getV2xRadioStatus(v2xStatus);
-    if (ret != Status::SUCCESS) {
-        LOGE("Failed to get v2x status\n");
-        return ret;
-    }
-
-    if (v2xStatus.rxStatus == Cv2xStatusType::INACTIVE &&
-            v2xStatus.txStatus == Cv2xStatusType::INACTIVE) {
-        LOGD("V2X radio already stopped\n");
-        return Status::SUCCESS;
-    }
+    // Remove the check of current cv2x status for now, so that when start cv2x without
+    // gps and then go to LPM, we can send stop cv2x request to modem. If modem provide
+    // fix for future SPs, eg. cv2x status transition to suspend in this scenario, we
+    // can add back the check.
 
     ret = cv2xTelux_->stopV2xRadio();
     if (ret != Status::SUCCESS) {
@@ -330,14 +323,11 @@ Status Cv2xDaemon::deInit() {
     Status ret = Status::FAILED;
 
     if (daemonMode_) {
-        ret = stopV2xMode();
-        if (ret != Status::SUCCESS) {
-            LOGE("Failed to stop v2x mode\n");
-            return Status::FAILED;
-        }
-        if (cv2xTelux_) {
-            ret = cv2xTelux_->deinitV2xLibrary();
-        }
+        stopV2xMode();
+    }
+
+    if (cv2xTelux_) {
+        ret = cv2xTelux_->deinitV2xLibrary();
         if (ret != Status::SUCCESS) {
             LOGE("Failed to de-initialize v2x library\n");
             return Status::FAILED;
@@ -397,11 +387,7 @@ Status Cv2xDaemon::handleArguments(bool &isRunningDaemonMode) {
     }
 
     if (stopV2x_) {
-        ret = stopV2xMode();
-        if (ret != Status::SUCCESS) {
-            LOGE("Failed to start v2x mode\n");
-            return ret;
-        }
+        stopV2xMode();
     }
 
     if (stopV2x_ == 0 and startV2x_ == 0) {

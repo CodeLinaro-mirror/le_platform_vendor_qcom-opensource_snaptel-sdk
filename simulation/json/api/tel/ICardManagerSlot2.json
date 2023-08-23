@@ -4,116 +4,122 @@
         "DefaultCallbackDelay" : 300,
         "UseDefaultCallbackDelay" : false,
         "AlwaysSuccess": false,
-        "ReadEFLinearFixed" :
+        "readEFLinearFixed" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "ReadEFLinearFixedAll" :
+        "readEFLinearFixedAll" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "ReadEFTransparent" :
+        "readEFTransparent" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "WriteEFLinearFixed" :
+        "writeEFLinearFixed" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "WriteEFTransparent" :
+        "writeEFTransparent" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "RequestEFAttributes" :
+        "requestEFAttributes" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "UnlockCardByPin" :
+        "unlockCardByPin" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "QueryFdnLockState" :
+        "queryFdnLockState" :
         {
             "State" : false,
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 100
         },
-        "QueryPin1LockState" :
+        "queryPin1LockState" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 300
         },
-        "CloseLogicalChannel" :
+        "closeLogicalChannel" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 0
         },
-        "ChangeCardPassword" :
+        "changeCardPassword" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "OpenLogicalChannel" :
+        "openLogicalChannel" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 100
         },
-        "SetCardLock" :
+        "setCardLock" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 400
         },
-        "SetCardPower" :
+        "cardPowerUp" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 400
         },
-        "TransmitApduBasicChannel" :
+        "cardPowerDown" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 400
         },
-        "TransmitApduLogicalChannel" :
+        "transmitApduBasicChannel" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 400
         },
-        "ExchangeSimIO" :
+        "transmitApduLogicalChannel" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 400
         },
-        "RequestEid" :
+        "exchangeSimIO" :
         {
             "error" : "SUCCESS",
             "status" : "SUCCESS",
             "callbackDelay" : 400
         },
-        "UnlockCardByPuk" :
+        "requestEid" :
+        {
+            "error" : "SUCCESS",
+            "status" : "SUCCESS",
+            "callbackDelay" : 400
+        },
+        "unlockCardByPuk" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",

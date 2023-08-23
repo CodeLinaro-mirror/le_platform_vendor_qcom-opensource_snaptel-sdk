@@ -6,37 +6,37 @@
         "DefaultCallbackDelay" : 300,
         "UseDefaultCallbackDelay" : false,
         "AlwaysSuccess": false,
-        "SetSmscAddress" :
+        "setSmscAddress" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "GetSmscAddress" :
+        "requestSmscAddress" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "RequestSmsMessageList" :
+        "requestSmsMessageList" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "DeleteMessage" :
+        "deleteMessage" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "ReadMessage" :
+        "readMessage" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "SendSmsDeprecated" :
+        "sendSmsDeprecated" :
         [
             {
                 "numberOfSegments" : 2,
@@ -52,7 +52,7 @@
                 "deliveryCallbackDelay" : 9000
             }
         ],
-        "SendRawSms" :
+        "sendRawSms" :
         [
             {   "receiverAddress" : "0909999994587",
                 "status" : "SUCCESS"
@@ -73,7 +73,7 @@
                 "onDeliveryReportCallbackDelay" : 12000
             }
         ],
-        "SendSms" :
+        "sendSms" :
         [
             {   "numberOfSegments" : 2,
                 "status" : "SUCCESS"
@@ -94,25 +94,25 @@
                 "onDeliveryReportCallbackDelay" : 12000
             }
         ],
-        "RequestStorageDetails" :
+        "requestStorageDetails" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "SetPreferredStorage" :
+        "setPreferredStorage" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "GetPreferredStorage" :
+        "requestPreferredStorage" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",
             "callbackDelay" : 200
         },
-        "SetTag" :
+        "setTag" :
         {
             "status" : "SUCCESS",
             "error" : "SUCCESS",

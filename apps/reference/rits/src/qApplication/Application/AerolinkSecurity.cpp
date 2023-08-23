@@ -63,6 +63,7 @@
  */
 
 #include <iostream>
+#include <sys/time.h>
 #include "AerolinkSecurity.hpp"
 
 /* STATIC VARIABLES */

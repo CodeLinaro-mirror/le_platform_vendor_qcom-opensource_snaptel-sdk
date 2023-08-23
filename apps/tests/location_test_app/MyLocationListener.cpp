@@ -28,79 +28,13 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
  *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-
-/*
- *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted (subject to the limitations in the
- *  disclaimer below) provided that the following conditions are met:
- *
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- *      * Redistributions in binary form must reproduce the above
- *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials provided
- *        with the distribution.
- *
- *      * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *        contributors may be used to endorse or promote products derived
- *        from this software without specific prior written permission.
- *
- *  NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- *  GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- *  HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- *  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- *  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <bitset>
 #include <iostream>
+#include <sstream>
 #include <memory>
 #include <iomanip>
 #include <cstdint>
@@ -110,7 +44,7 @@
 #include "MyLocationListener.hpp"
 
 #define PRINT_NOTIFICATION std::cout << "\033[1;35mNOTIFICATION: \033[0m"
-
+#define DETAILED_RECORDING std::cout << "###DTL: "
 
 void MyLocationListener::printSbasCorrectionEx(
    std::shared_ptr<telux::loc::ILocationInfoEx> locationInfo) {
@@ -1316,6 +1250,94 @@ void MyLocationListener::onDetailedLocationUpdate(
    std::cout << "Protection level vertical : " <<
        locationInfo->getProtectionLevelVertical() << std::endl;
    std::cout << "*************************************************************" << std::endl;
+   //Recording Data.
+   std::ostringstream recordStream;
+   if(isDetailedReportsRecordingEnabled_) {
+        telux::loc::SystemTime sysTime = locationInfo->getGnssSystemTime();
+        telux::loc::SystemTimeInfo sysTimeInfo = sysTime.time;
+        telux::loc::TimeInfo timeInfo = sysTimeInfo.bds;
+        uint8_t leapSeconds = 0;
+        locationInfo->getLeapSeconds(leapSeconds);
+        std::vector<float> enuVelocityVRPBased = locationInfo->getVRPBasedENUVelocity();
+
+        recordStream << locationInfo->getTimeStamp() << "," << locationInfo->getTechMask() << "," <<
+        locationInfo->getLatitude() << "," << locationInfo->getLongitude() << "," <<
+        locationInfo->getAltitude() << "," << locationInfo->getHeading() << "," <<
+        locationInfo->getSpeed() << "," << locationInfo->getHeadingUncertainty() << "," <<
+        locationInfo->getSpeedUncertainty() << "," << locationInfo->getHorizontalUncertainty() <<
+        "," << locationInfo->getVerticalUncertainty() << "," <<
+        locationInfo->getLocationInfoValidity() << "," << locationInfo->getElapsedRealTime() << ","
+        << locationInfo->getElapsedRealTimeUncertainty() << "," <<
+        locationInfo->getLocationInfoExValidity() << "," <<
+        locationInfo->getAltitudeMeanSeaLevel() << "," <<
+        locationInfo->getPositionDop() << "," <<
+        locationInfo->getHorizontalDop() << "," <<
+        locationInfo->getVerticalDop() << "," <<
+        locationInfo->getGeometricDop() << "," <<
+        locationInfo->getTimeDop() << "," <<
+        locationInfo->getMagneticDeviation() << "," <<
+        static_cast<int>(locationInfo->getHorizontalReliability()) << "," <<
+        static_cast<int>(locationInfo->getVerticalReliability()) << "," <<
+        locationInfo->getHorizontalUncertaintySemiMajor() << "," <<
+        locationInfo->getHorizontalUncertaintySemiMinor() << "," <<
+        locationInfo->getHorizontalUncertaintyAzimuth() << "," <<
+        locationInfo->getEastStandardDeviation() << "," <<
+        locationInfo->getNorthStandardDeviation() << "," <<
+        locationInfo->getNumSvUsed() << "," <<
+        locationInfo->getSvUsedInPosition().gps << "," <<
+        locationInfo->getSvUsedInPosition().glo << "," <<
+        locationInfo->getSvUsedInPosition().gal << "," <<
+        locationInfo->getSvUsedInPosition().bds << "," <<
+        locationInfo->getSvUsedInPosition().qzss << "," <<
+        locationInfo->getSvUsedInPosition().navic << "," <<
+        locationInfo->getSbasCorrection() << "," <<
+        locationInfo->getPositionTechnology() << "," <<
+        locationInfo->getBodyFrameData().latAccel << "," <<
+        locationInfo->getBodyFrameData().longAccel << "," <<
+        locationInfo->getBodyFrameData().vertAccel << "," <<
+        locationInfo->getBodyFrameData().yawRate << "," <<
+        locationInfo->getBodyFrameData().pitch << "," <<
+        locationInfo->getBodyFrameData().latAccelUnc << "," <<
+        locationInfo->getBodyFrameData().longAccelUnc << "," <<
+        locationInfo->getBodyFrameData().vertAccelUnc << "," <<
+        locationInfo->getBodyFrameData().yawRateUnc << "," <<
+        locationInfo->getBodyFrameData().pitchUnc << "," <<
+        locationInfo->getBodyFrameData().pitchRate << "," <<
+        locationInfo->getBodyFrameData().pitchRateUnc << "," <<
+        locationInfo->getBodyFrameData().roll << "," <<
+        locationInfo->getBodyFrameData().rollUnc << "," <<
+        locationInfo->getBodyFrameData().rollRate << "," <<
+        locationInfo->getBodyFrameData().rollRateUnc << "," <<
+        locationInfo->getBodyFrameData().yaw << "," <<
+        locationInfo->getBodyFrameData().yawUnc << "," <<
+        locationInfo->getBodyFrameData().bodyFrameDataMask << "," <<
+        locationInfo->getTimeUncMs() << "," <<
+        timeInfo.numClockResets << "," <<
+        timeInfo.refFCount << "," <<
+        timeInfo.systemClkTimeUncMs << "," <<
+        timeInfo.systemClkTimeBias << "," <<
+        timeInfo.systemMsec << "," <<
+        timeInfo.systemWeek << "," <<
+        static_cast<int>(leapSeconds) << "," <<
+        unsigned(locationInfo->getCalibrationConfidencePercent()) << "," <<
+        locationInfo->getCalibrationStatus() << "," <<
+        locationInfo->getConformityIndex() << "," <<
+        locationInfo->getVRPBasedLLA().latitude << "," <<
+        locationInfo->getVRPBasedLLA().longitude << "," <<
+        locationInfo->getVRPBasedLLA().altitude << "," <<
+        enuVelocityVRPBased[0] << "," <<
+        enuVelocityVRPBased[1] << "," <<
+        enuVelocityVRPBased[2] << "," <<
+        static_cast<int>(locationInfo->getAltitudeType()) << "," <<
+        locationInfo->getIntegrityRiskUsed() << "," <<
+        locationInfo->getProtectionLevelAlongTrack() << "," <<
+        locationInfo->getProtectionLevelCrossTrack() << "," <<
+        locationInfo->getProtectionLevelVertical() << "," <<
+        static_cast<int>(locationInfo->getLocOutputEngType()) << "," <<
+        locationInfo->getLocOutputEngMask() << "," <<
+        locationInfo->getSolutionStatus();
+        DETAILED_RECORDING << recordStream.str() << std::endl;
+   }
 }
 
 void MyLocationListener::onDetailedEngineLocationUpdate(
@@ -1705,4 +1727,8 @@ void MyLocationConfigListener::onXtraStatusUpdate(const telux::loc::XtraStatus x
 void MyLocationConfigListener::onGnssSignalUpdate(const telux::loc::GnssSignal gnssSignalMask){
     PRINT_NOTIFICATION << "\n********** GnssSignalMask Info **********" << std::endl;
     LocationUtils::printGnssSignalType(gnssSignalMask);
+}
+
+void MyLocationListener::setDetailedLocationRecordingFlag(bool enable) {
+   isDetailedReportsRecordingEnabled_ = enable;
 }

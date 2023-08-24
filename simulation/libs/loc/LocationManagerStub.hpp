@@ -28,38 +28,8 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -76,8 +46,9 @@
 #define MY_LOCATION_MANAGER_HPP
 
 #include "telux/loc/LocationManager.hpp"
-#include "StubSystemStarter.hpp"
 #include "ReportHandler.hpp"
+#include "../common/AsyncTaskQueue.hpp"
+
 namespace telux {
 
 namespace loc {
@@ -434,15 +405,22 @@ public:
 /**
  * Constructor of ILocationManager
  */
-    LocationManagerStub(telux::common::InitResponseCb callback = nullptr);
+    LocationManagerStub();
+
+    telux::common::Status init(telux::common::InitResponseCb callback);
+/**
+ * Clean-up method
+ */
+    void cleanup();
+
 /**
  * Destructor of ILocationManager
  */
     ~LocationManagerStub();
 
 private:
-    std::shared_ptr<StubSystemStarter> systemStarter_ = nullptr;
     std::mutex mutex_;
+    std::mutex listenerMutex_;
     std::mutex energyMutex_;
     std::vector<std::weak_ptr<ILocationListener>> listeners_;
     std::vector<std::weak_ptr<ILocationSystemInfoListener>> systemInfoListener_;
@@ -453,7 +431,7 @@ private:
     // 1 - Basic Report
     // 2 - Detailed Report
     // 3 - Detailed Engine Report
-    std::atomic<int> Type_;
+    std::atomic<int> type_;
     // Basic Report Interval in msecs
     std::atomic<uint32_t> brInterval_;
     // Basic Report Interval in 100 msecs steps (500 msecs gives brSeqDelta as 5)
@@ -484,18 +462,20 @@ private:
     time_t sysInfoHourTime_ = 0;
     // used in System Info report
     time_t usedSysInfoHourTime_ = 0;
+    std::mutex terrestrialPositionMutex_;
+    std::condition_variable cvTerrestrialPosition_;
+
+    bool waitForInitialization();
+    void initSync(telux::common::InitResponseCb callback);
+    std::condition_variable cv_;
+    telux::common::AsyncTaskQueue<void> taskQ_;
+
+    std::shared_ptr<LocationInfoBase> getLastLocation(bool defaultLocInfo = false);
 
     // managerThread waits on Report Handler Condition variable cv
     // Based upon the Type invokes appropriate type of Reports
     // If listners are available for System Info invokes System Info report
     void managerThread();
-
-    void requestEnergyConsumedCb(telux::common::ErrorCode retValue, int delay,
-        telux::loc::GnssEnergyConsumedInfo energyConsumed);
-
-    void getYearofHwCb(telux::common::ErrorCode retValue, int delay, uint16_t yearOfHw);
-
-    void getTerrestrialPositionCb(int delay);
 
     // system info report checks if the hour in system time has changed and invokes system
     // info report on every hour change

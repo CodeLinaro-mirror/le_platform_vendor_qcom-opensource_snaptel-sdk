@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * file       DgnssManagerStub.hpp
@@ -38,7 +43,7 @@
 #define DGNSSMANAGERSTUB_HPP
 
 #include "telux/loc/DgnssManager.hpp"
-#include "StubSystemStarter.hpp"
+#include "../common/AsyncTaskQueue.hpp"
 
 namespace telux {
 
@@ -136,22 +141,23 @@ public:
  */
     telux::common::Status injectCorrectionData(const uint8_t* buffer, uint32_t bufferSize) override;
 
-    DgnssManagerStub(telux::common::InitResponseCb callback = nullptr);
+    DgnssManagerStub(DgnssDataFormat dataFormat);
 
+    telux::common::Status init(telux::common::InitResponseCb callback);
 /**
  * Destructor of DgnssManagerStub
  */
-    ~DgnssManagerStub();
-
-    void setDgnssFormat(DgnssDataFormat dataFormat) {
-        dataFormat_ = dataFormat;
-    }
+    virtual ~DgnssManagerStub();
 
 private:
     DgnssDataFormat dataFormat_;
-    std::shared_ptr<StubSystemStarter> systemStarter_ = nullptr;
+    telux::common::AsyncTaskQueue<void> taskQ_;
     std::weak_ptr<IDgnssStatusListener> statusListener_;
     std::shared_ptr<std::string> dataSource_ = nullptr;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    void initSync(telux::common::InitResponseCb callback);
+    bool waitForInitialization();
 };
 
 } // end of namespace loc

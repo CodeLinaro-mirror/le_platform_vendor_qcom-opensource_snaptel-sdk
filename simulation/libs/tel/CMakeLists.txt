@@ -16,6 +16,14 @@ set(TEL_STUB_SOURCES
     SubscriptionManagerStub.cpp
     SubscriptionStub.cpp
     SmsManagerStub.cpp
+    SignalStrength.cpp
+    CellInfo.cpp
+    VoiceServiceInfo.cpp
+    CellIBroadcastMessage.cpp
+    OperatorInfo.cpp
+    SimProfile.cpp
+    PhoneManagerStub.cpp
+    PhoneStub.cpp
 )
 
 find_library(JSONCPP_LIBRARY NAMES jsoncpp)

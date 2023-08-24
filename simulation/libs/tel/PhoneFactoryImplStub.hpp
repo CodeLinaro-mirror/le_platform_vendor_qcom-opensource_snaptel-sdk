@@ -44,12 +44,12 @@
 
 #include <memory>
 #include <map>
-
 #include <telux/tel/PhoneFactory.hpp>
 #include "../common/Logger.hpp"
 #include "CardManagerStub.hpp"
 #include "../common/Logger.hpp"
 #include "SubscriptionManagerStub.hpp"
+#include "PhoneManagerStub.hpp"
 #include "SmsManagerStub.hpp"
 
 
@@ -102,9 +102,12 @@ class PhoneFactoryImplStub : public PhoneFactory {
     ~PhoneFactoryImplStub();
     std::map<int, std::shared_ptr<ISmsManager>> smsManagerMap_;
     std::shared_ptr<ICardManager> cardManager_;
+    std::shared_ptr<IPhoneManager> phoneManager_;
     std::vector<telux::common::InitResponseCb> cardMgrCallbacks_;
+    std::vector<telux::common::InitResponseCb> phoneMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> subscriptionMgrCallbacks_;
     telux::common::ServiceStatus subscriptionMgrInitStatus_;
+    telux::common::ServiceStatus phoneMgrInitStatus_;
     std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
     telux::common::ServiceStatus cardMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
@@ -113,6 +116,7 @@ class PhoneFactoryImplStub : public PhoneFactory {
     void onSubscriptionManagerResponse(telux::common::ServiceStatus status);
     std::shared_ptr<ISubscriptionManager> subscriptionManager_;
     void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
+    void onPhoneManagerResponse(telux::common::ServiceStatus status);
 };
 
 }  // namespace tel

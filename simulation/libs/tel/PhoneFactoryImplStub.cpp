@@ -172,9 +172,79 @@ void PhoneFactoryImplStub::onSmsMgrInitResponse(int phoneId, telux::common::Serv
         }
     }
 }
+
 std::shared_ptr<IPhoneManager> PhoneFactoryImplStub::getPhoneManager(
-    telux::common::InitResponseCb Callback) {
-    return nullptr;
+    telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    auto initCb = [this](telux::common::ServiceStatus status) {
+           LOG(DEBUG, __FUNCTION__, " Phone Manager initialization callback");
+           this->onPhoneManagerResponse(status);
+    };
+    if (phoneManager_ == nullptr) {
+       std::shared_ptr<PhoneManagerStub> phoneManager = nullptr;
+       try {
+           phoneManager = std::make_shared<PhoneManagerStub>(initCb);
+       } catch (std::bad_alloc & e) {
+           LOG(ERROR, __FUNCTION__ , e.what());
+           return nullptr;
+       }
+       if (callback) {
+          phoneMgrCallbacks_.push_back(callback);
+       } else {
+          LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+       }
+       phoneManager_ = phoneManager;
+    } else if (phoneMgrInitStatus_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+       LOG(DEBUG, __FUNCTION__, " Phone manager is not yet initialized");
+       if (callback) {
+          phoneMgrCallbacks_.push_back(callback);
+       } else {
+          LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+       }
+    } else if (callback) {
+       LOG(DEBUG, __FUNCTION__, " Phone manager is initialized, invoking app callback");
+       std::thread appCallback(callback, phoneMgrInitStatus_);
+       appCallback.detach();
+    } else {
+       LOG(ERROR, __FUNCTION__, " Phone manager is initialized, app Callback is NULL");
+    }
+    return phoneManager_;
+}
+
+
+void PhoneFactoryImplStub::onPhoneManagerResponse(telux::common::ServiceStatus status) {
+    std::vector<telux::common::InitResponseCb> phmgrCallbacks;
+    LOG(INFO, __FUNCTION__, " Phone Manager initialization status: " ,
+      static_cast<int>(status));
+    {
+       std::lock_guard<std::recursive_mutex> lock(mutex_);
+       phoneMgrInitStatus_ = status;
+       bool reportServiceStatus = false;
+       switch(status) {
+          case telux::common::ServiceStatus::SERVICE_FAILED:
+             phoneManager_ = NULL;
+             reportServiceStatus = true;
+             break;
+          case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+             reportServiceStatus = true;
+             break;
+          default:
+             break;
+       }
+       if (!reportServiceStatus) {
+          return;
+       }
+       phmgrCallbacks = phoneMgrCallbacks_;
+       phoneMgrCallbacks_.clear();
+    }
+    for (auto &callback : phmgrCallbacks) {
+       if (callback) {
+          callback(status);
+       } else {
+          LOG(INFO, __FUNCTION__, " Callback is NULL");
+       }
+    }
 }
 
 std::shared_ptr<ICallManager> PhoneFactoryImplStub::getCallManager(

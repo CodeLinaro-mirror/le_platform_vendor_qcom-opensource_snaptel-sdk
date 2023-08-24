@@ -1,45 +1,32 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-set(GCC_EXPECTED_VERSION 9.3)
-#Location library can be built with GCC version higher than 9.3
-if(${CMAKE_CXX_COMPILER_VERSION} GREATER ${GCC_EXPECTED_VERSION})
-    set(TARGET_LOCATION_LIBRARY telux_loc)
+# pkg-config support
+configure_file("telux-loc.pc.in" "telux-loc.pc" @ONLY)
 
-    set(LOCATION_TEST_LIB_SOURCES
-        LocationFactoryStub.cpp
-        LocationManagerStub.cpp
-        LocationConfiguratorStub.cpp
-        DgnssManagerStub.cpp
-        StubHelper.cpp
-        StubSystemStarter.cpp
-        ReportHandler.cpp
-        ReportReader.cpp
-        ConfigParserStub.cpp
-        Logger/Logger.cpp
-    )
-    macro(SYSR_INCLUDE_DIR subdir)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
-    endmacro()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 
-    # add these sub-folders from /usr/include/<subdir>
-    SYSR_INCLUDE_DIR(telux)
+set(TARGET_LOCATION_LIBRARY telux_loc)
 
-    include_directories(BEFORE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-    )
+set(LOCATION_TEST_LIB_SOURCES
+    LocationFactoryStub.cpp
+    LocationManagerStub.cpp
+    LocationConfiguratorStub.cpp
+    DgnssManagerStub.cpp
+    ReportHandler.cpp
+    ReportReader.cpp
+)
 
-    # set global variables
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror -pthread")
+find_library(JSONCPP_LIBRARY NAMES jsoncpp)
 
-    add_library (${TARGET_LOCATION_LIBRARY} SHARED ${LOCATION_TEST_LIB_SOURCES})
+add_library(${TARGET_LOCATION_LIBRARY} SHARED ${LOCATION_TEST_LIB_SOURCES})
 
-        install ( TARGETS ${TARGET_LOCATION_LIBRARY}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-endif()
+target_link_libraries(${TARGET_LOCATION_LIBRARY}
+    jsoncpp
+    telux_common
+)
 
+install(TARGETS ${TARGET_LOCATION_LIBRARY}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-
-
-
-
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/telux-loc.pc"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig/")

@@ -26,38 +26,48 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include "ReportHandler.hpp"
 #include "ReportReader.hpp"
-#include "Logger/Logger.hpp"
+#include "../common/Logger.hpp"
 
 namespace telux {
 
 namespace loc {
 
 void ReportHandler::reportThread() {
-    Debug(__func__, "Report Thread Created");
+    LOG(DEBUG, __FUNCTION__, " Creating");
     static int count = 0;
-    //Thread exits when Destructor changes atomic variable exitThread to 1
+    // Thread exits when Destructor changes atomic variable exitThread to 1
     while (exitThread.load() == 0) {
         {
             std::lock_guard<std::mutex> lk(cv_m);
             auto &myReader = ReportReader::getInstance();
-
-            myReader.getLocationInfoBase(iBase_, iBaseEx_);
-            gnssSVInfo_ =  myReader.getGnssSVInfo();
-            gnssSignalInfo_ = myReader.getGnssSignalInfo();
-            nmeaVals_ = myReader.getNmeaVal();
-            locationSystemInfo_ = myReader.getSystemInfoReport();
-            // Measurement read every 10 cycles (1 sec)
-            if (count++ == 10)
-            {
-                gnssMeasurement_ = myReader.getGnssMeasurements();
-                count = 0;
+            if(basicNotification_.load() == 1) {
+                myReader.getLocationInfoBase(iBase_);
+                repSeqNo_.br++;
             }
-            repSeqNo_.br++;
-            repSeqNo_.dr++;
-            repSeqNo_.der++;
+            if(detailedNotification_.load() == 1 || detailedEngineNotification_.load() == 1) {
+                myReader.getLocationInfoEx(iBaseEx_);
+                gnssSVInfo_ =  myReader.getGnssSVInfo();
+                gnssSignalInfo_ = myReader.getGnssSignalInfo();
+                nmeaVals_ = myReader.getNmeaVal();
+                // Measurement read every 10 cycles (1 sec)
+                if (count++ == 10) {
+                    gnssMeasurement_ = myReader.getGnssMeasurements();
+                    count = 0;
+                }
+                repSeqNo_.dr++;
+                repSeqNo_.der++;
+            }
+            if(sysinfoNotification_.load() == 1) {
+                locationSystemInfo_ = myReader.getSystemInfoReport();
+            }
         }
         cv.notify_all();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -65,32 +75,34 @@ void ReportHandler::reportThread() {
     cv.notify_all();
     // informs destructor it exited
     exited.store(1);
-    Debug(__func__, "Exiting Report Thread");
 }
 
 ReportHandler::ReportHandler() {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
     exitThread.store(0);
     exited.store(0);
+    basicNotification_.store(0);
+    detailedNotification_.store(0);
+    detailedEngineNotification_.store(0);
+    sysinfoNotification_.store(0);
+    //areListenersEnabled_.store(0);
     std::thread t(&ReportHandler::reportThread, this);
     t.detach();
 }
 
-ReportHandler & ReportHandler::getInstance() {
-    Debug(__FILE__,__func__);
+ReportHandler &ReportHandler::getInstance() {
+    LOG(DEBUG, __FUNCTION__);
     static ReportHandler reportHandler_;
-    return(reportHandler_);
+    return (reportHandler_);
 }
 
 ReportHandler::~ReportHandler() {
-    Debug(__func__, "ReportHandler Destructor");
+    LOG(DEBUG, __FUNCTION__);
     exitThread.store(1);
-    while (exited.load() == 0)
-    {
+    while (exited.load() == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    Debug(__func__, "Exiting Report Destructor");
 }
 
-}
-}
+}  // namespace loc
+}  // namespace telux

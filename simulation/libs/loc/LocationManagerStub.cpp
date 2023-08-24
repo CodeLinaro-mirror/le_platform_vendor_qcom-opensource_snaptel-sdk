@@ -28,45 +28,16 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 #include <telux/common/CommonDefines.hpp>
 #include "LocationManagerStub.hpp"
-#include "StubHelper.hpp"
-#include "Logger/Logger.hpp"
+#include "../common/Logger.hpp"
+#include "../common/JsonParser.hpp"
+#include "../common/CommonUtils.hpp"
+#include <chrono>
 
 // This is used for computing energy consumed based on duration
 #define ENERGY_CONSUMED_PER_SECOND 500
@@ -74,26 +45,31 @@
 // Year of HW used as below
 #define YEAR_OF_HW 0
 
+// Identify reports
+#define NONE_REPORTS 0
+#define BASIC_REPORTS 1
+#define DETAILED_REPORTS 2
+#define DETAILED_ENG_REPORTS 3
+
 namespace telux {
 
 namespace loc {
-//This denotes system start time and is used to arrive at elapsed duration for energy consumed info
-static std::chrono::time_point<std::chrono::steady_clock> time_t0 =
-    std::chrono::steady_clock::now();
+// This denotes system start time and is used to arrive at elapsed duration for energy consumed info
+static std::chrono::time_point<std::chrono::steady_clock> time_t0
+    = std::chrono::steady_clock::now();
 
-
-void LocationManagerStub::invokeSystemInfoReport(ReportHandler & rClass_) {
+void LocationManagerStub::invokeSystemInfoReport(ReportHandler &rClass_) {
+    LOG(DEBUG, __FUNCTION__);
     std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     tm *ltm = localtime(&now);
     // add 1 to avoid 00 hour reading
     sysInfoHourTime_ = ltm->tm_hour + 1;
-    if (sysInfoHourTime_ != usedSysInfoHourTime_)
-    {
+    if (sysInfoHourTime_ != usedSysInfoHourTime_) {
         struct LocationSystemInfo info_ = rClass_.getSystemInfoReport();
-        for (auto iter=systemInfoListener_.begin();iter != systemInfoListener_.end();) {
+        for (auto iter = systemInfoListener_.begin(); iter != systemInfoListener_.end();) {
             auto spt = (*iter).lock();
             if (spt != nullptr) {
-                Debug(__func__, "Sending System Info");
+                LOG(DEBUG, __FUNCTION__, " Sending System Info");
                 spt->onLocationSystemInfo(info_);
                 ++iter;
             } else {
@@ -104,11 +80,12 @@ void LocationManagerStub::invokeSystemInfoReport(ReportHandler & rClass_) {
     }
 }
 
-void LocationManagerStub::invokeBasicReport(ReportHandler & rClass_) {
+void LocationManagerStub::invokeBasicReport(ReportHandler &rClass_) {
+    LOG(DEBUG, __FUNCTION__);
     struct ReportSeqNos seqNo_ = rClass_.getReportSeqNos();
-    if (seqNo_.br > (brSeqNo_+ brSeqDelta_)) {
-        std::shared_ptr<LocationInfoBase>ibase = rClass_.getLocationInfoBase();
-        for (auto iter=listeners_.begin();iter != listeners_.end();) {
+    if (seqNo_.br > (brSeqNo_ + brSeqDelta_)) {
+        std::shared_ptr<LocationInfoBase> ibase = rClass_.getLocationInfoBase();
+        for (auto iter = listeners_.begin(); iter != listeners_.end();) {
             auto spt = (*iter).lock();
             if (spt != nullptr) {
                 spt->onBasicLocationUpdate(ibase);
@@ -121,15 +98,15 @@ void LocationManagerStub::invokeBasicReport(ReportHandler & rClass_) {
     }
 }
 
-void LocationManagerStub::invokeDetailedReport(ReportHandler & rClass_) {
+void LocationManagerStub::invokeDetailedReport(ReportHandler &rClass_) {
+    LOG(DEBUG, __FUNCTION__);
     struct ReportSeqNos seqNo_ = rClass_.getReportSeqNos();
     if (seqNo_.dr > (drSeqNo_+ drSeqDelta_)) {
-        std::shared_ptr<LocationInfoEx>infoEx = rClass_.getLocationInfoEx();
         for (auto iter=listeners_.begin(); iter != listeners_.end(); ) {
             auto spt = (*iter).lock();
             if (spt != nullptr) {
                 if (reportTypeMask_ & GnssReportType::LOCATION) {
-                    spt->onDetailedLocationUpdate(infoEx);
+                    spt->onDetailedLocationUpdate(rClass_.getLocationInfoEx());
                 }
                 if (reportTypeMask_ & GnssReportType::SATELLITE_VEHICLE) {
                     spt->onGnssSVInfo(rClass_.getGnssSVInfo());
@@ -138,8 +115,8 @@ void LocationManagerStub::invokeDetailedReport(ReportHandler & rClass_) {
                     spt->onGnssSignalInfo(rClass_.getGnssSignalInfo());
                 }
                 if (reportTypeMask_ & GnssReportType::NMEA) {
-                    std::vector<NMEAVals>& nmeaVals_ = rClass_.getNmeaVal();
-                    for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++ )
+                    std::vector<NMEAVals> &nmeaVals_ = rClass_.getNmeaVal();
+                    for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++)
                         spt->onGnssNmeaInfo(iterNMEA->nmeaTimestamp, iterNMEA->nmeaString);
                 }
                 if (reportTypeMask_ & GnssReportType::MEASUREMENT) {
@@ -157,13 +134,14 @@ void LocationManagerStub::invokeDetailedReport(ReportHandler & rClass_) {
     }
 }
 
-void LocationManagerStub::invokeDetailedEngineReport(ReportHandler & rClass_) {
+void LocationManagerStub::invokeDetailedEngineReport(ReportHandler &rClass_) {
+    LOG(DEBUG, __FUNCTION__);
     struct ReportSeqNos seqNo_ = rClass_.getReportSeqNos();
-    if (seqNo_.der > (derSeqNo_+ derSeqDelta_)) {
+    if (seqNo_.der > (derSeqNo_ + derSeqDelta_)) {
         std::vector<std::shared_ptr<ILocationInfoEx>> infoEngineReports;
-        std::shared_ptr<LocationInfoEx>infoEx = rClass_.getLocationInfoEx();
+        std::shared_ptr<LocationInfoEx> infoEx = rClass_.getLocationInfoEx();
         infoEngineReports.push_back(infoEx);
-        for (auto iter=listeners_.begin();iter != listeners_.end();) {
+        for (auto iter = listeners_.begin(); iter != listeners_.end();) {
             auto spt = (*iter).lock();
             if (spt != nullptr) {
                 if (reportTypeMask_ & GnssReportType::LOCATION) {
@@ -176,8 +154,8 @@ void LocationManagerStub::invokeDetailedEngineReport(ReportHandler & rClass_) {
                     spt->onGnssSignalInfo(rClass_.getGnssSignalInfo());
                 }
                 if (reportTypeMask_ & GnssReportType::NMEA) {
-                    std::vector<NMEAVals>& nmeaVals_ = rClass_.getNmeaVal();
-                    for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++ )
+                    std::vector<NMEAVals> &nmeaVals_ = rClass_.getNmeaVal();
+                    for (auto iterNMEA = nmeaVals_.begin(); iterNMEA != nmeaVals_.end(); iterNMEA++)
                         spt->onGnssNmeaInfo(iterNMEA->nmeaTimestamp, iterNMEA->nmeaString);
                 }
                 if (reportTypeMask_ & GnssReportType::MEASUREMENT) {
@@ -196,39 +174,47 @@ void LocationManagerStub::invokeDetailedEngineReport(ReportHandler & rClass_) {
 }
 
 void LocationManagerStub::managerThread() {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
     auto &rClass_ = ReportHandler::getInstance();
     while (exitThread_.load() == 0) {
         std::unique_lock<std::mutex> lk(rClass_.cv_m);
         rClass_.cv.wait(lk);
         {
-            std::lock_guard<std::mutex> listenerLock(mutex_);
+            std::lock_guard<std::mutex> listenerLock(listenerMutex_);
             if (listeners_.size() != 0) {
-                if (Type_.load()==1) {
+                if (type_.load() == BASIC_REPORTS) {
+                    if(rClass_.basicNotification_.load() == 0) {
+                        rClass_.basicNotification_.store(1);
+                    }
                     invokeBasicReport(rClass_);
-                } else if (Type_.load()==2) {
+                } else if (type_.load() == DETAILED_REPORTS) {
+                    if(rClass_.detailedNotification_.load() == 0) {
+                        rClass_.detailedNotification_.store(1);
+                    }
                     invokeDetailedReport(rClass_);
-                } else if (Type_.load()==3) {
+                } else if (type_.load() == DETAILED_ENG_REPORTS) {
+                    if(rClass_.detailedEngineNotification_.load() == 0) {
+                        rClass_.detailedEngineNotification_.store(1);
+                    }
                     invokeDetailedEngineReport(rClass_);
                 }
            } else {
-               //Debug(__func__, "No Listeners");
+               //"No Listeners"
            }
-           if (systemInfoListener_.size() != 0)
-           {
+           if (systemInfoListener_.size() != 0) {
+               if(rClass_.sysinfoNotification_.load() == 0) {
+                    rClass_.sysinfoNotification_.store(1);
+                }
                invokeSystemInfoReport(rClass_);
            }
         }
     }
-    Debug(__func__, "Exiting Manager Thread");
     exited_.store(1);
 }
 
-LocationManagerStub::LocationManagerStub(telux::common::InitResponseCb
-        callback) {
-    Debug(__FILE__,__func__);
-    systemStarter_ = std::make_shared<StubSystemStarter>(SubSystemType::LOCATION_MANAGER, callback);
-    Type_.store(0);
+LocationManagerStub::LocationManagerStub() {
+    LOG(DEBUG, __FUNCTION__, " Creating");
+    type_.store(NONE_REPORTS);
     exitThread_.store(0);
     exited_.store(0);
     brInterval_.store(0);
@@ -246,23 +232,64 @@ LocationManagerStub::LocationManagerStub(telux::common::InitResponseCb
 }
 
 std::future<bool> LocationManagerStub::onSubsystemReady() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->onSubSystemReady(SubSystemType::LOCATION_MANAGER));
+    LOG(DEBUG, __FUNCTION__);
+    auto f = std::async(std::launch::async, [&] { return waitForInitialization(); });
+    return f;
+}
+
+bool LocationManagerStub::waitForInitialization() {
+    LOG(DEBUG, __FUNCTION__);
+    std::unique_lock<std::mutex> cvLock(mutex_);
+    cv_.wait(cvLock);
+    return isSubsystemReady();
 }
 
 bool LocationManagerStub::isSubsystemReady() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->isSubSystemReady(SubSystemType::LOCATION_MANAGER));
+    LOG(DEBUG, __FUNCTION__);
+    return getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE;
 }
 
 telux::common::ServiceStatus LocationManagerStub::getServiceStatus() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->getServiceStatus(SubSystemType::LOCATION_MANAGER));
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ServiceStatus::SERVICE_AVAILABLE;
+}
+
+telux::common::Status LocationManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    auto f
+        = std::async(std::launch::async, [this, callback]() { this->initSync(callback); }).share();
+    taskQ_.add(f);
+    return telux::common::Status::SUCCESS;
+}
+
+void LocationManagerStub::initSync(telux::common::InitResponseCb callback) {
+    int cbDelay = 100;
+    telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    Json::Value rootNode;
+
+    {
+        ErrorCode errorCode
+            = JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
+        if (errorCode == ErrorCode::SUCCESS) {
+            cbDelay = rootNode["ILocationManager"]["SubSystemReadinessDelay"].asInt();
+            serviceStatus = rootNode["ILocationManager"]["SubSystemInit"].asBool() == true
+                                ? ServiceStatus::SERVICE_AVAILABLE
+                                : ServiceStatus::SERVICE_FAILED;
+        } else {
+            LOG(ERROR, "Unable to read LocationManager JSON");
+        }
+    }
+
+    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(serviceStatus));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    callback(serviceStatus);
+    cv_.notify_all();
 }
 
 telux::common::Status LocationManagerStub::registerListenerEx(std::weak_ptr<ILocationListener>
         listener) {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
     std::lock_guard<std::mutex> listenerLock(mutex_);
     auto spt = listener.lock();
     if (spt != nullptr) {
@@ -270,13 +297,13 @@ telux::common::Status LocationManagerStub::registerListenerEx(std::weak_ptr<ILoc
         for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
             if (spt == (*iter).lock()) {
                 existing = 1;
-                Debug(__func__, "Register Listener : Existing");
+                LOG(DEBUG, __FUNCTION__, " Register Listener : Existing");
                 break;
             }
         }
         if (existing == 0) {
             listeners_.emplace_back(listener);
-            Debug(__func__, "Register Listener : Adding");
+            LOG(DEBUG, __FUNCTION__, " Register Listener : Adding");
         }
     }
     return (telux::common::Status::SUCCESS);
@@ -284,7 +311,7 @@ telux::common::Status LocationManagerStub::registerListenerEx(std::weak_ptr<ILoc
 
 telux::common::Status LocationManagerStub::deRegisterListenerEx(std::weak_ptr<ILocationListener>
         listener) {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
     telux::common::Status retVal = telux::common::Status::FAILED;
     std::lock_guard<std::mutex> listenerLock(mutex_);
     auto spt = listener.lock();
@@ -292,7 +319,7 @@ telux::common::Status LocationManagerStub::deRegisterListenerEx(std::weak_ptr<IL
         for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
             if (spt == (*iter).lock()) {
                 iter = listeners_.erase(iter);
-                Debug(__func__, "In deRegister Listener : Removing");
+                LOG(DEBUG, __FUNCTION__, " In deRegister Listener : Removing");
                 retVal=telux::common::Status::SUCCESS;
                 break;
             }
@@ -301,265 +328,309 @@ telux::common::Status LocationManagerStub::deRegisterListenerEx(std::weak_ptr<IL
     return (retVal);
 }
 
-void locationResponseCallback(telux::common::ResponseCallback callback, telux::common::ErrorCode
-        retValue, int delay) {
-    Debug(__FILE__,__func__);
-    if(callback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-        callback(retValue);
-    }
-}
-
 telux::common::Status LocationManagerStub::startDetailedReports(uint32_t intervalInMs,
-        telux::common::ResponseCallback callback, GnssReportTypeMask reportMask) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    if (intervalInMs <100){
-        intervalInMs = 100;
+    telux::common::ResponseCallback callback, GnssReportTypeMask reportMask) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    if (status == Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            callback(errorCode);
+        }).share();
+        taskQ_.add(f);
+        std::lock_guard<std::mutex> listenerLock(listenerMutex_);
+        if (intervalInMs < 100) {
+            intervalInMs = 100;
+        }
+        reportTypeMask_ = reportMask;
+        drInterval_.store(intervalInMs);
+        drSeqDelta_.store(intervalInMs * .01);
+        drSeqNo_.store(0);
+        type_.store(DETAILED_REPORTS);
     }
-    drInterval_.store(intervalInMs);
-    drSeqDelta_.store(intervalInMs * .01);
-    drSeqNo_.store(0);
-    //Type should be updated last after other variables are set
-    Type_.store(2);
-    reportTypeMask_ = reportMask;
-    std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return(telux::common::Status::SUCCESS);
+    return status;
 }
 
 telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t intervalInMs,
-        LocReqEngine engineType, telux::common::ResponseCallback callback,
-            GnssReportTypeMask reportMask) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    if (intervalInMs <100){
-        intervalInMs = 100;
+    LocReqEngine engineType, telux::common::ResponseCallback callback,
+    GnssReportTypeMask reportMask) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    if (status == Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            callback(errorCode);
+        }).share();
+        taskQ_.add(f);
+        std::lock_guard<std::mutex> listenerLock(listenerMutex_);
+        if (intervalInMs < 100) {
+            intervalInMs = 100;
+        }
+        reportTypeMask_ = reportMask;
+        derInterval_.store(intervalInMs);
+        derSeqDelta_.store(intervalInMs * .01);
+        derSeqNo_.store(0);
+        type_.store(DETAILED_ENG_REPORTS);
     }
-    derInterval_.store(intervalInMs);
-    derSeqDelta_.store(intervalInMs * .01);
-    derSeqNo_.store(0);
-    //Type should be updated last after other variables are set
-    Type_.store(3);
-    reportTypeMask_ = reportMask;
-    std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return(telux::common::Status::SUCCESS);
+    return status;
 }
 
-telux::common::Status LocationManagerStub::startBasicReports(uint32_t distanceInMeters,
-        uint32_t intervalInMs, telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    if (intervalInMs <100){
-        intervalInMs = 100;
+telux::common::Status LocationManagerStub::startBasicReports(
+    uint32_t distanceInMeters, uint32_t intervalInMs, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    if (status == Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            callback(errorCode);
+        }).share();
+        taskQ_.add(f);
+        std::lock_guard<std::mutex> listenerLock(listenerMutex_);
+        if (intervalInMs < 100) {
+            intervalInMs = 100;
+        }
+        brInterval_.store(intervalInMs);
+        brSeqDelta_.store(intervalInMs * .01);
+        brSeqNo_.store(0);
+        type_.store(BASIC_REPORTS);
     }
-    brInterval_.store(intervalInMs);
-    brSeqDelta_.store(intervalInMs * .01);
-    brSeqNo_.store(0);
-    //Type should be updated last after other variables are set
-    Type_.store(1);
-    std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return(telux::common::Status::SUCCESS);
+    return status;
 }
 
 telux::common::Status LocationManagerStub::registerForSystemInfoUpdates(
-        std::weak_ptr<ILocationSystemInfoListener> listener,
-            telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::lock_guard<std::mutex> listenerLock(mutex_);
+    std::weak_ptr<ILocationSystemInfoListener> listener, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> listenerLock(listenerMutex_);
     auto spt = listener.lock();
     if (spt != nullptr) {
         bool existing = 0;
         for (auto iter=systemInfoListener_.begin(); iter<systemInfoListener_.end();++iter) {
             if (spt == (*iter).lock()) {
                 existing = 1;
-                Debug(__func__, "System Info Listener : Existing");
-                break;
+                LOG(DEBUG, __FUNCTION__, " System Info Listener : Existing");
+                return telux::common::Status::ALREADY;
             }
         }
         if (existing == 0) {
             systemInfoListener_.emplace_back(listener);
-            Debug(__func__, "Registering SystemInfo Listener");
+            LOG(DEBUG, __FUNCTION__, " Registering SystemInfo Listener");
         }
     }
-    std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    if (status == Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            callback(errorCode);
+        }).share();
+        taskQ_.add(f);
+    }
+    return status;
 }
 
 telux::common::Status LocationManagerStub::deRegisterForSystemInfoUpdates(
-        std::weak_ptr<ILocationSystemInfoListener> listener,
-            telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    telux::common::Status retVal = telux::common::Status::FAILED;
-    std::lock_guard<std::mutex> listenerLock(mutex_);
+    std::weak_ptr<ILocationSystemInfoListener> listener, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::mutex> listenerLock(listenerMutex_);
     auto spt = listener.lock();
     if (spt != nullptr) {
         for (auto iter=systemInfoListener_.begin(); iter<systemInfoListener_.end();++iter) {
             if (spt == (*iter).lock()) {
                 iter = systemInfoListener_.erase(iter);
-                Debug(__func__, "Removing System Info Listener");
-                retVal=telux::common::Status::SUCCESS;
+                LOG(DEBUG, __FUNCTION__, " Removing System Info Listener");
+                auto &rClass_ = ReportHandler::getInstance();
+                rClass_.sysinfoNotification_.store(0);
                 break;
             }
         }
     }
-    std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (retVal);
-}
-
-void LocationManagerStub::requestEnergyConsumedCb(telux::common::ErrorCode retValue, int delay,
-        telux::loc::GnssEnergyConsumedInfo energyConsumed) {
-    Debug(__FILE__,__func__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    {
-        std::lock_guard<std::mutex> lstnerEnergyLk(energyMutex_);
-        cbStore_(energyConsumed, retValue);
-        cbLock_ = false;
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    if (status == Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            callback(errorCode);
+        }).share();
+        taskQ_.add(f);
     }
+    return status;
 }
 
 telux::common::Status LocationManagerStub::requestEnergyConsumedInfo(GetEnergyConsumedCallback cb) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    {
-        std::lock_guard<std::mutex> lstnerEnergyLk(energyMutex_);
-        cbStore_ = cb;
-        if (cbLock_ == false) {
-            cbLock_ = true;
-        }
-        else
-            return (telux::common::Status::SUCCESS);
-    }
-    auto t1 =  std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff = t1 - time_t0;
-    struct GnssEnergyConsumedInfo energyConsumed;
-    energyConsumed.valid = 1;
-    Debug(__func__, "Elapsed Duration : " + std::to_string(diff.count()));
-    energyConsumed.energySinceFirstBoot = diff.count() * ENERGY_CONSUMED_PER_SECOND;
-    cbStore_ = cb;
-    std::thread t(&telux::loc::LocationManagerStub::requestEnergyConsumedCb, this,
-        telux::common::ErrorCode::SUCCESS, delay, energyConsumed);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
-}
+    LOG(DEBUG, __FUNCTION__);
 
-void LocationManagerStub::getYearofHwCb(telux::common::ErrorCode retValue, int delay,
-    uint16_t yearOfHw) {
-    Debug(__FILE__,__func__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    cbYearOfHw_(yearOfHw, retValue);
+    handleApiResponseForMethod("loc", "ILocationManager");
+
+    auto f = std::async(std::launch::async, [=]() {
+        telux::loc::GnssEnergyConsumedInfo energyConsumed;
+        if (errorCode == ErrorCode::SUCCESS) {
+            energyConsumed.valid
+                = std::stoi(telux::common::CommonUtils::readSystemDataValue("loc/ILocationManager",
+                    "0", {"ILocationManager", "GnssEnergyConsumedInfo", "valid"}));
+            energyConsumed.energySinceFirstBoot
+                = std::stoi(telux::common::CommonUtils::readSystemDataValue("loc/ILocationManager",
+                    "0", {"ILocationManager", "GnssEnergyConsumedInfo", "energySinceFirstBoot"}));
+            {
+                CommonUtils::writeSystemDataValue("loc/ILocationManager", "1",
+                    {"ILocationManager", "GnssEnergyConsumedInfo", "valid"});
+                CommonUtils::writeSystemDataValue("loc/ILocationManager",
+                    std::to_string(energyConsumed.energySinceFirstBoot + 100),
+                    {"ILocationManager", "GnssEnergyConsumedInfo", "energySinceFirstBoot"});
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+            }
+        }
+        cb(energyConsumed, errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationManagerStub::getYearOfHw(GetYearOfHwCallback cb) {
-    Debug(__FILE__,__func__);
-    int delay;
-    uint16_t yearOfHw = YEAR_OF_HW;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    cbYearOfHw_ = cb;
-    std::thread t(&telux::loc::LocationManagerStub::getYearofHwCb, this,
-        telux::common::ErrorCode::SUCCESS, delay, yearOfHw);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationManager");
+    auto f = std::async(std::launch::async, [=]() {
+        uint16_t yearOfHw;
+        if (errorCode == ErrorCode::SUCCESS) {
+            yearOfHw = std::stoi(telux::common::CommonUtils::readSystemDataValue(
+                "loc/ILocationManager", "0", {"ILocationManager", "yearOfHw"}));
+            if (yearOfHw == 0) {
+                yearOfHw = 2023;
+                CommonUtils::writeSystemDataValue("loc/ILocationManager", std::to_string(yearOfHw),
+                    {"ILocationManager", "yearOfHw"});
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        cb(yearOfHw, errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::loc::LocCapability LocationManagerStub::getCapabilities() {
-    Debug(__FILE__, __func__);
-    return capabilityMask_;
+    LOG(DEBUG, __FUNCTION__);
+    uint32_t cbDelay = 0;
+    Json::Value rootNode;
+    ErrorCode err = JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
+    if (err != ErrorCode::SUCCESS) {
+        LOG(ERROR, "Unable to read file: api/loc/ILocationManager.json");
+        return 0;
+    } else {
+        uint32_t capabilities = rootNode["ILocationManager"][__FUNCTION__]["capabilities"].asInt();
+        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        return capabilities;
+    }
 }
 
 telux::common::Status LocationManagerStub::stopReports(telux::common::ResponseCallback callback) {
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    Type_.store(0);
-    std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationManager");
+    type_.store(NONE_REPORTS);
+    auto &rClass_ = ReportHandler::getInstance();
+    rClass_.basicNotification_.store(0);
+    rClass_.detailedNotification_.store(0);
+    rClass_.detailedEngineNotification_.store(0);
+    auto f = std::async(std::launch::async, [=]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
     return (telux::common::Status::SUCCESS);
 }
 
-void LocationManagerStub::getTerrestrialPositionCb(int delay) {
-    Debug(__FILE__,__func__);
-    auto &rClass_ = ReportHandler::getInstance();
-    std::shared_ptr<LocationInfoBase>ibase = rClass_.getLocationInfoBase();
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    std::lock_guard<std::mutex> terrestrialPositionLock(mutex_);
-    if (isGetTerrestrialRequestActive_ == true) {
-        cbTerrestrialPosition_(ibase);
-        isGetTerrestrialRequestActive_ = false;
+std::shared_ptr<LocationInfoBase> LocationManagerStub::getLastLocation(bool defaultLocInfo) {
+    std::shared_ptr<LocationInfoBase> locInfo = std::make_shared<LocationInfoBase>();
+    if (defaultLocInfo) {
+        locInfo->setLatitude(0);
+        locInfo->setLongitude(0);
+        locInfo->setLocationInfoValidity(0);
     } else {
-        Debug(__func__, "Cancelling terrestrial callback");
+        auto &rClass = ReportHandler::getInstance();
+        locInfo = rClass.getLocationInfoBase();
     }
+    return locInfo;
 }
-
 telux::common::Status LocationManagerStub::getTerrestrialPosition(uint32_t timeoutMsec,
-        TerrestrialTechnology techMask, GetTerrestrialInfoCallback cb, telux::common
-            ::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    std::lock_guard<std::mutex> terrestrialPositionLock(mutex_);
-    isGetTerrestrialRequestActive_ = true;
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(locationResponseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    cbTerrestrialPosition_ = cb;
-    // Adding an additional delay of 5000 ms to accommodate possible request from
-    // cancelTerrestrialPositionRequest API.
-    std::thread t1(&telux::loc::LocationManagerStub::getTerrestrialPositionCb, this, delay + 5000);
-    t1.detach();
-    return(telux::common::Status::SUCCESS);
+    TerrestrialTechnology techMask, GetTerrestrialInfoCallback cb,
+    telux::common ::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationManager");
+    auto f = std::async(std::launch::async, [=]() {
+        uint32_t delay = cbDelay;
+        std::shared_ptr<LocationInfoBase> locInfo;
+        LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
+        if (timeoutMsec <= delay) {
+            LOG(INFO, "timeout shorter, will send default location");
+            delay = timeoutMsec;
+            LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
+            locInfo = getLastLocation(true);
+        } else {
+            LOG(INFO, "timeout lengthier, will send last received location unless cancelled");
+            locInfo = getLastLocation();
+        }
+        LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
+        std::unique_lock<std::mutex> lk(terrestrialPositionMutex_);
+        if (cvTerrestrialPosition_.wait_for(lk, std::chrono::milliseconds(delay))
+            == std::cv_status::timeout) {
+                LOG(DEBUG, "Timed out, sending GTP callback");
+                cb(locInfo);
+        } else {
+            LOG(DEBUG, "GTP callback cancelled");
+        }
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationManagerStub::cancelTerrestrialPositionRequest(
-      telux::common::ResponseCallback callback) {
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::lock_guard<std::mutex> terrestrialPositionLock(mutex_);
-    if (isGetTerrestrialRequestActive_ == true) {
-        isGetTerrestrialRequestActive_ = false;
-        std::thread t(locationResponseCallback, callback,
-            telux::common::ErrorCode::SUCCESS, delay);
-        t.detach();
-    } else {
-        std::thread t(locationResponseCallback, callback,
-            telux::common::ErrorCode::INVALID_ARGUMENTS, delay);
-        t.detach();
-    }
-    return (telux::common::Status::SUCCESS);
+    telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationManager");
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            std::lock_guard<std::mutex> lk(terrestrialPositionMutex_);
+            cvTerrestrialPosition_.notify_all();
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 LocationManagerStub::~LocationManagerStub() {
-    Debug(__FILE__,__func__);
-    Debug(__func__, "In Manager Destructor");
-
+    LOG(DEBUG, __FUNCTION__);
     exitThread_.store(1);
     while (exited_.load() == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    Debug(__func__, "Coming out of Manager Destructor");
-
 }
 
-} //namespace loc
+void LocationManagerStub::cleanup() {
+}
 
-} //namespace telux
+}  // namespace loc
+
+}  // namespace telux

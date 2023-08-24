@@ -28,40 +28,9 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-
 
 /**
  * file       LocationConfiguratorStub.hpp
@@ -74,7 +43,7 @@
 #define LOCATIONCONFIGURATORSTUB_HPP
 
 #include "telux/loc/LocationConfigurator.hpp"
-#include "StubSystemStarter.hpp"
+#include "../common/AsyncTaskQueue.hpp"
 #include <set>
 #include <map>
 
@@ -565,6 +534,36 @@ public:
       telux::common::ResponseCallback callback = nullptr) override;
 
 /**
+ * This API is used to configure the NMEA sentences that the clients will receive via
+ * @ref ILocationManager::startDetailedReports or
+ * @ref ILocationManager::startDetailedEngineReports.
+ * Without prior invocation to this API, all NMEA sentences supported in the system will get
+ * generated and delivered to all the clients that register to receive NMEA sentences.
+ * The NMEA sentence type configuration is common across all clients and updating it will affect
+ * all clients.
+ *
+ * Please note that for the NMEA datum type request to be successful,
+ * the nmea provider configuration in the GPS configuration file
+ * should be set to application processor.
+ *
+ * This API call is not incremental and the new NMEA configuration will completely overwrite the
+ * previous call to this API.
+ *
+ * @param [in] configParams - Configuration Parameters for Nmea on the device.
+ *
+ * @param [in] callback - Optional callback to get the response of configureNmea.
+ *
+ * @returns Status of configureNmea i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  telux::common::Status configureNmea(const NmeaConfig configParams,
+    telux::common::ResponseCallback callback = nullptr) override;
+
+/**
  * This API is used to instruct the specified engine to use the provided integrity risk level for
  * protection level calculation in position report.
  * This API can be called when a position session is in progress.
@@ -665,29 +664,71 @@ public:
   telux::common::Status deRegisterListener(LocConfigIndications indicationList,
     std::weak_ptr<ILocationConfigListener> listener) override;
 
-    LocationConfiguratorStub(telux::common::InitResponseCb callback = nullptr);
+/**
+ * To support the Galileo OSNMA feature, this API is used to inject the Merkle Tree information
+ * via a XML configuration file. The XML configuration contains the Merkle root, Merkle nodes
+ * and information for upto 2 public keys.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
+ * @param [in] merkleTreeInfo - The XML content to be injected.
+ *                              For injecting the Merkle information, clients need to
+ *                              pass the XML content in the form of a std::string.
+ *
+ * @param [in] callback - Optional callback to receive the result of the injection.
+ *
+ * @returns Status of the injection i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  telux::common::Status injectMerkleTreeInformation(std::string merkleTreeInfo,
+    telux::common::ResponseCallback callback = nullptr) override;
+
+/**
+ * This API is used to enable/disable the OSNMA Feature in the Modem.
+ *
+ * On platforms with Access control enabled, caller needs to have TELUX_LOC_CONFIG permission to
+ * invoke this API successfully.
+ *
+ * @param [in] enable - Enable/Disable the OSNMA Feature in the modem.
+ *
+ * @param [in] callback - Optional callback to receive the result of the enablement/disablement.
+ *
+ * @returns Status of the enablement/disablement i.e. success or suitable status code.
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and could
+ *             break backwards compatibility.
+ *
+ */
+
+  telux::common::Status configureOsnma(bool enable,
+    telux::common::ResponseCallback callback = nullptr) override;
+
+    LocationConfiguratorStub();
+
+    telux::common::Status init(telux::common::InitResponseCb callback);
+/**
+ * Clean-up method
+ */
+    void cleanup();
+
 /**
  * Destructor of ILocationConfigurator
  */
     ~LocationConfiguratorStub();
 private:
-    uint8_t confgMinSVElevation_;
-    uint16_t confgMinGpsWeek_;
-    std::shared_ptr<StubSystemStarter> systemStarter_ = nullptr;
-    telux::loc::RobustLocationConfiguration confgRobustLocation_;
-    telux::loc::ConstellationSet configSet_;
-    bool confgCTuncEnabled_;
-    float confgCTuncThreshold_;
-    uint32_t confgCTuncEnergyBudget_;
-    bool confgPaceEnabled_;
-    telux::loc::LeverArmConfigInfo confgLeverArmInfo_;
-    telux::loc::SvBlackList confgBlackList_;
-    telux::loc::XtraStatus xtraStatus_;
-    bool xtraEnabled_;
-    uint32_t registrationMask_ = 0;
-    void invokeXtraStatusUpdate();
-    void getAvailableListeners(uint32_t indication,
-      std::vector<std::weak_ptr<ILocationConfigListener>> &vec);
+  void getAvailableListeners(uint32_t indication,
+    std::vector<std::weak_ptr<ILocationConfigListener>> &vec);
+  void invokeXtraStatusUpdate();
+  bool xtraEnabled_;
+  uint32_t registrationMask_ = 0;
+  bool waitForInitialization();
+  void initSync(telux::common::InitResponseCb callback);
+
     /** std::weak_ptr doesn't support relational operators. Need to use a binary predicate. */
     struct SetPredicate {
         bool operator() (const std::weak_ptr<ILocationConfigListener> &lhs,
@@ -710,6 +751,10 @@ private:
     /** We maintain a mapping between an indication and all the corresponding listeners registered. */
     std::map<uint32_t,
       std::set<std::weak_ptr<ILocationConfigListener>, SetPredicate> > registrationMap_;
+    telux::common::AsyncTaskQueue<void> taskQ_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+
 };
 
 } // end of namespace loc

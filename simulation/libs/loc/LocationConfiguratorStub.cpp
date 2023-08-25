@@ -28,428 +28,614 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-
-#define SVELEVATION_MAXVALUE 90
-
 #include "LocationConfiguratorStub.hpp"
-#include "StubHelper.hpp"
-#include "Logger/Logger.hpp"
+#include "../common/Logger.hpp"
+#include "../common/JsonParser.hpp"
+#include "../common/CommonUtils.hpp"
 
 namespace telux {
 namespace loc {
 
-LocationConfiguratorStub::LocationConfiguratorStub(telux::common::InitResponseCb callback) {
-    Debug(__FILE__,__func__);
-    static bool created = false;
-    if (created == false) {
-        created = true;
-        systemStarter_ = std::make_shared<StubSystemStarter>(SubSystemType::LOCATION_CONFIGURATOR,
-            callback);
-    }
-
-    //default initialization of member variables
-    confgMinSVElevation_ = 0;
-    confgMinGpsWeek_ = 0;
-    confgRobustLocation_.validMask = 1;
-    confgRobustLocation_.enabled = false;
-    confgRobustLocation_.enabledForE911 = false;
-    confgRobustLocation_.version.major = 0;
-    confgRobustLocation_.version.minor = 1;
-    confgCTuncEnabled_ = false;
-    confgCTuncThreshold_ = 0.0f;
-    confgCTuncEnergyBudget_ = 0;
-    confgPaceEnabled_  = false;
-    xtraStatus_.featureEnabled = false;
-    xtraStatus_.xtraDataStatus = XtraDataStatus::STATUS_UNKNOWN;
-    xtraStatus_.xtraValidForHours = 0;
-    xtraEnabled_ = false;
+LocationConfiguratorStub::LocationConfiguratorStub() {
+    LOG(DEBUG, __FUNCTION__);
 }
 
 std::future<bool> LocationConfiguratorStub::onSubsystemReady() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->onSubSystemReady(SubSystemType::LOCATION_CONFIGURATOR));
+  LOG(DEBUG, __FUNCTION__);
+  auto f = std::async(std::launch::async, [&] {
+    return waitForInitialization();
+  });
+  return f;
+}
+
+bool LocationConfiguratorStub::waitForInitialization() {
+  LOG(DEBUG, __FUNCTION__);
+  std::unique_lock<std::mutex> cvLock(mutex_);
+  cv_.wait(cvLock);
+  return isSubsystemReady();
 }
 
 bool LocationConfiguratorStub::isSubsystemReady() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->isSubSystemReady(SubSystemType::LOCATION_CONFIGURATOR));
+    LOG(DEBUG, __FUNCTION__);
+    return getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE;
 }
 
 telux::common::ServiceStatus LocationConfiguratorStub::getServiceStatus() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->getServiceStatus(SubSystemType::LOCATION_CONFIGURATOR));
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ServiceStatus::SERVICE_AVAILABLE;
 }
 
-void responseCallback(telux::common::ResponseCallback callback, telux::common::ErrorCode
-        retValue, int delay) {
-    Debug(__FILE__,__func__);
-    if(callback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-        callback(retValue);
+telux::common::Status LocationConfiguratorStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    auto f = std::async(std::launch::async,
+    [this, callback]() {
+        this->initSync(callback);
+        }).share();
+        taskQ_.add(f);
+    return telux::common::Status::SUCCESS;
+}
+
+void LocationConfiguratorStub::initSync(telux::common::InitResponseCb callback) {
+    int cbDelay = 100;
+    telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    Json::Value rootNode;
+
+    {
+        ErrorCode errorCode = JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationConfigurator.json");
+        if(errorCode == ErrorCode::SUCCESS) {
+            cbDelay = rootNode["ILocationConfigurator"]["SubSystemReadinessDelay"].asInt();
+            serviceStatus = rootNode["ILocationConfigurator"]["SubSystemInit"].asBool() == true ? ServiceStatus::SERVICE_AVAILABLE : ServiceStatus::SERVICE_FAILED;
+        } else {
+            LOG(ERROR, "Unable to read LocationConfigurator JSON");
+        }
     }
+
+    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(serviceStatus));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    callback(serviceStatus);
+    cv_.notify_all();
 }
 
 telux::common::Status LocationConfiguratorStub::configureCTunc(bool enable,
         telux::common::ResponseCallback callback, float timeUncertainty, uint32_t energyBudget) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    confgCTuncEnabled_ = enable;
-    confgCTuncThreshold_ = timeUncertainty;
-    confgCTuncEnergyBudget_ = energyBudget;
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(timeUncertainty),
+                {"ILocationConfigurator", "CTunc", "timeUncertainty"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(energyBudget),
+                {"ILocationConfigurator", "CTunc", "energyBudget"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configurePACE(bool enable,
         telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    confgPaceEnabled_ = enable;
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enable),
+                {"ILocationConfigurator", "PACE", "enable"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::deleteAllAidingData(telux::common::ResponseCallback
         callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureLeverArm(const LeverArmConfigInfo& info,
         telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    confgLeverArmInfo_.insert(info.begin(), info.end());
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            for(auto itr: info) {
+                if(itr.first == LeverArmType::LEVER_ARM_TYPE_GNSS_TO_VRP) {
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.forwardOffset),
+                        {"ILocationConfigurator", "LeverArm", "GNSSTOVRPforwardOffset"});
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.sidewaysOffset),
+                        {"ILocationConfigurator", "LeverArm", "GNSSTOVRPsidewaysOffset"});
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.upOffset),
+                        {"ILocationConfigurator", "LeverArm", "GNSSTOVRPupOffset"});
+                }
+                if(itr.first == LeverArmType::LEVER_ARM_TYPE_DR_IMU_TO_GNSS) {
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.forwardOffset),
+                        {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSforwardOffset"});
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.sidewaysOffset),
+                        {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSsidewaysOffset"});
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.upOffset),
+                        {"ILocationConfigurator", "LeverArm", "DRIMUTOGNSSupOffset"});
+                }
+                if( (itr.first == LeverArmType::LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS) ||
+                    (itr.first == LeverArmType::LEVER_ARM_TYPE_VPE_IMU_TO_GNSS) ) {
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.forwardOffset),
+                        {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSforwardOffset"});
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.sidewaysOffset),
+                        {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSsidewaysOffset"});
+                    CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(itr.second.upOffset),
+                        {"ILocationConfigurator", "LeverArm", "VEPPIMUTOGNSSupOffset"});
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureConstellations(const SvBlackList& list,
         telux::common::ResponseCallback callback,  bool resetToDefault) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    if(!resetToDefault) {
-        confgBlackList_.clear();
-        //if list is empty then all will be enabled
-        for(SvBlackListInfo info : list) {
-            //insert only valid svId
-            if(info.constellation == GnssConstellationType::GALILEO && info.svId >= 301 &&
-                    info.svId <= 336) {
-                confgBlackList_.push_back(info);
-            } else if(info.constellation == GnssConstellationType::SBAS && ((info.svId >= 120 &&
-                    info.svId<= 158) || (info.svId >= 183 && info.svId <= 191))) {
-                confgBlackList_.push_back(info);
-            } else if(info.constellation == GnssConstellationType::GLONASS && info.svId >= 65
-                    && info.svId <= 96) {
-                confgBlackList_.push_back(info);
-            } else if(info.constellation == GnssConstellationType::BDS && info.svId >= 201
-                    && info.svId <= 237) {
-                confgBlackList_.push_back(info);
-            } else if(info.constellation == GnssConstellationType::QZSS && info.svId >= 193
-                    && info.svId <= 197) {
-                confgBlackList_.push_back(info);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            std::string blacklist = "";
+            for (auto itr : list) {
+                blacklist += std::to_string(static_cast<int>(itr.constellation));
+                blacklist += " : ";
+                blacklist += std::to_string(itr.svId);
+                blacklist += ", ";
             }
+            if(!blacklist.empty()) {
+                blacklist.pop_back();
+                blacklist.pop_back();
+            }
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", blacklist,
+                {"ILocationConfigurator", "configureConstellations", "Blacklist"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
         }
-    } else {
-        //By default none will be blacklisted
-        confgBlackList_.clear();
-    }
-    return (telux::common::Status::SUCCESS);
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureRobustLocation(bool enable,
         bool enableForE911, telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    confgRobustLocation_.enabled = enable;
-    confgRobustLocation_.enabledForE911 = enableForE911;
-    return (telux::common::Status::SUCCESS);
-}
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
 
-void requestRobustLocationCb(LocationConfiguratorStub::GetRobustLocationCallback cb,
-        telux::common::ErrorCode retValue, int delay, RobustLocationConfiguration robustLoc) {
-    Debug(__FILE__,__func__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    cb(robustLoc, retValue);
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enable),
+                {"ILocationConfigurator", "RobustLocation", "enable"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enableForE911),
+                {"ILocationConfigurator", "RobustLocation", "enableForE911"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::requestRobustLocation(
         GetRobustLocationCallback cb) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(requestRobustLocationCb, cb, telux::common::ErrorCode::SUCCESS, delay,
-        confgRobustLocation_);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        RobustLocationConfiguration rLConfig;
+        if (errorCode == ErrorCode::SUCCESS) {
+            rLConfig.enabled = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "RobustLocation", "enable"}));
+            rLConfig.enabledForE911 = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "RobustLocation", "enableForE911"}));
+            rLConfig.validMask = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "7",
+                {"ILocationConfigurator", "RobustLocation", "validity"}));
+            rLConfig.version.major = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "1",
+                {"ILocationConfigurator", "RobustLocation", "majorversion"}));
+            rLConfig.version.minor = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "2",
+                {"ILocationConfigurator", "RobustLocation", "minorversion"}));
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        cb(rLConfig, errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 
 telux::common::Status LocationConfiguratorStub::configureMinGpsWeek(uint16_t minGpsWeek,
         telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    confgMinGpsWeek_ = minGpsWeek;
-    return (telux::common::Status::SUCCESS);
-}
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
 
-void requestMinGpsWeekCb(LocationConfiguratorStub::GetMinGpsWeekCallback cb,
-        telux::common::ErrorCode retValue, int delay, uint16_t minGpsWeek) {
-    Debug(__FILE__,__func__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    cb(minGpsWeek, retValue);
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(minGpsWeek),
+                {"ILocationConfigurator", "MinGpsWeek", "mingpsweek"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::requestMinGpsWeek(GetMinGpsWeekCallback cb) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(requestMinGpsWeekCb, cb, telux::common::ErrorCode::SUCCESS
-        , delay, confgMinGpsWeek_);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        uint16_t minGpsWeek = 0;
+        if (errorCode == ErrorCode::SUCCESS) {
+            minGpsWeek = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "MinGpsWeek", "mingpsweek"}));
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        cb(minGpsWeek, errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureMinSVElevation(uint8_t minSVElevation,
         telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    if (minSVElevation <= SVELEVATION_MAXVALUE) {
-        std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-        t.detach();
-        confgMinSVElevation_ = minSVElevation;
-        return (telux::common::Status::SUCCESS);
-    }
-    else {
-        Error(__func__, "Invalid Parameter");
-        return (telux::common::Status::INVALIDPARAM);
-    }
-}
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
 
-void requestMinSVElevationCb(LocationConfiguratorStub::GetMinSVElevationCallback callback,
-        telux::common::ErrorCode retValue, int delay, uint8_t configValue) {
-    Debug(__FILE__,__func__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    callback(configValue, retValue);
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator",
+                std::to_string(minSVElevation),
+                    {"ILocationConfigurator", "MinSvElevation", "minSVElevation"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::requestMinSVElevation(GetMinSVElevationCallback cb) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(requestMinSVElevationCb, cb, telux::common::ErrorCode::SUCCESS, delay,
-        confgMinSVElevation_);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        uint8_t minSVElevation = 0;
+        if (errorCode == ErrorCode::SUCCESS) {
+            minSVElevation = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "MinSvElevation", "minSVElevation"}));
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        cb(minSVElevation, errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureSecondaryBand(const ConstellationSet& set,
         telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    configSet_ = set;
-    return (telux::common::Status::SUCCESS);
-}
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
 
-void requestSecondaryBandConfigCb(LocationConfiguratorStub::GetSecondaryBandCallback callback,
-        telux::common::ErrorCode retValue, int delay, const ConstellationSet& set) {
-    Debug(__FILE__,__func__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    callback(set, retValue);
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            std::string secBandSet = "";
+            for (auto itr : set) {
+                int id = static_cast<int>(itr);
+                secBandSet += std::to_string(id);
+                secBandSet += ", ";
+            }
+            if(!secBandSet.empty()) {
+                secBandSet.pop_back();
+                secBandSet.pop_back();
+            }
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", secBandSet,
+                {"ILocationConfigurator", "SecondaryBand", "Set"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::requestSecondaryBandConfig(GetSecondaryBandCallback
         cb) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(requestSecondaryBandConfigCb, cb, telux::common::ErrorCode::SUCCESS, delay,
-        configSet_);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        ConstellationSet set;
+        if (errorCode == ErrorCode::SUCCESS) {
+            std::string str = CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "8",
+                {"ILocationConfigurator", "SecondaryBand", "Set"});
+            for(size_t itr = 0; itr < str.size(); itr++) {
+                if(str[itr] >= '0' && str[itr] <= '8') {
+                    int constel = (str[itr] - 48);
+                    GnssConstellationType constelType;
+                    switch(constel) {
+                        case 1: constelType = GnssConstellationType::GPS;
+                                break;
+                        case 2: constelType = GnssConstellationType::GALILEO;
+                                break;
+                        case 3: constelType = GnssConstellationType::SBAS;
+                                break;
+                        case 5: constelType = GnssConstellationType::GLONASS;
+                                break;
+                        case 6: constelType = GnssConstellationType::BDS;
+                                break;
+                        case 7: constelType = GnssConstellationType::QZSS;
+                                break;
+                        case 8: constelType = GnssConstellationType::NAVIC;
+                                break;
+                    }
+                    set.insert(constelType);
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        cb(set, errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::deleteAidingData(AidingData aidingDataMask,
         telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(aidingDataMask),
+                {"ILocationConfigurator", "DeleteAidingData", "aidingDataMask"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
-// Currently DREngineConfiguration value passed in this API is not stored as there is request/get for this
 telux::common::Status LocationConfiguratorStub::configureDR(const DREngineConfiguration& config,
         telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.speedFactor),
+                {"ILocationConfigurator", "configureDR", "speedFactor"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.speedFactorUnc),
+                {"ILocationConfigurator", "configureDR", "speedFactorUnc"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.gyroFactor),
+                {"ILocationConfigurator", "configureDR", "gyroFactor"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.gyroFactorUnc),
+                {"ILocationConfigurator", "configureDR", "gyroFactorUnc"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.mountParam.rollOffset),
+                {"ILocationConfigurator", "configureDR", "rollOffset"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.mountParam.yawOffset),
+                {"ILocationConfigurator", "configureDR", "yawOffset"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.mountParam.pitchOffset),
+                {"ILocationConfigurator", "configureDR", "pitchOffset"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.mountParam.offsetUnc),
+                {"ILocationConfigurator", "configureDR", "offsetUnc"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(config.validMask),
+                {"ILocationConfigurator", "configureDR", "validity"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureEngineState(const EngineType engineType,
       const LocationEngineRunState engineState, telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(static_cast<int>(engineType)),
+                {"ILocationConfigurator", "EngineState", "engineType"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(static_cast<int>(engineState)),
+                {"ILocationConfigurator", "EngineState", "engineState"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::provideConsentForTerrestrialPositioning(
-      bool userConsent, telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+      bool ConsentForTerrestrialPositioning, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(ConsentForTerrestrialPositioning),
+                {"ILocationConfigurator", "ConsentForTerrestrialPositioning", "Consent"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureNmeaTypes(
       const NmeaSentenceConfig nmeaType, telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(nmeaType),
+                {"ILocationConfigurator", "configureNmeaTypes", "sentenceConfig"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
+}
+
+telux::common::Status LocationConfiguratorStub::configureNmea(const NmeaConfig configParams,
+    telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(static_cast<int>(configParams.sentenceConfig)),
+                {"ILocationConfigurator", "configureNmeaTypes", "sentenceConfig"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(static_cast<int>(configParams.datumType)),
+                {"ILocationConfigurator", "configureNmeaTypes", "datumType"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureEngineIntegrityRisk(
       const EngineType engineType, uint32_t integrityRisk,
           telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(static_cast<int>(engineType)),
+                {"ILocationConfigurator", "configureEngineIntegrityRisk", "engineType"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(integrityRisk),
+                {"ILocationConfigurator", "configureEngineIntegrityRisk", "integrityRisk"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::configureXtraParams(bool enable,
     const XtraConfig configParams, telux::common::ResponseCallback callback) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(responseCallback, callback, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    if(!enable) {
-        xtraStatus_.featureEnabled = false;
-        xtraStatus_.xtraDataStatus = XtraDataStatus::STATUS_UNKNOWN;
-        xtraStatus_.xtraValidForHours = 0;
-    } else {
-        xtraStatus_.featureEnabled = true;
-        xtraStatus_.xtraDataStatus = XtraDataStatus::STATUS_VALID;
-        xtraStatus_.xtraValidForHours = (configParams.downloadIntervalMinute) / 60;
-    }
-    if(xtraEnabled_ != enable) {
-        uint32_t indication =
-            static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
-        if( (registrationMask_ & (1 << indication)) ) {
-            invokeXtraStatusUpdate();
-        }
-        xtraEnabled_ = enable;
-    }
-    return (telux::common::Status::SUCCESS);
-}
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
 
-void requestXtraStatusCb(LocationConfiguratorStub::GetXtraStatusCallback cb,
-    telux::loc::XtraStatus xtraStatus, telux::common::ErrorCode retValue, int delay) {
-    Debug(__FILE__,__func__);
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    cb(xtraStatus, retValue);
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(static_cast<int>(enable)),
+                {"ILocationConfigurator", "XtraParams", "enable"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(configParams.downloadIntervalMinute),
+                {"ILocationConfigurator", "XtraParams", "downloadIntervalMinute"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(configParams.downloadTimeoutSec),
+                {"ILocationConfigurator", "XtraParams", "downloadTimeoutSec"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(configParams.downloadRetryIntervalMinute),
+                {"ILocationConfigurator", "XtraParams", "downloadRetryIntervalMinute"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(configParams.downloadRetryAttempts),
+                {"ILocationConfigurator", "XtraParams", "downloadRetryAttempts"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", configParams.caPath,
+                {"ILocationConfigurator", "XtraParams", "caPath"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(configParams.isIntegrityDownloadEnabled),
+                {"ILocationConfigurator", "XtraParams", "isIntegrityDownloadEnabled"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(configParams.integrityDownloadIntervalMinute),
+                {"ILocationConfigurator", "XtraParams", "integrityDownloadIntervalMinute"});
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(static_cast<int>(configParams.daemonDebugLogLevel)),
+                {"ILocationConfigurator", "XtraParams", "daemonDebugLogLevel"});
+            std::string urls = "";
+            for(auto url: configParams.serverURLs) {
+                urls += url + ", ";
+            }
+            if(!urls.empty()) {
+                urls.pop_back();
+                urls.pop_back();
+            }
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", urls,
+                {"ILocationConfigurator", "XtraParams", "serverURLs"});
+            std::string ntpurls = "";
+            for(auto url: configParams.ntpServerURLs) {
+                ntpurls += url + ", ";
+            }
+            if(!ntpurls.empty()) {
+                ntpurls.pop_back();
+                ntpurls.pop_back();
+            }
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", ntpurls,
+                {"ILocationConfigurator", "XtraParams", "ntpServerURLs"});
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+        if(xtraEnabled_ != enable) {
+            uint32_t indication =
+                static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
+            if( (registrationMask_ & (1 << indication)) ) {
+                invokeXtraStatusUpdate();
+            }
+            xtraEnabled_ = enable;
+        }
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::requestXtraStatus(GetXtraStatusCallback cb) {
-    Debug(__FILE__,__func__);
-    int delay;
-    auto &s_stubbed =  StubHelper::getInstance();
-    delay = s_stubbed.getCallbackDelay();
-    std::thread t(requestXtraStatusCb, cb, xtraStatus_, telux::common::ErrorCode::SUCCESS, delay);
-    t.detach();
-    return (telux::common::Status::SUCCESS);
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        XtraStatus xtraStatus;
+        if (errorCode == ErrorCode::SUCCESS) {
+            xtraStatus.featureEnabled = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "XtraParams", "enable"}));
+            int dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "XtraParams", "xtraDataStatus"}));
+            switch(dataStatus) {
+                case 0: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_UNKNOWN;
+                        break;
+                case 1: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_NOT_AVAIL;
+                        break;
+                case 2: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_NOT_VALID;
+                        break;
+                case 3: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_VALID;
+                        break;
+            }
+            xtraStatus.xtraValidForHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+                {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        cb(xtraStatus, errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
 }
 
 telux::common::Status LocationConfiguratorStub::registerListener(
@@ -520,6 +706,23 @@ void LocationConfiguratorStub::getAvailableListeners(uint32_t indication,
 void LocationConfiguratorStub::invokeXtraStatusUpdate() {
     uint32_t indication =
             static_cast<uint32_t>(LocConfigIndicationsType::LOC_CONF_IND_XTRA_STATUS);
+    XtraStatus xtraStatus;
+    xtraStatus.featureEnabled = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+        {"ILocationConfigurator", "XtraParams", "enable"}));
+    int dataStatus = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+        {"ILocationConfigurator", "XtraParams", "xtraDataStatus"}));
+    switch(dataStatus) {
+        case 0: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_UNKNOWN;
+                break;
+        case 1: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_NOT_AVAIL;
+                break;
+        case 2: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_NOT_VALID;
+                break;
+        case 3: xtraStatus.xtraDataStatus = XtraDataStatus::STATUS_VALID;
+                break;
+    }
+    xtraStatus.xtraValidForHours = std::stoi(CommonUtils::readSystemDataValue("loc/ILocationConfigurator", "0",
+        {"ILocationConfigurator", "XtraParams", "xtraValidForHours"}));
     std::vector<std::weak_ptr<ILocationConfigListener>> retList {};
     getAvailableListeners(indication, retList);
     if(!retList.empty()) {
@@ -527,10 +730,43 @@ void LocationConfiguratorStub::invokeXtraStatusUpdate() {
             auto l = listener.lock();
             // Prevent accessing a dangling listener reference.
             if(l != nullptr) {
-                l->onXtraStatusUpdate(xtraStatus_);
+                l->onXtraStatusUpdate(xtraStatus);
             }
         }
     }
+}
+
+telux::common::Status LocationConfiguratorStub::injectMerkleTreeInformation(
+    std::string merkleTreeInfo, telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
+}
+
+telux::common::Status LocationConfiguratorStub::configureOsnma(bool enable,
+    telux::common::ResponseCallback callback) {
+    LOG(DEBUG, __FUNCTION__);
+    handleApiResponseForMethod("loc", "ILocationConfigurator");
+
+    auto f = std::async(std::launch::async, [=]() {
+        if (errorCode == ErrorCode::SUCCESS) {
+            CommonUtils::writeSystemDataValue("loc/ILocationConfigurator", std::to_string(enable),
+                {"ILocationConfigurator", "configureOsnma", "enable"});
+            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        }
+        callback(errorCode);
+    }).share();
+    taskQ_.add(f);
+    return status;
+}
+
+void LocationConfiguratorStub::cleanup() {
+
 }
 
 LocationConfiguratorStub::~LocationConfiguratorStub() {}

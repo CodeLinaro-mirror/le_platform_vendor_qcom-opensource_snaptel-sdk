@@ -26,25 +26,30 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef REPORTHANDLER_HPP
 #define REPORTHANDLER_HPP
 #include <future>
-#include "commonDef.hpp"
 #include "LocationDefinesStub.hpp"
+#include "commonDef.hpp"
 
 namespace telux {
 
 namespace loc {
 
-class ReportHandler{
+class ReportHandler {
     ReportHandler();
     ReportHandler(const ReportHandler &) = delete;
     ReportHandler &operator=(const ReportHandler &) = delete;
     ~ReportHandler();
 
-    //Sequence No of Basic Report(Br), DR(Detailed Report), DER(Detailed Engine Report)
-    //increases by 1 every 100 msecs
+    // Sequence No of Basic Report(Br), DR(Detailed Report), DER(Detailed Engine Report)
+    // increases by 1 every 100 msecs
     struct ReportSeqNos repSeqNo_;
     std::shared_ptr<LocationInfoBase> iBase_ = nullptr;
     std::shared_ptr<LocationInfoEx> iBaseEx_ = nullptr;
@@ -54,27 +59,51 @@ class ReportHandler{
     std::vector<NMEAVals> nmeaVals_;
     GnssMeasurements gnssMeasurement_;
 
-    //reportThread gets reports from ReportReader every ~100 msecs
+    // reportThread gets reports from ReportReader every ~100 msecs
     //(it waits 100 msecs after getting report)
     void reportThread();
-public:
+
+ public:
     static ReportHandler &getInstance();
-    std::shared_ptr<LocationInfoBase> getLocationInfoBase() {return iBase_;};
-    std::shared_ptr<LocationInfoEx> getLocationInfoEx() {return iBaseEx_;};
-    struct ReportSeqNos getReportSeqNos() {return repSeqNo_;};
-    std::shared_ptr<GnssSVInfo> getGnssSVInfo() {return gnssSVInfo_;};
-    std::shared_ptr<GnssSignalInfo> getGnssSignalInfo() {return gnssSignalInfo_;};
-    std::vector<NMEAVals>& getNmeaVal() {return nmeaVals_;};
-    struct LocationSystemInfo& getSystemInfoReport() {return locationSystemInfo_;};
-    GnssMeasurements &getGnssMeasurements() {return gnssMeasurement_;};
+    std::shared_ptr<LocationInfoBase> getLocationInfoBase() {
+        return iBase_;
+    };
+    std::shared_ptr<LocationInfoEx> getLocationInfoEx() {
+        return iBaseEx_;
+    };
+    struct ReportSeqNos getReportSeqNos() {
+        return repSeqNo_;
+    };
+    std::shared_ptr<GnssSVInfo> getGnssSVInfo() {
+        return gnssSVInfo_;
+    };
+    std::shared_ptr<GnssSignalInfo> getGnssSignalInfo() {
+        return gnssSignalInfo_;
+    };
+    std::vector<NMEAVals> &getNmeaVal() {
+        return nmeaVals_;
+    };
+    struct LocationSystemInfo &getSystemInfoReport() {
+        return locationSystemInfo_;
+    };
+    GnssMeasurements &getGnssMeasurements() {
+        return gnssMeasurement_;
+    };
 
     // Manager objects can wait on condition_variable cv. All objects are notified every ~100msecs
     std::condition_variable cv;
     std::mutex cv_m;
     std::atomic<int> exitThread;
     std::atomic<int> exited;
+    /**
+     *  Enable report/sysinfo notifications.
+     */
+    std::atomic<int> basicNotification_;
+    std::atomic<int> detailedNotification_;
+    std::atomic<int> detailedEngineNotification_;
+    std::atomic<int> sysinfoNotification_;
 };
 
-}
-}
+}  // namespace loc
+}  // namespace telux
 #endif

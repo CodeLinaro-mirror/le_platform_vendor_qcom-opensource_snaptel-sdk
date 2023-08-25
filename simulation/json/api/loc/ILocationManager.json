@@ -1,0 +1,64 @@
+{
+    "ILocationManager": {
+        "AlwaysSuccess": true,
+        "DefaultCallbackDelay": 300,
+        "UseDefaultCallbackDelay": false,
+
+        "SubSystemInit": true,
+        "SubSystemStatus" : "AVAILABLE",
+        "SubSystemReadinessDelay": 500,
+        "requestEnergyConsumedInfo": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+        "getYearOfHw": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+        "getCapabilities": {
+			"callbackDelay": 400,
+            "capabilities": 32
+		},
+        "stopReports": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+        "getTerrestrialPosition": {
+			"callbackDelay": 40000,
+			"status": "SUCCESS"
+		},
+        "cancelTerrestrialPositionRequest": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+        "startDetailedReports": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+        "startDetailedEngineReports": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+        "startBasicReports": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+		"registerForSystemInfoUpdates": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		},
+		"deRegisterForSystemInfoUpdates": {
+			"callbackDelay": 400,
+            "error" : "SUCCESS",
+			"status": "SUCCESS"
+		}
+    }
+}

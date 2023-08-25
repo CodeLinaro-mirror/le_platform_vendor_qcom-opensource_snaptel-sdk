@@ -207,11 +207,14 @@ bool NAOIpTrigger::validateTrigger(char *buffer, int length,
 void NAOIpTrigger::listenNewTriggerClient(int triggerSocket) {
     LOG(DEBUG, __FUNCTION__);
     char buffer[BUFFER_SIZE] = {0};
-    bool isListenerConnected = true;
     try{
         do {
             int length = read(triggerSocket, buffer, BUFFER_SIZE);
             LOG(DEBUG, __FUNCTION__, " buffer = ", buffer, "\nlength = ", length);
+            if (length <= 0) {
+                LOG(ERROR, __FUNCTION__, " trigger connection interrupted ");
+                break;
+            }
             TcuActivityState triggerState = TcuActivityState::UNKNOWN;
             std::string machineName = ALL_MACHINES;
             if (validateTrigger(buffer, length, triggerState, machineName)) {
@@ -220,11 +223,15 @@ void NAOIpTrigger::listenNewTriggerClient(int triggerSocket) {
                 LOG(ERROR, __FUNCTION__, " trigger not match ");
             }
             memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
-            if (length <= 0) {
-                LOG(ERROR, __FUNCTION__, " trigger connection interrupted ");
-                isListenerConnected = false;
-            }
-        } while (isListenerConnected);
+        } while (true);
+        if (shutdown(triggerSocket, SHUT_RDWR) == -1) {
+            std::string logTmp = "shutdown failed errno = " + string(strerror(errno));
+            LOG(ERROR, __FUNCTION__, logTmp);
+        }
+        if (close(triggerSocket) == -1) {
+            std::string logTmp = "close failed errno = " + string(strerror(errno));
+            LOG(ERROR, __FUNCTION__, logTmp);
+        }
     } catch(const std::exception& e) {
         LOG(ERROR, __FUNCTION__, "  exception ", string(e.what()));
     }
@@ -325,10 +332,7 @@ void NAOIpTrigger::cleanOldDisconnectedClientThreads() {
     LOG(DEBUG, __FUNCTION__);
     for (auto it = clientsSocketInfo_.begin(); it != clientsSocketInfo_.end(); it++) {
         if ((*it).clientDisconnected.wait_for(std::chrono::milliseconds(0)) ==
-            std::future_status::ready) {
-            if (close((*it).socketFd) == -1) {
-                LOG(ERROR, __FUNCTION__, "close failed errno = ", string(strerror(errno)));
-            }
+            std::future_status::ready && (*it).runningOnThread.joinable()) {
             (*it).runningOnThread.join();
             clientsSocketInfo_.erase(it--);
         }
@@ -373,14 +377,24 @@ void NAOIpTrigger::stopServer() {
         LOG(DEBUG, __FUNCTION__, " server closed ");
 
         for (auto it = clientsSocketInfo_.begin(); it != clientsSocketInfo_.end();) {
-            (*it).runningOnThread.join();
+            // even after socket shutdown and close if client is connected it take some time to get
+            // out of read operation
+            if ((*it).clientDisconnected.wait_for(std::chrono::milliseconds(
+                    1000)) == std::future_status::ready &&
+                (*it).runningOnThread.joinable()) {
+                (*it).runningOnThread.join();
+            } else {
+                LOG(ERROR, __FUNCTION__, " unable to join client thread ");
+            }
             clientsSocketInfo_.erase(it);
         }
         LOG(DEBUG, __FUNCTION__, " clients joined ");
-
-        server_.join();
-        LOG(DEBUG, __FUNCTION__, " server joined ");
-
+        if(server_.joinable()) {
+            server_.join();
+            LOG(DEBUG, __FUNCTION__, " server joined ");
+        } else {
+            LOG(ERROR, __FUNCTION__, " unable to join server thread ");
+        }
     } catch(const std::exception& e) {
         LOG(ERROR, __FUNCTION__, "  exception ", string(e.what()));
     }

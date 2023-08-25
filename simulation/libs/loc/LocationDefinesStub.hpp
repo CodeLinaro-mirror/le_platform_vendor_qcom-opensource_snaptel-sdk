@@ -28,38 +28,8 @@
  */
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
- *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 
@@ -68,7 +38,7 @@
 
 #include <cmath>
 #include "telux/loc/LocationDefines.hpp"
-#include "Logger/Logger.hpp"
+
 namespace telux {
 namespace loc {
 
@@ -292,6 +262,9 @@ class LocationInfoEx : public ILocationInfoEx {
     float protectionLevelAlongTrack_ = 0.0;
     float protectionLevelCrossTrack_ = 0.0;
     float protectionLevelVertical_ = 0.0;
+    LLAInfo vrpLla_;
+    std::vector<float> vrpVel_;
+    uint32_t drSolutionStatus_ = 0;
 
 public:
 /**
@@ -736,26 +709,14 @@ public:
  * Vehicle Reference Point(VRP) based latitude, longitude and altitude information.
  *
  */
-    LLAInfo getVRPBasedLLA() {
-        LLAInfo llaInfo;
-        llaInfo.latitude = NAN;
-        llaInfo.longitude = NAN;
-        llaInfo.altitude = NAN;
-        return llaInfo;
-    }
+    LLAInfo getVRPBasedLLA() override { return vrpLla_;}
 
 /**
  * VRP-based east, north and up velocity information.
  * returns - vector of directional velocities in this order {east velocity, north velocity,
  *            up velocity}
  */
-    virtual std::vector<float> getVRPBasedENUVelocity() {
-        std::vector<float> vel;
-        vel.push_back(NAN);
-        vel.push_back(NAN);
-        vel.push_back(NAN);
-        return vel;
-    }
+    virtual std::vector<float> getVRPBasedENUVelocity() override { return vrpVel_;}
 
 /**
  * Determination of altitude is assumed or calculated. ASSUMED means there may not be
@@ -780,25 +741,33 @@ public:
  * @ref ILocationInfoEx::getProtecttionLevelVertical will not be available.
  *
  */
-  virtual uint32_t getIntegrityRiskUsed() { return integrityRisk_; };
+  virtual uint32_t getIntegrityRiskUsed() { return integrityRisk_; }
 
 /**
  * Along-track protection level at specified integrity risk, in unit of meter.
  *
  */
-  virtual float getProtectionLevelAlongTrack() { return protectionLevelAlongTrack_; };
+  virtual float getProtectionLevelAlongTrack() { return protectionLevelAlongTrack_; }
 
 /**
  * Cross-track protection level at specified integrity risk, in unit of meter.
  *
  */
-  virtual float getProtectionLevelCrossTrack() { return protectionLevelCrossTrack_; };
+  virtual float getProtectionLevelCrossTrack() { return protectionLevelCrossTrack_; }
 
 /**
  * Vertical component protection level at specified integrity risk, in unit of meter.
  *
  */
-  virtual float getProtectionLevelVertical() { return protectionLevelVertical_; };
+  virtual float getProtectionLevelVertical() { return protectionLevelVertical_; }
+
+/**
+ * DR solution status.
+ *
+ * @returns mask indicating the solution status with respect to the DR position engine.
+ *
+ */
+  virtual DrSolutionStatus getSolutionStatus() { return drSolutionStatus_; }
 
     void setLocationInfoValidity(uint32_t value) {locationInfoValidity_ = value;}
     void setLocationTechnology(uint32_t value) {locationTechnology_ = value;}
@@ -817,7 +786,7 @@ public:
         elapsedRealTimeUncertainty_ = elapsedRealTimeUncertainty;
     }
 
-    void setLocationInfoExValidity(uint32_t val) { locationInfoExValidity_ = val;}
+    void setLocationInfoExValidity(uint64_t val) { locationInfoExValidity_ = val;}
     void setAltitudeMeanSeaLevel(float val) { altitudeMeanSeaLevel_ = val;}
     void setPositionDop(float val) { positionDop_ = val;}
     void setHorizontalDop(float val) { horizontalDop_ = val;}
@@ -850,21 +819,44 @@ public:
     void setGnssSystemTime(SystemTime &val){ gnssSystemTime_ = val;}
     void setTimeUncMs(float val){ timeUncMs_ = val;}
     void setLeapSeconds(uint8_t val){ leapSeconds_ = val;}
-    void setVelocityEastNorthUp(std::vector<float> &val){
-        for(float num : val) {
-            velocityEastNorthUp_.push_back(num);
-        }
+    void setVelocityEastNorthUp(std::vector<float> val){
+        velocityEastNorthUp_ = val;
     }
-    void setVelocityUncertaintyEastNorthUp(std::vector<float> &val){
-        for(float num : val) {
-            velocityUncertaintyEastNorthUp_.push_back(num);
-        }
+    void setVelocityUncertaintyEastNorthUp(std::vector<float> val){
+        velocityUncertaintyEastNorthUp_ = val;
     }
     void setCalibrationConfidencePercent(uint8_t val) { calibrationConfidencePercent_ = val;}
     void setCalibrationStatus(uint32_t val) { calibrationStatus_ = val;}
     void setLocOutputEngType(LocationAggregationType val) { locOutputEngType_ = val;}
     void setLocOutputEngMask(uint32_t val) { locOutputEngMask_ = val;}
     void setConformityIndex(float val) { conformityIndex_ = val;}
+    void setVRPBasedLLA(LLAInfo llaVRPBased) {
+        vrpLla_ = llaVRPBased;
+    }
+    void setVRPBasedENUVelocity(std::vector<float> enuVelocityVRPBased) {
+        vrpVel_ = enuVelocityVRPBased;
+    }
+    void setAltitudeType(AltitudeType type) {
+        altitudeType_ = type;
+    }
+    void setReportStatus(ReportStatus status) {
+        reportStatus_ = status;
+    }
+    void setIntegrityRiskUsed(uint32_t integrityRisk) {
+        integrityRisk_ = integrityRisk;
+    }
+    void setProtectionLevelAlongTrack(float protectionLevelAlongTrack) {
+        protectionLevelAlongTrack_ = protectionLevelAlongTrack;
+    }
+    void setProtectionLevelCrossTrack(float protectionLevelCrossTrack) {
+        protectionLevelCrossTrack_ = protectionLevelCrossTrack;
+    }
+    void setProtectionLevelVertical(float protectionLevelVertical) {
+        protectionLevelVertical_ = protectionLevelVertical;
+    }
+    void setSolutionStatus(uint32_t drSolutionStatus) {
+        drSolutionStatus_ = drSolutionStatus;
+    }
 };
 
 

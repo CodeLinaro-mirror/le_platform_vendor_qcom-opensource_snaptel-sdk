@@ -121,9 +121,11 @@ int PowerRefDaemon::startDaemon(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    std::signal(SIGHUP, signalHandler);
-    std::signal(SIGINT, signalHandler);
-    std::signal(SIGTERM, signalHandler);
+    struct sigaction sigAction;
+    sigAction.sa_handler = signalHandler;
+    sigaction(SIGHUP, &sigAction, NULL);
+    sigaction(SIGINT, &sigAction, NULL);
+    sigaction(SIGTERM, &sigAction, NULL);
 
     if (init() != telux::common::Status::SUCCESS) {
 
@@ -155,6 +157,7 @@ void PowerRefDaemon::stopDaemon() {
     naoIpTrigger_.reset();
     eventManager_.reset();
     smsTrigger_.reset();
+    fflush(stdout);
     cv_.notify_all();
 }
 

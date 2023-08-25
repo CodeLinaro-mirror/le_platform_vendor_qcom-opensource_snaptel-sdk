@@ -400,7 +400,7 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         }
     }
     wsmp_data_t* wsmpdata;
-    uint32_t psid;
+    uint32_t psid = 0;
     if (ret >= 0) {
         rxSuccess++;
         if (qMon)

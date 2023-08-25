@@ -26,19 +26,27 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #ifndef REPORTREADER_HPP
 #define REPORTREADER_HPP
 
-#include "commonDef.hpp"
 #include "LocationDefinesStub.hpp"
+#include "commonDef.hpp"
+#include "../common/SimulationConfigParser.hpp"
+#include "../common/CsvHandler.hpp"
+
+using namespace telux::common;
+
 namespace telux {
 
 namespace loc {
 
-class ReportReader{
-    // file handler
-    std::ifstream in;
+class ReportReader {
     std::shared_ptr<GnssSignalInfo> gnssSignalInfo_;
     std::shared_ptr<GnssSVInfo> gnssSVInfo_;
     std::shared_ptr<LocationInfoBase> iBase_;
@@ -46,41 +54,58 @@ class ReportReader{
     struct GnssMeasurements gnssMeasurements_;
     struct LocationSystemInfo locationSystemInfo_;
     std::vector<NMEAVals> defaultNmeaVals_;
+    csvData csvData_;
+    int simulType_;
 
-    //Initalizer
+    // Initalizer
     void reportDataInit();
     // Filling Canned data for REPORT_SIMULATION_TYPE option 0 and also default
     void reportCannedDataInit();
-    // File reading and populating objects with read data for REPORT_SIMULATION_TYPE option 1
-    void readInfoBaseExData();
+    // Populating Basic Reports from file when REPORT_SIMULATION_TYPE = 1.
+    void reportCsvIBase();
+    // Populating Detailed PVT Reports from file when REPORT_SIMULATION_TYPE = 1.
+    void reportCsvIBaseEx();
+    // Populating NMEA Reports from file when REPORT_SIMULATION_TYPE = 1. Planned for Phase 2.
+    void reportCsvNmea();
+    // Populating SV Reports from file when REPORT_SIMULATION_TYPE = 1. Planned for Phase 2.
+    void reportCsvSvInfo();
+    // Populating Signal Reports from file when REPORT_SIMULATION_TYPE = 1. Planned for Phase 2.
+    void reportCsvSignalInfo();
+    // Populating Measurement Reports from file when REPORT_SIMULATION_TYPE = 1. Planned for Phase 2
+    void reportCsvMeasurementInfo();
+    // Read Csv data
+    void readCsvData(std::string configVal, csvData &csvReportData,
+        std::shared_ptr<SimulationConfigParser> configParser);
+
+    telux::loc::LocationReliability convertLocationReliability(size_t newLocReliability);
+    telux::loc::AltitudeType convertAltitudeType(bool type);
 
     ReportReader();
     ReportReader(const ReportReader &) = delete;
     ReportReader &operator=(const ReportReader &) = delete;
     ~ReportReader();
 
-public:
-    static  ReportReader &getInstance();
+ public:
+    static ReportReader &getInstance();
 
-    // Gets GnssSignalInfo; Currently either Default or canned values available (Not from File)
+    // Gets GnssSignalInfo; Canned values or from CSV
     std::shared_ptr<GnssSignalInfo> getGnssSignalInfo();
-    // Gets GnssSVInfo; Currently either Default or canned values available (Not from File)
+    // Gets GnssSVInfo; Canned values or from CSV
     std::shared_ptr<GnssSVInfo> getGnssSVInfo();
-    // Gets GnssMeasurements; Currently either Default or canned values available (Not from File)
-    GnssMeasurements& getGnssMeasurements();
-    // Gets NMEAVals; Currently either Default or canned values available (Not from File)
-    std::vector<NMEAVals>& getNmeaVal();
-    // Gets LocationSystemInfo; Currently either Default or canned values available (Not from File)
-    struct LocationSystemInfo& getSystemInfoReport();
-    // Gets LocationInfoBase and LocationInfoEx; Currently either Default or
-    // canned values or from File
-    void getLocationInfoBase(std::shared_ptr<LocationInfoBase> & ibase,
-        std::shared_ptr<LocationInfoEx> & ibaseEx);
-
+    // Gets GnssMeasurements; Canned values or from CSV
+    GnssMeasurements &getGnssMeasurements();
+    // Gets NMEAVals; Canned values or from CSV
+    std::vector<NMEAVals> getNmeaVal();
+    // Gets LocationSystemInfo; Canned values or from CSV
+    struct LocationSystemInfo &getSystemInfoReport();
+    // Gets LocationInfoBase; Canned values or from CSV
+    void getLocationInfoBase(std::shared_ptr<LocationInfoBase> &ibase);
+    // Gets LocationInfoEx; Canned values or from CSV
+    void getLocationInfoEx(std::shared_ptr<LocationInfoEx> &ibaseEx);
 
 };
 
-}
-}
+}  // namespace loc
+}  // namespace telux
 
 #endif

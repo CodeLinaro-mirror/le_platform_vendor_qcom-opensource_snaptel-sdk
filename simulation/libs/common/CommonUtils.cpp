@@ -1,246 +1,287 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <jsoncpp/json/json.h>
 #include "CommonUtils.hpp"
 
-telux::common::Status CommonUtils::mapStatus(std::string status) {
+namespace telux {
+
+namespace common {
+Status CommonUtils::mapStatus(std::string status) {
     if (status == "SUCCESS") {
-        return telux::common::Status::SUCCESS;
+        return Status::SUCCESS;
     } else if (status == "FAILED") {
-        return telux::common::Status::FAILED;
+        return Status::FAILED;
     } else if (status == "NOCONNECTION") {
-        return telux::common::Status::NOCONNECTION;
+        return Status::NOCONNECTION;
     } else if (status == "NOSUBSCRIPTION") {
-        return telux::common::Status::NOSUBSCRIPTION;
+        return Status::NOSUBSCRIPTION;
     } else if (status == "INVALIDPARAM") {
-        return telux::common::Status::INVALIDPARAM;
+        return Status::INVALIDPARAM;
     } else if (status == "INVALIDSTATE") {
-        return telux::common::Status::INVALIDSTATE;
+        return Status::INVALIDSTATE;
     } else if (status == "NOTREADY") {
-        return telux::common::Status::NOTREADY;
+        return Status::NOTREADY;
     } else if (status == "NOTALLOWED") {
-        return telux::common::Status::NOTALLOWED;
+        return Status::NOTALLOWED;
     } else if (status == "NOTIMPLEMENTED") {
-        return telux::common::Status::NOTIMPLEMENTED;
+        return Status::NOTIMPLEMENTED;
     } else if (status == "CONNECTIONLOST") {
-        return telux::common::Status::CONNECTIONLOST;
+        return Status::CONNECTIONLOST;
     } else if (status == "EXPIRED") {
-        return telux::common::Status::EXPIRED;
+        return Status::EXPIRED;
     } else if (status == "ALREADY") {
-        return telux::common::Status::ALREADY;
+        return Status::ALREADY;
     } else if (status == "NOSUCH") {
-        return telux::common::Status::NOSUCH;
+        return Status::NOSUCH;
     } else if (status == "NOTSUPPORTED") {
-        return telux::common::Status::NOTSUPPORTED;
+        return Status::NOTSUPPORTED;
     } else if (status == "NOMEMORY") {
-        return telux::common::Status::NOMEMORY;
+        return Status::NOMEMORY;
     }
 
-    return telux::common::Status::FAILED;
+    return Status::FAILED;
 }
 
-telux::common::ErrorCode CommonUtils::mapErrorCode(std::string errorCode) {
+ErrorCode CommonUtils::mapErrorCode(std::string errorCode) {
     if (errorCode == "SUCCESS") {
-        return telux::common::ErrorCode::SUCCESS;
+        return ErrorCode::SUCCESS;
     } else if (errorCode == "RADIO_NOT_AVAILABLE") {
-        return telux::common::ErrorCode::RADIO_NOT_AVAILABLE;
+        return ErrorCode::RADIO_NOT_AVAILABLE;
     } else if (errorCode == "GENERIC_FAILURE") {
-        return telux::common::ErrorCode::GENERIC_FAILURE;
+        return ErrorCode::GENERIC_FAILURE;
     } else if (errorCode == "PASSWORD_INCORRECT") {
-        return telux::common::ErrorCode::PASSWORD_INCORRECT;
+        return ErrorCode::PASSWORD_INCORRECT;
     } else if (errorCode == "SIM_PIN2") {
-        return telux::common::ErrorCode::SIM_PIN2;
+        return ErrorCode::SIM_PIN2;
     } else if (errorCode == "SIM_PUK2") {
-        return telux::common::ErrorCode::SIM_PUK2;
+        return ErrorCode::SIM_PUK2;
     } else if (errorCode == "REQUEST_NOT_SUPPORTED") {
-        return telux::common::ErrorCode::REQUEST_NOT_SUPPORTED;
+        return ErrorCode::REQUEST_NOT_SUPPORTED;
     } else if (errorCode == "CANCELLED") {
-        return telux::common::ErrorCode::CANCELLED;
+        return ErrorCode::CANCELLED;
     } else if (errorCode == "OP_NOT_ALLOWED_DURING_VOICE_CALL") {
-        return telux::common::ErrorCode::OP_NOT_ALLOWED_DURING_VOICE_CALL;
+        return ErrorCode::OP_NOT_ALLOWED_DURING_VOICE_CALL;
     } else if (errorCode == "OP_NOT_ALLOWED_BEFORE_REG_TO_NW") {
-        return telux::common::ErrorCode::OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
+        return ErrorCode::OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
     } else if (errorCode == "SMS_SEND_FAIL_RETRY") {
-        return telux::common::ErrorCode::SMS_SEND_FAIL_RETRY;
+        return ErrorCode::SMS_SEND_FAIL_RETRY;
     } else if (errorCode == "SIM_ABSENT") {
-        return telux::common::ErrorCode::SIM_ABSENT;
+        return ErrorCode::SIM_ABSENT;
     } else if (errorCode == "SUBSCRIPTION_NOT_AVAILABLE") {
-        return telux::common::ErrorCode::SUBSCRIPTION_NOT_AVAILABLE;
+        return ErrorCode::SUBSCRIPTION_NOT_AVAILABLE;
     } else if (errorCode == "MODE_NOT_SUPPORTED") {
-        return telux::common::ErrorCode::MODE_NOT_SUPPORTED;
+        return ErrorCode::MODE_NOT_SUPPORTED;
     } else if (errorCode == "FDN_CHECK_FAILURE") {
-        return telux::common::ErrorCode::FDN_CHECK_FAILURE;
+        return ErrorCode::FDN_CHECK_FAILURE;
     } else if (errorCode == "ILLEGAL_SIM_OR_ME") {
-        return telux::common::ErrorCode::ILLEGAL_SIM_OR_ME;
+        return ErrorCode::ILLEGAL_SIM_OR_ME;
     } else if (errorCode == "MISSING_RESOURCE") {
-        return telux::common::ErrorCode::MISSING_RESOURCE;
+        return ErrorCode::MISSING_RESOURCE;
     } else if (errorCode == "NO_SUCH_ELEMENT") {
-        return telux::common::ErrorCode::NO_SUCH_ELEMENT;
+        return ErrorCode::NO_SUCH_ELEMENT;
     } else if (errorCode == "DIAL_MODIFIED_TO_USSD") {
-        return telux::common::ErrorCode::DIAL_MODIFIED_TO_USSD;
+        return ErrorCode::DIAL_MODIFIED_TO_USSD;
     } else if (errorCode == "DIAL_MODIFIED_TO_SS") {
-        return telux::common::ErrorCode::DIAL_MODIFIED_TO_SS;
+        return ErrorCode::DIAL_MODIFIED_TO_SS;
     } else if (errorCode == "DIAL_MODIFIED_TO_DIAL") {
-        return telux::common::ErrorCode::DIAL_MODIFIED_TO_DIAL;
+        return ErrorCode::DIAL_MODIFIED_TO_DIAL;
     } else if (errorCode == "USSD_MODIFIED_TO_DIAL") {
-        return telux::common::ErrorCode::USSD_MODIFIED_TO_DIAL;
+        return ErrorCode::USSD_MODIFIED_TO_DIAL;
     } else if (errorCode == "USSD_MODIFIED_TO_SS") {
-        return telux::common::ErrorCode::USSD_MODIFIED_TO_SS;
+        return ErrorCode::USSD_MODIFIED_TO_SS;
     } else if (errorCode == "USSD_MODIFIED_TO_USSD") {
-        return telux::common::ErrorCode::USSD_MODIFIED_TO_USSD;
+        return ErrorCode::USSD_MODIFIED_TO_USSD;
     } else if (errorCode == "SS_MODIFIED_TO_DIAL") {
-        return telux::common::ErrorCode::SS_MODIFIED_TO_DIAL;
+        return ErrorCode::SS_MODIFIED_TO_DIAL;
     } else if (errorCode == "SS_MODIFIED_TO_USSD") {
-        return telux::common::ErrorCode::SS_MODIFIED_TO_USSD;
+        return ErrorCode::SS_MODIFIED_TO_USSD;
     } else if (errorCode == "SUBSCRIPTION_NOT_SUPPORTED") {
-        return telux::common::ErrorCode::SUBSCRIPTION_NOT_SUPPORTED;
+        return ErrorCode::SUBSCRIPTION_NOT_SUPPORTED;
     } else if (errorCode == "SS_MODIFIED_TO_SS") {
-        return telux::common::ErrorCode::SS_MODIFIED_TO_SS;
+        return ErrorCode::SS_MODIFIED_TO_SS;
     } else if (errorCode == "LCE_NOT_SUPPORTED") {
-        return telux::common::ErrorCode::LCE_NOT_SUPPORTED;
+        return ErrorCode::LCE_NOT_SUPPORTED;
     } else if (errorCode == "NO_MEMORY") {
-        return telux::common::ErrorCode::NO_MEMORY;
+        return ErrorCode::NO_MEMORY;
     } else if (errorCode == "INTERNAL_ERR") {
-        return telux::common::ErrorCode::INTERNAL_ERR;
+        return ErrorCode::INTERNAL_ERR;
     } else if (errorCode == "SYSTEM_ERR") {
-        return telux::common::ErrorCode::SYSTEM_ERR;
+        return ErrorCode::SYSTEM_ERR;
     } else if (errorCode == "MODEM_ERR") {
-        return telux::common::ErrorCode::MODEM_ERR;
+        return ErrorCode::MODEM_ERR;
     } else if (errorCode == "INVALID_STATE") {
-        return telux::common::ErrorCode::INVALID_STATE;
+        return ErrorCode::INVALID_STATE;
     } else if (errorCode == "NO_RESOURCES") {
-        return telux::common::ErrorCode::NO_RESOURCES;
+        return ErrorCode::NO_RESOURCES;
     } else if (errorCode == "SIM_ERR") {
-        return telux::common::ErrorCode::SIM_ERR;
+        return ErrorCode::SIM_ERR;
     } else if (errorCode == "INVALID_ARGUMENTS") {
-        return telux::common::ErrorCode::INVALID_ARGUMENTS;
+        return ErrorCode::INVALID_ARGUMENTS;
     } else if (errorCode == "INVALID_SIM_STATE") {
-        return telux::common::ErrorCode::INVALID_SIM_STATE;
+        return ErrorCode::INVALID_SIM_STATE;
     } else if (errorCode == "INVALID_MODEM_STATE") {
-        return telux::common::ErrorCode::INVALID_MODEM_STATE;
+        return ErrorCode::INVALID_MODEM_STATE;
     } else if (errorCode == "INVALID_CALL_ID") {
-        return telux::common::ErrorCode::INVALID_CALL_ID;
+        return ErrorCode::INVALID_CALL_ID;
     } else if (errorCode == "NO_SMS_TO_ACK") {
-        return telux::common::ErrorCode::NO_SMS_TO_ACK;
+        return ErrorCode::NO_SMS_TO_ACK;
     } else if (errorCode == "NETWORK_ERR") {
-        return telux::common::ErrorCode::NETWORK_ERR;
+        return ErrorCode::NETWORK_ERR;
     } else if (errorCode == "REQUEST_RATE_LIMITED") {
-        return telux::common::ErrorCode::REQUEST_RATE_LIMITED;
+        return ErrorCode::REQUEST_RATE_LIMITED;
     } else if (errorCode == "SIM_BUSY") {
-        return telux::common::ErrorCode::SIM_BUSY;
+        return ErrorCode::SIM_BUSY;
     } else if (errorCode == "SIM_FULL") {
-        return telux::common::ErrorCode::SIM_FULL;
+        return ErrorCode::SIM_FULL;
     } else if (errorCode == "NETWORK_REJECT") {
-        return telux::common::ErrorCode::NETWORK_REJECT;
+        return ErrorCode::NETWORK_REJECT;
     } else if (errorCode == "OPERATION_NOT_ALLOWED") {
-        return telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
+        return ErrorCode::OPERATION_NOT_ALLOWED;
     } else if (errorCode == "EMPTY_RECORD") {
-        return telux::common::ErrorCode::EMPTY_RECORD;
+        return ErrorCode::EMPTY_RECORD;
     } else if (errorCode == "INVALID_SMS_FORMAT") {
-        return telux::common::ErrorCode::INVALID_SMS_FORMAT;
+        return ErrorCode::INVALID_SMS_FORMAT;
     } else if (errorCode == "ENCODING_ERR") {
-        return telux::common::ErrorCode::ENCODING_ERR;
+        return ErrorCode::ENCODING_ERR;
     } else if (errorCode == "INVALID_SMSC_ADDRESS") {
-        return telux::common::ErrorCode::INVALID_SMSC_ADDRESS;
+        return ErrorCode::INVALID_SMSC_ADDRESS;
     } else if (errorCode == "NO_SUCH_ENTRY") {
-        return telux::common::ErrorCode::NO_SUCH_ENTRY;
+        return ErrorCode::NO_SUCH_ENTRY;
     } else if (errorCode == "NETWORK_NOT_READY") {
-        return telux::common::ErrorCode::NETWORK_NOT_READY;
+        return ErrorCode::NETWORK_NOT_READY;
     } else if (errorCode == "NOT_PROVISIONED") {
-        return telux::common::ErrorCode::NOT_PROVISIONED;
+        return ErrorCode::NOT_PROVISIONED;
     } else if (errorCode == "NO_SUBSCRIPTION") {
-        return telux::common::ErrorCode::NO_SUBSCRIPTION;
+        return ErrorCode::NO_SUBSCRIPTION;
     } else if (errorCode == "NO_NETWORK_FOUND") {
-        return telux::common::ErrorCode::NO_NETWORK_FOUND;
+        return ErrorCode::NO_NETWORK_FOUND;
     } else if (errorCode == "DEVICE_IN_USE") {
-        return telux::common::ErrorCode::DEVICE_IN_USE;
+        return ErrorCode::DEVICE_IN_USE;
     } else if (errorCode == "ABORTED") {
-        return telux::common::ErrorCode::ABORTED;
+        return ErrorCode::ABORTED;
     } else if (errorCode == "INCOMPATIBLE_STATE") {
-        return telux::common::ErrorCode::INCOMPATIBLE_STATE;
+        return ErrorCode::INCOMPATIBLE_STATE;
     } else if (errorCode == "NO_EFFECT") {
-        return telux::common::ErrorCode::NO_EFFECT;
+        return ErrorCode::NO_EFFECT;
     } else if (errorCode == "DEVICE_NOT_READY") {
-        return telux::common::ErrorCode::DEVICE_NOT_READY;
+        return ErrorCode::DEVICE_NOT_READY;
     } else if (errorCode == "MISSING_ARGUMENTS") {
-        return telux::common::ErrorCode::MISSING_ARGUMENTS;
+        return ErrorCode::MISSING_ARGUMENTS;
     } else if (errorCode == "PIN_PERM_BLOCKED") {
-        return telux::common::ErrorCode::PIN_PERM_BLOCKED;
+        return ErrorCode::PIN_PERM_BLOCKED;
     } else if (errorCode == "PIN_BLOCKED") {
-        return telux::common::ErrorCode::PIN_BLOCKED;
+        return ErrorCode::PIN_BLOCKED;
     } else if (errorCode == "MALFORMED_MSG") {
-        return telux::common::ErrorCode::MALFORMED_MSG;
+        return ErrorCode::MALFORMED_MSG;
     } else if (errorCode == "INTERNAL") {
-        return telux::common::ErrorCode::INTERNAL;
+        return ErrorCode::INTERNAL;
     } else if (errorCode == "CLIENT_IDS_EXHAUSTED") {
-        return telux::common::ErrorCode::CLIENT_IDS_EXHAUSTED;
+        return ErrorCode::CLIENT_IDS_EXHAUSTED;
     }
 
-    return telux::common::ErrorCode::INTERNAL_ERR;
+    return ErrorCode::INTERNAL_ERR;
 }
 
-telux::common::ErrorCode CommonUtils::toErrorCode(telux::common::Status status) {
+ErrorCode CommonUtils::toErrorCode(Status status) {
 
     switch (status) {
-        case telux::common::Status::SUCCESS:
-            return telux::common::ErrorCode::SUCCESS;
-        case telux::common::Status::FAILED:
-            return telux::common::ErrorCode::GENERIC_FAILURE;
-        case telux::common::Status::NOCONNECTION:
-        case telux::common::Status::INVALIDSTATE:
-        case telux::common::Status::NOTREADY:
-        case telux::common::Status::CONNECTIONLOST:
-            return telux::common::ErrorCode::INVALID_STATE;
-        case telux::common::Status::NOSUBSCRIPTION:
-            return telux::common::ErrorCode::NO_SUBSCRIPTION;
-        case telux::common::Status::INVALIDPARAM:
-        case telux::common::Status::ALREADY:
-            return telux::common::ErrorCode::INVALID_ARGUMENTS;
-        case telux::common::Status::NOTALLOWED:
-            return telux::common::ErrorCode::OPERATION_NOT_ALLOWED;
-        case telux::common::Status::NOTIMPLEMENTED:
-        case telux::common::Status::NOTSUPPORTED:
-            return telux::common::ErrorCode::NOT_SUPPORTED;
-        case telux::common::Status::EXPIRED:
-        case telux::common::Status::NOSUCH:
-            return telux::common::ErrorCode::NO_SUCH_ENTRY;
-        case telux::common::Status::NOMEMORY:
-            return telux::common::ErrorCode::NO_MEMORY;
+        case Status::SUCCESS:
+            return ErrorCode::SUCCESS;
+        case Status::FAILED:
+            return ErrorCode::GENERIC_FAILURE;
+        case Status::NOCONNECTION:
+        case Status::INVALIDSTATE:
+        case Status::NOTREADY:
+        case Status::CONNECTIONLOST:
+            return ErrorCode::INVALID_STATE;
+        case Status::NOSUBSCRIPTION:
+            return ErrorCode::NO_SUBSCRIPTION;
+        case Status::INVALIDPARAM:
+        case Status::ALREADY:
+            return ErrorCode::INVALID_ARGUMENTS;
+        case Status::NOTALLOWED:
+            return ErrorCode::OPERATION_NOT_ALLOWED;
+        case Status::NOTIMPLEMENTED:
+        case Status::NOTSUPPORTED:
+            return ErrorCode::NOT_SUPPORTED;
+        case Status::EXPIRED:
+        case Status::NOSUCH:
+            return ErrorCode::NO_SUCH_ENTRY;
+        case Status::NOMEMORY:
+            return ErrorCode::NO_MEMORY;
         default:
-            return telux::common::ErrorCode::GENERIC_FAILURE;
+            return ErrorCode::GENERIC_FAILURE;
     }
+}
+
+std::string CommonUtils::readSystemDataValue(
+    Json::Value &jsonValue, std::string defaultValue, std::vector<std::string> &path) {
+    std::string value = defaultValue;
+    try {
+        std::string p = path.front();
+        path.erase(path.begin());
+        LOG(DEBUG, p, "---", jsonValue);
+        if (path.size() > 0 && jsonValue.isObject()) {
+            return readSystemDataValue(jsonValue[p], defaultValue, path);
+        }
+        if (path.size() == 0 && jsonValue.isObject()) {
+            value = jsonValue[p].asString();
+            if (value == "") {
+                value = defaultValue;
+            }
+        }
+    } catch (std::exception &ex) {
+        value = defaultValue;
+    }
+    LOG(DEBUG, "Returning ", value);
+    return value;
+}
+
+void CommonUtils::writeSystemDataValue(
+    Json::Value &node, std::string value, std::vector<std::string> &path) {
+    try {
+        std::string p = path.front();
+        path.erase(path.begin());
+        if (path.size() > 0) {
+            writeSystemDataValue(node[p], value, path);
+        } else {
+            node[p] = value;
+        }
+    } catch (std::exception &ex) {
+        LOG(DEBUG, ex.what());
+    }
+}
+std::string CommonUtils::readSystemDataValue(
+    std::string subsystem, std::string defaultValue, std::vector<std::string> path) {
+    Json::Value jsonValue;
+    std::string value;
+    ErrorCode err = JsonParser::readFromJsonFile(jsonValue, "system-state/" + subsystem + ".json");
+    if (err != ErrorCode::SUCCESS) {
+        LOG(ERROR, "Unable to open file for ", subsystem, ". Return default value: ", defaultValue);
+        value = defaultValue;
+    } else {
+        value = readSystemDataValue(jsonValue, defaultValue, path);
+    }
+    LOG(DEBUG, "Read ", value, " in ", __FUNCTION__);
+    return value;
+}
+
+ErrorCode CommonUtils::writeSystemDataValue(
+    std::string subsystem, std::string value, std::vector<std::string> path) {
+    Json::Value root;
+    ErrorCode err = ErrorCode::GENERIC_FAILURE;
+    JsonParser::readFromJsonFile(root, "system-state/" + subsystem + ".json");
+    if (path.size() > 0) {
+        std::string attr = path.front();
+        path.erase(path.begin());
+        writeSystemDataValue(root[attr], value, path);
+        err = JsonParser::writeToJsonFile(root, "system-state/" + subsystem + ".json");
+    }
+    return err;
 }
 
 void CommonUtils::getValues(Json::Value &values, std::string subsystem,
@@ -275,3 +316,5 @@ telux::common::ServiceStatus CommonUtils::mapServiceStatus(std::string status) {
         return telux::common::ServiceStatus::SERVICE_FAILED;
     }
 }
+}  // namespace common
+}  // namespace telux

@@ -226,12 +226,12 @@
             }
         ]
     },
-    "ChangeCardPassword" :
+    "changeCardPassword" :
     {
         "retryCountPin1" : 3,
         "retryCountPin2" : 3
     },
-    "GetApplications" :
+    "getApplications" :
     [
         {
             "appId" : "a0000000871002fffff00189000001ff",
@@ -249,51 +249,51 @@
             "appType" : 0
         }
     ],
-    "GetState" :
+    "getState" :
     {
         "cardState" : 1
     },
-    "OpenLogicalChannel" :
+    "openLogicalChannel" :
     {
         "isOpen" : false,
         "onChannelResponseChannel" : 3
     },
-    "SetCardLock" :
+    "setCardLock" :
     {
         "fdnState" : true,
         "isPin1Available" : false,
         "isPin2Available" : true
     },
-    "SetCardPower" :
+    "setCardPower" :
     {
         "cardPowerState" : true
     },
-    "TransmitApduBasicChannel" :
+    "transmitApduBasicChannel" :
     {
         "onChannelResponseData" : "255 255 45 67 55 56 89 67 90 10 ",
         "onChannelResponsePayload" : "ffff2d43373859435aa",
         "onChannelResponseSw1" : 144,
         "onChannelResponseSw2" : 0
     },
-    "TransmitApduLogicalChannel" :
+    "transmitApduLogicalChannel" :
     {
         "onChannelResponseData" : "255 255 45 67 55 56 89 67 90 10 ",
         "onChannelResponsePayload" : "ffff2d43373859435aa",
         "onChannelResponseSw1" : 144,
         "onChannelResponseSw2" : 0
     },
-    "ExchangeSimIO" :
+    "exchangeSimIO" :
     {
         "onChannelResponseData" : "255 255 45 67 55 56 89 67 90 10 ",
         "onChannelResponsePayload" : "ffff2d43373859435aa",
         "onChannelResponseSw1" : 144,
         "onChannelResponseSw2" : 0
     },
-    "RequestEid" :
+    "requestEid" :
     {
         "eid" : "711111"
     },
-    "UnlockCardByPuk" :
+    "unlockCardByPuk" :
     {
         "retryCountPin1" : 10,
         "retryCountPin2" : 10

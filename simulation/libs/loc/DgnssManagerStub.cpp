@@ -26,106 +26,148 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include "DgnssManagerStub.hpp"
-#include "Logger/Logger.hpp"
+#include "../common/Logger.hpp"
+#include "../common/JsonParser.hpp"
+#include "../common/CommonUtils.hpp"
+#include <future>
 
 namespace telux {
 
 namespace loc {
 
-DgnssManagerStub::DgnssManagerStub(telux::common::InitResponseCb callback) {
-    Debug(__FILE__,__func__);
-    static bool created = false;
-    if (created == false) {
-        created = true;
-        systemStarter_ = std::make_shared<StubSystemStarter>(SubSystemType::DGNSS_MANAGER,
-            callback);
-    }
+DgnssManagerStub::DgnssManagerStub(DgnssDataFormat dataFormat) {
+    LOG(DEBUG, __FUNCTION__);
+    dataFormat_ = dataFormat;
 }
 
 std::future<bool> DgnssManagerStub::onSubsystemReady() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->onSubSystemReady(SubSystemType::DGNSS_MANAGER));
+  LOG(DEBUG, __FUNCTION__);
+  auto f = std::async(std::launch::async, [&] {
+    return waitForInitialization();
+  });
+  return f;
+}
+
+bool DgnssManagerStub::waitForInitialization() {
+  LOG(DEBUG, __FUNCTION__);
+  std::unique_lock<std::mutex> cvLock(mutex_);
+  cv_.wait(cvLock);
+  return isSubsystemReady();
 }
 
 bool DgnssManagerStub::isSubsystemReady() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->isSubSystemReady(SubSystemType::DGNSS_MANAGER));
+    LOG(DEBUG, __FUNCTION__);
+    return getServiceStatus() == telux::common::ServiceStatus::SERVICE_AVAILABLE;
 }
 
 telux::common::ServiceStatus DgnssManagerStub::getServiceStatus() {
-    Debug(__FILE__,__func__);
-    return(systemStarter_->getServiceStatus(SubSystemType::DGNSS_MANAGER));
+    LOG(DEBUG, __FUNCTION__);
+    return telux::common::ServiceStatus::SERVICE_AVAILABLE;
+}
+
+telux::common::Status DgnssManagerStub::init(telux::common::InitResponseCb callback) {
+    LOG(DEBUG, __FUNCTION__);
+    auto f = std::async(std::launch::async,
+    [this, callback]() {
+        this->initSync(callback);
+        }).share();
+        taskQ_.add(f);
+    return telux::common::Status::SUCCESS;
+}
+
+void DgnssManagerStub::initSync(telux::common::InitResponseCb callback) {
+    int cbDelay = 100;
+    telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+    Json::Value rootNode;
+
+    {
+        ErrorCode errorCode = JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
+        if(errorCode == ErrorCode::SUCCESS) {
+            cbDelay = rootNode["IDgnssManager"]["SubSystemReadinessDelay"].asInt();
+            serviceStatus = rootNode["IDgnssManager"]["SubSystemInit"].asBool() == true ? ServiceStatus::SERVICE_AVAILABLE : ServiceStatus::SERVICE_FAILED;
+        } else {
+            LOG(ERROR, "Unable to read DgnssManager JSON");
+        }
+    }
+
+    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(serviceStatus));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    callback(serviceStatus);
+    cv_.notify_all();
 }
 
 telux::common::Status DgnssManagerStub::registerListener(
     std::weak_ptr<IDgnssStatusListener> listener) {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
     if (statusListener_.lock()) {
-        Error(__func__, "Listener Already Registered");
+        LOG(ERROR, __FUNCTION__, " Listener Already Registered");
         return telux::common::Status::INVALIDSTATE;
     }
     if (listener.lock()!=nullptr) {
-        Info(__func__, "Listener Registered");
+        LOG(INFO, __FUNCTION__, " Listener Registered");
         statusListener_ = listener;
         return telux::common::Status::SUCCESS;
     } else {
-        Error(__func__, "Listener Paramater Invalid");
+        LOG(ERROR, __FUNCTION__, " Listener Parameter Invalid");
         return telux::common::Status::INVALIDPARAM;
     }
 }
 
 telux::common::Status DgnssManagerStub::deRegisterListener(void) {
-    Debug(__FILE__,__func__);
+    LOG(DEBUG, __FUNCTION__);
     if (statusListener_.lock()) {
         statusListener_.reset();
-        Info(__func__, "Listener Deregistered");
+        LOG(INFO, __FUNCTION__, " Listener Deregistered");
         return telux::common::Status::SUCCESS;
     } else {
-        Error(__func__, "No Listener Registered");
+        LOG(ERROR, __FUNCTION__, " No Listener Registered");
         return telux::common::Status::NOSUBSCRIPTION;
     }
 }
 
 telux::common::Status DgnssManagerStub::createSource(DgnssDataFormat dataFormat) {
-    Debug(__FILE__,__func__);
-    if (dataSource_ == nullptr) {
-        dataSource_ = std::make_shared<std::string> ("Data Source");
-        dataFormat_ = dataFormat;
-        Info(__func__, "Source Created");
-        return telux::common::Status::SUCCESS;
-    } else {
-        //user must call releaseSource() before calling this function
-        Error(__func__, "INVALID STATE", "call releaseSource() before calling this function");
-        return telux::common::Status::INVALIDSTATE;
-    }
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "IDgnssManager", __FUNCTION__, status, errorCode, cbDelay);
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    return status;
 }
 
 telux::common::Status DgnssManagerStub::releaseSource(void) {
-    Debug(__FILE__,__func__);
-    if (dataSource_ != nullptr) {
-        dataFormat_ = DgnssDataFormat::DATA_FORMAT_UNKNOWN;
-        dataSource_.reset();
-        Info(__func__, "Resource Released");
-        return telux::common::Status::SUCCESS;
-    } else {
-        Error(__func__, "INVALID STATE");
-        return telux::common::Status::INVALIDSTATE;
-    }
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "IDgnssManager", __FUNCTION__, status, errorCode, cbDelay);
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    return status;
 }
 
 telux::common::Status DgnssManagerStub::injectCorrectionData(const uint8_t* buffer,
         uint32_t bufferSize) {
-    Debug(__FILE__,__func__);
-    if( dataSource_ != nullptr) {
-        //inject data
-        Info(__func__, "Injecting Data");
-        return telux::common::Status::SUCCESS;
-    } else {
-        Error(__func__, "INVALID STATE");
-        return telux::common::Status::INVALIDSTATE;
-    }
+    LOG(DEBUG, __FUNCTION__);
+    Json::Value rootNode;
+    JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
+    telux::common::Status status;
+    telux::common::ErrorCode errorCode;
+    uint32_t cbDelay;
+    CommonUtils::getValues(rootNode, "IDgnssManager", __FUNCTION__, status, errorCode, cbDelay);
+    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+    return status;
 }
 
 DgnssManagerStub::~DgnssManagerStub() {}

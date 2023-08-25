@@ -1,0 +1,155 @@
+{
+    "ILocationConfigurator": {
+        "AlwaysSuccess": true,
+        "DefaultCallbackDelay": 300,
+        "UseDefaultCallbackDelay": false,
+
+        "SubSystemInit": true,
+        "SubSystemStatus" : "AVAILABLE",
+        "SubSystemReadinessDelay": 500,
+        "configureCTunc":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configurePACE":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "deleteAllAidingData":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureRobustLocation":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "requestRobustLocation":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureMinGpsWeek":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "requestMinGpsWeek":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureMinSVElevation":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "requestMinSVElevation":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "deleteAidingData":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureDR":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureEngineState":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "provideConsentForTerrestrialPositioning":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureNmeaTypes":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureNmea":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureEngineIntegrityRisk":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureXtraParams":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "requestXtraStatus":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "injectMerkleTreeInformation":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureOsnma":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureLeverArm":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureConstellations":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "configureSecondaryBand":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        },
+        "requestSecondaryBandConfig":
+        {
+            "callbackDelay": 400,
+            "error" : "SUCCESS",
+            "status": "SUCCESS"
+        }
+    }
+}

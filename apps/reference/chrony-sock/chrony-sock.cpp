@@ -72,6 +72,9 @@ using telux::platform::ITimeListener;
 #define SOCK_MAGIC 0x534f434b
 #define RTC_TIMER_SEC (60 * 11)
 
+// default offset threshold in seconds to set inital system time
+#define INITIAL_OFFSET_TREHSHOLD (24 * 3600)
+
 void chronylog(int level, const char *fmt, ...);
 
 #define LOGI(fmt, args...) \
@@ -97,16 +100,19 @@ struct TimeSample {
 static int chronyfd;
 static bool gExit = false;
 std::atomic<bool> gCv2xUtcValid{false};
+std::atomic<bool> gFirstSample{true};
 
 bool enableDebug = false;
 bool enableSyslog = false;
 bool enableWriteRtc = false;
 bool enableSlssUtc = false;
+uint64_t gOffsetThreshold = INITIAL_OFFSET_TREHSHOLD;
 
 // Used to get the Telux async result
 std::mutex mtx;
 std::condition_variable cv;
 
+static void setInitialTime(uint64_t utc);
 static void sendUtcToChronyd(uint64_t utc);
 
 int system_call(const char *command)
@@ -142,11 +148,13 @@ void chronylog(int level, const char *fmt, ...)
 }
 
 void printUsage(char *app_name) {
-    printf("Usage: %s -d -s -r -a\n", app_name);
+    printf("Usage: %s -d -s -r -a -o\n", app_name);
     printf("\t-d: Enable debug logs\n");
     printf("\t-s: Log to syslog instead of stdout\n");
     printf("\t-r: Enable updating the rtc file\n");
     printf("\t-a: Enable listening utc from cv2x\n");
+    printf("\t-o <threshold>: Set system time to the first UTC sample");
+    printf(" if the offset exceeds the threshold (unit in seconds)\n");
 }
 
 static void writeRtcFile(int sig, siginfo_t *si, void *uc) {
@@ -206,34 +214,35 @@ public:
             return;
         }
 
-        static bool firstFix = true;
-
-        if (firstFix) {
-            LOGI("Got first GNSS report\n");
-            firstFix = false;
-        }
-
         // CV2X UTC has higher priority if it's available and user has enabled
         if (enableSlssUtc and gCv2xUtcValid) {
             LOGD("GNSS report ignored with UTC = %" PRIu64 " due to CV2X UTC is valid\n", utc);
             return;
         }
 
+        if (gFirstSample) {
+            gFirstSample = false;
+            setInitialTime(utc);
+        }
+
         if (utc % 1000 == 0) {
+           sendUtcToChronyd(utc);
            LOGD("GNSS report with UTC = %" PRIu64 "\n", utc);
         } else {
            LOGD("GNSS report ignored with UTC = %" PRIu64 "\n", utc);
-           return;
         }
-        sendUtcToChronyd(utc);
     }
 
     void onCv2xUtcTimeUpdate(const uint64_t utc) {
         bool utcValid = false;
         if (0 != utc) {
             utcValid = true;
-            LOGD("CV2X report with UTC = %" PRIu64 "\n", utc);
+            if (gFirstSample) {
+                gFirstSample = false;
+                setInitialTime(utc);
+            }
             sendUtcToChronyd(utc);
+            LOGD("CV2X report with UTC = %" PRIu64 "\n", utc);
         }
         if (gCv2xUtcValid != utcValid) {
             LOGI("CV2X UTC valid:%d\n", utcValid);
@@ -242,6 +251,21 @@ public:
     }
 };
 
+// set sys time according to the first sample if the time diff exceeds the threshold,
+// otherwise chronyd might not sync with the time due to huge diff
+static void setInitialTime(uint64_t utc) {
+    struct timeval curTime, newTime;
+    newTime.tv_sec = (time_t)(utc / 1000);
+    newTime.tv_usec = (suseconds_t)((utc % 1000) * 1000);
+    gettimeofday(&curTime, NULL);
+    if (newTime.tv_sec > curTime.tv_sec + (time_t)gOffsetThreshold) {
+        if (settimeofday(&newTime, NULL) != 0) {
+            LOGE("Failed to set sys time, errno:%d\n", errno);
+        }
+    }
+    LOGI("Got first UTC report:%ld\n", utc);
+}
+
 static void sendUtcToChronyd(uint64_t utc) {
     struct TimeSample sample = { 0 };
     struct timeval gps_time, offset_time;
@@ -249,7 +273,7 @@ static void sendUtcToChronyd(uint64_t utc) {
     sample.magic = SOCK_MAGIC;
     gettimeofday(&sample.tv, NULL);
     gps_time.tv_sec = (time_t)(utc / 1000);
-    gps_time.tv_usec = (suseconds_t)(utc % 1000);
+    gps_time.tv_usec = (suseconds_t)((utc % 1000) * 1000);
     timersub(&gps_time, &sample.tv, &offset_time);
     sample.offset = (double)offset_time.tv_sec +
                     ((double)offset_time.tv_usec / 1000000);
@@ -291,7 +315,7 @@ int setupSocket(int *fd) {
 void parseArguments(int& argc, char **argv) {
     int opt;
 
-    while ((opt = getopt(argc, argv, "adsrh")) != -1) {
+    while ((opt = getopt(argc, argv, "adsrho:")) != -1) {
         switch (opt) {
         case 'd':
             enableDebug = true;
@@ -304,6 +328,12 @@ void parseArguments(int& argc, char **argv) {
             break;
         case 'a':
             enableSlssUtc = true;
+            break;
+        case 'o':
+            if (optarg) {
+                gOffsetThreshold = (uint64_t)atoll(optarg);
+                LOGD("set offset threshold to %ld\n", gOffsetThreshold);
+            }
             break;
         case 'h':
         default:

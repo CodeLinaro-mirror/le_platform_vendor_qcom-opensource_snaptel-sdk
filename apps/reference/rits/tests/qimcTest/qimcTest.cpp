@@ -57,18 +57,26 @@ void startPeriodicReport(uint32_t interval_ms, string resPath){
         return;
     }
      FILE* reportFile;
-    // open file one time
+    // open file one time to clear it
     if (isResPath)
     {
         reportFile = std::fopen(resPath.c_str(), "w");
-        std::fclose(reportFile);
+        if(reportFile != NULL){
+            std::fclose(reportFile);
+        }
         reportFile = std::fopen(resPath.c_str(), "a");
     }
     else
     {
         reportFile = std::fopen(RES_FILE, "w");
-        std::fclose(reportFile);
+        if(reportFile != NULL){
+            std::fclose(reportFile);
+        }
         reportFile = std::fopen(RES_FILE, "a");
+    }
+    if(reportFile == NULL){
+        std::cerr << "Periodic report log file not opened successfully. Returning.\n";
+        return;
     }
 
     int timer_misses = 0;

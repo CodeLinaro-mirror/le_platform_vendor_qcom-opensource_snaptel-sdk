@@ -89,6 +89,7 @@ bool MultiSimMenu::init() {
         std::chrono::duration<double> elapsedTime = endTime - startTime;
         std::cout << "Elapsed Time for Subsystem to ready : " << elapsedTime.count() << "s\n"
                   << std::endl;
+        std::cout << "MultiSimManger subsystem is ready \n";
         multiSimListener_ = std::make_shared<MyMultiSimListener>();
         telux::common::Status status = multiSimMgr_->registerListener(multiSimListener_);
         if(status != telux::common::Status::SUCCESS) {

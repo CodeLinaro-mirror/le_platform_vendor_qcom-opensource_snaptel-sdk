@@ -63,7 +63,6 @@ protected:
    void conference(std::vector<std::string> userInput);
    bool queryMuteState(bool muteStatus);
 
-   std::shared_ptr<telux::tel::IPhoneManager> phoneManager_;
    std::shared_ptr<telux::tel::ICallListener> callListener_;
    std::shared_ptr<telux::tel::ICallManager> callManager_;
    std::shared_ptr<MyCallCommandCallback> myHoldCb_;

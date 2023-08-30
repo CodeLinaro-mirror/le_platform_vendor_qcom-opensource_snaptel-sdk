@@ -65,7 +65,7 @@
 /**
 @page sequence_diagrams Call Flow Diagrams
 
-@section app_initialization Application initialization call flow
+@section app_initialization Application Initialization
 
 TelSDK initializes various sub-systems during start-up. It marks each sub-system as ready once the initialization procedures are completed for that sub-system. The application has to wait until the corresponding sub-system is ready on which it needs to make API requests. TelSDK provides APIs to check whether sub-system is ready or not.
 
@@ -877,7 +877,7 @@ asynchronous response using CommandResponseCallback.
 7. The SubscriptionManager receives callback card info change i.e subscription info changed or removed.
 8. The SubscriptionManager updates the application once the subscription info is updated.
 
-@section location_manager_call_flow Call flow for location services
+@section location_manager_call_flow Location Services
 
 Application will get the location manager object from location factory. The caller needs to register a listener. Application would then need to start the reports using one of 2 APIs depending on if the detailed or basic reports are needed.
 When reports are no longer required, the app needs to stop the report and de-register the listener.
@@ -3632,7 +3632,7 @@ sections.
 11. Application can remove listener.
 12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
-@section remote_sim_call_flow Remote SIM call flow
+@section remote_sim_call_flow Remote SIM
 
 Application will get the remote SIM manager object from phone factory. The application must
 register a listener to receive commands/messages from the modem to send to the SIM. After sending
@@ -3672,7 +3672,7 @@ bytes), APDU messages will begin to be sent/received.
 17. Status of send connection unavailable i.e. either SUCCESS or FAILED will be returned to the application.
 18. Optionally, the response to send connection unavailable can be received by the application.
 
-@section modem_config_call_flow Modem Config Call Flow
+@section modem_config_call_flow Modem Config
 
 Modem Config manager provides APIs to request all configs from modem, load/delete modem config files
 from modem's storage, activate/deactivate a modem config file, get the active config details, set
@@ -4180,7 +4180,7 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 8. Application calls decryptData() API of ICryptoManager passing the key blob, encrypted data and input parameters.
 9. ICryptoManager returns decrypted data otherwise appropriate error code.
 
-@section crypto_accelerato_call_flow Crypto accelerator
+@section crypto_accelerato_call_flow Crypto Accelerator
 
 The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calculation based on elliptic-curve cryptography.
 
@@ -4330,7 +4330,7 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 7. ICryptoAcceleratorManager returns success if data is sent for calculation.
 8. Application receives result in method onCalculationResult() of class implementing ICryptoAcceleratorListener interface.
 
-@section cellular_connsec_listener Cellular connection security
+@section cellular_connsec_listener Cellular Connection Security
 
 The ICellularSecurityManager provides support for detecting, monitoring and generating security
 threat scan report for cellular connections.

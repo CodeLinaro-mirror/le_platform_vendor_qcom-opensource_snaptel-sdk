@@ -117,7 +117,7 @@ Status AudioSession::createStream(StreamConfig config) {
         }
     } else {
         LOG(DEBUG, "Stream already exist");
-        return Status::SUCCESS;
+        return Status::ALREADY;
     }
     return statusFromRequest;
 }

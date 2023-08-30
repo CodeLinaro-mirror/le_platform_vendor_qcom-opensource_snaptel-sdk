@@ -59,6 +59,9 @@ ServingSystemMenu::~ServingSystemMenu() {
        servingSystemMgrs_[index]->deregisterListener(servingSystemListener_);
        servingSystemMgrs_[index] = nullptr;
    }
+   if (servingSystemListener_){
+      servingSystemListener_ = nullptr;
+   }
 }
 
 bool ServingSystemMenu::init() {
@@ -81,6 +84,7 @@ bool ServingSystemMenu::init() {
    }
    phoneMgrStatus = prom.get_future().get();
    if (phoneMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "Phone Manager subsystem is ready \n";
        telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
        if (status == telux::common::Status::SUCCESS) {
           for (auto index = 1; index <= phoneIds.size(); index++) {

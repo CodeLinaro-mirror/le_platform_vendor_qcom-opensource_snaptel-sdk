@@ -61,6 +61,9 @@ NetworkMenu::~NetworkMenu() {
        networkManagers_[index]->deregisterListener(networkListener_);
        networkManagers_[index] = nullptr;
    }
+   if (networkListener_) {
+      networkListener_ = nullptr;
+   }
 }
 
 bool NetworkMenu::init() {
@@ -83,6 +86,7 @@ bool NetworkMenu::init() {
    }
    phoneMgrStatus = prom.get_future().get();
    if ( phoneMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE ) {
+      std::cout << "Phone Manager subsystem is ready \n";
       telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
       if (status == telux::common::Status::SUCCESS) {
          for (auto index = 1; index <= phoneIds.size(); index++) {

@@ -58,9 +58,26 @@ PhoneMenu::PhoneMenu(std::string appName, std::string cursor)
 }
 
 PhoneMenu::~PhoneMenu() {
-   phoneManager_->removeListener(phoneListener_);
-   subscriptionMgr_->removeListener(subscriptionListener_);
-
+   if (phoneManager_ && phoneListener_) {
+      phoneManager_->removeListener(phoneListener_);
+   }
+   if (phoneListener_) {
+      phoneListener_ = nullptr;
+   }
+   if (subscriptionMgr_ && subscriptionListener_) {
+      subscriptionMgr_->removeListener(subscriptionListener_);
+   }
+   if (subscriptionListener_) {
+      subscriptionListener_ = nullptr;
+   }
+   mySignalStrengthCb_ = nullptr;
+   myVoiceSrvStateCb_ = nullptr;
+   myCellularCapabilityCb_ = nullptr;
+   myGetOperatingModeCb_ = nullptr;
+   mySetOperatingModeCb_ = nullptr;
+   for (auto index = 0; index < phones_.size() ; index++) {
+       phones_[index] = nullptr;
+   }
    subscriptionMgr_ = nullptr;
    phoneManager_ = nullptr;
 }

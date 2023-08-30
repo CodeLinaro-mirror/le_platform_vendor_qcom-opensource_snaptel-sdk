@@ -131,12 +131,17 @@ CardFileMenu::CardFileMenu(std::string appName, std::string cursor)
 }
 
 CardFileMenu::~CardFileMenu() {
+    if (cardManager_ && cardListener_) {
+       cardManager_->removeListener(cardListener_);
+    }
+    for (auto index = 0; index < cards_.size() ; index++) {
+        cards_[index] = nullptr;
+    }
     if (cardListener_) {
-        cardManager_->removeListener(cardListener_);
-        cardListener_ = nullptr;
+       cardListener_ = nullptr;
     }
     if (cardManager_) {
-        cardManager_ = nullptr;
+       cardManager_ = nullptr;
     }
 }
 
@@ -162,7 +167,7 @@ bool CardFileMenu::init() {
     cardMgrStatus = cardMgrprom.get_future().get();
     //  If call manager subsystem is ready
     if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-        std::cout << "\nCard Manager subsystem is ready" << std::endl;
+        std::cout << "Card Manager subsystem is ready \n" << std::endl;
         std::vector<int> slotIds;
         telux::common::Status status = cardManager_->getSlotIds(slotIds);
         if (status == telux::common::Status::SUCCESS) {

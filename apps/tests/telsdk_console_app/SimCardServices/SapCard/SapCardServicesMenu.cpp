@@ -106,6 +106,7 @@ bool SapCardServicesMenu::init() {
    }
    phoneMgrStatus = prom.get_future().get();
    if (phoneMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "Phone Manager subsystem is ready \n";
       std::vector<int> phoneIds;
       telux::common::Status status = phoneManager->getPhoneIds(phoneIds);
       if (status == telux::common::Status::SUCCESS) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -56,6 +56,11 @@ using namespace telux::platform;
 
 int main(int argc, char *argv[]) {
     cout << "Running telux version app" << endl;
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc < 0) {
+       std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
     auto &platformFactory = PlatformFactory::getInstance();
 
     std::promise<ServiceStatus> p;

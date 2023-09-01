@@ -1036,12 +1036,15 @@ void LocationMenu::configureEngineState(std::vector<std::string> userInput) {
         std::cout << "Enter the state of engine : " << std::endl;
         std::cout << "Enter 1 to bring engine to suspend state" << std::endl;
         std::cout << "Enter 2 to bring engine to running state" << std::endl;
+        std::cout << "Enter 3 to bring engine to suspend_retain state" << std::endl;
         std::getline(std::cin, state, delimiter);
         int engineStateOption = std::stoi(state);
         if (engineStateOption == 1) {
             engineState = telux::loc::LocationEngineRunState::SUSPENDED;
-        } else {
+        } else if(engineStateOption == 2 ) {
             engineState = telux::loc::LocationEngineRunState::RUNNING;
+        } else{
+            engineState = telux::loc::LocationEngineRunState::SUSPEND_RETAIN;
         }
 
         myLocCmdResponseCb_ = std::make_shared<MyLocationCommandCallback>

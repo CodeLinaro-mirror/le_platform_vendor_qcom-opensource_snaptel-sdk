@@ -1046,7 +1046,12 @@ int setup(const bool tx, const bool rx,
                                                       configFile, msgType, csv);
         else
             application = make_shared<SaeApplication>(configFile, msgType, csv);
-
+        // prevent tx and rx during wsa mode
+        if(rx && wsa){
+            printf("Warning: Can only do either TX only or RX only when wsa is enabled.\n");
+            printf("Disabling enableTxAlways config item. Now in RX only mode.\n");
+            application->configuration.enableTxAlways = false;
+        } 
     } else {
 #ifdef ETSI
         msgType = MessageType::CAM;
@@ -1341,6 +1346,12 @@ int main(int argc, char** argv) {
         printf("CAM; ");
     if(denm)
         printf("DENM; ");
+    // for wsa mode, should not have tx and rx at same time
+    if(rx && tx && wsa){
+        printf("Warning: Can only do either TX only or RX only when wsa is enabled.\n");
+        printf("Setting to tx only by default\n");
+        rx = false;
+    }
     std::cout << "CONFIG_FILE: " <<  configFile << std::endl;
 
     if (setup(tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded,

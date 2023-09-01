@@ -1794,10 +1794,25 @@ enum class EngineType {
 enum class LocationEngineRunState {
     /** Unknown engine run state. */
     UNKNOWN = -1,
-    /** Request the position engine to be put into suspended state. */
+    /**
+     * Request the position engine to be put into suspended state.
+     * When put in this state the QDR engine will discard calibration data.
+     *
+    */
     SUSPENDED = 1,
     /** Request the position engine to be put into running state. */
-    RUNNING = 2
+    RUNNING = 2,
+    /**
+     * Request the position engine to be put into suspend state while
+     * retaining any calibration data.
+     * While configuring this engine state via @ref ILocationConfigurator::configureEngineState,
+     * the vehicle is expected to be stationary and should be set to RUNNING
+     * before the vehicle is expected to move(for example,on Ignition On).
+     * This state is applicable when the client expects QDR to retain necessary data for
+     * subsequent resume/reboot while being suspended.
+     *
+     */
+    SUSPEND_RETAIN = 3
 };
 
 /**

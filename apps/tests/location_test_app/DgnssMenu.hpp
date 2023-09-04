@@ -72,12 +72,17 @@ public:
 
 private:
    telux::common::Status initDgnssManager(std::shared_ptr<IDgnssManager> &dgnssManager);
+   int waitforSock(int fd);
    int processRtcmFromServer(void);
+   int processRtxFromServer(void);
+   int processRtxFromFile(void);
    int processRtcmFromFile(void);
 
    std::shared_ptr<IDgnssManager> dgnssManager_ = nullptr;
    int ntcSocketFd_ = -1;
    int dgnssSourceFd_ = -1;
+   bool stop_ = false;
+   bool reconnect_ = false;
    DgnssSourceType dgnssSourceType_;
    DgnssDataFormat dataFormat_;
 

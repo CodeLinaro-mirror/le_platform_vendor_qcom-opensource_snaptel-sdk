@@ -85,6 +85,7 @@ CaptureMenu::CaptureMenu(std::string appName, std::string cursor,
 CaptureMenu::~CaptureMenu() {
     audioClient_ = nullptr;
     captureStatus_ = false;
+    readFail_ = false;
 
     for(std::thread &th : runningThreads_) {
         if(th.joinable()){
@@ -150,6 +151,7 @@ void CaptureMenu::init() {
 void CaptureMenu::cleanup() {
     ready_ = false;
     captureStatus_ = false;
+    readFail_ = false;
     cv_.notify_all();
     for (std::thread &th : runningThreads_) {
         if (th.joinable()){
@@ -186,6 +188,7 @@ void CaptureMenu::deleteStream(std::vector<std::string> userInput) {
     telux::common::Status status = telux::common::Status::FAILED;
     if(audioCaptureStream_) {
         captureStatus_ = false;
+        readFail_ = false;
         for(std::thread &th : runningThreads_) {
             if(th.joinable()){
                 th.join();
@@ -268,6 +271,7 @@ void CaptureMenu::startCapture(std::vector<std::string> userInput) {
 
 void CaptureMenu::stopCapture(std::vector<std::string> userInput) {
     captureStatus_ = false;
+    readFail_ = false;
 }
 
 
@@ -309,15 +313,16 @@ void CaptureMenu::record() {
         std::cout << "Unable to Create File " <<std::endl;
         return;
     }
+
     captureStatus_ = true;
     std::cout << "Audio Capture Started" << std::endl;
+    auto readCb =  std::bind(&CaptureMenu::readCallback, this,
+                  std::placeholders::_1, std::placeholders::_2);
     while (captureStatus_)
     {
         if(!freeBuffers_.empty()) {
             streamBuffer = freeBuffers_.front();
             freeBuffers_.pop();
-            auto readCb =  std::bind(&CaptureMenu::readCallback, this,
-                  std::placeholders::_1, std::placeholders::_2);
             telux::common::Status status = audioCaptureStream_->read(streamBuffer,
                     bytesToRead, readCb);
             if(status != telux::common::Status::SUCCESS) {
@@ -355,6 +360,7 @@ void CaptureMenu::record() {
     fflush(file_);
     fclose(file_);
     captureStatus_ = false;
+    readFail_ = false;
 }
 
 void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buffer,

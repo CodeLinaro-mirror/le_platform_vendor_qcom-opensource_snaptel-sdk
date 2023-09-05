@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -182,6 +182,11 @@ private:
     */
     map <uint32_t, uint32_t> bsmPacketsLost;
 
+    /*
+     * shared_ptr to the radio of the SDK.
+     */
+    shared_ptr<telux::cv2x::ICv2xRadio> cv2xRadio_ = nullptr;
+
  public:
 
     /**
@@ -258,10 +263,9 @@ private:
     /**
     * Constructor.
     * size - uin32_t that represent the amount of elements reserved for the LDM.
-    * gbTime - uint16_t that gives the amount of seconds the gb collector sleeps for.
-    * timeThreshold -uint8_t that gives the amount of seconds in which a bsm is purged.
+    * radio - ICv2xRadio that point to cv2x radio instance.
     */
-    Ldm(const uint16_t size);
+    Ldm(const uint16_t size, shared_ptr<telux::cv2x::ICv2xRadio> radio = nullptr);
 
     /**
     * Get element that is free and ready to decode contents on it.

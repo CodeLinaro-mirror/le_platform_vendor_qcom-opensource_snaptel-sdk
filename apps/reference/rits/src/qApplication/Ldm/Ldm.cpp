@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -97,7 +97,7 @@ static bool stopThread = false;
      mutex ldmContentsMutex;
 */
 
-Ldm::Ldm(const uint16_t size) {
+Ldm::Ldm(const uint16_t size, shared_ptr<ICv2xRadio> radio) {
     this->bsmContents.reserve(2 * size);
     for (uint16_t i = 0; i < size; i++)
     {
@@ -105,6 +105,7 @@ Ldm::Ldm(const uint16_t size) {
         this->bsmContents.push_back(std::make_shared<msg_contents>(msg));
         this->bsmFreeSlotIndices.push_back(i);
     }
+    cv2xRadio_ = radio;
 }
 
 int Ldm::getIndex(const uint32_t id) {
@@ -253,7 +254,6 @@ void Ldm::cv2xUpdateTrustedUEListCallback(ErrorCode error) {
 
 void Ldm::trustedScan() {
     auto i = 0;
-    RadioInterface inter;
     while (true) {
         for (auto info : tunnelTimingInfoList.trustedUEs) {
             //TODO SDK needs timestamp to take away UEs that are too old.
@@ -261,8 +261,13 @@ void Ldm::trustedScan() {
         auto respCb = [&](ErrorCode error) {
                 cv2xUpdateTrustedUEListCallback(error);
         };
-        auto radio = inter.cv2xRadioManager->getCv2xRadio(TrafficCategory::SAFETY_TYPE);
-        assert(Status::SUCCESS == radio->updateTrustedUEList(tunnelTimingInfoList, respCb));
+
+        if (!cv2xRadio_ or
+            Status::SUCCESS != cv2xRadio_->updateTrustedUEList(tunnelTimingInfoList, respCb)) {
+            cerr << "update trusted UE list failed!" << endl;
+            return;
+        }
+
         sleep(5);
     }
 }

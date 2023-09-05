@@ -1606,10 +1606,6 @@ int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
 
 void ApplicationBase::setup(MessageType msgType) {
     uint8_t i = 0;
-    // setup ldm
-    if(this->configuration.ldmSize){
-        this->ldm = new Ldm(this->configuration.ldmSize);
-    }
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
 
@@ -1725,6 +1721,11 @@ void ApplicationBase::setup(MessageType msgType) {
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->eventContents.push_back(mc);
         i += 1;
+    }
+
+    // setup ldm
+    if(this->configuration.ldmSize and this->radioReceives.size() > 0){
+        this->ldm = new Ldm(this->configuration.ldmSize, this->radioReceives[0].getCv2xRadio());
     }
 }
 
@@ -1962,26 +1963,29 @@ int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen,
     return -1;
 }
 
-void ApplicationBase::closeAllRadio() {
+void ApplicationBase::clearRadioInstance() {
+    if(appVerbosity) {
+        cout << "clearRadioInstance" << endl;
+    }
+    eventTransmits.clear();
+    spsTransmits.clear();
+    radioReceives.clear();
+}
 
-    for (uint8_t i = 0; i<this->eventTransmits.size(); i++)
-    {
+void ApplicationBase::closeAllRadio() {
+    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }
-    eventTransmits.erase(eventTransmits.begin(),eventTransmits.end());
-    for (uint8_t i = 0; i < this->spsTransmits.size(); i++)
-    {
+    for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
         this->spsTransmits[i].closeFlow();
     }
-    spsTransmits.erase(spsTransmits.begin(),spsTransmits.end());
-
-    for (uint8_t i = 0; i < this->radioReceives.size(); i++)
-    {
+    for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
         this->radioReceives[i].closeFlow();
     }
-    radioReceives.erase(radioReceives.begin(),radioReceives.end());
-    if (this->kinematicsReceive != nullptr)
-    {
+
+    clearRadioInstance();
+
+    if (this->kinematicsReceive != nullptr) {
         this->kinematicsReceive->close();
     }
     std::cout << "Finished closing all flows\n";

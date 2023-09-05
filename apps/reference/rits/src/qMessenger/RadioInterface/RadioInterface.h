@@ -154,6 +154,17 @@ private:
     void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
     void commonStatusCallback(ErrorCode error);
     std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
+
+    /*
+     * shared_ptr to the singleton radio manager of the SDK.
+     */
+    static shared_ptr<ICv2xRadioManager> cv2xRadioManager_;
+
+    /*
+     * shared_ptr to the singleton radio of the SDK.
+     */
+    shared_ptr<ICv2xRadio> cv2xRadio_ = nullptr;
+
 protected:
     TrafficCategory category;
     bool enableCsvLog_ = false;
@@ -164,17 +175,6 @@ public:
     * shared_ptr to the singleton radio manager of the SDK.
     */
     promise<ErrorCode> gCallbackPromise = promise<ErrorCode>();
-
-    /*
-     * shared_ptr to the singleton radio manager of the SDK.
-     */
-    shared_ptr<ICv2xRadioManager> cv2xRadioManager = nullptr;
-
-
-    /*
-     * shared_ptr to the singleton radio of the SDK.
-     */
-    shared_ptr<ICv2xRadio> cv2xRadio = nullptr;
 
     /*
     * A Cv2xStatus that holds the radio status information.
@@ -261,6 +261,16 @@ public:
     int clearGlobalIPInfo(void);
     int setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr);
 
+    /**
+    * Method to get local stored cv2x radio manager.
+    * @return ICv2xRadioManager, nullptr indicates cv2x radio manager is not ready.
+    */
+    shared_ptr<ICv2xRadioManager> getCv2xRadioManager();
 
+    /**
+    * Method to get local stored cv2x radio.
+    * @return ICv2xRadio, nullptr indicates cv2x radio is not ready.
+    */
+    shared_ptr<ICv2xRadio> getCv2xRadio();
 };
 

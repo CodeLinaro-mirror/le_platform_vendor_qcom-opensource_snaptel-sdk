@@ -209,7 +209,7 @@ void receive(MessageType msgType, int index) {
             if (!application->configuration.enableTxAlways) {
                 application->radioReceives[index].waitForCv2xToActivate(haltRx);
                 if (application->radioReceives[index].restartFlow) {
-                    application->closeAllRadio();
+                    application->clearRadioInstance();
                     application->setup(msgType);
                 }
             }
@@ -597,8 +597,8 @@ void transmit(MessageType msgType) {
                 //Check CV2X TX Status when TX is enabled.
                 // [TODO] The multiple tx/rx threads should be synced in a proper way to avoid crash
                 application->spsTransmits[0].waitForCv2xToActivate(haltRx);
-                if (application->spsTransmits[0].restartFlow ) {
-                    application->closeAllRadio();
+                if (application->spsTransmits[0].restartFlow) {
+                    application->clearRadioInstance();
                     application->setup(msgType);
                     if(!application->configuration.enableCongCtrl){
                         close(tx_timer_fd);

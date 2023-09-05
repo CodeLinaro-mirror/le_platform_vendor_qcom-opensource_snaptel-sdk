@@ -46,7 +46,7 @@ namespace tel {
 SimProfile::SimProfile(int profileId, ProfileType profileType, const std::string& iccid,
     bool isActive, const std::string& nickName, const std::string& spn, const std::string &name,
     IconType iconType, std::vector<uint8_t> icon, ProfileClass profileClass,
-    PolicyRuleMask policyRuleMask)
+    PolicyRuleMask policyRuleMask, int slotId)
    : profileId_(profileId)
    , profileType_(profileType)
    , iccid_(iccid)
@@ -57,7 +57,12 @@ SimProfile::SimProfile(int profileId, ProfileType profileType, const std::string
    , iconType_(iconType)
    , icon_(icon)
    , profileClass_(profileClass)
-   , policyRuleMask_(policyRuleMask) {
+   , policyRuleMask_(policyRuleMask)
+   , slotId_(slotId) {
+}
+
+int SimProfile::getSlotId() {
+    return slotId_;
 }
 
 int SimProfile::getProfileId() {

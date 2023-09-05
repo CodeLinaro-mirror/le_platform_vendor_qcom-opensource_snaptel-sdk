@@ -25,6 +25,10 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -52,10 +56,11 @@ namespace tel {
  */
 class SimProfile {
  public:
+
     SimProfile(int profileId, ProfileType profileType, const std::string &iccid, bool isActive,
         const std::string &nickName, const std::string &spn, const std::string &name,
         IconType iconType, std::vector<uint8_t> icon, ProfileClass profileClass,
-        PolicyRuleMask policyRuleMask);
+        PolicyRuleMask policyRuleMask, int slotId = DEFAULT_SLOT_ID);
 
     /**
      * Get slot id associated for this profile
@@ -163,6 +168,7 @@ class SimProfile {
     std::vector<uint8_t> icon_;
     ProfileClass profileClass_;
     PolicyRuleMask policyRuleMask_;
+    int slotId_;
 };
 
 /** @} */ /* end_addtogroup telematics_rsp */

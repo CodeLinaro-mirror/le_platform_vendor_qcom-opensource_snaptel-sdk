@@ -94,6 +94,11 @@ namespace net {
 // Forward declarations
 class IVlanListener;
 
+struct VlanBindConfig {
+    int vlanId;                         /** VLAN ID to be bound to the specified backhaul     */
+    BackhaulInfo bhInfo;                /**< Configuration of Backhaul to bind VLAN to        */
+};
+
 /**
  * This function is called as a response to @ref createVlan()
  *
@@ -126,6 +131,19 @@ using QueryVlanResponseCb
  */
 using VlanMappingResponseCb = std::function<void(
     const std::list<std::pair<int, int>> &mapping, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called as a response to @ref queryVlanToBackhaulBindings()
+ *
+ * @param [in] bindings        list of Vlan binding configurations
+ *                             @ref telux::data::net::VlanBindConfig
+ * @param [in] error           Return code which indicates whether the operation
+ *                             succeeded or not @ref telux::common::ErrorCode
+ *
+ * @note    Eval: This is a new API and is being evaluated. It is subject to change.
+ */
+using VlanBindingsResponseCb = std::function<void(
+    const std::vector<VlanBindConfig> bindings, telux::common::ErrorCode error)>;
 
 /**
  *@brief       VlanManager is a primary interface for configuring VLAN (Virtual Local Area Network).
@@ -225,6 +243,89 @@ class IVlanManager {
     virtual telux::common::Status queryVlanInfo(QueryVlanResponseCb callback) = 0;
 
     /**
+     * Bind Vlan to a particular backhaul. When network interface associated with specified
+     * backhaul is brought up, VLAN traffic will be forwarded to specified backhaul via the
+     * network interface.
+     * Slot ID and profile ID are relevant only for WWAN backhaul. For all other backhauls types,
+     * values are don't care.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] vlanBindConfig       Backhaul information and vlan id to bind it to.
+     *                                  @ref telux::data::net::VlanBindConfig
+     * @param [out] callback            Callback to get the response of bindToBackhaul API
+     *
+     * @returns Immediate status of bindToBackhaul() request sent i.e. success or
+     * suitable status code.
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     *
+     */
+    virtual telux::common::Status bindToBackhaul(VlanBindConfig vlanBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Unbind VLAN from particular backhaul. This API will stop vlan traffic flow to/from specified
+     * backhaul type.
+     * Slot ID and profile ID are relevant only for WWAN backhaul. For all other backhauls types,
+     * values are don't care.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_DATA_NETWORK_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] vlanBindConfig       Backhaul information and vlan id to unbind it from.
+     *                                  @ref telux::data::net::VlanBindConfig
+     * @param [in] callback             Callback to get the response of unbindFromBackhaul API
+     *
+     * @returns Immediate status of unbindFromBackhaul() request sent i.e. success or
+     * suitable status code
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status unbindFromBackhaul(VlanBindConfig vlanBindConfig,
+        telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+     * Query VLAN to backhaul binding configurations
+     *
+     * @param [in] backhaul      Backhaul to query vlan binding for.
+     * @param [in] callback      callback to get the response of queryVlanToBackhaulBindings API
+     *
+     * @returns Immediate status of queryVlanToBackhaulBindings() request sent i.e. success or
+     * suitable status code
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::Status queryVlanToBackhaulBindings(BackhaulType backhaul,
+        VlanBindingsResponseCb callback) = 0;
+
+    /**
+     * Register VLAN Manager as a listener for Data Service health events like data service
+     * available or data service not available.
+     *
+     * @param [in] listener    pointer of IVlanListener object that processes the
+     * notification
+     *
+     * @returns Status of registerListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status registerListener(std::weak_ptr<IVlanListener> listener) = 0;
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param [in] listener    pointer of IVlanListener object that needs to be removed
+     *
+     * @returns Status of deregisterListener success or suitable status code
+     *
+     */
+    virtual telux::common::Status deregisterListener(std::weak_ptr<IVlanListener> listener) = 0;
+
+    /**
      * Bind a VLAN with a particular profile id and slot id. When a WWAN network interface is
      * brought up using IDataConnectionManager::startDataCall on that profile id and slot id,
      * that interface will be accessible from this VLAN
@@ -241,7 +342,7 @@ class IVlanManager {
      *   - Binding VLAN to any other profile id and slot id will associate it with own bridge.
      *   - Multiple VLAN binding attempt to any profile id or slot id will result in error
      *     telux::common::ErrorCode::INVALID_OPERATION
-     * This setting will be persistant across multiple boots.
+     * This setting will be persistent across multiple boots.
      *
      * @param [in] profileId    profile id for VLAN association
      * @param [in] vlanId       VLAN ID to be bound to the data call brought up on the profile id
@@ -257,7 +358,7 @@ class IVlanManager {
 
     /**
      * Unbind VLAN id from given slot id and profile id
-     * This setting will be persistant across multiple boots.
+     * This setting will be persistent across multiple boots.
      *
      * @param [in] profileId    profile id for VLAN association
      * @param [in] vlanId       VLAN ID to be unbound to the data call brought up on the profile id
@@ -284,28 +385,6 @@ class IVlanManager {
      */
     virtual telux::common::Status queryVlanMappingList(VlanMappingResponseCb callback,
         SlotId slotId = DEFAULT_SLOT_ID) = 0;
-
-    /**
-     * Register VLAN Manager as a listener for Data Service health events like data service
-     * available or data service not available.
-     *
-     * @param [in] listener    pointer of IVlanListener object that processes the
-     * notification
-     *
-     * @returns Status of registerListener success or suitable status code
-     *
-     */
-    virtual telux::common::Status registerListener(std::weak_ptr<IVlanListener> listener) = 0;
-
-    /**
-     * Removes a previously added listener.
-     *
-     * @param [in] listener    pointer of IVlanListener object that needs to be removed
-     *
-     * @returns Status of deregisterListener success or suitable status code
-     *
-     */
-    virtual telux::common::Status deregisterListener(std::weak_ptr<IVlanListener> listener) = 0;
 
     /**
      * Get the associated operation type for this instance.

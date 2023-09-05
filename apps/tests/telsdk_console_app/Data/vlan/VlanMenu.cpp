@@ -75,6 +75,7 @@ extern "C" {
 #include "../../../../common/utils/Utils.hpp"
 
 #include "VlanMenu.hpp"
+#include "../DataUtils.hpp"
 
 using namespace std;
 
@@ -107,18 +108,19 @@ bool VlanMenu::init() {
         std::shared_ptr<ConsoleAppCommand> queryVlanInfo
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "query_vlan_info", {},
                 std::bind(&VlanMenu::queryVlanInfo, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> bindWithProfile
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "bind_with_profile", {},
-                std::bind(&VlanMenu::bindWithProfile, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> unbindFromProfile
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "unbind_from_profile", {},
-                std::bind(&VlanMenu::unbindFromProfile, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> queryVlanMappingList
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "query_vlan_mapping_list",
-                {}, std::bind(&VlanMenu::queryVlanMappingList, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> bindToBackhaul
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "bind_to_backhaul", {},
+                std::bind(&VlanMenu::bindToBackhaul, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> unbindFromBackhaul
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "unbind_from_backhaul", {},
+                std::bind(&VlanMenu::unbindFromBackhaul, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> queryVlanToBackhaulBindings
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6",
+            "query_vlan_to_backhaul_bindings", {},
+            std::bind(&VlanMenu::queryVlanToBackhaulBindings, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {createVlan, removeVlan,
-            queryVlanInfo, bindWithProfile, unbindFromProfile, queryVlanMappingList};
+            queryVlanInfo, bindToBackhaul, unbindFromBackhaul, queryVlanToBackhaulBindings};
 
         addCommands(commandsList);
     }
@@ -328,17 +330,12 @@ void VlanMenu::queryVlanInfo(std::vector<std::string> inputCommand) {
     Utils::printStatus(retStat);
 }
 
-void VlanMenu::bindWithProfile(std::vector<std::string> inputCommand) {
+void VlanMenu::bindToBackhaul(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
-    std::cout << "Bind with profile\n";
-
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
+    std::cout << "Bind to backhaul\n";
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
@@ -351,41 +348,39 @@ void VlanMenu::bindWithProfile(std::vector<std::string> inputCommand) {
         return;
     }
 
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    telux::data::net::VlanBindConfig vlanBindConfig = {};
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(vlanBindConfig.bhInfo);
 
     int vlanId;
     std::cout << "Enter Vlan Id: ";
     std::cin >> vlanId;
     Utils::validateInput(vlanId);
+    vlanBindConfig.vlanId = vlanId;
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
         std::cout << "CALLBACK: "
-                  << "bindWithProfile Response"
+                  << "bindToBackhaul Response"
                   << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
                   << ". ErrorCode: " << static_cast<int>(error)
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = vlanManagerMap_[opType]->bindWithProfile(
-        profileId, vlanId, respCb, static_cast<SlotId>(slotId));
+    if(isMultiBackhauls) {
+        retStat = vlanManagerMap_[opType]->bindToBackhaul(vlanBindConfig, respCb);
+    } else {
+        retStat = vlanManagerMap_[opType]->bindWithProfile(
+            vlanBindConfig.bhInfo.profileId, vlanId, respCb, vlanBindConfig.bhInfo.slotId);
+    }
     Utils::printStatus(retStat);
 }
 
-void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
+void VlanMenu::unbindFromBackhaul(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
-    std::cout << "Unbind with profile\n";
-
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
+    std::cout << "Unbind from backhaul\n";
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
@@ -398,15 +393,14 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
         return;
     }
 
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    telux::data::net::VlanBindConfig vlanBindConfig = {};
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(vlanBindConfig.bhInfo);
 
     int vlanId;
     std::cout << "Enter Vlan Id: ";
     std::cin >> vlanId;
     Utils::validateInput(vlanId);
+    vlanBindConfig.vlanId = vlanId;
 
     auto respCb = [](telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -417,22 +411,21 @@ void VlanMenu::unbindFromProfile(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-   retStat = vlanManagerMap_[opType]->unbindFromProfile(
-       profileId, vlanId, respCb, static_cast<SlotId>(slotId));
+    if(isMultiBackhauls) {
+        retStat = vlanManagerMap_[opType]->unbindFromBackhaul(vlanBindConfig, respCb);
+    } else {
+        retStat = vlanManagerMap_[opType]->unbindFromProfile(
+            vlanBindConfig.bhInfo.profileId, vlanId, respCb, vlanBindConfig.bhInfo.slotId);
+    }
    Utils::printStatus(retStat);
 }
 
-void VlanMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
+void VlanMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
     int operationType;
     bool subSystemStatus = false;
 
-    std::cout << "Query VLAN Mapping List\n";
-
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
+    std::cout << "Query VLAN To Backhaul Bindings\n";
 
     std::cout << "Enter Operation Type (0-LOCAL, 1-REMOTE): ";
     std::cin >> operationType;
@@ -445,19 +438,55 @@ void VlanMenu::queryVlanMappingList(std::vector<std::string> inputCommand) {
         return;
     }
 
-    auto respCb = [](
-        const std::list<std::pair<int, int>> &mapping, telux::common::ErrorCode error) {
-        std::cout << std::endl << std::endl;
-        std::cout << "CALLBACK: "
-                  << "queryVlanMappingList Response"
-                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-                  << ". ErrorCode: " << static_cast<int>(error)
-                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
-        for (auto c : mapping) {
-            std::cout << "profId: " << (int)c.first << ", vlanId: " << c.second << "\n";
+    telux::data::BackhaulType backhaulType = {};
+    int backhaul;
+    int isMultiBackhauls = 1;
+    std::cout << "Multiple Backhaul Supported? (0-No, 1-Yes): ";
+    std::cin >> isMultiBackhauls;
+    Utils::validateInput(isMultiBackhauls);
+    std::cout << std::endl;
+    if(isMultiBackhauls) {
+        std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";
+        std::cin >> backhaul;
+        Utils::validateInput(backhaul, {0, 1});
+        std::cout << std::endl;
+        if(backhaul) {
+            backhaulType = telux::data::BackhaulType::WWAN;
+        } else {
+            backhaulType = telux::data::BackhaulType::WLAN;
         }
-    };
-
-    retStat = vlanManagerMap_[opType]->queryVlanMappingList(respCb, static_cast<SlotId>(slotId));
+        auto respCb = [](
+            const std::vector<telux::data::net::VlanBindConfig> bindings,
+                telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                      << "queryVlanToBackhaulBindings Response"
+                      << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                      << ". ErrorCode: " << static_cast<int>(error)
+                      << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            for (auto c : bindings) {
+                std::cout << "Backhaul: " << DataUtils::backhaulToString(c.bhInfo.backhaul);
+                if(c.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+                    std::cout << ", profile id: " << c.bhInfo.profileId;
+                }
+                std::cout << ", vlanId: " << c.vlanId << "\n";
+            }
+        };
+        retStat = vlanManagerMap_[opType]->queryVlanToBackhaulBindings(backhaulType, respCb);
+    } else {
+        auto respCb = [](
+            const std::list<std::pair<int, int>> &mapping, telux::common::ErrorCode error) {
+            std::cout << std::endl << std::endl;
+            std::cout << "CALLBACK: "
+                    << "queryVlanMappingList Response"
+                    << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                    << ". ErrorCode: " << static_cast<int>(error)
+                    << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+            for (auto c : mapping) {
+                std::cout << "profId: " << (int)c.first << ", vlanId: " << c.second << "\n";
+            }
+        };
+        retStat = vlanManagerMap_[opType]->queryVlanMappingList(respCb);
+    }
     Utils::printStatus(retStat);
 }

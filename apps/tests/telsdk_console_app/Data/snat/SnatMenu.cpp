@@ -108,9 +108,9 @@ bool SnatMenu::init() {
         std::shared_ptr<ConsoleAppCommand> removeStaticNatEntry
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "remove_static_nat", {},
                 std::bind(&SnatMenu::removeStaticNatEntry, this, std::placeholders::_1)));
-        std::shared_ptr<ConsoleAppCommand> reqStaticNatEntries
-            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_static_nat_entries",
-                {}, std::bind(&SnatMenu::requestStaticNatEntries, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> reqStaticNatEntries =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "request_static_nat_entries",
+            {}, std::bind(&SnatMenu::requestStaticNatEntries, this, std::placeholders::_1)));
 
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {addStaticNatEntry,
             removeStaticNatEntry, reqStaticNatEntries};
@@ -128,18 +128,11 @@ void SnatMenu::onInitComplete(telux::common::ServiceStatus status) {
 
 void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
+    telux::data::net::NatSetting natSetting {};
 
     std::cout << "Add Static NAT entry\n";
 
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
-
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(natSetting.bhInfo);
 
     char delimiter = '\n';
     std::string privIpAddr;
@@ -163,11 +156,11 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
     std::getline(std::cin, protoStr, delimiter);
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
-    struct NatConfig natConfig;
-    natConfig.addr = privIpAddr;
-    natConfig.port = (uint16_t)privPort;
-    natConfig.globalPort = (uint16_t)globPort;
-    natConfig.proto = (uint8_t)proto;
+
+    natSetting.config.addr = privIpAddr;
+    natSetting.config.port = (uint16_t)privPort;
+    natSetting.config.globalPort = (uint16_t)globPort;
+    natSetting.config.proto = (uint8_t)proto;
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {
@@ -179,24 +172,25 @@ void SnatMenu::addStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = snatManager_->addStaticNatEntry(profileId, natConfig, respCb, static_cast<SlotId>(slotId));
+    if(isMultiBackhauls) {
+        retStat = snatManager_->addStaticNatEntry(natSetting, respCb);
+    } else {
+        retStat = snatManager_->addStaticNatEntry(
+            natSetting.bhInfo.profileId, natSetting.config, respCb,
+            static_cast<SlotId>(natSetting.bhInfo.slotId));
+    }
     Utils::printStatus(retStat);
 }
 
 void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
-    std::cout << "Remove Static NAT entry\n";
     telux::common::Status retStat;
+    telux::data::net::NatSetting natSetting {};
 
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    std::cout << "Remove Static NAT entry\n";
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(natSetting.bhInfo);
 
     char delimiter = '\n';
+
     std::string privIpAddr;
     std::cin.get();
     std::cout << "Enter Private IP address: ";
@@ -218,11 +212,10 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
     std::getline(std::cin, protoStr, delimiter);
 
     telux::data::IpProtocol proto = DataUtils::getProtcol(protoStr);
-    struct NatConfig natConfig;
-    natConfig.addr = privIpAddr;
-    natConfig.port = (uint16_t)privPort;
-    natConfig.globalPort = (uint16_t)globPort;
-    natConfig.proto = (uint8_t)proto;
+    natSetting.config.addr = privIpAddr;
+    natSetting.config.port = (uint16_t)privPort;
+    natSetting.config.globalPort = (uint16_t)globPort;
+    natSetting.config.proto = (uint8_t)proto;
 
     // Callback
     auto respCb = [](telux::common::ErrorCode error) {
@@ -234,23 +227,21 @@ void SnatMenu::removeStaticNatEntry(std::vector<std::string> inputCommand) {
                   << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     };
 
-    retStat = snatManager_->removeStaticNatEntry(
-        profileId, natConfig, respCb, static_cast<SlotId>(slotId));
+    if(isMultiBackhauls) {
+        retStat = snatManager_->removeStaticNatEntry(natSetting, respCb);
+    } else {
+        retStat = snatManager_->removeStaticNatEntry(
+            natSetting.bhInfo.profileId, natSetting.config, respCb, natSetting.bhInfo.slotId);
+    }
     Utils::printStatus(retStat);
 }
 
 void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
     telux::common::Status retStat;
+    telux::data::BackhaulInfo bhInfo {};
 
     std::cout << "List Static NAT entries\n";
-    int slotId = DEFAULT_SLOT_ID;
-    if (telux::common::DeviceConfig::isMultiSimSupported()) {
-        slotId = Utils::getValidSlotId();
-    }
-    int profileId;
-    std::cout << "Enter Profile Id: ";
-    std::cin >> profileId;
-    Utils::validateInput(profileId);
+    bool isMultiBackhauls = DataUtils::populateBackhaulInfo(bhInfo);
 
     auto respCb = [](const std::vector<NatConfig> &snatEntries, telux::common::ErrorCode error) {
         std::cout << std::endl << std::endl;
@@ -270,6 +261,38 @@ void SnatMenu::requestStaticNatEntries(std::vector<std::string> inputCommand) {
                       << "\n==========================================\n";
         }
     };
-    retStat = snatManager_->requestStaticNatEntries(profileId, respCb, static_cast<SlotId>(slotId));
+
+    auto bhRespCb = [](const std::vector<telux::data::net::NatSetting> &natSettings,
+                       telux::common::ErrorCode error) {
+        std::cout << std::endl << std::endl;
+        std::cout << "CALLBACK: "
+                  << "requestStaticNatEntries Response"
+                  << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+                  << ". ErrorCode: " << static_cast<int>(error)
+                  << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+        if (natSettings.size() > 0) {
+            std::cout << "==========================================\n";
+        }
+        for (auto entry : natSettings) {
+            if(entry.bhInfo.backhaul == telux::data::BackhaulType::WWAN) {
+                std::cout << "Backhaul: WWAN - Profile id: " << entry.bhInfo.profileId;
+            } else {
+                std::cout << "Backhaul: WLAN";
+            }
+            std::cout << "\n"
+                      << "Private IP address: " << entry.config.addr
+                      << "\nPrivate port: " << entry.config.port
+                      << "\nGlobal port: " << entry.config.globalPort
+                      << "\nProtocol: " << DataUtils::protocolToString(entry.config.proto)
+                      << "\n==========================================\n";
+        }
+    };
+
+    if(isMultiBackhauls) {
+        retStat = snatManager_->requestStaticNatEntries(bhInfo, bhRespCb);
+    } else {
+        retStat = snatManager_->requestStaticNatEntries(bhInfo.profileId, respCb, bhInfo.slotId);
+    }
     Utils::printStatus(retStat);
 }

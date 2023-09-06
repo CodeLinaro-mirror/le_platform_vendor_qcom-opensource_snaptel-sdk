@@ -70,6 +70,26 @@ void WlanApInterfaceManagerMenu::showMenu() {
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "set_config", {}, std::bind(&WlanApInterfaceManagerMenu::setConfig, this,
             std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setSecurityConfig
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "set_security_config", {}, std::bind(&WlanApInterfaceManagerMenu::setSecurityConfig,
+            this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setSsid
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "set_ssid", {}, std::bind(&WlanApInterfaceManagerMenu::setSsid, this,
+            std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setVisibility
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "set_visibility", {}, std::bind(&WlanApInterfaceManagerMenu::setVisibility, this,
+            std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> configureElementInfo
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "configure_elementInfo", {}, std::bind(&WlanApInterfaceManagerMenu::configureElementInfo,
+            this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setPassPhrase
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
+            "set_passphrase", {}, std::bind(&WlanApInterfaceManagerMenu::setPassPhrase,
+            this, std::placeholders::_1)));
         std::shared_ptr<ConsoleAppCommand> getConfig
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(std::to_string(stepID++),
             "get_config", {},
@@ -89,7 +109,8 @@ void WlanApInterfaceManagerMenu::showMenu() {
             std::bind(&WlanApInterfaceManagerMenu::manageApService,
             this, std::placeholders::_1)));
         std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            setConfig, getConfig, getStatus, getConnectedDevices, manageApService};
+            setConfig, setSecurityConfig, setSsid, setVisibility, configureElementInfo, setPassPhrase,
+            getConfig, getStatus, getConnectedDevices, manageApService};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -99,39 +120,105 @@ void WlanApInterfaceManagerMenu::setConfig(std::vector<std::string> userInput) {
 
     std::cout << "Set AP Configuration \n";
     telux::wlan::ApConfig config;
-    int apId = 1, apInterworking = 0, apType = 0;
-
+    int apId = 1;
     std::cout << "Enter Wlan Ap Id \
             (1-PRIMARY, 2-SECONDARY, 3-TERTIARY): ";
     std::cin >> apId;
     WlanUtils::validateInput(apId, {1, 2, 3});
     std::cout << std::endl;
-    config.id = static_cast<telux::wlan::Id>(apId);
-    //Primary is defaulted to private and full access
-    telux::wlan::ApNetConfig apNetConfig = {};
+    config.id = WlanUtils::convertIntToWlanId(apId);
+    int venue = 0;
+    std::cout << "Enter Venue Type: ";
+    std::cin >> venue;
+    std::cout << std::endl;
+    config.venue.type = venue;
+    venue = 0;
+    std::cout << "Enter Venue Group: ";
+    std::cin >> venue;
+    std::cout << std::endl;
+    config.venue.group = venue;
 
+    int userResp = 0;
+    std::cout << "Ap configured for 2.4 GHz band? (0-YES, 1-NO): ";
+    std::cin >> userResp;
+    WlanUtils::validateInput(userResp, {0, 1});
+    std::cout << std::endl;
+    telux::wlan::ApNetConfig apNetConfig = {};
+    if(userResp == 0) {
+        apNetConfig.info.apRadio = telux::wlan::BandType::BAND_2GHZ;
+    } else {
+        std::cout << "Ap configured for 5 GHz band" << std::endl;
+        apNetConfig.info.apRadio = telux::wlan::BandType::BAND_5GHZ;
+    }
+    populateApConfigNet(apNetConfig);
+    config.network.push_back(apNetConfig);
+
+    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setConfig(config);
+    std::cout << "\nSetting AP Configuration Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanApInterfaceManagerMenu::populateApConfigNet(telux::wlan::ApNetConfig& netConfig) {
+    int apType {};
     std::cout << "Enter AP Type\
             (1-PRIVATE, 2-GUEST): ";
     std::cin >> apType;
     WlanUtils::validateInput(apType, {1, 2});
     std::cout << std::endl;
-    apNetConfig.info.apType = static_cast<telux::wlan::ApType>(apType);
+    netConfig.info.apType = WlanUtils::convertIntToApType(apType);
 
+    std::string ssid = "";
+    std::cout << "Enter SSID (Without Quotes): ";
+    std::cin >> ssid;
+    Utils::validateInput(ssid);
+    netConfig.ssid = ssid;
+
+    int visible {};
+    std::cout << "Make AP SSID visible (0-YES, 1-NO)?: ";
+    std::cin >> visible;
+    WlanUtils::validateInput(visible, {0, 1});
+    std::cout << std::endl;
+    netConfig.isVisible = (visible)? false:true;
+
+    populateApElementInfo(netConfig.elementInfoConfig);
+
+    int apInterworking {};
     std::cout << "Enter AP network access\
             (0-INTERNET_ACCESS, 1-FULL_ACCESS): ";
     std::cin >> apInterworking;
     WlanUtils::validateInput(apInterworking, {0, 1});
     std::cout << std::endl;
+    netConfig.interworking = WlanUtils::convertIntToInterworking(apInterworking);
 
-    apNetConfig.interworking =
-        static_cast<telux::wlan::ApInterworking>(apInterworking);
-    config.network.push_back(apNetConfig);
+    int secMode {};
+    std::cout << "Enter AP security mode (0-OPEN, 1-WEP, 2-WPA, 3-WPA2, 4-WPA3): ";
+    std::cin >> secMode;
+    WlanUtils::validateInput(secMode, {0, 1, 2, 3, 4});
+    std::cout << std::endl;
+    netConfig.apSecurity.mode = WlanUtils::convertIntToSecMode(secMode);
 
-    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setConfig(config);
-    std::cout << "\nSetting Wlan Mode Response"
-              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
-              << ". ErrorCode: " << static_cast<int>(retCode)
-              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    int secAuth {};
+    std::cout << "Enter Authentication method (0-NONE, 1-PSK, 2-EAP_SIM, 3-EAP_AKA, 4-EAP_LEAP,";
+    std::cout << " 5-EAP_TLS, 6-EAP_TTLS, 7-EAP_PEAP, 8-EAP_FAST, 9-EAP_PSK, 10-SAE): ";
+    std::cin >> secAuth;
+    WlanUtils::validateInput(secAuth, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    std::cout << std::endl;
+    netConfig.apSecurity.auth = WlanUtils::convertIntToSecAuth(secAuth);
+
+    int secEncrypt {};
+    std::cout << "Enter AP security encryption (0-RC4, 1-TKIP, 2-AES, 3-GCMP): ";
+    std::cin >> secEncrypt;
+    WlanUtils::validateInput(secEncrypt, {0, 1, 2, 3});
+    std::cout << std::endl;
+    netConfig.apSecurity.encrypt = WlanUtils::convertIntToSecEncrypt(secEncrypt);
+
+    std::string passPhrase = "";
+    std::cout << "Enter AP passphrase (Without Quotes): ";
+    std::cin >> passPhrase;
+    Utils::validateInput(passPhrase);
+    netConfig.passPhrase = passPhrase;
 }
 
 void WlanApInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
@@ -146,12 +233,27 @@ void WlanApInterfaceManagerMenu::getConfig(std::vector<std::string> userInput) {
         for (auto &cfg : config) {
             std::cout << "------------------------------------------" << std::endl;
             std::cout << "AP Id: " << WlanUtils::getWlanId(cfg.id) << std::endl;
+            std::cout << "AP Venue Type : " << cfg.venue.type << std::endl;
+            std::cout << "AP Venue Group: " << cfg.venue.group << std::endl;
             for (auto &netCfg : cfg.network) {
                 std::cout << "AP Type: "
                     << WlanUtils::getWlanApType(netCfg.info.apType) << std::endl;
-                std::cout << "AP Access: "
-                    << ((netCfg.interworking == telux::wlan::ApInterworking::FULL_ACCESS)?
-                        "FULL ACCESS":"INTERNET ACCESS") << std::endl;
+                std::cout << "AP Radio: "
+                    << WlanUtils::apRadioTypeToString(netCfg.info.apRadio) << std::endl;
+                std::cout << "AP SSID: " << netCfg.ssid << std::endl;
+                std::cout << "AP is Visible: "
+                    << ((netCfg.isVisible)? "Yes":"No") << std::endl;
+                WlanUtils::printApElementInfo(netCfg.elementInfoConfig);
+                std::cout << "AP Interworking: "
+                    <<  WlanUtils::apAccessToString(netCfg.interworking) << std::endl;
+                std::cout << "AP Security: " << std::endl;
+                std::cout << "    Mode: "
+                    << WlanUtils::apSecurityModeToString(netCfg.apSecurity.mode) << std::endl;
+                std::cout << "    Authorization: "
+                    << WlanUtils::apSecurityAuthToString(netCfg.apSecurity.auth) << std::endl;
+                std::cout << "    Encryption: "
+                    << WlanUtils::apSecurityEncryptToString(netCfg.apSecurity.encrypt) << std::endl;
+                std::cout << "AP Passphrase: " << netCfg.passPhrase << std::endl;
             }
         }
     }
@@ -251,3 +353,250 @@ void WlanApInterfaceManagerMenu::onApDeviceStatusChanged(
         }
     }
 }
+
+void WlanApInterfaceManagerMenu::onApConfigChanged(telux::wlan::Id apId) {
+    PRINT_NOTIFICATION << " ** Wlan onApConfigChanged **\n";
+    std::cout << "Configuration has changed for AP: " << static_cast<int>(apId) << std::endl;
+}
+
+void WlanApInterfaceManagerMenu::setSecurityConfig(std::vector<std::string> userInput) {
+    std::cout << "Set AP Security Configuration" << std::endl;
+    int id = 0;
+    std::cout << "Enter Wlan AP Id (1-PRIMARY, 2-SECONDARY, 3-TERTIARY): ";
+    std::cin >> id;
+    std::cout << std::endl;
+    WlanUtils::validateInput(id, {1, 2, 3});
+
+    telux::wlan::ApSecurity security = {};
+    int input = 0;
+    std::cout << "Enter Security Mode (0-OPEN, 1-WEP, 2-WPA, 3-WPA2, 4-WPA3): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    WlanUtils::validateInput(input, {0, 1, 2, 3, 4});
+    security.mode = static_cast<telux::wlan::SecMode>(input);
+    std::cout << "Enter Authentication method (0-NONE, 1-PSK, 2-EAP_SIM, 3-EAP_AKA, 4-EAP_LEAP,";
+    std::cout << " 5-EAP_TLS, 6-EAP_TTLS, 7-EAP_PEAP, 8-EAP_FAST, 9-EAP_PSK, 10-SAE): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    WlanUtils::validateInput(input, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+    security.auth = static_cast<telux::wlan::SecAuth>(input);
+    std::cout << "Enter Encryption Method (0-RC4, 1-TKIP, 2-AES, 3-GCMP): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    WlanUtils::validateInput(input, {0, 1, 2, 3});
+    security.encrypt = static_cast<telux::wlan::SecEncrypt>(input);
+
+    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setSecurityConfig(
+        static_cast<telux::wlan::Id>(id), security);
+
+    std::cout << "\nSet AP Security Config Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanApInterfaceManagerMenu::setSsid(std::vector<std::string> userInput) {
+    std::cout << "Set AP SSID" << std::endl;
+    int id = 0;
+    std::cout << "Enter Wlan AP Id (1-PRIMARY, 2-SECONDARY, 3-TERTIARY): ";
+    std::cin >> id;
+    std::cout << std::endl;
+    WlanUtils::validateInput(id, {1, 2, 3});
+    std::string input{};
+    std::cout << "Enter SSID (Without Quotes): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    Utils::validateInput(input);
+
+    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setSsid(
+        static_cast<telux::wlan::Id>(id), input);
+
+    std::cout << "\nSet AP SSID Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanApInterfaceManagerMenu::setVisibility(std::vector<std::string> userInput) {
+    std::cout << "Set AP Visibility" << std::endl;
+    int id = 0;
+    std::cout << "Enter Wlan AP Id (1-PRIMARY, 2-SECONDARY, 3-TERTIARY): ";
+    std::cin >> id;
+    std::cout << std::endl;
+    WlanUtils::validateInput(id, {1, 2, 3});
+    int input{};
+    std::cout << "Enter AP SSID Visibility (0-INVISIBLE, 1-VISIBLE): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    WlanUtils::validateInput(input, {0, 1});
+
+    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setVisibility(
+        static_cast<telux::wlan::Id>(id), static_cast<bool>(input));
+
+    std::cout << "\nSet AP SSID Visibility Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanApInterfaceManagerMenu::configureElementInfo(std::vector<std::string> userInput) {
+    std::cout << "Enable AP Element Info" << std::endl;
+    int id = 0;
+    std::cout << "Enter Wlan AP Id (1-PRIMARY, 2-SECONDARY, 3-TERTIARY): ";
+    std::cin >> id;
+    std::cout << std::endl;
+    WlanUtils::validateInput(id, {1, 2, 3});
+    telux::wlan::ApElementInfoConfig ElemInfoConfig {};
+    populateApElementInfo(ElemInfoConfig);
+
+    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setElementInfoConfig(
+        static_cast<telux::wlan::Id>(id), ElemInfoConfig);
+
+    std::cout << "\nEnable AP Element Info Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanApInterfaceManagerMenu::setPassPhrase(std::vector<std::string> userInput) {
+    std::cout << "Set AP SSID Passphrase" << std::endl;
+    int id = 0;
+    std::cout << "Enter Wlan AP Id (1-PRIMARY, 2-SECONDARY, 3-TERTIARY): ";
+    std::cin >> id;
+    std::cout << std::endl;
+    WlanUtils::validateInput(id, {1, 2, 3});
+    std::string input{};
+    std::cout << "Enter SSID Passphrase (Without Quotes): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    Utils::validateInput(input);
+
+    telux::common::ErrorCode retCode = wlanApInterfaceManager_->setPassPhrase(
+        static_cast<telux::wlan::Id>(id), input);
+
+    std::cout << "\nSet AP SSID Passphrase Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanApInterfaceManagerMenu::populateApElementInfo(
+    telux::wlan::ApElementInfoConfig& ElementInfoConfig) {
+
+    int input = 0;
+    std::cout << "Enable AP Element Info (0-DISABLE, 1-ENABLE): ";
+    std::cin >> input;
+    std::cout << std::endl;
+    WlanUtils::validateInput(input, {0, 1});
+    ElementInfoConfig.isEnabled = false;
+    if(input) {
+        ElementInfoConfig.isEnabled = true;
+        input = 0;
+        std::cout << "Is Interworking Enabled (0-NO, 1-YES): ";
+        std::cin >> input;
+        std::cout << std::endl;
+        WlanUtils::validateInput(input, {0, 1});
+        ElementInfoConfig.isInterworkingEnabled = false;
+        if(input) {
+            ElementInfoConfig.isInterworkingEnabled = true;
+        }
+
+        input = 0;
+        std::cout << "Enter Network Access Type (0-PRIVATE, 1-PRIVATE_WITH_GUEST, ";
+        std::cout << "2-CHARGEABLE_PUBLIC, 3-FREE_PUBLIC, 4-PERSONAL_DEVICE, ";
+        std::cout << "5-EMERGENCY_SERVICES_ONLY, 6-TEST_OR_EXPERIMENTAL, 7-WILDCARD): ";
+        std::cin >> input;
+        std::cout << std::endl;
+        WlanUtils::validateInput(input, {0, 1, 2, 3, 4, 5, 6, 7});
+        ElementInfoConfig.netAccessType = static_cast<telux::wlan::NetAccessType>(input);
+
+        input = 0;
+        std::cout << "Does network provide connectivity to internet (0-UNSPECIFIED, 1-YES): ";
+        std::cin >> input;
+        std::cout << std::endl;
+        WlanUtils::validateInput(input, {0, 1});
+        ElementInfoConfig.internet = false;
+        if(input) {
+            ElementInfoConfig.internet = true;
+        }
+
+        input = 0;
+        std::cout << "Is additional step required for access (0-NO, 1-YES): ";
+        std::cin >> input;
+        std::cout << std::endl;
+        WlanUtils::validateInput(input, {0, 1});
+        ElementInfoConfig.asra = false;
+        if(input) {
+            ElementInfoConfig.asra = true;
+        }
+
+        input = 0;
+        std::cout << "Is emergency services reachable (0-NO, 1-YES): ";
+        std::cin >> input;
+        std::cout << std::endl;
+        WlanUtils::validateInput(input, {0, 1});
+        ElementInfoConfig.esr = false;
+        if(input) {
+            ElementInfoConfig.esr = true;
+        }
+
+        input = 0;
+        std::cout << "Is unauthenticated emergency service accessible (0-NO, 1-YES): ";
+        std::cin >> input;
+        std::cout << std::endl;
+        WlanUtils::validateInput(input, {0, 1});
+        ElementInfoConfig.uesa = false;
+        if(input) {
+            ElementInfoConfig.uesa = true;
+        }
+
+        int userPrompt = 0;
+        std::cout << "Do you want to enter venue info (0-NO, 1-YES)?: ";
+        std::cin >> userPrompt;
+        std::cout << std::endl;
+        WlanUtils::validateInput(userPrompt, {0, 1});
+
+        if(userPrompt) {
+            input = 0;
+            std::cout << "Enter venue group as defined in IEEE Std 802.11u-2011, 7.3.1.34: ";
+            std::cin >> input;
+            std::cout << std::endl;
+            WlanUtils::validateInput(input, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
+            ElementInfoConfig.venueGroup = input;
+
+            input = 0;
+            std::cout << "Enter venue type as defined in IEEE Std 802.11u-2011, 7.3.1.34: ";
+            std::cin >> input;
+            std::cout << std::endl;
+            ElementInfoConfig.venueType = input;
+        }
+
+        userPrompt = 0;
+        std::cout << "Do you want to enter Homogeneous ESS identifier (0-NO, 1-YES)?: ";
+        std::cin >> userPrompt;
+        std::cout << std::endl;
+        WlanUtils::validateInput(userPrompt, {0, 1});
+        std::string inStr = "";
+        if(userPrompt) {
+            std::cout << "Enter input Homogeneous ESS identifier (without quotes): ";
+            std::cin >> inStr;
+            std::cout << std::endl;
+            ElementInfoConfig.hessid = inStr;
+        }
+
+        inStr = "";
+        std::cout << "Enter additional vendor elements for Beacon and Probe response ";
+        std::cout << "frames (without quotes): ";
+        std::cin >> inStr;
+        std::cout << std::endl;
+        ElementInfoConfig.vendorElements = inStr;
+
+        inStr = "";
+        std::cout << "Enter additional vendor elements for (Re)Association Response frames ";
+        std::cout << "(without quotes): ";
+        std::cin >> inStr;
+        std::cout << std::endl;
+        ElementInfoConfig.assocRespElements = inStr;
+    }
+}
+

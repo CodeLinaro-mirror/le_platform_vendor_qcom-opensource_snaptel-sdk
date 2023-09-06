@@ -103,6 +103,7 @@ enum class StaInterfaceStatus {
  * AP Info - captures ap type (private/guest)
  */
 struct ApInfo {
+	BandType        apRadio;            /**< Radio type (2.4/5.0 GHz) */
     ApType          apType;             /**< Ap type (private/guest) */
 };
 
@@ -111,6 +112,7 @@ struct ApInfo {
  */
 struct ApNetInfo {
     ApInfo          info;               /**< Ap information (AP type)              */
+    std::string     ssid;               /**< SSID associated with this network     */
 };
 
 /**

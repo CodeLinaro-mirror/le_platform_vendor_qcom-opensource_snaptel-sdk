@@ -70,6 +70,7 @@
 #ifndef AUDIOFACTORY_HPP
 #define AUDIOFACTORY_HPP
 
+#include <telux/audio/AudioPlayer.hpp>
 #include <telux/audio/AudioManager.hpp>
 
 namespace telux {
@@ -98,6 +99,19 @@ class AudioFactory {
     */
    virtual std::shared_ptr<IAudioManager> getAudioManager(
         telux::common::InitResponseCb callback = nullptr) = 0;
+
+   /**
+    * Gets the IAudioPlayer instance.
+    *
+    * @param [out] audioPlayer, IAudioPlayer instance
+    *
+    * @returns @ref telux::common::ErrorCode::SUCCESS, if the IAudioPlayer instance
+    *          is created successfully, telux::common::ErrorCode::OPERATION_TIMEOUT
+    *          if the audio service does not become available for functional operation,
+    *          an appropriate error code in all other cases.
+    */
+   virtual telux::common::ErrorCode getAudioPlayer(
+        std::shared_ptr<IAudioPlayer>& audioPlayer) = 0;
 
 #ifndef TELUX_DOXY_SKIP
 protected:

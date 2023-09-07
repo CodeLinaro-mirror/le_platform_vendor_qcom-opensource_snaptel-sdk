@@ -184,22 +184,25 @@ Private eCall:
 
 @html_image{tps_ecall_over_ims_call_flow.png,ECall call flow,80,80,TPS eCall over IMS call flow}
 
-1. The application gets the CallManager object using PhoneFactory.
-2. The application receives the CallManager object in order to make eCall.
-3. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
-4. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
-5. The application dials a TPS emergency call over IMS(i.e normal VOLTE call) by using makeECall API, optionally specifying header and callback to get asynchronous response.
-6. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
-7. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
-8. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API.
-9. CallManager sends MSD update request recieved from network to the application by using OnMsdUpdateRequest API.
-10. The application sends the MSD data to network using updateECallMsd API, optionally specifying callback to get asynchronous response.
-11. The application receives the status like SUCCESS, FAILED etc based on the execution of updateECallMsd API.
-12. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API for MSD sent at step 10.
-13. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
-14. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
-15. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
-16. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
+1. Application requests an instance of Call Manager object using PhoneFactory, providing the initialization callback.
+2. Application receives a Call Manager instance.
+3. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+4. The application registers a listener with CallManager to listen to the call info change notifications like DIALING, ALERTING, ACTIVE etc.
+5. The application receives the status like SUCCESS, FAILED etc  based on registration of listener from CallManager.
+6. The application dials a TPS emergency call over IMS(i.e normal VOLTE call) by using makeECall API, optionally specifying header and callback to get asynchronous response.
+7. The application receives the status like SUCCESS, FAILED etc based on the execution of makeECall API.
+8. Optionally, the application gets asynchronous response for makeECall using makeCallResponseCallback.
+9. Application receives the listener notifications on call status change like DIALING/ALERTING/ACTIVE when other party accepts the call.
+10. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API.
+11. CallManager sends MSD update request recieved from network to the application by using OnMsdUpdateRequest API.
+12. The application sends the MSD data to network using updateECallMsd API, optionally specifying callback to get asynchronous response.
+13. The application receives the status like SUCCESS, FAILED etc based on the execution of updateECallMsd API.
+14. CallManager sends eCall MSD transmission status to the application by using onECallMsdTransmissionStatus API for MSD sent at step 10.
+15. The application sends hangup command to hangup the call, optionally gets asynchronous response using callback.
+16. The application receives the status like SUCCESS, FAILED etc based on the execution of hangup API.
+17. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
+18. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
+
 @subsection signal_strength Signal strength call flow
 
 @anchor fig_signal_strength

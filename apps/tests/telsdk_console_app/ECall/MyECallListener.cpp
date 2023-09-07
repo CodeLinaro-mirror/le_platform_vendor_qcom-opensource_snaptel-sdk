@@ -317,9 +317,17 @@ std::string MyECallListener::getCurrentTime() {
 
 int MyECallListener::getCallsOnSlot(SlotId slotId) {
     int numCalls = 0;
+    std::promise<ServiceStatus> callMgrprom;
     auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
-    auto callManager = phoneFactory.getCallManager();
-    if (callManager) {
+    auto callManager = phoneFactory.getCallManager([&](ServiceStatus status) {
+       callMgrprom.set_value(status);
+    });
+    if (!callManager) {
+       std::cout << "ERROR - Failed to get CallManager instance \n";
+       return false;
+    }
+    ServiceStatus callMgrsubSystemStatus = callMgrprom.get_future().get();
+    if (callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
         std::vector<std::shared_ptr<telux::tel::ICall>> inProgressCalls
           = callManager->getInProgressCalls();
         for(auto callIterator = std::begin(inProgressCalls);
@@ -329,7 +337,8 @@ int MyECallListener::getCallsOnSlot(SlotId slotId) {
             }
         }
     } else {
-        std::cout << "ERROR - CallManager is NULL, failed to get in progress calls on slot Id: "
+        std::cout << "ERROR - CallManager subsysem is not ready"
+                  << ", failed to get in progress calls on slot Id: "
                   << static_cast<int>(slotId) << std::endl;
     }
     return numCalls;

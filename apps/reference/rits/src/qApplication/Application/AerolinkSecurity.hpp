@@ -148,11 +148,11 @@ class AerolinkSecurity : public SecurityService {
         int asyncVerify(
             Kinematics hvKine, Kinematics rvKine,
             MisbehaviorStats* misbehaviorStat, void* asyncCbData ,ValidateCallback callBackFunction) override;
-        static int setSecCurrLocation(Kinematics* hvKine) ;
+        static int setSecCurrLocation(Kinematics* hvKine);
+        static int setLeapSeconds(uint32_t leapSeconds);
         int idChange() override;
         int lockIdChange() override;
         int unlockIdChange() override;
-
         ~AerolinkSecurity() {
             deinit();
         }

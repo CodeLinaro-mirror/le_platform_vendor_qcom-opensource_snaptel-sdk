@@ -101,7 +101,7 @@ double ApplicationBase::overrideHead;
 double ApplicationBase::overrideElev;
 double ApplicationBase::overrideSpeed;
 shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
-
+bool ApplicationBase::securityInitialized;
 std::string getCurrentTimestamp()
 {
     using std::chrono::system_clock;
@@ -128,8 +128,15 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
         kine.longitude = locationInfo->getLongitude() * 10000000;
         kine.elevation = locationInfo->getAltitude() * 10;
         kine.speed = locationInfo->getSpeed() * 50;
-        // need to check that aerolink has been init?
-        int result = AerolinkSecurity::setSecCurrLocation(&kine);
+        // make sure that aerolink knows most recent ego position and leap seconds
+        if(ApplicationBase::securityInitialized){
+            int result = AerolinkSecurity::setSecCurrLocation(&kine);
+            telux::common::Status status = 
+                locationInfo->getLeapSeconds(kine.leapSeconds);
+            if(status != Status::SUCCESS && kine.leapSeconds != 0){
+                result = AerolinkSecurity::setLeapSeconds(kine.leapSeconds);
+            }
+        }
     }
     #endif
     if(ApplicationBase::congCtrlEnabled){
@@ -408,14 +415,24 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
         return;
     }
 
-
     if(configuration.enableL2Filtering) {
         cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
     }
 
-    uint8_t keyGenMethod = NO_KEY_GEN;
+    // set up kinematics listener
+    if(configuration.enableLocationFixes){
+        std::cout << "Enabling location fixes\n";
+        appLocListener_ = make_shared<LocListener>();
+        appLocListener_->setLocCbFn(&locCbFn);
+        locListeners.push_back(appLocListener_);
+        kinematicsReceive = std::make_shared<KinematicsReceive>
+                (locListeners, this->configuration.locationInterval);
+    }
+
     // setup radio flows
     this->setup(msgType);
+
+    uint8_t keyGenMethod = NO_KEY_GEN;
     if(!this->isTx)
         keyGenMethod = ASYMMETRIC_KEY_GEN;
 
@@ -444,6 +461,23 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
                       configuration.securityContextName,
                       configuration.securityCountryCode));
           }
+          ApplicationBase::securityInitialized = true;
+          // set the leap seconds
+          int ret = -1;
+          if (kinematicsReceive && appLocListener_) {
+            auto locationInfo = appLocListener_->getLocation();
+            if (locationInfo) {
+                uint8_t leapSeconds = 0;
+                telux::common::Status stat = locationInfo->getLeapSeconds(leapSeconds);
+                std::cout << "Leap seconds from location Info is: " << leapSeconds << "\n";
+                if(stat == Status::FAILED || leapSeconds == 0){
+                    leapSeconds = configuration.leapSeconds;
+                }
+                ret = AerolinkSecurity::setLeapSeconds(leapSeconds);
+            }
+          }else{
+            ret = AerolinkSecurity::setLeapSeconds(configuration.leapSeconds);
+          }
         }catch(const std::runtime_error& error){
             fprintf(stderr, "Aerolink init failed: Please check config params \n");
             fprintf(stderr, "Attempting to close all radio flows\n");
@@ -458,15 +492,6 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
     #endif
     }
 
-    // set up kinematics listener
-    if(configuration.enableLocationFixes){
-        std::cout << "Enabling location fixes\n";
-        appLocListener_ = make_shared<LocListener>();
-        appLocListener_->setLocCbFn(&locCbFn);
-        locListeners.push_back(appLocListener_);
-        kinematicsReceive = std::make_shared<KinematicsReceive>
-                (locListeners, this->configuration.locationInterval);
-    }
 
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
@@ -1120,6 +1145,10 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             this->configuration.enableLocationFixes = true;
         else
             this->configuration.enableLocationFixes = false;
+    }
+
+    if (configs.end() != configs.find("leapSeconds")) {
+        this->configuration.leapSeconds = (uint8_t)stoi(configs["leapSeconds"], nullptr, 10);
     }
 
     if (configs.end() != configs.find("WraServiceID")) {

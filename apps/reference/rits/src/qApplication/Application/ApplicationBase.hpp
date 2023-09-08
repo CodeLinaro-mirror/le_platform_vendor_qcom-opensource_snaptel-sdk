@@ -210,6 +210,7 @@ struct Config{
     uint32_t distance3D = 0;
     bool qMonEnabled = false;
     uint32_t packetError = 0;
+    uint8_t leapSeconds = 18;
     /** Simulation config */
     bool enableUdp = false;
     string ipv4_src;
@@ -270,7 +271,7 @@ struct Config{
     string wsaInfoFile;
     uint32_t wsaInterval = 1000; // WSA Tx interval, 1s by default
     /** Pseudonym/ID Change */
-    string lcmName = "";
+    string lcmName;
     unsigned int idChangeInterval = 0;
     /** Misbehavior Stats Parameters */
     bool enableMbd = false;
@@ -664,6 +665,8 @@ public:
     static double overrideElev;
     static double overrideSpeed;
     static void setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn);
+    static bool securityInitialized;
+
 protected:
     static shared_ptr<ILocationInfoEx> hvLocationInfo;
     bool isTx = false;

@@ -112,6 +112,7 @@ struct Kinematics
     int16_t latitudeAcceleration;
     int32_t yawAcceleration;
     uint16_t brakes;
+    uint8_t leapSeconds;
 };
 
 /**

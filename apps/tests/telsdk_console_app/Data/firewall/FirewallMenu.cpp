@@ -259,12 +259,15 @@ void FirewallMenu::setFirewall(std::vector<std::string> inputCommand) {
     } else {
         firewallConfig.enable = false;
     }
-    int allowPacketsFlag;
-    std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
-    std::cin >> allowPacketsFlag;
-    Utils::validateInput(allowPacketsFlag,  {0, 1});
-    if (allowPacketsFlag) {
-        firewallConfig.allowPackets = true;
+
+    if (firewallConfig.enable) {
+        int allowPacketsFlag;
+        std::cout << "Enter Packets Allowed (1 - Accept, 0 - Drop): ";
+        std::cin >> allowPacketsFlag;
+        Utils::validateInput(allowPacketsFlag,  {0, 1});
+        if (allowPacketsFlag) {
+            firewallConfig.allowPackets = true;
+        }
     } else {
         firewallConfig.allowPackets = false;
     }

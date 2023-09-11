@@ -114,6 +114,8 @@
 #define DEFAULT_BSM_PSID    32
 #define MAX_PADDING_LEN     1000
 #define MAX_TIMESTAMP_BUFFER_SIZE 80
+#define PP_BUFFER_MAX_SIZE 4096
+#define SHARED_BUFFER_MAX_SIZE 1024
 
 using telux::cv2x::Priority;
 using namespace std;
@@ -140,6 +142,21 @@ enum class MessageType {
 enum class TxRxType {
     TX,
     RX
+};
+
+typedef enum {FREE, VERIF_DONE, PP_DONE} AsyncCbState;
+
+struct asyncCbData_t{
+    int indexToData;
+    bool verifSuccess;
+    AsyncCbState AsyncState=FREE;
+    signed int   Latitude;      // Degrees * 10^7
+    signed int   Longitude;     // Degrees * 10^7
+    unsigned int Heading_degrees;           // value (in degrees) / 0.0125
+    unsigned int Speed;                     // value (in kmph) * 250/18
+    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
+    unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
+    unsigned int tmpId;
 };
 
 struct Config{
@@ -391,6 +408,8 @@ public:
     struct timeval endRxIntervalTime;
     QMonitor* qMon = nullptr;
     QMonitor::Configuration* qMonConfig = nullptr;
+
+    asyncCbData_t asyncCbData[SHARED_BUFFER_MAX_SIZE];
 
     /* For multi-threaded msg verification */
     std::map<std::thread::id, int> verifStatIdx;

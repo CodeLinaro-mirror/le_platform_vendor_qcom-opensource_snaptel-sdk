@@ -93,13 +93,25 @@ thread_local int signFail = 0;
 thread_local int signSuccess = 0;
 thread_local std::shared_ptr<msg_contents> threadMc = nullptr;
 thread_local std::shared_ptr<msg_contents> hostMc = nullptr;
+static int async_index = SHARED_BUFFER_MAX_SIZE ;
+sem_t verificationSem;
+static std::mutex AsyncMtx;
+static int shared_index = 0;
+static int start_index = 0;
+thread_local int verificationSuccessCount = 0 ;
+thread_local int prevVerifSuccess = 0;
+thread_local int verificationFailCount = 0 ;
+int PostProcessingCbData[PP_BUFFER_MAX_SIZE] ={0};
+static int begin_flag = true;
+static int buffer_full = false;
 
 SaeApplication::SaeApplication(char *fileConfiguration,  MessageType msgType, bool enableCsvLog):
     ApplicationBase(fileConfiguration, msgType, enableCsvLog) {
     if (not configuration.isValid) {
         return;
     }
-
+    sem_init(&verificationSem, 0, 0);
+    PostProcessingThread();
     MsgType = msgType;
 
     wraInterval = std::chrono::milliseconds::zero();
@@ -180,6 +192,79 @@ SaeApplication::~SaeApplication() {
     }
     // delete default route in OBU if previously set
     deleteDefaultRouteInObu();
+}
+
+// thread function to PostProcessingThread
+void SaeApplication::PostProcessingThread()
+{
+    std::thread([this]() {
+    while (true)
+    {
+        (this->*AsyncthrFn)();
+    }
+    }).detach();
+}
+std::string SAEgetCurrentTimestamp()
+{
+    using std::chrono::system_clock;
+    auto currentTime = std::chrono::system_clock::now();
+    char buffer[MAX_TIMESTAMP_BUFFER_SIZE];
+    auto sinceEpoch = currentTime.time_since_epoch().count() / 1000000;
+    auto millis = sinceEpoch % 1000;
+    std::time_t tt = system_clock::to_time_t ( currentTime );
+    auto timeinfo = localtime (&tt);
+    int ret = strftime (buffer,80,"%F-%H:%M:%S.",timeinfo);
+    snprintf(&buffer[ret], MAX_TIMESTAMP_BUFFER_SIZE, "%03d", (int)millis);
+    return std::string(buffer);
+}
+void SaeApplication::AsyncPostProcessing()
+{
+    int i = 0 ;
+    sem_wait(&verificationSem);
+    for(i = start_index; PostProcessingCbData[i]!=0 ;++i)
+    {
+        if((asyncCbData[PostProcessingCbData[i]].verifSuccess) && (asyncCbData[PostProcessingCbData[i]].AsyncState != PP_DONE))
+        {
+            verificationSuccessCount++;
+            asyncCbData[PostProcessingCbData[i]].AsyncState = PP_DONE;
+            if(configuration.enableCongCtrl && configuration.enableSecurity )
+            {
+            congestionControlManager->addCongestionControlData(asyncCbData[PostProcessingCbData[i]].tmpId, (asyncCbData[PostProcessingCbData[i]].Latitude)/10000000,
+                (asyncCbData[PostProcessingCbData[i]].Longitude )/ 10000000, asyncCbData[PostProcessingCbData[i]].Heading_degrees, asyncCbData[PostProcessingCbData[i]].Speed, asyncCbData[PostProcessingCbData[i]].timestamp_ms,
+                asyncCbData[PostProcessingCbData[i]].MsgCount);
+
+
+            }
+        }
+    }
+    // Since the thread is running in while loop updating the loop index to the last successful value
+    start_index = i;
+    if(buffer_full)
+    {
+        postprocessing_cleanup();
+    }
+
+    if(verificationSuccessCount % 2500  == 0 )
+    {
+        cout<<"Timestamp at Postprocessing is: "<<SAEgetCurrentTimestamp()<<endl;
+        printf(" VerifSuccess at Postprocessing is : %d \n",verificationSuccessCount);
+    }
+}
+
+void SaeApplication::postprocessing_cleanup()
+{
+    for(int j =0;j<PP_BUFFER_MAX_SIZE;j++)
+    {
+        //If there is any pending elements to be post processed which is currently in VERIFY State , find that entry
+        if((asyncCbData[PostProcessingCbData[j]].AsyncState != PP_DONE) || ( asyncCbData[PostProcessingCbData[j]].AsyncState != FREE))
+        {
+            shared_index = j ; // This will make the post processing loop to run from this particular index
+        }
+        else
+        {
+            asyncCbData[PostProcessingCbData[j]].AsyncState = FREE;
+        }
+    }
 }
 
 void SaeApplication::printRxStats() {
@@ -490,6 +575,54 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen,
     return ret;
 }
 
+static void AsyncCallbackFunction (AEROLINK_RESULT returnCode,
+    void *userData)
+{
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    int tid = (int)std::stoul(ss.str());
+    std::unique_lock<std::mutex> lock(AsyncMtx);
+    asyncCbData_t* cb_data = (asyncCbData_t*) userData;
+    if(returnCode != WS_SUCCESS){
+        printf("TID : %d Verification Failure as per the call with the index id : %d \n",tid ,cb_data->indexToData);
+        verifFail++;
+        cb_data->verifSuccess = false;
+    }
+    else
+    {
+        cb_data->verifSuccess = true;
+        cb_data->AsyncState = VERIF_DONE;
+
+        verifSuccess++;
+        if(verifSuccess % 2500 == 0 )
+        {
+            cout<<"Timestamp at Callback is: "<<SAEgetCurrentTimestamp()<<endl;
+            printf(" VerifSuccess at Callback is: %d\n", verifSuccess);
+        }
+    }
+    if(shared_index < PP_BUFFER_MAX_SIZE)
+    {
+        if(begin_flag)
+        {
+            begin_flag = false;
+            start_index = shared_index;
+        }
+        PostProcessingCbData[shared_index] = cb_data->indexToData;
+        shared_index++;
+    }
+    else
+    {
+        buffer_full = true;
+        shared_index = 0;
+        begin_flag = true; // Post processing cleanup function will update the index and this index will update the start index also based on this flag
+    }
+    if(cb_data == nullptr){
+        fprintf(stderr,"Callback data was not properly set\n");
+        return;
+    }
+
+    sem_post(&verificationSem);
+}
 int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
     int ret = -1;
     std::thread::id tid = std::this_thread::get_id();
@@ -611,8 +744,48 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
         sopt.misbehaviorStat = nullptr;
     }
     // Verify packet signature ; providing lat/lon from the rx message
-    ret = SecService->VerifyMsg(sopt);
-    // this will override the actual result for testing purposes
+	if(!(sopt.enableAsync))
+    {
+        ret = SecService->VerifyMsg(sopt);
+    }
+    else
+    {
+        if(async_index > 0)
+        {
+            asyncCbData[async_index].indexToData = async_index;
+            if (mc->j2735_msg != nullptr)
+            {
+                bsm_value_t* bsm_squish = (bsm_value_t*)mc->j2735_msg;
+                if(configuration.enableCongCtrl)
+                {
+                    asyncCbData[async_index].Latitude = bsm_squish->Latitude;
+                    asyncCbData[async_index].Longitude = bsm_squish->Longitude;
+                    asyncCbData[async_index].MsgCount = bsm_squish->MsgCount;
+                    asyncCbData[async_index].Speed = bsm_squish->Speed;
+                    asyncCbData[async_index].timestamp_ms = bsm_squish->timestamp_ms;
+                    asyncCbData[async_index].Heading_degrees = bsm_squish->Heading_degrees;
+                    asyncCbData[async_index].tmpId = bsm_squish->id;
+                }
+            }
+            //call to AsyncVerify
+            if((asyncCbData[async_index].AsyncState != VERIF_DONE))
+            {
+                ret = SecService->asyncVerify(sopt.hvKine, sopt.rvKine, sopt.misbehaviorStat,(void *)&(asyncCbData[async_index]), AsyncCallbackFunction);
+                async_index--;
+            }
+            else
+            {
+                async_index--;
+            }
+        }
+        else
+        {
+            //buffer full
+            async_index = SHARED_BUFFER_MAX_SIZE;
+            begin_flag = true;
+        }
+    }
+        // this will override the actual result for testing purposes
     if(configuration.overrideVerifResult){
         ret = configuration.overrideVerifValue;
     }

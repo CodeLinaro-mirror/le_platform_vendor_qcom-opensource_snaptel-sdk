@@ -94,7 +94,8 @@ Status HpcmMenu::createVoiceStream(StreamConfig &config) {
     std::cout << "Supported sampling rates are 8kHz/16kHz." << std::endl;
     std::cout <<"------------------------------------------------" << std::endl;
     std::vector<telux::audio::Direction> direction{};
-    getUserSlotIdInput(config.slotId);
+    getUserSlotIdInput(slotId_);
+    config.slotId = slotId_;
     config.type = StreamType::VOICE_CALL;
     config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     config.channelTypeMask = ChannelType::LEFT;

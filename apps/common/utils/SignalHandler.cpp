@@ -53,8 +53,6 @@ using __cxxabiv1::__cxa_demangle;
 // private static variable definitions
 struct sigaction SignalHandler::oldacts_[STANDARD_SIGNAL_NUMS];
 std::stringstream SignalHandler::logStream_;
-SignalHandlerCb SignalHandler::cb_;
-bool SignalHandler::callbackFlag = false;
 
 void SignalHandler::dumpTrace(int sigNum, siginfo_t* info, void* ptr) {
     logStream_ << " error number = " << sigNum
@@ -106,16 +104,6 @@ void SignalHandler::dumpTrace(int sigNum, siginfo_t* info, void* ptr) {
     free(strings);
     strings = nullptr;
 
-    // if the signal was caused by a hardware exception, permit the user to use their callback function
-    // do not call the callback function if invalid or it has already been called (to prevent loops)
-    if (cb_ && !callbackFlag &&
-                (sigNum == SIGSEGV || sigNum == SIGABRT || sigNum == SIGFPE ||
-                sigNum == SIGILL || sigNum == SIGBUS)) {
-        // set to true to prevent issues if callback function causes an unexpected signal to be raised
-        callbackFlag = true;
-        cb_(sigNum);
-    }
-
     std::cout << logStream_.str() << std::endl;
     LOG(ERROR, __FUNCTION__, logStream_.str());
     // restore old action, so that coredump file will still be generated
@@ -163,9 +151,6 @@ bool SignalHandler::registerSignalHandler(sigset_t sigset, SignalHandlerCb cb) {
     memset(&action, 0, sizeof(action));
     action.sa_sigaction = SignalHandler::dumpTrace;
     action.sa_flags = SA_SIGINFO | SA_NODEFER;
-
-    // set this for report function to call cb function for segfault
-    cb_ = cb;
 
     // following signals are thread-directed signals, which means the signal handler
     // will be involked from the specific thread which cause the signal.

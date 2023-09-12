@@ -3,38 +3,31 @@
     {
         "IsSubsystemReady" : "SERVICE_AVAILABLE",
         "IsSubsystemReadyDelay" : 100,
-        "DefaultCallbackDelay" : 300,
-        "UseDefaultCallbackDelay" : false,
-        "AlwaysSuccess": false,
+        "DefaultCallbackDelay" : 400,
         "setSmscAddress" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "requestSmscAddress" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "requestSmsMessageList" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "deleteMessage" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "readMessage" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "sendSmsDeprecated" :
         [
@@ -97,26 +90,22 @@
         "requestStorageDetails" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "setPreferredStorage" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "requestPreferredStorage" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         },
         "setTag" :
         {
             "status" : "SUCCESS",
-            "error" : "SUCCESS",
-            "callbackDelay" : 200
+            "error" : "SUCCESS"
         }
     }
 }

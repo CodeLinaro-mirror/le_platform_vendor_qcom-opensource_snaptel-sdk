@@ -228,7 +228,7 @@ grpc::Status CardManagerServerImpl::ReadEFLinearFixed(ServerContext* context,
     telux::common::ErrorCode error;
     telux::common::Status status;
     tel::ErrorCode tmp;
-    uint32_t cbDelay;
+    int cbDelay;
      CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "readEFLinearFixed", status,
         error, cbDelay );
     int index;
@@ -320,7 +320,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
     int recordsize = request->record_number();
     std::vector<uint8_t> data;
     telux::common::Status status;
-    uint32_t cbDelay;
+    int cbDelay;
     tel::ErrorCode tmp;
     telux::common::ErrorCode error;
     for(int d : request->data()) {
@@ -446,7 +446,7 @@ grpc::Status CardManagerServerImpl::WriteEFLinearFixed(ServerContext* context,
     const char* appid = aid.c_str();
     std::vector<telux::tel::IccResult> records;
     tel::ErrorCode tmp;
-    uint32_t cbDelay;
+    int cbDelay;
     telux::common::Status status;
     telux::common::ErrorCode error;
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
@@ -571,7 +571,7 @@ grpc::Status CardManagerServerImpl::ReadEFTransparent(ServerContext* context,
     telux::tel::IccResult result;
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t cbDelay;
+    int cbDelay;
     std::string apiname = "readEFTransparent";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
@@ -701,7 +701,7 @@ grpc::Status CardManagerServerImpl::WriteEFTransparent(ServerContext* context,
     }
     std::string str1 = "";
     std::string str2 = "";
-    uint32_t cbDelay;
+    int cbDelay;
     telux::common::Status status;
     telux::common::ErrorCode error;
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
@@ -844,7 +844,7 @@ grpc::Status CardManagerServerImpl::RequestEFAttributes(ServerContext* context,
     tel::ErrorCode tmp;
     telux::common::ErrorCode error;
     std::string apiname = "requestEFAttributes";
-    uint32_t cbDelay;
+    int cbDelay;
     int index;
     int i = 0;
     telux::common::Status status;
@@ -1016,7 +1016,7 @@ grpc::Status CardManagerServerImpl::OpenLogicalChannel(ServerContext* context,
     getJsonForApiResponseSlot(phoneid, jsonObjApiResponseFileName, jsonObjApiResponse);
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t cbDelay;
+    int cbDelay;
     telux::tel::IccResult result;
     int channelId;
 
@@ -1083,7 +1083,7 @@ grpc::Status CardManagerServerImpl::CloseLogicalChannel(ServerContext* context,
     int channel = request->channel_id();
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", "closeLogicalChannel", status,
         error, cbDelay );
 
@@ -1129,7 +1129,7 @@ grpc::Status CardManagerServerImpl::TransmitAPDU(ServerContext* context,
     std::vector<uint8_t> data;
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t cbDelay;
+    int cbDelay;
     for(int d : request->data()) {
         data.emplace_back(d);
     }
@@ -1200,7 +1200,7 @@ grpc::Status CardManagerServerImpl::exchangeSimIO(ServerContext* context,
     std::string str1 = "";
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t cbDelay;
+    int cbDelay;
     std::string apiname = "exchangeSimIO";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
@@ -1265,7 +1265,7 @@ grpc::Status CardManagerServerImpl::TransmitBasicAPDU(ServerContext* context,
     std::string str1 = "";
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t cbDelay;
+    int cbDelay;
     telux::tel::IccResult result;
     std::string apiname = "transmitApduBasicChannel";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
@@ -1322,7 +1322,7 @@ grpc::Status CardManagerServerImpl::requestEid(ServerContext* context,
     Json::Value rootObj;
     telux::common::Status status;
     telux::common::ErrorCode errorCodefromUser;
-    uint32_t cbDelay;
+    int cbDelay;
     std::string jsonObjApiResponseFileName = "";
     Json::Value jsonObjApiResponse;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
@@ -1394,7 +1394,7 @@ grpc::Status CardManagerServerImpl::ChangePinLock(ServerContext* context,
     bool IsCardInfoChanged = false;
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t cbDelay;
+    int cbDelay;
     std::string apiname = "changeCardPassword";
     CommonUtils::getValues(jsonObjApiResponse, "ICardManager", apiname, status,
         error, cbDelay );
@@ -1505,7 +1505,7 @@ grpc::Status CardManagerServerImpl::UnlockByPin(ServerContext* context,
     std::string password;
     int retrycount;
     bool IsCardInfoChanged = false;
-    uint32_t cbDelay;
+    int cbDelay;
     telux::common::Status status;
     telux::common::ErrorCode error;
     std::string apiname = "unlockCardByPin";
@@ -1612,7 +1612,7 @@ grpc::Status CardManagerServerImpl::UnlockByPuk(ServerContext* context,
     bool IsCardInfoChanged = false;
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t cbDelay;
+    int cbDelay;
     std::string apiname = "unlockCardByPuk";
     bool iscallback = isCallbackNeeded(jsonObjApiResponse, apiname);
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
@@ -1727,7 +1727,7 @@ grpc::Status CardManagerServerImpl::SetCardLock(ServerContext* context,
     bool IsCardInfoChanged = false;
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t cbDelay;
+    int cbDelay;
     std::string apiname = "setCardLock";
     CommonUtils::getValues(jsonObjApiResponse, "ICardManager", apiname, status,
         error, cbDelay );
@@ -1831,7 +1831,7 @@ grpc::Status CardManagerServerImpl::QueryPin1Lock(ServerContext* context,
 
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t cbDelay;
+    int cbDelay;
     std::string apiname = "queryPin1LockState";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
         error, cbDelay );
@@ -1860,7 +1860,7 @@ grpc::Status CardManagerServerImpl::QueryFdnLock(ServerContext* context,
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
     telux::common::Status status;
     telux::common::ErrorCode errorCodefromUser;
-    uint32_t cbDelay;
+    int cbDelay;
 
     std::string apiname = "queryFdnLockState";
     CommonUtils::getValues(jsonObjApiResponse,"ICardManager", apiname, status,
@@ -1898,7 +1898,7 @@ grpc::Status CardManagerServerImpl::CardPower(ServerContext* context,
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(jsonObjApiResponse, "ICardManager", apiname, status,
         error, cbDelay );
 

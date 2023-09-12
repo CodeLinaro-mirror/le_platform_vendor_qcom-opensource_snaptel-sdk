@@ -139,7 +139,7 @@ telux::common::Status DgnssManagerStub::createSource(DgnssDataFormat dataFormat)
     JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "IDgnssManager", __FUNCTION__, status, errorCode, cbDelay);
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
     return status;
@@ -151,7 +151,7 @@ telux::common::Status DgnssManagerStub::releaseSource(void) {
     JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "IDgnssManager", __FUNCTION__, status, errorCode, cbDelay);
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
     return status;
@@ -164,7 +164,7 @@ telux::common::Status DgnssManagerStub::injectCorrectionData(const uint8_t* buff
     JsonParser::readFromJsonFile(rootNode, "api/loc/IDgnssManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "IDgnssManager", __FUNCTION__, status, errorCode, cbDelay);
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
     return status;

@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * CardServicesMenu provides menu options to invoke Card Services such as Transmit APDU.
  */
@@ -102,6 +108,15 @@ void queryPin1LockResponseCb(bool state, telux::common::ErrorCode error) {
    } else {
       PRINT_CB << "Query Pin1 Lock Request successful state:" << state << std::endl;
    }
+}
+
+void onEidResponse(std::string eid, telux::common::ErrorCode errorCode) {
+    if (errorCode == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "EID : " << eid <<std::endl;;
+    } else {
+        PRINT_CB << "Request EID failed, ErrorCode: " <<static_cast<int>(errorCode)
+                 << " Description : " << Utils::getErrorCodeAsString(errorCode)<< std::endl;
+    }
 }
 
 CardServicesMenu::CardServicesMenu(std::string appName, std::string cursor)
@@ -211,11 +226,15 @@ void CardServicesMenu::init() {
    std::shared_ptr<ConsoleAppCommand> setCardLockCommand = std::make_shared<ConsoleAppCommand>(
       ConsoleAppCommand("12", "Set_card_lock", {},
                         std::bind(&CardServicesMenu::setCardLock, this, std::placeholders::_1)));
+   std::shared_ptr<ConsoleAppCommand> requestEidCommand = std::make_shared<ConsoleAppCommand>(
+      ConsoleAppCommand("13", "Get_EID", {},
+                        std::bind(&CardServicesMenu::requestEid, this, std::placeholders::_1)));
    std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListCardServicesSubMenu
       = {getCardStateCommand,        getSupportedAppsCommand,  openLogicalChannelCommand,
          closeLogicalChannelCommand, transmitApduCommand,      basicTransmitApduCommand,
          changeCardPinCommand,       unlockCardByPinCommand,   unlockCardByPukCommand,
-         queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand};
+         queryPin1LockStateCommand,  queryFdnLockStateCommand, setCardLockCommand,
+         requestEidCommand};
    addCommands(commandsListCardServicesSubMenu);
    ConsoleApp::displayMenu();
 }
@@ -552,8 +571,7 @@ void CardServicesMenu::unlockCardByPuk(std::vector<std::string> userInput) {
    applications = card_->getApplications();
    if(applications.size() != 0)  {
       for(auto cardApp : applications) {
-         if((cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM)
-            && (cardApp->getAppState() == telux::tel::AppState::APPSTATE_PUK)) {
+         if(cardApp->getAppType() == telux::tel::AppType::APPTYPE_USIM) {
             auto ret = cardApp->unlockCardByPuk(cardLockType, puk, newPin,
                &unlockCardByPukResponseCb);
             if(ret == telux::common::Status::SUCCESS) {
@@ -755,4 +773,26 @@ void CardServicesMenu::setCardLock(std::vector<std::string> userInput) {
          card_->getState(cardState);
          std::cout << "Card State : " << cardStateToString(cardState) << std::endl;
    }
+}
+
+void CardServicesMenu::requestEid(std::vector<std::string> userInput) {
+   auto respCb = [&](std::string eid, telux::common::ErrorCode errorCode)
+       { onEidResponse(eid, errorCode); };
+
+    if (cardManager_) {
+        auto card = cardManager_->getCard();
+        if (card) {
+            telux::common::Status status = card->requestEid(respCb);
+            if (status == telux::common::Status::SUCCESS) {
+                std::cout << "Request EID sent successfully" << std::endl;
+            } else {
+                std::cout << "Request EID failed, status:" << static_cast<int>(status) << std::endl;
+                Utils::printStatus(status);
+            }
+        }  else {
+            std::cout << "ERROR: Unable to get card instance";
+        }
+    } else {
+        std::cout << "ERROR - CardManager is null" << std::endl;
+    }
 }

@@ -27,6 +27,12 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef CARDSERVICESMENU_HPP
 #define CARDSERVICESMENU_HPP
 
@@ -55,6 +61,7 @@ private:
    void queryPin1LockState(std::vector<std::string> userInput);
    void queryFdnLockState(std::vector<std::string> userInput);
    void setCardLock(std::vector<std::string> userInput);
+   void requestEid(std::vector<std::string> userInput);
    std::string appTypeToString(telux::tel::AppType appType);
    std::string appStateToString(telux::tel::AppState appState);
    std::string cardStateToString(telux::tel::CardState state);

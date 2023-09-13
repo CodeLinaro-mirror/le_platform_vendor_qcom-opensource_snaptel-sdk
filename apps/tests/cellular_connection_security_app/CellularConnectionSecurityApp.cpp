@@ -65,6 +65,9 @@ void CellSecurityReportListener::onScanReportAvailable(
         std::cout << "Threat type : " <<
             static_cast<uint32_t>(report.threats[x]) << std::endl;
     }
+
+    std::cout << "Environment : " <<
+        static_cast<uint32_t>(envInfo.environmentState) << std::endl;
 }
 
 /*
@@ -121,12 +124,17 @@ void CellularConnectionSecurityApp::deregisterListener() {
 }
 
 /*
- *  Since the time listener was registered, get overall stats.
+ *  Since the time listener was registered till now, get overall stats.
  */
 void CellularConnectionSecurityApp::getSessionStats() {
 
     telux::common::ErrorCode ec;
     telux::sec::SessionStats stats{};
+
+    if (!reportListener_) {
+        std::cout << "Listener doesn't exist" << std::endl;
+        return;
+    }
 
     ec = cellConSecMgr_->getCurrentSessionStats(stats);
     if (ec != telux::common::ErrorCode::SUCCESS) {

@@ -28,7 +28,7 @@ grpc:
 	cp -r ${PWD}/build/include/google ${ROOTFS}/include/ &&	cp -r ${PWD}/build/include/grpc ${ROOTFS}/include/ && cp -r ${PWD}/build/include/grpcpp ${ROOTFS}/include/ && cp -r ${PWD}/build/include/absl ${ROOTFS}/include/
 
 sim: headers
-	cd build && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ROOTFS}/lib/ && mkdir -p build_sim && cd build_sim && cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=${PWD}/build/lib/cmake/ -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../simulation && make install
+	cd build && export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ROOTFS}/lib/ && mkdir -p build_sim && cd build_sim && cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=${PWD}/build/lib/cmake/ -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../simulation && make install
 
 apps: sim
 	cd build && mkdir -p build_apps && cd build_apps && cmake -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../apps && make install

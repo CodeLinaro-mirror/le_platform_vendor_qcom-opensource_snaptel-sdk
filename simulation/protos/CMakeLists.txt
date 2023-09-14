@@ -2,13 +2,18 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_PROTOS_LIBRARY telux_protos)
 
+include(FindPkgConfig)
+
 set(protobuf_MODULE_COMPATIBLE TRUE)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 
+pkg_check_modules(PROTOBUF_LIB protobuf)
+pkg_check_modules(GRPC_LIB grpc)
+pkg_check_modules(GRPCPP_LIB grpc++)
+
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/proto-src)
-set(PROTOC_COMPILER $<TARGET_FILE:protobuf::protoc>)
-set(GRPCPP_EXECUTABLE gRPC::grpc++)
+set(PROTOC_COMPILER protoc)
 set(GRPCPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
@@ -48,7 +53,9 @@ add_library(${TARGET_PROTOS_LIBRARY} SHARED ${PROTOS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 
 target_link_libraries(${TARGET_PROTOS_LIBRARY}
-    ${GRPCPP_EXECUTABLE}
+    ${PROTOBUF_LIB_LIBRARIES}
+    ${GRPC_LIB_LIBRARIES}
+    ${GRPCPP_LIB_LIBRARIES}
     )
 
 install ( TARGETS ${TARGET_PROTOS_LIBRARY}

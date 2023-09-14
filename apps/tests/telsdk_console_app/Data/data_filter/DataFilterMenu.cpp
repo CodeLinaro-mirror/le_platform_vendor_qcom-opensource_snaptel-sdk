@@ -258,55 +258,28 @@ void DataFilterMenu::sendSetDataRestrictMode(DataRestrictMode mode) {
         return;
     }
 
-    char delimiter = '\n';
-    std::string profileIdInput;
-    std::cout << "Enter Profile Id : ";
-    std::getline(std::cin, profileIdInput, delimiter);
-
-    int profileId = -1;
-    if (!profileIdInput.empty()) {
-        try {
-            profileId = std::stoi(profileIdInput);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << profileId
-                      << std::endl;
-            return;
-        }
-    } else {
-        profileId = PROFILE_ID_MAX;
-    }
-
-    std::string ipFamilyTypeInput;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
-    std::getline(std::cin, ipFamilyTypeInput, delimiter);
-
-    telux::data::IpFamilyType ipFamType = IpFamilyType::UNKNOWN;
-    if (!ipFamilyTypeInput.empty()) {
-        try {
-            ipFamType = static_cast<telux::data::IpFamilyType>(std::stoi(ipFamilyTypeInput));
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values "
-                      << static_cast<int>(ipFamType) << std::endl;
-            return;
-        }
-    }
-
     if (mode.filterMode == DataRestrictModeType::ENABLE) {
         std::cout << " Sending command to enable Data Filter" << std::endl;
+        std::cout << "Auto Exit Filter (0-DISABLE, 1-ENABLE): ";
+        int filterAutoExitInput = 0;
+        std::cin >> filterAutoExitInput;
+        Utils::validateInput(filterAutoExitInput, {static_cast<int>(DataRestrictModeType::DISABLE),
+            static_cast<int>(DataRestrictModeType::ENABLE)});
+
+        if (filterAutoExitInput) {
+            std::cout << " ENABLE Auto Exit Filter " << std::endl;
+            mode.filterAutoExit = DataRestrictModeType::ENABLE;
+        } else {
+            std::cout << " DISABLE Auto Exit Filter " << std::endl;
+            mode.filterAutoExit = DataRestrictModeType::DISABLE;
+        }
     } else if (mode.filterMode == DataRestrictModeType::DISABLE) {
         std::cout << " Sending command to disable Data Filter" << std::endl;
     }
 
-    mode.filterAutoExit = DataRestrictModeType::DISABLE;
     telux::common::Status status = telux::common::Status::FAILED;
-
-    if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->setDataRestrictMode(mode,
-            responseCbMap_[static_cast<SlotId>(slotId)]);
-    } else {
-        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->setDataRestrictMode(mode,
-            responseCbMap_[static_cast<SlotId>(slotId)], profileId, ipFamType);
-    }
+    status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->setDataRestrictMode(mode,
+        responseCbMap_[static_cast<SlotId>(slotId)]);
 
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
@@ -314,7 +287,6 @@ void DataFilterMenu::sendSetDataRestrictMode(DataRestrictMode mode) {
 }
 
 void DataFilterMenu::getFilterMode() {
-
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
@@ -323,13 +295,10 @@ void DataFilterMenu::getFilterMode() {
         std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
     }
-
     std::cout << " Sending command to get Data Filter" << std::endl;
-
-    // pass empty interface name as string.
     telux::common::Status status =
         dataFilterManagerMap_[static_cast<SlotId>(slotId)]->requestDataRestrictMode(
-        "", &DataFilterModeResponseCb::requestDataRestrictModeResponse);
+        &DataFilterModeResponseCb::requestDataRestrictModeResponse);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
     }
@@ -398,7 +367,6 @@ int DataFilterMenu::getPortInfo(DataConfigParser cfgParser,
 }
 
 void DataFilterMenu::addFilter() {
-
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
@@ -406,41 +374,6 @@ void DataFilterMenu::addFilter() {
     if (dataFilterManagerMap_.find(static_cast<SlotId>(slotId)) == dataFilterManagerMap_.end()) {
         std::cout << "\nData Filter Manager on slot "<< slotId << " is not ready" << std::endl;
         return;
-    }
-
-    char delimiter = '\n';
-    std::string profileIdInput;
-    std::cout << "Enter Profile Id : ";
-    std::getline(std::cin, profileIdInput, delimiter);
-
-    int profileId = -1;
-    if (!profileIdInput.empty()) {
-        try {
-            profileId = std::stoi(profileIdInput);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << profileId
-                      << std::endl;
-            return;
-        }
-    } else {
-        profileId = PROFILE_ID_MAX;
-    }
-
-    std::string ipFamilyTypeInput;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
-    std::getline(std::cin, ipFamilyTypeInput, delimiter);
-
-    telux::data::IpFamilyType ipFamType = IpFamilyType::UNKNOWN;
-    if (!ipFamilyTypeInput.empty()) {
-        try {
-            ipFamType = static_cast<telux::data::IpFamilyType>(std::stoi(ipFamilyTypeInput));
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values "
-                      << static_cast<int>(ipFamType) << std::endl;
-            return;
-        }
-    } else {
-        ipFamType = IpFamilyType::UNKNOWN;
     }
 
     DataConfigParser cfgParser("filter", DEFAULT_DATA_CONFIG_FILE_NAME);
@@ -559,13 +492,9 @@ void DataFilterMenu::addFilter() {
         std::cout << " Sending command to Add Data Filter" << std::endl;
         telux::common::Status status = telux::common::Status::FAILED;
 
-        if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-            status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->addDataRestrictFilter(
-                dataFilter, responseCbMap_[static_cast<SlotId>(slotId)]);
-        } else {
-            status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->addDataRestrictFilter(
-                dataFilter, responseCbMap_[static_cast<SlotId>(slotId)], profileId, ipFamType);
-        }
+        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->addDataRestrictFilter(
+            dataFilter, responseCbMap_[static_cast<SlotId>(slotId)]);
+
         if (status != telux::common::Status::SUCCESS) {
             std::cout << " *** ERROR - Failed to send Data Restrict command" << std::endl;
         }
@@ -573,7 +502,6 @@ void DataFilterMenu::addFilter() {
 }
 
 void DataFilterMenu::removeAllFilter() {
-
     int slotId = DEFAULT_SLOT_ID;
     if (telux::common::DeviceConfig::isMultiSimSupported()) {
         slotId = Utils::getValidSlotId();
@@ -583,50 +511,9 @@ void DataFilterMenu::removeAllFilter() {
         return;
     }
     std::cout << "\nRemove data filters" << std::endl;
-
-    char delimiter = '\n';
-    std::string profileIdInput;
-    std::cout << "Enter Profile Id : ";
-    std::getline(std::cin, profileIdInput, delimiter);
-
-    int profileId = -1;
-    if (!profileIdInput.empty()) {
-        try {
-            profileId = std::stoi(profileIdInput);
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values " << profileId
-                      << std::endl;
-            return;
-        }
-    } else {
-        profileId = PROFILE_ID_MAX;
-    }
-
-    std::string ipFamilyTypeInput;
-    std::cout << "Enter Ip Family (4-IPv4, 6-IPv6, 10-IPv4V6): ";
-    std::getline(std::cin, ipFamilyTypeInput, delimiter);
-
-    telux::data::IpFamilyType ipFamType = IpFamilyType::UNKNOWN;
-    if (!ipFamilyTypeInput.empty()) {
-        try {
-            ipFamType = static_cast<telux::data::IpFamilyType>(std::stoi(ipFamilyTypeInput));
-        } catch (const std::exception &e) {
-            std::cout << "ERROR: invalid input, please enter numerical values "
-                      << static_cast<int>(ipFamType) << std::endl;
-            return;
-        }
-    } else {
-        ipFamType = IpFamilyType::UNKNOWN;
-    }
-
     telux::common::Status status = telux::common::Status::FAILED;
-    if (profileId == PROFILE_ID_MAX && ipFamType == IpFamilyType::UNKNOWN) {
-        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->removeAllDataRestrictFilters(
-                responseCbMap_[static_cast<SlotId>(slotId)]);
-    } else {
-        status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->removeAllDataRestrictFilters(
-                responseCbMap_[static_cast<SlotId>(slotId)], profileId, ipFamType);
-    }
+    status = dataFilterManagerMap_[static_cast<SlotId>(slotId)]->removeAllDataRestrictFilters(
+            responseCbMap_[static_cast<SlotId>(slotId)]);
     if (status != telux::common::Status::SUCCESS) {
         std::cout << " *** ERROR - Failed to send remove Data Filter command" << std::endl;
         return;

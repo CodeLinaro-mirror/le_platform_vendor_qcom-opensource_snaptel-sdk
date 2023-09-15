@@ -1,22 +1,16 @@
 {
     "IDgnssManager": {
-        "AlwaysSuccess": true,
-        "DefaultCallbackDelay": 300,
-        "UseDefaultCallbackDelay": false,
-
+        "DefaultCallbackDelay": 400,
         "SubSystemInit": true,
         "SubSystemStatus" : "AVAILABLE",
         "SubSystemReadinessDelay": 500,
 		"createSource": {
-			"callbackDelay": 400,
 			"status": "SUCCESS"
 		},
 		"releaseSource": {
-			"callbackDelay": 400,
 			"status": "SUCCESS"
 		},
 		"injectCorrectionData": {
-			"callbackDelay": 400,
 			"status": "SUCCESS"
 		}
     }

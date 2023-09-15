@@ -286,21 +286,15 @@ ErrorCode CommonUtils::writeSystemDataValue(
 
 void CommonUtils::getValues(Json::Value &values, std::string subsystem,
     std::string method, telux::common::Status &status,
-    telux::common::ErrorCode &errorCode, uint32_t &cbDelay) {
-    bool alwaysSuccessNeeded = values[subsystem]["AlwaysSuccess"].asBool();
-    if(alwaysSuccessNeeded) {
-        status = mapStatus("SUCCESS");
-    } else {
-        std::string statusStr = values[subsystem][method]["status"].asString();
-        status = mapStatus(statusStr);
-    }
+    telux::common::ErrorCode &errorCode, int &cbDelay) {
+    std::string statusStr = values[subsystem][method]["status"].asString();
+    status = mapStatus(statusStr);
+
     std::string errorStr = values[subsystem][method]["error"].asString();
     errorCode = mapErrorCode(errorStr);
-    bool useDefaultCallbackDelay = values[subsystem]["UseDefaultCallbackDelay"].asBool();
-    if(useDefaultCallbackDelay) {
+    cbDelay = values[subsystem][method]["callbackDelay"].asInt();
+    if(cbDelay == 0) {
         cbDelay = values[subsystem]["DefaultCallbackDelay"].asInt();
-    } else {
-        cbDelay = values[subsystem][method]["callbackDelay"].asInt();
     }
 }
 

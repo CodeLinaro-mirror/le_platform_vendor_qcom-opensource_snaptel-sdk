@@ -335,7 +335,7 @@ telux::common::Status LocationManagerStub::startDetailedReports(uint32_t interva
     JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
@@ -364,7 +364,7 @@ telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t i
     JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
@@ -392,7 +392,7 @@ telux::common::Status LocationManagerStub::startBasicReports(
     JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
@@ -435,7 +435,7 @@ telux::common::Status LocationManagerStub::registerForSystemInfoUpdates(
     JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
@@ -467,7 +467,7 @@ telux::common::Status LocationManagerStub::deRegisterForSystemInfoUpdates(
     JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
     telux::common::Status status;
     telux::common::ErrorCode errorCode;
-    uint32_t cbDelay;
+    int cbDelay;
     CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {

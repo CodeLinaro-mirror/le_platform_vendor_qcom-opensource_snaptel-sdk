@@ -1,64 +1,51 @@
 {
     "ILocationManager": {
-        "AlwaysSuccess": true,
-        "DefaultCallbackDelay": 300,
-        "UseDefaultCallbackDelay": false,
-
+        "DefaultCallbackDelay": 400,
         "SubSystemInit": true,
         "SubSystemStatus" : "AVAILABLE",
         "SubSystemReadinessDelay": 500,
         "requestEnergyConsumedInfo": {
-			"callbackDelay": 400,
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
+            "status": "SUCCESS"
+        },
         "getYearOfHw": {
-			"callbackDelay": 400,
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
+            "status": "SUCCESS"
+        },
         "getCapabilities": {
-			"callbackDelay": 400,
             "capabilities": 32
-		},
+        },
         "stopReports": {
-			"callbackDelay": 400,
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
+            "status": "SUCCESS"
+        },
         "getTerrestrialPosition": {
-			"callbackDelay": 40000,
-			"status": "SUCCESS"
-		},
+            "callbackDelay": 40000,
+            "status": "SUCCESS"
+        },
         "cancelTerrestrialPositionRequest": {
-			"callbackDelay": 400,
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
+            "status": "SUCCESS"
+        },
         "startDetailedReports": {
-			"callbackDelay": 400,
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
+            "status": "SUCCESS"
+        },
         "startDetailedEngineReports": {
-			"callbackDelay": 400,
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
+            "status": "SUCCESS"
+        },
         "startBasicReports": {
-			"callbackDelay": 400,
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
-		"registerForSystemInfoUpdates": {
-			"callbackDelay": 400,
+            "status": "SUCCESS"
+        },
+        "registerForSystemInfoUpdates": {
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		},
-		"deRegisterForSystemInfoUpdates": {
-			"callbackDelay": 400,
+            "status": "SUCCESS"
+        },
+        "deRegisterForSystemInfoUpdates": {
             "error" : "SUCCESS",
-			"status": "SUCCESS"
-		}
+            "status": "SUCCESS"
+        }
     }
 }

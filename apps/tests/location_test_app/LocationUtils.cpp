@@ -117,6 +117,24 @@ void LocationUtils::displayCapabilities(telux::loc::LocCapability capabilityMask
   if (capabilityMask & telux::loc::QWES_QDR3) {
     std::cout << "QWES QDR3" << std::endl;
   }
+  if (capabilityMask & telux::loc::TIME_BASED_BATCHING) {
+    std::cout << "TIME BASED BATCHING" << std::endl;
+  }
+  if (capabilityMask & telux::loc::DISTANCE_BASED_BATCHING) {
+    std::cout << "DISTANCE BASED BATCHING" << std::endl;
+  }
+  if (capabilityMask & telux::loc::GEOFENCE) {
+    std::cout << "GEOFENCE" << std::endl;
+  }
+  if (capabilityMask & telux::loc::OUTDOOR_TRIP_BATCHING) {
+    std::cout << "OUTDOOR TRIP BATCHING" << std::endl;
+  }
+  if (capabilityMask & telux::loc::SV_POLYNOMIAL) {
+    std::cout << "SV POLYNOMIAL" << std::endl;
+  }
+  if (capabilityMask & telux::loc::NLOS_ML20) {
+    std::cout << "NLOS ML20" << std::endl;
+  }
   std::cout << "*****************************************" << std::endl;
 }
 

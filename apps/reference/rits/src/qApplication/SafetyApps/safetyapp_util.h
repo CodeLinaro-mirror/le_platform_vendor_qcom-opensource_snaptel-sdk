@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 /**
     @file safetyapp_util.h
     This file contains the function declarations required for implementing safety applications.
@@ -65,14 +70,20 @@ typedef enum {
  * This structure is filled once per RV before running any safety app and all safety apps use that information.
  */
 typedef struct {
-	bool out_of_zone;   /**< Is RV out of zone of HV? */
-	double ttc;         /**< HV Time to crash RV*/
-	lane_types lt;      /**< @lane_types Lane of RV relative to HV */
-	bool rapid_decl;    /**< Is RV rapidly decelerating ?*/
-	bool stopped;       /**< Is RV stopped ?*/
-	bool airbag;        /**< Are airbags open in RV */
-	uint64_t hv_timestamp_ms;   /**< Recent timestamp on bsm of the host, Useful for logging warnings*/
-	int hv_msgcnt;              /**< Message count of the recent bsm of the host, Useful for logging warnings*/
+    bool out_of_zone;   /**< Is RV out of zone of HV? */
+    double ttc;         /**< HV Time to crash RV*/
+    lane_types lt;      /**< @lane_types Lane of RV relative to HV */
+    bool rapid_decl;    /**< Is RV rapidly decelerating ?*/
+    bool stopped;       /**< Is RV stopped ?*/
+    bool airbag;        /**< Are airbags open in RV */
+    uint64_t hv_timestamp_ms;   /**< Recent timestamp on bsm of the host, Useful for logging warnings*/
+    int hv_msgcnt;     /**< Message count of the recent bsm of the host, Useful for logging warnings*/
+    int totalCnt;      /**< Total number of messsages with different msg cnts received by the host*/
+    int lastTotalCnt;  /**< Used to calculate msg rate*/
+    uint64_t lastTime; /**< Used to calculate msg rate*/
+    int cntDiff;       /**< Total difference of messsages count between current and last msg received by the host*/
+    double msgRate;    /**< Message rate based on totalCnt over last interval of 1000ms*/
+    int lastCnt;       /**< Last Message count of the recent bsm of the host, Useful for logging warnings*/
 } rv_specs;
 
 /** @brief Initializes all the thresholds defined earlier by reading from the config file provided.

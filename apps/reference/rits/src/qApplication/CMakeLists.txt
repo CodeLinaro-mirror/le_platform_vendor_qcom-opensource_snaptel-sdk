@@ -28,7 +28,7 @@ endif()
 
 add_library(qapplication ${LIBQAPPLICATION_SOURCES})
 
-target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc telux-squish v2xcodec ${LIBAERO} rt pthread json-c)
+target_link_libraries(qapplication ${GLIB_LIBRARIES} telux_cv2x telux_loc telux_sec telux-squish v2xcodec ${LIBAERO} rt pthread json-c)
 
 install(TARGETS qapplication
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

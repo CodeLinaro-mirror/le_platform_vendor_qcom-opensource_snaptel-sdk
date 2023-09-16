@@ -167,8 +167,9 @@ private:
     /**
     * Method to setup and perform reception with LDM for SAE packets.
     * @param mc - A shared pointer to a v2x message contents struct
+    * @param l2SrcAddr - the l2 src address of the RV; needed for flooding detection
     */
-    int decodeAndVerify(msg_contents* mc);
+    int decodeAndVerify(msg_contents* mc, int l2SrcAddr);
 
 #ifdef WITH_WSA
     int onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr, int& MacAdrLen);

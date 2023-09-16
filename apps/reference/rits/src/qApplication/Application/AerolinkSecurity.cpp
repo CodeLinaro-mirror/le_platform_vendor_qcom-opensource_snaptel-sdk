@@ -410,7 +410,7 @@ int AerolinkSecurity::init(void) {
     /*
      * Register LCM for ID change.
      */
-    if(lcmName_) {
+    if(lcmName_ != NULL) {
         if(lcmName_[0] != '\0'){
             fprintf(stdout, "Aerolink:: Lcm name is: %s\n", lcmName_);
             result = securityServices_idChangeRegister(
@@ -703,6 +703,12 @@ static void handle_verify_result(
     void           *userData)
 {
     sem_t* cb_sem = (sem_t*) userData;
+    if(cb_sem == nullptr){
+        fprintf(stderr,"Callback data was not properly set\n");
+        return;
+    }
+    // print related verification stats per 2500
+    sem_wait(&verifLogSem);
     if(returnCode != WS_SUCCESS){
         if(secVerbosity > 4)
                 fprintf(stderr,
@@ -716,17 +722,8 @@ static void handle_verify_result(
                 ws_errid(returnCode));
         verifSuccess++;
     }
-
-    if(cb_sem == nullptr){
-        fprintf(stderr,"Callback data was not properly set\n");
-        return;
-    }
-
-    // print related verification stats per 2500
-    sem_wait(&verifLogSem);
     printVerifStats(std::this_thread::get_id());
     sem_post(&verifLogSem);
-
     sem_post(cb_sem);
 }
 
@@ -944,21 +941,28 @@ int AerolinkSecurity::asyncVerify(
         return -1;
     }
 
-    // smp_checkConsistency
-    result = smp_checkConsistency(*smp);
-    if(result != WS_SUCCESS){
-        if(secVerbosity > 4)
-            fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
-        return -1;
+    // smp_checkRelevance
+    if(this->enableRelevance){
+        result = smp_checkRelevance(*smp);
+        if (result != WS_SUCCESS)
+        {
+            if(secVerbosity > 4)
+                fprintf(stderr,"Unable to check relevance (%s)\n", ws_errid(result));
+            return -1;
+        }
     }
 
-    // smp_checkRelevance
-    result = smp_checkRelevance(*smp);
-    if (result != WS_SUCCESS)
-    {
-        if(secVerbosity > 4)
-            fprintf(stderr,"Unable to check relevance (%s)\n", ws_errid(result));
-        return -1;
+    if(secVerbosity > 7) {
+        fprintf(stdout, "Now checking consistency of signed message\n");
+    }
+    // smp_checkConsistency
+    if(this->enableConsistency){
+        result = smp_checkConsistency(*smp);
+        if(result != WS_SUCCESS){
+            if(secVerbosity > 4)
+                fprintf(stderr,"Unable to check consistency (%s)\n", ws_errid(result));
+            return -1;
+        }
     }
     // not TRULY async verification
     // smp_verifySignaturesAsync
@@ -971,11 +975,11 @@ int AerolinkSecurity::asyncVerify(
                      ws_errid(result));
         return -1;
     }
+    sem_wait(thrVerifSemPtr);
     //Misbehavior detection if enabled
     if(this->enableMisbehavior){
         mbdCheck(&rvKine, misbehaviorStat);
     }
-    sem_wait(thrVerifSemPtr);
     return 1;
 }
 

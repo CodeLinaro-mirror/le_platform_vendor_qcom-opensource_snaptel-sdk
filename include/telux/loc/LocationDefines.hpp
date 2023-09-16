@@ -68,14 +68,8 @@ const int DEFAULT_TUNC_ENERGY_THRESHOLD = 0; /**< Default value for energy consu
 const uint64_t INVALID_ENERGY_CONSUMED = 0xffffffffffffffff; /**< 0xffffffffffffffff indicates an
                                                                   invalid reading for energy
                                                                   consumed info. */
-/**< 0xffffffff indicates all the reports. All the reports but ENGINE_NMEA
-     will be enabled by default if no specific report masks are specified.
-     ENGINE_NMEA and NMEA are mutually exclusive. */
-#define DEFAULT_GNSS_REPORT ( 0xffffffff ^ ENGINE_NMEA )
-
 const float UNKNOWN_SV_TIME_SUB_NS = -1; /**< Unknown Sub nanoseconds portion of the received GNSS
                                               time. */
-
 /**
  * Defines RTCM injection data format
  */
@@ -1721,6 +1715,11 @@ enum GnssReportType {
 
 /** Specifies the applicable reports using the bits represented in GnssReportType */
 using GnssReportTypeMask = uint32_t;
+
+/**< 0xffffffff indicates all the reports. All the reports but ENGINE_NMEA
+     will be enabled by default if no specific report masks are specified.
+     ENGINE_NMEA and NMEA are mutually exclusive. */
+const uint32_t DEFAULT_GNSS_REPORT = (0xffffffff ^ ENGINE_NMEA);
 
 /** Specify the dead reckoning engine configuration parameters.
  */

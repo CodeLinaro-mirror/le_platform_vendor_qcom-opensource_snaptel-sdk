@@ -25,6 +25,10 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -345,6 +349,7 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
       } else if (ret > 0 && !strncmp(ACK_STRING, (char*)response, 12)) {
           // register status listener
           dgnssManager_->registerListener(shared_from_this());
+          ret = 0;
 
           // Please refer to injectFromFile() for alternative use case sample.
           while (!ret) {

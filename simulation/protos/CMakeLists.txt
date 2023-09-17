@@ -14,6 +14,7 @@ pkg_check_modules(GRPCPP_LIB grpc++)
 
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/proto-src)
 set(PROTOC_COMPILER protoc)
+set(GRPCPP_EXECUTABLE gRPC::grpc++)
 set(GRPCPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
@@ -56,6 +57,7 @@ target_link_libraries(${TARGET_PROTOS_LIBRARY}
     ${PROTOBUF_LIB_LIBRARIES}
     ${GRPC_LIB_LIBRARIES}
     ${GRPCPP_LIB_LIBRARIES}
+    ${GRPCPP_EXECUTABLE}
     )
 
 install ( TARGETS ${TARGET_PROTOS_LIBRARY}

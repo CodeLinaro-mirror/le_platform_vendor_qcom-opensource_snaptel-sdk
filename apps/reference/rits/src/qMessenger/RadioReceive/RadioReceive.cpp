@@ -75,7 +75,6 @@ void RadioReceive::rxSubCallback(shared_ptr<ICv2xRxSubscription> rxSub, ErrorCod
     if (ErrorCode::SUCCESS == error) {
         this->gRxSub = rxSub;
     }
-    this->gCallbackPromise.set_value(error);
 };
 
 RadioReceive::RadioReceive(const TrafficCategory category, const TrafficIpType trafficIpType,
@@ -89,14 +88,15 @@ RadioReceive::RadioReceive(const TrafficCategory category, const TrafficIpType t
     if (nullptr == cv2xRadio) {
         return;
     }
+
+    auto cb = std::make_shared<CommonCallback>();
     auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
                             ErrorCode error){
                                 rxSubCallback(rxSub, error);
+                                cb->onResponse(error);
                             };
-    if (Status::SUCCESS == cv2xRadio->createRxSubscription(trafficIpType, port, respCb))
-    {
-        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
-        {
+    if (Status::SUCCESS == cv2xRadio->createRxSubscription(trafficIpType, port, respCb)) {
+        if (ErrorCode::SUCCESS == cb->getResponse()) {
             cout<<"Rx Subscription creation succeeds.\n";
         }else{
             cout<<"Rx Subscription creation fails.\n";
@@ -104,8 +104,8 @@ RadioReceive::RadioReceive(const TrafficCategory category, const TrafficIpType t
     }else{
             cout<<"Rx Subscription creation fails.\n";
     }
-    this->resetCallbackPromise();
 }
+
 RadioReceive::RadioReceive(const TrafficCategory category,
                             const TrafficIpType trafficIpType, const uint16_t port,
                             std::shared_ptr<std::vector<uint32_t>> idList){
@@ -118,26 +118,25 @@ RadioReceive::RadioReceive(const TrafficCategory category,
     if (nullptr == cv2xRadio) {
         return;
     }
+    auto cb = std::make_shared<CommonCallback>();
     auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
                             ErrorCode error){
                                 rxSubCallback(rxSub, error);
+                                cb->onResponse(error);
                             };
-    if (Status::SUCCESS == cv2xRadio->createRxSubscription(trafficIpType, port, respCb, idList))
-    {
-        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
-        {
+    if (Status::SUCCESS == cv2xRadio->createRxSubscription(trafficIpType, port, respCb, idList)) {
+        if (ErrorCode::SUCCESS == cb->getResponse()) {
             cout<<"Rx Subscription creation succeeds for SID: ";
             auto idp = idList.get();
             for(int i=0; i < idp->size(); i++)
                 cout << idp->at(i) << ' ';
             cout << "\n";
-        }else{
+        } else {
             cout<<"Rx Subscription creation fails.\n";
         }
-    }else{
-            cout<<"Rx Subscription creation fails.\n";
+    } else {
+        cout<<"Rx Subscription creation fails.\n";
     }
-    this->resetCallbackPromise();
 }
 
 /*
@@ -366,21 +365,21 @@ uint8_t RadioReceive::closeFlow(){
         if (nullptr == cv2xRadio) {
             resp = static_cast<uint8_t>(Status::FAILED);
         } else {
+            auto cb = std::make_shared<CommonCallback>();
             auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
                                     ErrorCode error){
                                         rxSubCallback(rxSub, error);
+                                        cb->onResponse(error);
                                     };
             if (Status::SUCCESS == cv2xRadio->closeRxSubscription(this->gRxSub, respCb)){
-                if (ErrorCode::SUCCESS == gCallbackPromise.get_future().get())
-                {
+                if (ErrorCode::SUCCESS == cb->getResponse()) {
                     resp = static_cast<uint8_t>(Status::SUCCESS);
-                }else{
+                } else {
                     resp = static_cast<uint8_t>(Status::FAILED);
                 }
             }else{
                 resp = static_cast<uint8_t>(Status::FAILED);
             }
-            this->resetCallbackPromise();
         }
 
         this->gRxSub = nullptr;

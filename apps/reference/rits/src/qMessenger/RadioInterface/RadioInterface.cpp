@@ -76,6 +76,8 @@
 #include <iterator>
 #include "RadioInterface.h"
 
+#define INVALID_CBR_VALUE (255)
+
 shared_ptr<ICv2xRadioManager> RadioInterface::cv2xRadioManager_ = nullptr;
 
 class Cv2xRadioListener : public ICv2xRadioListener {
@@ -125,72 +127,94 @@ public:
     };
 
     telux::cv2x::Cv2xStatus getCurrentStatus() {
-        std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
+        std::lock_guard<std::mutex> lock(mtx_);
         return cv2xStatus_;
     }
 
-    bool waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool &haltRx) {
-        bool closeAllFlow = false;
-        // get the inital status
-        telux::cv2x::Cv2xStatus tmpStatus;
-        {
-            std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
-            tmpStatus = cv2xStatus_;
+    uint8_t getCurrentCbr() {
+        std::lock_guard<std::mutex> lock(mtx_);
+        if (cv2xStatus_.cbrValueValid) {
+            return cv2xStatus_.cbrValue;
         }
+        return INVALID_CBR_VALUE;
+    }
+
+    int waitForCv2xStatus(telux::cv2x::Cv2xStatusType status, bool& restartFlow) {
+        // get initial status
+        telux::cv2x::Cv2xStatus tmpStatus = getCurrentStatus();
 
         while (tmpStatus.rxStatus != status or tmpStatus.txStatus != status) {
-            // the initial status or the received status is not as expected,
-            // wait for the next status change
-            statusPromise_ = promise<telux::cv2x::Cv2xStatus>();
-            promiseSet_ = false;
-            //In the case where both tx and rx are enabled, flag to cease rx when cv2x status
-            //becomes inactive/suspended.
-            {
-                std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
-                haltRx = true;
+            // return false if status is unknow
+            if(tmpStatus.rxStatus == Cv2xStatusType::UNKNOWN or
+               tmpStatus.txStatus == Cv2xStatusType::UNKNOWN) {
+                return -1;
             }
-            tmpStatus = statusPromise_.get_future().get();
-            if(tmpStatus.rxStatus == status or tmpStatus.txStatus == status){
-                std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
-                //check if we need close the exisiting flows and setup again
-                closeAllFlow = true;
+
+            // if status is inactive, need to recreate flows
+            if (tmpStatus.rxStatus == Cv2xStatusType::INACTIVE or
+               tmpStatus.txStatus == Cv2xStatusType::INACTIVE) {
+                restartFlow = true;
             }
+
+            // wait for status change
+            std::unique_lock<std::mutex> cvLock(mtx_);
+            cv_.wait(cvLock);
+            tmpStatus = cv2xStatus_;
         }
-        return closeAllFlow;
+        return 0;
     }
 
     void onStatusChanged(telux::cv2x::Cv2xStatus status) override {
+        telux::cv2x::Cv2xStatus preStatus;
         {
-            std::lock_guard<std::mutex> lock(cv2xStatusMutex_);
-
-             if (0 != memcmp(&status, &cv2xStatus_, sizeof(telux::cv2x::Cv2xStatus))) {
-                if (radioVerbosity &&
-                    (status.rxStatus != cv2xStatus_.rxStatus or
-                    status.txStatus != cv2xStatus_.txStatus)) {
-                    cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
-                    cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
-                }
-                cv2xStatus_ = status;
-            } else {
-                // no need set promise if status is not changed
-                return;
-            }
+            std::lock_guard<std::mutex> lock(mtx_);
+            preStatus = cv2xStatus_;
+            cv2xStatus_ = status;
         }
 
-        if (not promiseSet_) {
-            promiseSet_ = true;
-            statusPromise_.set_value(status);
+        if (status.rxStatus != preStatus.rxStatus or
+            status.txStatus != preStatus.txStatus) {
+            if (radioVerbosity) {
+                cout << "Cv2x status updated, rxStatus:" << static_cast<int>(status.rxStatus);
+                cout << ", txStatus:" << static_cast<int>(status.txStatus) << endl;
+            }
+            cv_.notify_all();
         }
     }
 
+    void deinit() {
+        // set cv2x status to unknown during exit
+        std::lock_guard<std::mutex> lock(mtx_);
+        cv2xStatus_.rxStatus = Cv2xStatusType::UNKNOWN;
+        cv2xStatus_.txStatus = Cv2xStatusType::UNKNOWN;
+        cv_.notify_all();
+    }
+
+    // avoid potential stuck in case deinit is not invoked
+    ~Cv2xStatusListener() {
+        deinit();
+    }
 private:
-    promise<telux::cv2x::Cv2xStatus> statusPromise_;
-    std::atomic<bool> promiseSet_{false};
-    std::mutex cv2xStatusMutex_;
+    std::condition_variable cv_;
+    std::mutex mtx_;
     telux::cv2x::Cv2xStatus cv2xStatus_;
     int radioVerbosity = 0;
 };
 
+void CommonCallback::onResponse(ErrorCode error) {
+    std::unique_lock<std::mutex> cvLock(cbMtx_);
+    cbRecvd_ = true;
+    err_ = error;
+    cbCv_.notify_all();
+}
+
+ErrorCode CommonCallback::getResponse() {
+    std::unique_lock<std::mutex> cvLock(cbMtx_);
+    while (not cbRecvd_) {
+        cbCv_.wait(cvLock);
+    }
+    return err_;
+}
 
 void RadioInterface::set_radio_verbosity(int value) {
     if(value)
@@ -205,63 +229,37 @@ map<Cv2xStatusType, string> RadioInterface:: gCv2xStatusToString = {
     {Cv2xStatusType::UNKNOWN, "UNKNOWN"},
 };
 
-void RadioInterface::resetCallbackPromise() {
-    this->gCallbackPromise = promise<ErrorCode>();
-};
-
-void RadioInterface::updateSrcL2InfoCallback(ErrorCode error){
-    if(ErrorCode::SUCCESS == error) {
-        //successful l2 src address update
-    }else{
-        printf("Error in l2 src address update\n");
-    }
-    this->gCallbackPromise.set_value(error);
-};
-
 bool RadioInterface::updateSrcL2(){
-    bool success = false;
-    auto respCb = [&](ErrorCode error) {
-            updateSrcL2InfoCallback(error);
+    auto cb = std::make_shared<CommonCallback>();
+    auto respCb = [&cb](ErrorCode error) {
+        cb->onResponse(error);
     };
 
     auto cv2xRadio = getCv2xRadio();
     if(cv2xRadio and Status::SUCCESS == cv2xRadio->updateSrcL2Info(respCb)){
-        if(ErrorCode::SUCCESS == gCallbackPromise.get_future().get()){
-            success = true;
+        if(ErrorCode::SUCCESS == cb->getResponse()){
+            return true;
         }
     }
 
-    // successful l2 address change if reach here
-    this->resetCallbackPromise();
-    return success;
-};
-
-
-void RadioInterface::cv2xStatusCallback(Cv2xStatusEx status, ErrorCode error) {
-    if (ErrorCode::SUCCESS == error) {
-        this->gCv2xStatus = status;
-    }
-    this->gCallbackPromise.set_value(error);
+    return false;
 };
 
 Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
-
     Cv2xStatusType status;
-    auto respCb = [&](Cv2xStatusEx status,
-        ErrorCode error) {
-            cv2xStatusCallback(status, error);
+    auto cb = std::make_shared<CommonCallback>();
+    auto respCb = [&](Cv2xStatusEx status, ErrorCode error) {
+        if (ErrorCode::SUCCESS == error) {
+            this->gCv2xStatus = status;
+        }
+        cb->onResponse(error);
     };
 
     auto cv2xRadioMgr = getCv2xRadioManager();
     if (!cv2xRadioMgr or
-        Status::SUCCESS != cv2xRadioMgr->requestCv2xStatus(respCb)) {
+        Status::SUCCESS != cv2xRadioMgr->requestCv2xStatus(respCb)
+        or ErrorCode::SUCCESS != cb->getResponse()) {
         cerr << "Error : request for C-V2X status failed." << endl;
-        gCv2xStatus.status.rxStatus = Cv2xStatusType::UNKNOWN;
-        gCv2xStatus.status.txStatus = Cv2xStatusType::UNKNOWN;
-    }
-
-    if (ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
-        cerr << "Error : failed to retrieve C-V2X status." << endl;
         gCv2xStatus.status.rxStatus = Cv2xStatusType::UNKNOWN;
         gCv2xStatus.status.txStatus = Cv2xStatusType::UNKNOWN;
     }
@@ -287,16 +285,23 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
         cerr << "C-V2X RX or TX status " << gCv2xStatusToString[status] << endl;
     }
 
-    this->resetCallbackPromise();
     return status;
 }
 
 telux::cv2x::Cv2xStatus RadioInterface::getCurrentStatus() {
-    return cv2xStatusListener_->getCurrentStatus();
+    telux::cv2x::Cv2xStatus status;
+    if (cv2xStatusListener_) {
+        status = cv2xStatusListener_->getCurrentStatus();
+    }
+
+    return status;
 }
 
-void RadioInterface::waitForCv2xToActivate(bool &haltRx) {
-    restartFlow = cv2xStatusListener_->waitForCv2xStatus(Cv2xStatusType::ACTIVE, haltRx);
+int RadioInterface::waitForCv2xToActivate(bool& restartFlow) {
+    if (cv2xStatusListener_) {
+        return cv2xStatusListener_->waitForCv2xStatus(Cv2xStatusType::ACTIVE, restartFlow);
+    }
+    return -1;
 }
 
 bool RadioInterface::ready(TrafficCategory category, RadioType type) {
@@ -432,13 +437,9 @@ int RadioInterface::getV2xIfaceName(TrafficIpType type, string& ifName) {
 }
 
 uint8_t RadioInterface::getCBRValue() {
-    uint8_t cbr = 255;
-    telux::cv2x::Cv2xStatus status;
+    uint8_t cbr = INVALID_CBR_VALUE;
     if (cv2xStatusListener_) {
-        status = cv2xStatusListener_->getCurrentStatus();
-        if (status.cbrValueValid) {
-            cbr = status.cbrValue;
-        }
+        cbr = cv2xStatusListener_->getCurrentCbr();
     }
     return cbr;
 }
@@ -451,26 +452,9 @@ void RadioInterface::enableCsvLog(bool enable) {
     enableCsvLog_ = enable;
 }
 
-void RadioInterface::commonStatusCallback(ErrorCode error) {
-    this->gCallbackPromise.set_value(error);
-}
-
-void RadioInterface::createTcpSocketCallback(std::shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
-    if (ErrorCode::SUCCESS == error) {
-        this->tcpSockInfo = sock;
-    }
-    this->gCallbackPromise.set_value(error);
-}
-
-void RadioInterface::closeTcpSocketCallback(std::shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
-    this->gCallbackPromise.set_value(error);
-}
-
-
 /* set the Global IP addres prefix */
 int RadioInterface::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr,
-    const uint32_t serviceId)
-{
+    const uint32_t serviceId) {
     int ret = 0;
 
     SocketInfo tcpInfo;
@@ -479,66 +463,63 @@ int RadioInterface::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr,
     if (nullptr == cv2xRadio) {
         return -1;
     }
+    auto cb = std::make_shared<CommonCallback>();
     auto respCb = [&](ErrorCode error){
-                commonStatusCallback(error);
+            cb->onResponse(error);
         };
-    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Addr, respCb))
-    {
-        ErrorCode error =  this->gCallbackPromise.get_future().get();
-        if (ErrorCode::SUCCESS == error)
-        {
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Addr, respCb)) {
+        ErrorCode error = cb->getResponse();
+        if (ErrorCode::SUCCESS == error) {
             cout<<"setGlobalIPInfo succeeds." << endl;;
             ret = 0;
-        }else{
+        } else {
             if(rVerbosity)
                 cerr<<"setGlobalIPInfo fails:" << static_cast<int>(error) << endl;;
             ret = -1;
         }
-    } else{
-        if(rVerbosity)
+    } else {
+        if (rVerbosity)
             cerr<<"setGlobalIPInfo sync fails." << endl;
         ret = -1;
     }
-    this->resetCallbackPromise();
 
     /* Create IP unicast flow on port 0 */
     tcpInfo.serviceId = serviceId;
     tcpInfo.localPort = 0;
     eventInfo.isUnicast = true;
-    auto sockRespCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error){
-                createTcpSocketCallback(sock, error);
+    auto sockRespCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
+                if (ErrorCode::SUCCESS == error) {
+                    this->tcpSockInfo = sock;
+                }
+                cb->onResponse(error);
         };
     if (Status::SUCCESS ==
-        cv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, sockRespCb))
-    {
-        auto error = this->gCallbackPromise.get_future().get();
-        if (ErrorCode::SUCCESS == error)
-        {
+        cv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, sockRespCb)) {
+        auto error = cb->getResponse();
+        if (ErrorCode::SUCCESS == error) {
             if(rVerbosity)
                 cout<<"createCv2xTcpSocket succeeds." << endl;;
             ret = 0;
-        }else{
-            if(rVerbosity)
+        } else {
+            if (rVerbosity)
                 cerr<<"createCv2xTcpSocket fails: ." <<
                     static_cast<int>(error) << endl;;
             ret = -1;
         }
     } else {
-        if(rVerbosity)
+        if (rVerbosity)
             cerr << "createCv2xTcpSocket sync fails" << endl;
         ret = -1;
     }
 
-    this->resetCallbackPromise();
-    if(rVerbosity)
+    if (rVerbosity)
         cout << "Global IP Info Set" << endl;
 
     return ret;
 }
 
 //For RSU use case, clear Global IP info and unregister catch all flow
-int RadioInterface::clearGlobalIPInfo(void)
-{
+int RadioInterface::clearGlobalIPInfo(void) {
     if (not this->tcpSockInfo) {
         return 0;
     }
@@ -549,13 +530,13 @@ int RadioInterface::clearGlobalIPInfo(void)
     if (nullptr == cv2xRadio) {
         return -1;
     }
+    auto cb = std::make_shared<CommonCallback>();
     auto closeSockCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
-        closeTcpSocketCallback(sock, error);
+        cb->onResponse(error);
     };
-    resetCallbackPromise();
     if (Status::SUCCESS !=
         cv2xRadio->closeCv2xTcpSocket(tcpSockInfo, closeSockCb) ||
-        ErrorCode::SUCCESS != gCallbackPromise.get_future().get()) {
+        ErrorCode::SUCCESS != cb->getResponse()) {
         if(rVerbosity)
             cerr << "close tcp socket err or already closed" << endl;
         ret = -1;
@@ -563,75 +544,68 @@ int RadioInterface::clearGlobalIPInfo(void)
         this->tcpSockInfo = nullptr;
     }
 
-    resetCallbackPromise();
     if (ret)
         return ret;
 
     ipv6Prefix.prefixLen = 64;
     memset(&ipv6Prefix.ipv6Addr[0], 0, CV2X_IPV6_ADDR_ARRAY_LEN);
     auto respCb = [&](ErrorCode error) {
-        commonStatusCallback(error);
+        cb->onResponse(error);
     };
-    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Prefix, respCb))
-    {
-        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
-        {
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Prefix, respCb)) {
+        if (ErrorCode::SUCCESS == cb->getResponse()) {
             if(rVerbosity)
                 cout<<"setGlobalIPInfo succeeds." << endl;;
             ret = 0;
-        }else{
+        } else {
             if(rVerbosity)
                 cerr<<"setGlobalIPInfo fails." << endl;;
             ret = -1;
         }
-    } else{
-        if(rVerbosity)
+    } else {
+        if (rVerbosity)
             cout<<"setGlobalIPInfo sync fails." << endl;
         ret = -1;
     }
 
-    resetCallbackPromise();
     if(rVerbosity)
         cout << "Global IP session stopped" << endl;
 
     return ret;
 }
 
-int RadioInterface::setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr)
-{
+int RadioInterface::setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr) {
     int ret = 0;
     auto cv2xRadio = this->getCv2xRadio();
     if (nullptr == cv2xRadio) {
         return -1;
     }
+    auto cb = std::make_shared<CommonCallback>();
     auto respCb = [&](ErrorCode error){
-                commonStatusCallback(error);
-        };
+                cb->onResponse(error);
+            };
 
-    if (Status::SUCCESS == cv2xRadio->setGlobalIPUnicastRoutingInfo(destL2Addr, respCb))
-    {
-        if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get())
+    if (Status::SUCCESS == cv2xRadio->setGlobalIPUnicastRoutingInfo(destL2Addr, respCb)) {
+        if (ErrorCode::SUCCESS == cb->getResponse())
         {
             ret = 0;
             if(rVerbosity)
                 cout<<"setGlobalIPUnicastRoutingInfo succeeds." << endl;;
-        }else{
+        } else {
             if(rVerbosity)
                 cerr<<"setGlobalIPUnicastRoutingInfo fails." << endl;;
             ret = -1;
         }
-    }else{
+    } else {
         if(rVerbosity)
             cerr<< "setGlobalIPUnicastRoutingInfo sync fails." << endl;
         ret = -1;
     }
-    this->resetCallbackPromise();
 
     return ret;
 }
 
-int RadioInterface::onWraTimedout(void)
-{
+int RadioInterface::onWraTimedout(void) {
     return clearGlobalIPInfo();
 }
 
@@ -649,4 +623,17 @@ shared_ptr<ICv2xRadio> RadioInterface::getCv2xRadio() {
         return nullptr;
     }
     return cv2xRadio_;
+}
+
+void RadioInterface::prepareForExit() {
+    // deregister listeners
+    if (cv2xRadioManager_ and cv2xStatusListener_) {
+        cv2xRadioManager_->deregisterListener(cv2xStatusListener_);
+        // stop waiting for status change
+        cv2xStatusListener_->deinit();
+    }
+
+    if (cv2xRadio_ and radioListener_) {
+        cv2xRadio_->deregisterListener(radioListener_);
+    }
 }

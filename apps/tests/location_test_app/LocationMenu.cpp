@@ -2053,7 +2053,7 @@ void LocationMenu::enableDataInfoLogs() {
 }
 void LocationMenu::dgnssInject(std::vector<std::string> userInput) {
    auto dgnssMenu = std::make_shared<DgnssMenu>("Dgnss Menu", "location> ");
-   if (dgnssMenu->init() == -1) {
+   if (dgnssMenu->init(locationManager_) == -1) {
        std::cout << "ERROR - Subsystem not ready, Exiting !!!" << std::endl;
        return;
    }

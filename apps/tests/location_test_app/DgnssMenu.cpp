@@ -61,8 +61,23 @@
 uint8_t truncBuffer[RESP_BUFFER_SIZE];
 bool append = false;
 int appendOffset = 0;
+int nmeaGGAInterval = 0;
+std::chrono::time_point<std::chrono::system_clock> lastNmeaSentTime;
 
 using namespace telux::common;
+
+void NmeaInfoListener::onGnssNmeaInfo(uint64_t timestamp, const std::string &nmea) {
+    std::string s("GNGGA");
+    if (nmea.find(s, 0) != std::string::npos) {
+        std::cout << " Nmea String : " << nmea << std::endl;
+        std::lock_guard<std::mutex> lk(m_);
+        lastNmeaGGA_.assign(nmea);
+    }
+}
+void NmeaInfoListener::getNmeaStr(std::string &nmea) {
+    std::lock_guard<std::mutex> lk(m_);
+    nmea.assign(lastNmeaGGA_);
+}
 
 DgnssMenu::DgnssMenu(std::string appName, std::string cursor)
    : ConsoleApp(appName, cursor) {
@@ -116,7 +131,7 @@ telux::common::Status DgnssMenu::initDgnssManager(std::shared_ptr<IDgnssManager>
    return telux::common::Status::SUCCESS;
 }
 
-int DgnssMenu::init() {
+int DgnssMenu::init(std::shared_ptr<ILocationManager> locationManager) {
    std::shared_ptr<ConsoleAppCommand> injectFromFileCommand
       = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand(
          "1", "Inject_From_File", {},
@@ -138,8 +153,11 @@ int DgnssMenu::init() {
    if (status != telux::common::Status::SUCCESS) {
        rc = -1;
    }
+   locationManager_ = locationManager;
+
    return rc;
 }
+
 int DgnssMenu::waitforSock(int fd) {
     fd_set rfds;
     struct timeval tv;
@@ -176,6 +194,58 @@ int DgnssMenu::waitforSock(int fd) {
     return ret;
 }
 
+int DgnssMenu::startNmeaReport(uint32_t interval) {
+    std::promise<telux::common::Status> prom;
+    if (locationManager_ == nullptr) {
+        std::cout << "locationManager nullptr" << std::endl;
+        return -1;
+    }
+    nmeaInfoListener_ = std::make_shared<NmeaInfoListener>();
+    locationManager_->registerListenerEx(nmeaInfoListener_);
+
+    GnssReportTypeMask reportMask = NMEA;
+    auto responseCb = [&](ErrorCode code) {
+        if (code != ErrorCode::SUCCESS)
+            prom.set_value(telux::common::Status::FAILED);
+        else
+            prom.set_value(telux::common::Status::SUCCESS);
+    };
+    auto res = locationManager_->startDetailedReports(
+                  interval, responseCb, reportMask);
+    if (res != Status::SUCCESS) {
+        std::cout << "start detailed report sync failure" << std::endl;
+        return -1;
+    }
+
+    telux::common::Status status = prom.get_future().get();
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Failed to start detailed report" << std::endl;
+        return -1;
+    } else {
+        std::cout << "pos report started" << std::endl;
+    }
+    return 0;
+}
+int DgnssMenu::sendGGAString(void) {
+    int ret;
+    std::string nmeaGGA;
+    nmeaInfoListener_->getNmeaStr(nmeaGGA);
+    if (not nmeaGGA.empty()) {
+        std::cout << "Send NMEA: " << nmeaGGA << std::endl;
+        ret = send(ntcSocketFd_, nmeaGGA.c_str(), nmeaGGA.size(), 0);
+        if (ret < 0) {
+            std::cout << "failed to send GGA string to server" << std::endl;
+        } else {
+           lastNmeaSentTime = std::chrono::system_clock::now();
+        }
+    } else {
+        ret = -1;
+        std::cout << "No NMEA GGA string to send" << std::endl;
+    }
+
+    return ret;
+}
+
 int DgnssMenu::processRtcmFromServer(void) {
    int i, length;
    uint8_t buffer[RESP_BUFFER_SIZE];
@@ -187,6 +257,26 @@ int DgnssMenu::processRtcmFromServer(void) {
 
    if (ret <= 0) {
        return ret;
+   }
+   if (nmeaGGAInterval) {
+       auto TimeNow = std::chrono::system_clock::now();
+       auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(TimeNow -
+               lastNmeaSentTime);
+       if (static_cast<int>(elapsed_ms.count()) >= nmeaGGAInterval) {
+           ret = sendGGAString();
+       }
+
+   }
+
+   ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
+   if (ret < 0) {
+      std::cout << "ReadRtcmPacket: recv failed " << ret << std::endl;
+      return ret;
+   }
+
+   if (ret < 0) {
+      std::cout << "ReadRtcmPacket: recv failed " << ret << std::endl;
+      return ret;
    }
 
    ret = recv(ntcSocketFd_, buffer, sizeof(buffer), 0);
@@ -381,6 +471,20 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
 
       // parse the config file
       ConfigParser config(configFile);
+      nmeaGGAInterval = 0;
+      try {
+          nmeaGGAInterval = std::stoi(config.getValue("nmeaGGAInterval"));
+      } catch (std::invalid_argument const& ex) {
+          //no nmeaGGAInterval specified in config file.
+      } catch (std::out_of_range const& ex) {
+          std::cout << "Specified nmeaGGAInterval is out of range" << std::endl;
+      }
+      if (nmeaGGAInterval) {
+          if (startNmeaReport(nmeaGGAInterval) < 0) {
+              std::cout << "Failed to start nmea report" << std::endl;
+              return;
+          }
+      }
 
       while(stop_ == false) {
           ntcSocketFd_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -415,9 +519,14 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
           ret = send(ntcSocketFd_, con_request.c_str(), con_request.size(), 0);
           std::cout << "Sending request: " << con_request << std::endl;
           if (ret < 0) {
+              close(ntcSocketFd_);
               std::cout << "send failed: " << ret << std::endl;
               return;
           }
+          if (nmeaGGAInterval) {
+              ret = sendGGAString();
+          }
+
           // set for nonblocking socket
           flags = fcntl(ntcSocketFd_,F_GETFL,0);
           if (flags < 0) {
@@ -437,6 +546,7 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
           ret = recv(ntcSocketFd_, response, sizeof(response), 0);
           if(ret < 0 ) {
               std::cout << "recv failed" << std::endl;
+              close(ntcSocketFd_);
               return;
           } else if (ret > 0 && !strncmp(ACK_STRING, (char*)response, 12)) {
               // register status listener

@@ -75,8 +75,7 @@
 #include <cerrno>
 
 RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory category,
-                const TrafficIpType trafficType, const uint16_t port, const uint32_t serviceId,
-                const bool withEventFlow, const uint16_t eventFlowPort){
+                const TrafficIpType trafficType, const uint16_t port, const uint32_t serviceId) {
 
     if (!ready(category, RadioType::TX)) {
         cout << "Radio Checks on Sps Transmit Event Fail\n";
@@ -89,14 +88,18 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
     if (nullptr == cv2xRadio) {
         return;
     }
+    auto cb = std::make_shared<CommonCallback>();
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txSpsFlow,
                             std::shared_ptr<ICv2xTxFlow> txEventFlow,
                             ErrorCode spsError, ErrorCode eventError){
-                                spsFlowCallbackOnCreate(txSpsFlow,txEventFlow,spsError,eventError);
+                                if (ErrorCode::SUCCESS == spsError) {
+                                    this->flow = txSpsFlow;
+                                }
+                                cb->onResponse(spsError);
                             };
     if(Status::SUCCESS == cv2xRadio->createTxSpsFlow(trafficType, serviceId, spsInfo,
-                port, withEventFlow, eventFlowPort, respCallback)){
-        if(ErrorCode::SUCCESS == gCallbackPromise.get_future().get()){
+                port, false, 0, respCallback)){
+        if(ErrorCode::SUCCESS == cb->getResponse()){
             cout<<"Sps flow created succesfully sid=" << serviceId << endl;
 
             spsFlowInfo = std::make_shared<SpsFlowInfo>();
@@ -115,7 +118,6 @@ RadioTransmit::RadioTransmit(const SpsFlowInfo spsInfo, const TrafficCategory ca
         cout << "Sps Flow creation fails\n";
         //return static_cast<uint8_t>(Status::FAILED);
     }
-    this->resetCallbackPromise();
 }
 
 RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
@@ -133,27 +135,25 @@ RadioTransmit::RadioTransmit(const EventFlowInfo eventInfo,
     if (nullptr == cv2xRadio) {
         return;
     }
+    auto cb = std::make_shared<CommonCallback>();
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txEventFlow,
                             ErrorCode eventError){
-                                eventFlowCallbackOnCreate(txEventFlow,eventError);
+                                if (ErrorCode::SUCCESS == eventError) {
+                                    this->flow = txEventFlow;
+                                }
+                                cb->onResponse(eventError);
                             };
-    this->resetCallbackPromise();
     EventFlowInfo testEventInfo;
     if(Status::SUCCESS == cv2xRadio->createTxEventFlow(trafficType, serviceId, testEventInfo,
                 port, respCallback)){
-        if(ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
+        if(ErrorCode::SUCCESS == cb->getResponse()) {
             cout<<"Event Flow created succesfully\n";
-            //return static_cast<uint8_t>(Status::SUCCESS);
-        }else{
+        } else {
             cout<<"Event Flow creation fails, future.get\n";
-            //return static_cast<uint8_t>(Status::FAILED);
         }
-    }else{
-            cout<<"Event Flow creation fails\n";
-            //return static_cast<uint8_t>(Status::FAILED);
+    } else {
+        cout<<"Event Flow creation fails\n";
     }
-    this->resetCallbackPromise();
-
 }
 
 RadioTransmit::RadioTransmit(const RadioOpt radioOpt, const string ipv4_dst, const uint16_t port) {
@@ -301,64 +301,33 @@ uint8_t RadioTransmit::transmit(const char* buf, const uint16_t bufLen, Priority
     return resp;
 }
 
-
-
-void RadioTransmit::spsFlowCallbackOnCreate(shared_ptr<ICv2xTxFlow> txSpsFlow,
-    shared_ptr<ICv2xTxFlow> unusedFlow,ErrorCode spsError,ErrorCode unusedError) {
-    if (ErrorCode::SUCCESS == spsError) {
-        this->flow = txSpsFlow;
-    }
-    this->gCallbackPromise.set_value(spsError);
-}
-
-void RadioTransmit::eventFlowCallbackOnCreate(
-    shared_ptr<ICv2xTxFlow> txEventFlow,
-    ErrorCode eventError) {
-    if (ErrorCode::SUCCESS == eventError) {
-        this->flow = txEventFlow;
-    }
-    std::cout << "callback error=" << static_cast<int>(eventError) << std::endl;
-    this->gCallbackPromise.set_value(eventError);
-}
-
-void RadioTransmit::spsFlowCallbackOnChanges(shared_ptr<ICv2xTxFlow> txEventFlow,
-        ErrorCode eventError) {
-    if (ErrorCode::SUCCESS == eventError) {
-        this->flow = txEventFlow;
-    }
-    this->gCallbackPromise.set_value(eventError);
-}
-
-
 uint8_t RadioTransmit::updateSpsFlow(const SpsFlowInfo spsInfo) {
     auto resp = -1;
     auto cv2xRadio = this->getCv2xRadio();
     if (nullptr == cv2xRadio) {
         return -1;
     }
+    auto cb = std::make_shared<CommonCallback>();
     auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> txSpsFlow,
                             ErrorCode spsError){
-                                spsFlowCallbackOnChanges(txSpsFlow, spsError);
+                                if (ErrorCode::SUCCESS == spsError) {
+                                    this->flow = txSpsFlow;
+                                }
+                                cb->onResponse(spsError);
                             };
     if(Status::SUCCESS == cv2xRadio->changeSpsFlowInfo(this->flow, spsInfo, respCallback)){
-        if(ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
+        if(ErrorCode::SUCCESS == cb->getResponse()) {
             resp = static_cast<uint8_t>(Status::SUCCESS);
             if (spsFlowInfo) {
                 memcpy(spsFlowInfo.get(), &spsInfo, sizeof(SpsFlowInfo));
             }
-        }else{
+        } else {
             resp =  static_cast<uint8_t>(Status::FAILED);
         }
-    }else{
+    } else {
         resp =  static_cast<uint8_t>(Status::FAILED);
     }
-    this->resetCallbackPromise();
     return resp;
-}
-
-
-void RadioTransmit::closeCallback(shared_ptr<ICv2xTxFlow> flow, ErrorCode error) {
-    this->gCallbackPromise.set_value(error);
 }
 
 uint8_t RadioTransmit::closeFlow() {
@@ -383,12 +352,13 @@ uint8_t RadioTransmit::closeFlow() {
         if (nullptr == cv2xRadio) {
             resp = static_cast<uint8_t>(Status::FAILED);
         } else {
+            auto cb = std::make_shared<CommonCallback>();
             auto respCallback = [&](std::shared_ptr<ICv2xTxFlow> flow,
-                                    ErrorCode eventError){
-                                        closeCallback(flow, eventError);
+                                    ErrorCode error){
+                                        cb->onResponse(error);
                                     };
             if(Status::SUCCESS == cv2xRadio->closeTxFlow(this->flow, respCallback)){
-                if (ErrorCode::SUCCESS == this->gCallbackPromise.get_future().get()){
+                if (ErrorCode::SUCCESS == cb->getResponse()){
                     resp = static_cast<uint8_t>(Status::SUCCESS);
                     if (spsFlowInfo) {
                         memset(spsFlowInfo.get(), 0, sizeof(SpsFlowInfo));
@@ -400,7 +370,6 @@ uint8_t RadioTransmit::closeFlow() {
             }else{
                     resp = static_cast<uint8_t>(Status::FAILED);
             }
-            this->resetCallbackPromise();
         }
         this->flow = nullptr;
         cout << "Closing flow of type: " << flowType << "\n";

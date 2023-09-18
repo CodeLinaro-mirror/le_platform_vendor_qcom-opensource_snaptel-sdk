@@ -114,31 +114,37 @@ std::condition_variable gTerminateCv;
 bool stopThread = false;
 bool dump_raw = false;
 bool print_rv = true;
-std::condition_variable cv;
+std::condition_variable statusCv;
 bool haltRx = false;
 std::mutex cv2xStatusMtx;
 bool simMode = false;
 
+// stop threads due to error
+void stopThreads() {
+    std::unique_lock<std::mutex> lk(gTerminateMtx);
+    if (not stopThread) {
+        cout << "stop threads" << endl;
+        stopThread = true;
+
+        if (application) {
+            application->prepareForExit();
+             if(application->configuration.enableCongCtrl &&
+                    application->congestionControlManager){
+                std::cout << "Deinitializing congestion control library\n";
+                application->congestionControlManager->stopCongestionControl();
+            }
+            if (application->qMon) {
+                application->qMon->stop();
+            }
+        }
+        gTerminateCv.notify_all();
+    }
+}
+
 // catch specified signals and gracefully shut down program
 void signalHandler(int signum) {
     fprintf(stderr, "Interrupt signal (%d) received.\n", signum);
-    if (signum == SIGSEGV || signum == SIGABRT) {
-        if(application->ldm != nullptr)
-            application->ldm->stopGb();
-        fprintf(stderr, "Attempting to close all flows and subscriptions\n");
-        application->closeAllRadio();
-    }
-
-    application->prepareForExit();
-    std::unique_lock<std::mutex> lk(gTerminateMtx);
-    stopThread = true;
-     if(application->configuration.enableCongCtrl &&
-            application->congestionControlManager){
-        std::cout << "Deinitializing congestion control library\n";
-        application->congestionControlManager->stopCongestionControl();
-    }
-    gTerminateCv.notify_all();
-    application->qMon->stop();
+    stopThreads();
 }
 
 // allow the main thread to wait on the threads to join
@@ -317,22 +323,33 @@ void receive(MessageType msgType, int index) {
     int ret;
 
     gettimeofday(&application->startRxIntervalTime, NULL);
-    while (!stopThread)
-    {
-        if(!simMode){
+    while (!stopThread) {
+        if(!simMode) {
             //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
             sem_wait(&cnt_sem);
             //Check CV2X RX status when only RX is enabled
             if (!application->configuration.enableTxAlways) {
-                application->radioReceives[index].waitForCv2xToActivate(haltRx);
-                if (application->radioReceives[index].restartFlow) {
-                    application->clearRadioInstance();
-                    application->setup(msgType);
+                bool restartFlow = false;
+                if (application->radioReceives[index].waitForCv2xToActivate(restartFlow)) {
+                    // break out if return fail
+                    break;
                 }
-            }
-            else {// if TX is also enabled check the CV2X status in TX only
+                if (restartFlow) {
+                    application->clearRadioInstance();
+                    // if setup fail, stop threads and exit
+                    if (application->setup(msgType)) {
+                        sem_post(&cnt_sem);
+                        break;
+                    }
+                }
+            } else {
+                // if TX is also enabled check the CV2X status in TX only
                 std::unique_lock<std::mutex> lk(cv2xStatusMtx);
-                cv.wait(lk, []{return (!haltRx);});
+                statusCv.wait(lk, []{return (!haltRx or stopThread);});
+                if (stopThread) {
+                    sem_post(&cnt_sem);
+                    break;
+                }
             }
             sem_post(&cnt_sem);
         }
@@ -357,9 +374,13 @@ void receive(MessageType msgType, int index) {
         }
         sem_post(&cnt_sem);
     }
+
     if (application->configuration.driverVerbosity) {
         printf("Thread (%08x) closing\n", tid);
     }
+
+    // notify other threads to stop
+    stopThreads();
 
     if(application->configuration.enableVerifStatLog){
         application->writeVerifLogging();
@@ -679,31 +700,48 @@ void transmit(MessageType msgType) {
     gettimeofday(&currTime, NULL);
     time_t startTime = currTime.tv_sec;
     // main transmitting code
-    while (!stopThread){
+    while (!stopThread) {
         if (application->pendingTillNoEmergency()) {
 
             if(!simMode){
                 //Check if CV2X is active, if not wait for CV2X Status to be ACTIVE
-                //Check CV2X TX Status when TX is enabled.
-                // [TODO] The multiple tx/rx threads should be synced in a proper way to avoid crash
-                application->spsTransmits[0].waitForCv2xToActivate(haltRx);
-                if (application->spsTransmits[0].restartFlow) {
-                    application->clearRadioInstance();
-                    application->setup(msgType);
-                    if(!application->configuration.enableCongCtrl){
-                        close(tx_timer_fd);
-                        tx_timer_fd = start_tx_timer(txInterval);
-                    }
+                auto status = application->spsTransmits[0].getCurrentStatus();
+                if (Cv2xStatusType::ACTIVE != status.txStatus) {
+                    // if both Tx and Rx thread exist, check status in Tx thread
+                    // halt Rx if Tx status is not active because flows may need to restart
                     {
-                        std::lock_guard<std::mutex> lk(cv2xStatusMtx);
-                        haltRx = false;
+                        std::unique_lock<std::mutex> lk(cv2xStatusMtx);
+                        haltRx = true;
                     }
-                    cv.notify_all();
-                    // need to re-set the WSA Tx after the radio instance is re-created
-                    if (MessageType::WSA == msgType
-                        and prepareWsaTx() < 0) {
-                        cerr << "Failed to prepare WSA Tx" << endl;;
+                    bool restartFlow = false;
+                    if (application->spsTransmits[0].waitForCv2xToActivate(restartFlow)) {
+                        // break out if return fail
                         break;
+                    }
+                    if (restartFlow) {
+                        application->clearRadioInstance();
+                        // if setup fail, stop threads and exit
+                        if (application->setup(msgType)) {
+                            break;
+                        }
+
+                        {
+                            // notify rx thread to resume
+                            std::lock_guard<std::mutex> lk(cv2xStatusMtx);
+                            haltRx = false;
+                            statusCv.notify_all();
+                        }
+
+                        if(!application->configuration.enableCongCtrl){
+                            close(tx_timer_fd);
+                            tx_timer_fd = start_tx_timer(txInterval);
+                        }
+                        // need to re-set the WSA Tx after the radio instance is re-created
+                        if (MessageType::WSA == msgType
+                            and prepareWsaTx() < 0) {
+                            cerr << "Failed to prepare WSA Tx" << endl;;
+                            break;
+                        }
                     }
                 }
             }
@@ -735,6 +773,13 @@ void transmit(MessageType msgType) {
         }
     }
     printf("Sending thread stopped\n");
+
+    // notify other threads to stop
+    stopThreads();
+
+    // notify rx thread in case it's waiting for status notification
+    statusCv.notify_all();
+
     if(msgType == MessageType::WSA) {
         clearWsaTxSettings();
     }
@@ -1374,7 +1419,7 @@ int setup(const bool tx, const bool rx,
 }
 
 int main(int argc, char** argv) {
-    std::vector<std::string> groups{"system", "diag", "radio", "locclient"};
+    std::vector<std::string> groups{"system", "diag", "radio", "locclient", "mvm"};
     if (-1 == Utils::setSupplementaryGroups(groups)){
         cerr << "Adding supplementary group failed!" << std::endl;
         return -1;
@@ -1465,9 +1510,9 @@ int main(int argc, char** argv) {
 
     joinThreads();
     printf("Deleting application\n");
-    printf("Attempting to close all flows\n");
-    if(!rxSim && !txSim)
+    if(!rxSim && !txSim && application) {
         application->closeAllRadio();
+    }
 
     return 0;
 }

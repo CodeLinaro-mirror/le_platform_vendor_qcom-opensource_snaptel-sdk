@@ -110,6 +110,7 @@ using telux::cv2x::EventFlowInfo;
 using telux::cv2x::L2FilterInfo;
 
 class Cv2xStatusListener;
+class CommonCallback;
 
 typedef void (*v2x_src_l2_addr_update)(uint32_t newAddr);
 
@@ -126,6 +127,18 @@ typedef struct RadioOpt {
     string ipv4_src;
 } RadioOpt_t;
 
+class CommonCallback {
+public:
+    void onResponse(ErrorCode error);
+    ErrorCode getResponse();
+
+private:
+    std::mutex cbMtx_;
+    std::condition_variable cbCv_;
+    bool cbRecvd_ = false;
+    ErrorCode err_ = ErrorCode::GENERIC_FAILURE;
+};
+
 class RadioInterface {
 
 private:
@@ -140,19 +153,6 @@ private:
 
     //variable to store cv2x status listener
     std::shared_ptr<Cv2xStatusListener> cv2xStatusListener_;
-
-    /**
-     * Method that the SDK uses for callbacks.
-     * @param status a Cv2xStatus.
-     * @param errorCode a ErrorCode.
-     * @see Cv2xStatus
-     */
-    void cv2xStatusCallback(Cv2xStatusEx status, ErrorCode error);
-    void updateSrcL2InfoCallback(ErrorCode error);
-
-    void createTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
-    void closeTcpSocketCallback(shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error);
-    void commonStatusCallback(ErrorCode error);
     std::shared_ptr<ICv2xTxRxSocket>tcpSockInfo = nullptr;
 
     /*
@@ -170,11 +170,6 @@ protected:
     bool enableCsvLog_ = false;
 
 public:
-
-    /*
-    * shared_ptr to the singleton radio manager of the SDK.
-    */
-    promise<ErrorCode> gCallbackPromise = promise<ErrorCode>();
 
     /*
     * A Cv2xStatus that holds the radio status information.
@@ -195,12 +190,6 @@ public:
      * Method to get V2X network interface name according to the traffic type.
      */
     int getV2xIfaceName(TrafficIpType type, string& ifName);
-
-    /**
-     * Method that clears the value in gCallbackPromise.
-     * @see Cv2xStatus.
-     */
-    void resetCallbackPromise(void);
 
     /**
     * Non-blocking method that requests and returns TX/RX radio status.
@@ -226,15 +215,19 @@ public:
     void set_radio_verbosity(int value);
     int rVerbosity = 0;
     /**
-     * @brief Register a listener for cv2x status change and wait if cv2x not active
-     * @param type
-     * @return true
-     * @return false
+     * @brief Wait for cv2x status to be active
+     * @param bool restartFlow indicate whether need to restart flows
+     * @return 0 if wait for cv2x active success
+     * @return -1 if error occurs
      */
-    void waitForCv2xToActivate(bool &haltRx);
-    bool restartFlow;
+    int waitForCv2xToActivate(bool& restartFlow);
 
     telux::cv2x::Cv2xStatus getCurrentStatus();
+
+    /**
+     * @brief prepare for exit
+     */
+    void prepareForExit();
 
     /**
     * Method that requests src L2 address update.

@@ -130,6 +130,7 @@ CardServicesMenu::~CardServicesMenu() {
    myOpenLogicalChannelCb_ = nullptr;
    myTransmitApduCb_ = nullptr;
    myCloseLogicalChannelCb_ = nullptr;
+   cardManager_ = nullptr;
 }
 
 bool CardServicesMenu::init() {
@@ -159,10 +160,11 @@ bool CardServicesMenu::init() {
    if (cardMgrStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
       endTime = std::chrono::steady_clock::now();
       std::chrono::duration<double> elapsedTime = endTime - startTime;
-      std::cout << "Elapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
+      std::cout << "\nElapsed Time for Subsystems to ready : " << elapsedTime.count() << "s\n"
                 << std::endl;
+      std::cout << "Card Manager subsystem is ready \n";
    } else {
-      std::cout << "ERROR - Unable to initialize Call Manager subSystem" << std::endl;
+      std::cout << "ERROR - Unable to initialize Card Manager subSystem" << std::endl;
       return false;
    }
 

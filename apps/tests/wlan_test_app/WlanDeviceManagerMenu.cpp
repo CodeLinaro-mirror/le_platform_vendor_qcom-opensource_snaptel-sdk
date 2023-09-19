@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -98,9 +98,22 @@ bool WlanDeviceManagerMenu::init() {
         std::shared_ptr<ConsoleAppCommand> getStatus
             = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("4", "get_status", {},
                 std::bind(&WlanDeviceManagerMenu::getStatus, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setActiveCountry
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("5", "set_active_country", {},
+                std::bind(&WlanDeviceManagerMenu::setActiveCountry, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getRegulatoryParams
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("6", "get_regulatory_params",
+            {}, std::bind(&WlanDeviceManagerMenu::getRegulatoryParams, this,
+            std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setTxPower
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("7", "set_tx_power", {},
+                std::bind(&WlanDeviceManagerMenu::setTxPower, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getTxPower
+            = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("8", "get_tx_power", {},
+                std::bind(&WlanDeviceManagerMenu::getTxPower, this, std::placeholders::_1)));
 
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {
-            enableWlan, setMode, getConfig, getStatus};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {enableWlan, setMode,
+            getConfig, getStatus, setActiveCountry, getRegulatoryParams, setTxPower, getTxPower};
         addCommands(commandsList);
     }
     ConsoleApp::displayMenu();
@@ -193,6 +206,73 @@ void WlanDeviceManagerMenu::getStatus(std::vector<std::string> userInput) {
         }
     }
 }
+
+void WlanDeviceManagerMenu::setActiveCountry(std::vector<std::string> userInput) {
+    std::cout << "Set Active Country" << std::endl;
+    std::string input("");
+
+    std::cout << "Enter country name: ";
+    std::cin >> input;
+    Utils::validateInput(input);
+    std::cout << std::endl;
+
+    telux::common::ErrorCode retCode = wlanDeviceManager_->setActiveCountry(input);
+    std::cout << "\nSetting Active Country Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanDeviceManagerMenu::getRegulatoryParams(std::vector<std::string> userInput) {
+    std::cout << "Get Regulatory Parameters" << std::endl;
+    telux::wlan::RegulatoryParams regulatoryParams{};
+
+    telux::common::ErrorCode retCode = wlanDeviceManager_->getRegulatoryParams(regulatoryParams);
+    std::cout << "\nGet Regulatory Parameters Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is Successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    if(retCode == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Current Regulatory Parameters: \n";
+        std::cout << "Country: " << regulatoryParams.country << std::endl;
+        std::cout << "Operating Channel: " << regulatoryParams.opChannel << std::endl;
+        for(auto cls:regulatoryParams.opClass) {
+            std::cout << "Operating Class: " << cls << std::endl;
+        }
+        std::cout << "Transmit Power (MilliWatts): " << regulatoryParams.txPowerMw << std::endl;
+    }
+}
+
+void WlanDeviceManagerMenu::setTxPower(std::vector<std::string> userInput) {
+    std::cout << "Set Transmit Power" << std::endl;
+
+    int txPower = 0;
+    std::cout << "Enter Desired Transmit Power (milliwatts): ";
+    std::cin >> txPower;
+    Utils::validateInput(txPower);
+    std::cout << std::endl;
+    telux::common::ErrorCode retCode = wlanDeviceManager_->setTxPower(
+        static_cast<uint32_t>(txPower));
+    std::cout << "\nSet Transmit Power Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS ? " is Successful" : " failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+}
+
+void WlanDeviceManagerMenu::getTxPower(std::vector<std::string> userInput) {
+    std::cout << "Get Current Transmit Power" << std::endl;
+
+    uint32_t txPower = 0;
+    telux::common::ErrorCode retCode = wlanDeviceManager_->getTxPower(txPower);
+    std::cout << "Get Current Transmit Power Response"
+              << (retCode == telux::common::ErrorCode::SUCCESS? " is Successful":" failed")
+              << ". ErrorCode: " << static_cast<int>(retCode)
+              << ", description: " << Utils::getErrorCodeAsString(retCode) << std::endl;
+    if(retCode == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "Current transmit power is " << txPower << std::endl;
+    }
+}
+
 void WlanDeviceManagerMenu::onInitComplete(telux::common::ServiceStatus status) {
     std::lock_guard<std::mutex> lock(mtx_);
     subSystemStatusUpdated_ = true;
@@ -221,4 +301,25 @@ void WlanDeviceManagerMenu::onEnableChanged(bool enable) {
    } else {
        std::cout << "Wlan is disabled" << std::endl;
    }
+}
+
+void WlanDeviceManagerMenu::onTempCrossed(
+   float temperature, telux::wlan::DevicePerfState perfState) {
+   PRINT_NOTIFICATION << " ** Wlan onTempCrossed **\n";
+   std::cout << "Current device temperature: " << temperature << std::endl;
+   std::cout << "Device Performance is ";
+   switch(perfState) {
+    case telux::wlan::DevicePerfState::FULL:
+        std::cout << "Full" << std::endl;
+        break;
+    case telux::wlan::DevicePerfState::REDUCED:
+        std::cout << "Reduced" << std::endl;
+        break;
+    case telux::wlan::DevicePerfState::SHUTDOWN:
+        std::cout << "Shutdown" << std::endl;
+        break;
+    default:
+        std::cout << "Unkown" << std::endl;
+        break;
+   };
 }

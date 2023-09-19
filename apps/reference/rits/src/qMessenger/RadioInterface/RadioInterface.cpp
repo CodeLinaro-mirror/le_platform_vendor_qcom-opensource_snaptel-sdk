@@ -76,6 +76,8 @@
 #include <iterator>
 #include "RadioInterface.h"
 
+shared_ptr<ICv2xRadioManager> RadioInterface::cv2xRadioManager_ = nullptr;
+
 class Cv2xRadioListener : public ICv2xRadioListener {
 public:
     virtual void onL2AddrChanged(uint32_t newL2Addr) {
@@ -222,7 +224,8 @@ bool RadioInterface::updateSrcL2(){
             updateSrcL2InfoCallback(error);
     };
 
-    if(Status::SUCCESS == cv2xRadio->updateSrcL2Info(respCb)){
+    auto cv2xRadio = getCv2xRadio();
+    if(cv2xRadio and Status::SUCCESS == cv2xRadio->updateSrcL2Info(respCb)){
         if(ErrorCode::SUCCESS == gCallbackPromise.get_future().get()){
             success = true;
         }
@@ -249,7 +252,9 @@ Cv2xStatusType RadioInterface::statusCheck(RadioType type) {
             cv2xStatusCallback(status, error);
     };
 
-    if (Status::SUCCESS != this->cv2xRadioManager->requestCv2xStatus(respCb)) {
+    auto cv2xRadioMgr = getCv2xRadioManager();
+    if (!cv2xRadioMgr or
+        Status::SUCCESS != cv2xRadioMgr->requestCv2xStatus(respCb)) {
         cerr << "Error : request for C-V2X status failed." << endl;
         gCv2xStatus.status.rxStatus = Cv2xStatusType::UNKNOWN;
         gCv2xStatus.status.txStatus = Cv2xStatusType::UNKNOWN;
@@ -307,23 +312,28 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
         cv.notify_all();
     };
 
-    auto &cv2xFactory = Cv2xFactory::getInstance();
-    cv2xRadioManager = cv2xFactory.getCv2xRadioManager(statusCb);
-    if (!cv2xRadioManager) {
-        std::cout << "Fail to get cv2xRadioMgr" << std::endl;
-        return false;
-    }
-
-    {
-        std::unique_lock<std::mutex> lck(mtx);
-        cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
-        /* Check that V2X radio is initialized */
-        if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
-            cv2xRadioManagerStatus) {
-            std::cout << "V2X cv2xRadioMgr initialization failed" << std::endl;
+    if (!cv2xRadioManager_) {
+        auto &cv2xFactory = Cv2xFactory::getInstance();
+        auto cv2xRadioMgr = cv2xFactory.getCv2xRadioManager(statusCb);
+        if (!cv2xRadioMgr) {
+            std::cout << "Fail to get cv2xRadioMgr" << std::endl;
             return false;
         }
+
+        {
+            std::unique_lock<std::mutex> lck(mtx);
+            cv.wait(lck, [&] { return cv2xRadioManagerStatusUpdated; });
+            /* Check that V2X radio is initialized */
+            if (telux::common::ServiceStatus::SERVICE_AVAILABLE !=
+                cv2xRadioManagerStatus) {
+                std::cout << "V2X cv2xRadioMgr initialization failed" << std::endl;
+                return false;
+            }
+        }
+
+        cv2xRadioManager_ = cv2xRadioMgr;
     }
+
     // Get C-V2X status and make sure requested radio(Tx or Rx) is enabled
     if (statusCheck(type) != Cv2xStatusType::ACTIVE) {
         return false;
@@ -331,7 +341,7 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
 
     // register listener for cv2x status change
     cv2xStatusListener_ = std::make_shared<Cv2xStatusListener>(gCv2xStatus.status,rVerbosity);
-    if (Status::SUCCESS != cv2xRadioManager->registerListener(cv2xStatusListener_)) {
+    if (Status::SUCCESS != cv2xRadioManager_->registerListener(cv2xStatusListener_)) {
         cerr << "Error : register Cv2x status listener failed!" << endl;
         return false;
     }
@@ -349,7 +359,7 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
     };
 
     // Wait for radio to complete initialization
-    cv2xRadio = cv2xRadioManager->getCv2xRadio(category, cb);
+    auto cv2xRadio = cv2xRadioManager_->getCv2xRadio(category, cb);
     if (not cv2xRadio) {
         cerr << "C-V2X Radio creation failed." << endl;
         return false;
@@ -371,6 +381,8 @@ bool RadioInterface::ready(TrafficCategory category, RadioType type) {
         cerr << "Error : register Cv2x radio listener failed!" << endl;
         return false;
     }
+
+    cv2xRadio_ = cv2xRadio;
 
     return true;
 }
@@ -406,8 +418,8 @@ int RadioInterface::deregisterL2AddrCallback(v2x_src_l2_addr_update cb) {
 }
 
 int RadioInterface::getV2xIfaceName(TrafficIpType type, string& ifName) {
-    if (!cv2xRadio or not cv2xRadio->isReady()) {
-        cerr << "CV2X Radio not ready!" << endl;
+    auto cv2xRadio = getCv2xRadio();
+    if (!cv2xRadio) {
         return -1;
     }
 
@@ -463,7 +475,10 @@ int RadioInterface::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr,
 
     SocketInfo tcpInfo;
     EventFlowInfo eventInfo;
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto cv2xRadio = this->getCv2xRadio();
+    if (nullptr == cv2xRadio) {
+        return -1;
+    }
     auto respCb = [&](ErrorCode error){
                 commonStatusCallback(error);
         };
@@ -530,7 +545,10 @@ int RadioInterface::clearGlobalIPInfo(void)
 
     int ret = 0;
     telux::cv2x::IPv6AddrType ipv6Prefix;
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto cv2xRadio = this->getCv2xRadio();
+    if (nullptr == cv2xRadio) {
+        return -1;
+    }
     auto closeSockCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
         closeTcpSocketCallback(sock, error);
     };
@@ -582,7 +600,10 @@ int RadioInterface::clearGlobalIPInfo(void)
 int RadioInterface::setRoutingInfo(const telux::cv2x::GlobalIPUnicastRoutingInfo &destL2Addr)
 {
     int ret = 0;
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
+    auto cv2xRadio = this->getCv2xRadio();
+    if (nullptr == cv2xRadio) {
+        return -1;
+    }
     auto respCb = [&](ErrorCode error){
                 commonStatusCallback(error);
         };
@@ -614,3 +635,18 @@ int RadioInterface::onWraTimedout(void)
     return clearGlobalIPInfo();
 }
 
+shared_ptr<ICv2xRadioManager> RadioInterface::getCv2xRadioManager() {
+    if (nullptr == cv2xRadioManager_ or not cv2xRadioManager_->isReady()) {
+        cout << "cv2x radio manager is not ready." << endl;
+        return nullptr;
+    }
+    return cv2xRadioManager_;
+}
+
+shared_ptr<ICv2xRadio> RadioInterface::getCv2xRadio() {
+    if (nullptr == cv2xRadio_ or not cv2xRadio_->isReady()) {
+        cout << "cv2x radio is not ready." << endl;
+        return nullptr;
+    }
+    return cv2xRadio_;
+}

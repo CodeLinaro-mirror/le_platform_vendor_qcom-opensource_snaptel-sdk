@@ -58,7 +58,12 @@ CallMenu::CallMenu(std::string appName, std::string cursor)
 }
 
 CallMenu::~CallMenu() {
-   callManager_->removeListener(callListener_);
+   if (callManager_ && callListener_) {
+      callManager_->removeListener(callListener_);
+   }
+   if (callListener_) {
+      callListener_ = nullptr;
+   }
    myDialCallCmdCb_ = nullptr;
    myHangupCb_ = nullptr;
    myHoldCb_ = nullptr;
@@ -70,6 +75,7 @@ CallMenu::~CallMenu() {
    myPlayTonesCb_ = nullptr;
    myStartToneCb_ = nullptr;
    myStopToneCb_ = nullptr;
+   callManager_ = nullptr;
 }
 
 bool CallMenu::init() {
@@ -83,10 +89,11 @@ bool CallMenu::init() {
       std::cout << "ERROR - Failed to get CallManager instance \n";
       return false;
    }
-   std::cout << "CallManager subsystem is not ready " << ", Please wait " << std::endl;
+   std::cout << "CallManager subsystem is not ready" << ", Please wait " << std::endl;
    ServiceStatus callMgrsubSystemStatus = callMgrprom.get_future().get();
 
    if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
+      std::cout << "CallManager subsystem is ready \n";
       myDialCallCmdCb_ = std::make_shared<MyDialCallback>();
       myHangupCb_ = std::make_shared<MyCallCommandCallback>("Hang");
       myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");

@@ -8,7 +8,7 @@ set(INPUT_LIST "telux_common" "telux_data" "telux_loc" "telux_tel" "telux_cv2x"
                "telux_audio" "telux_power" "telux_therm" "telux_config" "v2x_radio" "telux_sensor"
                "telux_platform" "telux_sec" "telux_sec_con" "telux_wlan")
 
-set(SDK_VERSION "1.60.0")
+set(SDK_VERSION "1.61.0")
 #Update SDK Version for release
 
 # Loop to create stub library from the INPUT_LIST

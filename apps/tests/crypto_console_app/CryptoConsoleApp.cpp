@@ -56,7 +56,6 @@ void CryptoConsoleApp::getHexStringAsByteArrayFromUsr(
     std::size_t idx = 0;
     std::size_t byteArraySize = 0;
     std::string usrInput = "";
-    bool dataIsValid = true;
     uint8_t byteFromUsr = 0;
 
     while(1) {
@@ -81,13 +80,12 @@ void CryptoConsoleApp::getHexStringAsByteArrayFromUsr(
                 usrEntry.push_back(byteFromUsr);
             } catch (const std::exception& e) {
                 usrEntry.resize(0);
-                dataIsValid = false;
-                std::cout << "invalid input " << usrInput.substr(idx, 2) << std::endl;
+                std::cout << "invalid characters " << usrInput.substr(idx, 2) << std::endl;
                 break;
             }
         }
 
-        if (dataIsValid) {
+        if (x == byteArraySize) {
             return;
         }
     }

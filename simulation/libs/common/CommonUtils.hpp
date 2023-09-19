@@ -14,7 +14,7 @@
 #define handleApiResponseForMethod(subSystem, manager)                                       \
     telux::common::Status status = Status::FAILED;                                           \
     telux::common::ErrorCode errorCode = ErrorCode::GENERIC_FAILURE;                         \
-    uint32_t cbDelay = 100;                                                                  \
+    int cbDelay = 100;                                                                  \
     Json::Value rootNode;                                                                    \
     do {                                                                                     \
         ErrorCode err                                                                        \
@@ -44,7 +44,7 @@ class CommonUtils {
 
     static void getValues(Json::Value &values, std::string subsystem,
         std::string method, telux::common::Status &status,
-        telux::common::ErrorCode &errorCode, uint32_t &cbDelay);
+        telux::common::ErrorCode &errorCode, int &cbDelay);
     static telux::common::ServiceStatus mapServiceStatus(std::string status);
     static std::string readSystemDataValue(
         std::string subsystem, std::string defaultValue, std::vector<std::string> path);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -62,6 +62,7 @@ class WlanStaInterfaceManagerMenu : public ConsoleApp ,
     void setIpConfig(std::vector<std::string> userInput);
     void getConfig(std::vector<std::string> userInput);
     void getStatus(std::vector<std::string> userInput);
+    void enableHotspot2(std::vector<std::string> userInput);
     void setBridgeMode(std::vector<std::string> userInput);
     void manageStaService(std::vector<std::string> userInput);
     void onStationStatusChanged(std::vector<telux::wlan::StaStatus> status) override;

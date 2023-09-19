@@ -323,11 +323,19 @@ public:
  *
  * The listener method can be invoked from multiple different threads.
  * Client needs to make sure that implementation is thread-safe.
+ * Note: Some APIs of this listener support an auto-suppress feature, where the invocation of the
+ * API will be suppressed, to prevent unnecessary wakeups and save power, when the system is in a
+ * suspended state, enabling the auto suppress feature is controlled using a platform configuration
+ * in tel.conf. If the platform is configured to suppress an API, that API will not be invoked
+ * during suspend. In this case, if a state change or event occurs in the modem, the client will
+ * not know about it via a listener indication. If the client is interested, it can get the latest
+ * state explicitly on resume.
  */
 class IServingSystemListener {
 public:
     /**
-     * This function is called when service status changes.
+     * This function is called when telux::common::ServiceStatus status changes.
+     * telux::common::ServiceStatus indicate whether this sub system ready to provide service.
      *
      * @param [in] status - @ref ServiceStatus
      */
@@ -337,13 +345,18 @@ public:
     * This function is called whenever Drb status is changed.
     *
     * @param [in] status      @ref DrbStatus
+    *
+    * This API supports the auto-suppress feature.
     */
    virtual void onDrbStatusChanged(DrbStatus status) {};
 
    /**
-    * This function is called whenever service state is changed.
+    * This function is called whenever telux::data:ServiceStatus state is changed.
+    * telux::data:ServiceStatus indicate packet switch domain network status.
     *
     * @param [in] status      @ref ServiceStatus
+    *
+    * This API supports the auto-suppress feature.
     */
    virtual void onServiceStateChanged(ServiceStatus status) {};
 
@@ -351,6 +364,8 @@ public:
     * This function is called whenever roaming status is changed.
     *
     * @param [in] status      @ref RoamingStatus
+    *
+    * This API supports the auto-suppress feature.
     */
    virtual void onRoamingStatusChanged(RoamingStatus status) {};
 
@@ -358,6 +373,8 @@ public:
     * This function is called whenever NR icon type is changed.
     *
     * @param [in] type      @ref NrIconType
+    *
+    * This API supports the auto-suppress feature.
     */
    virtual void onNrIconTypeChanged(NrIconType type) {};
 

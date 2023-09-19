@@ -98,6 +98,9 @@
 #include "ThrottleManager.h"
 #include "safetyapp_util.h"
 #include "qMonitor.hpp"
+#include <telux/sec/CryptoAcceleratorManager.hpp>
+#include <telux/sec/SecurityFactory.hpp>
+#include <telux/sec/CAControlManager.hpp>
 #ifdef AEROLINK
 #include "AerolinkSecurity.hpp"
 #else
@@ -115,6 +118,12 @@
 using telux::cv2x::Priority;
 using namespace std;
 using namespace telux::cv2x::prop;
+using telux::sec::ICAControlManager;
+using telux::sec::SecurityFactory;
+using telux::sec::ICAControlManagerListener;
+using telux::sec::LoadConfig;
+using telux::sec::CACapacity;
+using telux::sec::CALoad;
 enum class TransmitType {
     SPS,
     EVENT
@@ -148,6 +157,9 @@ struct Config{
     vector<uint16_t> spsDestPorts;
     vector<uint16_t> eventDestPorts;
     vector<string> eventDestAddrs;
+    uint32_t padding = 0; // length of dummy data added to BSM, unit in Bytes
+    Priority spsPriority = Priority::PRIORITY_5; // priority setting for sps flow
+    Priority eventPriority = Priority::PRIORITY_2; // priority setting for event
     //vector<uint32_t> spsReservationSizes;
     uint32_t spsReservationSize;
     bool wildcardRx = false;
@@ -210,6 +222,8 @@ struct Config{
     uint8_t externalDataHash[32];
     uint32_t hashLength = 0;
     bool acceptAll = false;
+    bool overrideVerifResult = false;
+    int overrideVerifValue = -1;
     /** Sec Driver Options **/
     uint8_t driverVerbosity = 0;
     uint8_t secVerbosity = 0;
@@ -235,6 +249,8 @@ struct Config{
     string defaultGateway;
     string primaryDns;
     uint32_t wraServiceId = 4;
+    string wsaInfoFile;
+    uint32_t wsaInterval = 1000; // WSA Tx interval, 1s by default
     /** Pseudonym/ID Change */
     string lcmName = "";
     unsigned int idChangeInterval = 0;
@@ -248,13 +264,22 @@ struct Config{
     bool enableL2Filtering = false;
     unsigned int l2FilteringTime = 1; //1 s by default
     uint8_t l2IdTimeThreshold = 5;
-    string wsaInfoFile;
-    uint32_t wsaInterval = 1000; // WSA Tx interval, 1s by default
-    uint32_t padding = 0; // length of dummy data added to BSM, unit in Bytes
-    Priority spsPriority = Priority::PRIORITY_5; // priority setting for sps flow
-    Priority eventPriority = Priority::PRIORITY_2; // priority setting for event
+    /* Flooding attack detection and mitigation */
+    bool enableL2FloodingDetect = false; // enable flooding attack detection and mitigation
+    uint32_t floodDetectVerbosity = 0; // 0-8; console logging level for flooding detection
+    uint32_t commandInterval = 100; //ms ; basic interval in flooding attack detection
+    uint32_t nCommandInterval_0 = 10; // num of command intervals in eval interval in state 0
+    uint32_t nCommandInterval_1 = 5; // num of command intervals in eval interval in state 1
+    uint32_t floodAttackThreshTotal = 1000; // msg per sec
+    uint32_t floodAttackThreshSingle = 100; // msg per sec
+    uint32_t tShiftInterval = 20; // ms
+    uint32_t loadUpdateInterval = 100; // interval for how often mvm load is updated
+    double mvmUtilThreshold = 0.5; // utilization threshold to determine if should change state
+    bool mvmCapacityOverride = false; // flag to override actual mvm capacity for testing
+    uint32_t mvmCapacity = 20; // mvm capacity value to use if override flag enabled
+
     string congestionControlConfigFileName = "CongestionControlConfig.conf";
-    bool enableCongCtrl = false;
+    bool enableCongCtrl = false; // flag to override actual mvm capacity for testing purposes
 };
 
 /* Congestion Control CongestionControl Data */
@@ -336,6 +361,16 @@ struct CongCtrlConfig {
 };
 
 
+
+class CaControlManagerListener : public ICAControlManagerListener {
+public:
+    struct CALoad currLoad = {0};
+    void onCapacityUpdate(struct CACapacity newCapacity){}
+    void onLoadUpdate(struct CALoad currentLoad){
+        memcpy(&currLoad, &currentLoad, sizeof(struct CALoad));
+    }
+};
+
 class ApplicationBase
 {
 public:
@@ -351,6 +386,9 @@ public:
     int prevArrivalRate=0;
     int prevFilterRate= 0;
     int filterRate=0;
+    int rxCount = 0;
+    struct timeval startRxIntervalTime;
+    struct timeval endRxIntervalTime;
     QMonitor* qMon = nullptr;
     QMonitor::Configuration* qMonConfig = nullptr;
 
@@ -380,7 +418,7 @@ public:
     void setAppVerbosity(int value) {
         appVerbosity = value;
     }
-
+    void detectFloodAndMitigate(bool& stateOn, std::vector<L2FilterInfo>* rvListToFilter);
     /**
     * Constructor of  Application instance with all the
     * specifications of a configuration file.
@@ -439,6 +477,11 @@ public:
     virtual void fillMsg(std::shared_ptr<msg_contents> mc) = 0;
 
     /**
+    * Clear radio instance in application.
+    */
+    void clearRadioInstance();
+
+    /**
     * Closes all tx and rx flows from Snaptel SDK.
     */
     void closeAllRadio();
@@ -481,6 +524,10 @@ public:
     virtual bool pendingTillNoEmergency();
     virtual void prepareForExit();
     std::shared_ptr<ICongestionControlListener> congCtrlListener;
+    std::shared_ptr<CaControlManagerListener> cacMgrListr;
+    std::shared_ptr<ICAControlManager> caControlMgr;
+    double currUtil = 0.0;
+    struct CACapacity currCapacity = {0};
     bool openBsmLogFile(const std::string& fullPathName); // one dedicated to bsm
     bool openLogFile(const std::string& fullPathName);
     void writeLogHeader(FILE *fp);
@@ -605,7 +652,8 @@ protected:
     bool finishProgram;
     sem_t programSem;
     current_dynamic_vehicle_state_t* currVehState;
-
+    unordered_map <uint32_t,rv_specs> l2RvMap;
+    std::mutex l2MapMtx;
     /**
      * Adjust the specified transmit interval to cv2x supported reservation period.
      * @param intervalMs user specified transmit interval in milliseconds
@@ -654,8 +702,6 @@ protected:
     std::atomic<bool> criticalState{false};
 private:
     bool exitApp = false;
-    unordered_map <uint32_t,rv_specs> l2RvMap;
-    std::mutex l2MapMtx;
     VehicleReceive::VehicleEventsCallback cb;
     std::mutex stateMtx;
     std::condition_variable stateCv;

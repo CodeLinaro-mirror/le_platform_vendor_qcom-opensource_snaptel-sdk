@@ -3,23 +3,40 @@ Make Third Party Service (TPS) eCall over IMS {#make_eCall_Over_Ims}
 
 This sample application demonstrates how to make a TPS eCall over IMS.
 
-### 1. Get the PhoneFactory
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-
-
-### 2. Instantiate call manager
-
-   ~~~~~~{.cpp}
-   std::shared_ptr<ICallManager> callManager = phoneFactory.getCallManager();
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << Call Manager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << Call Manager subsystem initialization failed << std::endl;
+      }
+      cbProm.set_value(status);
+   }
    ~~~~~~
 
 
-### 3. Initialize phoneId with default value
+### 2. Get the PhoneFactory and Call Manager instance
 
    ~~~~~~{.cpp}
-   int phoneId = DEFAULT_PHONE_ID;
+   auto &phoneFactory = PhoneFactory::getInstance();
+   auto callManager = phoneFactory.getCallManager(initResponseCb);
+   if(callManager == NULL) {
+      std::cout << " Failed to get Call Manager instance" << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+
+### 3. Wait for Call Manager subsystem to be ready
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Call Manager subsystem << std::endl;
+      return -1;
+   }
    ~~~~~~
 
 

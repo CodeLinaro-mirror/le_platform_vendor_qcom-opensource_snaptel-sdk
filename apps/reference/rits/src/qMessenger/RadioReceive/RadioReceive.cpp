@@ -85,7 +85,10 @@ RadioReceive::RadioReceive(const TrafficCategory category, const TrafficIpType t
         cout << "Radio Checks on RadioReceive creation fail\n";
     }
     this->category = category;
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(category);
+    auto cv2xRadio = this->getCv2xRadio();
+    if (nullptr == cv2xRadio) {
+        return;
+    }
     auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
                             ErrorCode error){
                                 rxSubCallback(rxSub, error);
@@ -111,7 +114,10 @@ RadioReceive::RadioReceive(const TrafficCategory category,
         cout << "Radio Checks on RadioReceive creation fail\n";
     }
     this->category = category;
-    auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(category);
+    auto cv2xRadio = this->getCv2xRadio();
+    if (nullptr == cv2xRadio) {
+        return;
+    }
     auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
                             ErrorCode error){
                                 rxSubCallback(rxSub, error);
@@ -318,7 +324,14 @@ uint32_t RadioReceive::receive(const char* buf, int len,
 
 int RadioReceive::setL2Filters(std::vector<L2FilterInfo> filterList){
     promise<ErrorCode> p;
-    cv2xRadioManager->setL2Filters(filterList, [&p](ErrorCode error) {p.set_value(error);});
+    auto cv2xRadioMgr = this->getCv2xRadioManager();
+    if (nullptr == cv2xRadioMgr) {
+        return -1;
+    }
+    cv2xRadioMgr->setL2Filters(filterList, [&p](ErrorCode error) {p.set_value(error);});
+    if(rVerbosity) {
+        std::cout << "Setting l2 filters for flooding attack addresses\n";
+    }
     if (ErrorCode::SUCCESS == p.get_future().get()) {
         if(rVerbosity) {
             std::cout << "success to setL2Filters" << std::endl ;
@@ -349,22 +362,27 @@ uint8_t RadioReceive::closeFlow(){
 
     if (this->gRxSub) {
         auto resp = -1;
-        auto cv2xRadio = this->cv2xRadioManager->getCv2xRadio(this->category);
-        auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
-                                ErrorCode error){
-                                    rxSubCallback(rxSub, error);
-                                };
-        if (Status::SUCCESS == cv2xRadio->closeRxSubscription(this->gRxSub, respCb)){
-            if (ErrorCode::SUCCESS == gCallbackPromise.get_future().get())
-            {
-                resp = static_cast<uint8_t>(Status::SUCCESS);
+        auto cv2xRadio = this->getCv2xRadio();
+        if (nullptr == cv2xRadio) {
+            resp = static_cast<uint8_t>(Status::FAILED);
+        } else {
+            auto respCb = [&](std::shared_ptr<ICv2xRxSubscription> rxSub,
+                                    ErrorCode error){
+                                        rxSubCallback(rxSub, error);
+                                    };
+            if (Status::SUCCESS == cv2xRadio->closeRxSubscription(this->gRxSub, respCb)){
+                if (ErrorCode::SUCCESS == gCallbackPromise.get_future().get())
+                {
+                    resp = static_cast<uint8_t>(Status::SUCCESS);
+                }else{
+                    resp = static_cast<uint8_t>(Status::FAILED);
+                }
             }else{
                 resp = static_cast<uint8_t>(Status::FAILED);
             }
-        }else{
-            resp = static_cast<uint8_t>(Status::FAILED);
+            this->resetCallbackPromise();
         }
-        this->resetCallbackPromise();
+
         this->gRxSub = nullptr;
         cout << "Rx subscription closed.\n";
         return resp;

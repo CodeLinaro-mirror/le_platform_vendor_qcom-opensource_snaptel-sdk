@@ -242,7 +242,6 @@ int InCallPlaybackPCM::createIncallPlayStream() {
     sc.sampleRate = 48000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_SPEAKER);
 
     /* Direction::TX indicates voice uplink playback */
     sc.voicePaths.emplace_back(telux::audio::Direction::TX);
@@ -373,10 +372,14 @@ void InCallPlaybackPCM::play() {
 
         numBytes = fread(streamBuffer->getRawBuffer(), 1, size, fileToPlay_);
         if (numBytes == 0 && feof(fileToPlay_)) {
+            streamBuffer->reset();
+            freeBuffers_.push(streamBuffer);
             break;
         }
         if (numBytes != size && !feof(fileToPlay_)) {
             std::cout << "can't read required bytes, read " << numBytes << std::endl;
+            streamBuffer->reset();
+            freeBuffers_.push(streamBuffer);
             break;
         }
 
@@ -396,6 +399,10 @@ void InCallPlaybackPCM::play() {
             /* error occurred during playback, terminate the thread */
             break;
         }
+    }
+
+    while(freeBuffers_.size() != 2) {
+        cv_.wait(lock);
     }
 
     fclose(fileToPlay_);

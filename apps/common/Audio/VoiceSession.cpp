@@ -103,7 +103,7 @@ Status VoiceSession::startAudio() {
             }
         } else {
             LOG(ERROR, "Audio already started");
-            statusFromRequest = Status::SUCCESS;
+            statusFromRequest = Status::ALREADY;
         }
     } else {
         LOG(ERROR, "No stream exists");
@@ -134,7 +134,6 @@ Status VoiceSession::stopAudio() {
             return statusFromResponse;
         }
     } else {
-        statusFromRequest = Status::SUCCESS;
         LOG(ERROR, "Audio not started yet");
     }
     return statusFromRequest;

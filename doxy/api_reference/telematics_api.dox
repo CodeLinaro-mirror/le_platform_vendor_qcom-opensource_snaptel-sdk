@@ -86,6 +86,8 @@ Jun 2017   SVM      Created to support V2X API
       This section contains APIs related to Phone, Signal Strength and interfaces to register global listeners to event notifications.
       @defgroup telematics_call  Call
       This section contains APIs related to Call.
+      @defgroup telematics_ecall eCall
+      This section contains APIs related to emergency call management and configuration.
       @defgroup telematics_sms SMS
       This section contains APIs related to Sending and Receiving SMS.
       @defgroup telematics_card SIM Card Services
@@ -106,6 +108,8 @@ Jun 2017   SVM      Created to support V2X API
       This section contains APIs related to Remote SIM provisioning.
       @defgroup telematics_remote_sim Remote SIM
       This section contains APIs related to Remote SIM operations.
+      @defgroup telematics_supp_services Supplementary Services
+      This section contains APIs related to supplementary services to provide services like call forwarding, call waiting.
     @}
 
     @defgroup chapter_telematics_sdk_loc Location
@@ -198,7 +202,7 @@ Jun 2017   SVM      Created to support V2X API
       @defgroup telematics_sensor_control Sensor Control
       This section contains APIs related to sensor configuration, sensor control and data acquisition from sensors.
       @defgroup telematics_sensor_feature_control Sensor Feature Control
-      This section contains APIs related to contrlling the features the sensor sub-system offers.
+      This section contains APIs related to controlling the features the sensor sub-system offers.
     @}
 
     @defgroup telematics_platform Platform
@@ -206,7 +210,16 @@ Jun 2017   SVM      Created to support V2X API
     @{
       @defgroup telematics_platform_filesystem Filesystem
       This section contains APIs, data structures and components to configure and acquire information from the filesystem manager.
+      @defgroup telematics_platform_deviceinfo DeviceInfo
+      This section contains APIs related to device info management for retrieving IMEI and platform version.
+      @defgroup telematics_platform_hardware_antenna Hardware Antenna
+      This section contains APIs related to antenna management to set or get the active antenna's configuration.
+      @defgroup telematics_platform_time Time
+      This section contains APIs related to time management to register and deregister a listener for time reports.
     @}
+
+    @defgroup telematics_sec_mgmt Security Management
+    This section contains APIs related to security management.
 
     @defgroup telematics_wlan_config Wlan
     This section contains APIs related to WLAN management operations.

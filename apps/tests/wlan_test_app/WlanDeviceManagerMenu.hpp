@@ -64,9 +64,14 @@ class WlanDeviceManagerMenu : public ConsoleApp ,
     void setMode(std::vector<std::string> userInput);
     void getConfig(std::vector<std::string> userInput);
     void getStatus(std::vector<std::string> userInput);
+    void setActiveCountry(std::vector<std::string> userInput);
+    void getRegulatoryParams(std::vector<std::string> userInput);
+    void setTxPower(std::vector<std::string> userInput);
+    void getTxPower(std::vector<std::string> userInput);
 
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onEnableChanged(bool enable) override;
+    void onTempCrossed(float temperature, telux::wlan::DevicePerfState perfState) override;
  private:
     bool menuOptionsAdded_;
     std::shared_ptr<telux::wlan::IWlanDeviceManager> wlanDeviceManager_ = nullptr;

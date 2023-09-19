@@ -243,7 +243,6 @@ int InCallRecordPCM::createIncallRecordStream() {
     sc.sampleRate = 48000;
     sc.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
     sc.channelTypeMask = telux::audio::ChannelType::LEFT | telux::audio::ChannelType::RIGHT;
-    sc.deviceTypes.emplace_back(telux::audio::DeviceType::DEVICE_TYPE_MIC);
 
     /* Direction::RX indicates voice downlink */
     sc.voicePaths.emplace_back(telux::audio::Direction::RX);

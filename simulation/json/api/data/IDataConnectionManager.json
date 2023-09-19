@@ -2,9 +2,7 @@
 	"IDataConnectionManager": {
 		"IsSubsystemReady": true,
 		"IsSubsystemReadyDelay": 200,
-		"AlwaysSuccess" : true,
 		"DefaultCallbackDelay" : 300,
-		"UseDefaultCallbackDelay" : false,
 		"getDefaultProfile": {
 			"callbackDelay": 400,
 			"error": "SUCCESS",

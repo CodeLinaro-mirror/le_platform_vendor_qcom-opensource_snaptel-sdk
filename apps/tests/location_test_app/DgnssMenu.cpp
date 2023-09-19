@@ -25,6 +25,10 @@
  *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #include <chrono>
@@ -216,14 +220,14 @@ void DgnssMenu::onDgnssStatusUpdate(DgnssStatus status) {
          break;
        case DgnssStatus::DATA_SOURCE_NOT_USABLE:
          std::cout << "RTCM data source is not usable" << std::endl;
-         // Demonstrate "source switching" requirement. If current source's data
+         // Demonstrate "source switching" requirement for v2x use case. If current source's data
          // is not usable anymore, another source is picked, but we must call releaseSource()
          // to release current source and createSource() to create a new one.
-         dgnssManager_->releaseSource();
-         if (dgnssManager_->createSource(DgnssDataFormat::DATA_FORMAT_RTCM_3) !=
-                telux::common::Status::SUCCESS) {
-            std::cout << "Failed to create RTCM source" << std::endl;
-         }
+         //dgnssManager_->releaseSource();
+         //if (dgnssManager_->createSource(DgnssDataFormat::DATA_FORMAT_RTCM_3) !=
+         //       telux::common::Status::SUCCESS) {
+         //   std::cout << "Failed to create RTCM source" << std::endl;
+         //}
          break;
       default:
          std::cout << "Unknown RTCM status" << std::endl;
@@ -345,6 +349,7 @@ void DgnssMenu::injectFromServer(std::vector<std::string> userInput) {
       } else if (ret > 0 && !strncmp(ACK_STRING, (char*)response, 12)) {
           // register status listener
           dgnssManager_->registerListener(shared_from_this());
+          ret = 0;
 
           // Please refer to injectFromFile() for alternative use case sample.
           while (!ret) {

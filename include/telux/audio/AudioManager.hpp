@@ -92,11 +92,11 @@ class IAudioCaptureStream;
 class IAudioBuffer {
  public:
    /**
-    * For the @ref StreamType::PLAY stream, specifies the minimum number of bytes that
+    * For the @ref StreamType::PLAY stream, specifies the optimal number of bytes that
     * must be sent for playback. For the @ref StreamType::CAPTURE stream, specifies
-    * the minimum number of bytes that can be read.
+    * the optimal number of bytes that can be read.
     *
-    * @returns Minimum size (in bytes)
+    * @returns Optimal size (in bytes)
     */
    virtual size_t getMinSize() = 0;
 

@@ -65,6 +65,7 @@ auto &phoneFactory = telux::tel::PhoneFactory::getInstance();
     ServiceStatus callMgrsubSystemStatus = callMgrprom.get_future().get();
 
     if(callMgrsubSystemStatus == ServiceStatus::SERVICE_AVAILABLE) {
+       std::cout << "CallManager subsystem is ready \n";
        myHoldCb_ = std::make_shared<MyCallCommandCallback>("Hold");
        myResumeCb_ = std::make_shared<MyCallCommandCallback>("Resume");
        callListener_ = std::make_shared<MyCallListener>();

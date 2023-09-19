@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,12 +76,33 @@ enum class HwDeviceType {
 };
 
 /**
+ * Wlan Device Performance State
+ */
+enum class DevicePerfState {
+    UNKNOWN   = 0,                  /**<  Device is in Unknown performance state   */
+    FULL      = 1,                  /**<  Device is in full performance state      */
+    REDUCED   = 2,                  /**<  Device is in reduced performance state   */
+    SHUTDOWN  = 3,                  /**<  Device is shutdown                       */
+};
+
+/**
  * Wlan Interface status
  */
 struct InterfaceStatus {
-    HwDeviceType     device;                    /**> WiFi hardware type           */
-    std::vector<ApStatus>  apStatus;            /**< Vector of active APs status  */
-    std::vector<StaStatus> staStatus;           /**< Vector of active Sta status  */
+    HwDeviceType     device;              /**> WiFi hardware type           */
+    std::vector<ApStatus>  apStatus;      /**< Vector of active APs status  */
+    std::vector<StaStatus> staStatus;     /**< Vector of active Sta status  */
+};
+
+/**
+ * Wlan Regulatory Setting
+ */
+struct RegulatoryParams {
+    std::string         country;     /**< Country code according to ISO 3166 standard             */
+    float               opChannel;   /**< Operating channel according to IEEE 802.11 Standards    */
+    std::vector<float>  opClass;     /**< Operating class according to IEEE 802.11 Standards      */
+    uint32_t            txPowerMw;   /**< Transmit power in multiple of 100 MilliWatts
+                                          Actual transmit power = value set here * 100 milliwatts */
 };
 
 /** @addtogroup telematics_wlan
@@ -191,6 +212,66 @@ class IWlanDeviceManager {
         bool& isEnabled, std::vector<InterfaceStatus>& status) = 0;
 
     /**
+     * Set the country in which the device is operating. The country code will be used to make the
+     * device operate using the regulatory parameters pertaining to the active country
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_DEVICE_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @param [in] country                 Active country code according to ISO 3166 standard
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setActiveCountry(std::string country) = 0;
+    /**
+     * Request Regulatory Parameters
+     *
+     * @param [out] regulatoryParams    Current Regulatory Settings @ref RegulatoryParams.
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getRegulatoryParams(RegulatoryParams& regulatoryParams) = 0;
+
+    /**
+     * Set Transmit Power
+     * Immediately changes WLAN transmit power. The setting will not be persistent across power
+     * cycles. To restore default power associated with country set by
+     * telux::wlan::IWlanDeviceManager::setActiveCountry, either hostapd or wpa_supplicant daemons
+     * need to be restarted via telux::wlan::IApInterfaceManager::manageApService or
+     * telux::wlan::IStaInterfaceManager::manageStaService
+     *
+     * @param [in] txPower              Transmit Power to be set in mutiple of 100 milliwatts.
+     *                                  For instance, if txPower equals 15, transmit power will be
+     *                                  set to 1500 milliwatts.
+     *
+     * On platforms with Access control enabled, Caller needs to have TELUX_WLAN_DEVICE_CONFIG
+     * permission to invoke this API successfully.
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode setTxPower(uint32_t txPowerMw) = 0;
+    /**
+     * Request Transmit Power
+     *
+     * @param [out] txPowerMw           Current Transmit Power in mutiple of 100 milliwatts.
+     *
+     * @returns operation error code (if any). @ref telux::common::ErrorCode
+     *
+     * @note     Eval: This is a new API and is being evaluated.It is subject to change and could
+     *           break backwards compatibility.
+     */
+    virtual telux::common::ErrorCode getTxPower(uint32_t& txPowerMw) = 0;
+
+    /**
      * Register a listener for specific events in the Wlan Manager
      *
      * @param [in] listener    pointer of IWlanListener object that processes the
@@ -227,6 +308,14 @@ public:
      */
     virtual void onServiceStatusChange(telux::common::ServiceStatus status) {}
 
+    /**
+     * This function is called when temperature has crossed threshold
+     *
+     * @param [in] temperature - current device temperature in Fahrenheit
+     * @param [in] perfState   - current performance state of device due to device temperature
+     */
+
+    virtual void onTempCrossed(float temperature, DevicePerfState perfState) {}
     /**
      * This function is called when Wlan enablement has changed
      *

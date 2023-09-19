@@ -62,9 +62,23 @@ public:
    static std::string getWlanApType(telux::wlan::ApType apType);
    static std::string getWlanId(telux::wlan::Id id);
    static std::string getStaConnectionStatus(telux::wlan::StaInterfaceStatus status);
+   static std::string apAccessToString(telux::wlan::ApInterworking interworking);
+   static std::string apRadioTypeToString(telux::wlan::BandType radio);
+   static std::string apSecurityModeToString(telux::wlan::SecMode mode);
+   static std::string apSecurityAuthToString(telux::wlan::SecAuth auth);
+   static std::string apSecurityEncryptToString(telux::wlan::SecEncrypt encrypt);
    static void printAPStatus(std::vector<telux::wlan::ApStatus>& apStatus);
    static void printStaStatus(std::vector<telux::wlan::StaStatus>& staStatus);
    static void printDeviceInfo(std::vector<telux::wlan::DeviceInfo>& info);
+   static void printApElementInfo(telux::wlan::ApElementInfoConfig ElementInfoConfig);
+   static std::string apElementInfoAccessTypeToString(telux::wlan::NetAccessType accessType);
+   static telux::wlan::Id convertIntToWlanId(int id);
+   static telux::wlan::ApType convertIntToApType(int type);
+   static telux::wlan::BandType convertIntToApBand(int band);
+   static telux::wlan::ApInterworking convertIntToInterworking(int interworking);
+   static telux::wlan::SecMode convertIntToSecMode(int mode);
+   static telux::wlan::SecAuth convertIntToSecAuth(int auth);
+   static telux::wlan::SecEncrypt convertIntToSecEncrypt(int encrypt);
 };
 
 #endif

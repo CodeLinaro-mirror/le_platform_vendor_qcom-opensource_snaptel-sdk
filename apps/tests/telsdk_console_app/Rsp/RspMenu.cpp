@@ -63,8 +63,14 @@ RemoteSimProfileMenu::~RemoteSimProfileMenu() {
         simProfileManager_->deregisterListener(rspListener_);
     }
 
-    rspListener_ = nullptr;
+    if (rspListener_) {
+       rspListener_ = nullptr;
+    }
     simProfileManager_ = nullptr;
+    for (auto index = 0; index < cards_.size() ; index ++) {
+        cards_[index] = nullptr;
+    }
+    cardManager_ = nullptr;
 
 }
 
@@ -86,13 +92,14 @@ bool RemoteSimProfileMenu::init() {
 
         //  If subsystem is not ready, wait for it to be ready
         if (subSystemStatus != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
-            std::cout << "\n\nSimProfile subsystem is not ready, Please wait." << std::endl;
+            std::cout << "SimProfile subsystem is not ready, Please wait." << std::endl;
         }
 
         subSystemStatus = simProfileMgrprom.get_future().get();
 
         //  return from the function, if SDK is unable to initialize SimProfile subsystem
         if(subSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+           std::cout << "SimProfile subsystem is ready \n ";
             rspListener_ = std::make_shared<RspListener>();
             telux::common::Status status = simProfileManager_->registerListener(rspListener_);
             if(status != telux::common::Status::SUCCESS) {
@@ -122,6 +129,7 @@ bool RemoteSimProfileMenu::init() {
         cardSubSystemStatus = cardMgrprom.get_future().get();
 
         if (cardSubSystemStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+            std::cout << "Card subsystem is ready \n";
             std::vector<int> slotIds;
             telux::common::Status status = cardManager_->getSlotIds(slotIds);
             if (status == telux::common::Status::SUCCESS) {

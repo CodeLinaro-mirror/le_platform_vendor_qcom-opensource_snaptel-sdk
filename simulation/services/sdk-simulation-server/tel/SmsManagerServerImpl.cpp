@@ -153,7 +153,7 @@ grpc::Status SmsManagerServerImpl::SetSmscAddress(ServerContext* context,
     getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t delay;
+    int delay;
     std::string apiname = "setSmscAddress";
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
     CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay );
@@ -187,7 +187,7 @@ grpc::Status SmsManagerServerImpl::GetSmscAddress(ServerContext* context,
     getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t delay;
+    int delay;
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
     CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname,
         status, error, delay );
@@ -224,7 +224,7 @@ grpc::Status SmsManagerServerImpl::RequestSmsMessageList(ServerContext* context,
     std::vector<telux::tel::SmsMetaInfo> infos;
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t delay;
+    int delay;
     CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay );
 
     if(status == telux::common::Status::SUCCESS) {
@@ -310,7 +310,7 @@ grpc::Status SmsManagerServerImpl::ReadMessage(ServerContext *context,
     SmsMsg msg;
     telux::common::Status status;
     telux::common::ErrorCode error;
-    uint32_t delay;
+    int delay;
     bool found = false;
     CommonUtils::getValues(jsonObjApiResponse, TEL_SMS_MANAGER, apiname, status, error, delay );
 
@@ -415,7 +415,7 @@ grpc::Status SmsManagerServerImpl::DeleteMessage(ServerContext *context,
     Json::Value rootObj;
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t delay;
+    int delay;
     int phoneId = request->phone_id();
     uint32_t messageIndex = request->msg_index();
     tel::SmsTagType::TagType tag = request->tag_type();
@@ -522,7 +522,7 @@ grpc::Status SmsManagerServerImpl::SetPreferredStorage(ServerContext *context,
     Json::Value jsonObjApiResponse;
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t delay;
+    int delay;
     tel::StorageType::Type storageType = request->storage_type();
     telux::tel::StorageType type = static_cast<telux::tel::StorageType>(storageType);
     int phoneId = request->phone_id();
@@ -559,7 +559,7 @@ grpc::Status SmsManagerServerImpl::RequestPreferredStorage(ServerContext *contex
     telux::common::ErrorCode error;
     telux::common::Status status;
     std::string apiname = "requestPreferredStorage";
-    uint32_t delay;
+    int delay;
     telux::tel::StorageType type = telux::tel::StorageType::UNKNOWN;
     int phoneId = request->phone_id();
     getJsonForApiResponseSlot(phoneId, jsonObjApiResponseFileName, jsonObjApiResponse);
@@ -593,7 +593,7 @@ grpc::Status SmsManagerServerImpl::SetTag(ServerContext *context,
     Json::Value rootObj;
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t delay;
+    int delay;
     bool foundMsgIndex = true;
     int phoneId = request->phone_id();
     getJsonForSystemData(phoneId, jsonfilename, rootObj);
@@ -646,7 +646,7 @@ grpc::Status SmsManagerServerImpl::RequestStorageDetails(ServerContext *context,
     Json::Value rootObj;
     telux::common::ErrorCode error;
     telux::common::Status status;
-    uint32_t delay;
+    int delay;
     uint32_t availableCount = 0;
     uint32_t maxCount = 0;
     int size = 0;
@@ -722,13 +722,10 @@ grpc::Status SmsManagerServerImpl::SendSmsWithoutSmsc(ServerContext *context,
 
     int noOfSegments = rootObj[TEL_SMS_MANAGER]["sendSmsDeprecated"][0]\
         ["numberOfSegments"].asInt();
-    bool isAlwaysSuccss = rootObj[TEL_SMS_MANAGER]["AlwaysSuccess"].asBool();
-    if(isAlwaysSuccss) {
-        status  = telux::common::Status::SUCCESS;
-    } else {
-        tmp = rootObj[TEL_SMS_MANAGER]["sendSmsDeprecated"][0]["status"].asString();
-        status = CommonUtils::mapStatus(tmp);
-    }
+
+    tmp = rootObj[TEL_SMS_MANAGER]["sendSmsDeprecated"][0]["status"].asString();
+    status = CommonUtils::mapStatus(tmp);
+
     tmp = rootObj[TEL_SMS_MANAGER]["sendSmsDeprecated"][1]["sentCallbackErrorCode"].asString();
     telux::common::ErrorCode sentCallbackErrorCode = CommonUtils::mapErrorCode(tmp);
     int sentCallbackDelay = rootObj[TEL_SMS_MANAGER]["sendSmsDeprecated"][1]\
@@ -765,13 +762,10 @@ grpc::Status SmsManagerServerImpl::SendSms(ServerContext *context,
     getJsonForApiResponseSlot(phoneId, jsonfilename, rootObj);
 
     int noOfSegments = rootObj[TEL_SMS_MANAGER]["sendSms"][0]["numberOfSegments"].asInt();
-    bool isAlwaysSuccss = rootObj[TEL_SMS_MANAGER]["AlwaysSuccess"].asBool();
-    if(isAlwaysSuccss) {
-        status  = telux::common::Status::SUCCESS;
-    } else {
-        tmp = rootObj[TEL_SMS_MANAGER]["sendSms"][0]["status"].asString();
-        status = CommonUtils::mapStatus(tmp);
-    }
+
+    tmp = rootObj[TEL_SMS_MANAGER]["sendSms"][0]["status"].asString();
+    status = CommonUtils::mapStatus(tmp);
+
     tmp = rootObj[TEL_SMS_MANAGER]["sendSms"][1]["smsResponseCbErrorCode"].asString();
     telux::common::ErrorCode sentCallbackErrorCode = CommonUtils::mapErrorCode(tmp);
     int smsResponseCbDelay = rootObj[TEL_SMS_MANAGER]["sendSms"][1]\
@@ -821,13 +815,10 @@ grpc::Status SmsManagerServerImpl::SendRawSms(ServerContext *context,
 
     std::string recieverAddress = rootObj[TEL_SMS_MANAGER]["sendRawSms"][0]\
         ["receiverAddress"].asString();
-    bool isAlwaysSuccss = rootObj[TEL_SMS_MANAGER]["AlwaysSuccess"].asBool();
-    if(isAlwaysSuccss) {
-        status  = telux::common::Status::SUCCESS;
-    } else {
-        tmp = rootObj[TEL_SMS_MANAGER]["sendRawSms"][0]["status"].asString();
-        status = CommonUtils::mapStatus(tmp);
-    }
+
+    tmp = rootObj[TEL_SMS_MANAGER]["sendRawSms"][0]["status"].asString();
+    status = CommonUtils::mapStatus(tmp);
+
     tmp = rootObj[TEL_SMS_MANAGER]["sendRawSms"][1]["smsResponseCbErrorCode"].asString();
     telux::common::ErrorCode sentCallbackErrorCode = CommonUtils::mapErrorCode(tmp);
     int smsResponseCbDelay = rootObj[TEL_SMS_MANAGER]["sendRawSms"][1]\

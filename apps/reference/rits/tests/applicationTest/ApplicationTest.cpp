@@ -149,6 +149,35 @@ void joinThreads() {
     }
 }
 
+/**
+ * Initialize timer for transmit
+ * @param[in] interval_ms timer interval value in miliseconds
+ * @return timer's file descriptor if success or -1 on failure.
+ */
+int start_tx_timer(uint32_t interval_ms) {
+    int timerfd;
+    struct itimerspec its = {0};
+
+    timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
+    if (timerfd < 0) {
+        return -1;
+    }
+
+    /* Start the timer */
+    its.it_value.tv_sec = interval_ms / 1000;
+    its.it_value.tv_nsec = (interval_ms%1000) * 1000000;
+    its.it_interval = its.it_value;
+
+    if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
+        close(timerfd);
+        return -1;
+    }
+
+    return timerfd;
+
+}
+
+
 //Returns the value of enableL2filtering config
 bool isL2SrcFilteringEnabled() {
     return application->configuration.enableL2Filtering;
@@ -169,6 +198,92 @@ void rvL2SrcFiltering(shared_ptr<ApplicationBase> application) {
             application->tmCommunication();
             std::this_thread::sleep_for(std::chrono::milliseconds(
                                                         application->configuration.filterInterval));
+        }
+    }).detach();
+}
+
+
+// do we want a thread for each command interval and a thread for
+// evaluation interval. or for both?
+void l2FloodingMitigation(shared_ptr<ApplicationBase> application) {
+    // do we want the states to be tracked in application base or here?
+    std::thread ([application]() {
+        struct timeval currTime;
+        gettimeofday(&currTime, NULL);
+        time_t startTime = currTime.tv_sec;
+        int timer_misses = 0;
+        uint64_t exp = 0;
+        ssize_t s;
+        int ciTimerFd, tshiftTimerFd = 0;
+        ciTimerFd = start_tx_timer(application->configuration.commandInterval);
+        if (ciTimerFd == -1) {
+            cerr << "Failed to start command interval timer" << endl;
+            return;
+        }
+
+        tshiftTimerFd = start_tx_timer(application->configuration.tShiftInterval);
+        if (ciTimerFd == -1) {
+            cerr << "Failed to start t shift timer" << endl;
+            return;
+        }
+
+        bool stateOn = false;
+        int commandIntervalCtr = 0;
+        std::vector<L2FilterInfo> rvListToFilter;
+        //create timer for command interval and then when N command intervals happen
+        // call evaluation function
+        while (!stopThread) {
+            // wait logic varies based on state
+            // both of these should be equal to Command Interval
+            if(!stateOn){
+                if(application->configuration.floodDetectVerbosity > 3){
+                    std::cout << "STATE 0: command interval counter is: " <<
+                        commandIntervalCtr << "\n";
+                }
+                s = read(ciTimerFd, &exp, sizeof(exp));
+                if (s == sizeof(uint64_t) && exp > 1) {
+                    timer_misses += (exp-1);
+                    if(application->configuration.driverVerbosity){
+                        cout << "TX timer overruns: Total missed: " << timer_misses << endl;
+                    }
+                }
+            }else{
+                // now we are in active state, so we need to actively filter in each
+                // command interval. but we only set the filter after T shift time
+                // wait shift time * num of CI passed after last CI after state change
+                if(application->configuration.floodDetectVerbosity > 3){
+                    std::cout << "STATE 1: command interval counter is: " <<
+                        commandIntervalCtr << "\n";
+                    std::cout << "SHIFT VALUE: " <<
+                        (application->configuration.tShiftInterval*commandIntervalCtr) << "\n";
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                        application->configuration.tShiftInterval*commandIntervalCtr));
+                // then call l2 filtering for T_ON_1 time
+                if(application->configuration.floodDetectVerbosity > 3){
+                    std::cout << "Setting l2 flood attack filters in application test\n";
+                }
+                application->radioReceives[0].setL2Filters(rvListToFilter);
+                // then wait T_off_1 - T_shift * num of CI passed
+                // wait shift time * num of CI passed after last CI after state change
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(application->configuration.commandInterval -
+                    application->configuration.tShiftInterval*commandIntervalCtr));
+            }
+            // if current interval is now equal to evaluation interval
+            if(commandIntervalCtr ==
+                    application->configuration.nCommandInterval_0 && !stateOn
+                || commandIntervalCtr ==
+                    application->configuration.nCommandInterval_1 && stateOn){
+
+                // based on state, we will wait a set amount of time
+                // the function will determine which state the app is currently in
+                // then will filter out attacker l2 addresses for set time
+                application->detectFloodAndMitigate(stateOn, &rvListToFilter);
+                //reset the counter after we reach evaluation interval
+                commandIntervalCtr = 0;
+            }
+            commandIntervalCtr++;
         }
     }).detach();
 }
@@ -200,6 +315,8 @@ void receive(MessageType msgType, int index) {
 
     // will need to make this compatible for multiple rx ports
     int ret;
+
+    gettimeofday(&application->startRxIntervalTime, NULL);
     while (!stopThread)
     {
         if(!simMode){
@@ -209,7 +326,7 @@ void receive(MessageType msgType, int index) {
             if (!application->configuration.enableTxAlways) {
                 application->radioReceives[index].waitForCv2xToActivate(haltRx);
                 if (application->radioReceives[index].restartFlow) {
-                    application->closeAllRadio();
+                    application->clearRadioInstance();
                     application->setup(msgType);
                 }
             }
@@ -337,33 +454,6 @@ void ldmRx(void) {
     if(application->ldm != nullptr)
         application->ldm->stopGb();
     printf("Thread (%08x) closed\n", tid);
-}
-/**
- * Initialize timer for transmit
- * @param[in] interval_ms timer interval value in miliseconds
- * @return timer's file descriptor if success or -1 on failure.
- */
-int start_tx_timer(uint32_t interval_ms) {
-    int timerfd;
-    struct itimerspec its = {0};
-
-    timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
-    if (timerfd < 0) {
-        return -1;
-    }
-
-    /* Start the timer */
-    its.it_value.tv_sec = interval_ms / 1000;
-    its.it_value.tv_nsec = (interval_ms%1000) * 1000000;
-    its.it_interval = its.it_value;
-
-    if (timerfd_settime(timerfd, 0, &its, NULL) < 0) {
-        close(timerfd);
-        return -1;
-    }
-
-    return timerfd;
-
 }
 
 void onSrcL2AddrUpdate(uint32_t addr) {
@@ -597,8 +687,8 @@ void transmit(MessageType msgType) {
                 //Check CV2X TX Status when TX is enabled.
                 // [TODO] The multiple tx/rx threads should be synced in a proper way to avoid crash
                 application->spsTransmits[0].waitForCv2xToActivate(haltRx);
-                if (application->spsTransmits[0].restartFlow ) {
-                    application->closeAllRadio();
+                if (application->spsTransmits[0].restartFlow) {
+                    application->clearRadioInstance();
                     application->setup(msgType);
                     if(!application->configuration.enableCongCtrl){
                         close(tx_timer_fd);
@@ -1046,7 +1136,12 @@ int setup(const bool tx, const bool rx,
                                                       configFile, msgType, csv);
         else
             application = make_shared<SaeApplication>(configFile, msgType, csv);
-
+        // prevent tx and rx during wsa mode
+        if(rx && wsa){
+            printf("Warning: Can only do either TX only or RX only when wsa is enabled.\n");
+            printf("Disabling enableTxAlways config item. Now in RX only mode.\n");
+            application->configuration.enableTxAlways = false;
+        }
     } else {
 #ifdef ETSI
         msgType = MessageType::CAM;
@@ -1132,6 +1227,11 @@ int setup(const bool tx, const bool rx,
         // l2 filter and throttle manager timer thread
         if (isL2SrcFilteringEnabled())
             rvL2SrcFiltering(application);
+
+        if(application->configuration.enableL2FloodingDetect){
+            cout << "starting flood detection and mitigation thread\n";
+            l2FloodingMitigation(application);
+        }
 
         if (ldm)
         {
@@ -1341,7 +1441,21 @@ int main(int argc, char** argv) {
         printf("CAM; ");
     if(denm)
         printf("DENM; ");
+    // for wsa mode, should not have tx and rx at same time
+    if(rx && tx && wsa){
+        printf("Warning: Can only do either TX only or RX only when wsa is enabled.\n");
+        printf("Setting to tx only by default\n");
+        rx = false;
+    }
     std::cout << "CONFIG_FILE: " <<  configFile << std::endl;
+
+    // for wsa mode, should not have tx and rx at same time
+    std::cout << "Checking if rx, tx, wsa are enabled\n";
+    if(rx && tx && wsa){
+        printf("Warning: Can only do either TX only or RX only when wsa is enabled.\n");
+        printf("Setting to tx only by default\n");
+        rx = false;
+    }
 
     if (setup(tx, rx, ldm, help, safetyApps, bsm, wsa, cam, denm, preRecorded,
         preRecordedFile, txSim, rxSim, tunnelTx, tunnelRx, txSimIp, rxSimIp,

@@ -79,6 +79,10 @@ using std::pair;
 using namespace telux::cv2x::prop;
 using telux::cv2x::prop::V2xPropFactory;
 using telux::cv2x::prop::CongestionControlUtility;
+using telux::sec::ICAControlManager;
+using telux::sec::SecurityFactory;
+using telux::sec::ICAControlManagerListener;
+using telux::sec::LoadConfig;
 // Congestion Control related variables
 CongestionControlData ApplicationBase::congestionControlOut;
 sem_t ApplicationBase::congCtrlCbSem;
@@ -202,6 +206,7 @@ void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FIL
             (long unsigned int)0, this->congCtrlConfig.spsEnhHysterPerc);
     }
 }
+
 
 class QitsCongCtrlListener :public ICongestionControlListener {
 public:
@@ -372,15 +377,6 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
         return;
     }
 
-    // set up kinematics listener
-    if(configuration.enableLocationFixes){
-        std::cout << "Enabling location fixes\n";
-        appLocListener_ = make_shared<LocListener>();
-        appLocListener_->setLocCbFn(&locCbFn);
-        locListeners.push_back(appLocListener_);
-        kinematicsReceive = std::make_shared<KinematicsReceive>
-                (locListeners, this->configuration.locationInterval);
-    }
 
     if(configuration.enableL2Filtering) {
         cv2xTmListener=std::make_shared<Cv2xTmListener>(appVerbosity);
@@ -430,6 +426,17 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
                     configuration.securityCountryCode));
     #endif
     }
+
+    // set up kinematics listener
+    if(configuration.enableLocationFixes){
+        std::cout << "Enabling location fixes\n";
+        appLocListener_ = make_shared<LocListener>();
+        appLocListener_->setLocCbFn(&locCbFn);
+        locListeners.push_back(appLocListener_);
+        kinematicsReceive = std::make_shared<KinematicsReceive>
+                (locListeners, this->configuration.locationInterval);
+    }
+
     sem_init(&this->rx_sem, 0, 1);
     sem_init(&this->log_sem, 0, 1);
     cb =
@@ -446,6 +453,20 @@ ApplicationBase::ApplicationBase(char* fileConfiguration, MessageType msgType,
     {
         qMon = new QMonitor(*qMonConfig);
     }
+
+    if(configuration.enableL2FloodingDetect){
+        // if flooding mitigation enabled
+        // if configuration.floodingMitigationEnabled
+        // setup telux security service to get the mvm stats
+        auto& secFactory = SecurityFactory::getInstance();
+        telux::common::ErrorCode ec = telux::common::ErrorCode::SUCCESS;
+        caControlMgr = secFactory.getCAControlManager(ec);
+        cacMgrListr = std::make_shared<CaControlManagerListener>();
+        LoadConfig loadConfig = {0};
+        loadConfig.calculationInterval = configuration.loadUpdateInterval; // 1000 ms
+        ec = caControlMgr->registerListener(cacMgrListr);
+        ec = caControlMgr->startMonitoring(loadConfig);
+    }
 }
 
 ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
@@ -454,15 +475,6 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
     enableCsvLog_ = enableCsvLog;
     if (this->loadConfiguration(fileConfiguration)) {
         return;
-    }
-
-    if(configuration.enableLocationFixes){
-        std::cout << "Enabling location fixes\n";
-        appLocListener_ = make_shared<LocListener>();
-        appLocListener_->setLocCbFn(&locCbFn);
-        locListeners.push_back(appLocListener_);
-        kinematicsReceive = std::make_shared<KinematicsReceive>
-                (locListeners, this->configuration.locationInterval);
     }
 
     if(configuration.enableL2Filtering) {
@@ -509,6 +521,15 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
                     configuration.securityContextName,
                     configuration.securityCountryCode));
 #endif
+    }
+
+    if(configuration.enableLocationFixes){
+        std::cout << "Enabling location fixes\n";
+        appLocListener_ = make_shared<LocListener>();
+        appLocListener_->setLocCbFn(&locCbFn);
+        locListeners.push_back(appLocListener_);
+        kinematicsReceive = std::make_shared<KinematicsReceive>
+                (locListeners, this->configuration.locationInterval);
     }
 
     sem_init(&this->rx_sem, 0, 1);
@@ -561,6 +582,125 @@ ApplicationBase::~ApplicationBase() {
 
      closeAllRadio();
 }
+
+void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
+    std::vector<L2FilterInfo>* rvListToFilter){
+
+    if(rvListToFilter == NULL){
+        std::cout << "NULL struct for l2 filter info list passed\n";
+        return;
+    }
+    // reset to empty
+    rvListToFilter->clear();
+
+    // monitor mvm load and l2 src addresses
+    // cacMgrListr
+    telux::common::ErrorCode ec = caControlMgr->getCapacity(currCapacity);
+    rv_specs* rvsp;
+    uint32_t filteringTime = 0; // util is less than the threshold
+    L2FilterInfo rvSrc = {0};
+
+    if(configuration.mvmCapacityOverride){
+        currCapacity.nist256 = this->configuration.mvmCapacity;
+        if(configuration.floodDetectVerbosity > 3){
+            std::cout << "Using provided mvm capacity " << currCapacity.nist256 << "\n";
+        }
+    }else{
+        telux::common::ErrorCode ec = caControlMgr->getCapacity(currCapacity);
+        if(configuration.floodDetectVerbosity > 3){
+            std::cout << "Using the actual mvm capacity " << currCapacity.nist256 << "\n";
+        }
+    }
+
+    currUtil = (double)(cacMgrListr->currLoad.nist256) / (double)(currCapacity.nist256);
+    if(configuration.floodDetectVerbosity > 0){
+        std::cout << "Load for NIST is: " << cacMgrListr->currLoad.nist256 << "\n";
+        std::cout << "Capacity for NIST is: " << currCapacity.nist256 << "\n";
+        std::cout << "Curr Utilization for NIST is: " << currUtil << "\n";
+    }
+    struct timeval currTime;
+    gettimeofday(&currTime, NULL);
+    uint64_t currTime_ms = (currTime.tv_sec * 1000) + (currTime.tv_usec / 1000);
+    for(pair<uint32_t, rv_specs> l2RvElement : this->l2RvMap){
+        // determine the incoming rate per l2 src addr
+        rvsp = &l2RvElement.second;
+        if(rvsp->totalCnt > 1 && rvsp->lastTotalCnt < rvsp->totalCnt){
+            if(configuration.floodDetectVerbosity > 7){
+                std::cout << "This rv is: " << l2RvElement.first << "\n";
+                std::cout << "Last msg count field for this RV is: " << rvsp->lastCnt << "\n";
+                std::cout << "Last rx time for this RV is: " << rvsp->lastTime <<"\n";
+                std::cout << "Total number of rxed packets from this RV is " << rvsp->totalCnt << "\n";
+                std::cout << "The last count for this rv is: " << rvsp->lastTotalCnt << "\n";
+                std::cout << "Flooding nist msg rate threshold is: " <<
+                    (configuration.mvmUtilThreshold *  currCapacity.nist256) << "\n";
+                std::cout << " Threshold for flood attack single " <<
+                    configuration.floodAttackThreshSingle << " \n";
+                std::cout << " Threshold for mvm utilization to be attack is " <<
+                    (configuration.mvmUtilThreshold *  currCapacity.nist256)  << "\n";
+            }
+
+            // calculate the rate every 1000 ms?
+            if(rvsp->totalCnt > 1 && rvsp->lastTotalCnt < rvsp->totalCnt){
+                // number of packets sent within last period is current rate for single l2 addr
+                l2RvMap[l2RvElement.first].msgRate =
+                    1000.0 * ((double)(rvsp->totalCnt - rvsp->lastTotalCnt) /
+                    (double)(currTime_ms - rvsp->lastTime)) ;
+                if(configuration.floodDetectVerbosity > 7){
+                    std::cout << "The total count for this rv is: " << rvsp->totalCnt << "\n";
+                    std::cout << "The last total count for this rv is: " << rvsp->lastTotalCnt << "\n";
+                    std::cout << "The current msg rate for this rv is: " <<
+                        l2RvMap[l2RvElement.first].msgRate << "\n";
+                    std::cout << "Last time is: " << rvsp->lastTime << " and curr time is: " <<
+                            currTime_ms<< "\n";
+                    std::cout << "Time difference is: "  << (currTime_ms - rvsp->lastTime) << "ms \n";
+                }
+            }
+
+            if( (l2RvMap[l2RvElement.first].msgRate > configuration.floodAttackThreshSingle)
+                    && (currUtil >= (configuration.mvmUtilThreshold))){
+                // calculate expected filtering time
+                if( currUtil < 1.0 ){ // < 1 and >= threshold
+                    filteringTime = (uint32_t)((100.0 * currUtil) - 25.0); // ms
+                }else{ // >= 1
+                    filteringTime = 75; // ms
+                }
+                /* std::cout << "There is a flooding attack happening\n"; */
+                // add this l2 address to the list of addr to filter
+                // somehow need to identify portion from a single vehicle is a high value.
+                // via the l2 address
+                rvSrc.srcL2Id = l2RvElement.first;
+                rvSrc.pppp = 0;
+                rvSrc.durationMs = filteringTime;
+                if(configuration.floodDetectVerbosity > 1){
+                    std::cout << "Detected flooding attack\n";
+                    std::cout << "Adding " << rvSrc.srcL2Id << " to rv list to filter\n";
+                    std::cout << "Filtering time should be " << rvSrc.durationMs << "\n";
+                    std::cout << " Calculated filter time is " << filteringTime << "\n";
+                }
+                rvListToFilter->push_back(rvSrc);
+            }else{
+                if(configuration.floodDetectVerbosity > 3){
+                    std::cout << "There is no flooding attack from l2 " <<
+                        l2RvElement.first << " happening\n";
+                }
+                stateOn = false;
+            }
+            l2RvMap[l2RvElement.first].lastTime = currTime_ms;
+            l2RvMap[l2RvElement.first].lastTotalCnt = rvsp->totalCnt;
+        }
+    }
+
+    // evaluation instance logic
+    if(rvListToFilter->size()){
+        // move to state 1 - flooding attack happening
+        stateOn = true;
+        // filter the l2 addresses based on calculated filtering time
+        radioReceives[0].setL2Filters(*rvListToFilter);
+    }else{
+        stateOn = false;
+    }
+ }
+
 
 void ApplicationBase::vehicleEventReport(bool emergent,
     const current_dynamic_vehicle_state_t* const vehicle_state) {
@@ -1288,6 +1428,55 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
                 }
             }
         }
+
+        if (configs.find("overrideVerifResult") != configs.end())
+        {
+            istringstream is(configs["overrideVerifResult"]);
+            is >> boolalpha >> this->configuration.overrideVerifResult;
+        }
+        if(this->configuration.overrideVerifResult){
+            this->configuration.overrideVerifValue = stoi(configs["overrideVerifValue"]);
+        }
+
+        /* Flooding attack detection and mitigation config items */
+        if (configs.find("enableL2FloodingDetect") != configs.end())
+        {
+            istringstream is(configs["enableL2FloodingDetect"]);
+            is >> boolalpha >> this->configuration.enableL2FloodingDetect;
+        }
+        if(this->configuration.floodDetectVerbosity){
+            this->configuration.floodDetectVerbosity = stoi(configs["floodDetectVerbosity"]);
+        }
+        if(configs.find("commandInterval") != configs.end()) {
+            this->configuration.commandInterval = stoi(configs["commandInterval"]);
+        }
+        if(configs.find("nCommandInterval_0") != configs.end()) {
+            this->configuration.nCommandInterval_0 = stoi(configs["nCommandInterval_0"]);
+        }
+        if(configs.find("nCommandInterval_1") != configs.end()) {
+            this->configuration.nCommandInterval_1 = stoi(configs["nCommandInterval_1"]);
+        }
+        if(configs.find("floodAttackThreshTotal") != configs.end()) {
+            this->configuration.floodAttackThreshTotal = stoi(configs["floodAttackThreshTotal"]);
+        }
+        if(configs.find("floodAttackThreshSingle") != configs.end()) {
+            this->configuration.floodAttackThreshSingle = stoi(configs["floodAttackThreshSingle"]);
+        }
+        if(configs.find("loadUpdateInterval") != configs.end()) {
+            this->configuration.loadUpdateInterval = stoi(configs["loadUpdateInterval"]);
+        }
+        if(configs.find("mvmUtilThreshold") != configs.end()) {
+            this->configuration.mvmUtilThreshold = stod(configs["mvmUtilThreshold"]);
+        }
+
+        if (configs.find("mvmCapacityOverride") != configs.end())
+        {
+            istringstream is(configs["mvmCapacityOverride"]);
+            is >> boolalpha >> this->configuration.mvmCapacityOverride;
+        }
+        if(configs.find("mvmCapacity") != configs.end()) {
+            this->configuration.mvmCapacity = stoi(configs["mvmCapacity"]);
+        }
     }
 
     /* codec debug */
@@ -1425,9 +1614,6 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     }
     // Add qMonConfig elements here after this line.
     // e.g. qMonConfig->sockDomain = AF_INET; // etc etc...
-
-
-
 
     /*
       check if congestion control is enabled and begin setting the cong ctrl config parameters
@@ -1606,10 +1792,6 @@ int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
 
 void ApplicationBase::setup(MessageType msgType) {
     uint8_t i = 0;
-    // setup ldm
-    if(this->configuration.ldmSize){
-        this->ldm = new Ldm(this->configuration.ldmSize);
-    }
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
 
@@ -1725,6 +1907,11 @@ void ApplicationBase::setup(MessageType msgType) {
         abuf_alloc(&mc->abuf, ABUF_LEN, ABUF_HEADROOM);
         this->eventContents.push_back(mc);
         i += 1;
+    }
+
+    // setup ldm
+    if(this->configuration.ldmSize and this->radioReceives.size() > 0){
+        this->ldm = new Ldm(this->configuration.ldmSize, this->radioReceives[0].getCv2xRadio());
     }
 }
 
@@ -1962,26 +2149,29 @@ int ApplicationBase::receive(const uint8_t index, const uint16_t bufLen,
     return -1;
 }
 
-void ApplicationBase::closeAllRadio() {
+void ApplicationBase::clearRadioInstance() {
+    if(appVerbosity) {
+        cout << "clearRadioInstance" << endl;
+    }
+    eventTransmits.clear();
+    spsTransmits.clear();
+    radioReceives.clear();
+}
 
-    for (uint8_t i = 0; i<this->eventTransmits.size(); i++)
-    {
+void ApplicationBase::closeAllRadio() {
+    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }
-    eventTransmits.erase(eventTransmits.begin(),eventTransmits.end());
-    for (uint8_t i = 0; i < this->spsTransmits.size(); i++)
-    {
+    for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
         this->spsTransmits[i].closeFlow();
     }
-    spsTransmits.erase(spsTransmits.begin(),spsTransmits.end());
-
-    for (uint8_t i = 0; i < this->radioReceives.size(); i++)
-    {
+    for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
         this->radioReceives[i].closeFlow();
     }
-    radioReceives.erase(radioReceives.begin(),radioReceives.end());
-    if (this->kinematicsReceive != nullptr)
-    {
+
+    clearRadioInstance();
+
+    if (this->kinematicsReceive != nullptr) {
         this->kinematicsReceive->close();
     }
     std::cout << "Finished closing all flows\n";

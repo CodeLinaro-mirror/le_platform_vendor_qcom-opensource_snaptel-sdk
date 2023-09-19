@@ -1925,6 +1925,14 @@ struct XtraConfig {
      *  the default URL of https://nts.xtracloud.net:4460.
      */
     std::string ntsServerURL;
+    /**
+     * Enable or disable diag logging for Xtra.
+     *
+     * false : disable the diag logging for Xtra.
+     * true  : enable the diag logging for Xtra.
+     *
+     */
+    bool isDiagLoggingEnabled;
 };
 
 /** Provides the status of the previously downloaded Xtra data. */

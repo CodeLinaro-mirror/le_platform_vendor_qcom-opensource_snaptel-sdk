@@ -580,8 +580,6 @@ ApplicationBase::~ApplicationBase() {
             csvfp = nullptr;
         }
      }
-
-     closeAllRadio();
 }
 
 void ApplicationBase::detectFloodAndMitigate(bool& stateOn,
@@ -772,6 +770,17 @@ void ApplicationBase::prepareForExit() {
     std::unique_lock<std::mutex> loc(stateMtx);
     exitApp = true;
     stateCv.notify_all();
+
+    // notify all radio interface to prepare for exit
+    for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
+        this->eventTransmits[i].prepareForExit();
+    }
+    for (uint8_t i = 0; i < this->spsTransmits.size(); i++) {
+        this->spsTransmits[i].prepareForExit();
+    }
+    for (uint8_t i = 0; i < this->radioReceives.size(); i++) {
+        this->radioReceives[i].prepareForExit();
+    }
 }
 
 bool ApplicationBase::pendingTillEmergency() {
@@ -1791,7 +1800,7 @@ int ApplicationBase::adjustSpsPeriodicity(int intervalMs) {
     return (ret * 100);
 }
 
-void ApplicationBase::setup(MessageType msgType) {
+int ApplicationBase::setup(MessageType msgType) {
     uint8_t i = 0;
     EventFlowInfo eventInfo;
     SpsFlowInfo spsInfo;
@@ -1816,7 +1825,7 @@ void ApplicationBase::setup(MessageType msgType) {
     {
 
         RadioTransmit tx(spsInfo, TrafficCategory::SAFETY_TYPE, TrafficIpType::TRAFFIC_NON_IP,
-                         port, this->configuration.spsServiceIDs[i], false, 0);
+                         port, this->configuration.spsServiceIDs[i]);
         // save Tx instance only if create Tx flow succeeded
         if (tx.flow) {
             this->spsTransmits.push_back(std::move(tx));
@@ -1824,7 +1833,7 @@ void ApplicationBase::setup(MessageType msgType) {
             cerr << "ApplicationBase::setup error in creating Tx SPS flow!" <<
                     " with spsServiceId: " << this->configuration.spsServiceIDs[i]
                     << endl;
-            return;
+            return -1;
         }
 
         this->spsTransmits[i].configureIpv6(this->configuration.spsDestPorts[i],
@@ -1851,7 +1860,7 @@ void ApplicationBase::setup(MessageType msgType) {
             } else {
                 cerr << "ApplicationBase::setup error in creating wildcard Rx!"
                         << endl;
-                return;
+                return -1;
             }
         } else {
             RadioReceive rx(TrafficCategory::SAFETY_TYPE,
@@ -1868,7 +1877,7 @@ void ApplicationBase::setup(MessageType msgType) {
                     cerr << "" << this->configuration.receiveSubIds[i]<< ", ";
                 }
                 cerr << "" << endl;
-                return;
+                return -1;
             }
         }
 
@@ -1894,7 +1903,7 @@ void ApplicationBase::setup(MessageType msgType) {
         } else {
             cerr << "ApplicationBase::setup error in creating Tx event flow!"
                     << endl;
-            return;
+            return -1;
         }
         this->eventTransmits[i].configureIpv6(this->configuration.eventDestPorts[i],
                 this->configuration.eventDestAddrs[i].c_str());
@@ -1914,6 +1923,7 @@ void ApplicationBase::setup(MessageType msgType) {
     if(this->configuration.ldmSize and this->radioReceives.size() > 0){
         this->ldm = new Ldm(this->configuration.ldmSize, this->radioReceives[0].getCv2xRadio());
     }
+    return 0;
 }
 
 void ApplicationBase::setupLdm(){
@@ -2160,6 +2170,8 @@ void ApplicationBase::clearRadioInstance() {
 }
 
 void ApplicationBase::closeAllRadio() {
+    std::cout << "Attempting to close all flows\n";
+
     for (uint8_t i = 0; i<this->eventTransmits.size(); i++) {
         this->eventTransmits[i].closeFlow();
     }

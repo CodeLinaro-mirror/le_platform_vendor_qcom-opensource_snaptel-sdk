@@ -518,7 +518,7 @@ public:
 
     void printRxStats();
     void printTxStats();
-    void setup(MessageType msgType);
+    int setup(MessageType msgType);
     void setupLdm();
     virtual bool pendingTillEmergency();
     virtual bool pendingTillNoEmergency();

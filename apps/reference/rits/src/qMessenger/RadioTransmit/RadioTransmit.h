@@ -104,22 +104,8 @@ class RadioTransmit: public RadioInterface{
 private:
     // TrafficCategory category;
 
-
-    /**
-    * Function that acts as a callback of the SDK's Sps Flow creation.
-    * @param txSps a ICv2xTxFlow that results from the creation of the flow.
-    * @param unusedFlow a ICv2xTxFlow if Sps was created with event flow.
-    * @param spsError an ErrorCode of the sps creation in the SDK.
-    * @param eventError an ErrorCode of the optional event creation with the sps.
-    */
-    void spsFlowCallbackOnCreate(
-    shared_ptr<ICv2xTxFlow> txSpsFlow,
-    shared_ptr<ICv2xTxFlow> eventFlow,
-    ErrorCode spsError,
-    ErrorCode eventError);
     Priority spsPriority;
     uint32_t spsResSize;
-
     struct sockaddr_in6 destSock;
     int simSock = -1;
     bool isSim = false;
@@ -133,31 +119,6 @@ private:
     uint64_t actualSPSTxIntervalMs_ = 0;
     string flowType;
     TrafficIpType trafficType_ = TrafficIpType::TRAFFIC_NON_IP;
-
-    /**
-    * Function that acts as a callback of the SDK's Event Flow creation.
-    * @param txSps a ICv2xTxFlow that results from the creation of the flow.
-    * @param unusedFlow a ICv2xTxFlow if Sps was created with event flow.
-    * @param spsError an ErrorCode of the sps creation in the SDK.
-    * @param eventError an ErrorCode of the optional event creation with the sps.
-    */
-    void eventFlowCallbackOnCreate(shared_ptr<ICv2xTxFlow> txEventFlow, ErrorCode eventError);
-
-
-    /**
-    * Function that acts as a callback when an Sps flow parameters are updated.
-    * @param txSps a ICv2xTxFlow that results from the creation of the flow.
-    * @param error an ErrorCode of the optional event creation with the sps.
-    */
-    void spsFlowCallbackOnChanges(shared_ptr<ICv2xTxFlow> txSpsFlow, ErrorCode error);
-
-
-    /**
-    * Function that acts as a callback when a Flow is closed.
-    * @param flow a ICv2xTxFlow that results from the closing of the flow.
-    * @param error an ErrorCode of the optional event creation with the sps.
-    */
-    void closeCallback(shared_ptr<ICv2xTxFlow> flow, ErrorCode error);
 
 public:
     shared_ptr<ICv2xTxFlow> flow = nullptr;
@@ -193,8 +154,6 @@ public:
     * @param trafficType TrafficIpType.
     * @param port uint16_t value for the transmit port.
     * @param serviceId uint32_t value that IDs the event.
-    * @param withEventFlow bool to send sps with an event flow.If true MUST specify event flow port.
-    * @param eventFlowPort uint32_t that serves as the Even Flow port of this Sps flow.
     * @param microSleepTime uint32_t value that specifies the millisecond wait time until next send.
     * @see TrafficCategory
     * @see TrafficIpType
@@ -203,9 +162,7 @@ public:
                   const TrafficCategory category,
                   const TrafficIpType trafficType,
                   const uint16_t port,
-                  const uint32_t serviceId,
-                  const bool withEventFlow,
-                  const uint16_t eventFlowPort);
+                  const uint32_t serviceId);
 
     /**
     * Method that transmits data in a buffer based in the constructed flow.

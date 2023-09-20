@@ -69,6 +69,7 @@
   */
 
 #include <ifaddrs.h>
+#include <sys/time.h>
 #include <netdb.h>
 #include <sys/time.h>
 #include "ApplicationBase.hpp"

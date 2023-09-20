@@ -21,6 +21,7 @@ file(GLOB ASN1C_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/etsi/DENM/generated/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sae/generated/*.c
     )
+list(REMOVE_ITEM ASN1C_FILES ${ASN1C_SKELETONS}/converter-sample.c)
 
 set(SOURCE_FILES ${SOURCE_FILES_TOP})
 
@@ -31,13 +32,11 @@ if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
 endif()
 
 
-add_library(codec ${SOURCE_FILES})
+add_library(v2xcodec SHARED  ${SOURCE_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/src/v2x_codec.c)
 if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
-    add_library(v2xcodec SHARED  ${CMAKE_CURRENT_SOURCE_DIR}/src/v2x_codec.c)
-    target_link_libraries(v2xcodec codec asn1c_codec glib-2.0)
+    target_link_libraries(v2xcodec asn1c_codec glib-2.0 m)
 else()
-    add_library(v2xcodec SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/v2x_codec.c)
-    target_link_libraries(v2xcodec codec glib-2.0)
+    target_link_libraries(v2xcodec glib-2.0 m)
 endif()
 
 set_property(TARGET v2xcodec PROPERTY PUBLIC_HEADER

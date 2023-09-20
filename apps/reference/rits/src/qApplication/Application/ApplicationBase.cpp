@@ -127,10 +127,11 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
         pos.posLong = (locationInfo->getLongitude());
         pos.heading = (locationInfo->getHeading());
         pos.elev = (locationInfo->getAltitude());
-        auto &v2xPropFactory = V2xPropFactory::getInstance();
-        auto sp = v2xPropFactory.getCongestionControlManager();
-        CCErrorCode res = sp->updateHostVehicleData(
-            pos, locationInfo->getSpeed());
+        if(ApplicationBase::congestionControlManager){
+                CCErrorCode res =
+                    ApplicationBase::congestionControlManager->updateHostVehicleData(
+                    pos, locationInfo->getSpeed());
+        }
     }
 
 }
@@ -151,7 +152,7 @@ void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FIL
  * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
  */
 void ApplicationBase::writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
-    shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt,
+    CongestionControlCalculations* congestionControlCalculations, bool validPkt,
     uint16_t eventsData) {
     if (!congestionControlCalculations) {
         std::cerr << "Invalid congestionControl output struct provided\n";
@@ -2498,99 +2499,108 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
         return;
     }
 
-    auto sp = mc.lock();
+    auto sp = mc.lock(); 
+
+    // check if valid msg contents pointer
+    if (!sp) {
+        return;
+    }
+
+    if(psid == PSID_BSM && !sp.get()->j2735_msg ){
+        // we do not care about non bsms for now
+        return;
+    }
+
     // build a string and then only lock for just that part in writing to the file
     char tmpLogBuf[600] = "";
     char* curChar = tmpLogBuf;
-    char* const endChar = tmpLogBuf + sizeof tmpLogBuf;
+    char* const endChar = tmpLogBuf + sizeof tmpLogBuf - 1;
     char tmpLogStr[200] = "";
-
-    if (sp) {
-        // lock the critical section and write to the shared file
-        RVsInRange = vehiclesInRange();
-        timestamp_now_ms = timestamp_now();
-        if (isTx) {
-            if (txType == TransmitType::SPS) {
-                cbr = spsTransmits[index].getCBRValue();
-                monotonicTime = spsTransmits[index].latestTxRxTimeMonotonic();
-            } else {
-                cbr = eventTransmits[index].getCBRValue();
-                monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
-            }
+    RVsInRange = vehiclesInRange();
+    timestamp_now_ms = timestamp_now();
+    if (isTx) {
+        if (txType == TransmitType::SPS) {
+            cbr = spsTransmits[index].getCBRValue();
+            monotonicTime = spsTransmits[index].latestTxRxTimeMonotonic();
         } else {
-            monotonicTime = radioReceives[index].latestTxRxTimeMonotonic();
-            cbr = radioReceives[index].getCBRValue();
+            cbr = eventTransmits[index].getCBRValue();
+            monotonicTime = eventTransmits[index].latestTxRxTimeMonotonic();
         }
-        /* Log Format:
-         * TimeStamp    TimeStamp_ms    Time_monotonic
-         * LogRecType   L2 ID    CBR Percent    CPU_Util
-         * TXInterval   msgCnt  TempId  GPGSAMode
-         * secMark  lat long    semi_major_dev  speed
-         * heading  longAccel   latAccel    Tracking_Error
-         * vehicleDensityInRange    ChannelQualityIndication
-         * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
-         */
-
-        // write general data to log
-        // build the string in this function instead of immediately writing
-        writeGeneralLog(tmpLogStr, 200, sp.get(), csvfp, isTx, periodicityMs, validPkt,
-            RVsInRange, getCurrentTimestamp().c_str(), monotonicTime, timestamp,
-            locPositionDop_, locNumSvUsed_, locTimeMs_, cbr, txInterval, l2SrcAddr);
-        curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
-
-        // if congestion control enabled, write cong ctrl data to log
-        memset(tmpLogStr, 0, sizeof(tmpLogStr));
-        // may need to write these regardless
-
-        unsigned short eventsData = 0;
-        if(psid = PSID_BSM && sp.get()->j2735_msg && isTx && txType == TransmitType::EVENT){
-            bsm_value_t *bsm = (bsm_value_t*)(sp.get()->j2735_msg);
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventAirBagDeployment) << 12;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventDisabledVehicle) << 11;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventFlatTire) << 10;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventWipersChanged) << 9;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventLightsChanged) << 8;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventHardBraking) << 7;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardousMaterials) <<5;
-            eventsData |= (unsigned short)
-                (1 & bsm->events.bits.eventStabilityControlactivated) << 4;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventTractionControlLoss) << 3;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventABSactivated) << 2;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventStopLineViolation) <<1;
-            eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardLights) << 12;
-        }else{
-            eventsData = 0;
-        }
-
-        if (this->configuration.enableCongCtrl && isTx) {
-            // build the string in this function instead of immediately writing to file
-            writeCongCtrlLog(tmpLogStr, 200, csvfp,
-                congestionControlManager->
-                    getCongestionControlUserData()->congestionControlCalculations,
-                validPkt, eventsData);
-        }else{
-            // make sure to write commas for the empty fields
-
-            //uint16_t event_data = (uint16_t)bsm->events.data;
-            //tmpPtr += snprintf(tmpPtr, endBuf-tmpPtr, "%u,", eventsData);
-            snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d",
-                validPkt ? 1 : 0, this->configuration.enableCongCtrl ? congestionControlManager->
-                    getCongestionControlUserData()->congestionControlCalculations->maxITT : 0,
-                eventsData, this->congCtrlConfig.spsEnhHysterPerc);
-        }
-        curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
-        //reset
-        memset(tmpLogStr, 0, sizeof(tmpLogStr));
-        /* Security related fields */
-        // if security enabled, write security stats to log
-        if (this->configuration.enableSecurity) {
-            writeSecurityLog(tmpLogStr, 200, csvfp);
-        }else {
-            // todo: make sure to write commas for the empty fields
-        }
-        curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
-
-        lock_guard<std::mutex> lock(csvMutex);
-        fprintf(csvfp, "%s\n", tmpLogBuf);
+    } else {
+        monotonicTime = radioReceives[index].latestTxRxTimeMonotonic();
+        cbr = radioReceives[index].getCBRValue();
     }
+    /* Log Format:
+     * TimeStamp    TimeStamp_ms    Time_monotonic
+     * LogRecType   L2 ID    CBR Percent    CPU_Util
+     * TXInterval   msgCnt  TempId  GPGSAMode
+     * secMark  lat long    semi_major_dev  speed
+     * heading  longAccel   latAccel    Tracking_Error
+     * vehicleDensityInRange    ChannelQualityIndication
+     * BSMValid max_ITT GPS-Time    Events  DCC random time Hysterisis
+     */
+
+    // write general data to log
+    // build the string in this function instead of immediately writing
+    int ret = 0;
+    ret  = writeGeneralLog(tmpLogStr, 200, sp.get(), csvfp, isTx, periodicityMs, validPkt,
+                RVsInRange, getCurrentTimestamp().c_str(), monotonicTime, timestamp,
+                locPositionDop_, locNumSvUsed_, locTimeMs_, cbr, txInterval, l2SrcAddr);
+    // check if error in writing general data
+    if(ret == -1){
+        return;
+    }
+    curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    // if congestion control enabled, write cong ctrl data to log
+    unsigned short eventsData = 0;
+    if(psid == PSID_BSM && sp.get()->j2735_msg && isTx && txType == TransmitType::EVENT){
+        bsm_value_t *bsm = (bsm_value_t*)(sp.get()->j2735_msg);
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventAirBagDeployment) << 12;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventDisabledVehicle) << 11;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventFlatTire) << 10;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventWipersChanged) << 9;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventLightsChanged) << 8;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventHardBraking) << 7;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardousMaterials) <<5;
+        eventsData |= (unsigned short)
+            (1 & bsm->events.bits.eventStabilityControlactivated) << 4;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventTractionControlLoss) << 3;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventABSactivated) << 2;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventStopLineViolation) <<1;
+        eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardLights) << 12;
+    }else{
+        eventsData = 0;
+    }
+
+    if (this->configuration.enableCongCtrl && congCtrlInitialized && isTx) {
+        // get a snapshot of the current cong control calculations
+        CongestionControlCalculations congCtrlCalcs = {0};
+        memcpy(&congCtrlCalcs, congestionControlManager->
+                getCongestionControlUserData()->congestionControlCalculations.get(), 
+                sizeof(CongestionControlCalculations));
+        writeCongCtrlLog(tmpLogStr, 200, csvfp,
+            &congCtrlCalcs,
+            validPkt, eventsData);
+    }else{
+        // make sure to write commas for the empty fields
+        snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d",
+            validPkt ? 1 : 0, 
+            (this->configuration.enableCongCtrl && congCtrlInitialized) ? congestionControlManager->
+            getCongestionControlUserData()->congestionControlCalculations->maxITT : 0,
+            eventsData, this->congCtrlConfig.spsEnhHysterPerc);
+    }
+    curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    //reset
+    memset(tmpLogStr, 0, sizeof(tmpLogStr));
+    /* Security related fields */
+    // if security enabled, write security stats to log
+    if (this->configuration.enableSecurity) {
+        writeSecurityLog(tmpLogStr, 200, csvfp);
+    }else {
+        // todo: make sure to write commas for the empty fields
+    }
+    curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    // lock here to prevent race conditions when writing to file
+    lock_guard<std::mutex> lock(csvMutex);
+    fprintf(csvfp, "%s\n", tmpLogBuf);
 }

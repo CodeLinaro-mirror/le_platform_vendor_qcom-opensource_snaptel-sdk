@@ -730,7 +730,7 @@ private:
     static void congCtrlCb(CongestionControlUserData* congestionControlUserData, bool success);
     // function to write congestion control data to file
     void writeCongCtrlLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp,
-    shared_ptr<CongestionControlCalculations> congestionControlCalculations, bool validPkt,
+    CongestionControlCalculations* congestionControlCalculations, bool validPkt,
         uint16_t eventsData);
     // function to write security related data to file
     void writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp);

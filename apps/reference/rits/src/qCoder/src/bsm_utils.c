@@ -287,23 +287,20 @@ void print_summary_RV(msg_contents *mc)
         print_bsm_summary_RV(mc);
 }
 
-void writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FILE *myfp,
+int writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FILE *myfp,
     bool isTx, uint64_t periodicityMs, bool validPkt, uint32_t RVsInRange,
     const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
     float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr,
     uint64_t txInterval, uint32_t l2SrcAddr){
     if(!mc){
-        printf("Null message contents\n");
-        return;
+        return -1;
     }
 
     if(!mc->j2735_msg){
-        printf("Null j2735 msg\n");
-        return;
+        return -1;
     }
     if(!tmpLogStr){
-        printf("Invalid input buffer\n");
-        return;
+        return -1;
     }
     char wall_time[100];
     get_wall_time(wall_time);
@@ -355,6 +352,7 @@ void writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FIL
             loggings.semiMajorDev, loggings.speed,
             loggings.heading, loggings.lonaccl, loggings.lataccl);
     }
+    return 1;
 }
 
 //Function to write bsm contents to a csv file

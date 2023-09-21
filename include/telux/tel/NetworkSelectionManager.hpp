@@ -212,6 +212,14 @@ struct NetworkScanInfo {
                                     NetworkScanType::USER_SPECIFIED_RAT */
 };
 
+/**
+ * Defines network selection mode information.
+ */
+struct NetworkModeInfo {
+    NetworkSelectionMode mode;
+    std::string mcc;  /**< Mobile Country Code (Applicable only for MANUAL selection mode). */
+    std::string mnc;  /**< Mobile Network Code (Applicable only for MANUAL selection mode). */
+};
 /** @} */ /* end_addtogroup telematics_network_selection */
 
 /**
@@ -224,9 +232,25 @@ struct NetworkScanInfo {
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not
  *                        @ref telux::common::ErrorCode
+ *
+ * @deprecated Use SelectionModeInfoCb API instead.
  */
 using SelectionModeResponseCallback
    = std::function<void(NetworkSelectionMode mode, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called with the response to requestNetworkSelectionMode API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] info       Provides NetworkSelectionMode, MCC and MNC. @ref NetworkModeInfo
+ * @param [in] error      Return code which indicates whether the operation
+ *                        succeeded or not.
+ *                        @ref telux::common::ErrorCode
+ */
+using SelectionModeInfoCb
+   = std::function<void(NetworkModeInfo info, telux::common::ErrorCode error)>;
 
 /**
  * This function is called with the response to requestPreferredNetworks API.
@@ -309,8 +333,12 @@ public:
     *                         network selection mode request.
     *
     * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
     */
-   virtual telux::common::Status requestNetworkSelectionMode(SelectionModeResponseCallback callback)
+   virtual telux::common::Status
+      requestNetworkSelectionMode(SelectionModeInfoCb callback)
       = 0;
 
    /**
@@ -437,6 +465,23 @@ public:
       deregisterListener(std::weak_ptr<INetworkSelectionListener> listener)
       = 0;
 
+   /**
+    * Get current network selection mode (i.e Manual or Automatic) asynchronously.
+    *
+    * On platforms with Access control enabled, Caller needs to have
+    * TELUX_TEL_NETWORK_SELECTION_READ permission to invoke this API successfully.
+    *
+    * @param [in] callback    Callback function to get the response of get
+    *                         network selection mode request.
+    *
+    * @returns Status of requestNetworkSelectionMode i.e. success or suitable error code.
+    *
+    * @deprecated Use INetworkSelectionManager::requestNetworkSelectionMode(
+    *     SelectionModeInfoCb callback) API instead.
+    */
+   virtual telux::common::Status requestNetworkSelectionMode(SelectionModeResponseCallback callback)
+      = 0;
+
    virtual ~INetworkSelectionManager(){};
 };
 
@@ -508,9 +553,12 @@ public:
     * On platforms with Access control enabled, Caller needs to have
     * TELUX_TEL_NETWORK_SELECTION_READ permission to receive this notification.
     *
-    * @param [in] mode    Network selection mode @ref NetworkSelectionMode
+    * @param [in] info   Provides NetworkSelectionMode, MCC and MNC. @ref NetworkModeInfo
+    *
+    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
+    *          could break backward compatibility.
     */
-   virtual void onSelectionModeChanged(NetworkSelectionMode mode) {
+   virtual void onSelectionModeChanged(NetworkModeInfo info) {
    }
 
    /**
@@ -529,6 +577,20 @@ public:
     */
    virtual void onNetworkScanResults(NetworkScanStatus scanStatus,
       std::vector<telux::tel::OperatorInfo> operatorInfos) {
+   }
+
+   /**
+    * This function is called whenever network selection mode is changed.
+    *
+    * On platforms with Access control enabled, Caller needs to have
+    * TELUX_TEL_NETWORK_SELECTION_READ permission to receive this notification.
+    *
+    * @param [in] mode    Network selection mode. @ref NetworkSelectionMode
+    *
+    * @deprecated Use INetworkSelectionListener::onSelectionModeChanged(
+    *    NetworkModeInfo info) API instead.
+    */
+   virtual void onSelectionModeChanged(NetworkSelectionMode mode) {
    }
 
    /**

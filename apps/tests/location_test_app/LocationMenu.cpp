@@ -1757,6 +1757,21 @@ void LocationMenu::populateXtraConfigParams(telux::loc::XtraConfig &configParams
     }
     configParams.daemonDebugLogLevel =
         static_cast<telux::loc::DebugLogLevel>(daemonDebugLogLevel);
+
+    std::string ntsServer;
+    std::cout << "Enter NTS server url: ";
+    std::getline(std::cin, ntsServer, delimiter);
+    configParams.ntsServerURL = ntsServer;
+
+    std::cin.get();
+    std::string diagLogging;
+    std::cout << "Enable Xtra Diag logging (y/n): ";
+    std::getline(std::cin, diagLogging, delimiter);
+    if(diagLogging == "Y" || diagLogging == "y") {
+        configParams.isDiagLoggingEnabled = true;
+    } else {
+        configParams.isDiagLoggingEnabled = false;
+    }
 }
 
 void LocationMenu::configureXtraParameters(std::vector<std::string> userInput) {

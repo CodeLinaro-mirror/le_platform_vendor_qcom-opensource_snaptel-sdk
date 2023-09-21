@@ -1911,6 +1911,28 @@ struct XtraConfig {
     uint32_t integrityDownloadIntervalMinute;
     /** Level of debug log messages that will be logged. */
     DebugLogLevel daemonDebugLogLevel;
+    /** URL of NTS KE Server.
+     *
+     *  The URL, if provided, shall be complete and shall include
+     *  the port number.
+     *
+     *  Max of 128 bytes, including null-terminating byte will be
+     *  supported.
+     *
+     *  Valid NTS KE server URL should start with "https://".
+     *
+     *  If NTS KE server URL is not specified, then device will use
+     *  the default URL of https://nts.xtracloud.net:4460.
+     */
+    std::string ntsServerURL;
+    /**
+     * Enable or disable diag logging for Xtra.
+     *
+     * false : disable the diag logging for Xtra.
+     * true  : enable the diag logging for Xtra.
+     *
+     */
+    bool isDiagLoggingEnabled;
 };
 
 /** Provides the status of the previously downloaded Xtra data. */

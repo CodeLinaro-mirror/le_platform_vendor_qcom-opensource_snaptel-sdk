@@ -37,18 +37,14 @@
             "storageType:  valid storage types are NONE , SIM"
         ],
         "incomingsms":[
-            "telsdk_event_injector -f tel_sms -e incomingsms <slotId> <numberOfSegments> <refNumber> <segmentNumber> <msgIndex> <tagType> <encoding> <isMetaInfoValid> <pdu> <rawPdu> <receiver> <sender> <text>",
+            "telsdk_event_injector -f tel_sms -e incomingsms <slotId> <numberOfSegments> <refNumber> <segmentNumber> <encoding> <isMetaInfoValid> <pdu> <sender> <text>",
             "slotId:           valid slotIds are 1 & 2 only",
             "numberOfSegments: valid number of segments",
             "refNumber:        valid refNumber",
             "segmentNumber:    valid segmentNumber",
-            "msgIndex:         valid msgIndex",
-            "tagType:          valid tagType",
             "encoding:         valid encoding",
             "isMetaInfoValid:  valid isMetaInfoValid",
             "pdu:              valid pdu",
-            "rawPdu:           valid rawPdu",
-            "receiver:         valid receiver",
             "sender:           valid sender",
             "text:             valid text"
         ]

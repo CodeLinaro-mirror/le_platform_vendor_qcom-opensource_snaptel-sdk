@@ -50,6 +50,8 @@ class CommonUtils {
         std::string subsystem, std::string defaultValue, std::vector<std::string> path);
     static ErrorCode writeSystemDataValue(
         std::string subsystem, std::string value, std::vector<std::string> path);
+    static std::string convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex);
+    static std::vector<int> convertStringToVector(std::string input);
 
     template<typename T>
     static void updateJsonValue(const std::string& filePath, const std::string& subsystem,

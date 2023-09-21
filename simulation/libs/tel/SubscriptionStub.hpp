@@ -46,21 +46,14 @@
 #include "../common/Logger.hpp"
 #include <telux/common/CommonDefines.hpp>
 #include <telux/tel/Subscription.hpp>
-#include <grpcpp/grpcpp.h>
-#include "../../protos/proto-src/tel.grpc.pb.h"
-
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::Status;
-
-using tel::PhoneService;
 
 namespace telux {
 namespace tel {
 
 class SubscriptionStub : public ISubscription {
 public:
-    SubscriptionStub(int slot);
+    SubscriptionStub(int slotId, std::string carrierName, std::string iccId, int mcc,
+        int mnc, std::string number, std::string imsi, std::string gid1, std::string gid2);
     ~SubscriptionStub();
     std::string getCarrierName() override ;
     std::string getIccId() override;
@@ -73,13 +66,13 @@ public:
     std::string getImsi() override;
     std::string getGID1() override;
     std::string getGID2() override;
+    void updateSubscription(int slotId, std::string carrierName,
+    std::string iccId, int mcc, int mnc, std::string number, std::string imsi, std::string gid1,
+    std::string gid2);
     void cleanup();
 private:
-    std::unique_ptr<::tel::PhoneService::Stub> stub_;
-    int slotId_;
     int simSlotIndex_;
     std::string carrierName_;
-    std::string countryISO_;
     std::string iccId_;
     int mcc_;
     int mnc_;
@@ -87,7 +80,6 @@ private:
     std::string imsi_;
     std::string gid1_;
     std::string gid2_;
-    telux::common::Status getSubscription(int slotId);
 };
 
 } // end of namespace tel

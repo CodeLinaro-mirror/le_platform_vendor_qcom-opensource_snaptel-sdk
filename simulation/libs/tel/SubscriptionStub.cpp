@@ -38,11 +38,18 @@ namespace telux {
 
 namespace tel {
 
-SubscriptionStub::SubscriptionStub(int slotId)
-    :stub_(PhoneService::NewStub(grpc::CreateChannel("localhost:8089",
-    grpc::InsecureChannelCredentials()))) {
+SubscriptionStub::SubscriptionStub(int slotId, std::string carrierName, std::string iccId,
+    int mcc, int mnc, std::string number, std::string imsi, std::string gid1, std::string gid2)
+    :simSlotIndex_(slotId),
+    carrierName_(carrierName),
+    iccId_(iccId),
+    mcc_(mcc),
+    mnc_(mnc),
+    number_(number),
+    imsi_(imsi),
+    gid1_(gid1),
+    gid2_(gid2) {
     LOG(DEBUG, __FUNCTION__);
-    getSubscription(slotId);
 }
 
 SubscriptionStub::~SubscriptionStub() {
@@ -51,7 +58,6 @@ SubscriptionStub::~SubscriptionStub() {
 void SubscriptionStub::cleanup() {
     // reset data member to default
     carrierName_.clear();
-    countryISO_.clear();
     iccId_.clear();
     gid1_.clear();
     gid2_.clear();
@@ -115,34 +121,23 @@ std::string SubscriptionStub::getGID2() {
    return gid2_;
 }
 
-telux::common::Status SubscriptionStub::getSubscription(int slotId) {
+void SubscriptionStub::updateSubscription(int slotId, std::string carrierName,
+    std::string iccId, int mcc, int mnc, std::string number, std::string imsi, std::string gid1,
+    std::string gid2) {
     LOG(DEBUG, __FUNCTION__, slotId);
-    ::tel::GetSubscriptionRequest request;
-    ::tel::Subscription response;
-    ClientContext context;
-
-    request.set_phone_id(slotId);
-
-    grpc::Status status = stub_->GetSubscription(&context, request, &response);
-
-    if (!status.ok()) {
-        return telux::common::Status::FAILED;
-    }
     simSlotIndex_ = slotId;
-    carrierName_  = static_cast<std::string>(response.carrier_name());
-    iccId_  = static_cast<std::string>(response.icc_id());
-    mcc_  = static_cast<int>(response.mcc());
-    mnc_  = static_cast<int>(response.mnc());
-    number_  = static_cast<std::string>(response.phone_number());
-    imsi_  = static_cast<std::string>(response.imsi());
-    gid1_  = static_cast<std::string>(response.gid_1());
-    gid2_  = static_cast<std::string>(response.gid_2());
+    carrierName_  = carrierName;
+    iccId_  = iccId;
+    mcc_  = mcc;
+    mnc_  = mnc;
+    number_  = number;
+    imsi_  = imsi;
+    gid1_  = gid1;
+    gid2_  = gid2;
 
     LOG(DEBUG, __FUNCTION__, " Carrier name is ",carrierName_
     ," Phone number is ",number_, " iccid is ", iccId_ , " mcc is ",
     mcc_ , " mnc is ",mnc_ , " imsi is ",imsi_, " gid1 is ",gid1_ , "gid2 is ",gid2_);
-
-    return telux::common::Status::SUCCESS;
 }
 } // end of namespace tel
 

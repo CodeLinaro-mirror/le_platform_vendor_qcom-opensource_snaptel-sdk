@@ -39,6 +39,7 @@
 #include <bits/stdc++.h>
 #include "SmsManagerStub.hpp"
 #include "../common/SimulationConfigParser.hpp"
+#include "../common/CommonUtils.hpp"
 
 using namespace telux::common;
 using namespace telux::tel;
@@ -59,8 +60,8 @@ SmsManagerStub::SmsManagerStub(int phoneId, telux::common::InitResponseCb callba
 
 void SmsManagerStub::initSync(telux::common::InitResponseCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::GetServiceStatusReply response;
-    ::tel::GetServiceStatusRequest request;
+    ::commonStub::GetServiceStatusReply response;
+    ::commonStub::GetServiceStatusRequest request;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
@@ -70,6 +71,13 @@ void SmsManagerStub::initSync(telux::common::InitResponseCb callback) {
         static_cast<telux::common::ServiceStatus>(response.service_status());
     int cbDelay = static_cast<int>(response.delay());
     LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(cbStatus));
+    if(cbStatus == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        listenerMgr_ = std::make_shared<telux::common::ListenerManager<ISmsListener>>();
+        if(!listenerMgr_) {
+            LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+            cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
+        }
+    }
     if(callback) {
         this->invokeInitResponseCallback(cbDelay, cbStatus, callback);
     }
@@ -91,14 +99,12 @@ SmsManagerStub::~SmsManagerStub() {
 
 void SmsManagerStub::cleanup() {
     LOG(DEBUG, __FUNCTION__, " PhoneId: ", phoneId_);
-    listeners_.clear();
-    smsMessageMap_.clear();
 }
 
 telux::common::ServiceStatus SmsManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::GetServiceStatusReply response;
-    ::tel::GetServiceStatusRequest request;
+    ::commonStub::GetServiceStatusReply response;
+    ::commonStub::GetServiceStatusRequest request;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
@@ -110,41 +116,16 @@ telux::common::ServiceStatus SmsManagerStub::getServiceStatus() {
 
 telux::common::Status SmsManagerStub::registerListener(std::weak_ptr<ISmsListener> listener) {
     LOG(DEBUG, __FUNCTION__);
-    if (telux::common::ServiceStatus::SERVICE_AVAILABLE != getServiceStatus()) {
+    if(getServiceStatus() != telux::common::ServiceStatus::SERVICE_AVAILABLE) {
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    std::lock_guard<std::mutex> listenerLock(smsManagerMutex_);
     telux::common::Status status = telux::common::Status::FAILED;
-    auto spt = listener.lock();
-    if (spt != nullptr) {
-        if (listeners_.size() == 0) {
-            try {
-            } catch(exception const & ex) {
-                LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
-                status = telux::common::Status::NOMEMORY;
-                return status;
-            }
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.connectToSimulationServer();
-            eventManager.registerListener(shared_from_this(), TEL_SMS_FILTER);
-        }
-        bool existing = 0;
-        for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
-            if (spt == (*iter).lock()) {
-                existing = 1;
-                LOG(DEBUG, __FUNCTION__, "listener already exists");
-                return telux::common::Status::ALREADY;
-            }
-        }
-        if (existing == 0) {
-            listeners_.emplace_back(listener);
-            LOG(DEBUG, __FUNCTION__, " Register Listener : Adding");
-            status = telux::common::Status::SUCCESS;
-        }
-    } else {
-        LOG(ERROR, "Null listener");
-        return telux::common::Status::INVALIDPARAM;
+    if (listenerMgr_) {
+        status = listenerMgr_->registerListener(listener);
+        auto &eventManager = telux::common::EventManager::getInstance();
+        eventManager.connectToSimulationServer();
+        eventManager.registerListener(shared_from_this(), TEL_SMS_FILTER);
     }
     return status;
 }
@@ -156,27 +137,17 @@ telux::common::Status SmsManagerStub::removeListener(
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    telux::common::Status retVal = telux::common::Status::FAILED;
-    std::lock_guard<std::mutex> listenerLock(smsManagerMutex_);
-    auto spt = listener.lock();
-    if (spt != nullptr) {
-        for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
-            if (spt == (*iter).lock()) {
-                iter = listeners_.erase(iter);
-                LOG(DEBUG, __FUNCTION__, " Erasing listener");
-                retVal = telux::common::Status::SUCCESS;
-                break;
-            }
-        }
-        if (listeners_.size() == 0) {
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        std::vector<std::weak_ptr<ISmsListener>> applisteners;
+        status = listenerMgr_->deRegisterListener(listener);
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 0) {
             auto &eventManager = telux::common::EventManager::getInstance();
             eventManager.deregisterListener(shared_from_this());
         }
-    } else {
-        LOG(WARNING, "listener is null");
-        retVal = telux::common::Status::NOSUCH;
     }
-    return (retVal);
+    return status;
 }
 
 telux::common::Status SmsManagerStub::sendSms(const std::string &message,
@@ -202,8 +173,8 @@ telux::common::Status SmsManagerStub::sendSms(const std::string &message,
       LOG(DEBUG, __FUNCTION__, " Delivery callback is null");
       isDeliveryReportNeeded = false;
     }
-    ::tel::SendSmsWithoutSmscRequest request;
-    ::tel::SendSmsWithoutSmscReply response;
+    ::telStub::SendSmsWithoutSmscRequest request;
+    ::telStub::SendSmsWithoutSmscReply response;
     ClientContext context;
 
     request.set_phone_id(phoneId_);
@@ -219,7 +190,7 @@ telux::common::Status SmsManagerStub::sendSms(const std::string &message,
     int noofsegments = static_cast<int>(response.noofsegments());
     int sentCallbackDelay = static_cast<int>(response.sentcallback_callbackdelay());
     std::string ref = static_cast<std::string>(response.sentcallback_msgrefs());
-    std::vector<int> refs = SmsHelper::convertStringToVector(ref);
+    std::vector<int> refs = CommonUtils::convertStringToVector(ref);
     telux::common::ErrorCode deliveryCallbackErrorCode =
         static_cast<telux::common::ErrorCode>(response.deliverycallback_errorcode());
     int deliveryCallbackDelay = static_cast<int>(response.deliverycallback_callbackdelay());
@@ -272,8 +243,8 @@ telux::common::Status SmsManagerStub::sendSms(std::string message, std::string r
     if (!sentCallback) {
         LOG(DEBUG, __FUNCTION__, " Sent callback is null");
     }
-    ::tel::SendSmsRequest request;
-    ::tel::SendSmsReply response;
+    ::telStub::SendSmsRequest request;
+    ::telStub::SendSmsReply response;
     ClientContext context;
 
     request.set_phone_id(phoneId_);
@@ -289,7 +260,7 @@ telux::common::Status SmsManagerStub::sendSms(std::string message, std::string r
     static_cast<telux::common::ErrorCode>(response.smsresponsecb_errorcode());
     int smsResponseCbDelay = static_cast<int>(response.smsresponsecb_callbackdelay());
     std::string ref = static_cast<std::string>(response.sentcallback_msgrefs());
-    std::vector<int> refs = SmsHelper::convertStringToVector(ref);
+    std::vector<int> refs = CommonUtils::convertStringToVector(ref);
     std::vector<smsDeliveryInfo> infos;
 
     for (int i = 0; i < response.records_size(); i++) {
@@ -333,15 +304,18 @@ void SmsManagerStub::invokeDeliveryReportListener(std::string receiverAddress,
     LOG(DEBUG, __FUNCTION__);
     for (int i = 0; i < noofdeliveryreport ;i++) {
         std::this_thread::sleep_for(std::chrono::milliseconds(infos[i].cbDelay));
-        for (auto iter=listeners_.begin();iter != listeners_.end();) {
-            auto spt = (*iter).lock();
-            if (spt) {
-                spt->onDeliveryReport(phoneId_, infos[i].msgRef,
-                    receiverAddress, infos[i].errorCode);
-                ++iter;
-            } else {
-                iter = listeners_.erase(iter);
+        std::vector<std::weak_ptr<ISmsListener>> applisteners;
+        if (listenerMgr_) {
+            listenerMgr_->getAvailableListeners(applisteners);
+            // Notify respective events
+            for(auto &wp : applisteners) {
+                if(auto sp = wp.lock()) {
+                    sp->onDeliveryReport(phoneId_, infos[i].msgRef,
+                        receiverAddress, infos[i].errorCode);
+                }
             }
+        } else {
+            LOG(ERROR, __FUNCTION__, " listenerMgr is null");
         }
     }
 }
@@ -351,17 +325,20 @@ void SmsManagerStub::invokeDeliveryReportListener(std::string receiverAddress,
     int deliveryCallbackDelay) {
     LOG(DEBUG, __FUNCTION__);
     std::this_thread::sleep_for(std::chrono::milliseconds(deliveryCallbackDelay));
-    for (auto iter=listeners_.begin();iter != listeners_.end();) {
-        auto spt = (*iter).lock();
-        if (spt) {
-            for (int i =0; i < noofdeliveryreport ;i++) {
-                spt->onDeliveryReport(phoneId_, refs[i], receiverAddress, error);
+    std::vector<std::weak_ptr<ISmsListener>> applisteners;
+        if (listenerMgr_) {
+            listenerMgr_->getAvailableListeners(applisteners);
+            // Notify respective events
+            for(auto &wp : applisteners) {
+                if(auto sp = wp.lock()) {
+                    for (int i =0; i < noofdeliveryreport ;i++) {
+                        sp->onDeliveryReport(phoneId_, refs[i], receiverAddress, error);
+                    }
+                }
             }
-            ++iter;
         } else {
-            iter = listeners_.erase(iter);
+            LOG(ERROR, __FUNCTION__, " listenerMgr is null");
         }
-    }
 }
 
 telux::common::Status SmsManagerStub::sendRawSms(const std::vector<PduBuffer> rawPdus,
@@ -379,8 +356,8 @@ telux::common::Status SmsManagerStub::sendRawSms(const std::vector<PduBuffer> ra
         LOG(DEBUG, __FUNCTION__, " Sent callback is null");
     }
 
-    ::tel::SendRawSmsRequest request;
-    ::tel::SendRawSmsReply response;
+    ::telStub::SendRawSmsRequest request;
+    ::telStub::SendRawSmsReply response;
     int size = rawPdus.size();
     ClientContext context;
 
@@ -399,7 +376,7 @@ telux::common::Status SmsManagerStub::sendRawSms(const std::vector<PduBuffer> ra
     static_cast<telux::common::ErrorCode>(response.smsresponsecb_errorcode());
     int smsResponseCbDelay = static_cast<int>(response.smsresponsecb_callbackdelay());
     std::string ref = static_cast<std::string>(response.sentcallback_msgrefs());
-    std::vector<int> refs = SmsHelper::convertStringToVector(ref);
+    std::vector<int> refs = CommonUtils::convertStringToVector(ref);
     std::vector<smsDeliveryInfo> infos;
 
     for (int i = 0; i < response.records_size(); i++) {
@@ -465,8 +442,8 @@ telux::common::Status SmsManagerStub::requestSmscAddress
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    ::tel::GetSmscAddressRequest request;
-    ::tel::GetSmscAddressReply response;
+    ::telStub::GetSmscAddressRequest request;
+    ::telStub::GetSmscAddressReply response;
     ClientContext context;
 
     request.set_phone_id(phoneId_);
@@ -515,8 +492,8 @@ telux::common::Status SmsManagerStub::setSmscAddress(const std::string &smscAddr
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    ::tel::SetSmscAddressRequest request;
-    ::tel::SetSmscAddressReply response;
+    ::telStub::SetSmscAddressRequest request;
+    ::telStub::SetSmscAddressReply response;
     ClientContext context;
 
     request.set_phone_id(phoneId_);
@@ -555,10 +532,10 @@ void SmsManagerStub::invokeResponseCallback(int cbDelay, telux::common::ErrorCod
 telux::common::Status SmsManagerStub::requestSmsMessageList(SmsTagType type,
     RequestSmsInfoListCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::RequestSmsMessageListRequest request;
-    ::tel::RequestSmsMessageListReply response;
+    ::telStub::RequestSmsMessageListRequest request;
+    ::telStub::RequestSmsMessageListReply response;
     ClientContext context;
-    ::tel::SmsTagType_TagType tag =  static_cast<::tel::SmsTagType_TagType>(type);
+    ::telStub::SmsTagType_TagType tag =  static_cast<::telStub::SmsTagType_TagType>(type);
     request.set_phone_id(phoneId_);
     request.set_tag_type(tag);
     std::vector<SmsMetaInfo> infos;
@@ -605,8 +582,8 @@ void SmsManagerStub::invokeRequestSmsInfoListCb(std::vector<SmsMetaInfo> infos,
 telux::common::Status SmsManagerStub::readMessage(uint32_t messageIndex,
     ReadSmsMessageCb callback) {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::ReadMessageRequest request;
-    ::tel::ReadMessageReply response;
+    ::telStub::ReadMessageRequest request;
+    ::telStub::ReadMessageReply response;
     ClientContext context;
     request.set_phone_id(phoneId_);
     request.set_msg_index(messageIndex);
@@ -678,10 +655,10 @@ telux::common::Status SmsManagerStub::deleteMessage(DeleteInfo info,
     LOG(DEBUG, __FUNCTION__, " PhoneId: ", phoneId_, " MessageIndex: ", info.msgIndex,
         " Delete Type: ", static_cast<int>(info.delType), " SMS Tag Type: ",
         static_cast<int>(info.tagType));
-    ::tel::DeleteMessageRequest request;
-    ::tel::DeleteMessageRequestReply response;
-    ::tel::SmsTagType_TagType tag =  static_cast<::tel::SmsTagType_TagType>(info.tagType);
-    ::tel::DelType_DeleteType deltype =  static_cast<::tel::DelType_DeleteType>(info.delType);
+    ::telStub::DeleteMessageRequest request;
+    ::telStub::DeleteMessageRequestReply response;
+    ::telStub::SmsTagType_TagType tag =  static_cast<::telStub::SmsTagType_TagType>(info.tagType);
+    ::telStub::DelType_DeleteType deltype =  static_cast<::telStub::DelType_DeleteType>(info.delType);
     ClientContext context;
     request.set_phone_id(phoneId_);
     request.set_msg_index(info.msgIndex);
@@ -714,8 +691,8 @@ telux::common::Status SmsManagerStub::requestPreferredStorage(RequestPreferredSt
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    ::tel::RequestPreferredStorageRequest request;
-    ::tel::RequestPreferredStorageReply response;
+    ::telStub::RequestPreferredStorageRequest request;
+    ::telStub::RequestPreferredStorageReply response;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
@@ -757,9 +734,9 @@ telux::common::Status SmsManagerStub::setPreferredStorage(StorageType storageTyp
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    ::tel::SetPreferredStorageRequest request;
-    ::tel::SetPreferredStorageReply response;
-    ::tel::StorageType_Type type =  static_cast<::tel::StorageType_Type>(storageType);
+    ::telStub::SetPreferredStorageRequest request;
+    ::telStub::SetPreferredStorageReply response;
+    ::telStub::StorageType_Type type =  static_cast<::telStub::StorageType_Type>(storageType);
     ClientContext context;
     request.set_phone_id(phoneId_);
     request.set_storage_type(type);
@@ -789,9 +766,9 @@ telux::common::Status SmsManagerStub::setTag(uint32_t msgIndex, SmsTagType tagTy
         LOG(ERROR, __FUNCTION__, " SMS Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    ::tel::SetTagRequest request;
-    ::tel::SetTagReply response;
-    ::tel::SmsTagType_TagType tag =  static_cast<::tel::SmsTagType_TagType>(tagType);
+    ::telStub::SetTagRequest request;
+    ::telStub::SetTagReply response;
+    ::telStub::SmsTagType_TagType tag =  static_cast<::telStub::SmsTagType_TagType>(tagType);
     ClientContext context;
     request.set_phone_id(phoneId_);
     request.set_msg_index(msgIndex);
@@ -819,8 +796,8 @@ telux::common::Status SmsManagerStub::setTag(uint32_t msgIndex, SmsTagType tagTy
 telux::common::Status SmsManagerStub::requestStorageDetails(RequestStorageDetailsCb callback) {
 
     LOG(DEBUG, __FUNCTION__);
-    ::tel::RequestStorageDetailsRequest request;
-    ::tel::RequestStorageDetailsReply response;
+    ::telStub::RequestStorageDetailsRequest request;
+    ::telStub::RequestStorageDetailsReply response;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
@@ -862,8 +839,8 @@ int SmsManagerStub::getPhoneId() {
 
 MessageAttributes SmsManagerStub::calculateMessageAttributes(const std::string &message) {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::GetMessageAttributesRequest request;
-    ::tel::GetMessageAttributesReply response;
+    ::telStub::GetMessageAttributesRequest request;
+    ::telStub::GetMessageAttributesReply response;
     ClientContext context;
     request.set_phone_id(phoneId_);
 
@@ -970,7 +947,7 @@ void SmsManagerStub::handleEvent(std::string token , std::string event) {
     LOG(DEBUG, __FUNCTION__, "The leftover string is: ", event);
     if (token == "memoryfull") {
         handleMemoryFullEvent(event);
-    } else if (token == "incomingsms") {
+    } else if (token == "incoming") {
         handleIncomingSms(event);
     }
 }
@@ -1072,7 +1049,7 @@ void SmsManagerStub::handleIncomingSms(std::string eventParams) {
     if (token == "") {
         LOG(INFO, "The tagType is not passed!");
     } else {
-        tagType = SmsHelper::getTagType(token);
+        tagType = Helper::getTagType(token);
     }
     LOG(DEBUG, __FUNCTION__, "The fetched tagType is: ", static_cast<int>(tagType)
         , "The leftover string is: ", eventParams);
@@ -1083,7 +1060,7 @@ void SmsManagerStub::handleIncomingSms(std::string eventParams) {
     if (token == "") {
         LOG(INFO, "The encoding is not passed!");
     } else {
-        encoding = SmsHelper::getencodingMethod(token);
+        encoding = Helper::getencodingMethod(token);
     }
     LOG(DEBUG, __FUNCTION__, "The fetched encoding is: ", static_cast<int>(encoding)
         , "The leftover string is: ", eventParams);
@@ -1119,18 +1096,7 @@ void SmsManagerStub::handleIncomingSms(std::string eventParams) {
     LOG(DEBUG, __FUNCTION__, "The fetched pdu is: ", pdu
         , "The leftover string is: ", token);
 
-    /* Fetch rawPdu */
-
-    token = EventParserUtil::getNextToken(eventParams, DEFAULT_DELIMITER);
-    if (token == "") {
-        LOG(INFO, "The rawPdu is not passed!");
-    } else {
-        rawPdu = token;
-    }
-    LOG(DEBUG, __FUNCTION__, "The fetched rawPdu is: ", rawPdu
-        , "The leftover string is: ", eventParams);
-
-    const uint8_t* p = reinterpret_cast<const uint8_t*>(rawPdu.c_str());
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(pdu.c_str());
     std::vector <uint8_t> pduBuffer;
     while (*p !='\0')
     {
@@ -1194,8 +1160,8 @@ void SmsManagerStub::handleIncomingSms(std::string eventParams) {
 void SmsManagerStub::isMemoryFull(int phoneId) {
     LOG(DEBUG, __FUNCTION__);
 
-    ::tel::IsMemoryFullRequest request;
-    ::tel::IsMemoryFullReply response;
+    ::telStub::IsMemoryFullRequest request;
+    ::telStub::IsMemoryFullReply response;
     ClientContext context;
     request.set_phone_id(phoneId);
 
@@ -1208,30 +1174,39 @@ void SmsManagerStub::isMemoryFull(int phoneId) {
     }
 }
 
-void SmsManagerStub::invokeIncomingSmslisteners (int phoneId, std::shared_ptr<SmsMessage> message) {
+
+
+void SmsManagerStub::invokeIncomingSmslisteners (int phoneId,
+    std::shared_ptr<SmsMessage> message) {
     LOG(DEBUG, __FUNCTION__);
-    for (auto iter=listeners_.begin();iter != listeners_.end();) {
-        auto spt = (*iter).lock();
-        if (spt) {
-            spt->onIncomingSms(phoneId, message);
-            ++iter;
-        } else {
-            iter = listeners_.erase(iter);
+    std::vector<std::weak_ptr<ISmsListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                sp->onIncomingSms(phoneId, message);
+            }
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 }
 
 void SmsManagerStub::invokeIncomingSmslisteners(int phoneId,
     std::shared_ptr<std::vector<SmsMessage>> messages) {
     LOG(DEBUG, __FUNCTION__);
-    for (auto iter=listeners_.begin();iter != listeners_.end();) {
-        auto spt = (*iter).lock();
-        if (spt) {
-            spt->onIncomingSms(phoneId_, messages);
-            ++iter;
-        } else {
-            iter = listeners_.erase(iter);
+    std::vector<std::weak_ptr<ISmsListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                sp->onIncomingSms(phoneId_, messages);
+            }
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 }
 
@@ -1302,6 +1277,7 @@ void SmsManagerStub::parseAndConcatenateSmsMessage (int phoneId, SmsMessage& mes
             smsMessageMap_[metaData] = smsInfos;
         }
 }
+
 void SmsManagerStub::handleMemoryFullEvent(std::string eventParams) {
 
     LOG(DEBUG, __FUNCTION__);
@@ -1336,13 +1312,16 @@ void SmsManagerStub::handleMemoryFullEvent(std::string eventParams) {
 
 void SmsManagerStub::invokeMemoryFulllisteners(int phoneId, telux::tel::StorageType type) {
     LOG(DEBUG, __FUNCTION__);
-    for (auto iter=listeners_.begin();iter != listeners_.end();) {
-        auto spt = (*iter).lock();
-        if (spt) {
-            spt->onMemoryFull(phoneId, type);
-            ++iter;
-        } else {
-            iter = listeners_.erase(iter);
+    std::vector<std::weak_ptr<ISmsListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                sp->onMemoryFull(phoneId, type);
+            }
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 }

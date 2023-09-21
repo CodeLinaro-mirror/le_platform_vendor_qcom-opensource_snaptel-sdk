@@ -327,5 +327,27 @@ std::vector<std::string> CommonUtils::splitString(const std::string &s, char del
     return elements;
 }
 
+std::string CommonUtils::convertVectorToString(std::vector<std::uint8_t> bytes, bool toHex) {
+    std::stringstream ss;
+    for (std::size_t i = 0; i < bytes.size(); i++)
+    {
+        if(toHex) {
+            ss << std::hex << static_cast<int>(bytes[i]);
+        } else {
+            ss << static_cast<int>(bytes[i]) << " ";
+        }
+    }
+    return ss.str();
+}
+
+std::vector<int> CommonUtils::convertStringToVector(std::string input) {
+    std::stringstream iss( input );
+    int parsednum;
+    std::vector<int> myNumbers;
+    while ( iss >> parsednum ) {
+        myNumbers.push_back( parsednum );
+    }
+    return myNumbers;
+}
 }  // namespace common
 }  // namespace telux

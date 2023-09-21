@@ -63,11 +63,11 @@ void CardStub::cleanup() {
 
 telux::common::Status CardStub::getState(CardState &cardState) {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::GetCardStateRequest request;
-    ::tel::GetCardStateReply response;
+    ::telStub::GetCardStateRequest request;
+    ::telStub::GetCardStateReply response;
     telux::common::Status error = telux::common::Status::SUCCESS;
     ClientContext context;
-    ::tel::CardState state;
+    ::telStub::CardState state;
     request.set_phone_id(slotId_);
 
     grpc::Status status = stub_->GetCardState(&context, request, &response);
@@ -114,8 +114,8 @@ telux::common::Status CardStub::openLogicalChannel(
         LOG(DEBUG, __FUNCTION__,
             "Send request to open the channel for application: ", applicationId);
 
-        ::tel::OpenLogicalChannelRequest request;
-        ::tel::OpenLogicalChannelReply response;
+        ::telStub::OpenLogicalChannelRequest request;
+        ::telStub::OpenLogicalChannelReply response;
         ClientContext context;
 
         request.set_phone_id(slotId_);
@@ -172,8 +172,8 @@ void CardStub::invokeCallback(std::shared_ptr<ICardChannelCallback> callback, in
 
 telux::common::Status CardStub::closeLogicalChannel(
     int channelId, std::shared_ptr<telux::common::ICommandResponseCallback> callback) {
-    ::tel::CloseLogicalChannelRequest request;
-    ::tel::CloseLogicalChannelReply response;
+    ::telStub::CloseLogicalChannelRequest request;
+    ::telStub::CloseLogicalChannelReply response;
     ClientContext context;
 
     request.set_phone_id(slotId_);
@@ -211,8 +211,8 @@ void CardStub::invokeCallback(std::shared_ptr<telux::common::ICommandResponseCal
 telux::common::Status CardStub::transmitApduLogicalChannel(int channel, uint8_t cla,
     uint8_t instruction, uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
     std::shared_ptr<ICardCommandCallback> callback) {
-    ::tel::TransmitAPDURequest request;
-    ::tel::TransmitAPDUReply response;
+    ::telStub::TransmitAPDURequest request;
+    ::telStub::TransmitAPDUReply response;
     ClientContext context;
 
     request.set_phone_id(slotId_);
@@ -269,8 +269,8 @@ void CardStub::invokeCallback(std::shared_ptr<ICardCommandCallback> callback, in
 telux::common::Status CardStub::transmitApduBasicChannel(uint8_t cla, uint8_t instruction,
     uint8_t p1, uint8_t p2, uint8_t p3, std::vector<uint8_t> data,
     std::shared_ptr<ICardCommandCallback> callback) {
-    ::tel::TransmitBasicAPDURequest request;
-    ::tel::TransmitBasicAPDUReply response;
+    ::telStub::TransmitBasicAPDURequest request;
+    ::telStub::TransmitBasicAPDUReply response;
     ClientContext context;
 
     request.set_phone_id(slotId_);
@@ -318,8 +318,8 @@ telux::common::Status CardStub::exchangeSimIO(uint16_t fileId, uint8_t command, 
     uint8_t p2, uint8_t p3, std::string filePath, std::vector<uint8_t> data, std::string pin2,
     std::string aid, std::shared_ptr<ICardCommandCallback> callback) {
 
-    ::tel::exchangeSimIORequest request;
-    ::tel::exchangeSimIOReply response;
+    ::telStub::exchangeSimIORequest request;
+    ::telStub::exchangeSimIOReply response;
     ClientContext context;
 
     request.set_phone_id(slotId_);
@@ -366,8 +366,8 @@ telux::common::Status CardStub::exchangeSimIO(uint16_t fileId, uint8_t command, 
 
 
 telux::common::Status CardStub::requestEid(EidResponseCallback callback) {
-    ::tel::requestEidReply response;
-    ::tel::requestEidRequest request;
+    ::telStub::requestEidReply response;
+    ::telStub::requestEidRequest request;
     request.set_phone_id(slotId_);
     ClientContext context;
 
@@ -426,15 +426,15 @@ bool CardStub::validateAppId(std::string applicationId) {
 
 void CardStub::updateSimStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::updateSimStatusRequest request;
-    ::tel::updateSimStatusReply response;
+    ::telStub::updateSimStatusRequest request;
+    ::telStub::updateSimStatusReply response;
     request.set_phone_id(slotId_);
     ClientContext context;
 
     grpc::Status status = stub_->updateSimStatus(&context, request, &response);
 
-    ::tel::AppType apptype;
-    ::tel::AppState appstate;
+    ::telStub::AppType apptype;
+    ::telStub::AppState appstate;
     std::vector<std::shared_ptr<ICardApp>> applications;
 
     std::vector<CardAppStatus> latestApplications;

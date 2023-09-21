@@ -49,12 +49,14 @@
 #include <telux/common/CommonDefines.hpp>
 #include "../common/AsyncTaskQueue.hpp"
 #include <telux/tel/SubscriptionManager.hpp>
+#include "../common/ListenerManager.hpp"
 #include <grpcpp/grpcpp.h>
 #include "../../protos/proto-src/tel.grpc.pb.h"
 #include "../common/event-manager/EventManager.hpp"
 #include "../common/event-manager/EventParserUtil.hpp"
+#include "CardAppStub.hpp"
 
-using tel::PhoneService;
+using telStub::PhoneService;
 
 namespace telux {
 namespace tel {
@@ -82,13 +84,12 @@ private:
     SlotId slotId_;
     void initSync(telux::common::InitResponseCb callback);
     std::mutex subscriptionManagerMutex_;
-    std::unique_ptr<::tel::PhoneService::Stub> stub_;
-    std::unique_ptr<::tel::CardService::Stub> cardstub_;
+    std::unique_ptr<::telStub::PhoneService::Stub> stub_;
+    std::unique_ptr<::telStub::CardService::Stub> cardstub_;
     std::map<int, std::shared_ptr<SubscriptionStub>> subscriptionMap_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     telux::common::InitResponseCb initCb_;
-    std::vector<std::weak_ptr<ISubscriptionListener>> listeners_;
-    bool isSubscriptionChanged;
+    std::shared_ptr<telux::common::ListenerManager<ISubscriptionListener>> listenerMgr_;
     void invokeInitResponseCallback(int cbDelay, telux::common::ServiceStatus cbStatus,
     telux::common::InitResponseCb callback);
     void notifyNumberOfSubscriptions(int count);
@@ -97,7 +98,13 @@ private:
     telux::common::Status addNewOrUpdateSubscription(int slotId);
     void handleEvent(std::string token, std::string event);
     void handlesubscriptionInfoChanged(std::string eventParams);
+    void handlecardInfoChanged(std::string eventParams);
     void onCardInfoChanged(int slotId);
+    telux::common::Status getState(CardState &cardState, int phoneId);
+    telux::common::Status getAppInfo(std::vector<CardAppStatus> &apps, int phoneId);
+    telux::common::Status fetchSubscription(int slotId, std::string *carrierName,
+        std::string *iccId, int* mcc, int* mnc, std::string *number, std::string *imsi,
+        std::string *gid1, std::string *gid2 );
 };
 
 } // end of namespace tel

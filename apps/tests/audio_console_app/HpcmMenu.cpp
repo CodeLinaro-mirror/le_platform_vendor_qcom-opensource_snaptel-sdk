@@ -175,12 +175,15 @@ Status HpcmMenu::startVoiceStream() {
             << std::endl;
         return Status::FAILED;
     }
+
+    exitHpcm_ = false;
+
     std::thread recordThread(&HpcmMenu::record, this);
     runningThreads_.emplace_back(std::move(recordThread));
 
     std::thread playThread(&HpcmMenu::play, this);
     runningThreads_.emplace_back(std::move(playThread));
-    exitHpcm_ = false;
+
     return status;
 }
 
@@ -299,7 +302,6 @@ Status HpcmMenu::deleteHpcmPlayStream() {
 
 void HpcmMenu::startHpcmAudio(std::vector<std::string> userInput) {
     StreamConfig config;
-    std::vector<telux::audio::Direction> direction{};
     telux::common::Status status = telux::common::Status::FAILED;
     if (!ready_) {
         std::cout << "HPCM is not initialized" << std::endl;
@@ -382,6 +384,7 @@ void HpcmMenu::stopHpcmAudio(std::vector<std::string> userInput) {
     if (status != Status::SUCCESS) {
         return;
     }
+
 }
 
 Status HpcmMenu::createActiveSession(SlotId slotId) {
@@ -480,7 +483,7 @@ void HpcmMenu::record() {
         if (!freeCaptureBuffers_.empty()) {
             streamBuffer = freeCaptureBuffers_.front();
             freeCaptureBuffers_.pop();
-            if (streamBuffer) {
+            if (streamBuffer && audioCaptureStream_) {
                 status = audioCaptureStream_->read(streamBuffer, bytesToRead, readCb);
                 if(status != telux::common::Status::SUCCESS) {
                     std::cout << "can't read, err " << static_cast<int>(status) << std::endl;
@@ -545,7 +548,7 @@ void HpcmMenu::play() {
         if (!freePlayBuffers_.empty()) {
             streamBuffer = freePlayBuffers_.front();
             freePlayBuffers_.pop();
-            if (streamBuffer) {
+            if (streamBuffer && audioPlayStream_) {
                 status = audioPlayStream_->write(streamBuffer, writeCb);
                 if(status != telux::common::Status::SUCCESS) {
                     std::cout << "can't write, err "<< static_cast<unsigned int>(status)

@@ -1,121 +1,262 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted (subject to the limitations in the
- * disclaimer below) provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *
- *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
- * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef _LOGGER_HPP_
-#define _LOGGER_HPP_
+#ifndef LOGGER_HPP
+#define LOGGER_HPP
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <mutex>
 #include <fstream>
-#include <memory>
-#include <telux/common/Log.hpp>
+#include <iomanip>
+#include <iostream>
+#include <mutex>
+#include <sstream>
+#include <cstring>
+#include <bitset>
+#include <future>
 
-using namespace telux::common;
+#include <telux/common/Log.hpp>
 
 class SimulationConfigParser;
 
-enum class LoggerType {
-    CONSOLE_LOG = 1,
-    FILE_LOG = 2,
-    CONSOLE_FILE_LOG = 3,
-    SYSLOG_LOG = 4,
-};
+using namespace telux::common;
 
+namespace telux {
+namespace common {
+
+/**
+ * Logger class - A singleton class which provides interface to log messages to
+ *                a console, diag and to a log file.
+ * Log level is configurable
+ */
 class Logger {
-private:
-    LoggerType loggerType_;
-    LogLevel loggerLevel_;
-
-    std::mutex fileMutex_;
-    std::ofstream logFile_;
-    std::shared_ptr<SimulationConfigParser> config_;
-    std::string processName_;
-    std::string logFileFullName_;
-    int processID_;
-    int logFileMaxSize_;
-    ino_t inodeNumber_ = 0;
-
-    Logger();
-    Logger(const Logger &) = delete;
-    Logger &operator=(const Logger &) = delete;
-    ~Logger();
-    std::string getCurrentTime();
-    void logToFile(std::ostringstream & os);
-    void logToConsole(std::ostringstream & os);
-    void logToSyslog(std::ostringstream & os, LogLevel logLevel);
-
-    //Logging Type can only be changed from config file
-    void initLoggingType();
-
-    //Logging Level can only be changed from config file
-    void initLoggingLevel();
-    void initProcessId();
-    void initProcessName();
-    bool backupLogFile();
-    void initLogFileMaxSize();
-    int acquireLock(int &fileDescriptor);
-    ino_t reopenLogFile();
 
 public:
-    static Logger& getInstance();
-    LogLevel getLoggerLevel();
+   static Logger &getInstance();
 
-    /*
-    * write log a message to console and a log file based on the settings.
+   //getXxxLogLevel functions are utilized in the test cases.
+   /*
+    * Get the current console logging level
     */
-    void writeLogMessage(std::ostringstream &os, LogLevel logLevel,
-        const std::string &fileName, const int &component, const std::string &lineNo);
+   LogLevel getConsoleLogLevel();
 
-    bool isConsoleLoggingEnabled();
-    bool isFileLoggingEnabled();
-    bool isSyslogLoggingEnabled();
+   /*
+    * Get the file console logging level
+    */
+   LogLevel getFileLogLevel();
+
+   /*
+    * Get the syslog logging level
+    */
+   LogLevel getSyslogLogLevel();
+
+   /*
+    * write log a message to console, diag and a log file based on the settings.
+    */
+   void writeLogMessage(std::ostringstream &os, LogLevel logLevel, const std::string &fileName,
+                        const int &component, const std::string &lineNo);
+
+   /*
+    * get the current date and time of the device
+    */
+   const std::string getCurrentTime();
+
+   /*
+    * start logging, it will initialize Logger dependencies for the first log request.
+    *
+    */
+   inline bool startLogger();
+   /*
+    * Singleton implementation, copy constructors are disabled.
+    */
+   Logger(const Logger &) = delete;
+
+   Logger();
+   ~Logger();
+
+   /*
+    * To check if logging is allowed for the given level and component
+    * at least on one log sink
+    */
+   bool isLoggingEnabled(LogLevel logLevel, const int& component);
+
+private:
+
+   /*
+    * Logger status
+    */
+   enum class LoggerStatus {
+       INIT,          // default, initial status from start up,
+                      // need to call Logger::init() to make logger work
+       NOT_AVAILABLE, // Logging functionality disabled
+       AVAILABLE,     // Able to use Logger for logging
+   };
+
+   /*
+    * initialization of logging
+    */
+   void init();
+
+   /*
+    * set log file max size
+    */
+   void initLogFileMaxSize();
+
+   /*
+    * Get log level from given level string
+    */
+   LogLevel getLogLevel(std::string logLevelString);
+
+   /*
+    * set log file name
+    */
+   void initLogFileName();
+
+   /*
+    * set console logging level to a desired threshold
+    */
+   void initConsoleLogLevel();
+
+   /*
+    * set file logging level to a desired threshold
+    */
+   void initFileLogLevel();
+
+   /*
+    * set syslog logging level to a desired threshold
+    */
+   void initSyslogLogLevel();
+
+   /*
+    * set component filter to log a desired component
+    */
+   void initComponentLogging();
+
+   /*
+    * set date and time
+    */
+   void initDateTime();
+
+   /*
+    * To provide time stamp with Nano Seconds
+    */
+   void getTimeStampNs(struct timespec *tp);
+
+   /*
+    * initialize log file
+    */
+   void initFileLogging();
+
+   /*
+    * initialize logs to console
+    */
+   void initConsoleLogging();
+
+   /*
+    * write logs message to console
+    */
+   void writeToConsole(std::ostringstream &outputStream);
+
+   /*
+    * write log message to file
+    */
+   void writeToFile(std::ostringstream &outputStream);
+
+   /*
+    * write log message to syslog
+    */
+   void writeToSyslog(std::ostringstream &outputStream, LogLevel logLevel);
+
+   /*
+    * set pid
+    */
+   void initProcessId();
+
+   /*
+    * set process name
+    */
+   void initProcessName();
+
+   /*
+    * check if this component should be logged
+    */
+   bool isComponentLogged(const int component);
+
+   /*
+    * Perform current file backup.
+    */
+   bool backupLogFile();
+
+   /*
+    * Acquire lock on the log file.
+    */
+   int acquireLock(int &fileDescriptor);
+
+   ino_t reopenLogFile();
+
+   /*
+    * Update max log level.
+    */
+   void updateMaxLogLevel();
+
+   static Logger instance;
+
+   std::atomic<LoggerStatus> logStatus_{LoggerStatus::INIT};
+   LogLevel consoleLogLevel_, fileLogLevel_;
+   LogLevel syslogLogLevel_;
+   LogLevel maxLogLevel_ ;
+   std::ofstream logFileStream_;
+   std::mutex logFileMutex_;
+   std::shared_ptr<SimulationConfigParser> config_;
+
+   bool isLoggingToFileEnabled_ = false;
+   bool isLoggingToConsoleEnabled_ = false;
+   bool isDateTimeEnabled_ = false;
+   std::string logFileFullName_;
+   int logFileMaxSize_;
+   int processID_;
+   std::bitset<64> componentLogFilter_;
+   std::string processName_;
+   ino_t inodeNumber_ = 0;
 };
+
+bool Logger::startLogger() {
+    if (logStatus_ == LoggerStatus::AVAILABLE) {
+        return true;
+    }
+
+    if (logStatus_ == LoggerStatus::NOT_AVAILABLE) {
+        return false;
+    }
+
+    if (logStatus_ == LoggerStatus::INIT) {
+        init();
+        logStatus_.store(LoggerStatus::AVAILABLE);
+    }
+
+    return true;
+}
 
 template <typename... MessageArgs>
 void Log::logMessage(LogLevel logLevel, const std::string &fileName, const std::string &lineNo,
                      const int &component, MessageArgs... params) {
     Logger &logger = Logger::getInstance();
 
-    std::ostringstream outputStream;
-    if (logger.getLoggerLevel() >= ERROR) {
+    // Validate if Logger instance is still valid before dumping log.
+    if (logger.startLogger() && logger.isLoggingEnabled(logLevel, component)) {
+        /*
+        * Variable to buffer the input log message from input arguments
+        */
+        std::ostringstream outputStream;
         constructMessage(outputStream, params...);
         logger.writeLogMessage(outputStream, logLevel, fileName, component, lineNo);
     }
 }
 
+/*
+ * Recursive helper methods to construct the complete log message
+ * from input arguments
+ */
 template <typename K, typename T>
 void Log::constructMessage(K &os, T param) {
    os << param;
@@ -125,6 +266,8 @@ template <typename K, typename T, typename... MessageArgs>
 void Log::constructMessage(K &os, T param, MessageArgs... params) {
    os << param;
    return constructMessage(os, params...);
+}
+}
 }
 
 #endif

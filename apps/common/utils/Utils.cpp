@@ -1,30 +1,6 @@
 /*
- *  Copyright (c) 2018, The Linux Foundation. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions are
- *  met:
- *    * Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *    * Redistributions in binary form must reproduce the above
- *      copyright notice, this list of conditions and the following
- *      disclaimer in the documentation and/or other materials provided
- *      with the distribution.
- *    * Neither the name of The Linux Foundation nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
- *  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
- *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- *  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 /**
@@ -35,8 +11,15 @@
 
 #include <iostream>
 #include <string>
+#include <grp.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <iomanip>
+#include <sstream>
 
 #include "Utils.hpp"
+
+#define INVALID_GID -1
 
 void Utils::validateNumericString(std::string &input) {
    char delimiter = '\n';
@@ -56,6 +39,17 @@ void Utils::validateNumericString(std::string &input) {
          invalidChar = false;
       }
    } while(invalidChar);
+}
+
+bool Utils::validateDigitString(std::string &input) {
+   bool validChar = true;
+   for(size_t index = 0; index < input.size(); index++) {
+      if(!isdigit(input[index])) {
+         validChar = false;
+         break;
+      }
+    }
+    return validChar;
 }
 
 std::map<telux::common::ErrorCode, std::string> errorCodeToStringMap_ = {
@@ -293,4 +287,147 @@ std::string Utils::getErrorCodeAsString(telux::common::ErrorCode error) {
       return errorCodeToStringMap_[error];
    }
    return "UNKNOWN_ERROR";
+}
+
+std::vector<gid_t> getGidByName(std::vector<std::string> names) {
+    std::vector<gid_t> groupIds;
+    for(auto i: names) {
+        struct group* tempGrp;
+        if((tempGrp = getgrnam(i.c_str())) != NULL) {
+            gid_t tmpGid = tempGrp->gr_gid;
+            groupIds.push_back(tmpGid);
+        }
+    }
+    return groupIds;
+}
+
+int Utils::setSupplementaryGroups(std::vector<std::string> grps) {
+    int ret = 0;
+    std::vector<gid_t> groupIds = getGidByName(grps);
+    int numGroups = getgroups(0, NULL);
+    gid_t gid[numGroups]{};
+    ret = getgroups(numGroups, gid);
+    std::vector<gid_t> existingGidList(gid, gid+numGroups);
+    existingGidList.insert(std::end(existingGidList), std::begin(groupIds), std::end(groupIds));
+    uint32_t gidListSize = existingGidList.size();
+    gid_t newGidList[gidListSize]{};
+    std::copy(existingGidList.begin(), existingGidList.end(), newGidList);
+    ret = setgroups(gidListSize, newGidList);
+    return ret;
+}
+
+void Utils::printStatus(telux::common::Status status) {
+   switch (status)
+   {
+      case telux::common::Status::SUCCESS:
+         std::cout << "Operation processed successfully" << std::endl;
+         break;
+      case telux::common::Status::FAILED:
+         std::cout << "Operation processing failed" << std::endl;
+         break;
+      case telux::common::Status::NOCONNECTION:
+         std::cout << "Connection to Socket server has not been established" << std::endl;
+         break;
+      case telux::common::Status::NOSUBSCRIPTION:
+         std::cout << "Subscription not available" << std::endl;
+         break;
+      case telux::common::Status::INVALIDPARAM:
+         std::cout << "Input parameters are invalid" << std::endl;
+         break;
+      case telux::common::Status::INVALIDSTATE:
+         std::cout << "Invalid State detected" << std::endl;
+         break;
+      case telux::common::Status::NOTREADY:
+         std::cout << "Subsystem is not ready" << std::endl;
+         break;
+      case telux::common::Status::NOTALLOWED:
+         std::cout << "Operation not allowed" << std::endl;
+         break;
+      case telux::common::Status::NOTIMPLEMENTED:
+         std::cout << "Feature not supported" << std::endl;
+         break;
+      case telux::common::Status::CONNECTIONLOST:
+         std::cout << "Connection to Socket server lost" << std::endl;
+         break;
+      case telux::common::Status::EXPIRED:
+         std::cout << "Operation has expired" << std::endl;
+         break;
+      case telux::common::Status::ALREADY:
+         std::cout << "Already registered handler" << std::endl;
+         break;
+      case telux::common::Status::NOSUCH:
+         std::cout << "No such object" << std::endl;
+         break;
+      case telux::common::Status::NOTSUPPORTED:
+         std::cout << "Not supported on target platform" << std::endl;
+         break;
+      default:
+         break;
+   }
+}
+
+uint64_t Utils::getCurrentTimestamp(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+}
+
+const std::string Utils::getCurrentTimeString(void) {
+    std::stringstream ss;
+    std::tm tmSnapshot;
+    std::time_t now = std::time(nullptr);
+
+    if (NULL == localtime_r(&now, &tmSnapshot)) {
+        std::cout << "localtime_r error" << std::endl;
+        return std::string();
+    }
+    // convert current time to format of hour:minute:second
+    ss << std::put_time(&tmSnapshot, "%H:%M:%S");
+    return ss.str();
+}
+
+int Utils::validateV2xSpsInterval(uint16_t interval) {
+    if (0 == interval || 1000 < interval) {
+        return EXIT_FAILURE;
+    }
+
+    if (20 == interval || 50 == interval || 0 == interval % 100) {
+        return EXIT_SUCCESS;
+    }
+    return EXIT_FAILURE;
+}
+
+uint64_t Utils::getNanosecondsSinceBoot() {
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * SEC_TO_NANOS + (uint64_t)ts.tv_nsec;
+}
+
+std::vector<uint8_t> Utils::convertHexToBytes(std::string hexData) {
+   std::vector<uint8_t> output;
+   size_t i = 0, len = 0;
+   uint8_t rawData1 = 0, rawData2 = 0, rawData = 0;
+
+   len = hexData.length();
+   for(i = 0; i < len; i = i + 2) {
+      if(hexData[i] >= '0' && hexData[i] <= '9') {
+         rawData1 = (hexData[i] - 48) * 16;
+      } else if(hexData[i] >= 'A' && hexData[i] <= 'F') {
+         rawData1 = (hexData[i] - 55) * 16;
+      } else if(hexData[i] >= 'a' && hexData[i] <= 'f') {
+         rawData1 = (hexData[i] - 87) * 16;
+      }
+
+      if(hexData[i + 1] >= '0' && hexData[i + 1] <= '9') {
+         rawData2 = hexData[i + 1] - 48;
+      } else if(hexData[i + 1] >= 'A' && hexData[i + 1] <= 'F') {
+         rawData2 = hexData[i + 1] - 55;
+      } else if(hexData[i + 1] >= 'a' && hexData[i + 1] <= 'f') {
+         rawData2 = hexData[i + 1] - 87;
+      }
+
+      rawData = rawData1 + rawData2;
+      output.emplace_back(rawData);
+   }
+   return output;
 }

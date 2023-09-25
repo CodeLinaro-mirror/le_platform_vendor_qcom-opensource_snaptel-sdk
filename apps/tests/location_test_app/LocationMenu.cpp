@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <chrono>
 #include <future>
@@ -35,6 +40,7 @@
 
 #include <telux/loc/LocationFactory.hpp>
 
+#include "Utils.hpp"
 #include "LocationMenu.hpp"
 #include "MyLocationListener.hpp"
 
@@ -503,6 +509,12 @@ void LocationMenu::enableLocationSystemInfoLogs() {
 int main(int argc, char **argv) {
 
    LocationMenu locationMenu("Location Menu", "location> ");
+   // Setting required secondary groups for SDK file/diag logging
+   std::vector<std::string> supplementaryGrps{ "system", "diag" };
+   int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+   if (rc == -1){
+       std::cout << "Adding supplementary groups failed!" << std::endl;
+   }
    if( locationMenu.init() == -1) {
        std::cout << "ERROR - Subsystem not ready, Exiting !!!" << std::endl;
        return -1;

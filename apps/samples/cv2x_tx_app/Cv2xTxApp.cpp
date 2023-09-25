@@ -106,7 +106,7 @@ static void createSpsFlowCallback(shared_ptr<ICv2xTxFlow> txSpsFlow,
 static uint64_t getCurrentTimestamp(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000000ull + tv.tv_usec;
+    return (uint64_t)tv.tv_sec * 1000000ull + (uint64_t)tv.tv_usec;
 }
 
 // Fills buffer with dummy data

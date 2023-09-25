@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * This is a sample program to register and receive auto-shutdown mode updates, send commands to
@@ -45,6 +50,7 @@ extern "C" {
 }
 
 #include "ThermalShutdownMgrTestApp.hpp"
+#include "Utils.hpp"
 
 void ThermalShutdownTestApp::printHelp() {
 
@@ -210,6 +216,13 @@ void ThermalShutdownTestApp::consoleinit() {
 int main(int argc, char ** argv) {
 
     Status ret = Status::FAILED;
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
+    }
+
     auto &ThermMgmtTest = ThermalShutdownTestApp::getInstance();
     if( 0 != ThermMgmtTest.init()) {
         std::cout << APP_NAME <<

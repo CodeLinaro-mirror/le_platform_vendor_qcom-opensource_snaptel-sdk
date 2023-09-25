@@ -27,11 +27,18 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #include <getopt.h>
 #include <iostream>
 #include <dirent.h>
 
 #include "ModemConfigurator.hpp"
+#include "../../common/utils/Utils.hpp"
 
 using namespace telux::config;
 
@@ -472,6 +479,13 @@ telux::common::Status ModemConfigurator::parseArguments(int argc, char **argv) {
 int main(int argc, char **argv) {
 
     std::shared_ptr<ModemConfigurator> modemConfigurator = std::make_shared<ModemConfigurator>();
+
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1) {
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
 
     modemConfigurator->init();
 

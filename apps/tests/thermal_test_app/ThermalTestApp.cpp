@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 #include <iostream>
 #include <memory>
@@ -33,6 +38,7 @@
 
 #include <telux/common/Version.hpp>
 #include <telux/therm/ThermalFactory.hpp>
+#include "Utils.hpp"
 
 #include "ThermalHelper.hpp"
 #include "ThermalTestApp.hpp"
@@ -178,6 +184,12 @@ void ThermalTestApp::getCoolingDeviceById(std::vector<std::string> userInput) {
 
 // Main function that displays the console and processes user input
 int main(int argc, char **argv) {
+    // Setting required secondary groups for SDK file/diag logging
+    std::vector<std::string> supplementaryGrps{"system", "diag"};
+    int rc = Utils::setSupplementaryGroups(supplementaryGrps);
+    if (rc == -1){
+        std::cout << "Adding supplementary groups failed!" << std::endl;
+    }
 
     auto sdkVersion = telux::common::Version::getSdkVersion();
     std::string appName = "Thermal Test App v" + std::to_string(sdkVersion.major) + "."

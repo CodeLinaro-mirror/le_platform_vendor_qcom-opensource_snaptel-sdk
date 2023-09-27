@@ -72,6 +72,7 @@
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include <fstream>
 #include <sstream>
+#include <sys/time.h>
 #include "asnbuf.h"
 #include "wsmp.h"
 

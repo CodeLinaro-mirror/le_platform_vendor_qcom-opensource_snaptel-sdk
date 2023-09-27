@@ -478,6 +478,11 @@ void VlanMenu::queryVlanToBackhaulBindings(std::vector<std::string> inputCommand
     telux::data::OperationType opType =
         static_cast<telux::data::OperationType>(operationType);
 
+    if (vlanManagerMap_.find(opType) == vlanManagerMap_.end()) {
+        std::cout << "Vlan Manager is not ready" << std::endl;
+        return;
+    }
+
     telux::data::BackhaulType backhaulType = {};
     int backhaul;
     std::cout << "Enter Backhaul Type (0-Wlan, 1-WWAN): ";

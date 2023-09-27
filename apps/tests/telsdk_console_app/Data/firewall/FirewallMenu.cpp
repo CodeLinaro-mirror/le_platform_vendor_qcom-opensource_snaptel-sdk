@@ -835,12 +835,16 @@ void FirewallMenu::displayFirewallEntry() {
                 std::cout << "SRC Addr : Any" << std::endl;
             } else {
                 std::cout << "SRC Addr : " << ipv6Info.srcAddr << std::endl;
+                std::cout << "SRC Addr prefix length : "
+                          << (uint32_t)ipv6Info.srcPrefixLen << std::endl;
             }
 
             if (ipv6Info.destAddr.empty()) {
                 std::cout << "DST Addr : Any" << std::endl;
             } else {
                 std::cout << "DST Addr : " << ipv6Info.destAddr << std::endl;
+                std::cout << "DST Addr prefix length : "
+                          << (uint32_t)ipv6Info.dstPrefixLen << std::endl;
             }
 
             if (!ipv6Info.val) {

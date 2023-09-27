@@ -41,8 +41,8 @@
  *             needs to make sure that the implementation is thread-safe.
  */
 
-#ifndef THERMAL_LISTENER_HPP
-#define THERMAL_LISTENER_HPP
+#ifndef TELUX_THERM_THERMALLISTENER_HPP
+#define TELUX_THERM_THERMALLISTENER_HPP
 
 #include <memory>
 #include <vector>
@@ -103,4 +103,4 @@ class IThermalListener : public telux::common::IServiceStatusListener {
 }  // end of namespace therm
 }  // end of namespace telux
 
-#endif  // THERMAL_LISTENER_HPP
+#endif // TELUX_THERM_THERMALLISTENER_HPP

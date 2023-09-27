@@ -72,8 +72,8 @@
  *
  */
 
-#ifndef SIMPROFILEMANAGER_HPP
-#define SIMPROFILEMANAGER_HPP
+#ifndef TELUX_TEL_SIMPROFILEMANAGER_HPP
+#define TELUX_TEL_SIMPROFILEMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -408,4 +408,4 @@ class ISimProfileManager {
 }
 }
 
-#endif  // SIMPROFILEMANAGER_HPP
+#endif // TELUX_TEL_SIMPROFILEMANAGER_HPP

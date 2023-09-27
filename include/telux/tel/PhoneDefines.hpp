@@ -38,8 +38,8 @@
  * @brief     PhoneDefines contains enumerations and variables used for
  *            telephony subsystems.
  */
-#ifndef PHONEDEFINES_HPP
-#define PHONEDEFINES_HPP
+#ifndef TELUX_TEL_PHONEDEFINES_HPP
+#define TELUX_TEL_PHONEDEFINES_HPP
 
 #include <memory>
 #include <string>
@@ -343,4 +343,4 @@ struct SignalStrengthConfig {
 
 }  // End of namespace telux
 
-#endif  // PHONEDEFINES_HPP
+#endif // TELUX_TEL_PHONEDEFINES_HPP

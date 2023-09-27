@@ -69,8 +69,8 @@
  *
  */
 
-#ifndef DATADEFINES_HPP
-#define DATADEFINES_HPP
+#ifndef TELUX_DATA_DATADEFINES_HPP
+#define TELUX_DATA_DATADEFINES_HPP
 
 #include <string>
 #include <vector>
@@ -464,4 +464,4 @@ using QosFlowMask = std::bitset<16>;
 }
 }
 
-#endif  // DATADEFINES_HPP
+#endif // TELUX_DATA_DATADEFINES_HPP

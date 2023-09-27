@@ -452,4 +452,4 @@ class ICellularSecurityManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_CELLULARSECURITYMANAGER_HPP
+#endif // TELUX_SEC_CELLULARSECURITYMANAGER_HPP

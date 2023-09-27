@@ -325,4 +325,4 @@ class IWiFiSecurityManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_WIFISECURITYMANAGER_HPP
+#endif // TELUX_SEC_WIFISECURITYMANAGER_HPP

@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file       SubscriptionListener.hpp
@@ -37,8 +42,8 @@
  *             thread-safe.
  */
 
-#ifndef SUBSCRIPTIONLISTENER_HPP
-#define SUBSCRIPTIONLISTENER_HPP
+#ifndef TELUX_TEL_SUBSCRIPTIONLISTENER_HPP
+#define TELUX_TEL_SUBSCRIPTIONLISTENER_HPP
 
 #include <memory>
 
@@ -86,4 +91,4 @@ public:
 }  // end of namespace tel
 }  // end of namespace telux
 
-#endif
+#endif // TELUX_TEL_SUBSCRIPTIONLISTENER_HPP

@@ -135,4 +135,4 @@ class PlatformFactory {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_PLATFORMFACTORY_HPP
+#endif // TELUX_PLATFORM_PLATFORMFACTORY_HPP

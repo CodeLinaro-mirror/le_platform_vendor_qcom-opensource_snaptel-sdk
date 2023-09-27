@@ -209,4 +209,4 @@ class IAudioPlayer {
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif  // TELUX_AUDIO_AUDIOPLAYER_HPP
+#endif // TELUX_AUDIO_AUDIOPLAYER_HPP

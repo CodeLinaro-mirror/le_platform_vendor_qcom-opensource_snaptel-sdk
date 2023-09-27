@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -70,8 +70,8 @@
  *              which the SIM is connected.
  */
 
-#ifndef SUBSCRIPTION_HPP
-#define SUBSCRIPTION_HPP
+#ifndef TELUX_TEL_SUBSCRIPTION_HPP
+#define TELUX_TEL_SUBSCRIPTION_HPP
 
 #include <string>
 
@@ -222,4 +222,4 @@ public:
 }  // end namespace tel
 }  // end namespace telux
 
-#endif
+#endif // TELUX_TEL_SUBSCRIPTION_HPP

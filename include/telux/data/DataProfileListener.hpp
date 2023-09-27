@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -69,8 +69,8 @@
  * @brief      Listener interface for receiving data profile change events.
  */
 
-#ifndef DATAPROFILELISTENER_HPP
-#define DATAPROFILELISTENER_HPP
+#ifndef TELUX_DATA_DATAPROFILELISTENER_HPP
+#define TELUX_DATA_DATAPROFILELISTENER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 #include "telux/data/DataDefines.hpp"
@@ -120,4 +120,4 @@ public:
 
 }  // end of namespace telux
 
-#endif  // DATAPROFILELISTENER_HPP
+#endif // TELUX_DATA_DATAPROFILELISTENER_HPP

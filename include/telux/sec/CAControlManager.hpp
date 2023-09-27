@@ -242,4 +242,4 @@ class ICAControlManager {
 }  // End of namespace sec
 }  // End of namespace telux
 
-#endif  // TELUX_SEC_CACONTROLMANAGER_HPP
+#endif // TELUX_SEC_CACONTROLMANAGER_HPP

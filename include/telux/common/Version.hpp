@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -68,8 +68,8 @@
  * @brief      Provide APIs to query the version of the SDK
  */
 
-#ifndef VERSION_HPP
-#define VERSION_HPP
+#ifndef TELUX_COMMON_VERSION_HPP
+#define TELUX_COMMON_VERSION_HPP
 
 #include <string>
 
@@ -116,4 +116,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_COMMON_VERSION_HPP

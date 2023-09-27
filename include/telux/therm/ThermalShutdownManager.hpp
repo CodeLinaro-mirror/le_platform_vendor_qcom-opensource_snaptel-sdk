@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -76,8 +76,8 @@
  *             shutdown and receive relevant notifications.
  */
 
-#ifndef THERMALSHUTDOWNMANAGER_HPP
-#define THERMALSHUTDOWNMANAGER_HPP
+#ifndef TELUX_THERM_THERMALSHUTDOWNMANAGER_HPP
+#define TELUX_THERM_THERMALSHUTDOWNMANAGER_HPP
 
 #include <future>
 
@@ -194,4 +194,4 @@ public:
 }  // end of namespace therm
 }  // end of namespace telux
 
-#endif  // THERMALSHUTDOWNMANAGER_HPP
+#endif // TELUX_THERM_THERMALSHUTDOWNMANAGER_HPP

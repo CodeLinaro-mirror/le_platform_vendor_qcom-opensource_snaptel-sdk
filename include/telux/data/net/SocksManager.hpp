@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -70,8 +70,8 @@
  *
  */
 
-#ifndef SOCKSMANAGER_HPP
-#define SOCKSMANAGER_HPP
+#ifndef TELUX_DATA_NET_SOCKSMANAGER_HPP
+#define TELUX_DATA_NET_SOCKSMANAGER_HPP
 
 #include <future>
 #include <vector>
@@ -207,4 +207,4 @@ class ISocksListener {
 }
 }
 
-#endif
+#endif // TELUX_DATA_NET_SOCKSMANAGER_HPP

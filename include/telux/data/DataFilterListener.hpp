@@ -74,8 +74,8 @@
  *
  */
 
-#ifndef DATAFILTERLISTENER_HPP
-#define DATAFILTERLISTENER_HPP
+#ifndef TELUX_DATA_DATAFILTERLISTENER_HPP
+#define TELUX_DATA_DATAFILTERLISTENER_HPP
 
 #include <memory>
 
@@ -117,4 +117,4 @@ public:
 } // end of namespace data
 } // end of namespace telux
 
-#endif // DATAFILTERLISTENER_HPP
+#endif // TELUX_DATA_DATAFILTERLISTENER_HPP

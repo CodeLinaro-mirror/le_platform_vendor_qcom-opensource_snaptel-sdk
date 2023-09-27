@@ -61,6 +61,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 
 /**
@@ -74,8 +79,8 @@
  *             thread-safe.
  */
 
-#ifndef THERMALSHUTDOWNLISTENER_HPP
-#define THERMALSHUTDOWNLISTENER_HPP
+#ifndef TELUX_THERM_THERMALSHUTDOWNLISTENER_HPP
+#define TELUX_THERM_THERMALSHUTDOWNLISTENER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 
@@ -129,4 +134,4 @@ public:
 }  // end of namespace therm
 }  // end of namespace telux
 
-#endif  // THERMALSHUTDOWNLISTENER_HPP
+#endif // TELUX_THERM_THERMALSHUTDOWNLISTENER_HPP

@@ -71,8 +71,8 @@
  *             searching and registering (CS/PS domain, RAT and operation mode).
  */
 
-#ifndef SERVINGSYSTEMMANAGER_HPP
-#define SERVINGSYSTEMMANAGER_HPP
+#ifndef TELUX_TEL_SERVINGSYSTEMMANAGER_HPP
+#define TELUX_TEL_SERVINGSYSTEMMANAGER_HPP
 
 #include <bitset>
 #include <future>
@@ -780,4 +780,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_SERVINGSYSTEMMANAGER_HPP

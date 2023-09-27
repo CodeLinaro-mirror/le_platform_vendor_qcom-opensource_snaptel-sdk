@@ -69,8 +69,8 @@
 * @brief      Contains common data types used in Cv2x Radio API
 */
 
-#ifndef CV2XRADIOTYPES_HPP
-#define CV2XRADIOTYPES_HPP
+#ifndef TELUX_CV2X_CV2XRADIOTYPES_HPP
+#define TELUX_CV2X_CV2XRADIOTYPES_HPP
 
 #include <bitset>
 #include <vector>
@@ -738,4 +738,4 @@ struct GlobalIPUnicastRoutingInfo
 
 } // namespace telux
 
-#endif // #ifndef CV2XRADIOTYPES_HPP
+#endif // TELUX_CV2X_CV2XRADIOTYPES_HPP

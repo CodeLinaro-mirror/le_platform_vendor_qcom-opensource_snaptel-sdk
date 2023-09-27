@@ -38,8 +38,8 @@
  * @brief     ECallDefines contains enumerations and variables used for
  *            telephony subsystems.
  */
-#ifndef ECALLDEFINES_HPP
-#define ECALLDEFINES_HPP
+#ifndef TELUX_TEL_ECALLDEFINES_HPP
+#define TELUX_TEL_ECALLDEFINES_HPP
 
 #include <string>
 #include <bitset>
@@ -462,4 +462,4 @@ struct EcallConfig {
 
 }  // End of namespace telux
 
-#endif  // ECALLDEFINES_HPP
+#endif // TELUX_TEL_ECALLDEFINES_HPP

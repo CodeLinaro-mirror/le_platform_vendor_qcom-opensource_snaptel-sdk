@@ -71,8 +71,8 @@
 
 #include <telux/common/CommonDefines.hpp>
 
-#ifndef TCUACTIVITYDEFINES_HPP
-#define TCUACTIVITYDEFINES_HPP
+#ifndef TELUX_POWER_TCUACTIVITYDEFINES_HPP
+#define TELUX_POWER_TCUACTIVITYDEFINES_HPP
 
 namespace telux {
 namespace power {
@@ -207,4 +207,4 @@ enum class TcuActivityStateAck {
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif  // TCUACTIVITYDEFINES_HPP
+#endif // TELUX_POWER_TCUACTIVITYDEFINES_HPP

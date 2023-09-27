@@ -70,8 +70,8 @@
  *
  */
 
-#ifndef LOCATION_CONFIGURATOR_HPP
-#define LOCATION_CONFIGURATOR_HPP
+#ifndef TELUX_LOC_LOCATIONCONFIGURATOR_HPP
+#define TELUX_LOC_LOCATIONCONFIGURATOR_HPP
 
 #include <future>
 #include <memory>
@@ -838,4 +838,4 @@ public:
 
 } // end of namespace telux
 
-#endif // LOCATION_MANAGER_HPP
+#endif // TELUX_LOC_LOCATIONCONFIGURATOR_HPP

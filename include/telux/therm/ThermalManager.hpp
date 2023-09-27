@@ -70,8 +70,8 @@
  *             trip point information.
  */
 
-#ifndef THERMALMANAGER_HPP
-#define THERMALMANAGER_HPP
+#ifndef TELUX_THERM_THERMALMANAGER_HPP
+#define TELUX_THERM_THERMALMANAGER_HPP
 
 #include <bitset>
 #include <vector>
@@ -426,4 +426,4 @@ class ICoolingDevice {
 }  // end of namespace therm
 }  // end of namespace telux
 
-#endif  // THERMALMANAGER_HPP
+#endif // TELUX_THERM_THERMALMANAGER_HPP

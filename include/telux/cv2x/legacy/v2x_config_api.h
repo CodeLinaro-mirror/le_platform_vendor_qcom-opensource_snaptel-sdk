@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -70,8 +70,8 @@
   Abstraction of the CV2X configuration relevant interfaces.
  */
 
-#ifndef __V2X_CONFIG_APIS_H__
-#define __V2X_CONFIG_APIS_H__
+#ifndef TELUX_CV2X_LEGACY_V2X_CONFIG_API_H
+#define TELUX_CV2X_LEGACY_V2X_CONFIG_API_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -212,4 +212,4 @@ extern v2x_status_enum_type v2x_retrieve_configuration(const char *config_file_p
 }
 #endif
 
-#endif // __V2X_CONFIG_APIS_H__
+#endif // TELUX_CV2X_LEGACY_V2X_CONFIG_API_H

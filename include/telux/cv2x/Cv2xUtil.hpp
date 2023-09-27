@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
 * @file       Cv2xUtil.hpp
@@ -33,8 +38,8 @@
 * @brief      Cv2xUtil class encapsulates CV2X utilities.
 */
 
-#ifndef CV2XUTIL_HPP
-#define CV2XUTIL_HPP
+#ifndef TELUX_CV2X_CV2XUTIL_HPP
+#define TELUX_CV2X_CV2XUTIL_HPP
 
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 
@@ -84,5 +89,5 @@ public:
 
 } // namespace telux
 
-#endif // #ifndef CV2XUTIL_HPP
+#endif // TELUX_CV2X_CV2XUTIL_HPP
 

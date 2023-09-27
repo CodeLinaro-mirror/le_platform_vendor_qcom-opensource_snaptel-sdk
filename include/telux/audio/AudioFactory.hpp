@@ -67,8 +67,8 @@
  * @brief Factory to created IAudioManager instance.
  */
 
-#ifndef AUDIOFACTORY_HPP
-#define AUDIOFACTORY_HPP
+#ifndef TELUX_AUDIO_AUDIOFACTORY_HPP
+#define TELUX_AUDIO_AUDIOFACTORY_HPP
 
 #include <telux/audio/AudioPlayer.hpp>
 #include <telux/audio/AudioManager.hpp>
@@ -129,4 +129,4 @@ protected:
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif  // AUDIOFACTORY_HPP
+#endif // TELUX_AUDIO_AUDIOFACTORY_HPP

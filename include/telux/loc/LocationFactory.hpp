@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -70,8 +70,8 @@
  *             and dgnss manager.
  */
 
-#ifndef LOCATIONFACTORY_HPP
-#define LOCATIONFACTORY_HPP
+#ifndef TELUX_LOC_LOCATIONFACTORY_HPP
+#define TELUX_LOC_LOCATIONFACTORY_HPP
 
 #include <map>
 #include <memory>
@@ -149,4 +149,4 @@ private:
 
 }  // end of namespace telux
 
-#endif  // LOCATIONFACTORY_HPP
+#endif // TELUX_LOC_LOCATIONFACTORY_HPP

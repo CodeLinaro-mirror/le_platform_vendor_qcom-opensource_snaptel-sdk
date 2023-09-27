@@ -73,8 +73,8 @@
  *
  */
 
-#ifndef MULTISIMMANAGER_HPP
-#define MULTISIMMANAGER_HPP
+#ifndef TELUX_TEL_MULTISIMMANAGER_HPP
+#define TELUX_TEL_MULTISIMMANAGER_HPP
 
 #include <future>
 #include <map>
@@ -298,4 +298,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_MULTISIMMANAGER_HPP

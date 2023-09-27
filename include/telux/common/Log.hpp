@@ -66,9 +66,14 @@
  * @brief      Log class provides APIs for logging messages at different
  *             log level like DEBUG, INFO, WARNING, ERROR and PERF.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
-#ifndef LOG_HPP
-#define LOG_HPP
+#ifndef TELUX_COMMON_LOG_HPP
+#define TELUX_COMMON_LOG_HPP
 
 #include <string>
 #include <sstream>
@@ -195,4 +200,4 @@ private:
 
 } // End of namespace telux
 
-#endif
+#endif // TELUX_COMMON_LOG_HPP

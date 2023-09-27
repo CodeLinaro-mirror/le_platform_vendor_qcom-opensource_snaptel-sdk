@@ -71,8 +71,8 @@
  *             networks and set and get preferred networks list.
  */
 
-#ifndef NETWORKSELECTIONMANAGER_HPP
-#define NETWORKSELECTIONMANAGER_HPP
+#ifndef TELUX_TEL_NETWORKSELECTIONMANAGER_HPP
+#define TELUX_TEL_NETWORKSELECTIONMANAGER_HPP
 
 #include <bitset>
 #include <future>
@@ -605,4 +605,4 @@ public:
 }  // end of namespace tel
 }  // end of namespace telux
 
-#endif
+#endif // TELUX_TEL_NETWORKSELECTIONMANAGER_HPP

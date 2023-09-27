@@ -69,8 +69,8 @@
  *          instance should be used.
  */
 
-#ifndef AUDIOTRANSCODER_HPP
-#define AUDIOTRANSCODER_HPP
+#ifndef TELUX_AUDIO_AUDIOTRANSCODER_HPP
+#define TELUX_AUDIO_AUDIOTRANSCODER_HPP
 
 #include <future>
 #include <memory>
@@ -218,4 +218,4 @@ class ITranscoder {
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif  // end of AUDIOTRANSCODER_HPP
+#endif // TELUX_AUDIO_AUDIOTRANSCODER_HPP

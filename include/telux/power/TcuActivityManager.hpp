@@ -70,8 +70,8 @@
  *             related to TCU-activity states, initiate TCU-activity state transition.
  */
 
-#ifndef TCUACTIVITYMANAGER_HPP
-#define TCUACTIVITYMANAGER_HPP
+#ifndef TELUX_POWER_TCUACTIVITYMANAGER_HPP
+#define TELUX_POWER_TCUACTIVITYMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -388,4 +388,4 @@ public:
 }  // end of namespace power
 }  // end of namespace telux
 
-#endif  // TCUACTIVITYMANAGER_HPP
+#endif // TELUX_POWER_TCUACTIVITYMANAGER_HPP

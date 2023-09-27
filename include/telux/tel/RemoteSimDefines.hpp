@@ -26,6 +26,11 @@
  *  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 /**
  * @file      RemoteSimDefines.hpp
@@ -33,8 +38,8 @@
  *            Remote SIM subsystem.
  */
 
-#ifndef REMOTESIMDEFINES_HPP
-#define REMOTESIMDEFINES_HPP
+#ifndef TELUX_TEL_REMOTESIMDEFINES_HPP
+#define TELUX_TEL_REMOTESIMDEFINES_HPP
 
 #include <cstdint>
 #include <vector>
@@ -63,4 +68,4 @@ enum class CardErrorCause {
 
 } // End of namespace telux
 
-#endif // REMOTESIMDEFINES_HPP
+#endif // TELUX_TEL_REMOTESIMDEFINES_HPP

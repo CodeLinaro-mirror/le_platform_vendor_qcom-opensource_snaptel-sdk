@@ -73,8 +73,8 @@
 *
 */
 
-#ifndef CV2XTHROTTLEMANAGER_HPP
-#define CV2XTHROTTLEMANAGER_HPP
+#ifndef TELUX_CV2X_CV2XTHROTTLEMANAGER_HPP
+#define TELUX_CV2X_CV2XTHROTTLEMANAGER_HPP
 
 #include <future>
 #include <memory>
@@ -196,4 +196,4 @@ public:
 
 } // namespace telux
 
-#endif // #ifndef CV2XTHROTTLEMANAGER_HPP
+#endif // TELUX_CV2X_CV2XTHROTTLEMANAGER_HPP

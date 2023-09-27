@@ -68,8 +68,8 @@
  *        audio APIs.
  */
 
-#ifndef AUDIODEFINES_HPP
-#define AUDIODEFINES_HPP
+#ifndef TELUX_AUDIO_AUDIODEFINES_HPP
+#define TELUX_AUDIO_AUDIODEFINES_HPP
 
 #include <cstdint>
 #include <cstring>
@@ -495,4 +495,4 @@ struct DtmfTone {
 }  // End of namespace audio
 }  // End of namespace telux
 
-#endif  // AUDIODEFINES_HPP
+#endif // TELUX_AUDIO_AUDIODEFINES_HPP

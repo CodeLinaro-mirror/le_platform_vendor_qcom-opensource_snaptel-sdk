@@ -76,8 +76,8 @@
  *
  */
 
-#ifndef CELLBROADCASTMANAGER_HPP
-#define CELLBROADCASTMANAGER_HPP
+#ifndef TELUX_TEL_CELLBROADCASTMANAGER_HPP
+#define TELUX_TEL_CELLBROADCASTMANAGER_HPP
 
 #include <vector>
 #include <string>
@@ -809,4 +809,4 @@ public:
 /** @} */ /* end_addtogroup telematics_cellbroadcast */
 }  // End of namespace tel
 }  // End of namespace telux
-#endif // CELLBROADCASTMANAGER_HPP
+#endif // TELUX_TEL_CELLBROADCASTMANAGER_HPP

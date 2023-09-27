@@ -151,4 +151,4 @@ class SensorFactory {
 }  // namespace sensor
 }  // namespace telux
 
-#endif  // TELUX_SENSOR_SENSORFACTORY_HPP
+#endif // TELUX_SENSOR_SENSORFACTORY_HPP

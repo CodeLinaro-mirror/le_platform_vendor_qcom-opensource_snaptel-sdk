@@ -37,7 +37,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -70,8 +70,8 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CV2XRXSUBSCRIPTION_HPP
-#define CV2XRXSUBSCRIPTION_HPP
+#ifndef TELUX_CV2X_CV2XRXSUBSCRIPTION_HPP
+#define TELUX_CV2X_CV2XRXSUBSCRIPTION_HPP
 
 #include <vector>
 #include <memory>
@@ -154,4 +154,4 @@ public:
 
 } // namespace telux
 
-#endif // #ifndef CV2XRXSUBSCRIPTION_HPP
+#endif // TELUX_CV2X_CV2XRXSUBSCRIPTION_HPP

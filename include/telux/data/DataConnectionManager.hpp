@@ -73,8 +73,8 @@
  *
  */
 
-#ifndef DATACONNECTIONMANAGER_HPP
-#define DATACONNECTIONMANAGER_HPP
+#ifndef TELUX_DATA_DATACONNECTIONMANAGER_HPP
+#define TELUX_DATA_DATACONNECTIONMANAGER_HPP
 
 #include <future>
 #include <vector>
@@ -741,4 +741,4 @@ class IDataConnectionListener : public telux::common::IServiceStatusListener {
 }
 }
 
-#endif
+#endif // TELUX_DATA_DATACONNECTIONMANAGER_HPP

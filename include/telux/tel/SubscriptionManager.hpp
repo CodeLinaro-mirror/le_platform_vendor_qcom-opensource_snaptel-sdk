@@ -42,8 +42,8 @@
  *             request by SIM SlotId.
  */
 
-#ifndef SUBSCRIPTIONMANAGER_HPP
-#define SUBSCRIPTIONMANAGER_HPP
+#ifndef TELUX_TEL_SUBSCRIPTIONMANAGER_HPP
+#define TELUX_TEL_SUBSCRIPTIONMANAGER_HPP
 
 #include <future>
 #include <vector>
@@ -150,4 +150,4 @@ public:
 }  // end of namespace tel
 }  // end namespace telux
 
-#endif
+#endif // TELUX_TEL_SUBSCRIPTIONMANAGER_HPP

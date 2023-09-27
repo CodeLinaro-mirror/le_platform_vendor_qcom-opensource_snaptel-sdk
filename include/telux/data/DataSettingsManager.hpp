@@ -543,4 +543,4 @@ class IDataSettingsListener {
 }
 }
 
-#endif
+#endif // TELUX_DATA_DATASETTINGSMANAGER_HPP 

@@ -71,8 +71,8 @@
  *             voice radio tech and voice service state.
  */
 
-#ifndef PHONE_HPP
-#define PHONE_HPP
+#ifndef TELUX_TEL_PHONE_HPP
+#define TELUX_TEL_PHONE_HPP
 
 #include <memory>
 #include <string>
@@ -432,4 +432,4 @@ public:
 }
 }
 
-#endif
+#endif // TELUX_TEL_PHONE_HPP

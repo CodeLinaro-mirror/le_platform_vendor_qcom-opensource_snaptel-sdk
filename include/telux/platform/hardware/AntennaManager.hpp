@@ -39,8 +39,8 @@
  *             or get the active antenna's configuration.
  */
 
-#ifndef TELUX_PLATFORM_ANTENNAMANAGER_HPP
-#define TELUX_PLATFORM_ANTENNAMANAGER_HPP
+#ifndef TELUX_PLATFORM_HARDWARE_ANTENNAMANAGER_HPP
+#define TELUX_PLATFORM_HARDWARE_ANTENNAMANAGER_HPP
 
 #include <telux/common/CommonDefines.hpp>
 #include <telux/platform/hardware/AntennaListener.hpp>
@@ -159,4 +159,4 @@ class IAntennaManager {
 
 }  // end of namespace telux
 
-#endif  // TELUX_PLATFORM_ANTENNAMANAGER_HPP
+#endif // TELUX_PLATFORM_HARDWARE_ANTENNAMANAGER_HPP

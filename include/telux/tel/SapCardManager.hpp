@@ -71,8 +71,8 @@
  *             SIM power on/off/reset, card reader status, etc.
  */
 
-#ifndef SAPCARDMANAGER_HPP
-#define SAPCARDMANAGER_HPP
+#ifndef TELUX_TEL_SAPCARDMANAGER_HPP
+#define TELUX_TEL_SAPCARDMANAGER_HPP
 
 #include <vector>
 #include <future>
@@ -415,4 +415,4 @@ class ISapCardListener : public common::IServiceStatusListener{
 
 }  // End of namespace telux
 
-#endif
+#endif // TELUX_TEL_SAPCARDMANAGER_HPP

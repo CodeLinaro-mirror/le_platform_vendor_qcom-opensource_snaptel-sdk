@@ -73,8 +73,8 @@
  *             implementation should be thread safe.
  */
 
-#ifndef CALLLISTENER_HPP
-#define CALLLISTENER_HPP
+#ifndef TELUX_TEL_CALLLISTENER_HPP
+#define TELUX_TEL_CALLLISTENER_HPP
 
 #include <vector>
 #include <memory>
@@ -240,4 +240,4 @@ public:
 
 }  // End of namespace telux
 
-#endif  // CALLLISTENER_HPP
+#endif // TELUX_TEL_CALLLISTENER_HPP

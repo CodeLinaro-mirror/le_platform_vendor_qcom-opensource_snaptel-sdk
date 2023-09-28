@@ -246,7 +246,7 @@ std::string WlanUtils::apSecurityEncryptToString(telux::wlan::SecEncrypt encrypt
 }
 
 telux::wlan::Id WlanUtils::convertIntToWlanId(int id) {
-   telux::wlan::Id retId {};
+   telux::wlan::Id retId = telux::wlan::Id::PRIMARY;
    switch(id) {
       case 1:
          retId = telux::wlan::Id::PRIMARY;
@@ -267,7 +267,7 @@ telux::wlan::Id WlanUtils::convertIntToWlanId(int id) {
 }
 
 telux::wlan::ApType WlanUtils::convertIntToApType(int type) {
-   telux::wlan::ApType retType {};
+   telux::wlan::ApType retType = telux::wlan::ApType::UNKNOWN;
    switch(type) {
       case 0:
          retType = telux::wlan::ApType::UNKNOWN;
@@ -285,7 +285,7 @@ telux::wlan::ApType WlanUtils::convertIntToApType(int type) {
 }
 
 telux::wlan::BandType WlanUtils::convertIntToApBand(int band) {
-   telux::wlan::BandType retBand {};
+   telux::wlan::BandType retBand = telux::wlan::BandType::BAND_5GHZ;
    switch(band) {
       case 1:
          retBand = telux::wlan::BandType::BAND_5GHZ;
@@ -300,7 +300,7 @@ telux::wlan::BandType WlanUtils::convertIntToApBand(int band) {
 }
 
 telux::wlan::ApInterworking WlanUtils::convertIntToInterworking(int interworking) {
-   telux::wlan::ApInterworking retInterworking {};
+   telux::wlan::ApInterworking retInterworking = telux::wlan::ApInterworking::INTERNET_ACCESS;
    switch(interworking) {
       case 0:
          retInterworking = telux::wlan::ApInterworking::INTERNET_ACCESS;
@@ -315,7 +315,7 @@ telux::wlan::ApInterworking WlanUtils::convertIntToInterworking(int interworking
 }
 
 telux::wlan::SecMode WlanUtils::convertIntToSecMode(int mode) {
-   telux::wlan::SecMode retMode {};
+   telux::wlan::SecMode retMode = telux::wlan::SecMode::OPEN;
    switch(mode) {
       case 0:
          retMode = telux::wlan::SecMode::OPEN;
@@ -339,7 +339,7 @@ telux::wlan::SecMode WlanUtils::convertIntToSecMode(int mode) {
 }
 
 telux::wlan::SecAuth WlanUtils::convertIntToSecAuth(int auth) {
-   telux::wlan::SecAuth retAuth {};
+   telux::wlan::SecAuth retAuth = telux::wlan::SecAuth::NONE;
    switch(auth) {
       case 0:
          retAuth = telux::wlan::SecAuth::NONE;
@@ -381,7 +381,7 @@ telux::wlan::SecAuth WlanUtils::convertIntToSecAuth(int auth) {
 }
 
 telux::wlan::SecEncrypt WlanUtils::convertIntToSecEncrypt(int encrypt) {
-   telux::wlan::SecEncrypt retEncrypt {};
+   telux::wlan::SecEncrypt retEncrypt = telux::wlan::SecEncrypt::RC4;
    switch(encrypt) {
       case 0:
          retEncrypt = telux::wlan::SecEncrypt::RC4;

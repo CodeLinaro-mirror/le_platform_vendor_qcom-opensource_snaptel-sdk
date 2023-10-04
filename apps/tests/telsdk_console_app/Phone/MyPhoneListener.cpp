@@ -29,7 +29,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -979,6 +979,18 @@ void MyResetWwanCallback::resetWwanResponse(telux::common::ErrorCode error) {
         PRINT_CB << "reset WWAN request executed successfully" << std::endl;
     } else {
         PRINT_CB << "Request reset WWAN failed, errorCode: "
+                 << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
+void MyConfigureSignalStrengthCallback::configureSignalStrengthResponse(
+        telux::common::ErrorCode error) {
+
+    std::cout << "\n";
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        PRINT_CB << "Configure SignalStrength request executed successfully" << std::endl;
+    } else {
+        PRINT_CB << "Request Configure SignalStrength failed, errorCode: "
                  << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }

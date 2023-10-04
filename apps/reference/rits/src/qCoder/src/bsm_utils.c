@@ -67,6 +67,7 @@
  * @file bsm_utils.c
  * @purpose some BSM utilities.
  */
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -488,6 +489,32 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
     }
 
     fprintf(myfp, "\n");
+}
+long double deg2rad(double deg){
+    return deg * (M_PI / 180.0);
+}
+
+ double rad2deg(long double rad){
+    return tan (rad * M_PI / 180.0);
+}
+
+double bsmCompute2dDistance(double hvLat, double hvLon, double rvLat, double rvLon){
+
+    double rLat1 = deg2rad(hvLat); // deg2rad(lat1);
+    double rLat2 = deg2rad(rvLat); // deg2rad(lat2);
+    double rLon1 =  deg2rad(hvLon); // deg2rad(lon1);
+    double rLon2 = deg2rad(rvLon); // deg2rad(lon2);
+    double alpha = 6378137; // mean radius of earth in meters
+    double f = 0.003353; // earth's flattening
+    double f1 = pow((f * (2.0 - f)), (0.5));
+    double f1_sqd = pow(f1, 2.0);
+    double numer = (alpha * (1.0-f1_sqd));
+    double denom = pow(1.0 - (f1_sqd * pow(sin(rvLat),2)), 1.5);
+    double meridRad = (numer / denom);
+    double distance = meridRad *
+        ( acos(sin(rLat1) * sin(rLat2) + cos(rLat1) * cos(rLat2) * cos(rLon1 - rLon2)) ); // cos-1
+    return distance;
+    return distance;
 }
 
 // Writes bsm header to the csv file pointed by fp.

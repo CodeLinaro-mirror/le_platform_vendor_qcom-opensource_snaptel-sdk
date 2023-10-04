@@ -48,6 +48,24 @@ WiFiConnectionSecurityApp::~WiFiConnectionSecurityApp() {
 }
 
 /*
+ *  Helper to get input from user.
+ */
+void WiFiConnectionSecurityApp::getStringFromUser(const std::string promptToDisplay,
+        std::string& usrInput) {
+
+    while(1) {
+        std::cout << promptToDisplay;
+
+        if ((!std::getline(std::cin, usrInput)) || usrInput.empty()) {
+            std::cout << "invalid input" << std::endl;
+            continue;
+        }
+
+        return;
+    }
+}
+
+/*
  *  Listener to receive ML analysis result.
  */
 void WiFiSecurityReportListener::onReportAvailable(
@@ -82,9 +100,10 @@ void WiFiSecurityReportListener::onDeauthenticationAttack(
 /*
  *  Sets the value based on selection made by user with the help of UI previously.
  */
-void WiFiSecurityReportListener::isTrustedAP(std::string ssid, bool& isTrusted) {
+void WiFiSecurityReportListener::isTrustedAP(telux::sec::ApInfo apInfo, bool& isTrusted) {
 
-    std::cout << "Please press 3 to trust/distrust AP " << ssid << std::endl;
+    std::cout << "Please press 3 to trust/distrust AP " << apInfo.ssid <<
+    " with bssid " << apInfo.bssid << std::endl;
 
     /* Wait until user makes confirms to trust or distrust AP */
     std::unique_lock<std::mutex> lock(trustMutex_);
@@ -197,7 +216,7 @@ void WiFiConnectionSecurityApp::deregisterListener() {
         return;
     }
 
-    ec = wifiConSecMgr_->deRegisterListener(reportListener_);
+    ec = wifiConSecMgr_->deregisterListener(reportListener_);
     if (ec != telux::common::ErrorCode::SUCCESS) {
         std::cout << "can't register listener, err " << static_cast<int>(ec) << std::endl;
         return;
@@ -205,6 +224,55 @@ void WiFiConnectionSecurityApp::deregisterListener() {
 
     reportListener_ = nullptr;
     std::cout << "Listener deregistered" << std::endl;
+}
+
+/*
+ *  List trusted APs.
+ */
+void WiFiConnectionSecurityApp::getTrustedApList() {
+
+    telux::common::ErrorCode ec;
+    std::vector<telux::sec::ApInfo> trustedAPList;
+
+    if (!reportListener_) {
+        std::cout << "Listener doesn't exist" << std::endl;
+        return;
+    }
+
+    ec = wifiConSecMgr_->getTrustedApList(trustedAPList);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "can't list APs, err " << static_cast<int>(ec) << std::endl;
+        return;
+    }
+
+    for (auto ap : trustedAPList) {
+        std::cout << "ssid: " << ap.ssid << ", bssid: " << ap.bssid << std::endl;
+    }
+}
+
+/*
+ *  Remove trusted APs.
+ */
+void WiFiConnectionSecurityApp::removeApFromTrustedList() {
+
+    telux::sec::ApInfo apInfo{};
+    telux::common::ErrorCode ec;
+
+    if (!reportListener_) {
+        std::cout << "Listener doesn't exist" << std::endl;
+        return;
+    }
+
+    getStringFromUser("Enter SSID of AP  : ", apInfo.ssid);
+    getStringFromUser("Enter BSSID of AP : ", apInfo.bssid);
+
+    ec = wifiConSecMgr_->removeApFromTrustedList(apInfo);
+    if (ec != telux::common::ErrorCode::SUCCESS) {
+        std::cout << "can't distrust AP, err " << static_cast<int>(ec) << std::endl;
+        return;
+    }
+
+    std::cout << apInfo.ssid << " AP distrusted" << std::endl;
 }
 
 /*
@@ -235,8 +303,17 @@ void WiFiConnectionSecurityApp::init() {
         ConsoleAppCommand>(ConsoleAppCommand("3", "Trust the AP (yes/no)", {},
         std::bind(&WiFiConnectionSecurityApp::getTrustAPSelection, this)));
 
+    std::shared_ptr<ConsoleAppCommand> getTrustedApList = std::make_shared<
+        ConsoleAppCommand>(ConsoleAppCommand("4", "List trusted APs", {},
+        std::bind(&WiFiConnectionSecurityApp::getTrustedApList, this)));
+
+    std::shared_ptr<ConsoleAppCommand> removeApFromTrustedList = std::make_shared<
+        ConsoleAppCommand>(ConsoleAppCommand("5", "Remove trusted AP", {},
+        std::bind(&WiFiConnectionSecurityApp::removeApFromTrustedList, this)));
+
     std::vector<std::shared_ptr<ConsoleAppCommand>> mainCmds = {
-        regListener, deregListener, getTrustAPSelection };
+        regListener, deregListener, getTrustAPSelection,
+        getTrustedApList, removeApFromTrustedList };
 
     ConsoleApp::addCommands(mainCmds);
     ConsoleApp::displayMenu();

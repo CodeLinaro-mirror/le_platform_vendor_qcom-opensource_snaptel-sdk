@@ -10,7 +10,7 @@ setup: cmake grpc jsoncpp
 clean:
 	rm -rf build/build_telux_headers build/build_sim build/build_apps
 
-cleanall:
+cleanall: clean
 	rm -rf build simulation/protos/proto-src
 
 headers:
@@ -24,8 +24,7 @@ cmake:
 	mkdir build && cd build && wget https://cmake.org/files/v3.15/cmake-3.15.3.tar.gz && tar -zxvf cmake-3.15.3.tar.gz && rm cmake-3.15.3.tar.gz && cd cmake-3.15.3 && ./configure --prefix=${PWD}/build/ && make -j16 && make install
 
 grpc:
-	cd build && if [ ! -d grpc_repo ] ; then git clone --recurse-submodules -b v1.54.0 --depth 1 --shallow-submodules https://git.codelinaro.org/clo/le/grpc_repo.git ; fi && mkdir -p build_grpc && cd build_grpc && ${PWD}/build/bin/cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_INSTALL_SHAREDIR=${PWD}/build/ -DgRPC_INSTALL_INCLUDEDIR=${PWD}/build/include/ -DCMAKE_INSTALL_INCLUDEDIR=${PWD}/build/include/ -DgRPC_INSTALL_BINDIR=${PWD}/build/bin/ -DCMAKE_INSTALL_BINDIR=${PWD}/build/bin/ -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../grpc_repo && make -j16 && make install
-	cp -r ${PWD}/build/include/google ${ROOTFS}/include/ &&	cp -r ${PWD}/build/include/grpc ${ROOTFS}/include/ && cp -r ${PWD}/build/include/grpcpp ${ROOTFS}/include/ && cp -r ${PWD}/build/include/absl ${ROOTFS}/include/
+	cd build && if [ ! -d grpc_repo ] ; then git clone --recurse-submodules -b v1.48.0 --depth 1 --shallow-submodules https://git.codelinaro.org/clo/le/grpc_repo.git ; fi && mkdir -p build_grpc && cd build_grpc && ${PWD}/build/bin/cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../grpc_repo && make -j16 && make install
 
 sim: headers
 	cd build && export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ROOTFS}/lib/ && mkdir -p build_sim && cd build_sim && cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=${PWD}/build/lib/cmake/ -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${ROOTFS}/include -DCMAKE_INSTALL_PREFIX=${ROOTFS} ../../simulation && make install

@@ -13,7 +13,7 @@ pkg_check_modules(GRPC_LIB grpc)
 pkg_check_modules(GRPCPP_LIB grpc++)
 
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/proto-src)
-set(PROTOC_COMPILER protoc)
+set(PROTOC_COMPILER $<TARGET_FILE:protobuf::protoc>)
 set(GRPCPP_EXECUTABLE gRPC::grpc++)
 set(GRPCPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 

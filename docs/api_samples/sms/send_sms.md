@@ -3,41 +3,47 @@ Sending SMS {#send_sms}
 
 This sample application demonstrates how to send a SMS to a given cellphone specified by mobile number.
 
-### 1. Get the PhoneFactory and PhoneManager instances
+### 1. Implement ResponseCallback interface to receive subsystem initialization status
 
    ~~~~~~{.cpp}
-   auto &phoneFactory = PhoneFactory::getInstance();
-   auto phoneManager = phoneFactory.getPhoneManager();
-   ~~~~~~
-
-### 2. Check if telephony subsystem is ready
-
-   ~~~~~~{.cpp}
-   bool subSystemsStatus = phoneManager->isSubsystemReady();
-   ~~~~~~
-
-##### 2.1 If telephony subsystem is not ready, wait for it to be ready
-
-Telephony subsystems is to make sure that device is ready for services like Phone, SMS
-and others. if subsystems were not ready, wait for unconditionally.
-
-   ~~~~~~{.cpp}
-   if(!subSystemsStatus) {
-      std::future<bool> f = phoneManager->onSubsystemReady();
-      subSystemsStatus = f.get();
+   std::promise<telux::common::ServiceStatus> cbProm = std::promise<telux::common::ServiceStatus>();
+   void initResponseCb(telux::common::ServiceStatus status) {
+      if(subSystemsStatus == SERVICE_AVAILABLE) {
+         std::cout << SmsManager subsystem is ready << std::endl;
+      } else if(subSystemsStatus == SERVICE_FAILED) {
+         std::cout << SmsManager subsystem initialization failed << std::endl;
+      }
+      cbProm.set_value(status);
    }
    ~~~~~~
 
-### 3. Instantiate SMS sent and delivery callback
+### 2. Get the PhoneFactory and default SmsManager instance
+
+   ~~~~~~{.cpp}
+   auto &phoneFactory = PhoneFactory::getInstance();
+   std::shared_ptr<ISmsManager> smsManager = phoneFactory.getSmsManager(initResponseCb);
+   if(smsMgr == NULL) {
+      std::cout << " Failed to get Sms Manager  instance" << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 3. Wait for SmsManager subsystem to be ready
+
+   ~~~~~~{.cpp}
+   telux::common::ServiceStatus status = cbProm.get_future().get();
+   if(status != SERVICE_AVAILABLE) {
+      std::cout << Unable to initialize Sms Manager subsystem << std::endl;
+      return -1;
+   }
+   ~~~~~~
+
+### 4. Instantiate SMS sent and delivery callback and implement ICommandResponseCallback interface to know SMS sent and delivery status
 
    ~~~~~~{.cpp}
    auto smsSentCb = std::make_shared<SmsCallback>();
    auto smsDeliveryCb = std::make_shared<SmsDeliveryCallback>();
-   ~~~~~~
 
-### 3.1 Implement ICommandResponseCallback interface to know SMS sent and delivery status
-
-   ~~~~~~{.cpp}
    class SmsCallback : public ICommandResponseCallback {
    public:
       void commandResponse(ErrorCode error) override;
@@ -55,12 +61,6 @@ and others. if subsystems were not ready, wait for unconditionally.
    void SmsDeliveryCallback::commandResponse(ErrorCode error) {
       std::cout << "SMS Delivery callback" << std::endl;
    }
-   ~~~~~~
-
-### 4. Get default SMS manager instance
-
-   ~~~~~~{.cpp}
-   std::shared_ptr<ISmsManager> smsManager = phoneFactory.getSmsManager();
    ~~~~~~
 
 ### 5. Send an SMS using ISmsManager by passing the text and receiver number along with required callback

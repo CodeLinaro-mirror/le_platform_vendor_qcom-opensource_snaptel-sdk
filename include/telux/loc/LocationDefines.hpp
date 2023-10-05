@@ -636,7 +636,19 @@ enum LocCapabilityType {
   /** Support QDR2_C license bundle is enabled. */
   QWES_QDR2 = (1<<11),
   /** Support QDR3_C license bundle is enabled. */
-  QWES_QDR3 = (1<<12)
+  QWES_QDR3 = (1<<12),
+  /** support time-based batching session. */
+  TIME_BASED_BATCHING = (1<<13),
+  /** support distance-based batching session. */
+  DISTANCE_BASED_BATCHING = (1<<14),
+  /** Support geofencing. */
+  GEOFENCE = (1<<15),
+  /** Support outdoor trip batching session. */
+  OUTDOOR_TRIP_BATCHING = (1<<16),
+  /** Support SV Polynomial */
+  SV_POLYNOMIAL = (1<<17),
+  /** Indicates presence of ML Inference capability for Pseudo Range Measurements. */
+  NLOS_ML20 = (1<<18)
 };
 
 /*Bit mask containing bits from LocCapabilityType */

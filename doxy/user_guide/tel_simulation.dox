@@ -132,7 +132,7 @@ Simulation framework maintains the database to store the message attributes of a
 Sample input:<br>
 Segment-1 of multipart message:<br>
 \code{.sh}
-telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 1 5 MT_READ GSM7 1 07918185690700F0240B918189486537F300003280126063128A0F54741934AFBB41F2F4BC3C07A501 07918185690700F0240B918189486537F300003280126063128A0F54741934AFBB41F2F4BC3C07A501 123456789 +18988456733 The sun rises i
+telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 1 GSM7 1 07918185690700F0240B918189486537F300003280126063128A0F54741934AFBB41F2F4BC3C07A501 +18988456733 The sun rises i
 \endcode
 \htmlonly
 <BR>
@@ -140,7 +140,7 @@ telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 1 5 MT_READ GSM7 1 0791818
 <br>
 Segment-2 of multipart message:<br>
 \code{.sh}
-telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 2 6 MT_READ GSM7 1 07918185690700F0240B918189486537F300003280126014208A0A6E101D5D0695C3733A 07918185690700F0240B918189486537F300003280126014208A0A6E101D5D0695C3733A 123456789 +18988456733 n the east
+telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 2 GSM7 1 07918185690700F0240B918189486537F300003280126014208A0A6E101D5D0695C3733A +18988456733 n the east
 \endcode
 \htmlonly
 <BR>
@@ -150,7 +150,7 @@ telsdk_event_injector -f tel_sms -e incomingsms 1 2 1 2 6 MT_READ GSM7 1 0791818
 - Incoming SMS will be stored on the simulation server only when the preferred storage type is set to SIM.
 - It can be changed using telux::tel::ISmsManager::setPreferredStorage
 - Memory full indication ( telux::tel::ISmsListener::onMemoryFull ) will be sent to all the clients when the messages count on
-  the simulation server exceeds the defined count specified in <i>simulation/json/system-state/tel/ISmsManagerStateSlot*.json</i>
+  the simulation server exceeds the defined count specified in <i>simulation/json/api/tel/ISmsManagerSlot*.json</i>
 <pre>
 "requestStorageDetails" :
 {

@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -745,6 +745,24 @@ enum class BackhaulType {
                             /** @ref telux::data::DataConnectionManager::setDefaultProfile  */
     BLE           = 4  ,    /** Bluetooth Backhaul       */
     MAX_SUPPORTED = 5  ,    /** Max Supported Backhauls  */
+};
+
+/**
+ * Latency Level
+ * Latency level of configured IP packets. LatencyLevel::NORMAL is a default
+ * setting that has no additional priority.
+ */
+enum class LatencyLevel {
+    INVALID     = 0,        /** Not configured */
+    NORMAL      = 1,        /** Default, no priority */
+    LOW         = 2         /** More priority then LatencyLevel::NORMAL */
+};
+
+/**
+ * Latency configuration
+ */
+struct LatencyConfig {
+    LatencyLevel uplink = LatencyLevel::NORMAL;     /** Uplink latency level */
 };
 
 /**

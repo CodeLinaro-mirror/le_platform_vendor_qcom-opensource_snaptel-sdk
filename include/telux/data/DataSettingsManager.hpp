@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -87,6 +87,43 @@ public:
      */
     virtual telux::common::Status switchBackHaul(BackhaulInfo source, BackhaulInfo dest,
         bool applyToAll = false, telux::common::ResponseCallback callback = nullptr) = 0;
+
+    /**
+    * Sets the latency level for data traffic that has been marked as prioritized data. This only
+    * affects the latency level in the modem on the UE. This does not impact network level latency
+    * or QoS. This API allows clients to set the uplink latency level of data they deem as time
+    * critical compared to the rest of the data flowing in the system. If the latency level is set
+    * to @ref LatencyLevel::LOW, then the implementation will prioritize this data over other
+    * non-prioritized data flows. Configuration can be reset by setting
+    * @ref LatencyLevel::NORMAL (no priority).
+    *
+    * This is a global setting applicable to all WWAN profiles. Configuration set via this API is
+    * not persistent over reboot or sub-system restart (updated via
+    * @ref IDataSettingsListener::onServiceStatusChange). After reboot or SSR, configuration will
+    * reset to default, i.e., LatencyLevel::NORMAL (no priority).
+    *
+    * @param [in] latencyConfig       Latency/priority configuration
+    *
+    * @returns  Immediate error code of setLatencyConfig, i.e., success or suitable error code.
+    *
+    * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+    *           break backwards compatibility.
+    */
+    virtual telux::common::ErrorCode setLatencyConfig(LatencyConfig latencyConfig) = 0;
+
+    /**
+    * Get latency level.
+    * This API can be used to get the current latency configuration.
+    * See @ref setLatencyConfig for more information.
+    *
+    * @param [out] latencyConfig       Latency/priority configuration
+    *
+    * @returns Immediate error code of getLatencyConfig, i.e., success or suitable error code.
+    *
+    * @note     Eval: This is a new API and is being evaluated. It is subject to change and could
+    *           break backwards compatibility.
+    */
+    virtual telux::common::ErrorCode getLatencyConfig(LatencyConfig& latencyConfig) = 0;
 
     /**
      * Registers a listener to receive data settings notifications.

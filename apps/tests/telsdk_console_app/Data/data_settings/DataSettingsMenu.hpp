@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -37,6 +37,8 @@ public:
 
     //API
     void switchBackHaul(std::vector<std::string> inputCommand);
+    void setLatencyConfig(std::vector<std::string> inputCommand);
+    void getLatencyConfig(std::vector<std::string> inputCommand);
 
     ~DataSettingsMenu();
 private:

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -73,6 +73,8 @@ class DataSettingsMenu : public ConsoleApp ,
     void requestWwanConnectivityConfig(std::vector<std::string> inputCommand);
     void setMacSecState(std::vector<std::string> inputCommand);
     void requestMacSecState(std::vector<std::string> inputCommand);
+    void setLatencyConfig(std::vector<std::string> inputCommand);
+    void getLatencyConfig(std::vector<std::string> inputCommand);
     void onWwanConnectivityConfigChange(SlotId slotId, bool isConnectivityAllowed) override;
     //Initialization callback
     void onInitComplete(telux::common::ServiceStatus status);

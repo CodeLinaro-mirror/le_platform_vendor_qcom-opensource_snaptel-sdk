@@ -113,3 +113,9 @@ std::future<bool> PhoneStub::onReady() {
 telux::common::Status PhoneStub::requestOperatorName(OperatorNameCallback callback) {
     return telux::common::Status::NOTSUPPORTED;
 }
+
+telux::common::Status PhoneStub::configureSignalStrength(
+    std::vector<SignalStrengthConfig> signalStrengthConfig, telux::common::ResponseCallback
+    callback) {
+    return telux::common::Status::NOTSUPPORTED;
+}

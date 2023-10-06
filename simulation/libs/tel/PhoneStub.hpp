@@ -77,6 +77,9 @@ public:
    bool isSubsystemReady();
    std::future<bool> onReady();
    telux::common::Status requestOperatorName(OperatorNameCallback callback);
+   telux::common::Status configureSignalStrength(
+      std::vector<SignalStrengthConfig> signalStrengthConfig, telux::common::ResponseCallback
+      callback);
 
 };
 

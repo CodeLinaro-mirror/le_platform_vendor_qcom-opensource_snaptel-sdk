@@ -469,6 +469,7 @@ private:
     void initSync(telux::common::InitResponseCb callback);
     std::condition_variable cv_;
     telux::common::AsyncTaskQueue<void> taskQ_;
+    telux::common::ServiceStatus managerStatus_;
 
     std::shared_ptr<LocationInfoBase> getLastLocation(bool defaultLocInfo = false);
 
@@ -497,7 +498,6 @@ private:
     // from the report handler has exceeded
     // DURATION(in Seq Nos: derSeqDelta_) + last sequence No used (derSeqNo_)
     void invokeDetailedEngineReport(ReportHandler & rClass_);
-
 };
 
 } // end of namespace loc

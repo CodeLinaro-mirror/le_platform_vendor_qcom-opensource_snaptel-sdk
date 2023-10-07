@@ -120,7 +120,7 @@ void TelSdkConsoleApp::init() {
 
     // This instance is needed to hold the audio for the voice call in case the user comes out of
     // dialer menu.
-    AudioClient &audioClient_ = AudioClient::getInstance();
+    static std::shared_ptr<AudioClient> audioClient_ = AudioClient::getInstance();
     addCommands(mainMenuCommands);
     TelSdkConsoleApp::displayMenu();
 }

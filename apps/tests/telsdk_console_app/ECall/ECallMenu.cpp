@@ -251,12 +251,12 @@ void ECallMenu::makeCall(std::vector<std::string> inputCommand) {
    std::shared_ptr<telux::tel::ICall> spCall;
    const std::string phoneNumber = inputCommand[1];  // Phone Number mandatory
    if(callManager_) {
-      AudioClient &audioClient = AudioClient::getInstance();
-      if (audioClient.isReady()) {
+      static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+      if (audioClient->isReady()) {
          bool audioState = queryAudioState();
          std::cout << "Audio enablement status is : " << audioState << std::endl;
          if (audioState) {
-            audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+            audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
          }
       }
       telux::common::Status status = callManager_->makeCall(phoneId_, phoneNumber,
@@ -286,12 +286,12 @@ void ECallMenu::answerCall(std::vector<std::string> inputCommand) {
           if(spCall) {
              std::cout << "Sending request to accept call " << std::endl;
              int phoneId = spCall->getPhoneId();
-             AudioClient &audioClient = AudioClient::getInstance();
-             if (audioClient.isReady()) {
+             static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+             if (audioClient->isReady()) {
                 bool audioState = queryAudioState();
                 std::cout << "Audio enablement status is : " << audioState << std::endl;
                 if (audioState) {
-                   audioClient.startVoiceSession(static_cast<SlotId>(phoneId));
+                   audioClient->startVoiceSession(static_cast<SlotId>(phoneId));
                 }
              }
              spCall->answer(answerCommandCallback_);
@@ -348,12 +348,12 @@ void ECallMenu::eCallSos(std::vector<std::string> inputCommand) {
    MsdSettings msdSettings;
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    if (callManager_) {
-      AudioClient &audioClient = AudioClient::getInstance();
-      if (audioClient.isReady()) {
+      static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+      if (audioClient->isReady()) {
          bool audioState = queryAudioState();
          std::cout << "Audio enablement status is : " << audioState << std::endl;
          if (audioState) {
-            audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+            audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
          }
       }
       auto ret = callManager_->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
@@ -398,12 +398,12 @@ void ECallMenu::makeECall(std::vector<std::string> inputCommand) {
    MsdSettings msdSettings;
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    if (callManager_) {
-      AudioClient &audioClient = AudioClient::getInstance();
-      if (audioClient.isReady()) {
+      static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+      if (audioClient->isReady()) {
          bool audioState = queryAudioState();
          std::cout << "Audio enablement status is : " << audioState << std::endl;
          if (audioState) {
-            audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+            audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
          }
       }
       auto ret = callManager_->makeECall(phoneId_, eCallMsdData, (int)emergencyCategory,
@@ -437,12 +437,12 @@ void ECallMenu::makeCustomNumberECall(std::vector<std::string> inputCommand) {
    MsdSettings msdSettings;
    auto eCallMsdData = msdSettings.readMsdFromFile(MSDSETTINGS_FILE);
    if (callManager_) {
-      AudioClient &audioClient = AudioClient::getInstance();
-      if (audioClient.isReady()) {
+      static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+      if (audioClient->isReady()) {
          bool audioState = queryAudioState();
          std::cout << "Audio enablement status is : " << audioState << std::endl;
          if (audioState) {
-            audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+            audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
          }
       }
       auto ret = callManager_->makeECall(phoneId_, dialNumber, eCallMsdData,
@@ -543,12 +543,12 @@ void ECallMenu::eCallWithPdu(std::vector<std::string> inputCommand) {
    }
 
    telux::common::Status ret;
-   AudioClient &audioClient = AudioClient::getInstance();
-   if (audioClient.isReady()) {
+   static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+   if (audioClient->isReady()) {
       bool audioState = queryAudioState();
       std::cout << "Audio enablement status is : " << audioState << std::endl;
       if (audioState) {
-         audioClient.startVoiceSession(static_cast<SlotId>(phoneId_));
+         audioClient->startVoiceSession(static_cast<SlotId>(phoneId_));
       }
    }
    if(eCallVariant != telux::tel::ECallVariant::ECALL_VOICE && callManager_) {
@@ -711,10 +711,10 @@ void ECallMenu::AnswerCommandCallback::commandResponse(telux::common::ErrorCode 
 }
 
 void ECallMenu::enableAudio(std::vector<std::string> userInput) {
-   AudioClient &audioClient = AudioClient::getInstance();
-   if (!audioClient.isReady()) {
+   static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+   if (!audioClient->isReady()) {
       std::cout << "Initializing Audio Subsystem...." << std::endl;
-      auto status = audioClient.init();
+      auto status = audioClient->init();
       if (status == telux::common::Status::SUCCESS) {
          std::cout << "Audio Subsystem Initialized." << std::endl;
       } else {

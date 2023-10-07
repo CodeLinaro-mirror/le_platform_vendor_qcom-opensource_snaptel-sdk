@@ -92,8 +92,8 @@ AudioClient::AudioClient()
 AudioClient::~AudioClient() {
 }
 
-AudioClient &AudioClient::getInstance() {
-   static AudioClient instance;
+std::shared_ptr<AudioClient> AudioClient::getInstance() {
+   static std::shared_ptr<AudioClient> instance(new AudioClient);
    return instance;
 }
 
@@ -150,6 +150,11 @@ Status AudioClient::init() {
         std::cout << " *** ERROR - Unable to initialize audio subsystem" << std::endl;
         return Status::FAILED;
     }
+    auto status = audioMgr_->registerListener(shared_from_this());
+    if (status != telux::common::Status::SUCCESS) {
+        std::cout << "Audio Listener Registeration failed" <<std::endl;
+    }
+
     return Status::SUCCESS;
 #else
     return Status::FAILED;
@@ -337,4 +342,25 @@ void AudioClient::queryInputType() {
 #else
     return;
 #endif
+}
+
+void AudioClient::setSystemReady() {
+    ready_ = true;
+}
+
+void AudioClient::cleanup() {
+    ready_ = false;
+    voiceSessions_.clear();
+    activeSession_ = nullptr;
+}
+
+void AudioClient::onServiceStatusChange(telux::common::ServiceStatus status) {
+    if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+        std::cout << "Audio Service UNAVAILABLE" << std::endl;
+        cleanup();
+    }
+    if (status == telux::common::ServiceStatus::SERVICE_AVAILABLE) {
+        std::cout << "Audio Service AVAILABLE" << std::endl;
+        setSystemReady();
+    }
 }

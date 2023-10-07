@@ -187,11 +187,11 @@ void ConferenceMenu::holdCall(std::vector<std::string> userInput) {
         }
     }
     if(spCall) {
-        AudioClient &audioClient = AudioClient::getInstance();
-        if (audioClient.isReady()) {
+        static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+        if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
             if (queryMuteState(MUTE)) {
-                audioClient.setMuteStatus(static_cast<SlotId>(phoneId), MUTE);
+                audioClient->setMuteStatus(static_cast<SlotId>(phoneId), MUTE);
             }
         }
         spCall->hold(myHoldCb_);
@@ -220,11 +220,11 @@ void ConferenceMenu::resumeCall(std::vector<std::string> userInput) {
         }
     }
     if(spCall) {
-        AudioClient &audioClient = AudioClient::getInstance();
-        if (audioClient.isReady()) {
+        static std::shared_ptr<AudioClient> audioClient = AudioClient::getInstance();
+        if (audioClient->isReady()) {
             // Ask the user for the mute functionality.
             if (queryMuteState(UNMUTE)) {
-                audioClient.setMuteStatus(static_cast<SlotId>(phoneId), UNMUTE);
+                audioClient->setMuteStatus(static_cast<SlotId>(phoneId), UNMUTE);
             }
         }
         spCall->resume(myResumeCb_);

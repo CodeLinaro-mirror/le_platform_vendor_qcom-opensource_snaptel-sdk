@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -239,8 +239,6 @@ public:
     *
     * @returns Buffer containing raw PDU content.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change
-    *          and could break backward compatibility
     */
    PduBuffer getRawPdu() const;
 
@@ -251,8 +249,6 @@ public:
     * @returns If a message is single part SMS the method returns null otherwise returns
     *          message part information.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    std::shared_ptr<MessagePartInfo> getMessagePartInfo();
 
@@ -271,8 +267,6 @@ public:
     *
     * @returns Status of getMetaInfo i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    telux::common::Status getMetaInfo(SmsMetaInfo &metaInfo);
 
@@ -310,8 +304,6 @@ private:
  *                            message fails this API will return an @ref telux:common::ErrorCode
  *                            corresponding to the failure.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 using SmsResponseCb = std::function<void(std::vector<int> msgRefs,
    telux::common::ErrorCode errorCode)>;
@@ -327,8 +319,6 @@ using SmsResponseCb = std::function<void(std::vector<int> msgRefs,
  * @param [in] errorCode      Return code which indicates whether the operation
  *                            succeeded or not. @ref telux::common::ErrorCode.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 using RequestSmsInfoListCb = std::function<void(std::vector<SmsMetaInfo> infos,
    telux::common::ErrorCode errorCode)>;
@@ -341,8 +331,6 @@ using RequestSmsInfoListCb = std::function<void(std::vector<SmsMetaInfo> infos,
  * @param [in] errorCode      Return code which indicates whether the operation
  *                            succeeded or not.  @ref telux::common::ErrorCode.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 using ReadSmsMessageCb = std::function<void(SmsMessage message,
    telux::common::ErrorCode errorCode)>;
@@ -355,8 +343,6 @@ using ReadSmsMessageCb = std::function<void(SmsMessage message,
  * @param [in] errorCode      Return code which indicates whether the operation
  *                            succeeded or not.  @ref telux::common::ErrorCode.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 using RequestPreferredStorageCb = std::function<void(StorageType type,
    telux::common::ErrorCode errorCode)>;
@@ -370,8 +356,6 @@ using RequestPreferredStorageCb = std::function<void(StorageType type,
  * @param [in] errorCode             Return code which indicates whether the operation
  *                                   succeeded or not.  @ref telux::common::ErrorCode.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
  */
 using RequestStorageDetailsCb = std::function<void(uint32_t maxCount, uint32_t availableCount,
    telux::common::ErrorCode errorCode)>;
@@ -445,8 +429,6 @@ public:
     *
     * @returns Status of sendSms i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status sendSms(std::string message, std::string receiverAddress,
       bool deliveryReportNeeded = true, SmsResponseCb sentCallback = nullptr,
@@ -469,8 +451,6 @@ public:
     *
     * @returns Status of sendRawSms i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status sendRawSms(const std::vector<PduBuffer> rawPdus,
       SmsResponseCb sentCallback = nullptr) = 0;
@@ -524,8 +504,6 @@ public:
     *
     * @returns Status of requestSmsMessageList i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status requestSmsMessageList(SmsTagType type,
       RequestSmsInfoListCb callback) = 0;
@@ -541,8 +519,6 @@ public:
     *
     * @returns Status of readMessage i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status readMessage(uint32_t messageIndex, ReadSmsMessageCb callback) = 0;
 
@@ -559,8 +535,6 @@ public:
     *
     * @returns Status of deleteMessage i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status deleteMessage(DeleteInfo info,
       telux::common::ResponseCallback callback = nullptr) = 0;
@@ -575,8 +549,6 @@ public:
     *
     * @returns Status of requestPreferredStorage i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status requestPreferredStorage(RequestPreferredStorageCb callback) = 0;
 
@@ -594,8 +566,6 @@ public:
     *
     * @returns Status of setPreferredStorage i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status setPreferredStorage(StorageType storageType,
       telux::common::ResponseCallback callback = nullptr) = 0;
@@ -614,8 +584,6 @@ public:
     *
     * @returns Status of setTag i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status setTag(uint32_t msgIndex, SmsTagType tagType,
       telux::common::ResponseCallback callback = nullptr) = 0;
@@ -631,8 +599,6 @@ public:
     *
     * @returns Status of requestStorageDetails i.e. success or suitable error code.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual telux::common::Status requestStorageDetails(RequestStorageDetailsCb callback) = 0;
 
@@ -716,8 +682,6 @@ public:
     * @param [in] messages          Pointer to list of SmsMessage received corresponding to
     *                               single part or all parts of multipart message.
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual void onIncomingSms(int phoneId, std::shared_ptr<std::vector<SmsMessage>> messages) {
    }
@@ -739,8 +703,6 @@ public:
     * @param [in] receiverAddress     Receiver or destination address
     * @param [in] error               @ref telux::common::ErrorCode
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual void onDeliveryReport(int phoneId, int msgRef, std::string receiverAddress,
       telux::common::ErrorCode error) {
@@ -757,8 +719,6 @@ public:
     * @param [in] type                @ref telux::tel::StorageType. Applicable storage type
     *                                 StorageType::SIM
     *
-    * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-    *          could break backwards compatibility.
     */
    virtual void onMemoryFull(int phoneId, StorageType type) {
    }

@@ -104,8 +104,6 @@ class SecurityFactory {
      *
      * @returns ICryptoAcceleratorManager instance
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject
-     *             to change and could break backwards compatibility.
      */
     virtual std::shared_ptr<ICryptoAcceleratorManager> getCryptoAcceleratorManager(
       telux::common::ErrorCode &ec, Mode mode,

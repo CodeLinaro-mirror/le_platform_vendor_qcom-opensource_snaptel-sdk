@@ -449,8 +449,6 @@ using ServiceDomainPreferenceCallback
  * @param [in] error      Return code which indicates whether the operation
  *                        succeeded or not @ref ErrorCode
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using NetworkTimeResponseCallback
    = std::function<void(NetworkTimeInfo info, telux::common::ErrorCode error)>;
@@ -465,8 +463,6 @@ using NetworkTimeResponseCallback
  *                          succeeded or not
  *                          @ref ErrorCode
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using RFBandInfoCallback
    = std::function<void(RFBandInfo bandInfo, telux::common::ErrorCode error)>;
@@ -581,8 +577,6 @@ public:
     *
     * @returns Status of getServingSystemInfo i.e. success or suitable error code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual telux::common::Status getSystemInfo(ServingSystemInfo &sysInfo) = 0;
 
@@ -607,8 +601,6 @@ public:
     *
     * @returns Status of requestNetworkTime i.e. success or suitable error code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual telux::common::Status requestNetworkTime(NetworkTimeResponseCallback callback) = 0;
 
@@ -623,8 +615,6 @@ public:
     *
     * @returns Status of requestRFBandInfo i.e. success or suitable error code.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual telux::common::Status requestRFBandInfo(RFBandInfoCallback callback) = 0;
 
@@ -730,8 +720,6 @@ public:
     *
     * @param [in] sysInfo    @ref ServingSystemInfo
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual void onSystemInfoChanged(ServingSystemInfo sysInfo) {
    }
@@ -759,8 +747,6 @@ public:
     *
     * @param [in] info    Network time information @ref NetworkTimeInfo
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual void onNetworkTimeChanged(NetworkTimeInfo info) {
    }
@@ -773,8 +759,6 @@ public:
     *
     * @param [in] bandInfo       @ref RFBandInfo
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *             could break backwards compatibility.
     */
    virtual void onRFBandInfoChanged(RFBandInfo bandInfo) {
    }

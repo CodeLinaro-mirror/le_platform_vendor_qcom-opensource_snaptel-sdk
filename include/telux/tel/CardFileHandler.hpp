@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -86,8 +86,6 @@ struct FileAttributes {
  *                                 telux::tel::IccResult::data and telux::tel::IccResult::payload is
  *                                 empty.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and
- *          could break backward compatibility.
  */
 using EfOperationCallback = std::function<void(telux::common::ErrorCode error, IccResult result)>;
 
@@ -100,8 +98,6 @@ using EfOperationCallback = std::function<void(telux::common::ErrorCode error, I
  *                                 fixed file. If the reading of any of the records from the file
  *                                 fails then the records returned will be empty.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and
- *          could break backward compatibility.
  */
 using EfReadAllRecordsCallback = std::function<void(telux::common::ErrorCode error,
     std::vector<IccResult> records)>;
@@ -116,8 +112,6 @@ using EfReadAllRecordsCallback = std::function<void(telux::common::ErrorCode err
  * @param [in] attributes   @ref telux::tel::FileAttributes contain EF file information like file
  *                          type and file size etc.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change and
- *          could break backward compatibility.
  */
 using EfGetFileAttributesCallback = std::function<void(telux::common::ErrorCode error,
     IccResult result, FileAttributes attributes)>;
@@ -147,8 +141,6 @@ class ICardFileHandler {
      *
      * @returns - Status of readEFLinearFixed i.e. success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
 
     virtual telux::common::Status readEFLinearFixed(std::string filePath, uint16_t fileId,
@@ -169,8 +161,6 @@ class ICardFileHandler {
      *
      * @returns - Status of readEFLinearFixedAll i.e. success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
 
     virtual telux::common::Status readEFLinearFixedAll(std::string filePath, uint16_t fileId,
@@ -193,8 +183,6 @@ class ICardFileHandler {
      *
      * @returns - Status of readEFTransparent i.e. success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
 
     virtual telux::common::Status readEFTransparent(std::string filePath, uint16_t fileId, int size,
@@ -219,8 +207,6 @@ class ICardFileHandler {
      *
      * @returns - Status of writeEFLinearFixed i.e. success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
 
     virtual telux::common::Status writeEFLinearFixed(std::string filePath, uint16_t fileId,
@@ -243,8 +229,6 @@ class ICardFileHandler {
      *
      * @returns - Status of writeEFTransparent i.e. success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
 
     virtual telux::common::Status writeEFTransparent(std::string filePath, uint16_t fileId,
@@ -266,8 +250,6 @@ class ICardFileHandler {
      *
      * @returns - Status of requestEFAttributes i.e. success or suitable status code
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
 
     virtual telux::common::Status requestEFAttributes(EfType efType, std::string filePath,
@@ -278,8 +260,6 @@ class ICardFileHandler {
      *
      * @returns telux::common::SlotId
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      */
     virtual SlotId getSlotId() = 0;
 

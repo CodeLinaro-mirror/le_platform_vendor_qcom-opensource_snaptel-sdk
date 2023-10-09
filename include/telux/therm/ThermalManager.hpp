@@ -170,8 +170,6 @@ class IThermalManager {
      *
      * @returns  @ref telux::common::ServiceStatus
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -195,8 +193,6 @@ class IThermalManager {
      *
      * @returns status of the registration request.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(
         std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask = 0xFFFF)
@@ -223,8 +219,6 @@ class IThermalManager {
      *
      * @returns status of the deregistration request.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<IThermalListener> listener, ThermalNotificationMask mask = 0xFFFF)

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -116,8 +116,6 @@ class IFsManager {
      *
      * @returns - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status prepareForEcall() = 0;
 
@@ -133,8 +131,6 @@ class IFsManager {
      *
      * @returns - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status eCallCompleted() = 0;
 
@@ -154,8 +150,6 @@ class IFsManager {
      *
      * @returns - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status prepareForOta(
         OtaOperation otaOperation, telux::common::ResponseCallback responseCb)
@@ -178,8 +172,6 @@ class IFsManager {
      *
      * @returns - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status otaCompleted(
         OperationStatus operationStatus, telux::common::ResponseCallback responseCb)
@@ -198,8 +190,6 @@ class IFsManager {
      *
      * @returns - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status startAbSync(telux::common::ResponseCallback responseCb) = 0;
 

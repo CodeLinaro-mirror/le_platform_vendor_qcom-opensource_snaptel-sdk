@@ -188,8 +188,6 @@ using RequestRoamingStatusResponseCb
  * @param [in] type                Current NR icon type @ref telux::data::NrIconType
  * @param [in] error               Return code for whether the operation succeeded or failed.
  *
- * @note    Eval: This is a new API and is being evaluated. It is subject to change
- *          and could break backwards compatibility.
 */
 using RequestNrIconTypeResponseCb
     = std::function<void(NrIconType type, telux::common::ErrorCode error)>;
@@ -248,8 +246,6 @@ public:
      *
      * @returns Status of requestNrIconType i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *         and could break backwards compatibility.
      */
     virtual telux::common::Status requestNrIconType(RequestNrIconTypeResponseCb callback) = 0;
 
@@ -275,8 +271,6 @@ public:
      * On platforms with Access control enabled, Caller needs to have TELUX_DATA_SERVICE_MGMT
      * permission to invoke this API successfully.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status makeDormant(
         telux::common::ResponseCallback callback = nullptr) = 0;

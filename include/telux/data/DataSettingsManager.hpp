@@ -236,7 +236,6 @@ public:
      *
      * @returns Immediate status of restoreFactorySettings i.e. success or suitable status.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change.
      */
     virtual telux::common::Status restoreFactorySettings(OperationType operationType,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -260,8 +259,6 @@ public:
      *
      * @returns Status of setBackhaulPreference i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setBackhaulPreference(std::vector<BackhaulType> backhaulPref,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -273,8 +270,6 @@ public:
      *
      * @returns Status of requestBackhaulPreference i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestBackhaulPreference(
         RequestBackhaulPrefResponseCb callback) = 0;
@@ -306,8 +301,6 @@ public:
      *
      * @returns Status of setBandInterferenceConfig i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setBandInterferenceConfig(bool enable,
         std::shared_ptr<BandInterferenceConfig> config = nullptr ,
@@ -321,8 +314,6 @@ public:
      *
      * @returns Status of requestBandInterferenceConfig i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status requestBandInterferenceConfig(
         RequestBandInterferenceConfigResponseCb callback) = 0;
@@ -393,8 +384,6 @@ public:
      *
      * @returns Status of setWwanConnectivityConfig i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      */
     virtual telux::common::Status setWwanConnectivityConfig(SlotId slotId, bool allow,
         telux::common::ResponseCallback callback = nullptr) = 0;
@@ -407,8 +396,6 @@ public:
      *
      * @returns Status of requestWwanConnectivityConfig i.e. success or suitable status code.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change
-     *          and could break backwards compatibility.
      *
      */
     virtual telux::common::Status requestWwanConnectivityConfig(SlotId slotId,

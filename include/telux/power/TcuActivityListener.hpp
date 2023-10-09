@@ -111,8 +111,6 @@ public:
      *                              @ref ALL_MACHINES for a global state change and
      *                              @ref LOCAL_MACHINE for a local state change.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to
-     *             change and could break backward compatibility.
      */
     virtual void onTcuActivityStateUpdate(TcuActivityState state, std::string machineName) {
     }

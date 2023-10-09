@@ -714,8 +714,6 @@ public:
  *
  * @returns Status of configureEngineIntegrityRisk i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -744,8 +742,6 @@ public:
  *
  * @param [in] callback - Optional callback stating the response errorcode.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -759,8 +755,6 @@ public:
  *
  * @param [in] callback - Callback to get the Xtra data status information.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -774,8 +768,6 @@ public:
  *
  * @param [in] listener - Pointer of ILocationConfigListener object.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  */
 
   virtual telux::common::Status registerListener(LocConfigIndications indicationList,
@@ -789,8 +781,6 @@ public:
  *
  * @param [in] listener - Pointer of ILocationConfigListener object.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  */
 
   virtual telux::common::Status deRegisterListener(LocConfigIndications indicationList,
@@ -812,8 +802,6 @@ public:
  *
  * @returns Status of the injection i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 
@@ -832,8 +820,6 @@ public:
  *
  * @returns Status of the enablement/disablement i.e. success or suitable status code.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and could
- *             break backwards compatibility.
  *
  */
 

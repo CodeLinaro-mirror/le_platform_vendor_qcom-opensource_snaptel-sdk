@@ -906,10 +906,11 @@ int AerolinkSecurity::syncVerify(
 //   smp_verifySignaturesAsync
 int AerolinkSecurity::asyncVerify(
     Kinematics hvKine, Kinematics rvKine,
-    sem_t    *queue_sem, MisbehaviorStats* misbehaviorStat) {
+    MisbehaviorStats* misbehaviorStat,void *asyncCbData , ValidateCallback callBackFunction) {
 
     // Add new smp (if none exists) for this thread
     AEROLINK_RESULT result;
+    int priority = 1;
     std::thread::id thrId = std::this_thread::get_id();
     addNewThrSmp(thrId);
     sem_t* thrVerifSemPtr = getThrSmpSem(thrId);
@@ -964,10 +965,8 @@ int AerolinkSecurity::asyncVerify(
             return -1;
         }
     }
-    // not TRULY async verification
-    // smp_verifySignaturesAsync
-    result = smp_verifySignaturesAsync
-                    (*smp, thrVerifSemPtr, handle_verify_result);
+    // async verification
+    result = smp_verifySignaturesAsyncPriority(*smp, priority, asyncCbData, callBackFunction);
     if (result != WS_SUCCESS)
     {
         if(secVerbosity > 4)
@@ -975,7 +974,6 @@ int AerolinkSecurity::asyncVerify(
                      ws_errid(result));
         return -1;
     }
-    sem_wait(thrVerifSemPtr);
     //Misbehavior detection if enabled
     if(this->enableMisbehavior){
         mbdCheck(&rvKine, misbehaviorStat);
@@ -1042,18 +1040,10 @@ int AerolinkSecurity::VerifyMsg(const SecurityOpt opt) {
     this->enableConsistency = opt.enableConsistency;
     this->enableRelevance = opt.enableRelevance;
     int ret = 0;
-    if(opt.enableAsync){
-        // Asynchronous Verification
-        ret = asyncVerify(
-                opt.hvKine, opt.rvKine,
-                &verifQueueSem, opt.misbehaviorStat);
-    }else{
-        //Synchronous Verification
-        ret = syncVerify(
+    ret = syncVerify(
                 opt.hvKine, opt.rvKine,
                 opt.verifStat, opt.misbehaviorStat
               );
-    }
     return ret;
 }
 

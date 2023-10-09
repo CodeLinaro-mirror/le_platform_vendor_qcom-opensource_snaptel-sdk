@@ -164,7 +164,7 @@ void ConfigParser::readConfigFile(std::string configFile) {
   // regular expressions to process configuration files filter section
   std::regex sectionMatch_("\\[(.*?)\\]");
   // regular expressions to process configuration files key=value pairs
-  std::regex keyValueMatch_("(\\w+)=([^\\+]+(?!\\+{3}))");
+  std::regex keyValueMatch_("^(?!#)(\\w+)=([^\\+]+(?!\\+{3}))");
 
   // Create a file stream from the file name
   std::ifstream configFileStream(configFile);

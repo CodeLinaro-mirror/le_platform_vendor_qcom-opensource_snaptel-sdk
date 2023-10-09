@@ -201,32 +201,6 @@ Private eCall:
 17. Optionally, the application gets asynchronous response for hangup using CommandResponseCallback.
 18. CallManager sends call info change i.e Call Ended to the application by using onCallInfoChange callback function.
 
-@subsection signal_strength Signal strength call flow
-
-@anchor fig_signal_strength
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{signal_strength_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Signal strength call flow}
-  \label{fig_signal_strength}
-\end{figure}
-@endlatexonly
-
-@html_image{signal_strength_call_flow.png,Signal strength call flow,80,80,Signal strength call flow}
-
-1. The application gets PhoneManager object using PhoneFactory.
-2. The application receives the PhoneManager object in order to get Phone instance.
-3. The application gets phone instance for a given phone identifier using PhoneManager object.
-4. PhoneManager returns IPhone object to the application.
-5. Application registers the listener to get notification for signal strength change.
-6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
-7. The application requests for signal strength and optionally, gets asynchronous response using ISignalStrengthCallback.
-8. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSignalStrength API in SapCardManager.
-9. Optionally, the response for signal strength request is received by the application.
-10. Application receives a notification when there is a change in signal strength.
-
 @subsection answer_reject_rejectWithSMS Answer, Reject, RejectWithSMS call flow
 
 @anchor fig_answer_reject_reject_with_sms
@@ -341,6 +315,32 @@ Private eCall:
 9. The application requests for SmscAddress and optionally gets asynchronous response using ISmscAddressCallback.
 10. Application receives the status i.e. either SUCCESS or FAILED based on successful execution of requestSmscAddress API in SmsManager.
 11. Optionally, the application receives the SMSC address on success or gets error on failure in the command response callback.
+
+@subsection signal_strength Signal strength call flow
+
+@anchor fig_signal_strength
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{signal_strength_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Signal strength call flow}
+  \label{fig_signal_strength}
+\end{figure}
+@endlatexonly
+
+@html_image{signal_strength_call_flow.png,Signal strength call flow,80,80,Signal strength call flow}
+
+1. The application gets PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Phone instance.
+3. The application gets phone instance for a given phone identifier using PhoneManager object.
+4. PhoneManager returns IPhone object to the application.
+5. Application registers the listener to get notification for signal strength change.
+6. The application receives the status i.e. either SUCCESS or FAILED based on the registration of the listener.
+7. The application requests for signal strength and optionally, gets asynchronous response using ISignalStrengthCallback.
+8. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSignalStrength API in SapCardManager.
+9. Optionally, the response for signal strength request is received by the application.
+10. Application receives a notification when there is a change in signal strength.
 
 @subsection cellbroadcast_call_flow CellBroadcast Call Flow
 
@@ -512,6 +512,204 @@ of setServiceDomainPreference API.
 19. Application can deregister a listener there by it would not get notifications.
 20. Status of deregister listener i.e. either SUCCESS or other status will be returned to the application.
 
+@subsection get_applications Card-Get applications call flow
+
+@anchor fig_get_applications
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.6]{get_applications_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Card-Get applications call flow}
+  \label{fig_get_applications}
+\end{figure}
+@endlatexonly
+
+@html_image{get_applications_call_flow.png,Card-Get applications call flow,80,80,Card-Get applications call flow}
+
+1. Application gets the CardManager object from PhoneFactory.
+2. Application receives CardManager object in order to perform operations like getSlotIds and getCard.
+3. The application registers a listener for Card info change event with CardManager.
+4. Application receives the status i.e. either SUCCESS or INVALIDPARAM based on the registration of listener.
+5. The response from onCardInfoChanged is received by the application whenever there is card info change.
+6. The application gets the slotIds from the sub-system using CardManager.
+7. Application receives the status i.e. either SUCCESS or NOTREADY along with the updated slotIds.
+8. Then, the application sends request to CardManager to get Card object for a specific slotId.
+9. Application receives Card object from CardManager in order to perform card operation like getApplications.
+10. The application gets the CardApps from Card object.
+11. The application receives CardApps which contain information such as AppId, AppType and AppState.
+12. Now the application removes the listener associated with CardManager.
+13. Application receives the status i.e. either SUCCESS or NOSUCH for the removal of listener.
+
+@subsection transmit_apdu Card-Transmit APDU call flow
+
+@subsubsection apdu_logical On logical channel
+
+@anchor fig_apdu_logical
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{transmit_apdu_logical_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{On logical channel}
+  \label{fig_apdu_logical}
+\end{figure}
+@endlatexonly
+
+@html_image{transmit_apdu_logical_call_flow.png,On logical channel,80,80,On logical channel}
+
+1. The Application requests CardApp for the SIM application identifier.
+2. The application receives the application identifier to perform open logical channel.
+3. Application sends request to open the logical channel with the application identifier and optionally, gets asynchronous response in OpenLogicalChannelCallback.
+4. The application receives the status i.e. either SUCCESS or FAILED based on execution of openLogicalChannel API.
+5. Optionally, the application receives the response which contains either channel number on success or error in case of failure.
+6. Then, the application transmits the APDU data on logical channel using the channel obtained earlier. Optionally, gets asynchronous response in TransmitApduResponseCallback.
+7. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApduLogicalChannel API.
+8. Optionally, the application receives the response which contains either result on success or error in case of failure.
+9. Finally, the application closes the logical channel that is opened to transmit APDU and optionally, gets asynchronous response in CommandResponseCallback.
+10. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeLogicalChannel API.
+11. Optionally, the application receives the response which contains error in case of failure.
+
+@subsubsection apdu_basic On basic channel
+
+@anchor fig_apdu_basic
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{transmit_apdu_basic_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{On basic channel}
+  \label{fig_apdu_basic}
+\end{figure}
+@endlatexonly
+
+@html_image{transmit_apdu_basic_call_flow.png,On basic channel,80,80,On basic channel}
+
+1. Application gets the ICardManager object from PhoneFactory.
+2. Application receives ICardManager object in order to perform operation like getCard.
+3. The application gets ICard object for a specific slotId from ICardManager.
+4. Application receives ICard object in order to perform card operation like transmitApduBasicChannel.
+5. The application transmits APDU data on basic channel and optionally, gets asynchronous response in TransmitApduResponseCallback.
+6. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApduBasicChannel API.
+7. Optionally, the application receives the response which contains either result on success or error in case of failure.
+
+@subsection sap_manager_call_flow SAP card manager call flow
+
+@subsubsection sap_card_operations Request card reader status, Request ATR, Transmit APDU call flow
+
+@anchor fig_sap_card_operations
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{sap_card_operations.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Request card reader status, Request ATR, Transmit APDU call flow}
+  \label{fig_sap_card_operations}
+\end{figure}
+@endlatexonly
+
+@html_image{sap_card_operations.png,Request card reader status&#44 Request ATR&#44 Transmit APDU call flow,80,80,Request card reader status&#44 Request ATR&#44 Transmit APDU call flow}
+
+1. The application gets SapCardManager object corresponding to slotId using PhoneFactory.
+2. The application receives the SapCardManager object in order to perform SAP operations like request ATR, Card Reader Status and transmit APDU.
+3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets asynchronous
+response using CommandResponseCallback.
+4. The application receives the status i.e. either SUCCESS or FAILED based on execution of openConnection API in SapCardManager.
+5. Optionally, the response for openConnection is received by the application.
+6. The application sends request card reader status command and optionally, gets asynchronous response using ICardReaderCallback.
+7. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestCardReaderStatus API in SapCardManager.
+8. Optionally, the response for card reader status is received by the application.
+9. Similarly, the application can send SAP Answer To Reset command and optionally, gets asynchronous response using IAtrResponseCallback.
+10. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestAtr API in SapCardManager.
+11. Optionally, the response for SAP Answer To Reset is received by the application.
+12. Similarly, the application sends the APDU on SAP mode and optionally, gets asynchronous response using ISapTransmitApduResponseCallback.
+13. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApdu API in SapCardManager.
+14. Optionally, the response for transmit APDU is received by the application.
+15. Now the application closes the SAP connection with SIM and optionally, gets asynchronous response using CommandResponseCallback.
+16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager.
+17. Optionally, the response for SAP close connection is received by the application.
+
+@subsubsection sap_mgr_sim_call_flow SIM Turn off, Turn on and Reset call flow
+
+@anchor fig_sap_mgr_sim_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{sap_mgr_sim_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{SIM Turn off, Turn on and Reset call flow}
+  \label{fig_sap_mgr_sim_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{sap_mgr_sim_call_flow.png,SIM Turn off&#44 Turn on and Reset call flow,80,80,SIM Turn off&#44 Turn on and Reset call flow}
+
+1. Application gets SapCardManager object corresponding to slotID using PhoneFactory.
+2. PhoneFactory returns the SapCardManager object to application in order to perform SAP operations like SIM power off, on or reset.
+3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets
+asynchronous response using CommandResponseCallback.
+4. Application receives the status i.e. either SUCCESS or FAILED based on execution of openConnection API in SapCardManager.
+5. Optionally, the response for openConnection is received by the application.
+6. The application sends SIM Power Off command to turn off the SIM and optionally, gets asynchronous response using CommandResponseCallback.
+7. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOff API in SapCardManager.
+8. Optionally, the response for SIM Power Off is received by the application.
+9. Similarly, the application can send SIM Power On command to turn on the SIM and optionally, gets asynchronous response using CommandResponseCallback.
+10. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOn API in SapCardManager.
+11. Optionally, the response for SIM Power On is received by the application.
+12. Similarly, the application sends SIM Reset command to perform SIM Reset and optionally, gets asynchronous response.
+13. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimReset API in SapCardManager.
+14. Optionally, the response for SIM Reset is received by the application.
+15. Now the application closes the SAP connection with SIM and optionally, gets asynchronous response using CommandResponseCallback.
+16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager.
+17. Optionally, the response for SAP close connection is received by the application.
+
+@subsection subscription_call_flow Subscription Call flow
+
+@subsubsection subscription_initialization Subscription initialization
+
+@anchor fig_subscription_initialization
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.42]{subscription_initialization_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Subscription initialization call flow}
+  \label{fig_sub subscription_initialization}
+\end{figure}
+@endlatexonly
+
+@html_image{subscription_initialization_call_flow.png,Subscription initialization call flow,80,80,subscription initialization call flow}
+
+1. Application requests an instance of SubscriptionManager using PhoneFactory by providing the initialization callback.
+2. Application receives a Subscription Manager instance.
+3. Application uses SubscriptionManager::getServiceStatus to determine if the Subscription Manager is ready.
+4. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
+5. SubscriptionManager updates the application once subscription manager initialization completes.
+
+@subsubsection subscription_call Subscription call flow
+
+@anchor fig_subscription_call
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{subscription_call_flow.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Subscription call flow}
+  \label{fig_sub subscription_call}
+\end{figure}
+@endlatexonly
+
+@html_image{subscription_call_flow.png,Subscription call flow,80,80,subscription call flow}
+
+1. The application gets the PhoneManager object using PhoneFactory.
+2. The application receives the PhoneManager object in order to get Subscription.
+3. The application gets the Subscription object for given slot identifier using SubscriptionManager.
+4. SubscriptionManager returns Subscription object to application. Subscription can be used to get subscription details like countryISO, operator details etc.
+5. The Subscription manager registers a listener with CardManager to listen to the card info change notifications like card state PRESENT, ABSENT, UNKNOWN, ERROR and RESTRICTED.
+6. The SubscriptionManager receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CardManager.
+7. The SubscriptionManager receives callback card info change i.e subscription info changed or removed.
+8. The SubscriptionManager updates the application once the subscription info is updated.
+
 @subsection rsp_callflow Remote SIM Provisioning Call Flow
 
 Remote SIM provisioning provides API to add profile, delete profile, activate/deactivate profile
@@ -677,206 +875,45 @@ available.
 12. Steps (9-11) keep repeating for multiple HTTP Transaction indication for add, delete, set profile
     and memory reset operations.
 
+@subsection remote_sim_call_flow Remote SIM
 
-@section card_services Card Services
+Application will get the remote SIM manager object from phone factory. The application must
+register a listener to receive commands/messages from the modem to send to the SIM. After sending
+the connection available message, a onCardConnect() notification tells the application to connect
+to the SIM and perform an Answer to Reset. After sending the card reset message (with the AtR
+bytes), APDU messages will begin to be sent/received.
 
-@subsection get_applications Get applications call flow
-
-@anchor fig_get_applications
+@anchor fig_remote_sim_call_flow
 @latexonly
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.6]{get_applications_call_flow.png}
+  \includegraphics[width=\textwidth]{remote_sim_call_flow.png}
   \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Get applications call flow}
-  \label{fig_get_applications}
+  \caption{Remote SIM call flow}
+  \label{fig_remote_sim_call_flow}
 \end{figure}
 @endlatexonly
 
-@html_image{get_applications_call_flow.png,Get applications call flow,80,80,Get applications call flow}
+@html_image{remote_sim_call_flow.png,Remote SIM call flow,80,80,Remote SIM call flow}
 
-1. Application gets the CardManager object from PhoneFactory.
-2. Application receives CardManager object in order to perform operations like getSlotIds and getCard.
-3. The application registers a listener for Card info change event with CardManager.
-4. Application receives the status i.e. either SUCCESS or INVALIDPARAM based on the registration of listener.
-5. The response from onCardInfoChanged is received by the application whenever there is card info change.
-6. The application gets the slotIds from the sub-system using CardManager.
-7. Application receives the status i.e. either SUCCESS or NOTREADY along with the updated slotIds.
-8. Then, the application sends request to CardManager to get Card object for a specific slotId.
-9. Application receives Card object from CardManager in order to perform card operation like getApplications.
-10. The application gets the CardApps from Card object.
-11. The application receives CardApps which contain information such as AppId, AppType and AppState.
-12. Now the application removes the listener associated with CardManager.
-13. Application receives the status i.e. either SUCCESS or NOSUCH for the removal of listener.
-
-@subsection transmit_apdu Transmit APDU call flow
-
-@subsubsection apdu_logical On logical channel
-
-@anchor fig_apdu_logical
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.45]{transmit_apdu_logical_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{On logical channel}
-  \label{fig_apdu_logical}
-\end{figure}
-@endlatexonly
-
-@html_image{transmit_apdu_logical_call_flow.png,On logical channel,80,80,On logical channel}
-
-1. The Application requests CardApp for the SIM application identifier.
-2. The application receives the application identifier to perform open logical channel.
-3. Application sends request to open the logical channel with the application identifier and optionally, gets asynchronous response in OpenLogicalChannelCallback.
-4. The application receives the status i.e. either SUCCESS or FAILED based on execution of openLogicalChannel API.
-5. Optionally, the application receives the response which contains either channel number on success or error in case of failure.
-6. Then, the application transmits the APDU data on logical channel using the channel obtained earlier. Optionally, gets asynchronous response in TransmitApduResponseCallback.
-7. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApduLogicalChannel API.
-8. Optionally, the application receives the response which contains either result on success or error in case of failure.
-9. Finally, the application closes the logical channel that is opened to transmit APDU and optionally, gets asynchronous response in CommandResponseCallback.
-10. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeLogicalChannel API.
-11. Optionally, the application receives the response which contains error in case of failure.
-
-@subsubsection apdu_basic On basic channel
-
-@anchor fig_apdu_basic
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{transmit_apdu_basic_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{On basic channel}
-  \label{fig_apdu_basic}
-\end{figure}
-@endlatexonly
-
-@html_image{transmit_apdu_basic_call_flow.png,On basic channel,80,80,On basic channel}
-
-1. Application gets the ICardManager object from PhoneFactory.
-2. Application receives ICardManager object in order to perform operation like getCard.
-3. The application gets ICard object for a specific slotId from ICardManager.
-4. Application receives ICard object in order to perform card operation like transmitApduBasicChannel.
-5. The application transmits APDU data on basic channel and optionally, gets asynchronous response in TransmitApduResponseCallback.
-6. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApduBasicChannel API.
-7. Optionally, the application receives the response which contains either result on success or error in case of failure.
-
-@subsection sap_manager_call_flow SAP card manager call flow
-
-@subsubsection sap_card_operations Request card reader status, Request ATR, Transmit APDU call flow
-
-@anchor fig_sap_card_operations
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{sap_card_operations.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Request card reader status, Request ATR, Transmit APDU call flow}
-  \label{fig_sap_card_operations}
-\end{figure}
-@endlatexonly
-
-@html_image{sap_card_operations.png,Request card reader status, Request ATR, Transmit APDU call flow,80,80,Request card reader status, Request ATR, Transmit APDU call flow}
-
-1. The application gets SapCardManager object corresponding to slotId using PhoneFactory.
-2. The application receives the SapCardManager object in order to perform SAP operations like request ATR, Card Reader Status and transmit APDU.
-3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets asynchronous
-response using CommandResponseCallback.
-4. The application receives the status i.e. either SUCCESS or FAILED based on execution of openConnection API in SapCardManager.
-5. Optionally, the response for openConnection is received by the application.
-6. The application sends request card reader status command and optionally, gets asynchronous response using ICardReaderCallback.
-7. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestCardReaderStatus API in SapCardManager.
-8. Optionally, the response for card reader status is received by the application.
-9. Similarly, the application can send SAP Answer To Reset command and optionally, gets asynchronous response using IAtrResponseCallback.
-10. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestAtr API in SapCardManager.
-11. Optionally, the response for SAP Answer To Reset is received by the application.
-12. Similarly, the application sends the APDU on SAP mode and optionally, gets asynchronous response using ISapTransmitApduResponseCallback.
-13. The application receives the status i.e. either SUCCESS or FAILED based on execution of transmitApdu API in SapCardManager.
-14. Optionally, the response for transmit APDU is received by the application.
-15. Now the application closes the SAP connection with SIM and optionally, gets asynchronous response using CommandResponseCallback.
-16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager.
-17. Optionally, the response for SAP close connection is received by the application.
-
-@subsubsection sap_mgr_sim_call_flow SIM Turn off, Turn on and Reset call flow
-
-@anchor fig_sap_mgr_sim_call_flow
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{sap_mgr_sim_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{SIM Turn off, Turn on and Reset call flow}
-  \label{fig_sap_mgr_sim_call_flow}
-\end{figure}
-@endlatexonly
-
-@html_image{sap_mgr_sim_call_flow.png,SIM Turn off, Turn on and Reset call flow,80,80,SIM Turn off, Turn on and Reset call flow}
-
-1. Application gets SapCardManager object corresponding to slotID using PhoneFactory.
-2. PhoneFactory returns the SapCardManager object to application in order to perform SAP operations like SIM power off, on or reset.
-3. The application opens SIM Access Profile(SAP) connection with SIM card using default SAP condition (i.e. SAP_CONDITION_BLOCK_VOICE_OR_DATA) and optionally, gets
-asynchronous response using CommandResponseCallback.
-4. Application receives the status i.e. either SUCCESS or FAILED based on execution of openConnection API in SapCardManager.
-5. Optionally, the response for openConnection is received by the application.
-6. The application sends SIM Power Off command to turn off the SIM and optionally, gets asynchronous response using CommandResponseCallback.
-7. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOff API in SapCardManager.
-8. Optionally, the response for SIM Power Off is received by the application.
-9. Similarly, the application can send SIM Power On command to turn on the SIM and optionally, gets asynchronous response using CommandResponseCallback.
-10. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimPowerOn API in SapCardManager.
-11. Optionally, the response for SIM Power On is received by the application.
-12. Similarly, the application sends SIM Reset command to perform SIM Reset and optionally, gets asynchronous response.
-13. The application receives the status i.e. either SUCCESS or FAILED based on execution of requestSimReset API in SapCardManager.
-14. Optionally, the response for SIM Reset is received by the application.
-15. Now the application closes the SAP connection with SIM and optionally, gets asynchronous response using CommandResponseCallback.
-16. The application receives the status i.e. either SUCCESS or FAILED based on execution of closeConnection API in SapCardManager.
-17. Optionally, the response for SAP close connection is received by the application.
-
-@subsection subscription_call_flow Subscription Call flow
-
-@subsubsection subscription_initialization Subscription initialization
-
-@anchor fig_subscription_initialization
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.42]{subscription_initialization_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Subscription initialization call flow}
-  \label{fig_sub subscription_initialization}
-\end{figure}
-@endlatexonly
-
-@html_image{subscription_initialization_call_flow.png,Subscription initialization call flow,80,80,subscription initialization call flow}
-
-1. Application requests an instance of SubscriptionManager using PhoneFactory by providing the initialization callback.
-2. Application receives a Subscription Manager instance.
-3. Application uses SubscriptionManager::getServiceStatus to determine if the Subscription Manager is ready.
-4. Application waits for the subsystem initialization callback, which notifies the subsystem initialization status.
-5. SubscriptionManager updates the application once subscription manager initialization completes.
-
-@subsubsection subscription_call Subscription call flow
-
-@anchor fig_subscription_call
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.45]{subscription_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Subscription call flow}
-  \label{fig_sub subscription_call}
-\end{figure}
-@endlatexonly
-
-@html_image{subscription_call_flow.png,Subscription call flow,80,80,subscription call flow}
-
-1. The application gets the PhoneManager object using PhoneFactory.
-2. The application receives the PhoneManager object in order to get Subscription.
-3. The application gets the Subscription object for given slot identifier using SubscriptionManager.
-4. SubscriptionManager returns Subscription object to application. Subscription can be used to get subscription details like countryISO, operator details etc.
-5. The Subscription manager registers a listener with CardManager to listen to the card info change notifications like card state PRESENT, ABSENT, UNKNOWN, ERROR and RESTRICTED.
-6. The SubscriptionManager receives the status like SUCCESS or INVALIDPARAM based on registration of listener to CardManager.
-7. The SubscriptionManager receives callback card info change i.e subscription info changed or removed.
-8. The SubscriptionManager updates the application once the subscription info is updated.
+1. Application requests remote SIM manager object from phone factory, specifying a slot id and application callback.
+2. Phone factory returns IRemoteSimManager object.
+3. If subsystem is ready, application registers a listener to receive commands/messages from the modem to send to the SIM.
+4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
+5. Application sends a connection available message indicating that a SIM is available for use.
+6. Status of send connection available i.e. either SUCCESS or FAILED will be returned to the application.
+7. Optionally, the response to send connection available request can be received by the application.
+8. Application will receive a card connect notification by the listener.
+9. After the application successfully connects to the SIM and requests an AtR, it sends a card reset message with the AtR bytes.
+10. Status of send card reset i.e. either SUCCESS or FAILED will be returned to the application.
+11. Optionally, the response to send card reset request can be received by the application.
+12. Application will receive an APDU transfer notification by the listener (with APDU message id).
+13. After forwarding the APDU transfer to the SIM and receiving the response, application will send APDU response.
+14. Status of send APDU i.e. either SUCCESS or FAILED will be returned to the application.
+15. Optionally, the response to send APDU request can be received by the application.
+16. To close the connection, application will send connection unavailable message.
+17. Status of send connection unavailable i.e. either SUCCESS or FAILED will be returned to the application.
+18. Optionally, the response to send connection unavailable can be received by the application.
 
 @section location_manager_call_flow Location Services
 
@@ -3633,46 +3670,6 @@ sections.
 11. Application can remove listener.
 12. Status of remove listener i.e. either SUCCESS or FAILED will be returned to the application.
 
-@section remote_sim_call_flow Remote SIM
-
-Application will get the remote SIM manager object from phone factory. The application must
-register a listener to receive commands/messages from the modem to send to the SIM. After sending
-the connection available message, a onCardConnect() notification tells the application to connect
-to the SIM and perform an Answer to Reset. After sending the card reset message (with the AtR
-bytes), APDU messages will begin to be sent/received.
-
-@anchor fig_remote_sim_call_flow
-@latexonly
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{remote_sim_call_flow.png}
-  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
-  \caption{Remote SIM call flow}
-  \label{fig_remote_sim_call_flow}
-\end{figure}
-@endlatexonly
-
-@html_image{remote_sim_call_flow.png,Remote SIM call flow,80,80,Remote SIM call flow}
-
-1. Application requests remote SIM manager object from phone factory, specifying a slot id and application callback.
-2. Phone factory returns IRemoteSimManager object.
-3. If subsystem is ready, application registers a listener to receive commands/messages from the modem to send to the SIM.
-4. Status of register listener i.e. either SUCCESS or FAILED will be returned to the application.
-5. Application sends a connection available message indicating that a SIM is available for use.
-6. Status of send connection available i.e. either SUCCESS or FAILED will be returned to the application.
-7. Optionally, the response to send connection available request can be received by the application.
-8. Application will receive a card connect notification by the listener.
-9. After the application successfully connects to the SIM and requests an AtR, it sends a card reset message with the AtR bytes.
-10. Status of send card reset i.e. either SUCCESS or FAILED will be returned to the application.
-11. Optionally, the response to send card reset request can be received by the application.
-12. Application will receive an APDU transfer notification by the listener (with APDU message id).
-13. After forwarding the APDU transfer to the SIM and receiving the response, application will send APDU response.
-14. Status of send APDU i.e. either SUCCESS or FAILED will be returned to the application.
-15. Optionally, the response to send APDU request can be received by the application.
-16. To close the connection, application will send connection unavailable message.
-17. Status of send connection unavailable i.e. either SUCCESS or FAILED will be returned to the application.
-18. Optionally, the response to send connection unavailable can be received by the application.
-
 @section modem_config_call_flow Modem Config
 
 Modem Config manager provides APIs to request all configs from modem, load/delete modem config files
@@ -4103,11 +4100,13 @@ invoked by the sensor framework once the self test is completed.
 4. Once the self test is completed, the callback gets invoked indicating the result of the self
 test.
 
-@section crypto_call_flow Crypto
+@section security_manager_call_flow Security Management
+
+@subsection crypto_call_flow Crypto
 
 The CryptoManager class provides APIs to generate, import, export and upgrade key based on various cryptographic algorithms. Data can be signed and verified using this key. Further data can be encrypted and decrypted with the key.
 
-@subsection crypto_gen_key_call_flow Call flow to generate and export key
+@subsubsection crypto_gen_key_call_flow Call flow to generate and export key
 
 @anchor fig_crypto_gen_key_call_flow
 @latexonly
@@ -4131,7 +4130,7 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 7. For a given use-case, if the application wants to extract public key out of the key blob, it can do so by calling export key.
 8. ICryptoManager returns key in the format requested for ex; X509.
 
-@subsection crypto_sign_call_flow Call flow to sign and verify data
+@subsubsection crypto_sign_call_flow Call flow to sign and verify data
 
 @anchor fig_crypto_sign_call_flow
 @latexonly
@@ -4156,7 +4155,7 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 8. Application calls verifyData() API of ICryptoManager passing the key blob, signature, data to be verified and input parameters.
 9. ICryptoManager returns success if the verification succeeds (valid data and signature) otherwise appropriate error code.
 
-@subsection crypto_enc_call_flow Call flow to encrypt and decrypt data
+@subsubsection crypto_enc_call_flow Call flow to encrypt and decrypt data
 
 @anchor fig_crypto_enc_call_flow
 @latexonly
@@ -4181,11 +4180,11 @@ The CryptoManager class provides APIs to generate, import, export and upgrade ke
 8. Application calls decryptData() API of ICryptoManager passing the key blob, encrypted data and input parameters.
 9. ICryptoManager returns decrypted data otherwise appropriate error code.
 
-@section crypto_accelerato_call_flow Crypto Accelerator
+@subsection crypto_accelerato_call_flow Crypto Accelerator
 
 The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calculation based on elliptic-curve cryptography.
 
-@subsection ecc_verify_sync_call_flow Call flow for signature verification synchronous mode
+@subsubsection ecc_verify_sync_call_flow Call flow for signature verification synchronous mode
 
 @anchor fig_ecc_verify_sync_call_flow
 @latexonly
@@ -4208,7 +4207,7 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 6. Application calls eccVerifyDigest() API of ICryptoAcceleratorManager.
 7. ICryptoAcceleratorManager returns success if verification passed otherwise appropriate error code.
 
-@subsection ecc_verify_async_poll_call_flow Call flow for signature verification asynchronous poll mode
+@subsubsection ecc_verify_async_poll_call_flow Call flow for signature verification asynchronous poll mode
 
 @anchor fig_ecc_verify_async_poll_call_flow
 @latexonly
@@ -4234,7 +4233,7 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 9. ICryptoAcceleratorManager returns verification data obtained from crypto accelerator.
 10. Application calls various APIs of ResultParser to get exact verification result.
 
-@subsection ecc_verify_async_listener_call_flow Call flow for signature verification asynchronous listener mode
+@subsubsection ecc_verify_async_listener_call_flow Call flow for signature verification asynchronous listener mode
 
 @anchor fig_ecc_verify_async_listener_call_flow
 @latexonly
@@ -4258,7 +4257,7 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 7. ICryptoAcceleratorManager returns success if data is sent for verification.
 8. Application receives result in method onVerificationResult() of class implementing ICryptoAcceleratorListener interface.
 
-@subsection ecqv_calc_sync_call_flow Call flow for ECQV calculation synchronous mode
+@subsubsection ecqv_calc_sync_call_flow Call flow for ECQV calculation synchronous mode
 
 @anchor fig_ecqv_calc_sync_call_flow
 @latexonly
@@ -4281,7 +4280,7 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 6. Application calls ecqvPointMultiplyAndAdd() API of ICryptoAcceleratorManager.
 7. ICryptoAcceleratorManager returns success if calculation result otherwise appropriate error code.
 
-@subsection ecqv_calc_async_poll_call_flow Call flow for ECQV calculation asynchronous poll mode
+@subsubsection ecqv_calc_async_poll_call_flow Call flow for ECQV calculation asynchronous poll mode
 
 @anchor fig_ecqv_calc_async_poll_call_flow
 @latexonly
@@ -4307,7 +4306,7 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 9. ICryptoAcceleratorManager returns calculation data obtained from crypto accelerator.
 10. Application calls various APIs of ResultParser to get exact calculation result.
 
-@subsection ecqv_calc_async_listener_call_flow Call flow for ECQV calculation asynchronous listener mode
+@subsubsection ecqv_calc_async_listener_call_flow Call flow for ECQV calculation asynchronous listener mode
 
 @anchor fig_ecqv_calc_async_listener_call_flow
 @latexonly
@@ -4331,12 +4330,12 @@ The ICryptoAcceleratorManager provides APIs to verify signature and do ECQV calc
 7. ICryptoAcceleratorManager returns success if data is sent for calculation.
 8. Application receives result in method onCalculationResult() of class implementing ICryptoAcceleratorListener interface.
 
-@section cellular_connsec_listener Cellular Connection Security
+@subsection cellular_connsec_listener Cellular Connection Security
 
 The ICellularSecurityManager provides support for detecting, monitoring and generating security
 threat scan report for cellular connections.
 
-@subsection cell_connsec_listener_call_flow Call flow to register listener and receive reports
+@subsubsection cell_connsec_listener_call_flow Call flow to register listener and receive reports
 
 @anchor fig_cell_connsec_listener_call_flow
 @latexonly
@@ -4359,12 +4358,12 @@ threat scan report for cellular connections.
 6. Application receives security reports in onScanReportAvailable() callback method in CellSecurityReportListener listener.
 7. When use-case is complete application deregisters CellSecurityReportListener listener.
 
-@section wifi_connsec_listener Wifi connection security
+@subsection wifi_connsec_listener Wifi connection security
 
 The IWiFiSecurityManager provides support for detecting, monitoring and generating security
 threat report for WiFi connections.
 
-@subsection wifi_connsec_listener_call_flow Call flow to register listener and receive reports
+@subsubsection wifi_connsec_listener_call_flow Call flow to register listener and receive reports
 
 @anchor fig_wifi_connsec_listener_call_flow
 @latexonly

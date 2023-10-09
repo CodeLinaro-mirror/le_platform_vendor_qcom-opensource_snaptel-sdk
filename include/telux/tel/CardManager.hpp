@@ -390,8 +390,6 @@ class ICard {
     /**
      * Get file handler for reading or writing to EF on SIM.
      *
-     * @note    Eval: This is a new API and is being evaluated. It is subject to change and
-     *          could break backward compatibility.
      *
      * @returns ICardFileHandler
      */

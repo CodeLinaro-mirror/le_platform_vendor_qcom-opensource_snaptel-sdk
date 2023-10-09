@@ -27,6 +27,13 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /**
  * Cv2x Rx packets helper class - Help to parse the received packets' meta
  * data at the beginning of the payload, any applications that have enabled
@@ -129,8 +136,6 @@ public:
      *
      * @Returns SUCCESS if no error occurred.
      *
-     * @note   Eval: This is a new API and is being evaluated. It is subject to
-     *         change and could break backwards compatibility.
      */
     static telux::common::Status getRxMetaDataInfo(const uint8_t* payload, uint32_t payloadLength,
         size_t& metaDataLen, std::shared_ptr<std::vector<RxPacketMetaDataReport>> metaDatas);

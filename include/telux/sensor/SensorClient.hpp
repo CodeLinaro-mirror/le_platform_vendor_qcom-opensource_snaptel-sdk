@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -88,8 +88,6 @@ class ISensorEventListener {
      *
      * @param [in] events - List of sensor events
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual void onEvent(std::shared_ptr<std::vector<SensorEvent>> events) {
     }
@@ -108,8 +106,6 @@ class ISensorEventListener {
      *                              are valid can be identified using @ref
      *                              telux::sensor::SensorConfiguration::validityMask
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      *
      */
     virtual void onConfigurationUpdate(SensorConfiguration configuration) {
@@ -136,8 +132,6 @@ class ISensorClient {
      *
      * @returns information retated to sensor - @ref telux::sensor::SensorInfo
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual SensorInfo getSensorInfo() = 0;
 
@@ -168,8 +162,6 @@ class ISensorClient {
      *
      * @returns status of configuration request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status configure(SensorConfiguration configuration) = 0;
 
@@ -183,8 +175,6 @@ class ISensorClient {
      * telux::sensor::SensorConfiguration::validityMask should be checked to know which of the
      * fields in the returned configuration is valid.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual SensorConfiguration getConfiguration() = 0;
 
@@ -207,8 +197,6 @@ class ISensorClient {
      *
      * @returns status of activation request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status activate() = 0;
 
@@ -224,8 +212,6 @@ class ISensorClient {
      *
      * @returns status of deactivation request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status deactivate() = 0;
 
@@ -247,8 +233,6 @@ class ISensorClient {
      *          test done by the sensor is provided via the callback - @ref
      *          telux::sensor::SelfTestResultCallback
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status selfTest(
         SelfTestType selfTestType, SelfTestResultCallback cb) = 0;
@@ -258,8 +242,6 @@ class ISensorClient {
      *
      * @returns status of registration request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status registerListener(
         std::weak_ptr<ISensorEventListener> listener) = 0;
@@ -269,8 +251,6 @@ class ISensorClient {
      *
      * @returns status of deregistration request - @ref telux::common::Status
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status deregisterListener(
         std::weak_ptr<ISensorEventListener> listener) = 0;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted (subject to the limitations in the
@@ -426,8 +426,6 @@ enum class FailureCause {
  * @param [in] failureCause  -  Failure cause populated only in case of errors
  *                              @ref telux::tel::FailureCause.
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using SetSuppSvcPrefCallback
     = std::function<void(telux::common::ErrorCode error, FailureCause failureCause)>;
@@ -444,8 +442,6 @@ using SetSuppSvcPrefCallback
  * @param [in] error            -  Return code which indicates whether the operation
  *                                 succeeded or not @ref telux::common::ErrorCode
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using GetCallWaitingPrefExCb
     = std::function<void(SuppServicesStatus suppSvcStatus, FailureCause failureCause,
@@ -464,8 +460,6 @@ using GetCallWaitingPrefExCb
  * @param [in] error               - Return code which indicates whether the operation
  *                                   succeeded or not @ref telux::common::ErrorCode
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using GetForwardingPrefExCb
     = std::function<void(std::vector<ForwardInfo> forwardInfoList, FailureCause failureCause,
@@ -483,8 +477,6 @@ using GetForwardingPrefExCb
  * @param [in] error               - Return code which indicates whether the operation
  *                                   succeeded or not @ref telux::common::ErrorCode
  *
- * @note Eval: This is a new API and is being evaluated. It is subject to change and
- *             could break backwards compatibility.
  */
 using GetOirPrefCb
     = std::function<void(SuppServicesStatus suppSvcStatus, SuppSvcProvisionStatus
@@ -549,8 +541,6 @@ public:
      *          SERVICE_FAILED      - If ISuppServicesManager manager encountered an irrecoverable
      *                                failure.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::ServiceStatus getServiceStatus() = 0;
 
@@ -565,8 +555,6 @@ public:
      *
      * @returns Status of setCallWaitingPref i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status setCallWaitingPref(SuppServicesStatus suppSvcStatus,
         SetSuppSvcPrefCallback callback = nullptr) = 0;
@@ -581,8 +569,6 @@ public:
      *                          preference.
      * @returns Status of requestCallWaitingPref i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status requestCallWaitingPref(GetCallWaitingPrefExCb callback) = 0;
 
@@ -598,8 +584,6 @@ public:
      *
      * @returns Status of setForwardingPref i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status setForwardingPref(ForwardReq forwardReq,
         SetSuppSvcPrefCallback callback = nullptr) = 0;
@@ -619,8 +603,6 @@ public:
      *
      * @returns Status of requestForwardingPref i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status requestForwardingPref(ServiceClass serviceClass,
         ForwardReason reason, GetForwardingPrefExCb callback) = 0;
@@ -639,8 +621,6 @@ public:
      *
      * @returns Status of setOirPref i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status setOirPref(ServiceClass serviceClass,
         SuppServicesStatus suppSvcStatus, SetSuppSvcPrefCallback callback = nullptr) = 0;
@@ -656,8 +636,6 @@ public:
      *
      * @returns Status of requestOirPref i.e. success or suitable error code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status requestOirPref(ServiceClass serviceClass,
         GetOirPrefCb callback) = 0;
@@ -668,8 +646,6 @@ public:
     * @param [in] listener   Pointer to ISuppServicesListener object that
     *                        processes the notification.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *              could break backwards compatibility.
     *
     * @returns Status of registerListener i.e. success or suitable status code.
     */
@@ -682,8 +658,6 @@ public:
     * @param [in] listener   Pointer to ISuppServicesListener object that needs
     *                        to be removed.
     *
-    * @note Eval: This is a new API and is being evaluated. It is subject to change and
-    *              could break backwards compatibility.
     *
     * @returns Status of removeListener i.e. success or suitable status code.
     */

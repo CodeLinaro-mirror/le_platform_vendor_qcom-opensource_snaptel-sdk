@@ -303,8 +303,6 @@ public:
      *
      * @returns Status of setModemActivityState i.e. success or suitable status code.
      *
-     * @note Eval: This is a new API and is being evaluated. It is subject to change and
-     *             could break backwards compatibility.
      */
     virtual telux::common::Status setModemActivityState(TcuActivityState state) = 0;
 

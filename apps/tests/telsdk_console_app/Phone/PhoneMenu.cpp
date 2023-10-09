@@ -548,38 +548,40 @@ void PhoneMenu::configureSignalStrength(std::vector<std::string> userInput) {
       int upper_threshold;
       std::vector<telux::tel::SignalStrengthConfig> sigStrengthConfigList = {};
 
-      std::cout << "Enter Signal Strength Configuration (1-Delta, 2-Threshold ): ";
-      std::cin >> sigConfigType;
-      if (!sigConfigType.empty()) {
-         try {
-            opt = std::stoi(sigConfigType);
-         } catch(const std::exception &e) {
-            std::cout << "ERROR: Invalid input \n" << opt << std::endl;
-            return;
-         }
-      } else {
-         std::cout << "Signal Strength configuration should not be empty \n";
-         return;
-      }
-
-      if (opt >= 1 && opt <= 2) {
-         std::cout << "Enter the number of Signa1 type(s) want to configure : ";
-         std::cin >> num;
-         Utils::validateInput(num);
-         std::cout
-            << "\nAvailable Signal Strength RAT Types are: \n"
-            " 0 - GSM_RSSI\n 1 - WCDMA_RSSI\n 2 - LTE_SNR\n 3 - LTE_RSRQ\n 4 - LTE_RSRP\n" <<
-            " 5 - NR5G_SNR\n 6 - NR5G_RSRP\n 7 - NR5G_RSRQ \n\n";
-         if (num > 0 && num < 8) {
-            for (int i = 0; i < num ; i++) {
-               std::cout << "Enter Signal Type : ";
-               std::cin >> sigType;
-               Utils::validateInput(sigType);
-               if (sigType < 0 || sigType > 8) {
-                  std::cout << "Invalid input " << std::endl;
+      std::cout << "Enter the number of Signal type(s) to be configured : ";
+      std::cin >> num;
+      Utils::validateInput(num);
+      std::cout
+         << "\nAvailable Signal Strength RAT Types are: \n"
+         " 0 - GSM_RSSI\n 1 - WCDMA_RSSI\n 2 - LTE_SNR\n 3 - LTE_RSRQ\n 4 - LTE_RSRP\n" <<
+         " 5 - NR5G_SNR\n 6 - NR5G_RSRP\n 7 - NR5G_RSRQ \n\n";
+      if (num > 0 && num <= (static_cast<int>(telux::tel::RadioSignalStrengthType::NR5G_RSRQ)+1)) {
+                            // count is non-zero positive number i.e. enum last element+1
+         for (int i = 0; i < num ; i++) {
+            std::cout << "Enter Signal RAT Type : ";
+            std::cin >> sigType;
+            Utils::validateInput(sigType);
+            if (sigType < static_cast<int>(telux::tel::RadioSignalStrengthType::GSM_RSSI) ||
+                sigType > static_cast<int>(telux::tel::RadioSignalStrengthType::NR5G_RSRQ)) {
+                std::cout << "Invalid input " << std::endl;
+                return;
+            }
+            std::cout << "Enter Signal Strength Configuration (1-Delta, 2-Threshold ): ";
+            std::cin >> sigConfigType;
+            if (!sigConfigType.empty()) {
+               try {
+                  opt = std::stoi(sigConfigType);
+               } catch(const std::exception &e) {
+                  std::cout << "ERROR: Invalid input \n" << opt << std::endl;
                   return;
                }
-               if (opt == 1) {
+            } else {
+               std::cout << "Signal Strength configuration should not be empty \n";
+               return;
+            }
+            if (opt >= static_cast<int>(telux::tel::SignalStrengthConfigType::DELTA) &&
+               opt <= static_cast<int>(telux::tel::SignalStrengthConfigType::THRESHOLD)) {
+               if (opt == static_cast<int>(telux::tel::SignalStrengthConfigType::DELTA)) {
                   std::cout << "Enter delta value : ";
                   std::cin >> delta;
                   Utils::validateInput(delta);
@@ -594,7 +596,8 @@ void PhoneMenu::configureSignalStrength(std::vector<std::string> userInput) {
                        static_cast<telux::tel::RadioSignalStrengthType>(sigType);
                   sigStrengthConfig.delta = delta;
                   sigStrengthConfigList.emplace_back(sigStrengthConfig);
-               } else if (opt == 2) {
+               } else if (opt ==
+                  static_cast<int>(telux::tel::SignalStrengthConfigType::THRESHOLD)) {
                   std::cout << "Enter lower threshold value : ";
                   std::cin >> lower_threshold;
                   Utils::validateInput(lower_threshold);
@@ -611,22 +614,22 @@ void PhoneMenu::configureSignalStrength(std::vector<std::string> userInput) {
                   sigStrengthConfig.threshold.upperRangeThreshold = upper_threshold;
                   sigStrengthConfigList.emplace_back(sigStrengthConfig);
                }
+            } else {
+               std::cout << "Invalid input \n " << std::endl;
+               return;
             }
-         } else {
-            std::cout << "Invalid input, check the total available signal strength RAT types."
-               << std::endl;
-            return;
          }
-         telux::common::Status status = phone->configureSignalStrength(sigStrengthConfigList,
-             MyConfigureSignalStrengthCallback::configureSignalStrengthResponse);
-         std::cout << (status == telux::common::Status::SUCCESS
-                          ? "Configure Signal Strength request is successful. \n"
-                          : "Configure Signal Strength request failed, check the input provided.")
-                   << '\n';
       } else {
-         std::cout << "Invalid input \n " << std::endl;
+         std::cout << "Invalid input, check the total available signal strength RAT types."
+             << std::endl;
          return;
       }
+      telux::common::Status status = phone->configureSignalStrength(sigStrengthConfigList,
+         MyConfigureSignalStrengthCallback::configureSignalStrengthResponse);
+      std::cout << (status == telux::common::Status::SUCCESS
+                    ? "Configure Signal Strength request is successful. \n"
+                    : "Configure Signal Strength request failed, check the input provided.")
+                << '\n';
    } else {
       std::cout << "No phone found\n";
    }

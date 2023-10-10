@@ -52,15 +52,15 @@
 
 class SimulationServer {
 public:
-    SimulationServer();
-    ~SimulationServer();
+    static SimulationServer &getInstance();
     telux::common::Status start();
+    telux::common::Status writeMessage(char* buffer, int length);
 
 private:
-    telux::common::Status readMessage(int socketFd,
-        std::vector<int> &clientSockets);
-    telux::common::Status writeMessage(char* buffer, int length,
-        const std::vector<int> &clientSockets);
+    SimulationServer();
+    ~SimulationServer();
+
+    telux::common::Status readMessage(int socketFd);
     std::string createServerAddress(std::string ipAddress,
         std::string portNo);
     void startGrpcServer();
@@ -69,6 +69,7 @@ private:
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     bool exiting_ = false;
     std::mutex exitingMutex_;
+    std::vector<int> clientSockets_;
 };
 
 #endif // SIMULATION_SERVER_HPP

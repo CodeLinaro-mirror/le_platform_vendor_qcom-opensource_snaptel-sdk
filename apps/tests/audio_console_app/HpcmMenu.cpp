@@ -95,7 +95,6 @@ Status HpcmMenu::createVoiceStream(StreamConfig &config) {
     std::cout << "Supported sampling rates are 8kHz/16kHz." << std::endl;
     std::cout <<"------------------------------------------------" << std::endl;
     std::vector<telux::audio::Direction> direction{};
-    getUserSlotIdInput(slotId_);
     config.slotId = slotId_;
     config.type = StreamType::VOICE_CALL;
     config.format = telux::audio::AudioFormat::PCM_16BIT_SIGNED;
@@ -162,8 +161,13 @@ Status HpcmMenu::startVoiceStream() {
             return status;
         }
         std::cout << "Audio started on slotId : " << slotId_ << std::endl;
+        exitHpcm_ = false;
     }
 
+    return status;
+}
+
+Status HpcmMenu::startHpcm() {
     if (!audioCaptureStream_) {
         std::cout << "Invalid audio capture stream for slotId : " << slotId_
             << std::endl;
@@ -176,15 +180,13 @@ Status HpcmMenu::startVoiceStream() {
         return Status::FAILED;
     }
 
-    exitHpcm_ = false;
-
     std::thread recordThread(&HpcmMenu::record, this);
     runningThreads_.emplace_back(std::move(recordThread));
 
     std::thread playThread(&HpcmMenu::play, this);
     runningThreads_.emplace_back(std::move(playThread));
 
-    return status;
+    return Status::SUCCESS;
 }
 
 Status HpcmMenu::stopVoiceStream() {
@@ -319,6 +321,8 @@ void HpcmMenu::startHpcmAudio(std::vector<std::string> userInput) {
         return;
     }
 
+    getUserSlotIdInput(slotId_);
+
     if (createActiveSession(slotId_) != Status::SUCCESS) {
         std::cout << "No running voice session for slotId : " << slotId_
             << ", please create one" << std::endl;
@@ -330,18 +334,26 @@ void HpcmMenu::startHpcmAudio(std::vector<std::string> userInput) {
         return;
     }
 
+    status = startVoiceStream();
+    if (status != Status::SUCCESS) {
+        return;
+    }
+
     status = createHpcmRecordStream(config);
     if (status != Status::SUCCESS) {
+        exitHpcm_ = true;
         return;
     }
 
     status = createHpcmPlayStream(config);
     if (status != Status::SUCCESS) {
+        exitHpcm_ = true;
         return;
     }
 
-    status = startVoiceStream();
+    status = startHpcm();
     if (status != Status::SUCCESS) {
+        exitHpcm_ = true;
         return;
     }
 }

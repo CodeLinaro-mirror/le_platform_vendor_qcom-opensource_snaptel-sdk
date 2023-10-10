@@ -59,6 +59,7 @@ class HpcmMenu : public ConsoleApp,
     Status createHpcmRecordStream(StreamConfig &config);
     Status createHpcmPlayStream(StreamConfig &config);
     Status startVoiceStream();
+    Status startHpcm();
     Status deleteHpcmRecordStream();
     Status deleteHpcmPlayStream();
     Status stopVoiceStream();

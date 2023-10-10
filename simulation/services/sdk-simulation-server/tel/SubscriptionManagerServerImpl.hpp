@@ -54,7 +54,6 @@
 #include <telux/common/CommonDefines.hpp>
 #include "../../../libs/common/Logger.hpp"
 #include "../../../libs/common/JsonParser.hpp"
-#include "Helper.hpp"
 #include "../../../protos/proto-src/tel.grpc.pb.h"
 #include "../../libs/common/event-manager/EventManager.hpp"
 #include "../../../libs/common/CommonUtils.hpp"
@@ -64,11 +63,10 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-using tel::PhoneService;
-using tel::ServiceState;
+using telStub::PhoneService;
+using commonStub::ServiceStatus;
 
-
-class SubscriptionManagerServerImpl final : public tel::PhoneService::Service,
+class SubscriptionManagerServerImpl final : public telStub::PhoneService::Service,
                                             public IEventListener,
                                             public
                                     std::enable_shared_from_this<SubscriptionManagerServerImpl> {
@@ -76,17 +74,18 @@ class SubscriptionManagerServerImpl final : public tel::PhoneService::Service,
 public:
     SubscriptionManagerServerImpl();
     grpc::Status InitService(ServerContext* context, const google::protobuf::Empty* request,
-        tel::GetServiceStatusReply* response) override;
+        commonStub::GetServiceStatusReply* response) override;
     grpc::Status GetServiceStatus(ServerContext* context, const google::protobuf::Empty* request,
-        tel::GetServiceStatusReply* response) override;
+        commonStub::GetServiceStatusReply* response) override;
     grpc::Status IsSubsystemReady(ServerContext* context, const google::protobuf::Empty* request,
-        tel::IsSubsystemReadyReply* response) override;
+        commonStub::IsSubsystemReadyReply* response) override;
     grpc::Status GetSubscription(ServerContext* context,
-        const ::tel::GetSubscriptionRequest* request, tel::Subscription* response) override;
+        const ::telStub::GetSubscriptionRequest* request,
+        telStub::Subscription* response) override;
     void onEventUpdate(std::string event);
 private:
     Json::Value rootObj;
-    void readJson();
+    grpc::Status readJson();
     void handleEvent(std::string token , std::string event);
     void handlesubscriptionInfoChanged(std::string eventParams);
 

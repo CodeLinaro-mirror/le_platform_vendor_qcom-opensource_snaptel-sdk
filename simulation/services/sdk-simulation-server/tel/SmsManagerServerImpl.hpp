@@ -54,10 +54,10 @@
 #include "../../../libs/common/Logger.hpp"
 #include "../../../libs/common/JsonParser.hpp"
 #include "../../../libs/common/ResponseHandler.hpp"
-#include "Helper.hpp"
 #include "../../../protos/proto-src/tel.grpc.pb.h"
 #include "../../../libs/common/CommonUtils.hpp"
 #include "../../libs/common/event-manager/EventManager.hpp"
+#include <telux/tel/SmsManager.hpp>
 
 
 using grpc::Server;
@@ -65,9 +65,9 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-using tel::SmsService;
-using tel::ServiceState;
-using tel::GetServiceStatusReply;
+using telStub::SmsService;
+using commonStub::ServiceStatus;
+using commonStub::GetServiceStatusReply;
 
 struct SmsMsg  {
     std::string text;
@@ -90,55 +90,59 @@ struct SmsDeliveryInfo {
     int msgRef;
 };
 
-class SmsManagerServerImpl final : public tel::SmsService::Service,
+class SmsManagerServerImpl final : public telStub::SmsService::Service,
                                    public IEventListener,
                                    public std::enable_shared_from_this<SmsManagerServerImpl> {
 public:
     SmsManagerServerImpl();
     grpc::Status InitService(ServerContext *context,
-        const ::tel::GetServiceStatusRequest* request ,
-        tel::GetServiceStatusReply* response) override ;
+        const ::commonStub::GetServiceStatusRequest* request ,
+        commonStub::GetServiceStatusReply* response) override ;
     grpc::Status GetServiceStatus(ServerContext* context,
-        const ::tel::GetServiceStatusRequest* request,
-        tel::GetServiceStatusReply* response) override;
-    grpc::Status SetSmscAddress(ServerContext* context, const tel::SetSmscAddressRequest* request,
-        tel::SetSmscAddressReply* response) override;
-    grpc::Status GetSmscAddress(ServerContext* context, const tel::GetSmscAddressRequest* request,
-        tel::GetSmscAddressReply* response) override;
+        const ::commonStub::GetServiceStatusRequest* request,
+        commonStub::GetServiceStatusReply* response) override;
+    grpc::Status SetSmscAddress(ServerContext* context,
+        const telStub::SetSmscAddressRequest* request,
+        telStub::SetSmscAddressReply* response) override;
+    grpc::Status GetSmscAddress(ServerContext* context,
+        const telStub::GetSmscAddressRequest* request,
+        telStub::GetSmscAddressReply* response) override;
     grpc::Status RequestSmsMessageList(ServerContext* context,
-        const ::tel::RequestSmsMessageListRequest* request,
-        tel::RequestSmsMessageListReply* response) override;
+        const ::telStub::RequestSmsMessageListRequest* request,
+        telStub::RequestSmsMessageListReply* response) override;
     grpc::Status ReadMessage(ServerContext *context,
-        const tel::ReadMessageRequest *request, tel::ReadMessageReply *reply) override;
-    grpc::Status DeleteMessage(ServerContext *context, const tel::DeleteMessageRequest *request,
-        tel::DeleteMessageRequestReply *response) override;
+        const telStub::ReadMessageRequest *request, telStub::ReadMessageReply *reply) override;
+    grpc::Status DeleteMessage(ServerContext *context,
+        const telStub::DeleteMessageRequest *request,
+        telStub::DeleteMessageRequestReply *response) override;
     grpc::Status SetPreferredStorage(ServerContext *context,
-        const tel::SetPreferredStorageRequest *request,
-        tel::SetPreferredStorageReply *response) override;
+        const telStub::SetPreferredStorageRequest *request,
+        telStub::SetPreferredStorageReply *response) override;
     grpc::Status RequestPreferredStorage(ServerContext *context,
-        const tel::RequestPreferredStorageRequest *request,
-        tel::RequestPreferredStorageReply *response) override;
-    grpc::Status SetTag(ServerContext *context, const tel::SetTagRequest *request,
-        tel::SetTagReply *response) override;
+        const telStub::RequestPreferredStorageRequest *request,
+        telStub::RequestPreferredStorageReply *response) override;
+    grpc::Status SetTag(ServerContext *context, const telStub::SetTagRequest *request,
+        telStub::SetTagReply *response) override;
     grpc::Status RequestStorageDetails(ServerContext *context,
-        const tel::RequestStorageDetailsRequest *request,
-        tel::RequestStorageDetailsReply *response) override;
+        const telStub::RequestStorageDetailsRequest *request,
+        telStub::RequestStorageDetailsReply *response) override;
     grpc::Status GetMessageAttributes(ServerContext *context,
-        const tel::GetMessageAttributesRequest *request,
-        tel::GetMessageAttributesReply *response) override;
+        const telStub::GetMessageAttributesRequest *request,
+        telStub::GetMessageAttributesReply *response) override;
     grpc::Status IsMemoryFull(ServerContext *context,
-        const tel::IsMemoryFullRequest *request, tel::IsMemoryFullReply *response) override;
+        const telStub::IsMemoryFullRequest *request,
+        telStub::IsMemoryFullReply *response) override;
     grpc::Status SendSmsWithoutSmsc(ServerContext *context,
-        const tel::SendSmsWithoutSmscRequest *request, tel::SendSmsWithoutSmscReply *response)
+        const telStub::SendSmsWithoutSmscRequest *request,
+        telStub::SendSmsWithoutSmscReply *response)
         override;
     grpc::Status SendSms(ServerContext *context,
-        const tel::SendSmsRequest *request, tel::SendSmsReply *response) override;
+        const telStub::SendSmsRequest *request, telStub::SendSmsReply *response) override;
     grpc::Status SendRawSms(ServerContext *context,
-    const tel::SendRawSmsRequest *request, tel::SendRawSmsReply *response) override;
+    const telStub::SendRawSmsRequest *request, telStub::SendRawSmsReply *response) override;
     void onEventUpdate(std::string event);
-
 private:
-    Json::Value rootObjSystemStateSlot1;
+    Json::Value rootObjSystemStateSlot1_;
     Json::Value rootObjSystemStateSlot2_;
     Json::Value rootObjApiResponseSlot1_;
     Json::Value rootObjApiResponseSlot2_;
@@ -146,7 +150,8 @@ private:
     std::map <int, std::string> jsonObjSystemStateFileName_;
     std::map <int, Json::Value> jsonObjApiResponseSlot_;
     std::map <int, std::string> jsonObjApiResponseFileName_;
-    void readJson();
+    std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
+    grpc::Status readJson();
     bool isCallbackNeeded(Json::Value rootObj, std::string apiname);
     void getJsonForSystemData(int phoneId, std::string& jsonfilename, Json::Value& rootObj );
     void getJsonForApiResponseSlot(int phoneId, std::string& jsonfilename,
@@ -154,7 +159,12 @@ private:
     int getSMSStorage(int phoneId);
     void parseMessageAtIndex(int phoneId, int index,SmsMsg& msg );
     telux::common::ErrorCode deletedSmsatIndex(int phoneId, std::vector<int> index);
-    void handleEvent(std::string token , std::string event);
+    void handleEvent(std::string token, std::string event);
     void handleIncomingSms(std::string eventParams);
+    void triggerIncomingSmsEvent(int phoneId, int numberOfSegments,
+        int refNumber, int segmentNumber, int msgIndex, std::string tagType, std::string encoding,
+        bool isMetaInfoValid, std::string pdu, std::string receiver, std::string sender,
+        std::string text);
+    void reorderDatabase(int phoneId);
 };
 #endif // SMS_MANAGER_SERVER_HPP

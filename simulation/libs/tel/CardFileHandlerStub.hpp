@@ -56,7 +56,7 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-using tel::CardService;
+using telStub::CardService;
 
 
 namespace telux {
@@ -85,7 +85,7 @@ public:
 private:
     SlotId slotId_;
     std::mutex mtx_;
-    std::unique_ptr<::tel::CardService::Stub> stub_;
+    std::unique_ptr<::telStub::CardService::Stub> stub_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     std::vector<std::shared_ptr<CardAppStub>> cardApps_;
     void invokeCallback(EfOperationCallback callback,

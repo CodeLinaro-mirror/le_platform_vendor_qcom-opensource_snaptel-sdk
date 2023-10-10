@@ -69,7 +69,7 @@ void CardManagerStub::cleanup() {
 }
 
 void CardManagerStub::initSync(telux::common::InitResponseCb callback) {
-    ::tel::GetServiceStatusReply response;
+    ::commonStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
     ClientContext context;
     LOG(DEBUG, __FUNCTION__);
@@ -98,6 +98,11 @@ void CardManagerStub::initSync(telux::common::InitResponseCb callback) {
             for (auto slotId:simSlotIds_) {
                 LOG(DEBUG, __FUNCTION__,"SlotId is ",slotId);
                 cardMap_[slotId]->updateSimStatus();
+            }
+            listenerMgr_ = std::make_shared<telux::common::ListenerManager<ICardListener>>();
+            if(!listenerMgr_) {
+                LOG(ERROR, __FUNCTION__, " unable to instantiate ListenerManager");
+                cbStatus = telux::common::ServiceStatus::SERVICE_FAILED;
             }
         }
         if(callback) {
@@ -141,7 +146,7 @@ std::future<bool> CardManagerStub::onSubsystemReady() {
 
 telux::common::ServiceStatus CardManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::GetServiceStatusReply response;
+    ::commonStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
     ClientContext context;
 
@@ -214,8 +219,8 @@ telux::common::Status CardManagerStub::cardPowerUp(SlotId slotId,
         LOG(ERROR, __FUNCTION__, " Card Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    ::tel::CardPowerRequest request;
-    ::tel::CardPowerResponse response;
+    ::telStub::CardPowerRequest request;
+    ::telStub::CardPowerResponse response;
     ClientContext context;
     request.set_phone_id(slotId);
     request.set_powerup(true);
@@ -261,16 +266,17 @@ void CardManagerStub::invokeCallback(telux::common::ResponseCallback callback,
 
 void CardManagerStub::invokelisteners(int slotId) {
     LOG(DEBUG, __FUNCTION__);
-    for (auto iter=listeners_.begin();iter != listeners_.end();) {
-        auto spt = (*iter).lock();
-        if (spt) {
-            LOG(DEBUG, __FUNCTION__, "The fetched slot id is: ",slotId);
-            spt->onCardInfoChanged(slotId);
-            ++iter;
-        } else {
-            LOG(DEBUG, __FUNCTION__, "No valid listener found: ");
-            iter = listeners_.erase(iter);
+    std::vector<std::weak_ptr<ICardListener>> applisteners;
+    if (listenerMgr_) {
+        listenerMgr_->getAvailableListeners(applisteners);
+        // Notify respective events
+        for(auto &wp : applisteners) {
+            if(auto sp = wp.lock()) {
+                sp->onCardInfoChanged(slotId);
+            }
         }
+    } else {
+        LOG(ERROR, __FUNCTION__, " listenerMgr is null");
     }
 }
 
@@ -280,8 +286,8 @@ telux::common::Status CardManagerStub::cardPowerDown(SlotId slotId,
         LOG(ERROR, __FUNCTION__, " Card Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    ::tel::CardPowerRequest request;
-    ::tel::CardPowerResponse response;
+    ::telStub::CardPowerRequest request;
+    ::telStub::CardPowerResponse response;
     ClientContext context;
     request.set_phone_id(slotId);
     request.set_powerup(false);
@@ -322,40 +328,12 @@ telux::common::Status CardManagerStub::registerListener(std::shared_ptr<ICardLis
         LOG(ERROR, __FUNCTION__, " Card Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    std::lock_guard<std::mutex> lock(cardManagerMutex_);
     telux::common::Status status = telux::common::Status::FAILED;
-    if (listener != nullptr) {
-        if (listeners_.size() == 0) {
-            try {
-            } catch(exception const & ex) {
-                LOG(ERROR, __FUNCTION__, " Exception Occured: ", ex.what());
-                return telux::common::Status::NOMEMORY;
-            }
-            auto &eventManager = telux::common::EventManager::getInstance();
-            eventManager.connectToSimulationServer();
-            eventManager.registerListener(shared_from_this(), TEL_CARD_FILTER);
-        }
-        bool existing = 0;
-        for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
-            if (listener == (*iter).lock()) {
-                existing = 1;
-                LOG(DEBUG, __FUNCTION__, "listener already exists");
-                return telux::common::Status::ALREADY;
-            }
-        }
-        if (existing == 0) {
-            listeners_.emplace_back(listener);
-            LOG(DEBUG, __FUNCTION__, " creates a new listener entry");
-            return telux::common::Status::SUCCESS;
-        }
-        for (auto slotId:simSlotIds_) {
-            LOG(DEBUG, __FUNCTION__,"SlotId is ",slotId);
-            cardMap_[slotId]->setlisteners(listeners_);
-        }
-    } else {
-        LOG(ERROR, "Null listener");
-        return telux::common::Status::INVALIDPARAM;
-
+    if (listenerMgr_) {
+        status = listenerMgr_->registerListener(listener);
+        auto &eventManager = telux::common::EventManager::getInstance();
+        eventManager.connectToSimulationServer();
+        eventManager.registerListener(shared_from_this(), TEL_CARD_FILTER);
     }
     return status;
 }
@@ -366,31 +344,22 @@ telux::common::Status  CardManagerStub::removeListener(std::shared_ptr<ICardList
         LOG(ERROR, __FUNCTION__, " Card Manager is not ready");
         return telux::common::Status::NOTREADY;
     }
-    telux::common::Status retVal = telux::common::Status::FAILED;
-    std::lock_guard<std::mutex> lock(cardManagerMutex_);;
-    if (listener != nullptr) {
-        for (auto iter=listeners_.begin(); iter<listeners_.end();++iter) {
-            if (listener == (*iter).lock()) {
-                iter = listeners_.erase(iter);
-                LOG(DEBUG, __FUNCTION__, " In deRegister Listener : Removing");
-                retVal = telux::common::Status::SUCCESS;
-                break;
-            }
-        }
-        if (listeners_.size() == 0) {
+    telux::common::Status status = telux::common::Status::FAILED;
+    if (listenerMgr_) {
+        std::vector<std::weak_ptr<ICardListener>> applisteners;
+        status = listenerMgr_->deRegisterListener(listener);
+        listenerMgr_->getAvailableListeners(applisteners);
+        if (applisteners.size() == 0) {
             auto &eventManager = telux::common::EventManager::getInstance();
             eventManager.deregisterListener(shared_from_this());
         }
-    } else {
-        LOG(WARNING, "listener is null");
-        retVal = telux::common::Status::NOSUCH;
     }
-    return (retVal);
+    return status;
 }
 
 bool CardManagerStub::isSubsystemReady() {
     LOG(DEBUG, __FUNCTION__);
-    ::tel::GetServiceStatusReply response;
+    ::commonStub::GetServiceStatusReply response;
     const ::google::protobuf::Empty request;
     ClientContext context;
 

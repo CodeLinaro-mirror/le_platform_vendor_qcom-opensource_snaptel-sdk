@@ -89,6 +89,7 @@
         ],
         "requestStorageDetails" :
         {
+            "requestStorageDetailsCbMaxCount" : 10,
             "status" : "SUCCESS",
             "error" : "SUCCESS"
         },

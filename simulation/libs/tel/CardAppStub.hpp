@@ -61,7 +61,7 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-using tel::CardService;
+using telStub::CardService;
 
 
 namespace telux {
@@ -107,7 +107,7 @@ public:
 private:
     int slotId_;
     CardAppStatus cardAppStatus_;
-    std::unique_ptr<::tel::CardService::Stub> stub_;
+    std::unique_ptr<::telStub::CardService::Stub> stub_;
     std::shared_ptr<telux::common::AsyncTaskQueue<void>> taskQ_;
     void invokelisteners(int slotId);
     void invokeCallback(PinOperationResponseCb callback,telux::common::ErrorCode error,

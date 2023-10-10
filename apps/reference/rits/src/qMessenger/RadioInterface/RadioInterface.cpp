@@ -487,15 +487,16 @@ int RadioInterface::setGlobalIPInfo(const telux::cv2x::IPv6AddrType &ipv6Addr,
     tcpInfo.serviceId = serviceId;
     tcpInfo.localPort = 0;
     eventInfo.isUnicast = true;
+    auto commCb = std::make_shared<CommonCallback>();
     auto sockRespCb = [&](shared_ptr<ICv2xTxRxSocket> sock, ErrorCode error) {
                 if (ErrorCode::SUCCESS == error) {
                     this->tcpSockInfo = sock;
                 }
-                cb->onResponse(error);
+                commCb->onResponse(error);
         };
     if (Status::SUCCESS ==
         cv2xRadio->createCv2xTcpSocket(eventInfo, tcpInfo, sockRespCb)) {
-        auto error = cb->getResponse();
+        auto error = commCb->getResponse();
         if (ErrorCode::SUCCESS == error) {
             if(rVerbosity)
                 cout<<"createCv2xTcpSocket succeeds." << endl;;
@@ -549,11 +550,12 @@ int RadioInterface::clearGlobalIPInfo(void) {
 
     ipv6Prefix.prefixLen = 64;
     memset(&ipv6Prefix.ipv6Addr[0], 0, CV2X_IPV6_ADDR_ARRAY_LEN);
+    auto commCb = std::make_shared<CommonCallback>();
     auto respCb = [&](ErrorCode error) {
-        cb->onResponse(error);
+        commCb->onResponse(error);
     };
     if (Status::SUCCESS == cv2xRadio->setGlobalIPInfo(ipv6Prefix, respCb)) {
-        if (ErrorCode::SUCCESS == cb->getResponse()) {
+        if (ErrorCode::SUCCESS == commCb->getResponse()) {
             if(rVerbosity)
                 cout<<"setGlobalIPInfo succeeds." << endl;;
             ret = 0;

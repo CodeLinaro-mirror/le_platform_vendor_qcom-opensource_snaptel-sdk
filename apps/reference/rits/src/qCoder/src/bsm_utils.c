@@ -81,54 +81,6 @@ static char *brake_str0[] = {"Unavailable", "Off", "On", "Reserved"};
 static char *brake_str1[] = {"Unavailable", "Off", "On", ""};
 static char *brake_str2[] = {"Unavailable", "Off", "On", "Engaged"};
 
-typedef struct bsm_log_info_t {
-    char timestamp[STR_MAX_LEN];
-    uint64_t timestamp_ms;
-    uint64_t time_mono;
-    char logRecType[STR_MAX_LEN];
-    char l2Id[STR_MAX_LEN];
-    uint64_t cbrPerc;
-    double cpuUtil;
-    uint64_t txInterval; // this may need to be set from congestion control algo
-    //uint64_t msgCnt;
-    //int tempId;
-    uint64_t gpgsaMode;
-    // int secmark;
-    // lat
-    // lon
-    double semiMajorDev;
-    // speed
-    // heading
-    // longaccel
-    // lataccel
-
-    uint64_t timestamp_in_message;
-    unsigned int MsgCount;      // Ranges from 1 - 127 in cyclic fashion.
-    unsigned int id;            // 32 bit identifier
-    unsigned int secMark_ms;    // No of milliseconds in a minute
-
-    double lat;   // in degrees
-    double lon;  // in degrees
-    double ele; // in meters
-    double semimajoracc; // in meters
-    double semiminoracc; // in meters
-    double orien; // in degrees
-    double speed; // in kmph
-    double heading; // in degrees
-    double steer;    // in degrees
-    double lonaccl; // in m/sec2
-    double lataccl; // in m/sec2
-    double vertaccl; // in G steps
-    double yaw; // in deg/sec
-
-    j2735_BrakeBoostApplied_e brake_boost_applied : 2;
-    j2735_StabilityControlStatus_e stability_control_status : 2;
-    j2735_AntiLockBrakeStatus_e antilock_brake_status : 2;
-    j2735_TractionControlStatus_e traction_control_status : 2;
-
-    vehicleeventflags_ut events;
-} bsm_log_info;
-
 const char* get_wall_time(char* result)
 {
     time_t now;
@@ -288,71 +240,44 @@ void print_summary_RV(msg_contents *mc)
         print_bsm_summary_RV(mc);
 }
 
-int writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, msg_contents *mc, FILE *myfp,
+int writeGeneralLog(char* tmpLogStr, uint32_t maxBufSize, bsm_data* bs, FILE *myfp,
     bool isTx, uint64_t periodicityMs, bool validPkt, uint32_t RVsInRange,
     const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
     float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr,
     uint64_t txInterval, uint32_t l2SrcAddr){
-    if(!mc){
-        return -1;
-    }
 
-    if(!mc->j2735_msg){
-        return -1;
-    }
     if(!tmpLogStr){
         return -1;
     }
+
+    if(!bs){
+        return -1;
+    }
+
     char wall_time[100];
     get_wall_time(wall_time);
-    bsm_value_t *bs = mc->j2735_msg;
-    bsm_log_info loggings;
-    loggings.timestamp[0] = '\0';
-    loggings.timestamp_in_message = bs->timestamp_ms;
-    loggings.MsgCount = bs->MsgCount;
-    loggings.id = bs->id;
-    loggings.l2Id[0] = '\0';
-    loggings.logRecType[0] = '\0';
-    loggings.txInterval = txInterval;
-    loggings.secMark_ms = bs->secMark_ms;
-    loggings.time_mono = monotonicTime;
-    loggings.gpgsaMode = 0;
-    loggings.lat =  bs->Latitude / 10000000.0;   // in degrees
-    loggings.lon = bs->Longitude / 10000000.0;  // in degrees
-    loggings.ele =  bs->Elevation / 10.0; // in meters
-    loggings.semimajoracc =  bs->SemiMajorAxisAccuracy / 20.0; // in meters
-    loggings.semiminoracc =  bs->SemiMinorAxisAccuracy / 20.0; // in meters
-    loggings.orien =  bs->SemiMajorAxisOrientation * 0.0054932479; // in degrees
-    loggings.speed = (bs->Speed / 50.0) * 3.6; // in kmph
-    loggings.heading = bs->Heading_degrees * 0.0125; // in degrees
-    loggings.steer =  bs->SteeringWheelAngle * 1.5;    // in degrees
-    loggings.lonaccl =  bs->AccelLon_cm_per_sec_squared / 100.0; // in m/sec2
-    loggings.lataccl = bs->AccelLat_cm_per_sec_squared / 100.0; // in m/sec2
-    loggings.vertaccl = bs->AccelVert_two_centi_gs / 50.0; // in G steps
-    loggings.yaw = bs->AccelYaw_centi_degrees_per_sec / 100.0; // in deg/sec
-    loggings.antilock_brake_status = bs->brakes.bits.antilock_brake_status;
-    loggings.brake_boost_applied = bs->brakes.bits.brake_boost_applied;
-    loggings.stability_control_status = bs->brakes.bits.stability_control_status;
-    loggings.traction_control_status = bs->brakes.bits.traction_control_status;
 
     if(isTx){
         snprintf(tmpLogStr, maxBufSize,
         "%s,%"PRIu64",%"PRIu64",%s,,%d,%lf,%"PRIu64",%d,%d,0,%d,%f,%f,%f,%f,%f,%f,%f,",
-            timeStamp, realworldTimeNow, loggings.time_mono,
+            timeStamp, realworldTimeNow, monotonicTime,
             "Tx", cbr, get_CPU_percentage(monotonicTime),
-            loggings.txInterval, loggings.MsgCount, loggings.id,
-            loggings.secMark_ms, loggings.lat, loggings.lon,
-            loggings.semiMajorDev, loggings.speed,
-            loggings.heading, loggings.lonaccl, loggings.lataccl);
+            txInterval, bs->MsgCount, bs->id,
+            bs->secMark_ms, (bs->Latitude / 10000000.0), (bs->Longitude / 10000000.0),
+            (bs->SemiMajorAxisAccuracy / 20.0), ((bs->Speed / 50.0) * 3.6),
+            ( bs->Heading_degrees * 0.0125), (bs->AccelLon_cm_per_sec_squared / 100.0),
+             ( bs->AccelLat_cm_per_sec_squared / 100.0));
     }else{
         snprintf(tmpLogStr, maxBufSize,
         "%s,%"PRIu64",%"PRIu64",%s,%08x,0,0,0,%d,%d,0,%d,%f,%f,%f,%f,%f,%f,%f,",
-            timeStamp, realworldTimeNow, loggings.time_mono,
-            "Rx", l2SrcAddr, loggings.MsgCount, loggings.id,
-            loggings.secMark_ms, loggings.lat, loggings.lon,
-            loggings.semiMajorDev, loggings.speed,
-            loggings.heading, loggings.lonaccl, loggings.lataccl);
+            timeStamp, realworldTimeNow, monotonicTime,
+            "Rx", l2SrcAddr, bs->MsgCount, bs->id,
+            bs->secMark_ms, (bs->Latitude / 10000000.0), (bs->Longitude / 10000000.0),
+            (bs->SemiMajorAxisAccuracy / 20.0), ((bs->Speed / 50.0) * 3.6),
+            ( bs->Heading_degrees * 0.0125), (bs->AccelLon_cm_per_sec_squared / 100.0),
+             ( bs->AccelLat_cm_per_sec_squared / 100.0));
     }
+
     return 1;
 }
 
@@ -364,7 +289,6 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
     //Writing Core Data
     int i = 1;
     bsm_value_t *bs = mc->j2735_msg;
-    bsm_log_info loggings;
     int tracking_error = 0;
     char wall_time[100];
 
@@ -389,45 +313,21 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
         }
     }
 
-    loggings.timestamp_in_message = bs->timestamp_ms;
-    loggings.MsgCount = bs->MsgCount;
-    loggings.id = bs->id;
-    loggings.secMark_ms = bs->secMark_ms;
-
     fprintf(myfp, "%s,%"PRIu64",%"PRIu64",%s,%d,%.2f,", wall_time,
-        loggings.timestamp_in_message, monotonicTime, isTx ? "Tx" : "Rx",
+        bs->timestamp_ms, monotonicTime, isTx ? "Tx" : "Rx",
         cbr, get_CPU_percentage(monotonicTime));
 
-    loggings.lat =  bs->Latitude / 10000000.0;   // in degrees
-    loggings.lon = bs->Longitude / 10000000.0;  // in degrees
-    loggings.ele =  bs->Elevation / 10.0; // in meters
-    loggings.semimajoracc =  bs->SemiMajorAxisAccuracy / 20.0; // in meters
-    loggings.semiminoracc =  bs->SemiMinorAxisAccuracy / 20.0; // in meters
-    loggings.orien =  bs->SemiMajorAxisOrientation * 0.0054932479; // in degrees
-    loggings.speed = (bs->Speed / 50.0) * 3.6; // in kmph
-    loggings.heading = bs->Heading_degrees * 0.0125; // in degrees
-    loggings.steer =  bs->SteeringWheelAngle * 1.5;    // in degrees
-    loggings.lonaccl =  bs->AccelLon_cm_per_sec_squared / 100.0; // in m/sec2
-    loggings.lataccl = bs->AccelLat_cm_per_sec_squared / 100.0; // in m/sec2
-    loggings.vertaccl = bs->AccelVert_two_centi_gs / 50.0; // in G steps
-    loggings.yaw = bs->AccelYaw_centi_degrees_per_sec / 100.0; // in deg/sec
-
-    loggings.antilock_brake_status = bs->brakes.bits.antilock_brake_status;
-    loggings.brake_boost_applied = bs->brakes.bits.brake_boost_applied;
-    loggings.stability_control_status = bs->brakes.bits.stability_control_status;
-    loggings.traction_control_status = bs->brakes.bits.traction_control_status;
-
-    memcpy(&loggings.events, &bs->events, sizeof(vehicleeventflags_ut));
-
     fprintf(myfp, "%d,%04x,%d,%f,%f,%f,%f,%f,%f,%s,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,",
-        loggings.MsgCount,
-        loggings.id, loggings.secMark_ms, loggings.lat, loggings.lon,
-        loggings.ele, loggings.semimajoracc,
-        loggings.semiminoracc, loggings.orien, "", loggings.speed, loggings.heading,
-        loggings.steer, loggings.lonaccl,
-        loggings.lataccl, loggings.vertaccl, loggings.yaw,
-        loggings.antilock_brake_status, loggings.brake_boost_applied,
-        loggings.stability_control_status, loggings.traction_control_status);
+        bs->MsgCount,
+        bs->id, bs->secMark_ms, (bs->Latitude / 10000000.0), (bs->Longitude / 10000000.0),
+        (bs->Elevation / 10.0), (bs->SemiMajorAxisAccuracy / 20.0),
+        (bs->SemiMinorAxisAccuracy / 20.0), (bs->SemiMajorAxisOrientation * 0.0054932479), "",
+        ((bs->Speed / 50.0) * 3.6), (bs->Heading_degrees * 0.0125),
+        (bs->SteeringWheelAngle * 1.5), (bs->AccelLon_cm_per_sec_squared / 100.0),
+        (bs->AccelLat_cm_per_sec_squared / 100.0), (bs->AccelVert_two_centi_gs / 50.0), 
+        (bs->AccelYaw_centi_degrees_per_sec / 100.0),
+        bs->brakes.bits.antilock_brake_status, bs->brakes.bits.brake_boost_applied,
+        bs->brakes.bits.stability_control_status, bs->brakes.bits.traction_control_status);
 
     //Writing part-2 extensions
     fprintf(myfp, "%d,%d,%d,",
@@ -446,50 +346,50 @@ void write_bsm_to_csv(msg_contents *mc, FILE *myfp, bool isTx, uint64_t periodic
     }
 
     // Event Flags
-    if (loggings.events.bits.eventHazardLights) {
+    if (bs->events.bits.eventHazardLights) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (loggings.events.bits.eventABSactivated) {
+    if (bs->events.bits.eventABSactivated) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (loggings.events.bits.eventTractionControlLoss) {
+    if (bs->events.bits.eventTractionControlLoss) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (loggings.events.bits.eventStabilityControlactivated) {
+    if (bs->events.bits.eventStabilityControlactivated) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (loggings.events.bits.eventHardBraking) {
+    if (bs->events.bits.eventHardBraking) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (loggings.events.bits.eventWipersChanged) {
+    if (bs->events.bits.eventWipersChanged) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
 
-    if (loggings.events.bits.eventAirBagDeployment) {
+    if (bs->events.bits.eventAirBagDeployment) {
         fprintf(myfp, "1,");
     } else {
         fprintf(myfp, ",");
     }
-
     fprintf(myfp, "\n");
 }
+
 long double deg2rad(double deg){
     return deg * (M_PI / 180.0);
 }

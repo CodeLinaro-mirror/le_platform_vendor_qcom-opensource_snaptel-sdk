@@ -132,7 +132,7 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
         // make sure that aerolink knows most recent ego position and leap seconds
         if(ApplicationBase::securityInitialized){
             int result = AerolinkSecurity::setSecCurrLocation(&kine);
-            telux::common::Status status = 
+            telux::common::Status status =
                 locationInfo->getLeapSeconds(kine.leapSeconds);
             if(status != Status::SUCCESS && kine.leapSeconds != 0){
                 result = AerolinkSecurity::setLeapSeconds(kine.leapSeconds);
@@ -1517,7 +1517,7 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
             istringstream is(configs["enableL2FloodingDetect"]);
             is >> boolalpha >> this->configuration.enableL2FloodingDetect;
         }
-        if(this->configuration.floodDetectVerbosity){
+        if(configs.find("floodDetectVerbosity") != configs.end()){
             this->configuration.floodDetectVerbosity = stoi(configs["floodDetectVerbosity"]);
         }
         if(configs.find("commandInterval") != configs.end()) {
@@ -2162,17 +2162,16 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
             sem_wait (congestionControlManager->
                     getCongestionControlUserData()->congestionControlSem);
             currTime = timestamp_now();
+            lastTxTime = currTime;
         }
     }
     int ret = 0;
     if((criticalState && txType == TransmitType::EVENT) ||
-        (!criticalState && txType == TransmitType::SPS)){
+            (!criticalState && txType == TransmitType::SPS)){
         ret = this->transmit(index, mc, encLength, txType);
         if (encLength > 0 && ret > 0) {
             validMessage = true;
         }
-        // write the log here for this tx now. using tx timestamp made before sendto
-        writeLog(mc, index, 0, true, txType, validMessage, currTime, PSID_BSM);
 
         if (encLength > 0 && ret > 0) {
             if(csvfp) {
@@ -2183,6 +2182,42 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                     txInterval = 0;
                 }
                 lastTxTime = currTime;
+
+                // check if valid msg contents pointer
+                if (mc) {
+                    int psid = 0;
+                    if(mc->wsmp){
+                        psid = ((wsmp_data_t *)mc->wsmp)->psid;
+                    }
+                    if(psid == PSID_BSM && mc.get()->j2735_msg ){
+                        // we do not care about non bsms for now
+                        bsm_value_t *bsm = (bsm_value_t*)(mc.get()->j2735_msg);
+                        bsm_data bs = {0};
+                        bs.id = bsm->id;
+                        bs.timestamp_ms = bsm->timestamp_ms;
+                        bs.secMark_ms = bsm->secMark_ms;
+                        bs.Latitude = bsm->Latitude;
+                        bs.Longitude = bsm->Longitude;
+                        bs.Elevation = bsm->Elevation;
+                        bs.SemiMajorAxisAccuracy = bsm->SemiMajorAxisAccuracy;
+                        bs.SemiMinorAxisAccuracy = bsm->SemiMinorAxisAccuracy;
+                        bs.SemiMajorAxisOrientation = bsm->SemiMajorAxisOrientation;
+                        bs.TransmissionState = bsm->TransmissionState;
+                        bs.Speed = bsm->Speed;
+                        bs.Heading_degrees = bsm->Heading_degrees;
+                        bs.SteeringWheelAngle = bsm->SteeringWheelAngle;
+                        bs.AccelLon_cm_per_sec_squared = bsm->AccelLon_cm_per_sec_squared;
+                        bs.AccelLat_cm_per_sec_squared = bsm->AccelLat_cm_per_sec_squared;
+                        bs.AccelVert_two_centi_gs = bsm->AccelVert_two_centi_gs;
+                        bs.AccelYaw_centi_degrees_per_sec = bsm->AccelYaw_centi_degrees_per_sec;
+                        bs.brakes = bsm->brakes;
+                        bs.VehicleWidth_cm = bsm->VehicleWidth_cm;
+                        bs.VehicleLength_cm = bsm->VehicleLength_cm;
+                        bs.events = bsm->events;
+                        // write the log here for this tx now. using tx timestamp made before sendto
+                        writeLog(index, 0, true, txType, validMessage, currTime, PSID_BSM, &bs, 0.0);
+                    }
+                }
             }
         }
         if(kinematicsReceive && appLocListener_ && hvLocationInfo){
@@ -2598,9 +2633,9 @@ bool ApplicationBase::openLogFile(const std::string& fullPathName) {
 }
 
 
-void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t index,
+void ApplicationBase::writeLog( const uint8_t index,
     uint32_t l2SrcAddr, bool isTx, TransmitType txType, bool validPkt,
-    uint64_t timestamp, uint32_t psid) {
+    uint64_t timestamp, uint32_t psid, bsm_data* bs, double distFromRV) {
     uint64_t periodicityMs = 0;
     int res = -1;
     uint64_t monotonicTime;
@@ -2612,19 +2647,6 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     if (not csvfp) {
         return;
     }
-
-    auto sp = mc.lock();
-
-    // check if valid msg contents pointer
-    if (!sp) {
-        return;
-    }
-
-    if(psid == PSID_BSM && !sp.get()->j2735_msg ){
-        // we do not care about non bsms for now
-        return;
-    }
-
     // build a string and then only lock for just that part in writing to the file
     char tmpLogBuf[650] = "";
     char* curChar = tmpLogBuf;
@@ -2657,7 +2679,7 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     // write general data to log
     // build the string in this function instead of immediately writing
     int ret = 0;
-    ret  = writeGeneralLog(tmpLogStr, 200, sp.get(), csvfp, isTx, periodicityMs, validPkt,
+    ret  = writeGeneralLog(tmpLogStr, 200, bs, csvfp, isTx, periodicityMs, validPkt,
                 RVsInRange, getCurrentTimestamp().c_str(), monotonicTime, timestamp,
                 locPositionDop_, locNumSvUsed_, locTimeMs_, cbr, txInterval, l2SrcAddr);
     // check if error in writing general data
@@ -2667,24 +2689,20 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     // if congestion control enabled, write cong ctrl data to log
     unsigned short eventsData = 0;
-    if(psid == PSID_BSM && sp.get()->j2735_msg){
-        bsm_value_t *bsm = (bsm_value_t*)(sp.get()->j2735_msg);
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventAirBagDeployment) << 12;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventDisabledVehicle) << 11;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventFlatTire) << 10;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventWipersChanged) << 9;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventLightsChanged) << 8;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventHardBraking) << 7;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardousMaterials) <<5;
-        eventsData |= (unsigned short)
-            (1 & bsm->events.bits.eventStabilityControlactivated) << 4;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventTractionControlLoss) << 3;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventABSactivated) << 2;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventStopLineViolation) <<1;
-        eventsData |= (unsigned short) (1 & bsm->events.bits.eventHazardLights) << 12;
-    }else{
-        eventsData = 0;
-    }
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventAirBagDeployment) << 12;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventDisabledVehicle) << 11;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventFlatTire) << 10;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventWipersChanged) << 9;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventLightsChanged) << 8;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventHardBraking) << 7;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventHazardousMaterials) <<5;
+    eventsData |= (unsigned short)
+        (1 & bs->events.bits.eventStabilityControlactivated) << 4;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventTractionControlLoss) << 3;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventABSactivated) << 2;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventStopLineViolation) <<1;
+    eventsData |= (unsigned short) (1 & bs->events.bits.eventHazardLights) << 12;
+
 
     if (this->configuration.enableCongCtrl && congCtrlInitialized && isTx) {
         // get a snapshot of the current cong control calculation
@@ -2702,31 +2720,10 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     memset(tmpLogStr, 0, sizeof(tmpLogStr));
     if(this->configuration.enableCongCtrl && congCtrlInitialized && !isTx){
-        double distFromRV = 0.0;
-        if(this->configuration.enableDistanceLogs){
-            bsm_value_t *bsm = (bsm_value_t*)(sp.get()->j2735_msg);
-            double rvLat = bsm->Latitude / 10000000.0;   // in degrees
-            double rvLon = bsm->Longitude / 10000000.0;  // in degrees
-            double hvLatitude = 0.0;
-            double hvLongitude = 0.0;
-            if(kinematicsReceive && appLocListener_ && hvLocationInfo){
-                if(ApplicationBase::positionOverride){
-                    hvLatitude = configuration.overrideLat;
-                    hvLongitude = configuration.overrideLong;
-                }
-                else{
-                    hvLatitude = hvLocationInfo->getLatitude();
-                    hvLongitude = hvLocationInfo->getLongitude();
-                }
-            }
-            if(hvLatitude != 0.0 && hvLongitude != 0.0){
-                distFromRV = bsmCompute2dDistance(hvLatitude, hvLongitude, rvLat, rvLon);
-            }
-        }
         char* tmpPtr = tmpLogStr;
         char* const endBuf = tmpPtr + 50;
         snprintf(tmpLogStr, endBuf-tmpPtr, ",%d,%f", congCtrlCbData.totalRvsInRange,
-            distFromRV);
+            bs->distFromRV);
         curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     }
     //reset

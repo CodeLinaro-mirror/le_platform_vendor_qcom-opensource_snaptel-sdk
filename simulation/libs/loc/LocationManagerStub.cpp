@@ -226,7 +226,7 @@ LocationManagerStub::LocationManagerStub() {
     derInterval_.store(0);
     derSeqDelta_.store(0);
     derSeqNo_.store(0);
-
+    managerStatus_ = ServiceStatus::SERVICE_UNAVAILABLE;
     std::thread t(&telux::loc::LocationManagerStub::managerThread, this);
     t.detach();
 }
@@ -251,7 +251,8 @@ bool LocationManagerStub::isSubsystemReady() {
 
 telux::common::ServiceStatus LocationManagerStub::getServiceStatus() {
     LOG(DEBUG, __FUNCTION__);
-    return telux::common::ServiceStatus::SERVICE_AVAILABLE;
+    std::lock_guard<std::mutex> lock(mutex_);
+    return managerStatus_;
 }
 
 telux::common::Status LocationManagerStub::init(telux::common::InitResponseCb callback) {
@@ -264,15 +265,15 @@ telux::common::Status LocationManagerStub::init(telux::common::InitResponseCb ca
 
 void LocationManagerStub::initSync(telux::common::InitResponseCb callback) {
     int cbDelay = 100;
-    telux::common::ServiceStatus serviceStatus = telux::common::ServiceStatus::SERVICE_FAILED;
     Json::Value rootNode;
 
     {
+        std::lock_guard<std::mutex> lock(mutex_);
         ErrorCode errorCode
             = JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
         if (errorCode == ErrorCode::SUCCESS) {
             cbDelay = rootNode["ILocationManager"]["SubSystemReadinessDelay"].asInt();
-            serviceStatus = rootNode["ILocationManager"]["SubSystemInit"].asBool() == true
+            managerStatus_ = rootNode["ILocationManager"]["SubSystemInit"].asBool() == true
                                 ? ServiceStatus::SERVICE_AVAILABLE
                                 : ServiceStatus::SERVICE_FAILED;
         } else {
@@ -280,10 +281,10 @@ void LocationManagerStub::initSync(telux::common::InitResponseCb callback) {
         }
     }
 
-    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(serviceStatus));
+    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(managerStatus_));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    callback(serviceStatus);
+    callback(managerStatus_);
     cv_.notify_all();
 }
 

@@ -726,6 +726,7 @@ private:
   void invokeXtraStatusUpdate();
   bool xtraEnabled_;
   uint32_t registrationMask_ = 0;
+
   bool waitForInitialization();
   void initSync(telux::common::InitResponseCb callback);
 
@@ -754,7 +755,7 @@ private:
     telux::common::AsyncTaskQueue<void> taskQ_;
     std::mutex mutex_;
     std::condition_variable cv_;
-
+    telux::common::ServiceStatus managerStatus_;
 };
 
 } // end of namespace loc

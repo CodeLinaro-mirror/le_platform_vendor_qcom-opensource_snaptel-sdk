@@ -75,6 +75,26 @@
 #include <chrono>
 #include <atomic>
 
+
+struct asyncCbData_t{
+    int indexToData;
+    bool verifSuccess;
+    AsyncCbState AsyncState=FREE;
+    signed int   Latitude;      // Degrees * 10^7
+    signed int   Longitude;     // Degrees * 10^7
+    unsigned int Heading_degrees;           // value (in degrees) / 0.0125
+    unsigned int Speed;                     // value (in kmph) * 250/18
+    uint64_t timestamp_ms;      // UTC Timestamp in milliseconds when bsm was creatd. computed from secmark_ms
+    unsigned int MsgCount;      // Ranges from 0 - 127 in cyclic fashion.
+    unsigned int tmpId;
+    bsm_data bs = {0};
+    uint32_t psid;
+    uint8_t msg_index;
+    uint64_t timestamp;
+    uint32_t l2SrcAddr;
+    double distFromRV;
+};
+
 class SaeApplication : public ApplicationBase {
 public:
     SaeApplication(char *fileConfiguration, MessageType msgType, bool enableCsvLog = false);
@@ -121,7 +141,8 @@ public:
 
     int setGlobalIPv6Prefix(void);
     int clearGlobalIPv6Prefix(void);
-
+    logData log_data;
+    asyncCbData_t asyncCbData[SHARED_BUFFER_MAX_SIZE];
 private:
     uint8_t prevSourceMac[CV2X_MAC_ADDR_LEN];
     std::atomic<bool>  GlobalIpSessionActive{false};
@@ -142,6 +163,7 @@ private:
     void (SaeApplication::*AsyncthrFn)()=&SaeApplication::AsyncPostProcessing;
     void AsyncPostProcessing();
     void postprocessing_cleanup();
+    void printStats(std::thread::id thrId);
     /**
     * Method to setup and perform transmission for SAE packets.
     * @param index - An uint8_t that is used for which buffer to access
@@ -172,7 +194,7 @@ private:
     * @param mc - A shared pointer to a v2x message contents struct
     * @param l2SrcAddr - the l2 src address of the RV; needed for flooding detection
     */
-    int decodeAndVerify(msg_contents* mc, int l2SrcAddr);
+    int decodeAndVerify(msg_contents* mc, int l2SrcAddr, logData *log_data);
 
 #ifdef WITH_WSA
     int onReceiveWra(RoutingAdvertisement_t *wra, uint8_t *sourceMacAddr, int& MacAdrLen);

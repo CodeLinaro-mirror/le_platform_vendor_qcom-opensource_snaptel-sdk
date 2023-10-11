@@ -330,6 +330,9 @@ int SaeApplication::receive(const uint8_t index, const uint16_t bufLen) {
         initMsg(threadMc, true);
     } else {
         abuf_reset(&threadMc->abuf, ABUF_HEADROOM);
+        if(threadMc->j2735_msg){
+            memset(threadMc->j2735_msg, 0, sizeof(bsm_value_t));
+        }
     }
 
     // receive packet
@@ -1238,13 +1241,6 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     bsm->timestamp_ms = timestamp_now();
     bsm->VehicleLength_cm = configuration.vehicleLength;
     bsm->VehicleWidth_cm = configuration.vehicleWidth;
-    if (configuration.enableVehicleExt==true) {
-        bsm->has_safety_extension = v2x_bool_t::V2X_True;
-        bsm->has_supplemental_extension = v2x_bool_t::V2X_True;
-    } else {
-        bsm->has_safety_extension = v2x_bool_t::V2X_False;
-        bsm->has_supplemental_extension = v2x_bool_t::V2X_False;
-    }
     bsm->secMark_ms = bsm->timestamp_ms % 60000;
     // needs to be randomized along with l2 address and msg id and pseudonym cert
 
@@ -1303,12 +1299,13 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 
     // NEED TO FIX THIS!!
     bsm->TransmissionState = J2735_TRANNY_FORWARD_GEARS;
-
     if(criticalState){
         bsm->has_partII = (v2x_bool_t)1;
+        bsm->has_safety_extension = (v2x_bool_t)1;
+    }else{
+        bsm->has_partII = (v2x_bool_t)0;
+        bsm->has_safety_extension = (v2x_bool_t)0;
     }
-
-    bsm->has_safety_extension = (v2x_bool_t)1;
     bsm->vehsafeopts = (v2x_bool_t)(bsm->vehsafeopts | (1 << 3));
     bsm->events.data = 0;
 

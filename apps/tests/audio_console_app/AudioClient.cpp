@@ -493,6 +493,7 @@ Status AudioClient::deleteStream(StreamType streamType) {
         std::cout << "request to delete stream sent" << std::endl;
     } else {
         std::cout << "Request to delete stream failed"  << std::endl;
+        return Status::FAILED;
     }
     if (p.get_future().get()) {
         if(streamType == StreamType::VOICE_CALL) {
@@ -538,6 +539,7 @@ void AudioClient::getStreamDevice(StreamType streamType) {
             std::cout << "Request to get device sent" << std::endl;
         } else {
             std::cout << "Request to get device failed" << std::endl;
+            return;
         }
 
         if (p.get_future().get()) {
@@ -575,6 +577,7 @@ void AudioClient::setStreamDevice(StreamType streamType) {
             std::cout << "Request to set device sent" << std::endl;
         } else {
             std::cout << "Request to set device failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
              std::cout << "set stream device succeeded." << std::endl;
@@ -607,6 +610,7 @@ void AudioClient::setVolume(StreamType streamType) {
             std::cout << "Request to set volume sent" << std::endl;
         } else {
             std::cout << "Request to set volume failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             std::cout << "setStreamVolume() succeeded." << std::endl;
@@ -641,6 +645,7 @@ void AudioClient::getVolume(StreamType streamType) {
             std::cout << "Request to get volume sent" << std::endl;
         } else {
             std::cout << "Request to get volume failed" << std::endl;
+            return;
         }
 
         if (p.get_future().get()) {
@@ -703,6 +708,7 @@ void AudioClient::setMute(StreamType streamType) {
             std::cout << "Request to set mute sent " << std::endl;
         } else {
             std::cout << "Request to set mute failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             if (mute.enable) {
@@ -744,6 +750,7 @@ void AudioClient::getMute(StreamType streamType) {
             std::cout << "Request to get mute sent" << std::endl;
         } else {
             std::cout << "Request to get mute failed" << std::endl;
+            return;
         }
         if (p.get_future().get()) {
             std::string muteStatus;

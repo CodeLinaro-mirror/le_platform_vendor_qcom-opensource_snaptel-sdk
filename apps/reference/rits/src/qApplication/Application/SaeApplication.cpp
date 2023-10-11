@@ -1233,10 +1233,12 @@ void SaeApplication::fillWsa(SrvAdvMsg_t *wsa, RoutingAdvertisement_t *wra) {
 void SaeApplication::fillBsm(bsm_value_t *bsm) {
     bool idChangeEnabled = false;
     memset(bsm, 0, sizeof(bsm_value_t));
-    srand(timestamp_now());
+
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    srand(ts.tv_sec * 1000000000LL + ts.tv_nsec);
     fillBsmCan(bsm);
     fillBsmLocation(bsm);
-
     bsm->timestamp_ms = timestamp_now();
     bsm->VehicleLength_cm = configuration.vehicleLength;
     bsm->VehicleWidth_cm = configuration.vehicleWidth;
@@ -1260,12 +1262,13 @@ void SaeApplication::fillBsm(bsm_value_t *bsm) {
     if (idChangeEnabled) {
         sem_wait(&idChangeData.idSem);
     }
-        // for synchronization between Application and Aerolink sides
+    // for synchronization between Application and Aerolink sides
+    // NOTE: real products should use a certified TRNG source and not
+    // rand() function for random number generation.
     if (!initialized) {
         bsm->MsgCount = (rand() % 128);
         bsm->id = rand();
         initialized = true;
-
         if (appVerbosity > 1) {
             printf("Msg count: %d, id: %u\n", bsm->MsgCount, bsm->id);
         }

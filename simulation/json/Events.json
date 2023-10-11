@@ -48,5 +48,16 @@
             "sender:           valid sender",
             "text:             valid text"
         ]
+    },
+    "loc_config":{
+        "xtra_status":[
+            "telsdk_event_injector -f loc_config -e xtra_status <validity> <dataStatus>",
+            "validity         Number of hours that xtra assistance data will remain valid",
+            "dataStatus       Valid status correspond to enum values of telux::loc::XtraDataStatus, eg: 1,2,3."
+        ],
+        "constellation_update":[
+            "telsdk_event_injector -f loc_config -e constellation_update <mask>",
+            "mask             A mask to enable different signals. Refer to telux::loc::GnssSignalType for the signals that can be enabled. An example of a valid mask is 0x1FFFFF."
+        ]
     }
 }

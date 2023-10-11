@@ -77,7 +77,9 @@ int writeGeneralLog(char* tmpLogStr, uint32_t maxSize, msg_contents *mc, FILE *m
     bool validPkt, uint32_t RVsInRange, const char* timeStamp, uint64_t monotonicTime, uint64_t realworldTimeNow,
     float locPositionDop, uint16_t locNumSvUsed, uint64_t gnssTime, uint8_t cbr,
     uint64_t txInterval, uint32_t l2SrcAddr);
-
+double bsmCompute2dDistance(double hvLat, double hvLon, double rvLat, double rvLon);
+    long double deg2rad(double deg);
+     double rad2deg(long double rad);
 #ifdef __cplusplus
 }
 #endif

@@ -70,7 +70,6 @@
 
 #include <ifaddrs.h>
 #include <netdb.h>
-#include <sys/time.h>
 #include "ApplicationBase.hpp"
 #include "VehicleReceive.h"
 using std::cout;
@@ -87,13 +86,22 @@ using telux::sec::LoadConfig;
 // Congestion Control related variables
 CongestionControlData ApplicationBase::congestionControlOut;
 sem_t ApplicationBase::congCtrlCbSem;
-CongestionControlUserData ApplicationBase::congCtrlCbData;
+shared_ptr<CongestionControlUserData> ApplicationBase::congCtrlCbDataPtr;
+CongestionControlCalculations ApplicationBase::congCtrlCbData;
 bool ApplicationBase::cbSuccess;
 shared_ptr<telux::cv2x::prop::ICongestionControlManager> ApplicationBase::congestionControlManager;
 FILE* ApplicationBase::csvfp;
 std::mutex ApplicationBase::csvMutex;
 bool ApplicationBase::securityEnabled;
 bool ApplicationBase::congCtrlEnabled;
+bool ApplicationBase::positionOverride;
+double ApplicationBase::overrideLat;
+double ApplicationBase::overrideLong;
+double ApplicationBase::overrideHead;
+double ApplicationBase::overrideElev;
+double ApplicationBase::overrideSpeed;
+shared_ptr<ILocationInfoEx> ApplicationBase::hvLocationInfo;
+
 std::string getCurrentTimestamp()
 {
     using std::chrono::system_clock;
@@ -110,6 +118,8 @@ std::string getCurrentTimestamp()
 
 void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
 {
+    //ApplicationBase::hvLocationInfo = locationInfo;
+    ApplicationBase::setHvLocation(locationInfo);
     // callback will pass data to corresponding other components
     #ifdef AEROLINK
     if(ApplicationBase::securityEnabled){
@@ -123,18 +133,32 @@ void locCbFn (shared_ptr<ILocationInfoEx> &locationInfo)
     }
     #endif
     if(ApplicationBase::congCtrlEnabled){
-        Position pos;
-        pos.posLat = (locationInfo->getLatitude());
-        pos.posLong = (locationInfo->getLongitude());
-        pos.heading = (locationInfo->getHeading());
-        pos.elev = (locationInfo->getAltitude());
+        Position pos = {0};
+        double speed = 0.0;
+        if(ApplicationBase::positionOverride){
+            pos.posLat = ApplicationBase::overrideLat;
+            pos.posLong = ApplicationBase::overrideLong;
+            pos.heading = ApplicationBase::overrideHead;
+            pos.elev = ApplicationBase::overrideElev;
+            speed = ApplicationBase::overrideSpeed;
+        }else{
+            pos.posLat = (locationInfo->getLatitude());
+            pos.posLong = (locationInfo->getLongitude());
+            pos.heading = (locationInfo->getHeading());
+            pos.elev = (locationInfo->getAltitude());
+            speed = locationInfo->getSpeed();
+        }
         if(ApplicationBase::congestionControlManager){
                 CCErrorCode res =
                     ApplicationBase::congestionControlManager->updateHostVehicleData(
-                    pos, locationInfo->getSpeed());
+                    pos, speed);
         }
     }
 
+}
+
+void ApplicationBase::setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn){
+   ApplicationBase::hvLocationInfo = hvLocationInfoIn;
 }
 
 void ApplicationBase::writeSecurityLog(char* tmpLogStr, uint32_t maxBufSize, FILE *myfp){
@@ -253,9 +277,14 @@ void updateSpsTransmitFlow(
 void onCongestionControlDataReady (
     std::shared_ptr<CongestionControlUserData> congestionControlUserData,
         bool critEvent) override {
-    QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
-    if(!critEvent){
-        sem_post(congestionControlUserData->congestionControlSem);
+
+    if(congestionControlUserData){
+        QitsCongCtrlListener::updateSpsTransmitFlow(congestionControlUserData);
+        memcpy(&ApplicationBase::congCtrlCbData, congestionControlUserData->congestionControlCalculations.get(),
+                sizeof(CongestionControlCalculations));
+        if(!critEvent){
+            sem_post(congestionControlUserData->congestionControlSem);
+        }
     }
 }
 };
@@ -532,6 +561,8 @@ ApplicationBase::ApplicationBase(const string txIpv4, const uint16_t txPort,
         locListeners.push_back(appLocListener_);
         kinematicsReceive = std::make_shared<KinematicsReceive>
                 (locListeners, this->configuration.locationInterval);
+        // wait some time for location fixes to come in
+        usleep(100000);
     }
 
     sem_init(&this->rx_sem, 0, 1);
@@ -1626,6 +1657,47 @@ void ApplicationBase::saveConfiguration(map<string, string> configs) {
     // Add qMonConfig elements here after this line.
     // e.g. qMonConfig->sockDomain = AF_INET; // etc etc...
 
+    // enable 2d distance calculation log when logging for each packet
+    if (configs.end() != configs.find("enableDistanceLogs")) {
+        istringstream is(configs["enableDistanceLogs"]);
+        is >> boolalpha >> this->configuration.enableDistanceLogs;
+    }
+
+    // use the user-provided position in config file
+    if (configs.end() != configs.find("positionOverride")) {
+        istringstream is(configs["positionOverride"]);
+        is >> boolalpha >> this->configuration.positionOverride;
+        if(this->configuration.positionOverride == true){
+            ApplicationBase::positionOverride = true;
+            if(configs.find("overrideLat") != configs.end()){
+                this->configuration.overrideLat = stod(configs["overrideLat"]);
+                ApplicationBase::overrideLat = this->configuration.overrideLat;
+            }
+            if(configs.find("overrideLong") != configs.end()){
+                this->configuration.overrideLong = stod(configs["overrideLong"]);
+                ApplicationBase::overrideLong = this->configuration.overrideLong;
+            }
+            if(configs.find("overrideHead") != configs.end()){
+                this->configuration.overrideHead = stod(configs["overrideHead"]);
+                ApplicationBase::overrideHead = this->configuration.overrideHead;
+            }
+            if(configs.find("overrideElev") != configs.end()){
+                this->configuration.overrideElev = stod(configs["overrideElev"]);
+                ApplicationBase::overrideElev = this->configuration.overrideElev;
+            }
+            if(configs.find("overrideSpeed") != configs.end()){
+                this->configuration.overrideSpeed = stod(configs["overrideSpeed"]);
+                ApplicationBase::overrideSpeed = this->configuration.overrideSpeed;
+            }
+            std::cout << "OVERRIDING POSITION FIXES WITH CONFIG ITEMS: ";
+            std::cout << "\nLAT: " << this->configuration.overrideLat << ", ";
+            std::cout << "\nLON: " << this->configuration.overrideLong << ", ";
+            std::cout << "\nELE: " << this->configuration.overrideHead << ", ";
+            std::cout << "\nHEAD: " << this->configuration.overrideElev << ", ";
+            std::cout << "\nSPD: " << this->configuration.overrideSpeed << "\n";
+        }
+    }
+
     /*
       check if congestion control is enabled and begin setting the cong ctrl config parameters
     */
@@ -2048,13 +2120,14 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                 congestionControlManager->updateSpsEnhanceConfig
                     (congCtrlConfig.spsEnhIntervalRound, congCtrlConfig.spsEnhDelayPerc,
                     congCtrlConfig.spsEnhHysterPerc);
-                //QitsCongCtrlListener::initSpsTransmitFlow(&this->spsTransmits[index]);
+                // need to use squish api for this in future
                 QitsCongCtrlListener::spsTransmit_ = &this->spsTransmits[index];
             }
             if(CCErrorCode::SUCCESS !=
                     congestionControlManager->startCongestionControl()){
                 std::cerr << "Congestion control manager failed start up\n";
             }
+            congCtrlCbDataPtr = std::make_shared<CongestionControlUserData>();
             sem_wait (congestionControlManager->
                     getCongestionControlUserData()->congestionControlSem);
             currTime = timestamp_now();
@@ -2081,13 +2154,10 @@ int ApplicationBase::send(uint8_t index, TransmitType txType) {
                 lastTxTime = currTime;
             }
         }
-        if (kinematicsReceive && appLocListener_) {
-            auto locationInfo = appLocListener_->getLocation();
-            if (locationInfo) {
-                locTimeMs_ = locationInfo->getTimeStamp();
-                locPositionDop_ = locationInfo->getPositionDop();
-                locNumSvUsed_ = locationInfo->getNumSvUsed();
-            }
+        if(kinematicsReceive && appLocListener_ && hvLocationInfo){
+            locTimeMs_ = hvLocationInfo->getTimeStamp();
+            locPositionDop_ = hvLocationInfo->getPositionDop();
+            locNumSvUsed_ = hvLocationInfo->getNumSvUsed();
         }
     }
     return (validMessage ? encLength : 0);
@@ -2112,12 +2182,11 @@ int ApplicationBase::encodeAndSignMsg(std::shared_ptr<msg_contents> mc,
     }
     sopt.enableAsync = this->configuration.enableAsync;
     sopt.secVerbosity = this->configuration.secVerbosity;
-    if(kinematicsReceive && appLocListener_){
-        shared_ptr<ILocationInfoEx> locationInfo =
-                                    appLocListener_->getLocation();
-        sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
-        sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
-        sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
+
+    if(kinematicsReceive && appLocListener_ && hvLocationInfo){
+        sopt.hvKine.latitude = (hvLocationInfo->getLatitude() * 10000000);
+        sopt.hvKine.longitude = (hvLocationInfo->getLongitude() * 10000000);
+        sopt.hvKine.elevation = (hvLocationInfo->getAltitude() * 10);
     }
 
     std::thread::id tid = std::this_thread::get_id();
@@ -2458,7 +2527,8 @@ void ApplicationBase::writeLogHeader(FILE *fp) {
     fprintf(fp, "secMark,lat,long,semi_major_dev,speed,");
     fprintf(fp, "heading,longAccel,latAccel,Tracking_Error,");
     fprintf(fp, "vehicleDensityInRange,ChannelQualityIndication,");
-    fprintf(fp, "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis");
+    fprintf(fp, "BSMValid,max_ITT,GPS-Time,Events,DCC random time,Hysterisis,");
+    fprintf(fp, "TotalRVs,DistanceFromRV");
     // TODO add security headers here too
     fprintf(fp, "\n");
 }
@@ -2512,7 +2582,7 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
         return;
     }
 
-    auto sp = mc.lock(); 
+    auto sp = mc.lock();
 
     // check if valid msg contents pointer
     if (!sp) {
@@ -2525,7 +2595,7 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     }
 
     // build a string and then only lock for just that part in writing to the file
-    char tmpLogBuf[600] = "";
+    char tmpLogBuf[650] = "";
     char* curChar = tmpLogBuf;
     char* const endChar = tmpLogBuf + sizeof tmpLogBuf - 1;
     char tmpLogStr[200] = "";
@@ -2586,23 +2656,48 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     }
 
     if (this->configuration.enableCongCtrl && congCtrlInitialized && isTx) {
-        // get a snapshot of the current cong control calculations
-        CongestionControlCalculations congCtrlCalcs = {0};
-        memcpy(&congCtrlCalcs, congestionControlManager->
-                getCongestionControlUserData()->congestionControlCalculations.get(), 
-                sizeof(CongestionControlCalculations));
-        writeCongCtrlLog(tmpLogStr, 200, csvfp,
-            &congCtrlCalcs,
+        // get a snapshot of the current cong control calculation
+            writeCongCtrlLog(tmpLogStr, 200, csvfp,
+            &congCtrlCbData,
             validPkt, eventsData);
     }else{
         // make sure to write commas for the empty fields
         snprintf(tmpLogStr, 200, "0.0,0.0,0.0,%d,%lu,0.0,%u,0,%d",
-            validPkt ? 1 : 0, 
-            (this->configuration.enableCongCtrl && congCtrlInitialized) ? congestionControlManager->
-            getCongestionControlUserData()->congestionControlCalculations->maxITT : 0,
+            validPkt ? 1 : 0,
+            (this->configuration.enableCongCtrl && congCtrlInitialized) ?
+              congCtrlCbData.maxITT : 0,
             eventsData, this->congCtrlConfig.spsEnhHysterPerc);
     }
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    memset(tmpLogStr, 0, sizeof(tmpLogStr));
+    if(this->configuration.enableCongCtrl && congCtrlInitialized && !isTx){
+        double distFromRV = 0.0;
+        if(this->configuration.enableDistanceLogs){
+            bsm_value_t *bsm = (bsm_value_t*)(sp.get()->j2735_msg);
+            double rvLat = bsm->Latitude / 10000000.0;   // in degrees
+            double rvLon = bsm->Longitude / 10000000.0;  // in degrees
+            double hvLatitude = 0.0;
+            double hvLongitude = 0.0;
+            if(kinematicsReceive && appLocListener_ && hvLocationInfo){
+                if(ApplicationBase::positionOverride){
+                    hvLatitude = configuration.overrideLat;
+                    hvLongitude = configuration.overrideLong;
+                }
+                else{
+                    hvLatitude = hvLocationInfo->getLatitude();
+                    hvLongitude = hvLocationInfo->getLongitude();
+                }
+            }
+            if(hvLatitude != 0.0 && hvLongitude != 0.0){
+                distFromRV = bsmCompute2dDistance(hvLatitude, hvLongitude, rvLat, rvLon);
+            }
+        }
+        char* tmpPtr = tmpLogStr;
+        char* const endBuf = tmpPtr + 50;
+        snprintf(tmpLogStr, endBuf-tmpPtr, ",%d,%f", congCtrlCbData.totalRvsInRange,
+            distFromRV);
+        curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
+    }
     //reset
     memset(tmpLogStr, 0, sizeof(tmpLogStr));
     /* Security related fields */
@@ -2612,8 +2707,10 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     }else {
         // todo: make sure to write commas for the empty fields
     }
+
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     // lock here to prevent race conditions when writing to file
     lock_guard<std::mutex> lock(csvMutex);
     fprintf(csvfp, "%s\n", tmpLogBuf);
+
 }

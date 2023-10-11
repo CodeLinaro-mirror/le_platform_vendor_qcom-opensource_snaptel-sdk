@@ -72,7 +72,6 @@
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include <fstream>
 #include <sstream>
-#include <sys/time.h>
 #include "asnbuf.h"
 #include "wsmp.h"
 
@@ -705,15 +704,12 @@ int SaeApplication::decodeAndVerify(msg_contents* mc, int l2SrcAddr) {
         }
     }
     // set the hv kinematics
-    shared_ptr<ILocationInfoEx> locationInfo;
-    if(configuration.enableLocationFixes && kinematicsReceive && appLocListener_){
-        auto locationInfo = appLocListener_->getLocation();
-        if (locationInfo) {
-            sopt.hvKine.latitude = (locationInfo->getLatitude() * 10000000);
-            sopt.hvKine.longitude = (locationInfo->getLongitude() * 10000000);
-            sopt.hvKine.elevation = (locationInfo->getAltitude() * 10);
-        }
+    if(hvLocationInfo){
+        sopt.hvKine.latitude = (hvLocationInfo->getLatitude() * 10000000);
+        sopt.hvKine.longitude = (hvLocationInfo->getLongitude() * 10000000);
+        sopt.hvKine.elevation = (hvLocationInfo->getAltitude() * 10);
     }
+
     // prepare verification statistics logging
     if (configuration.enableVerifStatLog) {
         std::thread::id tid = std::this_thread::get_id();
@@ -1349,36 +1345,31 @@ void SaeApplication::fillBsmCan(bsm_value_t *bsm)
 
 void SaeApplication::fillBsmLocation(bsm_value_t *bsm) {
     if(!configuration.enableLocationFixes || !kinematicsReceive ||
-        !appLocListener_){
-        return;
-    }
-    shared_ptr<ILocationInfoEx> locationInfo = appLocListener_->getLocation();
-    if(!locationInfo){
-        std::cout << "Invalid location info\n";
+        !appLocListener_ || !hvLocationInfo){
         return;
     }
     //ref_app code with the new telSDK Location
-    bsm->Latitude = (locationInfo->getLatitude() * 10000000);
-    bsm->Longitude = (locationInfo->getLongitude() * 10000000);
-    bsm->Elevation = (locationInfo->getAltitude() * 10);
+    bsm->Latitude = (hvLocationInfo->getLatitude() * 10000000);
+    bsm->Longitude = (hvLocationInfo->getLongitude() * 10000000);
+    bsm->Elevation = (hvLocationInfo->getAltitude() * 10);
 
-    bsm->SemiMajorAxisAccuracy = (locationInfo->getHorizontalUncertaintySemiMajor() * 20);
+    bsm->SemiMajorAxisAccuracy = (hvLocationInfo->getHorizontalUncertaintySemiMajor() * 20);
 
-    bsm->SemiMinorAxisAccuracy = (locationInfo->getHorizontalUncertaintySemiMinor() * 20);
+    bsm->SemiMinorAxisAccuracy = (hvLocationInfo->getHorizontalUncertaintySemiMinor() * 20);
 
-    bsm->SemiMajorAxisOrientation = (locationInfo->getHorizontalUncertaintyAzimuth() / 0.0054932479);
+    bsm->SemiMajorAxisOrientation = (hvLocationInfo->getHorizontalUncertaintyAzimuth() / 0.0054932479);
 
-    bsm->Heading_degrees = (locationInfo->getHeading() / 0.0125);
+    bsm->Heading_degrees = (hvLocationInfo->getHeading() / 0.0125);
 
-    bsm->Speed = (50 * locationInfo->getSpeed());
+    bsm->Speed = (50 * hvLocationInfo->getSpeed());
 
-    bsm->AccelLat_cm_per_sec_squared = (100 * locationInfo->getBodyFrameData().latAccel);
+    bsm->AccelLat_cm_per_sec_squared = (100 * hvLocationInfo->getBodyFrameData().latAccel);
 
-    bsm->AccelLon_cm_per_sec_squared = (100 * locationInfo->getBodyFrameData().longAccel);
+    bsm->AccelLon_cm_per_sec_squared = (100 * hvLocationInfo->getBodyFrameData().longAccel);
 
-    bsm->AccelVert_two_centi_gs = (locationInfo->getBodyFrameData().latAccel * 50); // / 0.1962);
+    bsm->AccelVert_two_centi_gs = (hvLocationInfo->getBodyFrameData().latAccel * 50); // / 0.1962);
 
-    bsm->AccelYaw_centi_degrees_per_sec = (locationInfo->getBodyFrameData().yawRate * 100);
+    bsm->AccelYaw_centi_degrees_per_sec = (hvLocationInfo->getBodyFrameData().yawRate * 100);
 }
 void SaeApplication::initRecordedBsm(bsm_value_t* bsm) {
     bsm->timestamp_ms = (uint64_t ) 0;

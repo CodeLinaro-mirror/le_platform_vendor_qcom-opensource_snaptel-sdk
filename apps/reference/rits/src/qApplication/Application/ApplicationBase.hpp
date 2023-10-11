@@ -258,6 +258,7 @@ struct Config{
     uint32_t signStatsSize = 10000;
     string signStatLogFile = "/tmp/sign_stats.log";
     bool enableLocationFixes = true;
+    bool enableDistanceLogs = false;
     bool enableVehicleDataCallbacks = true;
     /* config data for Ieee1609.3 Wsa */
     long routerLifetime;
@@ -297,6 +298,12 @@ struct Config{
 
     string congestionControlConfigFileName = "CongestionControlConfig.conf";
     bool enableCongCtrl = false; // flag to override actual mvm capacity for testing purposes
+    bool positionOverride = false;
+    double overrideLat = 0.0;
+    double overrideLong = 0.0;
+    double overrideHead = 0.0;
+    double overrideElev = 0.0;
+    double overrideSpeed = 0.0;
 };
 
 /* Congestion Control CongestionControl Data */
@@ -644,13 +651,21 @@ public:
     shared_ptr<Cv2xTmListener> cv2xTmListener;
 
     // congestion variables that we'd want the driver program to access
-    static CongestionControlUserData congCtrlCbData;
+    static shared_ptr<CongestionControlUserData> congCtrlCbDataPtr;
+    static CongestionControlCalculations congCtrlCbData;
     static shared_ptr<ICongestionControlManager> congestionControlManager;
     static bool cbSuccess;
     static bool congCtrlEnabled;
     static bool securityEnabled;
-
+    static bool positionOverride;
+    static double overrideLat;
+    static double overrideLong;
+    static double overrideHead;
+    static double overrideElev;
+    static double overrideSpeed;
+    static void setHvLocation(shared_ptr<ILocationInfoEx>& hvLocationInfoIn);
 protected:
+    static shared_ptr<ILocationInfoEx> hvLocationInfo;
     bool isTx = false;
     bool isRx = false;
     bool isTxSim = false;

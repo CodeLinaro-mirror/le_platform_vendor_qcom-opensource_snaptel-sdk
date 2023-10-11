@@ -189,6 +189,8 @@ struct CongestionControlCalculations {
     double trackingError;
     /** Latest calculated smoothed average density */
     double smoothDens;
+    /** Latest unsmoothed density in range */
+    int totalRvsInRange;
     /** Latest calculated channel quality indicator and packet error rates */
     std::shared_ptr<ChannelData> channData;
     /** SPS flow changes that may need to be made for congestion control */

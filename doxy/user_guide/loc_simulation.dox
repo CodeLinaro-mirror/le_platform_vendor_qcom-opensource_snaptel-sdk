@@ -11,6 +11,17 @@ This section has details about the simulation for APIs under the telux::loc name
 The location simulation framework provides the ability to record location data from an actual Telematics device.
 Applications using ILocationManager APIs will get reports from this recorded data.
 
+@anchor fig_loc_sim_overview
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{simulation_location_overview.PNG}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Location Simulation Framework}
+  \label{fig_loc_sim_overview}
+\end{figure}
+@endlatexonly
+
 @html_image{simulation_location_overview.png,"",50,50,Location Simulation Framework}
 
 <br>

@@ -10,9 +10,36 @@ This allows applications to be developed, compiled, and executed using this fram
 The Simulation framework is designed to be configurable to tweak the behavior and the responses of the APIs. This provides flexibility to exercise the client code in multiple ways and scenarios.
 Users can run the Simulation framework within a docker as well if desired.
 
-@table{2,{\raggedright}p{2.00in},{\raggedright}p{2.80in}}
-@tr @td @html_image{telsdk_overview.png,"",100,100,TelSDK On-Target Architecture} @tdend @tdlast @html_image{telsdk_simulation_overview.png,"",100,100,TelSDK Simulation Architecture} @tdlastend @trend
-@tableend
+@anchor fig_telsdk_overview
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{telsdk_overview.PNG}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{TelSDK On-Target Architecture}
+  \label{fig_telsdk_overview}
+\end{figure}
+@endlatexonly
+
+@anchor fig_telsdk_sim_overview
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{telsdk_simulation_overview.PNG}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{TelSDK Simulation Architecture}
+  \label{fig_telsdk_sim_overview}
+\end{figure}
+@endlatexonly
+
+\htmlonly
+<table>
+<tr>
+<td><img src="images/telsdk_overview.PNG" height="400" width ="450"></td>
+<td> <img src="images/telsdk_simulation_overview.PNG" height="400" width="450"></td>
+</tr>
+</table>
+\endhtmlonly
 
 <br>
 - - -
@@ -56,7 +83,7 @@ To build various components of the Simulation framework:
 
 1. Fetch the source code
 \code{.sh}
-$ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git -b telsdk.lnx.2.0 telux
+$ git clone https://git.codelinaro.org/clo/le/platform/vendor/qcom-opensource/snaptel-sdk.git -b telsdk.lnx.2.0.r11-rel telux
 $ cd telux/
 \endcode
 \htmlonly
@@ -116,6 +143,7 @@ $ sudo usermod -aG docker ${USER}
 
 2. Build docker image
 \code{.sh}
+$ cd telux/
 $ ./build_sim.sh docker-image <DESTINATION_FOLDER_ROOT_PATH>
 \endcode
 \htmlonly
@@ -167,7 +195,7 @@ $ telsdk_simulation_server &
 
 3. User application can be started or if users wish to run one of the SDK's sample app or test app, then
 \code{.sh}
-$ ./<APP_NAME>
+$ <APP_NAME>
 \endcode
 \htmlonly
 <BR>
@@ -259,11 +287,12 @@ The data stored and used by the simulation can be classified into three categori
 - - -
 @section log Logging in simulation
 - - -
-TelSDK simulation framework supports logging. User configurable logger settings available in <i>/etc/telux/tel.conf</i> are listed below.
+TelSDK simulation framework supports logging. User configurable logger settings available in <i>/etc/telux/tel.conf</i> are listed below.<br>
+
 
 @table{2,{\raggedright}p{1.00in},{\raggedright}p{2.80in}}
-@tr @td LOGGER_LEVEL @tdend @tdlast Supported log levels are: <br><br><i>DISABLE_ALL</i> - No logging<br><i>ERROR</i> - Very minimal logging. Prints error messages only.<br><i>WARNING</i> - Prints error and warning messages.<br><i>INFO</i> - Prints errors, warning, and information messages.<br><i>DEBUG</i> - Full logging including debug messages. It is intended for debugging purposes only.@tdlastend @trend
-@tr @td LOGGER_TYPE @tdend @tdlast Supported log types are: <br><br><i>CONSOLE_LOG</i> - enables console logging<br><i>FILE_LOG</i> - enables file-based logging. Once file logging is enabled, LOG_FILE_NAME and LOG_FILE_PATH could further be configured by users.<br><i>CONSOLE_FILE_LOG</i> - enables console and file logging.<br><i>SYSLOG_LOG</i> - enables syslog logging.@tdlastend @trend
+@tr @td LOGGER_LEVEL @tdend @tdlast Supported log levels are: <br><br><i>NONE</i> - No logging<br><i>PERF</i> - Prints messages with nanoseconds precision timestamp.<br><i>ERROR</i> - Very minimal logging. Prints error messages only.<br><i>WARNING</i> - Prints perf, error and warning messages.<br><i>INFO</i> - Prints errors, warning, and information messages.<br><i>DEBUG</i> - Full logging including debug messages.It is intended for debugging purposes only.@tdlastend @trend
+@tr @td LOGGER_TYPE @tdend @tdlast Supported log types are: <br><br><i>CONSOLE_LOG</i> - enables console logging<br><i>FILE_LOG</i> - enables file-based logging. Once file logging is enabled, LOG_FILE_NAME and LOG_FILE_PATH could further be configured by users.<br><i>SYSLOG_LOG</i> - enables syslog logging.@tdlastend @trend
 
 @tableend
 

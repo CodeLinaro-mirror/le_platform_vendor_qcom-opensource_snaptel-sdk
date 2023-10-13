@@ -30,7 +30,7 @@
 /*
  *  Changes from Qualcomm Innovation Center are provided under the following license:
  *
- *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -188,6 +188,7 @@ enum class ErrorCode {
    NO_EFFECT = 101,                      /**< Given request had to no effect */
    DEVICE_NOT_READY = 102,               /**< Device not ready */
    MISSING_ARGUMENTS = 103,              /**< Missing one or more arguments */
+   FILE_NOT_FOUND = 104,                 /**< Required configuration file is missing */
 
    PIN_PERM_BLOCKED = 201,               /**< PIN is permanently blocked. The SIM is unusable. */
    PIN_BLOCKED = 202,                    /**< PIN is blocked. Unblock operation must be issued. */

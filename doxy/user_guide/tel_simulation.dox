@@ -7,6 +7,17 @@
 This page and the sub-pages provide information about usage of simulation for the telephony
 sub-system that are part of the telux::tel namespace of the Telematics SDK.
 
+@anchor fig_tel_sim_overview
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.45]{simulation_telephony_overview.PNG}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Telephony Simulation Framework}
+  \label{fig_tel_sim_overview}
+\end{figure}
+@endlatexonly
+
 @html_image{simulation_telephony_overview.png,"",50,50,Telephony Simulation Framework}
 
 <br>

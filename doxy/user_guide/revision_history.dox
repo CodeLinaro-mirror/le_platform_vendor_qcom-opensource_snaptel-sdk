@@ -88,7 +88,8 @@ when       who     what, where, why
 @trhdgend
 @tr @tdmulrow{1,AP} @tdmulrowend
 @td Oct 2023 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.63.0 @tdlastend @trend
+\- Add support for Diagnostics services
+<br>\- Updated documentation for API reference and user guide for V1.63.0 @tdlastend @trend
 @tr @tdmulrow{1,AN} @tdmulrowend
 @td Sep 2023 @tdend @tdlast
 \- Updated documentation for API reference and user guide for V1.62.0 @tdlastend @trend
@@ -119,7 +120,8 @@ when       who     what, where, why
 @tdlastend @trend
 @tr @tdmulrow{1,AE} @tdmulrowend
 @td Nov 2022 @tdend @tdlast
-\- Updated documentation for API reference and user guide for V1.54.0 @tdlastend @trend
+\- Add support for WLAN features
+<br>\- Updated documentation for API reference and user guide for V1.54.0 @tdlastend @trend
 @tr @tdmulrow{1,AD} @tdmulrowend
 @td Sep 2022 @tdend @tdlast
 \- Added information of linux group IDs @tdlastend @trend

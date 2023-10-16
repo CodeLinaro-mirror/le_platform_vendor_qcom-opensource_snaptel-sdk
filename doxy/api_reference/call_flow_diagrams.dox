@@ -4475,4 +4475,62 @@ threat report for WiFi connections.
 11. Application calls IApInterfaceManager::managerApService to restart hostapd daemon.
 12. Application receives response to restart hostapd daemon and access point configuration shall be active at this stage.
 
+@section diag_call_flow Diagnostics
+@subsection diag_using_file_method_call_flow Call flow to collect logs using file method
+
+@anchor fig_diag_using_file_method_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{diag_file_method.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Log Collection Using File Method Call Flow}
+  \label{fig_diag_using_file_method_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{diag_file_method.png,File Method Log Collection Call Flow,80,80,File Method Log Collection Call Flow}
+
+1. Application requests IDiagLogManager object from Diagnostics factory.
+2. Diagnostics factory returns a shared pointer to the Diagnostics factory object to the application.
+3. Application shall wait for init callback
+4. Application shall ensure subsystem is ready before proceeding
+5. Application can use IDiagLogManager::getStatus to determine the current system status.
+6. Application can check returned status to ensure diag logging is not already in progress.
+7. Application can call IDiagLogManager::setConfig to set desired configurations.
+8. Application must ensure the return status is Success.
+9. Application can call IDiagLogManager::startLogCollection to start logging.
+10. Application must ensure the return status is Success.
+11. Application can IDiagLogManager::stopLogCollection to stop logging.
+12. Application must ensure the return status is Success.
+
+@subsection diag_using_callback_method_call_flow Call flow to collect logs using callback method
+
+@anchor fig_diag_using_callback_method_call_flow
+@latexonly
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{diag_callback_method.png}
+  \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+  \caption{Log Collection Using Callback Method Call Flow}
+  \label{fig_diag_using_callback_method_call_flow}
+\end{figure}
+@endlatexonly
+
+@html_image{diag_callback_method.png,Callback Method Log Collection Call Flow,80,80,Callback Method Log Collection Call Flow}
+
+1. Application requests IDiagLogManager object from Diagnostics factory.
+2. Diagnostics factory returns a shared pointer to the Diagnostics factory object to the application.
+3. Application shall wait for init callback
+4. Application shall ensure subsystem is ready before proceeding
+5. Application can use IDiagLogManager::getStatus to determine the current system status.
+6. Application can check returned status to ensure diag logging is not already in progress.
+7. Application can call IDiagLogManager::setConfig to set desired configurations.
+8. Application must ensure the return status is Success.
+9. Application can call IDiagLogManager::startLogCollection to start logging.
+10. Application must ensure the return status is Success.
+11. TelSDK will invoke callback provided by the application whenever new log entry is availabe.
+12. Application can IDiagLogManager::stopLogCollection to stop logging.
+13. Application must ensure the return status is Success.
+
 */

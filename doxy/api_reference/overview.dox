@@ -147,9 +147,14 @@ The Telematics library runs in the user space of the Linux system. It interacts 
 <b>Debug Logger</b>
 
    Logger consists of API that can be utilized to log messages from SDK Applications.
+
 <b>WLAN Management</b>
 
    The WLAN management subsystem consists of APIs to configure, enable, and set access point and station configurations.
+
+<b>Diagnostics Services</b>
+
+   The Diagnostics services subsystem consists of APIs to configure, start and stop diagnostic logging.
 
 Telematics SDK classes can be broadly divided into the following types:
 
@@ -560,6 +565,20 @@ WLAN management APIs in the Telematics SDK provide services related to the follo
    - Request station status
    - Request list of devices connected to any access point.
    - Restart hostapd and wpa_supplicant daemons
+
+@subsection diag_services Diagnostic Services
+Two methods are supported to collect logs; file and callback method. In file method, logs are captured
+and saved to file. In callback method, log is passed to client provided callback whenever new log is generated.
+Logging is also provided per device or peripheral level. With device level logging, logs from all peripherals in
+that device is collected. With peripheral logging, logs from client selected perihpherals only are captured.
+Diagnostic services APIs in the Telematics SDK provide the following functionality.
+   - Configure diagnostic servics which include:
+      - Set logging level (Device/Peripheral).
+      - Set logging method (File/Callback).
+      - Set logging mode (Streaming, Threshold, or Circular Buffer).
+      - Set mask file for both modem and or EAP.
+      - Set max file size and max number of files generated if file method logging is selected.
+   - Start/Stop logging.
 
 @section subsystem_restart_handeling Subsystem Restart
 Subsystem restart events occur when device operating system or services crashes due to any reason and then reboots

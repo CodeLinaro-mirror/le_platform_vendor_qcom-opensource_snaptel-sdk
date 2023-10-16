@@ -29,7 +29,7 @@
 ##############################################################################
 #  Changes from Qualcomm Innovation Center are provided under the following license:
 #
-#  Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+#  Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted (subject to the limitations in the
@@ -329,7 +329,8 @@ INPUT                  = $(TITLE_PAGE) \
                          $(TELUX_GIT_ROOT)/docs/api_samples/crypto_accelerator/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/cellular_connection_security/ \
                          $(TELUX_GIT_ROOT)/docs/api_samples/wifi_connection_security/ \
-                         $(TELUX_GIT_ROOT)/docs/api_samples/wlan/
+                         $(TELUX_GIT_ROOT)/docs/api_samples/wlan/ \
+                         $(TELUX_GIT_ROOT)/docs/api_samples/diag/
 
 INPUT_ENCODING         = UTF-8
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and

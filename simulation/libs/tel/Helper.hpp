@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -34,24 +34,34 @@
 
 
 /**
- * @file       SmsMessageHelper.hpp
+ * @file       Helper.hpp
  *
  * @brief
  *
  */
 
-#ifndef SMS_MESSAGEHELPER_HPP
-#define SMS_MESSAGEHELPER_HPP
+#ifndef HELPER_HPP
+#define HELPER_HPP
 
-#include "common/Logger.hpp"
-#include "common/CsvHandler.hpp"
 #include <telux/tel/SmsManager.hpp>
+#include <telux/tel/PhoneDefines.hpp>
 
  enum TelEventType {
     UNKNOWN,
     SMS_MEMORY_FULL,
     SMS_INCOMING
 };
+
+#define makeECallWithMsd 0
+#define makeTpsECallOverCSWithMsd 1
+#define makeTpsECallOverIMS 2
+#define makeECallWithRawMsd 3
+#define makeTpsECallOverCSWithRawMsd 4
+#define makeECallWithoutMsd 5
+#define makeTpsECallOverCSWithoutMsd 6
+#define updateEcallMsd 7
+#define updateECallRawMsd 8
+
 class Helper  {
 public:
     static telux::tel::SmsTagType getTagType(std::string tagType ) {
@@ -124,7 +134,27 @@ public:
         return "UNKNOWN";
     }
 
+    static telux::tel::CallState getCallState(std::string callState ) {
+        if(callState == "CALL_IDLE") {
+            return telux::tel::CallState::CALL_IDLE;
+        } else if (callState == "CALL_ACTIVE") {
+            return telux::tel::CallState::CALL_ACTIVE;
+        } else if (callState == "CALL_HOLD") {
+            return telux::tel::CallState::CALL_ON_HOLD;
+        } else if (callState == "CALL_DIALING") {
+            return telux::tel::CallState::CALL_DIALING;
+        } else if (callState == "CALL_INCOMING") {
+            return telux::tel::CallState::CALL_INCOMING;
+        } else if (callState == "CALL_WAITING") {
+            return telux::tel::CallState::CALL_WAITING;
+        } else if (callState == "CALL_ALERTING") {
+            return telux::tel::CallState::CALL_ALERTING;
+        } else if (callState == "CALL_ENDED") {
+            return telux::tel::CallState::CALL_ENDED;
+        } else {
+            return telux::tel::CallState::CALL_IDLE;
+        }
+    }
 };
 
-
-#endif // SMS_MESSAGEHELPER_HPP
+#endif // HELPER_HPP

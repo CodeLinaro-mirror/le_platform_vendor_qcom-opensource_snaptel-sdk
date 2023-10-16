@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -42,6 +42,7 @@ PhoneFactoryImplStub::PhoneFactoryImplStub() {
     LOG(DEBUG, __FUNCTION__);
     cardMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
     subscriptionMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
+    multiSimMgrInitStatus_ = telux::common::ServiceStatus::SERVICE_UNAVAILABLE;
 }
 
 PhoneFactoryImplStub::~PhoneFactoryImplStub() {
@@ -60,11 +61,16 @@ PhoneFactoryImplStub::~PhoneFactoryImplStub() {
             (std::static_pointer_cast<SmsManagerStub>(sms.second))->cleanup();
         }
     }
+    // remove multiSimManagerStub
+    if (multiSimManager_) {
+        (std::static_pointer_cast<MultiSimManagerStub>(multiSimManager_))->cleanup();
+    }
     smsManagerMap_.clear();
     smsMgrInitStatus_.clear();
     smsMgrCallbacks_.clear();
     subscriptionMgrCallbacks_.clear();
     cardMgrCallbacks_.clear();
+    multiSimMgrCallbacks_.clear();
 }
 PhoneFactory::PhoneFactory() {
     LOG(DEBUG, __FUNCTION__);
@@ -247,9 +253,63 @@ void PhoneFactoryImplStub::onPhoneManagerResponse(telux::common::ServiceStatus s
     }
 }
 
+void PhoneFactoryImplStub::onCallMgrInitResponse(telux::common::ServiceStatus status) {
+    LOG(DEBUG, __FUNCTION__, " status: ", static_cast<int>(status));
+    std::vector<telux::common::InitResponseCb> cbs;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        callMgrInitStatus_ = status;
+        if (status == telux::common::ServiceStatus::SERVICE_FAILED) {
+            //it is probably the manager's initSync task context, discard object in a separate
+            //thread, to avoid join itself in the manager's destruction issue.
+            std::thread cleanup([this]() {
+                std::lock_guard<std::recursive_mutex> lock(mutex_);
+                callManager_ = nullptr;
+            });
+            cleanup.detach();
+        } else if (status == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+            return;
+        }
+        cbs = callMgrInitCallbacks_;
+        callMgrInitCallbacks_.clear();
+    }
+    for (auto &cb : cbs) {
+        if(cb) {
+            cb(status);
+        }
+    }
+}
+
 std::shared_ptr<ICallManager> PhoneFactoryImplStub::getCallManager(
-    telux::common::InitResponseCb Callback) {
-    return nullptr;
+    telux::common::InitResponseCb callback) {
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
+    std::shared_ptr<CallManagerStub> callManager = nullptr;
+    auto initCb = [this](telux::common::ServiceStatus status) {
+           LOG(DEBUG, __FUNCTION__, " Call Manager initialization callback");
+           this->onCallMgrInitResponse(status);
+       };
+    if (callManager_ == nullptr) {
+        try {
+            callManager = std::make_shared<CallManagerStub>(initCb);
+        } catch (std::bad_alloc & e) {
+            LOG(ERROR, __FUNCTION__ , e.what());
+            return nullptr;
+        }
+        callMgrInitCallbacks_.push_back(callback);
+        callManager_ = callManager;
+    } else if (callMgrInitStatus_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+       LOG(DEBUG, __FUNCTION__, " Call Manager is not yet initialized");
+       if (callback) {
+           callMgrInitCallbacks_.push_back(callback);
+       } else {
+           LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+       }
+    } else if (callback) {
+       LOG(DEBUG, __FUNCTION__, " Call Manager is initialized, invoking app callback");
+       std::thread appCallback(callback, callMgrInitStatus_);
+       appCallback.detach();
+    }
+    return callManager_;
 }
 
 std::shared_ptr<ICardManager> PhoneFactoryImplStub::getCardManager(
@@ -419,7 +479,75 @@ std::shared_ptr<IRemoteSimManager> PhoneFactoryImplStub::getRemoteSimManager(int
 
 std::shared_ptr<IMultiSimManager> PhoneFactoryImplStub::getMultiSimManager(
     telux::common::InitResponseCb callback) {
-    return nullptr;
+    LOG(DEBUG, __FUNCTION__);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (multiSimManager_ == nullptr) {
+       std::shared_ptr<MultiSimManagerStub> multiSimMgr = nullptr;
+       auto initCb = [this](telux::common::ServiceStatus status) {
+          LOG(DEBUG, __FUNCTION__, " MultiSim Manager initialization callback");
+          this->onMultiSimManagerResponse(status);
+       };
+       try {
+          multiSimMgr = std::make_shared<MultiSimManagerStub>(initCb);
+       } catch (std::bad_alloc & e) {
+          LOG(ERROR, __FUNCTION__ , e.what());
+          return nullptr;
+       }
+       if (callback) {
+          multiSimMgrCallbacks_.push_back(callback);
+       } else {
+          LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+       }
+       multiSimManager_ = multiSimMgr;
+    } else if (multiSimMgrInitStatus_ == telux::common::ServiceStatus::SERVICE_UNAVAILABLE) {
+       LOG(DEBUG, __FUNCTION__, " MultiSim Manager is not yet initialized");
+       if (callback) {
+          multiSimMgrCallbacks_.push_back(callback);
+       } else {
+          LOG(DEBUG, __FUNCTION__, " Callback is NULL");
+       }
+    } else if (callback) {
+       LOG(DEBUG, __FUNCTION__, " MultiSim Manager is initialized, invoking app callback");
+       std::thread appCallback(callback, multiSimMgrInitStatus_);
+       appCallback.detach();
+    } else {
+       LOG(ERROR, __FUNCTION__, " MultiSim Manager is initialized, app Callback is NULL");
+    }
+    return multiSimManager_;
+}
+
+void PhoneFactoryImplStub::onMultiSimManagerResponse(telux::common::ServiceStatus status) {
+    std::vector<telux::common::InitResponseCb> multiSimCallbacks;
+    LOG(INFO, __FUNCTION__, " MultiSim Manager initialization status: " ,
+      static_cast<int>(status));
+    {
+       std::lock_guard<std::recursive_mutex> lock(mutex_);
+       multiSimMgrInitStatus_ = status;
+       bool reportServiceStatus = false;
+       switch(status) {
+          case telux::common::ServiceStatus::SERVICE_FAILED:
+             multiSimManager_ = NULL;
+             reportServiceStatus = true;
+             break;
+          case telux::common::ServiceStatus::SERVICE_AVAILABLE:
+             reportServiceStatus = true;
+             break;
+          default:
+             break;
+       }
+       if (!reportServiceStatus) {
+          return;
+       }
+       multiSimCallbacks = multiSimMgrCallbacks_;
+       multiSimMgrCallbacks_.clear();
+    }
+    for (auto &callback : multiSimCallbacks) {
+       if (callback) {
+          callback(status);
+       } else {
+          LOG(INFO, __FUNCTION__, " Callback is NULL");
+       }
+    }
 }
 
 std::shared_ptr<ICellBroadcastManager> PhoneFactoryImplStub::getCellBroadcastManager(SlotId slotId,

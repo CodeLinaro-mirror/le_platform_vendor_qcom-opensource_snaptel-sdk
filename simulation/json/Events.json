@@ -66,5 +66,21 @@
             "featureName       string, Valid features are available from JSON configuration.",
             "eventId           Integer, valid event Id are available from csv data file"
         ]
+    },
+    "tel_call": {
+        "msdUpdateRequest":[
+            "telsdk_event_injector -f tel_call -e msdUpdateRequest <slotId>",
+            "slotId:       valid slotIds are 1 & 2 only."
+        ],
+        "incomingCall":[
+            "telsdk_event_injector -f tel_call -e incomingCall <slotId> <phonenumber>",
+            "slotId:           valid slotIds are 1 & 2 only.",
+            "phonenumber:      valid phonenumber "
+        ],
+        "hangupCall":[
+            "telsdk_event_injector -f tel_call -e hangupCall <slotId> <callId>",
+            "slotId:           valid slotIds are 1 & 2 only." ,
+            "callId:           valid callId"
+        ]
     }
 }

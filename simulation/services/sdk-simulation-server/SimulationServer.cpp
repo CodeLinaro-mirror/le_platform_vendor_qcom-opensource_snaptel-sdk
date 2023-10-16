@@ -17,8 +17,8 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "libs/common/SimulationConfigParser.hpp"
-#include "libs/common/Logger.hpp"
+#include "../../libs/common/SimulationConfigParser.hpp"
+#include "../../libs/common/Logger.hpp"
 
 #include "SimulationServer.hpp"
 #include "tel/CardManagerServerImpl.hpp"
@@ -30,6 +30,7 @@
 #include "data/ServingSystemServerImpl.hpp"
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
+#include "tel/CallManagerServerImpl.hpp"
 #include "event/EventService.hpp"
 #include "sensor/SensorFeatureManagerServerImpl.hpp"
 
@@ -117,6 +118,10 @@ void SimulationServer::startGrpcServer() {
     std::shared_ptr<LocationConfiguratorServerImpl> locConfigService =
         std::make_shared<LocationConfiguratorServerImpl>();
     builder.RegisterService(locConfigService.get());
+
+    std::shared_ptr<CallManagerServerImpl> callService =
+        std::make_shared<CallManagerServerImpl>();
+    builder.RegisterService(callService.get());
 
     auto& eventService = EventService::getInstance();
     builder.RegisterService(&eventService);

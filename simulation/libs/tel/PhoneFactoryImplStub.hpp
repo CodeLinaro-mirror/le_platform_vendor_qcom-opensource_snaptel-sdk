@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -52,7 +52,8 @@
 #include "PhoneManagerStub.hpp"
 #include "SmsManagerStub.hpp"
 #include "CellBroadcastManagerStub.hpp"
-
+#include "CallManagerStub.hpp"
+#include "MultiSimManagerStub.hpp"
 
 namespace telux {
 namespace tel {
@@ -106,22 +107,30 @@ class PhoneFactoryImplStub : public PhoneFactory {
     std::shared_ptr<ICardManager> cardManager_;
     std::shared_ptr<IPhoneManager> phoneManager_;
     std::shared_ptr<ISubscriptionManager> subscriptionManager_;
+    std::shared_ptr<ICallManager> callManager_;
+    std::shared_ptr<IMultiSimManager> multiSimManager_;
     std::vector<telux::common::InitResponseCb> cardMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> phoneMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> subscriptionMgrCallbacks_;
+    std::vector<telux::common::InitResponseCb> multiSimMgrCallbacks_;
     telux::common::ServiceStatus subscriptionMgrInitStatus_;
     telux::common::ServiceStatus phoneMgrInitStatus_;
+    telux::common::ServiceStatus multiSimMgrInitStatus_;
     std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
     std::map<int, std::vector<telux::common::InitResponseCb>> cbMgrCallbacks_;
     telux::common::ServiceStatus cardMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> cbMgrInitStatus_;
     std::recursive_mutex mutex_;
+    common::ServiceStatus callMgrInitStatus_ = common::ServiceStatus::SERVICE_UNAVAILABLE;
+    std::vector<telux::common::InitResponseCb> callMgrInitCallbacks_;
+    void onCallMgrInitResponse(telux::common::ServiceStatus status);
     void onCardManagerResponse(telux::common::ServiceStatus status);
     void onSubscriptionManagerResponse(telux::common::ServiceStatus status);
     void onCellBroadcastManagerResponse(SlotId slotId, telux::common::ServiceStatus status);
     void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
     void onPhoneManagerResponse(telux::common::ServiceStatus status);
+    void onMultiSimManagerResponse(telux::common::ServiceStatus status);
 };
 
 }  // namespace tel

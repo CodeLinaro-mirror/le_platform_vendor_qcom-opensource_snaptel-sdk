@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -33,7 +33,7 @@
 */
 
 #include "SmsManagerServerImpl.hpp"
-#include "libs/tel/SmsMessageHelper.hpp"
+#include "libs/tel/Helper.hpp"
 #include "libs/tel/TelDefinesStub.hpp"
 #include "libs/common/event-manager/EventParserUtil.hpp"
 #include "event/EventService.hpp"

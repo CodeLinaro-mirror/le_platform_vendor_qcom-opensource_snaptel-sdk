@@ -35,6 +35,8 @@ set (COMMON_STUB_SOURCES
     CsvHandler.cpp
     CommonUtils.cpp
     Utils.cpp
+    BaseState.cpp
+    BaseStateMachine.cpp
 )
 
 add_library (${TARGET_COMMON_LIBRARY} SHARED  ${COMMON_STUB_SOURCES})

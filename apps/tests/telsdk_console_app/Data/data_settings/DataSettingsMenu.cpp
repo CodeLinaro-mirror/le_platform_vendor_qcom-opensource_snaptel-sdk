@@ -44,8 +44,15 @@ bool DataSettingsMenu::init() {
         std::shared_ptr<ConsoleAppCommand> switchBackHaul =
             std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("1", "switch_backhaul", {},
             std::bind(&DataSettingsMenu::switchBackHaul, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> setLatencyConfig =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "set_latency_config", {},
+            std::bind(&DataSettingsMenu::setLatencyConfig, this, std::placeholders::_1)));
+        std::shared_ptr<ConsoleAppCommand> getLatencyConfig =
+            std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("3", "get_latency_config", {},
+            std::bind(&DataSettingsMenu::getLatencyConfig, this, std::placeholders::_1)));
 
-        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {switchBackHaul};
+        std::vector<std::shared_ptr<ConsoleAppCommand>> commandsList = {switchBackHaul,
+            setLatencyConfig, getLatencyConfig};
         addCommands(commandsList);
     }
 
@@ -137,3 +144,43 @@ void DataSettingsMenu::switchBackHaul(std::vector<std::string> inputCommand) {
     Utils::printStatus(retStat);
 }
 
+void DataSettingsMenu::setLatencyConfig(std::vector<std::string> inputCommand) {
+    std::cout << "Set Latency Config\n";
+    std::cout << "Enter Uplink Latency Level (0-NORMAL, 1-LOW): ";
+    int latency = 0;
+    std::cin >> latency;
+    Utils::validateInput(latency, {0, 1});
+    LatencyConfig llConfig = {};
+    if (latency) {
+        llConfig.uplink = LatencyLevel::LOW;
+    } else {
+        llConfig.uplink = LatencyLevel::NORMAL;
+    }
+    telux::common::ErrorCode error =
+        dataSettingsManager_[telux::data::OperationType::DATA_LOCAL]->setLatencyConfig(llConfig);
+
+    std::cout << "setLatencyConfig Response"
+        << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+        << ". ErrorCode: " << static_cast<int>(error)
+        << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+}
+
+void DataSettingsMenu::getLatencyConfig(std::vector<std::string> inputCommand) {
+    std::cout << "Get Latency Config\n";
+    LatencyConfig llConfig = {};
+    telux::common::ErrorCode error =
+        dataSettingsManager_[telux::data::OperationType::DATA_LOCAL]->getLatencyConfig(llConfig);
+
+    std::cout << "\ngetLatencyConfig Response"
+        << (error == telux::common::ErrorCode::SUCCESS ? " is successful" : " failed")
+        << ". ErrorCode: " << static_cast<int>(error)
+        << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        if (llConfig.uplink == LatencyLevel::LOW) {
+            std::cout << " Uplink Latency Level: LOW" << std::endl;
+        } else if (llConfig.uplink == LatencyLevel::NORMAL) {
+            std::cout << " Uplink Latency Level: NORMAL" << std::endl;
+        }
+    }
+}

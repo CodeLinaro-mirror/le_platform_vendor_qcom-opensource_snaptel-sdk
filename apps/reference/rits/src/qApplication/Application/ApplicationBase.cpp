@@ -70,6 +70,7 @@
 
 #include <ifaddrs.h>
 #include <netdb.h>
+#include <sys/time.h>
 #include "ApplicationBase.hpp"
 #include "VehicleReceive.h"
 using std::cout;

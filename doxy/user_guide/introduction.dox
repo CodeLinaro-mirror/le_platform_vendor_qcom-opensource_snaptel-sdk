@@ -66,7 +66,9 @@
                              Edit History
 when       who     what, where, why
 --------   ---     ------------------------------------------------------------
+10/13/23   FS      Added support for Diagnostics Services in Telematics SDK
 03/06/23   MH      Added documentation for thermal notifications.
+11/02/22   FS      Added support for WLAN feature in Telematics SDK
 01/10/22   BS      Added documentation for sensor self test.
 12/24/21   MH      Added documentation for ECALL and OTA operations
 11/25/21   RR      Added support for Xtra feature for location in Telematics SDK
@@ -100,7 +102,6 @@ when       who     what, where, why
 05/10/19   SM      Added TCU Activity management support in Telematics SDK
 01/28/19   RK      Updated with Audio support to the Telematics SDK
 02/27/17   LB      Created to support the Telematics SDK
-11/02/22   FS      Added support for WLAN feature in Telematics SDK
 
 NOTE: for an appendix, the label must match the filename
 =============================================================================*/

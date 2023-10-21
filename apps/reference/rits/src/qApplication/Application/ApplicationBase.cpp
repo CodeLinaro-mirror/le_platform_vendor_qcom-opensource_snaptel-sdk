@@ -793,6 +793,7 @@ void ApplicationBase::vehicleEventReport(bool emergent,
             std::unique_lock<std::mutex> loc(stateMtx);
             criticalState = false;
             newEvent = false;
+            currVehState->events.data = 0;
             // if congestion control enabled, notify the congestion control library
             if(this->configuration.enableCongCtrl && congestionControlManager != NULL){
                congestionControlManager->disableCriticalEvent();
@@ -2666,7 +2667,7 @@ void ApplicationBase::writeLog(std::weak_ptr<msg_contents> mc, const uint8_t ind
     curChar += snprintf(curChar, endChar-curChar, "%s", tmpLogStr);
     // if congestion control enabled, write cong ctrl data to log
     unsigned short eventsData = 0;
-    if(psid == PSID_BSM && sp.get()->j2735_msg && isTx && txType == TransmitType::EVENT){
+    if(psid == PSID_BSM && sp.get()->j2735_msg){
         bsm_value_t *bsm = (bsm_value_t*)(sp.get()->j2735_msg);
         eventsData |= (unsigned short) (1 & bsm->events.bits.eventAirBagDeployment) << 12;
         eventsData |= (unsigned short) (1 & bsm->events.bits.eventDisabledVehicle) << 11;

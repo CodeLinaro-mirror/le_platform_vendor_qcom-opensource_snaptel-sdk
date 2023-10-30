@@ -91,6 +91,7 @@ private:
     std::queue<std::shared_ptr<telux::audio::IAudioBuffer>> readBuffers_;
     std::atomic<bool> pipeLineEmpty_;
     std::atomic<bool> ready_;
+    std::atomic<bool> stopTranscoder_;
 };
 
 #endif // TRANSCODEMENU_HPP

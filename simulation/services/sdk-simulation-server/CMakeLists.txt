@@ -33,6 +33,7 @@ add_subdirectory(data)
 add_subdirectory(event)
 add_subdirectory(tel)
 add_subdirectory(loc)
+add_subdirectory(sensor)
 
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common

@@ -30,6 +30,7 @@
 #include "loc/LocationManagerServerImpl.hpp"
 #include "loc/LocationConfiguratorServerImpl.hpp"
 #include "event/EventService.hpp"
+#include "sensor/SensorFeatureManagerServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -110,6 +111,10 @@ void SimulationServer::startGrpcServer() {
 
     auto& eventService = EventService::getInstance();
     builder.RegisterService(&eventService);
+
+    std::shared_ptr<SensorFeatureManagerServerImpl> sensorService =
+        std::make_shared<SensorFeatureManagerServerImpl>();
+    builder.RegisterService(sensorService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

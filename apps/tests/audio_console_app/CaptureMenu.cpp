@@ -27,6 +27,42 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <chrono>
 #include <iostream>
 #include <queue>
@@ -116,7 +152,10 @@ void CaptureMenu::cleanup() {
     ready_ = false;
     captureStatus_ = false;
     readFail_ = false;
-    cv_.notify_all();
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        cv_.notify_all();
+    }
     for (std::thread &th : runningThreads_) {
         if (th.joinable()){
             th.join();
@@ -295,23 +334,26 @@ void CaptureMenu::record() {
                 streamBuffer->reset();
                 freeBuffers_.push(streamBuffer);
                 readFail_ = true;
-                goto exit;
+                break;
             }
         } else {
             cv_.wait(lock);
             if(readFail_) {
-                goto exit;
+                break;
             }
         }
     }
 
-    exit:
     if(readFail_) {
-        while(freeBuffers_.size() != TOTAL_BUFFERS) {
+        while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
             cv_.wait(lock);
         }
         std::cout << "File Recording Failed" <<std::endl;
     } else {
+    /* WaitTime is time required to receive buffer for the last read request.
+       We calculate the total time by converting max buffer size in bytes to bits, then we divide
+       this by frame size which is numChannel(mono/setero)*16(2 byte per analog sample) and
+       samplerate to get time.*/
         int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
                         (sampleRate*numChannels*BITS_PER_SAMPLE);
         waitTime = waitTime+100;
@@ -345,6 +387,10 @@ void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buff
     }
     buffer->reset();
     freeBuffers_.push(buffer);
-    cv_.notify_all();
-    return;
+    {
+        /*This thread will be able to acquire this lock once the waiting thread is in wait state by
+          releasing the lock, ready to receive the wake up notification.*/
+        std::lock_guard<std::mutex> lock(mutex_);
+        cv_.notify_all();
+    }
 }

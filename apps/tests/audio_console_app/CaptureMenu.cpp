@@ -152,7 +152,10 @@ void CaptureMenu::cleanup() {
     ready_ = false;
     captureStatus_ = false;
     readFail_ = false;
-    cv_.notify_all();
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        cv_.notify_all();
+    }
     for (std::thread &th : runningThreads_) {
         if (th.joinable()){
             th.join();
@@ -331,23 +334,26 @@ void CaptureMenu::record() {
                 streamBuffer->reset();
                 freeBuffers_.push(streamBuffer);
                 readFail_ = true;
-                goto exit;
+                break;
             }
         } else {
             cv_.wait(lock);
             if(readFail_) {
-                goto exit;
+                break;
             }
         }
     }
 
-    exit:
     if(readFail_) {
-        while(freeBuffers_.size() != TOTAL_BUFFERS) {
+        while(freeBuffers_.size() != TOTAL_BUFFERS && ready_) {
             cv_.wait(lock);
         }
         std::cout << "File Recording Failed" <<std::endl;
     } else {
+    /* WaitTime is time required to receive buffer for the last read request.
+       We calculate the total time by converting max buffer size in bytes to bits, then we divide
+       this by frame size which is numChannel(mono/setero)*16(2 byte per analog sample) and
+       samplerate to get time.*/
         int waitTime = (8*(streamBuffer->getMaxSize())*1000)/
                         (sampleRate*numChannels*BITS_PER_SAMPLE);
         waitTime = waitTime+100;
@@ -381,6 +387,10 @@ void CaptureMenu::readCallback(std::shared_ptr<telux::audio::IStreamBuffer> buff
     }
     buffer->reset();
     freeBuffers_.push(buffer);
-    cv_.notify_all();
-    return;
+    {
+        /*This thread will be able to acquire this lock once the waiting thread is in wait state by
+          releasing the lock, ready to receive the wake up notification.*/
+        std::lock_guard<std::mutex> lock(mutex_);
+        cv_.notify_all();
+    }
 }

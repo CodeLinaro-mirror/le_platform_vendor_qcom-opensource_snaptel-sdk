@@ -91,74 +91,9 @@ const uint16_t INFINITE_TONE_DURATION = 0xFFFF;
 
 /**
  * Represents an audio device. Each device is mapped to its corresponding
- * platform specific audio device type. Below table provides default
- * mapping of devices on a QTI's reference platform.
- *
- * Applicable for SA515M, SA415M, SA410M, SA2150P based software products:
- * @table{3,{\raggedright}p{1.62in},{\raggedright}p{1.63in},{\raggedright}p{1.63in}}
- * @trfirsthdg
- * @thmultcol{1,|c|} Telsdk device type @thmultcolend @thmultcol{1,c|} Direction @thmultcolend
- *  @thmultcollast{1,c|} Mapped HAL device @thmultcollastend
- * @trfirsthdgend
- * @trhdg
- * @thdg{1,|c|, Telsdk device type} @thdg{1,c|,Direction} @thdglast{1,c|,Mapped HAL device}
- * @trhdgend
- * @tr @td DEVICE_TYPE_NONE @tdend @td N/A @tdend
- *  @tdlast AUDIO_DEVICE_NONE @tdlastend @trend
- * @tr @td DEVICE_TYPE_SPEAKER @tdend @td RX @tdend
- *  @tdlast AUDIO_DEVICE_OUT_SPEAKER @tdlastend @trend
- * @tr @td DEVICE_TYPE_SPEAKER_2 @tdend @td RX @tdend
- *  @tdlast AUDIO_DEVICE_OUT_EARPIECE @tdlastend @trend
- * @tr @td DEVICE_TYPE_SPEAKER_3 @tdend @td RX @tdend
- *  @tdlast AUDIO_DEVICE_OUT_WIRED_HEADSET @tdlastend @trend
- * @tr @td DEVICE_TYPE_BT_SCO_SPEAKER @tdend @td RX @tdend
- *  @tdlast AUDIO_DEVICE_NONE @tdlastend @trend
- * @tr @td DEVICE_TYPE_PROXY_SPEAKER @tdend @td RX @tdend
- *  @tdlast AUDIO_DEVICE_OUT_PROXY @tdlastend @trend
- * @tr @td DEVICE_TYPE_MIC @tdend @td TX @tdend
- *  @tdlast AUDIO_DEVICE_IN_BACK_MIC @tdlastend @trend
- * @tr @td DEVICE_TYPE_MIC_2 @tdend @td TX @tdend
- *  @tdlast AUDIO_DEVICE_IN_BUILTIN_MIC @tdlastend @trend
- * @tr @td DEVICE_TYPE_MIC_3 @tdend @td TX @tdend
- *  @tdlast AUDIO_DEVICE_IN_WIRED_HEADSET @tdlastend @trend
- * @tr @td DEVICE_TYPE_BT_SCO_MIC @tdend @td TX @tdend
- *  @tdlast AUDIO_DEVICE_NONE @tdlastend @trend
- * @tr @td DEVICE_TYPE_PROXY_MIC @tdend @td TX @tdend
- *  @tdlast AUDIO_DEVICE_IN_PROXY @tdlastend @trend
- * @tableend
- *
- * Applicable for SA525M based software products:
- * @table{3,{\raggedright}p{1.62in},{\raggedright}p{1.63in},{\raggedright}p{1.63in}}
- * @trfirsthdg
- * @thmultcol{1,|c|} Telsdk device type @thmultcolend @thmultcol{1,c|} Direction @thmultcolend
- *  @thmultcollast{1,c|} Mapped PAL device @thmultcollastend
- * @trfirsthdgend
- * @trhdg
- * @thdg{1,|c|, Telsdk device type} @thdg{1,c|,Direction} @thdglast{1,c|,Mapped HAL device}
- * @trhdgend
- * @tr @td DEVICE_TYPE_NONE @tdend @td N/A @tdend
- *  @tdlast PAL_DEVICE_NONE @tdlastend @trend
- * @tr @td DEVICE_TYPE_SPEAKER @tdend @td RX @tdend
- *  @tdlast PAL_DEVICE_OUT_SPEAKER @tdlastend @trend
- * @tr @td DEVICE_TYPE_SPEAKER_2 @tdend @td RX @tdend
- *  @tdlast PAL_DEVICE_OUT_HANDSET @tdlastend @trend
- * @tr @td DEVICE_TYPE_SPEAKER_3 @tdend @td RX @tdend
- *  @tdlast PAL_DEVICE_OUT_WIRED_HEADSET @tdlastend @trend
- * @tr @td DEVICE_TYPE_BT_SCO_SPEAKER @tdend @td RX @tdend
- *  @tdlast PAL_DEVICE_OUT_BLUETOOTH_SCO @tdlastend @trend
- * @tr @td DEVICE_TYPE_PROXY_SPEAKER @tdend @td RX @tdend
- *  @tdlast PAL_DEVICE_OUT_PROXY @tdlastend @trend
- * @tr @td DEVICE_TYPE_MIC @tdend @td TX @tdend
- *  @tdlast PAL_DEVICE_IN_SPEAKER_MIC @tdlastend @trend
- * @tr @td DEVICE_TYPE_MIC_2 @tdend @td TX @tdend
- *  @tdlast PAL_DEVICE_IN_HANDSET_MIC @tdlastend @trend
- * @tr @td DEVICE_TYPE_MIC_3 @tdend @td TX @tdend
- *  @tdlast PAL_DEVICE_IN_WIRED_HEADSET @tdlastend @trend
- * @tr @td DEVICE_TYPE_BT_SCO_MIC @tdend @td TX @tdend
- *  @tdlast PAL_DEVICE_IN_BLUETOOTH_SCO_HEADSET @tdlastend @trend
- * @tr @td DEVICE_TYPE_PROXY_MIC @tdend @td TX @tdend
- *  @tdlast PAL_DEVICE_IN_PROXY @tdlastend @trend
- * @tableend
+ * platform specific audio device type. This mapping is done in tel.conf file by the system
+ * integrator. Refer to README specified for the tel.conf file for details on the mapping of
+ * the DeviceType to a specific device on the HW platform.
  */
 enum DeviceType {
     /** Default device (invalid) */

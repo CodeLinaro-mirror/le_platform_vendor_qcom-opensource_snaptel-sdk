@@ -178,5 +178,16 @@
             "callType:     integer, Current call allowed type in cell. Refer SDK documentation enum CallsAllowedInCell. For example ALL_CALLS = 3",
             "example: telsdk_event_injector -f tel_serv -e \"callBarringUpdate 1 ,14 2 3\""
         ]
+    },
+    "therm": {
+        "ssr":[
+            "telsdk_event_injector -f therm -e ssr <serviceStatus>",
+            "serviceStatus:  valid service status are SERVICE_AVAILABLE, SERVICE_UNAVAILABLE & SERVICE_FAILED."
+        ],
+        "setTemp":[
+            "telsdk_event_injector -f therm -e setTemp <tZoneId> <temp>",
+            "tZoneId:     thermal zone id.",
+            "temp:        temperature in millidegree Celsius."
+        ]
     }
 }

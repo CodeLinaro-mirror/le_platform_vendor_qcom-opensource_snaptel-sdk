@@ -1184,8 +1184,8 @@ void SmsManagerServerImpl::triggerIncomingSmsEvent(int phoneId, int numberOfSegm
     + " " + receiver
     + " " + sender
     + " " + text;
-    simulationServer.writeMessage(const_cast<char*>(smsInfoEvent.c_str()),
-        smsInfoEvent.length());
+    simulationServer.writeMessage(smsInfoEvent,
+        smsInfoEvent.length(), ClientType::LIB);
 }
 
 grpc::Status SmsManagerServerImpl::IsMemoryFull(ServerContext *context,

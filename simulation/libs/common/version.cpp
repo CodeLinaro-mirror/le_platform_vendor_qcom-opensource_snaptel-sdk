@@ -27,20 +27,58 @@
  *  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <vector>
 #include <telux/common/Version.hpp>
+
+#include "VersionInfo.hpp"
+#include "Logger.hpp"
+
+#define VERSIONS_SIZE 3
 
 using namespace telux::common;
 
+namespace telux {
+namespace common {
 
 SdkVersion Version::getSdkVersion() {
-    SdkVersion ver;
-    ver.major = 0;
-    ver.minor = 0;
-    ver.patch = 0;
-    return (ver);
+    SdkVersion sdkVersion;
+    std::string versionStr(SDK_VERSION);
+    std::string delimiter = ".";
+    std::string token;
+    std::vector<std::string> tokens;
+
+    size_t position = 0;
+    size_t end = 0;
+    size_t strLength = 0;
+    do {
+        end = versionStr.find(delimiter, position);
+        strLength = end - position;
+        token = versionStr.substr(position, strLength);
+        if(!token.empty()) {
+            tokens.emplace_back(token);
+        }
+        position += strLength + delimiter.length();
+    } while(end != std::string::npos);
+
+    if(tokens.size() == VERSIONS_SIZE) {
+        sdkVersion.major = std::stoi(tokens.at(0));
+        sdkVersion.minor = std::stoi(tokens.at(1));
+        sdkVersion.patch = std::stoi(tokens.at(2));
+    } else {
+        LOG(DEBUG, " Invalid version length ");
+    }
+    return sdkVersion;
 }
 
 std::string Version::getReleaseName() {
-    std::string s1 = "Simulated Version";
-    return (s1);
+   return RELEASE_NAME;
+}
+
+}
 }

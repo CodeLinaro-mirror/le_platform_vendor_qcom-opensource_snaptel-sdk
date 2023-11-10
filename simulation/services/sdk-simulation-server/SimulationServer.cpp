@@ -191,7 +191,11 @@ telux::common::Status SimulationServer::readMessage(int socketFd) {
         }
         else {
             LOG(DEBUG, __FUNCTION__, "received data::", buffer);
-            writeMessage(buffer, length);
+            std::string msg(buffer);
+            auto f = std::async(std::launch::async, [this, msg, length]() {
+                this->writeMessage(msg, length, ClientType::SERVER);
+            }).share();
+            taskQ_->add(f);
             memset(buffer, 0, BUFFER_SIZE * (sizeof buffer[0]));
         }
 
@@ -205,17 +209,32 @@ telux::common::Status SimulationServer::readMessage(int socketFd) {
     return telux::common::Status::SUCCESS;
 }
 
-telux::common::Status SimulationServer::writeMessage(char* buffer, int length) {
+telux::common::Status SimulationServer::writeMessage(std::string msg, int length,
+    ClientType type) {
     LOG(DEBUG, __FUNCTION__);
 
     auto& eventMgr = EventManager::getInstance();
-    std::string message(buffer);
+    std::string event;
+    std::stringstream sstr(msg);
+    int optval;
+    socklen_t optlen = sizeof(optval);
 
-    eventMgr.handleEventNotifications(message);
+    std::lock_guard<std::mutex> lck(writeMutex_);
+    while (std::getline(sstr, event, '\n')) {
+        LOG(DEBUG, __FUNCTION__ ," received event::", event);
 
-    for(auto socket: clientSockets_)
-    {
-        write(socket,buffer,length);
+        if ((type == ClientType::SERVER) || (type == ClientType::ALL)) {
+            eventMgr.handleEventNotifications(event);
+        }
+
+        if ((type == ClientType::LIB)  || (type == ClientType::ALL)) {
+            for(auto socket: clientSockets_) {
+                int status = getsockopt(socket, SOL_SOCKET, SO_ERROR, &optval, &optlen);
+                if (status == 0) {
+                    write(socket,const_cast<char*>(event.c_str()),length);
+                }
+            }
+        }
     }
     return telux::common::Status::SUCCESS;
 }

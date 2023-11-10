@@ -35,6 +35,14 @@ namespace telux {
 
 namespace common {
 
+struct JsonData {
+    Json::Value apiRootObj;
+    Json::Value stateRootObj;
+    telux::common::Status status;
+    telux::common::ErrorCode error;
+    int cbDelay;
+};
+
 class CommonUtils {
  public:
     static telux::common::Status mapStatus(std::string status);
@@ -64,6 +72,9 @@ class CommonUtils {
         rootObj[subsystem][method][attribute] = val;
         JsonParser::writeToJsonFile(rootObj, filePath);
     }
+
+    static ErrorCode readJsonData(std::string apiJsonPath, std::string stateJsonPath,
+        std::string subsystem, std::string method, JsonData& data);
 
  private:
     static std::string readSystemDataValue(

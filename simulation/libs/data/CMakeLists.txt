@@ -2,14 +2,24 @@ cmake_minimum_required(VERSION 2.8.9)
 
 set(TARGET_DATA_LIBRARY telux_data)
 
+configure_file("telux-data.pc.in" "telux-data.pc" @ONLY)
+
 set(DATA_STUB_SOURCES
     DataFactoryImplStub.cpp
-    DataSubSystemStub.cpp
+    DataProfileStub.cpp
+    DataUtilsStub.cpp
+    DataProfileManagerStub.cpp
+    DataCallStub.cpp
+    DataEventListener.cpp
+    DataConnectionManagerStub.cpp
+    ServingSystemManagerStub.cpp
 )
 macro(SYSR_INCLUDE_DIR subdir)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I =/usr/include/${subdir}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I =/usr/include/${subdir}")
 endmacro()
+
+find_library(JSONCPP_LIBRARY NAMES jsoncpp)
 
 # add these sub-folders from /usr/include/<subdir>
 SYSR_INCLUDE_DIR(telux)
@@ -19,9 +29,19 @@ include_directories(BEFORE
 )
 
 # set global variables
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 
-add_library (${TARGET_DATA_LIBRARY} SHARED ${DATA_STUB_SOURCES})
+add_library (${TARGET_DATA_LIBRARY} SHARED ${SOURCE} ${DATA_STUB_SOURCES})
+
+target_link_libraries(${TARGET_DATA_LIBRARY}
+    ${GRPCPP_EXECUTABLE}
+    jsoncpp
+    telux_protos
+    telux_common
+    )
 
 install ( TARGETS ${TARGET_DATA_LIBRARY}
     LIBRARY DESTINATION  ${CMAKE_INSTALL_LIBDIR} )
+
+install ( FILES "${CMAKE_CURRENT_BINARY_DIR}/telux-data.pc"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig/" )

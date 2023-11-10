@@ -285,6 +285,30 @@ ErrorCode CommonUtils::writeSystemDataValue(
     return err;
 }
 
+ErrorCode CommonUtils::readJsonData(std::string apiJsonPath, std::string stateJsonPath,
+    std::string subsystem, std::string method, JsonData& data) {
+    LOG(DEBUG, __FUNCTION__);
+    ErrorCode err =
+        JsonParser::readFromJsonFile(data.apiRootObj, apiJsonPath);
+    if (err != ErrorCode::SUCCESS) {
+        LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+        return err;
+    }
+    CommonUtils::getValues(data.apiRootObj, subsystem, method, data.status,
+        data.error, data.cbDelay );
+
+    if (data.status == telux::common::Status::SUCCESS) {
+        err =
+            JsonParser::readFromJsonFile(data.stateRootObj, stateJsonPath);
+        if (err != ErrorCode::SUCCESS) {
+            LOG(ERROR, __FUNCTION__, " Reading JSON File failed! " );
+            return err;
+        }
+    }
+
+    return err;
+}
+
 void CommonUtils::getValues(Json::Value &values, std::string subsystem,
     std::string method, telux::common::Status &status,
     telux::common::ErrorCode &errorCode, int &cbDelay) {

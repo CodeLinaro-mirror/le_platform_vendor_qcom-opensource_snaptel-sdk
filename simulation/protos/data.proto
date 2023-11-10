@@ -5,8 +5,9 @@
 
 syntax = "proto3";
 
-package data;
+package dataStub;
 import "google/protobuf/empty.proto";
+import "common.proto";
 
 /*******************************************************************
 * Services Definition                                             *
@@ -17,19 +18,21 @@ import "google/protobuf/empty.proto";
 */
 
 service DataConnectionManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
+    rpc InitService(SlotInfo) returns (GetServiceStatusReply) {}
+    rpc GetServiceStatus(SlotInfo) returns (GetServiceStatusReply) {}
+    rpc IsSubsystemReady(google.protobuf.Empty) returns (IsSubsystemReadyReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-    rpc StartDatacall(DataCallInputParams) returns (google.protobuf.Empty) {}
-    rpc StopDatacall(DataCallInputParams) returns (google.protobuf.Empty) {}
+    rpc StartDatacall(DataCallInputParams) returns (DefaultReply) {}
+    rpc StopDatacall(DataCallInputParams) returns (DefaultReply) {}
     rpc RequestDatacallStatistics(DataCallStatisticsRequest) returns
         (RequestDataCallStatisticsReply) {}
     rpc ResetDatacallStatistics(DataCallStatisticsRequest) returns (google.protobuf.Empty) {}
     rpc RequestDatacallList(DataCallInputParams) returns (RequestDataCallListReply) {}
-    rpc SetDefaultProfile(SetDefaultProfileRequest) returns (google.protobuf.Empty) {}
+    rpc SetDefaultProfile(SetDefaultProfileRequest) returns (DefaultReply) {}
     rpc GetDefaultProfile(GetDefaultProfileRequest) returns (GetDefaultProfileReply) {}
     rpc QueryDataCall(QueryDataCallRequest) returns (QueryDataCallReply) {}
     rpc RequestDataCallBitRate(DataCallBitRateRequest) returns (RequestDataCallBitRateReply) {}
-    rpc SetRoamingMode(SetRoamingModeRequest) returns (google.protobuf.Empty) {}
+    rpc SetRoamingMode(SetRoamingModeRequest) returns (DefaultReply) {}
     rpc RequestRoamingMode(RequestRoamingModeRequest) returns (RequestRoamingModeReply) {}
     rpc RegisterOnDataCallInfoChanged(google.protobuf.Empty) returns
         (stream RegisterOnDataCallInfoChangedReply) {}
@@ -46,13 +49,15 @@ service DataConnectionManager {
   */
 
 service DataProfileManager {
-    rpc InitService(SubsystemReadiness) returns (google.protobuf.Empty) {}
+    rpc InitService(SlotInfo) returns (GetServiceStatusReply) {}
+    rpc GetServiceStatus(SlotInfo) returns (GetServiceStatusReply) {}
+    rpc IsSubsystemReady(SlotInfo) returns (IsSubsystemReadyReply) {}
     rpc CleanUpService(google.protobuf.Empty) returns (google.protobuf.Empty) {}
     rpc CreateProfile(CreateProfileRequest) returns (CreateProfileReply) {}
-    rpc DeleteProfile(DeleteProfileRequest) returns (google.protobuf.Empty) {}
+    rpc DeleteProfile(DeleteProfileRequest) returns (DefaultReply) {}
     rpc RequestProfileList(RequestProfileListRequest) returns (RequestProfileListReply) {}
     rpc RequestProfileById(RequestProfileByIdRequest) returns (RequestProfileByIdReply) {}
-    rpc ModifyProfile(ModifyProfileRequest) returns (google.protobuf.Empty) {}
+    rpc ModifyProfile(ModifyProfileRequest) returns (DefaultReply) {}
     rpc QueryProfile(QueryProfileRequest) returns (QueryProfileReply) {}
 }
 
@@ -188,6 +193,10 @@ message SubsystemReadiness{
     SubsystemReadinessType type = 1;
 }
 
+message IsSubsystemReadyReply {
+    bool is_ready = 1;
+}
+
 message IpFamilyType {
     enum Type {
         DUMMY = 0;
@@ -250,11 +259,20 @@ enum L2tpProtocol {
     UDP = 0x02;
 }
 
+message SlotInfo {
+   int32 slot_id = 1;
+}
+
 message DataCallInputParams {
     int32 slot_id = 1;
     int32 profile_id = 2;
     IpFamilyType ip_family_type = 3;
     OperationType operation_type = 4;
+}
+
+message GetServiceStatusReply {
+    ServiceStatus service_status = 1;
+    int32 delay = 2;
 }
 
 message DataCallReply {
@@ -303,7 +321,8 @@ message RequestDataCallBitRateReply {
 }
 
 message RequestDataCallListReply {
-    repeated DataCallReply data_call_list = 1;
+    DefaultReply reply = 1;
+    repeated DataCallReply data_call_list = 2;
 }
 
 message DataCallBitRateRequest {
@@ -316,14 +335,21 @@ message SetDefaultProfileRequest {
     OperationType operation_type = 3;
 }
 
+message DefaultReply {
+    commonStub.ErrorCode error = 1;
+    commonStub.Status status = 2;
+    int32 delay = 3;
+}
+
 message GetDefaultProfileRequest {
     int32 slot_id = 1;
     OperationType operation_type = 2;
 }
 
 message GetDefaultProfileReply {
-    int32 slot_id = 1;
-    int32 profile_id = 2;
+    DefaultReply reply = 1;
+    int32 slot_id = 2;
+    int32 profile_id = 3;
 }
 
 message QueryDataCallRequest {
@@ -349,8 +375,9 @@ message RequestRoamingModeRequest {
 }
 
 message RequestRoamingModeReply {
-    int32 profile_id = 1;
-    int32 roaming_mode = 2;
+    DefaultReply reply = 1;
+    int32 profile_id = 2;
+    int32 roaming_mode = 3;
 }
 
 message RegisterOnDataCallInfoChangedReply {
@@ -379,14 +406,16 @@ message CreateProfileRequest {
     string apn_name = 2;
     string user_name = 3;
     string password = 4;
-    TechPreference tech_preference = 5;
-    AuthProtocolType auth_type = 6;
-    IpFamilyType ip_family_type = 7;
-    int32 slot_id = 8;
+    string apn_types = 5;
+    TechPreference tech_preference = 6;
+    AuthProtocolType auth_type = 7;
+    IpFamilyType ip_family_type = 8;
+    int32 slot_id = 9;
 }
 
 message CreateProfileReply {
-    int32 profile_id = 1;
+    DefaultReply reply = 1;
+    int32 profile_id = 2;
 }
 
 message Request {
@@ -414,9 +443,10 @@ message ModifyProfileRequest {
     string apn_name = 4;
     string user_name = 5;
     string password = 6;
-    TechPreference tech_preference = 7;
-    AuthProtocolType auth_type = 8;
-    IpFamilyType ip_family_type = 9;
+    string apn_types = 7;
+    TechPreference tech_preference = 8;
+    AuthProtocolType auth_type = 9;
+    IpFamilyType ip_family_type = 10;
 }
 
 message QueryProfileRequest {
@@ -425,9 +455,10 @@ message QueryProfileRequest {
     string apn_name = 3;
     string user_name = 4;
     string password = 5;
-    TechPreference tech_preference = 6;
-    AuthProtocolType auth_type = 7;
-    IpFamilyType ip_family_type = 8;
+    string apn_types = 6;
+    TechPreference tech_preference = 7;
+    AuthProtocolType auth_type = 8;
+    IpFamilyType ip_family_type = 9;
 }
 
 message Profile {
@@ -436,21 +467,25 @@ message Profile {
     string apn_name = 3;
     string user_name = 4;
     string password = 5;
-    IpFamilyType ip_family_type = 6;
-    TechPreference tech_preference = 7;
-    AuthProtocolType auth_type = 8;
+    string apn_types = 6;
+    IpFamilyType ip_family_type = 7;
+    TechPreference tech_preference = 8;
+    AuthProtocolType auth_type = 9;
 }
 
 message RequestProfileByIdReply {
-    Profile profile = 1;
+    DefaultReply reply = 1;
+    Profile profile = 2;
 }
 
 message RequestProfileListReply {
-    repeated Profile profiles = 1;
+    DefaultReply reply = 1;
+    repeated Profile profiles = 2;
 }
 
 message QueryProfileReply {
-    repeated Profile profiles = 1;
+    DefaultReply reply = 1;
+    repeated Profile profiles = 2;
 }
 
 message GetDataRestrictModeRequest {
@@ -828,10 +863,9 @@ message RequestDMZEntryReply {
 }
 
 enum ServiceStatus {
-    SERVICE_UNKNOWN = 0;
-    SERVICE_UNAVAILABLE = 1;
-    SERVICE_AVAILABLE = 2;
-    SERVICE_FAILED = 3;
+    SERVICE_UNAVAILABLE = 0;
+    SERVICE_AVAILABLE = 1;
+    SERVICE_FAILED = 2;
 }
 
 message RegisterOnServiceStatusChangeReply {

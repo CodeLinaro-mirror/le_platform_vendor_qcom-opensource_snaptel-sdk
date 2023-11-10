@@ -18,6 +18,8 @@ set(GRPCPP_EXECUTABLE gRPC::grpc++)
 
 set(TARGET_SIMULATION_SERVER_APP_SRC
     SimulationServer.cpp
+    data/DataConnectionServerImpl.cpp
+    data/DataProfileServerImpl.cpp
     tel/CardManagerServerImpl.cpp
     tel/SubscriptionManagerServerImpl.cpp
     tel/SmsManagerServerImpl.cpp
@@ -33,6 +35,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pthread")
 add_executable (${TARGET_SIMULATION_SERVER_APP} ${TARGET_SIMULATION_SERVER_APP_SRC})
 target_link_libraries(${TARGET_SIMULATION_SERVER_APP}
     telux_common
+    telux_data
     telux_protos
     ${PROTOBUF_LIB_LIBRARIES}
     ${GRPC_LIB_LIBRARIES}

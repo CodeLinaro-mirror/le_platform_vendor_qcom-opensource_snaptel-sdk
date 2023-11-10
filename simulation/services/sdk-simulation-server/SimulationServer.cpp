@@ -60,6 +60,8 @@
 #include "tel/CardManagerServerImpl.hpp"
 #include "tel/SubscriptionManagerServerImpl.hpp"
 #include "tel/SmsManagerServerImpl.hpp"
+#include "data/DataConnectionServerImpl.hpp"
+#include "data/DataProfileServerImpl.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -241,6 +243,14 @@ void SimulationServer::startGrpcServer() {
 
     std::shared_ptr<SmsManagerServerImpl> smsService = std::make_shared<SmsManagerServerImpl>();
     builder.RegisterService(smsService.get());
+
+    std::shared_ptr<DataConnectionServerImpl> dcmService =
+        std::make_shared<DataConnectionServerImpl>();
+    builder.RegisterService(dcmService.get());
+
+    std::shared_ptr<DataProfileServerImpl> dataprofileService =
+        std::make_shared<DataProfileServerImpl>();
+    builder.RegisterService(dataprofileService.get());
 
     std::unique_ptr<Server> server(builder.BuildAndStart());
     LOG(DEBUG, __FUNCTION__, " Server listening on ", server_address);

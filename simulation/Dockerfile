@@ -9,7 +9,7 @@ ARG ROOTFS=rootfs
 # LABEL about the custom image
 LABEL description="This is custom docker image for SDK simulation users"
 
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt-get -qq install build-essential nano
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt-get -qq install build-essential nano net-tools
 
 copy $ROOTFS/include /usr/include
 copy $ROOTFS/bin /usr/bin

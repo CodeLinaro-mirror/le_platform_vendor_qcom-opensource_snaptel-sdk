@@ -51,6 +51,7 @@
 #include "SubscriptionManagerStub.hpp"
 #include "PhoneManagerStub.hpp"
 #include "SmsManagerStub.hpp"
+#include "CellBroadcastManagerStub.hpp"
 
 
 namespace telux {
@@ -100,21 +101,25 @@ class PhoneFactoryImplStub : public PhoneFactory {
  private:
     PhoneFactoryImplStub();
     ~PhoneFactoryImplStub();
+    std::map<int, std::shared_ptr<ICellBroadcastManager>> cbMap_;
     std::map<int, std::shared_ptr<ISmsManager>> smsManagerMap_;
     std::shared_ptr<ICardManager> cardManager_;
     std::shared_ptr<IPhoneManager> phoneManager_;
+    std::shared_ptr<ISubscriptionManager> subscriptionManager_;
     std::vector<telux::common::InitResponseCb> cardMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> phoneMgrCallbacks_;
     std::vector<telux::common::InitResponseCb> subscriptionMgrCallbacks_;
     telux::common::ServiceStatus subscriptionMgrInitStatus_;
     telux::common::ServiceStatus phoneMgrInitStatus_;
     std::map<int, std::vector<telux::common::InitResponseCb>> smsMgrCallbacks_;
+    std::map<int, std::vector<telux::common::InitResponseCb>> cbMgrCallbacks_;
     telux::common::ServiceStatus cardMgrInitStatus_;
     std::map<int, telux::common::ServiceStatus> smsMgrInitStatus_;
+    std::map<int, telux::common::ServiceStatus> cbMgrInitStatus_;
     std::recursive_mutex mutex_;
     void onCardManagerResponse(telux::common::ServiceStatus status);
     void onSubscriptionManagerResponse(telux::common::ServiceStatus status);
-    std::shared_ptr<ISubscriptionManager> subscriptionManager_;
+    void onCellBroadcastManagerResponse(SlotId slotId, telux::common::ServiceStatus status);
     void onSmsMgrInitResponse(int phoneId, telux::common::ServiceStatus status);
     void onPhoneManagerResponse(telux::common::ServiceStatus status);
 };

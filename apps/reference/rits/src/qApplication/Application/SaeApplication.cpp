@@ -68,6 +68,7 @@
   *
   * @brief: class for ITS stack application - SAE
   */
+#include <sys/time.h>
 #include "SaeApplication.hpp"
 #include <telux/cv2x/Cv2xRadioTypes.hpp>
 #include <fstream>

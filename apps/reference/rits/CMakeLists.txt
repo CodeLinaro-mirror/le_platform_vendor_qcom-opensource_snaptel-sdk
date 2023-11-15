@@ -5,6 +5,8 @@ include(GNUInstallDirs)
 include(FindPkgConfig)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 
+message( ${CMAKE_SYSTEM_PROCESSOR} )
+message(${CMAKE_HOST_SYSTEM_PROCESSOR})
 if (WITH_AEROLINK)
     add_definitions( -DAEROLINK)
 elseif(DEFINED ENV{AEROLINK_PATH})
@@ -24,20 +26,10 @@ endif()
 
 find_path(GLIB_INCLUDE_DIR NAMES glibconfig.h glib.h PATH_SUFFIXES glib-2.0)
 
-#Find sysroot path in environment CC
-string(REGEX MATCH "=.*" GLIB64_PATH $ENV{CC})
-
-pkg_check_modules(JSONC_LIB REQUIRED json-c)
-if (JSONC_LIB_FOUND)
-    include_directories(${JSONC_LIB_INCLUDE_DIRS})
-endif (JSONC_LIB_FOUND)
-
-
 include_directories(BEFORE
     ${PROJECT_SOURCE_DIR}/include
     #Including this libraries given a bug with glib
     ${GLIB_INCLUDE_DIR}
-    ${GLIB64_PATH}/usr/lib64/glib-2.0/include/
     ${PROJECT_SOURCE_DIR}/src/qCoder/include
     ${PROJECT_SOURCE_DIR}/src/qMessenger/RadioInterface
     ${PROJECT_SOURCE_DIR}/src/qMessenger/RadioTransmit
@@ -58,6 +50,64 @@ if(DEFINED ENV{ASN1C_PATH} OR DEFINED ASN1C_PATH)
     ${PROJECT_SOURCE_DIR}/src/qCoder/src/sae/generated
     ${PROJECT_SOURCE_DIR}/src/qMessenger/GeoNetRouter)
 endif()
+
+if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSIM_BUILD")
+    if (NOT DEFINED ENV{TELUX_STUB_DIR})
+        message(SEND_ERROR " please specify telux sub library path via ENV TELUX_STUB_DIR")
+    endif()
+
+    if (NOT DEFINED ENV{NANOPB_DIR})
+        message(SEND_ERROR "  Please specify nanopb path via environment variable NANOPB_DIR")
+    else()
+        set(NANOPB_DIR "$ENV{NANOPB_DIR}")
+        #build nanopb
+        include_directories(BEFORE ${NANOPB_DIR})
+        file(GLOB NANOPB_SOURCE_FILES ${NANOPB_DIR}/*.c)
+        add_library(protobuf-nanopb STATIC ${NANOPB_SOURCE_FILES})
+        target_compile_options(protobuf-nanopb PUBLIC "-fPIC")
+    endif()
+
+    include_directories(BEFORE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
+        ${NANOPB_DIR}
+        )
+    if (NOT DEFINED ENV{JSONC_DIR})
+        message(SEND_ERROR " Please specify json-c library path via ENV JSONC_DIR")
+    else()
+        #build out of tree json-c lib
+        include_directories(${CMAKE_CURRENT_BINARY_DIR}/json-c
+            $ENV{JSONC_DIR})
+        add_subdirectory($ENV{JSONC_DIR} json-c)
+    endif()
+
+    if (NOT DEFINED ENV{CV2X_VEH_LIB_DIR})
+        message(SEND_ERROR "please specify cv2x vehicle librar path via ENV CV2X_VEH_LIB_DIR")
+    else()
+        #build vehicle sim lib locally
+        include_directories(BEFORE $ENV{CV2X_VEH_LIB_DIR}/../inc)
+        file(GLOB CV2X_VEH_LIB_SOURCE_FILES $ENV{CV2X_VEH_LIB_DIR}/veh_sim.c)
+        add_library(v2x_veh STATIC ${CV2X_VEH_LIB_SOURCE_FILES})
+        target_compile_options(v2x_veh PUBLIC "-fPIC")
+    endif()
+    if (DEFINED ENV{SQUISH_DIR})
+        #build squish locally
+        include_directories(BEFORE
+            $ENV{SQUISH_DIR}/include
+            $ENV{SQUISH_DIR}/src
+            )
+        add_definitions(-DTELUX_TECH_AREA=2)
+        file(GLOB LIBSQUISH_SOURCES $ENV{SQUISH_DIR}/src/*.cpp
+            $ENV{SQUISH_DIR}/include/*.hpp)
+        add_library(telux_squish STATIC ${LIBSQUISH_SOURCES})
+    endif()
+else()
+    pkg_check_modules(JSONC_LIB REQUIRED json-c)
+    if (JSONC_LIB_FOUND)
+        include_directories(${JSONC_LIB_INCLUDE_DIRS})
+    endif (JSONC_LIB_FOUND)
+endif()
+
 add_subdirectory(src/qCoder/)
 add_subdirectory(src/qMessenger/)
 add_subdirectory(src/qApplication)

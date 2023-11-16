@@ -69,6 +69,13 @@ telux::tel::ECallMsdData MsdSettings::readMsdFromFile(std::string filename) {
       = atoi(numberOfPassengersPresentAsString.c_str()) ? true : false;
    msdData.optionals.numberOfPassengersPresent = numberOfPassengersPresentAsBool;
 
+   // OPTIONAL_ADDITIONAL_DATA_PRESENT
+   auto optionalAdditionalDataPresentAsString =
+       MsdSettings::getValue("OPTIONAL_ADDITIONAL_DATA_PRESENT");
+   bool optionalAdditionalDataPresentAsBool
+       = atoi(optionalAdditionalDataPresentAsString.c_str()) ? true : false;
+   msdData.optionals.optionalDataPresent = optionalAdditionalDataPresentAsBool;
+
    // MESSAGE_IDENTIFIER
    msdData.messageIdentifier = atoi(MsdSettings::getValue("MESSAGE_IDENTIFIER").c_str());
 
@@ -173,6 +180,11 @@ telux::tel::ECallMsdData MsdSettings::readMsdFromFile(std::string filename) {
    // NUMBER_OF_PASSENGERS
    msdData.numberOfPassengers = atoi(MsdSettings::getValue("NUMBER_OF_PASSENGERS").c_str());
 
+   // OPTIONAL_ADDTIONAL_DATA
+   msdData.optionalPdu.oid = MsdSettings::getValue("EUROPEAN_ECALL_OID");
+   std::string str = MsdSettings::getValue("EUROPEAN_ECALL_OAD");
+   std::vector<uint8_t> data(str.begin(), str.end());
+   msdData.optionalPdu.data = data;
    return msdData;
 }
 /*

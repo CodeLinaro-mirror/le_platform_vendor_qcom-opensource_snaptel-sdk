@@ -105,6 +105,13 @@ void MsdProvider::init(std::string filename, std::string filePath) {
       = atoi(numberOfPassengersPresentAsString.c_str()) ? true : false;
     msdData_.optionals.numberOfPassengersPresent = numberOfPassengersPresentAsBool;
 
+    // OPTIONAL_ADDITIONAL_DATA_PRESENT
+    auto optionalAdditionalDataPresentAsString =
+        msdSettings->getValue("OPTIONAL_ADDITIONAL_DATA_PRESENT");
+    bool optionalAdditionalDataPresentAsBool
+        = atoi(optionalAdditionalDataPresentAsString.c_str()) ? true : false;
+    msdData_.optionals.optionalDataPresent = optionalAdditionalDataPresentAsBool;
+
     // MESSAGE_IDENTIFIER
     msdData_.messageIdentifier = atoi(msdSettings->getValue("MESSAGE_IDENTIFIER").c_str());
 
@@ -210,4 +217,9 @@ void MsdProvider::init(std::string filename, std::string filePath) {
     // NUMBER_OF_PASSENGERS
     msdData_.numberOfPassengers = atoi(msdSettings->getValue("NUMBER_OF_PASSENGERS").c_str());
 
+    // OPTIONAL_ADDTIONAL_DATA
+    msdData_.optionalPdu.oid = msdSettings->getValue("EUROPEAN_ECALL_OID");
+    std::string str = msdSettings->getValue("EUROPEAN_ECALL_OAD");
+    std::vector<uint8_t> data(str.begin(), str.end());
+    msdData_.optionalPdu.data = data;
 }

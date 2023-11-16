@@ -72,8 +72,9 @@ using namespace telux::common;
 #define NUMBER_OF_PASSENGERS_PRESENT 1
 #define NUMBER_OF_PASSENGERS 2
 #define VIN "ECALLEXAMPLE02013"
-#define OPTIONAL_DATA_PRESENT 1
-#define OPTIONALS_OPTIONAL_DATA_TYPE 1
+#define OPTIONAL_ADDITIONAL_DATA_PRESENT 1
+#define OID_DATA "1.2.3"
+#define OAD_DATA "0123456789ABCDEF"
 
 std::shared_ptr<ICall> dialedCall = nullptr;
 
@@ -151,13 +152,15 @@ int main(int, char **) {
    eCallMsdData.vehicleLocation.positionLatitude = VEHICLE_POSITION_LATITUDE;
    eCallMsdData.vehicleLocation.positionLongitude = VEHICLE_POSITION_LONGITUDE;
    eCallMsdData.vehicleDirection = VEHICLE_DIRECTION;
-   eCallMsdData.optionals.optionalDataType = (ECallOptionalDataType)OPTIONALS_OPTIONAL_DATA_TYPE;
-   eCallMsdData.optionals.optionalDataPresent = OPTIONAL_DATA_PRESENT;
+   eCallMsdData.optionals.optionalDataPresent = OPTIONAL_ADDITIONAL_DATA_PRESENT;
    eCallMsdData.recentVehicleLocationN1.latitudeDelta = RECENT_N1_LATITUDE_DELTA;
    eCallMsdData.recentVehicleLocationN1.longitudeDelta = RECENT_N1_LONGITUDE_DELTA;
    eCallMsdData.recentVehicleLocationN2.latitudeDelta = RECENT_N2_LATITUDE_DELTA;
    eCallMsdData.recentVehicleLocationN2.longitudeDelta = RECENT_N2_LONGITUDE_DELTA;
    eCallMsdData.numberOfPassengers = NUMBER_OF_PASSENGERS;
+   eCallMsdData.optionalPdu.oid = OID_DATA;
+   std::vector<uint8_t> data(OAD_DATA.begin(), OAD_DATA.end());
+   msdData_.optionalPdu.data = data;
 
    // ### 5. Send an eCall request
    auto makeCallStatus

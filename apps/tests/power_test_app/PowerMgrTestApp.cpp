@@ -266,8 +266,14 @@ int main(int argc, char ** argv) {
         std::cout << APP_NAME << "Adding supplementary groups failed!" << std::endl;
     }
 
-    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
-    if( 0 != myPowerMgmtTest->start()) {
+    std::shared_ptr<PowerMgmtTestApp> myPowerMgmtTest = nullptr;
+    try{
+        myPowerMgmtTest = std::make_shared<PowerMgmtTestApp>();
+    } catch(std::exception &e){
+        std::cout << " Failed to initialize PowerMgmtTestApp pointer " << e.what() << std::endl;
+        exit(1);
+    }
+    if(myPowerMgmtTest == nullptr || 0 != myPowerMgmtTest->start()) {
         std::cout << APP_NAME << " Failed to initialize the TCU-activity management service"
             << std::endl;
         return -1;

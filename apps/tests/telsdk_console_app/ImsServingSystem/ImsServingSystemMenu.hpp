@@ -59,6 +59,7 @@ public:
 
     void requestImsRegStatus(std::vector<std::string> userInput);
     void requestServiceStatusOverIms(std::vector<std::string> userInput);
+    void requestPdpStatusOverIms(std::vector<std::string> userInput);
 
 private:
     // Member variable to keep the Listener object alive till application ends.

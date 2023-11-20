@@ -78,6 +78,7 @@
 #include <string>
 
 #include <telux/common/CommonDefines.hpp>
+#include <telux/common/ConnectivityDefines.hpp>
 #include <telux/tel/PhoneDefines.hpp>
 
 namespace telux {
@@ -137,6 +138,29 @@ struct ImsServiceInfo {
 };
 
 /**
+ * Defines the cellular PDP failure error code.
+ */
+enum class PdpFailureCode {
+    OTHER_FAILURE = 0,                 /**< Generic failure reason. */
+    OPTION_UNSUBSCRIBED = 1,           /**< Option is unsubscribed. */
+    UNKNOWN_PDP = 2,                   /**< PDP was unknown. */
+    REASON_NOT_SPECIFIED = 3,          /**< Reason not specified. */
+    CONNECTION_BRINGUP_FAILURE = 4,    /**< Connection bring-up failure. */
+    CONNECTION_IKE_AUTH_FAILURE = 5,   /**< IKE authentication failure. */
+    USER_AUTH_FAILED = 6,              /**< User authentication failed. */
+};
+
+/**
+ * Represents the IMS PDP status information.
+ */
+struct ImsPdpStatusInfo {
+    bool isPdpConnected;             /**< PDP connection status. */
+    PdpFailureCode failureCode;      /**< PDP failure code. */
+    telux::common::DataCallEndReason failureReason; /**< PDP call end reason type and its cause. */
+    std::string apnName;             /**< IMS registration APN name. */
+};
+
+/**
  * This function is called in the response to requestRegistrationInfo API.
  *
  * The callback can be invoked from multiple different threads.
@@ -166,6 +190,22 @@ using ImsRegistrationInfoCb
 using ImsServiceInfoCb
    = std::function<void(ImsServiceInfo service, telux::common::ErrorCode error)>;
 
+/**
+ * This function is called in response to the requestPdpStatus API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] status         Indicates the IMS PDP status information.
+ *                            @ref telux::tel::ImsPdpStatusInfo
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not. @ref telux::common::ErrorCode
+ *
+ * @note Eval: This is a new API and is being evaluated. It is subject to change and
+ *             could break backwards compatibility.
+ */
+using ImsPdpStatusInfoCb
+   = std::function<void(ImsPdpStatusInfo status, telux::common::ErrorCode error)>;
 
 /**
  * @brief IMS Serving System Manager is the primary interface for IMS related operations
@@ -207,6 +247,20 @@ public:
     */
     virtual telux::common::Status
         requestServiceInfo(ImsServiceInfoCb callback) = 0;
+
+   /**
+    * Request PDP status information, such as PDP connection status, failure cause
+    * and error code for IMS PDP failure.
+    *
+    * @param [in] callback     Callback pointer to get the response of
+    *                          requestPdpStatus.
+    *
+    * @returns Status of requestPdpStatus i.e., success or suitable status code.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+    virtual telux::common::Status requestPdpStatus(ImsPdpStatusInfoCb callback) = 0;
 
    /**
     * Add a listener to listen for specific events in the IMS Serving System subsystem.
@@ -271,6 +325,18 @@ public:
     *
     */
     virtual void onImsServiceInfoChange(ImsServiceInfo service) {
+    }
+
+    /**
+    * This function is called whenever any IMS PDP status information is changed.
+    *
+    * @param [in] status         Indicates which IMS PDP information has changed.
+    *                            @ref telux::tel::ImsPdpStatusInfo.
+    *
+    * @note Eval: This is a new API and is being evaluated. It is subject to change and
+    *             could break backwards compatibility.
+    */
+    virtual void onImsPdpStatusInfoChange(ImsPdpStatusInfo status) {
     }
 
     virtual ~IImsServingSystemListener() {

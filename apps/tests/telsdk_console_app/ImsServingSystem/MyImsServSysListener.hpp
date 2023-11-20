@@ -74,6 +74,8 @@ public:
                                 telux::common::ErrorCode error);
     static void imsServiceStatusResponse(SlotId slotId,
                 telux::tel::ImsServiceInfo service, telux::common::ErrorCode error);
+    static void imsPdpStatusResponse(SlotId slotId,
+                telux::tel::ImsPdpStatusInfo status, telux::common::ErrorCode error);
 };
 
 class MyImsServSysListener : public telux::tel::IImsServingSystemListener {
@@ -82,8 +84,12 @@ public:
     void onServiceStatusChange(telux::common::ServiceStatus status) override;
     void onImsRegStatusChange(telux::tel::ImsRegistrationInfo status) override;
     void onImsServiceInfoChange(telux::tel::ImsServiceInfo service) override;
+    void onImsPdpStatusInfoChange(telux::tel::ImsPdpStatusInfo status) override;
     static std::string convertRegStatustoString(telux::tel::RegistrationStatus state);
     static std::string convertServiceStatustoString(telux::tel::CellularServiceStatus status);
+    static std::string convertPdpFailureErrorToString(telux::tel::PdpFailureCode errorCode);
+    static std::string convertPdpFailureReasonTypeToString(telux::common::EndReasonType reasonType);
+    static int callEndReasonCode(telux::common::DataCallEndReason ceReason);
 
     ~MyImsServSysListener() {}
 

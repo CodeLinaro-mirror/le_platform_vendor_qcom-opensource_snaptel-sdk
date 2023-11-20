@@ -65,6 +65,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #include "MyImsServSysListener.hpp"
 #include "../Phone/MyPhoneListener.hpp"
@@ -76,14 +77,16 @@
 // Implementation of IMS Registration State callback
 void MyImsServSysCallback::imsRegStateResponse(SlotId slotId,
     telux::tel::ImsRegistrationInfo status, telux::common::ErrorCode error) {
+    std::cout << std::endl << std::endl;
     std::cout << " Request IMS Registration status response received on slotId "
             << static_cast<int>(slotId) << std::endl;
     if(error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\n";
         PRINT_CB << "IMS Registration Status: "
             << MyImsServSysListener::convertRegStatustoString(status.imsRegStatus)
-                << ", radio technology: "
+                << "\n Radio technology: "
                 << MyPhoneHelper::radioTechToString(status.rat)
-                << ", error code: " << status.errorCode << ", error description: "
+                << "\n Error Code: " << status.errorCode << "\n Error Description: "
                 << status.errorString << std::endl;
     } else {
         PRINT_CB << "requestRegistrationInfo failed, errorCode: " << static_cast<int>(error)
@@ -94,16 +97,44 @@ void MyImsServSysCallback::imsRegStateResponse(SlotId slotId,
 // Implementation of IMS Service Status callback
 void MyImsServSysCallback::imsServiceStatusResponse(SlotId slotId,
     telux::tel::ImsServiceInfo service, telux::common::ErrorCode error) {
-    std::cout << "IMS service status response received on slotId "
+    std::cout << std::endl << std::endl;
+    std::cout << " IMS service status response received on slotId "
             << static_cast<int>(slotId) << std::endl;
     if(error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\n";
         PRINT_CB << "SMS Service Status over IMS: "
             << MyImsServSysListener::convertServiceStatustoString(service.sms)
-            << ", Voice Service Status over IMS: "
+            << "\n Voice Service Status over IMS: "
             << MyImsServSysListener::convertServiceStatustoString(service.voice)
             << std::endl;
     } else {
         PRINT_CB << "requestServiceInfo failed, errorCode: " << static_cast<int>(error)
+                << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
+    }
+}
+
+// Implementation of IMS Pdp Status callback
+void MyImsServSysCallback::imsPdpStatusResponse(SlotId slotId,
+    telux::tel::ImsPdpStatusInfo status, telux::common::ErrorCode error) {
+    std::cout << std::endl << std::endl;
+    std::cout << " IMS PDP status response received on slotId "
+            << static_cast<int>(slotId) << std::endl;
+    if (error == telux::common::ErrorCode::SUCCESS) {
+        std::cout << "\n";
+        PRINT_CB << "IMS PDP is connected : "
+            << ((status.isPdpConnected) ? "Yes" : "No")
+            << "\n IMS PDP Failure Error Code: "
+            << MyImsServSysListener::convertPdpFailureErrorToString(status.failureCode)
+            << "\n IMS PDP Failure Cause/Reason Code: "
+            << ((status.isPdpConnected) ? "" : MyImsServSysListener::
+               convertPdpFailureReasonTypeToString(status.failureReason.type))
+            << "\n IMS PDP Failure Reason: "
+            << ((status.isPdpConnected) ? "" : std::to_string(MyImsServSysListener::
+                callEndReasonCode(status.failureReason)))
+            << "\n IMS PDN Name: " << status.apnName
+            << std::endl;
+    } else {
+        PRINT_CB << "requestPdpStatusInfo failed, errorCode: " << static_cast<int>(error)
                 << ", description: " << Utils::getErrorCodeAsString(error) << std::endl;
     }
 }
@@ -113,23 +144,43 @@ MyImsServSysListener::MyImsServSysListener(SlotId slotId)
 }
 
 void MyImsServSysListener::onImsRegStatusChange(telux::tel::ImsRegistrationInfo status) {
+    std::cout << std::endl << std::endl;
     PRINT_NOTIFICATION << "onImsRegStatusChange, SlotId: " << static_cast<int>(slotId_)
         << std::endl;
     PRINT_NOTIFICATION << "IMS Registration status changed to: "
                 << convertRegStatustoString(status.imsRegStatus)
-                << ", radio technology: " << MyPhoneHelper::radioTechToString(status.rat)
-                << ", error code: " << status.errorCode
-                << ", error description: " << status.errorString << std::endl;
+                << "\n Radio Technology: " << MyPhoneHelper::radioTechToString(status.rat)
+                << "\n Error Code: " << status.errorCode
+                << "\n Error Description: " << status.errorString << std::endl;
 }
 
 void MyImsServSysListener::onImsServiceInfoChange(telux::tel::ImsServiceInfo service) {
+    std::cout << std::endl << std::endl;
     PRINT_NOTIFICATION << "onImsServiceInfoChange, SlotId: " << static_cast<int>(slotId_)
         << std::endl;
     PRINT_NOTIFICATION << "SMS Service Status over IMS: "
                 << convertServiceStatustoString(service.sms)
-                << ", Voice Service Status over IMS: "
+                << "\n Voice Service Status over IMS: "
                 << convertServiceStatustoString(service.voice)
                 << std::endl;
+}
+
+void MyImsServSysListener::onImsPdpStatusInfoChange(telux::tel::ImsPdpStatusInfo status) {
+    std::cout << std::endl << std::endl;
+    PRINT_NOTIFICATION << "onImsPdpStatusInfoChange, SlotId: " << static_cast<int>(slotId_)
+        << std::endl;
+    PRINT_NOTIFICATION  "IMS PDP is connected : "
+            << ((status.isPdpConnected) ? "Yes" : "No")
+            << "\n IMS PDP Failure Error Code: "
+            << convertPdpFailureErrorToString(status.failureCode)
+            << "\n IMS PDP Failure Cause/Reason Code: "
+            << ((status.isPdpConnected) ? "" : convertPdpFailureReasonTypeToString
+                (status.failureReason.type))
+            << "\n IMS PDP Failure Reason: "
+            << ((status.isPdpConnected) ? "" : std::to_string(
+               callEndReasonCode(status.failureReason)))
+            << "\n IMS PDN Name: " << status.apnName
+            << std::endl;
 }
 
 std::string MyImsServSysListener::convertRegStatustoString(telux::tel::RegistrationStatus state) {
@@ -176,6 +227,102 @@ std::string MyImsServSysListener::convertServiceStatustoString(
     }
 
     return statusString;
+}
+
+std::string MyImsServSysListener::convertPdpFailureErrorToString(
+    telux::tel::PdpFailureCode errorCode) {
+    std::string errorCodeString;
+
+    switch(errorCode) {
+        case telux::tel::PdpFailureCode::OTHER_FAILURE:
+            errorCodeString = "OTHER_FAILURE";
+            break;
+        case telux::tel::PdpFailureCode::OPTION_UNSUBSCRIBED:
+            errorCodeString = "OPTION_UNSUBSCRIBED";
+            break;
+        case telux::tel::PdpFailureCode::UNKNOWN_PDP:
+            errorCodeString = "UNKNOWN_PDP";
+            break;
+        case telux::tel::PdpFailureCode::REASON_NOT_SPECIFIED:
+            errorCodeString = "REASON_NOT_SPECIFIED";
+            break;
+        case telux::tel::PdpFailureCode::CONNECTION_BRINGUP_FAILURE:
+            errorCodeString = "CONNECTION_BRINGUP_FAILURE";
+            break;
+        case telux::tel::PdpFailureCode::CONNECTION_IKE_AUTH_FAILURE:
+            errorCodeString = "CONNECTION_IKE_AUTH_FAILURE";
+            break;
+        case telux::tel::PdpFailureCode::USER_AUTH_FAILED:
+            errorCodeString = "USER_AUTH_FAILED";
+            break;
+        default:
+            errorCodeString = "OTHER_FAILURE";
+            break;
+    }
+
+    return errorCodeString;
+}
+
+std::string MyImsServSysListener::convertPdpFailureReasonTypeToString(
+    telux::common::EndReasonType reasonType) {
+    std::string reasonTypeString;
+    switch(reasonType) {
+        case telux::common::EndReasonType::CE_UNKNOWN:
+            reasonTypeString = "UNKNOWN";
+            break;
+        case telux::common::EndReasonType::CE_MOBILE_IP:
+            reasonTypeString = "MOBILE_IP";
+            break;
+        case telux::common::EndReasonType::CE_INTERNAL:
+            reasonTypeString = "INTERNAL";
+            break;
+        case telux::common::EndReasonType::CE_CALL_MANAGER_DEFINED:
+            reasonTypeString = "CALL_MANAGER_DEFINED";
+            break;
+        case telux::common::EndReasonType::CE_3GPP_SPEC_DEFINED:
+            reasonTypeString = "3GPP_SPEC_DEFINED";
+            break;
+        case telux::common::EndReasonType::CE_PPP:
+            reasonTypeString = "PPP";
+            break;
+        case telux::common::EndReasonType::CE_EHRPD:
+            reasonTypeString = "EHRPD";
+            break;
+        case telux::common::EndReasonType::CE_IPV6:
+            reasonTypeString = "IPV6";
+            break;
+        case telux::common::EndReasonType::CE_HANDOFF:
+            reasonTypeString = "HANDOFF";
+            break;
+        default:
+            reasonTypeString = "UNKNOWN";
+            break;
+    }
+    return reasonTypeString;
+}
+
+int MyImsServSysListener::callEndReasonCode(telux::common::DataCallEndReason ceReason) {
+   switch(ceReason.type) {
+      case telux::common::EndReasonType::CE_MOBILE_IP:
+         return static_cast<int>(ceReason.IpCode);
+      case telux::common::EndReasonType::CE_INTERNAL:
+         return static_cast<int>(ceReason.internalCode);
+      case telux::common::EndReasonType::CE_CALL_MANAGER_DEFINED:
+         return static_cast<int>(ceReason.cmCode);
+      case telux::common::EndReasonType::CE_3GPP_SPEC_DEFINED:
+         return static_cast<int>(ceReason.specCode);
+      case telux::common::EndReasonType::CE_PPP:
+         return static_cast<int>(ceReason.pppCode);
+      case telux::common::EndReasonType::CE_EHRPD:
+         return static_cast<int>(ceReason.ehrpdCode);
+      case telux::common::EndReasonType::CE_IPV6:
+         return static_cast<int>(ceReason.ipv6Code);
+      case telux::common::EndReasonType::CE_HANDOFF:
+         return static_cast<int>(ceReason.handOffCode);
+      case telux::common::EndReasonType::CE_UNKNOWN:
+         return -1;
+      default: { return -1; }
+   }
 }
 
 void MyImsServSysListener::onServiceStatusChange(telux::common::ServiceStatus status) {

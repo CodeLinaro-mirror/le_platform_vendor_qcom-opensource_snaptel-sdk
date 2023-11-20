@@ -116,13 +116,43 @@ bool ImsSettingsMenu::init() {
     std::shared_ptr<ConsoleAppCommand> setImsServiceConfig
         = std::make_shared<ConsoleAppCommand>(ConsoleAppCommand("2", "Set_Service_Configurations",
         {}, std::bind(&ImsSettingsMenu::setImsServiceConfig, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> setImsUserAgentConfig
+        = std::make_shared<ConsoleAppCommand>
+        (ConsoleAppCommand("3", "Set_ImsUserAgent_Configuration",
+        {}, std::bind(&ImsSettingsMenu::setImsUserAgentConfig, this, std::placeholders::_1)));
+    std::shared_ptr<ConsoleAppCommand> getImsUserAgentConfig
+        = std::make_shared<ConsoleAppCommand>
+        (ConsoleAppCommand("4", "Get_ImsUserAgent_Configuration",
+        {}, std::bind(&ImsSettingsMenu::requestImsUserAgentConfig, this,
+        std::placeholders::_1)));
 
     std::vector<std::shared_ptr<ConsoleAppCommand>> commandsListImsSettingsMenu
-        = { getImsServiceConfig, setImsServiceConfig };
+        = { getImsServiceConfig, setImsServiceConfig,
+            setImsUserAgentConfig, getImsUserAgentConfig };
 
     addCommands(commandsListImsSettingsMenu);
     ConsoleApp::displayMenu();
     return true;
+}
+
+void ImsSettingsMenu::requestImsUserAgentConfig(std::vector<std::string> userInput) {
+   if (imsSettingsMgr_) {
+      SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+      if (DeviceConfig::isMultiSimSupported()) {
+         slotId = static_cast<SlotId>(Utils::getValidSlotId());
+      }
+      Status status = imsSettingsMgr_->requestSipUserAgent(slotId,
+         MyImsSettingsCallback::onRequestImsSipUserAgentConfig);
+      if (status == Status::SUCCESS) {
+         std::cout << "IMS SIP user agent configuration request sent successfully \n";
+      } else {
+         std::cout << "ERROR - Failed to send IMS SIP user agent configuration request,"
+                   << "Status:" << static_cast<int>(status) << "\n";
+         Utils::printStatus(status);
+      }
+   } else {
+      std::cout << "ERROR - ImsSettingsManger is null \n";
+   }
 }
 
 void ImsSettingsMenu::requestImsServiceConfig(std::vector<std::string> userInput) {
@@ -158,7 +188,7 @@ void ImsSettingsMenu::setImsServiceConfig(std::vector<std::string> userInput) {
       int configType = INVALID_CONFIG_TYPE;
       bool enable = false;
       std::cout  << "Available IMS Service configurations \n 1 - VOIMS \n 2 - IMS Service \n "
-                 << "3 - SMS \n q - exit \n ";
+                 << "3 - SMS \n 4 - RTT \n q - exit \n ";
       while(true) {
          std::cout << "\nSelect the configuration type: ";
          std::getline(std::cin, configSelection, delimiter);
@@ -203,6 +233,11 @@ void ImsSettingsMenu::setImsServiceConfig(std::vector<std::string> userInput) {
                      telux::tel::ImsServiceConfigType::IMSSETTINGS_SMS);
                  config.smsEnabled = enable;
                  break;
+             case telux::tel::ImsServiceConfigType::IMSSETTINGS_RTT:
+                 config.configValidityMask.set(
+                     telux::tel::ImsServiceConfigType::IMSSETTINGS_RTT);
+                 config.rttEnabled = enable;
+                 break;
              default:
                  std::cout << "Invalid configuration selection \n";
                  return;
@@ -218,6 +253,30 @@ void ImsSettingsMenu::setImsServiceConfig(std::vector<std::string> userInput) {
                        << static_cast<int>(status) << "\n";
              Utils::printStatus(status);
           }
+      }
+   } else {
+      std::cout << "ERROR - ImsSettingsManger is null \n";
+   }
+}
+
+void ImsSettingsMenu::setImsUserAgentConfig(std::vector<std::string> userInput) {
+   if (imsSettingsMgr_) {
+      SlotId slotId = SlotId::DEFAULT_SLOT_ID;
+      if (DeviceConfig::isMultiSimSupported()) {
+         slotId = static_cast<SlotId>(Utils::getValidSlotId());
+      }
+      std::string userAgent = "";
+      char delimiter = '\n';
+      std::cout  << "Input SIP User Agent \n ";
+      std::getline(std::cin, userAgent, delimiter);
+      Status status = imsSettingsMgr_->setSipUserAgent(slotId, userAgent,
+            MyImsSettingsCallback::onResponseCallback);
+      if (status == Status::SUCCESS) {
+          std::cout << "Set IMS user agent request sent successfully \n";
+      } else {
+          std::cout << "ERROR - Failed to send set IMS user agent request, Status:"
+                    << static_cast<int>(status) << "\n";
+          Utils::printStatus(status);
       }
    } else {
       std::cout << "ERROR - ImsSettingsManger is null \n";

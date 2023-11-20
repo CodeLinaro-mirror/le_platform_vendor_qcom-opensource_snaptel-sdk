@@ -64,6 +64,8 @@ enum ImsServiceConfigType {
     IMSSETTINGS_VOIMS = 1,       /**< Voice calling support on LTE */
     IMSSETTINGS_IMS_SERVICE = 2, /**< IMS Normal Registration configuration */
     IMSSETTINGS_SMS = 3,         /**< SMS support on IMS */
+    IMSSETTINGS_RTT = 4,         /**< RTT support on IMS */
+
 };
 
 /**
@@ -79,10 +81,14 @@ using ImsServiceConfigValidity = std::bitset<32>;
 struct ImsServiceConfig {
     ImsServiceConfigValidity configValidityMask;   /**< Indicates the configurations type.
                                                         Bit set to 1 denotes the config is
-                                                        valid.*/
-    bool imsServiceEnabled;                        /**< Enable/Disable IMS service */
+                                                        valid.
+                                                        Example: configValidityMask = 0x01
+                                                        denotes ImsServiceConfig::voImsEnabled has
+                                                        a valid value */
     bool voImsEnabled;                             /**< Enable/Disable VOIMS service */
+    bool imsServiceEnabled;                        /**< Enable/Disable IMS service */
     bool smsEnabled;                               /**< Enable/Disable SMS service */
+    bool rttEnabled;                               /**< Enable/Disable RTT service */
 };
 
 /**
@@ -100,6 +106,21 @@ struct ImsServiceConfig {
  */
 using ImsServiceConfigCb
    = std::function<void(SlotId slotId, ImsServiceConfig config, telux::common::ErrorCode error)>;
+
+/**
+ * This function is called in the response to requestSipUserAgent API.
+ *
+ * The callback can be invoked from multiple different threads.
+ * The implementation should be thread safe.
+ *
+ * @param [in] slotId         Slot for which the IMS service configuration is intended.
+ * @param [in] config         Indicates the configured Sip UserAgent.
+ * @param [in] error          Return code which indicates whether the operation
+ *                            succeeded or not @ErrorCode.
+ *
+ */
+using ImsSipUserAgentConfigCb
+   = std::function<void(SlotId slotId, std::string sipUserAgent, telux::common::ErrorCode error)>;
 
 /**
  * @brief      ImsSettingsManager allows IMS settings. For example enabling or disabling
@@ -130,6 +151,42 @@ public:
     */
    virtual telux::common::Status requestServiceConfig(SlotId slotId,
       ImsServiceConfigCb callback) = 0;
+
+    /**
+    * Request the IMS SIP User Agent configuration
+    *
+    * @param [in] slotId      Slot for which the IMS SIP User Agent configuration is requested.
+    * @param [in] callback    Callback function to get the response of request
+    *                         IMS SIP User Agent configurations.
+    *
+    * @returns Status of requestSipUserAgent i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    *
+    */
+   virtual telux::common::Status requestSipUserAgent(SlotId slotId,
+      ImsSipUserAgentConfigCb callback) = 0;
+
+    /**
+    * Set the IMS SIP user agent
+    *
+    * On platforms with Access control enabled, Caller needs to have TELUX_TEL_IMS_SETTINGS
+    * permission to invoke this API successfully.
+    *
+    * @param [in] slotId         Slot for which the IMS SIP User Agent configuration is intended.
+    * @param [in] userAgent      Configure User Agent Client(UAC) orignating the request.
+    * @param [in] callback       Callback function to get the response of set IMS SIP User Agent
+    *                            configuration request.
+    *
+    * @returns Status of setSipUserAgent i.e. success or suitable error code.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    *
+    */
+   virtual telux::common::Status setSipUserAgent(SlotId slotId,
+      std::string userAgent, common::ResponseCallback callback = nullptr) = 0;
 
    /**
     * To configure the IMS service configurations.
@@ -194,6 +251,19 @@ public:
     *
     */
    virtual void onImsServiceConfigsChange(SlotId slotId, ImsServiceConfig config) {}
+
+   /**
+    * This function is called whenever any IMS SIP user agent is changed.
+    *
+    * @param [in] slotId        SIM corresponding to slot identifier for which the IMS SIP user
+    *                           agent is changed.
+    * @param [in] sipUserAgent  Indicates the configured SIP User Agent.
+    *
+    * @note   Eval: This is a new API and is being evaluated. It is subject to
+    *         change and could break backwards compatibility.
+    *
+    */
+   virtual void onImsSipUserAgentChange(SlotId slotId, std::string sipUserAgent) {}
 
    /**
     * This function is called when IImsSettingsManager service status changes.

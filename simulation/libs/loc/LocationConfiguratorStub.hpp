@@ -49,6 +49,14 @@
 #include <set>
 #include <map>
 
+#include <grpcpp/grpcpp.h>
+#include "../../protos/proto-src/loc.grpc.pb.h"
+
+using grpc::Channel;
+using grpc::ClientContext;
+
+using locStub::LocationConfiguratorService;
+
 namespace telux {
 
 namespace loc {
@@ -733,7 +741,6 @@ private:
   void invokeGnssConstellationUpdate();
   bool xtraEnabled_;
   uint32_t registrationMask_ = 0;
-
   bool waitForInitialization();
   void initSync(telux::common::InitResponseCb callback);
   void handleEvent(std::string token , std::string event);
@@ -768,6 +775,7 @@ private:
     std::condition_variable cv_;
     telux::common::ServiceStatus managerStatus_;
     std::weak_ptr<telux::loc::LocationConfiguratorStub> myself_;
+    std::unique_ptr<::locStub::LocationConfiguratorService::Stub> stub_;
 };
 
 } // end of namespace loc

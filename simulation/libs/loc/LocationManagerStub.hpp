@@ -47,7 +47,16 @@
 
 #include "telux/loc/LocationManager.hpp"
 #include "ReportHandler.hpp"
+#include "ReportReader.hpp"
 #include "../common/AsyncTaskQueue.hpp"
+
+#include <grpcpp/grpcpp.h>
+#include "../../protos/proto-src/loc.grpc.pb.h"
+
+using grpc::Channel;
+using grpc::ClientContext;
+
+using locStub::LocationManagerService;
 
 namespace telux {
 
@@ -464,6 +473,7 @@ private:
     time_t usedSysInfoHourTime_ = 0;
     std::mutex terrestrialPositionMutex_;
     std::condition_variable cvTerrestrialPosition_;
+    std::unique_ptr<::locStub::LocationManagerService::Stub> stub_;
 
     bool waitForInitialization();
     void initSync(telux::common::InitResponseCb callback);
@@ -498,6 +508,7 @@ private:
     // from the report handler has exceeded
     // DURATION(in Seq Nos: derSeqDelta_) + last sequence No used (derSeqNo_)
     void invokeDetailedEngineReport(ReportHandler & rClass_);
+
 };
 
 } // end of namespace loc

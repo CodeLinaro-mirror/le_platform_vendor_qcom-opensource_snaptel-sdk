@@ -23,6 +23,8 @@ set(TARGET_SIMULATION_SERVER_APP_SRC
     tel/CardManagerServerImpl.cpp
     tel/SubscriptionManagerServerImpl.cpp
     tel/SmsManagerServerImpl.cpp
+    loc/LocationManagerServerImpl.cpp
+    loc/LocationConfiguratorServerImpl.cpp
 )
 
 include_directories(BEFORE

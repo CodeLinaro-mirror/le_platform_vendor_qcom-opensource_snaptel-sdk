@@ -66,6 +66,8 @@ class IVoiceServiceStateCallback;
  *                        - @ref telux::common::ErrorCode::SUCCESS
  *                        - @ref telux::common::ErrorCode::RADIO_NOT_AVAILABLE
  *                        - @ref telux::common::ErrorCode::GENERIC_FAILURE
+ *
+ * @deprecated Use IVoiceServiceStateCallback instead
  */
 using VoiceRadioTechResponseCb
    = std::function<void(telux::tel::RadioTechnology radioTech, telux::common::ErrorCode error)>;
@@ -133,6 +135,9 @@ public:
     *
     * @returns Status of requestVoiceRadioTechnology i.e. success or suitable
     * error code @ref telux::common::Status.
+    *
+    * @deprecated Use requestVoiceServiceState() API to get VoiceServiceInfo which
+    *             has API to get radio technology i.e VoiceServiceInfo::getRadioTechnology()
     */
    virtual telux::common::Status requestVoiceRadioTechnology(VoiceRadioTechResponseCb callback) = 0;
 

@@ -39,6 +39,10 @@
 #include "../common/CommonUtils.hpp"
 #include <chrono>
 
+//Default cb delay.
+#define DEFAULT_CALLBACK_DELAY 100
+#define SKIP_CALLBACK -1
+
 // This is used for computing energy consumed based on duration
 #define ENERGY_CONSUMED_PER_SECOND 500
 
@@ -51,9 +55,12 @@
 #define DETAILED_REPORTS 2
 #define DETAILED_ENG_REPORTS 3
 
+#define RPC_FAIL_SUFFIX " RPC Request failed - "
+
 namespace telux {
 
 namespace loc {
+
 // This denotes system start time and is used to arrive at elapsed duration for energy consumed info
 static std::chrono::time_point<std::chrono::steady_clock> time_t0
     = std::chrono::steady_clock::now();
@@ -227,6 +234,8 @@ LocationManagerStub::LocationManagerStub() {
     derSeqDelta_.store(0);
     derSeqNo_.store(0);
     managerStatus_ = ServiceStatus::SERVICE_UNAVAILABLE;
+    stub_ = LocationManagerService::NewStub(grpc::CreateChannel("localhost:8089",
+        grpc::InsecureChannelCredentials()));
     std::thread t(&telux::loc::LocationManagerStub::managerThread, this);
     t.detach();
 }
@@ -264,27 +273,27 @@ telux::common::Status LocationManagerStub::init(telux::common::InitResponseCb ca
 }
 
 void LocationManagerStub::initSync(telux::common::InitResponseCb callback) {
-    int cbDelay = 100;
-    Json::Value rootNode;
-
-    {
+    LOG(DEBUG, __FUNCTION__);
+    ::locStub::GetServiceStatusReply response;
+    const ::google::protobuf::Empty request;
+    ClientContext context;
+    int cbDelay = DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->InitService(&context, request, &response);
+    if(reqstatus.ok()) {
         std::lock_guard<std::mutex> lock(mutex_);
-        ErrorCode errorCode
-            = JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
-        if (errorCode == ErrorCode::SUCCESS) {
-            cbDelay = rootNode["ILocationManager"]["SubSystemReadinessDelay"].asInt();
-            managerStatus_ = rootNode["ILocationManager"]["SubSystemInit"].asBool() == true
-                                ? ServiceStatus::SERVICE_AVAILABLE
-                                : ServiceStatus::SERVICE_FAILED;
-        } else {
-            LOG(ERROR, "Unable to read LocationManager JSON");
-        }
+        managerStatus_ = static_cast<telux::common::ServiceStatus>(response.service_status());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+        std::lock_guard<std::mutex> lock(mutex_);
+        managerStatus_ = telux::common::ServiceStatus::SERVICE_FAILED;
     }
+    LOG(DEBUG, __FUNCTION__, " cbDelay::", cbDelay, " cbStatus::", static_cast<int>(managerStatus_));
 
-    LOG(DEBUG, "Delay: ", cbDelay, " ServiceStatus: ", static_cast<int>(managerStatus_));
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-    callback(managerStatus_);
+    if (callback && (cbDelay != SKIP_CALLBACK)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+        callback(managerStatus_);
+    }
     cv_.notify_all();
 }
 
@@ -332,16 +341,26 @@ telux::common::Status LocationManagerStub::deRegisterListenerEx(std::weak_ptr<IL
 telux::common::Status LocationManagerStub::startDetailedReports(uint32_t intervalInMs,
     telux::common::ResponseCallback callback, GnssReportTypeMask reportMask) {
     LOG(DEBUG, __FUNCTION__);
-    Json::Value rootNode;
-    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
-    telux::common::Status status;
-    telux::common::ErrorCode errorCode;
-    int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay = DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->StartDetailedReports(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback(errorCode);
+            if (callback && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(errorCode);
+            }
         }).share();
         taskQ_.add(f);
         std::lock_guard<std::mutex> listenerLock(listenerMutex_);
@@ -361,16 +380,26 @@ telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t i
     LocReqEngine engineType, telux::common::ResponseCallback callback,
     GnssReportTypeMask reportMask) {
     LOG(DEBUG, __FUNCTION__);
-    Json::Value rootNode;
-    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
-    telux::common::Status status;
-    telux::common::ErrorCode errorCode;
-    int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->StartDetailedEngineReports(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback(errorCode);
+            if (callback && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(errorCode);
+            }
         }).share();
         taskQ_.add(f);
         std::lock_guard<std::mutex> listenerLock(listenerMutex_);
@@ -389,16 +418,26 @@ telux::common::Status LocationManagerStub::startDetailedEngineReports(uint32_t i
 telux::common::Status LocationManagerStub::startBasicReports(
     uint32_t distanceInMeters, uint32_t intervalInMs, telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
-    Json::Value rootNode;
-    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
-    telux::common::Status status;
-    telux::common::ErrorCode errorCode;
-    int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
-    if (status == Status::SUCCESS) {
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->StartBasicReports(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+    if (status == telux::common::Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback(errorCode);
+            if (callback && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(errorCode);
+            }
         }).share();
         taskQ_.add(f);
         std::lock_guard<std::mutex> listenerLock(listenerMutex_);
@@ -432,16 +471,26 @@ telux::common::Status LocationManagerStub::registerForSystemInfoUpdates(
             LOG(DEBUG, __FUNCTION__, " Registering SystemInfo Listener");
         }
     }
-    Json::Value rootNode;
-    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
-    telux::common::Status status;
-    telux::common::ErrorCode errorCode;
-    int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->RegisterLocationSystemInfo(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback(errorCode);
+            if (callback && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(errorCode);
+            }
         }).share();
         taskQ_.add(f);
     }
@@ -464,16 +513,26 @@ telux::common::Status LocationManagerStub::deRegisterForSystemInfoUpdates(
             }
         }
     }
-    Json::Value rootNode;
-    JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
-    telux::common::Status status;
-    telux::common::ErrorCode errorCode;
-    int cbDelay;
-    CommonUtils::getValues(rootNode, "ILocationManager", __FUNCTION__, status, errorCode, cbDelay);
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->DeregisterLocationSystemInfo(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
     if (status == Status::SUCCESS) {
         auto f = std::async(std::launch::async, [=]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-            callback(errorCode);
+            if (callback && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(errorCode);
+            }
         }).share();
         taskQ_.add(f);
     }
@@ -482,80 +541,91 @@ telux::common::Status LocationManagerStub::deRegisterForSystemInfoUpdates(
 
 telux::common::Status LocationManagerStub::requestEnergyConsumedInfo(GetEnergyConsumedCallback cb) {
     LOG(DEBUG, __FUNCTION__);
-
-    handleApiResponseForMethod("loc", "ILocationManager");
-
-    auto f = std::async(std::launch::async, [=]() {
-        telux::loc::GnssEnergyConsumedInfo energyConsumed;
-        if (errorCode == ErrorCode::SUCCESS) {
-            energyConsumed.valid
-                = std::stoi(telux::common::CommonUtils::readSystemDataValue("loc/ILocationManager",
-                    "0", {"ILocationManager", "GnssEnergyConsumedInfo", "valid"}));
-            energyConsumed.energySinceFirstBoot
-                = std::stoi(telux::common::CommonUtils::readSystemDataValue("loc/ILocationManager",
-                    "0", {"ILocationManager", "GnssEnergyConsumedInfo", "energySinceFirstBoot"}));
-            {
-                CommonUtils::writeSystemDataValue("loc/ILocationManager", "1",
-                    {"ILocationManager", "GnssEnergyConsumedInfo", "valid"});
-                CommonUtils::writeSystemDataValue("loc/ILocationManager",
-                    std::to_string(energyConsumed.energySinceFirstBoot + 100),
-                    {"ILocationManager", "GnssEnergyConsumedInfo", "energySinceFirstBoot"});
+    const ::google::protobuf::Empty request;
+    ::locStub::RequestEnergyConsumedInfoReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->RequestEnergyConsumedInfo(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+    if (status == Status::SUCCESS) {
+        telux::loc::GnssEnergyConsumedInfo energyConsumed = {};
+        energyConsumed.valid = static_cast<int>(response.validity());
+        energyConsumed.energySinceFirstBoot = static_cast<int>(response.energy_consumed());
+        auto f = std::async(std::launch::async, [=]() {
+            if (cb && (cbDelay != SKIP_CALLBACK)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                cb(energyConsumed, errorCode);
             }
-        }
-        cb(energyConsumed, errorCode);
-    }).share();
-    taskQ_.add(f);
+        }).share();
+        taskQ_.add(f);
+    }
     return status;
 }
 
 telux::common::Status LocationManagerStub::getYearOfHw(GetYearOfHwCallback cb) {
     LOG(DEBUG, __FUNCTION__);
-    handleApiResponseForMethod("loc", "ILocationManager");
-    auto f = std::async(std::launch::async, [=]() {
-        uint16_t yearOfHw;
-        if (errorCode == ErrorCode::SUCCESS) {
-            yearOfHw = std::stoi(telux::common::CommonUtils::readSystemDataValue(
-                "loc/ILocationManager", "0", {"ILocationManager", "yearOfHw"}));
-            if (yearOfHw == 0) {
-                yearOfHw = 2023;
-                CommonUtils::writeSystemDataValue("loc/ILocationManager", std::to_string(yearOfHw),
-                    {"ILocationManager", "yearOfHw"});
+    const ::google::protobuf::Empty request;
+    ::locStub::GetYearOfHwReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->GetYearOfHw(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+    if (status == Status::SUCCESS) {
+        uint16_t yearOfHw = static_cast<int>(response.year_of_hw());
+        auto f = std::async(std::launch::async, [=]() {
+            if (cb && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                cb(yearOfHw, errorCode);
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        }
-        cb(yearOfHw, errorCode);
-    }).share();
-    taskQ_.add(f);
+        }).share();
+        taskQ_.add(f);
+    }
     return status;
 }
 
 telux::loc::LocCapability LocationManagerStub::getCapabilities() {
     LOG(DEBUG, __FUNCTION__);
-    uint32_t cbDelay = 0;
-    Json::Value rootNode;
-    ErrorCode err = JsonParser::readFromJsonFile(rootNode, "api/loc/ILocationManager.json");
-    if (err != ErrorCode::SUCCESS) {
-        LOG(ERROR, "Unable to read file: api/loc/ILocationManager.json");
-        return 0;
+    const ::google::protobuf::Empty request;
+    ::locStub::GetCapabilitiesReply response;
+    ClientContext context;
+    ::grpc::Status reqstatus = stub_->GetCapabilities(&context, request, &response);
+    uint32_t capabilities = 0;
+    if(reqstatus.ok()) {
+        capabilities = static_cast<int>(response.loc_capability());
     } else {
-        uint32_t capabilities = rootNode["ILocationManager"][__FUNCTION__]["capabilities"].asInt();
-        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        return capabilities;
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
     }
+    return capabilities;
 }
 
 telux::common::Status LocationManagerStub::stopReports(telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
-    handleApiResponseForMethod("loc", "ILocationManager");
     type_.store(NONE_REPORTS);
     auto &rClass_ = ReportHandler::getInstance();
     rClass_.basicNotification_.store(0);
     rClass_.detailedNotification_.store(0);
     rClass_.detailedEngineNotification_.store(0);
     auto f = std::async(std::launch::async, [=]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        callback(errorCode);
+        if (callback) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_CALLBACK_DELAY));
+            callback(telux::common::ErrorCode::SUCCESS);
+        }
     }).share();
     taskQ_.add(f);
     return (telux::common::Status::SUCCESS);
@@ -568,56 +638,92 @@ std::shared_ptr<LocationInfoBase> LocationManagerStub::getLastLocation(bool defa
         locInfo->setLongitude(0);
         locInfo->setLocationInfoValidity(0);
     } else {
-        auto &rClass = ReportHandler::getInstance();
-        locInfo = rClass.getLocationInfoBase();
+        auto &myReader = ReportReader::getInstance();
+        myReader.getLocationInfoBase(locInfo);
     }
     return locInfo;
 }
+
 telux::common::Status LocationManagerStub::getTerrestrialPosition(uint32_t timeoutMsec,
     TerrestrialTechnology techMask, GetTerrestrialInfoCallback cb,
     telux::common ::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
-    handleApiResponseForMethod("loc", "ILocationManager");
-    auto f = std::async(std::launch::async, [=]() {
-        uint32_t delay = cbDelay;
-        std::shared_ptr<LocationInfoBase> locInfo;
-        LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
-        if (timeoutMsec <= delay) {
-            LOG(INFO, "timeout shorter, will send default location");
-            delay = timeoutMsec;
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay = DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->GetTerrestrialPosition(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+    if (status == Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            uint32_t delay = cbDelay;
+            std::shared_ptr<LocationInfoBase> locInfo;
             LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
-            locInfo = getLastLocation(true);
-        } else {
-            LOG(INFO, "timeout lengthier, will send last received location unless cancelled");
-            locInfo = getLastLocation();
-        }
-        LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
-        std::unique_lock<std::mutex> lk(terrestrialPositionMutex_);
-        if (cvTerrestrialPosition_.wait_for(lk, std::chrono::milliseconds(delay))
-            == std::cv_status::timeout) {
-                LOG(DEBUG, "Timed out, sending GTP callback");
-                cb(locInfo);
-        } else {
-            LOG(DEBUG, "GTP callback cancelled");
-        }
-    }).share();
-    taskQ_.add(f);
+            if (timeoutMsec <= delay) {
+                LOG(INFO, "timeout shorter, will send default location");
+                delay = timeoutMsec;
+                LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
+                locInfo = getLastLocation(true);
+            } else {
+                LOG(INFO, "timeout lengthier, will send last received location unless cancelled");
+                locInfo = getLastLocation();
+            }
+            LOG(DEBUG, "Timeout: ", timeoutMsec, ", delay: ", delay);
+            std::unique_lock<std::mutex> lk(terrestrialPositionMutex_);
+            if (cvTerrestrialPosition_.wait_for(lk, std::chrono::milliseconds(delay))
+                == std::cv_status::timeout) {
+                    LOG(DEBUG, "Timed out, sending GTP callback");
+                    cb(locInfo);
+            } else {
+                LOG(DEBUG, "GTP callback cancelled");
+            }
+            if (callback) {
+                callback(errorCode);
+            }
+        }).share();
+        taskQ_.add(f);
+    }
     return status;
 }
 
 telux::common::Status LocationManagerStub::cancelTerrestrialPositionRequest(
     telux::common::ResponseCallback callback) {
     LOG(DEBUG, __FUNCTION__);
-    handleApiResponseForMethod("loc", "ILocationManager");
-    auto f = std::async(std::launch::async, [=]() {
-        if (errorCode == ErrorCode::SUCCESS) {
-            std::lock_guard<std::mutex> lk(terrestrialPositionMutex_);
-            cvTerrestrialPosition_.notify_all();
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
-        callback(errorCode);
-    }).share();
-    taskQ_.add(f);
+    const ::google::protobuf::Empty request;
+    ::locStub::LocManagerCommandReply response;
+    ClientContext context;
+    telux::common::Status status = telux::common::Status::FAILED;
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;
+    int cbDelay =DEFAULT_CALLBACK_DELAY;
+    ::grpc::Status reqstatus = stub_->CancelTerrestrialPosition(&context, request, &response);
+    if(reqstatus.ok()) {
+        status = static_cast<telux::common::Status>(response.status());
+        errorCode = static_cast<telux::common::ErrorCode>(response.error());
+        cbDelay = static_cast<int>(response.delay());
+    } else {
+        LOG(ERROR, RPC_FAIL_SUFFIX, reqstatus.error_code());
+    }
+    if (status == Status::SUCCESS) {
+        auto f = std::async(std::launch::async, [=]() {
+            if (errorCode == ErrorCode::SUCCESS) {
+                std::lock_guard<std::mutex> lk(terrestrialPositionMutex_);
+                cvTerrestrialPosition_.notify_all();
+            }
+            if (callback && (cbDelay != SKIP_CALLBACK)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(cbDelay));
+                callback(errorCode);
+            }
+        }).share();
+        taskQ_.add(f);
+    }
     return status;
 }
 

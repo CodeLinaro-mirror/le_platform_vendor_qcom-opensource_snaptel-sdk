@@ -1,4 +1,5 @@
 /*
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
  *  Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
@@ -11,22 +12,22 @@
 #include "Logger.hpp"
 
 #define handleApiResponseForMethod(subSystem, manager)                                       \
-    telux::common::Status status = Status::FAILED;                                           \
-    telux::common::ErrorCode errorCode = ErrorCode::GENERIC_FAILURE;                         \
-    int cbDelay = 100;                                                                  \
+    telux::common::Status status = telux::common::Status::FAILED;                            \
+    telux::common::ErrorCode errorCode = telux::common::ErrorCode::GENERIC_FAILURE;          \
+    int cbDelay = 100;                                                                       \
     Json::Value rootNode;                                                                    \
     do {                                                                                     \
         ErrorCode err                                                                        \
             = JsonParser::readFromJsonFile(rootNode, "api/" subSystem "/" manager ".json");  \
         if (err != ErrorCode::SUCCESS) {                                                     \
             LOG(ERROR, "Unable to read file: " subSystem "/" manager);                       \
-            status = Status::FAILED;                                                         \
-            errorCode = ErrorCode::GENERIC_FAILURE;                                          \
+            status = telux::common::Status::FAILED;                                          \
+            errorCode = telux::common::ErrorCode::GENERIC_FAILURE;                           \
             break;                                                                           \
         }                                                                                    \
         CommonUtils::getValues(rootNode, manager, __FUNCTION__, status, errorCode, cbDelay); \
     } while (0);                                                                             \
-    if (status != Status::SUCCESS) {                                                         \
+    if (status != telux::common::Status::SUCCESS) {                                          \
         LOG(ERROR, subSystem "/" manager "::", __FUNCTION__,                                 \
             " failed: ", static_cast<int>(status));                                          \
         return status;                                                                       \
